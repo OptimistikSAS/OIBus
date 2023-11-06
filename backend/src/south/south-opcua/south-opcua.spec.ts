@@ -511,7 +511,7 @@ describe('SouthOPCUA', () => {
         nowDateString,
         nowDateString
       )
-    ).rejects.toThrowError('opcua read error');
+    ).rejects.toThrow('opcua read error');
     expect(south.addValues).not.toHaveBeenCalled();
     jest.advanceTimersByTime(1000);
     await south.start();
@@ -521,7 +521,7 @@ describe('SouthOPCUA', () => {
         nowDateString,
         nowDateString
       )
-    ).rejects.toThrowError('opcua read error');
+    ).rejects.toThrow('opcua read error');
 
     await south.connect();
   });
@@ -598,14 +598,14 @@ describe('SouthOPCUA', () => {
 
     await south.start();
     south.disconnect();
-    await expect(south.lastPointQuery(items)).rejects.toThrowError('opcua read error');
+    await expect(south.lastPointQuery(items)).rejects.toThrow('opcua read error');
     const expectedItemsToRead = items.filter(item => item.settings.mode === 'DA');
 
     expect(read).toHaveBeenCalledWith(expectedItemsToRead.map(item => ({ nodeId: item.settings.nodeId })));
     expect(south.addValues).not.toHaveBeenCalled();
     jest.advanceTimersByTime(1000);
     await south.start();
-    await expect(south.lastPointQuery(items)).rejects.toThrowError('opcua read error');
+    await expect(south.lastPointQuery(items)).rejects.toThrow('opcua read error');
 
     await south.connect();
   });
@@ -858,7 +858,7 @@ describe('SouthOPCUA with certificate', () => {
 
     expect(nodeOPCUAClient.OPCUAClient.createSession).toHaveBeenCalledWith(connector.settings.url, expectedUserIdentity, expectedOptions);
     expect(logger.info).toHaveBeenCalledWith(`OPCUA ${connector.name} connected`);
-    expect(setTimeoutSpy).not.toBeCalled();
+    expect(setTimeoutSpy).not.toHaveBeenCalled();
   });
 
   it('should get resampling value', () => {

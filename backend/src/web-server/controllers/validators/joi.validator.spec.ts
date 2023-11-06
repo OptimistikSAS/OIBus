@@ -20,7 +20,7 @@ describe('Joi validator', () => {
       throw new Error();
     });
 
-    await expect(validator.validate(schema, dto)).rejects.toThrowError(new Error());
+    await expect(validator.validate(schema, dto)).rejects.toThrow(new Error());
     expect(validateAsyncSpy).toHaveBeenCalledWith(dto, { abortEarly: false });
   });
 

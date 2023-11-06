@@ -259,7 +259,7 @@ describe('SouthPostgreSQL with authentication', () => {
       connectionTimeoutMillis: configuration.settings.connectionTimeout,
       query_timeout: configuration.settings.requestTimeout
     });
-    expect(client.connect).toBeCalledTimes(1);
+    expect(client.connect).toHaveBeenCalledTimes(1);
     expect(client.query).toHaveBeenCalledWith(items[0].settings.query.replace(/@StartTime/g, '$1').replace(/@EndTime/g, '$2'), {
       startTime: DateTime.fromISO(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'),
       endTime: DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS')
@@ -315,7 +315,7 @@ describe('SouthPostgreSQL with authentication', () => {
       error = err;
     }
 
-    expect(client.connect).toBeCalledTimes(1);
+    expect(client.connect).toHaveBeenCalledTimes(1);
     expect(client.query).toHaveBeenCalledWith(items[0].settings.query.replace(/@StartTime/g, '$1').replace(/@EndTime/g, '$2'), {
       startTime,
       endTime

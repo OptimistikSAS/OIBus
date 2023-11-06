@@ -326,7 +326,7 @@ describe('SouthFolderScanner test connection', () => {
     });
 
     const folderRegex = new RegExp(`Folder '.*(${configuration.settings.inputFolder}).*' does not exist`);
-    await expect(south.testConnection()).rejects.toThrowError(folderRegex);
+    await expect(south.testConnection()).rejects.toThrow(folderRegex);
 
     const accessRegex = new RegExp(`Access error on '.*(${configuration.settings.inputFolder}).*': ${errorMessage}`);
     expect((logger.error as jest.Mock).mock.calls).toEqual([[expect.stringMatching(accessRegex)]]);
@@ -340,7 +340,7 @@ describe('SouthFolderScanner test connection', () => {
         throw new Error(errorMessage);
       });
 
-    await expect(south.testConnection()).rejects.toThrowError('No read access on folder');
+    await expect(south.testConnection()).rejects.toThrow('No read access on folder');
 
     const accessRegex = new RegExp(`Access error on '.*(${configuration.settings.inputFolder}).*': ${errorMessage}`);
     expect((logger.error as jest.Mock).mock.calls).toEqual([[expect.stringMatching(accessRegex)]]);
@@ -351,7 +351,7 @@ describe('SouthFolderScanner test connection', () => {
     (fs.stat as jest.Mock).mockReturnValue({
       isDirectory: () => false
     });
-    await expect(south.testConnection()).rejects.toThrowError(`${path.resolve(configuration.settings.inputFolder)} is not a directory`);
+    await expect(south.testConnection()).rejects.toThrow(`${path.resolve(configuration.settings.inputFolder)} is not a directory`);
     expect(logger.error).toHaveBeenCalledWith(`${path.resolve(configuration.settings.inputFolder)} is not a directory`);
   });
 

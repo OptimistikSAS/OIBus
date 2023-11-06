@@ -178,7 +178,7 @@ describe('Log repository', () => {
 
     repository.deleteLogsByScopeId(scopeType, scopeId);
 
-    expect(database.prepare).toBeCalledWith(query);
-    expect(run).toBeCalledWith(scopeType, scopeId);
+    expect(database.prepare).toHaveBeenCalledWith(query);
+    expect(run).toHaveBeenCalledWith(scopeType, scopeId);
   });
 });

@@ -180,8 +180,8 @@ describe('FileCache', () => {
     cache.retryFiles = jest.fn();
 
     await cache.retryErrorFiles(filenames);
-    expect(cache.retryFiles).toBeCalledWith(cache.errorFolder, filenames);
-    expect(cache.retryFiles).toBeCalledTimes(1);
+    expect(cache.retryFiles).toHaveBeenCalledWith(cache.errorFolder, filenames);
+    expect(cache.retryFiles).toHaveBeenCalledTimes(1);
   });
 
   it('should retry all files from folder', async () => {
@@ -194,7 +194,7 @@ describe('FileCache', () => {
 
     expect(fs.readdir).toHaveBeenCalledWith(cache.errorFolder);
     expect(cache.retryFiles).toHaveBeenCalledWith(cache.errorFolder, filenames);
-    expect(cache.retryFiles).toBeCalledTimes(1);
+    expect(cache.retryFiles).toHaveBeenCalledTimes(1);
   });
 
   it('should retry all error files', async () => {
@@ -202,8 +202,8 @@ describe('FileCache', () => {
 
     await cache.retryAllErrorFiles();
 
-    expect(cache.retryAllFiles).toBeCalledWith(cache.errorFolder);
-    expect(cache.retryAllFiles).toBeCalledTimes(1);
+    expect(cache.retryAllFiles).toHaveBeenCalledWith(cache.errorFolder);
+    expect(cache.retryAllFiles).toHaveBeenCalledTimes(1);
   });
 
   it('should handle retrying all files when folder is empty', async () => {

@@ -151,7 +151,7 @@ describe('reload service', () => {
     expect(oibusEngine.stopSouth).toHaveBeenCalledWith('southId');
     expect(repositoryService.southConnectorRepository.updateSouthConnector).toHaveBeenCalledWith('southId', command);
     expect(oibusEngine.startSouth).not.toHaveBeenCalled();
-    expect(repositoryService.southCacheRepository.deleteAllCacheScanModes).toBeCalled();
+    expect(repositoryService.southCacheRepository.deleteAllCacheScanModes).toHaveBeenCalled();
     expect(repositoryService.southCacheRepository.createOrUpdateCacheScanMode).toHaveBeenNthCalledWith(1, {
       southId: 'southId',
       itemId: 'item1',
@@ -211,7 +211,7 @@ describe('reload service', () => {
     expect(oibusEngine.stopSouth).toHaveBeenCalledWith('southId');
     expect(repositoryService.southConnectorRepository.updateSouthConnector).toHaveBeenCalledWith('southId', command);
     expect(oibusEngine.startSouth).not.toHaveBeenCalled();
-    expect(repositoryService.southCacheRepository.deleteAllCacheScanModes).toBeCalled();
+    expect(repositoryService.southCacheRepository.deleteAllCacheScanModes).toHaveBeenCalled();
     expect(repositoryService.southCacheRepository.createOrUpdateCacheScanMode).toHaveBeenNthCalledWith(1, {
       southId: 'southId',
       itemId: 'all',
@@ -254,15 +254,15 @@ describe('reload service', () => {
     expect(oibusEngine.startNorth).toHaveBeenNthCalledWith(1, 'northId1', { id: 'northId1', enabled: true });
     expect(oibusEngine.startNorth).toHaveBeenNthCalledWith(2, 'northId2', { id: 'northId2', enabled: true });
 
-    expect(repositoryService.southConnectorRepository.getSouthConnector).toBeCalledWith('southId');
+    expect(repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
     expect(oibusEngine.deleteSouth).toHaveBeenCalledWith('southId', 'southName');
 
     expect(repositoryService.southItemRepository.deleteAllSouthItems).toHaveBeenCalledWith('southId');
     expect(repositoryService.southConnectorRepository.deleteSouthConnector).toHaveBeenCalledWith('southId');
 
-    expect(repositoryService.logRepository.deleteLogsByScopeId).toBeCalledWith('south', 'southId');
-    expect(repositoryService.southMetricsRepository.removeMetrics).toBeCalledWith('southId');
-    expect(repositoryService.southCacheRepository.deleteAllCacheScanModes).toBeCalledWith('southId');
+    expect(repositoryService.logRepository.deleteLogsByScopeId).toHaveBeenCalledWith('south', 'southId');
+    expect(repositoryService.southMetricsRepository.removeMetrics).toHaveBeenCalledWith('southId');
+    expect(repositoryService.southCacheRepository.deleteAllCacheScanModes).toHaveBeenCalledWith('southId');
   });
 
   it('should start south', async () => {
@@ -360,7 +360,7 @@ describe('reload service', () => {
     await service.onDeleteSouthItem('southItemId');
     expect(oibusEngine.deleteItemFromSouth).toHaveBeenCalledWith('southId', southItem);
     expect(repositoryService.southItemRepository.deleteSouthItem).toHaveBeenCalledWith('southItemId');
-    expect(repositoryService.southCacheRepository.deleteCacheScanModesByItem).toBeCalledWith('southItemId');
+    expect(repositoryService.southCacheRepository.deleteCacheScanModesByItem).toHaveBeenCalledWith('southItemId');
   });
 
   it('delete should throw when south item not found', async () => {
@@ -460,11 +460,11 @@ describe('reload service', () => {
 
     await service.onDeleteNorth('northId');
 
-    expect(repositoryService.northConnectorRepository.getNorthConnector).toBeCalledWith('northId');
+    expect(repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('northId');
     expect(oibusEngine.deleteNorth).toHaveBeenCalledWith('northId', 'northName');
     expect(repositoryService.northConnectorRepository.deleteNorthConnector).toHaveBeenCalledWith('northId');
-    expect(repositoryService.logRepository.deleteLogsByScopeId).toBeCalledWith('north', 'northId');
-    expect(repositoryService.northMetricsRepository.removeMetrics).toBeCalledWith('northId');
+    expect(repositoryService.logRepository.deleteLogsByScopeId).toHaveBeenCalledWith('north', 'northId');
+    expect(repositoryService.northMetricsRepository.removeMetrics).toHaveBeenCalledWith('northId');
   });
 
   it('should start north', async () => {
@@ -522,13 +522,13 @@ describe('reload service', () => {
 
     await service.onDeleteHistoryQuery('historyId');
 
-    expect(repositoryService.historyQueryRepository.getHistoryQuery).toBeCalledWith('historyId');
+    expect(repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
     expect(historyQueryEngine.deleteHistoryQuery).toHaveBeenCalledWith('historyId', 'historyName');
 
     expect(repositoryService.historyQueryItemRepository.deleteAllItems).toHaveBeenCalledWith('historyId');
     expect(repositoryService.historyQueryRepository.deleteHistoryQuery).toHaveBeenCalledWith('historyId');
 
-    expect(repositoryService.logRepository.deleteLogsByScopeId).toBeCalledWith('history-query', 'historyId');
+    expect(repositoryService.logRepository.deleteLogsByScopeId).toHaveBeenCalledWith('history-query', 'historyId');
   });
 
   it('should create history item', async () => {
@@ -724,7 +724,7 @@ describe('reload service', () => {
   it('should not update scan mode if not found', async () => {
     (repositoryService.scanModeRepository.getScanMode as jest.Mock).mockReturnValue(null);
 
-    await expect(service.onUpdateScanMode('scanModeId', { cron: '*/10 * * * *' } as ScanModeCommandDTO)).rejects.toThrowError(
+    await expect(service.onUpdateScanMode('scanModeId', { cron: '*/10 * * * *' } as ScanModeCommandDTO)).rejects.toThrow(
       new Error(`Scan mode scanModeId not found`)
     );
     expect(repositoryService.scanModeRepository.getScanMode).toHaveBeenCalledWith('scanModeId');

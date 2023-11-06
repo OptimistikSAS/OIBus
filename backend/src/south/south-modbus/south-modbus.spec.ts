@@ -229,7 +229,7 @@ describe('SouthModbus', () => {
   });
 
   it('should read coil', async () => {
-    await expect(south.readCoil(1234)).rejects.toThrowError('Read coil error: Modbus client not set');
+    await expect(south.readCoil(1234)).rejects.toThrow('Read coil error: Modbus client not set');
 
     await south.start();
     const result = await south.readCoil(1234);
@@ -239,7 +239,7 @@ describe('SouthModbus', () => {
   });
 
   it('should read discrete input', async () => {
-    await expect(south.readDiscreteInputRegister(1234)).rejects.toThrowError('Read discrete input error: Modbus client not set');
+    await expect(south.readDiscreteInputRegister(1234)).rejects.toThrow('Read discrete input error: Modbus client not set');
 
     await south.start();
     const result = await south.readDiscreteInputRegister(1234);
@@ -249,7 +249,7 @@ describe('SouthModbus', () => {
   });
 
   it('should read input', async () => {
-    await expect(south.readInputRegister(1234, 1, 'UInt16', 10)).rejects.toThrowError('Read input error: Modbus client not set');
+    await expect(south.readInputRegister(1234, 1, 'UInt16', 10)).rejects.toThrow('Read input error: Modbus client not set');
 
     south.getNumberOfWords = jest.fn().mockReturnValue(2);
     south.getValueFromBuffer = jest.fn().mockReturnValue(123);
@@ -262,7 +262,7 @@ describe('SouthModbus', () => {
   });
 
   it('should read holding', async () => {
-    await expect(south.readHoldingRegister(1234, 1, 'UInt16', 10)).rejects.toThrowError('Read holding error: Modbus client not set');
+    await expect(south.readHoldingRegister(1234, 1, 'UInt16', 10)).rejects.toThrow('Read holding error: Modbus client not set');
 
     south.getNumberOfWords = jest.fn().mockReturnValue(2);
     south.getValueFromBuffer = jest.fn().mockReturnValue(123);
@@ -302,7 +302,7 @@ describe('SouthModbus', () => {
     expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
     jest.advanceTimersByTime(configuration.settings.retryInterval);
     expect(south.connect).toHaveBeenCalledTimes(1);
-    await expect(south.lastPointQuery([items[0]])).rejects.toThrowError('another error');
+    await expect(south.lastPointQuery([items[0]])).rejects.toThrow('another error');
     jest.clearAllMocks();
     await south.lastPointQuery([items[2]]);
     expect(south.modbusFunction).toHaveBeenCalledTimes(1);
@@ -385,7 +385,7 @@ describe('SouthModbus', () => {
         address: '1010'
       }
     };
-    await expect(south.modbusFunction(item)).rejects.toThrowError(`Wrong Modbus type "${item.settings.modbusType}" for point ${item.name}`);
+    await expect(south.modbusFunction(item)).rejects.toThrow(`Wrong Modbus type "${item.settings.modbusType}" for point ${item.name}`);
     expect(south.addValues).not.toHaveBeenCalled();
   });
 

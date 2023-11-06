@@ -159,15 +159,15 @@ describe('HistoryQueryEngine', () => {
     const baseFolder = path.resolve('./cache/history-query', `history-${historyId}`);
     await engine.deleteHistoryQuery(historyId, name);
 
-    expect(stopHistoryQuerySpy).toBeCalled();
-    expect(filesExists).toBeCalledWith(baseFolder);
-    expect(fs.rm).toBeCalledWith(baseFolder, { recursive: true });
-    expect(logger.trace).toBeCalledWith(`Deleting base folder "${baseFolder}" of History query "${name}" (${historyId})`);
-    expect(logger.info).toBeCalledWith(`Deleted History query "${name}" (${historyId})`);
+    expect(stopHistoryQuerySpy).toHaveBeenCalled();
+    expect(filesExists).toHaveBeenCalledWith(baseFolder);
+    expect(fs.rm).toHaveBeenCalledWith(baseFolder, { recursive: true });
+    expect(logger.trace).toHaveBeenCalledWith(`Deleting base folder "${baseFolder}" of History query "${name}" (${historyId})`);
+    expect(logger.info).toHaveBeenCalledWith(`Deleted History query "${name}" (${historyId})`);
 
     // Removing again should not call rm, meaning that it's actually removed
     await engine.deleteHistoryQuery(historyId, name);
-    expect(fs.rm).toBeCalledTimes(1);
+    expect(fs.rm).toHaveBeenCalledTimes(1);
   });
 
   it('should handle deletion errors', async () => {
@@ -186,9 +186,9 @@ describe('HistoryQueryEngine', () => {
     const baseFolder = path.resolve('./cache/history-query', `history-${historyId}`);
     await engine.deleteHistoryQuery(historyId, name);
 
-    expect(stopHistoryQuerySpy).toBeCalled();
-    expect(filesExists).toBeCalled();
-    expect(logger.trace).toBeCalledWith(`Deleting base folder "${baseFolder}" of History query "${name}" (${historyId})`);
-    expect(logger.error).toBeCalledWith(`Unable to delete History query "${name}" (${historyId}) base folder: ${error}`);
+    expect(stopHistoryQuerySpy).toHaveBeenCalled();
+    expect(filesExists).toHaveBeenCalled();
+    expect(logger.trace).toHaveBeenCalledWith(`Deleting base folder "${baseFolder}" of History query "${name}" (${historyId})`);
+    expect(logger.error).toHaveBeenCalledWith(`Unable to delete History query "${name}" (${historyId}) base folder: ${error}`);
   });
 });

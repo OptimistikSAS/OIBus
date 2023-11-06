@@ -173,10 +173,10 @@ describe('Service utils', () => {
       (zlib.createGzip as jest.Mock).mockReturnValue({});
       await compress('myInputFile', 'myOutputFile');
 
-      expect(fsSync.createReadStream).toBeCalledTimes(1);
+      expect(fsSync.createReadStream).toHaveBeenCalledTimes(1);
       expect(fsSync.createReadStream).toHaveBeenCalledWith('myInputFile');
-      expect(myReadStream.pipe).toBeCalledTimes(2);
-      expect(fsSync.createWriteStream).toBeCalledTimes(1);
+      expect(myReadStream.pipe).toHaveBeenCalledTimes(2);
+      expect(fsSync.createWriteStream).toHaveBeenCalledTimes(1);
       expect(fsSync.createWriteStream).toHaveBeenCalledWith('myOutputFile');
     });
 
@@ -207,10 +207,10 @@ describe('Service utils', () => {
         expectedError = error;
       }
       expect(expectedError).toEqual('compression error');
-      expect(fsSync.createReadStream).toBeCalledTimes(1);
+      expect(fsSync.createReadStream).toHaveBeenCalledTimes(1);
       expect(fsSync.createReadStream).toHaveBeenCalledWith('myInputFile');
-      expect(myReadStream.pipe).toBeCalledTimes(2);
-      expect(fsSync.createWriteStream).toBeCalledTimes(1);
+      expect(myReadStream.pipe).toHaveBeenCalledTimes(2);
+      expect(fsSync.createWriteStream).toHaveBeenCalledTimes(1);
       expect(fsSync.createWriteStream).toHaveBeenCalledWith('myOutputFile');
     });
   });
@@ -901,7 +901,7 @@ describe('Service utils', () => {
           end: jest.fn()
         };
       });
-      await expect(httpGetWithBody('body', { protocol: 'https:' })).rejects.toThrowError('an error');
+      await expect(httpGetWithBody('body', { protocol: 'https:' })).rejects.toThrow('an error');
     });
 
     it('should throw an error when parsing received data', async () => {
@@ -918,7 +918,7 @@ describe('Service utils', () => {
           end: jest.fn()
         };
       });
-      await expect(httpGetWithBody('body', { protocol: 'https:' })).rejects.toThrowError('Unexpected token s in JSON at position 0');
+      await expect(httpGetWithBody('body', { protocol: 'https:' })).rejects.toThrow('Unexpected token s in JSON at position 0');
     });
   });
 
