@@ -57,7 +57,7 @@
     "argon2": "0.31.2",
     "basic-auth": "2.0.1",
     "better-sqlite3": "9.0.0",
-    "cron": "3.1.1",
+    "cron": "3.1.6",
     "form-data": "4.0.0",
     "http-proxy-agent": "7.0.0",
     "https-proxy-agent": "7.0.2",
