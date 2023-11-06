@@ -103,7 +103,7 @@
     "@types/jsonwebtoken": "9.0.3",
     "@types/koa": "2.13.9",
     "@types/koa__multer": "2.0.5",
-    "@types/koa-bodyparser": "4.3.10",
+    "@types/koa-bodyparser": "4.3.11",
     "@types/koa-send": "4.1.4",
     "@types/luxon": "3.3.2",
     "@types/minimist": "1.2.3",
