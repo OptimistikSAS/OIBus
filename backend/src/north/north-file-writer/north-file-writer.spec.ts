@@ -113,7 +113,7 @@ describe('NorthFileWriter', () => {
     const expectedFileName = `${configuration.settings.prefix}${new Date().getTime()}${configuration.settings.suffix}.json`;
     const expectedOutputFolder = path.resolve(configuration.settings.outputFolder);
     const expectedPath = path.join(expectedOutputFolder, expectedFileName);
-    expect(fs.writeFile).toBeCalledWith(expectedPath, expectedData);
+    expect(fs.writeFile).toHaveBeenCalledWith(expectedPath, expectedData);
   });
 
   it('should properly catch handle values error', async () => {
@@ -127,7 +127,7 @@ describe('NorthFileWriter', () => {
     jest.spyOn(fs, 'writeFile').mockImplementationOnce(() => {
       throw new Error('Error handling values');
     });
-    await expect(north.handleValues(values)).rejects.toThrowError('Error handling values');
+    await expect(north.handleValues(values)).rejects.toThrow('Error handling values');
   });
 
   it('should properly handle files', async () => {
@@ -136,7 +136,7 @@ describe('NorthFileWriter', () => {
     const expectedFileName = `${configuration.settings.prefix}example${configuration.settings.suffix}.file`;
     const expectedOutputFolder = path.resolve(configuration.settings.outputFolder);
     await north.handleFile(filePath);
-    expect(fs.copyFile).toBeCalledWith(filePath, path.join(expectedOutputFolder, expectedFileName));
+    expect(fs.copyFile).toHaveBeenCalledWith(filePath, path.join(expectedOutputFolder, expectedFileName));
   });
 
   it('should properly catch handle file error', async () => {
@@ -145,7 +145,7 @@ describe('NorthFileWriter', () => {
       throw new Error('Error handling files');
     });
     const filePath = '/path/to/file/example-123456.file';
-    await expect(north.handleFile(filePath)).rejects.toThrowError('Error handling files');
+    await expect(north.handleFile(filePath)).rejects.toThrow('Error handling files');
   });
 });
 
@@ -197,7 +197,7 @@ describe('NorthFileWriter without suffix or prefix', () => {
     const expectedFileName = `${new Date().getTime()}.json`;
     const expectedOutputFolder = path.resolve(configuration.settings.outputFolder);
     const expectedPath = path.join(expectedOutputFolder, expectedFileName);
-    expect(fs.writeFile).toBeCalledWith(expectedPath, expectedData);
+    expect(fs.writeFile).toHaveBeenCalledWith(expectedPath, expectedData);
   });
 
   it('should properly handle files', async () => {
@@ -205,7 +205,7 @@ describe('NorthFileWriter without suffix or prefix', () => {
     const filePath = '/path/to/file/example-123456.file';
     const expectedOutputFolder = path.resolve(configuration.settings.outputFolder);
     await north.handleFile(filePath);
-    expect(fs.copyFile).toBeCalledWith(filePath, path.join(expectedOutputFolder, 'example.file'));
+    expect(fs.copyFile).toHaveBeenCalledWith(filePath, path.join(expectedOutputFolder, 'example.file'));
   });
 
   it('should have access to output folder', async () => {
@@ -226,8 +226,8 @@ describe('NorthFileWriter without suffix or prefix', () => {
 
     await expect(north.testConnection()).rejects.toThrow(`Folder "${outputFolder}" does not exist`);
 
-    expect(logger.info).toBeCalledWith('Testing North File Writer');
-    expect(logger.error).toBeCalledWith(`Access error on "${outputFolder}": ${errorMessage}`);
+    expect(logger.info).toHaveBeenCalledWith('Testing North File Writer');
+    expect(logger.error).toHaveBeenCalledWith(`Access error on "${outputFolder}": ${errorMessage}`);
   });
 
   it('should handle not having write access on folder', async () => {
@@ -240,7 +240,7 @@ describe('NorthFileWriter without suffix or prefix', () => {
 
     await expect(north.testConnection()).rejects.toThrow('No write access on folder');
 
-    expect(logger.info).toBeCalledWith('Testing North File Writer');
-    expect(logger.error).toBeCalledWith(`Access error on "${outputFolder}": ${errorMessage}`);
+    expect(logger.info).toHaveBeenCalledWith('Testing North File Writer');
+    expect(logger.error).toHaveBeenCalledWith(`Access error on "${outputFolder}": ${errorMessage}`);
   });
 });

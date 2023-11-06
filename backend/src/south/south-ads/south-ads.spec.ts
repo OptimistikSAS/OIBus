@@ -163,7 +163,7 @@ describe('South ADS', () => {
     south.disconnect = jest.fn();
     await south.connect();
 
-    expect(logger.error).toBeCalledTimes(1);
+    expect(logger.error).toHaveBeenCalledTimes(1);
   });
 
   it('should parse BYTE value', () => {
@@ -407,7 +407,7 @@ describe('South ADS', () => {
     south.readAdsSymbol = jest.fn().mockImplementationOnce(() => {
       throw new Error('read error');
     });
-    await expect(south.lastPointQuery(items)).rejects.toThrowError('read error');
+    await expect(south.lastPointQuery(items)).rejects.toThrow('read error');
     expect(south.disconnect).not.toHaveBeenCalled();
     expect(south.addValues).not.toHaveBeenCalledWith();
   });
@@ -486,7 +486,7 @@ describe('South ADS', () => {
       undefined,
       undefined
     );
-    await expect(south.readAdsSymbol(items[0], nowDateString)).rejects.toThrowError('read error');
+    await expect(south.readAdsSymbol(items[0], nowDateString)).rejects.toThrow('read error');
   });
 
   it('should disconnect ads client', async () => {

@@ -146,7 +146,7 @@ describe('NorthAmazonS3', () => {
       });
       await north.start();
 
-      await expect(north.handleFile(filePath)).rejects.toThrowError('test');
+      await expect(north.handleFile(filePath)).rejects.toThrow('test');
     });
   });
 
@@ -225,7 +225,7 @@ describe('NorthAmazonS3', () => {
       });
       await north.start();
 
-      await expect(north.handleFile(filePath)).rejects.toThrowError('test');
+      await expect(north.handleFile(filePath)).rejects.toThrow('test');
     });
   });
 

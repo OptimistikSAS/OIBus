@@ -483,7 +483,7 @@ describe('SouthSlims with query params', () => {
     );
 
     await south.start();
-    await expect(south.queryData(items[1], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z')).rejects.toThrowError(
+    await expect(south.queryData(items[1], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z')).rejects.toThrow(
       'HTTP request failed with status code 400 and message: statusText'
     );
 

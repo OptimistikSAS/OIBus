@@ -133,7 +133,7 @@ describe('Engine validator', () => {
     if (dataProvider.isValid) {
       await expect(validator.validate(engineSchema, dataProvider.dto)).resolves.not.toThrow();
     } else {
-      await expect(validator.validate(engineSchema, dataProvider.dto)).rejects.toThrowError(new Error(dataProvider.errorMessage as string));
+      await expect(validator.validate(engineSchema, dataProvider.dto)).rejects.toThrow(new Error(dataProvider.errorMessage as string));
     }
   });
 });
