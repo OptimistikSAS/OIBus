@@ -54,7 +54,7 @@
     "@koa/multer": "3.0.2",
     "@koa/router": "12.0.1",
     "ads-client": "1.14.3",
-    "argon2": "0.31.1",
+    "argon2": "0.31.2",
     "basic-auth": "2.0.1",
     "better-sqlite3": "9.0.0",
     "cron": "3.1.1",
