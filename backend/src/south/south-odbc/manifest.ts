@@ -43,7 +43,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'retryInterval',
       type: 'OibNumber',
-      label: 'Connection timeout',
+      label: 'Retry interval',
       defaultValue: 1000,
       unitLabel: 'ms',
       class: 'col-3',
