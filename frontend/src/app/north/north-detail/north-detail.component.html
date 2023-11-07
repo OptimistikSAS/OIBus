@@ -14,9 +14,9 @@
           </button>
         </h1>
         <span class="text-disabled pull-right me-2">
-          {{ northConnector.id }}
+          <span translate="north.copy-cache-path" [translateParams]="{ id: northConnector.id }"></span>
           <i
-            class="fa fa-copy"
+            class="fa fa-copy ms-1"
             role="button"
             [cdkCopyToClipboard]="oibusInfo!.dataDirectory + '/cache/data-stream/north-' + northConnector.id"
             (cdkCopyToClipboardCopied)="onClipboardCopy($event)"
