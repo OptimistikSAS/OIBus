@@ -1,5 +1,36 @@
 # Changelog
 
+## [3.1.0](https://github.com/OptimistikSAS/OIBus/compare/v3.0.4...v3.1.0) (2023-11-07)
+
+
+### Features
+
+* **build:** Add Dockerfile for OIBus ([86c8a82](https://github.com/OptimistikSAS/OIBus/commit/86c8a821c249ac81a559a0dc0e1585d2520eb570))
+* **history-query:** Add connector test to history queries ([16d153d](https://github.com/OptimistikSAS/OIBus/commit/16d153d3c2d58ac3caa2e44e4ec22bb8e55de2ae))
+* **modbus:** Read Modbus single bit ([99b6a68](https://github.com/OptimistikSAS/OIBus/commit/99b6a689f10170d5c94f374f35462473439376f7))
+* **north-cache:** Add north cache pagination ([99a9488](https://github.com/OptimistikSAS/OIBus/commit/99a9488096b1aa0a10db3d7d7bffe7405372a7b9))
+* **north-cache:** Add ordering for cache tables ([d643bf4](https://github.com/OptimistikSAS/OIBus/commit/d643bf46717504fdcf7e1e2e2dfbb2e4850ce4c2))
+* **north-cache:** Add refresh cache button ([5c464f4](https://github.com/OptimistikSAS/OIBus/commit/5c464f45cc06ece4cd772113d9256dab2f624794))
+* **north-cache:** Show regular cache files ([2b9f7e4](https://github.com/OptimistikSAS/OIBus/commit/2b9f7e4c27767f6265ff188db534de3778a85a70))
+* **north:** Add AAD auth in OIAnalytics North ([781cf56](https://github.com/OptimistikSAS/OIBus/commit/781cf56eeeb3621b22d11181069aefb02c16651a))
+* **north:** Manage subscription from North edit ([79c5b0b](https://github.com/OptimistikSAS/OIBus/commit/79c5b0b4a098c5f78493f1d8698fc514d0e9f80e))
+* **opchda:** Use OIBus Agent for OPCHDA queries ([5f19d30](https://github.com/OptimistikSAS/OIBus/commit/5f19d30c3daa4f3f60cc5d44a246b74df70c5a53))
+* **south:** Add overlap for history capable South ([582bbdf](https://github.com/OptimistikSAS/OIBus/commit/582bbdfd3b8062f158c664210effa87dca150dc5))
+
+
+### Bug Fixes
+
+* Copy cache with connector id ([699c464](https://github.com/OptimistikSAS/OIBus/commit/699c464b9b4bd388399e3d9a352f02eede551140))
+* **history-query:** Add history query duplicate button ([8f275b4](https://github.com/OptimistikSAS/OIBus/commit/8f275b435687ce584a383046a2b65008c00ae9a8))
+* **history-query:** Paginate south items ([ce109aa](https://github.com/OptimistikSAS/OIBus/commit/ce109aa6da370e56220be1a6bf629ab51378f775))
+* **north/south/history:** make appear the id for copy it ([fd772a6](https://github.com/OptimistikSAS/OIBus/commit/fd772a61ed51ce91448cb60113756c507120899c))
+* **north:** Fix north creation with subscriptions ([3f3554b](https://github.com/OptimistikSAS/OIBus/commit/3f3554bee64ad53d35cc987a75284ae27bc798d2))
+* Properly copy cache path into clipboard ([8f02d8f](https://github.com/OptimistikSAS/OIBus/commit/8f02d8f63ce6a713d1c514b564b48e11a249f082))
+* **south:** Fix south reload on max instant update ([0ab93f2](https://github.com/OptimistikSAS/OIBus/commit/0ab93f290a359f80f7bae7dd0e8fd048942aab40))
+* **South:** Paginate south items ([1ad8db1](https://github.com/OptimistikSAS/OIBus/commit/1ad8db1f482023156240afabd16da0942d5a3948))
+* **south:** Properly manage run with history query and last point query ([441cf9c](https://github.com/OptimistikSAS/OIBus/commit/441cf9caa11decf2041faa9b08ddb6a4b013fa62))
+* **South:** Update OPCHDA manifest ([50ad84d](https://github.com/OptimistikSAS/OIBus/commit/50ad84dd4932e034c88447734b563145adc8f84f))
+
 ## [3.0.4](https://github.com/OptimistikSAS/OIBus/compare/v3.0.3...v3.0.4) (2023-10-06)
 
 
