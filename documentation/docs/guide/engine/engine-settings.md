@@ -24,7 +24,7 @@ specifically for troubleshooting purposes.
 
 ## Console
 This section displays logs in the Console, alongside values if a [North Console connector
-](../../guide/north-connectors/console.md) is used. To access these logs, execute OIBus from a terminal.
+](../../guide/north-connectors/console) is used. To access these logs, execute OIBus from a terminal.
 
 ## File
 To store logs in one or more files, you can configure the maximum file size and specify the number of files for log rotation.

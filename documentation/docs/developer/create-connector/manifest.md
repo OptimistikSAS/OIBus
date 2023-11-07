@@ -86,7 +86,7 @@ Additional field:
 ### OibSecret
 Create an input of type password in the frontend, and a field of type `string` in the TypeScript model.
 This field does not show what is typed in the frontend, and indicate OIBus [to encrypt the 
-input](../../guide/advanced/oibus-security.md#oibus-security)
+input](../../guide/advanced/oibus-security#oibus-security)
 
 ### OibCheckbox
 Create an input of type checkbox in the frontend (customized in a toggle), and a field of type `boolean` in the TypeScript 
