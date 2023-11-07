@@ -105,8 +105,6 @@ const configuration: SouthConnectorDTO<SouthOPCHDASettings> = {
   settings: {
     agentUrl: 'http://localhost:2224',
     retryInterval: 1000,
-    maxReturnValues: 0,
-    readTimeout: 60,
     host: 'localhost',
     serverName: 'Matrikon.OPC.Simulation'
   }

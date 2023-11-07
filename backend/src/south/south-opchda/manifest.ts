@@ -24,7 +24,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'retryInterval',
       type: 'OibNumber',
-      label: 'Connection timeout',
+      label: 'Retry interval',
       defaultValue: 1000,
       unitLabel: 'ms',
       class: 'col-3',
@@ -35,7 +35,7 @@ const manifest: SouthConnectorManifest = {
       type: 'OibText',
       label: 'Server URL (from the agent)',
       defaultValue: 'localhost',
-      class: 'col-4',
+      class: 'col-7',
       newRow: true,
       validators: [{ key: 'required' }],
       displayInViewMode: true
@@ -45,30 +45,10 @@ const manifest: SouthConnectorManifest = {
       type: 'OibText',
       label: 'Server name',
       defaultValue: 'Matrikon.OPC.Simulation',
-      class: 'col-4',
+      class: 'col-5',
       newRow: false,
       validators: [{ key: 'required' }],
       displayInViewMode: true
-    },
-    {
-      key: 'readTimeout',
-      type: 'OibNumber',
-      label: 'Read timeout (s)',
-      defaultValue: 180,
-      class: 'col-2',
-      newRow: false,
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
-      displayInViewMode: false
-    },
-    {
-      key: 'maxReturnValues',
-      type: 'OibNumber',
-      label: 'Max return values',
-      defaultValue: 1000,
-      class: 'col-2',
-      newRow: false,
-      validators: [{ key: 'required' }],
-      displayInViewMode: false
     }
   ],
   items: {

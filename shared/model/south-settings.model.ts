@@ -246,8 +246,6 @@ export interface SouthOPCHDASettings extends BaseSouthSettings {
   retryInterval: number;
   host: string;
   serverName: string;
-  readTimeout: number;
-  maxReturnValues: number;
 }
 
 export interface SouthOPCUASettings extends BaseSouthSettings {
