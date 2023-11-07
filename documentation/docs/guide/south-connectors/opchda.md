@@ -2,7 +2,7 @@
 sidebar_position: 10
 ---
 
-# OPCHDA (Windows only)
+# OPCHDA
 OPCDA and OPCHDA are communication protocols used in the industrial world and developed by the 
 [OPC Foundation](https://opcfoundation.org/). This technology has been replaced by OPCUA but is still widely used in 
 the industry. To use OPCUA in OIBus, see the [OPCUA connector documentation](./opcua.md).
@@ -10,70 +10,36 @@ the industry. To use OPCUA in OIBus, see the [OPCUA connector documentation](./o
 An HDA server allows to retrieve the history of data over a more or less long period, while a DA server allows to 
 retrieve only the most recent value of a tag.
 
-Only OPCHDA is supported by OIBus. OIBus uses an HDA agent, i.e. a module integrated to OIBus, but available in 
-standalone, to perform OPC history extractions in command line. See the 
-[OPCHDA agent documentation](../oibus-agent/opchda.md) to use the agent in standalone.
+Only OPCHDA is supported by OIBus. This connector uses the [OIBus Agent](../oibus-agent/installation.mdx), and a 
+dedicated HDA module.
 
-Both the OPCHDA connector and the standalone agent are available under Windows only and use Microsoft’s proprietary DCOM
-technology to transfer information over the network. This technology is much more complex to set up than traditional TCP
-communications. A dedicated guide is offered [here](../oibus-agent/opchda.md#comdcom-setup) to correctly 
-setup HDA communications with COM/DCOM interfaces.
+:::caution
+The OIBus Agent must be installed on a Windows machine to use the HDA module.
+:::
 
+The HDA module can also be used as a standalone, to perform OPC history extractions in command line. See the 
+[OPCHDA agent documentation](../oibus-agent/opchda.mdx#hda-module) to use the module in standalone and check the 
+[COM/DCOM](../oibus-agent/opchda.mdx#comdcom-setup) setup documentation to properly install the module.
 
-## OPCHDA connector
-OIBus uses a HDA agent, compiled for Windows platforms, to interact with COM/DCOM interfaces. The HDA agent can also be
-used [in standalone](../oibus-agent/opchda.md). 
-
-### HDA Agent section
+## Specific settings
 OIBus exchanges commands and data with the HDA agent through a TCP server/client communication. Therefore, several 
 fields must be filled to make OIBus communicate with the HDA Agent:
-- **Agent filename**: the file path of the HDA Agent. By default, the HDA agent is in the same folder as the OIBus binary.
-- **TCP port**: the TCP port that the HDA Agent will use to create its own TCP server. If you need two OPCHDA connectors, 
-be careful to have two distinct TCP ports to avoid conflicts.
-- **Logging level**: the level of log the HDA Agent will use. If the HDA agent log level is lower than the OIBus log levels, 
-the lowest logs will be lost. See the [Engine log section](../engine/engine-settings.md) to know more about logging parameters.
+- **Remote agent URL**: Specify the URL of the remote OIBus agent, e.g., http://ip-address-or-host:2224.
+- **Connection timeout**: Set the timeout for establishing a connection.
+- **Retry interval**: Time to wait before retrying connection.
+- **Server host**: Address of the OPC server (from the remote OIBus agent machine).
+- **Server name**: Name of the OPC server (e.g. Matrikon.OPC.Simulation).
 
-### Connection and network
-Some information are required to connect to the OPCHDA server:
-- **Host**: the hostname or its IP address
-- **Server name**: the name of the OPCHDA server
+## Item settings
+When configuring each item to retrieve data in JSON payload, you'll need to specify the following specific settings:
+- **Node ID**: The Node ID corresponds to the path of the data within the appropriate namespace on the OPC server.
+- **Aggregate**: Aggregate the retrieved values over the requested interval (be sure that the server supports the aggregate).
+- **Resampling**: When aggregate is different from `Raw`, it is possible to resample the retrieved values at the requested
+  interval.
 
-Several options are available to better manage network failure or inactivity:
-- **Retry interval**: in case of connection failure, time to wait before reconnecting (in ms)
-- **Max read interval**: split the request interval into smaller chunks (in s)
-- **Read interval delay**: time to wait (in ms) between two sub-intervals in case a split occurs (ignored otherwise)
-- **Max return values**: max number of values to retrieve **per node**. If 100 nodes are requested, this value is 
-multiplied by 100 to have the total number of values retrieved.
-
-
-### Accessing data
-#### Scan groups
-OIBus retrieves data by intervals. It is then possible to aggregate these values or to resample them. To do so, a scan 
-mode must be selected (to create additional scan modes, see [Engine settings](../engine/scan-modes.md)), with its 
-associated aggregate and resampling options.
-
-:::info Creating scan groups
-
-Creating scan groups is mandatory to choose them in the _Points_ section when adding new points to request.
-
+:::caution Compatibility with the OPC server
+It's important to note that not all aggregation and resampling options are supported by OPC servers. To avoid
+compatibility issues, it's recommended to use `Raw` aggregation and `None` resampling whenever possible.    
 :::
 
-:::danger Compatibility with the OPCUA server
-
-Not every aggregate and resampling are supported by OPCUA server. _Raw_ aggregate and _None_ resampling are preferred to
-avoid compatibility issues.
-
-:::
-
-
-#### Points and nodes
-The OPCHDA connector retrieves values from specific addresses. Addresses (called node ID, or just node) are organized in
-namespaces, in a tree-like structure. These can be added in the _Points section_ (in the upper right corner).
-
-To request a data, specify the following fields:
-- Point ID
-- Node ID
-- Scan group
-
-The Node ID matches the path of the data in the appropriate namespace in the OPCHDA server. The point ID will be used
-when sent to North connectors. It can be the same as the Node ID, but it allows friendlier names to manage.
+The name of the item will serve as a reference in JSON payloads, specifically in the `pointID` field for the North application. 
