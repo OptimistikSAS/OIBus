@@ -38,9 +38,15 @@ WizardResizable=no
 [Languages]
 Name: "en"; MessagesFile: "compiler:Default.isl"
 
+[Dirs]
+Name: {app}\binaries
+Name: {app}\update
+Name: {app}\backup
+
 [Files]
-Source: "..\..\bin\win\oibus.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\bin\win\binaries\oibus.exe"; DestDir: "{app}\binaries"; Flags: ignoreversion
 Source: "..\..\bin\win\nssm.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\bin\win\oibus-launcher.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\bin\win\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 
 [Messages]
@@ -167,9 +173,9 @@ begin
     Result := False
   else if not ExecCmd('nssm.exe', 'stop OIBus >nul 2>&1', ExpandConstant('{app}')) then
     Result := False
-  else if not SaveStringToFile(LogPath, 'nssm.exe install OIBus "' + ExpandConstant('{app}') + '\oibus.exe" "--config ""' + OIBus_DataDirPage.Values[0] + '"""' + #13#10, True) then
+  else if not SaveStringToFile(LogPath, 'nssm.exe install OIBus "' + ExpandConstant('{app}') + '\oibus-launcher.exe" "--config ""' + OIBus_DataDirPage.Values[0] + '"""' + #13#10, True) then
     Result := False
-  else  if not ExecCmd('nssm.exe', 'install OIBus "' + ExpandConstant('{app}') + '\oibus.exe" "--config ""' + OIBus_DataDirPage.Values[0] + '"""', ExpandConstant('{app}')) then
+  else  if not ExecCmd('nssm.exe', 'install OIBus "' + ExpandConstant('{app}') + '\oibus-launcher.exe" "--config ""' + OIBus_DataDirPage.Values[0] + '"""', ExpandConstant('{app}')) then
     Result := False
   else if not SaveStringToFile(LogPath, 'nssm.exe set OIBus AppDirectory "' + ExpandConstant('{app}') + '"' + #13#10, True) then
     Result := False
@@ -195,8 +201,8 @@ var
 begin;
     ConfigFilePath := OIBus_DataDirPage.Values[0];
     FileContent := 'echo Stopping OIBus service... You can restart it from the Windows Service Manager' + #13#10
-      + 'nssm.exe stop OIBus' + #13#10
-      + '"' + ExpandConstant('{app}') + '\oibus.exe" --config "' + ConfigFilePath + '"'
+          + 'nssm.exe stop OIBus' + #13#10
+          + '"' + ExpandConstant('{app}') + '\oibus-launcher.exe" --config "' + ConfigFilePath + '"'
     if not SaveStringToFile(ExpandConstant('{app}') + '\go.bat', FileContent, False) then
       Result := False
     else
@@ -228,23 +234,9 @@ begin
   end;
 end;
 
-function UninstallProgram(): Boolean;
-begin
-  if not ExecCmd('nssm.exe', 'remove OIBus confirm', ExpandConstant('{app}')) then
-  begin
-    MsgBox('ERROR : OIBus service uninstall failed. Remove it manually.', mbCriticalError, MB_OK)
-    Result := False
-  end
-  else
-  begin
-    Result := True
-    Sleep(400)
-  end
-end;
-
 function StopProgram(): Boolean;
 begin
-  if not ExecCmd('nssm.exe', ' stop OIBus', ExpandConstant('{app}')) then
+  if not ExecCmd(ExpandConstant('{sys}') + '\sc.exe', 'stop OIBus', ExpandConstant('{app}')) then
     Result := False
   else
     begin
@@ -263,7 +255,7 @@ begin
       begin
         if RegQueryStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Services\OIBus', 'ImagePath', Dir) then
         begin
-          ExecCmd('nssm.exe', ' stop OIBus', Dir + '\..\')
+          ExecCmd(ExpandConstant('{sys}') + '\sc.exe', 'stop OIBus', Dir + '\..\')
           Sleep(400);
         end;
       end;
@@ -332,19 +324,23 @@ begin
         end
         else
           MsgBox('ERROR : Could not read OIBus DataDir registry', mbCriticalError, MB_OK);
-        UninstallProgram()
+        ExecCmd(ExpandConstant('{sys}') + '\sc.exe', 'stop OIBus >nul 2>&1', ExpandConstant('{app}'));
+        ExecCmd(ExpandConstant('{sys}') + '\sc.exe', 'delete OIBus >nul 2>&1', ExpandConstant('{app}'));
       end
       else
-        UninstallProgram()
+        ExecCmd(ExpandConstant('{sys}') + '\sc.exe', 'stop OIBus >nul 2>&1', ExpandConstant('{app}'));
+        ExecCmd(ExpandConstant('{sys}') + '\sc.exe', 'delete OIBus >nul 2>&1', ExpandConstant('{app}'));
     end
   end
 end;
 
 
 [UninstallDelete]
-Name: {app}\oibus.exe; Type: files
-Name: {app}\nssm.exe; Type: files
 Name: {app}\LICENSE; Type: files
+Name: {app}\nssm.exe; Type: files
 Name: {app}\install.log; Type: files
 Name: {app}\go.bat; Type: files
+Name: {app}\binaries; Type: filesandordirs
+Name: {app}\update; Type: filesandordirs
+Name: {app}\backup; Type: filesandordirs
 Name: {app}; Type: dirifempty
