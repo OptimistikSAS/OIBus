@@ -28,6 +28,11 @@ jobs:
         with:
           cache_version: ${{ secrets.GH_ACTIONS_CACHE_KEY }}
 
+      - name: Setup launcher environment
+        uses: ./.github/actions/setup_launcher_environment
+        with:
+          cache_version: ${{ secrets.GH_ACTIONS_CACHE_KEY }}
+
       - name: Setup backend environment
         uses: ./.github/actions/setup_backend_environment
         with:
@@ -42,14 +47,18 @@ jobs:
         working-directory: ./frontend
         run: npm run build
 
-      - name: Build OIBus for ${{ matrix.config['friendlyName'] }}
+      - name: Build OIBus launcher for ${{ matrix.config['friendlyName'] }}
+        working-directory: ./launcher
+        run: npm run build:${{ matrix.config['platform'] }}
+
+      - name: Build OIBus binary for ${{ matrix.config['friendlyName'] }}
         working-directory: ./backend
         run: npm run build:${{ matrix.config['platform'] }}
 
       - name: Test OIBus run for ${{ matrix.config['friendlyName'] }}
         run: |
           cd build/bin/${{ matrix.config['platform'] }}
-          ./oibus --config ../../../data-folder --check true
+          ./oibus-launcher --config ../../../data-folder --check true
 
       - name: Package OIBus for ${{ matrix.config['friendlyName'] }}
         run: |
@@ -107,6 +116,11 @@ jobs:
         with:
           cache_version: ${{ secrets.GH_ACTIONS_CACHE_KEY }}
 
+      - name: Setup launcher environment
+        uses: ./.github/actions/setup_launcher_environment
+        with:
+          cache_version: ${{ secrets.GH_ACTIONS_CACHE_KEY }}
+
       - name: Setup backend environment
         uses: ./.github/actions/setup_backend_environment
         with:
@@ -121,12 +135,15 @@ jobs:
         working-directory: ./frontend
         run: npm run build
 
-      - name: Pre build OIBus backend for ${{ matrix.config['friendlyName'] }}
+      - name: Build OIBus launcher for ${{ matrix.config['friendlyName'] }}
+        working-directory: ./launcher
+        run: npm run build:${{ matrix.config['platform'] }}
+
+      - name: Pre build OIBus binary for ${{ matrix.config['friendlyName'] }}
         working-directory: ./backend
         run: |
           npm run build
           npm run internal:build:lib-${{ matrix.config['platform'] }}
-
 
       - name: Run arm64 pkg command
         uses: uraimo/run-on-arch-action@v2
@@ -145,14 +162,21 @@ jobs:
             pkg \
             --config package.json \
             --target=node18-${{ matrix.config['platform'] }} \
-            --output ../build/bin/${{ matrix.config['platform'] }}/oibus \
+            --output ../build/bin/${{ matrix.config['platform'] }}/binaries/oibus \
             --public --compress GZip \
             ./dist/backend/src/index.js 
+            cd ../launcher
+            pkg \
+            --config ./package.json \
+            --target=node18-${{ matrix.config['platform'] }} \
+            --output ../build/bin/${{ matrix.config['platform'] }}/oibus-launcher \
+            --public --compress GZip \
+            ./dist/index.js
 
       - name: Post build OIBus library for ${{ matrix.config['friendlyName'] }}
         if: ${{ matrix.config['platform'] == 'linux-arm64' }}
         run: |
-          stat build/bin/${{ matrix.config['platform'] }}/oibus
+          stat build/bin/${{ matrix.config['platform'] }}/binaries/oibus
           sudo cp build/deps/${{ matrix.config['platform'] }}/* ./build/bin/${{ matrix.config['platform'] }}/
           cd build/bin/${{ matrix.config['platform'] }}
           sudo ${{ matrix.config['zip'] }} ../${{ matrix.config['archiveName'] }}-${{ github.ref_name }}.zip .
