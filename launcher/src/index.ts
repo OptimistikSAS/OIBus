@@ -3,9 +3,9 @@ import minimist from 'minimist';
 
 import Launcher from './launcher';
 
-const workDir = path.resolve(__dirname, 'binaries');
-const updateDir = path.resolve(__dirname, 'update');
-const backupDir = path.resolve(__dirname, 'backup');
+const workDir = path.resolve(process.cwd(), 'binaries');
+const updateDir = path.resolve(process.cwd(), 'update');
+const backupDir = path.resolve(process.cwd(), 'backup');
 
 const args = minimist(process.argv.slice(2));
 const { config = './', check = false } = args;
