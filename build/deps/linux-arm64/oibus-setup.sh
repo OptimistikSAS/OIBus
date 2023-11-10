@@ -51,8 +51,13 @@ if [[ -f "/etc/systemd/system/oibus.service" ]]; then
 fi
 
 # Move binary file into install dir
-if ! mv oibus "$install_dir"; then
+if ! mv binaries "$install_dir"; then
   printf "ERROR: Could not move OIBus into binary directory. Terminating installation process."
+  exit 1
+fi
+# Move binary file into install dir
+if ! mv oibus-launcher "$install_dir"; then
+  printf "ERROR: Could not move OIBus launcher into binary directory. Terminating installation process."
   exit 1
 fi
 
@@ -77,7 +82,7 @@ install_path=$(readlink -m "$install_dir")
 {
   printf "[Unit]\nDescription=OIBus Client\nAfter=network-online.target\n\n"
   printf "[Service]\nWorkingDirectory=%s\nEnvironmentFile=%s/oibus-env\n" "$install_path" "$install_path"
-  printf "ExecStart=%s/oibus %s %s\nRestart=on-failure\n\n" "$install_path" '$ARG1' '$ARG2'
+  printf "ExecStart=%s/oibus-launcher %s %s\nRestart=on-failure\n\n" "$install_path" '$ARG1' '$ARG2'
   printf "[Install]\nWantedBy=default.target"
 } > /etc/systemd/system/oibus.service
 
@@ -98,7 +103,7 @@ fi
   printf '#!/bin/bash\n\n'
   printf "echo 'Stopping OIBus service... To restart it, enter the following command once this script is over: sudo systemctl start oibus'\n"
   printf 'sudo systemctl stop oibus\n'
-  printf "%s/oibus --config '%s'" "$install_path" "$conf_path"
+  printf "%s/oibus-launcher --config '%s'" "$install_path" "$conf_path"
 } > "$install_path"/go.sh
 
 if ! chmod 755 "$install_path"/go.sh; then
