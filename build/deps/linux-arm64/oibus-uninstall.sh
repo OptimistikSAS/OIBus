@@ -36,8 +36,17 @@ else
 fi
 
 # Removing OIBus binary and script
-if [[ -f "$dir/oibus" ]]; then
-  rm -f "$dir/oibus"
+if [[ -f "$dir/oibus-launcher" ]]; then
+  rm -f "$dir/oibus-launcher"
+fi
+if [[ -d "$dir/binaries" ]]; then
+  rm -rf "$dir/binaries"
+fi
+if [[ -d "$dir/update" ]]; then
+  rm -rf "$dir/update"
+fi
+if [[ -d "$dir/backup" ]]; then
+  rm -rf "$dir/backup"
 fi
 if [[ -f "$dir/oibus-env" ]]; then
   rm -f "$dir/oibus-env"
