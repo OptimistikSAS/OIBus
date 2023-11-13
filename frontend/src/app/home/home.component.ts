@@ -20,7 +20,7 @@ const NUMBER_OF_COLUMN = 3;
   standalone: true,
   imports: [TranslateModule, NgForOf, NgIf, EngineMetricsComponent, NorthMetricsComponent, SouthMetricsComponent, RouterLink],
   templateUrl: './home.component.html',
-  styleUrls: ['./home.component.scss']
+  styleUrl: './home.component.scss'
 })
 export class HomeComponent implements OnInit, OnDestroy {
   readonly copyrightYear = new Date().getFullYear();

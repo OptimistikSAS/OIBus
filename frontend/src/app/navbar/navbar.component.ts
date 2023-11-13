@@ -14,7 +14,7 @@ import { of, switchMap } from 'rxjs';
   standalone: true,
   imports: [RouterLink, TranslateModule, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgIf],
   templateUrl: './navbar.component.html',
-  styleUrls: ['./navbar.component.scss']
+  styleUrl: './navbar.component.scss'
 })
 export class NavbarComponent implements OnInit {
   user: User | null = null;

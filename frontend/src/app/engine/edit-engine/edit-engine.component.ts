@@ -15,7 +15,7 @@ import { BoxComponent } from '../../shared/box/box.component';
   standalone: true,
   imports: [TranslateModule, ...formDirectives, RouterLink, NgForOf, NgIf, SaveButtonComponent, BoxComponent],
   templateUrl: './edit-engine.component.html',
-  styleUrls: ['./edit-engine.component.scss']
+  styleUrl: './edit-engine.component.scss'
 })
 export class EditEngineComponent implements OnInit {
   readonly logLevels = LOG_LEVELS;

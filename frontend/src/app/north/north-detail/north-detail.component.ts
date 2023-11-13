@@ -44,7 +44,7 @@ import { EngineService } from '../../services/engine.service';
     ClipboardModule
   ],
   templateUrl: './north-detail.component.html',
-  styleUrls: ['./north-detail.component.scss'],
+  styleUrl: './north-detail.component.scss',
   providers: [PageLoader, BooleanEnumPipe]
 })
 export class NorthDetailComponent implements OnInit, OnDestroy {

@@ -28,7 +28,7 @@ import { DownloadService } from '../../services/download.service';
     ClipboardCopyDirective
   ],
   templateUrl: './certificate-list.component.html',
-  styleUrls: ['./certificate-list.component.scss']
+  styleUrl: './certificate-list.component.scss'
 })
 export class CertificateListComponent implements OnInit {
   certificates: Array<CertificateDTO> = [];

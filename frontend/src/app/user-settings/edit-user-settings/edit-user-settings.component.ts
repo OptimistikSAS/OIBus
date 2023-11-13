@@ -26,7 +26,7 @@ declare namespace Intl {
 @Component({
   selector: 'oib-edit-user-settings',
   templateUrl: './edit-user-settings.component.html',
-  styleUrls: ['./edit-user-settings.component.scss'],
+  styleUrl: './edit-user-settings.component.scss',
   imports: [...formDirectives, TranslateModule, NgIf, NgForOf, NgbTypeahead, SaveButtonComponent],
   standalone: true
 })

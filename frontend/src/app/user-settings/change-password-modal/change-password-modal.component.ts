@@ -24,7 +24,7 @@ function samePasswordValidator(newPasswordForm: AbstractControl): ValidationErro
 @Component({
   selector: 'oib-change-password-modal',
   templateUrl: './change-password-modal.component.html',
-  styleUrls: ['./change-password-modal.component.scss'],
+  styleUrl: './change-password-modal.component.scss',
   imports: [...formDirectives, TranslateModule, NgbCollapse, NgIf],
   standalone: true
 })

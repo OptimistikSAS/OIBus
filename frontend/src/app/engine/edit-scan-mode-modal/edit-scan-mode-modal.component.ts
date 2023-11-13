@@ -11,7 +11,7 @@ import { formDirectives } from '../../shared/form-directives';
 @Component({
   selector: 'oib-edit-scan-mode-modal',
   templateUrl: './edit-scan-mode-modal.component.html',
-  styleUrls: ['./edit-scan-mode-modal.component.scss'],
+  styleUrl: './edit-scan-mode-modal.component.scss',
   imports: [...formDirectives, TranslateModule, SaveButtonComponent],
   standalone: true
 })

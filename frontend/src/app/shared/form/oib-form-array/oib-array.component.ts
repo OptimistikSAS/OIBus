@@ -10,7 +10,7 @@ import { PipeProviderService } from '../pipe-provider.service';
 @Component({
   selector: 'oib-array',
   templateUrl: './oib-array.component.html',
-  styleUrls: ['./oib-array.component.scss'],
+  styleUrl: './oib-array.component.scss',
   imports: [...formDirectives, NgIf, NgForOf, TranslateModule, EditElementComponent],
   providers: [
     {

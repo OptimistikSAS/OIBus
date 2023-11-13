@@ -14,7 +14,7 @@ interface Action {
 @Component({
   selector: 'oib-notification',
   templateUrl: './notification.component.html',
-  styleUrls: ['./notification.component.scss'],
+  styleUrl: './notification.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [NgIf, NgForOf, NgbToastModule, TranslateModule, AsyncPipe],
   standalone: true

@@ -39,7 +39,7 @@ const PAGE_SIZE = 15;
     LegendComponent
   ],
   templateUrl: './south-list.component.html',
-  styleUrls: ['./south-list.component.scss']
+  styleUrl: './south-list.component.scss'
 })
 export class SouthListComponent implements OnInit {
   allSouths: Array<SouthConnectorDTO> | null = null;

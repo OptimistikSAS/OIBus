@@ -20,7 +20,7 @@ import { Modal, ModalService } from '../../shared/modal.service';
   standalone: true,
   imports: [NgIf, NgForOf, TranslateModule, BoxComponent, BoxTitleDirective],
   templateUrl: './north-subscriptions.component.html',
-  styleUrls: ['./north-subscriptions.component.scss']
+  styleUrl: './north-subscriptions.component.scss'
 })
 export class NorthSubscriptionsComponent implements OnInit {
   @Input() northConnector: NorthConnectorDTO | null = null;

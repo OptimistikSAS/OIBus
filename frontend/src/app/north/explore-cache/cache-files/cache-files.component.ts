@@ -16,7 +16,7 @@ import { FileTableComponent, FileTableData } from '../file-table/file-table.comp
 @Component({
   selector: 'oib-cache-files',
   templateUrl: './cache-files.component.html',
-  styleUrls: ['./cache-files.component.scss'],
+  styleUrl: './cache-files.component.scss',
   imports: [
     ...formDirectives,
     TranslateModule,

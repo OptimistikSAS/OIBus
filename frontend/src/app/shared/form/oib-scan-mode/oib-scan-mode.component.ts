@@ -10,7 +10,7 @@ import { TranslateModule } from '@ngx-translate/core';
   standalone: true,
   imports: [...formDirectives, NgIf, NgForOf, TranslateModule],
   templateUrl: './oib-scan-mode.component.html',
-  styleUrls: ['./oib-scan-mode.component.scss'],
+  styleUrl: './oib-scan-mode.component.scss',
   providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => OibScanModeComponent), multi: true }]
 })
 export class OibScanModeComponent implements ControlValueAccessor {

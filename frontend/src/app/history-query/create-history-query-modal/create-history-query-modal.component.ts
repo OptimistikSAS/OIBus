@@ -14,7 +14,7 @@ import { ObservableState, SaveButtonComponent } from '../../shared/save-button/s
 @Component({
   selector: 'oib-create-history-query-modal',
   templateUrl: './create-history-query-modal.component.html',
-  styleUrls: ['./create-history-query-modal.component.scss'],
+  styleUrl: './create-history-query-modal.component.scss',
   imports: [...formDirectives, TranslateModule, NgForOf, NgIf, SaveButtonComponent],
   standalone: true
 })

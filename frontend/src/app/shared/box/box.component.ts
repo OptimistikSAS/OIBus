@@ -30,7 +30,7 @@ export class BoxTitleDirective {
   selector: 'oib-box',
   standalone: true,
   templateUrl: './box.component.html',
-  styleUrls: ['./box.component.scss'],
+  styleUrl: './box.component.scss',
   imports: [NgbCollapse, NgIf, NgTemplateOutlet, TranslateModule],
   changeDetection: ChangeDetectionStrategy.OnPush
 })

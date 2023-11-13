@@ -6,7 +6,7 @@ import { DecimalPipe } from '@angular/common';
 @Component({
   selector: 'oib-default-validation-errors',
   templateUrl: './default-validation-errors.component.html',
-  styleUrls: ['./default-validation-errors.component.scss'],
+  styleUrl: './default-validation-errors.component.scss',
   imports: [TranslateModule, ValdemortModule, DecimalPipe],
   standalone: true
 })

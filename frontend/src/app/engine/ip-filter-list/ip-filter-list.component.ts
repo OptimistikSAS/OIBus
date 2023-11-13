@@ -15,7 +15,7 @@ import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component'
   standalone: true,
   imports: [NgIf, NgForOf, TranslateModule, BoxComponent, BoxTitleDirective],
   templateUrl: './ip-filter-list.component.html',
-  styleUrls: ['./ip-filter-list.component.scss']
+  styleUrl: './ip-filter-list.component.scss'
 })
 export class IpFilterListComponent implements OnInit {
   ipFilters: Array<IpFilterDTO> = [];

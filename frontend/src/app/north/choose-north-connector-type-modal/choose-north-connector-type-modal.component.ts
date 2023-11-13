@@ -10,7 +10,7 @@ import { NorthConnectorService } from '../../services/north-connector.service';
 @Component({
   selector: 'oib-choose-north-connector-type-modal',
   templateUrl: './choose-north-connector-type-modal.component.html',
-  styleUrls: ['./choose-north-connector-type-modal.component.scss'],
+  styleUrl: './choose-north-connector-type-modal.component.scss',
   imports: [...formDirectives, TranslateModule, NgForOf],
   standalone: true
 })

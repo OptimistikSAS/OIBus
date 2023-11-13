@@ -16,7 +16,7 @@ import { FileTableComponent, FileTableData } from '../file-table/file-table.comp
 @Component({
   selector: 'oib-archive-files',
   templateUrl: './archive-files.component.html',
-  styleUrls: ['./archive-files.component.scss'],
+  styleUrl: './archive-files.component.scss',
   imports: [
     ...formDirectives,
     TranslateModule,

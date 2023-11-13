@@ -14,7 +14,7 @@ import { WindowService } from '../../shared/window.service';
 @Component({
   selector: 'oib-login',
   templateUrl: './login.component.html',
-  styleUrls: ['./login.component.scss'],
+  styleUrl: './login.component.scss',
   imports: [...formDirectives, TranslateModule, NgbCollapse],
   standalone: true
 })

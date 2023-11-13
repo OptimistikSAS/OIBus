@@ -31,7 +31,7 @@ declare namespace Intl {
 @Component({
   selector: 'oib-edit-south-item-modal',
   templateUrl: './edit-south-item-modal.component.html',
-  styleUrls: ['./edit-south-item-modal.component.scss'],
+  styleUrl: './edit-south-item-modal.component.scss',
   imports: [
     ...formDirectives,
     TranslateModule,

@@ -31,7 +31,7 @@ export class ObservableState {
 @Component({
   selector: 'oib-save-button',
   templateUrl: './save-button.component.html',
-  styleUrls: ['./save-button.component.scss'],
+  styleUrl: './save-button.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [AsyncPipe, NgIf, NgClass, TranslateModule],
   standalone: true

@@ -20,7 +20,7 @@ import { OIBusInfo } from '../../../../shared/model/engine.model';
     ValidationErrorsComponent
   ],
   templateUrl: './about.component.html',
-  styleUrls: ['./about.component.scss']
+  styleUrl: './about.component.scss'
 })
 export class AboutComponent implements OnInit {
   oibusInfo: OIBusInfo | null = null;

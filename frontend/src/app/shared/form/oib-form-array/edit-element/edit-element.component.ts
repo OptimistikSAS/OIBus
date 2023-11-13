@@ -10,7 +10,7 @@ import { FormComponent } from '../../form.component';
 @Component({
   selector: 'oib-edit-element',
   templateUrl: './edit-element.component.html',
-  styleUrls: ['./edit-element.component.scss'],
+  styleUrl: './edit-element.component.scss',
   imports: [...formDirectives, NgIf, NgForOf, TranslateModule, forwardRef(() => FormComponent)],
   standalone: true
 })

@@ -18,7 +18,7 @@ import { CacheFilesComponent } from './cache-files/cache-files.component';
 @Component({
   selector: 'oib-explore-cache',
   templateUrl: './explore-cache.component.html',
-  styleUrls: ['./explore-cache.component.scss'],
+  styleUrl: './explore-cache.component.scss',
   imports: [
     ...formDirectives,
     TranslateModule,

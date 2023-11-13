@@ -49,7 +49,7 @@ import { formDirectives } from '../form-directives';
 @Component({
   selector: 'oib-datetimepicker',
   templateUrl: './datetimepicker.component.html',
-  styleUrls: ['./datetimepicker.component.scss'],
+  styleUrl: './datetimepicker.component.scss',
   providers: [
     { provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => DatetimepickerComponent), multi: true },
     { provide: NG_VALIDATORS, useExisting: forwardRef(() => DatetimepickerComponent), multi: true }

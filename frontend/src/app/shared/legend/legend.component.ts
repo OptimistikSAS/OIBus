@@ -5,7 +5,7 @@ import { TranslateModule } from '@ngx-translate/core';
 @Component({
   selector: 'oib-legend',
   templateUrl: './legend.component.html',
-  styleUrls: ['./legend.component.scss'],
+  styleUrl: './legend.component.scss',
   standalone: true,
   imports: [NgClass, NgIf, NgForOf, TranslateModule],
   changeDetection: ChangeDetectionStrategy.OnPush

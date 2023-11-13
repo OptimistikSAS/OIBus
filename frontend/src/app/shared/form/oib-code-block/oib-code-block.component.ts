@@ -11,7 +11,7 @@ import { NgIf } from '@angular/common';
 @Component({
   selector: 'oib-code-block',
   templateUrl: './oib-code-block.component.html',
-  styleUrls: ['./oib-code-block.component.scss'],
+  styleUrl: './oib-code-block.component.scss',
   imports: [...formDirectives, NgIf],
   providers: [
     {

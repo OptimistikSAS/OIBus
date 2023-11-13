@@ -33,7 +33,7 @@ import { CertificateListComponent } from './certificate-list/certificate-list.co
     RouterLink
   ],
   templateUrl: './engine-detail.component.html',
-  styleUrls: ['./engine-detail.component.scss']
+  styleUrl: './engine-detail.component.scss'
 })
 export class EngineDetailComponent implements OnInit, OnDestroy {
   engineSettings: EngineSettingsDTO | null = null;

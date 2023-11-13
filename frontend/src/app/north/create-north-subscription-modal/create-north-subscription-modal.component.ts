@@ -12,7 +12,7 @@ import { OIBusSubscription } from '../../../../../shared/model/subscription.mode
 @Component({
   selector: 'oib-create-north-subscription-modal',
   templateUrl: './create-north-subscription-modal.component.html',
-  styleUrls: ['./create-north-subscription-modal.component.scss'],
+  styleUrl: './create-north-subscription-modal.component.scss',
   imports: [...formDirectives, TranslateModule, SaveButtonComponent, NgForOf, NgIf],
   standalone: true
 })
