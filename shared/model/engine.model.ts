@@ -66,16 +66,23 @@ export interface EngineSettingsDTO extends BaseEntity {
   logParameters: LogSettings;
 }
 
+export const REGISTRATION_STATUS = ['NOT_REGISTERED', 'PENDING', 'REGISTERED'];
+export type RegistrationStatus = (typeof REGISTRATION_STATUS)[number];
+
 /**
  * Registration settings DTO
  */
 export interface RegistrationSettingsDTO extends BaseEntity {
-  enabled: boolean;
   host: string;
-  activationCode: string;
-  activated: boolean;
+  activationCode?: string;
+  status: RegistrationStatus;
   activationDate: Instant;
-  activationExpirationDate: Instant;
+  activationExpirationDate?: Instant;
+  checkUrl?: string;
+}
+
+export interface RegistrationSettingsCommandDTO {
+  host: string;
 }
 
 export interface CryptoSettings {
@@ -91,14 +98,6 @@ export interface EngineSettingsCommandDTO {
   name: string;
   port: number;
   logParameters: LogSettings;
-}
-
-/**
- * Engine settings command DTO
- */
-export interface RegistrationSettingsCommandDTO {
-  enabled: boolean;
-  host: string;
 }
 
 export interface OIBusError {

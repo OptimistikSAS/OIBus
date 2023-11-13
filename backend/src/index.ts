@@ -103,7 +103,7 @@ const LOG_DB_NAME = 'logs.db';
     loggerService.createChildLogger('history-engine')
   );
 
-  const oibusService = new OIBusService(engine, historyQueryEngine, repositoryService);
+  const oibusService = new OIBusService(engine, historyQueryEngine, repositoryService, encryptionService);
 
   await engine.start();
   await historyQueryEngine.start();

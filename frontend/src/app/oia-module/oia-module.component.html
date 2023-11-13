@@ -1,0 +1,50 @@
+<div class="oib-padded-container" *ngIf="registration">
+  <div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+      <div class="oib-header-container d-flex align-items-center justify-content-between">
+        <div class="d-flex">
+          <div class="oib-block-title">
+            <img class="oib-title-image pt-2" src="../assets/oi.svg" />
+          </div>
+          <h1 class="oib-title" translate="oia-module.title"></h1>
+        </div>
+      </div>
+
+      <div *ngIf="registration.status === 'NOT_REGISTERED'" class="w-100 text-center oib-search-form mt-2 py-3">
+        <div class="mb-2">
+          <span translate="oia-module.registration.not-registered"></span>
+        </div>
+        <button type="button" class="btn btn-primary btn-lg" id="register-button" (click)="register()">
+          <span translate="oia-module.registration.register"></span>
+        </button>
+      </div>
+
+      <div *ngIf="registration.status === 'PENDING'" class="oib-search-form mt-2 py-3">
+        <div class="w-100 text-center">
+          <div class="mb-2">
+            <span translate="oia-module.registration.pending"></span>
+            <span translate="common.colon-separator"></span>
+          </div>
+          <div>
+            <h1>{{ registration.activationCode }}</h1>
+          </div>
+          <div>
+            <span translate="oia-module.registration.expiration-date"></span>
+            <span translate="common.colon-separator"></span>
+            <span>{{ registration.activationExpirationDate! | datetime:'mediumWithSeconds' }}</span>
+          </div>
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="unregister-button" (click)="unregister()">
+            <span translate="oia-module.registration.unregister"></span>
+          </button>
+        </div>
+        <div class="d-flex pull-right"></div>
+      </div>
+
+      <div *ngIf="registration.status === 'REGISTERED'">
+        <span translate="oia-module.registrations.registered"></span>
+        <span translate="oia-module.registrations.activation-date"></span>
+        <span>{{ registration.activationDate | datetime:'mediumWithSeconds' }}</span>
+      </div>
+    </div>
+  </div>
+</div>
