@@ -6,7 +6,7 @@ import { OibusUpdateCheckResponse, OibusUpdateDTO } from '../../../shared/model/
 import { downloadFile, generateRandomId, getOIBusInfo, unzip } from './utils';
 import RepositoryService from './repository.service';
 import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../shared/model/engine.model';
-import { DateTime } from 'luxon';
+import EncryptionService from './encryption.service';
 
 export default class OIBusService {
   private static UPDATE_URL = 'http://localhost:3333/api/update';
@@ -17,7 +17,8 @@ export default class OIBusService {
   constructor(
     private engine: OIBusEngine,
     private historyEngine: HistoryQueryEngine,
-    private repositoryService: RepositoryService
+    private repositoryService: RepositoryService,
+    private encryptionService: EncryptionService
   ) {}
 
   async restartOIBus(): Promise<void> {
@@ -44,23 +45,49 @@ export default class OIBusService {
     return this.repositoryService.registrationRepository.getRegistrationSettings();
   }
 
-  updateRegistrationSettings(command: RegistrationSettingsCommandDTO): void {
-    this.repositoryService.registrationRepository.updateRegistrationSettings(command);
-  }
-
-  createActivationCode(): void {
+  async updateRegistrationSettings(command: RegistrationSettingsCommandDTO): Promise<void> {
     const activationCode = generateRandomId(6);
-    this.repositoryService.registrationRepository.createActivationCode(
+    const registrationSettings = this.repositoryService.registrationRepository.getRegistrationSettings();
+    const engineSettings = this.repositoryService.engineRepository.getEngineSettings()!;
+    if (!registrationSettings) {
+      throw new Error(`Registration settings not found`);
+    }
+    const oibusInfo = getOIBusInfo();
+    const body = {
       activationCode,
-      DateTime.now()
-        .toUTC()
-        .plus(60000 * 10)
-        .toISO()!
-    );
+      oibusVersion: oibusInfo.version,
+      oibusId: engineSettings.id,
+      oibusName: engineSettings.name
+    };
+    let response;
+    try {
+      const url = `${command.host}/api/oianalytics/oibus/registration`;
+      response = await fetch(url, {
+        method: 'POST',
+        timeout: OIBusService.CHECK_TIMEOUT,
+        body: JSON.stringify(body),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+    } catch (fetchError) {
+      throw new Error(`Registration failed: ${fetchError}`);
+    }
+
+    if (!response.ok) {
+      throw new Error(`Registration failed with status code ${response.status} and message: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    this.repositoryService.registrationRepository.updateRegistration(command, activationCode, result.redirectUrl, result.expirationDate);
   }
 
   activateRegistration(activationDate: string): void {
     this.repositoryService.registrationRepository.activateRegistration(activationDate);
+  }
+
+  unregister() {
+    this.repositoryService.registrationRepository.unregister();
   }
 
   async checkForUpdate(): Promise<OibusUpdateDTO> {

@@ -26,38 +26,47 @@ describe('Empty registration repository', () => {
 
   it('should properly init registration settings table', () => {
     const command: RegistrationSettingsCommandDTO = {
-      enabled: false,
       host: 'http://localhost:4200'
     };
 
     repository.createRegistrationSettings(command);
     expect(generateRandomId).toHaveBeenCalledWith();
-    expect(database.prepare).toHaveBeenCalledWith('INSERT INTO registrations (id, enabled, host) VALUES (?, ?, ?);');
-    expect(run).toHaveBeenCalledWith('123456', +command.enabled, command.host);
+    expect(database.prepare).toHaveBeenCalledWith('INSERT INTO registrations (id, host, status) VALUES (?, ?, ?);');
+    expect(run).toHaveBeenCalledWith('123456', command.host, 'NOT_REGISTERED');
 
     expect(run).toHaveBeenCalledTimes(2);
   });
 
   it('should update registration settings', () => {
     const command: RegistrationSettingsCommandDTO = {
-      enabled: false,
       host: 'http://localhost:4200'
     };
-    repository.updateRegistrationSettings(command);
-    expect(database.prepare).toHaveBeenCalledWith(
-      'UPDATE registrations SET enabled = ?, host = ? WHERE rowid=(SELECT MIN(rowid) FROM registrations);'
+    repository.updateRegistration(
+      command,
+      '1234',
+      'http://localhost:4200/api/oianalytics/oibus/registration?id=id',
+      '2020-01-01T00:00:00Z'
     );
-    expect(run).toHaveBeenCalledWith(+command.enabled, command.host);
+    expect(database.prepare).toHaveBeenCalledWith(
+      `UPDATE registrations SET host = ?, status = ?, activation_code = ?, check_url = ?, activation_expiration_date = ?` +
+        ` WHERE rowid=(SELECT MIN(rowid) FROM registrations);`
+    );
+    expect(run).toHaveBeenCalledWith(
+      command.host,
+      'PENDING',
+      '1234',
+      'http://localhost:4200/api/oianalytics/oibus/registration?id=id',
+      '2020-01-01T00:00:00Z'
+    );
   });
 });
 
 describe('Non-empty Registration repository', () => {
   const existingSettings: RegistrationSettingsDTO = {
     id: 'id1',
-    enabled: false,
     host: 'http://localhost:4200',
     activationCode: '1234',
-    activated: false,
+    status: 'NOT_REGISTERED',
     activationDate: '2020-20-20T00:00:00.000Z',
     activationExpirationDate: '2020-20-20T00:00:00.000Z'
   };
@@ -76,17 +85,16 @@ describe('Non-empty Registration repository', () => {
   it('should properly get the registration settings', () => {
     const expectedValue: RegistrationSettingsDTO = {
       id: 'id1',
-      enabled: false,
       host: 'http://localhost:4200',
       activationCode: '1234',
-      activated: false,
+      status: 'NOT_REGISTERED',
       activationDate: '2020-20-20T00:00:00.000Z',
       activationExpirationDate: '2020-20-20T00:00:00.000Z'
     };
     const registration = repository.getRegistrationSettings();
     expect(database.prepare).toHaveBeenCalledWith(
-      'SELECT id, enabled, host, activation_code AS activationCode, activated, activation_date AS activationDate, ' +
-        'activation_expiration_date AS activationExpirationDate FROM registrations;'
+      'SELECT id, host, activation_code AS activationCode, status, activation_date AS activationDate, ' +
+        'check_url AS checkUrl, activation_expiration_date AS activationExpirationDate FROM registrations;'
     );
     expect(all).toHaveBeenCalledTimes(2);
     expect(registration).toEqual(expectedValue);
@@ -94,27 +102,26 @@ describe('Non-empty Registration repository', () => {
 
   it('should not create registration settings if they already exist', () => {
     const command: RegistrationSettingsCommandDTO = {
-      enabled: false,
       host: 'http://localhost:4200'
     };
     repository.createRegistrationSettings(command);
     expect(generateRandomId).not.toHaveBeenCalled();
   });
 
-  it('should create activation code', () => {
-    repository.createActivationCode('1234', '2020-01-01T00:00:00.000Z');
+  it('should unregister', () => {
+    repository.unregister();
     expect(database.prepare).toHaveBeenCalledWith(
-      `UPDATE registrations SET activationCode = ?, activation_expiration_date = ?, activated = 0, ` +
-        `activation_date = '' WHERE rowid=(SELECT MIN(rowid) FROM registrations);`
+      `UPDATE registrations SET status = 'NOT_REGISTERED', activation_expiration_date = '', check_url = '', ` +
+        `activation_date = '', activation_code = '' WHERE rowid=(SELECT MIN(rowid) FROM registrations);`
     );
-    expect(run).toHaveBeenCalledWith('1234', '2020-01-01T00:00:00.000Z');
+    expect(run).toHaveBeenCalledWith();
   });
 
   it('should activate registration', () => {
     repository.activateRegistration('2020-01-01T00:00:00.000Z');
     expect(database.prepare).toHaveBeenCalledWith(
-      `UPDATE registrations SET activated = 1, activation_expiration_date = '', activation_date = ? ` +
-        `WHERE rowid=(SELECT MIN(rowid) FROM registrations);`
+      `UPDATE registrations SET status = 'REGISTERED', activation_expiration_date = '', activation_code = '', ` +
+        `check_url = '', activation_date = ? WHERE rowid=(SELECT MIN(rowid) FROM registrations);`
     );
     expect(run).toHaveBeenCalledWith('2020-01-01T00:00:00.000Z');
   });

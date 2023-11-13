@@ -22,15 +22,13 @@ describe('Registration controller', () => {
     jest.useFakeTimers();
 
     registrationCommand = {
-      enabled: false,
       host: 'http://localhost:4200'
     };
     registrationSettings = {
       id: '1',
-      enabled: false,
       host: 'http://localhost:4200',
       activationCode: '1234',
-      activated: false,
+      status: 'NOT_REGISTERED',
       activationDate: '2020-01-01T00:00:00.000Z',
       activationExpirationDate: '2020-01-01T00:00:00.000Z'
     };
@@ -78,10 +76,10 @@ describe('Registration controller', () => {
     expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
   });
 
-  it('generateActivationCode() should create activation code registration settings', async () => {
-    await registrationController.generateActivationCode(ctx);
+  it('unregister() should call unregister from oibus service', async () => {
+    await registrationController.unregister(ctx);
 
-    expect(ctx.app.oibusService.createActivationCode).toHaveBeenCalledTimes(1);
+    expect(ctx.app.oibusService.unregister).toHaveBeenCalledTimes(1);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 });

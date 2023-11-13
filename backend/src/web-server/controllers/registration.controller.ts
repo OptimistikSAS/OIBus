@@ -16,15 +16,15 @@ export default class RegistrationController extends AbstractController {
       await this.validate(ctx.request.body);
       const command = ctx.request.body as RegistrationSettingsCommandDTO;
 
-      ctx.app.oibusService.updateRegistrationSettings(command);
+      await ctx.app.oibusService.updateRegistrationSettings(command);
       return ctx.noContent();
     } catch (error: any) {
       ctx.badRequest(error.message);
     }
   }
 
-  async generateActivationCode(ctx: KoaContext<void, void>): Promise<void> {
-    ctx.app.oibusService.createActivationCode();
+  unregister(ctx: KoaContext<any, any>) {
+    ctx.app.oibusService.unregister();
     return ctx.noContent();
   }
 }

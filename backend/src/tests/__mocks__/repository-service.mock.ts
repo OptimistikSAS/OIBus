@@ -89,9 +89,9 @@ export default jest.fn().mockImplementation(() => ({
   },
   registrationRepository: {
     getRegistrationSettings: jest.fn(),
-    createActivationCode: jest.fn(),
+    unregister: jest.fn(),
     activateRegistration: jest.fn(),
-    updateRegistrationSettings: jest.fn()
+    updateRegistration: jest.fn()
   },
   proxyRepository: {
     getProxies: jest.fn(),
