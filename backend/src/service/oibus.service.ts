@@ -3,7 +3,10 @@ import fetch from 'node-fetch';
 import OIBusEngine from '../engine/oibus-engine';
 import HistoryQueryEngine from '../engine/history-query-engine';
 import { OibusUpdateCheckResponse, OibusUpdateDTO } from '../../../shared/model/update.model';
-import { downloadFile, getOIBusInfo, unzip } from './utils';
+import { downloadFile, generateRandomId, getOIBusInfo, unzip } from './utils';
+import RepositoryService from './repository.service';
+import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../shared/model/engine.model';
+import { DateTime } from 'luxon';
 
 export default class OIBusService {
   private static UPDATE_URL = 'http://localhost:3333/api/update';
@@ -13,7 +16,8 @@ export default class OIBusService {
 
   constructor(
     private engine: OIBusEngine,
-    private historyEngine: HistoryQueryEngine
+    private historyEngine: HistoryQueryEngine,
+    private repositoryService: RepositoryService
   ) {}
 
   async restartOIBus(): Promise<void> {
@@ -34,6 +38,29 @@ export default class OIBusService {
 
   async addFile(externalSourceId: string | null, filePath: string): Promise<void> {
     await this.engine.addExternalFile(externalSourceId, filePath);
+  }
+
+  getRegistrationSettings(): RegistrationSettingsDTO | null {
+    return this.repositoryService.registrationRepository.getRegistrationSettings();
+  }
+
+  updateRegistrationSettings(command: RegistrationSettingsCommandDTO): void {
+    this.repositoryService.registrationRepository.updateRegistrationSettings(command);
+  }
+
+  createActivationCode(): void {
+    const activationCode = generateRandomId(6);
+    this.repositoryService.registrationRepository.createActivationCode(
+      activationCode,
+      DateTime.now()
+        .toUTC()
+        .plus(60000 * 10)
+        .toISO()!
+    );
+  }
+
+  activateRegistration(activationDate: string): void {
+    this.repositoryService.registrationRepository.activateRegistration(activationDate);
   }
 
   async checkForUpdate(): Promise<OibusUpdateDTO> {

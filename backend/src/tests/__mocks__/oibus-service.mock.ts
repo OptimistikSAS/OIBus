@@ -8,5 +8,8 @@ export default jest.fn().mockImplementation(() => ({
   addValues: jest.fn(),
   addFile: jest.fn(),
   checkForUpdate: jest.fn(),
-  downloadUpdate: jest.fn()
+  downloadUpdate: jest.fn(),
+  getRegistrationSettings: jest.fn(),
+  updateRegistrationSettings: jest.fn(),
+  createActivationCode: jest.fn()
 }));
