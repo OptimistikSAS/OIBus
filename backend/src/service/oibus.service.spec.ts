@@ -7,6 +7,9 @@ import HistoryQueryEngine from '../engine/history-query-engine';
 import HistoryQueryEngineMock from '../tests/__mocks__/history-query-engine.mock';
 import { OibusUpdateCheckResponse } from '../../../shared/model/update.model';
 import * as utils from '../service/utils';
+import RepositoryService from './repository.service';
+import RepositoryServiceMock from '../tests/__mocks__/repository-service.mock';
+import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../shared/model/engine.model';
 
 jest.mock('node:fs/promises');
 jest.mock('node-fetch');
@@ -15,12 +18,17 @@ jest.mock('../service/utils');
 
 const oibusEngine: OIBusEngine = new OibusEngineMock();
 const historyQueryEngine: HistoryQueryEngine = new HistoryQueryEngineMock();
+const repositoryRepository: RepositoryService = new RepositoryServiceMock('', '');
+
+const nowDateString = '2020-02-02T02:02:02.222Z';
 
 let service: OIBusService;
 describe('OIBus service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new OIBusService(oibusEngine, historyQueryEngine);
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+
+    service = new OIBusService(oibusEngine, historyQueryEngine, repositoryRepository);
   });
 
   it('should restart OIBus', async () => {
@@ -45,6 +53,44 @@ describe('OIBus service', () => {
   it('should add file', async () => {
     await service.addFile('source', 'filePath');
     expect(oibusEngine.addExternalFile).toHaveBeenCalledWith('source', 'filePath');
+  });
+
+  it('should get registration settings', () => {
+    const mockResult: RegistrationSettingsDTO = {
+      id: 'id',
+      enabled: false,
+      host: 'http://localhost:4200',
+      activationCode: '1234',
+      activated: false,
+      activationDate: '2020-20-20T00:00:00.000Z',
+      activationExpirationDate: ''
+    };
+    (repositoryRepository.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(mockResult);
+    const result = service.getRegistrationSettings();
+    expect(result).toEqual(mockResult);
+    expect(repositoryRepository.registrationRepository.getRegistrationSettings).toHaveBeenCalledTimes(1);
+  });
+
+  it('should update registration settings', () => {
+    const command: RegistrationSettingsCommandDTO = {
+      enabled: false,
+      host: 'http://localhost:4200'
+    };
+    service.updateRegistrationSettings(command);
+    expect(repositoryRepository.registrationRepository.updateRegistrationSettings).toHaveBeenCalledTimes(1);
+    expect(repositoryRepository.registrationRepository.updateRegistrationSettings).toHaveBeenCalledWith(command);
+  });
+
+  it('should create activation code', () => {
+    (utils.generateRandomId as jest.Mock).mockReturnValue('1234');
+    service.createActivationCode();
+    expect(utils.generateRandomId).toHaveBeenCalledWith(6);
+    expect(repositoryRepository.registrationRepository.createActivationCode).toHaveBeenCalledWith('1234', '2020-02-02T02:12:02.222Z');
+  });
+
+  it('should activate registration', () => {
+    service.activateRegistration('2020-20-20T00:00:00.000Z');
+    expect(repositoryRepository.registrationRepository.activateRegistration).toHaveBeenCalledWith('2020-20-20T00:00:00.000Z');
   });
 
   it('should check for update', async () => {
