@@ -64,13 +64,14 @@ describe('NavbarComponent', () => {
 
   it('should have a navbar with nav items', () => {
     tester.detectChanges();
-    expect(tester.navItems.length).toBe(9);
+    expect(tester.navItems.length).toBe(10);
     expect(tester.navItems[0]).toContainText('Engine');
-    expect(tester.navItems[1]).toContainText('North');
-    expect(tester.navItems[2]).toContainText('South');
-    expect(tester.navItems[3]).toContainText('History');
-    expect(tester.navItems[4]).toContainText('Logs');
-    expect(tester.navItems[5]).toContainText('About');
+    expect(tester.navItems[1]).toContainText('OIA Module');
+    expect(tester.navItems[2]).toContainText('North');
+    expect(tester.navItems[3]).toContainText('South');
+    expect(tester.navItems[4]).toContainText('History');
+    expect(tester.navItems[5]).toContainText('Logs');
+    expect(tester.navItems[6]).toContainText('About');
   });
 
   it('should display version when it is available and there is a user', () => {

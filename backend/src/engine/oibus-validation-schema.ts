@@ -54,7 +54,6 @@ const engineSchema: Joi.ObjectSchema = Joi.object({
 });
 
 const registrationSchema: Joi.ObjectSchema = Joi.object({
-  enabled: Joi.boolean().required(),
   host: Joi.string().required()
 });
 

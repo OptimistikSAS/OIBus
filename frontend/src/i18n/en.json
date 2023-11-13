@@ -187,6 +187,7 @@
   "nav": {
     "home": "Home",
     "engine": "Engine",
+    "oia-module": "OIA Module",
     "north-list": "North",
     "south-list": "South",
     "history-queries": "History",
@@ -244,6 +245,21 @@
       "title": "History query",
       "name": "Name",
       "status": "Status"
+    }
+  },
+  "oia-module": {
+    "title": "OIA Module",
+    "registration": {
+      "title": "Register OIBus",
+      "host": "Host",
+      "register":"Register",
+      "saved": "Registration settings saved",
+      "unregister":"Unregister",
+      "confirm-unregistration":"Are you sure you want to unregister this OIBus?",
+      "unregistered":"OIBus unregistered",
+      "not-registered": "OIBus is not registered to OIAnalytics. Click on the button below to register.",
+      "pending": "Registration pending. Activate it on OIAnalytics with the following activation code",
+      "expiration-date": "Expired on"
     }
   },
   "about": {
