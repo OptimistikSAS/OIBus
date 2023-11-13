@@ -14,7 +14,7 @@ import { HistoryQueryService } from '../../services/history-query.service';
 import { HistoryQueryDTO } from '../../../../../shared/model/history-query.model';
 import { NorthConnectorCommandDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
 import { SouthConnectorCommandDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
-import { Modal, ModalService } from 'src/app/shared/modal.service';
+import { Modal, ModalService } from '../../shared/modal.service';
 
 class EditHistoryQueryComponentTester extends ComponentTester<EditHistoryQueryComponent> {
   constructor() {

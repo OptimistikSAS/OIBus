@@ -11,7 +11,7 @@ import { PaginationComponent } from '../../../shared/pagination/pagination.compo
 import { FileSizePipe } from '../../../shared/file-size.pipe';
 import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
 import { FileTableComponent, FileTableData } from '../file-table/file-table.component';
-import { emptyPage } from 'src/app/shared/test-utils';
+import { emptyPage } from '../../../shared/test-utils';
 
 @Component({
   selector: 'oib-error-files',

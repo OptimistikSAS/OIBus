@@ -15,7 +15,7 @@ import { NorthConnectorCommandDTO, NorthConnectorManifest } from '../../../../..
 import { ScanModeService } from '../../services/scan-mode.service';
 import { OIBusInfo } from '../../../../../shared/model/engine.model';
 import { EngineService } from '../../services/engine.service';
-import { Modal, ModalService } from 'src/app/shared/modal.service';
+import { Modal, ModalService } from '../../shared/modal.service';
 
 class HistoryQueryDisplayComponentTester extends ComponentTester<HistoryQueryDetailComponent> {
   constructor() {

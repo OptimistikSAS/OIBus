@@ -9,8 +9,8 @@ import { DatetimePipe } from '../../../shared/datetime.pipe';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
 import { FileSizePipe } from '../../../shared/file-size.pipe';
 import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
-import { Instant, Page, createPageFromArray } from '../../../../../../shared/model/types';
-import { emptyPage } from 'src/app/shared/test-utils';
+import { createPageFromArray, Instant, Page } from '../../../../../../shared/model/types';
+import { emptyPage } from '../../../shared/test-utils';
 
 const PAGE_SIZE = 15;
 const enum ColumnSortState {

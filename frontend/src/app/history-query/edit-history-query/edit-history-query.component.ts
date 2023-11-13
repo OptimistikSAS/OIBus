@@ -31,8 +31,8 @@ import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component'
 import { SouthItemsComponent } from '../../south/south-items/south-items.component';
 import { HistoryQueryItemsComponent } from '../history-query-items/history-query-items.component';
 import { DateTime } from 'luxon';
-import { ModalService } from 'src/app/shared/modal.service';
-import { TestConnectionResultModalComponent } from 'src/app/shared/test-connection-result-modal/test-connection-result-modal.component';
+import { ModalService } from '../../shared/modal.service';
+import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 
 @Component({
   selector: 'oib-edit-history-query',

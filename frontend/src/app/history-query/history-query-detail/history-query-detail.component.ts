@@ -32,8 +32,8 @@ import { NotificationService } from '../../shared/notification.service';
 import { ObservableState } from '../../shared/save-button/save-button.component';
 import { EngineService } from '../../services/engine.service';
 import { ClipboardModule } from '@angular/cdk/clipboard';
-import { ModalService } from 'src/app/shared/modal.service';
-import { TestConnectionResultModalComponent } from 'src/app/shared/test-connection-result-modal/test-connection-result-modal.component';
+import { ModalService } from '../../shared/modal.service';
+import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 
 @Component({
   selector: 'oib-history-query-detail',

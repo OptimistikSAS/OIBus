@@ -1,14 +1,14 @@
 import { Component } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { SaveButtonComponent } from '../../shared/save-button/save-button.component';
+import { SaveButtonComponent } from '../save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { SouthConnectorCommandDTO, SouthConnectorDTO } from '../../../../../shared/model/south-connector.model';
 import { NgForOf, NgIf } from '@angular/common';
-import { FormComponent } from '../../shared/form/form.component';
+import { FormComponent } from '../form/form.component';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { NorthConnectorCommandDTO, NorthConnectorDTO } from '../../../../../shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
-import { HistoryQueryService } from 'src/app/services/history-query.service';
+import { HistoryQueryService } from '../../services/history-query.service';
 
 @Component({
   selector: 'oib-test-connection-result-modal',

@@ -10,7 +10,7 @@ import { DatetimePipe } from '../../../shared/datetime.pipe';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
 import { FileSizePipe } from '../../../shared/file-size.pipe';
 import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
-import { emptyPage } from 'src/app/shared/test-utils';
+import { emptyPage } from '../../../shared/test-utils';
 import { FileTableComponent, FileTableData } from '../file-table/file-table.component';
 
 @Component({

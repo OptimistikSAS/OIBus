@@ -9,7 +9,7 @@ import { NorthConnectorService } from '../../services/north-connector.service';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NorthConnectorCommandDTO, NorthConnectorDTO } from '../../../../../shared/model/north-connector.model';
-import { HistoryQueryService } from 'src/app/services/history-query.service';
+import { HistoryQueryService } from '../../services/history-query.service';
 
 class TestConnectionResultModalComponentTester extends ComponentTester<TestConnectionResultModalComponent> {
   constructor() {

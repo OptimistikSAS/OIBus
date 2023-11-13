@@ -24,7 +24,7 @@ import { HistoryQueryDTO } from '../../../../../shared/model/history-query.model
 import { HistoryQueryService } from '../../services/history-query.service';
 import { EditSouthItemModalComponent } from '../../south/edit-south-item-modal/edit-south-item-modal.component';
 import { ImportSouthItemsModalComponent } from '../../south/import-south-items-modal/import-south-items-modal.component';
-import { PaginationComponent } from 'src/app/shared/pagination/pagination.component';
+import { PaginationComponent } from '../../shared/pagination/pagination.component';
 
 const PAGE_SIZE = 20;
 
