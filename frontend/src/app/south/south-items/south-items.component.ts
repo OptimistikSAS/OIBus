@@ -49,7 +49,7 @@ const PAGE_SIZE = 20;
     PaginationComponent
   ],
   templateUrl: './south-items.component.html',
-  styleUrls: ['./south-items.component.scss']
+  styleUrl: './south-items.component.scss'
 })
 export class SouthItemsComponent implements OnInit {
   @Input() southConnector: SouthConnectorDTO | null = null;

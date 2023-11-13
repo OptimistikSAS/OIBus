@@ -42,7 +42,7 @@ import { OIBusSubscription } from '../../../../../shared/model/subscription.mode
     NorthSubscriptionsComponent
   ],
   templateUrl: './edit-north.component.html',
-  styleUrls: ['./edit-north.component.scss']
+  styleUrl: './edit-north.component.scss'
 })
 export class EditNorthComponent implements OnInit {
   mode: 'create' | 'edit' = 'create';

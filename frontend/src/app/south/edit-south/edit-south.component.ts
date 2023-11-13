@@ -44,7 +44,7 @@ import { ModalService } from '../../shared/modal.service';
     EditElementComponent
   ],
   templateUrl: './edit-south.component.html',
-  styleUrls: ['./edit-south.component.scss']
+  styleUrl: './edit-south.component.scss'
 })
 export class EditSouthComponent implements OnInit {
   mode: 'create' | 'edit' = 'create';

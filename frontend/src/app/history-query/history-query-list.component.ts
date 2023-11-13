@@ -1,13 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
-import { NgClass } from '@angular/common';
-import { CommonModule } from '@angular/common';
+import { AsyncPipe, CommonModule, NgClass, NgForOf, NgIf } from '@angular/common';
 import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
 import { ConfirmationService } from '../shared/confirmation.service';
 import { NotificationService } from '../shared/notification.service';
 import { ModalService } from '../shared/modal.service';
 import { Router, RouterLink } from '@angular/router';
-import { AsyncPipe, NgForOf, NgIf } from '@angular/common';
 import { CreateHistoryQueryModalComponent } from './create-history-query-modal/create-history-query-modal.component';
 import { HistoryQueryDTO, HistoryQueryStatus } from '../../../../shared/model/history-query.model';
 import { HistoryQueryService } from '../services/history-query.service';
@@ -45,7 +43,7 @@ const PAGE_SIZE = 15;
     LegendComponent
   ],
   templateUrl: './history-query-list.component.html',
-  styleUrls: ['./history-query-list.component.scss']
+  styleUrl: './history-query-list.component.scss'
 })
 export class HistoryQueryListComponent implements OnInit {
   allHistoryQueries: Array<HistoryQueryDTO> | null = null;

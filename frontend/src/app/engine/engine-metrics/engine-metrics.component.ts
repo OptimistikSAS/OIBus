@@ -15,7 +15,7 @@ import { Router } from '@angular/router';
   standalone: true,
   imports: [TranslateModule, NgIf, BoxComponent, BoxTitleDirective, PercentPipe, FileSizePipe, DatetimePipe, DurationPipe],
   templateUrl: './engine-metrics.component.html',
-  styleUrls: ['./engine-metrics.component.scss']
+  styleUrl: './engine-metrics.component.scss'
 })
 export class EngineMetricsComponent {
   @Input() displayButton = false;

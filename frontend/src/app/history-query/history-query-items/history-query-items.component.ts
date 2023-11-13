@@ -47,7 +47,7 @@ const PAGE_SIZE = 20;
     DurationPipe
   ],
   templateUrl: './history-query-items.component.html',
-  styleUrls: ['./history-query-items.component.scss']
+  styleUrl: './history-query-items.component.scss'
 })
 export class HistoryQueryItemsComponent implements OnInit {
   @Input() historyQuery: HistoryQueryDTO | null = null;

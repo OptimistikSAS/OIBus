@@ -15,7 +15,7 @@ import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component'
   standalone: true,
   imports: [NgIf, NgForOf, TranslateModule, BoxComponent, BoxTitleDirective],
   templateUrl: './scan-mode-list.component.html',
-  styleUrls: ['./scan-mode-list.component.scss']
+  styleUrl: './scan-mode-list.component.scss'
 })
 export class ScanModeListComponent implements OnInit {
   scanModes: Array<ScanModeDTO> = [];

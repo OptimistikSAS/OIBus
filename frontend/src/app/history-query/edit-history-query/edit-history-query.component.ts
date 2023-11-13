@@ -54,7 +54,7 @@ import { TestConnectionResultModalComponent } from '../../shared/test-connection
     HistoryQueryItemsComponent
   ],
   templateUrl: './edit-history-query.component.html',
-  styleUrls: ['./edit-history-query.component.scss']
+  styleUrl: './edit-history-query.component.scss'
 })
 export class EditHistoryQueryComponent implements OnInit {
   mode: 'create' | 'edit' = 'create';

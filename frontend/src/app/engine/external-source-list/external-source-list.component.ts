@@ -15,7 +15,7 @@ import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component'
   standalone: true,
   imports: [NgIf, NgForOf, TranslateModule, BoxComponent, BoxTitleDirective],
   templateUrl: './external-source-list.component.html',
-  styleUrls: ['./external-source-list.component.scss']
+  styleUrl: './external-source-list.component.scss'
 })
 export class ExternalSourceListComponent implements OnInit {
   externalSources: Array<ExternalSourceDTO> = [];
