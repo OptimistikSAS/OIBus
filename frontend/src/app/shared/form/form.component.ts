@@ -28,7 +28,7 @@ declare namespace Intl {
   standalone: true,
   imports: [...formDirectives, NgIf, NgForOf, OibCodeBlockComponent, NgbTypeahead, TranslateModule, OibArrayComponent],
   templateUrl: './form.component.html',
-  styleUrls: ['./form.component.scss'],
+  styleUrl: './form.component.scss',
   viewProviders: [
     {
       provide: ControlContainer,

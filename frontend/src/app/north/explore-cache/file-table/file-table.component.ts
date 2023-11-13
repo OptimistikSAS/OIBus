@@ -28,7 +28,7 @@ export type FileTableData = {
 @Component({
   selector: 'oib-file-table',
   templateUrl: './file-table.component.html',
-  styleUrls: ['./file-table.component.scss'],
+  styleUrl: './file-table.component.scss',
   imports: [
     ...formDirectives,
     TranslateModule,

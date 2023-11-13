@@ -4,7 +4,7 @@ import { NgClass, NgIf } from '@angular/common';
 @Component({
   selector: 'oib-pill',
   templateUrl: './pill.component.html',
-  styleUrls: ['./pill.component.scss'],
+  styleUrl: './pill.component.scss',
   standalone: true,
   imports: [NgClass, NgIf],
   changeDetection: ChangeDetectionStrategy.OnPush

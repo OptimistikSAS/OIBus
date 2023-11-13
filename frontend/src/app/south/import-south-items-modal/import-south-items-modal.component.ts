@@ -16,7 +16,7 @@ import { PipeProviderService } from '../../shared/form/pipe-provider.service';
 @Component({
   selector: 'oib-import-south-items-modal',
   templateUrl: './import-south-items-modal.component.html',
-  styleUrls: ['./import-south-items-modal.component.scss'],
+  styleUrl: './import-south-items-modal.component.scss',
   imports: [
     ...formDirectives,
     TranslateModule,

@@ -12,7 +12,7 @@ import { SouthConnectorManifest } from '../../../../../../shared/model/south-con
 @Component({
   selector: 'oib-history-metrics',
   templateUrl: './history-metrics.component.html',
-  styleUrls: ['./history-metrics.component.scss'],
+  styleUrl: './history-metrics.component.scss',
   imports: [TranslateModule, NgIf, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe],
   standalone: true
 })

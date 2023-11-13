@@ -14,7 +14,7 @@ import { Router } from '@angular/router';
 @Component({
   selector: 'oib-north-metrics',
   templateUrl: './north-metrics.component.html',
-  styleUrls: ['./north-metrics.component.scss'],
+  styleUrl: './north-metrics.component.scss',
   imports: [TranslateModule, NgIf, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe, FileSizePipe],
   standalone: true
 })

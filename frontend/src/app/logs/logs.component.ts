@@ -58,7 +58,7 @@ import { LegendComponent } from '../shared/legend/legend.component';
     LegendComponent
   ],
   templateUrl: './logs.component.html',
-  styleUrls: ['./logs.component.scss'],
+  styleUrl: './logs.component.scss',
   providers: [PageLoader]
 })
 export class LogsComponent implements OnInit, OnDestroy {

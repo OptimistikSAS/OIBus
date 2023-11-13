@@ -43,7 +43,7 @@ import { ClipboardModule } from '@angular/cdk/clipboard';
     ClipboardModule
   ],
   templateUrl: './south-detail.component.html',
-  styleUrls: ['./south-detail.component.scss'],
+  styleUrl: './south-detail.component.scss',
   providers: [PageLoader]
 })
 export class SouthDetailComponent implements OnInit, OnDestroy {

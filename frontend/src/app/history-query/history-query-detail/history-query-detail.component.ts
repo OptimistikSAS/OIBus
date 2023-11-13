@@ -59,7 +59,7 @@ import { TestConnectionResultModalComponent } from '../../shared/test-connection
     ClipboardModule
   ],
   templateUrl: './history-query-detail.component.html',
-  styleUrls: ['./history-query-detail.component.scss'],
+  styleUrl: './history-query-detail.component.scss',
   providers: [PageLoader]
 })
 export class HistoryQueryDetailComponent implements OnInit, OnDestroy {

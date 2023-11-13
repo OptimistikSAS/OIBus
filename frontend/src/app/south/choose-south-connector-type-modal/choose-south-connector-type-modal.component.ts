@@ -10,7 +10,7 @@ import { NgForOf } from '@angular/common';
 @Component({
   selector: 'oib-choose-south-connector-type-modal',
   templateUrl: './choose-south-connector-type-modal.component.html',
-  styleUrls: ['./choose-south-connector-type-modal.component.scss'],
+  styleUrl: './choose-south-connector-type-modal.component.scss',
   imports: [...formDirectives, TranslateModule, NgForOf],
   standalone: true
 })

@@ -11,7 +11,7 @@ import { formDirectives } from '../../shared/form-directives';
 @Component({
   selector: 'oib-edit-ip-filter-modal',
   templateUrl: './edit-ip-filter-modal.component.html',
-  styleUrls: ['./edit-ip-filter-modal.component.scss'],
+  styleUrl: './edit-ip-filter-modal.component.scss',
   imports: [...formDirectives, TranslateModule, SaveButtonComponent],
   standalone: true
 })

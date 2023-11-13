@@ -16,7 +16,7 @@ import { emptyPage } from '../../../shared/test-utils';
 @Component({
   selector: 'oib-error-files',
   templateUrl: './error-files.component.html',
-  styleUrls: ['./error-files.component.scss'],
+  styleUrl: './error-files.component.scss',
   imports: [
     ...formDirectives,
     TranslateModule,

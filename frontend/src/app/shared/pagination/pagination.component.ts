@@ -7,7 +7,7 @@ import { NgIf } from '@angular/common';
 @Component({
   selector: 'oib-pagination',
   templateUrl: './pagination.component.html',
-  styleUrls: ['./pagination.component.scss'],
+  styleUrl: './pagination.component.scss',
   imports: [NgbPaginationModule, NgIf],
   standalone: true
 })

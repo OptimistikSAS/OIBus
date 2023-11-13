@@ -12,7 +12,7 @@ import { NgIf } from '@angular/common';
 @Component({
   selector: 'oib-edit-certificate-modal',
   templateUrl: './edit-certificate-modal.component.html',
-  styleUrls: ['./edit-certificate-modal.component.scss'],
+  styleUrl: './edit-certificate-modal.component.scss',
   imports: [...formDirectives, TranslateModule, SaveButtonComponent, NgIf],
   standalone: true
 })

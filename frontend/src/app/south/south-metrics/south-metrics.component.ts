@@ -13,7 +13,7 @@ import { Router } from '@angular/router';
 @Component({
   selector: 'oib-south-metrics',
   templateUrl: './south-metrics.component.html',
-  styleUrls: ['./south-metrics.component.scss'],
+  styleUrl: './south-metrics.component.scss',
   standalone: true,
   imports: [TranslateModule, NgIf, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe]
 })

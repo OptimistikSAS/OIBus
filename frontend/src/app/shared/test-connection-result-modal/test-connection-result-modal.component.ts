@@ -13,7 +13,7 @@ import { HistoryQueryService } from '../../services/history-query.service';
 @Component({
   selector: 'oib-test-connection-result-modal',
   templateUrl: './test-connection-result-modal.component.html',
-  styleUrls: ['./test-connection-result-modal.component.scss'],
+  styleUrl: './test-connection-result-modal.component.scss',
   imports: [TranslateModule, SaveButtonComponent, NgForOf, NgIf, FormComponent],
   standalone: true
 })

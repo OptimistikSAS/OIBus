@@ -22,7 +22,7 @@ import { NgForOf, NgIf } from '@angular/common';
 @Component({
   selector: 'oib-multi-select',
   templateUrl: './multi-select.component.html',
-  styleUrls: ['./multi-select.component.scss'],
+  styleUrl: './multi-select.component.scss',
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

@@ -11,7 +11,7 @@ import { formDirectives } from '../../shared/form-directives';
 @Component({
   selector: 'oib-edit-external-source-modal',
   templateUrl: './edit-external-source-modal.component.html',
-  styleUrls: ['./edit-external-source-modal.component.scss'],
+  styleUrl: './edit-external-source-modal.component.scss',
   imports: [...formDirectives, TranslateModule, SaveButtonComponent],
   standalone: true
 })
