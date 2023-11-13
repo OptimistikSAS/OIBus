@@ -54,6 +54,11 @@ const engineSchema: Joi.ObjectSchema = Joi.object({
   })
 });
 
+const registrationSchema: Joi.ObjectSchema = Joi.object({
+  enabled: Joi.boolean().required(),
+  host: Joi.string().required()
+});
+
 const ipFilterSchema: Joi.ObjectSchema = Joi.object({
   address: Joi.string().required(),
   description: Joi.string().required().allow(null, '')
@@ -103,4 +108,14 @@ function cronValidator(value: string, helper: Joi.CustomHelpers) {
   }
 }
 
-export { scanModeSchema, certificateSchema, externalSourceSchema, engineSchema, ipFilterSchema, userSchema, historyQuerySchema, logSchema };
+export {
+  scanModeSchema,
+  certificateSchema,
+  externalSourceSchema,
+  engineSchema,
+  registrationSchema,
+  ipFilterSchema,
+  userSchema,
+  historyQuerySchema,
+  logSchema
+};
