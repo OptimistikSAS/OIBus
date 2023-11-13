@@ -11,5 +11,5 @@ export default jest.fn().mockImplementation(() => ({
   downloadUpdate: jest.fn(),
   getRegistrationSettings: jest.fn(),
   updateRegistrationSettings: jest.fn(),
-  createActivationCode: jest.fn()
+  unregister: jest.fn()
 }));

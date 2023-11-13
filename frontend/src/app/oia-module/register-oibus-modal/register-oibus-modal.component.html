@@ -1,0 +1,19 @@
+<div class="modal-header">
+  <h4 class="modal-title" translate="oia-module.registration.title"></h4>
+</div>
+<div class="modal-body">
+  <form [formGroup]="form" (ngSubmit)="save()" id="form">
+    <!-- Host -->
+    <div class="form-group">
+      <label class="form-label" for="host" translate="oia-module.registration.host"></label>
+      <input formControlName="host" id="host" class="form-control" />
+      <val-errors controlName="host"></val-errors>
+    </div>
+  </form>
+</div>
+<div class="modal-footer">
+  <div class="btn-group">
+    <oib-save-button [state]="state" translationKey="oia-module.registration.register"></oib-save-button>
+    <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
+  </div>
+</div>
