@@ -9,6 +9,7 @@ import {
   historyQuerySchema,
   ipFilterSchema,
   logSchema,
+  registrationSchema,
   scanModeSchema,
   userSchema
 } from '../../engine/oibus-validation-schema';
@@ -26,12 +27,14 @@ import SubscriptionController from '../controllers/subscription.controller';
 import JoiValidator from '../controllers/validators/joi.validator';
 import { KoaContext } from '../koa';
 import CertificateController from '../controllers/certificate.controller';
+import RegistrationController from '../controllers/registration.controller';
 
 const joiValidator = new JoiValidator();
 const scanModeController = new ScanModeController(joiValidator, scanModeSchema);
 const certificateController = new CertificateController(joiValidator, certificateSchema);
 const externalSourceController = new ExternalSourceController(joiValidator, externalSourceSchema);
 const oibusController = new OibusController(joiValidator, engineSchema);
+const registrationController = new RegistrationController(joiValidator, registrationSchema);
 const ipFilterController = new IpFilterController(joiValidator, ipFilterSchema);
 const northConnectorController = new NorthConnectorController(joiValidator);
 const southConnectorController = new SouthConnectorController(joiValidator);
@@ -85,6 +88,10 @@ router.post('/api/add-file', upload.single('file'), (ctx: KoaContext<any, any>) 
 router.get('/api/info', (ctx: KoaContext<any, any>) => oibusController.getOIBusInfo(ctx));
 router.get('/api/check-update', (ctx: KoaContext<any, any>) => oibusController.checkForUpdate(ctx));
 router.get('/api/update', (ctx: KoaContext<any, any>) => oibusController.update(ctx));
+
+router.get('/api/registrations', (ctx: KoaContext<any, any>) => registrationController.getRegistrationSettings(ctx));
+router.post('/api/registrations/activate', (ctx: KoaContext<any, any>) => registrationController.generateActivationCode(ctx));
+router.put('/api/registrations', (ctx: KoaContext<any, any>) => registrationController.updateRegistrationSettings(ctx));
 
 router.get('/api/ip-filters', (ctx: KoaContext<any, any>) => ipFilterController.getIpFilters(ctx));
 router.get('/api/ip-filters/:id', (ctx: KoaContext<any, any>) => ipFilterController.getIpFilter(ctx));

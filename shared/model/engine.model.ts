@@ -66,6 +66,18 @@ export interface EngineSettingsDTO extends BaseEntity {
   logParameters: LogSettings;
 }
 
+/**
+ * Registration settings DTO
+ */
+export interface RegistrationSettingsDTO extends BaseEntity {
+  enabled: boolean;
+  host: string;
+  activationCode: string;
+  activated: boolean;
+  activationDate: Instant;
+  activationExpirationDate: Instant;
+}
+
 export interface CryptoSettings {
   algorithm: string;
   initVector: string;
@@ -79,6 +91,14 @@ export interface EngineSettingsCommandDTO {
   name: string;
   port: number;
   logParameters: LogSettings;
+}
+
+/**
+ * Engine settings command DTO
+ */
+export interface RegistrationSettingsCommandDTO {
+  enabled: boolean;
+  host: string;
 }
 
 export interface OIBusError {
