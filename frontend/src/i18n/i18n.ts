@@ -1,6 +1,6 @@
 import { ENVIRONMENT_INITIALIZER, importProvidersFrom, inject, LOCALE_ID } from '@angular/core';
 import { TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
-import { WebpackTranslateLoader } from './webpack-translate-loader';
+import { ModuleTranslateLoader } from './module-translate-loader';
 
 import { DEFAULT_TZ, Language, Timezone } from '../../../shared/model/types';
 
@@ -36,7 +36,7 @@ export const provideI18n = () => {
       TranslateModule.forRoot({
         loader: {
           provide: TranslateLoader,
-          useClass: WebpackTranslateLoader
+          useClass: ModuleTranslateLoader
         }
       })
     ),
