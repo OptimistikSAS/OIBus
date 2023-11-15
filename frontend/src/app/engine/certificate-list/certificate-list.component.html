@@ -1,7 +1,10 @@
 <oib-box>
   <ng-template oibBoxTitle>
     <div class="d-flex justify-content-between align-items-center">
-      <span translate="engine.certificate.list" id="title"></span>
+      <div>
+        <span translate="engine.certificate.list" id="title"></span>
+        <span class="mx-1" *ngIf="this.certificates.length">({{this.certificates.length}})</span>
+      </div>
       <button type="button" class="btn btn-primary btn-sm oib-box-btn" (click)="addCertificate()">
         <span class="fa fa-plus" id="add-certificate"></span>
       </button>

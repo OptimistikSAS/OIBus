@@ -9,7 +9,10 @@
 <oib-box>
   <ng-template oibBoxTitle>
     <div class="d-flex justify-content-between align-items-center">
-      <span translate="north.subscriptions.title" id="title"></span>
+      <div>
+        <span translate="north.subscriptions.title" id="title"></span>
+        <span class="mx-1" *ngIf="this.subscriptions.length">({{this.subscriptions.length}})</span>
+      </div>
       <button
         class="btn btn-primary btn-sm oib-box-btn"
         *ngIf="externalSources.length + southConnectors.length !== subscriptions.length"

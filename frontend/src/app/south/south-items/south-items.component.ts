@@ -61,7 +61,7 @@ export class SouthItemsComponent implements OnInit {
 
   allItems: Array<SouthConnectorItemDTO> = [];
   itemIdsToDelete: Array<string> = [];
-  private filteredItems: Array<SouthConnectorItemDTO> = [];
+  filteredItems: Array<SouthConnectorItemDTO> = [];
   displayedItems: Page<SouthConnectorItemDTO> = emptyPage();
   displaySettings: Array<OibFormControl> = [];
 
