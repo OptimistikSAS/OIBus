@@ -37,7 +37,7 @@ const config = {
           lastVersion: 'current',
           versions: {
             current: {
-              label: '3.0'
+              label: 'v3'
             },
           },
         },
