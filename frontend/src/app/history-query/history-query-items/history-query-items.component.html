@@ -10,7 +10,10 @@
   <ng-template oibBoxTitle>
     <div class="d-flex justify-content-between align-items-center">
       <div class="d-flex align-items-center">
-        <span translate="south.items.title"></span>
+        <div>
+          <span translate="south.items.title"></span>
+          <span class="mx-1" *ngIf="this.filteredItems.length">({{this.filteredItems.length}})</span>
+        </div>
         <input
           class="ms-4 form form-control oib-box-input-header"
           [formControl]="searchControl"
