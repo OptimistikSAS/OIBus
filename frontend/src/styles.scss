@@ -4,11 +4,8 @@ html {
   font-size: 12px;
 }
 
-// TODO use the SCSS import when https://github.com/angular/angular-cli/issues/26339 is fixed
-// $fa-font-path: '../fonts';
-// @import 'font-awesome/scss/font-awesome';
-
-@import 'font-awesome/css/font-awesome';
+$fa-font-path: 'font-awesome/fonts';
+@import 'font-awesome/scss/font-awesome';
 @import './custom-bootstrap';
 
 :root {
