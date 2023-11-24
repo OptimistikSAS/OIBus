@@ -8,6 +8,7 @@ export default class ValueCacheServiceMock {
     on: jest.fn(),
     emit: jest.fn()
   } as unknown as EventEmitter;
+  valueFolder = 'valueFolder';
   start = jest.fn();
   stop = jest.fn();
   cacheValues = jest.fn();
@@ -16,4 +17,6 @@ export default class ValueCacheServiceMock {
   manageErroredValues = jest.fn();
   isEmpty = jest.fn();
   setLogger = jest.fn();
+  getQueuedFilesMetadata = jest.fn();
+  removeAllValues = jest.fn();
 }

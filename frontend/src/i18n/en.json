@@ -555,7 +555,10 @@
       "refresh-cache": "Refresh cache",
       "cache-files": "Cache files",
       "cache-files-none": "No cache files",
-      "archive-selected-files": "Archive selected files"
+      "archive-selected-files": "Archive selected files",
+      "cache-values": "Cache values",
+      "cache-values-none": "No cache values",
+      "values-count": "Nr. of values"
     },
     "archive-settings": {
       "title": "Archive",

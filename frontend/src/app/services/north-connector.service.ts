@@ -6,7 +6,8 @@ import {
   NorthConnectorCommandDTO,
   NorthConnectorDTO,
   NorthConnectorManifest,
-  NorthType
+  NorthType,
+  NorthValueFiles
 } from '../../../../shared/model/north-connector.model';
 import { ExternalSubscriptionDTO, OIBusSubscription, SubscriptionDTO } from '../../../../shared/model/subscription.model';
 
@@ -181,6 +182,14 @@ export class NorthConnectorService {
 
   removeAllCacheArchiveFiles(northId: string): Observable<void> {
     return this.http.delete<void>(`/api/north/${northId}/cache/archive-files/remove-all`);
+  }
+
+  getCacheValues(northId: string): Observable<Array<NorthValueFiles>> {
+    return this.http.get<Array<NorthValueFiles>>(`/api/north/${northId}/cache/values`);
+  }
+
+  removeCacheValues(northId: string, filenames: Array<string>): Observable<void> {
+    return this.http.post<void>(`/api/north/${northId}/cache/values/remove`, filenames);
   }
 
   /**

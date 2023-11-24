@@ -167,6 +167,28 @@ describe('ValueCache', () => {
     expect(cache.deleteKeyFromCache).toHaveBeenCalledWith('1.compact.tmp');
   });
 
+  it('should remove all values', async () => {
+    cache.removeSentValues = jest.fn();
+    fs.readdir = jest.fn().mockImplementationOnce(() => ['1.queue.tmp', '2.queue.tmp', '3.queue.tmp', '4.queue.tmp']);
+    fs.readFile = jest
+      .fn()
+      .mockImplementationOnce(() => JSON.stringify([{ data: 'myFlushBuffer1' }]))
+      .mockImplementationOnce(() => JSON.stringify([{ data: 'myFlushBuffer2' }]))
+      .mockImplementationOnce(() => JSON.stringify([{ data: 'myFlushBuffer3' }]))
+      .mockImplementationOnce(() => JSON.stringify([{ data: 'myFlushBuffer4' }]));
+
+    await cache.start();
+    await cache.removeAllValues();
+    expect(cache.removeSentValues).toHaveBeenCalledWith(
+      new Map([
+        [path.resolve('myCacheFolder', 'values', '1.queue.tmp'), [{ data: 'myFlushBuffer1' }]],
+        [path.resolve('myCacheFolder', 'values', '2.queue.tmp'), [{ data: 'myFlushBuffer2' }]],
+        [path.resolve('myCacheFolder', 'values', '3.queue.tmp'), [{ data: 'myFlushBuffer3' }]],
+        [path.resolve('myCacheFolder', 'values', '4.queue.tmp'), [{ data: 'myFlushBuffer4' }]]
+      ])
+    );
+  });
+
   it('should delete key from cache', async () => {
     fs.unlink = jest
       .fn()
@@ -357,6 +379,31 @@ describe('ValueCache', () => {
     await cache.start();
     expect(logger.debug).not.toHaveBeenCalled();
     expect(anotherLogger.debug).toHaveBeenCalledWith(`No value in cache`);
+  });
+
+  it('should return metadata from queue', async () => {
+    fs.readdir = jest.fn().mockImplementationOnce(() => ['1test.queue.tmp', '2test.queue.tmp', '3.queue.tmp', '4.queue.tmp']);
+    fs.readFile = jest
+      .fn()
+      .mockImplementationOnce(() => JSON.stringify([{ data: 'myFlushBuffer1' }]))
+      .mockImplementationOnce(() => JSON.stringify([{ data: 'myFlushBuffer2' }, { data: 'myFlushBuffer2' }]))
+      .mockImplementationOnce(() => JSON.stringify([{ data: 'myFlushBuffer3' }, { data: 'myFlushBuffer3' }, { data: 'myFlushBuffer3' }]))
+      .mockImplementationOnce(() =>
+        JSON.stringify([{ data: 'myFlushBuffer4' }, { data: 'myFlushBuffer4' }, { data: 'myFlushBuffer4' }, { data: 'myFlushBuffer4' }])
+      );
+
+    await cache.start();
+    expect(cache.getQueuedFilesMetadata('')).toEqual([
+      { filename: '1test.queue.tmp', valuesCount: 1 },
+      { filename: '2test.queue.tmp', valuesCount: 2 },
+      { filename: '3.queue.tmp', valuesCount: 3 },
+      { filename: '4.queue.tmp', valuesCount: 4 }
+    ]);
+
+    expect(cache.getQueuedFilesMetadata('test')).toEqual([
+      { filename: '1test.queue.tmp', valuesCount: 1 },
+      { filename: '2test.queue.tmp', valuesCount: 2 }
+    ]);
   });
 
   describe('with values loaded', () => {

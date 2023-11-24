@@ -83,3 +83,8 @@ export interface NorthCacheFiles {
 }
 
 export interface NorthArchiveFiles extends NorthCacheFiles {}
+
+export interface NorthValueFiles {
+  filename: string;
+  valuesCount: number;
+}

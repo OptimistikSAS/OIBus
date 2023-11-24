@@ -159,7 +159,10 @@ const createdNorth = {
   removeAllArchiveFiles: jest.fn(),
   retryAllArchiveFiles: jest.fn(),
   getMetricsDataStream: jest.fn(),
-  resetMetrics: jest.fn()
+  resetMetrics: jest.fn(),
+  getCacheValues: jest.fn(),
+  removeCacheValues: jest.fn(),
+  removeAllCacheValues: jest.fn()
 };
 
 describe('OIBusEngine', () => {
@@ -434,6 +437,31 @@ describe('OIBusEngine', () => {
     await engine.updateScanMode({ id: 'scanModeId' } as ScanModeDTO);
     expect(createdNorth.updateScanMode).toHaveBeenCalledTimes(2);
     expect(createdSouth.updateScanMode).toHaveBeenCalledTimes(2);
+
+    // Cache value operations
+    // Get cache values
+    engine.getCacheValues('id1', '');
+    expect(createdNorth.getCacheValues).toHaveBeenCalledWith('');
+
+    engine.getCacheValues('id1', 'file');
+    expect(createdNorth.getCacheValues).toHaveBeenCalledWith('file');
+
+    engine.getCacheValues('northId', '');
+    expect(createdNorth.getCacheValues).toHaveBeenCalledTimes(2);
+
+    // Remove cache values
+    engine.removeCacheValues('id1', ['1.queue.tmp', '2.queue.tmp']);
+    expect(createdNorth.removeCacheValues).toHaveBeenCalledWith(['1.queue.tmp', '2.queue.tmp']);
+
+    engine.removeCacheValues('northId', []);
+    expect(createdNorth.removeCacheValues).toHaveBeenCalledTimes(1);
+
+    // Remove all cache values
+    engine.removeAllCacheValues('id1');
+    expect(createdNorth.removeAllCacheValues).toHaveBeenCalled();
+
+    engine.removeAllCacheValues('northId');
+    expect(createdNorth.removeAllCacheValues).toHaveBeenCalledTimes(1);
 
     await engine.stopSouth('southId');
     expect(createdSouth.stop).not.toHaveBeenCalled();
