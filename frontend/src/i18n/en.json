@@ -451,7 +451,7 @@
       "title": "Items",
       "export": "Export",
       "import": {
-        "button":"Import",
+        "button": "Import",
         "imported": "Items imported",
         "title": "Import validation",
         "error-title": "These items have errors and won't be imported",
