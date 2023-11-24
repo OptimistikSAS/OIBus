@@ -21,7 +21,7 @@ html {
   background-color: $veryLightGrey;
   border-radius: 1rem;
   width: 100%;
-  height:90%;
+  height: 90%;
   color: $darkGrey;
   padding: 1rem;
 }
@@ -51,7 +51,7 @@ html {
 
 .oib-modal-category-image {
   height: 3rem;
-  transform: translate(0%,30%);
+  transform: translate(0%, 30%);
 }
 
 .oib-modal-image-block {
@@ -84,7 +84,7 @@ img.oib-title-image {
 
 .oib-title {
   margin-top: 0.4rem;
-  margin-left: 1rem
+  margin-left: 1rem;
 }
 
 img.oib-image-header {
@@ -104,20 +104,20 @@ img.oib-image-header {
 }
 
 // customization of the button of datepicker
-  .datepicker-toggle {
+.datepicker-toggle {
+  border-top-right-radius: 1rem;
+  border-bottom-right-radius: 1rem;
+  background-color: $yellow;
+  color: $darkGrey;
+  border: 0;
+  &:hover {
     border-top-right-radius: 1rem;
     border-bottom-right-radius: 1rem;
-    background-color: $yellow;
-    color: $darkGrey;
+    background-color: $electricBlue;
+    color: $white;
     border: 0;
-      &:hover {
-        border-top-right-radius: 1rem;
-        border-bottom-right-radius: 1rem;
-        background-color: $electricBlue;
-        color: $white;
-        border: 0;
-      }
   }
+}
 // change to yellow when hover a day in the ngb-datepicker
 .dropdown-menu.show {
   .btn-light {
@@ -126,13 +126,14 @@ img.oib-image-header {
   .btn-light:hover {
     background-color: $yellow;
   }
-  .btn-light:active, .bg-primary {
+  .btn-light:active,
+  .bg-primary {
     background-color: $electricBlue;
-    color:white;
+    color: white;
   }
   .bg-primary {
     background-color: $electricBlue;
-    color:white;
+    color: white;
   }
 }
 .ngb-dp-weekday.small {
@@ -339,11 +340,11 @@ img.oib-image-header {
 .btn-outline-secondary {
   border: 1px $blue solid;
   color: $blue;
-    &:hover {
-      background-color: $blue;
-      color: white;
-      border: 1px $blue solid;
-    }
+  &:hover {
+    background-color: $blue;
+    color: white;
+    border: 1px $blue solid;
+  }
 }
 
 // margin for better readability
@@ -456,7 +457,7 @@ val-errors > div {
   background-color: $white !important;
   border-bottom-left-radius: 1rem;
   border-bottom-right-radius: 1rem;
-  border:0;
+  border: 0;
 }
 // customization of modal content colors
 .modal-content {
@@ -484,8 +485,8 @@ val-errors > div {
 
 // centered position of flex items in a modal
 .modal-container-list {
-    display: flex;
-    align-items: center;
+  display: flex;
+  align-items: center;
 }
 
 // Suppression of border on not-first and not-last child of btn-group
@@ -510,7 +511,8 @@ val-errors > div {
   &:hover {
     color: $white;
     background-color: $yellow;
-  }}
+  }
+}
 
 // arrow to navigate
 .page-item {
@@ -577,7 +579,7 @@ val-errors > div {
   width: 1rem;
   height: 1rem;
   border-radius: 1rem;
-  background-color: #2478BE;
+  background-color: #2478be;
   margin-top: auto;
   margin-bottom: auto;
 }
