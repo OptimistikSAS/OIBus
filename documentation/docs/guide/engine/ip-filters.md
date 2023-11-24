@@ -12,11 +12,5 @@ IP address format is correctly specified, whether it's IPv4 or IPv6. OIBus suppo
 When you install OIBus from a script, within a Docker container, or for other use cases, it can be valuable to permit access 
 from remote IP addresses. You can execute the following curl command using the default credentials and port:
 ```curl title="curl command"
-curl --location --request POST 'http://localhost:2224/api/ip-filters' \
---header 'Content-Type: application/json' \
---data-raw '{
-    "address": "*",
-    "description": "All"
-}' \
--u "admin:pass"
+curl --location --request POST "http://localhost:2223/api/ip-filters" --header "Content-Type: application/json" --data-raw "{\"address\": \"*\", \"description\": \"All\" }" -u "admin:pass"
 ```
