@@ -146,6 +146,12 @@ router.delete('/api/north/:northId/cache/archive-files/retry-all', (ctx: KoaCont
 
 router.put('/api/north/:northId/cache/reset-metrics', (ctx: KoaContext<any, any>) => northConnectorController.resetNorthMetrics(ctx));
 
+router.get('/api/north/:northId/cache/values', (ctx: KoaContext<any, any>) => northConnectorController.getCacheValues(ctx));
+router.post('/api/north/:northId/cache/values/remove', (ctx: KoaContext<any, any>) => northConnectorController.removeCacheValues(ctx));
+router.delete('/api/north/:northId/cache/values/remove-all', (ctx: KoaContext<any, any>) =>
+  northConnectorController.removeAllCacheValues(ctx)
+);
+
 router.get('/api/south-types', (ctx: KoaContext<any, any>) => southConnectorController.getSouthConnectorTypes(ctx));
 router.get('/api/south-types/:id', (ctx: KoaContext<any, any>) => southConnectorController.getSouthConnectorManifest(ctx));
 

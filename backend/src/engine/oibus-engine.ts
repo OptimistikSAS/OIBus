@@ -313,6 +313,18 @@ export default class OIBusEngine extends BaseEngine {
     await this.northConnectors.get(northId)?.retryAllArchiveFiles();
   }
 
+  async getCacheValues(northId: string, fileNameContains: string) {
+    return this.northConnectors.get(northId)?.getCacheValues(fileNameContains) || [];
+  }
+
+  async removeCacheValues(northId: string, filenames: Array<string>) {
+    await this.northConnectors.get(northId)?.removeCacheValues(filenames);
+  }
+
+  async removeAllCacheValues(northId: string) {
+    await this.northConnectors.get(northId)?.removeAllCacheValues();
+  }
+
   getSouthDataStream(southId: string): PassThrough | null {
     return this.southConnectors.get(southId)?.getMetricsDataStream() || null;
   }

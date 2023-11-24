@@ -19,7 +19,10 @@
       <div class="mb-3">
         <oib-error-files *ngIf="northConnector" [northConnector]="northConnector"></oib-error-files>
       </div>
-      <oib-archive-files *ngIf="northConnector" [northConnector]="northConnector"></oib-archive-files>
+      <div class="mb-3">
+        <oib-archive-files *ngIf="northConnector" [northConnector]="northConnector"></oib-archive-files>
+      </div>
+      <oib-cache-values *ngIf="northConnector" [northConnector]="northConnector"></oib-cache-values>
     </div>
   </div>
 </div>

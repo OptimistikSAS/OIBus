@@ -53,6 +53,9 @@ export default jest.fn().mockImplementation(() => ({
     testSouth: jest.fn(),
     getCacheFiles: jest.fn(),
     removeCacheFiles: jest.fn(),
-    archiveCacheFiles: jest.fn()
+    archiveCacheFiles: jest.fn(),
+    getCacheValues: jest.fn(),
+    removeCacheValues: jest.fn(),
+    removeAllCacheValues: jest.fn()
   }
 }));

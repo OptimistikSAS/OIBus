@@ -1,6 +1,6 @@
 import ArchiveService from '../service/cache/archive.service';
 
-import { NorthArchiveFiles, NorthCacheFiles, NorthConnectorDTO } from '../../../shared/model/north-connector.model';
+import { NorthArchiveFiles, NorthCacheFiles, NorthConnectorDTO, NorthValueFiles } from '../../../shared/model/north-connector.model';
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
 import ValueCacheService from '../service/cache/value-cache.service';
@@ -539,6 +539,21 @@ export default class NorthConnector<T extends NorthSettings = any> {
   async resetCache(): Promise<void> {
     await this.fileCacheService.removeAllErrorFiles();
     await this.fileCacheService.removeAllCacheFiles();
+  }
+
+  getCacheValues(fileNameContains: string): Array<NorthValueFiles> {
+    return this.valueCacheService.getQueuedFilesMetadata(fileNameContains);
+  }
+
+  async removeCacheValues(filenames: Array<string>): Promise<void> {
+    const sentValues = new Map<string, OIBusDataValue[]>(
+      filenames.map(filename => [path.join(this.valueCacheService.valueFolder, filename), []])
+    );
+    await this.valueCacheService.removeSentValues(sentValues);
+  }
+
+  async removeAllCacheValues(): Promise<void> {
+    await this.valueCacheService.removeAllValues();
   }
 
   getMetricsDataStream(): PassThrough {

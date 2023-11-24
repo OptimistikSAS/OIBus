@@ -17,6 +17,7 @@ import fs from 'node:fs/promises';
 import { dirSize } from '../service/utils';
 import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 import { OIBusDataValue } from '../../../shared/model/engine.model';
+import path from 'node:path';
 
 // Mock fs
 jest.mock('node:fs/promises');
@@ -25,6 +26,9 @@ jest.mock('node:path');
 const getValuesToSendMock = jest.fn();
 const getFileToSend = jest.fn();
 const valueCacheIsEmpty = jest.fn();
+const getQueuedFilesMetadata = jest.fn();
+const removeSentValues = jest.fn();
+const removeAllValues = jest.fn();
 const fileCacheIsEmpty = jest.fn();
 const removeAllErrorFiles = jest.fn();
 const removeAllCacheFiles = jest.fn();
@@ -44,6 +48,9 @@ jest.mock(
       valueCacheServiceMock.getValuesToSend = getValuesToSendMock;
       valueCacheServiceMock.isEmpty = valueCacheIsEmpty;
       valueCacheServiceMock.triggerRun = valueTrigger;
+      valueCacheServiceMock.getQueuedFilesMetadata = getQueuedFilesMetadata;
+      valueCacheServiceMock.removeSentValues = removeSentValues;
+      valueCacheServiceMock.removeAllValues = removeAllValues;
       return valueCacheServiceMock;
     }
 );
@@ -490,6 +497,33 @@ describe('NorthConnector enabled', () => {
     expect(logger.error).toHaveBeenCalledWith(`Error while handling file "file.csv" (2). oibus error`);
     await north.handleFilesWrapper();
     expect(logger.error).toHaveBeenCalledWith(`Error while handling file "file.csv" (3). oibus error 2`);
+  });
+
+  it('should get cache values', async () => {
+    north.getCacheValues('');
+    expect(getQueuedFilesMetadata).toHaveBeenCalledWith('');
+
+    north.getCacheValues('file');
+    expect(getQueuedFilesMetadata).toHaveBeenCalledWith('file');
+  });
+
+  it('should remove all cache values', async () => {
+    await north.removeAllCacheValues();
+    expect(removeAllValues).toHaveBeenCalled();
+  });
+
+  it('should remove cache values by filename', async () => {
+    const filenames = ['file1.queue.tmp', 'file2.queue.tmp'];
+    path.join = jest.fn().mockImplementation((...args) => args.join('/'));
+
+    await north.removeCacheValues(filenames);
+
+    expect(removeSentValues).toHaveBeenCalledWith(
+      new Map([
+        ['valueFolder/file1.queue.tmp', []],
+        ['valueFolder/file2.queue.tmp', []]
+      ])
+    );
   });
 });
 

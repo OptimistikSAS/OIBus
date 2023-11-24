@@ -9,7 +9,8 @@ import {
   NorthConnectorCommandDTO,
   NorthConnectorDTO,
   NorthConnectorManifest,
-  NorthType
+  NorthType,
+  NorthValueFiles
 } from '../../../../shared/model/north-connector.model';
 import { SubscriptionDTO } from '../../../../shared/model/subscription.model';
 import { provideHttpClient } from '@angular/common/http';
@@ -278,6 +279,24 @@ describe('NorthConnectorService', () => {
     let done = false;
     service.retryAllCacheArchiveFiles('id1').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'DELETE', url: '/api/north/id1/cache/archive-files/retry-all' });
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should get cache values', () => {
+    let expectedNorthValues: Array<NorthValueFiles> | null = null;
+    const northValueFiles: Array<NorthValueFiles> = [];
+
+    service.getCacheValues('id1').subscribe(c => (expectedNorthValues = c));
+
+    http.expectOne({ url: '/api/north/id1/cache/values', method: 'GET' }).flush(northValueFiles);
+    expect(expectedNorthValues!).toEqual(northValueFiles);
+  });
+
+  it('should remove listed cache values', () => {
+    let done = false;
+    service.removeCacheValues('id1', ['file1', 'file2']).subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/north/id1/cache/values/remove' });
     testRequest.flush(null);
     expect(done).toBe(true);
   });

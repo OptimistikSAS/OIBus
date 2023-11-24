@@ -4,7 +4,7 @@ import path from 'node:path';
 import { createFolder, generateRandomId } from '../utils';
 import pino from 'pino';
 
-import { NorthCacheSettingsDTO } from '../../../../shared/model/north-connector.model';
+import { NorthCacheSettingsDTO, NorthValueFiles } from '../../../../shared/model/north-connector.model';
 import { EventEmitter } from 'node:events';
 import { OIBusDataValue } from '../../../../shared/model/engine.model';
 
@@ -20,7 +20,7 @@ const ERROR_FOLDER = 'values-errors';
 export default class ValueCacheService {
   private _logger: pino.Logger;
   private readonly baseFolder: string;
-  private readonly valueFolder: string;
+  readonly valueFolder: string;
   private readonly errorFolder: string;
   private flushInProgress = false;
 
@@ -253,6 +253,14 @@ export default class ValueCacheService {
   }
 
   /**
+   * Remove all the values from the queue.
+   * Values are not used in this case
+   */
+  async removeAllValues(): Promise<void> {
+    this.removeSentValues(this.queue);
+  }
+
+  /**
    * Remove the key (filename) from the queues if it exists and remove the associated file
    */
   async deleteKeyFromCache(key: string): Promise<void> {
@@ -335,6 +343,19 @@ export default class ValueCacheService {
       this._logger.error(error);
     }
     return files.length === 0;
+  }
+
+  /**
+   * Returns metadata about files in the current queue.
+   */
+  getQueuedFilesMetadata(fileNameContains: string): Array<NorthValueFiles> {
+    const files: Array<NorthValueFiles> = [...this.queue.entries()]
+      .map(([filepath, value]) => ({
+        filename: path.basename(filepath),
+        valuesCount: value.length
+      }))
+      .filter(file => file.filename.toUpperCase().includes(fileNameContains.toUpperCase()));
+    return files;
   }
 
   /**

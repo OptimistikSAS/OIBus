@@ -373,6 +373,41 @@ export default class NorthConnectorController {
     ctx.noContent();
   }
 
+  async getCacheValues(ctx: KoaContext<void, void>): Promise<void> {
+    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
+    if (!northConnector) {
+      return ctx.notFound();
+    }
+
+    const fileNameContains = ctx.query.fileNameContains || '';
+    const cacheValues = await ctx.app.reloadService.oibusEngine.getCacheValues(northConnector.id, fileNameContains);
+    ctx.ok(cacheValues);
+  }
+
+  async removeCacheValues(ctx: KoaContext<Array<string>, void>): Promise<void> {
+    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
+    if (!northConnector) {
+      return ctx.notFound();
+    }
+
+    if (!Array.isArray(ctx.request.body)) {
+      return ctx.throw(400, 'Invalid file list');
+    }
+
+    await ctx.app.reloadService.oibusEngine.removeCacheValues(northConnector.id, ctx.request.body);
+    ctx.noContent();
+  }
+
+  async removeAllCacheValues(ctx: KoaContext<void, void>): Promise<void> {
+    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
+    if (!northConnector) {
+      return ctx.notFound();
+    }
+
+    await ctx.app.reloadService.oibusEngine.removeAllCacheValues(northConnector.id);
+    ctx.noContent();
+  }
+
   async testNorthConnection(ctx: KoaContext<NorthConnectorCommandDTO, void>): Promise<void> {
     try {
       const manifest = ctx.request.body
