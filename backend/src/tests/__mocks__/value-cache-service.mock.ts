@@ -19,4 +19,9 @@ export default class ValueCacheServiceMock {
   setLogger = jest.fn();
   getQueuedFilesMetadata = jest.fn();
   removeAllValues = jest.fn();
+  getErrorValueFiles = jest.fn();
+  removeErrorValues = jest.fn();
+  removeAllErrorValues = jest.fn();
+  retryErrorValues = jest.fn();
+  retryAllErrorValues = jest.fn();
 }

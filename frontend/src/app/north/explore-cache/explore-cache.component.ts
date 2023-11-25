@@ -15,6 +15,7 @@ import { ErrorFilesComponent } from './error-files/error-files.component';
 import { ArchiveFilesComponent } from './archive-files/archive-files.component';
 import { CacheFilesComponent } from './cache-files/cache-files.component';
 import { CacheValuesComponent } from './cache-values/cache-values.component';
+import { ErrorValuesComponent } from './error-values/error-values.component';
 
 @Component({
   selector: 'oib-explore-cache',
@@ -34,7 +35,8 @@ import { CacheValuesComponent } from './cache-values/cache-values.component';
     ErrorFilesComponent,
     ArchiveFilesComponent,
     CacheFilesComponent,
-    CacheValuesComponent
+    CacheValuesComponent,
+    ErrorValuesComponent
   ],
   standalone: true
 })
@@ -45,6 +47,7 @@ export class ExploreCacheComponent implements OnInit {
   @ViewChild(CacheFilesComponent) cacheFilesComponent!: CacheFilesComponent;
 
   @ViewChild(CacheValuesComponent) cacheValuesComponent!: CacheValuesComponent;
+  @ViewChild(ErrorValuesComponent) errorValuesComponent!: ErrorValuesComponent;
 
   constructor(
     private route: ActivatedRoute,
@@ -73,5 +76,6 @@ export class ExploreCacheComponent implements OnInit {
     this.cacheFilesComponent.refreshCacheFiles();
 
     this.cacheValuesComponent.refreshCacheValues();
+    this.errorValuesComponent.refreshErrorValues();
   }
 }

@@ -162,7 +162,12 @@ const createdNorth = {
   resetMetrics: jest.fn(),
   getCacheValues: jest.fn(),
   removeCacheValues: jest.fn(),
-  removeAllCacheValues: jest.fn()
+  removeAllCacheValues: jest.fn(),
+  getValueErrors: jest.fn(),
+  removeValueErrors: jest.fn(),
+  removeAllValueErrors: jest.fn(),
+  retryValueErrors: jest.fn(),
+  retryAllValueErrors: jest.fn()
 };
 
 describe('OIBusEngine', () => {
@@ -462,6 +467,41 @@ describe('OIBusEngine', () => {
 
     engine.removeAllCacheValues('northId');
     expect(createdNorth.removeAllCacheValues).toHaveBeenCalledTimes(1);
+
+    // Get cache value errors
+    engine.getValueErrors('id1', '', '', '');
+    expect(createdNorth.getValueErrors).toHaveBeenCalledWith('', '', '');
+
+    engine.getValueErrors('northId', '', '', '');
+    expect(createdNorth.getValueErrors).toHaveBeenCalledTimes(1);
+
+    // Remove cache value errors
+    engine.removeValueErrors('id1', ['1.queue.tmp', '2.queue.tmp']);
+    expect(createdNorth.removeValueErrors).toHaveBeenCalledWith(['1.queue.tmp', '2.queue.tmp']);
+
+    engine.removeValueErrors('northId', []);
+    expect(createdNorth.removeValueErrors).toHaveBeenCalledTimes(1);
+
+    // Remove all cache value errors
+    engine.removeAllValueErrors('id1');
+    expect(createdNorth.removeAllValueErrors).toHaveBeenCalled();
+
+    engine.removeAllValueErrors('northId');
+    expect(createdNorth.removeAllValueErrors).toHaveBeenCalledTimes(1);
+
+    // Retry cache value errors
+    engine.retryValueErrors('id1', ['1.queue.tmp', '2.queue.tmp']);
+    expect(createdNorth.retryValueErrors).toHaveBeenCalledWith(['1.queue.tmp', '2.queue.tmp']);
+
+    engine.retryValueErrors('northId', []);
+    expect(createdNorth.retryValueErrors).toHaveBeenCalledTimes(1);
+
+    // Retry all cache value errors
+    engine.retryAllValueErrors('id1');
+    expect(createdNorth.retryAllValueErrors).toHaveBeenCalled();
+
+    engine.retryAllValueErrors('northId');
+    expect(createdNorth.retryAllValueErrors).toHaveBeenCalledTimes(1);
 
     await engine.stopSouth('southId');
     expect(createdSouth.stop).not.toHaveBeenCalled();

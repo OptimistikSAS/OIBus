@@ -556,6 +556,30 @@ export default class NorthConnector<T extends NorthSettings = any> {
     await this.valueCacheService.removeAllValues();
   }
 
+  async getValueErrors(fromDate: string, toDate: string, fileNameContains: string): Promise<Array<NorthArchiveFiles>> {
+    return await this.valueCacheService.getErrorValueFiles(fromDate, toDate, fileNameContains);
+  }
+
+  async removeValueErrors(filenames: Array<string>): Promise<void> {
+    this.logger.trace(`Removing ${filenames.length} value error files from North connector "${this.connector.name}"...`);
+    await this.valueCacheService.removeErrorValues(filenames);
+  }
+
+  async removeAllValueErrors(): Promise<void> {
+    this.logger.trace(`Removing all value error files from North connector "${this.connector.name}"...`);
+    await this.valueCacheService.removeAllErrorValues();
+  }
+
+  async retryValueErrors(filenames: Array<string>): Promise<void> {
+    this.logger.trace(`Retrying ${filenames.length} value error files in North connector "${this.connector.name}"...`);
+    await this.valueCacheService.retryErrorValues(filenames);
+  }
+
+  async retryAllValueErrors(): Promise<void> {
+    this.logger.trace(`Retrying all value error files in North connector "${this.connector.name}"...`);
+    await this.valueCacheService.retryAllErrorValues();
+  }
+
   getMetricsDataStream(): PassThrough {
     return this.metricsService!.stream;
   }

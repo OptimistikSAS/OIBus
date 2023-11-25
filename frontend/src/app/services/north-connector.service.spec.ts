@@ -301,6 +301,32 @@ describe('NorthConnectorService', () => {
     expect(done).toBe(true);
   });
 
+  it('should get cache value errors', () => {
+    let expectedNorthCacheFiles: Array<NorthCacheFiles> | null = null;
+    const northCacheFiles: Array<NorthCacheFiles> = [];
+
+    service.getCacheErrorValues('id1').subscribe(c => (expectedNorthCacheFiles = c));
+
+    http.expectOne({ url: '/api/north/id1/cache/value-errors', method: 'GET' }).flush(northCacheFiles);
+    expect(expectedNorthCacheFiles!).toEqual(northCacheFiles);
+  });
+
+  it('should remove cache value errors', () => {
+    let done = false;
+    service.removeCacheErrorValues('id1', ['file1', 'file2']).subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/north/id1/cache/value-errors/remove' });
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should retry cache value errors', () => {
+    let done = false;
+    service.retryCacheErrorValues('id1', ['file1', 'file2']).subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/north/id1/cache/value-errors/retry' });
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
   it('should reset North metrics', () => {
     let done = false;
 

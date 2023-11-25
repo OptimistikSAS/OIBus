@@ -558,7 +558,9 @@
       "archive-selected-files": "Archive selected files",
       "cache-values": "Cache values",
       "cache-values-none": "No cache values",
-      "values-count": "Nr. of values"
+      "values-count": "Nr. of values",
+      "error-values": "Error values",
+      "error-values-none": "No error values"
     },
     "archive-settings": {
       "title": "Archive",
