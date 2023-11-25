@@ -14,6 +14,7 @@ import http from 'node:http';
 import { OIBusInfo } from '../../../shared/model/engine.model';
 import os from 'node:os';
 import { version } from '../../package.json';
+import { NorthCacheFiles } from '../../../shared/model/north-connector.model';
 
 const COMPRESSION_LEVEL = 9;
 
@@ -443,4 +444,38 @@ export const getOIBusInfo = (): OIBusInfo => {
     architecture: process.arch,
     version
   };
+};
+
+/**
+ * Returns file metadata from the folder based on filters.
+ */
+export const getFilesFiltered = async (
+  folder: string,
+  fromDate: Instant,
+  toDate: Instant,
+  nameFilter: string,
+  logger: pino.Logger
+): Promise<Array<NorthCacheFiles>> => {
+  const filenames = await fs.readdir(folder);
+  const filteredFilenames: Array<NorthCacheFiles> = [];
+  for (const filename of filenames) {
+    try {
+      const stats = await fs.stat(path.join(folder, filename));
+
+      const dateIsSuperiorToStart = fromDate ? stats.mtimeMs >= DateTime.fromISO(fromDate).toMillis() : true;
+      const dateIsInferiorToEnd = toDate ? stats.mtimeMs <= DateTime.fromISO(toDate).toMillis() : true;
+      const dateIsBetween = dateIsSuperiorToStart && dateIsInferiorToEnd;
+      const filenameContains = nameFilter ? filename.toUpperCase().includes(nameFilter.toUpperCase()) : true;
+      if (dateIsBetween && filenameContains) {
+        filteredFilenames.push({
+          filename,
+          modificationDate: DateTime.fromMillis(stats.mtimeMs).toUTC().toISO() as Instant,
+          size: stats.size
+        });
+      }
+    } catch (error) {
+      logger.error(`Error while reading in ${path.basename(folder)} folder file stats "${path.join(folder, filename)}": ${error}`);
+    }
+  }
+  return filteredFilenames;
 };

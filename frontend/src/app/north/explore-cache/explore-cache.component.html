@@ -22,7 +22,10 @@
       <div class="mb-3">
         <oib-archive-files *ngIf="northConnector" [northConnector]="northConnector"></oib-archive-files>
       </div>
-      <oib-cache-values *ngIf="northConnector" [northConnector]="northConnector"></oib-cache-values>
+      <div class="mb-3">
+        <oib-cache-values *ngIf="northConnector" [northConnector]="northConnector"></oib-cache-values>
+      </div>
+      <oib-error-values *ngIf="northConnector" [northConnector]="northConnector"></oib-error-values>
     </div>
   </div>
 </div>

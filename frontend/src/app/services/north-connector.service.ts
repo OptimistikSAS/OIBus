@@ -192,6 +192,17 @@ export class NorthConnectorService {
     return this.http.post<void>(`/api/north/${northId}/cache/values/remove`, filenames);
   }
 
+  getCacheErrorValues(northId: string): Observable<Array<NorthCacheFiles>> {
+    return this.http.get<Array<NorthCacheFiles>>(`/api/north/${northId}/cache/value-errors`);
+  }
+
+  removeCacheErrorValues(northId: string, filenames: Array<string>): Observable<void> {
+    return this.http.post<void>(`/api/north/${northId}/cache/value-errors/remove`, filenames);
+  }
+
+  retryCacheErrorValues(northId: string, filenames: Array<string>): Observable<void> {
+    return this.http.post<void>(`/api/north/${northId}/cache/value-errors/retry`, filenames);
+  }
   /**
    * Reset the selected North metrics
    * @param northId - the ID of the North connector to reset

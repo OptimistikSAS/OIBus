@@ -2,10 +2,9 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 
 import FileCache from './file-cache.service';
-import { createFolder } from '../utils';
+import { createFolder, getFilesFiltered } from '../utils';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/logger.mock';
-import { DateTime } from 'luxon';
 import { NorthCacheSettingsDTO } from '../../../../shared/model/north-connector.model';
 
 jest.mock('node:fs/promises');
@@ -306,109 +305,13 @@ describe('FileCache', () => {
   });
 
   it('should properly get error files', async () => {
-    (fs.readdir as jest.Mock).mockImplementation(() => ['file1', 'file2', 'file3', 'anotherFile', 'errorFile']);
-    (fs.stat as jest.Mock)
-      .mockImplementationOnce(() => ({ mtimeMs: DateTime.fromISO('2020-02-02T04:02:02.222Z').toMillis() }))
-      .mockImplementationOnce(() => ({ mtimeMs: DateTime.fromISO('2020-02-02T06:02:02.222Z').toMillis() }))
-      .mockImplementationOnce(() => ({ mtimeMs: DateTime.fromISO('2020-02-04T02:02:02.222Z').toMillis() }))
-      .mockImplementationOnce(() => ({ mtimeMs: DateTime.fromISO('2020-02-05T02:02:02.222Z').toMillis() }))
-      .mockImplementationOnce(() => {
-        throw new Error('error file');
-      });
-
-    const files = await cache.getErrorFiles('2020-02-02T02:02:02.222Z', '2020-02-03T02:02:02.222Z', 'file');
-
-    expect(files).toEqual([
-      { filename: 'file1', modificationDate: '2020-02-02T04:02:02.222Z' },
-      { filename: 'file2', modificationDate: '2020-02-02T06:02:02.222Z' }
-    ]);
-    expect(logger.error).toHaveBeenCalledWith(
-      `Error while reading in files-errors folder file stats "${path.resolve(
-        'myCacheFolder',
-        'files-errors',
-        'errorFile'
-      )}": Error: error file`
-    );
-  });
-
-  it('should properly get error files', async () => {
-    (fs.readdir as jest.Mock).mockImplementation(() => ['file1', 'file2']);
-    (fs.stat as jest.Mock)
-      .mockReturnValueOnce({ mtimeMs: DateTime.fromISO('2000-02-02T02:02:02.222Z').toMillis() })
-      .mockReturnValueOnce({ mtimeMs: DateTime.fromISO('2030-02-02T02:02:02.222Z').toMillis() });
-
-    const files = await cache.getErrorFiles('2020-02-02T02:02:02.222Z', '2020-02-03T02:02:02.222Z', 'file');
-
-    expect(files).toEqual([]);
-  });
-
-  it('should properly get error files without filtering', async () => {
-    (fs.readdir as jest.Mock).mockImplementation(() => ['file1', 'file2']);
-    (fs.stat as jest.Mock)
-      .mockReturnValueOnce({ mtimeMs: DateTime.fromISO('2000-02-02T02:02:02.222Z').toMillis(), size: 100 })
-      .mockReturnValueOnce({ mtimeMs: DateTime.fromISO('2030-02-02T02:02:02.222Z').toMillis(), size: 60 });
-
-    const files = await cache.getErrorFiles('', '', '');
-
-    expect(files).toEqual([
-      { filename: 'file1', modificationDate: '2000-02-02T02:02:02.222Z', size: 100 },
-      {
-        filename: 'file2',
-        modificationDate: '2030-02-02T02:02:02.222Z',
-        size: 60
-      }
-    ]);
+    await cache.getErrorFiles('2020-02-02T02:02:02.222Z', '2020-02-03T02:02:02.222Z', 'file');
+    expect(getFilesFiltered).toHaveBeenCalled();
   });
 
   it('should properly get cache files', async () => {
-    (fs.readdir as jest.Mock).mockImplementation(() => ['file1', 'file2', 'file3', 'anotherFile', 'errorFile']);
-    (fs.stat as jest.Mock)
-      .mockImplementationOnce(() => ({ mtimeMs: DateTime.fromISO('2020-02-02T04:02:02.222Z').toMillis() }))
-      .mockImplementationOnce(() => ({ mtimeMs: DateTime.fromISO('2020-02-02T06:02:02.222Z').toMillis() }))
-      .mockImplementationOnce(() => ({ mtimeMs: DateTime.fromISO('2020-02-04T02:02:02.222Z').toMillis() }))
-      .mockImplementationOnce(() => ({ mtimeMs: DateTime.fromISO('2020-02-05T02:02:02.222Z').toMillis() }))
-      .mockImplementationOnce(() => {
-        throw new Error('error file');
-      });
-
-    const files = await cache.getCacheFiles('2020-02-02T02:02:02.222Z', '2020-02-03T02:02:02.222Z', 'file');
-
-    expect(files).toEqual([
-      { filename: 'file1', modificationDate: '2020-02-02T04:02:02.222Z' },
-      { filename: 'file2', modificationDate: '2020-02-02T06:02:02.222Z' }
-    ]);
-    expect(logger.error).toHaveBeenCalledWith(
-      `Error while reading in files folder file stats "${path.resolve('myCacheFolder', 'files', 'errorFile')}": Error: error file`
-    );
-  });
-
-  it('should properly get cache files', async () => {
-    (fs.readdir as jest.Mock).mockImplementation(() => ['file1', 'file2']);
-    (fs.stat as jest.Mock)
-      .mockReturnValueOnce({ mtimeMs: DateTime.fromISO('2000-02-02T02:02:02.222Z').toMillis() })
-      .mockReturnValueOnce({ mtimeMs: DateTime.fromISO('2030-02-02T02:02:02.222Z').toMillis() });
-
-    const files = await cache.getCacheFiles('2020-02-02T02:02:02.222Z', '2020-02-03T02:02:02.222Z', 'file');
-
-    expect(files).toEqual([]);
-  });
-
-  it('should properly get cache files without filtering', async () => {
-    (fs.readdir as jest.Mock).mockImplementation(() => ['file1', 'file2']);
-    (fs.stat as jest.Mock)
-      .mockReturnValueOnce({ mtimeMs: DateTime.fromISO('2000-02-02T02:02:02.222Z').toMillis(), size: 100 })
-      .mockReturnValueOnce({ mtimeMs: DateTime.fromISO('2030-02-02T02:02:02.222Z').toMillis(), size: 60 });
-
-    const files = await cache.getCacheFiles('', '', '');
-
-    expect(files).toEqual([
-      { filename: 'file1', modificationDate: '2000-02-02T02:02:02.222Z', size: 100 },
-      {
-        filename: 'file2',
-        modificationDate: '2030-02-02T02:02:02.222Z',
-        size: 60
-      }
-    ]);
+    await cache.getCacheFiles('2020-02-02T02:02:02.222Z', '2020-02-03T02:02:02.222Z', 'file');
+    expect(getFilesFiltered).toHaveBeenCalled();
   });
 
   it('should properly change logger', async () => {

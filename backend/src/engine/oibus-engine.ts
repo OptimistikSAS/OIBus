@@ -325,6 +325,26 @@ export default class OIBusEngine extends BaseEngine {
     await this.northConnectors.get(northId)?.removeAllCacheValues();
   }
 
+  async getValueErrors(northId: string, start: Instant, end: Instant, fileNameContains: string) {
+    return (await this.northConnectors.get(northId)?.getValueErrors(start, end, fileNameContains)) || [];
+  }
+
+  async removeValueErrors(northId: string, filenames: Array<string>) {
+    await this.northConnectors.get(northId)?.removeValueErrors(filenames);
+  }
+
+  async removeAllValueErrors(northId: string) {
+    await this.northConnectors.get(northId)?.removeAllValueErrors();
+  }
+
+  async retryValueErrors(northId: string, filenames: Array<string>) {
+    await this.northConnectors.get(northId)?.retryValueErrors(filenames);
+  }
+
+  async retryAllValueErrors(northId: string) {
+    await this.northConnectors.get(northId)?.retryAllValueErrors();
+  }
+
   getSouthDataStream(southId: string): PassThrough | null {
     return this.southConnectors.get(southId)?.getMetricsDataStream() || null;
   }

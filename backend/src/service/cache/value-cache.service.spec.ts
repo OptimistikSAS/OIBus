@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 
 import ValueCache from './value-cache.service';
 
-import { createFolder, generateRandomId, dirSize } from '../utils';
+import { createFolder, generateRandomId, dirSize, getFilesFiltered } from '../utils';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/logger.mock';
 import { NorthCacheSettingsDTO } from '../../../../shared/model/north-connector.model';
@@ -12,7 +12,8 @@ import { OIBusDataValue } from '../../../../shared/model/engine.model';
 jest.mock('../utils', () => ({
   generateRandomId: jest.fn(() => 'generated-uuid'),
   createFolder: jest.fn(() => Promise.resolve()),
-  dirSize: jest.fn()
+  dirSize: jest.fn(),
+  getFilesFiltered: jest.fn(() => Promise.resolve([]))
 }));
 jest.mock('node:fs/promises');
 // Mock logger
@@ -404,6 +405,95 @@ describe('ValueCache', () => {
       { filename: '1test.queue.tmp', valuesCount: 1 },
       { filename: '2test.queue.tmp', valuesCount: 2 }
     ]);
+  });
+
+  it('should return metadata about error value files', async () => {
+    await cache.getErrorValueFiles('2020-02-02T02:02:02.222Z', '2020-02-03T02:02:02.222Z', 'file');
+    expect(getFilesFiltered).toHaveBeenCalled();
+  });
+
+  it('should remove error value files', async () => {
+    const valuesToRemove = ['1.queue.tmp', '2.queue.tmp'];
+    const deleteKeyFromCacheSpy = jest.spyOn(cache, 'deleteKeyFromCache');
+    await cache.removeErrorValues(valuesToRemove);
+
+    expect(deleteKeyFromCacheSpy).toHaveBeenCalledTimes(2);
+    expect(deleteKeyFromCacheSpy).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values-errors', '1.queue.tmp'));
+    expect(deleteKeyFromCacheSpy).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values-errors', '2.queue.tmp'));
+  });
+
+  it('should remove all error value files', async () => {
+    const removeErrorValuesSpy = jest.spyOn(cache, 'removeErrorValues');
+    (fs.readdir as jest.Mock).mockImplementationOnce(() => ['1.queue.tmp', '2.queue.tmp', '3.queue.tmp', '4.queue.tmp']);
+
+    await cache.removeAllErrorValues();
+    expect(removeErrorValuesSpy).toHaveBeenCalledWith(['1.queue.tmp', '2.queue.tmp', '3.queue.tmp', '4.queue.tmp']);
+    expect(logger.debug).toHaveBeenCalledWith(`Removing 4 files from "${path.resolve('myCacheFolder', 'values-errors')}"`);
+  });
+
+  it('should remove all error value files when there are none', async () => {
+    const removeErrorValuesSpy = jest.spyOn(cache, 'removeErrorValues');
+    (fs.readdir as jest.Mock).mockImplementationOnce(() => []);
+
+    await cache.removeAllErrorValues();
+    expect(removeErrorValuesSpy).not.toHaveBeenCalled();
+    expect(logger.debug).toHaveBeenCalledWith(
+      `The error value folder "${path.resolve('myCacheFolder', 'values-errors')}" is empty. Nothing to delete`
+    );
+  });
+
+  it('should retry error value files', async () => {
+    const valuesToRetry = ['1.queue.tmp', '2.queue.tmp', 'error.queue.tmp'];
+    (fs.readFile as jest.Mock)
+      .mockImplementationOnce(() => `[{"data": "myFirstValue"}]`)
+      .mockImplementationOnce(() => `[{"data": "mySecondValue"}]`)
+      .mockImplementationOnce(() => {
+        throw new Error('read error');
+      });
+
+    const deleteKeyFromCacheSpy = jest.spyOn(cache, 'deleteKeyFromCache');
+    const cacheValuesSpy = jest.spyOn(cache, 'cacheValues');
+
+    await cache.retryErrorValues(valuesToRetry);
+
+    // 1.queue.tmp
+    expect(fs.readFile).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values-errors', '1.queue.tmp'), { encoding: 'utf8' });
+    expect(cacheValuesSpy).toHaveBeenCalledWith([{ data: 'myFirstValue' }]);
+    expect(deleteKeyFromCacheSpy).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values-errors', '1.queue.tmp'));
+
+    // 2.queue.tmp
+    expect(fs.readFile).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values-errors', '2.queue.tmp'), { encoding: 'utf8' });
+    expect(cacheValuesSpy).toHaveBeenCalledWith([{ data: 'mySecondValue' }]);
+    expect(deleteKeyFromCacheSpy).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values-errors', '2.queue.tmp'));
+
+    // error.queue.tmp
+    expect(fs.readFile).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values-errors', 'error.queue.tmp'), { encoding: 'utf8' });
+    expect(logger.error).toHaveBeenCalledWith(
+      `Error while reading error value file "${path.resolve('myCacheFolder', 'values-errors', 'error.queue.tmp')}": Error: read error`
+    );
+
+    expect(cacheValuesSpy).toHaveBeenCalledTimes(2);
+    expect(deleteKeyFromCacheSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it('should retry all error value files', async () => {
+    const retryErrorValuesSpy = jest.spyOn(cache, 'retryErrorValues');
+    (fs.readdir as jest.Mock).mockImplementationOnce(() => ['1.queue.tmp', '2.queue.tmp', '3.queue.tmp', '4.queue.tmp']);
+
+    await cache.retryAllErrorValues();
+    expect(retryErrorValuesSpy).toHaveBeenCalledWith(['1.queue.tmp', '2.queue.tmp', '3.queue.tmp', '4.queue.tmp']);
+    expect(logger.debug).toHaveBeenCalledWith(`Retrying 4 files from "${path.resolve('myCacheFolder', 'values-errors')}"`);
+  });
+
+  it('should retry all error value files when there are none', async () => {
+    const retryErrorValuesSpy = jest.spyOn(cache, 'retryErrorValues');
+    (fs.readdir as jest.Mock).mockImplementationOnce(() => []);
+
+    await cache.retryAllErrorValues();
+    expect(retryErrorValuesSpy).not.toHaveBeenCalled();
+    expect(logger.debug).toHaveBeenCalledWith(
+      `The error value folder "${path.resolve('myCacheFolder', 'values-errors')}" is empty. Nothing to retry`
+    );
   });
 
   describe('with values loaded', () => {

@@ -56,6 +56,11 @@ export default jest.fn().mockImplementation(() => ({
     archiveCacheFiles: jest.fn(),
     getCacheValues: jest.fn(),
     removeCacheValues: jest.fn(),
-    removeAllCacheValues: jest.fn()
+    removeAllCacheValues: jest.fn(),
+    getValueErrors: jest.fn(),
+    removeValueErrors: jest.fn(),
+    removeAllValueErrors: jest.fn(),
+    retryValueErrors: jest.fn(),
+    retryAllValueErrors: jest.fn()
   }
 }));

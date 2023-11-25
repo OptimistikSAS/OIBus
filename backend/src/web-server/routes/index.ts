@@ -152,6 +152,18 @@ router.delete('/api/north/:northId/cache/values/remove-all', (ctx: KoaContext<an
   northConnectorController.removeAllCacheValues(ctx)
 );
 
+router.get('/api/north/:northId/cache/value-errors', (ctx: KoaContext<any, any>) => northConnectorController.getValueErrors(ctx));
+router.post('/api/north/:northId/cache/value-errors/remove', (ctx: KoaContext<any, any>) =>
+  northConnectorController.removeValueErrors(ctx)
+);
+router.delete('/api/north/:northId/cache/value-errors/remove-all', (ctx: KoaContext<any, any>) =>
+  northConnectorController.removeAllValueErrors(ctx)
+);
+router.post('/api/north/:northId/cache/value-errors/retry', (ctx: KoaContext<any, any>) => northConnectorController.retryValueErrors(ctx));
+router.delete('/api/north/:northId/cache/value-errors/retry-all', (ctx: KoaContext<any, any>) =>
+  northConnectorController.retryAllValueErrors(ctx)
+);
+
 router.get('/api/south-types', (ctx: KoaContext<any, any>) => southConnectorController.getSouthConnectorTypes(ctx));
 router.get('/api/south-types/:id', (ctx: KoaContext<any, any>) => southConnectorController.getSouthConnectorManifest(ctx));
 
