@@ -61,7 +61,7 @@ export class FileTableComponent implements OnInit {
 
   ngOnInit() {
     this.clearCheckBoxes();
-    this.changePage(0);
+    this.sortTable();
   }
 
   /**
