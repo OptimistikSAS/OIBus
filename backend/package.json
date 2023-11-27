@@ -97,7 +97,7 @@
   },
   "devDependencies": {
     "@types/basic-auth": "1.1.5",
-    "@types/better-sqlite3": "7.6.6",
+    "@types/better-sqlite3": "7.6.8",
     "@types/cron": "2.0.1",
     "@types/jest": "29.5.7",
     "@types/jsonwebtoken": "9.0.4",
