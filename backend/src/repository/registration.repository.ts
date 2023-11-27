@@ -18,7 +18,7 @@ export default class RegistrationRepository {
    */
   getRegistrationSettings(): RegistrationSettingsDTO | null {
     const query =
-      `SELECT id, host, activation_code AS activationCode, status, activation_date AS activationDate, ` +
+      `SELECT id, host, token, activation_code AS activationCode, status, activation_date AS activationDate, ` +
       `check_url AS checkUrl, activation_expiration_date AS activationExpirationDate FROM ${REGISTRATIONS_TABLE};`;
     const results: Array<any> = this.database.prepare(query).all();
 
@@ -26,6 +26,7 @@ export default class RegistrationRepository {
       return {
         id: results[0].id,
         host: results[0].host,
+        token: results[0].token,
         activationCode: results[0].activationCode,
         status: results[0].status,
         activationDate: results[0].activationDate,
@@ -41,8 +42,8 @@ export default class RegistrationRepository {
    * Update registration in the database.
    */
   updateRegistration(command: RegistrationSettingsCommandDTO, activationCode: string, checkUrl: string, expirationDate: Instant): void {
-    const query = `UPDATE ${REGISTRATIONS_TABLE} SET host = ?, status = ?, activation_code = ?, check_url = ?, activation_expiration_date = ? WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
-    this.database.prepare(query).run(command.host, 'PENDING', activationCode, checkUrl, expirationDate);
+    const query = `UPDATE ${REGISTRATIONS_TABLE} SET host = ?, status = 'PENDING', token = '', activation_code = ?, check_url = ?, activation_expiration_date = ? WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
+    this.database.prepare(query).run(command.host, activationCode, checkUrl, expirationDate);
   }
 
   /**
@@ -57,13 +58,13 @@ export default class RegistrationRepository {
     this.database.prepare(query).run(generateRandomId(), command.host, 'NOT_REGISTERED');
   }
 
-  activateRegistration(activationDate: Instant) {
-    const query = `UPDATE ${REGISTRATIONS_TABLE} SET status = 'REGISTERED', activation_expiration_date = '', activation_code = '', check_url = '', activation_date = ? WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
-    this.database.prepare(query).run(activationDate);
+  activateRegistration(activationDate: Instant, token: string) {
+    const query = `UPDATE ${REGISTRATIONS_TABLE} SET status = 'REGISTERED', activation_expiration_date = '', activation_code = '', check_url = '', activation_date = ?, token = ? WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
+    this.database.prepare(query).run(activationDate, token);
   }
 
   unregister() {
-    const query = `UPDATE ${REGISTRATIONS_TABLE} SET status = 'NOT_REGISTERED', activation_expiration_date = '', check_url = '', activation_date = '', activation_code = '' WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
+    const query = `UPDATE ${REGISTRATIONS_TABLE} SET status = 'NOT_REGISTERED', activation_expiration_date = '', check_url = '', activation_date = '', activation_code = '', token = '' WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
     this.database.prepare(query).run();
   }
 }
