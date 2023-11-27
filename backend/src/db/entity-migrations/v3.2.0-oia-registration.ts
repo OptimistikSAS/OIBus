@@ -20,6 +20,7 @@ async function createRegistrationTable(knex: Knex): Promise<void> {
     table.string('check_url').unique();
     table.string('activation_date');
     table.string('activation_expiration_date');
+    table.string('token');
     table.enum('status', REGISTRATION_STATUS).notNullable().defaultTo('NOT_REGISTERED');
   });
 }

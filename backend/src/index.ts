@@ -103,7 +103,13 @@ const LOG_DB_NAME = 'logs.db';
     loggerService.createChildLogger('history-engine')
   );
 
-  const oibusService = new OIBusService(engine, historyQueryEngine, repositoryService, encryptionService);
+  const oibusService = new OIBusService(
+    engine,
+    historyQueryEngine,
+    repositoryService,
+    encryptionService,
+    loggerService.createChildLogger('engine')
+  );
 
   await engine.start();
   await historyQueryEngine.start();
@@ -134,18 +140,16 @@ const LOG_DB_NAME = 'logs.db';
 
   let stopping = false;
   // Catch Ctrl+C and properly stop the Engine
-  process.on('SIGINT', () => {
+  process.on('SIGINT', async () => {
     if (stopping) return;
     console.info('SIGINT (Ctrl+C) received. Stopping everything.');
     stopping = true;
-    const stopAll = [engine.stop(), historyQueryEngine.stop()];
-    Promise.allSettled(stopAll).then(async () => {
-      await server.stop();
-      loggerService.stop();
-      console.info('OIBus stopped');
-      process.exit();
-      stopping = false;
-    });
+    await oibusService.stopOIBus();
+    await server.stop();
+    loggerService.stop();
+    console.info('OIBus stopped');
+    stopping = false;
+    process.exit();
   });
 
   loggerService.logger!.info(`OIBus fully started: ${JSON.stringify(getOIBusInfo())}`);

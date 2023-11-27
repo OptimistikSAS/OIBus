@@ -8,6 +8,7 @@ export default class RegistrationController extends AbstractController {
     if (!registrationSettings) {
       return ctx.notFound();
     }
+    registrationSettings.token = '';
     return ctx.ok(registrationSettings);
   }
 
