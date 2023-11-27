@@ -1,0 +1,96 @@
+---
+sidebar_position: 12
+---
+
+import SerializationSettings from './_south-rest-serialization-settings.mdx';
+
+
+# SLIM (Rest API)
+Retrieve data from the [Agilent SLIMS](https://www.agilent.com/en/product/software-informatics/lab-workflow-management-software/slims)
+application, which serves as a comprehensive laboratory management solution.
+
+## Specific settings
+Here are the details for configuring your connection:
+- **URL**: This is the address of the SLIMS application.
+- **Port**: Specify the port that the application is listening on.
+- **Username**: Provide the username used for authentication.
+- **Password**: Enter the password used for authentication.
+- **Use proxy**: Choose whether to route the request through a proxy.
+- **Accept unauthorized certificate**: Decide whether to accept certificates even if they are outdated or self-signed.
+
+## Item settings
+In the South connector, each item can be configured to be queried according to the chosen scan mode. Multiple queries to
+the same database can be configured within the same South connector. OIBus will execute the queries one after another,
+prepare the output file, and then send it to North connectors.
+
+### Endpoint
+The endpoint where to send the HTTP request, for instance `/slimsrest/rest/Result/advanced`.
+
+### Body and query params
+The **Body** field supports JSON syntax and can utilize internal variables. These variables serve two primary purposes:
+ensuring data stream resilience in case of connection failures and breaking down large intervals into smaller chunks,
+thus reducing the load on both the server and the network (as explained in the [big queries section](#splitting-large-queries)).
+
+The **Query params** field is structured as a key/value array and can also make use of the same interval variables.
+
+#### Query variables
+In OIBus, you can utilize the following internal variables that will be interpreted by the system:
+
+- **@StartTime**: Initially, the @StartTime variable is set to the date of the first execution of the query. When results
+are retrieved from the application, the @StartTime value is updated to the most recent timestamp among those results in the
+field used as a reference (refer to [the datetime fields section](#datetime-fields)).
+- **@EndTime**: The @EndTime variable is set to either the current time (_now()_) or the end of the sub-interval if a
+query is split.
+
+```json title="Body example with variables"
+{
+    "criteria": {
+        "operator": "and",
+        "criteria": [
+            {
+                "fieldName": "rslt_fk_status",
+                "operator": "equals",
+                "value": 14
+            },
+            {
+                "fieldName": "rslt_cf_pid",
+                "operator": "notNull"
+            },
+            {
+                "fieldName": "rslt_cf_samplingDateAndTime",
+                "operator": "notNull"
+            },
+            {
+                "fieldName": "rslt_modifiedOn",
+                "operator": "between",
+                "start": @StartTime,
+                "end": @EndTime
+            }
+        ]
+    },
+    "sortBy": [
+        "rslt_modifiedOn"
+    ]
+}
+```
+
+### Datetime fields
+You can specify in this array which fields are a datetime type, and which format to use.
+- **Field name**: The field name in the HTTP payload result.
+- **Reference field**: Use this field as reference for the next @StartTime value (see [query variables](#query-variables)).
+- **Type**: The type of the data in the result.
+- **Timezone** (for string only): The timezone of the datetime stored in the
+database.
+- **Format** (for string only): The string format of the datetime retrieved.
+- **Locale** (for string only): The locale to use when the format contains locale specific string (such as MMM format for
+months).
+
+For SLIMS, two datetime fields must be specified:
+- **rslt_modifiedOn** (used as reference): this field will be stored in the internal variable @StartTime for the next HTTP request
+- **rslt_cf_samplingDateAndTime**: this field is not used as reference but must be specified to be correctly parsed. It will be used
+as the timestamp of the value retrieved.
+
+OIBus will internally use these dates in ISO UTC format. The output datetime format can be set in the
+[serialization section](#serialization).
+
+<SerializationSettings></SerializationSettings>

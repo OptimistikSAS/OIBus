@@ -1,0 +1,62 @@
+{
+  "version.label": {
+    "message": "v3",
+    "description": "The label for version current"
+  },
+  "sidebar.guideSidebar.category.Installation": {
+    "message": "Installation",
+    "description": "The label for category Installation in sidebar guideSidebar"
+  },
+  "sidebar.guideSidebar.category.Installation.link.generated-index.description": {
+    "message": "Let's install OIBus in less than 2 minutes.",
+    "description": "The generated-index page description for category Installation in sidebar guideSidebar"
+  },
+  "sidebar.guideSidebar.category.Engine": {
+    "message": "Engine",
+    "description": "The label for category Engine in sidebar guideSidebar"
+  },
+  "sidebar.guideSidebar.category.Engine.link.generated-index.description": {
+    "message": "Learn how to set up OIBus Engine.",
+    "description": "The generated-index page description for category Engine in sidebar guideSidebar"
+  },
+  "sidebar.guideSidebar.category.North connectors": {
+    "message": "North connectors",
+    "description": "The label for category North connectors in sidebar guideSidebar"
+  },
+  "sidebar.guideSidebar.category.North connectors.link.generated-index.description": {
+    "message": "Learn how to use and set up north connectors.",
+    "description": "The generated-index page description for category North connectors in sidebar guideSidebar"
+  },
+  "sidebar.guideSidebar.category.South connectors": {
+    "message": "South connectors",
+    "description": "The label for category South connectors in sidebar guideSidebar"
+  },
+  "sidebar.guideSidebar.category.South connectors.link.generated-index.description": {
+    "message": "Learn how to use and set up south connectors.",
+    "description": "The generated-index page description for category South connectors in sidebar guideSidebar"
+  },
+  "sidebar.guideSidebar.category.Advanced": {
+    "message": "Advanced",
+    "description": "The label for category Advanced in sidebar guideSidebar"
+  },
+  "sidebar.guideSidebar.category.Advanced.link.generated-index.description": {
+    "message": "Learn some advanced concepts about OIBus.",
+    "description": "The generated-index page description for category Advanced in sidebar guideSidebar"
+  },
+  "sidebar.guideSidebar.category.OIBus Agent": {
+    "message": "OIBus Agent",
+    "description": "The label for category OIBus Agent in sidebar guideSidebar"
+  },
+  "sidebar.guideSidebar.category.OIBus Agent.link.generated-index.description": {
+    "message": "Learn how to install and communicate with the OIBus Agent.",
+    "description": "The generated-index page description for category OIBus Agent in sidebar guideSidebar"
+  },
+  "sidebar.developerSidebar.category.Create a connector": {
+    "message": "Create a connector",
+    "description": "The label for category Create a connector in sidebar developerSidebar"
+  },
+  "sidebar.developerSidebar.category.Create a connector.link.generated-index.description": {
+    "message": "Learn how to develop new OIBus connectors.",
+    "description": "The generated-index page description for category Create a connector in sidebar developerSidebar"
+  }
+}

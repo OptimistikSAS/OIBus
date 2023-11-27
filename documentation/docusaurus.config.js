@@ -24,7 +24,7 @@ const config = {
   // to replace "en" with "zh-Hans".
   i18n: {
     defaultLocale: 'en',
-    locales: ['en'],
+    locales: ['en', 'zh'],
   },
 
   presets: [
@@ -35,6 +35,7 @@ const config = {
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
           lastVersion: 'current',
+          editLocalizedFiles: true,
           versions: {
             current: {
               label: 'v3'
@@ -69,9 +70,19 @@ const config = {
             label: 'Developer',
           },
           {
+            type: 'doc',
+            docId: 'use-cases/index',
+            position: 'left',
+            label: 'Use cases',
+          },
+          {
             type: 'docsVersionDropdown',
             position: 'right',
             dropdownActiveClassDisabled: true,
+          },
+          {
+            type: 'localeDropdown',
+            position: 'right',
           },
           {
             href: 'https://github.com/OptimistikSAS/OIBus',
@@ -93,6 +104,10 @@ const config = {
               {
                 label: 'Developer Guide',
                 to: '/docs/developer/',
+              },
+              {
+                label: 'Use cases',
+                to: '/docs/use-cases/',
               },
             ],
           },
