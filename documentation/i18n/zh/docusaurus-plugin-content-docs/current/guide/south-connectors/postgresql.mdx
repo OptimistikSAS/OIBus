@@ -1,0 +1,26 @@
+---
+sidebar_position: 7
+---
+
+import ItemSettings from './_south-sql-item-settings.mdx';
+
+# PostgreSQL
+Send SQL queries to interact with a PostgreSQL database.
+
+## Specific settings
+When configuring the SQL connector to send SQL queries to a PostgreSQL Server, you will need to provide the following
+details:
+- **Host**: The address of the PostgreSQL server.
+- **Port**: The PostgreSQL server port (default is 5432).
+- **Database**: The name of the database to connect to.
+- **Username**: The username used for authentication.
+- **Password**: The password used for authentication.
+- **Connection timeout**: Timeout setting for establishing the connection.
+- **Request timeout**: Timeout for each SQL query.
+
+
+:::tip Database access
+It is strongly advised to use a read-only user when connecting to the database for security and data integrity purposes.
+:::
+
+<ItemSettings></ItemSettings>

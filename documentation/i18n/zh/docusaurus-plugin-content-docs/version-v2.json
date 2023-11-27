@@ -1,0 +1,38 @@
+{
+  "version.label": {
+    "message": "v2",
+    "description": "The label for version v2"
+  },
+  "sidebar.guideSidebar.category.Engine": {
+    "message": "Engine",
+    "description": "The label for category Engine in sidebar guideSidebar"
+  },
+  "sidebar.guideSidebar.category.Engine.link.generated-index.description": {
+    "message": "Learn how to set up OIBus Engine.",
+    "description": "The generated-index page description for category Engine in sidebar guideSidebar"
+  },
+  "sidebar.guideSidebar.category.South connectors": {
+    "message": "South connectors",
+    "description": "The label for category South connectors in sidebar guideSidebar"
+  },
+  "sidebar.guideSidebar.category.South connectors.link.generated-index.description": {
+    "message": "Learn how to use and set up south connectors.",
+    "description": "The generated-index page description for category South connectors in sidebar guideSidebar"
+  },
+  "sidebar.guideSidebar.category.North connectors": {
+    "message": "North connectors",
+    "description": "The label for category North connectors in sidebar guideSidebar"
+  },
+  "sidebar.guideSidebar.category.North connectors.link.generated-index.description": {
+    "message": "Learn how to use and set up north connectors.",
+    "description": "The generated-index page description for category North connectors in sidebar guideSidebar"
+  },
+  "sidebar.guideSidebar.category.Advanced": {
+    "message": "Advanced",
+    "description": "The label for category Advanced in sidebar guideSidebar"
+  },
+  "sidebar.guideSidebar.category.Advanced.link.generated-index.description": {
+    "message": "Learn some advanced concepts about OIBus.",
+    "description": "The generated-index page description for category Advanced in sidebar guideSidebar"
+  }
+}

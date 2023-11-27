@@ -1,0 +1,25 @@
+---
+sidebar_position: 1
+---
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import WindowsInstallation from './installation/_windows.mdx';
+import LinuxInstallation from './installation/_linux.mdx';
+
+# Concept and installation
+OIBus Agent is a tool used to embed through HTTP some protocol specific queries. For now, [ODBC](./odbc) and
+[OPCHDA](./opchda) are supported.
+
+OIBus can request the agent through its South connectors [ODBC](../south-connectors/odbc) and [OPCHDA](../south-connectors/opchda).
+
+
+<Tabs>
+  <TabItem value="windows" label="Windows" default>
+    <WindowsInstallation/>
+  </TabItem>
+  <TabItem value="linux" label="Linux">
+    <LinuxInstallation/>
+  </TabItem>
+</Tabs>
+
+
