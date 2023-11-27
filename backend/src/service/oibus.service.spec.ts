@@ -12,6 +12,8 @@ import RepositoryServiceMock from '../tests/__mocks__/repository-service.mock';
 import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../shared/model/engine.model';
 import EncryptionServiceMock from '../tests/__mocks__/encryption-service.mock';
 import EncryptionService from './encryption.service';
+import pino from 'pino';
+import PinoLogger from '../tests/__mocks__/logger.mock';
 
 jest.mock('node:fs/promises');
 jest.mock('node-fetch');
@@ -24,6 +26,8 @@ const repositoryRepository: RepositoryService = new RepositoryServiceMock('', ''
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
+const logger: pino.Logger = new PinoLogger();
+const flushPromises = () => new Promise(jest.requireActual('timers').setImmediate);
 
 let service: OIBusService;
 describe('OIBus service', () => {
@@ -31,7 +35,7 @@ describe('OIBus service', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
-    service = new OIBusService(oibusEngine, historyQueryEngine, repositoryRepository, encryptionService);
+    service = new OIBusService(oibusEngine, historyQueryEngine, repositoryRepository, encryptionService, logger);
   });
 
   it('should restart OIBus', async () => {
@@ -58,10 +62,11 @@ describe('OIBus service', () => {
     expect(oibusEngine.addExternalFile).toHaveBeenCalledWith('source', 'filePath');
   });
 
-  it('should get registration settings', () => {
+  it('should get NOT_REGISTERED registration settings', () => {
     const mockResult: RegistrationSettingsDTO = {
       id: 'id',
       host: 'http://localhost:4200',
+      token: 'token',
       activationCode: '1234',
       status: 'NOT_REGISTERED',
       activationDate: '2020-20-20T00:00:00.000Z',
@@ -70,7 +75,7 @@ describe('OIBus service', () => {
     (repositoryRepository.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(mockResult);
     const result = service.getRegistrationSettings();
     expect(result).toEqual(mockResult);
-    expect(repositoryRepository.registrationRepository.getRegistrationSettings).toHaveBeenCalledTimes(1);
+    expect(repositoryRepository.registrationRepository.getRegistrationSettings).toHaveBeenCalledTimes(2);
   });
 
   it('should update registration', async () => {
@@ -157,9 +162,9 @@ describe('OIBus service', () => {
     expect(error).toEqual(new Error('Registration settings not found'));
   });
 
-  it('should activate registration', () => {
-    service.activateRegistration('2020-20-20T00:00:00.000Z');
-    expect(repositoryRepository.registrationRepository.activateRegistration).toHaveBeenCalledWith('2020-20-20T00:00:00.000Z');
+  it('should activate registration', async () => {
+    await service.activateRegistration('2020-20-20T00:00:00.000Z', 'token');
+    expect(repositoryRepository.registrationRepository.activateRegistration).toHaveBeenCalledWith('2020-20-20T00:00:00.000Z', 'token');
   });
 
   it('should unregister', () => {
@@ -236,5 +241,189 @@ describe('OIBus service', () => {
     expect(utils.unzip).toHaveBeenCalledWith(expectedFilename, '.');
     expect(utils.unzip).toHaveBeenCalledWith(expectedFilename, '.');
     expect(fs.unlink).toHaveBeenCalledWith(expectedFilename);
+  });
+
+  it('should check registration', async () => {
+    const mockResult: RegistrationSettingsDTO = {
+      id: 'id',
+      host: 'http://localhost:4200',
+      token: 'token',
+      activationCode: '1234',
+      checkUrl: '/check/url',
+      status: 'PENDING',
+      activationDate: '2020-20-20T00:00:00.000Z',
+      activationExpirationDate: ''
+    };
+    (repositoryRepository.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(mockResult);
+    const fetchResponse = { status: 'COMPLETED', expired: true, accessToken: 'access_token' };
+    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response(JSON.stringify(fetchResponse))));
+    service.activateRegistration = jest.fn();
+
+    await service.checkRegistration();
+    expect(fetch).toHaveBeenCalledWith(`${mockResult.host}${mockResult.checkUrl}`, { method: 'GET', timeout: 10000 });
+    expect(service.activateRegistration).toHaveBeenCalledWith('2020-02-02T02:02:02.222Z', 'access_token');
+  });
+
+  it('should check registration and return because already checking', async () => {
+    const mockResult: RegistrationSettingsDTO = {
+      id: 'id',
+      host: 'http://localhost:4200',
+      token: 'token',
+      activationCode: '1234',
+      checkUrl: '/check/url',
+      status: 'PENDING',
+      activationDate: '2020-20-20T00:00:00.000Z',
+      activationExpirationDate: ''
+    };
+    (repositoryRepository.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(mockResult);
+    const fetchResponse = { status: 'COMPLETED', expired: true, accessToken: 'access_token' };
+    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response(JSON.stringify(fetchResponse))));
+    service.activateRegistration = jest.fn();
+
+    service.checkRegistration();
+    await service.checkRegistration();
+    expect(logger.trace).toHaveBeenCalledWith('On going registration check');
+    await flushPromises();
+  });
+
+  it('should check registration but fail because of return status', async () => {
+    const mockResult: RegistrationSettingsDTO = {
+      id: 'id',
+      host: 'http://localhost:4200',
+      token: 'token',
+      activationCode: '1234',
+      checkUrl: '/check/url',
+      status: 'PENDING',
+      activationDate: '2020-20-20T00:00:00.000Z',
+      activationExpirationDate: ''
+    };
+    (repositoryRepository.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(mockResult);
+    const fetchResponse = { status: 'DECLINED', expired: true, accessToken: 'access_token' };
+    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response(JSON.stringify(fetchResponse))));
+    service.activateRegistration = jest.fn();
+
+    await service.checkRegistration();
+    expect(fetch).toHaveBeenCalledWith(`${mockResult.host}${mockResult.checkUrl}`, { method: 'GET', timeout: 10000 });
+    expect(service.activateRegistration).not.toHaveBeenCalled();
+    expect(logger.error).toHaveBeenCalledWith(`Registration not completed. Status: DECLINED`);
+    await service.checkRegistration();
+  });
+
+  it('should check registration but fail because of fetch response', async () => {
+    const mockResult: RegistrationSettingsDTO = {
+      id: 'id',
+      host: 'http://localhost:4200',
+      token: 'token',
+      activationCode: '1234',
+      checkUrl: '/check/url',
+      status: 'PENDING',
+      activationDate: '2020-20-20T00:00:00.000Z',
+      activationExpirationDate: ''
+    };
+    (repositoryRepository.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(mockResult);
+    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('invalid', { status: 404 })));
+    await service.checkRegistration();
+    expect(fetch).toHaveBeenCalledWith(`${mockResult.host}${mockResult.checkUrl}`, { method: 'GET', timeout: 10000 });
+    expect(logger.error).toHaveBeenCalledWith(
+      `Error 404 while checking registration status on ${mockResult.host}${mockResult.checkUrl}: Not Found`
+    );
+  });
+
+  it('should check registration and fail when registration check url not set', async () => {
+    const mockResult: RegistrationSettingsDTO = {
+      id: 'id',
+      host: 'http://localhost:4200',
+      token: 'token',
+      activationCode: '1234',
+      status: 'PENDING',
+      activationDate: '2020-20-20T00:00:00.000Z',
+      activationExpirationDate: ''
+    };
+    (repositoryRepository.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(mockResult);
+    await service.checkRegistration();
+    expect(logger.error).toHaveBeenCalledWith('Error while checking registration status: Could not retrieve check URL');
+  });
+
+  it('should check registration and fail on fetch error', async () => {
+    const mockResult: RegistrationSettingsDTO = {
+      id: 'id',
+      host: 'http://localhost:4200',
+      token: 'token',
+      activationCode: '1234',
+      checkUrl: 'check/url',
+      status: 'PENDING',
+      activationDate: '2020-20-20T00:00:00.000Z',
+      activationExpirationDate: ''
+    };
+    (repositoryRepository.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(mockResult);
+    (fetch as unknown as jest.Mock).mockImplementation(() => {
+      throw new Error('error');
+    });
+    await service.checkRegistration();
+    expect(logger.error).toHaveBeenCalledWith(
+      `Error while checking registration status on ${mockResult.host}${mockResult.checkUrl}. Error: error`
+    );
+  });
+});
+
+describe('OIBus service with PENDING registration', () => {
+  const mockResult: RegistrationSettingsDTO = {
+    id: 'id',
+    host: 'http://localhost:4200',
+    token: 'token',
+    activationCode: '1234',
+    status: 'PENDING',
+    checkUrl: 'http://localhost:4200/check/url',
+    activationDate: '2020-20-20T00:00:00.000Z',
+    activationExpirationDate: ''
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    (repositoryRepository.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(mockResult);
+  });
+
+  it('should get PENDING registration settings', () => {
+    const setIntervalSpy = jest.spyOn(global, 'setInterval');
+
+    service = new OIBusService(oibusEngine, historyQueryEngine, repositoryRepository, encryptionService, logger);
+    expect(setIntervalSpy).toHaveBeenCalledTimes(1);
+    expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 10000);
+
+    const result = service.getRegistrationSettings();
+    expect(result).toEqual(mockResult);
+    expect(repositoryRepository.registrationRepository.getRegistrationSettings).toHaveBeenCalledTimes(2);
+  });
+
+  it('should stop and clear interval', async () => {
+    const setIntervalSpy = jest.spyOn(global, 'setInterval');
+    const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
+
+    service = new OIBusService(oibusEngine, historyQueryEngine, repositoryRepository, encryptionService, logger);
+    expect(setIntervalSpy).toHaveBeenCalledTimes(1);
+    expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 10000);
+    await service.stopOIBus();
+    expect(clearIntervalSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('should activate registration and clear interval', async () => {
+    const setIntervalSpy = jest.spyOn(global, 'setInterval');
+    const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
+    service = new OIBusService(oibusEngine, historyQueryEngine, repositoryRepository, encryptionService, logger);
+    expect(setIntervalSpy).toHaveBeenCalledTimes(1);
+    expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 10000);
+    await service.activateRegistration('2020-20-20T00:00:00.000Z', 'token');
+    expect(clearIntervalSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('should unregister and clear interval', () => {
+    const setIntervalSpy = jest.spyOn(global, 'setInterval');
+    const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
+    service = new OIBusService(oibusEngine, historyQueryEngine, repositoryRepository, encryptionService, logger);
+    expect(setIntervalSpy).toHaveBeenCalledTimes(1);
+    expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 10000);
+    service.unregister();
+    expect(clearIntervalSpy).toHaveBeenCalledTimes(1);
   });
 });

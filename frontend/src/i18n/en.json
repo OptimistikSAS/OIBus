@@ -104,6 +104,7 @@
     "scope-types": {
       "south": "South",
       "north": "North",
+      "engine": "Engine",
       "data-stream": "Data stream engine",
       "history-engine": "History engine",
       "history-query": "History query",
@@ -258,7 +259,8 @@
       "unregistered":"OIBus unregistered",
       "not-registered": "OIBus is not registered to OIAnalytics. Click on the button below to register.",
       "pending": "Registration pending. Activate it on OIAnalytics with the following activation code",
-      "expiration-date": "Expired on"
+      "expiration-date": "Expired on",
+      "registered": "OIBus registered on {{ activationDate }}"
     }
   },
   "about": {
