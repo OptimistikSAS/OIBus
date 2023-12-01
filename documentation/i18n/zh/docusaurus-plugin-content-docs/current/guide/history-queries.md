@@ -2,53 +2,37 @@
 sidebar_position: 6
 ---
 
-# History queries
-OIBus primarily serves as a tool for data streaming, allowing you to retrieve data in real-time from various sources, 
-such as points or files. However, it can also be valuable for retrieving historical data in situations where you need to 
-access information prior to setting up the data streaming process. In such instances, historical queries can prove to 
-be exceptionally beneficial.
+# 历史查询
+OIBus 主要用作数据流工具，允许您从各种来源（如点或文件）实时检索数据。然而，当您需要访问在设置数据流程之前的信息时，它也可以用于检索历史数据。在这种情况下，历史查询可能特别有益。
 
-## Create a History Query
-On the History Query page, you have the option to generate new history query either through new South and North connectors 
-or by choosing from existing South/North connectors.
+## 创建历史查询
+在历史查询页面，您可以选择通过新建南向和北向连接器或从现有的南/北向连接器中选择，生成新的历史查询。
 
 :::info
-You can select South connectors for historical data retrieval, but only those that are compatible with the historian, 
-such as OPC UA, MSSQL, and others.
+您可以选择南向连接器进行历史数据检索，但只能选择与历史数据库兼容的连接器，如 OPC UA、MSSQL 等。
 :::
 
-When you select both the South and North connectors, all the information, including items from the South, is copied into 
-the new History query. Please remove any unnecessary items.
+当您选择南向和北向连接器时，包括南向的项目在内的所有信息都会被复制到新的历史查询中。请删除任何不必要的项目。
 
-## History main query settings
-When you edit a History query, make sure to specify the start time and end time. If the time interval is substantial, 
-you have the option to divide the query into smaller intervals within the `History settings` section.
+## 主要历史查询设置
+编辑历史查询时，请务必指定开始时间和结束时间。如果时间间隔较大，您可以在 `历史设置` 部分将查询分为较小的时间间隔。
 
-:::caution About SQL connectors
-Make sure to incorporate the **@StartTime** and **@EndTime** variables in SQL queries to effectively utilize split intervals.
+:::caution 关于 SQL 连接器
+确保在 SQL 查询中加入 **@StartTime** 和 **@EndTime** 变量，以有效利用分割的时间间隔。
 :::
 
-## Resilience
-The maximum instant retrieved from a query is stored in a local cache database. In the event of a connection failure 
-during a history query, OIBus will attempt to reconnect. Upon successful reconnection, it will resume the query from its 
-last recorded maximum instant.
+## 弹性
+查询中检索的最大瞬时值会存储在本地缓存数据库中。如果在历史查询期间出现连接失败，OIBus 将尝试重新连接。成功重新连接后，它将从最后记录的最大瞬时值恢复查询。
 
-Certain connectors, such as OPC UA, offer the ability to group items together to share the same maximum instant. This 
-grouping enhances OIBus's performance. However, there may be situations where it's beneficial to isolate individual items. 
-To achieve this, you can select the **Max instant per item** option.
+某些连接器，如 OPC UA，提供了将项目组合在一起使用相同最大瞬时值的能力。这种组合提高了 OIBus 的性能。然而，在某些情况下，单独隔离项目可能会更有益。为了达到这个目的，您可以选择 **每个项目的最大瞬时值** 选项。
 
-:::tip When to use Max instant per item
-If data is not stored synchronously in the OPC UA server, there is a risk of losing some of it. To prevent such loss, 
-it's advisable to maintain a maximum instant per item. However, it's important to exercise caution, as this approach will 
-result in a separate query for each item instead of grouping them. While this ensures that you keep track of individual 
-maximum instants, it may also potentially overload the server due to the increased query volume.
+:::tip 什么时候使用每个项目的最大瞬时值
+如果 OPC UA 服务器中的数据不是同步存储，可能会丢失一些数据。为了防止数据丢失，建议为每个项目保持一个最大瞬时值。但是，需要谨慎，因为这种方式将为每个项目进行单独查询，而不是将它们分组。虽然这确保了您能够跟踪个别最大瞬时值，但也可能由于查询量增加，而使服务器过载。
 :::
 
-## Running a query
-You have the flexibility to initiate or pause a history query from its editing page, the list page, or the display page. 
-When on the display page, you can also monitor the progress and status of the history query.
+## 运行查询
+您可以从其编辑页面、列表页面或显示页面开始或暂停历史查询。在显示页面上，还可以监控历史查询的进度和状态。
 
 :::caution
-When you make modifications to a history query by adding, removing, or updating items, the query will restart from the 
-specified start time.
+当您通过添加、移除或更新项目对历史查询进行修改时，查询将从指定的开始时间重新开始。
 :::

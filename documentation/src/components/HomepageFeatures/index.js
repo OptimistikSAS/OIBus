@@ -5,7 +5,13 @@ import Translate from "@docusaurus/Translate";
 
 const FeatureList = [
   {
-    title: 'Multi source',
+    title: (
+      <>
+        <Translate description="Multi source title">
+          Multi source
+        </Translate>
+      </>
+    ),
     Svg: require('@site/static/img/multi-source.svg').default,
     description: (
       <>
@@ -16,7 +22,13 @@ const FeatureList = [
     ),
   },
   {
-    title: 'No code',
+    title: (
+      <>
+        <Translate description="No code title">
+          No code
+        </Translate>
+      </>
+    ),
     Svg: require('@site/static/img/no-code.svg').default,
     description: (
       <>
@@ -27,7 +39,13 @@ const FeatureList = [
     ),
   },
   {
-    title: 'Real time',
+    title: (
+      <>
+        <Translate description="Real code title">
+          Real code
+        </Translate>
+      </>
+    ),
     Svg: require('@site/static/img/real-time.svg').default,
     description: (
       <Translate description="Real time feature">

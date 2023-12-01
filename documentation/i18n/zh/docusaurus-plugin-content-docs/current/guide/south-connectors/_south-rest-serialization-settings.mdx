@@ -1,16 +1,11 @@
-### CSV Serialization
-OIBus offers the option to serialize retrieved data into CSV files, and you can customize the serialization process with
-the following settings:
-- **Filename**: The name of the file where the result will be stored. You can use several internal variables like
-**@ConnectorName** (the name of the connector) and **@CurrentDate** (the current date in `yyyy_MM_dd_HH_mm_ss_SSS` format).
-- **Delimiter**: The delimiter to use in the CSV.
-- **Compression**: Choose whether to compress the file with gzip or not.
-- **Output datetime format**: Specify the format of the datetime in the CSV. OIBus will only convert the
-[datetime fields](#datetime-fields) specified.
-- **Output timezone**: The timezone to use for storing the datetime.
+### CSV 序列化
+OIBus 提供将检索到的数据序列化为 CSV 文件的选项，并且您可以使用以下设置自定义序列化过程：
+- **文件名**：结果将被存储的文件的名称。您可以使用几个内部变量，如
+**@ConnectorName**（连接器的名称）和 **@CurrentDate**（当前日期，格式为 `yyyy_MM_dd_HH_mm_ss_SSS`）。
+- **分隔符**：在 CSV 中使用的分隔符。
+- **压缩**：选择是否使用 gzip 压缩文件。
+- **输出日期时间格式**：指定 CSV 中的日期时间格式。OIBus 只会转换指定的[日期时间字段](#datetime-fields)。
+- **输出时区**：用于存储日期时间的时区。
 
-## Splitting large queries
-In situations where a query may impose a significant load on the server, especially when a large time interval is requested
-and the @StartTime and @EndTime [query variables](#query-variables) are utilized, you can split the query into several
-sub-queries with smaller intervals. This can be achieved by configuring the **Max read interval** field in the
-[history settings](./common-settings.md#history-settings).
+## 分割大型查询
+在查询可能对服务器造成重大负载的情况下，特别是当请求较大的时间间隔并且使用 @StartTime 和 @EndTime [查询变量](#query-variables)时，您可以将查询分割成几个时间间隔较小的子查询。这可以通过配置[历史设置](./common-settings.md#history-settings)中的 **最大读取间隔** 字段来实现。

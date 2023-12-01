@@ -3,22 +3,21 @@ sidebar_position: 2
 ---
 
 # OIBus
-OIBus is a North connector specifically designed for sending data to other OIBus endpoints. It supports both 
-[JSON payloads](#json-payload), sent to `/api/add-values`, and files, sent to `/api/add-file`.
+OIBus 是一种北向连接器，专为发送数据到其他 OIBus 端点而设计。它支持发送到 `/api/add-values` 的 [JSON 负载](#json-payload)，和发送到 `/api/add-file` 的文件。
 
-## Specific settings
-To transmit data, whether in JSON or file format, to another OIBus instance, you need to complete the following fields:
-- **Host**: The hostname of the target OIBus (e.g., `http://1.2.3.4:2223`).
-- **Username**: The username used for the connection.
-- **Password**: The password associated with the specified username.
-- **Use proxy**: An option to employ a proxy for HTTP requests.
-- **Proxy URL**: The URL of the proxy server to be used.
-- **Proxy username**: The username linked to the proxy.
-- **Proxy password**: The password associated with the proxy username.
+## 特定设置
+要将数据（无论是 JSON 还是文件格式）传输到另一个 OIBus 实例，您需要完成以下字段：
+- **主机**：目标 OIBus 的主机名（例如，`http://1.2.3.4:2223`）。
+- **用户名**：用于连接的用户名。
+- **密码**：与指定用户名相关联的密码。
+- **使用代理**：用于 HTTP 请求的代理选项。
+- **代理 URL**：要使用的代理服务器的 URL。
+- **代理用户名**：与代理相关的用户名。
+- **代理密码**：与代理用户名相关联的密码。
 
-## JSON payload
-The other OIBus will accept the following payload format:
-```json title="JSON payload"
+## JSON 负载
+另一个 OIBus 将接受以下负载格式：
+```json 标题="JSON 负载"
 [
   {
     "timestamp": "2020-01-01T00:00:00.000Z",
@@ -28,11 +27,8 @@ The other OIBus will accept the following payload format:
 ]
 ```
 
-## Connecting two OIBus together
-Refer to the [documentation provided](../advanced/oibus-to-oibus.md) for detailed instructions on how to establish a 
-connection between one OIBus instance and another.
+## 连接两个 OIBus
+有关如何在一个 OIBus 实例与另一个之间建立连接的详细说明，请参阅[所提供的文档](../advanced/oibus-to-oibus.md)。
 
 ## HTTPS
-OIBus only includes an HTTP server. To establish an HTTPS connection between two OIBus instances, it's recommended to 
-utilize a dedicated HTTP server like Nginx or Apache as a reverse proxy in front of OIBus. By doing so, you can delegate 
-certificate management to the HTTP server and securely forward HTTPS requests to the OIBus HTTP server on the relevant port.
+OIBus 仅包含一个 HTTP 服务器。要在两个 OIBus 实例之间建立 HTTPS 连接，建议使用像 Nginx 或 Apache 这样的专用 HTTP 服务器作为 OIBus 前的反向代理。通过这样做，您可以将证书管理委托给 HTTP 服务器，并安全地将 HTTPS 请求转发到相关端口上的 OIBus HTTP 服务器。

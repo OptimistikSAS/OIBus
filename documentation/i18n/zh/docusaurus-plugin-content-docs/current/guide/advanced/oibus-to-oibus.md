@@ -2,57 +2,34 @@
 sidebar_position: 2
 ---
 
-# OIBus to OIBus communication
-## Context
-Often, PLCs are exclusively reachable within a restricted network known as the Operational Technology (OT) domain which 
-often coexists either within or adjacent to another network, the Information Technology (IT) domain, with datacenters and
-cloud systems. OT machines, for security reasons, don't have access to internet. OIBus may need an internet access. There 
-are two viable approaches for accessing data within these networks:
-- Install OIBus in the IT domain, and allow connections of PLCs in OT from the OIBus Machine. In this approach, you permit
-connections to each data source from the OIBus machine, which resides in the IT (external to the OT) through the firewall.
-- Installing OIBus in both networks: The second option involves setting up one instance of OIBus within the OT and another 
-within the IT. This enables the management of a single communication link between the two networks.
+# OIBus 至 OIBus 通信
+## 上下文
+通常，PLC 只能在称为运维技术 (OT) 领域的受限网络内访问，这个领域通常存在于信息技术 (IT) 领域中或与之相邻，后者包含了数据中心和云系统。出于安全原因，OT 机器无法访问互联网。OIBus 可能需要互联网访问权限。有两种可行的方法可以访问这些网络中的数据：
+- 在 IT 领域安装 OIBus，并允许 PLC 在 OT 中从 OIBus 机器连接。在这种方法中，你允许每个数据源从位于 IT 领域（外部于 OT）的 OIBus 机器通过防火墙进行连接。
+- 在两个网络中都安装 OIBus：第二个选项涉及在 OT 内部和 IT 内部设置一个 OIBus 实例。这使得两个网络之间仅需管理单一的通信连接。
 
-The first option is acceptable when you have only one machine available for OIBus installation, but it entails a more 
-complex network configuration and carries the risk of exposing your machines to potential security threats. The second 
-option is a preferable choice. With this approach, the initial OIBus instance in the OT, referred to as OIBus1, can 
-access machines within the same network and transmit data to the office network via a single firewall-permitted connection 
-(from OIBus1 to OIBus2).
+当你只有一台可用于 OIBus 安装的机器时，第一个选项是可以接受的，但它涉及更复杂的网络配置，并承担将你的机器暴露给潜在安全威胁的风险。第二个选项是更可取的选择。采用这种方法，位于 OT 的初始 OIBus 实例，称为 OIBus1，可以访问同一网络内的机器，并通过单一被防火墙允许的连接（从 OIBus1 到 OIBus2）将数据传输到办公网络。
 
-Let's delve into the details of setting up this communication method.
+让我们深入了解设置此通信方法的细节。
 
 
-## Data stream set-up
-### Set up a North connector OIConnect in OIBus1
-[OIBus North connector](../north-connectors/oibus.md) proves highly valuable when one OIBus instance lacks direct internet 
-access, often due to isolation within an industrial network. However, it can establish communication with another OIBus 
-located in a different network that does have internet access.
+## 数据流设置
+### 在 OIBus1 中设置北向连接器 OIConnect
+[OIBus 北向连接器](../north-connectors/oibus.md)在一个 OIBus 实例由于处于工业网络而缺乏直接互联网访问权限时非常有价值，尽管如此，它可以与位于另一个有互联网访问的网络中的另一个 OIBus 建立通信。
 
-For instance, the host address might take the form of http://1.2.3.4:2223, (IP address and port of OIBus2). It's crucial 
-to ensure that remote connections are authorized in the settings of the second OIBus Engine, specifically within the 
-[IP Filter section](../engine/ip-filters.md). Additionally, the appropriate username and password should be utilized. In 
-this case, the OIBus default username and password (admin and pass) should be employed for authentication purposes.
+例如，主机地址可能采用 http://1.2.3.4:2223 的形式（OIBus2 的 IP 地址和端口）。确保在第二个 OIBus 引擎的设置中授权远程连接，尤其是在[IP筛选器部分](../engine/ip-filters.md)中，至关重要。另外，应使用适当的用户名和密码。在这种情况下，应该使用 OIBus 默认的用户名和密码（admin 和 pass）进行身份验证。
 
-### Set up an External source in OIBus2
-On OIBus2, you must now define an [External Source](../engine/external-sources.md). If no external source is set in OIBus2,
-data sent by OIBus1 to OIBus2 will be discarded. 
+### 在 OIBus2 中设置外部来源
+现在在 OIBus2 上，你必须定义一个[外部来源](../engine/external-sources.md)。如果在 OIBus2 中没有设置外部来源，OIBus1 发送到 OIBus2 的数据将被丢弃。
 
-The name of this external source should adhere to the syntax of the name query param, for instance, `MyOIBus:MyOIConnect`.
+这个外部来源的名称应遵循名称查询参数的语法，例如，`MyOIBus:MyOIConnect`。
 
-With the external source defined, the North connector of OIBus2 can then proceed to subscribe to this specific external source, 
-enabling the exchange of data between the two OIBus instances.
+定义了外部来源后，OIBus2 的北向连接器可以继续订阅这个特定的外部来源，从而使两个 OIBus 实例之间的数据交换成为可能。
 
-## Logs
-### Loki through another OIBus
-To transmit logs to OIBus2 from OIBus1, navigate to the [Engine page](../engine/engine-settings.md) within the _Loki logs_ 
-section and specify OIBus2's address in the **Host** field, along with its associated endpoint: http://1.2.3.4:2223/logs. 
-It's important to note that OIBus2 utilizes Basic Authentication. Keep the token address field empty and provide the username 
-and password credentials used to connect to OIBus2.
+## 日志
+### 通过另一个 OIBus 传输 Loki
+要将日志从 OIBus1 传输到 OIBus2，在 _Loki 日志_ 部分内的[引擎页面](../engine/engine-settings.md)中，指定 OIBus2 的地址在 **主机** 字段中，以及它相关的端点：http://1.2.3.4:2223/logs。值得注意的是 OIBus2 使用基本认证。保持 token 地址字段为空，并提供用于连接 OIBus2 的用户名和密码凭据。
 
-In cases where the loki level is set to **info** in OIBus1, only logs with **info** level and above will be forwarded to 
-OIBus2. 
+在 OIBus1 中如果 loki 级别设置为 **info**，则只有 **info** 级别及以上的日志会被转发到 OIBus2。
 
-In OIBus2, if the console and file levels are configured to **error** only logs with **error** level or higher will be 
-recorded in the console and file. However, if the loki level in OIBus2 is also set to **info** all the logs received 
-from OIBus1 will be sent to this loki endpoint (set in OIBus2).
-
+在 OIBus2 中，如果控制台和文件级别被配置为 **error**，则只有 **error** 级别或更高级别的日志才会在控制台和文件中记录。然而，如果 OIBus2 的 loki 级别也被设置为 **info**，那么从 OIBus1 收到的所有日志都会被发送到这个 loki 端点（在 OIBus2 中设置）。

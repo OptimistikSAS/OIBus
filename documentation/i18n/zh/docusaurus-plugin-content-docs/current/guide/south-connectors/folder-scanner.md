@@ -2,41 +2,27 @@
 sidebar_position: 1
 ---
 
-# Folder Scanner
-The Folder Scanner South connector operates by periodically scanning the specified input folder for new files. It 
-utilizes regular expressions (Regexp) defined in its items to determine which files to monitor. When a new file matching 
-the defined criteria is detected, it is then transmitted to North caches.
+# 文件夹扫描器
+“文件夹扫描器”南向连接器通过定期扫描指定的输入文件夹以查找新文件来运作。它使用其项目中定义的正则表达式（Regexp）来确定要监控哪些文件。当检测到与定义的标准匹配的新文件时，它会被传输到北向缓存。
 
-## Specific settings
-- **Input folder**: This field specifies the path of the folder to be scanned. The path can be either absolute or relative. 
-In the case of a relative path, it is computed based on the **Data folder** mentioned in the _About_ section. Remote paths 
-can also be specified, such as `/remote.server/data` or `Z:\Remote disk\DATA`. Note that the path is case-sensitive.
-- **Compress file**: If enabled, files are compressed using gzip locally before being sent into the North caches.
+## 特定设置
+- **输入文件夹**：此字段指定要扫描的文件夹的路径。路径可以是绝对的也可以是相对的。若为相对路径，它是基于“关于”部分中提到的**数据文件夹**计算出来的。也可以指定远程路径，如 `/remote.server/data` 或 `Z:\远程磁盘\DATA`。请注意，路径区分大小写。
+- **压缩文件**：如果启用，将在文件本地发送到北向缓存之前使用 gzip 进行压缩。
 
-## Item settings 
-- **RegExp**: You can use a Regular Expression to selectively retrieve files that match a specific pattern. Here are some 
-examples:
-  - `.*` retrieves all files in the input folder.
-  - `.*.txt` retrieves all text files (with a .txt extension) in the input folder.
-  - `.*.csv` retrieves all CSV files in the input folder.
-  - `.csv||.xlsx` retrieves all files with either a .csv or .xlsx extension in the input folder.
-- **Minimum age**: This field is used to set a minimum age for retrieved files. It helps avoid retrieving potentially
-  corrupted files that are still being written. By default, OIBus retrieves files that have been written for at least one
-  second.
-- **Preserve file**: When enabled, retrieved files are kept in the folder. This can be useful when another application
-  needs access to these files. The **Preserve file** feature lists all retrieved files in the cache, along with their
-  last modification time. If the modification time remains unchanged, the file is ignored. Otherwise, the file is retrieved
-  again.
-- **Ignored modified date** (_Preserve file_ must be enabled): This option forces the retrieval of a file, even if its
-  modification time hasn't changed since the last retrieval. It is useful in situations where you want to ensure that the
-  file is always retrieved.
+## 项目设置
+- **RegExp**：您可以使用正则表达式来有选择性地检索与特定模式匹配的文件。这里有一些例子：
+  - `.*` 检索输入文件夹中的所有文件。
+  - `.*.txt` 检索输入文件夹中的所有文本文件（带有 .txt 扩展名）。
+  - `.*.csv` 检索输入文件夹中的所有 CSV 文件。
+  - `.csv||.xlsx` 检索输入文件夹中带有 .csv 或 .xlsx 扩展名的所有文件。
+- **最小年龄**：该字段用于为检索到的文件设置最小年龄。有助于避免检索仍在写入中的可能已损坏的文件。默认情况下，OIBus 检索至少已写入一秒钟的文件。
+- **保留文件**：启用后，检索到的文件将保留在文件夹中。当另一个应用程序需要访问这些文件时，这可能很有用。**保留文件**功能将所有检索到的文件及其最后修改时间列在缓存中。如果修改时间保持不变，则忽略该文件。否则，该文件将再次被检索。
+- **忽略修改日期**（必须启用 “保留文件”）：即使文件的修改时间自上次检索以来没有改变，此选项也会强制检索该文件。在您希望确保文件总是被检索的情况下，这很有用。
 
-:::info Regex testing
-To test your regular expressions, you can utilize a tool like https://regex101.com/.
+:::info 正则表达式测试
+要测试您的正则表达式，您可以使用像 https://regex101.com/ 这样的工具。
 :::
 
-:::danger User access
-The user who runs OIBus (the logged-in user when OIBus is executed from a terminal or the service session when OIBus is
-run as a service) must have read access to the input folder in order to read the files. If **Preserve file** is not enabled,
-the files are set to be removed and write access may also be needed to delete the files.
+:::danger 用户访问
+运行 OIBus 的用户（当 OIBus 从终端执行时的登录用户或当 OIBus 作为服务运行时的服务会话）必须对输入文件夹有读取权限，以便读取文件。如果没有启用 **保留文件**，文件将被设定为删除，可能还需要写入权限才能删除文件。
 :::

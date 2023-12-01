@@ -8,12 +8,16 @@
     "description": "The alt text of navbar logo"
   },
   "item.label.Documentation": {
-    "message": "Documentation",
+    "message": "文件",
     "description": "Navbar item with label Documentation"
   },
   "item.label.Developer": {
-    "message": "Developer",
+    "message": "开发人员",
     "description": "Navbar item with label Developer"
+  },
+  "item.label.Use cases": {
+    "message": "使用案例",
+    "description": "Navbar item with label Use case"
   },
   "item.label.GitHub": {
     "message": "GitHub",

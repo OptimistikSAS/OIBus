@@ -3,56 +3,41 @@ sidebar_position: 6
 ---
 
 # MQTT
-MQTT (Message Queuing Telemetry Transport) is a protocol designed for real-time messaging and data exchange using a 
-publish/subscribe model. In MQTT, data is organized into topics, and clients can publish or subscribe to these topics to 
-exchange information.
+MQTT（消息队列遥测传输）是一种为实时消息和数据交换而设计的协议，它使用发布/订阅模型。在 MQTT 中，数据组织在主题中，客户端可以发布或订阅这些主题来交换信息。
 
-The MQTT protocol consists of two primary components:
-- **MQTT Broker**: This acts as the server and is responsible for collecting and distributing data. It manages the topics 
-and facilitates communication between clients.
-- **MQTT Client**: Clients can publish data to a broker by specifying a topic, and they can also subscribe to topics to 
-receive data from the broker.
+MQTT 协议包含两个主要组成部分：
+- **MQTT Broker**：它作为服务器，负责收集和分发数据。它管理主题并促进客户端之间的通信。
+- **MQTT 客户端**：客户端可以通过指定主题向代理发布数据，同时也可以订阅主题以从代理接收数据。
 
-OIBus functions as an MQTT client and utilizes the [MQTT.js](https://github.com/mqttjs/MQTT.js) library to interact with 
-MQTT brokers for data exchange.
+OIBus 作为一个 MQTT 客户端，并利用 [MQTT.js](https://github.com/mqttjs/MQTT.js) 库与 MQTT 代理进行交互以数据交换。
 
-## Specific settings
-MQTT is a versatile protocol for exchanging data, and OIBus provides various configuration options to tailor its behavior 
-to your needs. Here are some of the key configuration parameters for MQTT connections in OIBus:
-- **URL**: This specifies the address of the MQTT broker, typically in the format `mqtt://address:port`. The default MQTT 
-port is 1883, but it may vary depending on the broker's configuration.
-- **Quality of Service** (QoS): MQTT offers three levels of QoS for message delivery:
-  - QoS 0: At most once. Messages are sent once, but there's no guarantee of successful receipt.
-  - QoS 1: At least once. Messages are sent multiple times until the recipient acknowledges receipt. Some duplicates may 
-occur.
-  - QoS 2: Exactly once. Messages are sent only once, and retries are attempted until the recipient confirms successful 
-receipt. No duplicates are expected.
-- **Persistence**: QoS 1 and QoS 2 allow for persistent connections. This means that the broker can retain a certain number 
-of messages in memory until the client reconnects, ensuring that no data is lost in case of connection interruptions.
-- **Authentication**:
-  - None: No authentication is required.
-  - Basic: Authenticate using a username and password.
-  - Certificate: Authenticate using certificates.
-    - Cert file path: Path to the signed certificate file used to authenticate OIBus with the broker.
-    - Key file path: Path to the key file used to sign the certificate.
-    - CA file path: Path to the certificate authority file used to generate the certificate. If empty, the certificate is considered self-signed.
-- **Reject unauthorized connection**: Decide whether to reject connections that cannot be verified, such as those with 
-self-signed certificates from the broker.
-- **Reconnect period**: The time to wait before attempting to reconnect the socket in case of a connection loss.
-- **Connect timeout**: The maximum time to wait for a connection to be established before it is considered a failure.
+## 特定设置
+MQTT 是一种用于数据交换的多功能协议，OIBus 提供多种配置选项以根据您的需求定制其行为。以下是 OIBus 中 MQTT 连接的一些关键配置参数：
+- **URL**：指定 MQTT 代理的地址，通常格式为 `mqtt://address:port`。默认的 MQTT 端口是 1883，但可能会根据代理的配置而有所不同。
+- **服务质量**（QoS）：MQTT 提供三个消息传递的 QoS 级别：
+  - QoS 0：至多一次。消息发送一次，但没有成功接收的保证。
+  - QoS 1：至少一次。消息被多次发送，直到收件人确认收到。可能出现一些重复。
+  - QoS 2：正好一次。消息只发送一次，并重试直到收件人确认成功接收。预期不会有重复。
+- **持久性**：QoS 1 和 QoS 2 允许持久连接。这意味着代理可以在内存中保留一定数量的消息，直到客户端重新连接，确保连接中断时不会丢失数据。
+- **认证**：
+  - 无：无需认证。
+  - 基本：使用用户名和密码进行认证。
+  - 证书：使用证书进行认证。
+    - 证书文件路径：用于向代理认证 OIBus 的签名证书文件的路径。
+    - 密钥文件路径：用来签名证书的密钥文件的路径。
+    - CA 文件路径：用于生成证书的证书颁发机构文件路径。如果为空，则证书被认为是自签名的。
+- **拒绝未经验证的连接**：决定是否拒绝无法验证的连接，例如代理的自签名证书。
+- **重连周期**：在连接丢失的情况下，尝试重新连接套接字之前的等待时间。
+- **连接超时**：等待建立连接的最大时间，超过此时间将视为失败。
 
-These configuration options provide flexibility in setting up MQTT connections in OIBus to suit your specific requirements 
-and security needs.
+这些配置选项在 OIBus 中建立 MQTT 连接时提供了灵活性，以适应您的具体要求和安全需求。
 
-## Item settings
-### Address space and topic
-MQTT connectors in OIBus use a subscription-based approach, which means there's no need to set scan modes for these items. 
-Instead, you specify the topics you want to subscribe to, and the MQTT connector retrieves data published to those topics 
-by the broker.
+## 项目设置
+### 地址空间和主题
+OIBus 中的 MQTT 连接器使用基于订阅的方法，这意味着不需要为这些项目设置扫描模式。相反，您需要指定您希望订阅的主题，MQTT 连接器将检索代理发布到这些主题的数据。
 
-Topics in MQTT are structured hierarchically, organized in a tree-like structure. Topics are used to address specific 
-data points or information within the MQTT broker's address space.
-```text title="Topic structure example"
+MQTT 中的主题是分层结构化的，按树状结构组织。主题用于在 MQTT 代理的地址空间内定位特定的数据点或信息。
+```text 标题="主题结构示例"
 France
     | -> Paris
         | -> temperatureTank1
@@ -62,32 +47,25 @@ France
         | -> temperatureTank2
 ```
 
-When you subscribe to a dataset in MQTT, you can use wildcard characters to specify the topics you're interested in. 
-Here are some examples:
-- Using # (hash) as a wildcard:
-  - France/# will subscribe to all topics under the "France" branch, including all subtopics and their data points.
-  - France/Chambery/# will subscribe to all topics under "France/Chambery," including all subtopics and data points specific to Chambery.
-- Using specific topic paths:
-  - France/Paris/temperatureTank1 will subscribe to only the data point "temperatureTank1" in the "France/Paris" branch.
+当您在 MQTT 中订阅数据集时，可以使用通配符指定您感兴趣的主题。以下是一些示例：
+- 使用 #（哈希）作为通配符：
+  - France/# 将订阅 "France" 分支下的所有主题，包括所有子主题及其数据点。
+  - France/Chambery/# 将订阅 "France/Chambery" 下的所有主题，包括所有特定于 Chambery 的子主题和数据点。
+- 使用特定的主题路径：
+  - France/Paris/temperatureTank1 将只订阅 "France/Paris" 分支中的数据点 "temperatureTank1"。
 
-## Payload and timestamp
-### Data types
-When you subscribe to an MQTT topic and receive a payload, the payload can contain various types of data, such as numbers, 
-strings, or JSON objects. Depending on the type of data you receive, you may need to parse the payload to extract the 
-information you want to store in OIBus North caches.
+## 载荷和时间戳
+### 数据类型
+当您订阅一个 MQTT 主题并接收到载荷时，载荷可以包含各种类型的数据，如数字、字符串或 JSON 对象。根据您接收的数据类型，您可能需要解析载荷以提取您想要存储在 OIBus North 缓存中的信息。
 
-Here are some common scenarios for parsing MQTT payloads:
-- **Number**: If the payload contains a single numeric value, you can parse it directly as a number and store it in 
-North caches. For example, if you receive a payload like `25.5`, you can parse it as a floating-point number and store 
-it as a numeric data point.
-- **String**: If the payload is a string, you can store it as-is in North caches. For example, if you receive a payload 
-like `Hello, MQTT!`, you can store it as a string data point.
-- **JSON**: If the payload is a JSON object, you'll need to specify the payload format it to extract the relevant data 
-fields. 
+以下是解析 MQTT 载荷的一些常见情况：
+- **数字**：如果载荷包含单个数字值，可以直接将其解析为数字并存储在 North 缓存中。例如，如果您接收到类似 `25.5` 的载荷，可以将其解析为浮点数并存储为数字数据点。
+- **字符串**：如果载荷是字符串，可以将其原样存储在 North 缓存中。例如，如果您接收到类似 `Hello, MQTT!` 的载荷，可以将其存储为字符串数据点。
+- **JSON**：如果载荷是一个 JSON 对象，您需要指定载荷格式以提取相关的数据字段。
 
-#### JSON object
-Below is a JSON payload format example where data must be extracted.
-```json title="JSON payload format example"
+#### JSON 对象
+下面是一个必须提取数据的 JSON 载荷格式示例。
+```json 标题="JSON 载荷格式示例"
 {
     "pointId": "point1",
     "value": "666.666",
@@ -96,24 +74,24 @@ Below is a JSON payload format example where data must be extracted.
 }
 ```
 
-Then the following configuration must be applied:
-- **Payload in array**: _false_
-- **Point ID origin**: _payload_ (it will override the name of the item as reference)
-- **Timestamp origin**: _payload_
-- **Value path**: _value_
-- **Point ID path**: _pointId_
-- **Timestamp path**: _timestamp_
-- **Type**: _String_
-- **Timezone**: _UTC_ (if the broker is in UTC timezone)
-- **Timestamp format**: _yyyy-MM-dd HH:mm:ss_
+然后必须应用以下配置：
+- **载荷为数组**：_false_
+- **Point ID 来源**：_payload_（它将覆盖项目名称作为参考）
+- **时间戳来源**：_payload_
+- **数值路径**：_value_
+- **Point ID 路径**：_pointId_
+- **时间戳路径**：_timestamp_
+- **类型**：_String_
+- **时区**：_UTC_（如果代理在 UTC 时区）
+- **时间戳格式**：_yyyy-MM-dd HH:mm:ss_
 
-You can retrieve additional fields, such as the quality field, by clicking on the `+` button on the last section.
-- **Field name in output**: _quality_
-- **Path in the retrieved payload**: _quality_
+你可以通过点击最后一节的 `+` 按钮来检索额外字段。
+- **输出中的字段名称**：_quality_
+- **检索到的载荷中的路径**：_quality_
 
-#### JSON array
-Below is another example with an array.
-```json title="JSON payload with array format example"
+#### JSON 数组
+下面是另一个带有数组的示例。
+```json 标题="带有数组格式的 JSON 载荷示例"
 {
   "metrics": [
     {
@@ -125,35 +103,27 @@ Below is another example with an array.
 }
 ```
 
-Then the following configuration must be applied:
-- **Values in array**: _true_
-- **Array path**: _metrics_
-- **Point ID origin**: _oibus_ (the name of the item will be taken as point ID reference)
-- **Timestamp origin**: _payload_
-- **Value path**: _customValue_
-- **Timestamp path**: _customTimestamp_
-- **Type**: _String_
-- **Timezone**: _UTC_ (if the broker is in UTC timezone)
-- **Timestamp format**: _yyyy-MM-dd HH:mm:ss_
+然后必须应用以下配置：
+- **数组中的值**：_true_
+- **数组路径**：_metrics_
+- **Point ID 来源**：_oibus_（将以项目名称作为 Point ID 参考）
+- **时间戳来源**：_payload_
+- **数值路径**：_customValue_
+- **时间戳路径**：_customTimestamp_
+- **类型**：_String_
+- **时区**：_UTC_（如果代理在 UTC 时区）
+- **时间戳格式**：_yyyy-MM-dd HH:mm:ss_
 
-Here, the quality field can be added with:
-- **Field name in output**: _quality_
-- **Path in the retrieved payload**: _customQuality_
+这里，质量字段可以添加：
+- **输出中的字段名称**：_quality_
+- **检索到的载荷中的路径**：_customQuality_
 
+### 时间戳
+您可以从载荷中提取时间戳，也可以使用 OIBus 提供的当前 UTC 时间戳。这两种方法的选择取决于您的 MQTT 源提供的时间戳方式。OIBus 允许您根据数据源的要求配置这些选项。
 
-### Timestamp
-You can either extract the timestamp from the payload or you can use the current UTC timestamp provided by OIBus. The
-choice between these two approaches depends on how timestamps are provided by your MQTT source. OIBus allows you to
-configure these options to suit your data source's requirements.
+#### 当前 OIBus 时间戳
+如果 MQTT 载荷不包含时间戳，或者您更愿意使用 OIBus 的当前时间戳，可以配置 OIBus 使用当前的 UTC 时间戳。在这种情况下，OIBus 在处理 MQTT 载荷时会自动生成一个 UTC 时间戳，并且您不需要从载荷中提取它。
 
-#### Current OIBus Timestamp
-If the MQTT payload doesn't contain a timestamp or if you prefer to use the current timestamp from OIBus, you can 
-configure OIBus to use the current UTC timestamp. In this case, OIBus will automatically generate a UTC timestamp when 
-processing the MQTT payload, and you don't need to extract it from the payload.
-
-#### Timestamp in Payload
-Alternatively, if the MQTT payload contains a timestamp, specify the **Timestamp path** to retrieve it and specify its 
-type (String, ISO8601, UNIX Epoch (s) or UNIX Epoch (ms)). String timestamp can be parsed with the specified**timezone**
-and **timestamp format**.
-
-
+#### 载荷中的时间戳
+或者，如果 MQTT 载荷包含时间戳，指定**时间戳路径**以检索它，并指定其类型（字符串、ISO8601、UNIX 纪元（秒）或 UNIX 纪元（毫秒））。字符串时间戳可以根据指定的**时区**
+和 **时间戳格式**来解析。

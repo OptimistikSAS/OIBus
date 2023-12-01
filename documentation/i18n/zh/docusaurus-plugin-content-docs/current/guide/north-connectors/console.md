@@ -2,23 +2,19 @@
 sidebar_position: 6
 ---
 
-# Console
-The console is primarily employed for development and troubleshooting purposes.
+# 控制台
+控制台主要用于开发和故障排除目的。
 
-## Specific settings
-The console accepts just one option: `verbose`. When verbose mode is enabled, the received data is presented in detailed 
-tables within the console. In contrast, with verbose mode disabled, only the count of values received by the North 
-connector is displayed.
+## 特定设置
+控制台只接受一个选项：`verbose`。当启用详细模式时，接收到的数据将在控制台中以详细表格的形式呈现。相反，当详细模式被禁用时，只会显示北向连接器接收到的值的计数。
 
-## Display Console in production
-In a production environment, particularly on Windows or Linux, you might have OIBus running as a service. If you need 
-to access the console output in such a scenario, you can follow these steps:
-1. Stop the OIBus service.
-2. Launch OIBus from a terminal with administrative access, directly from its installation folder:
-   - On Windows: Execute the `go.bat` script.
-   - On Linux: Run the `go.sh` script.
+## 在生产中显示控制台
+在生产环境中，特别是在Windows或Linux上，您可能会将OIBus作为服务运行。如果您在这种情况下需要访问控制台输出，可以按照以下步骤进行操作：
+1. 停止OIBus服务。
+2. 在具有管理访问权限的终端中，直接从其安装文件夹启动OIBus：
+   - 在Windows上：执行`go.bat`脚本。
+   - 在Linux上：运行`go.sh`脚本。
 
-:::caution Restart the service
-When you exit the terminal and wish to run OIBus as a service once more, remember to restart the service using the OS 
-service manager.
+:::caution 重启服务
+当您退出终端并希望再次将OIBus作为服务运行时，请记得使用操作系统的服务管理器重新启动服务。
 :::

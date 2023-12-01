@@ -7,33 +7,33 @@ import DownloadButton from "../../../../../../src/components/DownloadButton";
 import packageInfo from '../../../../../../package.json'
 
 # macOS
-## Download
+## 下载
 <div style={{ display: "flex", justifyContent: "space-around" }}>
   <DownloadButton link={`https://github.com/OptimistikSAS/OIBus/releases/download/v${packageInfo.version}/oibus-macos_x64-v${packageInfo.version}.zip`}>
     <div>
       <div>{`OIBus v${packageInfo.version}`}</div>
-      <div>MacOS (Intel chip)</div>
+      <div>MacOS (Intel 芯片)</div>
     </div>
   </DownloadButton>
 </div>
 
-macOS OIBus binary can be run through its executable. Once unzipped, start a Terminal and enter the following command:
+macOS OIBus 二进制文件可以通过其可执行文件运行。解压缩后，启动终端并输入以下命令：
 
 <CodeBlock>
-    {`./oibus --config ./data-folder`}
+  {`./oibus --config ./data-folder`}
 </CodeBlock>
 
-The `./data-folder` path must be adapted according to the place where the OIBus cache and config will be stored.
+`./data-folder` 路径必须根据存储OIBus缓存和配置的位置进行调整。
 
-For example, if the binary is stored in `/bin/` and the cache and configuration files are stored in
-`~/test/oibus-data`, the command will be:
+例如，如果二进制文件存储在 `/bin/`，并且缓存和配置文件存储在
+`~/test/oibus-data`，命令将会是：
 
 <CodeBlock>
-    {`/bin/oibus --config ~/test/oibus-data`}
+  {`/bin/oibus --config ~/test/oibus-data`}
 </CodeBlock>
 
 :::caution
-Be sure to have admin permissions to run the binary
+确保拥有 admin 权限来运行二进制文件
 :::
 
-Get familiar with the OIBus interface on the [first access page](./first-access.mdx).
+在[首次访问页面](./first-access.mdx)上熟悉OIBus界面。

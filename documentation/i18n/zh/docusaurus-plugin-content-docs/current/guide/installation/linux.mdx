@@ -6,9 +6,8 @@ import CodeBlock from '@theme/CodeBlock';
 import DownloadButton from "../../../../../../src/components/DownloadButton";
 import packageInfo from '../../../../../../package.json'
 
-
 # Linux
-## Download
+## 下载
 <div style={{ display: "flex", justifyContent: "space-around" }}>
   <DownloadButton link={`https://github.com/OptimistikSAS/OIBus/releases/download/v${packageInfo.version}/oibus-linux_x64-v${packageInfo.version}.zip`}>
     <div>
@@ -24,31 +23,28 @@ import packageInfo from '../../../../../../package.json'
   </DownloadButton>
 </div>
 
-You also have the option to obtain the files using this command:
+您还可以使用以下命令获取文件：
 <CodeBlock>
-{ `curl -LO https://github.com/OptimistikSAS/OIBus/releases/download/v${packageInfo.version}/oibus-linux_arm64-v${packageInfo.version}.zip` }
-{ `\r\nunzip -a oibus-linux_arm64-v${packageInfo.version}.zip -d OIBus/`}
+  { `curl -LO https://github.com/OptimistikSAS/OIBus/releases/download/v${packageInfo.version}/oibus-linux_arm64-v${packageInfo.version}.zip` }
+  { `\r\nunzip -a oibus-linux_arm64-v${packageInfo.version}.zip -d OIBus/`}
 </CodeBlock>
 
-The following files have been extracted:
+已提取以下文件
 ```
 oibus                   // OIBus binary
 oibus-setup.sh          // installation script
 oibus-uninstall.sh      // uninstallation script that will be updated during the installation process
 ```
 
-Bash scripts have been tested on Ubuntu. They are used to set OIBus as a service. Alternatively, it is possible
-to [run OIBus binary only](#run-oibus-in-standalone).
+Bash 脚本已在 Ubuntu 上测试。它们用于将 OIBus 设置为服务。另外，您可以[仅运行 OIBus 二进制文件](#run-oibus-in-standalone)。
 
-## Installation of OIBus as a Linux service
-You can execute the installation script using the following command, and administrative privileges will be necessary
-during the script's execution.
+## 将 OIBus 安装为 Linux 服务
+您可以使用以下命令执行安装脚本，执行脚本时需要管理员权限。
 
 ```
 sudo ./oibus-setup.sh
 ```
-
-During the installation process, the following questions will be presented (default answers are provided in this example):
+在安装过程中，将出现以下问题（本例提供了默认答案）：
 ```
 Administrative permissions are required to proceed. Do you wish to continue? (Y/n)
 Administrative permissions granted.
@@ -70,18 +66,27 @@ Useful commands:
 
 Access OIBus: http://localhost:2223/
 ```
+熟悉 OIBus 界面，请访问[首次访问页面](./first-access.mdx)。
 
-Get familiar with the OIBus interface on the [first access page](./first-access.mdx).
+## 更新
+要执行 OIBus 更新，请下载最新版本，解压缩文件，并开始设置安装。
 
-## Update
-To perform an OIBus update, download the most recent version, extract the compressed archive, and initiate the setup
-installation.
 ```
 sudo ./oibus-setup.sh
 ```
 
-At start, OIBus will automatically update the configuration `oibus.db` and the cache structure if needed. Here is
-an output example:
+在启动时，如果需要，OIBus 会自动更新配置`oibus.db`和缓存结构。以下是一个输出示例：
+
+## 更新
+要进行 OIBus 更新，请下载最新版本，解压缩档案，然后启动安装程序。
+
+
+```
+sudo ./oibus-setup.sh
+```
+
+启动时，如果需要，OIBus 将自动更新配置 `oibus.db` 和缓存结构。以下是输出示例：
+
 ```
 Administrative permissions are required to proceed. Do you wish to continue? (Y/n)
 Administrative permissions granted.
@@ -102,15 +107,13 @@ Useful commands:
         Check service status:   sudo systemctl status oibus
         Check service-logs:     sudo journalctl -u oibus -f
 ```
+## 卸载 OIBus
+在 OIBus 二进制目录中提供了一个卸载脚本。当您位于此文件夹内时，输入以下命令：
 
-## Uninstall OIBus
-An uninstallation script has been provided within the OIBus binary directory. When inside this folder, input the following
-command:
 ```
 sudo ./oibus-uninstall.sh
 ```
-
-Here is an output example:
+以下是一个输出示例：
 ```
 Administrative permissions are required to proceed with uninstall. Do you wish to continue ? (Y/n)
 Administrative permissions granted.
@@ -118,17 +121,12 @@ Do you wish to remove all OIBus data (cache, logs...)? All data, credentials and
 Removed /etc/systemd/system/default.target.wants/oibus.service.
 OIBus service was successfully removed.
 ```
+默认情况下，如果您打算稍后重新安装 OIBus，配置将被保留。但是，您也可以选择将其移除，这样做将导致所有凭据和整个 OIBus 配置的丢失。
 
-As a default setting, the configuration is retained if you intend to reinstall OIBus at a later time. However, it is
-possible to remove it, but doing so will result in the loss of all credentials and the entire OIBus configuration.
-
-## Run OIBus in standalone
-If you prefer to run OIBus without installing it as a service, after downloading and unzipping the archive, you can
-execute the following command:
+## 单独运行 OIBus
+如果您喜欢在不将 OIBus 安装为服务的情况下运行它，在下载并解压缩归档文件后，您可以执行以下命令：
 
 ```
 ./oibus --config ./OIBusData
 ```
-
-Ensure that the OIBusData directory is already in place, as it serves as the storage location for cache, logs, and
-the configuration database (`OIBusData` in the example).
+确保 OIBusData 目录已经就绪，因为它用作缓存、日志和配置数据库（例如中的 `OIBusData`）的存储位置。

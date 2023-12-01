@@ -4,26 +4,24 @@ sidebar_position: 3
 
 import ItemSettings from './_south-sql-item-settings.mdx';
 
-# Microsoft SQL Server (MSSQL)
-Send SQL queries to Microsoft SQL Server.
+# 微软 SQL 服务器 (MSSQL)
+发送 SQL 查询到 Microsoft SQL 服务器。
 
-## Specific settings
-When configuring the SQL connector to send SQL queries to a Microsoft SQL Server, you will need to provide the following
-details:
-- **Host**: The address of the Microsoft SQL server.
-- **Port**: The MSSQL server port (default is 1433).
-- **Database**: The name of the database to connect to.
-- **Username**: The username used for authentication.
-- **Password**: The password used for authentication.
-- **Domain** (optional): This field is useful when connecting to an Active Directory domain.
-- **Use encryption**: Option to encrypt the data between the database and OIBus (note that encryption can potentially
-overload the server).
-- **Trust server certificate**: Option to accept server certificates even if they are outdated or self-signed.
-- **Connection timeout**: Timeout setting for establishing the connection.
-- **Request timeout**: Timeout for each SQL query.
+## 特定设置
+配置 SQL 连接器向 Microsoft SQL 服务器发送 SQL 查询时，您需要提供以下详细信息：
+- **主机**：Microsoft SQL 服务器的地址。
+- **端口**：MSSQL 服务器端口（默认为 1433）。
+- **数据库**：要连接的数据库名称。
+- **用户名**：用于身份验证的用户名。
+- **密码**：用于身份验证的密码。
+- **域**（可选）：在连接到 Active Directory 域时有用。
+- **使用加密**：选择加密数据库与 OIBus 之间的数据（请注意，加密可能会使服务器负担过重）。
+- **信任服务器证书**：即使服务器证书过时或自签名也接受的选项。
+- **连接超时**：建立连接的超时设置。
+- **请求超时**：每个 SQL 查询的超时。
 
-:::tip Database access
-It is strongly advised to use a read-only user when connecting to the database for security and data integrity purposes.
+:::tip 数据库访问
+出于安全和数据完整性目的，建议使用只读用户连接到数据库。
 :::
 
 <ItemSettings></ItemSettings>

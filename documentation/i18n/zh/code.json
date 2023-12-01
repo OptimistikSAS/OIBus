@@ -1,34 +1,46 @@
 {
   "OIBus - Data collection solution": {
-    "message": "OIBus - Data collection solution",
+    "message": "OIBus - 数据采集解决方案",
     "description": "The homepage main heading"
   },
   "Start collecting your data now": {
-    "message": "Start collecting your data now",
+    "message": "现在就开始收集数据",
     "description": "The tagline"
   },
   "Get familiar with OIBus": {
-    "message": "Get familiar with OIBus",
+    "message": "熟悉 OIBus",
     "description": "The guide button"
   },
   "Install OIBus": {
-    "message": "Install OIBus",
+    "message": "安装 OIBus",
     "description": "The install button"
   },
   "Develop OIBus": {
-    "message": "Develop OIBus",
+    "message": "开发 OIBus",
     "description": "The develop button"
   },
+  "Multi source": {
+    "message": "多源",
+    "description": "Multi source title"
+  },
   "Access a variety of data sources securely and remotely, including databases and IoT devices.": {
-    "message": "Access a variety of data sources securely and remotely, including databases and IoT devices.",
+    "message": "安全地远程访问各种数据源，包括数据库和物联网设备。",
     "description": "Multi source feature"
   },
+  "No code": {
+    "message": "无代码",
+    "description": "No code title"
+  },
   "Using OIBus is simple: connect a data source and send your data at desired intervals directly from the web interface.": {
-    "message": "Using OIBus is simple: connect a data source and send your data at desired intervals directly from the web interface.",
+    "message": "使用 OIBus 非常简单：连接数据源，然后直接从网络界面按所需时间间隔发送数据。",
     "description": "No code feature"
   },
+  "Real time": {
+    "message": "实时",
+    "description": "Real time title"
+  },
   "Manage your subscriptions and schedule tasks with high precision to adapt your data stream to your real-time needs.": {
-    "message": "Manage your subscriptions and schedule tasks with high precision to adapt your data stream to your real-time needs.",
+    "message": "高精度管理订阅和任务计划，使数据流适应实时需求。",
     "description": "Real time feature"
   },
   "theme.ErrorPageContent.title": {

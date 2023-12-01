@@ -2,47 +2,42 @@
 sidebar_position: 1
 ---
 
-# OIBus Settings
-## OIBus port
-The default port for accessing OIBus settings through a web interface is 2223, and it is accessible at `http://localhost:2223`. 
-You have the option to modify this port in the event of conflicts or for security purposes.
+# OIBus 設定
+## OIBus 端口
+通過 Web 介面訪問 OIBus 設定的默認端口是 2223，可以在 `http://localhost:2223` 訪問。
+您可以修改此端口以解決衝突或出於安全目的。
 
-# Logging parameters
-OIBus logs encompass six levels, ranging from the most critical to the least:
-- None (deactivates the logs)
-- Error
-- Warning
-- Info
-- Debug
-- Trace
+# 日誌參數
+OIBus 日誌涵蓋六個級別，從最嚴重到最輕微：
+- 無（停用日誌）
+- 錯誤
+- 警告
+- 信息
+- 調試
+- 追踪
 
-Activating **Info** logs will automatically enable **Warning** and **Error** logs. Enabling **Error** logs will exclusively 
-display Error logs. It's worth noting that activating **Trace** logs will generate highly detailed and verbose logs, 
-primarily intended for advanced troubleshooting. Therefore, it's advisable to use **Trace** and **Debug** log levels 
-specifically for troubleshooting purposes.
+啟動 **信息** 日誌將自動啟用 **警告** 和 **錯誤** 日誌。啟用 **錯誤** 日誌將僅顯示錯誤日誌。值得注意的是，啟動 **追踪** 日誌會產生高度詳細和冗長的日誌，
+主要用於高級故障排除。因此，建議僅在故障排除時使用 **追踪** 和 **調試** 日誌級別。
 
 
-## Console
-This section displays logs in the Console, alongside values if a [North Console connector
-](../../guide/north-connectors/console) is used. To access these logs, execute OIBus from a terminal.
+## 控制台
+本節在控制台中顯示日誌，如果使用 [北方控制台連接器](../../guide/north-connectors/console)，
+還會顯示數值。要訪問這些日誌，請從終端執行 OIBus。
 
-## File
-To store logs in one or more files, you can configure the maximum file size and specify the number of files for log rotation.
+## 文件
+您可以配置最大文件大小並指定日誌輪換的文件數量，以將日誌存儲在一個或多個文件中。
 
 ## SQLite
-To save logs in a local SQLite database for viewing in the **Logs tab** of OIBus, you can set a **maximum number of logs** 
-to prevent the database from becoming overly large. Older entries will be automatically purged.
+要將日誌保存在本地 SQLite 數據庫中，以便在 OIBus 的 **日誌選項卡** 中查看，
+您可以設置 **最大日誌數量**，以防止數據庫過於龐大。較舊的條目將被自動清除。
 
 ## Loki
-To transmit logs to a remote **Loki** instance, the logs are sent to the designated host in batches at a configurable 
-time interval (default is 60 seconds). You have the flexibility to adjust this interval to control the batch size.
+將日誌傳輸到遠程 **Loki** 實例時，日誌以批處理方式在可配置的時間間隔（默認為 60 秒）內發送到指定的主機。
+您可以調整此間隔以控制批量大小。
 
-Loki can be accessed directly using Basic Auth, where you provide a **username** and **password**. If a JWT token is 
-required, you can specify the **Token address** to obtain it through Basic Auth (using the provided username and password). 
-OIBus will utilize this token to send logs to the remote **Loki** instance. If you are not using JWT token authentication, 
-leave the token address field empty.
+可以使用基本身份驗證直接訪問 Loki，您需要提供 **用戶名** 和 **密碼**。如果需要 JWT 令牌，您可以指定 **令牌地址** 通過基本身份驗證獲取它（使用提供的用戶名和密碼）。
+OIBus 將使用此令牌將日誌發送到遠程 **Loki** 實例。如果您不使用 JWT 令牌身份驗證，則將令牌地址欄留空。
 
-:::caution Loki logs with multiple OIBus
-Logs sent to Loki are identified by the OIBus ID. The name is sent alongside the ID. Ensure that you update this name 
-correctly to locate your OIBus logs within your Loki instance, specially if you have several OIBus.
+:::caution Loki 日誌與多個 OIBus
+發送到 Loki 的日誌由 OIBus ID 標識。該名稱與 ID 一同發送。如果您有多個 OIBus，請務必正確更新此名稱以便在您的 Loki 實例中定位您的 OIBus 日誌。
 :::

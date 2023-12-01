@@ -1,42 +1,33 @@
 import SerializationSettings from './_south-rest-serialization-settings.mdx';
 
-## Item settings
-In the South connector, each item can be configured to be queried according to the chosen scan mode. Multiple queries to
-the same database can be configured within the same South connector. OIBus will execute the queries one after another,
-prepare the output file, and then send it to North connectors.
+## 项目设置
+在 South 连接器中，每个项目都可以根据所选的扫描模式进行配置查询。相同 South 连接器内可以配置对同一数据库的多个查询。OIBus 将依次执行查询，
+准备输出文件，然后将其发送到 North 连接器。
 
-### Query
-The query field in the South connector accepts SQL syntax and can utilize several internal variables. These variables
-serve various purposes, including enhancing data stream resilience in the event of a connection failure and breaking
-down large intervals into smaller chunks, which helps reduce the load on the server and network. For more information,
-refer to the [big queries](#splitting-large-queries) section.
+### 查询
+South 连接器中的查询字段接受 SQL 语法，并可以利用几个内部变量。这些变量的用途包括在连接失败的情况下增强数据流的韧性，以及将大时间间隔分解成更小的块，
+这有助于减轻服务器和网络的负载。欲了解更多信息，请参阅[大型查询](#splitting-large-queries)部分。
 
-#### Query variables
-In OIBus, you can utilize the following internal variables that will be interpreted by the system:
+#### 查询变量
+在 OIBus 中，你可以利用以下内部变量，这些变量将由系统解读：
 
-- **@StartTime**: Initially, the @StartTime variable is set to the date of the first execution of the query. When results
-are retrieved from the database, the @StartTime value is updated to the most recent timestamp among those results in the
-field used as a reference (refer to [the datetime fields section](#datetime-fields)).
-- **@EndTime**: The @EndTime variable is set to either the current time (_now()_) or the end of the sub-interval if a
-query is split.
+- **@StartTime**：最初，@StartTime 变量被设置为查询首次执行的日期。当从数据库检索到结果时，@StartTime 的值会更新为这些结果中用作参考的字段的最新时间戳
+（参阅[日期时间字段部分](#datetime-fields)）。
+- **@EndTime**：@EndTime 变量被设置为当前时间（_now()_）或者如果查询被分割，则为子间隔的结束时间。
 
-```sql title="SQL query with @StartTime and @EndTime"
+``` sql 标题="带有 @StartTime 和 @EndTime 的 SQL 查询"
 SELECT reference, value, timestamp FROM table WHERE timestamp > @StartTime AND timestamp < @EndTime
 ```
 
-### Datetime fields
-In the South connector, you can specify an array of fields that are of datetime type and indicate the format to use for
-each field. Here are the details for configuring datetime fields:
-- **Field name**: The field name in the SELECT section of the query.
-- **Reference field**: Use this field as a reference for the next @StartTime value (refer to [query variables](#query-variables)).
-- **Type**: The type of data in the result.
-- **Timezone** (for string, Date, DateTime, DateTime2, SmallDateTime types): The timezone of the datetime stored in the
-database.
-- **Format** (for string only): The string format of the datetime stored in the database.
-- **Locale** (for string only): The locale to use when the format contains locale-specific strings (such as MMM format
-for months).
+### 日期时间字段
+在 South 连接器中，你可以指定一系列 datetime 类型的字段，并指出每个字段使用的格式。以下是配置日期时间字段的详细信息：
+- **字段名称**：查询中 SELECT 部分的字段名。
+- **参考字段**：使用此字段作为下一个 @StartTime 值的参考（参阅[查询变量](#query-variables)）。
+- **类型**：结果中的数据类型。
+- **时区**（对于 string、Date、DateTime、DateTime2、SmallDateTime 类型）：数据库中存储的日期时间的时区。
+- **格式**（仅限字符串）：数据库中存储的日期时间的字符串格式。
+- **语言环境**（仅限字符串）：当格式包含特定于语言环境的字符串时（如月份的 MMM 格式）使用的语言环境。
 
-OIBus internally uses these dates in ISO UTC format, and the output datetime format can be set in the
-[serialization section](#serialization).
+OIBus 在内部使用这些日期的 ISO UTC 格式，而输出日期时间格式可以在[序列化部分](#serialization)中设置。
 
 <SerializationSettings></SerializationSettings>

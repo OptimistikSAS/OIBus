@@ -3,17 +3,17 @@ sidebar_position: 4
 ---
 
 # AWS S3
-The AWS S3 North connector is designed to write files received from South connectors to the designated AWS S3 bucket.
+AWS S3 北向连接器旨在将南向连接器接收的文件写入指定的 AWS S3 存储桶中。
 
-## Specific settings
-Here are the essential parameters for configuring the AWS S3 connector:
+## 特定设置
+以下是配置 AWS S3 连接器的必要参数：
 
-- **Bucket**: The name of the AWS S3 bucket.
-- **Region**: The region where the bucket is located (e.g., `eu-west-3`).
-- **Folder**: The specific folder within the bucket where files should be stored.
-- **Access key**: The authentication key used for connecting to the Amazon S3 bucket.
-- **Secret key**: The secret key associated with the access key.
-- **Use proxy**: An option to utilize a proxy for sending HTTP requests.
-- **Proxy URL**: The URL of the proxy server to pass requests through.
-- **Proxy username**: The username linked to the proxy.
-- **Proxy password**: The password associated with the proxy username.
+- **存储桶**：AWS S3 存储桶的名称。
+- **区域**：存储桶所在的区域（例如，`eu-west-3`）。
+- **文件夹**：文件应存储在存储桶中的特定文件夹。
+- **访问密钥**：用于连接到 Amazon S3 存储桶的验证密钥。
+- **秘密密钥**：与访问密钥关联的秘密密钥。
+- **使用代理**：使用代理发送 HTTP 请求的选项。
+- **代理 URL**：通过该代理服务器传递请求的 URL。
+- **代理用户名**：与代理相关的用户名。
+- **代理密码**：与代理用户名关联的密码。
