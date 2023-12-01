@@ -2,80 +2,49 @@
 sidebar_position: 1
 ---
 
-# OIBus security
-Typically, OIBus is installed on a dedicated machine, which can also be a virtual machine, situated at the customer's site. 
-The behavior of OIBus is entirely controlled through the OIBus configuration SQLite database (oibus.db). It is crucial 
-to take into account various factors to safeguard OIBus, including:
-- Controlling access to the machine.
-- Managing access to the OIBus administration interface.
-- Ensuring the security of sensitive information such as passwords and secret keys.
+# OIBus 安全
+通常，OIBus 安装在位于客户现场的专用机器上，该机器也可以是虚拟机。通过 OIBus 配置 SQLite 数据库 (oibus.db) 完全控制 OIBus 的行为。重要的是要考虑保护 OIBus 的各种因素，包括：
+- 控制对机器的访问。
+- 管理对 OIBus 管理界面的访问。
+- 确保密码和密钥等敏感信息的安全性。
 
-## Access to the OIBus machine
-It is imperative to restrict access to the OIBus machine in such a way that only the designated OIBus administrator can 
-gain access, thus preventing unauthorized individuals from reaching it. 
+## 访问 OIBus 机器
+必须限制对 OIBus 机器的访问，以使只有指定的 OIBus 管理员才能访问，从而防止未经授权的人员接触到它。
 
-Certainly, local or remote access to the machine where OIBus is installed poses a significant risk. For instance, using
-methods like RDP (Remote Desktop Protocol) or disk sharing could potentially enable a local user to delete OIBus files
-or directly tamper with the configuration file.
+当然，对安装有 OIBus 的机器的本地或远程访问构成显著风险。例如，使用 RDP（远程桌面协议）或磁盘共享等方法，可能会使本地用户删除 OIBus 文件或直接篡改配置文件。
 
-## Access to the OIBus administration interface
-The OIBus administration interface is web-based and can be accessed either locally or from any remote PC with a web browser. 
-It is advisable to utilize the interface locally by accessing it through the URL http://localhost:2223.
+## 访问 OIBus 管理界面
+OIBus 管理界面是基于 Web 的，可以本地访问，也可以从任何带有 Web 浏览器的远程 PC 访问。建议通过 URL http://localhost:2223 本地使用该界面。
 
-For remote access, it is necessary to configure the [IP Filters](../engine/ip-filters.md) section of the OIBus Engine.
+对于远程访问，需要配置 OIBus 引擎的 [IP 过滤器](../engine/ip-filters.md) 部分。
 
-Accessing the administration interface mandates a valid user/password combination. The default username is `admin`, and 
-the default password is `pass`.
+访问管理界面要求有效的用户/密码组合。默认用户名是 `admin`，默认密码是 `pass`。
 
-We strongly recommend changing the default password for enhanced security from the user settings page..
+我们强烈建议从用户设置页面更改默认密码以提高安全性。
 
+## HTTP 协议和基本认证
+OIBus 采用基本认证方法，与大多数 Web 浏览器支持的 HTTP 协议一起使用。然而，重要的是要注意此方法不会对每个 HTTP 请求头中传输的凭证提供任何加密。
 
-## HTTP protocol and Basic Auth
-OIBus employs the Basic Auth method in conjunction with the widely supported HTTP protocol in most web browsers. 
-However, it's important to note that this method does not offer any encryption for the credentials transmitted in the 
-header with each HTTP request.
+为了解决这个潜在的弱点，OIBus 引擎包括可以通过限制对特定 IP 地址的访问来帮助降低风险的过滤器。尽管如此，这种方法并非万无一失，因为黑客可以通过使用假 IP 地址轻易地冒充其他计算机系统。另外，确保 HTTP 请求传递的网络的隐私性至关重要，以防止凭据泄露。
 
+因此，建议将对 OIBus 管理界面的远程访问限制在客户的局域网 (LAN) 内，而不将其暴露于互联网。强烈建议使用虚拟专用网络 (VPN) 来增加安全性。
 
-To address this potential vulnerability, the OIBus Engine includes filters that can help mitigate the risk by restricting 
-access to specific IP addresses. Nevertheless, this approach is not foolproof, as hackers can easily impersonate other 
-computer systems by using fake IP addresses. Additionally, it's crucial to ensure the privacy of the network through 
-which the HTTP requests pass to prevent credential leaks.
+### 使用 HTTPS
+为了为 OIBus 实现 HTTPS，您可以通过位于 OIBus 前面的反向代理来建立它，例如 nginx 或 Apache。这样，您可以将 HTTPS 查询指向 HTTPS 服务器，随后将它们重定向到 OIBus HTTP 服务器。
 
-For this reason, it is advisable to limit remote access to the OIBus administration interface to within the customer's 
-local area network (LAN) and not expose it to the Internet. The use of a Virtual Private Network (VPN) is strongly 
-recommended for added security.
+这种设置通过加密网络上传输的数据（如果 HTTPS 正确设置）来增强 OIBus 通信的安全性。它确保了包括凭证在内的敏感信息在传输过程中保持机密，并最大限度地减少了被拦截或未经授权访问的风险。
 
-### Using HTTPS
-To implement HTTPS for OIBus, you can establish it through a reverse proxy positioned in front of OIBus, such as nginx 
-or Apache. By doing so, you can direct HTTPS queries to the HTTPS server, which will subsequently redirect them to the 
-OIBus HTTP server.
+## 保护密码和秘密
+重要的是要强调，OIBus 不会以纯文本形式存储用户密码。
 
-This setup enhances the security of OIBus communication by encrypting data transmitted over the network (if HTTPS is 
-correctly set up). It ensures that sensitive information, including credentials, remains confidential during transmission 
-and minimizes the risk of interception or unauthorized access.
+### 登录密码
+管理员界面登录密码使用 argon2 算法进行哈希处理，只保留生成的哈希值。当尝试登录时，输入密码的哈希值会与存储的哈希值进行验证，以提供额外的安全层保护用户凭证。
 
-## Protection of passwords and secrets
-It's important to highlight that OIBus does not store user passwords in plaintext. 
+### 连接器凭证
+OIBus 需要访问各种信息源，包括历史数据、DCS、LIMS、MES、数据库等。其中许多源需要用户名/密码组合或密钥进行认证。
 
-### Login password
-The admin interface login password undergoes hashing using the argon2 algorithm, retaining solely the resulting hash. When 
-a login attempt is made, the entered password's hash is verified against the stored hash to provide an additional security 
-layer safeguarding user credentials.
+所有这些敏感信息都存储在 OIBus 配置数据库 (`oibus.db`) 中，但使用 AES-256 算法在 CBC 模式下进行加密。这种加密提供了强大的安全层，确保信息在未加密形式下保持不可读。
 
-### Connector credentials
-OIBus requires access to various sources of information, including Histories, DCS, LIMS, MES, Databases, and more. Many 
-of these sources necessitate a username/password combination or a secret key for authentication.
+用于加密的 AES 对称密钥存储在单独的 `crypto.db` SQLite 数据库中。保持单独数据库的决策是为了防止在分享 `oibus.db` 文件以进行调试或配置复制时未经授权的访问。通过使用存储在单独数据库中的密钥加密秘密信息，除非两个数据库文件一起可用，否则不可能访问加密的秘密信息。这种分离是一种安全措施。
 
-All this sensitive information is stored within the OIBus configuration database (`oibus.db`), but it is encrypted using 
-the AES-256 algorithm in CBC mode. This encryption provides a strong security layer, ensuring that the information remains 
-unreadable in its unencrypted form.
-
-The AES symmetric key used for encryption is stored separately in the `crypto.db` SQLite database. The decision to maintain 
-a separate database serves the purpose of preventing unauthorized access in case the `oibus.db` file is shared for debugging 
-or configuration replication. By encrypting the secrets with a key stored in a separate database, it becomes infeasible 
-to access the encrypted secrets unless both database files are available together. This separation is a security measure.
-
-It's important to note that if the `crypto.db` SQLite database is deleted, OIBus will be unable to decrypt the encrypted 
-secrets. In such an event, a new AES key will be generated upon restarting OIBus. Consequently, it will be necessary to 
-use the administration interface to re-enter all the secrets to regain access to the encrypted data. This process ensures 
-the security of the secrets even in the event of a database deletion.
+重要的是要注意，如果 `crypto.db` SQLite 数据库被删除，OIBus 将无法解密加密的秘密信息。如果发生这种情况，在重启 OIBus 后，将生成一个新的 AES 密钥。因此，需要使用管理界面重新输入所有秘密信息，以重新获得对加密数据的访问权限。即使数据库被删除，这个过程也确保了秘密信息的安全性。

@@ -3,18 +3,18 @@ sidebar_position: 5
 ---
 
 # Azure Blob
-The Azure Blob North connector is used to write files received from South connectors to a designated Azure Blob container.
+Azure Blob 北向连接器用于将南向连接器接收的文件写入到指定的 Azure Blob 容器中。
 
-## Specific settings
-Here are the key parameters for configuring the Azure Blob connector:
-- **Account**: The Azure account to use. This account must have access to the specified container.
-- **Container**: The Azure Blob container where files will be stored.
-- **Path**: The folder within the container where files should be stored.
-- **Authentication**: The method of authentication used to connect to the Azure Blob container.
-  - **Access Key**: Connect to the account using an access key.
-  - **SAS Token**: Use a Shared Access Signature Token to connect to the account.
-  - **AAD (Application Active Directory)**: Requires a service account in Azure.
-    - **Tenant ID**: The Azure account's tenant ID.
-    - **Client ID**: An ID associated with the service account.
-    - **Client Secret**: The secret associated with the client ID.
-  - External (Windows only): Utilize Windows domain authentication.
+## 特定设置
+以下是配置 Azure Blob 连接器的关键参数：
+- **账户**：使用的 Azure 账户。此账户必须具有对指定容器的访问权限。
+- **容器**：将存储文件的 Azure Blob 容器。
+- **路径**：文件应存储在容器中的文件夹。
+- **认证**：用于连接到 Azure Blob 容器的认证方法。
+  - **访问密钥**：使用访问密钥连接到账户。
+  - **SAS 令牌**：使用共享访问签名令牌连接到账户。
+  - **AAD (应用程序活动目录)**：需要在 Azure 中的服务账户。
+    - **租户 ID**：Azure 账户的租户 ID。
+    - **客户端 ID**：与服务账户相关联的 ID。
+    - **客户端密钥**：与客户端 ID 相关联的密钥。
+  - 外部（仅限 Windows）：使用 Windows 域认证。

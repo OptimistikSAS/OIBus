@@ -5,64 +5,50 @@ sidebar_position: 14
 import ItemSettings from './_south-sql-item-settings.mdx';
 
 # ODBC
-Send SQL queries to a local ODBC driver or to a remote [OIBus Agent](../oibus-agent/odbc.md) that can manage ODBC
-queries on the same machine as the server.
+向本地 ODBC 驱动程序或可以在服务器同一机器上管理 ODBC 查询的远程 [OIBus Agent](../oibus-agent/odbc.md) 发送 SQL 查询。
 
-The OIBus agent can be installed separately, as specified in its [documentation](../oibus-agent/installation).
+OIBus agent 可以根据其[文档](../oibus-agent/installation)中的说明单独安装。
 
-This connector proves valuable when retrieving data from IP21 ODBC interfaces or other ODBC-compatible applications.
+当需要从 IP21 ODBC 接口或其他 ODBC 兼容应用程序检索数据时，此连接器非常有价值。
 
-## Specific settings
-- **Use remote agent**: If set to `No`, ensure that an ODBC [driver is installed](#driver-installation) on the machine
-where OIBus is deployed. Alternatively, you can opt to [install an OIBus agent](../oibus-agent/installation) on a remote
-machine equipped with the necessary drivers.
-- **Remote agent URL**: Specify the URL of the remote OIBus agent, e.g., http://ip-address-or-host:2224.
-- **Retry interval**: Time to wait before retrying connection.
-- **Request timeout**: Determine the timeout duration for each query.
-- **Connection string**: The ODBC connection string.
-- **Password**: The authentication password, securely stored within OIBus configuration. If directly included in the
-connection string, the password will be stored in plain text. When a password is used, OIBus appends `PWD=<password>` to
-the end of the connection string.
+## 特定设置
+- **使用远程代理**：如果设置为 `No`，确保在部署 OIBus 的机器上安装了 ODBC [驱动程序](#driver-installation)。或者，您可以选择在配备必要驱动程序的远程机器上[安装 OIBus agent](../oibus-agent/installation)。
+- **远程代理 URL**：指定远程 OIBus agent 的 URL，例如，http://ip-address-or-host:2224。
+- **重试间隔**：在重新尝试连接前的等待时间。
+- **请求超时**：确定每个查询的超时持续时间。
+- **连接字符串**：ODBC 连接字符串。
+- **密码**：认证密码，在 OIBus 配置中安全存储。如果直接包含在连接字符串中，密码将以明文存储。当使用密码时，OIBus 会在连接字符串的末尾附加 `PWD=<password>`。
 
-Please ensure that the ODBC connection string adheres to the specified driver format, and it is imperative to have the
-driver specified in the connection string correctly installed.
+请确保 ODBC 连接字符串符合指定驱动程序的格式，并且连接字符串中指定的驱动程序正确安装。
 
-:::tip ODBC connection string example
-`Driver={driver name};SERVER=localhost,10014;TrustServerCertificate=yes;Database=test;UID=oibus;PWD=<secret>`
+:::tip ODBC 连接字符串示例
+`Driver={驱动程序名称};SERVER=localhost,10014;TrustServerCertificate=yes;Database=test;UID=oibus;PWD=<secret>`
 
-The driver is either the name of the driver (Windows) or the path of the driver file (unix like systems).
-The port is optional, and can be replaced by `PORT=10014` (be sure to replace the comma `,` by a semicolon `;`).
+驱动程序是驱动程序的名称（Windows）或驱动程序文件的路径（类 Unix 系统）。
+端口是可选的，可以用 `PORT=10014` 替换（确保将逗号 `,` 替换为分号 `;`）。
 :::
 
-### Driver Installation
-On Windows, you can conveniently access the ODBC driver management tool, where you can specify the driver's name in the
-connection string, such as `MySQL ODBC 3.51 driver` or `SQL Server`.
+### 驱动程序安装
+在 Windows 上，您可以方便地访问 ODBC 驱动程序管理工具，在那里您可以在连接字符串中指定驱动程序的名称，例如 `MySQL ODBC 3.51 驱动程序` 或 `SQL Server`。
 
-On UNIX-like systems, you should first install the driver on your machine and then specify the driver's path in the
-connection string, like `/opt/lib/libmsodbcsql.18.dylib`, for example.
+在类 UNIX 系统上，您应该先在您的机器上安装驱动程序，然后在连接字符串中指定驱动程序的路径，例如 `/opt/lib/libmsodbcsql.18.dylib`。
 
-### Using OIBus with IP21
-ODBC connections often suffer from latency issues, particularly during large historian queries, such as those involving
-IP21. This can place a heavy load on both the network and the server.
+### 与 IP21 使用 OIBus
+ODBC 连接通常会遇到延迟问题，特别是在大型历史查询期间，例如涉及 IP21 的查询。这可能会对网络和服务器造成重大负载。
 
-To mitigate these challenges, we recommend installing the OIBus Agent as a service on the same machine as IP21. OIBus
-can then transmit queries to its agent using the HTTP protocol, and the agent can communicate directly with IP21 using
-ODBC, eliminating network latency.
+为了减轻这些挑战，我们建议将 OIBus Agent 作为服务安装在与 IP21 相同的机器上。OIBus 然后可以使用 HTTP 协议将查询传输给其代理，代理可以直接使用 ODBC 与 IP21 通信，消除网络延迟。
 
-Of course, it's essential to ensure that the appropriate ODBC driver is installed **on the agent machine** and specified
-correctly in the connection string.
+当然，必须确保在 **代理机器上** 安装了适合的 ODBC 驱动程序，并在连接字符串中正确指定。
 
-:::tip IP21 ODBC driver
-To establish a connection to IP21 via ODBC, you will need the `AspenTech SQLplus` driver installed on your machine.
-Please ensure that this driver is correctly installed.
+:::tip IP21 ODBC 驱动程序
+要通过 ODBC 建立与 IP21 的连接，您需要在您的机器上安装 `AspenTech SQLplus` 驱动程序。
+请确保此驱动程序正确安装。
 :::
 
-:::caution ODBC Access
-Authentication can be handled either through the connection string or locally. When choosing local authentication, it's
-important to ensure that the OIBus agent runs with the appropriate permissions. You may need to run the service as a
-different user, which can be configured through the service management window.
+:::caution ODBC 访问
+认证可以通过连接字符串或本地处理。在选择本地认证时，重要的是确保 OIBus agent 以适当的权限运行。您可能需要以不同用户身份运行服务，这可以通过服务管理窗口配置。
 :::
 
-The following connection string works with a basic IP21 installation: `Driver={AspenTech SQLplus};HOST=<host>;PORT=10014"`
+以下连接字符串适用于基本的 IP21 安装：`Driver={AspenTech SQLplus};HOST=<host>;PORT=10014"`
 
 <ItemSettings></ItemSettings>

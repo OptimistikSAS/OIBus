@@ -3,50 +3,40 @@ sidebar_position: 4
 ---
 
 # Modbus
-Modbus is a communication protocol utilized in PLC networks. Originally, it was developed for serial interfaces like 
-RS232, RS422, and RS485, and later expanded to include support for TCP mode. 
+Modbus 是用于 PLC 网络的通信协议。起初，它是为串行接口开发的，如 RS232、RS422 和 RS485，并后来扩展以支持 TCP 模式。
 
-OIBus uses the [jsmodbus](https://github.com/Cloud-Automation/node-modbus) library **in TCP mode only**.
+OIBus 使用 [jsmodbus](https://github.com/Cloud-Automation/node-modbus) 库 **仅在 TCP 模式下**。
 
-## Specific settings
-Here are the Modbus connector settings:
-- **Host**: IP address or hostname of the Modbus server machine.
-- **Port**: The port to use for connection (502 by default).
-- **Retry interval**: Time to wait between reconnections after a connection failure.
-- **Slave ID**: Identifies the Modbus source machine, default is 1.
-- **Address Offset**: For most PLCs, there is no offset (Modbus option). Some PLCs may start the address range at 1 instead of 0 (JBus option).
-- **Endianness**: Specifies the type of bit encoding (Big Endian or Little Endian).
-- **Swap Bytes**: Determines whether the bytes within a group of 16 bits (a word) should be inverted or not.
-- **Swap Words**: Indicates whether the words (16-bit groups) should be inverted or not within a 32-bit group.
+## 特定设置
+以下是 Modbus 连接器设置：
+- **主机**：Modbus 服务器机器的 IP 地址或主机名。
+- **端口**：用于连接的端口（默认为 502）。
+- **重试间隔**：连接失败后重新连接的等待时间。
+- **从站 ID**：标识 Modbus 源机器，默认为 1。
+- **地址偏移**：对于大多数 PLC，没有偏移（Modbus 选项）。一些 PLC 可能从 1 而不是 0 开始地址范围（JBus 选项）。
+- **字节顺序**：指定位编码的类型（大端或小端）。
+- **字节交换**：确定是否应该在 16 位（一个字）的字节组内反转字节。
+- **字交换**：指示是否应该在 32 位组内反转字（16 位组）。
 
-## Item settings
-- **Address**: The hexadecimal address of the data within the device.
-- **Modbus type**: Specifies whether it's a _coil_, _discrete input_, _input register_, or _holding register_ (default).
-- **Data type**: Relevant for _holding registers_ or _input registers_. It defines the type of data fetched from the 
-register, with options such as UInt16 (default), Int16, UInt32, Int32, UInt64, Int64, Float, or Double.
-- **Multiplier Coefficient**: Multiplies the retrieved value (default is 1).
+## 项目设置
+- **地址**：设备内数据的十六进制地址。
+- **Modbus 类型**：指定是 _线圈_、_离散输入_、_输入寄存器_ 还是 _保持寄存器_（默认）。
+- **数据类型**：与 _保持寄存器_ 或 _输入寄存器_ 相关。它定义了从寄存器中提取的数据类型，选项如 UInt16（默认）、Int16、UInt32、Int32、UInt64、Int64、Float 或 Double。
+- **乘数系数**：乘以检索到的值（默认为 1）。
 
-### About the Modbus address
-The address should match the variable's address in the PLC, represented in hexadecimal without the data type digit. For 
-instance:
-- For _holding register_ data at 0x40001, input the address as **0x0001** (excluding the digit `4`) and specify the 
-Modbus type as _holdingRegister_.
-- For _coil_ data at 0x009C, use **0x009C** as the address and specify the Modbus type as _coil_.
+### 关于 Modbus 地址
+地址应与 PLC 中变量的地址匹配，以十六进制表示且不带数据类型数字。例如：
+- 对于位于 0x40001 的 _保持寄存器_ 数据，输入地址为 **0x0001**（不包括数字 `4`），并指定 Modbus 类型为 _holdingRegister_。
+- 对于位于 0x009C 的 _线圈_ 数据，使用 **0x009C** 作为地址，并指定 Modbus 类型为 _coil_。
 
-Modbus data addresses are structured according to the [Modicon Convention Notation (MCN)](https://www.modbus.org/docs/PI_MBUS_300.pdf):
-- Coil: `[0x00001 - 0x09999]` (1 to 39,321)
-- Discrete Input: `[0x10001 - 0x19999]` (65,537 to 104,857)
-- Input Register: `[0x30001 - 0x39999]` (196,609 to 235,929)
-- Holding Register: `[0x40001 - 0x49999]` (262,145 to 301,465)
+Modbus 数据地址按照 [Modicon Convention Notation (MCN)](https://www.modbus.org/docs/PI_MBUS_300.pdf) 结构化：
+- 线圈：`[0x00001 - 0x09999]`（1 到 39,321）
+- 离散输入：`[0x10001 - 0x19999]`（65,537 到 104,857）
+- 输入寄存器：`[0x30001 - 0x39999]`（196,609 到 235,929）
+- 保持寄存器：`[0x40001 - 0x49999]`（262,145 到 301,465）
 
-An extended version of MCN allows for larger address spaces:
-- Coil: `[0x000001 - 0x065535]`
-- Discrete Input: `[0x100001 - 0x165535]`
-- Input Register: `[0x300001 - 0x365535]`
-- Holding Register: `[0x400001 - 0x465535]`
-
-
-
-
-
-
+MCN 的扩展版本允许更大的地址空间：
+- 线圈：`[0x000001 - 0x065535]`
+- 离散输入：`[0x100001 - 0x165535]`
+- 输入寄存器：`[0x300001 - 0x365535]`
+- 保持寄存器：`[0x400001 - 0x465535]`

@@ -3,96 +3,68 @@ sidebar_position: 9
 ---
 
 # ADS - TwinCAT
-The Automation Device Specification (ADS) protocol serves as a transport layer integrated into TwinCAT systems, designed 
-and developed by Beckhoff.
+自动化设备规范（ADS）协议作为集成到TwinCAT系统中的传输层，由Beckhoff设计并开发。
 
-Every data item is identified by a distinct address within the controller, which can be conveniently accessed through 
-the ADS connector on the OIBus.
+控制器中的每个数据项都有一个独特的地址，可以通过OIBus上的ADS连接器方便地访问。
 
-The OIBus utilizes the [ads-client](https://github.com/jisotalo/ads-client) library for this purpose.
+OIBus使用[ads-client](https://github.com/jisotalo/ads-client)库来实现这一目的。
 
-## Specific settings
-OIBus uses the ADS protocol to connect to an AMS Router. The AMS Router serves as the intermediary that connects ADS clients, 
-such as OIBus, to PLCs and the TwinCAT runtime. This connectivity enables OIBus to access data from PLCs.
+## 特定设置
+OIBus使用ADS协议连接到AMS路由器。AMS路由器作为中介，将诸如OIBus之类的ADS客户端连接到PLC和TwinCAT运行时。这种连接性使OIBus能够访问PLC中的数据。
 
-The specific configuration possibilities depend on the placement and location of the AMS Router.
+具体的配置可能性取决于AMS路由器的放置和位置。
 
-### With local AMS server (TwinCAT runtime)
-When TwinCAT is installed on the same machine and network as OIBus, the ADS connector has the capability to utilize the 
-TwinCAT runtime, enabling direct communication with the PLC using its **Net ID** and **PLC Port** (no need to specify Router 
-address, Router TCP port, Client AMS Net ID, Client ADS port).
+### 与本地AMS服务器（TwinCAT运行时）
+当TwinCAT安装在与OIBus相同的机器和网络上时，ADS连接器能够利用TwinCAT运行时，使用其**Net ID**和**PLC Port**与PLC直接通信（无需指定路由器地址、路由器TCP端口、客户端AMS Net ID、客户端ADS端口）。
 
-The Net ID is an address resembling an IP address with two extra numeric values. Typically, the Net ID corresponds to 
-the IP address used to access the PLC from the network, with two additional numbers for distinguishing between multiple 
-PLCs that can be accessed through a single AMS Router. For instance, an example Net ID might look like `127.0.0.1.1.1`.
+Net ID是一个类似IP地址加上两个额外数字值的地址。通常，Net ID对应于网络中用来访问PLC的IP地址，并增加两个附加数字，以区分可通过单个AMS路由器访问的多个PLC。例如，一个示例Net ID可能看起来像是`127.0.0.1.1.1`。
 
-The port specifies the communication endpoint for connecting with the PLC from the AMS Router, typically set to the default 
-value of 851.
+端口指定了AMS路由器中用于与PLC连接的通信终端，默认设置为851。
 
-### With remote AMS server
-When connecting to a remote AMS server, you will need the **Net ID** and **PLC Port** as well as several additional fields:
-- **Router address**: This is the IP address or domain name of the AMS router.
-- **Router TCP port**: The port used by the AMS router for communication. Ensure that this port is allowed by both the 
-network and operating system firewalls.
-- **AMS Net ID**: This is a client identifier used to establish a connection with the TwinCAT runtime.
-- **ADS Client port** (optional): You can specify the port used by the client for data exchange. If left empty, the AMS 
-server will assign a random port. If you choose to specify a port, ensure that it is not already in use by another client.
+### 与远程AMS服务器
+连接到远程AMS服务器时，您需要**Net ID**和**PLC Port**以及几个附加字段：
+- **路由器地址**：这是AMS路由器的IP地址或域名。
+- **路由器TCP端口**：AMS路由器用于通信的端口。确保此端口得到网络和操作系统防火墙的允许。
+- **AMS Net ID**：这是用于与TwinCAT运行时建立连接的客户端标识符。
+- **ADS客户端端口**（可选）：您可以指定客户端用于数据交换的端口。如果留空，AMS服务器将分配一个随机端口。如果您选择指定端口，请确保它不是已被其他客户端使用的端口。
 
-To enable communication between the ADS connector and the TwinCAT runtime, you must configure Static Routes using the 
-_TwinCAT Static Routes_ tool. The following example illustrates how to configure two routes using the **AMS Net ID**, which 
-should be utilized on the OIBus side. It is crucial that the **AMS Net ID** is used in conjunction with the IP address
-specified in the Static Routes.
+要启用ADS连接器与TwinCAT运行时之间的通信，您必须使用_TwinCAT静态路由_工具配置静态路由。以下示例展示了如何使用**AMS Net ID**配置两条路由，它应在OIBus方使用。关键的是，**AMS Net ID**在与静态路由中指定的IP地址一起使用时才有效。
 
 ![TwinCAT Static Routes tool](../../../static/img/guide/south/ads/installation-ads-distant.png)
 
 ![Add a TwinCAT Static Route](../../../static/img/guide/south/ads/routes.png)
 
-The AMSNetId specified must be filled in the **AMS Net ID** field of the OIBus configuration.
+指定的AMSNetId必须填写在OIBus配置的**AMS Net ID**字段中。
 
-:::danger Multiple ADS connectors
-OIBus supports only a single remote ADS connector at a time. If you need to connect to two different PLCs simultaneously, 
-you can achieve this by using a local AMS server.
+:::danger 多个ADS连接器
+OIBus一次只支持一个远程ADS连接器。如果您需要同时连接到两个不同的PLC，则可以通过使用本地AMS服务器来实现。
 :::
 
-### Other specific settings
-Here are some additional configuration options:
-- **Retry Interval**: This is the amount of time to wait before attempting to retry the connection.
-- **PLC Name**: You can specify a prefix added to each item name before they are sent into North caches. For example, 
-with a PLC name of `PLC001.` (including the dot), and an item name of `MyVariable.Value`, the resulting name, once the 
-values are retrieved, will be `PLC001.MyVariable.Value`. This helps differentiate data from different PLCs. Another PLC 
-might have a resulting item name like `PLC002.MyVariable.Value`.
-- **Enumeration value**: You can choose whether to serialize enumerations as integers or as text.
-- **Boolean value**: You can choose whether to serialize booleans as integers or as text.
-- **Structure filtering**: For details on structure filtering, please refer to the [specific documentation](#data-structures).
+### 其他特定设置
+这里还有一些额外的配置选项：
+- **重试间隔**：尝试重连前的等待时间。
+- **PLC名称**：您可以指定一个添加到每个项目名称前的前缀，然后它们会被发送到北向缓存中。例如，以PLC名称为`PLC001. `（包括点），一个项目名称为`MyVariable.Value`，一旦检索到值，最终的名称将是`PLC001.MyVariable.Value`。这有助于区分来自不同PLC的数据。另一个PLC的结果项目名称可能类似`PLC002.MyVariable.Value`。
+- **枚举值**：您可以选择将枚举序列化为整数还是文本。
+- **布尔值**：您可以选择将布尔值序列化为整数还是文本。
+- **结构过滤**：有关结构过滤的详细信息，请参阅[特定文档](#data-structures)。
 
+:::tip 何时使用PLC名称？
+在通过两个不同的ADS连接器检索具有共享点地址模式的类似PLC的数据并将其发送到同一个北向连接器的情况下，即使数据来自不同的PLC，最终的值可能具有相同的点ID。
 
-:::tip When to use PLC name?
-In scenarios where data from similar PLCs with shared point addresses schema is retrieved via two different ADS connectors 
-and sent to the same North connector, the resulting values may possess identical point IDs despite originating from distinct 
-PLCs.
+为了消除这种潜在的歧义，您可以选择在数据检索后在每个点ID前附加**PLC名称**。这种做法确保发送到北向连接器的点ID保持不同，当导出这些项目以导入到另一个OIBus中时特别有用。
 
-To mitigate this potential ambiguity, you can opt to append the **PLC name** in front of each point ID once the data is 
-retrieved. This practice ensures that the point IDs sent to the North connector remain distinct, which proves particularly 
-useful when exporting these items for import into another OIBus. 
-
-By simply altering the PLC name, you can ensure that your data remains unique in the North-targeted application.
+通过简单地更改PLC名称，您可以确保您的数据在北向目标应用程序中保持唯一。
 :::
 
-#### Structure filtering
-You can also retrieve an entire data structure using this method. For instance, if the data _MyVariable_ is of the
-_MyStructure_ type and includes fields like _MyDate_, _MyNumber_, and _Value_, but you only need _MyDate_ and
-_MyNumber_, you can create a new structure within the _structure filtering_ section with the **Structure name**
-`MyStructure`. 
-In the **Fields to keep** section, you can specify only the required fields, separated by commas, such as `MyDate, MyNumber`.
+#### 结构过滤
+您还可以使用此方式检索整个数据结构。例如，如果数据_MyVariable_是_MyStructure_类型，并包含诸如_MyDate_、_MyNumber_ 和 _Value_ 等字段，但您只需要_MyDate_和_MyNumber_，您可以在_structure filtering_部分创建一个新的结构，其**结构名称**是`MyStructure`。
+在**要保留的字段**部分，您可以指定只需要的字段，用逗号分隔，例如`MyDate, MyNumber`。
 
-This feature is particularly beneficial when dealing with multiple data items, all of which are of the _MyStructure_ type, 
-but you are interested in retrieving only specific fields from the structure, such as _MyDate_ and _MyNumber_. The more
-fields the structure has, the more advantageous this feature becomes.
+当面对多个数据项全部为_MyStructure_类型时，此功能特别有用，但您只对从结构中检索特定字段，诸如_MyDate_和_MyNumber_感兴趣。结构含有的字段越多，此功能的优势越大。
 
-Ultimately, each field specified will result in a unique point ID. In the example provided, using this method for the 
-single point _MyVariable_ will result in two distinct points:
+最终，指定的每个字段都会产生一个独特的点ID。在提供的示例中，使用此方法对单个点_MyVariable_会导致两个不同的点：
 - MyVariable.MyDate
 - MyVariable.MyNumber
 
-## Item settings
-- **Address**: The address of the data to query in the PLC.
+## 项目设置
+- **地址**：PLC中要查询的数据的地址。

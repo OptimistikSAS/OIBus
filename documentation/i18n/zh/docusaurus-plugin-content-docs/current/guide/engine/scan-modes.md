@@ -2,17 +2,16 @@
 sidebar_position: 2
 ---
 
-# Scan modes
-Cron-defined scan modes are utilized in OIBus to retrieve or send data from 
-[South connectors](../../guide/south-connectors/common-settings.md) at specific dates and intervals.
+# 扫描模式
+OIBus 使用 Cron 定义的扫描模式从[南向连接器](../../guide/south-connectors/common-settings.md)在特定日期和时间间隔检索或发送数据。
 
-There are six default scan modes:
-- Every second: (* * * * * *)
-- Every 10 seconds: (/10 * * * *)
-- Every minute: (0 * * * * *), running every minute at precisely 0 seconds.
-- Every 10 minutes: (0 /10 * * *), running every 10 minutes at precisely 0 seconds.
-- Every hour: (0 0 * * * *), running every hour at precisely 0 seconds.
-- Every 24 hours: (0 0 0 * * *), running every day at midnight exactly.
+有六种默认的扫描模式：
+- 每秒：(* * * * * *)
+- 每10秒：(*/10 * * * * *)
+- 每分钟：(0 * * * * *)，每分钟准时运行 0 秒。
+- 每10分钟：(0 */10 * * *)，每10分钟准时运行 0 秒。
+- 每小时：(0 0 * * * *)，每小时准时运行 0 秒。
+- 每24小时：(0 0 0 * * *)，每天凌晨准时运行。
 
-You have the option to create your custom scan modes by adding one, assigning it a name, and specifying the Cron expression. 
-You can test your Cron expression using the following website: https://crontab.cronhub.io/.
+您可以通过添加一个自定义扫描模式来创建您的扫描模式，给它一个名称，并指定 Cron 表达式。
+您可以使用以下网站测试您的 Cron 表达式：https://crontab.cronhub.io/。

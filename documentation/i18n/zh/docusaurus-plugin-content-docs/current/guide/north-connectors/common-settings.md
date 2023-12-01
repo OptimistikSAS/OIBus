@@ -2,71 +2,49 @@
 sidebar_position: 0
 ---
 
-# Concept
-A North connector is employed to transmit data to a designated target application, extracting the data from its cache. 
-Data can be delivered either as files or JSON payloads.
+# 概念
+北向连接器用于将数据传输到指定的目标应用程序，从其缓存中提取数据。
+数据可以作为文件或 JSON 负载交付。
 
-To add a North connector, navigate to the North page and click the '+' button. Choose one of the available North
-connector types and complete its settings. The form's structure varies depending on the chosen connector type, but 
-certain principles remain consistent.
+要添加北向连接器，请导航到 North 页面并单击 '+' 按钮。选择一个可用的北向连接器类型，并完成其设置。表单的结构取决于所选择的连接器类型，但某些原则保持一致。
 
-You can monitor the status of the North connector from its display page or make adjustments to its settings.
+您可以从其显示页面监控北向连接器的状态或对其设置进行调整。
 
-## General settings
-- **Name**: The connector's name serves as a user-friendly label to help you easily identify its purpose.
-- **Description**: You have the option to include a description to provide additional context, such as details about the 
-connection, access rights, or any unique characteristics.
-- **Toggle**: You can enable or disable the connector using the toggle switch. Additionally, you can toggle the connector 
-from either the North connector list or its dedicated display page (accessible via the magnifying glass icon of the list 
-page).
+## 通用设置
+- **名称**：连接器的名称作为用户友好的标签，帮助您轻松识别其用途。
+- **描述**：您可以选择包括描述以提供额外的上下文，例如有关连接、访问权或任何独特特征的详细信息。
+- **切换**：您可以使用切换开关启用或禁用连接器。此外，您可以在北向连接器列表或其专 dedicated 显示页面（通过列表页面的放大镜图标访问）中切换连接器。
 
-## Specific section
-Specific settings for the connector can be found in the respective connector's documentation for more detailed information.
+## 特定部分
+特定连接器的设置可以在各自的连接器文档中找到更多详细信息。
 
-## Caching
-The caching section plays a crucial role in helping OIBus efficiently manage network congestion:
-- **Send interval**: This setting allows you to schedule the transmission of data to a target application. Refer to the
-[scan mode section](../engine/scan-modes.md) for configuring new scan modes.
-- **Retry interval**: Specifies the waiting period before attempting to resend data to a target application after a 
-failure (measured in milliseconds).
-- **Retry count**: Indicates the number of retry attempts before giving up and relocating failed data to the error folder.
-- **Max size**: This parameter defines the maximum size of the cache in megabytes (MB). Once the cache reaches its maximum 
-size, any additional data will be discarded.
-- **Group count** (for JSON payloads): Instead of waiting for the _Send interval_, this feature triggers the North 
-connector to transmit data as soon as the specified number of data items is reached.
-- **Max group count** (for JSON payloads): When the connection experiences prolonged downtime, the cache of a North 
-connector may accumulate a substantial amount of data. To prevent overwhelming the target or the network, this field can 
-be set to split the data into multiple smaller chunks, each sent separately at intervals defined by the _Send interval_.
-- **Send file immediately** (for files): This option enables the North connector to send the file directly, bypassing the 
-_Send interval_ waiting period.
+## 缓存
+缓存部分在帮助 OIBus 有效管理网络拥塞方面发挥着至关重要的作用：
+- **发送间隔**：该设置允许您计划将数据传输到目标应用程序。有关配置新扫描模式，请参阅[扫描模式部分](../engine/scan-modes.md)。
+- **重试间隔**：指定故障后尝试将数据重新发送到目标应用程序前的等待时间（以毫秒为单位）。
+- **重试次数**：在放弃并将失败的数据移动到错误文件夹之前，表示重试尝试的次数。
+- **最大大小**：此参数定义缓存的最大大小（以兆字节 MB 计）。缓存达到其最大大小时，任何额外的数据都将被丢弃。
+- **组数量**（对于 JSON 负载）：这个特性触发北向连接器在达到指定的数据项数量时立即发送数据，而不是等待 _发送间隔_。
+- **最大组数量**（对于 JSON 负载）：当连接经历长时间停机时，北向连接器的缓存可能会积累大量数据。为了防止压倒目标或网络，此字段可以设置为将数据分割成多个较小的块，每个块分别在由 _发送间隔_ 定义的间隔时间内发送。
+- **立即发送文件**（对于文件）：此选项启用北向连接器立即发送文件，绕过 _发送间隔_ 的等待时间。
 
-## Archive
-It is also possible to enable archive mode, and to set a **retention duration**. With archive mode enabled, files will be
-kept in the `archive` subfolder. Otherwise, they are deleted once sent to the North application.
+## 归档
+也可以启用归档模式，并设置**保留持续时间**。启用归档模式后，文件将保存在 `archive` 子文件夹中。否则，一旦发送到北应用程序，它们就会被删除。
 
-If the retention duration is set to zero, it will keep files indefinitely.
+如果保留持续时间设置为零，则会无限期地保留文件。
 
-You can also activate archive mode and define a **retention duration**. When archive mode is enabled, files will be preserved 
-in the `archive` subfolder; otherwise, they will be deleted once transmitted to the North application.
+您还可以激活归档模式并定义**保留持续时间**。启用归档模式时，文件将保存在 `archive` 子文件夹中；否则，它们将在传输到北应用程序后被删除。
 
-If you set the retention duration to zero, it means that files will be retained indefinitely.
+如果您将保留持续时间设置为零，这意味着文件将无限期保留。
 
-:::caution Disk space
-If you opt to retain files indefinitely, it's essential to remember to periodically manually clear the archive folder. 
-Failing to do so could result in the archive folder consuming a significant amount of disk space.
+:::caution 磁盘空间
+如果您选择无限期保留文件，重要的是要记得定期手动清理归档文件夹。如果忽略这样做，可能会导致归档文件夹占用大量磁盘空间。
 :::
 
-## Subscriptions
-By default, a North connector collects data from all activated South connectors. However, you have the option to subscribe 
-a North connector to a particular South connector or a list of South connectors (or [External Source](../engine/external-sources.md)).
-In the Subscriptions section, you can add a specific South connector or an External source. This means that only data from 
-the specified South connector or External Source will be included in the cache of this North connector. All other data 
-will either be discarded or sent to other active North connectors that are subscribed to the data stream.
+## 订阅
+默认情况下，北向连接器会从所有已激活的南向连接器收集数据。但是，您可以选择订阅北向连接器到特定的南向连接器或南向连接器列表（或[外部来源](../engine/external-sources.md)）。
+在订阅部分，您可以添加特定的南向连接器或外部来源。这意味着只有来自指定的南向连接器或外部来源的数据才会包含在这个北向连接器的缓存中。所有其他数据要么被丢弃，要么发送到订阅数据流的其他活动北向连接器。
 
-:::caution No data for disabled North
-When a North connector is disabled, it will not store any data in its cache.
+:::caution 禁用北向无数据
+当北向连接器被禁用时，它不会在其缓存中存储任何数据。
 :::
-
-
-
-

@@ -10,64 +10,64 @@ import packageInfo from '../../../../../../package.json'
 <div style={{ display: "flex", justifyContent: "space-around" }}>
   <DownloadButton link={`https://github.com/OptimistikSAS/OIBus/releases/download/v${packageInfo.version}/oibus-setup-win_x64-v${packageInfo.version}.exe`}>
     <div>
-      <div>{`OIBus v${packageInfo.version} (installer)`}</div>
+      <div>{`OIBus v${packageInfo.version} (安装程序)`}</div>
       <div>Windows (x64)</div>
     </div>
   </DownloadButton>
   <DownloadButton link={`https://github.com/OptimistikSAS/OIBus/releases/download/v${packageInfo.version}/oibus-win_x64-v${packageInfo.version}.zip`}>
     <div>
-      <div>{`OIBus v${packageInfo.version} (zip)`}</div>
+      <div>{`OIBus v${packageInfo.version} (压缩包)`}</div>
       <div>Windows (x64)</div>
     </div>
   </DownloadButton>
 </div>
 
-## Installation
-### With the Windows Installer
-1. Run the Windows Installer, you should see the following welcome screen:
+## 安装
+### 使用Windows安装程序
+1. 运行Windows安装程序，您应该会看到以下欢迎屏幕：
 
 <div style={{textAlign: 'center'}}>
 
-  ![Installer welcome screen](./win_installer/1.png)
+  ![安装程序欢迎屏幕](./win_installer/1.png)
 
 </div>
 
 
-2. Accept the EU-PL license.
+2. 接受EU-PL许可证。
 
-3. Choose the path where you want to install the binaries.
-
-<div style={{textAlign: 'center'}}>
-
-  ![Installer binaries path](./win_installer/2.png)
-
-</div>
-
-4. Select the directory where you'd like to store the cache, logs, and configuration files.
+3. 选择您想要安装二进制文件的路径。
 
 <div style={{textAlign: 'center'}}>
 
-  ![Installer data folder path](./win_installer/3.png)
+  ![安装程序二进制文件路径](./win_installer/2.png)
 
 </div>
 
-5. Confirm the settings and await the installer to extract and copy the files to the designated folder.
+4. 选择您想存储缓存、日志和配置文件的目录
 
 <div style={{textAlign: 'center'}}>
 
-  ![Installer validation step](./win_installer/4.png)
+  ![安装程序数据文件夹路径](./win_installer/3.png)
 
 </div>
 
-6. The last screen will confirm the completion of the installation process.
+5. 确认设置并等待安装程序提取并复制文件到指定文件夹。
 
-:::caution Browser support
-Note that Internet Explorer is not supported.
+<div style={{textAlign: 'center'}}>
+
+  ![安装程序验证步骤](./win_installer/4.png)
+
+</div>
+
+6. 最后一个屏幕将确认安装程序过程的完成。
+
+:::caution
+浏览器支持 请注意Internet Explorer不被支持。
 :::
 
-Get familiar with the OIBus interface on the [first access page](./first-access.mdx).
+在[首次访问页面](./first-access.mdx)上熟悉OIBus界面。
 
-### With the installation bat script
+### 使用安装批处理脚本
 ``` commandline title="Usage"
 install.bat <data-path>
 ```
@@ -89,29 +89,29 @@ install.bat C:\OIBusData
 ```
 
 :::tip
-If you do not provide the data path argument, the script will prompt you to input it during execution.
+如果您不提供数据路径参数，脚本将在执行过程中提示您输入。
 :::
 
-Get familiar with the OIBus interface on the [first access page](./first-access.mdx).
+在[首次访问页面](./first-access.mdx)上熟悉OIBus界面。
 
-## Uninstall
-### With the Windows Uninstaller
-Navigate to the binary folder and execute the `unin000.exe` file with administrative privileges.
+## 卸载
+### 使用Windows卸载程序
+导航至二进制文件夹并以管理员权限执行`unin000.exe`文件。
 
 <div style={{textAlign: 'center'}}>
 
-  ![Installer binaries path](./win_uninstall/1.png)
+  ![安装程序二进制文件路径](./win_uninstall/1.png)
 
 </div>
 
 <div style={{textAlign: 'center'}}>
 
-  ![Installer binaries path](./win_uninstall/2.png)
+  ![安装程序二进制文件路径](./win_uninstall/2.png)
 
 </div>
 
 
-### With the uninstallation batch script
+### 使用卸载批处理脚本
 ```` title="Example with terminal outputs"
 uninstall.bat
 Administrator permissions required. Detecting permission...
@@ -120,26 +120,24 @@ Removing OIBus service...
 ````
 
 :::caution
-The data folder must be removed manually.
+数据文件夹需要手动删除。
 :::
 
-## Update
-### With the Windows Installer
-If you wish to update OIBus, you can utilize the OIBus Windows Installer and indicate the current executable and configuration
-paths. You have the option to retain the existing configuration file or replace it.
+## 更新
+### 使用Windows安装程序
+如果您希望更新OIBus，您可以利用OIBus Windows安装程序并指明当前的可执行文件和配置 路径。您可以选择保留现有的配置文件或替换它。
 
-During the update process, the OIBus service will experience a brief interruption.
+在更新过程中，OIBus服务将会短暂中断。
 
-Upon the initial startup after the update, the configuration database `oibus.db` will be automatically upgraded to the
-latest version.
+在更新后首次启动时，配置数据库`oibus.db`将会自动升级到 最新版本
 
-### With binaries (from zip file)
-After extracting the files from the zip archive:
-1. Open the Windows Service Manager.
-2. Halt the OIBus service.
-3. Copy and paste the contents of the zip file into the OIBus executable directory, replacing any existing files.
-4. Resume the OIBus service.
+### 使用二进制文件(从zip文件)
+从zip压缩文件解压文件后：
 
-Upon the initial startup after the update, the configuration database `oibus.db` will be automatically upgraded to the
-latest version.
+1. 打开Windows服务管理器。
+2. 停止OIBus服务。
+3. 将zip文件的内容复制并粘贴到OIBus可执行文件目录中，替换任何现有文件。
+4. 重新启动OIBus服务。
+
+在更新后首次启动时，配置数据库`oibus.db`将会自动升级到 最新版本。
 

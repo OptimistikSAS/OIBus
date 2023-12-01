@@ -58,19 +58,14 @@ that your network firewall permits the connection.
 The connection issue might be due to a port rule (HTTPS / 443, although very unlikely) or a domain name rule. Consult 
 your IT team to add a rule allowing communication.
 
-Within the OIAnalytics platform, navigate to the configuration settings. In the user section, create a user with the 
-following access rights:
+Within the OIAnalytics platform, navigate to the configuration settings.
+In the user management section, create a profile with the following access rights:
 - `Value: Query | Update`
 - `File upload: Update resource`
 
-For the created user, generate an access key and securely store both the key and the secret. They will be required to 
-set up the North OIAnalytics connector.
+Then create a user with such a profile and generate an access key for him.
+Take care to securely store both the key and the secret : they will be required to set up the North OIAnalytics connector.
 
 ### North connector
-Create the OIAnalytics North connector and populate the relevant fields. Prior to saving, utilize the `Test settings` 
-button to verify the connection.
-
-
-
-
-
+Create the OIAnalytics North connector and populate the relevant fields.
+Prior to saving, use the `Test settings` button to check the connection.
