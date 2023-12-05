@@ -29,7 +29,7 @@ export class EditEngineComponent implements OnInit {
       }),
       file: this.fb.group({
         level: ['info' as LogLevel, Validators.required],
-        maxFileSize: [null as number | null, [Validators.required, Validators.min(1), Validators.max(10)]],
+        maxFileSize: [null as number | null, [Validators.required, Validators.min(1), Validators.max(50)]],
         numberOfFiles: [null as number | null, [Validators.required, Validators.min(1)]]
       }),
       database: this.fb.group({
