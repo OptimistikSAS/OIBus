@@ -445,7 +445,8 @@
     "specific-settings": "{{ type }} settings",
     "edit-item-modal": {
       "create-title": "Add a new item to the south connector",
-      "edit-title": "Edit item"
+      "edit-title": "Edit item",
+      "copy-title": "Add a new item to the south connector"
     },
     "items": {
       "title": "Items",

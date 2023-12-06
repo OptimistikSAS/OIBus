@@ -158,7 +158,7 @@ describe('EditSouthItemModalComponent', () => {
       tester.detectChanges();
 
       const command: SouthConnectorItemCommandDTO = {
-        id: 'id1',
+        id: '',
         enabled: true,
         name: 'MyName-2',
         scanModeId: 'scanModeId2',
