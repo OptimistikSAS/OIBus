@@ -48,7 +48,7 @@ declare namespace Intl {
   standalone: true
 })
 export class EditSouthItemModalComponent {
-  mode: 'create' | 'edit' = 'create';
+  mode: 'create' | 'edit' | 'copy' = 'create';
   state = new ObservableState();
   subscriptionOnly = false;
   acceptSubscription = false;
@@ -151,7 +151,7 @@ export class EditSouthItemModalComponent {
   prepareForCopy(southItemSchema: SouthConnectorItemManifest, scanModes: Array<ScanModeDTO>, southItem: SouthConnectorItemDTO) {
     this.item = JSON.parse(JSON.stringify(southItem)) as SouthConnectorItemDTO;
     this.item.name = `${southItem.name}-copy`;
-    this.mode = 'create';
+    this.mode = 'copy';
     this.southItemSchema = southItemSchema;
     this.southItemRows = groupFormControlsByRow(southItemSchema.settings);
     this.scanModes = scanModes;
@@ -168,9 +168,21 @@ export class EditSouthItemModalComponent {
     }
 
     const formValue = this.form!.value;
+    let id;
+    switch (this.mode) {
+      case 'create':
+        id = '';
+        break;
+      case 'edit':
+        id = this.item ? this.item.id : '';
+        break;
+      case 'copy':
+        id = '';
+        break;
+    }
 
     const command: SouthConnectorItemCommandDTO = {
-      id: this.item ? this.item.id : '',
+      id,
       enabled: formValue.enabled!,
       name: formValue.name!,
       scanModeId: this.subscriptionOnly ? 'subscription' : formValue.scanModeId!,
