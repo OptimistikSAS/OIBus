@@ -99,7 +99,7 @@
     "@types/basic-auth": "1.1.5",
     "@types/better-sqlite3": "7.6.6",
     "@types/cron": "2.0.1",
-    "@types/jest": "29.5.7",
+    "@types/jest": "29.5.11",
     "@types/jsonwebtoken": "9.0.4",
     "@types/koa": "2.13.10",
     "@types/koa__multer": "2.0.6",
