@@ -37,6 +37,13 @@ export interface SlimsResults {
   entities: Array<SlimsEntity>;
 }
 
+interface SlimsDataValue {
+  pointId: string;
+  timestamp: Instant;
+  value: string | number;
+  unit: string;
+}
+
 /**
  * Class SouthSlims - Retrieve data from SLIMS REST API
  */
@@ -147,7 +154,7 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
           this.logger
         );
       } else {
-        this.logger.debug(`No result found for item ${item.name}. Request done in ${requestDuration} ms`);
+        this.logger.info(`No result found for item ${item.name}. Request done in ${requestDuration} ms`);
       }
     }
     return updatedStartTime;
@@ -202,7 +209,7 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
       };
 
       this.logger.info(
-        `Requesting data with GET method and body on: "${requestOptions.host}:${requestOptions.port}${requestOptions.path}"`
+        `Requesting data with GET method and body "${bodyToSend}" on: "${requestOptions.host}:${requestOptions.port}${requestOptions.path}"`
       );
 
       return httpGetWithBody(bodyToSend, requestOptions);
@@ -251,13 +258,13 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
     item: SouthConnectorItemDTO<SouthSlimsItemSettings>,
     httpResult: SlimsResults
   ): {
-    formattedResult: Array<OIBusDataValue>;
+    formattedResult: Array<SlimsDataValue>;
     maxInstant: Instant;
   } {
     if (!httpResult?.entities || !Array.isArray(httpResult.entities)) {
       throw new Error('Bad data: expect SLIMS values to be an array.');
     }
-    const formattedData: Array<OIBusDataValue> = [];
+    const formattedData: Array<SlimsDataValue> = [];
     let maxInstant = DateTime.fromMillis(0).toUTC().toISO()!;
     for (const element of httpResult.entities) {
       const rsltCfPid = element.columns.find(column => column.name === 'rslt_cf_pid');
@@ -289,7 +296,6 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
         throw new Error('Bad config: expect rslt_cf_samplingDateAndTime to have an associated date time fields (see item)');
       }
       const resultInstant = convertDateTimeToInstant(rsltCfSamplingDateAndTime.value, samplingDatetimeField);
-
       const referenceDatetimeField = item.settings.dateTimeFields!.find(
         dateTimeField => dateTimeField.fieldName === 'rslt_modifiedOn' && dateTimeField.useAsReference
       );
@@ -301,7 +307,8 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
       formattedData.push({
         pointId: `${rsltCfPid.value}-${testName.value}`,
         timestamp: formatInstant(resultInstant, { type: 'iso-string' }) as Instant,
-        data: { value: rsltValue.value, unit: rsltValue.unit || 'Ø' }
+        value: rsltValue.value,
+        unit: rsltValue.unit || 'Ø'
       });
       if (referenceInstant > maxInstant) {
         maxInstant = referenceInstant;
