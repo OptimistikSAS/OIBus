@@ -304,9 +304,9 @@ export default class SouthConnectorController {
       return ctx.throw(400, 'Could not parse item ids to delete array');
     }
 
-    if (file.mimetype !== 'text/csv') {
-      return ctx.badRequest();
-    }
+    // if (file.mimetype !== 'text/csv') {
+    //   return ctx.badRequest('Bad type of file');
+    // }
     const scanModes = ctx.app.repositoryService.scanModeRepository.getScanModes();
 
     const existingItems: Array<SouthConnectorItemDTO> =

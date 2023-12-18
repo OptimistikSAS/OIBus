@@ -356,9 +356,9 @@ export default class HistoryQueryController extends AbstractController {
     }
 
     const file = ctx.request.file;
-    if (file.mimetype !== 'text/csv') {
-      return ctx.badRequest();
-    }
+    // if (file.mimetype !== 'text/csv') {
+    //   return ctx.badRequest();
+    // }
 
     const existingItems: Array<SouthConnectorItemDTO> =
       ctx.params.historyQueryId === 'create'
