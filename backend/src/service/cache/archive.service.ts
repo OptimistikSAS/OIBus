@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import { createReadStream, ReadStream } from 'node:fs';
 import path from 'node:path';
 
 import { createFolder } from '../utils';
@@ -160,6 +161,19 @@ export default class ArchiveService {
       }
     }
     return filteredFilenames;
+  }
+
+  /**
+   * Get archive file content.
+   */
+  async getArchiveFileContent(filename: string): Promise<ReadStream | null> {
+    try {
+      await fs.stat(path.join(this.archiveFolder, filename));
+    } catch (error) {
+      this._logger.error(`Error while reading file "${path.join(this.archiveFolder, filename)}": ${error}`);
+      return null;
+    }
+    return createReadStream(path.join(this.archiveFolder, filename));
   }
 
   /**

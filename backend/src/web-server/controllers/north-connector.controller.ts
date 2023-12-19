@@ -227,6 +227,20 @@ export default class NorthConnectorController {
     ctx.ok(errorFiles);
   }
 
+  async getFileErrorContent(ctx: KoaContext<void, void>): Promise<void> {
+    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
+    if (!northConnector) {
+      return ctx.notFound();
+    }
+
+    ctx.attachment(ctx.params.filename);
+    const fileStream = await ctx.app.reloadService.oibusEngine.getErrorFileContent(northConnector.id, ctx.params.filename);
+    if (!fileStream) {
+      return ctx.notFound();
+    }
+    ctx.ok(fileStream);
+  }
+
   async removeFileErrors(ctx: KoaContext<Array<string>, void>): Promise<void> {
     const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
     if (!northConnector) {
@@ -286,6 +300,20 @@ export default class NorthConnectorController {
     ctx.ok(errorFiles);
   }
 
+  async getCacheFileContent(ctx: KoaContext<void, void>): Promise<void> {
+    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
+    if (!northConnector) {
+      return ctx.notFound();
+    }
+
+    ctx.attachment(ctx.params.filename);
+    const fileStream = await ctx.app.reloadService.oibusEngine.getCacheFileContent(northConnector.id, ctx.params.filename);
+    if (!fileStream) {
+      return ctx.notFound();
+    }
+    ctx.ok(fileStream);
+  }
+
   async removeCacheFiles(ctx: KoaContext<Array<string>, void>): Promise<void> {
     const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
     if (!northConnector) {
@@ -323,6 +351,20 @@ export default class NorthConnectorController {
     const fileNameContains = ctx.query.fileNameContains || '';
     const errorFiles = await ctx.app.reloadService.oibusEngine.getArchiveFiles(northConnector.id, '', '', fileNameContains);
     ctx.ok(errorFiles);
+  }
+
+  async getArchiveFileContent(ctx: KoaContext<void, void>): Promise<void> {
+    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
+    if (!northConnector) {
+      return ctx.notFound();
+    }
+
+    ctx.attachment(ctx.params.filename);
+    const fileStream = await ctx.app.reloadService.oibusEngine.getArchiveFileContent(northConnector.id, ctx.params.filename);
+    if (!fileStream) {
+      return ctx.notFound();
+    }
+    ctx.ok(fileStream);
   }
 
   async removeArchiveFiles(ctx: KoaContext<Array<string>, void>): Promise<void> {

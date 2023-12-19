@@ -183,6 +183,15 @@ describe('NorthConnectorService', () => {
     expect(expectedNorthCacheFiles!).toEqual(northCacheFiles);
   });
 
+  it('should get error cache file content', () => {
+    let httpResponse;
+    const northCacheFileContent = new Blob(['test'], { type: 'text/plain' });
+    service.getCacheErrorFileContent('id1', 'file1').subscribe(c => (httpResponse = c));
+
+    http.expectOne({ url: '/api/north/id1/cache/file-errors/file1', method: 'GET' }).flush(northCacheFileContent);
+    expect(httpResponse!.body).toEqual(northCacheFileContent);
+  });
+
   it('should remove listed error cache files', () => {
     let done = false;
     service.removeCacheErrorFiles('id1', ['file1', 'file2']).subscribe(() => (done = true));
@@ -225,6 +234,15 @@ describe('NorthConnectorService', () => {
     expect(expectedNorthCacheFiles!).toEqual(northCacheFiles);
   });
 
+  it('should get cache file content', () => {
+    let httpResponse;
+    const northCacheFileContent = new Blob(['test'], { type: 'text/plain' });
+    service.getCacheFileContent('id1', 'file1').subscribe(c => (httpResponse = c));
+
+    http.expectOne({ url: '/api/north/id1/cache/files/file1', method: 'GET' }).flush(northCacheFileContent);
+    expect(httpResponse!.body).toEqual(northCacheFileContent);
+  });
+
   it('should remove listed cache files', () => {
     let done = false;
     service.removeCacheFiles('id1', ['file1', 'file2']).subscribe(() => (done = true));
@@ -249,6 +267,15 @@ describe('NorthConnectorService', () => {
 
     http.expectOne({ url: '/api/north/id1/cache/archive-files', method: 'GET' }).flush(northArchiveFiles);
     expect(expectedNorthArchiveFiles!).toEqual(northArchiveFiles);
+  });
+
+  it('should get archive file content', () => {
+    let httpResponse;
+    const northCacheFileContent = new Blob(['test'], { type: 'text/plain' });
+    service.getCacheArchiveFileContent('id1', 'file1').subscribe(c => (httpResponse = c));
+
+    http.expectOne({ url: '/api/north/id1/cache/archive-files/file1', method: 'GET' }).flush(northCacheFileContent);
+    expect(httpResponse!.body).toEqual(northCacheFileContent);
   });
 
   it('should remove listed archive files', () => {

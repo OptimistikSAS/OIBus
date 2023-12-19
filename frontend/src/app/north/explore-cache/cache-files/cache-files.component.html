@@ -27,7 +27,13 @@
     </div>
   </ng-template>
 
-  <oib-file-table #fileTable [files]="cacheFiles" *ngIf="cacheFiles?.length !== 0; else emptyCacheFiles"></oib-file-table>
+  <oib-file-table
+    #fileTable
+    [actions]="['view', 'archive', 'remove']"
+    (itemAction)="onItemAction($event)"
+    [files]="cacheFiles"
+    *ngIf="cacheFiles?.length !== 0; else emptyCacheFiles"
+  ></oib-file-table>
 </oib-box>
 
 <ng-template #emptyCacheFiles>

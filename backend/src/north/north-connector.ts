@@ -14,6 +14,7 @@ import { OIBusDataValue, OIBusError } from '../../../shared/model/engine.model';
 import { ExternalSubscriptionDTO, SubscriptionDTO } from '../../../shared/model/subscription.model';
 import { DateTime } from 'luxon';
 import { PassThrough } from 'node:stream';
+import { ReadStream } from 'node:fs';
 import path from 'node:path';
 import { HandlesFile, HandlesValues } from './north-interface';
 import NorthConnectorMetricsService from '../service/north-connector-metrics.service';
@@ -432,6 +433,13 @@ export default class NorthConnector<T extends NorthSettings = any> {
   }
 
   /**
+   * Get error file content as a read stream.
+   */
+  async getErrorFileContent(filename: string): Promise<ReadStream | null> {
+    return await this.fileCacheService.getErrorFileContent(filename);
+  }
+
+  /**
    * Remove error files from file cache.
    */
   async removeErrorFiles(filenames: Array<string>): Promise<void> {
@@ -471,6 +479,13 @@ export default class NorthConnector<T extends NorthSettings = any> {
   }
 
   /**
+   * Get cache file content as a read stream.
+   */
+  async getCacheFileContent(filename: string): Promise<ReadStream | null> {
+    return await this.fileCacheService.getCacheFileContent(filename);
+  }
+
+  /**
    * Remove cache files.
    */
   async removeCacheFiles(filenames: Array<string>): Promise<void> {
@@ -494,6 +509,13 @@ export default class NorthConnector<T extends NorthSettings = any> {
    */
   async getArchiveFiles(fromDate: string, toDate: string, fileNameContains: string): Promise<Array<NorthArchiveFiles>> {
     return await this.archiveService.getArchiveFiles(fromDate, toDate, fileNameContains);
+  }
+
+  /**
+   * Get archive file content as a read stream.
+   */
+  async getArchiveFileContent(filename: string): Promise<ReadStream | null> {
+    return await this.archiveService.getArchiveFileContent(filename);
   }
 
   /**

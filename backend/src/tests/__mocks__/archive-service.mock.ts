@@ -21,4 +21,5 @@ export default class ArchiveServiceMock {
     on: jest.fn(),
     emit: jest.fn()
   } as unknown as EventEmitter;
+  getArchiveFileContent = jest.fn();
 }

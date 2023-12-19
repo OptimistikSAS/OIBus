@@ -33,4 +33,6 @@ export default class FileCacheServiceMock {
     { filename: 'file5.name', modificationDate: '', size: 2 },
     { filename: 'file6.name', modificationDate: '', size: 3 }
   ]);
+  getErrorFileContent = jest.fn();
+  getCacheFileContent = jest.fn();
 }

@@ -27,7 +27,13 @@
     </div>
   </ng-template>
 
-  <oib-file-table #fileTable [files]="errorFiles" *ngIf="errorFiles?.length !== 0; else emptyErrorFiles"></oib-file-table>
+  <oib-file-table
+    #fileTable
+    [actions]="['view', 'retry', 'remove']"
+    (itemAction)="onItemAction($event)"
+    [files]="errorFiles"
+    *ngIf="errorFiles?.length !== 0; else emptyErrorFiles"
+  ></oib-file-table>
 </oib-box>
 
 <ng-template #emptyErrorFiles>

@@ -10,8 +10,10 @@ import { DatetimePipe } from '../../../shared/datetime.pipe';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
 import { FileSizePipe } from '../../../shared/file-size.pipe';
 import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
-import { FileTableComponent, FileTableData } from '../file-table/file-table.component';
+import { FileTableComponent, FileTableData, ItemActionEvent } from '../file-table/file-table.component';
 import { emptyPage } from '../../../shared/test-utils';
+import { ModalService } from '../../../shared/modal.service';
+import { FileContentModalComponent } from '../file-content-modal/file-content-modal.component';
 
 @Component({
   selector: 'oib-error-files',
@@ -39,7 +41,10 @@ export class ErrorFilesComponent implements OnInit {
   @ViewChild('fileTable') fileTable!: FileTableComponent;
   fileTablePages = emptyPage<FileTableData>();
 
-  constructor(private northConnectorService: NorthConnectorService) {}
+  constructor(
+    private northConnectorService: NorthConnectorService,
+    private modalService: ModalService
+  ) {}
 
   ngOnInit() {
     this.northConnectorService.getCacheErrorFiles(this.northConnector!.id).subscribe(errorFiles => {
@@ -48,15 +53,21 @@ export class ErrorFilesComponent implements OnInit {
     });
   }
 
-  retryErrorFiles() {
-    const files = this.errorFiles.filter(file => this.fileTable.checkboxByFiles.get(file.filename)).map(file => file.filename);
+  /**
+   * Retry error files.
+   * By default, retry all checked files.
+   */
+  retryErrorFiles(files: Array<string> = this.getCheckedFiles()) {
     this.northConnectorService.retryCacheErrorFiles(this.northConnector!.id, files).subscribe(() => {
       this.refreshErrorFiles();
     });
   }
 
-  removeErrorFiles() {
-    const files = this.errorFiles.filter(file => this.fileTable.checkboxByFiles.get(file.filename)).map(file => file.filename);
+  /**
+   * Remove error files from cache.
+   * By default, remove all checked files.
+   */
+  removeErrorFiles(files: Array<string> = this.getCheckedFiles()) {
     this.northConnectorService.removeCacheErrorFiles(this.northConnector!.id, files).subscribe(() => {
       this.refreshErrorFiles();
     });
@@ -70,5 +81,34 @@ export class ErrorFilesComponent implements OnInit {
         this.fileTablePages = this.fileTable.pages;
       }
     });
+  }
+
+  onItemAction(event: ItemActionEvent) {
+    switch (event.type) {
+      case 'remove':
+        this.removeErrorFiles([event.file.filename]);
+        break;
+      case 'retry':
+        this.retryErrorFiles([event.file.filename]);
+        break;
+      case 'view':
+        this.northConnectorService.getCacheErrorFileContent(this.northConnector!.id, event.file.filename).subscribe(async response => {
+          if (!response.body) return;
+          const content = await response.body.text();
+          // Split header into content type and encoding
+          const contentType = response.headers.get('content-type')?.split(';')[0] ?? '';
+          // Get file type from content type. Additionally, remove 'x-' from the type.
+          const fileType = contentType.split('/')[1].replace(/x-/g, '');
+
+          const modalRef = this.modalService.open(FileContentModalComponent, { size: 'xl' });
+          const component: FileContentModalComponent = modalRef.componentInstance;
+          component.prepareForCreation(event.file.filename, fileType, content);
+        });
+        break;
+    }
+  }
+
+  private getCheckedFiles(): Array<string> {
+    return this.errorFiles.filter(file => this.fileTable.checkboxByFiles.get(file.filename)).map(file => file.filename);
   }
 }

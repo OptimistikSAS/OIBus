@@ -265,6 +265,10 @@ export default class OIBusEngine extends BaseEngine {
     return (await this.northConnectors.get(northId)?.getErrorFiles(start, end, fileNameContains)) || [];
   }
 
+  async getErrorFileContent(northId: string, filename: string) {
+    return (await this.northConnectors.get(northId)?.getErrorFileContent(filename)) || null;
+  }
+
   async removeErrorFiles(northId: string, filenames: Array<string>): Promise<void> {
     await this.northConnectors.get(northId)?.removeErrorFiles(filenames);
   }
@@ -285,6 +289,10 @@ export default class OIBusEngine extends BaseEngine {
     return (await this.northConnectors.get(northId)?.getCacheFiles(start, end, fileNameContains)) || [];
   }
 
+  async getCacheFileContent(northId: string, filename: string) {
+    return (await this.northConnectors.get(northId)?.getCacheFileContent(filename)) || null;
+  }
+
   async removeCacheFiles(northId: string, filenames: Array<string>): Promise<void> {
     await this.northConnectors.get(northId)?.removeCacheFiles(filenames);
   }
@@ -295,6 +303,10 @@ export default class OIBusEngine extends BaseEngine {
 
   async getArchiveFiles(northId: string, start: Instant, end: Instant, fileNameContains: string) {
     return (await this.northConnectors.get(northId)?.getArchiveFiles(start, end, fileNameContains)) || [];
+  }
+
+  async getArchiveFileContent(northId: string, filename: string) {
+    return (await this.northConnectors.get(northId)?.getArchiveFileContent(filename)) || null;
   }
 
   async removeArchiveFiles(northId: string, filenames: Array<string>): Promise<void> {

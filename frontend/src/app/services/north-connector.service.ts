@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Injectable } from '@angular/core';
 import {
@@ -136,6 +136,13 @@ export class NorthConnectorService {
     return this.http.get<Array<NorthCacheFiles>>(`/api/north/${northId}/cache/file-errors`);
   }
 
+  getCacheErrorFileContent(northId: string, filename: string): Observable<HttpResponse<Blob>> {
+    return this.http.get<Blob>(`/api/north/${northId}/cache/file-errors/${filename}`, {
+      responseType: 'blob' as 'json',
+      observe: 'response'
+    });
+  }
+
   retryCacheErrorFiles(northId: string, filenames: Array<string>): Observable<void> {
     return this.http.post<void>(`/api/north/${northId}/cache/file-errors/retry`, filenames);
   }
@@ -156,6 +163,13 @@ export class NorthConnectorService {
     return this.http.get<Array<NorthCacheFiles>>(`/api/north/${northId}/cache/files`);
   }
 
+  getCacheFileContent(northId: string, filename: string): Observable<HttpResponse<Blob>> {
+    return this.http.get<Blob>(`/api/north/${northId}/cache/files/${filename}`, {
+      responseType: 'blob' as 'json',
+      observe: 'response'
+    });
+  }
+
   removeCacheFiles(northId: string, filenames: Array<string>): Observable<void> {
     return this.http.post<void>(`/api/north/${northId}/cache/files/remove`, filenames);
   }
@@ -166,6 +180,13 @@ export class NorthConnectorService {
 
   getCacheArchiveFiles(northId: string): Observable<Array<NorthCacheFiles>> {
     return this.http.get<Array<NorthCacheFiles>>(`/api/north/${northId}/cache/archive-files`);
+  }
+
+  getCacheArchiveFileContent(northId: string, filename: string): Observable<HttpResponse<Blob>> {
+    return this.http.get<Blob>(`/api/north/${northId}/cache/archive-files/${filename}`, {
+      responseType: 'blob' as 'json',
+      observe: 'response'
+    });
   }
 
   retryCacheArchiveFiles(northId: string, filenames: Array<string>): Observable<void> {

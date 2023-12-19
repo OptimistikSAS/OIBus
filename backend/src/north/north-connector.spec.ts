@@ -40,6 +40,9 @@ const retryAllErrorValues = jest.fn();
 const valueTrigger = new EventEmitter();
 const fileTrigger = new EventEmitter();
 const archiveTrigger = new EventEmitter();
+const getErrorFileContent = jest.fn();
+const getCacheFileContent = jest.fn();
+const getArchiveFileContent = jest.fn();
 
 // Mock services
 jest.mock('../service/repository.service');
@@ -75,6 +78,8 @@ jest.mock(
       fileCacheServiceMock.getFileToSend = getFileToSend;
       fileCacheServiceMock.isEmpty = fileCacheIsEmpty;
       fileCacheServiceMock.triggerRun = fileTrigger;
+      fileCacheServiceMock.getErrorFileContent = getErrorFileContent;
+      fileCacheServiceMock.getCacheFileContent = getCacheFileContent;
       return fileCacheServiceMock;
     }
 );
@@ -84,6 +89,7 @@ jest.mock(
     function () {
       const archiveServiceMock = new ArchiveServiceMock();
       archiveServiceMock.triggerRun = archiveTrigger;
+      archiveServiceMock.getArchiveFileContent = getArchiveFileContent;
       return archiveServiceMock;
     }
 );
@@ -566,6 +572,21 @@ describe('NorthConnector enabled', () => {
     await north.retryAllValueErrors();
     expect(retryAllErrorValues).toHaveBeenCalled();
     expect(logger.trace).toHaveBeenCalledWith(`Retrying all value error files in North connector "${configuration.name}"...`);
+  });
+
+  it('should get error file content', async () => {
+    await north.getErrorFileContent('file1.queue.tmp');
+    expect(getErrorFileContent).toHaveBeenCalledWith('file1.queue.tmp');
+  });
+
+  it('should get cache file content', async () => {
+    await north.getCacheFileContent('file1.queue.tmp');
+    expect(getCacheFileContent).toHaveBeenCalledWith('file1.queue.tmp');
+  });
+
+  it('should get archive file content', async () => {
+    await north.getArchiveFileContent('file1.queue.tmp');
+    expect(getArchiveFileContent).toHaveBeenCalledWith('file1.queue.tmp');
   });
 });
 

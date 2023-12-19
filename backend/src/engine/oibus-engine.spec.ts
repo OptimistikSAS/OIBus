@@ -146,14 +146,17 @@ const createdNorth = {
   setLogger: jest.fn(),
   updateScanMode: jest.fn(),
   getErrorFiles: jest.fn(),
+  getErrorFileContent: jest.fn(),
   removeErrorFiles: jest.fn(),
   retryErrorFiles: jest.fn(),
   removeAllErrorFiles: jest.fn(),
   retryAllErrorFiles: jest.fn(),
   getCacheFiles: jest.fn(),
+  getCacheFileContent: jest.fn(),
   removeCacheFiles: jest.fn(),
   archiveCacheFiles: jest.fn(),
   getArchiveFiles: jest.fn(),
+  getArchiveFileContent: jest.fn(),
   removeArchiveFiles: jest.fn(),
   retryArchiveFiles: jest.fn(),
   removeAllArchiveFiles: jest.fn(),
@@ -289,6 +292,11 @@ describe('OIBusEngine', () => {
     await engine.getErrorFiles(northConnectors[1].id, '2020-02-02T02:02:02.222Z', '2022-02-02T02:02:02.222Z', '');
     expect(createdNorth.getErrorFiles).toHaveBeenCalledWith('2020-02-02T02:02:02.222Z', '2022-02-02T02:02:02.222Z', '');
 
+    await engine.getErrorFileContent('northId', 'file1');
+    expect(createdNorth.getErrorFileContent).not.toHaveBeenCalled();
+    await engine.getErrorFileContent(northConnectors[1].id, 'file1');
+    expect(createdNorth.getErrorFileContent).toHaveBeenCalledWith('file1');
+
     await engine.retryErrorFiles('northId', ['file1']);
     expect(createdNorth.retryErrorFiles).not.toHaveBeenCalled();
     await engine.retryErrorFiles(northConnectors[1].id, ['file1']);
@@ -314,6 +322,11 @@ describe('OIBusEngine', () => {
     await engine.getCacheFiles(northConnectors[1].id, '2020-02-02T02:02:02.222Z', '2022-02-02T02:02:02.222Z', '');
     expect(createdNorth.getCacheFiles).toHaveBeenCalledWith('2020-02-02T02:02:02.222Z', '2022-02-02T02:02:02.222Z', '');
 
+    await engine.getCacheFileContent('northId', 'file1');
+    expect(createdNorth.getCacheFileContent).not.toHaveBeenCalled();
+    await engine.getCacheFileContent(northConnectors[1].id, 'file1');
+    expect(createdNorth.getCacheFileContent).toHaveBeenCalledWith('file1');
+
     await engine.removeCacheFiles('northId', ['file1']);
     expect(createdNorth.removeCacheFiles).not.toHaveBeenCalled();
     await engine.removeCacheFiles(northConnectors[1].id, ['file1']);
@@ -328,6 +341,11 @@ describe('OIBusEngine', () => {
     expect(createdNorth.getArchiveFiles).not.toHaveBeenCalled();
     await engine.getArchiveFiles(northConnectors[1].id, '2020-02-02T02:02:02.222Z', '2022-02-02T02:02:02.222Z', '');
     expect(createdNorth.getArchiveFiles).toHaveBeenCalledWith('2020-02-02T02:02:02.222Z', '2022-02-02T02:02:02.222Z', '');
+
+    await engine.getArchiveFileContent('northId', 'file1');
+    expect(createdNorth.getArchiveFileContent).not.toHaveBeenCalled();
+    await engine.getArchiveFileContent(northConnectors[1].id, 'file1');
+    expect(createdNorth.getArchiveFileContent).toHaveBeenCalledWith('file1');
 
     await engine.retryArchiveFiles('northId', ['file1']);
     expect(createdNorth.retryArchiveFiles).not.toHaveBeenCalled();
