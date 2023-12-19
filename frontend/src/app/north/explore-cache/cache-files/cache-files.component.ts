@@ -11,7 +11,9 @@ import { PaginationComponent } from '../../../shared/pagination/pagination.compo
 import { FileSizePipe } from '../../../shared/file-size.pipe';
 import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
 import { emptyPage } from '../../../shared/test-utils';
-import { FileTableComponent, FileTableData } from '../file-table/file-table.component';
+import { FileTableComponent, FileTableData, ItemActionEvent } from '../file-table/file-table.component';
+import { FileContentModalComponent } from '../file-content-modal/file-content-modal.component';
+import { ModalService } from '../../../shared/modal.service';
 
 @Component({
   selector: 'oib-cache-files',
@@ -39,7 +41,10 @@ export class CacheFilesComponent implements OnInit {
   @ViewChild('fileTable') fileTable!: FileTableComponent;
   fileTablePages = emptyPage<FileTableData>();
 
-  constructor(private northConnectorService: NorthConnectorService) {}
+  constructor(
+    private northConnectorService: NorthConnectorService,
+    private modalService: ModalService
+  ) {}
 
   ngOnInit() {
     this.northConnectorService.getCacheFiles(this.northConnector!.id).subscribe(cacheFiles => {
@@ -48,15 +53,21 @@ export class CacheFilesComponent implements OnInit {
     });
   }
 
-  archiveCacheFiles() {
-    const files = this.cacheFiles.filter(file => this.fileTable.checkboxByFiles.get(file.filename)).map(file => file.filename);
+  /**
+   * Archive cache files.
+   * By default, retry all checked files.
+   */
+  archiveCacheFiles(files: Array<string> = this.getCheckedFiles()) {
     this.northConnectorService.archiveCacheFiles(this.northConnector!.id, files).subscribe(() => {
       this.refreshCacheFiles();
     });
   }
 
-  removeCacheFiles() {
-    const files = this.cacheFiles.filter(file => this.fileTable.checkboxByFiles.get(file.filename)).map(file => file.filename);
+  /**
+   * Remove cache files.
+   * By default, remove all checked files.
+   */
+  removeCacheFiles(files: Array<string> = this.getCheckedFiles()) {
     this.northConnectorService.removeCacheFiles(this.northConnector!.id, files).subscribe(() => {
       this.refreshCacheFiles();
     });
@@ -70,5 +81,34 @@ export class CacheFilesComponent implements OnInit {
         this.fileTablePages = this.fileTable.pages;
       }
     });
+  }
+
+  onItemAction(event: ItemActionEvent) {
+    switch (event.type) {
+      case 'remove':
+        this.removeCacheFiles([event.file.filename]);
+        break;
+      case 'archive':
+        this.archiveCacheFiles([event.file.filename]);
+        break;
+      case 'view':
+        this.northConnectorService.getCacheFileContent(this.northConnector!.id, event.file.filename).subscribe(async response => {
+          if (!response.body) return;
+          const content = await response.body.text();
+          // Split header into content type and encoding
+          const contentType = response.headers.get('content-type')?.split(';')[0] ?? '';
+          // Get file type from content type. Additionally, remove 'x-' from the type.
+          const fileType = contentType.split('/')[1].replace(/x-/g, '');
+
+          const modalRef = this.modalService.open(FileContentModalComponent, { size: 'xl' });
+          const component: FileContentModalComponent = modalRef.componentInstance;
+          component.prepareForCreation(event.file.filename, fileType, content);
+        });
+        break;
+    }
+  }
+
+  private getCheckedFiles(): Array<string> {
+    return this.cacheFiles.filter(file => this.fileTable.checkboxByFiles.get(file.filename)).map(file => file.filename);
   }
 }

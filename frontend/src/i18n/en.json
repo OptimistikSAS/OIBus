@@ -561,7 +561,13 @@
       "cache-values-none": "No cache values",
       "values-count": "Nr. of values",
       "error-values": "Error values",
-      "error-values-none": "No error values"
+      "error-values-none": "No error values",
+      "actions": "Actions",
+      "view-file-content": "File content",
+      "view-file": "View file",
+      "remove-file": "Remove file",
+      "retry-file": "Retry file",
+      "archive-file": "Archive file"
     },
     "archive-settings": {
       "title": "Archive",

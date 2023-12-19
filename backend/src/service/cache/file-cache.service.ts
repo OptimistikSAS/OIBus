@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import { createReadStream, ReadStream } from 'node:fs';
 import path from 'node:path';
 
 import { createFolder, getFilesFiltered } from '../utils';
@@ -179,6 +180,19 @@ export default class FileCacheService {
   }
 
   /**
+   * Get error file content.
+   */
+  async getErrorFileContent(filename: string): Promise<ReadStream | null> {
+    try {
+      await fs.stat(path.join(this._errorFolder, filename));
+    } catch (error) {
+      this._logger.error(`Error while reading file "${path.join(this._errorFolder, filename)}": ${error}`);
+      return null;
+    }
+    return createReadStream(path.join(this._errorFolder, filename));
+  }
+
+  /**
    * Remove files from folder.
    */
   async removeFiles(folder: string, filenames: Array<string>): Promise<void> {
@@ -239,6 +253,20 @@ export default class FileCacheService {
    */
   async getCacheFiles(fromDate: Instant, toDate: Instant, nameFilter: string): Promise<Array<NorthCacheFiles>> {
     return getFilesFiltered(this._fileFolder, fromDate, toDate, nameFilter, this._logger);
+  }
+
+  /**
+   * Get cache file content.
+   */
+  async getCacheFileContent(filename: string): Promise<ReadStream | null> {
+    try {
+      await fs.stat(path.join(this._fileFolder, filename));
+    } catch (error) {
+      this._logger.error(`Error while reading file "${path.join(this._fileFolder, filename)}": ${error}`);
+      return null;
+    }
+
+    return createReadStream(path.join(this._fileFolder, filename));
   }
 
   /**

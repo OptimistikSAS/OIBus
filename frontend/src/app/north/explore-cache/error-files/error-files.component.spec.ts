@@ -4,15 +4,16 @@ import { TestBed } from '@angular/core/testing';
 import { NorthConnectorService } from '../../../services/north-connector.service';
 import { of } from 'rxjs';
 import { NorthConnectorDTO } from '../../../../../../shared/model/north-connector.model';
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 
 @Component({
-  template: `<oib-error-files [northConnector]="northConnector"></oib-error-files>`,
+  template: `<oib-error-files #component [northConnector]="northConnector"></oib-error-files>`,
   standalone: true,
   imports: [ErrorFilesComponent]
 })
 class TestComponent {
+  @ViewChild('component') component!: ErrorFilesComponent;
   northConnector: NorthConnectorDTO = {
     id: 'northId',
     name: 'North Connector'
@@ -42,10 +43,30 @@ describe('ErrorFilesComponent', () => {
 
     tester = new ErrorFilesComponentTester();
     northConnectorService.getCacheErrorFiles.and.returnValue(of([]));
+    northConnectorService.removeCacheErrorFiles.and.returnValue(of());
+    northConnectorService.retryCacheErrorFiles.and.returnValue(of());
+    northConnectorService.getCacheErrorFileContent.and.returnValue(of());
     tester.detectChanges();
   });
 
   it('should have no error files', () => {
     expect(tester.fileErrors.length).toBe(0);
+  });
+
+  it('should handle item actions', () => {
+    const file = {
+      filename: 'filename',
+      modificationDate: '2021-01-01T00:00:00.000Z',
+      size: 123
+    };
+
+    tester.componentInstance.component.onItemAction({ type: 'remove', file });
+    expect(northConnectorService.removeCacheErrorFiles).toHaveBeenCalled();
+
+    tester.componentInstance.component.onItemAction({ type: 'retry', file });
+    expect(northConnectorService.retryCacheErrorFiles).toHaveBeenCalled();
+
+    tester.componentInstance.component.onItemAction({ type: 'view', file });
+    expect(northConnectorService.getCacheErrorFileContent).toHaveBeenCalled();
   });
 });

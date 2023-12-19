@@ -1,5 +1,6 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
+import { createReadStream } from 'node:fs';
 
 import ArchiveService from './archive.service';
 
@@ -12,6 +13,7 @@ import { NorthArchiveSettings } from '../../../../shared/model/north-connector.m
 
 jest.mock('../../service/utils');
 jest.mock('node:fs/promises');
+jest.mock('node:fs');
 
 const logger: pino.Logger = new PinoLogger();
 const anotherLogger: pino.Logger = new PinoLogger();
@@ -246,6 +248,28 @@ describe('ArchiveService', () => {
       expect(logger.debug).toHaveBeenCalledTimes(1);
 
       removeFilesSpy.mockRestore();
+    });
+
+    it('should properly get archived file content', async () => {
+      const filename = 'myFile.csv';
+      (createReadStream as jest.Mock).mockImplementation(() => {});
+      await archiveService.getArchiveFileContent(filename);
+
+      expect(createReadStream).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'archive', filename));
+    });
+
+    it('should handle error while getting archived file content', async () => {
+      const filename = 'myFile.csv';
+      const error = new Error('file does not exist');
+      (fs.stat as jest.Mock).mockImplementation(() => {
+        throw error;
+      });
+      const readStream = await archiveService.getArchiveFileContent(filename);
+
+      expect(readStream).toBeNull();
+      expect(logger.error).toHaveBeenCalledWith(
+        `Error while reading file "${path.resolve('myCacheFolder', 'archive', filename)}": ${error}`
+      );
     });
   });
 

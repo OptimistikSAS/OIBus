@@ -4,15 +4,16 @@ import { TestBed } from '@angular/core/testing';
 import { NorthConnectorService } from '../../../services/north-connector.service';
 import { of } from 'rxjs';
 import { NorthConnectorDTO } from '../../../../../../shared/model/north-connector.model';
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 
 @Component({
-  template: `<oib-cache-files [northConnector]="northConnector"></oib-cache-files>`,
+  template: `<oib-cache-files #component [northConnector]="northConnector"></oib-cache-files>`,
   standalone: true,
   imports: [CacheFilesComponent]
 })
 class TestComponent {
+  @ViewChild('component') component!: CacheFilesComponent;
   northConnector: NorthConnectorDTO = {
     id: 'northId',
     name: 'North Connector'
@@ -42,10 +43,30 @@ describe('CacheFilesComponent', () => {
 
     tester = new CacheFilesComponentTester();
     northConnectorService.getCacheFiles.and.returnValue(of([]));
+    northConnectorService.removeCacheFiles.and.returnValue(of());
+    northConnectorService.archiveCacheFiles.and.returnValue(of());
+    northConnectorService.getCacheFileContent.and.returnValue(of());
     tester.detectChanges();
   });
 
   it('should have no archive files', () => {
     expect(tester.fileCache.length).toBe(0);
+  });
+
+  it('should handle item actions', () => {
+    const file = {
+      filename: 'filename',
+      modificationDate: '2021-01-01T00:00:00.000Z',
+      size: 123
+    };
+
+    tester.componentInstance.component.onItemAction({ type: 'remove', file });
+    expect(northConnectorService.removeCacheFiles).toHaveBeenCalled();
+
+    tester.componentInstance.component.onItemAction({ type: 'archive', file });
+    expect(northConnectorService.archiveCacheFiles).toHaveBeenCalled();
+
+    tester.componentInstance.component.onItemAction({ type: 'view', file });
+    expect(northConnectorService.getCacheFileContent).toHaveBeenCalled();
   });
 });

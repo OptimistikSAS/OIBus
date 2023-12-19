@@ -1,5 +1,6 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
+import { createReadStream } from 'node:fs';
 
 import FileCache from './file-cache.service';
 import { createFolder, getFilesFiltered } from '../utils';
@@ -8,6 +9,7 @@ import PinoLogger from '../../tests/__mocks__/logger.mock';
 import { NorthCacheSettingsDTO } from '../../../../shared/model/north-connector.model';
 
 jest.mock('node:fs/promises');
+jest.mock('node:fs');
 jest.mock('../../service/utils');
 
 const logger: pino.Logger = new PinoLogger();
@@ -336,5 +338,45 @@ describe('FileCache', () => {
     };
     cache.settings = otherSettings;
     await cache.cacheFile('myFile.csv');
+  });
+
+  it('should properly get error file content', async () => {
+    const filename = 'myFile.csv';
+    (createReadStream as jest.Mock).mockImplementation(() => {});
+    await cache.getErrorFileContent(filename);
+
+    expect(createReadStream).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'files-errors', filename));
+  });
+
+  it('should handle error when getting error file content', async () => {
+    const filename = 'myFile.csv';
+    const error = new Error('file does not exist');
+    (fs.stat as jest.Mock).mockImplementation(() => {
+      throw error;
+    });
+    await cache.getErrorFileContent(filename);
+
+    expect(logger.error).toHaveBeenCalledWith(
+      `Error while reading file "${path.resolve('myCacheFolder', 'files-errors', filename)}": ${error}`
+    );
+  });
+
+  it('should properly get cache file content', async () => {
+    const filename = 'myFile.csv';
+    (createReadStream as jest.Mock).mockImplementation(() => {});
+    await cache.getCacheFileContent(filename);
+
+    expect(createReadStream).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'files', filename));
+  });
+
+  it('should handle error when getting cache file content', async () => {
+    const filename = 'myFile.csv';
+    const error = new Error('file does not exist');
+    (fs.stat as jest.Mock).mockImplementation(() => {
+      throw error;
+    });
+    await cache.getCacheFileContent(filename);
+
+    expect(logger.error).toHaveBeenCalledWith(`Error while reading file "${path.resolve('myCacheFolder', 'files', filename)}": ${error}`);
   });
 });
