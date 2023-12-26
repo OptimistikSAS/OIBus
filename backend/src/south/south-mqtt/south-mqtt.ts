@@ -1,4 +1,4 @@
-import * as mqtt from 'mqtt';
+import mqtt from 'mqtt';
 import { QoS } from 'mqtt-packet';
 
 import objectPath from 'object-path';
