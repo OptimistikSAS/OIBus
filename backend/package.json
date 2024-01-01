@@ -96,7 +96,7 @@
     "oracledb": "6.3.0"
   },
   "devDependencies": {
-    "@types/basic-auth": "1.1.6",
+    "@types/basic-auth": "1.1.7",
     "@types/better-sqlite3": "7.6.8",
     "@types/cron": "2.0.1",
     "@types/jest": "29.5.11",
