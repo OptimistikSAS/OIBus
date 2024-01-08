@@ -61,7 +61,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
     private engineAddValuesCallback: (southId: string, values: Array<OIBusDataValue>) => Promise<void>,
     private engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     protected readonly encryptionService: EncryptionService,
-    private readonly repositoryService: RepositoryService,
+    protected readonly repositoryService: RepositoryService,
     protected logger: pino.Logger,
     protected readonly baseFolder: string
   ) {

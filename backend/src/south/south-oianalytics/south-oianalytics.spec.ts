@@ -13,6 +13,7 @@ import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock
 import path from 'node:path';
 import { SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../../../shared/model/south-settings.model';
 import { createProxyAgent } from '../../service/proxy.service';
+import { RegistrationSettingsDTO } from '../../../../shared/model/engine.model';
 
 jest.mock('../../service/proxy.service');
 jest.mock('../../service/utils', () => ({
@@ -21,6 +22,14 @@ jest.mock('../../service/utils', () => ({
   createFolder: jest.fn(),
   formatQueryParams: jest.fn(),
   getOIBusInfo: jest.fn()
+}));
+jest.mock('@azure/identity', () => ({
+  ClientSecretCredential: jest.fn().mockImplementation(() => ({
+    getToken: () => ({ token: 'token' })
+  })),
+  ClientCertificateCredential: jest.fn().mockImplementation(() => ({
+    getToken: () => ({ token: 'token' })
+  }))
 }));
 
 // Mock node-fetch
@@ -141,12 +150,16 @@ describe('SouthOIAnalytics with Basic auth', () => {
       overlap: 0
     },
     settings: {
-      host: 'http://localhost:4200',
-      acceptUnauthorized: false,
+      useOiaModule: false,
       timeout: 30,
-      accessKey: 'username',
-      secretKey: 'password',
-      useProxy: false
+      specificSettings: {
+        host: 'http://localhost:4200',
+        authentication: 'basic',
+        acceptUnauthorized: false,
+        accessKey: 'username',
+        secretKey: 'password',
+        useProxy: false
+      }
     }
   };
   beforeEach(() => {
@@ -177,7 +190,7 @@ describe('SouthOIAnalytics with Basic auth', () => {
       );
 
     await south.testConnection();
-    expect(logger.info).toHaveBeenCalledWith(`Testing connection on "${connector.settings.host}"`);
+    expect(logger.info).toHaveBeenCalledWith(`Testing connection on "${connector.settings.specificSettings!.host}"`);
     expect(logger.info).toHaveBeenCalledWith('OIAnalytics request successful');
     await expect(south.testConnection()).rejects.toThrow(`HTTP request failed with status code 401 and message: Unauthorized`);
   });
@@ -287,12 +300,16 @@ describe('SouthOIAnalytics without proxy but with accept self signed', () => {
       overlap: 0
     },
     settings: {
-      host: 'https://localhost:4200/',
-      acceptUnauthorized: true,
+      useOiaModule: false,
       timeout: 30,
-      accessKey: 'username',
-      secretKey: 'password',
-      useProxy: false
+      specificSettings: {
+        host: 'https://localhost:4200/',
+        acceptUnauthorized: true,
+        authentication: 'basic',
+        accessKey: 'username',
+        secretKey: '',
+        useProxy: false
+      }
     }
   };
 
@@ -315,7 +332,7 @@ describe('SouthOIAnalytics without proxy but with accept self signed', () => {
 
     await expect(south.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
     expect(fetch).toHaveBeenCalledWith('https://localhost:4200/api/optimistik/oibus/status', {
-      headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
+      headers: { authorization: 'Basic dXNlcm5hbWU6' },
       method: 'GET',
       timeout: 30000
     });
@@ -336,7 +353,7 @@ describe('SouthOIAnalytics without proxy but with accept self signed', () => {
       'https://localhost:4200/api/my/endpoint' +
         '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
       {
-        headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
+        headers: { authorization: 'Basic dXNlcm5hbWU6' },
         method: 'GET',
         timeout: 30000
       }
@@ -490,15 +507,19 @@ describe('SouthOIAnalytics with proxy', () => {
       overlap: 0
     },
     settings: {
-      host: 'http://localhost:4200',
-      acceptUnauthorized: false,
+      useOiaModule: false,
       timeout: 30,
-      accessKey: 'username',
-      secretKey: 'password',
-      useProxy: true,
-      proxyPassword: 'proxyPassword',
-      proxyUrl: 'http://proxyurl',
-      proxyUsername: 'proxyUsername'
+      specificSettings: {
+        host: 'http://localhost:4200',
+        acceptUnauthorized: false,
+        authentication: 'basic',
+        accessKey: 'username',
+        secretKey: 'password',
+        useProxy: true,
+        proxyPassword: 'proxyPassword',
+        proxyUrl: 'http://proxyurl',
+        proxyUsername: 'proxyUsername'
+      }
     }
   };
   const fakeAgent = { rejectUnauthorized: false };
@@ -567,15 +588,19 @@ describe('SouthOIAnalytics with proxy but without proxy password', () => {
       overlap: 0
     },
     settings: {
-      host: 'http://localhost:4200',
-      acceptUnauthorized: false,
+      useOiaModule: false,
       timeout: 30,
-      accessKey: 'username',
-      secretKey: 'password',
-      useProxy: true,
-      proxyPassword: '',
-      proxyUrl: 'http://proxyurl',
-      proxyUsername: 'proxyUsername'
+      specificSettings: {
+        host: 'http://localhost:4200',
+        authentication: 'basic',
+        acceptUnauthorized: false,
+        accessKey: 'username',
+        secretKey: 'password',
+        useProxy: true,
+        proxyPassword: '',
+        proxyUrl: 'http://proxyurl',
+        proxyUsername: 'proxyUsername'
+      }
     }
   };
   const fakeAgent = { rejectUnauthorized: false };
@@ -632,11 +657,215 @@ describe('SouthOIAnalytics with proxy but without proxy password', () => {
       'http://localhost:4200/api/my/endpoint' +
         '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
       {
-        url: configuration.settings.proxyUrl!,
-        username: configuration.settings.proxyUsername!,
+        url: configuration.settings.specificSettings!.proxyUrl!,
+        username: configuration.settings.specificSettings!.proxyUsername!,
         password: null
       },
-      configuration.settings.acceptUnauthorized
+      configuration.settings.specificSettings!.acceptUnauthorized
     );
+  });
+});
+
+describe('SouthOIAnalytics without proxy but with acceptUnauthorized', () => {
+  const configuration: SouthConnectorDTO<SouthOIAnalyticsSettings> = {
+    id: 'id',
+    name: 'north',
+    type: 'test',
+    description: 'my test connector',
+    enabled: true,
+    settings: {
+      useOiaModule: false,
+      timeout: 30,
+      specificSettings: {
+        host: 'https://hostname',
+        acceptUnauthorized: true,
+        accessKey: 'anyUser',
+        authentication: 'aad-client-secret',
+        tenantId: 'tenantId',
+        clientId: 'clientId',
+        clientSecret: 'clientSecret',
+        scope: 'api://my-scope/.default',
+        secretKey: null,
+        useProxy: false
+      }
+    },
+    history: {
+      maxInstantPerItem: true,
+      maxReadInterval: 3600,
+      readDelay: 0,
+      overlap: 0
+    }
+  };
+  const fakeAgent = { rejectUnauthorized: false };
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+
+    (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
+    south = new SouthOianalytics(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    await south.start();
+  });
+
+  it('should add header with aad-client-secret', async () => {
+    const result = await south.getNetworkSettings('/endpoint');
+    expect(result.headers).toEqual({ authorization: 'Bearer token' });
+    expect(result.host).toEqual(configuration.settings.specificSettings!.host);
+    expect(result.agent).toEqual(fakeAgent);
+  });
+});
+
+describe('SouthOIAnalytics with aad-certificate', () => {
+  const configuration: SouthConnectorDTO<SouthOIAnalyticsSettings> = {
+    id: 'id',
+    name: 'north',
+    type: 'test',
+    description: 'my test connector',
+    enabled: true,
+    settings: {
+      useOiaModule: false,
+      timeout: 30,
+      specificSettings: {
+        host: 'https://hostname/',
+        acceptUnauthorized: false,
+        authentication: 'aad-certificate',
+        certificateId: 'certificateId',
+        useProxy: false
+      }
+    },
+    history: {
+      maxInstantPerItem: true,
+      maxReadInterval: 3600,
+      readDelay: 0,
+      overlap: 0
+    }
+  };
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    (createProxyAgent as jest.Mock).mockReturnValue({});
+    south = new SouthOianalytics(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    await south.start();
+  });
+
+  it('should add header with aad-certificate', async () => {
+    (repositoryService.certificateRepository.findById as jest.Mock).mockReturnValueOnce({
+      name: 'name',
+      description: 'description',
+      publicKey: 'public key',
+      privateKey: 'private key',
+      certificate: 'cert',
+      expiry: '2020-10-10T00:00:00.000Z'
+    });
+    const result = await south.getNetworkSettings('/endpoint');
+    expect(result.headers).toEqual({ authorization: 'Bearer token' });
+    expect(result.host).toEqual(configuration.settings.specificSettings!.host);
+    expect(result.agent).toEqual({});
+  });
+
+  it('should not add header with aad-certificate when cert not found', async () => {
+    (repositoryService.certificateRepository.findById as jest.Mock).mockReturnValueOnce(null);
+    const result = await south.getNetworkSettings('/endpoint');
+    expect(result.headers).toEqual({});
+  });
+});
+
+describe('SouthOIAnalytics with OIA module', () => {
+  const configuration: SouthConnectorDTO<SouthOIAnalyticsSettings> = {
+    id: 'id',
+    name: 'north',
+    type: 'test',
+    description: 'my test connector',
+    enabled: true,
+    settings: {
+      useOiaModule: true,
+      timeout: 30
+    },
+    history: {
+      maxInstantPerItem: true,
+      maxReadInterval: 3600,
+      readDelay: 0,
+      overlap: 0
+    }
+  };
+
+  let registrationSettings: RegistrationSettingsDTO;
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+
+    (createProxyAgent as jest.Mock).mockReturnValue({});
+    registrationSettings = {
+      id: 'id',
+      host: 'http://localhost:4200',
+      token: 'my oia token',
+      status: 'REGISTERED',
+      activationDate: '2020-01-01T00:00:00Z',
+      useProxy: false,
+      acceptUnauthorized: false
+    };
+    south = new SouthOianalytics(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    await south.start();
+  });
+
+  it('should use oia module', async () => {
+    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValueOnce(registrationSettings);
+    const result = await south.getNetworkSettings('/endpoint');
+    expect(result.headers).toEqual({ authorization: 'Bearer my oia token' });
+    expect(result.host).toEqual(registrationSettings.host);
+    expect(createProxyAgent).toHaveBeenCalledWith(
+      registrationSettings.useProxy,
+      `${registrationSettings.host}/endpoint`,
+      null,
+      registrationSettings.acceptUnauthorized
+    );
+    expect(result.agent).toEqual({});
+  });
+
+  it('should use oia module with proxy', async () => {
+    registrationSettings.host = 'http://localhost:4200/';
+    registrationSettings.useProxy = true;
+    registrationSettings.proxyUrl = 'http://localhost:8080';
+    registrationSettings.proxyUsername = 'user';
+    registrationSettings.proxyPassword = 'pass';
+    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValueOnce(registrationSettings);
+    const result = await south.getNetworkSettings('/endpoint');
+    expect(result.headers).toEqual({ authorization: 'Bearer my oia token' });
+    expect(result.host).toEqual('http://localhost:4200');
+    expect(createProxyAgent).toHaveBeenCalledWith(
+      registrationSettings.useProxy,
+      `${registrationSettings.host}/endpoint`,
+      { url: registrationSettings.proxyUrl, username: registrationSettings.proxyUsername, password: registrationSettings.proxyPassword },
+      registrationSettings.acceptUnauthorized
+    );
+    expect(result.agent).toEqual({});
+  });
+
+  it('should use oia module with proxy without user', async () => {
+    registrationSettings.host = 'http://localhost:4200/';
+    registrationSettings.useProxy = true;
+    registrationSettings.proxyUrl = 'http://localhost:8080';
+    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValueOnce(registrationSettings);
+    const result = await south.getNetworkSettings('/endpoint');
+    expect(result.headers).toEqual({ authorization: 'Bearer my oia token' });
+    expect(result.host).toEqual('http://localhost:4200');
+    expect(createProxyAgent).toHaveBeenCalledWith(
+      registrationSettings.useProxy,
+      `${registrationSettings.host}/endpoint`,
+      { url: registrationSettings.proxyUrl, username: undefined, password: null },
+      registrationSettings.acceptUnauthorized
+    );
+    expect(result.agent).toEqual({});
+  });
+
+  it('should not use oia module if not registered', async () => {
+    registrationSettings.status = 'PENDING';
+    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValueOnce(registrationSettings);
+
+    await expect(south.getNetworkSettings('/endpoint')).rejects.toThrow(new Error('OIBus not registered in OIAnalytics'));
+
+    expect(createProxyAgent).not.toHaveBeenCalled();
   });
 });

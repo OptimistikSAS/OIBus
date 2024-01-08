@@ -17,6 +17,26 @@ class RegisterOibusModalComponentTester extends ComponentTester<RegisterOibusMod
     return this.input('#host')!;
   }
 
+  get acceptUnauthorized() {
+    return this.input('#accept-unauthorized')!;
+  }
+
+  get useProxy() {
+    return this.input('#use-proxy')!;
+  }
+
+  get proxyUrl() {
+    return this.input('#proxy-url')!;
+  }
+
+  get proxyUsername() {
+    return this.input('#proxy-username')!;
+  }
+
+  get proxyPassword() {
+    return this.input('#proxy-password')!;
+  }
+
   get validationErrors() {
     return this.elements('val-errors div');
   }
@@ -57,6 +77,8 @@ describe('RegisterOibusModalComponent', () => {
 
   it('should have an empty form', () => {
     expect(tester.host).toHaveValue('');
+    expect(tester.acceptUnauthorized).not.toBeChecked();
+    expect(tester.useProxy).not.toBeChecked();
   });
 
   it('should not register if invalid', () => {
@@ -69,11 +91,21 @@ describe('RegisterOibusModalComponent', () => {
 
   it('should register if valid', fakeAsync(() => {
     tester.host.fillWith('http://localhost:4200');
+    tester.acceptUnauthorized.check();
+    tester.useProxy.check();
+    tester.proxyUrl.fillWith('http://localhost:8080');
+    tester.proxyUsername.fillWith('user');
+    tester.proxyPassword.fillWith('pass');
     tester.detectChanges();
     tester.save.click();
 
     const expectedCommand: RegistrationSettingsCommandDTO = {
-      host: 'http://localhost:4200'
+      host: 'http://localhost:4200',
+      acceptUnauthorized: true,
+      useProxy: true,
+      proxyUrl: 'http://localhost:8080',
+      proxyUsername: 'user',
+      proxyPassword: 'pass'
     };
 
     expect(engineService.updateRegistrationSettings).toHaveBeenCalledWith(expectedCommand);
