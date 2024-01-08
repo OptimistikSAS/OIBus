@@ -15,7 +15,7 @@ import { HandlesFile, HandlesValues } from '../north-interface';
 import { filesExists } from '../../service/utils';
 import { NorthOIAnalyticsSettings } from '../../../../shared/model/north-settings.model';
 import { OIBusDataValue } from '../../../../shared/model/engine.model';
-import { ClientSecretCredential, ClientCertificateCredential } from '@azure/identity';
+import { ClientCertificateCredential, ClientSecretCredential } from '@azure/identity';
 
 /**
  * Class NorthOIAnalytics - Send files to a POST Multipart HTTP request and values as JSON payload
@@ -32,37 +32,20 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     baseFolder: string
   ) {
     super(connector, encryptionService, repositoryService, logger, baseFolder);
-
-    if (this.connector.settings.host.endsWith('/')) {
-      this.connector.settings.host = this.connector.settings.host.slice(0, this.connector.settings.host.length - 1);
-    }
   }
 
   override async testConnection(): Promise<void> {
-    this.logger.info(`Testing connection on "${this.connector.settings.host}"`);
+    const connectionSettings = await this.getNetworkSettings(`/api/optimistik/oibus/status`);
 
-    const headers: HeadersInit = {};
-    await this.addHeaderAuthentication(headers);
-    const requestUrl = `${this.connector.settings.host}/api/optimistik/oibus/status`;
+    this.logger.info(`Testing connection on "${connectionSettings.host}"`);
+    const requestUrl = `${connectionSettings.host}/api/optimistik/oibus/status`;
     const fetchOptions: RequestInit = {
       method: 'GET',
-      headers,
+      headers: connectionSettings.headers,
       timeout: this.connector.settings.timeout * 1000,
-      agent: createProxyAgent(
-        this.connector.settings.useProxy,
-        requestUrl,
-        this.connector.settings.useProxy
-          ? {
-              url: this.connector.settings.proxyUrl!,
-              username: this.connector.settings.proxyUsername!,
-              password: this.connector.settings.proxyPassword
-                ? await this.encryptionService.decryptText(this.connector.settings.proxyPassword)
-                : null
-            }
-          : null,
-        this.connector.settings.acceptUnauthorized
-      )
+      agent: connectionSettings.agent
     };
+
     try {
       const response = await fetch(requestUrl, fetchOptions);
       if (response.ok) {
@@ -81,33 +64,19 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
    * Handle values by sending them to OIAnalytics
    */
   async handleValues(values: Array<OIBusDataValue>): Promise<void> {
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json'
-    };
-    await this.addHeaderAuthentication(headers);
+    const connectionSettings = await this.getNetworkSettings(`/api/oianalytics/oibus/time-values?dataSourceId=${this.connector.name}`);
 
+    // @ts-ignore
+    connectionSettings.headers['Content-Type'] = 'application/json';
     let response;
-    const valuesUrl = `${this.connector.settings.host}/api/oianalytics/oibus/time-values?dataSourceId=${this.connector.name}`;
+    const valuesUrl = `${connectionSettings.host}/api/oianalytics/oibus/time-values?dataSourceId=${this.connector.name}`;
     try {
       response = await fetch(valuesUrl, {
         method: 'POST',
-        headers,
+        headers: connectionSettings.headers,
         timeout: this.connector.settings.timeout * 1000,
         body: JSON.stringify(values),
-        agent: createProxyAgent(
-          this.connector.settings.useProxy,
-          valuesUrl,
-          this.connector.settings.useProxy
-            ? {
-                url: this.connector.settings.proxyUrl!,
-                username: this.connector.settings.proxyUsername!,
-                password: this.connector.settings.proxyPassword
-                  ? await this.encryptionService.decryptText(this.connector.settings.proxyPassword)
-                  : null
-              }
-            : null,
-          this.connector.settings.acceptUnauthorized
-        )
+        agent: connectionSettings.agent
       });
     } catch (fetchError) {
       throw {
@@ -128,9 +97,8 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
    * Handle the file by sending it to OIAnalytics.
    */
   async handleFile(filePath: string): Promise<void> {
-    const headers: HeadersInit = {};
+    const connectionSettings = await this.getNetworkSettings(`/api/oianalytics/file-uploads?dataSourceId=${this.connector.name}`);
 
-    await this.addHeaderAuthentication(headers);
     if (!(await filesExists(filePath))) {
       throw new Error(`File ${filePath} does not exist`);
     }
@@ -143,31 +111,19 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     body.append('file', readStream, { filename: `${filename}${ext}` });
     const formHeaders = body.getHeaders();
     Object.keys(formHeaders).forEach(key => {
-      headers[key] = formHeaders[key];
+      // @ts-ignore
+      connectionSettings.headers[key] = formHeaders[key];
     });
 
     let response;
-    const fileUrl = `${this.connector.settings.host}/api/oianalytics/file-uploads?dataSourceId=${this.connector.name}`;
+    const fileUrl = `${connectionSettings.host}/api/oianalytics/file-uploads?dataSourceId=${this.connector.name}`;
     try {
       response = await fetch(fileUrl, {
         method: 'POST',
-        headers,
+        headers: connectionSettings.headers,
         timeout: this.connector.settings.timeout * 1000,
         body,
-        agent: createProxyAgent(
-          this.connector.settings.useProxy,
-          fileUrl,
-          this.connector.settings.useProxy
-            ? {
-                url: this.connector.settings.proxyUrl!,
-                username: this.connector.settings.proxyUsername!,
-                password: this.connector.settings.proxyPassword
-                  ? await this.encryptionService.decryptText(this.connector.settings.proxyPassword)
-                  : null
-              }
-            : null,
-          this.connector.settings.acceptUnauthorized
-        )
+        agent: connectionSettings.agent
       });
       readStream.close();
     } catch (fetchError) {
@@ -186,39 +142,96 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     }
   }
 
-  async addHeaderAuthentication(headers: Record<string, string>): Promise<boolean> {
-    switch (this.connector.settings.authentication) {
+  async getNetworkSettings(endpoint: string): Promise<{ host: string; headers: HeadersInit; agent: any }> {
+    const headers: HeadersInit = {};
+
+    if (this.connector.settings.useOiaModule) {
+      const registrationSettings = this.repositoryService.registrationRepository.getRegistrationSettings();
+      if (!registrationSettings || registrationSettings.status !== 'REGISTERED') {
+        throw new Error('OIBus not registered in OIAnalytics');
+      }
+
+      if (registrationSettings.host.endsWith('/')) {
+        registrationSettings.host = registrationSettings.host.slice(0, registrationSettings.host.length - 1);
+      }
+
+      const token = await this.encryptionService.decryptText(registrationSettings.token!);
+      headers.authorization = `Bearer ${token}`;
+
+      const agent = createProxyAgent(
+        registrationSettings.useProxy,
+        `${registrationSettings.host}${endpoint}`,
+        registrationSettings.useProxy
+          ? {
+              url: registrationSettings.proxyUrl!,
+              username: registrationSettings.proxyUsername!,
+              password: registrationSettings.proxyPassword
+                ? await this.encryptionService.decryptText(registrationSettings.proxyPassword)
+                : null
+            }
+          : null,
+        registrationSettings.acceptUnauthorized
+      );
+
+      return {
+        host: registrationSettings.host,
+        headers,
+        agent
+      };
+    }
+
+    const specificSettings = this.connector.settings.specificSettings!;
+    if (specificSettings.host.endsWith('/')) {
+      specificSettings.host = specificSettings.host.slice(0, specificSettings.host.length - 1);
+    }
+
+    switch (specificSettings.authentication) {
       case 'basic':
         headers.authorization = `Basic ${Buffer.from(
-          `${this.connector.settings.accessKey}:${
-            this.connector.settings.secretKey ? await this.encryptionService.decryptText(this.connector.settings.secretKey) : ''
+          `${specificSettings.accessKey}:${
+            specificSettings.secretKey ? await this.encryptionService.decryptText(specificSettings.secretKey) : ''
           }`
         ).toString('base64')}`;
-        return true;
+        break;
       case 'aad-client-secret':
         const clientSecretCredential = new ClientSecretCredential(
-          this.connector.settings.tenantId!,
-          this.connector.settings.clientId!,
-          await this.encryptionService.decryptText(this.connector.settings.clientSecret!)
+          specificSettings.tenantId!,
+          specificSettings.clientId!,
+          await this.encryptionService.decryptText(specificSettings.clientSecret!)
         );
-        const result = await clientSecretCredential.getToken(this.connector.settings.scope!);
+        const result = await clientSecretCredential.getToken(specificSettings.scope!);
         headers.authorization = `Bearer ${Buffer.from(result.token)}`;
-        return true;
+        break;
       case 'aad-certificate':
-        const certificate = this.repositoryService.certificateRepository.findById(this.connector.settings.certificateId!);
+        const certificate = this.repositoryService.certificateRepository.findById(specificSettings.certificateId!);
         if (certificate != null) {
           const decryptedPrivateKey = await this.encryptionService.decryptText(certificate.privateKey);
-          const clientCertificateCredential = new ClientCertificateCredential(
-            this.connector.settings.tenantId!,
-            this.connector.settings.clientId!,
-            {
-              certificate: `${certificate.certificate}\n${decryptedPrivateKey}`
-            }
-          );
-          const result = await clientCertificateCredential.getToken(this.connector.settings.scope!);
+          const clientCertificateCredential = new ClientCertificateCredential(specificSettings.tenantId!, specificSettings.clientId!, {
+            certificate: `${certificate.certificate}\n${decryptedPrivateKey}`
+          });
+          const result = await clientCertificateCredential.getToken(specificSettings.scope!);
           headers.authorization = `Bearer ${Buffer.from(result.token)}`;
         }
-        return true;
+        break;
     }
+
+    const agent = createProxyAgent(
+      specificSettings.useProxy,
+      `${specificSettings.host}${endpoint}`,
+      specificSettings.useProxy
+        ? {
+            url: specificSettings.proxyUrl!,
+            username: specificSettings.proxyUsername!,
+            password: specificSettings.proxyPassword ? await this.encryptionService.decryptText(specificSettings.proxyPassword) : null
+          }
+        : null,
+      specificSettings.acceptUnauthorized
+    );
+
+    return {
+      host: specificSettings.host,
+      headers,
+      agent
+    };
   }
 }

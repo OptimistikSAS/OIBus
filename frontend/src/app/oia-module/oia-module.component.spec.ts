@@ -25,6 +25,8 @@ describe('OiaModuleComponent', () => {
   const registrationSettings: RegistrationSettingsDTO = {
     id: 'id',
     host: 'http://localhost:4200',
+    acceptUnauthorized: false,
+    useProxy: false,
     status: 'NOT_REGISTERED',
     activationCode: '',
     activationDate: '',

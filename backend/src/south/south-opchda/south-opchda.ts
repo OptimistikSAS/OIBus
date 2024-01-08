@@ -171,14 +171,15 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
     }
     this.reconnectTimeout = null;
 
-    this.connected = false;
-
-    try {
-      const fetchOptions = { method: 'DELETE' };
-      await fetch(`${this.connector.settings.agentUrl}/api/opc/${this.connector.id}/disconnect`, fetchOptions);
-    } catch (error) {
-      this.logger.error(`Error while sending disconnection HTTP request into agent. ${error}`);
+    if (this.connected) {
+      try {
+        const fetchOptions = { method: 'DELETE' };
+        await fetch(`${this.connector.settings.agentUrl}/api/opc/${this.connector.id}/disconnect`, fetchOptions);
+      } catch (error) {
+        this.logger.error(`Error while sending disconnection HTTP request into agent. ${error}`);
+      }
     }
+    this.connected = false;
     await super.disconnect();
   }
 }

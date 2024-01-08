@@ -26,13 +26,13 @@ describe('Log repository', () => {
         {
           timestamp: '2023-01-01T00:00:00.000Z',
           level: 'error',
-          scopeType: 'data-stream',
+          scopeType: 'internal',
           message: 'my log 1'
         },
         {
           timestamp: '2023-01-02T00:00:00.000Z',
           level: 'error',
-          scopeType: 'data-stream',
+          scopeType: 'internal',
           message: 'my log 2'
         }
       ],
@@ -45,13 +45,13 @@ describe('Log repository', () => {
       {
         timestamp: '2023-01-01T00:00:00.000Z',
         level: 'error',
-        scopeType: 'data-stream',
+        scopeType: 'internal',
         message: 'my log 1'
       },
       {
         timestamp: '2023-01-02T00:00:00.000Z',
         level: 'error',
-        scopeType: 'data-stream',
+        scopeType: 'internal',
         message: 'my log 2'
       }
     ]);

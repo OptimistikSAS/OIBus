@@ -1,9 +1,11 @@
 import { Knex } from 'knex';
 import { LOG_TABLE } from '../../repository/log.repository';
-import { LOG_LEVELS, SCOPE_TYPES } from '../../../../shared/model/engine.model';
+import { LOG_LEVELS } from '../../../../shared/model/engine.model';
 import { NORTH_METRICS_TABLE } from '../../repository/north-connector-metrics.repository';
 import { SOUTH_METRICS_TABLE } from '../../repository/south-connector-metrics.repository';
 import { ENGINE_METRICS_TABLE } from '../../repository/engine-metrics.repository';
+
+const SCOPE_TYPES = ['south', 'north', 'engine', 'data-stream', 'history-engine', 'history-query', 'web-server', 'logger-service'];
 
 export async function up(knex: Knex): Promise<void> {
   await createLogsTable(knex);

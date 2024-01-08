@@ -3,7 +3,6 @@ import HistoryQueryConnectorController from './history-query.controller';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
 import JoiValidator from './validators/joi.validator';
 import { HistoryQueryCommandDTO, HistoryQueryCreateCommandDTO } from '../../../../shared/model/history-query.model';
-import { historyQuerySchema } from '../../engine/oibus-validation-schema';
 import {
   NorthArchiveSettings,
   NorthCacheSettingsDTO,
@@ -15,6 +14,7 @@ import csv from 'papaparse';
 import fs from 'node:fs/promises';
 import { southTestManifest } from '../../tests/__mocks__/south-service.mock';
 import { northTestManifest } from '../../tests/__mocks__/north-service.mock';
+import { historyQuerySchema } from './validators/oibus-validation-schema';
 
 jest.mock('papaparse');
 jest.mock('node:fs/promises');

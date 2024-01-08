@@ -67,6 +67,9 @@ export type SouthODBCItemSettingsSerializationType = (typeof SOUTH_O_D_B_C_ITEM_
 const SOUTH_O_D_B_C_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const
 export type SouthODBCItemSettingsSerializationDelimiter = (typeof SOUTH_O_D_B_C_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
 
+const SOUTH_O_I_ANALYTICS_SETTINGS_SPECIFIC_SETTINGS_AUTHENTICATIONS = ['basic', 'aad-client-secret', 'aad-certificate'] as const
+export type SouthOIAnalyticsSettingsSpecificSettingsAuthentication = (typeof SOUTH_O_I_ANALYTICS_SETTINGS_SPECIFIC_SETTINGS_AUTHENTICATIONS)[number];
+
 const SOUTH_O_I_ANALYTICS_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const
 export type SouthOIAnalyticsItemSettingsSerializationType = (typeof SOUTH_O_I_ANALYTICS_ITEM_SETTINGS_SERIALIZATION_TYPES)[number];
 
@@ -145,6 +148,23 @@ export interface SouthMQTTSettingsAuthentication {
   certFilePath?: string;
   keyFilePath?: string | null;
   caFilePath?: string | null;
+}
+
+export interface SouthOIAnalyticsSettingsSpecificSettings {
+  host: string;
+  acceptUnauthorized: boolean;
+  authentication: SouthOIAnalyticsSettingsSpecificSettingsAuthentication;
+  accessKey?: string;
+  secretKey?: string | null;
+  tenantId?: string | null;
+  clientId?: string;
+  clientSecret?: string | null;
+  certificateId?: string | null;
+  scope?: string | null;
+  useProxy: boolean;
+  proxyUrl?: string;
+  proxyUsername?: string | null;
+  proxyPassword?: string | null;
 }
 
 export interface SouthOPCUASettingsAuthentication {
@@ -230,15 +250,9 @@ export interface SouthODBCSettings extends BaseSouthSettings {
 }
 
 export interface SouthOIAnalyticsSettings extends BaseSouthSettings {
-  host: string;
-  acceptUnauthorized: boolean;
+  useOiaModule: boolean;
   timeout: number;
-  accessKey: string;
-  secretKey: string | null;
-  useProxy: boolean;
-  proxyUrl?: string;
-  proxyUsername?: string | null;
-  proxyPassword?: string | null;
+  specificSettings?: SouthOIAnalyticsSettingsSpecificSettings | null;
 }
 
 export interface SouthOPCHDASettings extends BaseSouthSettings {

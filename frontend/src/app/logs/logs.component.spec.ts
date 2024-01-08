@@ -34,7 +34,7 @@ describe('LogsComponent', () => {
     {
       timestamp: '2023-01-01T00:00:00.000Z',
       level: 'error',
-      scopeType: 'data-stream',
+      scopeType: 'internal',
       message: 'my log 1'
     },
     {
@@ -99,7 +99,7 @@ describe('LogsComponent', () => {
 
     expect(tester.logs[0].elements('td').length).toBe(5);
     expect(tester.logs[0].elements('td')[1]).toContainText('1 Jan 2023, 01:00:00');
-    expect(tester.logs[0].elements('td')[2]).toContainText('Data stream engine');
+    expect(tester.logs[0].elements('td')[2]).toContainText('Internal');
     expect(tester.logs[0].elements('td')[3]).toHaveText('');
     expect(tester.logs[0].elements('td')[4]).toContainText('my log 1');
 

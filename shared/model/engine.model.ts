@@ -1,6 +1,6 @@
 import { BaseEntity, Instant } from './types';
 
-export const SCOPE_TYPES = ['south', 'north', 'engine', 'data-stream', 'history-engine', 'history-query', 'web-server', 'logger-service'];
+export const SCOPE_TYPES = ['south', 'north', 'history-query', 'internal', 'web-server'];
 export type ScopeType = (typeof SCOPE_TYPES)[number];
 
 export const LOG_LEVELS = ['silent', 'error', 'warn', 'info', 'debug', 'trace'];
@@ -48,6 +48,11 @@ interface LokiLogSettings extends BaseLogSettings {
 }
 
 /**
+ * Settings to write logs into a remote loki instance
+ */
+interface OiaLogSettings extends BaseLogSettings {}
+
+/**
  * Logs settings used in the engine
  */
 export interface LogSettings {
@@ -55,6 +60,7 @@ export interface LogSettings {
   file: FileLogSettings;
   database: DatabaseLogSettings;
   loki: LokiLogSettings;
+  oia: OiaLogSettings;
 }
 
 /**
@@ -80,10 +86,20 @@ export interface RegistrationSettingsDTO extends BaseEntity {
   activationDate: Instant;
   activationExpirationDate?: Instant;
   checkUrl?: string;
+  useProxy: boolean;
+  proxyUrl?: string;
+  proxyUsername?: string | null;
+  proxyPassword?: string | null;
+  acceptUnauthorized: boolean;
 }
 
 export interface RegistrationSettingsCommandDTO {
   host: string;
+  useProxy: boolean;
+  proxyUrl?: string;
+  proxyUsername?: string | null;
+  proxyPassword?: string | null;
+  acceptUnauthorized: boolean;
 }
 
 export interface CryptoSettings {

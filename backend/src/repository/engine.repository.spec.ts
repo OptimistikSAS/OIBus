@@ -48,6 +48,9 @@ describe('Empty engine repository', () => {
           tokenAddress: '',
           username: '',
           password: ''
+        },
+        oia: {
+          level: 'silent'
         }
       }
     };
@@ -57,8 +60,8 @@ describe('Empty engine repository', () => {
     expect(database.prepare).toHaveBeenCalledWith(
       'INSERT INTO engines (id, name, port, log_console_level, log_file_level, log_file_max_file_size, ' +
         'log_file_number_of_files, log_database_level, log_database_max_number_of_logs, log_loki_level, ' +
-        'log_loki_interval, log_loki_address, log_loki_token_address, log_loki_username, log_loki_password) ' +
-        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);'
+        'log_loki_interval, log_loki_address, log_loki_token_address, log_loki_username, log_loki_password, log_oia_level) ' +
+        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);'
     );
     expect(run).toHaveBeenCalledWith(
       '123456',
@@ -75,7 +78,8 @@ describe('Empty engine repository', () => {
       command.logParameters.loki.address,
       command.logParameters.loki.tokenAddress,
       command.logParameters.loki.username,
-      command.logParameters.loki.password
+      command.logParameters.loki.password,
+      command.logParameters.oia.level
     );
 
     expect(run).toHaveBeenCalledTimes(2);
@@ -105,6 +109,9 @@ describe('Empty engine repository', () => {
           tokenAddress: '',
           username: '',
           password: ''
+        },
+        oia: {
+          level: 'silent'
         }
       }
     };
@@ -113,7 +120,7 @@ describe('Empty engine repository', () => {
       'UPDATE engines SET name = ?, port = ?, log_console_level = ?, log_file_level = ?, log_file_max_file_size = ?, ' +
         'log_file_number_of_files = ?, log_database_level = ?, log_database_max_number_of_logs = ?, log_loki_level = ?, ' +
         'log_loki_interval = ?, log_loki_address = ?, log_loki_token_address = ?, log_loki_username = ?, ' +
-        'log_loki_password = ? WHERE rowid=(SELECT MIN(rowid) FROM engines);'
+        'log_loki_password = ?, log_oia_level = ? WHERE rowid=(SELECT MIN(rowid) FROM engines);'
     );
     expect(run).toHaveBeenCalledWith(
       command.name,
@@ -129,7 +136,8 @@ describe('Empty engine repository', () => {
       command.logParameters.loki.address,
       command.logParameters.loki.tokenAddress,
       command.logParameters.loki.username,
-      command.logParameters.loki.password
+      command.logParameters.loki.password,
+      command.logParameters.oia.level
     );
   });
 });
@@ -150,7 +158,8 @@ describe('Non-empty Engine repository', () => {
     lokiLogAddress: '',
     lokiLogTokenAddress: '',
     lokiLogUsername: '',
-    lokiLogPassword: ''
+    lokiLogPassword: '',
+    oiaLogLevel: 'silent'
   };
   beforeEach(() => {
     jest.clearAllMocks();
@@ -189,20 +198,23 @@ describe('Non-empty Engine repository', () => {
           tokenAddress: '',
           username: '',
           password: ''
+        },
+        oia: {
+          level: 'silent'
         }
       }
     };
-    const externalSource = repository.getEngineSettings();
+    const engineSettings = repository.getEngineSettings();
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, name, port, log_console_level AS consoleLogLevel, log_file_level AS fileLogLevel, ' +
         'log_file_max_file_size AS fileLogMaxFileSize, log_file_number_of_files AS fileLogNumberOfFiles, ' +
         'log_database_level AS databaseLogLevel, log_database_max_number_of_logs AS databaseLogMaxNumberOfLogs, ' +
         'log_loki_level AS lokiLogLevel, log_loki_interval AS lokiLogInterval, log_loki_address AS lokiLogAddress, ' +
-        'log_loki_token_address AS lokiLogTokenAddress, ' +
-        'log_loki_username AS lokiLogUsername, log_loki_password AS lokiLogPassword FROM engines;'
+        'log_loki_token_address AS lokiLogTokenAddress, log_loki_username AS lokiLogUsername, ' +
+        'log_loki_password AS lokiLogPassword, log_oia_level AS oiaLogLevel FROM engines;'
     );
     expect(all).toHaveBeenCalledTimes(2);
-    expect(externalSource).toEqual(expectedValue);
+    expect(engineSettings).toEqual(expectedValue);
   });
 
   it('should not create engine settings if they already exist', () => {
@@ -229,6 +241,9 @@ describe('Non-empty Engine repository', () => {
           tokenAddress: '',
           username: '',
           password: ''
+        },
+        oia: {
+          level: 'silent'
         }
       }
     };
