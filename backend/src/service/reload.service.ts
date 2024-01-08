@@ -84,8 +84,8 @@ export default class ReloadService {
       this.loggerService.stop();
       await this.loggerService.start(newSettings.id, newSettings.name, newSettings.logParameters);
       this.webServerChangeLoggerCallback(this.loggerService.createChildLogger('web-server'));
-      this.engineMetricsService.setLogger(this.loggerService.createChildLogger('metrics'));
-      this.oibusEngine.setLogger(this.loggerService.createChildLogger('data-stream'));
+      this.engineMetricsService.setLogger(this.loggerService.createChildLogger('internal'));
+      this.oibusEngine.setLogger(this.loggerService.createChildLogger('internal'));
     }
     if (!oldSettings || oldSettings.port !== newSettings.port) {
       await this.webServerChangePortCallback(newSettings.port);

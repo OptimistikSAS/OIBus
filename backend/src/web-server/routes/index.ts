@@ -2,18 +2,6 @@
 import Router from '@koa/router';
 import multer from '@koa/multer';
 
-import {
-  certificateSchema,
-  engineSchema,
-  externalSourceSchema,
-  historyQuerySchema,
-  ipFilterSchema,
-  logSchema,
-  registrationSchema,
-  scanModeSchema,
-  userSchema
-} from '../../engine/oibus-validation-schema';
-
 import LogController from '../controllers/log.controller';
 import ScanModeController from '../controllers/scan-mode.controller';
 import ExternalSourceController from '../controllers/external-source.controller';
@@ -28,6 +16,17 @@ import JoiValidator from '../controllers/validators/joi.validator';
 import { KoaContext } from '../koa';
 import CertificateController from '../controllers/certificate.controller';
 import RegistrationController from '../controllers/registration.controller';
+import {
+  certificateSchema,
+  engineSchema,
+  externalSourceSchema,
+  historyQuerySchema,
+  ipFilterSchema,
+  logSchema,
+  registrationSchema,
+  scanModeSchema,
+  userSchema
+} from '../controllers/validators/oibus-validation-schema';
 
 const joiValidator = new JoiValidator();
 const scanModeController = new ScanModeController(joiValidator, scanModeSchema);

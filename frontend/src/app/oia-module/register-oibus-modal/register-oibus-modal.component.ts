@@ -5,19 +5,25 @@ import { ObservableState, SaveButtonComponent } from '../../shared/save-button/s
 import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
 import { EngineService } from '../../services/engine.service';
-import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../../../shared/model/engine.model';
+import { LOG_LEVELS, RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../../../shared/model/engine.model';
+import { NgForOf, NgIf } from '@angular/common';
 
 @Component({
   selector: 'oib-register-oibus-modal',
   templateUrl: './register-oibus-modal.component.html',
   styleUrl: './register-oibus-modal.component.scss',
-  imports: [...formDirectives, TranslateModule, SaveButtonComponent],
+  imports: [...formDirectives, TranslateModule, SaveButtonComponent, NgForOf, NgIf],
   standalone: true
 })
 export class RegisterOibusModalComponent {
   state = new ObservableState();
   form = this.fb.group({
-    host: ['', Validators.required]
+    host: ['', Validators.required],
+    useProxy: [false, Validators.required],
+    proxyUrl: '',
+    proxyUsername: '',
+    proxyPassword: '',
+    acceptUnauthorized: [false, Validators.required]
   });
 
   constructor(
@@ -47,7 +53,12 @@ export class RegisterOibusModalComponent {
     const formValue = this.form.value;
 
     const command: RegistrationSettingsCommandDTO = {
-      host: formValue.host!
+      host: formValue.host!,
+      acceptUnauthorized: formValue.acceptUnauthorized!,
+      useProxy: formValue.useProxy!,
+      proxyUrl: formValue.proxyUrl!,
+      proxyUsername: formValue.proxyUsername!,
+      proxyPassword: formValue.proxyPassword!
     };
 
     this.oibusService
@@ -57,4 +68,6 @@ export class RegisterOibusModalComponent {
         this.modal.close();
       });
   }
+
+  protected readonly logLevels = LOG_LEVELS;
 }

@@ -82,7 +82,7 @@ class LoggerService {
       level: 'trace', // default to trace since each transport has its defined level
       timestamp: pino.stdTimeFunctions.isoTime,
       transport: { targets }
-    }).child({ scopeType: 'logger-service' });
+    }).child({ scopeType: 'internal' });
 
     this.fileCleanUpService = new FileCleanupService(this.folder, this.logger, LOG_FILE_NAME, logParameters.file.numberOfFiles);
     await this.fileCleanUpService.start();

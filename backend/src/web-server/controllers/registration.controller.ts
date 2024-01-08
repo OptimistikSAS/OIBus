@@ -9,6 +9,7 @@ export default class RegistrationController extends AbstractController {
       return ctx.notFound();
     }
     registrationSettings.token = '';
+    registrationSettings.proxyPassword = '';
     return ctx.ok(registrationSettings);
   }
 
@@ -16,7 +17,6 @@ export default class RegistrationController extends AbstractController {
     try {
       await this.validate(ctx.request.body);
       const command = ctx.request.body as RegistrationSettingsCommandDTO;
-
       await ctx.app.oibusService.updateRegistrationSettings(command);
       return ctx.noContent();
     } catch (error: any) {

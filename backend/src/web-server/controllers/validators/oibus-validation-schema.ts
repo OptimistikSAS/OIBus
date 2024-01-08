@@ -50,12 +50,20 @@ const engineSchema: Joi.ObjectSchema = Joi.object({
       tokenAddress: Joi.string().required().allow(''),
       username: Joi.string().required().allow(''),
       password: Joi.string().required().allow('')
+    }),
+    oia: Joi.object({
+      level: Joi.string().required().allow('silent', 'error', 'warning', 'info', 'debug', 'trace')
     })
   })
 });
 
 const registrationSchema: Joi.ObjectSchema = Joi.object({
-  host: Joi.string().required()
+  host: Joi.string().required(),
+  acceptUnauthorized: Joi.boolean().required(),
+  useProxy: Joi.boolean().required(),
+  proxyUrl: Joi.string().optional().allow(''),
+  proxyUsername: Joi.string().optional().allow(''),
+  proxyPassword: Joi.string().optional().allow('')
 });
 
 const ipFilterSchema: Joi.ObjectSchema = Joi.object({
