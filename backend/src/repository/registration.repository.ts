@@ -10,7 +10,7 @@ export const REGISTRATIONS_TABLE = 'registrations';
  */
 export default class RegistrationRepository {
   constructor(private readonly database: Database) {
-    this.createRegistrationSettings({ host: '' });
+    this.createRegistrationSettings({ host: '', useProxy: false, acceptUnauthorized: false });
   }
 
   /**
@@ -19,7 +19,9 @@ export default class RegistrationRepository {
   getRegistrationSettings(): RegistrationSettingsDTO | null {
     const query =
       `SELECT id, host, token, activation_code AS activationCode, status, activation_date AS activationDate, ` +
-      `check_url AS checkUrl, activation_expiration_date AS activationExpirationDate FROM ${REGISTRATIONS_TABLE};`;
+      `check_url AS checkUrl, activation_expiration_date AS activationExpirationDate, use_proxy AS useProxy, ` +
+      `proxy_url AS proxyUrl, proxy_username AS proxyUsername, proxy_password AS proxyPassword, ` +
+      `accept_unauthorized AS acceptUnauthorized FROM ${REGISTRATIONS_TABLE};`;
     const results: Array<any> = this.database.prepare(query).all();
 
     if (results.length > 0) {
@@ -31,7 +33,12 @@ export default class RegistrationRepository {
         status: results[0].status,
         activationDate: results[0].activationDate,
         activationExpirationDate: results[0].activationExpirationDate,
-        checkUrl: results[0].checkUrl
+        checkUrl: results[0].checkUrl,
+        useProxy: results[0].useProxy,
+        proxyUrl: results[0].proxyUrl,
+        proxyUsername: results[0].proxyUsername,
+        proxyPassword: results[0].proxyPassword,
+        acceptUnauthorized: results[0].acceptUnauthorized
       };
     } else {
       return null;
@@ -42,8 +49,23 @@ export default class RegistrationRepository {
    * Update registration in the database.
    */
   updateRegistration(command: RegistrationSettingsCommandDTO, activationCode: string, checkUrl: string, expirationDate: Instant): void {
-    const query = `UPDATE ${REGISTRATIONS_TABLE} SET host = ?, status = 'PENDING', token = '', activation_code = ?, check_url = ?, activation_expiration_date = ? WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
-    this.database.prepare(query).run(command.host, activationCode, checkUrl, expirationDate);
+    const query =
+      `UPDATE ${REGISTRATIONS_TABLE} SET host = ?, status = 'PENDING', token = '', activation_code = ?, ` +
+      `check_url = ?, activation_expiration_date = ?, use_proxy = ?, proxy_url = ?, proxy_username = ?, proxy_password = ?, ` +
+      `accept_unauthorized = ? WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
+    this.database
+      .prepare(query)
+      .run(
+        command.host,
+        activationCode,
+        checkUrl,
+        expirationDate,
+        +command.useProxy,
+        command.proxyUrl,
+        command.proxyUsername,
+        command.proxyPassword,
+        +command.acceptUnauthorized
+      );
   }
 
   /**

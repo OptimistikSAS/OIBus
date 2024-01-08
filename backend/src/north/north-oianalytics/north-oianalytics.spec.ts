@@ -17,7 +17,7 @@ import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock'
 import { NorthOIAnalyticsSettings } from '../../../../shared/model/north-settings.model';
 import ArchiveServiceMock from '../../tests/__mocks__/archive-service.mock';
 import { createProxyAgent } from '../../service/proxy.service';
-import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import { OIBusDataValue, RegistrationSettingsDTO } from '../../../../shared/model/engine.model';
 
 jest.mock('node:fs/promises');
 jest.mock('node:fs');
@@ -102,13 +102,16 @@ describe('NorthOIAnalytics without proxy', () => {
     description: 'my test connector',
     enabled: true,
     settings: {
-      host: 'https://hostname/',
+      useOiaModule: false,
       timeout: 30,
-      acceptUnauthorized: false,
-      authentication: 'basic',
-      accessKey: 'anyUser',
-      secretKey: 'anypass',
-      useProxy: false
+      specificSettings: {
+        host: 'https://hostname/',
+        acceptUnauthorized: false,
+        authentication: 'basic',
+        accessKey: 'anyUser',
+        secretKey: 'anypass',
+        useProxy: false
+      }
     },
     caching: {
       scanModeId: 'id1',
@@ -147,9 +150,9 @@ describe('NorthOIAnalytics without proxy', () => {
     });
     expect(createProxyAgent).toHaveBeenCalledWith(
       false,
-      `${configuration.settings.host}/api/optimistik/oibus/status`,
+      `${configuration.settings.specificSettings!.host}/api/optimistik/oibus/status`,
       null,
-      configuration.settings.acceptUnauthorized
+      configuration.settings.specificSettings!.acceptUnauthorized
     );
     expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
   });
@@ -168,7 +171,9 @@ describe('NorthOIAnalytics without proxy', () => {
     const expectedFetchOptions = {
       method: 'POST',
       headers: {
-        authorization: `Basic ${Buffer.from(`${configuration.settings.accessKey}:${configuration.settings.secretKey}`).toString('base64')}`,
+        authorization: `Basic ${Buffer.from(
+          `${configuration.settings.specificSettings!.accessKey}:${configuration.settings.specificSettings!.secretKey}`
+        ).toString('base64')}`,
         'Content-Type': 'application/json'
       },
       timeout: 30000,
@@ -179,7 +184,7 @@ describe('NorthOIAnalytics without proxy', () => {
     await north.handleValues(values);
 
     expect(fetch).toHaveBeenCalledWith(
-      `${configuration.settings.host}/api/oianalytics/oibus/time-values?dataSourceId=${configuration.name}`,
+      `${configuration.settings.specificSettings!.host}/api/oianalytics/oibus/time-values?dataSourceId=${configuration.name}`,
       expectedFetchOptions
     );
   });
@@ -204,9 +209,9 @@ describe('NorthOIAnalytics without proxy', () => {
       err = error;
     }
     expect(err).toEqual({
-      message: `Fail to reach values endpoint ${configuration.settings.host}/api/oianalytics/oibus/time-values?dataSourceId=${
-        configuration.name
-      }. ${new Error('error')}`,
+      message: `Fail to reach values endpoint ${
+        configuration.settings.specificSettings!.host
+      }/api/oianalytics/oibus/time-values?dataSourceId=${configuration.name}. ${new Error('error')}`,
       retry: true
     });
   });
@@ -225,7 +230,9 @@ describe('NorthOIAnalytics without proxy', () => {
     const expectedFetchOptions = {
       method: 'POST',
       headers: {
-        authorization: `Basic ${Buffer.from(`${configuration.settings.accessKey}:${configuration.settings.secretKey}`).toString('base64')}`,
+        authorization: `Basic ${Buffer.from(
+          `${configuration.settings.specificSettings!.accessKey}:${configuration.settings.specificSettings!.secretKey}`
+        ).toString('base64')}`,
         'Content-Type': 'application/json'
       },
       timeout: 30000,
@@ -246,7 +253,7 @@ describe('NorthOIAnalytics without proxy', () => {
     });
 
     expect(fetch).toHaveBeenCalledWith(
-      `${configuration.settings.host}/api/oianalytics/oibus/time-values?dataSourceId=${configuration.name}`,
+      `${configuration.settings.specificSettings!.host}/api/oianalytics/oibus/time-values?dataSourceId=${configuration.name}`,
       expectedFetchOptions
     );
   });
@@ -258,7 +265,9 @@ describe('NorthOIAnalytics without proxy', () => {
     const expectedFetchOptions = {
       method: 'POST',
       headers: {
-        authorization: `Basic ${Buffer.from(`${configuration.settings.accessKey}:${configuration.settings.secretKey}`).toString('base64')}`,
+        authorization: `Basic ${Buffer.from(
+          `${configuration.settings.specificSettings!.accessKey}:${configuration.settings.specificSettings!.secretKey}`
+        ).toString('base64')}`,
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
       timeout: 30000,
@@ -269,7 +278,7 @@ describe('NorthOIAnalytics without proxy', () => {
     await north.handleFile(filePath);
 
     expect(fetch).toHaveBeenCalledWith(
-      `${configuration.settings.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
+      `${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
       expectedFetchOptions
     );
   });
@@ -300,7 +309,7 @@ describe('NorthOIAnalytics without proxy', () => {
       err = error;
     }
     expect(err).toEqual({
-      message: `Fail to reach file endpoint ${configuration.settings.host}/api/oianalytics/file-uploads?dataSourceId=${
+      message: `Fail to reach file endpoint ${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${
         configuration.name
       }. ${new Error('error')}`,
       retry: true
@@ -316,7 +325,9 @@ describe('NorthOIAnalytics without proxy', () => {
     const expectedFetchOptions = {
       method: 'POST',
       headers: {
-        authorization: `Basic ${Buffer.from(`${configuration.settings.accessKey}:${configuration.settings.secretKey}`).toString('base64')}`,
+        authorization: `Basic ${Buffer.from(
+          `${configuration.settings.specificSettings!.accessKey}:${configuration.settings.specificSettings!.secretKey}`
+        ).toString('base64')}`,
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
       timeout: 30000,
@@ -337,7 +348,7 @@ describe('NorthOIAnalytics without proxy', () => {
     });
 
     expect(fetch).toHaveBeenCalledWith(
-      `${configuration.settings.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
+      `${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
       expectedFetchOptions
     );
   });
@@ -351,17 +362,20 @@ describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
     description: 'my test connector',
     enabled: true,
     settings: {
-      host: 'https://hostname',
-      acceptUnauthorized: true,
+      useOiaModule: false,
       timeout: 30,
-      accessKey: 'anyUser',
-      authentication: 'aad-client-secret',
-      tenantId: 'tenantId',
-      clientId: 'clientId',
-      clientSecret: 'clientSecret',
-      scope: 'api://my-scope/.default',
-      secretKey: null,
-      useProxy: false
+      specificSettings: {
+        host: 'https://hostname',
+        acceptUnauthorized: true,
+        accessKey: 'anyUser',
+        authentication: 'aad-client-secret',
+        tenantId: 'tenantId',
+        clientId: 'clientId',
+        clientSecret: 'clientSecret',
+        scope: 'api://my-scope/.default',
+        secretKey: null,
+        useProxy: false
+      }
     },
     caching: {
       scanModeId: 'id1',
@@ -414,12 +428,12 @@ describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
     await north.handleValues(values);
 
     expect(fetch).toHaveBeenCalledWith(
-      `${configuration.settings.host}/api/oianalytics/oibus/time-values?dataSourceId=${configuration.name}`,
+      `${configuration.settings.specificSettings!.host}/api/oianalytics/oibus/time-values?dataSourceId=${configuration.name}`,
       expectedFetchOptions
     );
     expect(createProxyAgent).toHaveBeenCalledWith(
       false,
-      `${configuration.settings.host}/api/oianalytics/oibus/time-values?dataSourceId=${configuration.name}`,
+      `${configuration.settings.specificSettings!.host}/api/oianalytics/oibus/time-values?dataSourceId=${configuration.name}`,
       null,
       true
     );
@@ -443,12 +457,12 @@ describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
     await north.handleFile(filePath);
 
     expect(fetch).toHaveBeenCalledWith(
-      `${configuration.settings.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
+      `${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
       expectedFetchOptions
     );
     expect(createProxyAgent).toHaveBeenCalledWith(
       false,
-      `${configuration.settings.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
+      `${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
       null,
       true
     );
@@ -463,18 +477,21 @@ describe('NorthOIAnalytics with proxy', () => {
     description: 'my test connector',
     enabled: true,
     settings: {
-      host: 'https://hostname',
-      acceptUnauthorized: false,
+      useOiaModule: false,
       timeout: 30,
-      authentication: 'aad-client-secret',
-      tenantId: 'tenantId',
-      clientId: 'clientId',
-      clientSecret: 'clientSecret',
-      scope: 'api://my-scope/.default',
-      useProxy: true,
-      proxyUrl: 'http://localhost',
-      proxyUsername: 'my username',
-      proxyPassword: 'my password'
+      specificSettings: {
+        host: 'https://hostname',
+        acceptUnauthorized: false,
+        authentication: 'aad-client-secret',
+        tenantId: 'tenantId',
+        clientId: 'clientId',
+        clientSecret: 'clientSecret',
+        scope: 'api://my-scope/.default',
+        useProxy: true,
+        proxyUrl: 'http://localhost',
+        proxyUsername: 'my username',
+        proxyPassword: 'my password'
+      }
     },
     caching: {
       scanModeId: 'id1',
@@ -517,13 +534,13 @@ describe('NorthOIAnalytics with proxy', () => {
     });
     expect(createProxyAgent).toHaveBeenCalledWith(
       true,
-      `${configuration.settings.host}/api/optimistik/oibus/status`,
+      `${configuration.settings.specificSettings!.host}/api/optimistik/oibus/status`,
       {
-        url: configuration.settings.proxyUrl!,
-        username: configuration.settings.proxyUsername!,
-        password: configuration.settings.proxyPassword
+        url: configuration.settings.specificSettings!.proxyUrl!,
+        username: configuration.settings.specificSettings!.proxyUsername!,
+        password: configuration.settings.specificSettings!.proxyPassword
       },
-      configuration.settings.acceptUnauthorized
+      configuration.settings.specificSettings!.acceptUnauthorized
     );
     expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
   });
@@ -545,7 +562,7 @@ describe('NorthOIAnalytics with proxy', () => {
       );
 
     await north.testConnection();
-    expect(logger.info).toHaveBeenCalledWith(`Testing connection on "${configuration.settings.host}"`);
+    expect(logger.info).toHaveBeenCalledWith(`Testing connection on "${configuration.settings.specificSettings!.host}"`);
     expect(logger.info).toHaveBeenCalledWith('OIAnalytics request successful');
     await expect(north.testConnection()).rejects.toThrow(`HTTP request failed with status code 401 and message: Unauthorized`);
   });
@@ -555,13 +572,13 @@ describe('NorthOIAnalytics with proxy', () => {
     await north.handleValues([]);
     expect(createProxyAgent).toHaveBeenCalledWith(
       true,
-      `${configuration.settings.host}/api/oianalytics/oibus/time-values?dataSourceId=${configuration.name}`,
+      `${configuration.settings.specificSettings!.host}/api/oianalytics/oibus/time-values?dataSourceId=${configuration.name}`,
       {
-        url: configuration.settings.proxyUrl!,
-        username: configuration.settings.proxyUsername!,
-        password: configuration.settings.proxyPassword
+        url: configuration.settings.specificSettings!.proxyUrl!,
+        username: configuration.settings.specificSettings!.proxyUsername!,
+        password: configuration.settings.specificSettings!.proxyPassword
       },
-      configuration.settings.acceptUnauthorized
+      configuration.settings.specificSettings!.acceptUnauthorized
     );
   });
 
@@ -571,13 +588,13 @@ describe('NorthOIAnalytics with proxy', () => {
     await north.handleFile(filePath);
     expect(createProxyAgent).toHaveBeenCalledWith(
       true,
-      `${configuration.settings.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
+      `${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
       {
-        url: configuration.settings.proxyUrl!,
-        username: configuration.settings.proxyUsername!,
-        password: configuration.settings.proxyPassword
+        url: configuration.settings.specificSettings!.proxyUrl!,
+        username: configuration.settings.specificSettings!.proxyUsername!,
+        password: configuration.settings.specificSettings!.proxyPassword
       },
-      configuration.settings.acceptUnauthorized
+      configuration.settings.specificSettings!.acceptUnauthorized
     );
   });
 });
@@ -590,16 +607,19 @@ describe('NorthOIAnalytics with proxy but without proxy password', () => {
     description: 'my test connector',
     enabled: true,
     settings: {
-      host: 'https://hostname',
-      acceptUnauthorized: false,
+      useOiaModule: false,
       timeout: 30,
-      authentication: 'basic',
-      accessKey: 'anyUser',
-      secretKey: null,
-      useProxy: true,
-      proxyUrl: 'http://localhost',
-      proxyUsername: 'my username',
-      proxyPassword: null
+      specificSettings: {
+        host: 'https://hostname',
+        acceptUnauthorized: false,
+        authentication: 'basic',
+        accessKey: 'anyUser',
+        secretKey: null,
+        useProxy: true,
+        proxyUrl: 'http://localhost',
+        proxyUsername: 'my username',
+        proxyPassword: null
+      }
     },
     caching: {
       scanModeId: 'id1',
@@ -635,13 +655,13 @@ describe('NorthOIAnalytics with proxy but without proxy password', () => {
     await expect(north.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
     expect(createProxyAgent).toHaveBeenCalledWith(
       true,
-      `${configuration.settings.host}/api/optimistik/oibus/status`,
+      `${configuration.settings.specificSettings!.host}/api/optimistik/oibus/status`,
       {
-        url: configuration.settings.proxyUrl!,
-        username: configuration.settings.proxyUsername!,
-        password: configuration.settings.proxyPassword
+        url: configuration.settings.specificSettings!.proxyUrl!,
+        username: configuration.settings.specificSettings!.proxyUsername!,
+        password: configuration.settings.specificSettings!.proxyPassword
       },
-      configuration.settings.acceptUnauthorized
+      configuration.settings.specificSettings!.acceptUnauthorized
     );
     expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
   });
@@ -651,13 +671,13 @@ describe('NorthOIAnalytics with proxy but without proxy password', () => {
     await north.handleValues([]);
     expect(createProxyAgent).toHaveBeenCalledWith(
       true,
-      `${configuration.settings.host}/api/oianalytics/oibus/time-values?dataSourceId=${configuration.name}`,
+      `${configuration.settings.specificSettings!.host}/api/oianalytics/oibus/time-values?dataSourceId=${configuration.name}`,
       {
-        url: configuration.settings.proxyUrl!,
-        username: configuration.settings.proxyUsername!,
+        url: configuration.settings.specificSettings!.proxyUrl!,
+        username: configuration.settings.specificSettings!.proxyUsername!,
         password: null
       },
-      configuration.settings.acceptUnauthorized
+      configuration.settings.specificSettings!.acceptUnauthorized
     );
   });
 
@@ -667,13 +687,13 @@ describe('NorthOIAnalytics with proxy but without proxy password', () => {
     await north.handleFile(filePath);
     expect(createProxyAgent).toHaveBeenCalledWith(
       true,
-      `${configuration.settings.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
+      `${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
       {
-        url: configuration.settings.proxyUrl!,
-        username: configuration.settings.proxyUsername!,
+        url: configuration.settings.specificSettings!.proxyUrl!,
+        username: configuration.settings.specificSettings!.proxyUsername!,
         password: null
       },
-      configuration.settings.acceptUnauthorized
+      configuration.settings.specificSettings!.acceptUnauthorized
     );
   });
 
@@ -684,7 +704,7 @@ describe('NorthOIAnalytics with proxy but without proxy password', () => {
     const expectedFetchOptions = {
       method: 'POST',
       headers: {
-        authorization: `Basic ${Buffer.from(`${configuration.settings.accessKey}:`).toString('base64')}`,
+        authorization: `Basic ${Buffer.from(`${configuration.settings.specificSettings!.accessKey}:`).toString('base64')}`,
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
       body: expect.anything(),
@@ -695,7 +715,7 @@ describe('NorthOIAnalytics with proxy but without proxy password', () => {
     await north.handleFile(filePath);
 
     expect(fetch).toHaveBeenCalledWith(
-      `${configuration.settings.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
+      `${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
       expectedFetchOptions
     );
   });
@@ -709,12 +729,15 @@ describe('NorthOIAnalytics with aad-certificate', () => {
     description: 'my test connector',
     enabled: true,
     settings: {
-      host: 'https://hostname/',
+      useOiaModule: false,
       timeout: 30,
-      acceptUnauthorized: false,
-      authentication: 'aad-certificate',
-      certificateId: 'certificateId',
-      useProxy: false
+      specificSettings: {
+        host: 'https://hostname/',
+        acceptUnauthorized: false,
+        authentication: 'aad-certificate',
+        certificateId: 'certificateId',
+        useProxy: false
+      }
     },
     caching: {
       scanModeId: 'id1',
@@ -741,7 +764,6 @@ describe('NorthOIAnalytics with aad-certificate', () => {
   });
 
   it('should add header with aad-certificate', async () => {
-    const headers: any = {};
     (repositoryService.certificateRepository.findById as jest.Mock).mockReturnValueOnce({
       name: 'name',
       description: 'description',
@@ -750,14 +772,122 @@ describe('NorthOIAnalytics with aad-certificate', () => {
       certificate: 'cert',
       expiry: '2020-10-10T00:00:00.000Z'
     });
-    await north.addHeaderAuthentication(headers);
-    expect(headers).toEqual({ authorization: 'Bearer token' });
+    const result = await north.getNetworkSettings('/endpoint');
+    expect(result.headers).toEqual({ authorization: 'Bearer token' });
+    expect(result.host).toEqual(configuration.settings.specificSettings!.host);
+    expect(result.agent).toEqual({});
   });
 
   it('should not add header with aad-certificate when cert not found', async () => {
-    const headers: any = {};
     (repositoryService.certificateRepository.findById as jest.Mock).mockReturnValueOnce(null);
-    await north.addHeaderAuthentication(headers);
-    expect(headers).toEqual({});
+    const result = await north.getNetworkSettings('/endpoint');
+    expect(result.headers).toEqual({});
+  });
+});
+
+describe('NorthOIAnalytics with OIA module', () => {
+  const configuration: NorthConnectorDTO<NorthOIAnalyticsSettings> = {
+    id: 'id',
+    name: 'north',
+    type: 'test',
+    description: 'my test connector',
+    enabled: true,
+    settings: {
+      useOiaModule: true,
+      timeout: 30
+    },
+    caching: {
+      scanModeId: 'id1',
+      retryInterval: 5000,
+      groupCount: 10000,
+      maxSendCount: 10000,
+      retryCount: 2,
+      sendFileImmediately: true,
+      maxSize: 30000
+    },
+    archive: {
+      enabled: true,
+      retentionDuration: 720
+    }
+  };
+
+  let registrationSettings: RegistrationSettingsDTO;
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+
+    (filesExists as jest.Mock).mockReturnValue(true);
+
+    registrationSettings = {
+      id: 'id',
+      host: 'http://localhost:4200',
+      token: 'my oia token',
+      status: 'REGISTERED',
+      activationDate: '2020-01-01T00:00:00Z',
+      useProxy: false,
+      acceptUnauthorized: false
+    };
+    north = new NorthOIAnalytics(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+    await north.start();
+  });
+
+  it('should use oia module', async () => {
+    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValueOnce(registrationSettings);
+    const result = await north.getNetworkSettings('/endpoint');
+    expect(result.headers).toEqual({ authorization: 'Bearer my oia token' });
+    expect(result.host).toEqual(registrationSettings.host);
+    expect(createProxyAgent).toHaveBeenCalledWith(
+      registrationSettings.useProxy,
+      `${registrationSettings.host}/endpoint`,
+      null,
+      registrationSettings.acceptUnauthorized
+    );
+    expect(result.agent).toEqual({});
+  });
+
+  it('should use oia module with proxy', async () => {
+    registrationSettings.host = 'http://localhost:4200/';
+    registrationSettings.useProxy = true;
+    registrationSettings.proxyUrl = 'http://localhost:8080';
+    registrationSettings.proxyUsername = 'user';
+    registrationSettings.proxyPassword = 'pass';
+    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValueOnce(registrationSettings);
+    const result = await north.getNetworkSettings('/endpoint');
+    expect(result.headers).toEqual({ authorization: 'Bearer my oia token' });
+    expect(result.host).toEqual('http://localhost:4200');
+    expect(createProxyAgent).toHaveBeenCalledWith(
+      registrationSettings.useProxy,
+      `${registrationSettings.host}/endpoint`,
+      { url: registrationSettings.proxyUrl, username: registrationSettings.proxyUsername, password: registrationSettings.proxyPassword },
+      registrationSettings.acceptUnauthorized
+    );
+    expect(result.agent).toEqual({});
+  });
+
+  it('should use oia module with proxy without user', async () => {
+    registrationSettings.host = 'http://localhost:4200/';
+    registrationSettings.useProxy = true;
+    registrationSettings.proxyUrl = 'http://localhost:8080';
+    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValueOnce(registrationSettings);
+    const result = await north.getNetworkSettings('/endpoint');
+    expect(result.headers).toEqual({ authorization: 'Bearer my oia token' });
+    expect(result.host).toEqual('http://localhost:4200');
+    expect(createProxyAgent).toHaveBeenCalledWith(
+      registrationSettings.useProxy,
+      `${registrationSettings.host}/endpoint`,
+      { url: registrationSettings.proxyUrl, username: undefined, password: null },
+      registrationSettings.acceptUnauthorized
+    );
+    expect(result.agent).toEqual({});
+  });
+
+  it('should not use oia module if not registered', async () => {
+    registrationSettings.status = 'PENDING';
+    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValueOnce(registrationSettings);
+
+    await expect(north.getNetworkSettings('/endpoint')).rejects.toThrow(new Error('OIBus not registered in OIAnalytics'));
+
+    expect(createProxyAgent).not.toHaveBeenCalled();
   });
 });

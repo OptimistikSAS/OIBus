@@ -27,6 +27,9 @@ const defaultEngineSettings: EngineSettingsCommandDTO = {
       tokenAddress: '',
       username: '',
       password: ''
+    },
+    oia: {
+      level: 'silent'
     }
   }
 };
@@ -60,7 +63,8 @@ export default class EngineRepository {
       'log_loki_address AS lokiLogAddress, ' +
       'log_loki_token_address AS lokiLogTokenAddress, ' +
       'log_loki_username AS lokiLogUsername, ' +
-      'log_loki_password AS lokiLogPassword ' +
+      'log_loki_password AS lokiLogPassword, ' +
+      'log_oia_level AS oiaLogLevel ' +
       `FROM ${ENGINES_TABLE};`;
     const results: Array<any> = this.database.prepare(query).all();
 
@@ -89,6 +93,9 @@ export default class EngineRepository {
             tokenAddress: results[0].lokiLogTokenAddress,
             username: results[0].lokiLogUsername,
             password: results[0].lokiLogPassword
+          },
+          oia: {
+            level: results[0].oiaLogLevel
           }
         }
       };
@@ -114,7 +121,8 @@ export default class EngineRepository {
       'log_loki_address = ?, ' +
       'log_loki_token_address = ?, ' +
       'log_loki_username = ?, ' +
-      'log_loki_password = ? ' +
+      'log_loki_password = ?, ' +
+      'log_oia_level = ? ' +
       `WHERE rowid=(SELECT MIN(rowid) FROM ${ENGINES_TABLE});`;
 
     this.database
@@ -133,7 +141,8 @@ export default class EngineRepository {
         command.logParameters.loki.address,
         command.logParameters.loki.tokenAddress,
         command.logParameters.loki.username,
-        command.logParameters.loki.password
+        command.logParameters.loki.password,
+        command.logParameters.oia.level
       );
   }
 
@@ -149,7 +158,7 @@ export default class EngineRepository {
       `INSERT INTO ${ENGINES_TABLE} (id, name, port, log_console_level, ` +
       'log_file_level, log_file_max_file_size, log_file_number_of_files, log_database_level, ' +
       'log_database_max_number_of_logs, log_loki_level, log_loki_interval, log_loki_address, log_loki_token_address, ' +
-      'log_loki_username, log_loki_password) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);';
+      'log_loki_username, log_loki_password, log_oia_level) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);';
     this.database
       .prepare(query)
       .run(
@@ -167,7 +176,8 @@ export default class EngineRepository {
         command.logParameters.loki.address,
         command.logParameters.loki.tokenAddress,
         command.logParameters.loki.username,
-        command.logParameters.loki.password
+        command.logParameters.loki.password,
+        command.logParameters.oia.level
       );
   }
 }

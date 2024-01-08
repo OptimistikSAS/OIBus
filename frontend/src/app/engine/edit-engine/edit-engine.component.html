@@ -156,6 +156,21 @@
                 </div>
               </div>
             </ng-container>
+
+            <!-- OIA settings -->
+            <ng-container formGroupName="oia">
+              <div class="row">
+                <!-- Level -->
+                <div class="col-4">
+                  <div class="form-group">
+                    <label class="form-label" for="oia-level" translate="engine.logger.oia.level"></label>
+                    <select formControlName="level" class="form-select mb-2 mr-sm-2" id="oia-level">
+                      <option *ngFor="let level of logLevels" [ngValue]="level">{{ 'enums.log-levels.' + level | translate }}</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </ng-container>
           </div>
         </oib-box>
       </form>

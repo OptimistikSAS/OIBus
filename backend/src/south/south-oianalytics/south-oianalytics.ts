@@ -15,6 +15,7 @@ import { QueriesHistory } from '../south-interface';
 import { SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../../../shared/model/south-settings.model';
 import { createProxyAgent } from '../../service/proxy.service';
 import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import { ClientSecretCredential, ClientCertificateCredential } from '@azure/identity';
 
 interface OIATimeValues {
   type: string;
@@ -55,9 +56,6 @@ export default class SouthOIAnalytics
   ) {
     super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
     this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
-    if (this.connector.settings.host.endsWith('/')) {
-      this.connector.settings.host = this.connector.settings.host.slice(0, this.connector.settings.host.length - 1);
-    }
   }
 
   /**
@@ -69,32 +67,15 @@ export default class SouthOIAnalytics
   }
 
   override async testConnection(): Promise<void> {
-    this.logger.info(`Testing connection on "${this.connector.settings.host}"`);
+    const connectionSettings = await this.getNetworkSettings('/api/optimistik/oibus/status');
 
-    const headers: HeadersInit = {};
-    const basic = Buffer.from(
-      `${this.connector.settings.accessKey}:${await this.encryptionService.decryptText(this.connector.settings.secretKey!)}`
-    ).toString('base64');
-    headers.authorization = `Basic ${basic}`;
-    const requestUrl = `${this.connector.settings.host}/api/optimistik/oibus/status`;
+    this.logger.info(`Testing connection on "${connectionSettings.host}"`);
+    const requestUrl = `${connectionSettings.host}/api/optimistik/oibus/status`;
     const fetchOptions: RequestInit = {
       method: 'GET',
-      headers,
+      headers: connectionSettings.headers,
       timeout: this.connector.settings.timeout * 1000,
-      agent: createProxyAgent(
-        this.connector.settings.useProxy,
-        requestUrl,
-        this.connector.settings.useProxy
-          ? {
-              url: this.connector.settings.proxyUrl!,
-              username: this.connector.settings.proxyUsername!,
-              password: this.connector.settings.proxyPassword
-                ? await this.encryptionService.decryptText(this.connector.settings.proxyPassword)
-                : null
-            }
-          : null,
-        this.connector.settings.acceptUnauthorized
-      )
+      agent: connectionSettings.agent
     };
 
     try {
@@ -151,35 +132,20 @@ export default class SouthOIAnalytics
   }
 
   async queryData(item: SouthConnectorItemDTO<SouthOIAnalyticsItemSettings>, startTime: Instant, endTime: Instant): Promise<any> {
-    const headers: HeadersInit = {};
-    const basic = Buffer.from(
-      `${this.connector.settings.accessKey}:${await this.encryptionService.decryptText(this.connector.settings.secretKey!)}`
-    ).toString('base64');
-    headers.authorization = `Basic ${basic}`;
+    const connectionSettings = await this.getNetworkSettings(
+      `${item.settings.endpoint}${formatQueryParams(startTime, endTime, item.settings.queryParams || [])}`
+    );
 
-    const requestUrl = `${this.connector.settings.host}${item.settings.endpoint}${formatQueryParams(
+    const requestUrl = `${connectionSettings.host}${item.settings.endpoint}${formatQueryParams(
       startTime,
       endTime,
       item.settings.queryParams || []
     )}`;
     const fetchOptions: RequestInit = {
       method: 'GET',
-      headers,
+      headers: connectionSettings.headers,
       timeout: this.connector.settings.timeout * 1000,
-      agent: createProxyAgent(
-        this.connector.settings.useProxy,
-        requestUrl,
-        this.connector.settings.useProxy
-          ? {
-              url: this.connector.settings.proxyUrl!,
-              username: this.connector.settings.proxyUsername!,
-              password: this.connector.settings.proxyPassword
-                ? await this.encryptionService.decryptText(this.connector.settings.proxyPassword)
-                : null
-            }
-          : null,
-        this.connector.settings.acceptUnauthorized
-      )
+      agent: connectionSettings.agent
     };
 
     this.logger.info(`Requesting data from URL "${requestUrl}"`);
@@ -189,6 +155,99 @@ export default class SouthOIAnalytics
       throw new Error(`HTTP request failed with status code ${response.status} and message: ${response.statusText}`);
     }
     return response.json();
+  }
+
+  async getNetworkSettings(endpoint: string): Promise<{ host: string; headers: HeadersInit; agent: any }> {
+    const headers: HeadersInit = {};
+
+    if (this.connector.settings.useOiaModule) {
+      const registrationSettings = this.repositoryService.registrationRepository.getRegistrationSettings();
+      if (!registrationSettings || registrationSettings.status !== 'REGISTERED') {
+        throw new Error('OIBus not registered in OIAnalytics');
+      }
+
+      if (registrationSettings.host.endsWith('/')) {
+        registrationSettings.host = registrationSettings.host.slice(0, registrationSettings.host.length - 1);
+      }
+
+      const token = await this.encryptionService.decryptText(registrationSettings.token!);
+      headers.authorization = `Bearer ${token}`;
+
+      const agent = createProxyAgent(
+        registrationSettings.useProxy,
+        `${registrationSettings.host}${endpoint}`,
+        registrationSettings.useProxy
+          ? {
+              url: registrationSettings.proxyUrl!,
+              username: registrationSettings.proxyUsername!,
+              password: registrationSettings.proxyPassword
+                ? await this.encryptionService.decryptText(registrationSettings.proxyPassword)
+                : null
+            }
+          : null,
+        registrationSettings.acceptUnauthorized
+      );
+
+      return {
+        host: registrationSettings.host,
+        headers,
+        agent
+      };
+    }
+
+    const specificSettings = this.connector.settings.specificSettings!;
+    if (specificSettings.host.endsWith('/')) {
+      specificSettings.host = specificSettings.host.slice(0, specificSettings.host.length - 1);
+    }
+
+    switch (specificSettings.authentication) {
+      case 'basic':
+        headers.authorization = `Basic ${Buffer.from(
+          `${specificSettings.accessKey}:${
+            specificSettings.secretKey ? await this.encryptionService.decryptText(specificSettings.secretKey) : ''
+          }`
+        ).toString('base64')}`;
+        break;
+      case 'aad-client-secret':
+        const clientSecretCredential = new ClientSecretCredential(
+          specificSettings.tenantId!,
+          specificSettings.clientId!,
+          await this.encryptionService.decryptText(specificSettings.clientSecret!)
+        );
+        const result = await clientSecretCredential.getToken(specificSettings.scope!);
+        headers.authorization = `Bearer ${Buffer.from(result.token)}`;
+        break;
+      case 'aad-certificate':
+        const certificate = this.repositoryService.certificateRepository.findById(specificSettings.certificateId!);
+        if (certificate != null) {
+          const decryptedPrivateKey = await this.encryptionService.decryptText(certificate.privateKey);
+          const clientCertificateCredential = new ClientCertificateCredential(specificSettings.tenantId!, specificSettings.clientId!, {
+            certificate: `${certificate.certificate}\n${decryptedPrivateKey}`
+          });
+          const result = await clientCertificateCredential.getToken(specificSettings.scope!);
+          headers.authorization = `Bearer ${Buffer.from(result.token)}`;
+        }
+        break;
+    }
+
+    const agent = createProxyAgent(
+      specificSettings.useProxy,
+      `${specificSettings.host}${endpoint}`,
+      specificSettings.useProxy
+        ? {
+            url: specificSettings.proxyUrl!,
+            username: specificSettings.proxyUsername!,
+            password: specificSettings.proxyPassword ? await this.encryptionService.decryptText(specificSettings.proxyPassword) : null
+          }
+        : null,
+      specificSettings.acceptUnauthorized
+    );
+
+    return {
+      host: specificSettings.host,
+      headers,
+      agent
+    };
   }
 
   /**

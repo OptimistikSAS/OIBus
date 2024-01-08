@@ -62,6 +62,9 @@ describe('Logger', () => {
         tokenAddress: 'token-url',
         address: 'loki-url',
         interval: 60
+      },
+      oia: {
+        level: 'error'
       }
     };
     service = new LoggerService(encryptionService, 'folder');

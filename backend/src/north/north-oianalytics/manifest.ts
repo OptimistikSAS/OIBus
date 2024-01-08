@@ -12,26 +12,11 @@ const manifest: NorthConnectorManifest = {
   },
   settings: [
     {
-      key: 'host',
-      type: 'OibText',
-      label: 'Host',
-      validators: [
-        { key: 'required' },
-        {
-          key: 'pattern',
-          params: { pattern: '^(http:\\/\\/|https:\\/\\/|HTTP:\\/\\/|HTTPS:\\/\\/).*' }
-        }
-      ],
-      defaultValue: 'https://instance_name.oianalytics.fr',
-      displayInViewMode: true,
-      class: 'col-6'
-    },
-    {
-      key: 'acceptUnauthorized',
+      key: 'useOiaModule',
       type: 'OibCheckbox',
-      label: 'Accept unauthorized certificate',
+      label: 'Use OIA Module',
       validators: [{ key: 'required' }],
-      defaultValue: false,
+      defaultValue: true,
       displayInViewMode: true,
       class: 'col-3'
     },
@@ -45,71 +30,105 @@ const manifest: NorthConnectorManifest = {
       class: 'col-3'
     },
     {
-      key: 'authentication',
-      type: 'OibSelect',
-      options: ['basic', 'aad-client-secret', 'aad-certificate'],
-      label: 'Authentication',
-      pipe: 'authentication',
-      defaultValue: 'basic',
+      key: 'specificSettings',
+      type: 'OibFormGroup',
+      label: 'Specific settings',
       newRow: true,
-      validators: [{ key: 'required' }],
-      displayInViewMode: true
-    },
-    {
-      key: 'accessKey',
-      type: 'OibText',
-      label: 'Access key',
-      validators: [{ key: 'required' }],
-      conditionalDisplay: { field: 'authentication', values: ['basic'] },
-      newRow: true,
-      displayInViewMode: true
-    },
-    {
-      key: 'secretKey',
-      type: 'OibSecret',
-      label: 'Secret key',
-      conditionalDisplay: { field: 'authentication', values: ['basic'] },
-      displayInViewMode: false
-    },
-    {
-      key: 'tenantId',
-      type: 'OibText',
-      label: 'Tenant ID',
-      newRow: true,
-      conditionalDisplay: { field: 'authentication', values: ['aad-client-secret', 'aad-certificate'] },
-      displayInViewMode: true
-    },
-    {
-      key: 'clientId',
-      type: 'OibText',
-      label: 'Client ID',
-      newRow: false,
-      validators: [{ key: 'required' }],
-      conditionalDisplay: { field: 'authentication', values: ['aad-client-secret', 'aad-certificate'] },
-      displayInViewMode: true
-    },
-    {
-      key: 'clientSecret',
-      type: 'OibSecret',
-      label: 'Client secret',
-      newRow: false,
-      conditionalDisplay: { field: 'authentication', values: ['aad-client-secret'] }
-    },
-    {
-      key: 'certificateId',
-      type: 'OibCertificate',
-      label: 'Certificate',
-      newRow: false,
-      conditionalDisplay: { field: 'authentication', values: ['aad-certificate'] }
-    },
-    {
-      key: 'scope',
-      type: 'OibText',
-      label: 'Scope',
-      newRow: false,
-      conditionalDisplay: { field: 'authentication', values: ['aad', 'aad-certificate'] }
-    },
-    ...proxy
+      conditionalDisplay: { field: 'useOiaModule', values: [false] },
+      content: [
+        {
+          key: 'host',
+          type: 'OibText',
+          label: 'Host',
+          validators: [
+            { key: 'required' },
+            {
+              key: 'pattern',
+              params: { pattern: '^(http:\\/\\/|https:\\/\\/|HTTP:\\/\\/|HTTPS:\\/\\/).*' }
+            }
+          ],
+          defaultValue: 'https://instance_name.oianalytics.fr',
+          displayInViewMode: true,
+          newRow: true,
+          class: 'col-6'
+        },
+        {
+          key: 'acceptUnauthorized',
+          type: 'OibCheckbox',
+          label: 'Accept unauthorized certificate',
+          validators: [{ key: 'required' }],
+          defaultValue: false,
+          displayInViewMode: true,
+          class: 'col-3'
+        },
+        {
+          key: 'authentication',
+          type: 'OibSelect',
+          options: ['basic', 'aad-client-secret', 'aad-certificate'],
+          label: 'Authentication',
+          pipe: 'authentication',
+          defaultValue: 'basic',
+          newRow: true,
+          validators: [{ key: 'required' }],
+          displayInViewMode: true
+        },
+        {
+          key: 'accessKey',
+          type: 'OibText',
+          label: 'Access key',
+          validators: [{ key: 'required' }],
+          conditionalDisplay: { field: 'authentication', values: ['basic'] },
+          newRow: true,
+          displayInViewMode: true
+        },
+        {
+          key: 'secretKey',
+          type: 'OibSecret',
+          label: 'Secret key',
+          conditionalDisplay: { field: 'authentication', values: ['basic'] },
+          displayInViewMode: false
+        },
+        {
+          key: 'tenantId',
+          type: 'OibText',
+          label: 'Tenant ID',
+          newRow: true,
+          conditionalDisplay: { field: 'authentication', values: ['aad-client-secret', 'aad-certificate'] },
+          displayInViewMode: true
+        },
+        {
+          key: 'clientId',
+          type: 'OibText',
+          label: 'Client ID',
+          newRow: false,
+          validators: [{ key: 'required' }],
+          conditionalDisplay: { field: 'authentication', values: ['aad-client-secret', 'aad-certificate'] },
+          displayInViewMode: true
+        },
+        {
+          key: 'clientSecret',
+          type: 'OibSecret',
+          label: 'Client secret',
+          newRow: false,
+          conditionalDisplay: { field: 'authentication', values: ['aad-client-secret'] }
+        },
+        {
+          key: 'certificateId',
+          type: 'OibCertificate',
+          label: 'Certificate',
+          newRow: false,
+          conditionalDisplay: { field: 'authentication', values: ['aad-certificate'] }
+        },
+        {
+          key: 'scope',
+          type: 'OibText',
+          label: 'Scope',
+          newRow: false,
+          conditionalDisplay: { field: 'authentication', values: ['aad', 'aad-certificate'] }
+        },
+        ...proxy
+      ]
+    }
   ]
 };
 

@@ -26,7 +26,12 @@ describe('Empty registration repository', () => {
 
   it('should properly init registration settings table', () => {
     const command: RegistrationSettingsCommandDTO = {
-      host: 'http://localhost:4200'
+      host: 'http://localhost:4200',
+      acceptUnauthorized: false,
+      useProxy: false,
+      proxyUrl: '',
+      proxyUsername: '',
+      proxyPassword: ''
     };
 
     repository.createRegistrationSettings(command);
@@ -39,7 +44,9 @@ describe('Empty registration repository', () => {
 
   it('should update registration settings', () => {
     const command: RegistrationSettingsCommandDTO = {
-      host: 'http://localhost:4200'
+      host: 'http://localhost:4200',
+      acceptUnauthorized: false,
+      useProxy: false
     };
     repository.updateRegistration(
       command,
@@ -48,14 +55,20 @@ describe('Empty registration repository', () => {
       '2020-01-01T00:00:00Z'
     );
     expect(database.prepare).toHaveBeenCalledWith(
-      `UPDATE registrations SET host = ?, status = 'PENDING', token = '', activation_code = ?, check_url = ?, activation_expiration_date = ?` +
-        ` WHERE rowid=(SELECT MIN(rowid) FROM registrations);`
+      `UPDATE registrations SET host = ?, status = 'PENDING', token = '', activation_code = ?, check_url = ?, ` +
+        `activation_expiration_date = ?, use_proxy = ?, proxy_url = ?, proxy_username = ?, proxy_password = ?, ` +
+        `accept_unauthorized = ? WHERE rowid=(SELECT MIN(rowid) FROM registrations);`
     );
     expect(run).toHaveBeenCalledWith(
       command.host,
       '1234',
       'http://localhost:4200/api/oianalytics/oibus/registration?id=id',
-      '2020-01-01T00:00:00Z'
+      '2020-01-01T00:00:00Z',
+      +command.useProxy,
+      command.proxyUrl,
+      command.proxyUsername,
+      command.proxyPassword,
+      +command.acceptUnauthorized
     );
   });
 });
@@ -64,6 +77,11 @@ describe('Non-empty Registration repository', () => {
   const existingSettings: RegistrationSettingsDTO = {
     id: 'id1',
     host: 'http://localhost:4200',
+    acceptUnauthorized: false,
+    useProxy: false,
+    proxyUrl: '',
+    proxyUsername: '',
+    proxyPassword: '',
     token: 'token',
     activationCode: '1234',
     status: 'NOT_REGISTERED',
@@ -86,6 +104,11 @@ describe('Non-empty Registration repository', () => {
     const expectedValue: RegistrationSettingsDTO = {
       id: 'id1',
       host: 'http://localhost:4200',
+      acceptUnauthorized: false,
+      useProxy: false,
+      proxyUrl: '',
+      proxyUsername: '',
+      proxyPassword: '',
       token: 'token',
       activationCode: '1234',
       status: 'NOT_REGISTERED',
@@ -95,7 +118,9 @@ describe('Non-empty Registration repository', () => {
     const registration = repository.getRegistrationSettings();
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, host, token, activation_code AS activationCode, status, activation_date AS activationDate, ' +
-        'check_url AS checkUrl, activation_expiration_date AS activationExpirationDate FROM registrations;'
+        'check_url AS checkUrl, activation_expiration_date AS activationExpirationDate, use_proxy AS useProxy, ' +
+        `proxy_url AS proxyUrl, proxy_username AS proxyUsername, proxy_password AS proxyPassword, ` +
+        'accept_unauthorized AS acceptUnauthorized FROM registrations;'
     );
     expect(all).toHaveBeenCalledTimes(2);
     expect(registration).toEqual(expectedValue);
@@ -103,7 +128,12 @@ describe('Non-empty Registration repository', () => {
 
   it('should not create registration settings if they already exist', () => {
     const command: RegistrationSettingsCommandDTO = {
-      host: 'http://localhost:4200'
+      host: 'http://localhost:4200',
+      acceptUnauthorized: false,
+      useProxy: false,
+      proxyUrl: '',
+      proxyUsername: '',
+      proxyPassword: ''
     };
     repository.createRegistrationSettings(command);
     expect(generateRandomId).not.toHaveBeenCalled();
