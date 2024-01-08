@@ -17,11 +17,28 @@ export type NorthInfluxDBSettingsPrecision = (typeof NORTH_INFLUX_D_B_SETTINGS_P
 const NORTH_MQTT_SETTINGS_QOSS = ['0', '1', '2'] as const
 export type NorthMqttSettingsQos = (typeof NORTH_MQTT_SETTINGS_QOSS)[number];
 
-const NORTH_O_I_ANALYTICS_SETTINGS_AUTHENTICATIONS = ['basic', 'aad-client-secret', 'aad-certificate'] as const
-export type NorthOIAnalyticsSettingsAuthentication = (typeof NORTH_O_I_ANALYTICS_SETTINGS_AUTHENTICATIONS)[number];
+const NORTH_O_I_ANALYTICS_SETTINGS_SPECIFIC_SETTINGS_AUTHENTICATIONS = ['basic', 'aad-client-secret', 'aad-certificate'] as const
+export type NorthOIAnalyticsSettingsSpecificSettingsAuthentication = (typeof NORTH_O_I_ANALYTICS_SETTINGS_SPECIFIC_SETTINGS_AUTHENTICATIONS)[number];
 
 const NORTH_REST_A_P_I_SETTINGS_AUTHENTICATION_TYPES = ['none', 'basic', 'bearer', 'api-key'] as const
 export type NorthRestAPISettingsAuthenticationType = (typeof NORTH_REST_A_P_I_SETTINGS_AUTHENTICATION_TYPES)[number];
+
+export interface NorthOIAnalyticsSettingsSpecificSettings {
+  host: string;
+  acceptUnauthorized: boolean;
+  authentication: NorthOIAnalyticsSettingsSpecificSettingsAuthentication;
+  accessKey?: string;
+  secretKey?: string | null;
+  tenantId?: string | null;
+  clientId?: string;
+  clientSecret?: string | null;
+  certificateId?: string | null;
+  scope?: string | null;
+  useProxy: boolean;
+  proxyUrl?: string;
+  proxyUsername?: string | null;
+  proxyPassword?: string | null;
+}
 
 export interface NorthRestAPISettingsAuthentication {
   type: NorthRestAPISettingsAuthenticationType;
@@ -125,21 +142,9 @@ export interface NorthMqttSettings extends BaseNorthSettings {
 }
 
 export interface NorthOIAnalyticsSettings extends BaseNorthSettings {
-  host: string;
-  acceptUnauthorized: boolean;
+  useOiaModule: boolean;
   timeout: number;
-  authentication: NorthOIAnalyticsSettingsAuthentication;
-  accessKey?: string;
-  secretKey?: string | null;
-  tenantId?: string | null;
-  clientId?: string;
-  clientSecret?: string | null;
-  certificateId?: string | null;
-  scope?: string | null;
-  useProxy: boolean;
-  proxyUrl?: string;
-  proxyUsername?: string | null;
-  proxyPassword?: string | null;
+  specificSettings?: NorthOIAnalyticsSettingsSpecificSettings | null;
 }
 
 export interface NorthOIBusSettings extends BaseNorthSettings {

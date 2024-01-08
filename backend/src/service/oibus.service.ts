@@ -10,6 +10,7 @@ import EncryptionService from './encryption.service';
 import pino from 'pino';
 import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
+import { createProxyAgent } from './proxy.service';
 
 const CHECK_TIMEOUT = 10_000;
 
@@ -63,24 +64,47 @@ export default class OIBusService {
 
   async updateRegistrationSettings(command: RegistrationSettingsCommandDTO): Promise<void> {
     const activationCode = generateRandomId(6);
-    const registrationSettings = this.repositoryService.registrationRepository.getRegistrationSettings();
-    const engineSettings = this.repositoryService.engineRepository.getEngineSettings()!;
+    const registrationSettings = this.repositoryService.registrationRepository.getRegistrationSettings()!;
     if (!registrationSettings) {
       throw new Error(`Registration settings not found`);
     }
+
+    if (!command.proxyPassword) {
+      command.proxyPassword = registrationSettings.proxyPassword;
+    } else {
+      command.proxyPassword = await this.encryptionService.encryptText(command.proxyPassword);
+    }
+
+    const engineSettings = this.repositoryService.engineRepository.getEngineSettings()!;
+
     const oibusInfo = getOIBusInfo();
     const body = {
       activationCode,
       oibusVersion: oibusInfo.version,
+      oibusArch: oibusInfo.architecture,
+      oibusOs: oibusInfo.operatingSystem,
       oibusId: engineSettings.id,
       oibusName: engineSettings.name
     };
     let response;
     try {
       const url = `${command.host}/api/oianalytics/oibus/registration`;
+      const agent = createProxyAgent(
+        command.useProxy,
+        url,
+        command.useProxy
+          ? {
+              url: command.proxyUrl!,
+              username: command.proxyUsername!,
+              password: command.proxyPassword ? await this.encryptionService.decryptText(command.proxyPassword) : null
+            }
+          : null,
+        command.acceptUnauthorized
+      );
       response = await fetch(url, {
         method: 'POST',
         timeout: CHECK_TIMEOUT,
+        agent,
         body: JSON.stringify(body),
         headers: {
           'Content-Type': 'application/json'
@@ -133,9 +157,24 @@ export default class OIBusService {
     const url = `${registrationSettings.host}${registrationSettings.checkUrl}`;
     try {
       this.ongoingCheckRegistration = true;
+      const agent = createProxyAgent(
+        registrationSettings.useProxy,
+        url,
+        registrationSettings.useProxy
+          ? {
+              url: registrationSettings.proxyUrl!,
+              username: registrationSettings.proxyUsername!,
+              password: registrationSettings.proxyPassword
+                ? await this.encryptionService.decryptText(registrationSettings.proxyPassword)
+                : null
+            }
+          : null,
+        registrationSettings.acceptUnauthorized
+      );
       response = await fetch(url, {
         method: 'GET',
-        timeout: CHECK_TIMEOUT
+        timeout: CHECK_TIMEOUT,
+        agent
       });
       if (!response.ok) {
         this.logger.error(`Error ${response.status} while checking registration status on ${url}: ${response.statusText}`);

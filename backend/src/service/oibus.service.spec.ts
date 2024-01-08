@@ -14,11 +14,13 @@ import EncryptionServiceMock from '../tests/__mocks__/encryption-service.mock';
 import EncryptionService from './encryption.service';
 import pino from 'pino';
 import PinoLogger from '../tests/__mocks__/logger.mock';
+import { createProxyAgent } from './proxy.service';
 
 jest.mock('node:fs/promises');
 jest.mock('node-fetch');
 const { Response } = jest.requireActual('node-fetch');
-jest.mock('../service/utils');
+jest.mock('./utils');
+jest.mock('./proxy.service');
 
 const oibusEngine: OIBusEngine = new OibusEngineMock();
 const historyQueryEngine: HistoryQueryEngine = new HistoryQueryEngineMock();
@@ -34,6 +36,7 @@ describe('OIBus service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    (createProxyAgent as jest.Mock).mockReturnValue(undefined);
 
     service = new OIBusService(oibusEngine, historyQueryEngine, repositoryRepository, encryptionService, logger);
   });
@@ -66,6 +69,8 @@ describe('OIBus service', () => {
     const mockResult: RegistrationSettingsDTO = {
       id: 'id',
       host: 'http://localhost:4200',
+      acceptUnauthorized: false,
+      useProxy: false,
       token: 'token',
       activationCode: '1234',
       status: 'NOT_REGISTERED',
@@ -82,7 +87,71 @@ describe('OIBus service', () => {
     (utils.generateRandomId as jest.Mock).mockReturnValue('1234');
 
     const command: RegistrationSettingsCommandDTO = {
-      host: 'http://localhost:4200'
+      host: 'http://localhost:4200',
+      acceptUnauthorized: false,
+      useProxy: false
+    };
+    (utils.getOIBusInfo as jest.Mock).mockReturnValueOnce({ version: 'v3.2.0' });
+    (repositoryRepository.engineRepository.getEngineSettings as jest.Mock).mockReturnValueOnce({ id: 'id1', name: 'MyOIBus' });
+    const fetchResponse = {
+      redirectUrl: 'http://localhost:4200/api/oianalytics/oibus/check-registration?id=id',
+      expirationDate: '2020-02-02T02:12:02.222Z'
+    };
+
+    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response(JSON.stringify(fetchResponse))));
+
+    await service.updateRegistrationSettings(command);
+    expect(repositoryRepository.registrationRepository.updateRegistration).toHaveBeenCalledTimes(1);
+    expect(utils.generateRandomId).toHaveBeenCalledWith(6);
+    expect(repositoryRepository.registrationRepository.updateRegistration).toHaveBeenCalledWith(
+      command,
+      '1234',
+      'http://localhost:4200/api/oianalytics/oibus/check-registration?id=id',
+      '2020-02-02T02:12:02.222Z'
+    );
+  });
+
+  it('should update registration with proxy', async () => {
+    (utils.generateRandomId as jest.Mock).mockReturnValue('1234');
+
+    const command: RegistrationSettingsCommandDTO = {
+      host: 'http://localhost:4200',
+      acceptUnauthorized: false,
+      useProxy: true,
+      proxyUrl: 'http://localhost:3128',
+      proxyUsername: 'user',
+      proxyPassword: 'pass'
+    };
+    (utils.getOIBusInfo as jest.Mock).mockReturnValueOnce({ version: 'v3.2.0' });
+    (repositoryRepository.engineRepository.getEngineSettings as jest.Mock).mockReturnValueOnce({ id: 'id1', name: 'MyOIBus' });
+    const fetchResponse = {
+      redirectUrl: 'http://localhost:4200/api/oianalytics/oibus/check-registration?id=id',
+      expirationDate: '2020-02-02T02:12:02.222Z'
+    };
+
+    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response(JSON.stringify(fetchResponse))));
+
+    await service.updateRegistrationSettings(command);
+    expect(repositoryRepository.registrationRepository.updateRegistration).toHaveBeenCalledTimes(1);
+    expect(utils.generateRandomId).toHaveBeenCalledWith(6);
+    expect(repositoryRepository.registrationRepository.updateRegistration).toHaveBeenCalledWith(
+      command,
+      '1234',
+      'http://localhost:4200/api/oianalytics/oibus/check-registration?id=id',
+      '2020-02-02T02:12:02.222Z'
+    );
+  });
+
+  it('should update registration with proxy and without password', async () => {
+    (utils.generateRandomId as jest.Mock).mockReturnValue('1234');
+
+    const command: RegistrationSettingsCommandDTO = {
+      host: 'http://localhost:4200',
+      acceptUnauthorized: false,
+      useProxy: true,
+      proxyUrl: 'http://localhost:3128',
+      proxyUsername: '',
+      proxyPassword: ''
     };
     (utils.getOIBusInfo as jest.Mock).mockReturnValueOnce({ version: 'v3.2.0' });
     (repositoryRepository.engineRepository.getEngineSettings as jest.Mock).mockReturnValueOnce({ id: 'id1', name: 'MyOIBus' });
@@ -108,7 +177,9 @@ describe('OIBus service', () => {
     (utils.generateRandomId as jest.Mock).mockReturnValue('1234');
 
     const command: RegistrationSettingsCommandDTO = {
-      host: 'http://localhost:4200'
+      host: 'http://localhost:4200',
+      acceptUnauthorized: false,
+      useProxy: false
     };
     (utils.getOIBusInfo as jest.Mock).mockReturnValueOnce({ version: 'v3.2.0' });
     (repositoryRepository.engineRepository.getEngineSettings as jest.Mock).mockReturnValueOnce({ id: 'id1', name: 'MyOIBus' });
@@ -129,7 +200,9 @@ describe('OIBus service', () => {
     (utils.generateRandomId as jest.Mock).mockReturnValue('1234');
 
     const command: RegistrationSettingsCommandDTO = {
-      host: 'http://localhost:4200'
+      host: 'http://localhost:4200',
+      acceptUnauthorized: false,
+      useProxy: false
     };
     (utils.getOIBusInfo as jest.Mock).mockReturnValueOnce({ version: 'v3.2.0' });
     (repositoryRepository.engineRepository.getEngineSettings as jest.Mock).mockReturnValueOnce({ id: 'id1', name: 'MyOIBus' });
@@ -150,7 +223,9 @@ describe('OIBus service', () => {
     (repositoryRepository.engineRepository.getEngineSettings as jest.Mock).mockReturnValueOnce({ id: 'id1', name: 'MyOIBus' });
 
     const command: RegistrationSettingsCommandDTO = {
-      host: 'http://localhost:4200'
+      host: 'http://localhost:4200',
+      acceptUnauthorized: false,
+      useProxy: false
     };
 
     let error;
@@ -247,6 +322,8 @@ describe('OIBus service', () => {
     const mockResult: RegistrationSettingsDTO = {
       id: 'id',
       host: 'http://localhost:4200',
+      acceptUnauthorized: false,
+      useProxy: false,
       token: 'token',
       activationCode: '1234',
       checkUrl: '/check/url',
@@ -268,6 +345,8 @@ describe('OIBus service', () => {
     const mockResult: RegistrationSettingsDTO = {
       id: 'id',
       host: 'http://localhost:4200',
+      acceptUnauthorized: false,
+      useProxy: false,
       token: 'token',
       activationCode: '1234',
       checkUrl: '/check/url',
@@ -290,6 +369,8 @@ describe('OIBus service', () => {
     const mockResult: RegistrationSettingsDTO = {
       id: 'id',
       host: 'http://localhost:4200',
+      acceptUnauthorized: false,
+      useProxy: false,
       token: 'token',
       activationCode: '1234',
       checkUrl: '/check/url',
@@ -313,6 +394,8 @@ describe('OIBus service', () => {
     const mockResult: RegistrationSettingsDTO = {
       id: 'id',
       host: 'http://localhost:4200',
+      acceptUnauthorized: false,
+      useProxy: false,
       token: 'token',
       activationCode: '1234',
       checkUrl: '/check/url',
@@ -333,6 +416,8 @@ describe('OIBus service', () => {
     const mockResult: RegistrationSettingsDTO = {
       id: 'id',
       host: 'http://localhost:4200',
+      acceptUnauthorized: false,
+      useProxy: false,
       token: 'token',
       activationCode: '1234',
       status: 'PENDING',
@@ -348,6 +433,8 @@ describe('OIBus service', () => {
     const mockResult: RegistrationSettingsDTO = {
       id: 'id',
       host: 'http://localhost:4200',
+      acceptUnauthorized: false,
+      useProxy: false,
       token: 'token',
       activationCode: '1234',
       checkUrl: 'check/url',
@@ -364,12 +451,66 @@ describe('OIBus service', () => {
       `Error while checking registration status on ${mockResult.host}${mockResult.checkUrl}. Error: error`
     );
   });
+
+  it('should check registration with proxy', async () => {
+    const mockResult: RegistrationSettingsDTO = {
+      id: 'id',
+      host: 'http://localhost:4200',
+      acceptUnauthorized: false,
+      useProxy: true,
+      proxyUrl: 'http://localhost:3128',
+      proxyUsername: 'user',
+      proxyPassword: 'pass',
+      token: 'token',
+      activationCode: '1234',
+      checkUrl: '/check/url',
+      status: 'PENDING',
+      activationDate: '2020-20-20T00:00:00.000Z',
+      activationExpirationDate: ''
+    };
+    (repositoryRepository.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(mockResult);
+    const fetchResponse = { status: 'COMPLETED', expired: true, accessToken: 'access_token' };
+    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response(JSON.stringify(fetchResponse))));
+    service.activateRegistration = jest.fn();
+
+    await service.checkRegistration();
+    expect(fetch).toHaveBeenCalledWith(`${mockResult.host}${mockResult.checkUrl}`, { method: 'GET', timeout: 10000 });
+    expect(service.activateRegistration).toHaveBeenCalledWith('2020-02-02T02:02:02.222Z', 'access_token');
+  });
+
+  it('should check registration with proxy and without password', async () => {
+    const mockResult: RegistrationSettingsDTO = {
+      id: 'id',
+      host: 'http://localhost:4200',
+      acceptUnauthorized: false,
+      useProxy: true,
+      proxyUrl: 'http://localhost:3128',
+      proxyUsername: '',
+      proxyPassword: '',
+      token: 'token',
+      activationCode: '1234',
+      checkUrl: '/check/url',
+      status: 'PENDING',
+      activationDate: '2020-20-20T00:00:00.000Z',
+      activationExpirationDate: ''
+    };
+    (repositoryRepository.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(mockResult);
+    const fetchResponse = { status: 'COMPLETED', expired: true, accessToken: 'access_token' };
+    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response(JSON.stringify(fetchResponse))));
+    service.activateRegistration = jest.fn();
+
+    await service.checkRegistration();
+    expect(fetch).toHaveBeenCalledWith(`${mockResult.host}${mockResult.checkUrl}`, { method: 'GET', timeout: 10000 });
+    expect(service.activateRegistration).toHaveBeenCalledWith('2020-02-02T02:02:02.222Z', 'access_token');
+  });
 });
 
 describe('OIBus service with PENDING registration', () => {
   const mockResult: RegistrationSettingsDTO = {
     id: 'id',
     host: 'http://localhost:4200',
+    acceptUnauthorized: false,
+    useProxy: false,
     token: 'token',
     activationCode: '1234',
     status: 'PENDING',
@@ -381,6 +522,7 @@ describe('OIBus service with PENDING registration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    (createProxyAgent as jest.Mock).mockReturnValue(undefined);
     (repositoryRepository.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(mockResult);
   });
 

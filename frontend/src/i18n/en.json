@@ -105,12 +105,9 @@
     "scope-types": {
       "south": "South",
       "north": "North",
-      "engine": "Engine",
-      "data-stream": "Data stream engine",
-      "history-engine": "History engine",
       "history-query": "History query",
-      "web-server": "Web server",
-      "logger-service": "Logger service"
+      "internal": "Internal",
+      "web-server": "Web server"
     },
     "categories": {
       "api": "API",
@@ -253,6 +250,11 @@
     "registration": {
       "title": "Register OIBus",
       "host": "Host",
+      "accept-unauthorized": "Accept unauthorized",
+      "use-proxy": "Use proxy",
+      "proxy-url": "Proxy URL",
+      "proxy-username": "Proxy username",
+      "proxy-password": "Proxy password",
       "register":"Register",
       "saved": "Registration settings saved",
       "unregister":"Unregister",
@@ -324,6 +326,10 @@
         "token-address": "Loki token url",
         "username": "Loki username",
         "password": "Loki password"
+      },
+      "oia": {
+        "title": "OIAnalytics logs",
+        "level": "OIA level"
       }
     },
     "monitoring": {

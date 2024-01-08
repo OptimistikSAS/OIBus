@@ -22,11 +22,15 @@ describe('Registration controller', () => {
     jest.useFakeTimers();
 
     registrationCommand = {
-      host: 'http://localhost:4200'
+      host: 'http://localhost:4200',
+      acceptUnauthorized: false,
+      useProxy: false
     };
     registrationSettings = {
       id: '1',
       host: 'http://localhost:4200',
+      acceptUnauthorized: false,
+      useProxy: false,
       activationCode: '1234',
       status: 'NOT_REGISTERED',
       activationDate: '2020-01-01T00:00:00.000Z',

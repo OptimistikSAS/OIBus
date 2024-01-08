@@ -36,7 +36,7 @@ export class OiaModuleComponent implements OnInit {
   }
 
   register(): void {
-    const modalRef = this.modalService.open(RegisterOibusModalComponent);
+    const modalRef = this.modalService.open(RegisterOibusModalComponent, { size: 'xl' });
     modalRef.componentInstance.prepare(this.registration!);
     modalRef.result
       .pipe(

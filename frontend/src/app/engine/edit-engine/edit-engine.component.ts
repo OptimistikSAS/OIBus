@@ -43,6 +43,9 @@ export class EditEngineComponent implements OnInit {
         tokenAddress: ['', Validators.pattern(/http.*/)],
         username: null as string | null,
         password: null as string | null
+      }),
+      oia: this.fb.group({
+        level: ['silent' as LogLevel, Validators.required]
       })
     })
   });
@@ -91,6 +94,9 @@ export class EditEngineComponent implements OnInit {
           tokenAddress: formValue.logParameters!.loki!.tokenAddress!,
           username: formValue.logParameters!.loki!.username!,
           password: formValue.logParameters!.loki!.password!
+        },
+        oia: {
+          level: formValue.logParameters!.oia!.level!
         }
       }
     };

@@ -79,6 +79,10 @@ class EditEngineComponentTester extends ComponentTester<EditEngineComponent> {
     return this.input('#loki-password');
   }
 
+  get oiaLevel() {
+    return this.select('#oia-level')!;
+  }
+
   get submitButton() {
     return this.button('#save-button')!;
   }
@@ -113,6 +117,9 @@ describe('EditEngineComponent', () => {
         tokenAddress: 'http://token-address.oibus.com',
         username: 'oibus',
         password: 'pass'
+      },
+      oia: {
+        level: 'silent'
       }
     }
   };
@@ -156,6 +163,7 @@ describe('EditEngineComponent', () => {
     expect(tester.lokiAddress).toHaveValue(engineSettings.logParameters.loki.address);
     expect(tester.lokiUsername).toHaveValue(engineSettings.logParameters.loki.username);
     expect(tester.lokiPassword).toHaveValue(engineSettings.logParameters.loki.password);
+    expect(tester.oiaLevel).toHaveSelectedLabel('Silent');
   });
 
   it('should update engine settings', () => {
@@ -164,11 +172,13 @@ describe('EditEngineComponent', () => {
     tester.consoleLevel.selectLabel('Error');
     tester.fileNumberOfFiles!.fillWith('10');
     tester.lokiLevel.selectLabel('Silent');
+    tester.oiaLevel.selectLabel('Error');
 
     expect(tester.name).toHaveValue('OIBus Dev');
     expect(tester.consoleLevel).toHaveSelectedLabel('Error');
     expect(tester.fileNumberOfFiles).toHaveValue('10');
     expect(tester.lokiLevel).toHaveSelectedLabel('Silent');
+    expect(tester.oiaLevel).toHaveSelectedLabel('Error');
 
     tester.submitButton.click();
 
@@ -178,6 +188,7 @@ describe('EditEngineComponent', () => {
     expectedSettings.logParameters.console.level = 'error';
     expectedSettings.logParameters.file.numberOfFiles = 10;
     expectedSettings.logParameters.loki.level = 'silent';
+    expectedSettings.logParameters.oia.level = 'error';
 
     expect(engineService.updateEngineSettings).toHaveBeenCalledWith({
       name: 'OIBus Dev',
@@ -202,6 +213,9 @@ describe('EditEngineComponent', () => {
           tokenAddress: 'http://token-address.oibus.com',
           username: 'oibus',
           password: 'pass'
+        },
+        oia: {
+          level: 'error'
         }
       }
     });

@@ -160,7 +160,7 @@ describe('South OPCHDA', () => {
     expect(fetch).toHaveBeenCalledTimes(2);
   });
 
-  it('should properly clear reconnect timeout on disconnect', async () => {
+  it('should properly clear reconnect timeout on disconnect when not connected', async () => {
     (fetch as unknown as jest.Mock)
       .mockImplementationOnce(() => {
         throw new Error('connection failed');
@@ -177,12 +177,32 @@ describe('South OPCHDA', () => {
     await south.disconnect();
     expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
     jest.advanceTimersByTime(configuration.settings.retryInterval);
-    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(fetch).toHaveBeenCalledTimes(1);
     expect(logger.error).toHaveBeenCalledWith(
       `Error while sending connection HTTP request into agent. Reconnecting in ${configuration.settings.retryInterval} ms. ${new Error(
         'connection failed'
       )}`
     );
+  });
+
+  it('should properly clear reconnect timeout on disconnect when connected', async () => {
+    (fetch as unknown as jest.Mock)
+      .mockImplementationOnce(() => {
+        return true;
+      })
+      .mockImplementationOnce(() => {
+        throw new Error('disconnection failed');
+      });
+
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+
+    await south.connect();
+
+    expect(fetch).toHaveBeenCalledTimes(1);
+    await south.disconnect();
+    expect(clearTimeoutSpy).toHaveBeenCalledTimes(0);
+    jest.advanceTimersByTime(configuration.settings.retryInterval);
+    expect(fetch).toHaveBeenCalledTimes(2);
     expect(logger.error).toHaveBeenCalledWith(
       `Error while sending disconnection HTTP request into agent. ${new Error('disconnection failed')}`
     );

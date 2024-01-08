@@ -88,28 +88,16 @@ const LOG_DB_NAME = 'logs.db';
     repositoryService.southMetricsRepository
   );
 
-  const engine = new OIBusEngine(
-    encryptionService,
-    northService,
-    southService,
-    homeMetricsService,
-    loggerService.createChildLogger('data-stream')
-  );
+  const engine = new OIBusEngine(encryptionService, northService, southService, homeMetricsService, loggerService.logger!);
   const historyQueryEngine = new HistoryQueryEngine(
     encryptionService,
     northService,
     southService,
     historyQueryService,
-    loggerService.createChildLogger('history-engine')
+    loggerService.logger!
   );
 
-  const oibusService = new OIBusService(
-    engine,
-    historyQueryEngine,
-    repositoryService,
-    encryptionService,
-    loggerService.createChildLogger('engine')
-  );
+  const oibusService = new OIBusService(engine, historyQueryEngine, repositoryService, encryptionService, loggerService.logger!);
 
   await engine.start();
   await historyQueryEngine.start();
