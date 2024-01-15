@@ -23,7 +23,7 @@ runs:
 
     - name: Load cached venv
       id: cached-node-modules-dependencies
-      uses: actions/cache@v3.3.2
+      uses: actions/cache@v3.3.3
       with:
         path: |
           ./backend/node_modules
