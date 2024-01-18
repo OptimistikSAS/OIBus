@@ -19,6 +19,7 @@ import SouthCacheRepository from '../repository/south-cache.repository';
 import EngineMetricsRepository from '../repository/engine-metrics.repository';
 import CertificateRepository from '../repository/certificate.repository';
 import RegistrationRepository from '../repository/registration.repository';
+import CommandRepository from '../repository/command.repository';
 
 export default class RepositoryService {
   private readonly _engineRepository: EngineRepository;
@@ -40,6 +41,7 @@ export default class RepositoryService {
   private readonly _userRepository: UserRepository;
   private readonly _subscriptionRepository: SubscriptionRepository;
   private readonly _registrationRepository: RegistrationRepository;
+  private readonly _commandRepository: CommandRepository;
 
   constructor(oibusDatabasePath: string, logsDatabasePath: string, cryptoDatabasePath: string, cacheDatabasePath: string) {
     const oibusDatabase = Database(oibusDatabasePath);
@@ -61,6 +63,7 @@ export default class RepositoryService {
     this._userRepository = new UserRepository(oibusDatabase);
     this._subscriptionRepository = new SubscriptionRepository(oibusDatabase);
     this._registrationRepository = new RegistrationRepository(oibusDatabase);
+    this._commandRepository = new CommandRepository(oibusDatabase);
 
     this._cryptoRepository = new CryptoRepository(cryptoDatabase);
 
@@ -147,5 +150,9 @@ export default class RepositoryService {
 
   get subscriptionRepository(): SubscriptionRepository {
     return this._subscriptionRepository;
+  }
+
+  get commandRepository(): CommandRepository {
+    return this._commandRepository;
   }
 }

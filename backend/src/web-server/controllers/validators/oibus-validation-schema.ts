@@ -27,6 +27,8 @@ const externalSourceSchema: Joi.ObjectSchema = Joi.object({
   description: Joi.string().required().allow(null, '')
 });
 
+const commandSchema: Joi.ObjectSchema = Joi.object({});
+
 const engineSchema: Joi.ObjectSchema = Joi.object({
   name: Joi.string().required(),
   port: Joi.number().required().port(),
@@ -124,5 +126,6 @@ export {
   ipFilterSchema,
   userSchema,
   historyQuerySchema,
-  logSchema
+  logSchema,
+  commandSchema
 };

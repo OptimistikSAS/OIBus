@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises';
-import fetch from 'node-fetch';
+import fetch, { HeadersInit } from 'node-fetch';
 import OIBusEngine from '../engine/oibus-engine';
 import HistoryQueryEngine from '../engine/history-query-engine';
 import { OibusUpdateCheckResponse, OibusUpdateDTO } from '../../../shared/model/update.model';
@@ -11,6 +11,7 @@ import pino from 'pino';
 import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { createProxyAgent } from './proxy.service';
+import { OIBusCommand, OIBusCommandDTO } from '../../../shared/model/command.model';
 
 const CHECK_TIMEOUT = 10_000;
 
@@ -18,8 +19,10 @@ export default class OIBusService {
   private static UPDATE_URL = 'http://localhost:3333/api/update';
   private static DOWNLOAD_URL = 'http://localhost:3333/api/oibus';
   private static DOWNLOAD_TIMEOUT = 60000;
-  private interval: NodeJS.Timeout | null = null;
+  private intervalCheckRegistration: NodeJS.Timeout | null = null;
+  private intervalCheckCommands: NodeJS.Timeout | null = null;
   private ongoingCheckRegistration = false;
+  private ongoingCheckCommands = false;
 
   constructor(
     private engine: OIBusEngine,
@@ -30,7 +33,10 @@ export default class OIBusService {
   ) {
     const registrationSettings = this.repositoryService.registrationRepository.getRegistrationSettings();
     if (registrationSettings && registrationSettings.checkUrl && registrationSettings.status === 'PENDING') {
-      this.interval = setInterval(this.checkRegistration.bind(this), CHECK_TIMEOUT);
+      this.intervalCheckRegistration = setInterval(this.checkRegistration.bind(this), CHECK_TIMEOUT);
+    }
+    if (registrationSettings && registrationSettings.status === 'REGISTERED') {
+      this.intervalCheckCommands = setInterval(this.checkCommands.bind(this), CHECK_TIMEOUT);
     }
   }
 
@@ -44,9 +50,14 @@ export default class OIBusService {
   async stopOIBus(): Promise<void> {
     await this.engine.stop();
     await this.historyEngine.stop();
-    if (this.interval) {
-      clearInterval(this.interval);
-      this.interval = null;
+    if (this.intervalCheckRegistration) {
+      clearInterval(this.intervalCheckRegistration);
+      this.intervalCheckRegistration = null;
+    }
+
+    if (this.intervalCheckCommands) {
+      clearInterval(this.intervalCheckCommands);
+      this.intervalCheckCommands = null;
     }
   }
 
@@ -120,25 +131,36 @@ export default class OIBusService {
 
     const result: { redirectUrl: string; expirationDate: Instant } = await response.json();
     this.repositoryService.registrationRepository.updateRegistration(command, activationCode, result.redirectUrl, result.expirationDate);
-    if (!this.interval) {
-      this.interval = setInterval(this.checkRegistration.bind(this), CHECK_TIMEOUT);
+    if (!this.intervalCheckRegistration) {
+      this.intervalCheckRegistration = setInterval(this.checkRegistration.bind(this), CHECK_TIMEOUT);
     }
   }
 
   async activateRegistration(activationDate: string, accessToken: string): Promise<void> {
     const encryptedToken = await this.encryptionService.encryptText(accessToken);
     this.repositoryService.registrationRepository.activateRegistration(activationDate, encryptedToken);
-    if (this.interval) {
-      clearInterval(this.interval);
-      this.interval = null;
+    if (this.intervalCheckRegistration) {
+      clearInterval(this.intervalCheckRegistration);
+      this.intervalCheckRegistration = null;
     }
+
+    if (this.intervalCheckCommands) {
+      clearInterval(this.intervalCheckCommands);
+      this.intervalCheckCommands = null;
+    }
+    this.intervalCheckCommands = setInterval(this.checkCommands.bind(this), CHECK_TIMEOUT);
   }
 
   unregister() {
     this.repositoryService.registrationRepository.unregister();
-    if (this.interval) {
-      clearInterval(this.interval);
-      this.interval = null;
+    if (this.intervalCheckRegistration) {
+      clearInterval(this.intervalCheckRegistration);
+      this.intervalCheckRegistration = null;
+    }
+
+    if (this.intervalCheckCommands) {
+      clearInterval(this.intervalCheckCommands);
+      this.intervalCheckCommands = null;
     }
   }
 
@@ -195,6 +217,94 @@ export default class OIBusService {
     this.ongoingCheckRegistration = false;
   }
 
+  async checkCommands(): Promise<void> {
+    if (this.ongoingCheckCommands) {
+      this.logger.trace(`On going commands check`);
+      return;
+    }
+    this.ongoingCheckCommands = true;
+    const engineSettings = this.repositoryService.engineRepository.getEngineSettings()!;
+
+    await this.checkPendingCommands(engineSettings.id);
+    await this.retrieveCommands(engineSettings.id);
+    this.ongoingCheckCommands = false;
+  }
+
+  async checkPendingCommands(oibusId: string): Promise<void> {
+    const pendingCommands = this.repositoryService.commandRepository.searchCommandsList({ status: ['PENDING'], types: [] });
+    if (pendingCommands.length === 0) {
+      return;
+    }
+
+    let endpoint = `/api/oianalytics/oibus-commands/${oibusId}/check?`;
+    for (const command of pendingCommands) {
+      endpoint += `ids=${command.id}&`;
+    }
+    endpoint = endpoint.slice(0, endpoint.length - 1);
+    const connectionSettings = await this.getNetworkSettings(endpoint);
+    let response;
+    const url = `${connectionSettings.host}${endpoint}`;
+    try {
+      response = await fetch(url, {
+        method: 'GET',
+        headers: connectionSettings.headers,
+        timeout: CHECK_TIMEOUT,
+        agent: connectionSettings.agent
+      });
+      if (!response.ok) {
+        this.logger.error(`Error ${response.status} while checking PENDING commands status on ${url}: ${response.statusText}`);
+        return;
+      }
+      const commandsToCancel: Array<OIBusCommandDTO> = await response.json();
+      if (commandsToCancel.length === 0) {
+        this.logger.trace(`No command cancelled among the ${pendingCommands.length} commands`);
+        return;
+      }
+      this.logger.trace(`${commandsToCancel.length} commands cancelled among the ${pendingCommands.length} pending commands`);
+      for (const command of commandsToCancel) {
+        // TODO: remove from queue
+        this.repositoryService.commandRepository.cancel(command.id);
+      }
+    } catch (fetchError) {
+      this.logger.error(`Error while checking PENDING commands status on ${url}. ${fetchError}`);
+    }
+  }
+
+  async retrieveCommands(oibusId: string): Promise<void> {
+    const endpoint = `/api/oianalytics/oibus-commands/${oibusId}/retrieve-commands`;
+    const connectionSettings = await this.getNetworkSettings(endpoint);
+    let response;
+    const url = `${connectionSettings.host}${endpoint}`;
+    try {
+      response = await fetch(url, {
+        method: 'GET',
+        headers: connectionSettings.headers,
+        timeout: CHECK_TIMEOUT,
+        agent: connectionSettings.agent
+      });
+      if (!response.ok) {
+        this.logger.error(`Error ${response.status} while retrieving commands on ${url}: ${response.statusText}`);
+        return;
+      }
+      const newCommands: Array<OIBusCommandDTO> = await response.json();
+      if (newCommands.length === 0) {
+        this.logger.trace(`No command to create`);
+        return;
+      }
+      this.logger.trace(`${newCommands.length} commands to add`);
+      for (const command of newCommands) {
+        // TODO: add to queue
+        const creationCommand: OIBusCommand = {
+          type: command.type,
+          version: command.version
+        };
+        this.repositoryService.commandRepository.create(command.id, creationCommand);
+      }
+    } catch (fetchError) {
+      this.logger.error(`Error while retrieving commands on ${url}. ${fetchError}`);
+    }
+  }
+
   async checkForUpdate(): Promise<OibusUpdateDTO> {
     const oibusInfo = getOIBusInfo();
     let response;
@@ -229,5 +339,42 @@ export default class OIBusService {
     await downloadFile(url, filename, OIBusService.DOWNLOAD_TIMEOUT);
     await unzip(filename, '.');
     await fs.unlink(filename);
+  }
+
+  async getNetworkSettings(endpoint: string): Promise<{ host: string; headers: HeadersInit; agent: any }> {
+    const headers: HeadersInit = {};
+
+    const registrationSettings = this.getRegistrationSettings();
+    if (!registrationSettings || registrationSettings.status !== 'REGISTERED') {
+      throw new Error('OIBus not registered in OIAnalytics');
+    }
+
+    if (registrationSettings.host.endsWith('/')) {
+      registrationSettings.host = registrationSettings.host.slice(0, registrationSettings.host.length - 1);
+    }
+
+    const token = await this.encryptionService.decryptText(registrationSettings.token!);
+    headers.authorization = `Bearer ${token}`;
+
+    const agent = createProxyAgent(
+      registrationSettings.useProxy,
+      `${registrationSettings.host}${endpoint}`,
+      registrationSettings.useProxy
+        ? {
+            url: registrationSettings.proxyUrl!,
+            username: registrationSettings.proxyUsername!,
+            password: registrationSettings.proxyPassword
+              ? await this.encryptionService.decryptText(registrationSettings.proxyPassword)
+              : null
+          }
+        : null,
+      registrationSettings.acceptUnauthorized
+    );
+
+    return {
+      host: registrationSettings.host,
+      headers,
+      agent
+    };
   }
 }
