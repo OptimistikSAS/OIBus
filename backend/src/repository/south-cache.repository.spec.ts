@@ -87,7 +87,7 @@ describe('SouthCacheRepository', () => {
 
   it('should create custom table', () => {
     repository.createCustomTable('test', 'field1 TEXT, field2 INTEGER');
-    expect(database.prepare).toHaveBeenCalledWith(`CREATE TABLE IF NOT EXISTS test (field1 TEXT, field2 INTEGER);`);
+    expect(database.prepare).toHaveBeenCalledWith(`CREATE TABLE IF NOT EXISTS "test" (field1 TEXT, field2 INTEGER);`);
     expect(run).toHaveBeenCalledTimes(1);
   });
 

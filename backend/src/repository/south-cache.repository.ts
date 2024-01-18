@@ -79,7 +79,7 @@ export default class SouthCacheRepository {
   }
 
   createCustomTable(tableName: string, fields: string): void {
-    this._database.prepare(`CREATE TABLE IF NOT EXISTS ${tableName} (${fields});`).run();
+    this._database.prepare(`CREATE TABLE IF NOT EXISTS "${tableName}" (${fields});`).run();
   }
 
   runQueryOnCustomTable(query: string, params: Array<any>): any {
