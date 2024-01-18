@@ -1,7 +1,8 @@
 import SqliteDatabaseMock, { all, get, run } from '../tests/__mocks__/database.mock';
 import { Database } from 'better-sqlite3';
 import CommandRepository, { COMMANDS_TABLE } from './command.repository';
-import { OIBusCommand, OIBusCommandDTO } from '../../../shared/model/command.model';
+import { CommandSearchParam, OIBusCommand, OIBusCommandDTO } from '../../../shared/model/command.model';
+import { createPageFromArray } from '../../../shared/model/types';
 
 jest.mock('../tests/__mocks__/database.mock');
 jest.mock('../service/utils', () => ({
@@ -12,6 +13,27 @@ let database: Database;
 let repository: CommandRepository;
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
+
+const expectedCommands: Array<OIBusCommandDTO> = [
+  {
+    id: 'id1',
+    type: 'UPGRADE',
+    status: 'COMPLETED',
+    creationDate: '2023-01-01T12:00:00Z',
+    completedDate: '2023-01-01T12:00:00Z',
+    result: 'ok',
+    version: '3.2.0'
+  },
+  {
+    id: 'id2',
+    type: 'UPGRADE',
+    status: 'PENDING',
+    creationDate: '2023-01-01T12:00:00Z',
+    completedDate: '2023-01-01T12:00:00Z',
+    result: 'ok',
+    version: '3.2.0'
+  }
+];
 
 describe('Command repository', () => {
   beforeEach(() => {
@@ -27,31 +49,44 @@ describe('Command repository', () => {
   });
 
   it('should properly list commands', () => {
-    const expectedValue: Array<OIBusCommandDTO> = [
-      {
-        id: 'id1',
-        type: 'UPGRADE',
-        status: 'COMPLETED',
-        retrievedDate: '2023-01-01T12:00:00Z',
-        completedDate: '2023-01-01T12:00:00Z',
-        result: 'ok',
-        version: '3.2.0'
-      },
-      {
-        id: 'id2',
-        type: 'UPGRADE',
-        status: 'PENDING',
-        retrievedDate: '2023-01-01T12:00:00Z',
-        completedDate: '2023-01-01T12:00:00Z',
-        result: 'ok',
-        version: '3.2.0'
-      }
-    ];
-    all.mockReturnValueOnce(expectedValue);
+    all.mockReturnValueOnce(expectedCommands);
     const results = repository.findAll();
     const query = `SELECT id, type, status, retrieved_date as retrievedDate, completed_date as completedDate, result, version FROM commands;`;
     expect(database.prepare).toHaveBeenCalledWith(query);
-    expect(results).toEqual(expectedValue);
+    expect(results).toEqual(expectedCommands);
+  });
+
+  it('should properly search commands and page them', () => {
+    all.mockReturnValueOnce(expectedCommands);
+    const searchCriteria: CommandSearchParam = {
+      types: ['UPGRADE'],
+      status: ['ERRORED']
+    };
+    get.mockReturnValueOnce({ count: 2 });
+    const results = repository.searchCommandsPage(searchCriteria, 0);
+    const query =
+      `SELECT id, type, status, retrieved_date as retrievedDate, completed_date as completedDate, ` +
+      `result, version FROM commands WHERE id IS NOT NULL AND type IN (?) AND status IN (?) ` +
+      `ORDER BY created_at DESC LIMIT 50 OFFSET ?;`;
+    expect(database.prepare).toHaveBeenCalledWith(query);
+    expect(database.prepare).toHaveBeenCalledWith(
+      'SELECT COUNT(*) as count FROM commands WHERE id IS NOT NULL AND type IN (?) AND status IN (?)'
+    );
+    expect(results).toEqual(createPageFromArray(expectedCommands, 50, 0));
+  });
+
+  it('should properly search commands and list them', () => {
+    all.mockReturnValueOnce(expectedCommands);
+    const searchCriteria: CommandSearchParam = {
+      types: ['UPGRADE'],
+      status: ['ERRORED']
+    };
+    const results = repository.searchCommandsList(searchCriteria);
+    const query =
+      `SELECT id, type, status, retrieved_date as retrievedDate, completed_date as completedDate, ` +
+      `result, version FROM commands WHERE id IS NOT NULL AND type IN (?) AND status IN (?) ORDER BY created_at DESC;`;
+    expect(database.prepare).toHaveBeenCalledWith(query);
+    expect(results).toEqual(expectedCommands);
   });
 
   it('should properly find by id', () => {
@@ -59,7 +94,7 @@ describe('Command repository', () => {
       id: 'id1',
       type: 'UPGRADE',
       status: 'COMPLETED',
-      retrievedDate: '2023-01-01T12:00:00Z',
+      creationDate: '2023-01-01T12:00:00Z',
       completedDate: '2023-01-01T12:00:00Z',
       result: 'ok',
       version: '3.2.0'
@@ -80,10 +115,10 @@ describe('Command repository', () => {
       type: 'UPGRADE',
       version: '3.2.0'
     };
-    repository.create(command);
-    const insertQuery = `INSERT INTO ${COMMANDS_TABLE} (id, type, status, retrieved_date, version) VALUES (?, ?, ?, ?, ?);`;
+    repository.create('id1', command);
+    const insertQuery = `INSERT INTO ${COMMANDS_TABLE} (id, retrieved_date, type, status, version) VALUES (?, ?, ?, ?, ?);`;
     expect(database.prepare).toHaveBeenCalledWith(insertQuery);
-    expect(run).toHaveBeenCalledWith('123456', command.type, 'PENDING', nowDateString, command.version);
+    expect(run).toHaveBeenCalledWith('id1', nowDateString, command.type, 'PENDING', command.version);
   });
 
   it('should update a command', () => {
@@ -92,7 +127,7 @@ describe('Command repository', () => {
       version: '3.2.0'
     };
     repository.update('id1', command);
-    const updateQuery = `UPDATE commands SET version  = ? ` + 'WHERE id = ?;';
+    const updateQuery = `UPDATE commands SET version = ? WHERE id = ?;`;
     expect(database.prepare).toHaveBeenCalledWith(updateQuery);
     expect(run).toHaveBeenCalledWith(command.version, 'id1');
   });
