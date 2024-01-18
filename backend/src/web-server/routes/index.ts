@@ -18,6 +18,7 @@ import CertificateController from '../controllers/certificate.controller';
 import RegistrationController from '../controllers/registration.controller';
 import {
   certificateSchema,
+  commandSchema,
   engineSchema,
   externalSourceSchema,
   historyQuerySchema,
@@ -27,10 +28,12 @@ import {
   scanModeSchema,
   userSchema
 } from '../controllers/validators/oibus-validation-schema';
+import CommandController from '../controllers/command.controller';
 
 const joiValidator = new JoiValidator();
 const scanModeController = new ScanModeController(joiValidator, scanModeSchema);
 const certificateController = new CertificateController(joiValidator, certificateSchema);
+const commandController = new CommandController(joiValidator, commandSchema);
 const externalSourceController = new ExternalSourceController(joiValidator, externalSourceSchema);
 const oibusController = new OibusController(joiValidator, engineSchema);
 const registrationController = new RegistrationController(joiValidator, registrationSchema);
@@ -265,5 +268,7 @@ router.get('/api/logs', (ctx: KoaContext<any, any>) => logController.searchLogs(
 router.get('/api/scope-logs/suggestions', (ctx: KoaContext<any, any>) => logController.suggestScopes(ctx));
 router.get('/api/scope-logs/:id', (ctx: KoaContext<any, any>) => logController.getScopeById(ctx));
 router.post('/api/logs', (ctx: KoaContext<any, any>) => logController.addLogs(ctx));
+
+router.get('/api/commands', (ctx: KoaContext<any, any>) => commandController.searchCommands(ctx));
 
 export default router;
