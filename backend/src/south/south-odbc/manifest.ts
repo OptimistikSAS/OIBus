@@ -72,7 +72,7 @@ const manifest: SouthConnectorManifest = {
       defaultValue: 15_000,
       unitLabel: 'ms',
       class: 'col-4',
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30000 } }],
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
       conditionalDisplay: { field: 'remoteAgent', values: [true] }
     }
   ],

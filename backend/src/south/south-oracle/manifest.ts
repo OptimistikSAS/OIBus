@@ -85,7 +85,7 @@ const manifest: SouthConnectorManifest = {
         class: 'col-4',
         unitLabel: 'ms',
         newRow: true,
-        validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 300_000 } }],
+        validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
         displayInViewMode: false
       },
       buildDateTimeFieldsFormControl(['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms']),
