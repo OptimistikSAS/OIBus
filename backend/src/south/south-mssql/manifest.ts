@@ -93,7 +93,7 @@ const manifest: SouthConnectorManifest = {
       unitLabel: 'ms',
       class: 'col-4',
       newRow: true,
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30000 } }],
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
       displayInViewMode: false
     }
   ],
