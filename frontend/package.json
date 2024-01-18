@@ -43,7 +43,7 @@
     "@angular/cli": "17.1.0",
     "@angular/compiler-cli": "17.1.0",
     "@types/jasmine": "5.1.4",
-    "@types/luxon": "3.3.7",
+    "@types/luxon": "3.4.1",
     "@typescript-eslint/eslint-plugin": "6.16.0",
     "@typescript-eslint/parser": "6.16.0",
     "@typescript-eslint/types": "6.16.0",
