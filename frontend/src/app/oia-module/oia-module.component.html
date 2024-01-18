@@ -57,4 +57,68 @@
       </div>
     </div>
   </div>
+
+  <div class="row justify-content-center mt-3" *ngIf="registration.status === 'REGISTERED'">
+    <div class="col">
+      <h2 class="oib-title" translate="oia-module.commands.title"></h2>
+      <div *ngIf="oibusCommands.totalElements !== 0">
+        <oib-pagination class="d-flex justify-content-end" [page]="oibusCommands" [navigate]="true"></oib-pagination>
+      </div>
+
+      <form class="px-3 mb-4 d-none d-lg-block oib-search-form" id="search-form" [formGroup]="searchForm" (ngSubmit)="searchCommands()">
+        <div class="row gx-2 py-3">
+          <label class="col-auto col-form-label"><i class="fa fa-search fa-lg"></i></label>
+          <label for="status" class="col-auto col-form-label" translate="oia-module.commands.status"></label>
+          <div class="col-2">
+            <oib-multi-select formControlName="status" id="status">
+              <oib-multi-select-option
+                *ngFor="let status of statusList"
+                [value]="status"
+                [label]="status | oibusCommandStatusEnum"
+              ></oib-multi-select-option>
+            </oib-multi-select>
+          </div>
+          <label for="types" class="col-auto col-form-label" translate="oia-module.commands.type"></label>
+          <div class="col-2">
+            <oib-multi-select formControlName="types" id="types">
+              <oib-multi-select-option
+                *ngFor="let type of typeList"
+                [value]="type"
+                [label]="type | oibusCommandTypeEnum"
+              ></oib-multi-select-option>
+            </oib-multi-select>
+          </div>
+          <div class="col">
+            <button class="col-auto btn btn-primary" id="search-button" form="search-form" translate="common.search"></button>
+          </div>
+        </div>
+      </form>
+
+      <ng-container>
+        <div *ngIf="oibusCommands.totalElements !== 0; else empty">
+          <table class="table table-sm table-hover">
+            <thead class="table-light">
+              <tr>
+                <th translate="oia-module.commands.creation-date"></th>
+                <th translate="oia-module.commands.type"></th>
+                <th translate="oia-module.commands.status"></th>
+                <th translate="oia-module.commands.completion-date"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let command of oibusCommands.content">
+                <td>{{ command.retrievedDate! | datetime:'mediumWithSeconds' }}</td>
+                <td>{{ command.type | oibusCommandTypeEnum }}</td>
+                <td>{{ command.status | oibusCommandStatusEnum }}</td>
+                <td><span *ngIf="command.completedDate">{{ command.completedDate | datetime:'mediumWithSeconds' }}</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <ng-template #empty>
+          <div class="oib-grey-container empty" translate="oia-module.commands.none"></div>
+        </ng-template>
+      </ng-container>
+    </div>
+  </div>
 </div>

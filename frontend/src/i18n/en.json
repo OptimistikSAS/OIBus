@@ -179,6 +179,16 @@
       "FINISHED": "Finished",
       "RUNNING": "Running",
       "ABORTED": "Aborted"
+    },
+    "oibus-command-status": {
+      "PENDING": "Pending",
+      "RETRIEVED": "Retrieved",
+      "ERRORED": "Errored",
+      "CANCELLED": "Cancelled",
+      "COMPLETED": "Completed"
+    },
+    "oibus-command-type": {
+      "UPGRADE": "Upgrade"
     }
   },
   "nav": {
@@ -263,6 +273,14 @@
       "pending": "Registration pending. Activate it on OIAnalytics with the following activation code",
       "expiration-date": "Expired on",
       "registered": "OIBus registered on {{ activationDate }}"
+    },
+    "commands":  {
+      "title": "Command list",
+      "creation-date": "Creation date",
+      "completion-date": "Completion date",
+      "status": "Status",
+      "type": "Type",
+      "none": "No command"
     }
   },
   "about": {
