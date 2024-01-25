@@ -78,4 +78,17 @@ describe('HistoryMetricsService', () => {
     service.metrics;
     service.stream;
   });
+
+  it('should reset metrics', () => {
+    const updateMetricsSpy = jest.spyOn(service, 'updateMetrics');
+    service.resetMetrics();
+
+    expect(southRepositoryMock.removeMetrics).toHaveBeenCalled();
+    expect(southRepositoryMock.initMetrics).toHaveBeenCalled();
+
+    expect(northRepositoryMock.removeMetrics).toHaveBeenCalled();
+    expect(northRepositoryMock.initMetrics).toHaveBeenCalled();
+
+    expect(updateMetricsSpy).toHaveBeenCalled();
+  });
 });

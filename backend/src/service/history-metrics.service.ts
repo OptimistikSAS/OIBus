@@ -27,6 +27,19 @@ export default class HistoryMetricsService {
     this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
   }
 
+  resetMetrics(): void {
+    this.southMetricsRepository.removeMetrics(this.historyId);
+    this.southMetricsRepository.initMetrics(this.historyId);
+
+    this.northMetricsRepository.removeMetrics(this.historyId);
+    this.northMetricsRepository.initMetrics(this.historyId);
+
+    this.updateMetrics({
+      north: this.northMetricsRepository.getMetrics(this.historyId)!,
+      south: this.southMetricsRepository.getMetrics(this.historyId)!
+    });
+  }
+
   get metrics(): HistoryMetrics {
     return this._metrics;
   }
