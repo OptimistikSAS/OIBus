@@ -161,6 +161,10 @@ export default class HistoryQuery {
         await this.north.resetCache();
       }
     }
+    // Also reset the metrics service
+    if (this._metricsService && resetCache) {
+      this._metricsService.resetMetrics();
+    }
   }
 
   /**

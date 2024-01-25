@@ -22,12 +22,14 @@ import { OIBusDataValue } from '../../../shared/model/engine.model';
 jest.mock('../service/south.service');
 jest.mock('../service/north.service');
 const updateMetrics = jest.fn();
+const resetMetrics = jest.fn();
 jest.mock(
   '../service/history-metrics.service',
   () =>
     function () {
       return {
         updateMetrics,
+        resetMetrics,
         metrics: { status: 'my status' },
         get stream() {
           return { stream: 'myStream' };
@@ -232,6 +234,7 @@ describe('HistoryQuery enabled', () => {
 
   it('should properly stop', async () => {
     const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
+
     await historyQuery.start();
     connectedEvent.emit('connected');
     await historyQuery.stop();
@@ -241,10 +244,13 @@ describe('HistoryQuery enabled', () => {
     expect(createdNorth.stop).toHaveBeenCalledTimes(1);
     expect(createdNorth.resetCache).not.toHaveBeenCalled();
     expect(createdSouth.resetCache).not.toHaveBeenCalled();
+    expect(resetMetrics).not.toHaveBeenCalled();
+
     await historyQuery.stop(true);
     expect(createdNorth.resetCache).toHaveBeenCalledTimes(1);
     expect(createdSouth.resetCache).toHaveBeenCalledTimes(1);
     expect(logger.debug).not.toHaveBeenCalled();
+    expect(resetMetrics).toHaveBeenCalled();
   });
 
   it('should properly finish and not stop', async () => {
