@@ -96,6 +96,16 @@
                   <span class="fa fa-spinner fa-spin" role="status" *ngIf="states.get(query.id)?.isPending | async"></span>
                   <span class="fa fa-play" role="status" *ngIf="(states.get(query.id)?.isPending | async) === false"></span>
                 </button>
+                <button
+                  *ngIf="query.status === 'FINISHED' || query.status === 'ERRORED'"
+                  class="btn btn-link py-0 px-1 m-0"
+                  id="history-query-restart"
+                  (click)="toggleHistoryQuery(query, 'RUNNING')"
+                  [disabled]="states.get(query.id)?.isPending | async"
+                >
+                  <span class="fa fa-spinner fa-spin" role="status" *ngIf="states.get(query.id)?.isPending | async"></span>
+                  <span class="fa fa-repeat" role="status" *ngIf="(states.get(query.id)?.isPending | async) === false"></span>
+                </button>
                 <!-- Display button -->
                 <a class="btn btn-link display-history-query px-1 py-0" id="display-link" [routerLink]="[query.id]">
                   <span class="fa fa-search"></span>

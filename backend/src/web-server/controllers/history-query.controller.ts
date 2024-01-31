@@ -179,7 +179,12 @@ export default class HistoryQueryController extends AbstractController {
     }
 
     try {
-      await ctx.app.reloadService.onStartHistoryQuery(ctx.params.id);
+      if (historyQuery.status === 'FINISHED' || historyQuery.status === 'ERRORED') {
+        await ctx.app.reloadService.onRestartHistoryQuery(ctx.params.id);
+      } else {
+        await ctx.app.reloadService.onStartHistoryQuery(ctx.params.id);
+      }
+
       ctx.noContent();
     } catch (error: any) {
       ctx.badRequest(error.message);

@@ -563,6 +563,15 @@ describe('reload service', () => {
     expect(historyQueryEngine.startHistoryQuery).toHaveBeenCalledWith({ id: 'historyId' });
   });
 
+  it('should restart history query', async () => {
+    (repositoryService.historyQueryRepository.getHistoryQuery as jest.Mock).mockReturnValueOnce({ id: 'historyId' });
+    await service.onRestartHistoryQuery('historyId');
+    expect(historyQueryEngine.stopHistoryQuery).toHaveBeenCalledWith('historyId', true);
+    expect(repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
+    expect(repositoryService.historyQueryRepository.setHistoryQueryStatus).toHaveBeenCalledWith('historyId', 'RUNNING');
+    expect(historyQueryEngine.startHistoryQuery).toHaveBeenCalledWith({ id: 'historyId' });
+  });
+
   it('should stop history query', async () => {
     await service.onPauseHistoryQuery('historyId');
     expect(historyQueryEngine.stopHistoryQuery).toHaveBeenCalledWith('historyId');
