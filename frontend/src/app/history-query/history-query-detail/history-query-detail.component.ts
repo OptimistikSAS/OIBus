@@ -159,6 +159,10 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
   }
 
   connectToEventSource(): void {
+    if (this.historyStream) {
+      this.historyStream.close();
+    }
+
     const token = this.windowService.getStorageItem('oibus-token');
     this.historyStream = new EventSource(`/sse/history-queries/${this.historyQuery!.id}?token=${token}`, { withCredentials: true });
     this.historyStream.addEventListener('message', (event: MessageEvent) => {
@@ -186,6 +190,7 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
         .subscribe(updatedHistoryQuery => {
           this.historyQuery = updatedHistoryQuery;
           this.notificationService.success('history-query.started', { name: this.historyQuery!.name });
+          this.connectToEventSource();
         });
     } else {
       this.historyQueryService
@@ -199,6 +204,7 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
         .subscribe(updatedHistoryQuery => {
           this.historyQuery = updatedHistoryQuery;
           this.notificationService.success('history-query.paused', { name: this.historyQuery!.name });
+          this.historyStream?.close();
         });
     }
   }

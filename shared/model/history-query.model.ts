@@ -2,7 +2,7 @@ import { NorthArchiveSettings, NorthCacheSettingsDTO } from './north-connector.m
 import { SouthConnectorHistorySettings, SouthConnectorItemDTO } from './south-connector.model';
 import { BaseEntity } from './types';
 
-export const HISTORY_QUERY_STATUS = ['PENDING', 'RUNNING', 'PAUSED', 'FINISHED', 'ERRORED'];
+export const HISTORY_QUERY_STATUS = ['PENDING', 'RUNNING', 'PAUSED', 'FINISHED', 'ERRORED'] as const;
 export type HistoryQueryStatus = (typeof HISTORY_QUERY_STATUS)[number];
 
 /**

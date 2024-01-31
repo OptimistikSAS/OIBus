@@ -118,7 +118,28 @@ class TestComponent {
       retentionDuration: 0
     }
   };
-  historyMetrics: HistoryMetrics = { north: {}, south: {} } as HistoryMetrics;
+  historyMetrics: HistoryMetrics = {
+    north: {
+      numberOfValuesSent: 10,
+      numberOfFilesSent: 0,
+      lastValueSent: null,
+      lastFileSent: null,
+      cacheSize: 0,
+      metricsStart: '2023-01-01T00:00:00.000Z',
+      lastConnection: null,
+      lastRunStart: null,
+      lastRunDuration: null
+    },
+    south: {
+      numberOfValuesRetrieved: 20,
+      numberOfFilesRetrieved: 0,
+      lastValueRetrieved: null,
+      lastFileRetrieved: null,
+      historyMetrics: {
+        intervalProgress: 1
+      }
+    }
+  } as HistoryMetrics;
 }
 
 class HistoryMetricsComponentTester extends ComponentTester<TestComponent> {
