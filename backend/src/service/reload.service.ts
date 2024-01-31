@@ -327,6 +327,13 @@ export default class ReloadService {
     await this.historyEngine.startHistoryQuery(settings!);
   }
 
+  async onRestartHistoryQuery(historyId: string): Promise<void> {
+    await this.historyEngine.stopHistoryQuery(historyId, true);
+    this.repositoryService.historyQueryRepository.setHistoryQueryStatus(historyId, 'RUNNING');
+    const settings = this.repositoryService.historyQueryRepository.getHistoryQuery(historyId);
+    await this.historyEngine.startHistoryQuery(settings!);
+  }
+
   async onPauseHistoryQuery(historyId: string): Promise<void> {
     await this.historyEngine.stopHistoryQuery(historyId);
     this.repositoryService.historyQueryRepository.setHistoryQueryStatus(historyId, 'PAUSED');

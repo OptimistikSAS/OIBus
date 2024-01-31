@@ -418,6 +418,20 @@ describe('History query controller', () => {
     expect(ctx.notFound).toHaveBeenCalled();
   });
 
+  it('startHistoryQuery() should restart when the history is in finished or errored state', async () => {
+    ctx.params.enable = true;
+    ctx.params.id = 'id';
+
+    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue({ ...historyQuery, status: 'FINISHED' });
+    await historyQueryController.startHistoryQuery(ctx);
+
+    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue({ ...historyQuery, status: 'ERRORED' });
+    await historyQueryController.startHistoryQuery(ctx);
+
+    expect(ctx.app.reloadService.onRestartHistoryQuery).toHaveBeenCalledTimes(2);
+    expect(ctx.badRequest).not.toHaveBeenCalled();
+  });
+
   it('pauseHistoryQuery() should pause History query', async () => {
     ctx.params.enable = true;
     ctx.params.id = 'id';
