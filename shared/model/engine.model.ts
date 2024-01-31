@@ -111,7 +111,19 @@ export interface NorthConnectorMetrics extends BaseConnectorMetrics {
   cacheSize: number;
 }
 
-export interface SouthHistoryMetrics {}
+export interface SouthHistoryMetrics {
+  running?: boolean;
+  // Percentage of the current interval that has been processed [0,1]
+  intervalProgress?: number;
+  // Start of the current interval
+  currentIntervalStart?: Instant;
+  // End of the current interval
+  currentIntervalEnd?: Instant;
+  // Number of the current interval
+  currentIntervalNumber?: number;
+  // Maximum number of intervals
+  numberOfIntervals?: number;
+}
 
 export interface SouthConnectorMetrics extends BaseConnectorMetrics {
   numberOfValuesRetrieved: number;

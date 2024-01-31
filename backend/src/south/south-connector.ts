@@ -262,10 +262,9 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
       for (const [index, item] of itemsToRead.entries()) {
         if (this.stopping) {
           this.logger.debug(`Connector is stopping. Exiting history query at item ${item.name}`);
-          this.metricsService!.updateMetrics(this.connector.id, {
-            ...this.metricsService!.metrics,
-            historyMetrics: { running: false }
-          });
+          const stoppedMetrics = structuredClone(this.metricsService!.metrics);
+          stoppedMetrics.historyMetrics.running = false;
+          this.metricsService!.updateMetrics(this.connector.id, stoppedMetrics);
           this.historyIsRunning = false;
           return;
         }
@@ -293,10 +292,9 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
 
       await this.queryIntervals(intervals, itemsToRead, southCache, startTime);
     }
-    this.metricsService!.updateMetrics(this.connector.id, {
-      ...this.metricsService!.metrics,
-      historyMetrics: { running: false }
-    });
+    const stoppedMetrics = structuredClone(this.metricsService!.metrics);
+    stoppedMetrics.historyMetrics.running = false;
+    this.metricsService!.updateMetrics(this.connector.id, stoppedMetrics);
     this.historyIsRunning = false;
   }
 
@@ -310,44 +308,39 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
       ...this.metricsService!.metrics,
       historyMetrics: {
         running: true,
-        intervalProgress:
-          1 -
-          (DateTime.fromISO(intervals[intervals.length - 1].end).toMillis() - DateTime.fromISO(intervals[0].start).toMillis()) /
-            (DateTime.fromISO(intervals[intervals.length - 1].end).toMillis() - DateTime.fromISO(startTime).toMillis())
+        intervalProgress: this.calculateIntervalProgress(intervals, 0, startTime)
       }
     });
+
     for (const [index, interval] of intervals.entries()) {
       // @ts-ignore
       const lastInstantRetrieved = await this.historyQuery(items, interval.start, interval.end);
-      if (index !== intervals.length - 1) {
-        this.cacheService!.createOrUpdateCacheScanMode({
-          southId: this.connector.id,
-          scanModeId: southCache.scanModeId,
-          itemId: southCache.itemId,
-          maxInstant: lastInstantRetrieved
-        });
-        this.metricsService!.updateMetrics(this.connector.id, {
-          ...this.metricsService!.metrics,
-          historyMetrics: {
-            running: true,
-            intervalProgress:
-              1 -
-              (DateTime.fromISO(intervals[intervals.length - 1].end).toMillis() - DateTime.fromISO(interval.start).toMillis()) /
-                (DateTime.fromISO(intervals[intervals.length - 1].end).toMillis() - DateTime.fromISO(startTime).toMillis())
-          }
-        });
-        if (this.stopping) {
-          this.logger.debug(`Connector is stopping. Exiting history query at interval ${index}: [${interval.start}, ${interval.end}]`);
-          return;
+      this.cacheService!.createOrUpdateCacheScanMode({
+        southId: this.connector.id,
+        scanModeId: southCache.scanModeId,
+        itemId: southCache.itemId,
+        maxInstant: lastInstantRetrieved
+      });
+
+      this.metricsService!.updateMetrics(this.connector.id, {
+        ...this.metricsService!.metrics,
+        historyMetrics: {
+          running: true,
+          intervalProgress: this.calculateIntervalProgress(intervals, index, startTime),
+          currentIntervalStart: interval.start,
+          currentIntervalEnd: interval.end,
+          currentIntervalNumber: index + 1,
+          numberOfIntervals: intervals.length
         }
+      });
+
+      if (this.stopping) {
+        this.logger.debug(`Connector is stopping. Exiting history query at interval ${index}: [${interval.start}, ${interval.end}]`);
+        return;
+      }
+
+      if (index !== intervals.length - 1) {
         await delay(this.connector.history.readDelay);
-      } else {
-        this.cacheService!.createOrUpdateCacheScanMode({
-          southId: this.connector.id,
-          scanModeId: southCache.scanModeId,
-          itemId: southCache.itemId,
-          maxInstant: lastInstantRetrieved
-        });
       }
     }
   }
@@ -370,6 +363,28 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
     } else {
       this.logger.trace(`Querying interval: ${JSON.stringify(intervals[0], null, 2)}`);
     }
+  }
+
+  /**
+   * Calculate the progress of the current interval
+   */
+  private calculateIntervalProgress(intervals: Array<Interval>, currentIntervalIndex: number, startTime: Instant) {
+    // calculate progress based on time
+    const progress =
+      1 -
+      (DateTime.fromISO(intervals[intervals.length - 1].end).toMillis() -
+        DateTime.fromISO(intervals[currentIntervalIndex].start).toMillis()) /
+        (DateTime.fromISO(intervals[intervals.length - 1].end).toMillis() - DateTime.fromISO(startTime).toMillis());
+
+    // round to 2 decimals
+    const roundedProgress = Math.round((progress + Number.EPSILON) * 100) / 100;
+
+    // in the chance that the rounded progress is 0.99, but it's the last interval, we want to return 1
+    if (currentIntervalIndex === intervals.length - 1) {
+      return 1;
+    }
+
+    return roundedProgress;
   }
 
   /**

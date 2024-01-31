@@ -53,7 +53,8 @@ jest.mock(
         },
         metrics: {
           numberOfValuesRetrieved: 1,
-          numberOfFilesRetrieved: 1
+          numberOfFilesRetrieved: 1,
+          historyMetrics: {}
         }
       };
     }

@@ -722,7 +722,8 @@
         "last-value": "Last value sent",
         "last-value-content": "{{ pointId }} at {{ timestamp }} with content {{ data }}",
         "last-run-start": "Last run",
-        "last-run-duration": "Last run duration"
+        "last-run-duration": "Last run duration",
+        "data-sent": "Data sent"
       },
       "south": {
         "title": "South metrics",
@@ -736,7 +737,11 @@
         "last-value": "Last value retrieved",
         "last-value-content": "{{ pointId }} at {{ timestamp }} with content {{ data }}",
         "last-run-start": "Last run",
-        "last-run-duration": "Last run duration"
+        "last-run-duration": "Last run duration",
+        "data-retrieved": "Data retrieved",
+        "interval-start": "Interval start",
+        "interval-end": "Interval end",
+        "interval-progress": "Interval progress"
       }
     }
   },
