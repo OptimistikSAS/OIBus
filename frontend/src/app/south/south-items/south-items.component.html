@@ -60,11 +60,11 @@
       <table class="mb-2 table table-sm table-hover oib-table">
         <thead class="light">
           <tr>
-            <th *ngIf="!inMemory" style="width: 3%"></th>
+            <th *ngIf="!inMemory"></th>
             <th translate="south.items.name"></th>
-            <th *ngIf="!southManifest.items.scanMode.subscriptionOnly" translate="south.items.scan-mode"></th>
+            <th *ngIf="!southManifest.items.scanMode.subscriptionOnly" translate="south.items.scan-mode" style="width: 8rem"></th>
             <th *ngFor="let setting of displaySettings">{{ setting.label }}</th>
-            <th style="width: 3%"></th>
+            <th style="width: 6rem"></th>
           </tr>
         </thead>
         <tbody>

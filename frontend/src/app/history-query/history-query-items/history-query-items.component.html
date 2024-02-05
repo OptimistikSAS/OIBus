@@ -60,10 +60,10 @@
       <table class="table table-sm table-hover oib-table">
         <thead class="light">
           <tr>
-            <th *ngIf="!inMemory" style="width: 3%"></th>
+            <th *ngIf="!inMemory"></th>
             <th translate="history-query.items.name"></th>
             <th *ngFor="let setting of displaySettings">{{ setting.label }}</th>
-            <th style="width: 3%"></th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
