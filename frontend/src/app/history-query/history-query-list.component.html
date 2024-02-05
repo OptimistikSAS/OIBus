@@ -45,11 +45,11 @@
       <table class="mt-2 table table-sm table-hover oib-table">
         <thead>
           <tr>
-            <th style="width: 1%"></th>
-            <th translate="history-query.name" style="width: 10%"></th>
-            <th translate="history-query.interval" style="width: 25%"></th>
-            <th translate="history-query.description" style="width: 60%"></th>
-            <th style="width: 3%"></th>
+            <th></th>
+            <th translate="history-query.name"></th>
+            <th translate="history-query.interval" style="width: 22rem"></th>
+            <th translate="history-query.description"></th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -58,10 +58,12 @@
               <div [class]="getStatusClass(query.status)"></div>
             </td>
             <td>{{ query.name }}</td>
-            <td class="d-flex">
-              <div>{{ query.startTime | datetime:'ff' }}</div>
-              <div class="fa fa-arrow-right oib-fa-arrow"></div>
-              <div>{{ query.endTime | datetime:'ff' }}</div>
+            <td>
+              <div>
+                {{ query.startTime | datetime:'ff' }}
+                <div class="fa fa-arrow-right oib-fa-arrow"></div>
+                {{ query.endTime | datetime:'ff' }}
+              </div>
             </td>
             <td>{{ query.description }}</td>
             <td class="text-nowrap action-buttons">

@@ -208,10 +208,12 @@ img.oib-image-header {
     // first case of the first line
     th:first-child {
       border-top-left-radius: 1rem;
+      width: 3rem;
     }
     // last case of the first line
     th:last-child {
       border-top-right-radius: 1rem;
+      width: 9rem;
     }
     // alternative case if oib-box-title is on top of table
     .light {
@@ -226,6 +228,10 @@ img.oib-image-header {
       vertical-align: middle;
       padding-left: 1rem;
       border-bottom-width: 0;
+      max-width: 0;
+      text-overflow: clip;
+      overflow: hidden;
+      white-space: nowrap;
     }
     // line
     tr {
@@ -247,6 +253,7 @@ img.oib-image-header {
       td:last-child {
         text-align: right;
         padding-right: 1em;
+        overflow: visible;
       }
     }
     // customised colours on the lines (one out of two)
