@@ -58,6 +58,8 @@
     "basic-auth": "2.0.1",
     "better-sqlite3": "9.3.0",
     "cron": "3.1.6",
+    "cron-parser": "^4.9.0",
+    "cronstrue": "^2.48.0",
     "form-data": "4.0.0",
     "http-proxy-agent": "7.0.0",
     "https-proxy-agent": "7.0.2",
