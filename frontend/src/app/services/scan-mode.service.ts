@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Injectable } from '@angular/core';
-import { ScanModeCommandDTO, ScanModeDTO } from '../../../../shared/model/scan-mode.model';
+import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '../../../../shared/model/scan-mode.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on Scan Modes
@@ -50,5 +50,13 @@ export class ScanModeService {
    */
   delete(scanModeId: string) {
     return this.http.delete<void>(`/api/scan-modes/${scanModeId}`);
+  }
+
+  /**
+   * Verify the cron expression
+   * @param cron - the cron expression to verify
+   */
+  verifyCron(cron: string) {
+    return this.http.post<ValidatedCronExpression>(`/api/scan-modes/verify`, { cron });
   }
 }

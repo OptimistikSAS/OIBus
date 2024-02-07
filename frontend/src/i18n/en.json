@@ -33,7 +33,6 @@
       "invalid-json": "The json is not valid",
       "all-access-control-tag-keys-must-be-valued": "All the tag keys used for access control must have a value. Missing tag key(s): {{ missingTagKeys }}.",
       "parsing-processor-error": "The parsing processor is not valid. {{ error }}",
-      "cron-error": "The cron expression is not valid",
       "must-be-unique": "Must be unique"
     },
     "period": {
@@ -349,7 +348,9 @@
       "none": "No scan mode",
       "name": "Name",
       "description": "Description",
-      "cron": "Cron"
+      "cron": "Cron",
+      "cron-meaning": "Cron meaning:",
+      "cron-next-occurrences": "Next occurrences:"
     },
     "certificate": {
       "list": "Certificates",

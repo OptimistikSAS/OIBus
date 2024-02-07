@@ -1,8 +1,8 @@
 import { EditScanModeModalComponent } from './edit-scan-mode-modal.component';
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { fakeAsync, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { fakeAsync, flush, TestBed } from '@angular/core/testing';
+import { of, throwError } from 'rxjs';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { ScanModeCommandDTO, ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
@@ -62,6 +62,7 @@ describe('EditScanModeModalComponent', () => {
 
   describe('create mode', () => {
     beforeEach(() => {
+      scanModeService.verifyCron.and.returnValue(of({ nextExecutions: [], humanReadableForm: '' }));
       tester.componentInstance.prepareForCreation();
       tester.detectChanges();
     });
@@ -72,18 +73,34 @@ describe('EditScanModeModalComponent', () => {
       expect(tester.cron).toHaveValue('');
     });
 
-    it('should not save if invalid', () => {
+    it('should not save if invalid', fakeAsync(() => {
+      // bad name
+      tester.name.fillWith('');
+      flush();
+
       tester.save.click();
 
-      // name, cron
       expect(tester.validationErrors.length).toBe(2);
       expect(fakeActiveModal.close).not.toHaveBeenCalled();
-    });
+
+      // bad cron
+      scanModeService.verifyCron.and.returnValue(throwError(() => ({ error: { message: 'bad cron' } })));
+      tester.name.fillWith('test');
+      tester.cron.fillWith('* * *');
+      flush();
+
+      tester.save.click();
+
+      expect(tester.validationErrors.length).toBe(1);
+      expect(fakeActiveModal.close).not.toHaveBeenCalled();
+      expect(tester.validationErrors[0].nativeElement.textContent).toContain('bad cron');
+    }));
 
     it('should save if valid', fakeAsync(() => {
       tester.name.fillWith('test');
       tester.description.fillWith('desc');
       tester.cron.fillWith('* * * * * *');
+      flush();
 
       tester.detectChanges();
 
@@ -119,6 +136,7 @@ describe('EditScanModeModalComponent', () => {
     };
 
     beforeEach(() => {
+      scanModeService.verifyCron.and.returnValue(of({ nextExecutions: [], humanReadableForm: '' }));
       scanModeService.get.and.returnValue(of(scanModeToUpdate));
 
       tester.componentInstance.prepareForEdition(scanModeToUpdate);
@@ -128,29 +146,45 @@ describe('EditScanModeModalComponent', () => {
     it('should have a populated form', () => {
       expect(tester.name).toHaveValue(scanModeToUpdate.name);
       expect(tester.description).toHaveValue(scanModeToUpdate.description);
+      expect(tester.cron).toHaveValue(scanModeToUpdate.cron);
     });
 
-    it('should not save if invalid', () => {
+    it('should not save if invalid', fakeAsync(() => {
+      // bad name
       tester.name.fillWith('');
+      flush();
+
       tester.save.click();
 
-      // name
       expect(tester.validationErrors.length).toBe(1);
       expect(fakeActiveModal.close).not.toHaveBeenCalled();
-    });
+
+      // bad cron
+      scanModeService.verifyCron.and.returnValue(throwError(() => ({ error: { message: 'bad cron' } })));
+      tester.name.fillWith('test');
+      tester.cron.fillWith('* * *');
+      flush();
+
+      tester.save.click();
+
+      expect(tester.validationErrors.length).toBe(1);
+      expect(fakeActiveModal.close).not.toHaveBeenCalled();
+      expect(tester.validationErrors[0].nativeElement.textContent).toContain('bad cron');
+    }));
 
     it('should save if valid', fakeAsync(() => {
       scanModeService.update.and.returnValue(of(undefined));
 
       tester.name.fillWith('Scan Mode 1 (updated)');
       tester.description.fillWith('A longer and updated description of my Scan Mode');
-
+      tester.cron.fillWith('*/10 * * * * *');
+      flush();
       tester.save.click();
 
       const expectedCommand: ScanModeCommandDTO = {
         name: 'Scan Mode 1 (updated)',
         description: 'A longer and updated description of my Scan Mode',
-        cron: scanModeToUpdate.cron
+        cron: '*/10 * * * * *'
       };
 
       expect(scanModeService.update).toHaveBeenCalledWith('id1', expectedCommand);
