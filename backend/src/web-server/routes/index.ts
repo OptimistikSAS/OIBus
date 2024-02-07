@@ -87,8 +87,6 @@ router.put('/api/shutdown', (ctx: KoaContext<any, any>) => oibusController.shutd
 router.post('/api/add-values', (ctx: KoaContext<any, any>) => oibusController.addValues(ctx));
 router.post('/api/add-file', upload.single('file'), (ctx: KoaContext<any, any>) => oibusController.addFile(ctx));
 router.get('/api/info', (ctx: KoaContext<any, any>) => oibusController.getOIBusInfo(ctx));
-router.get('/api/check-update', (ctx: KoaContext<any, any>) => oibusController.checkForUpdate(ctx));
-router.get('/api/update', (ctx: KoaContext<any, any>) => oibusController.update(ctx));
 
 router.get('/api/registration', (ctx: KoaContext<any, any>) => registrationController.getRegistrationSettings(ctx));
 router.put('/api/registration', (ctx: KoaContext<any, any>) => registrationController.updateRegistrationSettings(ctx));

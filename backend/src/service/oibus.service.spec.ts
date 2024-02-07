@@ -1,11 +1,9 @@
-import fs from 'node:fs/promises';
 import fetch from 'node-fetch';
 import OIBusService from './oibus.service';
 import OIBusEngine from '../engine/oibus-engine';
 import OibusEngineMock from '../tests/__mocks__/oibus-engine.mock';
 import HistoryQueryEngine from '../engine/history-query-engine';
 import HistoryQueryEngineMock from '../tests/__mocks__/history-query-engine.mock';
-import { OibusUpdateCheckResponse } from '../../../shared/model/update.model';
 import * as utils from '../service/utils';
 import RepositoryService from './repository.service';
 import RepositoryServiceMock from '../tests/__mocks__/repository-service.mock';
@@ -16,6 +14,7 @@ import pino from 'pino';
 import PinoLogger from '../tests/__mocks__/logger.mock';
 import { createProxyAgent } from './proxy.service';
 import { OIBusCommandDTO } from '../../../shared/model/command.model';
+import { getNetworkSettingsFromRegistration } from './utils';
 
 jest.mock('node:fs/promises');
 jest.mock('node-fetch');
@@ -36,10 +35,12 @@ const command: OIBusCommandDTO = {
   id: 'id1',
   type: 'UPGRADE',
   status: 'COMPLETED',
+  ack: true,
   creationDate: '2023-01-01T12:00:00Z',
   completedDate: '2023-01-01T12:00:00Z',
   result: 'ok',
-  version: '3.2.0'
+  version: '3.2.0',
+  assetId: 'assetId'
 };
 
 let service: OIBusService;
@@ -258,77 +259,6 @@ describe('OIBus service', () => {
     expect(repositoryService.registrationRepository.unregister).toHaveBeenCalledTimes(1);
   });
 
-  it('should check for update', async () => {
-    (utils.getOIBusInfo as jest.Mock).mockReturnValue({ architecture: 'x64', platform: 'linux', version: 'v3.1.0' });
-    const expectedUrl = `http://localhost:3333/api/update?platform=linux&architecture=x64`;
-    const expectedFetchOptions = {
-      timeout: 10000
-    };
-    const fetchResponse: OibusUpdateCheckResponse = {
-      latestVersion: '1.0.0',
-      changelog: 'Changelog'
-    };
-
-    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response(JSON.stringify(fetchResponse))));
-
-    const updateData = await service.checkForUpdate();
-
-    expect(fetch).toHaveBeenCalledWith(expectedUrl, expectedFetchOptions);
-    expect(updateData).toEqual({
-      hasAvailableUpdate: true,
-      actualVersion: 'v3.1.0',
-      latestVersion: fetchResponse.latestVersion,
-      changelog: fetchResponse.changelog
-    });
-  });
-
-  it('should handle fetch error during update check', async () => {
-    (utils.getOIBusInfo as jest.Mock).mockReturnValue({ architecture: 'x64', platform: 'linux', version: 'v3.1.0' });
-    const expectedUrl = `http://localhost:3333/api/update?platform=linux&architecture=x64`;
-    const expectedFetchOptions = {
-      timeout: 10000
-    };
-    (fetch as unknown as jest.Mock).mockImplementation(() => {
-      throw new Error('error');
-    });
-
-    try {
-      await service.checkForUpdate();
-    } catch (error) {
-      expect(fetch).toHaveBeenCalledWith(expectedUrl, expectedFetchOptions);
-      expect(error).toEqual(new Error('Update check failed: Error: error'));
-    }
-  });
-
-  it('should handle invalid fetch response during update check', async () => {
-    (utils.getOIBusInfo as jest.Mock).mockReturnValue({ architecture: 'x64', platform: 'linux', version: 'v3.1.0' });
-    const expectedUrl = `http://localhost:3333/api/update?platform=linux&architecture=x64`;
-    const expectedFetchOptions = {
-      timeout: 10000
-    };
-    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('invalid', { status: 404 })));
-
-    try {
-      await service.checkForUpdate();
-    } catch (error) {
-      expect(fetch).toHaveBeenCalledWith(expectedUrl, expectedFetchOptions);
-      expect(error).toEqual(new Error('Update check failed with status code 404 and message: Not Found'));
-    }
-  });
-
-  it('should download update', async () => {
-    (utils.getOIBusInfo as jest.Mock).mockReturnValue({ architecture: 'x64', platform: 'linux', version: 'v3.1.0' });
-    const expectedUrl = `http://localhost:3333/api/oibus?platform=linux&architecture=x64`;
-    const expectedFilename = `oibus-linux_x64.zip`;
-
-    await service.downloadUpdate();
-
-    expect(utils.downloadFile).toHaveBeenCalledWith(expectedUrl, expectedFilename, 60000);
-    expect(utils.unzip).toHaveBeenCalledWith(expectedFilename, '.');
-    expect(utils.unzip).toHaveBeenCalledWith(expectedFilename, '.');
-    expect(fs.unlink).toHaveBeenCalledWith(expectedFilename);
-  });
-
   it('should check registration', async () => {
     const mockResult: RegistrationSettingsDTO = {
       id: 'id',
@@ -397,7 +327,7 @@ describe('OIBus service', () => {
     await service.checkRegistration();
     expect(fetch).toHaveBeenCalledWith(`${mockResult.host}${mockResult.checkUrl}`, { method: 'GET', timeout: 10000 });
     expect(service.activateRegistration).not.toHaveBeenCalled();
-    expect(logger.error).toHaveBeenCalledWith(`Registration not completed. Status: DECLINED`);
+    expect(logger.warn).toHaveBeenCalledWith(`Registration not completed. Status: DECLINED`);
     await service.checkRegistration();
   });
 
@@ -674,82 +604,6 @@ describe('OIBus service with REGISTERED registration', () => {
     service.unregister();
     expect(clearIntervalSpy).toHaveBeenCalledTimes(1);
   });
-
-  it('should get network settings and throw error if not registered', async () => {
-    const mockResult: RegistrationSettingsDTO = {
-      status: 'PENDING'
-    } as RegistrationSettingsDTO;
-
-    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(mockResult);
-
-    await expect(service.getNetworkSettings('/api/oianalytics/oibus-commands/${oibusId}/check')).rejects.toThrow(
-      'OIBus not registered in OIAnalytics'
-    );
-  });
-
-  it('should get network settings', async () => {
-    const mockResult: RegistrationSettingsDTO = {
-      status: 'REGISTERED',
-      host: 'http://localhost:4200/',
-      token: 'my token',
-      useProxy: false,
-      acceptUnauthorized: false
-    } as RegistrationSettingsDTO;
-
-    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(mockResult);
-
-    const result = await service.getNetworkSettings('/endpoint');
-    expect(result).toEqual({ host: 'http://localhost:4200', headers: { authorization: 'Bearer my token' }, agent: undefined });
-    expect(createProxyAgent).toHaveBeenCalledWith(false, 'http://localhost:4200/endpoint', null, false);
-  });
-
-  it('should get network settings and proxy', async () => {
-    const mockResult: RegistrationSettingsDTO = {
-      status: 'REGISTERED',
-      host: 'http://localhost:4200/',
-      token: 'my token',
-      useProxy: true,
-      proxyUrl: 'https://proxy.url',
-      proxyUsername: 'user',
-      proxyPassword: 'pass',
-      acceptUnauthorized: false
-    } as RegistrationSettingsDTO;
-
-    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(mockResult);
-
-    const result = await service.getNetworkSettings('/endpoint');
-    expect(result).toEqual({ host: 'http://localhost:4200', headers: { authorization: 'Bearer my token' }, agent: undefined });
-    expect(createProxyAgent).toHaveBeenCalledWith(
-      true,
-      'http://localhost:4200/endpoint',
-      { url: 'https://proxy.url', username: 'user', password: 'pass' },
-      false
-    );
-  });
-
-  it('should get network settings and proxy without pass', async () => {
-    const mockResult: RegistrationSettingsDTO = {
-      status: 'REGISTERED',
-      host: 'http://localhost:4200/',
-      token: 'my token',
-      useProxy: true,
-      proxyUrl: 'https://proxy.url',
-      proxyUsername: 'user',
-      proxyPassword: '',
-      acceptUnauthorized: false
-    } as RegistrationSettingsDTO;
-
-    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(mockResult);
-
-    const result = await service.getNetworkSettings('/endpoint');
-    expect(result).toEqual({ host: 'http://localhost:4200', headers: { authorization: 'Bearer my token' }, agent: undefined });
-    expect(createProxyAgent).toHaveBeenCalledWith(
-      true,
-      'http://localhost:4200/endpoint',
-      { url: 'https://proxy.url', username: 'user', password: null },
-      false
-    );
-  });
 });
 
 describe('OIBus service should interact with OIA and', () => {
@@ -772,7 +626,7 @@ describe('OIBus service should interact with OIA and', () => {
     (createProxyAgent as jest.Mock).mockReturnValue(undefined);
     (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(mockResult);
     service = new OIBusService(oibusEngine, historyQueryEngine, repositoryService, encryptionService, logger);
-    service.getNetworkSettings = jest.fn().mockReturnValue({ host: 'http://localhost:4200', headers: {}, agent: undefined });
+    (getNetworkSettingsFromRegistration as jest.Mock).mockReturnValue({ host: 'http://localhost:4200', headers: {}, agent: undefined });
   });
 
   it('should check cancelled commands and return if no commands in OIBus', async () => {
@@ -867,7 +721,11 @@ describe('OIBus service should interact with OIA and', () => {
       timeout: 10000,
       agent: undefined
     });
-    expect(repositoryService.commandRepository.create).toHaveBeenCalledWith('id1', { type: command.type, version: command.version });
+    expect(repositoryService.commandRepository.create).toHaveBeenCalledWith('id1', {
+      type: command.type,
+      version: command.version,
+      assetId: command.assetId
+    });
   });
 
   it('should retrieve log error on bad fetch response', async () => {

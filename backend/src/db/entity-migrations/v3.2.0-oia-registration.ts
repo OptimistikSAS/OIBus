@@ -121,10 +121,12 @@ async function createCommandTable(knex: Knex): Promise<void> {
     createDefaultEntityFields(table);
     table.enum('type', OIBUS_COMMAND_TYPES).notNullable();
     table.enum('status', OIBUS_COMMAND_STATUS).notNullable();
+    table.boolean('ack').defaultTo(false).notNullable();
     table.string('retrieved_date');
     table.string('completed_date');
     table.string('result');
-    table.string('version');
+    table.string('upgrade_version');
+    table.string('upgrade_asset_id');
   });
 }
 

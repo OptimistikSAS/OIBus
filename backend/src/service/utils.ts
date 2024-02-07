@@ -5,7 +5,7 @@ import path from 'node:path';
 
 import minimist from 'minimist';
 import { DateTime } from 'luxon';
-import fetch from 'node-fetch';
+import fetch, { HeadersInit } from 'node-fetch';
 import AdmZip from 'adm-zip';
 
 import { CsvCharacter, DateTimeType, Instant, Interval, SerializationSettings, Timezone } from '../../../shared/model/types';
@@ -13,10 +13,12 @@ import pino from 'pino';
 import csv from 'papaparse';
 import https from 'node:https';
 import http from 'node:http';
-import { OIBusInfo } from '../../../shared/model/engine.model';
+import { OIBusInfo, RegistrationSettingsDTO } from '../../../shared/model/engine.model';
 import os from 'node:os';
 import { version } from '../../package.json';
 import { NorthCacheFiles } from '../../../shared/model/north-connector.model';
+import EncryptionService from './encryption.service';
+import { createProxyAgent } from './proxy.service';
 
 const COMPRESSION_LEVEL = 9;
 
@@ -395,7 +397,14 @@ export const convertDateTimeToInstant = (
   }
 };
 
-export const formatQueryParams = (startTime: any, endTime: any, queryParams: Array<{ key: string; value: string }>): string => {
+export const formatQueryParams = (
+  startTime: any,
+  endTime: any,
+  queryParams: Array<{
+    key: string;
+    value: string;
+  }>
+): string => {
   if (queryParams.length === 0) {
     return '';
   }
@@ -448,12 +457,20 @@ export const httpGetWithBody = (body: string, options: any): Promise<any> =>
     req.end();
   });
 
-export const downloadFile = async (url: string, filePath: string, timeout: number): Promise<void> => {
+export const downloadFile = async (
+  connectionSettings: { host: string; headers: HeadersInit; agent: any },
+  endpoint: string,
+  filePath: string,
+  timeout: number
+): Promise<void> => {
   let response;
 
   try {
-    response = await fetch(url, {
-      timeout: timeout
+    response = await fetch(`${connectionSettings.host}${endpoint}`, {
+      method: 'GET',
+      timeout,
+      agent: connectionSettings.agent,
+      headers: connectionSettings.headers
     });
   } catch (fetchError) {
     throw new Error(`Download failed: ${fetchError}`);
@@ -525,4 +542,42 @@ export const getFilesFiltered = async (
     }
   }
   return filteredFilenames;
+};
+
+export const getNetworkSettingsFromRegistration = async (
+  registrationSettings: RegistrationSettingsDTO | null,
+  endpoint: string,
+  encryptionService: EncryptionService
+): Promise<{ host: string; headers: HeadersInit; agent: any }> => {
+  if (!registrationSettings || registrationSettings.status !== 'REGISTERED') {
+    throw new Error('OIBus not registered in OIAnalytics');
+  }
+
+  if (registrationSettings.host.endsWith('/')) {
+    registrationSettings.host = registrationSettings.host.slice(0, registrationSettings.host.length - 1);
+  }
+
+  const headers: HeadersInit = {};
+
+  const token = await encryptionService.decryptText(registrationSettings.token!);
+  headers.authorization = `Bearer ${token}`;
+
+  const agent = createProxyAgent(
+    registrationSettings.useProxy,
+    `${registrationSettings.host}${endpoint}`,
+    registrationSettings.useProxy
+      ? {
+          url: registrationSettings.proxyUrl!,
+          username: registrationSettings.proxyUsername!,
+          password: registrationSettings.proxyPassword ? await encryptionService.decryptText(registrationSettings.proxyPassword) : null
+        }
+      : null,
+    registrationSettings.acceptUnauthorized
+  );
+
+  return {
+    host: registrationSettings.host,
+    headers,
+    agent
+  };
 };

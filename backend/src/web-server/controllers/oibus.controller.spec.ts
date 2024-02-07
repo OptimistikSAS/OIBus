@@ -225,36 +225,4 @@ describe('Oibus controller', () => {
     expect(ctx.badRequest).not.toHaveBeenCalled();
     expect(ctx.noContent).not.toHaveBeenCalled();
   });
-
-  it('should check for update', async () => {
-    ctx.app.oibusService.checkForUpdate.mockReturnValue({ version: '3.0' } as OIBusInfo);
-    await oibusController.checkForUpdate(ctx);
-    expect(ctx.app.oibusService.checkForUpdate).toHaveBeenCalled();
-    expect(ctx.ok).toHaveBeenCalledWith({ version: '3.0' });
-  });
-
-  it('should handle update check error', async () => {
-    (ctx.app.oibusService.checkForUpdate as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('update error');
-    });
-    await oibusController.checkForUpdate(ctx);
-    expect(ctx.app.oibusService.checkForUpdate).toHaveBeenCalled();
-    expect(ctx.internalServerError).toHaveBeenCalled();
-  });
-
-  it('should update', async () => {
-    await oibusController.update(ctx);
-    expect(ctx.app.oibusService.downloadUpdate).toHaveBeenCalled();
-    expect(ctx.app.oibusService.restartOIBus).toHaveBeenCalled();
-    expect(ctx.ok).toHaveBeenCalled();
-  });
-
-  it('should handle update error', async () => {
-    (ctx.app.oibusService.downloadUpdate as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('update error');
-    });
-    await oibusController.update(ctx);
-    expect(ctx.app.oibusService.downloadUpdate).toHaveBeenCalled();
-    expect(ctx.internalServerError).toHaveBeenCalled();
-  });
 });
