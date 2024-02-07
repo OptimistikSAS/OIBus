@@ -124,6 +124,7 @@ export default jest.fn().mockImplementation(() => ({
     cancel: jest.fn(),
     markAsCompleted: jest.fn(),
     markAsErrored: jest.fn(),
+    markAsRunning: jest.fn(),
     delete: jest.fn()
   },
   engineRepository: {

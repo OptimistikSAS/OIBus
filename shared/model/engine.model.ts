@@ -72,7 +72,7 @@ export interface EngineSettingsDTO extends BaseEntity {
   logParameters: LogSettings;
 }
 
-export const REGISTRATION_STATUS = ['NOT_REGISTERED', 'PENDING', 'REGISTERED'];
+export const REGISTRATION_STATUS = ['NOT_REGISTERED', 'PENDING', 'REGISTERED'] as const;
 export type RegistrationStatus = (typeof REGISTRATION_STATUS)[number];
 
 /**
