@@ -1,5 +1,4 @@
 import { EngineSettingsCommandDTO, EngineSettingsDTO, OIBusInfo } from '../../../../shared/model/engine.model';
-import { OibusUpdateDTO } from '../../../../shared/model/update.model';
 import { KoaContext } from '../koa';
 import AbstractController from './abstract.controller';
 import { getOIBusInfo } from '../../service/utils';
@@ -93,26 +92,5 @@ export default class OibusController extends AbstractController {
       }
     }
     return ctx.badRequest();
-  }
-
-  async checkForUpdate(ctx: KoaContext<void, OibusUpdateDTO>): Promise<void> {
-    try {
-      const data = await ctx.app.oibusService.checkForUpdate();
-      ctx.ok(data);
-    } catch (error) {
-      ctx.app.logger.error(error);
-      return ctx.internalServerError();
-    }
-  }
-
-  async update(ctx: KoaContext<void, void>): Promise<void> {
-    try {
-      await ctx.app.oibusService.downloadUpdate();
-      await ctx.app.oibusService.restartOIBus();
-      ctx.ok();
-    } catch (error) {
-      ctx.app.logger.error(error);
-      return ctx.internalServerError();
-    }
   }
 }

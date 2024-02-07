@@ -1,9 +1,7 @@
-import fs from 'node:fs/promises';
-import fetch, { HeadersInit } from 'node-fetch';
+import fetch from 'node-fetch';
 import OIBusEngine from '../engine/oibus-engine';
 import HistoryQueryEngine from '../engine/history-query-engine';
-import { OibusUpdateCheckResponse, OibusUpdateDTO } from '../../../shared/model/update.model';
-import { downloadFile, generateRandomId, getOIBusInfo, unzip } from './utils';
+import { generateRandomId, getNetworkSettingsFromRegistration, getOIBusInfo } from './utils';
 import RepositoryService from './repository.service';
 import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../shared/model/engine.model';
 import EncryptionService from './encryption.service';
@@ -16,9 +14,6 @@ import { OIBusCommand, OIBusCommandDTO } from '../../../shared/model/command.mod
 const CHECK_TIMEOUT = 10_000;
 
 export default class OIBusService {
-  private static UPDATE_URL = 'http://localhost:3333/api/update';
-  private static DOWNLOAD_URL = 'http://localhost:3333/api/oibus';
-  private static DOWNLOAD_TIMEOUT = 60000;
   private intervalCheckRegistration: NodeJS.Timeout | null = null;
   private intervalCheckCommands: NodeJS.Timeout | null = null;
   private ongoingCheckRegistration = false;
@@ -206,7 +201,7 @@ export default class OIBusService {
 
       const responseData: { status: string; expired: boolean; accessToken: string } = await response.json();
       if (responseData.status !== 'COMPLETED') {
-        this.logger.error(`Registration not completed. Status: ${responseData.status}`);
+        this.logger.warn(`Registration not completed. Status: ${responseData.status}`);
       } else {
         await this.activateRegistration(DateTime.now().toUTC().toISO()!, responseData.accessToken);
         this.logger.info(`OIBus registered on ${registrationSettings.host}`);
@@ -225,6 +220,7 @@ export default class OIBusService {
     this.ongoingCheckCommands = true;
     const engineSettings = this.repositoryService.engineRepository.getEngineSettings()!;
 
+    // TODO: send non ack cancelled / errored / completed commands
     await this.checkPendingCommands(engineSettings.id);
     await this.retrieveCommands(engineSettings.id);
     this.ongoingCheckCommands = false;
@@ -241,7 +237,8 @@ export default class OIBusService {
       endpoint += `ids=${command.id}&`;
     }
     endpoint = endpoint.slice(0, endpoint.length - 1);
-    const connectionSettings = await this.getNetworkSettings(endpoint);
+    const registrationSettings = this.getRegistrationSettings();
+    const connectionSettings = await getNetworkSettingsFromRegistration(registrationSettings, endpoint, this.encryptionService);
     let response;
     const url = `${connectionSettings.host}${endpoint}`;
     try {
@@ -272,7 +269,8 @@ export default class OIBusService {
 
   async retrieveCommands(oibusId: string): Promise<void> {
     const endpoint = `/api/oianalytics/oibus-commands/${oibusId}/retrieve-commands`;
-    const connectionSettings = await this.getNetworkSettings(endpoint);
+    const registrationSettings = this.getRegistrationSettings();
+    const connectionSettings = await getNetworkSettingsFromRegistration(registrationSettings, endpoint, this.encryptionService);
     let response;
     const url = `${connectionSettings.host}${endpoint}`;
     try {
@@ -296,85 +294,13 @@ export default class OIBusService {
         // TODO: add to queue
         const creationCommand: OIBusCommand = {
           type: command.type,
-          version: command.version
+          version: command.version,
+          assetId: command.assetId
         };
         this.repositoryService.commandRepository.create(command.id, creationCommand);
       }
     } catch (fetchError) {
       this.logger.error(`Error while retrieving commands on ${url}. ${fetchError}`);
     }
-  }
-
-  async checkForUpdate(): Promise<OibusUpdateDTO> {
-    const oibusInfo = getOIBusInfo();
-    let response;
-
-    try {
-      const url = `${OIBusService.UPDATE_URL}?platform=${oibusInfo.platform}&architecture=${oibusInfo.architecture}`;
-      response = await fetch(url, {
-        timeout: CHECK_TIMEOUT
-      });
-    } catch (fetchError) {
-      throw new Error(`Update check failed: ${fetchError}`);
-    }
-
-    if (!response.ok) {
-      throw new Error(`Update check failed with status code ${response.status} and message: ${response.statusText}`);
-    }
-
-    const responseData = (await response.json()) as OibusUpdateCheckResponse;
-    return {
-      hasAvailableUpdate: responseData.latestVersion !== oibusInfo.version,
-      actualVersion: oibusInfo.version,
-      latestVersion: responseData.latestVersion,
-      changelog: responseData.changelog
-    };
-  }
-
-  async downloadUpdate(): Promise<void> {
-    const oibusInfo = getOIBusInfo();
-    const url = `${OIBusService.DOWNLOAD_URL}?platform=${oibusInfo.platform}&architecture=${oibusInfo.architecture}`;
-    const filename = `oibus-${oibusInfo.platform}_${oibusInfo.architecture}.zip`;
-
-    await downloadFile(url, filename, OIBusService.DOWNLOAD_TIMEOUT);
-    await unzip(filename, '.');
-    await fs.unlink(filename);
-  }
-
-  async getNetworkSettings(endpoint: string): Promise<{ host: string; headers: HeadersInit; agent: any }> {
-    const headers: HeadersInit = {};
-
-    const registrationSettings = this.getRegistrationSettings();
-    if (!registrationSettings || registrationSettings.status !== 'REGISTERED') {
-      throw new Error('OIBus not registered in OIAnalytics');
-    }
-
-    if (registrationSettings.host.endsWith('/')) {
-      registrationSettings.host = registrationSettings.host.slice(0, registrationSettings.host.length - 1);
-    }
-
-    const token = await this.encryptionService.decryptText(registrationSettings.token!);
-    headers.authorization = `Bearer ${token}`;
-
-    const agent = createProxyAgent(
-      registrationSettings.useProxy,
-      `${registrationSettings.host}${endpoint}`,
-      registrationSettings.useProxy
-        ? {
-            url: registrationSettings.proxyUrl!,
-            username: registrationSettings.proxyUsername!,
-            password: registrationSettings.proxyPassword
-              ? await this.encryptionService.decryptText(registrationSettings.proxyPassword)
-              : null
-          }
-        : null,
-      registrationSettings.acceptUnauthorized
-    );
-
-    return {
-      host: registrationSettings.host,
-      headers,
-      agent
-    };
   }
 }

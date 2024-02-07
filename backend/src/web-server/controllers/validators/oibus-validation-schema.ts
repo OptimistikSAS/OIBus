@@ -1,5 +1,5 @@
 import Joi from 'joi';
-import { validateCronExpression } from '../service/utils';
+import { validateCronExpression } from '../../../service/utils';
 
 const scanModeSchema: Joi.ObjectSchema = Joi.object({
   name: Joi.string().required(),
