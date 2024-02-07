@@ -3,8 +3,11 @@ import Joi from 'joi';
 import ScanModeController from './scan-mode.controller';
 import JoiValidator from './validators/joi.validator';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
+import { validateCronExpression } from '../../service/utils';
+import { ValidatedCronExpression } from '../../../../shared/model/scan-mode.model';
 
 jest.mock('./validators/joi.validator');
+jest.mock('../../service/utils');
 
 const validator = new JoiValidator();
 const schema = Joi.object({});
@@ -55,6 +58,42 @@ describe('Scan mode controller', () => {
 
     expect(ctx.app.repositoryService.scanModeRepository.getScanMode).toHaveBeenCalledWith(id);
     expect(ctx.notFound).toHaveBeenCalledWith();
+  });
+
+  it('verifyScanMode() should return validated cron expression', async () => {
+    const cron = '* * * * * *';
+    const validatedCronExpression: ValidatedCronExpression = { nextExecutions: [], humanReadableForm: '' };
+    ctx.request.body = { cron };
+    (validateCronExpression as jest.Mock).mockReturnValue(validatedCronExpression);
+
+    await scanModeController.verifyScanMode(ctx);
+
+    expect(ctx.ok).toHaveBeenCalledWith(validatedCronExpression);
+  });
+
+  it('verifyScanMode() should return bad request for no cron expression', async () => {
+    ctx.request.body = {};
+    await scanModeController.verifyScanMode(ctx);
+
+    expect(ctx.badRequest).toHaveBeenCalledWith('Cron expression is required');
+
+    ctx.request = {};
+    await scanModeController.verifyScanMode(ctx);
+
+    expect(ctx.badRequest).toHaveBeenCalledWith('Cron expression is required');
+  });
+
+  it('verifyScanMode() should return bad request for invalid cron expression', async () => {
+    const cron = '* * *';
+    const validationError = new Error('invalid cron expression');
+    ctx.request.body = { cron };
+    (validateCronExpression as jest.Mock).mockImplementationOnce(() => {
+      throw validationError;
+    });
+
+    await scanModeController.verifyScanMode(ctx);
+
+    expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
   });
 
   it('createScanMode() should create scan mode', async () => {

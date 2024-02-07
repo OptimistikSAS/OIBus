@@ -25,7 +25,8 @@ import {
   httpGetWithBody,
   logQuery,
   persistResults,
-  getFilesFiltered
+  getFilesFiltered,
+  validateCronExpression
 } from './utils';
 import csv from 'papaparse';
 import pino from 'pino';
@@ -35,6 +36,7 @@ import Stream from 'node:stream';
 import http from 'node:http';
 import https from 'node:https';
 import os from 'node:os';
+import cronstrue from 'cronstrue';
 
 jest.mock('node:zlib');
 jest.mock('node:fs/promises');
@@ -994,6 +996,65 @@ describe('Service utils', () => {
           size: 60
         }
       ]);
+    });
+  });
+
+  describe('validateCronExpression', () => {
+    beforeEach(() => {
+      jest.resetAllMocks();
+      jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    });
+
+    it('should properly validate a cron expression', () => {
+      const result = validateCronExpression('* * * * * *');
+      const expectedResult = {
+        humanReadableForm: 'Every second, every minute, every hour, every day',
+        nextExecutions: ['2020-02-02T02:02:03.000Z', '2020-02-02T02:02:04.000Z', '2020-02-02T02:02:05.000Z']
+      };
+      expect(result).toEqual(expectedResult);
+    });
+
+    it('should properly validate a cron expression', () => {
+      const result = validateCronExpression('0 */10 * * * *');
+      const expectedResult = {
+        humanReadableForm: 'Every 10 minutes, every hour, every day',
+        nextExecutions: ['2020-02-02T02:10:00.000Z', '2020-02-02T02:20:00.000Z', '2020-02-02T02:30:00.000Z']
+      };
+      expect(result).toEqual(expectedResult);
+    });
+
+    it('should throw an error for too many fields', () => {
+      expect(() => validateCronExpression('* * * * * * 2024')).toThrow(
+        'Too many fields. Only seconds, minutes, hours, day of month, month and day of week are supported.'
+      );
+    });
+
+    it('should throw an error for non standard characters', () => {
+      expect(() => validateCronExpression('* * * * 5L')).toThrow('Expression contains non-standard characters: L');
+      expect(() => validateCronExpression('* * * W * *')).toThrow('Expression contains non-standard characters: W');
+      expect(() => validateCronExpression('* * * * * 5#3')).toThrow('Expression contains non-standard characters: #');
+      expect(() => validateCronExpression('? ? * * * *')).toThrow('Expression contains non-standard characters: ?');
+      expect(() => validateCronExpression('H * * * *')).toThrow('Expression contains non-standard characters: H');
+    });
+
+    it('should throw an error for invalid cron expression caught by cronstrue', () => {
+      expect(() => validateCronExpression('0 35 10 19 01')).toThrow('Hours part must be >= 0 and <= 23');
+      expect(() => validateCronExpression('0 23 10 19 01')).toThrow('Month part must be >= 1 and <= 12');
+      expect(() => validateCronExpression('0 23 10 12 8')).toThrow('DOW part must be >= 0 and <= 6');
+    });
+
+    it('should throw an error for invalid cron expression caught by cron-parser', () => {
+      expect(() => validateCronExpression('0 23 10 12 6/')).toThrow('Constraint error, cannot repeat at every 0 time.');
+      expect(() => validateCronExpression('0 23 10 12 6/-')).toThrow('Constraint error, cannot repeat at every NaN time.');
+      expect(() => validateCronExpression('0 23 10 12 6/-')).toThrow('Constraint error, cannot repeat at every NaN time.');
+      expect(() => validateCronExpression('0 23 10-1 12 6/1')).toThrow('Invalid range: 10-1');
+    });
+
+    it('should catch unexpected errors', () => {
+      jest.spyOn(cronstrue, 'toString').mockImplementation(() => {
+        throw null;
+      });
+      expect(() => validateCronExpression('* * * * * *')).toThrow('Invalid cron expression');
     });
   });
 });

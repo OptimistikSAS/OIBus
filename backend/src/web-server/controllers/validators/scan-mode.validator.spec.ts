@@ -41,7 +41,7 @@ const dataProviders: DataProvider[] = [
       name: 'valid',
       description: 'valid',
       description1: 'valid',
-      cron: 'valid'
+      cron: '* * * * * *'
     },
     isValid: false,
     errorMessage: '"description1" is not allowed'
@@ -50,10 +50,19 @@ const dataProviders: DataProvider[] = [
     dto: {
       name: 'valid',
       description: 'valid',
-      cron: 'valid'
+      cron: '* * * * * *'
     },
     isValid: true,
     errorMessage: null
+  },
+  {
+    dto: {
+      name: 'valid',
+      description: 'valid',
+      cron: '* * * * * *L'
+    },
+    isValid: false,
+    errorMessage: 'Expression contains non-standard characters: L'
   }
 ];
 

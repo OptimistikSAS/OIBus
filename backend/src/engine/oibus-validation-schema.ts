@@ -1,9 +1,10 @@
 import Joi from 'joi';
+import { validateCronExpression } from '../service/utils';
 
 const scanModeSchema: Joi.ObjectSchema = Joi.object({
   name: Joi.string().required(),
   description: Joi.string().required().allow(null, ''),
-  cron: Joi.string().required()
+  cron: Joi.string().custom(cronValidator).required()
 });
 
 const certificateSchema: Joi.ObjectSchema = Joi.object({
@@ -92,5 +93,14 @@ const logSchema: Joi.ObjectSchema = Joi.object({
     })
   )
 });
+
+function cronValidator(value: string, helper: Joi.CustomHelpers) {
+  try {
+    validateCronExpression(value);
+    return true;
+  } catch (error: any) {
+    return helper.message({ custom: error.message });
+  }
+}
 
 export { scanModeSchema, certificateSchema, externalSourceSchema, engineSchema, ipFilterSchema, userSchema, historyQuerySchema, logSchema };
