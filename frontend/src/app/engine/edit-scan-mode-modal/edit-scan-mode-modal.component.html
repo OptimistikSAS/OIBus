@@ -19,7 +19,14 @@
     <div class="form-group">
       <label class="form-label" for="cron" translate="engine.scan-mode.cron"></label>
       <input formControlName="cron" id="cron" class="form-control" />
-      <val-errors controlName="cron"></val-errors>
+      <val-errors *ngIf="this.form.get(['cron'])!.errors" controlName="cron"></val-errors>
+      <div *ngIf="this.cronValidationResponse" class="mt-1">
+        <label translate="engine.scan-mode.cron-meaning"></label>
+        <div>{{humanReadableCron}}</div>
+
+        <label translate="engine.scan-mode.cron-next-occurrences"></label>
+        <div *ngFor="let date of nextCronExecutions">{{date | datetime:'mediumWithSecondsLocalized'}}</div>
+      </div>
     </div>
   </form>
 </div>

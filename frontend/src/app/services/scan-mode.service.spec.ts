@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ScanModeService } from './scan-mode.service';
-import { ScanModeCommandDTO, ScanModeDTO } from '../../../../shared/model/scan-mode.model';
+import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '../../../../shared/model/scan-mode.model';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('ScanModeService', () => {
@@ -74,5 +74,15 @@ describe('ScanModeService', () => {
     const testRequest = http.expectOne({ method: 'DELETE', url: '/api/scan-modes/id1' });
     testRequest.flush(null);
     expect(done).toBe(true);
+  });
+
+  it('should verify a cron expression', () => {
+    let expectedValidatedCronExpression: ValidatedCronExpression | null = null;
+    const validatedCronExpression: ValidatedCronExpression = { nextExecutions: [], humanReadableForm: '' };
+
+    service.verifyCron('* * * * * *').subscribe(c => (expectedValidatedCronExpression = c));
+
+    http.expectOne({ url: '/api/scan-modes/verify', method: 'POST' }).flush(validatedCronExpression);
+    expect(expectedValidatedCronExpression!).toEqual(validatedCronExpression);
   });
 });

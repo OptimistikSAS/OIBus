@@ -77,8 +77,8 @@
   <ng-template valError="invalidJson">
     <span translate="common.validation-errors.invalid-json"></span>
   </ng-template>
-  <ng-template valError="cronError">
-    <span translate="common.validation-errors.cron-error"></span>
+  <ng-template valError="cronErrorMessage" let-error="error">
+    <span>{{ error }}</span>
   </ng-template>
   <ng-template valError="mustBeUnique">
     <span translate="common.validation-errors.must-be-unique"></span>

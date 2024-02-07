@@ -1,18 +1,20 @@
 import { Component } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { FormBuilder, Validators } from '@angular/forms';
-import { Observable, switchMap } from 'rxjs';
+import { AbstractControl, FormBuilder, ValidationErrors, Validators } from '@angular/forms';
+import { Observable, firstValueFrom, switchMap } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { ScanModeService } from '../../services/scan-mode.service';
-import { ScanModeCommandDTO, ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
+import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '../../../../../shared/model/scan-mode.model';
 import { formDirectives } from '../../shared/form-directives';
+import { NgFor, NgIf } from '@angular/common';
+import { DatetimePipe } from '../../shared/datetime.pipe';
 
 @Component({
   selector: 'oib-edit-scan-mode-modal',
   templateUrl: './edit-scan-mode-modal.component.html',
   styleUrl: './edit-scan-mode-modal.component.scss',
-  imports: [...formDirectives, TranslateModule, SaveButtonComponent],
+  imports: [...formDirectives, TranslateModule, SaveButtonComponent, NgIf, NgFor, DatetimePipe],
   standalone: true
 })
 export class EditScanModeModalComponent {
@@ -22,8 +24,9 @@ export class EditScanModeModalComponent {
   form = this.fb.group({
     name: ['', Validators.required],
     description: '',
-    cron: ['', Validators.required]
+    cron: ['', Validators.required, this.cronValidator()]
   });
+  cronValidationResponse: ValidatedCronExpression | undefined;
 
   constructor(
     private modal: NgbActiveModal,
@@ -78,5 +81,35 @@ export class EditScanModeModalComponent {
     obs.pipe(this.state.pendingUntilFinalization()).subscribe(scanMode => {
       this.modal.close(scanMode);
     });
+  }
+
+  /**
+   * Returns the human-readable version of the cron expression.
+   */
+  get humanReadableCron() {
+    return this.cronValidationResponse?.humanReadableForm ?? '';
+  }
+
+  /**
+   * Returns the next 3 cron executions.
+   */
+  get nextCronExecutions() {
+    return this.cronValidationResponse?.nextExecutions ?? [];
+  }
+
+  /**
+   * Custom validator for the cron field.
+   */
+  cronValidator() {
+    return async (control: AbstractControl): Promise<ValidationErrors | null> => {
+      try {
+        const response = await firstValueFrom(this.scanModeService.verifyCron(control.value));
+        this.cronValidationResponse = response;
+        return null;
+      } catch (error: any) {
+        this.cronValidationResponse = undefined;
+        return { cronErrorMessage: error.error.message };
+      }
+    };
   }
 }

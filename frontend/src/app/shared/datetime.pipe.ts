@@ -8,6 +8,7 @@ const FRIENDLY_FORMATS = {
   shortWithSeconds: 'F',
   medium: 'ff',
   mediumWithSeconds: 'FF',
+  mediumWithSecondsLocalized: 'FFF',
   shortDate: 'D',
   mediumDate: 'DD',
   time: 't',
