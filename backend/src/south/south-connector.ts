@@ -140,6 +140,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
       this.cronByScanModeIds.delete(scanMode.id);
     }
     this.logger.debug(`Creating South cron job for scan mode "${scanMode.name}" (${scanMode.cron})`);
+
     const job = new CronJob(
       scanMode.cron,
       () => {

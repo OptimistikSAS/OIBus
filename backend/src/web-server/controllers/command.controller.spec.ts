@@ -15,7 +15,9 @@ const oibusCommand: OIBusCommandDTO = {
   id: 'id1',
   type: 'UPGRADE',
   version: 'v3.2.0',
-  status: 'ERRORED'
+  assetId: 'assetId',
+  status: 'ERRORED',
+  ack: true
 };
 const page = {
   content: [oibusCommand],

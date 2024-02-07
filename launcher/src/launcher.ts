@@ -9,6 +9,8 @@ const STARTED_DELAY = 30000;
 export default class Launcher {
   private updated: boolean = false;
   private startedTimeout: NodeJS.Timeout | null = null;
+  private child: ChildProcessWithoutNullStreams | null = null;
+  private stopping: boolean = false;
 
   constructor(
     private workDir: string,
@@ -17,9 +19,6 @@ export default class Launcher {
     private config: string,
     private check: boolean
   ) {}
-
-  private child: ChildProcessWithoutNullStreams | null = null;
-  private stopping = false;
 
   start(): void {
     const oibusPath = this.getOibusPath();
@@ -36,11 +35,11 @@ export default class Launcher {
     this.child = spawn(oibusPath, args, { cwd: this.workDir });
 
     this.child.stdout.on('data', data => {
-      console.info(`OIBus stdout: "${data.toString()}"`);
+      console.info(`OIBus stdout: ${data.toString()}`);
     });
 
     this.child.stderr.on('data', data => {
-      console.error(`OIBus stderr: "${data.toString()}"`);
+      console.error(`OIBus stderr: ${data.toString()}`);
     });
 
     this.child.on('close', code => {
@@ -51,7 +50,6 @@ export default class Launcher {
         this.stop();
         this.rollback();
         this.start();
-
         return;
       }
 
@@ -109,6 +107,7 @@ export default class Launcher {
 
     console.log(`Backup OIBus: ${oibusPath} -> ${oibusBackupPath}`);
     fs.renameSync(oibusPath, oibusBackupPath);
+    // TODO: backup data-folder
 
     console.log(`Updating OIBus: ${oibusUpdatePath} -> ${oibusPath}`);
     fs.renameSync(oibusUpdatePath, oibusPath);
@@ -122,6 +121,7 @@ export default class Launcher {
 
     console.log(`Rollback OIBus: ${oibusBackupPath} -> ${oibusPath}`);
     fs.renameSync(oibusBackupPath, oibusPath);
+    // TODO: data-folder
   }
 
   handleOibusStarted(): void {

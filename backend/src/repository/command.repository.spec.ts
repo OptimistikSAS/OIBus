@@ -19,19 +19,23 @@ const expectedCommands: Array<OIBusCommandDTO> = [
     id: 'id1',
     type: 'UPGRADE',
     status: 'COMPLETED',
+    ack: true,
     creationDate: '2023-01-01T12:00:00Z',
     completedDate: '2023-01-01T12:00:00Z',
     result: 'ok',
-    version: '3.2.0'
+    version: '3.2.0',
+    assetId: 'assetId'
   },
   {
     id: 'id2',
     type: 'UPGRADE',
     status: 'PENDING',
+    ack: false,
     creationDate: '2023-01-01T12:00:00Z',
     completedDate: '2023-01-01T12:00:00Z',
     result: 'ok',
-    version: '3.2.0'
+    version: '3.2.0',
+    assetId: 'assetId'
   }
 ];
 
@@ -51,7 +55,9 @@ describe('Command repository', () => {
   it('should properly list commands', () => {
     all.mockReturnValueOnce(expectedCommands);
     const results = repository.findAll();
-    const query = `SELECT id, type, status, retrieved_date as retrievedDate, completed_date as completedDate, result, version FROM commands;`;
+    const query =
+      `SELECT id, type, status, ack, retrieved_date as retrievedDate, completed_date as completedDate, result, ` +
+      `upgrade_version as version, upgrade_asset_id as assetId FROM commands;`;
     expect(database.prepare).toHaveBeenCalledWith(query);
     expect(results).toEqual(expectedCommands);
   });
@@ -65,9 +71,9 @@ describe('Command repository', () => {
     get.mockReturnValueOnce({ count: 2 });
     const results = repository.searchCommandsPage(searchCriteria, 0);
     const query =
-      `SELECT id, type, status, retrieved_date as retrievedDate, completed_date as completedDate, ` +
-      `result, version FROM commands WHERE id IS NOT NULL AND type IN (?) AND status IN (?) ` +
-      `ORDER BY created_at DESC LIMIT 50 OFFSET ?;`;
+      `SELECT id, type, status, ack, retrieved_date as retrievedDate, completed_date as completedDate, ` +
+      `result, upgrade_version as version, upgrade_asset_id as assetId FROM commands WHERE id IS NOT NULL AND ` +
+      `type IN (?) AND status IN (?) ORDER BY created_at DESC LIMIT 50 OFFSET ?;`;
     expect(database.prepare).toHaveBeenCalledWith(query);
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT COUNT(*) as count FROM commands WHERE id IS NOT NULL AND type IN (?) AND status IN (?)'
@@ -83,8 +89,9 @@ describe('Command repository', () => {
     };
     const results = repository.searchCommandsList(searchCriteria);
     const query =
-      `SELECT id, type, status, retrieved_date as retrievedDate, completed_date as completedDate, ` +
-      `result, version FROM commands WHERE id IS NOT NULL AND type IN (?) AND status IN (?) ORDER BY created_at DESC;`;
+      `SELECT id, type, status, ack, retrieved_date as retrievedDate, completed_date as completedDate, ` +
+      `result, upgrade_version as version, upgrade_asset_id as assetId FROM commands WHERE id IS NOT NULL AND ` +
+      `type IN (?) AND status IN (?) ORDER BY created_at DESC;`;
     expect(database.prepare).toHaveBeenCalledWith(query);
     expect(results).toEqual(expectedCommands);
   });
@@ -94,16 +101,18 @@ describe('Command repository', () => {
       id: 'id1',
       type: 'UPGRADE',
       status: 'COMPLETED',
+      ack: true,
       creationDate: '2023-01-01T12:00:00Z',
       completedDate: '2023-01-01T12:00:00Z',
       result: 'ok',
-      version: '3.2.0'
+      version: '3.2.0',
+      assetId: 'assetId'
     };
     get.mockReturnValueOnce(expectedValue);
     const result = repository.findById('id2');
     const query =
-      `SELECT id, type, status, retrieved_date as retrievedDate, completed_date as completedDate, result, ` +
-      `version FROM commands WHERE id = ?;`;
+      `SELECT id, type, status, ack, retrieved_date as retrievedDate, completed_date as completedDate, result, ` +
+      `upgrade_version as version, upgrade_asset_id as assetId FROM commands WHERE id = ?;`;
     expect(database.prepare).toHaveBeenCalledWith(query);
     expect(get).toHaveBeenCalledWith('id2');
     expect(result).toEqual(expectedValue);
@@ -113,30 +122,22 @@ describe('Command repository', () => {
     run.mockReturnValueOnce({ lastInsertRowid: 1 });
     const command: OIBusCommand = {
       type: 'UPGRADE',
-      version: '3.2.0'
+      version: '3.2.0',
+      assetId: 'assetId'
     };
     repository.create('id1', command);
-    const insertQuery = `INSERT INTO ${COMMANDS_TABLE} (id, retrieved_date, type, status, version) VALUES (?, ?, ?, ?, ?);`;
+    const insertQuery =
+      `INSERT INTO ${COMMANDS_TABLE} (id, retrieved_date, type, status, ack, upgrade_version, ` +
+      `upgrade_asset_id) VALUES (?, ?, ?, ?, ?, ?, ?);`;
     expect(database.prepare).toHaveBeenCalledWith(insertQuery);
-    expect(run).toHaveBeenCalledWith('id1', nowDateString, command.type, 'PENDING', command.version);
-  });
-
-  it('should update a command', () => {
-    const command: OIBusCommand = {
-      type: 'UPGRADE',
-      version: '3.2.0'
-    };
-    repository.update('id1', command);
-    const updateQuery = `UPDATE commands SET version = ? WHERE id = ?;`;
-    expect(database.prepare).toHaveBeenCalledWith(updateQuery);
-    expect(run).toHaveBeenCalledWith(command.version, 'id1');
+    expect(run).toHaveBeenCalledWith('id1', nowDateString, command.type, 'PENDING', 0, command.version, command.assetId);
   });
 
   it('should mark a command as COMPLETED', () => {
-    repository.markAsCompleted('id1', 'ok');
-    const query = `UPDATE ${COMMANDS_TABLE} SET status = 'COMPLETED', result = ? WHERE id = ?;`;
+    repository.markAsCompleted('id1', nowDateString, 'ok');
+    const query = `UPDATE ${COMMANDS_TABLE} SET status = 'COMPLETED', completed_date = ?, result = ? WHERE id = ?;`;
     expect(database.prepare).toHaveBeenCalledWith(query);
-    expect(run).toHaveBeenCalledWith('ok', 'id1');
+    expect(run).toHaveBeenCalledWith(nowDateString, 'ok', 'id1');
   });
 
   it('should mark a command as ERRORED', () => {
@@ -144,6 +145,20 @@ describe('Command repository', () => {
     const query = `UPDATE ${COMMANDS_TABLE} SET status = 'ERRORED', result = ? WHERE id = ?;`;
     expect(database.prepare).toHaveBeenCalledWith(query);
     expect(run).toHaveBeenCalledWith('not ok', 'id1');
+  });
+
+  it('should mark a command as RUNNING', () => {
+    repository.markAsRunning('id1');
+    const query = `UPDATE ${COMMANDS_TABLE} SET status = 'RUNNING' WHERE id = ?;`;
+    expect(database.prepare).toHaveBeenCalledWith(query);
+    expect(run).toHaveBeenCalledWith('id1');
+  });
+
+  it('should mark a command as Acknowledged', () => {
+    repository.markAsAcknowledged('id1');
+    const query = `UPDATE ${COMMANDS_TABLE} SET ack = 1 WHERE id = ?;`;
+    expect(database.prepare).toHaveBeenCalledWith(query);
+    expect(run).toHaveBeenCalledWith('id1');
   });
 
   it('should cancel a command', () => {

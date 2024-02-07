@@ -15,6 +15,7 @@ import HistoryQueryService from './service/history-query.service';
 import OIBusService from './service/oibus.service';
 import { migrateCrypto, migrateEntities, migrateLogsAndMetrics, migrateSouthCache } from './db/migration-service';
 import HomeMetricsService from './service/home-metrics.service';
+import CommandService from './service/command.service';
 
 const CONFIG_DATABASE = 'oibus.db';
 const CRYPTO_DATABASE = 'crypto.db';
@@ -25,6 +26,8 @@ const LOG_DB_NAME = 'logs.db';
 
 (async () => {
   const { configFile, check } = getCommandLineArguments();
+
+  const binaryFolder = process.cwd();
 
   const baseDir = path.resolve(configFile);
   console.info(`Starting OIBus with base directory ${baseDir}...`);
@@ -126,6 +129,9 @@ const LOG_DB_NAME = 'logs.db';
   );
   await server.init();
 
+  const commandService = new CommandService(oibusSettings.id, repositoryService, encryptionService, loggerService.logger!, binaryFolder);
+  commandService.start();
+
   let stopping = false;
   // Catch Ctrl+C and properly stop the Engine
   process.on('SIGINT', async () => {
@@ -133,6 +139,7 @@ const LOG_DB_NAME = 'logs.db';
     console.info('SIGINT (Ctrl+C) received. Stopping everything.');
     stopping = true;
     await oibusService.stopOIBus();
+    await commandService.stop();
     await server.stop();
     loggerService.stop();
     console.info('OIBus stopped');

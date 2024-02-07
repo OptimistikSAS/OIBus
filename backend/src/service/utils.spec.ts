@@ -14,6 +14,7 @@ import {
   createFolder,
   delay,
   dirSize,
+  downloadFile,
   filesExists,
   formatInstant,
   formatQueryParams,
@@ -21,14 +22,14 @@ import {
   generateRandomId,
   generateReplacementParameters,
   getCommandLineArguments,
+  getFilesFiltered,
+  getNetworkSettingsFromRegistration,
   getOIBusInfo,
+  getPlatformFromOsType,
   httpGetWithBody,
   logQuery,
   persistResults,
-  unzip,
-  downloadFile,
-  getPlatformFromOsType,
-  getFilesFiltered
+  unzip
 } from './utils';
 import csv from 'papaparse';
 import pino from 'pino';
@@ -40,6 +41,10 @@ import Stream from 'node:stream';
 import http from 'node:http';
 import https from 'node:https';
 import os from 'node:os';
+import { RegistrationSettingsDTO } from '../../../shared/model/engine.model';
+import { createProxyAgent } from './proxy.service';
+import EncryptionService from './encryption.service';
+import EncryptionServiceMock from '../tests/__mocks__/encryption-service.mock';
 
 jest.mock('node:zlib');
 jest.mock('node:fs/promises');
@@ -51,10 +56,96 @@ jest.mock('node-fetch');
 const { Response } = jest.requireActual('node-fetch');
 jest.mock('node:http', () => ({ request: jest.fn() }));
 jest.mock('node:https', () => ({ request: jest.fn() }));
+jest.mock('./proxy.service.ts');
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
-
 describe('Service utils', () => {
+  describe('getNetworkSettings', () => {
+    const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
+
+    it('should get network settings and throw error if not registered', async () => {
+      await expect(
+        getNetworkSettingsFromRegistration(
+          {
+            status: 'PENDING'
+          } as RegistrationSettingsDTO,
+          '/api/oianalytics/oibus-commands/${oibusId}/check',
+          encryptionService
+        )
+      ).rejects.toThrow('OIBus not registered in OIAnalytics');
+    });
+
+    it('should get network settings', async () => {
+      const settings: RegistrationSettingsDTO = {
+        status: 'REGISTERED',
+        host: 'http://localhost:4200/',
+        token: 'my token',
+        useProxy: false,
+        acceptUnauthorized: false
+      } as RegistrationSettingsDTO;
+
+      const result = await getNetworkSettingsFromRegistration(settings, '/endpoint', encryptionService);
+      expect(result).toEqual({
+        host: 'http://localhost:4200',
+        headers: { authorization: 'Bearer my token' },
+        agent: undefined
+      });
+      expect(createProxyAgent).toHaveBeenCalledWith(false, 'http://localhost:4200/endpoint', null, false);
+    });
+
+    it('should get network settings and proxy', async () => {
+      const settings: RegistrationSettingsDTO = {
+        status: 'REGISTERED',
+        host: 'http://localhost:4200/',
+        token: 'my token',
+        useProxy: true,
+        proxyUrl: 'https://proxy.url',
+        proxyUsername: 'user',
+        proxyPassword: 'pass',
+        acceptUnauthorized: false
+      } as RegistrationSettingsDTO;
+
+      const result = await getNetworkSettingsFromRegistration(settings, '/endpoint', encryptionService);
+      expect(result).toEqual({
+        host: 'http://localhost:4200',
+        headers: { authorization: 'Bearer my token' },
+        agent: undefined
+      });
+      expect(createProxyAgent).toHaveBeenCalledWith(
+        true,
+        'http://localhost:4200/endpoint',
+        { url: 'https://proxy.url', username: 'user', password: 'pass' },
+        false
+      );
+    });
+
+    it('should get network settings and proxy without pass', async () => {
+      const settings: RegistrationSettingsDTO = {
+        status: 'REGISTERED',
+        host: 'http://localhost:4200/',
+        token: 'my token',
+        useProxy: true,
+        proxyUrl: 'https://proxy.url',
+        proxyUsername: 'user',
+        proxyPassword: '',
+        acceptUnauthorized: false
+      } as RegistrationSettingsDTO;
+
+      const result = await getNetworkSettingsFromRegistration(settings, '/endpoint', encryptionService);
+      expect(result).toEqual({
+        host: 'http://localhost:4200',
+        headers: { authorization: 'Bearer my token' },
+        agent: undefined
+      });
+      expect(createProxyAgent).toHaveBeenCalledWith(
+        true,
+        'http://localhost:4200/endpoint',
+        { url: 'https://proxy.url', username: 'user', password: null },
+        false
+      );
+    });
+  });
+
   describe('getCommandLineArguments', () => {
     beforeEach(() => {
       jest.clearAllMocks();
@@ -962,26 +1053,35 @@ describe('Service utils', () => {
   });
 
   describe('downloadFile', () => {
+    const connectionSettings = {
+      host: 'http://localhost:4200',
+      agent: undefined,
+      headers: { authorization: `Bearer token` }
+    };
+
     beforeEach(() => {
       jest.resetAllMocks();
     });
 
     it('should download file', async () => {
-      const downloadUrl = 'https://example.com';
       const filePath = 'oibus.zip';
       const timeout = 1000;
 
       const response = new Response('content');
       (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(response));
 
-      await downloadFile(downloadUrl, filePath, timeout);
+      await downloadFile(connectionSettings, '/endpoint', filePath, timeout);
 
-      expect(fetch).toHaveBeenCalledWith(downloadUrl, { timeout });
+      expect(fetch).toHaveBeenCalledWith(`${connectionSettings.host}/endpoint`, {
+        method: 'GET',
+        timeout,
+        headers: connectionSettings.headers,
+        agent: connectionSettings.agent
+      });
       expect(fs.writeFile).toHaveBeenCalledWith(filePath, Buffer.from('content'));
     });
 
     it('should handle fetch error during download', async () => {
-      const downloadUrl = 'https://example.com';
       const filePath = 'oibus.zip';
       const timeout = 1000;
 
@@ -990,16 +1090,20 @@ describe('Service utils', () => {
       });
 
       try {
-        await downloadFile(downloadUrl, filePath, timeout);
+        await downloadFile(connectionSettings, '/endpoint', filePath, timeout);
       } catch (error) {
         expect(error).toEqual(new Error('Download failed: Error: error'));
       }
-      expect(fetch).toHaveBeenCalledWith(downloadUrl, { timeout });
+      expect(fetch).toHaveBeenCalledWith(`${connectionSettings.host}/endpoint`, {
+        method: 'GET',
+        timeout,
+        headers: connectionSettings.headers,
+        agent: connectionSettings.agent
+      });
       expect(fs.writeFile).not.toHaveBeenCalled();
     });
 
     it('should handle invalid fetch response during download', async () => {
-      const downloadUrl = 'https://example.com';
       const filePath = 'oibus.zip';
       const timeout = 1000;
       (fetch as unknown as jest.Mock).mockReturnValueOnce(
@@ -1007,11 +1111,16 @@ describe('Service utils', () => {
       );
 
       try {
-        await downloadFile(downloadUrl, filePath, timeout);
+        await downloadFile(connectionSettings, '/endpoint', filePath, timeout);
       } catch (error) {
         expect(error).toEqual(new Error('Download failed with status code 404 and message: Not Found'));
       }
-      expect(fetch).toHaveBeenCalledWith(downloadUrl, { timeout });
+      expect(fetch).toHaveBeenCalledWith(`${connectionSettings.host}/endpoint`, {
+        method: 'GET',
+        timeout,
+        headers: connectionSettings.headers,
+        agent: connectionSettings.agent
+      });
       expect(fs.writeFile).not.toHaveBeenCalled();
     });
   });
