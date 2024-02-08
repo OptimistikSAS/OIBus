@@ -1,8 +1,9 @@
-import fs from 'node:fs';
+import fs from 'node:fs/promises';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { ChildProcessWithoutNullStreams } from 'child_process';
 import * as os from 'os';
+import { filesExists } from './utils';
 
 const STARTED_DELAY = 30000;
 
@@ -20,11 +21,11 @@ export default class Launcher {
     private check: boolean
   ) {}
 
-  start(): void {
+  async start(): Promise<void> {
     const oibusPath = this.getOibusPath();
 
-    if (this.checkForUpdate() && !this.check) {
-      this.update();
+    if ((await this.checkForUpdate()) && !this.check) {
+      await this.update();
     }
 
     const args = ['--config', this.config];
@@ -32,39 +33,48 @@ export default class Launcher {
       args.push('--check');
     }
     console.log(`Starting OIBus: ${oibusPath} ${args.join(' ')}`);
-    this.child = spawn(oibusPath, args, { cwd: this.workDir });
+    try {
+      this.child = spawn(oibusPath, args, { cwd: this.workDir });
 
-    this.child.stdout.on('data', data => {
-      console.info(`OIBus stdout: ${data.toString()}`);
-    });
+      this.child.stdout.on('data', data => {
+        console.info(`OIBus stdout: ${data.toString()}`);
+      });
 
-    this.child.stderr.on('data', data => {
-      console.error(`OIBus stderr: ${data.toString()}`);
-    });
+      this.child.stderr.on('data', data => {
+        console.error(`OIBus stderr: ${data.toString()}`);
+      });
 
-    this.child.on('close', code => {
-      console.info(`OIBus closed with code: ${code}`);
+      this.child.on('close', async code => {
+        console.info(`OIBus closed with code: ${code}`);
 
-      if (this.updated) {
-        this.updated = false;
-        this.stop();
-        this.rollback();
-        this.start();
-        return;
-      }
+        if (this.updated) {
+          this.updated = false;
+          this.stop();
+          await this.rollback();
+          await this.start();
+          return;
+        }
 
-      if (this.check) {
-        console.info('OIBus launcher started in check mode. Exiting process.');
-        process.exit();
-      }
-      if (!this.stopping) {
-        this.start();
-      }
-    });
+        if (this.check) {
+          console.info('OIBus launcher started in check mode. Exiting process.');
+          process.exit();
+        }
+        if (!this.stopping) {
+          await this.start();
+        }
+      });
 
-    this.child.on('error', error => {
-      console.error(`Failed to start OIBus: "${error.message}"`);
-    });
+      this.child.on('error', error => {
+        console.error(`Failed to start OIBus: "${error.message}"`);
+      });
+    } catch (err) {
+      console.error(err);
+      this.updated = false;
+      this.stop();
+      await this.rollback();
+      await this.start();
+      return;
+    }
 
     this.startedTimeout = setTimeout(this.handleOibusStarted.bind(this), STARTED_DELAY);
   }
@@ -94,34 +104,37 @@ export default class Launcher {
     return path.resolve(this.backupDir, this.getOibusExecutable());
   }
 
-  checkForUpdate(): boolean {
+  async checkForUpdate(): Promise<boolean> {
     const oibusUpdatePath = this.getOibusUpdatePath();
     console.log(`Checking for OIBus update: ${oibusUpdatePath}`);
-    return fs.existsSync(oibusUpdatePath);
+    return await filesExists(oibusUpdatePath);
   }
 
-  update(): void {
+  async update(): Promise<void> {
     const oibusUpdatePath = this.getOibusUpdatePath();
     const oibusPath = this.getOibusPath();
     const oibusBackupPath = this.getOibusBackupPath();
 
     console.log(`Backup OIBus: ${oibusPath} -> ${oibusBackupPath}`);
-    fs.renameSync(oibusPath, oibusBackupPath);
-    // TODO: backup data-folder
+    await fs.rename(oibusPath, oibusBackupPath);
+    console.log(`Backup OIBus data folder: ${this.config} -> ${path.resolve(this.backupDir, 'data-folder')}`);
+    await fs.cp(this.config, path.resolve(this.backupDir, 'data-folder'), { force: true, recursive: true });
 
     console.log(`Updating OIBus: ${oibusUpdatePath} -> ${oibusPath}`);
-    fs.renameSync(oibusUpdatePath, oibusPath);
+    await fs.rename(oibusUpdatePath, oibusPath);
 
     this.updated = true;
   }
 
-  rollback(): void {
+  async rollback(): Promise<void> {
     const oibusPath = this.getOibusPath();
     const oibusBackupPath = this.getOibusBackupPath();
 
     console.log(`Rollback OIBus: ${oibusBackupPath} -> ${oibusPath}`);
-    fs.renameSync(oibusBackupPath, oibusPath);
-    // TODO: data-folder
+    await fs.rename(oibusBackupPath, oibusPath);
+
+    console.log(`Rollback OIBus data folder: ${path.resolve(this.backupDir, 'data-folder')} -> ${this.config}`);
+    await fs.cp(path.resolve(this.backupDir, 'data-folder'), this.config, { force: true, recursive: true });
   }
 
   handleOibusStarted(): void {
