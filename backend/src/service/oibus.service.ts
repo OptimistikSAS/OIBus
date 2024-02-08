@@ -220,10 +220,48 @@ export default class OIBusService {
     this.ongoingCheckCommands = true;
     const engineSettings = this.repositoryService.engineRepository.getEngineSettings()!;
 
-    // TODO: send non ack cancelled / errored / completed commands
+    await this.sendAckCommands(engineSettings.id);
     await this.checkPendingCommands(engineSettings.id);
     await this.retrieveCommands(engineSettings.id);
     this.ongoingCheckCommands = false;
+  }
+
+  async sendAckCommands(oibusId: string): Promise<void> {
+    const commandsToAck = this.repositoryService.commandRepository.searchCommandsList({
+      status: ['COMPLETED', 'ERRORED', 'CANCELLED'],
+      types: [],
+      ack: false
+    });
+    if (commandsToAck.length === 0) {
+      return;
+    }
+
+    const endpoint = `/api/oianalytics/oibus-commands/${oibusId}/ack`;
+    const registrationSettings = this.getRegistrationSettings();
+    const connectionSettings = await getNetworkSettingsFromRegistration(registrationSettings, endpoint, this.encryptionService);
+    let response;
+    const url = `${connectionSettings.host}${endpoint}`;
+    try {
+      response = await fetch(url, {
+        method: 'PUT',
+        body: JSON.stringify(commandsToAck),
+        headers: connectionSettings.headers,
+        timeout: CHECK_TIMEOUT,
+        agent: connectionSettings.agent
+      });
+      if (!response.ok) {
+        this.logger.error(
+          `Error ${response.status} while acknowledging ${commandsToAck.length} commands on ${url}: ${response.statusText}`
+        );
+        return;
+      }
+      for (const command of commandsToAck) {
+        this.repositoryService.commandRepository.markAsAcknowledged(command.id);
+      }
+      this.logger.trace(`${commandsToAck.length} commands acknowledged`);
+    } catch (fetchError) {
+      this.logger.error(`Error while acknowledging ${commandsToAck.length} commands on ${url}. ${fetchError}`);
+    }
   }
 
   async checkPendingCommands(oibusId: string): Promise<void> {

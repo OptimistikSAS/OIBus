@@ -67,6 +67,10 @@ export default class CommandRepository {
       whereClause += ` AND status IN (${searchParams.status.map(() => '?')})`;
       queryParams.push(...searchParams.status);
     }
+    if (searchParams.ack !== undefined) {
+      whereClause += ` AND ack = ?`;
+      queryParams.push(+searchParams.ack);
+    }
 
     const query =
       `SELECT id, type, status, ack, retrieved_date as retrievedDate, completed_date as completedDate, result, ` +

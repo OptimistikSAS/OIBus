@@ -450,11 +450,15 @@ describe('OIBus service', () => {
 
     service.checkPendingCommands = jest.fn();
     service.retrieveCommands = jest.fn();
+    service.sendAckCommands = jest.fn();
 
     await service.checkCommands();
     expect(service.checkPendingCommands).toHaveBeenCalledTimes(1);
     expect(service.retrieveCommands).toHaveBeenCalledTimes(1);
+    expect(service.sendAckCommands).toHaveBeenCalledTimes(1);
+    expect(service.checkPendingCommands).toHaveBeenCalledWith('id1');
     expect(service.retrieveCommands).toHaveBeenCalledWith('id1');
+    expect(service.sendAckCommands).toHaveBeenCalledWith('id1');
   });
 
   it('should check comm ands and return because already checking', async () => {
@@ -466,6 +470,7 @@ describe('OIBus service', () => {
       });
     });
     service.retrieveCommands = jest.fn();
+    service.sendAckCommands = jest.fn();
 
     service.checkCommands();
     await service.checkCommands();
@@ -627,6 +632,55 @@ describe('OIBus service should interact with OIA and', () => {
     (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(mockResult);
     service = new OIBusService(oibusEngine, historyQueryEngine, repositoryService, encryptionService, logger);
     (getNetworkSettingsFromRegistration as jest.Mock).mockReturnValue({ host: 'http://localhost:4200', headers: {}, agent: undefined });
+  });
+
+  it('should ack commands and return if no commands in OIBus', async () => {
+    (repositoryService.commandRepository.searchCommandsList as jest.Mock).mockReturnValue([]);
+
+    await service.sendAckCommands('id');
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('should ack commands', async () => {
+    (repositoryService.commandRepository.searchCommandsList as jest.Mock).mockReturnValue([command]);
+
+    const fetchResponse: Array<OIBusCommandDTO> = [{ id: 'id1' }] as Array<OIBusCommandDTO>;
+    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response(JSON.stringify(fetchResponse))));
+
+    await service.sendAckCommands('id');
+    expect(logger.trace).toHaveBeenCalledWith(`1 commands acknowledged`);
+    expect(fetch).toHaveBeenCalledWith('http://localhost:4200/api/oianalytics/oibus-commands/id/ack', {
+      method: 'PUT',
+      headers: {},
+      body: JSON.stringify([command]),
+      timeout: 10000,
+      agent: undefined
+    });
+    expect(repositoryService.commandRepository.markAsAcknowledged).toHaveBeenCalledWith('id1');
+  });
+
+  it('should ack commands and manage 404 error', async () => {
+    (repositoryService.commandRepository.searchCommandsList as jest.Mock).mockReturnValue([command]);
+
+    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('invalid', { status: 404 })));
+
+    await service.sendAckCommands('id');
+    expect(logger.error).toHaveBeenCalledWith(
+      `Error 404 while acknowledging 1 commands on http://localhost:4200/api/oianalytics/oibus-commands/id/ack: Not Found`
+    );
+  });
+
+  it('should ack commands and log error on fetch error', async () => {
+    (repositoryService.commandRepository.searchCommandsList as jest.Mock).mockReturnValue([command]);
+
+    (fetch as unknown as jest.Mock).mockImplementation(() => {
+      throw new Error('error');
+    });
+
+    await service.sendAckCommands('id');
+    expect(logger.error).toHaveBeenCalledWith(
+      `Error while acknowledging 1 commands on http://localhost:4200/api/oianalytics/oibus-commands/id/ack. ${new Error('error')}`
+    );
   });
 
   it('should check cancelled commands and return if no commands in OIBus', async () => {
