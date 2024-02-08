@@ -39,4 +39,5 @@ export interface CommandSearchParam {
   page?: number;
   types: Array<OIBusCommandType>;
   status: Array<OIBusCommandStatus>;
+  ack?: boolean;
 }
