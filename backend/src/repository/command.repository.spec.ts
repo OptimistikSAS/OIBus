@@ -85,13 +85,14 @@ describe('Command repository', () => {
     all.mockReturnValueOnce(expectedCommands);
     const searchCriteria: CommandSearchParam = {
       types: ['UPGRADE'],
-      status: ['ERRORED']
+      status: ['ERRORED'],
+      ack: true
     };
     const results = repository.searchCommandsList(searchCriteria);
     const query =
       `SELECT id, type, status, ack, retrieved_date as retrievedDate, completed_date as completedDate, ` +
       `result, upgrade_version as version, upgrade_asset_id as assetId FROM commands WHERE id IS NOT NULL AND ` +
-      `type IN (?) AND status IN (?) ORDER BY created_at DESC;`;
+      `type IN (?) AND status IN (?) AND ack = ? ORDER BY created_at DESC;`;
     expect(database.prepare).toHaveBeenCalledWith(query);
     expect(results).toEqual(expectedCommands);
   });
