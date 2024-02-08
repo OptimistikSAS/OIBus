@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events';
 import { CronJob } from 'cron';
-import { delay, generateIntervals } from '../service/utils';
+import { delay, generateIntervals, validateCronExpression } from '../service/utils';
 
 import { SouthCache, SouthConnectorDTO, SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
 import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
@@ -140,15 +140,20 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
       this.cronByScanModeIds.delete(scanMode.id);
     }
     this.logger.debug(`Creating South cron job for scan mode "${scanMode.name}" (${scanMode.cron})`);
-    const job = new CronJob(
-      scanMode.cron,
-      () => {
-        this.addToQueue(scanMode);
-      },
-      null,
-      true
-    );
-    this.cronByScanModeIds.set(scanMode.id, job);
+    try {
+      validateCronExpression(scanMode.cron);
+      const job = new CronJob(
+        scanMode.cron,
+        () => {
+          this.addToQueue(scanMode);
+        },
+        null,
+        true
+      );
+      this.cronByScanModeIds.set(scanMode.id, job);
+    } catch (error: any) {
+      this.logger.error(`Error when creating South cron job for scan mode "${scanMode.name}" (${scanMode.cron}): ${error.message}`);
+    }
   }
 
   addToQueue(scanMode: ScanModeDTO): void {

@@ -14,7 +14,7 @@ import ArchiveServiceMock from '../tests/__mocks__/archive-service.mock';
 import { EventEmitter } from 'node:events';
 import { HandlesFile, HandlesValues } from './north-interface';
 import fs from 'node:fs/promises';
-import { dirSize } from '../service/utils';
+import { dirSize, validateCronExpression } from '../service/utils';
 import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 import { OIBusDataValue } from '../../../shared/model/engine.model';
 import path from 'node:path';
@@ -210,6 +210,25 @@ describe('NorthConnector enabled', () => {
     expect(logger.debug).toHaveBeenCalledWith(`Removing existing North cron job associated to scan mode "name" (* * * * *)`);
 
     await north.stop();
+  });
+
+  it('should not create a cron job when the cron expression is invalid', () => {
+    const scanMode = {
+      id: 'id1',
+      name: 'my scan mode',
+      description: 'my description',
+      cron: '* * * * * *L'
+    };
+    const error = new Error('Invalid cron expression');
+    (validateCronExpression as jest.Mock).mockImplementationOnce(() => {
+      throw error;
+    });
+
+    north.createCronJob(scanMode);
+
+    expect(logger.error).toHaveBeenCalledWith(
+      `Error when creating North cron job for scan mode "${scanMode.name}" (${scanMode.cron}): ${error.message}`
+    );
   });
 
   it('should properly add to queue a new task and trigger next run', async () => {

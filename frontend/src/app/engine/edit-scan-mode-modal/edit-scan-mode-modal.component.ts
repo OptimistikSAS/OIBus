@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AbstractControl, FormBuilder, ValidationErrors, Validators } from '@angular/forms';
-import { Observable, firstValueFrom, switchMap } from 'rxjs';
+import { firstValueFrom, Observable, switchMap } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { ScanModeService } from '../../services/scan-mode.service';
@@ -103,8 +103,7 @@ export class EditScanModeModalComponent {
   cronValidator() {
     return async (control: AbstractControl): Promise<ValidationErrors | null> => {
       try {
-        const response = await firstValueFrom(this.scanModeService.verifyCron(control.value));
-        this.cronValidationResponse = response;
+        this.cronValidationResponse = await firstValueFrom(this.scanModeService.verifyCron(control.value));
         return null;
       } catch (error: any) {
         this.cronValidationResponse = undefined;
