@@ -19,7 +19,7 @@ import path from 'node:path';
 import { HandlesFile, HandlesValues } from './north-interface';
 import NorthConnectorMetricsService from '../service/north-connector-metrics.service';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
-import { dirSize } from '../service/utils';
+import { dirSize, validateCronExpression } from '../service/utils';
 
 /**
  * Class NorthConnector : provides general attributes and methods for north connectors.
@@ -183,15 +183,20 @@ export default class NorthConnector<T extends NorthSettings = any> {
       this.cronByScanModeIds.delete(scanMode.id);
     }
     this.logger.debug(`Creating North cron job for scan mode "${scanMode.name}" (${scanMode.cron})`);
-    const job = new CronJob(
-      scanMode.cron,
-      () => {
-        this.addToQueue(scanMode);
-      },
-      null,
-      true
-    );
-    this.cronByScanModeIds.set(scanMode.id, job);
+    try {
+      validateCronExpression(scanMode.cron);
+      const job = new CronJob(
+        scanMode.cron,
+        () => {
+          this.addToQueue(scanMode);
+        },
+        null,
+        true
+      );
+      this.cronByScanModeIds.set(scanMode.id, job);
+    } catch (error: any) {
+      this.logger.error(`Error when creating North cron job for scan mode "${scanMode.name}" (${scanMode.cron}): ${error.message}`);
+    }
   }
 
   addToQueue(scanMode: ScanModeDTO): void {

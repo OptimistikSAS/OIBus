@@ -9,7 +9,7 @@ import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
 import RepositoryService from '../service/repository.service';
 
-import { delay, generateIntervals } from '../service/utils';
+import { delay, generateIntervals, validateCronExpression } from '../service/utils';
 import { QueriesFile, QueriesHistory, QueriesLastPoint, QueriesSubscription } from './south-interface';
 import { Instant } from '../../../shared/model/types';
 import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
@@ -691,6 +691,25 @@ describe('SouthConnector enabled', () => {
     south.createCronJob(scanMode);
 
     await south.stop();
+  });
+
+  it('should not create a cron job when the cron expression is invalid', () => {
+    const scanMode = {
+      id: 'id1',
+      name: 'scanMode1',
+      description: 'my scan mode',
+      cron: '* * * * * *L'
+    };
+    const error = new Error('Invalid cron expression');
+    (validateCronExpression as jest.Mock).mockImplementationOnce(() => {
+      throw error;
+    });
+
+    south.createCronJob(scanMode);
+
+    expect(logger.error).toHaveBeenCalledWith(
+      `Error when creating South cron job for scan mode "${scanMode.name}" (${scanMode.cron}): ${error.message}`
+    );
   });
 
   it('should not activate item when adding disabled item', () => {
