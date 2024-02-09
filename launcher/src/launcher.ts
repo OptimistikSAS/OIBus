@@ -97,7 +97,7 @@ export default class Launcher {
   }
 
   getOibusUpdatePath(): string {
-    return path.resolve(this.updateDir, this.getOibusExecutable());
+    return path.resolve(this.updateDir, 'binaries', this.getOibusExecutable());
   }
 
   getOibusBackupPath(): string {
