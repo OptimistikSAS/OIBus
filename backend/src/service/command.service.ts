@@ -97,6 +97,15 @@ export default class CommandService {
     this.commandsQueue.splice(idx, 1);
   }
 
+  /**
+   * Add a command to the command queue and trigger the next run if no command is running
+   * @param command - The command to add
+   */
+  addCommandToQueue(command: OIBusCommandDTO): void {
+    this.commandsQueue.push(command);
+    this.triggerRun.emit('next');
+  }
+
   async executeCommand(command: OIBusCommandDTO): Promise<void> {
     const oibusInfo = getOIBusInfo();
     const endpoint = `/api/oianalytics/oibus/${this.oibusId}/upgrade?assetId=${command.assetId}`;

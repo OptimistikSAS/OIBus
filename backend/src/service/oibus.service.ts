@@ -10,6 +10,7 @@ import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { createProxyAgent } from './proxy.service';
 import { OIBusCommand, OIBusCommandDTO } from '../../../shared/model/command.model';
+import CommandService from './command.service';
 
 const CHECK_TIMEOUT = 10_000;
 
@@ -24,6 +25,7 @@ export default class OIBusService {
     private historyEngine: HistoryQueryEngine,
     private repositoryService: RepositoryService,
     private encryptionService: EncryptionService,
+    private commandService: CommandService,
     private logger: pino.Logger
   ) {
     const registrationSettings = this.repositoryService.registrationRepository.getRegistrationSettings();
@@ -241,6 +243,8 @@ export default class OIBusService {
     const connectionSettings = await getNetworkSettingsFromRegistration(registrationSettings, endpoint, this.encryptionService);
     let response;
     const url = `${connectionSettings.host}${endpoint}`;
+    // @ts-ignore
+    connectionSettings.headers['Content-Type'] = 'application/json';
     try {
       response = await fetch(url, {
         method: 'PUT',
@@ -297,7 +301,7 @@ export default class OIBusService {
       }
       this.logger.trace(`${commandsToCancel.length} commands cancelled among the ${pendingCommands.length} pending commands`);
       for (const command of commandsToCancel) {
-        // TODO: remove from queue
+        this.commandService.removeCommandFromQueue(command.id);
         this.repositoryService.commandRepository.cancel(command.id);
       }
     } catch (fetchError) {
@@ -329,13 +333,13 @@ export default class OIBusService {
       }
       this.logger.trace(`${newCommands.length} commands to add`);
       for (const command of newCommands) {
-        // TODO: add to queue
         const creationCommand: OIBusCommand = {
           type: command.type,
           version: command.version,
           assetId: command.assetId
         };
-        this.repositoryService.commandRepository.create(command.id, creationCommand);
+        const newCommand = this.repositoryService.commandRepository.create(command.id, creationCommand);
+        this.commandService.addCommandToQueue(newCommand);
       }
     } catch (fetchError) {
       this.logger.error(`Error while retrieving commands on ${url}. ${fetchError}`);

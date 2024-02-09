@@ -185,7 +185,8 @@
       "RETRIEVED": "Retrieved",
       "ERRORED": "Errored",
       "CANCELLED": "Cancelled",
-      "COMPLETED": "Completed"
+      "COMPLETED": "Completed",
+      "RUNNING": "Running"
     },
     "oibus-command-type": {
       "UPGRADE": "Upgrade"
