@@ -100,7 +100,17 @@ const LOG_DB_NAME = 'logs.db';
     loggerService.logger!
   );
 
-  const oibusService = new OIBusService(engine, historyQueryEngine, repositoryService, encryptionService, loggerService.logger!);
+  const commandService = new CommandService(oibusSettings.id, repositoryService, encryptionService, loggerService.logger!, binaryFolder);
+  commandService.start();
+
+  const oibusService = new OIBusService(
+    engine,
+    historyQueryEngine,
+    repositoryService,
+    encryptionService,
+    commandService,
+    loggerService.logger!
+  );
 
   await engine.start();
   await historyQueryEngine.start();
@@ -128,9 +138,6 @@ const LOG_DB_NAME = 'logs.db';
     loggerService.createChildLogger('web-server')
   );
   await server.init();
-
-  const commandService = new CommandService(oibusSettings.id, repositoryService, encryptionService, loggerService.logger!, binaryFolder);
-  commandService.start();
 
   let stopping = false;
   // Catch Ctrl+C and properly stop the Engine

@@ -15,6 +15,8 @@ import PinoLogger from '../tests/__mocks__/logger.mock';
 import { createProxyAgent } from './proxy.service';
 import { OIBusCommandDTO } from '../../../shared/model/command.model';
 import { getNetworkSettingsFromRegistration } from './utils';
+import CommandService from './command.service';
+import CommandServiceMock from '../tests/__mocks__/command-service.mock';
 
 jest.mock('node:fs/promises');
 jest.mock('node-fetch');
@@ -26,6 +28,7 @@ const oibusEngine: OIBusEngine = new OibusEngineMock();
 const historyQueryEngine: HistoryQueryEngine = new HistoryQueryEngineMock();
 const repositoryService: RepositoryService = new RepositoryServiceMock('', '');
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
+const commandService: CommandService = new CommandServiceMock('', '');
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
 const logger: pino.Logger = new PinoLogger();
@@ -50,7 +53,7 @@ describe('OIBus service', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     (createProxyAgent as jest.Mock).mockReturnValue(undefined);
 
-    service = new OIBusService(oibusEngine, historyQueryEngine, repositoryService, encryptionService, logger);
+    service = new OIBusService(oibusEngine, historyQueryEngine, repositoryService, encryptionService, commandService, logger);
   });
 
   it('should restart OIBus', async () => {
@@ -505,7 +508,7 @@ describe('OIBus service with PENDING registration', () => {
   it('should get PENDING registration settings', () => {
     const setIntervalSpy = jest.spyOn(global, 'setInterval');
 
-    service = new OIBusService(oibusEngine, historyQueryEngine, repositoryService, encryptionService, logger);
+    service = new OIBusService(oibusEngine, historyQueryEngine, repositoryService, encryptionService, commandService, logger);
     expect(setIntervalSpy).toHaveBeenCalledTimes(1);
     expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 10000);
 
@@ -518,7 +521,7 @@ describe('OIBus service with PENDING registration', () => {
     const setIntervalSpy = jest.spyOn(global, 'setInterval');
     const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
 
-    service = new OIBusService(oibusEngine, historyQueryEngine, repositoryService, encryptionService, logger);
+    service = new OIBusService(oibusEngine, historyQueryEngine, repositoryService, encryptionService, commandService, logger);
     expect(setIntervalSpy).toHaveBeenCalledTimes(1);
     expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 10000);
     await service.stopOIBus();
@@ -528,7 +531,7 @@ describe('OIBus service with PENDING registration', () => {
   it('should activate registration and clear interval', async () => {
     const setIntervalSpy = jest.spyOn(global, 'setInterval');
     const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
-    service = new OIBusService(oibusEngine, historyQueryEngine, repositoryService, encryptionService, logger);
+    service = new OIBusService(oibusEngine, historyQueryEngine, repositoryService, encryptionService, commandService, logger);
     expect(setIntervalSpy).toHaveBeenCalledTimes(1);
     expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 10000);
     await service.activateRegistration('2020-20-20T00:00:00.000Z', 'token');
@@ -538,7 +541,7 @@ describe('OIBus service with PENDING registration', () => {
   it('should unregister and clear interval', () => {
     const setIntervalSpy = jest.spyOn(global, 'setInterval');
     const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
-    service = new OIBusService(oibusEngine, historyQueryEngine, repositoryService, encryptionService, logger);
+    service = new OIBusService(oibusEngine, historyQueryEngine, repositoryService, encryptionService, commandService, logger);
     expect(setIntervalSpy).toHaveBeenCalledTimes(1);
     expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 10000);
     service.unregister();
@@ -570,7 +573,7 @@ describe('OIBus service with REGISTERED registration', () => {
   it('should get REGISTERED registration settings', () => {
     const setIntervalSpy = jest.spyOn(global, 'setInterval');
 
-    service = new OIBusService(oibusEngine, historyQueryEngine, repositoryService, encryptionService, logger);
+    service = new OIBusService(oibusEngine, historyQueryEngine, repositoryService, encryptionService, commandService, logger);
     expect(setIntervalSpy).toHaveBeenCalledTimes(1);
     expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 10000);
 
@@ -583,7 +586,7 @@ describe('OIBus service with REGISTERED registration', () => {
     const setIntervalSpy = jest.spyOn(global, 'setInterval');
     const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
 
-    service = new OIBusService(oibusEngine, historyQueryEngine, repositoryService, encryptionService, logger);
+    service = new OIBusService(oibusEngine, historyQueryEngine, repositoryService, encryptionService, commandService, logger);
     expect(setIntervalSpy).toHaveBeenCalledTimes(1);
     expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 10000);
     await service.stopOIBus();
@@ -593,7 +596,7 @@ describe('OIBus service with REGISTERED registration', () => {
   it('should activate registration and clear interval', async () => {
     const setIntervalSpy = jest.spyOn(global, 'setInterval');
     const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
-    service = new OIBusService(oibusEngine, historyQueryEngine, repositoryService, encryptionService, logger);
+    service = new OIBusService(oibusEngine, historyQueryEngine, repositoryService, encryptionService, commandService, logger);
     expect(setIntervalSpy).toHaveBeenCalledTimes(1);
     expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 10000);
     await service.activateRegistration('2020-20-20T00:00:00.000Z', 'token');
@@ -603,7 +606,7 @@ describe('OIBus service with REGISTERED registration', () => {
   it('should unregister and clear interval', () => {
     const setIntervalSpy = jest.spyOn(global, 'setInterval');
     const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
-    service = new OIBusService(oibusEngine, historyQueryEngine, repositoryService, encryptionService, logger);
+    service = new OIBusService(oibusEngine, historyQueryEngine, repositoryService, encryptionService, commandService, logger);
     expect(setIntervalSpy).toHaveBeenCalledTimes(1);
     expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 10000);
     service.unregister();
@@ -630,7 +633,7 @@ describe('OIBus service should interact with OIA and', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     (createProxyAgent as jest.Mock).mockReturnValue(undefined);
     (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(mockResult);
-    service = new OIBusService(oibusEngine, historyQueryEngine, repositoryService, encryptionService, logger);
+    service = new OIBusService(oibusEngine, historyQueryEngine, repositoryService, encryptionService, commandService, logger);
     (getNetworkSettingsFromRegistration as jest.Mock).mockReturnValue({ host: 'http://localhost:4200', headers: {}, agent: undefined });
   });
 
@@ -651,7 +654,9 @@ describe('OIBus service should interact with OIA and', () => {
     expect(logger.trace).toHaveBeenCalledWith(`1 commands acknowledged`);
     expect(fetch).toHaveBeenCalledWith('http://localhost:4200/api/oianalytics/oibus-commands/id/ack', {
       method: 'PUT',
-      headers: {},
+      headers: {
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify([command]),
       timeout: 10000,
       agent: undefined
