@@ -122,12 +122,21 @@
 
         <!-- items -->
         <oib-south-items
+          *ngIf="mode === 'edit' && southConnector"
+          [southConnector]="southConnector"
+          [southManifest]="manifest"
+          [scanModes]="scanModes"
+          [inMemory]="false"
+          [maxInstantPerItem]="maxInstantPerItem"
+        ></oib-south-items>
+
+        <oib-south-items
+          *ngIf="mode === 'create'"
           [southConnector]="southConnector"
           [southManifest]="manifest"
           [scanModes]="scanModes"
           (inMemoryItems)="updateInMemoryItems($event)"
           [inMemory]="true"
-          [maxInstantPerItem]="maxInstantPerItem"
         ></oib-south-items>
       </form>
       <div id="actions" class="mt-2 d-flex justify-content-end">
