@@ -134,6 +134,7 @@ export default jest.fn().mockImplementation(() => ({
     getLatestMaxInstants: jest.fn(),
     updateCacheScanModeId: jest.fn(),
     createOrUpdateCacheScanMode: jest.fn(),
-    deleteCacheScanMode: jest.fn()
+    deleteCacheScanMode: jest.fn(),
+    getSouthCacheScanMode: jest.fn()
   }
 }));

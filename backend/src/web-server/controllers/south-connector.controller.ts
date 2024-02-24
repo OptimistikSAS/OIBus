@@ -165,8 +165,10 @@ export default class SouthConnectorController {
       for (const itemId of ctx.request.body!.itemIdsToDelete) {
         await ctx.app.reloadService.onDeleteSouthItem(itemId);
       }
-      await ctx.app.reloadService.onCreateOrUpdateSouthItems(southConnector, itemsToAdd, itemsToUpdate, false);
+      // Update south connector first, because updating items takes into account the max instant per item setting,
+      // which might be changed in the south connector update
       await ctx.app.reloadService.onUpdateSouth(ctx.params.id, command);
+      await ctx.app.reloadService.onCreateOrUpdateSouthItems(southConnector, itemsToAdd, itemsToUpdate, false);
       ctx.noContent();
     } catch (error: any) {
       ctx.badRequest(error.message);
