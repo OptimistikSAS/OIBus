@@ -62,7 +62,7 @@
     "cronstrue": "2.48.0",
     "form-data": "4.0.0",
     "http-proxy-agent": "7.0.2",
-    "https-proxy-agent": "7.0.2",
+    "https-proxy-agent": "7.0.4",
     "joi": "17.12.2",
     "jsmodbus": "4.0.10",
     "jsonwebtoken": "9.0.2",
