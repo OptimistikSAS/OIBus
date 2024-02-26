@@ -120,6 +120,20 @@
           ></oib-form>
         </oib-box>
 
+        <div *ngIf="mode === 'edit' && southConnector" id="actions" class="mt-2 d-flex justify-content-end">
+          <div class="btn-group">
+            <oib-save-button form="south-form" [state]="state"></oib-save-button>
+            <button
+              *ngIf="!southConnector"
+              class="btn btn-cancel"
+              translate="common.cancel"
+              id="cancel-create-button"
+              routerLink="/south"
+            ></button>
+            <button *ngIf="southConnector" class="btn btn-cancel" translate="common.cancel" id="cancel-edit-button" oibBackButton></button>
+          </div>
+        </div>
+
         <!-- items -->
         <oib-south-items
           *ngIf="mode === 'edit' && southConnector"
@@ -139,7 +153,7 @@
           [inMemory]="true"
         ></oib-south-items>
       </form>
-      <div id="actions" class="mt-2 d-flex justify-content-end">
+      <div *ngIf="mode === 'create'" id="actions" class="mt-2 d-flex justify-content-end">
         <div class="btn-group">
           <oib-save-button form="south-form" [state]="state"></oib-save-button>
           <button

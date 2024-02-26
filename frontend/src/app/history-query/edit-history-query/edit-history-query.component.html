@@ -229,8 +229,25 @@
           ></oib-form>
         </oib-box>
 
+        <div *ngIf="mode === 'edit' && historyQuery" id="actions" class="mt-2 d-flex justify-content-end">
+          <div class="btn-group">
+            <oib-save-button form="history-query-form" [state]="state"></oib-save-button>
+            <button class="btn btn-cancel" translate="common.cancel" id="cancel-edit-button" oibBackButton></button>
+          </div>
+        </div>
+
         <!-- items -->
         <oib-history-query-items
+          *ngIf="mode === 'edit' && historyQuery"
+          (inMemoryItems)="updateInMemoryItems($event)"
+          [historyQuery]="historyQuery"
+          [southManifest]="southManifest"
+          [initItems]="inMemoryItems"
+          [inMemory]="false"
+        ></oib-history-query-items>
+
+        <oib-history-query-items
+          *ngIf="mode === 'create'"
           (inMemoryItems)="updateInMemoryItems($event)"
           [historyQuery]="historyQuery"
           [southManifest]="southManifest"
@@ -239,7 +256,7 @@
         ></oib-history-query-items>
       </form>
 
-      <div id="actions" class="mb-2 d-flex justify-content-end">
+      <div *ngIf="mode === 'create'" id="actions" class="mt-2 d-flex justify-content-end">
         <div class="btn-group">
           <oib-save-button form="history-query-form" [state]="state"></oib-save-button>
           <button class="btn btn-cancel" translate="common.cancel" id="cancel-edit-button" oibBackButton></button>
