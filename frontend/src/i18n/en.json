@@ -433,7 +433,8 @@
       "max-instant-per-item": "Max instant per item",
       "max-read-interval": "Max read interval",
       "read-delay": "Read delay",
-      "overlap": "Overlap"
+      "overlap": "Overlap",
+      "max-instant-per-item-disabling-warning": "Disabling max instant per item might result in data loss."
     },
     "test-connection": {
       "title": "Testing settings",
@@ -481,7 +482,8 @@
       "edit-mode-info": "The changes to the items will be committed on save",
       "search": {
         "name": "Name"
-      }
+      },
+      "scan-mode-change-warning": "Changing scan mode when max instant per item is disabled might lead to data duplication or loss."
     },
     "monitoring": {
       "title": "{{ name }} metrics",

@@ -71,6 +71,9 @@ export class EditSouthComponent implements OnInit {
   inMemoryItems: Array<SouthConnectorItemDTO> = [];
   inMemoryItemIdsToDelete: Array<string> = [];
 
+  initialMaxInstantPerItem: boolean | null = null;
+  showMaxInstantPerItemWarning = false;
+
   constructor(
     private southConnectorService: SouthConnectorService,
     private fb: NonNullableFormBuilder,
@@ -138,6 +141,8 @@ export class EditSouthComponent implements OnInit {
           // we should provoke all value changes to make sure fields are properly hidden and disabled
           this.southForm.setValue(this.southForm.getRawValue());
         }
+
+        this.initialMaxInstantPerItem = Boolean(this.southForm!.get('history.maxInstantPerItem')!.value);
       });
   }
 
@@ -192,5 +197,33 @@ export class EditSouthComponent implements OnInit {
   updateInMemoryItems({ items, itemIdsToDelete }: { items: Array<SouthConnectorItemDTO>; itemIdsToDelete: Array<string> }) {
     this.inMemoryItems = items;
     this.inMemoryItemIdsToDelete = itemIdsToDelete;
+  }
+
+  onMaxInstantPerItemChange() {
+    if (!this.initialMaxInstantPerItem) {
+      this.showMaxInstantPerItemWarning = false;
+      return;
+    }
+
+    const currentMaxInstantPerItem = Boolean(this.southForm!.get('history.maxInstantPerItem')!.value);
+    if (this.initialMaxInstantPerItem === currentMaxInstantPerItem) {
+      this.showMaxInstantPerItemWarning = false;
+      return;
+    }
+
+    // enabled -> disabled
+    if (this.initialMaxInstantPerItem && !currentMaxInstantPerItem) {
+      this.showMaxInstantPerItemWarning = true;
+    }
+  }
+
+  get maxInstantPerItem() {
+    if (this.mode === 'create') {
+      // When we are creating a new South connector,
+      // we don't pass down the max instant per item value
+      // because item changes are not persisted until the South connector is created
+      return null;
+    }
+    return Boolean(this.southForm!.get('history.maxInstantPerItem')?.value);
   }
 }
