@@ -56,6 +56,7 @@ export class SouthItemsComponent implements OnInit {
   @Input({ required: true }) southManifest!: SouthConnectorManifest;
   @Input({ required: true }) scanModes!: Array<ScanModeDTO>;
   @Input() inMemory = false;
+  @Input() maxInstantPerItem: boolean | null = null;
 
   @Output() readonly inMemoryItems = new EventEmitter<{ items: Array<SouthConnectorItemDTO>; itemIdsToDelete: Array<string> }>();
 
@@ -123,7 +124,7 @@ export class SouthItemsComponent implements OnInit {
   editItem(southItem: SouthConnectorItemDTO) {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl' });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
-    component.prepareForEdition(this.southManifest.items, this.allItems, this.scanModes, southItem);
+    component.prepareForEdition(this.southManifest.items, this.allItems, this.scanModes, southItem, this.maxInstantPerItem);
     this.refreshAfterEditionModalClosed(modalRef, southItem);
   }
 

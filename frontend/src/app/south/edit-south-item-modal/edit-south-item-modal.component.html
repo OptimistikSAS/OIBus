@@ -46,6 +46,10 @@
       [settingsSchema]="southItemRows"
       [scanModes]="scanModes"
     ></oib-form>
+    <div *ngIf="maxInstantPerItem !== null && !maxInstantPerItem">
+      <span class="fa fa-warning mx-1" style="color: orange"></span>
+      <span translate="south.items.scan-mode-change-warning"></span>
+    </div>
   </form>
 </div>
 <div class="modal-footer">

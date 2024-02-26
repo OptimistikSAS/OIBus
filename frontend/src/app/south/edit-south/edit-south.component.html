@@ -64,8 +64,18 @@
             <div class="col-4" *ngIf="!manifest.modes.forceMaxInstantPerItem">
               <div class="form-group">
                 <div class="form-check form-switch padded">
-                  <input formControlName="maxInstantPerItem" id="south-max-instant-per-item" type="checkbox" class="form-check-input" />
+                  <input
+                    (change)="onMaxInstantPerItemChange()"
+                    formControlName="maxInstantPerItem"
+                    id="south-max-instant-per-item"
+                    type="checkbox"
+                    class="form-check-input"
+                  />
                   <label class="form-check-label" for="south-max-instant-per-item" translate="south.history.max-instant-per-item"></label>
+                </div>
+                <div *ngIf="showMaxInstantPerItemWarning">
+                  <span class="fa fa-warning mx-1" style="color: orange"></span>
+                  <span translate="south.history.max-instant-per-item-disabling-warning"></span>
                 </div>
               </div>
             </div>
@@ -117,6 +127,7 @@
           [scanModes]="scanModes"
           (inMemoryItems)="updateInMemoryItems($event)"
           [inMemory]="true"
+          [maxInstantPerItem]="maxInstantPerItem"
         ></oib-south-items>
       </form>
       <div id="actions" class="mt-2 d-flex justify-content-end">
