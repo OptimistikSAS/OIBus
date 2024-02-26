@@ -174,15 +174,34 @@
             </div>
           </div>
         </oib-box>
-
+        <div *ngIf="mode === 'edit' && northConnector" id="actions" class="mt-2 d-flex justify-content-end">
+          <div class="btn-group">
+            <oib-save-button form="north-form" [state]="state"></oib-save-button>
+            <button
+              *ngIf="!northConnector"
+              class="btn btn-cancel"
+              translate="common.cancel"
+              id="cancel-create-button"
+              routerLink="/north"
+            ></button>
+            <button *ngIf="northConnector" class="btn btn-cancel" translate="common.cancel" id="cancel-edit-button" oibBackButton></button>
+          </div>
+        </div>
         <!-- subscription -->
         <oib-north-subscriptions
+          *ngIf="mode === 'create'"
           [northConnector]="northConnector"
           [inMemory]="true"
           (inMemorySubscriptions)="updateInMemorySubscriptions($event)"
         ></oib-north-subscriptions>
+        <oib-north-subscriptions
+          *ngIf="mode === 'edit' && northConnector"
+          [northConnector]="northConnector"
+          [inMemory]="false"
+          (inMemorySubscriptions)="updateInMemorySubscriptions($event)"
+        ></oib-north-subscriptions>
       </form>
-      <div id="actions" class="mt-2 d-flex justify-content-end">
+      <div *ngIf="mode === 'create'" id="actions" class="mt-2 d-flex justify-content-end">
         <div class="btn-group">
           <oib-save-button form="north-form" [state]="state"></oib-save-button>
           <button
