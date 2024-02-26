@@ -59,7 +59,7 @@
     "karma-jasmine": "5.1.0",
     "karma-jasmine-html-reporter": "2.1.0",
     "karma-mocha-reporter": "2.2.5",
-    "ngx-speculoos": "11.0.0",
+    "ngx-speculoos": "11.1.0",
     "prettier": "3.2.5",
     "typescript": "5.2.2"
   }
