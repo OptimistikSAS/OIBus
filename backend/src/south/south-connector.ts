@@ -16,6 +16,7 @@ import { QueriesFile, QueriesHistory, QueriesLastPoint, QueriesSubscription } fr
 import SouthConnectorMetricsService from '../service/south-connector-metrics.service';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { OIBusDataValue } from '../../../shared/model/engine.model';
+import path from 'node:path';
 
 /**
  * Class SouthConnector : provides general attributes and methods for south connectors.
@@ -141,7 +142,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
     }
     this.logger.debug(`Creating South cron job for scan mode "${scanMode.name}" (${scanMode.cron})`);
 
-try {
+    try {
       validateCronExpression(scanMode.cron);
       const job = new CronJob(
         scanMode.cron,
@@ -419,7 +420,7 @@ try {
     this.metricsService!.updateMetrics(this.connector.id, {
       ...currentMetrics,
       numberOfFilesRetrieved: currentMetrics.numberOfFilesRetrieved + 1,
-      lastFileRetrieved: filePath
+      lastFileRetrieved: path.parse(filePath).base
     });
   }
 
@@ -455,19 +456,23 @@ try {
   }
 
   async addItem(item: SouthConnectorItemDTO<I>): Promise<void> {
-    const scanMode = this.repositoryService.scanModeRepository.getScanMode(item.scanModeId);
-    if (!scanMode) {
-      this.logger.error(`Error when creating South item in cron jobs: scan mode ${item.scanModeId} not found`);
-      return;
-    }
-    this.items.push(item);
-    if (!this.isEnabled() || !item.enabled) {
-      return;
-    }
-    if (item.scanModeId === 'subscription' && item.enabled) {
-      await this.createSubscriptions([item]);
-    } else if (!this.cronByScanModeIds.get(scanMode.id) && item.enabled) {
-      this.createCronJob(scanMode);
+    if (item.scanModeId) {
+      const scanMode = this.repositoryService.scanModeRepository.getScanMode(item.scanModeId);
+      if (!scanMode) {
+        this.logger.error(`Error when creating South item in cron jobs: scan mode ${item.scanModeId} not found`);
+        return;
+      }
+      this.items.push(item);
+      if (!this.isEnabled() || !item.enabled) {
+        return;
+      }
+      if (item.scanModeId === 'subscription' && item.enabled) {
+        await this.createSubscriptions([item]);
+      } else if (!this.cronByScanModeIds.get(scanMode.id) && item.enabled) {
+        this.createCronJob(scanMode);
+      }
+    } else {
+      this.items.push(item);
     }
   }
 

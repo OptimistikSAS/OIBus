@@ -33,7 +33,7 @@ describe('History query item repository', () => {
           enabled: true,
           connectorId: 'historyId',
           settings: {},
-          scanModeId: 'history'
+          scanModeId: ''
         },
         {
           id: 'id2',
@@ -41,7 +41,7 @@ describe('History query item repository', () => {
           enabled: false,
           connectorId: 'historyId',
           settings: {},
-          scanModeId: 'history'
+          scanModeId: ''
         }
       ],
       size: 50,
@@ -85,7 +85,7 @@ describe('History query item repository', () => {
         enabled: true,
         connectorId: 'historyId',
         settings: {},
-        scanModeId: 'history'
+        scanModeId: ''
       },
       {
         id: 'id2',
@@ -93,7 +93,7 @@ describe('History query item repository', () => {
         enabled: false,
         connectorId: 'historyId',
         settings: {},
-        scanModeId: 'history'
+        scanModeId: ''
       }
     ];
     all.mockReturnValueOnce([
@@ -102,7 +102,7 @@ describe('History query item repository', () => {
         name: 'my history query item',
         enabled: true,
         historyId: 'historyId',
-        scanModeId: 'scanMode1',
+        scanModeId: '',
         settings: JSON.stringify({})
       },
       {
@@ -110,7 +110,7 @@ describe('History query item repository', () => {
         name: 'my second history query item',
         enabled: false,
         historyId: 'historyId',
-        scanModeId: 'scan1',
+        scanModeId: '',
         settings: JSON.stringify({})
       }
     ]);
@@ -126,7 +126,7 @@ describe('History query item repository', () => {
       enabled: true,
       connectorId: 'historyId',
       settings: {},
-      scanModeId: 'history'
+      scanModeId: ''
     };
     get.mockReturnValueOnce({
       id: 'id1',
@@ -150,7 +150,7 @@ describe('History query item repository', () => {
     const command: SouthConnectorItemCommandDTO = {
       name: 'historyItem1',
       enabled: true,
-      scanModeId: 'history',
+      scanModeId: '',
       settings: {}
     };
     repository.createHistoryItem('historyId', command);
@@ -170,7 +170,7 @@ describe('History query item repository', () => {
     const command: SouthConnectorItemCommandDTO = {
       name: 'historyItem1',
       enabled: false,
-      scanModeId: 'history',
+      scanModeId: '',
       settings: {}
     };
     repository.updateHistoryItem('id1', command);
@@ -200,7 +200,7 @@ describe('History query item repository', () => {
       enabled: true,
       connectorId: 'southId',
       settings: {},
-      scanModeId: 'history'
+      scanModeId: ''
     };
 
     const itemToUpdate: SouthConnectorItemDTO = {
@@ -209,7 +209,7 @@ describe('History query item repository', () => {
       enabled: true,
       connectorId: 'southId',
       settings: {},
-      scanModeId: 'history'
+      scanModeId: ''
     };
 
     repository.createAndUpdateItems('historyId', [itemToAdd], [itemToUpdate]);

@@ -98,6 +98,7 @@ describe('HistoryQueryEngine', () => {
       }
     };
     (historyQueryService.getHistoryQueryList as jest.Mock).mockReturnValue([configuration]);
+    (historyQueryService.getItems as jest.Mock).mockReturnValue([]);
     (historyQueryService.getHistoryQuery as jest.Mock).mockReturnValue(configuration);
 
     engine = new HistoryQueryEngine(encryptionService, northService, southService, historyQueryService, logger);

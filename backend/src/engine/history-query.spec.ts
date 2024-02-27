@@ -174,6 +174,7 @@ describe('HistoryQuery enabled', () => {
   });
 
   it('should start south connector', async () => {
+    const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
     createdSouth.historyQueryHandler.mockImplementation(() => {
       return new Promise(resolve => {
         resolve('');
@@ -189,6 +190,9 @@ describe('HistoryQuery enabled', () => {
       configuration.endTime,
       'history'
     );
+    expect(clearIntervalSpy).not.toHaveBeenCalled();
+    connectedEvent.emit('connected');
+    expect(clearIntervalSpy).toHaveBeenCalledTimes(1);
   });
 
   it('should start south connector with error', async () => {
