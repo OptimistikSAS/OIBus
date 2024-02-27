@@ -523,6 +523,7 @@ describe('NorthConnector enabled', () => {
       });
 
     (fs.stat as jest.Mock).mockReturnValue({ size: 123 });
+    (path.parse as jest.Mock).mockImplementation(filePath => ({ base: filePath }));
 
     await north.handleFilesWrapper();
     expect(logger.error).not.toHaveBeenCalled();

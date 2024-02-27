@@ -3,7 +3,7 @@ import { HistoryQueryDTO } from '../../../shared/model/history-query.model';
 import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
 import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 
-import { createFolder } from '../service/utils';
+import { createFolder, delay } from '../service/utils';
 import pino from 'pino';
 import SouthService from '../service/south.service';
 import NorthService from '../service/north.service';
@@ -30,7 +30,7 @@ export default class HistoryQuery {
     private readonly southService: SouthService,
     private readonly northService: NorthService,
     private readonly historyService: HistoryQueryService,
-    private items: Array<SouthConnectorItemDTO<any>>,
+    private items: Array<SouthConnectorItemDTO>,
     private logger: pino.Logger,
     baseFolder: string
   ) {
@@ -107,12 +107,19 @@ export default class HistoryQuery {
         this.historyConfiguration.endTime,
         'history'
       )
-        .catch(error => {
-          this.logger.error(`Error while executing history query. ${error}`);
-        })
-        .finally(() => {
+        .then(() => {
           this.south!.resolveDeferredPromise();
+        })
+        .catch(async error => {
+          this.logger.error(`Error while executing history query. ${error}`);
+          this.south!.resolveDeferredPromise();
+          await delay(FINISH_INTERVAL);
+          await this.south!.stop();
+          await this.south!.start();
         });
+      if (this.finishInterval) {
+        clearInterval(this.finishInterval);
+      }
       this.finishInterval = setInterval(this.finish.bind(this), FINISH_INTERVAL);
     });
     await this.south.start();
@@ -184,6 +191,7 @@ export default class HistoryQuery {
     if (!this.south) {
       return;
     }
+    this.items.push(item);
     await this.stop();
     await this.south.addItem(item);
     await this.start();
@@ -197,11 +205,12 @@ export default class HistoryQuery {
     await this.addItem(item);
   }
 
-  async deleteItem<I extends SouthItemSettings>(item: SouthConnectorItemDTO<I>): Promise<void> {
+  async deleteItem<I extends SouthItemSettings>(itemToRemove: SouthConnectorItemDTO<I>): Promise<void> {
+    this.items = this.items.filter(item => item.id !== itemToRemove.id);
     if (!this.south) {
       return;
     }
-    await this.south.deleteItem(item);
+    await this.south.deleteItem(itemToRemove);
   }
 
   async deleteItems(): Promise<void> {

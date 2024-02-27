@@ -297,7 +297,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
         this.metricsService!.updateMetrics(this.connector.id, {
           ...currentMetrics,
           numberOfFilesSent: currentMetrics.numberOfFilesSent + 1,
-          lastFileSent: this.fileBeingSent
+          lastFileSent: path.parse(this.fileBeingSent).base
         });
         this.fileCacheService.removeFileFromQueue();
         await this.archiveService.archiveOrRemoveFile(this.fileBeingSent);

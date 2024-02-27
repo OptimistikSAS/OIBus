@@ -492,6 +492,7 @@ describe('SouthConnector enabled', () => {
     expect(logger.error).toHaveBeenCalledWith(`Error when creating South item in cron jobs: scan mode ${item.scanModeId} not found`);
 
     await south.addItem(item);
+    await south.addItem({ ...item, scanModeId: '' });
 
     expect(south.createCronJob).toHaveBeenCalledTimes(1);
   });
