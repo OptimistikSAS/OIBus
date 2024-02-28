@@ -63,7 +63,7 @@ values are retrieved, will be `PLC001.MyVariable.Value`. This helps differentiat
 might have a resulting item name like `PLC002.MyVariable.Value`.
 - **Enumeration value**: You can choose whether to serialize enumerations as integers or as text.
 - **Boolean value**: You can choose whether to serialize booleans as integers or as text.
-- **Structure filtering**: For details on structure filtering, please refer to the [specific documentation](#data-structures).
+- **Structure filtering**: For details on structure filtering, please refer to the [specific documentation](#structure-filtering).
 
 
 :::tip When to use PLC name?

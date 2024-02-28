@@ -3,7 +3,7 @@ sidebar_position: 2
 ---
 
 # OIBus
-OIBus 是一种北向连接器，专为发送数据到其他 OIBus 端点而设计。它支持发送到 `/api/add-values` 的 [JSON 负载](#json-payload)，和发送到 `/api/add-file` 的文件。
+OIBus 是一种北向连接器，专为发送数据到其他 OIBus 端点而设计。它支持发送到 `/api/add-values` 的 [JSON 负载](#json-负载)，和发送到 `/api/add-file` 的文件。
 
 ## 特定设置
 要将数据（无论是 JSON 还是文件格式）传输到另一个 OIBus 实例，您需要完成以下字段：
