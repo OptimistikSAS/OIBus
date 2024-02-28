@@ -11,6 +11,8 @@ import RepositoryService from '../../service/repository.service';
 import { HandlesFile } from '../north-interface';
 import { NorthAzureBlobSettings } from '../../../../shared/model/north-settings.model';
 
+const TEST_FILE = 'oibus-azure-test.txt';
+
 export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSettings> implements HandlesFile {
   static type = manifest.id;
   private blobClient: BlobServiceClient | null = null;
@@ -71,35 +73,40 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
     const container = this.connector.settings.container;
     const blobPath = this.connector.settings.path ? `${this.connector.settings.path}/` : '';
     this.logger.info(`Uploading file "${filePath}" to Azure Blob Storage for container ${container} and path ${blobPath}`);
-
     const { name, ext } = path.parse(filePath);
     const filename = name.slice(0, name.lastIndexOf('-'));
-
     const blobName = `${blobPath}${filename}${ext}`;
     const stats = await fs.stat(filePath);
     const content = await fs.readFile(filePath);
 
-    const containerClient = this.blobClient!.getContainerClient(container);
-    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+    const blockBlobClient = this.blobClient!.getContainerClient(container).getBlockBlobClient(blobName);
     const uploadBlobResponse = await blockBlobClient.upload(content, stats.size);
     this.logger.info(`Upload block blob "${blobName}" successfully with requestId: ${uploadBlobResponse.requestId}`);
   }
 
   override async testConnection(): Promise<void> {
-    this.logger.info('Testing Azure Blob connection');
     await this.prepareConnection();
+    const blobPath = this.connector.settings.path ? `${this.connector.settings.path}/${TEST_FILE}` : TEST_FILE;
 
-    let result = false;
+    let result: boolean = false;
     try {
-      result = await this.blobClient!.getContainerClient(this.connector.settings.container).exists();
-    } catch (error) {
-      this.logger.error(`Error testing Azure Blob connection. ${error}`);
-      throw error;
+      const blockBlobClient = this.blobClient!.getContainerClient(this.connector.settings.container).getBlockBlobClient(blobPath);
+      await blockBlobClient.upload('', 0);
+      result = await blockBlobClient.exists();
+      try {
+        await blockBlobClient.deleteIfExists();
+      } catch (deleteError) {
+        this.logger.error(`Could not delete file ${blobPath}`);
+      }
+    } catch (error: unknown) {
+      const errorString = `Connection could not establish. Check path and authentication. ${error}`;
+      this.logger.error(errorString);
+      throw new Error(errorString);
     }
-    if (result) {
-      this.logger.info(`Access to container ${this.connector.settings.container} ok`);
-    } else {
-      throw new Error(`Container ${this.connector.settings.container} does not exist`);
+    if (!result) {
+      const errorString = `Container ${this.connector.settings.container} and path ${blobPath} does not exist`;
+      this.logger.error(errorString);
+      throw new Error(errorString);
     }
   }
 }

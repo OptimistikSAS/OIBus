@@ -16,8 +16,12 @@ import { NorthAzureBlobSettings } from '../../../../shared/model/north-settings.
 import ArchiveServiceMock from '../../tests/__mocks__/archive-service.mock';
 
 const uploadMock = jest.fn().mockReturnValue(Promise.resolve({ requestId: 'requestId' }));
+const deleteMock = jest.fn();
+const existsMock = jest.fn();
 const getBlockBlobClientMock = jest.fn().mockImplementation(() => ({
-  upload: uploadMock
+  upload: uploadMock,
+  exists: existsMock,
+  deleteIfExists: deleteMock
 }));
 const getContainerClientMock = jest.fn().mockImplementation(() => ({
   getBlockBlobClient: getBlockBlobClientMock
@@ -219,12 +223,7 @@ describe('NorthAzureBlob', () => {
   it('should successfully test', async () => {
     const defaultAzureCredential = jest.fn();
     (DefaultAzureCredential as jest.Mock).mockImplementationOnce(() => defaultAzureCredential);
-    const exists = jest.fn().mockReturnValueOnce(true).mockReturnValueOnce(false);
-    (getContainerClientMock as jest.Mock).mockImplementation(() => {
-      return {
-        exists: exists
-      };
-    });
+    existsMock.mockImplementationOnce(() => true).mockImplementationOnce(() => false);
     const north = new NorthAzureBlob(configuration, encryptionService, repositoryService, logger, 'baseFolder');
     await north.testConnection();
     expect(DefaultAzureCredential).toHaveBeenCalled();
@@ -233,8 +232,9 @@ describe('NorthAzureBlob', () => {
       defaultAzureCredential
     );
     expect(getContainerClientMock).toHaveBeenCalledWith(configuration.settings.container);
-    expect(logger.info).toHaveBeenCalledWith(`Access to container ${configuration.settings.container} ok`);
-    await expect(north.testConnection()).rejects.toThrow(new Error(`Container ${configuration.settings.container} does not exist`));
+    await expect(north.testConnection()).rejects.toThrow(
+      new Error(`Container ${configuration.settings.container} and path my path/oibus-azure-test.txt does not exist`)
+    );
   });
 
   it('should manage test error', async () => {
@@ -245,9 +245,11 @@ describe('NorthAzureBlob', () => {
     });
     const north = new NorthAzureBlob(configuration, encryptionService, repositoryService, logger, 'baseFolder');
 
-    await expect(north.testConnection()).rejects.toThrow(new Error('connection error'));
+    await expect(north.testConnection()).rejects.toThrow(
+      new Error('Connection could not establish. Check path and authentication. Error: connection error')
+    );
     expect(getContainerClientMock).toHaveBeenCalledWith(configuration.settings.container);
-    expect(logger.error).toHaveBeenCalledWith(`Error testing Azure Blob connection. ${new Error('connection error')}`);
+    expect(logger.error).toHaveBeenCalledWith('Connection could not establish. Check path and authentication. Error: connection error');
   });
 
   it('should manage bad authentication type', async () => {
