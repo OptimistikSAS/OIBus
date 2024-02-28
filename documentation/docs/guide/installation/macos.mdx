@@ -24,13 +24,14 @@ macOS OIBus binary can be run through its executable. Once unzipped, start a Ter
   {`./oibus-launcher --config ./data-folder`}
 </CodeBlock>
 
-The `./data-folder` path must be adapted according to the place where the OIBus cache and config will be stored.
+The `./data-folder` path must be adapted according to the place where the OIBus cache and config will be stored and the binary
+must be run from its own folder.
 
 For example, if the binary is stored in `/bin/` and the cache and configuration files are stored in
 `~/test/oibus-data`, the command will be:
 
 <CodeBlock>
-  {`/bin/oibus-launcher --config ~/test/oibus-data`}
+  {`cd /bin && ./oibus-launcher --config ~/test/oibus-data`}
 </CodeBlock>
 
 :::caution
@@ -39,7 +40,17 @@ Be sure to have admin permissions to run the binary
 
 :::caution Allow the app to be executed
 On macOS, you may need to allow the execution of the binary. When first run, go to the System Settings, on the Privacy &
-Security menu, and allow the oibus-launcher in the Security section.
+Security menu, and allow the oibus-launcher in the Security section by clicking on `Allow Anyway`.
+
+<div style={{textAlign: 'center'}}>
+
+  ![MacOS security](../../../static/img/guide/installation/macos-security.png)
+
+</div>
+
+This operation must be done twice:
+- One for `oibus-launcher`
+- One for `oibus` (run by `oibus-launcher`)
 :::
 
 
