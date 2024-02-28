@@ -44,9 +44,6 @@ OIBus internally uses these dates in ISO UTC format, and the output datetime for
 If the `timestamp` field is utilized as a reference of type string, formatted as `yyyy-MM-dd HH:mm:ss`, the @StartTime
 and @EndTime will be injected into the query as `yyyy-MM-dd HH:mm:ss` format strings.
 
-
-If the timestamp field is utilized as a reference of type string, formatted as yyyy-MM-dd HH:mm:ss, the @StartTime and @EndTime will be injected into the query as yyyy-MM-dd HH:mm:ss format strings.
-
 In the subsequent query, the `datetime` field (retrieved from the database) is a DateTime object converted into a
 string (`timestamp`). OIBus will interpret the `timestamp` (string) field from the query as a reference field. However,
 injecting @StartTime and @EndTime as string variables in the same format may lead to unexpected behavior due to the
