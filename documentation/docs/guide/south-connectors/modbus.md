@@ -23,7 +23,8 @@ Here are the Modbus connector settings:
 - **Address**: The hexadecimal address of the data within the device.
 - **Modbus type**: Specifies whether it's a _coil_, _discrete input_, _input register_, or _holding register_ (default).
 - **Data type**: Relevant for _holding registers_ or _input registers_. It defines the type of data fetched from the 
-register, with options such as UInt16 (default), Int16, UInt32, Int32, UInt64, Int64, Float, or Double.
+register, with options such as Bit, UInt16 (default), Int16, UInt32, Int32, UInt64, Int64, Float, or Double.
+- **Bit index** (Bit data type only): The index of the bit to retrieve from the read value.
 - **Multiplier Coefficient**: Multiplies the retrieved value (default is 1).
 
 ### About the Modbus address

@@ -29,6 +29,10 @@ prolonged network failures. To handle such scenarios, the history settings enabl
 smaller sub-intervals, each no longer than the specified **Max read interval** in seconds. These sub-intervals are requested 
 with a delay defined by the **Read delay** setting.
 
+In certain situations, adding an overlap to the history query can be beneficial. You can achieve this by configuring 
+the **overlap** field (in milliseconds): it will subtract this specified number of milliseconds from the `@StartTime`
+variable of the subsequent query.
+
 ## Specific section
 Specific settings for the connector can be found in the respective connector's documentation for more detailed information.
 
@@ -64,4 +68,194 @@ When you upload a CSV file, the system will perform checks for duplicates and va
 process, all correctly formatted items will be added.
 :::
 
+### Changing scan mode and max instant issue
+History-capable South connectors maintain a record of the last maximum instant in the `cache.db` database's `cache_history`
+table. This section provides an in-depth explanation of how the max instant, associated with scan modes and items, operates.
 
+
+For Database South connectors, the `Max instant per item` option is always enabled and cannot be changed. In South 
+connectors like OPCUA (in HA mode), users have the choice to maintain one max instant per item, even if they share the 
+same scan mode, or to group items with the same scan mode together, resulting in a single max instant.
+
+#### Max instant per item is `enabled`
+##### Change an item’s scan mode
+Changing an item's scan mode results in the removal of the previous cache entry and the creation of a new cache entry, 
+utilizing the preceding `max_instant`.
+
+- Example: changing the scan mode of item1 from `scan_prev` to `scan_new`.
+
+    **`cache_history` table (in `cache.db` database) before change**
+    | south_id | scan_mode_id | item_id | max_instant              |
+    |----------|--------------|---------|--------------------------|
+    | south1   | scan_prev    | item1   | 2024-02-16T00:00:00.000Z |
+
+    **`cache_history` table (in `cache.db` database) after change**
+    | south_id | scan_mode_id | item_id | max_instant              |
+    |----------|--------------|---------|--------------------------|
+    | south1   | scan_new     | item1   | 2024-02-16T00:00:00.000Z |
+
+##### Remove an item
+It deletes the item from the `south_items` table in the `config.db` database and the corresponding entry from the 
+`cache_history` table in the `cache.db` database.
+
+##### Remove the south
+It removes all linked items from the `south_items` table in the `config.db` database and their associated entries from
+the `cache_history` table in the `cache.db` database.
+
+#### Max instant per item is `disabled`
+##### Change an item’s scan mode
+- Example: The new scan mode is not present in the `cache_history` table (in `cache.db` database)
+  It removes the previous cache entry, but **only if there are no other items utilizing the previous scan mode**. 
+  Subsequently, it creates a new cache entry, utilizing the previous **max_instant**.
+
+    **`south_items` table (in `config.db` database) before change**
+    | south_id | scan_mode_id | item_id |
+    |----------|--------------|---------|
+    | south1   | scan_prev    | item1   |
+    | south1   | scan_prev    | item2   |
+
+    **`cache_history` table (in `cache.db` database) before change**
+    | south_id | scan_mode_id | item_id | max_instant              |
+    |----------|--------------|---------|--------------------------|
+    | south1   | scan_prev    | all     | 2024-02-16T00:00:00.000Z |
+
+    **`south_items` table (in `config.db` database) after change**
+    | south_id | scan_mode_id | item_id |
+    |----------|--------------|---------|
+    | south1   | scan_new     | item1   |
+    | south1   | scan_prev    | item2   |
+
+    **`cache_history` table (in `cache.db` database) after change**
+    | south_id | scan_mode_id | item_id | max_instant              |
+    |----------|--------------|---------|--------------------------|
+    | south1   | scan_new     | all     | 2024-02-16T00:00:00.000Z |
+    | south1   | scan_prev    | all     | 2024-02-16T00:00:00.000Z |
+
+    In this scenario, a new cache entry is generated (`south1 → scan_new`), but the old one (`south1 → scan_prev`) 
+    is retained because `item2` still employs the previous scan mode.    
+
+    :::info
+    If `item1` was the sole item using `scan_prev`, the `south1 → scan_prev` entry would have been deleted. Consequently,
+    if the scan mode for `item1` is reverted to `scan_prev`, it will adopt the `max_instant` of the `scan_new`. However, 
+    if the `south1 → scan_prev` combination still exists, please refer to the next case.
+    :::
+
+- Example: The new scan mode is present in the `cache_history` table (in `cache.db` database)
+  It removes the previous cache entry, but **only if there are no other items using the previous scan mode**, and it will 
+  **not** create a new cache entry nor update the existing `max_instant`.
+
+    **`south_items` table (in `config.db` database) before change**
+    | south_id | scan_mode_id | item_id |
+    |----------|--------------|---------|
+    | south1   | scan_prev    | item1   |
+    | south1   | scan_prev    | item2   |
+    | south1   | scan_new     | item3   |
+
+    **`cache_history` table (in `cache.db` database) before change**
+    | south_id | scan_mode_id | item_id | max_instant              |
+    |----------|--------------|---------|--------------------------|
+    | south1   | scan_new     | all     | 2024-01-16T00:00:00.000Z |
+    | south1   | scan_prev    | all     | 2024-02-16T00:00:00.000Z |
+
+    **`south_items` table (in `config.db` database) after change**
+    | south_id | scan_mode_id | item_id |
+    |----------|--------------|---------|
+    | south1   | **scan_new** | item1   |
+    | south1   | scan_prev    | item2   |
+    | south1   | scan_new     | item3   |
+
+    **`cache_history` table (in `cache.db` database) after change**
+    | south_id | scan_mode_id | item_id | max_instant              |
+    |----------|--------------|---------|--------------------------|
+    | south1   | scan_new     | all     | 2024-01-16T00:00:00.000Z |
+    | south1   | scan_prev    | all     | 2024-02-16T00:00:00.000Z |
+
+    In this case, a new cache entry is **not** created (`south1 → scan_new`) because it already exists in the table. 
+    Additionally, `scan_prev` is not removed because `item2` still utilizes it.
+    
+    :::info
+    If `item1` was the only item using `scan_prev`, the `south1 → scan_prev` entry would have been removed.  
+    :::
+
+    However, two issues arise:
+    - `item1` is now utilizing a `max_instant` that is one month in the past compared to its previous `max_instant`. 
+    This results in duplicate queries between the two `max_instant`. As `item1` transitions from `scan_prev` (2024-02-16)
+    to `scan_new` (2024-01-16), it retroactively processes data for the previous month. 
+    - Conversely, the same situation can occur in the opposite manner, resulting in a month's worth of data not being 
+    retrieved.
+
+##### Remove an item
+It deletes the cache entry in the `cache.db` database **only if there are no other items utilizing the same scan mode 
+as the item**.
+
+##### Remove the south
+It removes all linked items from the `south_items` table in the `config.db` database and their associated entries from
+the `cache_history` table in the `cache.db` database.
+
+#### Max instant per item `disabled`→`enabled`
+It removes all cache entries with item_id `all` linked to the south, and it creates new cache entries for each item. The 
+`max_instant` of these new entries will be the `max_instant` of the previously removed ones, based on scan mode.
+
+- Example
+    **`south_items` table (in `config.db` database) before change**
+    | south_id | scan_mode_id | item_id |
+    |----------|--------------|---------|
+    | south1   | scan_prev    | item1   |
+    | south1   | scan_prev    | item2   |
+    | south1   | scan_new     | item3   |
+
+    **`cache_history` table (in `cache.db` database) before change**
+    | south_id | scan_mode_id | item_id | max_instant              |
+    |----------|--------------|---------|--------------------------|
+    | south1   | scan_new     | all     | 2024-01-16T00:00:00.000Z |
+    | south1   | scan_prev    | all     | 2024-02-16T00:00:00.000Z |
+
+    **`south_items` table (in `config.db` database) after change**
+    | south_id | scan_mode_id | item_id |
+    |----------|--------------|---------|
+    | south1   | scan_new     | item1   |
+    | south1   | scan_prev    | item2   |
+    | south1   | scan_new     | item3   |
+
+    **`cache_history` table (in `cache.db` database) after change**
+    | south_id | scan_mode_id | item_id | max_instant              |
+    |----------|--------------|---------|--------------------------|
+    | south1   | scan_prev    | item1   | 2024-02-16T00:00:00.000Z |
+    | south1   | scan_prev    | item2   | 2024-02-16T00:00:00.000Z |
+    | south1   | scan_new     | item3   | 2024-01-16T00:00:00.000Z |
+
+#### Max instant per item `enabled`→`disabled`
+It removes all cache entries associated with the south and establishes new cache entries for the scan modes utilized by 
+the items. Only one entry is added per scan mode. Each new cache entry will have the **latest** `max_instant` from the list
+of previous items using the scan mode of that entry.
+
+- Example
+    **`south_items` table (in `config.db` database) before change**
+    | south_id | scan_mode_id | item_id |
+    |----------|--------------|---------|
+    | south1   | scan_prev    | item1   |
+    | south1   | scan_prev    | item2   |
+    | south1   | scan_new     | item3   |
+    
+    **`cache_history` table (in `cache.db` database) before change**
+    | south_id | scan_mode_id | item_id | max_instant              |
+    |----------|--------------|---------|--------------------------|
+    | south1   | scan_prev    | item1   | 2024-02-16T00:00:00.000Z |
+    | south1   | scan_prev    | item2   | 2024-02-20T00:00:00.000Z |
+    | south1   | scan_new     | item3   | 2024-01-16T00:00:00.000Z |
+
+    **`south_items` table (in `config.db` database) after change**
+    | south_id | scan_mode_id | item_id |
+    |----------|--------------|---------|
+    | south1   | scan_new     | item1   |
+    | south1   | scan_prev    | item2   |
+    | south1   | scan_new     | item3   |
+
+    **`cache_history` table (in `cache.db` database) after change**
+    | south_id | scan_mode_id | item_id | max_instant              |
+    |----------|--------------|---------|--------------------------|
+    | south1   | scan_new     | all     | 2024-01-16T00:00:00.000Z |
+    | south1   | scan_prev    | all     | 2024-02-20T00:00:00.000Z |
+
+    In this case the `max_instant` for `scan_prev` is set to 2024-02-20 instead of 2024-02-16, because it’s a newer date. 
+    It may cause data loss.

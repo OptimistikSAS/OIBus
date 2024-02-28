@@ -21,12 +21,13 @@ field used as a reference (refer to [the datetime fields section](#datetime-fiel
 query is split.
 
 ```sql title="SQL query with @StartTime and @EndTime"
-SELECT reference, value, timestamp FROM table WHERE timestamp > @StartTime AND timestamp < @EndTime
+SELECT data_name AS dataName, value, timestamp FROM table WHERE timestamp > @StartTime AND timestamp < @EndTime
 ```
 
 ### Datetime fields
-In the South connector, you can specify an array of fields that are of datetime type and indicate the format to use for
-each field. Here are the details for configuring datetime fields:
+In the South connector, you can specify an array of fields that are of datetime type. Each row indicate the format in
+which OIBus will parse this field in order to convert it to an internal UTC date. Here are the details for configuring
+datetime fields:
 - **Field name**: The field name in the SELECT section of the query.
 - **Reference field**: Use this field as a reference for the next @StartTime value (refer to [query variables](#query-variables)).
 - **Type**: The type of data in the result.
@@ -37,6 +38,31 @@ database.
 for months).
 
 OIBus internally uses these dates in ISO UTC format, and the output datetime format can be set in the
-[serialization section](#serialization).
+[serialization section](#serialization). All datetime fields are converted using the same serialization settings.
+
+:::warning Conversion in SQL query
+If the `timestamp` field is utilized as a reference of type string, formatted as `yyyy-MM-dd HH:mm:ss`, the @StartTime
+and @EndTime will be injected into the query as `yyyy-MM-dd HH:mm:ss` format strings.
+
+
+If the timestamp field is utilized as a reference of type string, formatted as yyyy-MM-dd HH:mm:ss, the @StartTime and @EndTime will be injected into the query as yyyy-MM-dd HH:mm:ss format strings.
+
+In the subsequent query, the `datetime` field (retrieved from the database) is a DateTime object converted into a
+string (`timestamp`). OIBus will interpret the `timestamp` (string) field from the query as a reference field. However,
+injecting @StartTime and @EndTime as string variables in the same format may lead to unexpected behavior due to the
+inconsistency between the injected @StartTime and @EndTime variables (string type) and the datetime field
+(formatted as DateTime from the database).
+
+```sql title="Bad SQL query with @StartTime and @EndTime and convert"
+SELECT data_name AS dataName, value, convert(datetime, DATETIME) AS timestamp FROM table
+WHERE datetime > @StartTime AND datetime < @EndTime
+```
+
+In the following case, the uniformity in formats guarantees proper functionality.
+```sql title="Correct SQL query with @StartTime and @EndTime"
+SELECT data_name AS dataName, value, convert(datetime, DATETIME) AS timestamp FROM table
+WHERE convert(datetime, DATETIME) > @StartTime AND convert(datetime, DATETIME) < @EndTime
+```
+:::
 
 <SerializationSettings></SerializationSettings>
