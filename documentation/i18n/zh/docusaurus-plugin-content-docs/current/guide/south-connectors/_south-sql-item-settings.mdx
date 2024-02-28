@@ -5,12 +5,12 @@ import SerializationSettings from './_south-rest-serialization-settings.mdx';
 准备输出文件，然后将其发送到 North 连接器。
 
 ### 查询
-South 连接器中的查询字段接受 SQL 语法，并且可以利用几个内部变量。这些变量用于多种目的，包括在连接失败时增强数据流的韧性以及将大时间间隔分解为更小的块，这有助于减轻服务器和网络的负载。更多信息，请参考[大查询](#splitting-large-queries)部分。
+South 连接器中的查询字段接受 SQL 语法，并且可以利用几个内部变量。这些变量用于多种目的，包括在连接失败时增强数据流的韧性以及将大时间间隔分解为更小的块，这有助于减轻服务器和网络的负载。更多信息，请参考[大查询](#拆分大型查询)部分。
 
 #### 查询变量
 在 OIBus 中，你可以使用以下内部变量，系统将解释这些变量：
 
-- **@StartTime**：最初，@StartTime 变量设置为查询第一次执行的日期。当从数据库检索到结果时，@StartTime 值更新为这些结果中用作参考的字段的最新时间戳（参考[日期时间字段部分](#datetime-fields)）。
+- **@StartTime**：最初，@StartTime 变量设置为查询第一次执行的日期。当从数据库检索到结果时，@StartTime 值更新为这些结果中用作参考的字段的最新时间戳（参考[日期时间字段部分](#日期时间字段)）。
 - **@EndTime**：@EndTime 变量设置为当前时间（_now()_）或者如果查询被分割，则为子间隔的结束时间。
 
 ```sql title="包含 @StartTime 和 @EndTime 的 SQL 查询"
@@ -19,13 +19,13 @@ SELECT data_name AS dataName, value, timestamp FROM table WHERE timestamp > @Sta
 ### 日期时间字段
 在 South 连接器中，你可以指定一个由 datetime 类型字段组成的数组。每行指示 OIBus 将如何解析此字段以将其转换为内部 UTC 日期。这里是配置日期时间字段的详细信息：
 - **字段名称**：查询的 SELECT 部分中的字段名称。
-- **参考字段**：使用此字段作为下一个 @StartTime 值的参考（参考[查询变量](#query-variables)）。
+- **参考字段**：使用此字段作为下一个 @StartTime 值的参考（参考[查询变量](#查询变量)）。
 - **类型**：结果中的数据类型。
 - **时区**（对于字符串、Date、DateTime、DateTime2、SmallDateTime 类型）：数据库中存储的日期时间的时区。
 - **格式**（仅限字符串）：数据库中存储的日期时间的字符串格式。
 - **区域设置**（仅限字符串）：当格式包含特定于区域的字符串时使用的区域设置（如月份的 MMM 格式）。
 
-OIBus 内部使用这些日期的 ISO UTC 格式，并且可以在[序列化部分](#serialization)中设置输出日期时间格式。所有日期时间字段都使用相同的序列化设置进行转换。
+OIBus 内部使用这些日期的 ISO UTC 格式，并且可以在[序列化部分](#csv序列化)中设置输出日期时间格式。所有日期时间字段都使用相同的序列化设置进行转换。
 
 :::warning SQL 查询中的转换
 如果使用字符串类型的 `timestamp` 字段作为参考，格式为 `yyyy-MM-dd HH:mm:ss`，则 @StartTime 和 @EndTime 将被注入查询中为 `yyyy-MM-dd HH:mm:ss` 格式的字符串。

@@ -15,7 +15,7 @@ OIBus集成了两种OPCUA模式（HA和DA），仅用于只读模式，使用[no
 - **重试间隔**：连接失败时，重连尝试之间的等待时间。
 - **安全模式**：可以使用安全模式和安全策略字段来保护通信。可用的安全模式包括：_None_（无）、_Sign_（签名）、_SignAndEncrypt_（签名并加密）。
 - **安全策略**（当安全模式不是None时适用）：安全策略定义了通信的安全级别。可用的安全策略包括：None、Basic128、Basic192、Basic256、Basic128Rsa15、Basic192Rsa15、Basic256Rsa15、Basic256Sha256、Aes128_Sha256_RsaOaep、PubSub_Aes128_CTR、PubSub_Aes256_CTR。
-- **认证**：认证选项包括None（无）、Basic（基础）和Certificate（证书）。详情请参考[安全设置](#authentication)。
+- **认证**：认证选项包括None（无）、Basic（基础）和Certificate（证书）。详情请参考[安全设置](#认证)。
 
 :::caution 与OPCUA服务器的兼容性
 选择与您要连接的OPCUA服务器支持的安全模式和安全策略至关重要，确保兼容性对于成功连接至关重要。
@@ -44,7 +44,7 @@ OIBus集成了两种OPCUA模式（HA和DA），仅用于只读模式，使用[no
 :::
 
 ### 认证
-用于客户端认证的证书必须添加到OPCUA服务器的信任用户证书列表中。它与前面提到的用于[保护通信](#communication)的自签名证书分开管理。
+用于客户端认证的证书必须添加到OPCUA服务器的信任用户证书列表中。它与前面提到的用于[保护通信](#通信)的自签名证书分开管理。
 
 :::info 在Prosys OPCUA模拟服务器上的示例
 对于Prosys OPC UA服务器，用于认证OIBus的证书必须放置在`.prosysopc\prosys-opc-ua-simulation-server\USERS_PKI\CA\certs`文件夹中。如果不这样做，可能会出现包含信息：`Error: serviceResult = BadIdentityTokenRejected (0x80210000)` 的错误。

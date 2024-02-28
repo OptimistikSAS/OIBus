@@ -108,8 +108,8 @@ Timestamp	                Reference	001	    002	    003
 
 我们的主要关注点将是 JSON 文件格式中的数据。在这方面，其大小取决于多个参数，包括：
 - 数据采样频率。
-- 分组在一起传输的点的数量（由 [Group Count](../north-connectors/common-settings#caching) 定义）。
-- 传输频率（由 [Send Interval](../north-connectors/common-settings#caching) 定义）。
+- 分组在一起传输的点的数量（由 [Group Count](../north-connectors/common-settings#缓存) 定义）。
+- 传输频率（由 [Send Interval](../north-connectors/common-settings#缓存) 定义）。
 - 数据和质量的格式，特别是用于精度的字符数。
 - 数据引用的大小。
 

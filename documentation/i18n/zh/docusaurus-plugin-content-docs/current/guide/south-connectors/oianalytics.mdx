@@ -2,9 +2,6 @@
 sidebar_position: 13
 ---
 
-import SerializationSettings from './_south-rest-serialization-settings.mdx';
-
-
 # OIAnalytics (Rest API)
 Retrieve data from the [Optimistik OIAnalytics](https://optimistik.com/oianalytics/) application.
 
@@ -35,8 +32,24 @@ In OIBus, you can utilize the following internal variables that will be interpre
 
 - **@StartTime**: Initially, the @StartTime variable is set to the date of the first execution of the query. When results
 are retrieved from the application, the @StartTime value is updated to the most recent timestamp among those results in the
-field used as a reference (refer to [the datetime fields section](#datetime-fields)).
+field used as a reference.
 - **@EndTime**: The @EndTime variable is set to either the current time (_now()_) or the end of the sub-interval if a
 query is split.
 
-<SerializationSettings></SerializationSettings>
+### CSV Serialization
+OIBus offers the option to serialize retrieved data into CSV files, and you can customize the serialization process with
+the following settings:
+- **Filename**: The name of the file where the result will be stored. You can use several internal variables like
+**@ConnectorName** (the name of the connector) and **@CurrentDate** (the current date in `yyyy_MM_dd_HH_mm_ss_SSS`
+format - it is uncorrelated to the datetime format of the serialization, used for datetime fields).
+- **Delimiter**: The delimiter to use in the CSV.
+- **Compression**: Choose whether to compress the file with gzip or not.
+- **Output datetime format**: Specify the format of the datetime in the CSV. The **@CurrentDate** variable used in the output
+filename won't be affected.
+- **Output timezone**: The timezone to use for storing the datetime.
+
+## Splitting large queries
+In situations where a query may impose a significant load on the server, especially when a large time interval is requested
+and the @StartTime and @EndTime [query variables](#query-variables) are utilized, you can split the query into several
+sub-queries with smaller intervals. This can be achieved by configuring the **Max read interval** field in the
+[history settings](./common-settings.md#历史设置).
