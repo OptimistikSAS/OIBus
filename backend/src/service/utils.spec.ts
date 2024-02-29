@@ -1064,7 +1064,9 @@ describe('Service utils', () => {
           end: jest.fn()
         };
       });
-      await expect(httpGetWithBody('body', { protocol: 'https:' })).rejects.toThrow('Unexpected token s in JSON at position 0');
+      await expect(httpGetWithBody('body', { protocol: 'https:' })).rejects.toThrow(
+        'Unexpected token \'s\', "some datab"... is not valid JSON'
+      );
     });
   });
 
