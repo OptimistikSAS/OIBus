@@ -154,21 +154,21 @@ jobs:
           # We need to install node and yarn "again" because they don't exist inside our build container
           install: |
             apt update && apt -y install curl build-essential
-            curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+            curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
             apt-get install -y nodejs
             npm install -g pkg
           run: |
             cd ./backend/
             pkg \
             --config package.json \
-            --target=node18-${{ matrix.config['platform'] }} \
+            --target=node20-${{ matrix.config['platform'] }} \
             --output ../build/bin/${{ matrix.config['platform'] }}/binaries/oibus \
             --public --compress GZip \
             ./dist/backend/src/index.js 
             cd ../launcher
             pkg \
             --config ./package.json \
-            --target=node18-${{ matrix.config['platform'] }} \
+            --target=node20-${{ matrix.config['platform'] }} \
             --output ../build/bin/${{ matrix.config['platform'] }}/oibus-launcher \
             --public --compress GZip \
             ./dist/index.js
