@@ -1,5 +1,54 @@
 # Changelog
 
+## [3.2.0](https://github.com/OptimistikSAS/OIBus/compare/v3.1.0...v3.2.0) (2024-02-29)
+
+
+### Features
+
+* Adapt bash install scripts ([fe67e2d](https://github.com/OptimistikSAS/OIBus/commit/fe67e2d21d8b50ab64b3e4bda717f113ecdb77fb))
+* Adapt bat install scripts ([ca2660d](https://github.com/OptimistikSAS/OIBus/commit/ca2660dc660bb83c5dbb4035315f72bf1beef42d))
+* Adapt bundle for launcher ([ad33e2e](https://github.com/OptimistikSAS/OIBus/commit/ad33e2e466a13c0d14c6149780943e15c6abb201))
+* **backend:** Create cron validation endpoint ([6667ebc](https://github.com/OptimistikSAS/OIBus/commit/6667ebc4572818b7f7b4bbbad09f874c13236349))
+* Create launcher for OIBus auto-update ([1398328](https://github.com/OptimistikSAS/OIBus/commit/1398328286e090b7730f8d8b6f4c8a6fcbc4aa14))
+* **frontend:** Display number of items in tables ([92bd9e6](https://github.com/OptimistikSAS/OIBus/commit/92bd9e6bb70e278d0b49529f7186fe41a22374dc))
+* **frontend:** Show warning when changing scan modes ([556a3f9](https://github.com/OptimistikSAS/OIBus/commit/556a3f935759ced5498bb36c1bc2c117b0292379))
+* **frontend:** Validate cron and show next occurrences and human readable form ([3bfd42a](https://github.com/OptimistikSAS/OIBus/commit/3bfd42aaec0216ce161a92cc49df772349170ff9))
+* **history:** Add restart history buttons ([259a1c8](https://github.com/OptimistikSAS/OIBus/commit/259a1c874e22376d4868299b99db4296fba8a07a))
+* **history:** Added progress bar ([fcff359](https://github.com/OptimistikSAS/OIBus/commit/fcff35949849e4fee7954db33d02f29176985aaa))
+* **launcher:** Backup and rollback data-folder ([f010cab](https://github.com/OptimistikSAS/OIBus/commit/f010cab11d28db69868dfedebbf6b25d504abee1))
+* **north-cache:** Add actions to file tables ([9026e8f](https://github.com/OptimistikSAS/OIBus/commit/9026e8f04fa051e7cca2c10d0cb77982026abb50))
+* **north-cache:** Display north error values ([4f430e5](https://github.com/OptimistikSAS/OIBus/commit/4f430e5575be550f72766b092eb7ec3fba7f41ec))
+* **north-cache:** Display north regular values ([9b9d6bd](https://github.com/OptimistikSAS/OIBus/commit/9b9d6bdcea08e02963f6c9ba9f904cdd512d37b3))
+* **oia-module:** Manage Commands acknowledgment ([726f4bd](https://github.com/OptimistikSAS/OIBus/commit/726f4bd36bdc5fda0ee505cc4dcad50b41c7f116))
+* **oia-module:** Manage Upgrade command ([a4690b8](https://github.com/OptimistikSAS/OIBus/commit/a4690b8e515a9dc40fcd5be5eaac824e5b1d1fbd))
+* **oia-module:** Queue commands when retrieving them ([89b513b](https://github.com/OptimistikSAS/OIBus/commit/89b513b913eb039b0e0298cd459cddc116abfe22))
+* **oia-module:** Retrieve commands from OIA ([e9409b6](https://github.com/OptimistikSAS/OIBus/commit/e9409b6bcad78d99c4eef93d93fb9bbef7618027))
+* **oia-module:** Use OIA module in OIA connectors ([784e907](https://github.com/OptimistikSAS/OIBus/commit/784e907545c246a44e2729e0dc916c7d583848b3))
+* **registration:** Add registration process (OIA module) ([b283915](https://github.com/OptimistikSAS/OIBus/commit/b283915e2ae2ead326e69e64a959c4f124926869))
+* **registration:** Create registration backend service ([1d37015](https://github.com/OptimistikSAS/OIBus/commit/1d37015d84853523da9adc4b407ee216956b6e69))
+* **registration:** Implement check registration process ([ba8d474](https://github.com/OptimistikSAS/OIBus/commit/ba8d474f9e212809188bbe7deff1501b986a22da))
+
+
+### Bug Fixes
+
+* **azure-blob:** fix test of writing access of a blob ([a601eb9](https://github.com/OptimistikSAS/OIBus/commit/a601eb90374a4b9c5f5db1d44733a9b22a8b0b4e))
+* **backend:** Fixed instantiating invalid cron jobs ([1fdb104](https://github.com/OptimistikSAS/OIBus/commit/1fdb1043cfa6450d4d57c0d0276395d2f3a19826))
+* **connectors:** Only log test connection's errors on modal, not in logger anymore ([c65576a](https://github.com/OptimistikSAS/OIBus/commit/c65576a239a862a2b9b7714f52cd023f8d05c701))
+* **form:** Increase max file size validator to match default OIBus engine value ([dcf914a](https://github.com/OptimistikSAS/OIBus/commit/dcf914ac68ec6fcce4d41bfd4a145ffc93496b8b))
+* **history-metrics:** Reset metrics when resetting cache ([49535f8](https://github.com/OptimistikSAS/OIBus/commit/49535f84b867a425503f7b9b58831deb16db2d14))
+* **history-query:** fix item update and history query error management ([ef0d3be](https://github.com/OptimistikSAS/OIBus/commit/ef0d3be42ef7613bd028fe22fbb6350278b68cd4))
+* **history:** Add additional tests for progress bar component ([4eadefd](https://github.com/OptimistikSAS/OIBus/commit/4eadefd581f3a24f37c550ec36e94daec7aeede0))
+* **north-cache:** Fix file table tests ([7fba183](https://github.com/OptimistikSAS/OIBus/commit/7fba183f3182fbf3dd84dc8aea2ca35a91c0a310))
+* **oia-module:** Fix path when updating OIBus from launcher ([17fbd7d](https://github.com/OptimistikSAS/OIBus/commit/17fbd7df903f194b608761d89a85c2f7d4f02053))
+* **slims:** Fix slims parser to serialize data properly ([2584667](https://github.com/OptimistikSAS/OIBus/commit/25846675979b9769f9b6de06b8b39e96f55fe984))
+* **south:** Fix custom cache table creation for South Connector (e.g. Folder Scanner) ([8c850f3](https://github.com/OptimistikSAS/OIBus/commit/8c850f307c70798ecc7eacfabc5a179ce9771a1f))
+* **south:** Fix duplicating south items ([098c7d4](https://github.com/OptimistikSAS/OIBus/commit/098c7d4dab3b7b3f889999c67d169ffc15a3c1cd))
+* **south:** Fix last max instant behavior on scan mode changes ([59f02fd](https://github.com/OptimistikSAS/OIBus/commit/59f02fd8a7e1fee51b669b5b043d133d3d881a7d))
+* **south:** Increase request timeout of SQL South connectors ([412c2b3](https://github.com/OptimistikSAS/OIBus/commit/412c2b3b0eece79691d5ddd42a53f3498f130571))
+* **south:** Remove mimetype check on item import ([16ee824](https://github.com/OptimistikSAS/OIBus/commit/16ee824b934022546259585df352821f77ae420a))
+* **table:** fix cell size / add text-overflow: clip / minimize "type"/"mode"/"interval" column / define first/last cell size ([17d97b8](https://github.com/OptimistikSAS/OIBus/commit/17d97b8ba24b3d1591f9895319a40ed06c4755a1))
+* use default property of JSON i18n module ([58b7bad](https://github.com/OptimistikSAS/OIBus/commit/58b7bad9994d47928ad6a2eb315b16277177021d))
+
 ## [3.1.0](https://github.com/OptimistikSAS/OIBus/compare/v3.0.4...v3.1.0) (2023-11-07)
 
 
