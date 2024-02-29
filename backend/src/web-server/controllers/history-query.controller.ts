@@ -480,6 +480,10 @@ export default class HistoryQueryController extends AbstractController {
         name: `${ctx.request.body!.type}:test-connection`
       };
       command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(command.settings, southSettings, manifest.settings);
+      const logger = ctx.app.logger.child(
+        { scopeType: 'history-query', scopeId: command.id, scopeName: command.name },
+        { level: 'silent' }
+      );
       const southToTest = ctx.app.southService.createSouth(
         command,
         [],
@@ -488,7 +492,7 @@ export default class HistoryQueryController extends AbstractController {
         /* istanbul ignore next: noop function */
         async (_southId: string, _filename: string) => {},
         'baseFolder',
-        ctx.app.logger
+        logger
       );
       await southToTest.testConnection();
 
@@ -530,7 +534,11 @@ export default class HistoryQueryController extends AbstractController {
         name: `${ctx.request.body!.type}:test-connection`
       };
       command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(command.settings, northSettings, manifest.settings);
-      const northToTest = ctx.app.northService.createNorth(command, 'baseFolder', ctx.app.logger);
+      const logger = ctx.app.logger.child(
+        { scopeType: 'history-query', scopeId: command.id, scopeName: command.name },
+        { level: 'silent' }
+      );
+      const northToTest = ctx.app.northService.createNorth(command, 'baseFolder', logger);
       await northToTest.testConnection();
 
       ctx.noContent();

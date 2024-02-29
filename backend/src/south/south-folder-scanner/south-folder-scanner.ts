@@ -47,24 +47,19 @@ export default class SouthFolderScanner
     try {
       await fs.access(inputFolder, fs.constants.F_OK);
     } catch (error: any) {
-      this.logger.error(`Access error on '${inputFolder}': ${error.message}`);
-      throw new Error(`Folder '${inputFolder}' does not exist`);
+      throw new Error(`Folder "${inputFolder}" does not exist: ${error.message}`);
     }
 
     try {
       await fs.access(inputFolder, fs.constants.R_OK);
     } catch (error: any) {
-      this.logger.error(`Access error on '${inputFolder}': ${error.message}`);
-      throw new Error(`No read access on folder`);
+      throw new Error(`Read access error on "${inputFolder}": ${error.message}`);
     }
 
     const stat = await fs.stat(inputFolder);
     if (!stat.isDirectory()) {
-      this.logger.error(`${inputFolder} is not a directory`);
       throw new Error(`${inputFolder} is not a directory`);
     }
-
-    this.logger.info(`Folder "${inputFolder}" exists and is reachable`);
   }
 
   async start(): Promise<void> {

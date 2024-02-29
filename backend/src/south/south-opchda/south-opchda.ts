@@ -60,10 +60,6 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
   }
 
   async testConnection(): Promise<void> {
-    this.logger.info(
-      `Testing OPC OIBus Agent connection on ${this.connector.settings.agentUrl} with host "${this.connector.settings.host}" and server name "${this.connector.settings.serverName}"`
-    );
-
     const headers: Record<string, string> = {};
     headers['Content-Type'] = 'application/json';
     const fetchOptions = {
@@ -76,14 +72,11 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
     };
     const response = await fetch(`${this.connector.settings.agentUrl!}/api/opc/${this.connector.id}/connect`, fetchOptions);
     if (response.status === 200) {
-      this.logger.info('Connected to remote OPC server. Disconnecting...');
       await fetch(`${this.connector.settings.agentUrl}/api/opc/${this.connector.id}/disconnect`, { method: 'DELETE' });
     } else if (response.status === 400) {
       const errorMessage = await response.text();
-      this.logger.error(`Error occurred when sending connect command to remote agent with status ${response.status}: ${errorMessage}`);
-      throw new Error(`Error occurred when sending connect command to remote agent with status ${response.status}: ${errorMessage}`);
+      throw new Error(`Error occurred when sending connect command to remote agent with status ${response.status}. ${errorMessage}`);
     } else {
-      this.logger.error(`Error occurred when sending connect command to remote agent with status ${response.status}`);
       throw new Error(`Error occurred when sending connect command to remote agent with status ${response.status}`);
     }
   }

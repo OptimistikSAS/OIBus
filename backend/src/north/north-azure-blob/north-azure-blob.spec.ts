@@ -237,6 +237,39 @@ describe('NorthAzureBlob', () => {
     );
   });
 
+  it('should successfully test but not delete', async () => {
+    const defaultAzureCredential = jest.fn();
+    (DefaultAzureCredential as jest.Mock).mockImplementationOnce(() => defaultAzureCredential);
+    existsMock.mockImplementationOnce(() => true);
+    deleteMock.mockImplementationOnce(() => {
+      throw new Error('delete error');
+    });
+    const north = new NorthAzureBlob(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+    await north.testConnection();
+    expect(DefaultAzureCredential).toHaveBeenCalled();
+    expect(BlobServiceClient).toHaveBeenCalledWith(
+      `https://${configuration.settings.account}.blob.core.windows.net`,
+      defaultAzureCredential
+    );
+    expect(getContainerClientMock).toHaveBeenCalledWith(configuration.settings.container);
+    expect(logger.error).toHaveBeenCalledWith(`Could not delete file "my path/oibus-azure-test.txt"`);
+  });
+
+  it('should successfully test on root', async () => {
+    const defaultAzureCredential = jest.fn();
+    (DefaultAzureCredential as jest.Mock).mockImplementationOnce(() => defaultAzureCredential);
+    existsMock.mockImplementationOnce(() => true);
+    configuration.settings.path = '';
+    const north = new NorthAzureBlob(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+    await north.testConnection();
+    expect(DefaultAzureCredential).toHaveBeenCalled();
+    expect(BlobServiceClient).toHaveBeenCalledWith(
+      `https://${configuration.settings.account}.blob.core.windows.net`,
+      defaultAzureCredential
+    );
+    expect(getContainerClientMock).toHaveBeenCalledWith(configuration.settings.container);
+  });
+
   it('should manage test error', async () => {
     const defaultAzureCredential = jest.fn();
     (DefaultAzureCredential as jest.Mock).mockImplementationOnce(() => defaultAzureCredential);

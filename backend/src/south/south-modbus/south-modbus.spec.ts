@@ -439,9 +439,9 @@ describe('SouthModbus test connection', () => {
   // Error codes handled by the test function
   // With the expected error messages to throw
   const ERROR_CODES = {
-    ENOTFOUND: 'Please check host and port',
-    ECONNREFUSED: 'Please check host and port',
-    DEFAULT: 'Please check logs' // For exceptions that we aren't explicitly specifying
+    ENOTFOUND: 'Please check host and port.',
+    ECONNREFUSED: 'Please check host and port.',
+    DEFAULT: 'Unable to connect to socket.' // For exceptions that we aren't explicitly specifying
   } as const;
 
   type ErrorCodes = keyof typeof ERROR_CODES;
@@ -468,11 +468,6 @@ describe('SouthModbus test connection', () => {
     });
 
     await expect(testingSouth.testConnection()).resolves.not.toThrow();
-
-    expect((logger.info as jest.Mock).mock.calls).toEqual([
-      [`Testing modbus connection on ${configuration.settings.host}:${configuration.settings.port}`],
-      [`Successfully connected to Modbus socket ${configuration.settings.host}:${configuration.settings.port}`]
-    ]);
   });
 
   it('Unable to create connection to socket', async () => {
@@ -492,12 +487,7 @@ describe('SouthModbus test connection', () => {
         end: jest.fn()
       });
 
-      await expect(testingSouth.testConnection()).rejects.toThrow(new Error(ERROR_CODES[code]));
-
-      expect((logger.error as jest.Mock).mock.calls).toEqual([[`Unable to connect to socket. ${new ModbusError(errorMessage, code)}`]]);
-      expect((logger.info as jest.Mock).mock.calls).toEqual([
-        [`Testing modbus connection on ${configuration.settings.host}:${configuration.settings.port}`]
-      ]);
+      await expect(testingSouth.testConnection()).rejects.toThrow(new Error(`${ERROR_CODES[code]} ${errorMessage}`));
     }
   });
 
@@ -515,7 +505,5 @@ describe('SouthModbus test connection', () => {
     expect(net.Socket).toHaveBeenCalledTimes(1);
     mockedEmitter.emit('error', 'connect error');
     await flushPromises();
-
-    expect(logger.error).toHaveBeenCalledWith(`Unable to connect to socket. connect error`);
   });
 });

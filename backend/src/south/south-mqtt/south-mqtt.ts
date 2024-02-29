@@ -70,7 +70,6 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
   }
 
   override async testConnection(): Promise<void> {
-    this.logger.info(`Testing connection on "${this.connector.settings.url}"`);
     const options = await this.createConnectionOptions();
     await this.testConnectionToBroker(options);
   }

@@ -34,8 +34,6 @@ export default class NorthOibus extends NorthConnector<NorthOIBusSettings> imple
   }
 
   override async testConnection(): Promise<void> {
-    this.logger.info(`Testing connection on "${this.connector.settings.host}"`);
-
     const headers: HeadersInit = {};
     const basic = Buffer.from(
       `${this.connector.settings.username}:${await this.encryptionService.decryptText(this.connector.settings.password!)}`
@@ -62,17 +60,14 @@ export default class NorthOibus extends NorthConnector<NorthOIBusSettings> imple
       )
     };
 
+    let response;
     try {
-      const response = await fetch(requestUrl, fetchOptions);
-      if (response.ok) {
-        this.logger.info('OIConnect request successful');
-        return;
-      }
-      this.logger.error(`HTTP request failed with status code ${response.status} and message: ${response.statusText}`);
-      throw new Error(`HTTP request failed with status code ${response.status} and message: ${response.statusText}`);
+      response = await fetch(requestUrl, fetchOptions);
     } catch (error) {
-      this.logger.error(`Fetch error ${error}`);
       throw new Error(`Fetch error ${error}`);
+    }
+    if (!response.ok) {
+      throw new Error(`HTTP request failed with status code ${response.status} and message: ${response.statusText}`);
     }
   }
 

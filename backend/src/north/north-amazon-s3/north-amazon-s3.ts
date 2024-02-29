@@ -95,7 +95,6 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
   }
 
   override async testConnection(): Promise<void> {
-    this.logger.info('Testing Amazon S3 connection');
     await this.prepareConnection();
 
     try {
@@ -106,7 +105,6 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
       );
       this.logger.info(`Access to bucket ${this.connector.settings.bucket} allowed. ${JSON.stringify(result)}`);
     } catch (error) {
-      this.logger.error(`Error testing Amazon S3 connection. ${error}`);
       throw new Error(`Error testing Amazon S3 connection. ${error}`);
     }
   }

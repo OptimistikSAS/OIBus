@@ -214,11 +214,7 @@ describe('South OPCHDA', () => {
         status: 200
       })
     );
-    await south.testConnection();
-    expect(logger.info).toHaveBeenCalledWith('Connected to remote OPC server. Disconnecting...');
-    expect(logger.info).toHaveBeenCalledWith(
-      `Testing OPC OIBus Agent connection on ${configuration.settings.agentUrl} with host "${configuration.settings.host}" and server name "${configuration.settings.serverName}"`
-    );
+    await expect(south.testConnection()).resolves.not.toThrow();
   });
 
   it('should test connection fail', async () => {
@@ -236,14 +232,12 @@ describe('South OPCHDA', () => {
         })
       );
     await expect(south.testConnection()).rejects.toThrow(
-      new Error(`Error occurred when sending connect command to remote agent with status 400: bad request`)
+      new Error(`Error occurred when sending connect command to remote agent with status 400. bad request`)
     );
-    expect(logger.error).toHaveBeenCalledWith(`Error occurred when sending connect command to remote agent with status 400: bad request`);
 
     await expect(south.testConnection()).rejects.toThrow(
       new Error(`Error occurred when sending connect command to remote agent with status 500`)
     );
-    expect(logger.error).toHaveBeenCalledWith(`Error occurred when sending connect command to remote agent with status 500`);
   });
 
   it('should get data from Remote agent', async () => {

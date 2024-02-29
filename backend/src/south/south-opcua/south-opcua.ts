@@ -86,8 +86,6 @@ export default class SouthOPCUA
   }
 
   override async testConnection(): Promise<void> {
-    this.logger.info(`Testing connection on "${this.connector.settings.url}"`);
-
     const tempCertFolder = `opcua-test-${randomUUID()}`;
     await this.initOpcuaCertificateFolders(tempCertFolder);
     const clientCertificateManager = new OPCUACertificateManager({
@@ -98,8 +96,6 @@ export default class SouthOPCUA
     // It is useful for offline instances of OIBus where downloading openssl is not possible
     clientCertificateManager.state = 2;
 
-    this.logger.trace(`Created OPCUA temporary folder for certificates: ${tempCertFolder}`);
-
     let session;
     try {
       const { options, userIdentity } = await this.createSessionConfigs(
@@ -109,9 +105,7 @@ export default class SouthOPCUA
         'OIBus Connector test'
       );
       session = await OPCUAClient.createSession(this.connector.settings.url, userIdentity, options);
-      this.logger.info(`OPCUA connected on "${this.connector.settings.url}"`);
     } catch (error: any) {
-      this.logger.error(`Error while connecting to the OPCUA server. ${error}`);
       const message = error.message;
 
       if (/BadTcpEndpointUrlInvalid/i.test(message)) {
@@ -145,10 +139,9 @@ export default class SouthOPCUA
       }
 
       // Unhandled errors
-      throw new Error('Please check logs');
+      throw new Error(error.message);
     } finally {
       await fs.rm(tempCertFolder, { recursive: true, force: true });
-      this.logger.trace('OPCUA temporary folder deleted');
 
       if (session) {
         await session.close();

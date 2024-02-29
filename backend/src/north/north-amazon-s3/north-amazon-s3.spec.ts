@@ -285,11 +285,7 @@ describe('NorthAmazonS3', () => {
     it('should test connection and success', async () => {
       sendMock.mockReturnValueOnce({ result: 'ok' });
       await north.testConnection();
-      expect(logger.info).toHaveBeenCalledWith('Testing Amazon S3 connection');
       expect(sendMock).toHaveBeenCalledTimes(1);
-      expect(logger.info).toHaveBeenCalledWith(
-        `Access to bucket ${configuration.settings.bucket} allowed. ${JSON.stringify({ result: 'ok' })}`
-      );
     });
 
     it('should test connection and fail', async () => {
@@ -299,8 +295,6 @@ describe('NorthAmazonS3', () => {
       });
 
       await expect(north.testConnection()).rejects.toThrow(new Error(`Error testing Amazon S3 connection. ${error}`));
-      expect(logger.info).toHaveBeenCalledWith('Testing Amazon S3 connection');
-      expect(logger.error).toHaveBeenCalledWith(`Error testing Amazon S3 connection. ${error}`);
     });
   });
 });

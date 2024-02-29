@@ -96,7 +96,7 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
       try {
         await blockBlobClient.deleteIfExists();
       } catch (deleteError) {
-        this.logger.error(`Could not delete file ${blobPath}`);
+        this.logger.error(`Could not delete file "${blobPath}"`);
       }
     } catch (error: unknown) {
       const errorString = `Connection could not establish. Check path and authentication. ${error}`;
@@ -104,9 +104,7 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
       throw new Error(errorString);
     }
     if (!result) {
-      const errorString = `Container ${this.connector.settings.container} and path ${blobPath} does not exist`;
-      this.logger.error(errorString);
-      throw new Error(errorString);
+      throw new Error(`Container ${this.connector.settings.container} and path ${blobPath} does not exist`);
     }
   }
 }

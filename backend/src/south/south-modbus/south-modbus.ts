@@ -207,11 +207,8 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
   override async testConnection(): Promise<void> {
     try {
       await new Promise<void>((resolve, reject) => {
-        this.logger.info(`Testing modbus connection on ${this.connector.settings.host}:${this.connector.settings.port}`);
         const socket = new net.Socket();
-
         socket.connect({ host: this.connector.settings.host, port: this.connector.settings.port }, async () => {
-          this.logger.info(`Successfully connected to Modbus socket ${this.connector.settings.host}:${this.connector.settings.port}`);
           socket.end();
           resolve();
         });
@@ -220,14 +217,13 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
         });
       });
     } catch (error: any) {
-      this.logger.error(`Unable to connect to socket. ${error}`);
       switch (error.code) {
         case 'ENOTFOUND':
         case 'ECONNREFUSED':
-          throw new Error('Please check host and port');
+          throw new Error(`Please check host and port. ${error.message}`);
 
         default:
-          throw new Error('Please check logs');
+          throw new Error(`Unable to connect to socket. ${error.message}`);
       }
     }
   }

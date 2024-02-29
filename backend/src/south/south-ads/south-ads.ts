@@ -239,15 +239,9 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
 
   override async testConnection(): Promise<void> {
     const options = this.createConnectionOptions();
-    this.logger.info(`Connecting to ADS Client with options ${JSON.stringify(options)}`);
-
     this.client = new ads.Client(options);
-    const result = await this.client.connect();
-    this.logger.info(
-      `Connected to ${result.targetAmsNetId} with local AmsNetId ${result.localAmsNetId} and local port ${result.localAdsPort}. Disconnecting...`
-    );
+    await this.client.connect();
     await this.disconnect();
-    this.logger.info(`ADS connection correctly closed`);
   }
 
   /**

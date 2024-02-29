@@ -46,19 +46,16 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
   }
 
   override async testConnection(): Promise<void> {
-    this.logger.info(`Testing connection on "${this.connector.settings.databasePath}"`);
     const dbPath = path.resolve(this.connector.settings.databasePath);
 
     try {
       await fs.access(dbPath, fs.constants.F_OK);
     } catch (error: any) {
-      this.logger.error(`Access error on "${dbPath}". ${error.message}`);
-      throw new Error(`File "${dbPath}" does not exist`);
+      throw new Error(`Access error on "${dbPath}". ${error.message}`);
     }
 
     const database = db(dbPath);
     let result;
-
     let table_count;
     try {
       result = database
@@ -70,17 +67,13 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
         .all() as { table_count: number }[];
       table_count = result[0]?.table_count ?? 0;
     } catch (error: any) {
-      this.logger.error(`Unable to query system table. ${error.message}`);
-      throw new Error('Error testing database connection, check logs');
+      throw new Error(`Unable to query system table. ${error.message}`);
     }
     database.close();
 
     if (table_count === 0) {
-      this.logger.warn(`Database "${dbPath}" has no tables`);
-      throw new Error('Database has no tables');
+      throw new Error(`Database "${dbPath}" has no tables`);
     }
-
-    this.logger.info(`Database is live with ${table_count} tables`);
   }
 
   /**

@@ -58,24 +58,18 @@ export default class NorthFileWriter extends NorthConnector<NorthFileWriterSetti
   }
 
   override async testConnection(): Promise<void> {
-    this.logger.info('Testing North File Writer');
-
     const outputFolder = path.resolve(this.connector.settings.outputFolder);
 
     try {
       await fs.access(outputFolder, fs.constants.F_OK);
     } catch (error: any) {
-      this.logger.error(`Access error on "${outputFolder}": ${error.message}`);
-      throw new Error(`Folder "${outputFolder}" does not exist`);
+      throw new Error(`Access error on "${outputFolder}": ${error.message}`);
     }
 
     try {
       await fs.access(outputFolder, fs.constants.W_OK);
     } catch (error: any) {
-      this.logger.error(`Access error on "${outputFolder}": ${error.message}`);
-      throw new Error(`No write access on folder`);
+      throw new Error(`Access error on "${outputFolder}": ${error.message}`);
     }
-
-    this.logger.info(`Folder "${outputFolder}" exists and is reachable`);
   }
 }

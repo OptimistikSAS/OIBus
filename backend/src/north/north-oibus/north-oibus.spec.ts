@@ -86,7 +86,7 @@ const repositoryService: RepositoryService = new RepositoryServiceMock();
 const nowDateString = '2020-02-02T02:02:02.222Z';
 let north: NorthOibus;
 
-describe('NorthOIConnect with proxy', () => {
+describe('NorthOIBus with proxy', () => {
   const configuration: NorthConnectorDTO<NorthOIBusSettings> = {
     id: 'id',
     name: 'north',
@@ -315,7 +315,6 @@ describe('NorthOIConnect with proxy', () => {
       method: 'GET',
       timeout: 30000
     });
-    expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
   });
 
   it('should test connection', async () => {
@@ -334,14 +333,12 @@ describe('NorthOIConnect with proxy', () => {
         })
       );
 
-    await north.testConnection();
-    expect(logger.info).toHaveBeenCalledWith(`Testing connection on "${configuration.settings.host}"`);
-    expect(logger.info).toHaveBeenCalledWith('OIConnect request successful');
+    await expect(north.testConnection()).resolves.not.toThrow();
     await expect(north.testConnection()).rejects.toThrow(`HTTP request failed with status code 401 and message: Unauthorized`);
   });
 });
 
-describe('NorthOIConnect with proxy but without proxy password', () => {
+describe('NorthOIBus with proxy but without proxy password', () => {
   const configuration: NorthConnectorDTO<NorthOIBusSettings> = {
     id: 'id',
     name: 'north',
@@ -397,7 +394,6 @@ describe('NorthOIConnect with proxy but without proxy password', () => {
       agent: fakeAgent,
       timeout: 30000
     });
-    expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
   });
 
   it('should properly handle values without password', async () => {
@@ -460,7 +456,7 @@ describe('NorthOIConnect with proxy but without proxy password', () => {
   });
 });
 
-describe('NorthOIConnect without proxy', () => {
+describe('NorthOIBus without proxy', () => {
   const configuration: NorthConnectorDTO<NorthOIBusSettings> = {
     id: 'id',
     name: 'north',
@@ -510,7 +506,6 @@ describe('NorthOIConnect without proxy', () => {
       method: 'GET',
       timeout: 30000
     });
-    expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
   });
 
   it('should properly handle values without password', async () => {

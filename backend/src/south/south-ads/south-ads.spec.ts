@@ -432,10 +432,6 @@ describe('South ADS', () => {
 
     south.disconnect = jest.fn();
     await south.testConnection();
-    expect(logger.info).toHaveBeenCalledWith(
-      'Connected to targetAmsNetId with local AmsNetId localAmsNetId and local port localAdsPort. Disconnecting...'
-    );
-    expect(logger.info).toHaveBeenCalledWith('ADS connection correctly closed');
     expect(south.disconnect).toHaveBeenCalledTimes(1);
   });
 

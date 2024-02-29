@@ -78,8 +78,6 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
   }
 
   override async testConnection(): Promise<void> {
-    this.logger.info(`Testing connection on "${this.connector.settings.url}"`);
-
     const headers: HeadersInit = {};
     const basic = Buffer.from(
       `${this.connector.settings.username}:${await this.encryptionService.decryptText(this.connector.settings.password!)}`
@@ -107,21 +105,19 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
       )
     };
 
+    let response;
     try {
-      const response = await fetch(requestUrl, fetchOptions);
-      switch (response.status) {
-        case 404: // 404 is included because /slimsrest/rest is not found but the authentication occurs before. There is no ping to test the connection
-        case 200:
-        case 201:
-          this.logger.info('SLIMS server request successful');
-          return;
-        default:
-          this.logger.error(`HTTP request failed with status code ${response.status} and message: ${response.statusText}`);
-          throw new Error(`HTTP request failed with status code ${response.status} and message: ${response.statusText}`);
-      }
+      response = await fetch(requestUrl, fetchOptions);
     } catch (error) {
-      this.logger.error(`Fetch error ${error}`);
       throw new Error(`Fetch error ${error}`);
+    }
+    switch (response.status) {
+      case 404: // 404 is included because /slimsrest/rest is not found but the authentication occurs before. There is no ping to test the connection
+      case 200:
+      case 201:
+        return;
+      default:
+        throw new Error(`HTTP request failed with status code ${response.status} and message: ${response.statusText}`);
     }
   }
 

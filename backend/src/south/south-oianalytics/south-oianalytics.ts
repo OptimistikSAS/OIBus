@@ -68,8 +68,6 @@ export default class SouthOIAnalytics
 
   override async testConnection(): Promise<void> {
     const connectionSettings = await this.getNetworkSettings('/api/optimistik/oibus/status');
-
-    this.logger.info(`Testing connection on "${connectionSettings.host}"`);
     const requestUrl = `${connectionSettings.host}/api/optimistik/oibus/status`;
     const fetchOptions: RequestInit = {
       method: 'GET',
@@ -78,17 +76,14 @@ export default class SouthOIAnalytics
       agent: connectionSettings.agent
     };
 
+    let response;
     try {
-      const response = await fetch(requestUrl, fetchOptions);
-      if (response.ok) {
-        this.logger.info('OIAnalytics request successful');
-        return;
-      }
-      this.logger.error(`HTTP request failed with status code ${response.status} and message: ${response.statusText}`);
-      throw new Error(`HTTP request failed with status code ${response.status} and message: ${response.statusText}`);
+      response = await fetch(requestUrl, fetchOptions);
     } catch (error) {
-      this.logger.error(`Fetch error ${error}`);
       throw new Error(`Fetch error ${error}`);
+    }
+    if (!response.ok) {
+      throw new Error(`HTTP request failed with status code ${response.status} and message: ${response.statusText}`);
     }
   }
 

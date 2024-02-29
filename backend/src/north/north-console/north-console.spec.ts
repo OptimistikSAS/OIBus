@@ -167,7 +167,6 @@ describe('NorthConsole test connection', () => {
   it('should be able to write test data to output', async () => {
     await expect(north.testConnection()).resolves.not.toThrow();
 
-    expect(logger.info).toHaveBeenCalledWith('Testing North Console output');
     expect(process.stdout.write).toHaveBeenCalledWith('North Console output test.\r\n');
     expect(console.table).toHaveBeenCalledWith([{ data: 'foo' }, { data: 'bar' }]);
   });
@@ -177,12 +176,10 @@ describe('NorthConsole test connection', () => {
     Object.defineProperty(process.stdout, 'writable', { value: false, configurable: true });
 
     const error = new Error('The process.stdout stream has been destroyed, errored or ended');
-    await expect(north.testConnection()).rejects.toThrow(new Error('Node process is unable to write to STDOUT'));
+    await expect(north.testConnection()).rejects.toThrow(error);
 
-    expect(logger.info).toHaveBeenCalledWith('Testing North Console output');
     expect(process.stdout.write).not.toHaveBeenCalled();
     expect(console.table).not.toHaveBeenCalled();
-    expect(logger.error).toHaveBeenCalledWith(`Error testing North Console output: ${error}`);
 
     Object.defineProperty(process.stdout, 'writable', { value: true, configurable: true });
   });
@@ -193,11 +190,8 @@ describe('NorthConsole test connection', () => {
       throw error;
     });
 
-    await expect(north.testConnection()).rejects.toThrow(new Error('Node process is unable to write to STDOUT'));
-
-    expect(logger.info).toHaveBeenCalledWith('Testing North Console output');
+    await expect(north.testConnection()).rejects.toThrow(new Error(`Node process is unable to write to STDOUT. ${error}`));
     expect(process.stdout.write).toHaveBeenCalled();
     expect(console.table).not.toHaveBeenCalled();
-    expect(logger.error).toHaveBeenCalledWith(`Error testing North Console output: ${error}`);
   });
 });

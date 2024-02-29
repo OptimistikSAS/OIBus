@@ -58,18 +58,14 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> i
   }
 
   override testConnection(): Promise<void> {
-    this.logger.info('Testing North Console output');
-
+    if (!process.stdout.writable) {
+      return Promise.reject(Error('The process.stdout stream has been destroyed, errored or ended'));
+    }
     try {
-      if (!process.stdout.writable) {
-        throw new Error('The process.stdout stream has been destroyed, errored or ended');
-      }
-
       process.stdout.write('North Console output test.\r\n');
       console.table([{ data: 'foo' }, { data: 'bar' }]);
     } catch (error) {
-      this.logger.error(`Error testing North Console output: ${error}`);
-      return Promise.reject(new Error('Node process is unable to write to STDOUT'));
+      return Promise.reject(new Error(`Node process is unable to write to STDOUT. ${error}`));
     }
 
     return Promise.resolve();

@@ -209,9 +209,7 @@ describe('SouthSlims with body', () => {
         })
       );
 
-    await south.testConnection();
-    expect(logger.info).toHaveBeenCalledWith(`Testing connection on "${configuration.settings.url}"`);
-    expect(logger.info).toHaveBeenCalledWith('SLIMS server request successful');
+    await expect(south.testConnection()).resolves.not.toThrow();
     await expect(south.testConnection()).rejects.toThrow(`HTTP request failed with status code 401 and message: Unauthorized`);
   });
 
@@ -349,7 +347,6 @@ describe('SouthSlims with body and accept self signed', () => {
       method: 'GET',
       timeout: 30000
     });
-    expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
   });
 
   it('should properly fetch with Body', async () => {

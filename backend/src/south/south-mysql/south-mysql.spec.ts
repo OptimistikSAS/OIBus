@@ -399,12 +399,12 @@ describe('SouthMySQL test connection', () => {
   // Error codes handled by the test function
   // With the expected error messages to throw
   const ERROR_CODES = {
-    ETIMEDOUT: 'Please check host and port',
-    ECONNREFUSED: 'Please check host and port',
-    ER_ACCESS_DENIED_ERROR: 'Please check username and password',
-    ER_DBACCESS_DENIED_ERROR: `User "${configuration.settings.username}" does not have access to database "${configuration.settings.database}"`,
-    ER_BAD_DB_ERROR: `Database "${configuration.settings.database}" does not exist`,
-    DEFAULT: 'Please check logs' // For exceptions that we aren't explicitly specifying
+    ETIMEDOUT: 'Please check host and port.',
+    ECONNREFUSED: 'Please check host and port.',
+    ER_ACCESS_DENIED_ERROR: 'Please check username and password.',
+    ER_DBACCESS_DENIED_ERROR: `User "${configuration.settings.username}" does not have access to database "${configuration.settings.database}".`,
+    ER_BAD_DB_ERROR: `Database "${configuration.settings.database}" does not exist.`,
+    DEFAULT: 'Unexpected error.' // For exceptions that we aren't explicitly specifying
   } as const;
 
   type ErrorCodes = keyof typeof ERROR_CODES;
@@ -439,11 +439,6 @@ describe('SouthMySQL test connection', () => {
     await expect(south.testConnection()).resolves.not.toThrow();
 
     expect(mysqlConnection.end).toHaveBeenCalled();
-
-    expect((logger.info as jest.Mock).mock.calls).toEqual([
-      [`Testing connection on "${configuration.settings.host}"`],
-      ['Database is live with 21 tables']
-    ]);
   });
 
   it('Unable to create connection', async () => {
@@ -457,10 +452,7 @@ describe('SouthMySQL test connection', () => {
         throw new MYSQL2Error(errorMessage, code);
       });
 
-      await expect(south.testConnection()).rejects.toThrow(new Error(ERROR_CODES[code]));
-
-      expect((logger.error as jest.Mock).mock.calls).toEqual([[`Unable to connect to database. ${errorMessage}`]]);
-      expect((logger.info as jest.Mock).mock.calls).toEqual([[`Testing connection on "${configuration.settings.host}"`]]);
+      await expect(south.testConnection()).rejects.toThrow(new Error(`${ERROR_CODES[code]} ${errorMessage}`));
     }
   });
 
@@ -479,11 +471,8 @@ describe('SouthMySQL test connection', () => {
       };
       (mysql.createConnection as jest.Mock).mockReturnValue(mysqlConnection);
 
-      await expect(south.testConnection()).rejects.toThrow(new Error(ERROR_CODES[code]));
-
+      await expect(south.testConnection()).rejects.toThrow(new Error(`${ERROR_CODES[code]} ${errorMessage}`));
       expect(mysqlConnection.end).toHaveBeenCalled();
-      expect((logger.error as jest.Mock).mock.calls).toEqual([[`Unable to connect to database. ${errorMessage}`]]);
-      expect((logger.info as jest.Mock).mock.calls).toEqual([[`Testing connection on "${configuration.settings.host}"`]]);
     }
   });
 
@@ -499,14 +488,9 @@ describe('SouthMySQL test connection', () => {
     (mysql.createConnection as jest.Mock).mockReturnValue(mysqlConnection);
 
     await expect(south.testConnection()).rejects.toThrow(
-      new Error(`Unable to read tables in database "${configuration.settings.database}", check logs`)
+      new Error(`Unable to read tables in database "${configuration.settings.database}". ${errorMessage}`)
     );
-
     expect(mysqlConnection.end).toHaveBeenCalled();
-    expect((logger.error as jest.Mock).mock.calls).toEqual([
-      [`Unable to read tables in database "${configuration.settings.database}". ${errorMessage}`]
-    ]);
-    expect((logger.info as jest.Mock).mock.calls).toEqual([[`Testing connection on "${configuration.settings.host}"`]]);
   });
 
   it('Database has no tables', async () => {
@@ -517,11 +501,8 @@ describe('SouthMySQL test connection', () => {
     };
     (mysql.createConnection as jest.Mock).mockReturnValue(mysqlConnection);
 
-    await expect(south.testConnection()).rejects.toThrow(new Error('Database has no tables'));
-
+    await expect(south.testConnection()).rejects.toThrow(new Error(`Database "${configuration.settings.database}" has no tables`));
     expect(mysqlConnection.end).toHaveBeenCalled();
-    expect((logger.warn as jest.Mock).mock.calls).toEqual([[`Database "${configuration.settings.database}" has no tables`]]);
-    expect((logger.info as jest.Mock).mock.calls).toEqual([[`Testing connection on "${configuration.settings.host}"`]]);
   });
 
   it('Database does not return count of tables', async () => {
@@ -532,11 +513,8 @@ describe('SouthMySQL test connection', () => {
     };
     (mysql.createConnection as jest.Mock).mockReturnValue(mysqlConnection);
 
-    await expect(south.testConnection()).rejects.toThrow(new Error('Database has no tables'));
-
+    await expect(south.testConnection()).rejects.toThrow(new Error(`Database "${configuration.settings.database}" has no tables`));
     expect(mysqlConnection.end).toHaveBeenCalled();
-    expect((logger.warn as jest.Mock).mock.calls).toEqual([[`Database "${configuration.settings.database}" has no tables`]]);
-    expect((logger.info as jest.Mock).mock.calls).toEqual([[`Testing connection on "${configuration.settings.host}"`]]);
   });
 
   it('Unable to ping database without password', async () => {
@@ -553,7 +531,7 @@ describe('SouthMySQL test connection', () => {
       };
       (mysql.createConnection as jest.Mock).mockReturnValue(mysqlConnection);
 
-      await expect(south.testConnection()).rejects.toThrow(new Error(ERROR_CODES[code]));
+      await expect(south.testConnection()).rejects.toThrow(new Error(`${ERROR_CODES[code]} ${errorMessage}`));
     }
   });
 });

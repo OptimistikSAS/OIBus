@@ -189,9 +189,7 @@ describe('SouthOIAnalytics with Basic auth', () => {
         })
       );
 
-    await south.testConnection();
-    expect(logger.info).toHaveBeenCalledWith(`Testing connection on "${connector.settings.specificSettings!.host}"`);
-    expect(logger.info).toHaveBeenCalledWith('OIAnalytics request successful');
+    await expect(south.testConnection()).resolves.not.toThrow();
     await expect(south.testConnection()).rejects.toThrow(`HTTP request failed with status code 401 and message: Unauthorized`);
   });
 
@@ -336,7 +334,6 @@ describe('SouthOIAnalytics without proxy but with accept self signed', () => {
       method: 'GET',
       timeout: 30000
     });
-    expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
   });
 
   it('should properly fetch', async () => {
@@ -548,7 +545,6 @@ describe('SouthOIAnalytics with proxy', () => {
       method: 'GET',
       timeout: 30000
     });
-    expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
   });
 
   it('should properly fetch', async () => {
@@ -629,7 +625,6 @@ describe('SouthOIAnalytics with proxy but without proxy password', () => {
       method: 'GET',
       timeout: 30000
     });
-    expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
   });
 
   it('should properly fetch', async () => {

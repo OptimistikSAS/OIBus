@@ -69,8 +69,6 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
     if (!oracledb) {
       throw new Error('oracledb library not loaded');
     }
-    this.logger.info(`Testing connection on "${this.connector.settings.host}"`);
-
     const config: Parameters<typeof oracledb.getConnection>[0] = {
       user: this.connector.settings.username,
       password: this.connector.settings.password ? await this.encryptionService.decryptText(this.connector.settings.password) : '',
@@ -82,7 +80,6 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
       connection = await oracledb.getConnection(config);
       await connection.ping();
     } catch (error: any) {
-      this.logger.error(`Unable to connect to database. ${error.message}`);
       if (connection) {
         await connection.close();
       }
@@ -90,16 +87,16 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
       switch (error.code) {
         case 'NJS-515':
         case 'NJS-503':
-          throw new Error('Please check host and port');
+          throw new Error(`Please check host and port. ${error.message}`);
 
         case 'ORA-01017':
-          throw new Error('Please check username and password');
+          throw new Error(`Please check username and password. ${error.message}`);
 
         case 'NJS-518':
-          throw new Error(`Cannot connect to database "${this.connector.settings.database}". Service is not registered`);
+          throw new Error(`Cannot connect to database "${this.connector.settings.database}". Service is not registered. ${error.message}`);
 
         default:
-          throw new Error('Please check logs');
+          throw new Error(`Unexpected error. ${error.message}`);
       }
     }
 
@@ -114,19 +111,14 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
       table_count = rows[0]?.TABLE_COUNT ?? 0;
     } catch (error: any) {
       await connection.close();
-
-      this.logger.error(`Unable to read tables in database "${this.connector.settings.database}". ${error.message}`);
-      throw new Error(`Unable to read tables in database "${this.connector.settings.database}", check logs`);
+      throw new Error(`Unable to read tables in database "${this.connector.settings.database}". ${error.message}`);
     }
 
     await connection.close();
 
     if (table_count === 0) {
-      this.logger.warn(`No tables in the "${this.connector.settings.username}" schema`);
       throw new Error(`No tables in the "${this.connector.settings.username}" schema`);
     }
-
-    this.logger.info(`Database is live with ${table_count} tables`);
   }
 
   /**
