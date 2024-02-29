@@ -196,7 +196,7 @@ export default class JoiValidator {
       schema = schema.when(condition.field, {
         is: Joi.any().valid(...condition.values),
         then: schema.required(),
-        otherwise: schema.optional()
+        otherwise: schema.allow('').optional()
       });
     }
     return schema;
