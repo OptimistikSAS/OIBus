@@ -28,8 +28,7 @@ export const createFolder = async (folder: string): Promise<void> => {
   const folderPath = path.resolve(folder);
   try {
     await fs.stat(folderPath);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  } catch (_error) {
+  } catch {
     await fs.mkdir(folderPath, { recursive: true });
   }
 };
