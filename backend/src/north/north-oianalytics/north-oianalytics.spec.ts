@@ -154,7 +154,6 @@ describe('NorthOIAnalytics without proxy', () => {
       null,
       configuration.settings.specificSettings!.acceptUnauthorized
     );
-    expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
   });
 
   it('should properly handle values', async () => {
@@ -542,7 +541,6 @@ describe('NorthOIAnalytics with proxy', () => {
       },
       configuration.settings.specificSettings!.acceptUnauthorized
     );
-    expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
   });
 
   it('should test connection', async () => {
@@ -561,9 +559,7 @@ describe('NorthOIAnalytics with proxy', () => {
         })
       );
 
-    await north.testConnection();
-    expect(logger.info).toHaveBeenCalledWith(`Testing connection on "${configuration.settings.specificSettings!.host}"`);
-    expect(logger.info).toHaveBeenCalledWith('OIAnalytics request successful');
+    await expect(north.testConnection()).resolves.not.toThrow();
     await expect(north.testConnection()).rejects.toThrow(`HTTP request failed with status code 401 and message: Unauthorized`);
   });
 
@@ -663,7 +659,6 @@ describe('NorthOIAnalytics with proxy but without proxy password', () => {
       },
       configuration.settings.specificSettings!.acceptUnauthorized
     );
-    expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
   });
 
   it('should properly handle values', async () => {

@@ -433,11 +433,11 @@ describe('SouthOracle test connection', () => {
   // Error codes handled by the test function
   // With the expected error messages to throw
   const ERROR_CODES = {
-    'NJS-515': 'Please check host and port',
-    'NJS-503': 'Please check host and port',
-    'ORA-01017': 'Please check username and password',
-    'NJS-518': `Cannot connect to database "${configuration.settings.database}". Service is not registered`,
-    DEFAULT: 'Please check logs' // For exceptions that we aren't explicitly specifying
+    'NJS-515': 'Please check host and port.',
+    'NJS-503': 'Please check host and port.',
+    'ORA-01017': 'Please check username and password.',
+    'NJS-518': `Cannot connect to database "${configuration.settings.database}". Service is not registered.`,
+    DEFAULT: 'Unexpected error.' // For exceptions that we aren't explicitly specifying
   } as const;
 
   type ErrorCodes = keyof typeof ERROR_CODES;
@@ -472,11 +472,6 @@ describe('SouthOracle test connection', () => {
     await expect(south.testConnection()).resolves.not.toThrow();
 
     expect(oracleConnection.close).toHaveBeenCalled();
-
-    expect((logger.info as jest.Mock).mock.calls).toEqual([
-      [`Testing connection on "${configuration.settings.host}"`],
-      ['Database is live with 21 tables']
-    ]);
   });
 
   it('Unable to create connection', async () => {
@@ -484,16 +479,11 @@ describe('SouthOracle test connection', () => {
     const errorMessage = 'Error creating connection';
 
     for (code in ERROR_CODES) {
-      (logger.error as jest.Mock).mockClear();
-      (logger.info as jest.Mock).mockClear();
       (oracledb.getConnection as jest.Mock).mockImplementationOnce(() => {
         throw new OracleDBError(errorMessage, code);
       });
 
-      await expect(south.testConnection()).rejects.toThrow(new Error(ERROR_CODES[code]));
-
-      expect((logger.error as jest.Mock).mock.calls).toEqual([[`Unable to connect to database. ${errorMessage}`]]);
-      expect((logger.info as jest.Mock).mock.calls).toEqual([[`Testing connection on "${configuration.settings.host}"`]]);
+      await expect(south.testConnection()).rejects.toThrow(new Error(`${ERROR_CODES[code]} ${errorMessage}`));
     }
   });
 
@@ -512,11 +502,8 @@ describe('SouthOracle test connection', () => {
       };
       (oracledb.getConnection as jest.Mock).mockReturnValue(oracleConnection);
 
-      await expect(south.testConnection()).rejects.toThrow(new Error(ERROR_CODES[code]));
-
+      await expect(south.testConnection()).rejects.toThrow(new Error(`${ERROR_CODES[code]} ${errorMessage}`));
       expect(oracleConnection.close).toHaveBeenCalled();
-      expect((logger.error as jest.Mock).mock.calls).toEqual([[`Unable to connect to database. ${errorMessage}`]]);
-      expect((logger.info as jest.Mock).mock.calls).toEqual([[`Testing connection on "${configuration.settings.host}"`]]);
     }
   });
 
@@ -532,14 +519,9 @@ describe('SouthOracle test connection', () => {
     (oracledb.getConnection as jest.Mock).mockReturnValue(oracleConnection);
 
     await expect(south.testConnection()).rejects.toThrow(
-      new Error(`Unable to read tables in database "${configuration.settings.database}", check logs`)
+      new Error(`Unable to read tables in database "${configuration.settings.database}". ${errorMessage}`)
     );
-
     expect(oracleConnection.close).toHaveBeenCalled();
-    expect((logger.error as jest.Mock).mock.calls).toEqual([
-      [`Unable to read tables in database "${configuration.settings.database}". ${errorMessage}`]
-    ]);
-    expect((logger.info as jest.Mock).mock.calls).toEqual([[`Testing connection on "${configuration.settings.host}"`]]);
   });
 
   it('Database has no tables', async () => {
@@ -551,10 +533,7 @@ describe('SouthOracle test connection', () => {
     (oracledb.getConnection as jest.Mock).mockReturnValue(oracleConnection);
 
     await expect(south.testConnection()).rejects.toThrow(new Error(`No tables in the "${configuration.settings.username}" schema`));
-
     expect(oracleConnection.close).toHaveBeenCalled();
-    expect((logger.warn as jest.Mock).mock.calls).toEqual([[`No tables in the "${configuration.settings.username}" schema`]]);
-    expect((logger.info as jest.Mock).mock.calls).toEqual([[`Testing connection on "${configuration.settings.host}"`]]);
   });
 
   it('Database does not return count of tables', async () => {
@@ -566,10 +545,7 @@ describe('SouthOracle test connection', () => {
     (oracledb.getConnection as jest.Mock).mockReturnValue(oracleConnection);
 
     await expect(south.testConnection()).rejects.toThrow(new Error(`No tables in the "${configuration.settings.username}" schema`));
-
     expect(oracleConnection.close).toHaveBeenCalled();
-    expect((logger.warn as jest.Mock).mock.calls).toEqual([[`No tables in the "${configuration.settings.username}" schema`]]);
-    expect((logger.info as jest.Mock).mock.calls).toEqual([[`Testing connection on "${configuration.settings.host}"`]]);
   });
 
   it('Unable to ping database without password', async () => {
@@ -588,7 +564,7 @@ describe('SouthOracle test connection', () => {
       };
       (oracledb.getConnection as jest.Mock).mockReturnValue(oracleConnection);
 
-      await expect(south.testConnection()).rejects.toThrow(new Error(ERROR_CODES[code]));
+      await expect(south.testConnection()).rejects.toThrow(new Error(`${ERROR_CODES[code]} ${errorMessage}`));
     }
   });
 });

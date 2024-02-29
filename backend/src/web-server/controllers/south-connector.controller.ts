@@ -89,7 +89,8 @@ export default class SouthConnectorController {
         manifest.settings
       );
       ctx.request.body!.name = southConnector ? southConnector.name : `${ctx.request.body!.type}:test-connection`;
-      const southToTest = ctx.app.southService.createSouth(command, [], this.addValues, this.addFile, 'baseFolder', ctx.app.logger);
+      const logger = ctx.app.logger.child({ scopeType: 'south', scopeId: command.id, scopeName: command.name }, { level: 'silent' });
+      const southToTest = ctx.app.southService.createSouth(command, [], this.addValues, this.addFile, 'baseFolder', logger);
       await southToTest.testConnection();
 
       ctx.noContent();

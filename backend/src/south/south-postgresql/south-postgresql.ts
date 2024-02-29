@@ -68,7 +68,6 @@ export default class SouthPostgreSQL
   }
 
   override async testConnection(): Promise<void> {
-    this.logger.info(`Testing connection on "${this.connector.settings.host}"`);
     const config = await this.createConnectionOptions();
 
     let connection;
@@ -76,24 +75,23 @@ export default class SouthPostgreSQL
       connection = new pg.Client(config);
       await connection.connect();
     } catch (error: any) {
-      this.logger.error(`Unable to connect to database. ${error.message}`);
       if (connection) {
         await connection.end();
       }
 
       if (/(timeout expired)|(^(connect ECONNREFUSED).*)/.test(error.message)) {
-        throw new Error('Please check host and port');
+        throw new Error(`Please check host and port. ${error.message}`);
       }
 
       switch (error.message) {
         case `password authentication failed for user "${this.connector.settings.username}"`:
-          throw new Error('Please check username and password');
+          throw new Error(`Please check username and password. ${error.message}`);
 
         case `database "${this.connector.settings.database}" does not exist`:
-          throw new Error(`Database "${this.connector.settings.database}" does not exist`);
+          throw new Error(`Database "${this.connector.settings.database}" does not exist. ${error.message}`);
 
         default:
-          throw new Error('Please check logs');
+          throw new Error(`Unexpected error. ${error.message}`);
       }
     }
 
@@ -108,19 +106,14 @@ export default class SouthPostgreSQL
       table_count = rows[0]?.table_count ?? 0;
     } catch (error: any) {
       await connection.end();
-
-      this.logger.error(`Unable to read tables in database "${this.connector.settings.database}". ${error.message}`);
-      throw new Error(`Unable to read tables in database "${this.connector.settings.database}", check logs`);
+      throw new Error(`Unable to read tables in database "${this.connector.settings.database}". ${error.message}`);
     }
 
     await connection.end();
 
     if (table_count === 0) {
-      this.logger.warn(`Database "${this.connector.settings.database}" has no tables`);
-      throw new Error('Database has no tables');
+      throw new Error(`Database "${this.connector.settings.database}" has no tables`);
     }
-
-    this.logger.info(`Database is live with ${table_count} tables`);
   }
 
   /**

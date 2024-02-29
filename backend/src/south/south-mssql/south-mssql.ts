@@ -66,7 +66,6 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
   }
 
   override async testConnection(): Promise<void> {
-    this.logger.info(`Testing connection on "${this.connector.settings.host}"`);
     const config = await this.createConnectionOptions();
 
     let pool;
@@ -75,18 +74,16 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
       pool = await new mssql.ConnectionPool(config).connect();
       request = pool.request();
     } catch (error: any) {
-      this.logger.error(`Unable to connect to database: ${error.message}`);
-
       switch (error.code) {
         case 'ETIMEOUT':
         case 'ESOCKET':
-          throw new Error('Please check host and port. See logs for more info');
+          throw new Error(`Please check host and port. ${error.message}`);
 
         case 'ELOGIN':
-          throw new Error('Please check username, password and database name. See logs for more info');
+          throw new Error(`Please check username, password and database name. ${error.message}`);
 
         default:
-          throw new Error('Please check logs');
+          throw new Error(`Unable to connect to database. ${error.message}`);
       }
     }
 
@@ -102,18 +99,13 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
       table_count = (recordset[0]?.table_count as number) ?? 0;
     } catch (error: any) {
       await pool.close();
-      this.logger.error(`Unable to read tables in database "${this.connector.settings.database}". ${error.message}`);
-      throw new Error(`Unable to read tables in database "${this.connector.settings.database}", check logs`);
+      throw new Error(`Unable to read tables in database "${this.connector.settings.database}". ${error.message}`);
     }
-
     await pool.close();
 
     if (table_count === 0) {
-      this.logger.warn(`Database "${this.connector.settings.database}" has no tables`);
-      throw new Error('Database has no tables');
+      throw new Error(`Database "${this.connector.settings.database}" has no tables`);
     }
-
-    this.logger.info(`Database is live with ${table_count} tables`);
   }
 
   /**

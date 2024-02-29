@@ -535,7 +535,7 @@ export default class NorthConnectorController {
         northConnector?.settings || null,
         manifest.settings
       );
-      const logger = ctx.app.logger.child({ scopeType: 'north', scopeId: command.id, scopeName: command.name });
+      const logger = ctx.app.logger.child({ scopeType: 'north', scopeId: command.id, scopeName: command.name }, { level: 'silent' });
       const northToTest = ctx.app.northService.createNorth(command, 'baseFolder', logger);
       await northToTest.testConnection();
 

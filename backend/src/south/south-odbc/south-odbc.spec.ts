@@ -456,7 +456,7 @@ describe('SouthODBC odbc driver test connection', () => {
     PORT: 'Please check host and port',
     CREDENTIALS: 'Please check username and password',
     DB_ACCESS: `User does not have access to database`,
-    DEFAULT: 'Please check logs'
+    DEFAULT: 'Unable to connect to database'
   } as const;
   const connectionErrorMessage = 'Error creating connection';
 
@@ -519,7 +519,6 @@ describe('SouthODBC odbc driver test connection', () => {
   });
 
   it('Database is reachable and has tables', async () => {
-    const result = [{ table_name: 'logs', columns: 'data(INTEGER), timestamp(datetime)' }];
     const tablesResult = [{ TABLE_NAME: 'logs' }];
     const columnsResult = [
       { COLUMN_NAME: 'data', TYPE_NAME: 'INTEGER' },
@@ -534,12 +533,6 @@ describe('SouthODBC odbc driver test connection', () => {
     await expect(south.testConnection()).resolves.not.toThrow();
 
     expect(odbcConnection.close).toHaveBeenCalled();
-    const tables = result.map((row: any) => `${row.table_name}: [${row.columns}]`).join(',\n');
-
-    expect((logger.info as jest.Mock).mock.calls).toEqual([
-      ['Testing ODBC connection with "Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes"'],
-      ['Database is live with tables (table:[columns]):\n%s', tables]
-    ]);
   });
 
   it('Database is reachable but reading table fails', async () => {
@@ -550,7 +543,7 @@ describe('SouthODBC odbc driver test connection', () => {
       })
     };
     (odbc.connect as jest.Mock).mockReturnValue(odbcConnection);
-    await expect(south.testConnection()).rejects.toThrow('Unable to read tables in database, check logs');
+    await expect(south.testConnection()).rejects.toThrow('Unable to read tables in database');
   });
 
   it.each(flattenedErrors)(
@@ -561,12 +554,7 @@ describe('SouthODBC odbc driver test connection', () => {
       });
       configuration.settings.connectionString = `Driver=${driverTest.driver}`;
 
-      await expect(south.testConnection()).rejects.toThrow(driverTest.error.expectedError);
-
-      expect((logger.error as jest.Mock).mock.calls).toEqual([
-        [`Unable to connect to database: ${connectionErrorMessage}`],
-        [`Error from ODBC driver: ${driverTest.error.driverError.odbcErrors[0].message}`]
-      ]);
+      await expect(south.testConnection()).rejects.toThrow(`${driverTest.error.expectedError.message}`);
     }
   );
 
@@ -579,11 +567,6 @@ describe('SouthODBC odbc driver test connection', () => {
     });
 
     await expect(south.testConnection()).rejects.toThrow(new Error(`Driver not found. Check connection string and driver`));
-
-    expect((logger.error as jest.Mock).mock.calls).toEqual([
-      [`Unable to connect to database: ${connectionErrorMessage}`],
-      [`Error from ODBC driver: ${error.odbcErrors[0].message}`]
-    ]);
   });
 
   it('System table unreachable', async () => {
@@ -596,10 +579,9 @@ describe('SouthODBC odbc driver test connection', () => {
     };
     (odbc.connect as jest.Mock).mockReturnValue(odbcConnection);
 
-    await expect(south.testConnection()).rejects.toThrow(new Error(`Unable to read tables in database, check logs`));
+    await expect(south.testConnection()).rejects.toThrow(new Error(`Unable to read tables in database`));
 
     expect(odbcConnection.close).toHaveBeenCalled();
-    expect((logger.error as jest.Mock).mock.calls).toEqual([[`Unable to read tables in database: ${errorMessage}`]]);
   });
 
   it('Database has no tables', async () => {
@@ -612,7 +594,6 @@ describe('SouthODBC odbc driver test connection', () => {
     await expect(south.testConnection()).rejects.toThrow(new Error('Database has no table'));
 
     expect(odbcConnection.close).toHaveBeenCalled();
-    expect((logger.warn as jest.Mock).mock.calls).toEqual([[`Database has no table`]]);
   });
 
   it('Unable to connect to database without password', async () => {
@@ -623,12 +604,7 @@ describe('SouthODBC odbc driver test connection', () => {
       throw new NodeOdbcError(errorMessage, [{ code: -1, message: errorMessage, state: '' }]);
     });
 
-    await expect(south.testConnection()).rejects.toThrow(new Error('Please check logs'));
-
-    expect((logger.error as jest.Mock).mock.calls).toEqual([
-      [`Unable to connect to database: ${errorMessage}`],
-      [`Error from ODBC driver: ${errorMessage}`]
-    ]);
+    await expect(south.testConnection()).rejects.toThrow(new Error(`Unable to connect to database`));
   });
 });
 
@@ -912,11 +888,7 @@ describe('SouthODBC odbc remote test connection', () => {
         status: 200
       })
     );
-    await south.testConnection();
-    expect(logger.info).toHaveBeenCalledWith('Connected to remote odbc. Disconnecting...');
-    expect(logger.info).toHaveBeenCalledWith(
-      `Testing ODBC OIBus Agent connection on ${configuration.settings.agentUrl} with "${configuration.settings.connectionString}"`
-    );
+    await expect(south.testConnection()).resolves.not.toThrow();
   });
 
   it('should test connection fail', async () => {
@@ -936,11 +908,9 @@ describe('SouthODBC odbc remote test connection', () => {
     await expect(south.testConnection()).rejects.toThrow(
       new Error(`Error occurred when sending connect command to remote agent with status 400: bad request`)
     );
-    expect(logger.error).toHaveBeenCalledWith(`Error occurred when sending connect command to remote agent with status 400: bad request`);
 
     await expect(south.testConnection()).rejects.toThrow(
       new Error(`Error occurred when sending connect command to remote agent with status 500`)
     );
-    expect(logger.error).toHaveBeenCalledWith(`Error occurred when sending connect command to remote agent with status 500`);
   });
 });

@@ -212,10 +212,6 @@ describe('NorthFileWriter without suffix or prefix', () => {
     (fs.access as jest.Mock).mockImplementation(() => Promise.resolve());
 
     await expect(north.testConnection()).resolves.not.toThrow();
-
-    expect(logger.error).not.toHaveBeenCalled();
-    expect(logger.info).toHaveBeenNthCalledWith(1, 'Testing North File Writer');
-    expect(logger.info).toHaveBeenNthCalledWith(2, `Folder "${outputFolder}" exists and is reachable`);
   });
 
   it('should handle folder not existing', async () => {
@@ -224,10 +220,7 @@ describe('NorthFileWriter without suffix or prefix', () => {
       throw new Error(errorMessage);
     });
 
-    await expect(north.testConnection()).rejects.toThrow(`Folder "${outputFolder}" does not exist`);
-
-    expect(logger.info).toHaveBeenCalledWith('Testing North File Writer');
-    expect(logger.error).toHaveBeenCalledWith(`Access error on "${outputFolder}": ${errorMessage}`);
+    await expect(north.testConnection()).rejects.toThrow(`Access error on "${outputFolder}": ${errorMessage}`);
   });
 
   it('should handle not having write access on folder', async () => {
@@ -238,9 +231,6 @@ describe('NorthFileWriter without suffix or prefix', () => {
         throw new Error(errorMessage);
       });
 
-    await expect(north.testConnection()).rejects.toThrow('No write access on folder');
-
-    expect(logger.info).toHaveBeenCalledWith('Testing North File Writer');
-    expect(logger.error).toHaveBeenCalledWith(`Access error on "${outputFolder}": ${errorMessage}`);
+    await expect(north.testConnection()).rejects.toThrow(`Access error on "${outputFolder}": ${errorMessage}`);
   });
 });

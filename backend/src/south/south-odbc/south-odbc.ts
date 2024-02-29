@@ -115,17 +115,12 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     if (!odbc) {
       throw new Error('odbc library not loaded');
     }
-    this.logger.info(`Testing ODBC connection with "${this.connector.settings.connectionString}"`);
-
     let connection;
     try {
       const connectionConfig = await this.createConnectionConfig(this.connector.settings);
       connection = await odbc.connect(connectionConfig);
     } catch (error: any) {
-      this.logger.error(`Unable to connect to database: ${error.message}`);
-
       const { odbcErrors } = error;
-      this.logOdbcErrors(odbcErrors);
 
       if (odbcErrors[0].state === 'IM002') {
         throw new Error(`Driver not found. Check connection string and driver`);
@@ -136,16 +131,16 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
       switch (errorCode) {
         case ERROR_CODES.HOST:
         case ERROR_CODES.PORT:
-          throw new Error('Please check host and port');
+          throw new Error(`Please check host and port`);
 
         case ERROR_CODES.CREDENTIALS:
-          throw new Error('Please check username and password');
+          throw new Error(`Please check username and password`);
 
         case ERROR_CODES.DB_ACCESS:
           throw new Error(`User does not have access to database`);
 
         default:
-          throw new Error('Please check logs');
+          throw new Error(`Unable to connect to database`);
       }
     }
     const tables: { table_name: string; columns: string }[] = [];
@@ -165,26 +160,17 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
       }
     } catch (error: any) {
       await connection.close();
-      this.logOdbcErrors(error.odbcErrors);
-      this.logger.error(`Unable to read tables in database: ${error.message}`);
-      throw new Error(`Unable to read tables in database, check logs`);
+      throw new Error(`Unable to read tables in database`);
     }
 
     await connection.close();
 
     if (tables.length === 0) {
-      this.logger.warn(`Database has no table`);
       throw new Error('Database has no table');
     }
-    const tablesString = tables.map(row => `${row.table_name}: [${row.columns}]`).join(',\n');
-    this.logger.info('Database is live with tables (table:[columns]):\n%s', tablesString);
   }
 
   async testAgentConnection(): Promise<void> {
-    this.logger.info(
-      `Testing ODBC OIBus Agent connection on ${this.connector.settings.agentUrl} with "${this.connector.settings.connectionString}"`
-    );
-
     const headers: Record<string, string> = {};
     headers['Content-Type'] = 'application/json';
     const fetchOptions = {
@@ -197,14 +183,11 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     };
     const response = await fetch(`${this.connector.settings.agentUrl!}/api/odbc/${this.connector.id}/connect`, fetchOptions);
     if (response.status === 200) {
-      this.logger.info('Connected to remote odbc. Disconnecting...');
       await fetch(`${this.connector.settings.agentUrl}/api/odbc/${this.connector.id}/disconnect`, { method: 'DELETE' });
     } else if (response.status === 400) {
       const errorMessage = await response.text();
-      this.logger.error(`Error occurred when sending connect command to remote agent with status ${response.status}: ${errorMessage}`);
       throw new Error(`Error occurred when sending connect command to remote agent with status ${response.status}: ${errorMessage}`);
     } else {
-      this.logger.error(`Error occurred when sending connect command to remote agent with status ${response.status}`);
       throw new Error(`Error occurred when sending connect command to remote agent with status ${response.status}`);
     }
   }
@@ -452,7 +435,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     }
     // Other
     else {
-      throw new Error('Please check logs');
+      throw new Error(`Unable to connect to database`);
     }
 
     return { errorCode, ERROR_CODES };

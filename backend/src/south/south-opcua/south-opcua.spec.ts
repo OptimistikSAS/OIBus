@@ -975,7 +975,6 @@ describe('SouthOPCUA test connection', () => {
   // Mock UUID
   const uuid = 'test-uuid';
   (randomUUID as jest.Mock).mockReturnValue(uuid);
-  const tempCertFolder = `opcua-test-${uuid}`;
 
   class FileError extends Error {
     public code: string;
@@ -1010,13 +1009,6 @@ describe('SouthOPCUA test connection', () => {
     south = new SouthOPCUA(connector, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
-  afterEach(async () => {
-    expect((logger.trace as jest.Mock).mock.calls).toEqual([
-      [`Created OPCUA temporary folder for certificates: ${tempCertFolder}`],
-      ['OPCUA temporary folder deleted']
-    ]);
-  });
-
   it('Connection settings are correct', async () => {
     const close = jest.fn();
     (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ close });
@@ -1024,10 +1016,6 @@ describe('SouthOPCUA test connection', () => {
     await expect(south.testConnection()).resolves.not.toThrow();
 
     expect(close).toHaveBeenCalled();
-    expect((logger.info as jest.Mock).mock.calls).toEqual([
-      [`Testing connection on "${connector.settings.url}"`],
-      [`OPCUA connected on "${connector.settings.url}"`]
-    ]);
   });
 
   it('Wrong URL', async () => {
@@ -1037,8 +1025,6 @@ describe('SouthOPCUA test connection', () => {
     });
 
     await expect(south.testConnection()).rejects.toThrow(new Error('Please check the URL'));
-
-    expect((logger.error as jest.Mock).mock.calls).toEqual([[`Error while connecting to the OPCUA server. ${error}`]]);
   });
 
   it.each(securityPolicies)('Server does not support Security policy: %s', async securityPolicy => {
@@ -1050,8 +1036,6 @@ describe('SouthOPCUA test connection', () => {
     });
 
     await expect(south.testConnection()).rejects.toThrow(new Error(`Security Policy "${securityPolicy}" is not supported on the server`));
-
-    expect((logger.error as jest.Mock).mock.calls).toEqual([[`Error while connecting to the OPCUA server. ${error}`]]);
   });
 
   it.each(securityPolicies.slice(1))('Server did not trust certificate using Security policy: %s', async securityPolicy => {
@@ -1063,8 +1047,6 @@ describe('SouthOPCUA test connection', () => {
     });
 
     await expect(south.testConnection()).rejects.toThrow(new Error('Please check if the OIBus certificate has been trusted by the server'));
-
-    expect((logger.error as jest.Mock).mock.calls).toEqual([[`Error while connecting to the OPCUA server. ${error}`]]);
   });
 
   it('Wrong user credentials', async () => {
@@ -1076,8 +1058,6 @@ describe('SouthOPCUA test connection', () => {
     });
 
     await expect(south.testConnection()).rejects.toThrow(new Error('Please check username and password'));
-
-    expect((logger.error as jest.Mock).mock.calls).toEqual([[`Error while connecting to the OPCUA server. ${error}`]]);
   });
 
   it('Wrong certificate', async () => {
@@ -1098,8 +1078,6 @@ describe('SouthOPCUA test connection', () => {
     });
 
     await expect(south.testConnection()).rejects.toThrow(new Error('Please check the certificate and key'));
-
-    expect((logger.error as jest.Mock).mock.calls).toEqual([[`Error while connecting to the OPCUA server. ${error}`]]);
   });
 
   it('Certificate file does not exist', async () => {
@@ -1119,8 +1097,6 @@ describe('SouthOPCUA test connection', () => {
     });
 
     await expect(south.testConnection()).rejects.toThrow(new Error(`File "${error.path}" does not exist`));
-
-    expect((logger.error as jest.Mock).mock.calls).toEqual([[`Error while connecting to the OPCUA server. ${error}`]]);
   });
 
   it('Failed to read private key', async () => {
@@ -1141,8 +1117,6 @@ describe('SouthOPCUA test connection', () => {
     });
 
     await expect(south.testConnection()).rejects.toThrow(new Error(`Could not read private key "${keyPath}"`));
-
-    expect((logger.error as jest.Mock).mock.calls).toEqual([[`Error while connecting to the OPCUA server. ${error}`]]);
   });
 
   it('Unknown error', async () => {
@@ -1159,8 +1133,6 @@ describe('SouthOPCUA test connection', () => {
       throw error;
     });
 
-    await expect(south.testConnection()).rejects.toThrow(new Error('Please check logs'));
-
-    expect((logger.error as jest.Mock).mock.calls).toEqual([[`Error while connecting to the OPCUA server. ${error}`]]);
+    await expect(south.testConnection()).rejects.toThrow(new Error('Unknown error'));
   });
 });
