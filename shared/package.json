@@ -5,8 +5,8 @@
   "author": "Optimistik SAS",
   "license": "EUPL",
   "engines": {
-    "node": ">=v16.17.0",
-    "npm": ">=8.15.0"
+    "node": ">=v22.9",
+    "npm": ">=10"
   },
   "keywords": [
     "Optimistik"

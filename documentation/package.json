@@ -2,6 +2,10 @@
   "name": "doc-oibus",
   "version": "3.4.7",
   "private": true,
+  "engines": {
+    "node": ">=v22.9",
+    "npm": ">=10"
+  },
   "scripts": {
     "docusaurus": "docusaurus",
     "start": "docusaurus start",
@@ -38,8 +42,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "engines": {
-    "node": ">=16.14"
   }
 }
