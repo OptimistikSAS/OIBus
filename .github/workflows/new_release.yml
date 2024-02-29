@@ -3,7 +3,7 @@ name: Release new OIBus version
 on:
   push:
     branches:
-      - main
+      - stable
 
 concurrency:
   # New commit on branch cancels running workflows of the same branch
@@ -25,7 +25,7 @@ jobs:
           command: manifest
           token: ${{ secrets.REPO_ACCESS_TOKEN }}
           signoff: "Optimistik SAS <optimistiksas@users.noreply.github.com>"
-          default-branch: main
+          default-branch: stable
           config-file: .github/release-please-config.json
           manifest-file: .github/release-please-manifest.json
 
