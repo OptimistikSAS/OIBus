@@ -5,25 +5,23 @@ sidebar_position: 11
 import ItemSettings from './_south-sql-item-settings.mdx';
 
 # Oracle
-Send SQL queries to interact with an Oracle database.
+发送SQL查询以与Oracle数据库交互。
 
-:::caution Dependency
-This connector requires the local installation of an Oracle Instant Client (Basic or Basic Light, minimal supported
-version is 18.5.0.0.0)
+:::caution 依赖性
+此连接器需要本地安装Oracle Instant Client（基础版或轻量级基础版，最低支持版本为18.5.0.0.0）
 :::
 
-## Specific settings
-When configuring the SQL connector to send SQL queries to a Oracle Server, you will need to provide the following
-details:
-- **Host**: The address of the Oracle server.
-- **Port**: The Oracle server port (default is 1521).
-- **Database**: The name of the database to connect to.
-- **Username**: The username used for authentication.
-- **Password**: The password used for authentication.
-- **Connection timeout**: Timeout setting for establishing the connection.
+## 特定设置
+在配置SQL连接器以发送SQL查询到Oracle服务器时，您需要提供以下细节：
+- **主机**：Oracle服务器的地址。
+- **端口**：Oracle服务器端口（默认是1521）。
+- **数据库**：要连接的数据库名称。
+- **用户名**：用于认证的用户名。
+- **密码**：用于认证的密码。
+- **连接超时**：建立连接的超时设置。
 
-:::tip Database access
-It is strongly advised to use a read-only user when connecting to the database for security and data integrity purposes.
+:::tip 数据库访问
+强烈建议在连接数据库时使用只读用户，以确保安全和数据完整性。
 :::
 
 <ItemSettings></ItemSettings>
