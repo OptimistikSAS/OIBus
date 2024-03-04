@@ -29,7 +29,7 @@ const expectedCommands: Array<OIBusCommandDTO> = [
   {
     id: 'id2',
     type: 'UPGRADE',
-    status: 'PENDING',
+    status: 'RETRIEVED',
     ack: false,
     creationDate: '2023-01-01T12:00:00Z',
     completedDate: '2023-01-01T12:00:00Z',

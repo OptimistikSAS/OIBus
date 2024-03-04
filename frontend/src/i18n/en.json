@@ -181,8 +181,7 @@
       "ABORTED": "Aborted"
     },
     "oibus-command-status": {
-      "PENDING": "Pending",
-      "RETRIEVED": "Retrieved",
+      "RETRIEVED": "Pending",
       "ERRORED": "Errored",
       "CANCELLED": "Cancelled",
       "COMPLETED": "Completed",

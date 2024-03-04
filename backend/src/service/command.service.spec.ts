@@ -73,7 +73,7 @@ describe('Command service with running command', () => {
     service.run = jest.fn();
     service.start();
     expect(service.run).toHaveBeenCalledTimes(1);
-    expect(repositoryService.commandRepository.searchCommandsList).toHaveBeenCalledWith({ status: ['PENDING', 'RUNNING'], types: [] });
+    expect(repositoryService.commandRepository.searchCommandsList).toHaveBeenCalledWith({ status: ['RETRIEVED', 'RUNNING'], types: [] });
 
     await service.stop();
     expect(logger.debug).toHaveBeenCalledWith(`Stopping command service...`);
@@ -198,7 +198,7 @@ describe('Command service without command', () => {
 
     await service.executeCommand(command);
     const expectedFilename = `oibus-${oibusInfo.platform}_${oibusInfo.architecture}.zip`;
-    const expectedEndpoint = `/api/oianalytics/oibus/oibusId/upgrade?assetId=${command.assetId}`;
+    const expectedEndpoint = `/api/oianalytics/oibus/upgrade?assetId=${command.assetId}`;
     expect(downloadFile).toHaveBeenCalledWith(connectionSettings, expectedEndpoint, expectedFilename, 600_000);
     expect(unzip).toHaveBeenCalledWith(expectedFilename, path.resolve('binaryFolder', '..', 'update'));
     expect(fs.unlink).toHaveBeenCalledWith(expectedFilename);

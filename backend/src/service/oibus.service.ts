@@ -220,17 +220,16 @@ export default class OIBusService {
       return;
     }
     this.ongoingCheckCommands = true;
-    const engineSettings = this.repositoryService.engineRepository.getEngineSettings()!;
 
-    await this.sendAckCommands(engineSettings.id);
-    await this.checkPendingCommands(engineSettings.id);
-    await this.retrieveCommands(engineSettings.id);
+    await this.sendAckCommands();
+    await this.checkRetrievedCommands();
+    await this.retrieveCommands();
     this.ongoingCheckCommands = false;
   }
 
-  async sendAckCommands(oibusId: string): Promise<void> {
+  async sendAckCommands(): Promise<void> {
     const commandsToAck = this.repositoryService.commandRepository.searchCommandsList({
-      status: ['COMPLETED', 'ERRORED', 'CANCELLED'],
+      status: [],
       types: [],
       ack: false
     });
@@ -238,18 +237,16 @@ export default class OIBusService {
       return;
     }
 
-    const endpoint = `/api/oianalytics/oibus-commands/${oibusId}/ack`;
+    const endpoint = `/api/oianalytics/oibus/commands/ack`;
     const registrationSettings = this.getRegistrationSettings();
     const connectionSettings = await getNetworkSettingsFromRegistration(registrationSettings, endpoint, this.encryptionService);
     let response;
     const url = `${connectionSettings.host}${endpoint}`;
-    // @ts-ignore
-    connectionSettings.headers['Content-Type'] = 'application/json';
     try {
       response = await fetch(url, {
         method: 'PUT',
         body: JSON.stringify(commandsToAck),
-        headers: connectionSettings.headers,
+        headers: { ...connectionSettings.headers, 'Content-Type': 'application/json' },
         timeout: CHECK_TIMEOUT,
         agent: connectionSettings.agent
       });
@@ -268,13 +265,13 @@ export default class OIBusService {
     }
   }
 
-  async checkPendingCommands(oibusId: string): Promise<void> {
-    const pendingCommands = this.repositoryService.commandRepository.searchCommandsList({ status: ['PENDING'], types: [] });
+  async checkRetrievedCommands(): Promise<void> {
+    const pendingCommands = this.repositoryService.commandRepository.searchCommandsList({ status: ['RETRIEVED'], types: [] });
     if (pendingCommands.length === 0) {
       return;
     }
 
-    let endpoint = `/api/oianalytics/oibus-commands/${oibusId}/check?`;
+    let endpoint = `/api/oianalytics/oibus/commands/list-by-ids?`;
     for (const command of pendingCommands) {
       endpoint += `ids=${command.id}&`;
     }
@@ -309,8 +306,8 @@ export default class OIBusService {
     }
   }
 
-  async retrieveCommands(oibusId: string): Promise<void> {
-    const endpoint = `/api/oianalytics/oibus-commands/${oibusId}/retrieve-commands`;
+  async retrieveCommands(): Promise<void> {
+    const endpoint = `/api/oianalytics/oibus/commands/pending`;
     const registrationSettings = this.getRegistrationSettings();
     const connectionSettings = await getNetworkSettingsFromRegistration(registrationSettings, endpoint, this.encryptionService);
     let response;
@@ -341,6 +338,7 @@ export default class OIBusService {
         const newCommand = this.repositoryService.commandRepository.create(command.id, creationCommand);
         this.commandService.addCommandToQueue(newCommand);
       }
+      await this.sendAckCommands();
     } catch (fetchError) {
       this.logger.error(`Error while retrieving commands on ${url}. ${fetchError}`);
     }
