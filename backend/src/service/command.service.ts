@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises';
-import { downloadFile, getNetworkSettingsFromRegistration, getOIBusInfo, unzip } from './utils';
+import { delay, downloadFile, getNetworkSettingsFromRegistration, getOIBusInfo, unzip } from './utils';
 import RepositoryService from './repository.service';
 import EncryptionService from './encryption.service';
 import pino from 'pino';
@@ -58,22 +58,14 @@ export default class CommandService {
 
   async run(): Promise<void> {
     this.runProgress$ = new DeferredPromise();
-    const runStart = DateTime.now();
-
     const [command] = this.commandsQueue;
     this.repositoryService.commandRepository.markAsRunning(command.id);
 
     try {
       await this.executeCommand(command);
-      const duration = DateTime.now().toMillis() - runStart.toMillis();
-      this.logger.info(
-        `Command ${command.id} (retrieved ${command.retrievedDate}) of type ${command.type} after ${duration} ms of execution`
-      );
     } catch (error: any) {
-      const duration = DateTime.now().toMillis() - runStart.toMillis();
       this.logger.error(
-        `Error while executing command ${command.id} (retrieved ${command.retrievedDate}) of type ${command.type} ` +
-          `after ${duration} ms of execution. ${error.toString()}`
+        `Error while executing command ${command.id} (retrieved ${command.retrievedDate}) of type ${command.type}. ${error.toString()}`
       );
       this.repositoryService.commandRepository.markAsErrored(command.id, error.toString());
     }
@@ -107,16 +99,27 @@ export default class CommandService {
   }
 
   async executeCommand(command: OIBusCommandDTO): Promise<void> {
+    const runStart = DateTime.now();
     const oibusInfo = getOIBusInfo();
     const endpoint = `/api/oianalytics/oibus/${this.oibusId}/upgrade?assetId=${command.assetId}`;
 
+    this.logger.info(
+      `Upgrading OIBus from ${oibusInfo.version} to ${command.version} for platform ${oibusInfo.platform} and architecture ${oibusInfo.architecture}...`
+    );
     const registrationSettings = this.repositoryService.registrationRepository.getRegistrationSettings();
     const connectionSettings = await getNetworkSettingsFromRegistration(registrationSettings, endpoint, this.encryptionService);
     const filename = `oibus-${oibusInfo.platform}_${oibusInfo.architecture}.zip`;
     await downloadFile(connectionSettings, endpoint, filename, DOWNLOAD_TIMEOUT);
     await unzip(filename, path.resolve(this.binaryFolder, '..', 'update'));
     await fs.unlink(filename);
-    this.logger.debug(`Restarting OIBus`);
+
+    const duration = DateTime.now().toMillis() - runStart.toMillis();
+    this.logger.debug(
+      `Command ${command.id} (retrieved ${command.retrievedDate}) of type ${command.type} after ${duration} ms of execution`
+    );
+
+    this.logger.info(`OIBus ${oibusInfo.version}. Restarting OIBus to upgrade...`);
+    await delay(1500);
     process.exit();
   }
 
