@@ -3,7 +3,7 @@ import { BaseEntity, Instant } from './types';
 export const OIBUS_COMMAND_TYPES = ['UPGRADE'] as const;
 export type OIBusCommandType = (typeof OIBUS_COMMAND_TYPES)[number];
 
-export const OIBUS_COMMAND_STATUS = ['PENDING', 'RUNNING', 'ERRORED', 'CANCELLED', 'COMPLETED'] as const;
+export const OIBUS_COMMAND_STATUS = ['RETRIEVED', 'RUNNING', 'ERRORED', 'CANCELLED', 'COMPLETED'] as const;
 export type OIBusCommandStatus = (typeof OIBUS_COMMAND_STATUS)[number];
 
 export interface BaseOIBusCommand {

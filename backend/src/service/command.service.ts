@@ -42,7 +42,7 @@ export default class CommandService {
       this.logger.debug(`Command service not started: OIAnalytics not registered`);
       return;
     }
-    this.commandsQueue = this.repositoryService.commandRepository.searchCommandsList({ status: ['PENDING', 'RUNNING'], types: [] });
+    this.commandsQueue = this.repositoryService.commandRepository.searchCommandsList({ status: ['RETRIEVED', 'RUNNING'], types: [] });
 
     this.triggerRun.on('next', async () => {
       if (!this.runProgress$) {
@@ -101,7 +101,7 @@ export default class CommandService {
   async executeCommand(command: OIBusCommandDTO): Promise<void> {
     const runStart = DateTime.now();
     const oibusInfo = getOIBusInfo();
-    const endpoint = `/api/oianalytics/oibus/${this.oibusId}/upgrade?assetId=${command.assetId}`;
+    const endpoint = `/api/oianalytics/oibus/upgrade?assetId=${command.assetId}`;
 
     this.logger.info(
       `Upgrading OIBus from ${oibusInfo.version} to ${command.version} for platform ${oibusInfo.platform} and architecture ${oibusInfo.architecture}...`
