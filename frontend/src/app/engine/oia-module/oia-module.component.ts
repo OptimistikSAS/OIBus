@@ -2,33 +2,33 @@ import { Component, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgForOf, NgIf } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { EngineService } from '../services/engine.service';
-import { RegistrationSettingsDTO } from '../../../../shared/model/engine.model';
-import { BoxComponent, BoxTitleDirective } from '../shared/box/box.component';
-import { DatetimePipe } from '../shared/datetime.pipe';
-import { ModalService } from '../shared/modal.service';
+import { EngineService } from '../../services/engine.service';
+import { RegistrationSettingsDTO } from '../../../../../shared/model/engine.model';
+import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
+import { DatetimePipe } from '../../shared/datetime.pipe';
+import { ModalService } from '../../shared/modal.service';
 import { RegisterOibusModalComponent } from './register-oibus-modal/register-oibus-modal.component';
 import { catchError, EMPTY, switchMap, tap } from 'rxjs';
-import { NotificationService } from '../shared/notification.service';
-import { ConfirmationService } from '../shared/confirmation.service';
-import { MultiSelectComponent } from '../shared/multi-select/multi-select.component';
-import { MultiSelectOptionDirective } from '../shared/multi-select/multi-select-option.directive';
-import { formDirectives } from '../shared/form-directives';
-import { PaginationComponent } from '../shared/pagination/pagination.component';
-import { emptyPage } from '../shared/test-utils';
+import { NotificationService } from '../../shared/notification.service';
+import { ConfirmationService } from '../../shared/confirmation.service';
+import { MultiSelectComponent } from '../../shared/multi-select/multi-select.component';
+import { MultiSelectOptionDirective } from '../../shared/multi-select/multi-select-option.directive';
+import { formDirectives } from '../../shared/form-directives';
+import { PaginationComponent } from '../../shared/pagination/pagination.component';
+import { emptyPage } from '../../shared/test-utils';
 import {
   OIBUS_COMMAND_STATUS,
   OIBUS_COMMAND_TYPES,
   OIBusCommandDTO,
   OIBusCommandStatus,
   OIBusCommandType
-} from '../../../../shared/model/command.model';
-import { Page } from '../../../../shared/model/types';
-import { PageLoader } from '../shared/page-loader.service';
+} from '../../../../../shared/model/command.model';
+import { Page } from '../../../../../shared/model/types';
+import { PageLoader } from '../../shared/page-loader.service';
 import { NonNullableFormBuilder } from '@angular/forms';
-import { OibusCommandService } from '../services/oibus-command.service';
-import { OibusCommandTypeEnumPipe } from '../shared/oibus-command-type-enum.pipe';
-import { OibusCommandStatusEnumPipe } from '../shared/oibus-command-status-enum.pipe';
+import { OibusCommandService } from '../../services/oibus-command.service';
+import { OibusCommandTypeEnumPipe } from '../../shared/oibus-command-type-enum.pipe';
+import { OibusCommandStatusEnumPipe } from '../../shared/oibus-command-status-enum.pipe';
 
 @Component({
   selector: 'oib-oia-module',
@@ -98,7 +98,7 @@ export class OiaModuleComponent implements OnInit {
     modalRef.componentInstance.prepare(this.registration!);
     modalRef.result
       .pipe(
-        tap(registration => this.notificationService.success('oia-module.registration.saved')),
+        tap(() => this.notificationService.success('oia-module.registration.saved')),
         switchMap(() => this.oibusService.getRegistrationSettings())
       )
       .subscribe(registration => {

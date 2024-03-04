@@ -195,7 +195,6 @@
   "nav": {
     "home": "Home",
     "engine": "Engine",
-    "oia-module": "OIA Module",
     "north-list": "North",
     "south-list": "South",
     "history-queries": "History",
@@ -300,6 +299,7 @@
     "title": "Engine",
     "edit": "Edit settings",
     "edit-title": "Edit engine settings",
+    "oianalytics": "OIAnalytics",
     "shutdown": "Shutdown",
     "confirm-shutdown": "Are you sure you want to shutdown OIBus engine?",
     "shutdown-complete": "OIBus shut down",

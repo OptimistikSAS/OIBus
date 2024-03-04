@@ -1,11 +1,11 @@
 import { Component } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FormBuilder, Validators } from '@angular/forms';
-import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
+import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
-import { formDirectives } from '../../shared/form-directives';
-import { EngineService } from '../../services/engine.service';
-import { LOG_LEVELS, RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../../../shared/model/engine.model';
+import { formDirectives } from '../../../shared/form-directives';
+import { EngineService } from '../../../services/engine.service';
+import { LOG_LEVELS, RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../../../../shared/model/engine.model';
 import { NgForOf, NgIf } from '@angular/common';
 
 @Component({
