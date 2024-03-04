@@ -1,16 +1,16 @@
 import { TestBed } from '@angular/core/testing';
 
 import { OiaModuleComponent } from './oia-module.component';
-import { provideI18nTesting } from '../../i18n/mock-i18n';
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { ComponentTester, createMock, stubRoute } from 'ngx-speculoos';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
-import { EngineService } from '../services/engine.service';
-import { RegistrationSettingsDTO } from '../../../../shared/model/engine.model';
+import { EngineService } from '../../services/engine.service';
+import { RegistrationSettingsDTO } from '../../../../../shared/model/engine.model';
 import { provideHttpClient } from '@angular/common/http';
-import { OibusCommandService } from '../services/oibus-command.service';
-import { emptyPage } from '../shared/test-utils';
-import { OIBusCommandDTO } from '../../../../shared/model/command.model';
+import { OibusCommandService } from '../../services/oibus-command.service';
+import { emptyPage } from '../../shared/test-utils';
+import { OIBusCommandDTO } from '../../../../../shared/model/command.model';
 
 class OiaModuleComponentTester extends ComponentTester<OiaModuleComponent> {
   constructor() {

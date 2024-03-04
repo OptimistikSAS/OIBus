@@ -3,10 +3,10 @@ import { ComponentTester, createMock } from 'ngx-speculoos';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { fakeAsync, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
-import { provideI18nTesting } from '../../../i18n/mock-i18n';
-import { EngineService } from '../../services/engine.service';
-import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../../../shared/model/engine.model';
+import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
+import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import { EngineService } from '../../../services/engine.service';
+import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../../../../shared/model/engine.model';
 
 class RegisterOibusModalComponentTester extends ComponentTester<RegisterOibusModalComponent> {
   constructor() {

@@ -17,7 +17,7 @@ import { LoginComponent } from './auth/login/login.component';
 import { authenticationGuard } from './auth/authentication.guard';
 import { ExploreCacheComponent } from './north/explore-cache/explore-cache.component';
 import { EditUserSettingsComponent } from './user-settings/edit-user-settings/edit-user-settings.component';
-import { OiaModuleComponent } from './oia-module/oia-module.component';
+import { OiaModuleComponent } from './engine/oia-module/oia-module.component';
 
 export const ROUTES: Routes = [
   { path: 'login', component: LoginComponent },
@@ -34,7 +34,7 @@ export const ROUTES: Routes = [
         component: EngineDetailComponent
       },
       {
-        path: 'oia-module',
+        path: 'engine/oianalytics',
         component: OiaModuleComponent
       },
       {

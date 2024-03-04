@@ -8,13 +8,17 @@
           </div>
 
           <h1 class="oib-title" translate="engine.title">
-            <button class="btn btn-primary mx-2" id="edit-link" routerLink="edit">
+            <a class="btn btn-primary mx-2" id="edit-link" routerLink="edit">
               <i class="fa fa-pencil"></i>
-            </button>
+            </a>
           </h1>
         </div>
 
         <div>
+          <a class="btn btn-primary me-2" id="oianalytics-module" routerLink="oianalytics">
+            <span class="fa fa-gear me-1" role="status" aria-hidden="true"></span>
+            <span translate="engine.oianalytics"></span>
+          </a>
           <button
             (click)="restart()"
             type="button"
