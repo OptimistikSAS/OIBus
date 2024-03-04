@@ -785,8 +785,6 @@
         "last-run-start": "Last run",
         "last-run-duration": "Last run duration",
         "data-retrieved": "Data retrieved",
-        "interval-start": "Interval start",
-        "interval-end": "Interval end",
         "interval-progress": "Interval progress"
       }
     }

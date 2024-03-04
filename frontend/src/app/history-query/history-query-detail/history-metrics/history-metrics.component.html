@@ -15,7 +15,7 @@
       </thead>
       <tbody>
         <!-- north interval progressbar -->
-        <tr *ngIf="historyMetrics.south.historyMetrics.intervalProgress === 1 && northProgress > 0">
+        <tr *ngIf="historyMetrics.south.historyMetrics.intervalProgress === 1">
           <td translate="history-query.monitoring.north.data-sent"></td>
           <td>
             <oib-progressbar [value]="northProgress" [max]="1" [animated]="northProgressbarAnimated" />
@@ -82,18 +82,9 @@
         <tr *ngIf="historyMetrics.south.historyMetrics.currentIntervalNumber && historyMetrics.south.historyMetrics.numberOfIntervals">
           <td translate="history-query.monitoring.south.interval-progress"></td>
           <td>
-            {{ historyMetrics.south.historyMetrics.currentIntervalNumber }} / {{ historyMetrics.south.historyMetrics.numberOfIntervals }}
+            {{ historyMetrics.south.historyMetrics.currentIntervalNumber }} / {{ historyMetrics.south.historyMetrics.numberOfIntervals }} :
+            [{{ historyMetrics.south.historyMetrics.currentIntervalStart }}, {{ historyMetrics.south.historyMetrics.currentIntervalEnd }}]
           </td>
-        </tr>
-        <!-- south interval start -->
-        <tr *ngIf="historyMetrics.south.historyMetrics.currentIntervalStart">
-          <td translate="history-query.monitoring.south.interval-start"></td>
-          <td>{{ historyMetrics.south.historyMetrics.currentIntervalStart }}</td>
-        </tr>
-        <!-- south interval end -->
-        <tr *ngIf="historyMetrics.south.historyMetrics.currentIntervalEnd">
-          <td translate="history-query.monitoring.south.interval-end"></td>
-          <td>{{ historyMetrics.south.historyMetrics.currentIntervalEnd }}</td>
         </tr>
         <!-- number of values for point connectors -->
         <tr>
