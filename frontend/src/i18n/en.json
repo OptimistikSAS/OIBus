@@ -520,7 +520,7 @@
       "scan-mode": "Schedule",
       "enabled": "South item {{name}} enabled",
       "disabled": "South item {{name}} disabled",
-      "display-mode-info": "The changes to the items will be committed directly",
+      "display-mode-info": "The changes to the items below will be saved directly",
       "edit-mode-info": "The changes to the items will be committed on save",
       "search": {
         "name": "Name"
