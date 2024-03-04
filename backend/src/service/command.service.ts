@@ -101,7 +101,7 @@ export default class CommandService {
   async executeCommand(command: OIBusCommandDTO): Promise<void> {
     const runStart = DateTime.now();
     const oibusInfo = getOIBusInfo();
-    const endpoint = `/api/oianalytics/oibus/upgrade?assetId=${command.assetId}`;
+    const endpoint = `/api/oianalytics/oibus/upgrade/asset?assetId=${command.assetId}`;
 
     this.logger.info(
       `Upgrading OIBus from ${oibusInfo.version} to ${command.version} for platform ${oibusInfo.platform} and architecture ${oibusInfo.architecture}...`
