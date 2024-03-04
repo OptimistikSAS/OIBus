@@ -97,9 +97,6 @@ describe('Command service with running command', () => {
     await service.stop();
     service.removeCommandFromQueue(command.id);
 
-    expect(logger.info).toHaveBeenCalledWith(
-      `Command ${command.id} (retrieved ${command.retrievedDate}) of type ${command.type} after 1000 ms of execution`
-    );
     expect(service.executeCommand).toHaveBeenCalledTimes(1);
     expect(logger.debug).toHaveBeenCalledWith('Waiting for command to finish');
     service.addCommandToQueue(command);
@@ -119,7 +116,7 @@ describe('Command service with running command', () => {
 
     await service.stop();
     expect(logger.error).toHaveBeenCalledWith(
-      `Error while executing command ${command.id} (retrieved ${command.retrievedDate}) of type ${command.type} after 1000 ms of execution. Error: exception`
+      `Error while executing command ${command.id} (retrieved ${command.retrievedDate}) of type ${command.type}. Error: exception`
     );
     expect(service.executeCommand).toHaveBeenCalledTimes(1);
     expect(logger.debug).toHaveBeenCalledWith('Waiting for command to finish');

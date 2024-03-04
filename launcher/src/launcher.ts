@@ -115,6 +115,8 @@ export default class Launcher {
     const oibusPath = this.getOibusPath();
     const oibusBackupPath = this.getOibusBackupPath();
 
+    await fs.rm(path.resolve(this.backupDir, 'data-folder'), { recursive: true, force: true });
+
     console.log(`Backup OIBus: ${oibusPath} -> ${oibusBackupPath}`);
     await fs.rename(oibusPath, oibusBackupPath);
     console.log(`Backup OIBus data folder: ${this.config} -> ${path.resolve(this.backupDir, 'data-folder')}`);
@@ -123,6 +125,9 @@ export default class Launcher {
     console.log(`Updating OIBus: ${oibusUpdatePath} -> ${oibusPath}`);
     await fs.rename(oibusUpdatePath, oibusPath);
 
+    for (const file of await fs.readdir(this.updateDir)) {
+      await fs.unlink(path.join(this.updateDir, file));
+    }
     this.updated = true;
   }
 
@@ -135,6 +140,8 @@ export default class Launcher {
 
     console.log(`Rollback OIBus data folder: ${path.resolve(this.backupDir, 'data-folder')} -> ${this.config}`);
     await fs.cp(path.resolve(this.backupDir, 'data-folder'), this.config, { force: true, recursive: true });
+
+    await fs.rm(path.resolve(this.backupDir, 'data-folder'), { recursive: true, force: true });
   }
 
   handleOibusStarted(): void {
