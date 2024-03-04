@@ -198,7 +198,7 @@ describe('Command service without command', () => {
 
     await service.executeCommand(command);
     const expectedFilename = `oibus-${oibusInfo.platform}_${oibusInfo.architecture}.zip`;
-    const expectedEndpoint = `/api/oianalytics/oibus/upgrade?assetId=${command.assetId}`;
+    const expectedEndpoint = `/api/oianalytics/oibus/upgrade/asset?assetId=${command.assetId}`;
     expect(downloadFile).toHaveBeenCalledWith(connectionSettings, expectedEndpoint, expectedFilename, 600_000);
     expect(unzip).toHaveBeenCalledWith(expectedFilename, path.resolve('binaryFolder', '..', 'update'));
     expect(fs.unlink).toHaveBeenCalledWith(expectedFilename);
