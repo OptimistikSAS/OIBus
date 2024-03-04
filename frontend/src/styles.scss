@@ -604,3 +604,12 @@ val-errors > div {
 .text-disabled {
   color: $blue;
 }
+
+.save-zone {
+  box-sizing: content-box;
+  border-radius: 1rem;
+  //background-color: $lightGrey;
+  border: solid $lightGrey;
+    padding-bottom: 0.5em;
+}
+
