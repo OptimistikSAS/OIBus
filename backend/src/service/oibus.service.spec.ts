@@ -652,7 +652,7 @@ describe('OIBus service should interact with OIA and', () => {
 
     await service.sendAckCommands();
     expect(logger.trace).toHaveBeenCalledWith(`1 commands acknowledged`);
-    expect(fetch).toHaveBeenCalledWith('http://localhost:4200/api/oianalytics/oibus/commands/ack', {
+    expect(fetch).toHaveBeenCalledWith('http://localhost:4200/api/oianalytics/oibus/commands/status', {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json'
@@ -671,7 +671,7 @@ describe('OIBus service should interact with OIA and', () => {
 
     await service.sendAckCommands();
     expect(logger.error).toHaveBeenCalledWith(
-      `Error 404 while acknowledging 1 commands on http://localhost:4200/api/oianalytics/oibus/commands/ack: Not Found`
+      `Error 404 while acknowledging 1 commands on http://localhost:4200/api/oianalytics/oibus/commands/status: Not Found`
     );
   });
 
@@ -684,7 +684,7 @@ describe('OIBus service should interact with OIA and', () => {
 
     await service.sendAckCommands();
     expect(logger.error).toHaveBeenCalledWith(
-      `Error while acknowledging 1 commands on http://localhost:4200/api/oianalytics/oibus/commands/ack. ${new Error('error')}`
+      `Error while acknowledging 1 commands on http://localhost:4200/api/oianalytics/oibus/commands/status. ${new Error('error')}`
     );
   });
 
