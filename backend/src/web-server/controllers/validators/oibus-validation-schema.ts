@@ -32,6 +32,8 @@ const commandSchema: Joi.ObjectSchema = Joi.object({});
 const engineSchema: Joi.ObjectSchema = Joi.object({
   name: Joi.string().required(),
   port: Joi.number().required().port(),
+  proxyEnabled: Joi.boolean().required(),
+  proxyPort: Joi.number().required().port(),
   logParameters: Joi.object({
     console: Joi.object({
       level: Joi.string().required().allow('silent', 'error', 'warning', 'info', 'debug', 'trace')

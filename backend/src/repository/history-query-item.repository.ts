@@ -36,7 +36,7 @@ export default class HistoryQueryItemRepository {
       .map((result: any) => ({
         id: result.id,
         name: result.name,
-        enabled: result.enabled,
+        enabled: Boolean(result.enabled),
         connectorId: result.historyId,
         scanModeId: '',
         settings: JSON.parse(result.settings)
@@ -66,7 +66,7 @@ export default class HistoryQueryItemRepository {
       .map((result: any) => ({
         id: result.id,
         name: result.name,
-        enabled: result.enabled,
+        enabled: Boolean(result.enabled),
         connectorId: historyId,
         scanModeId: '',
         settings: JSON.parse(result.settings)

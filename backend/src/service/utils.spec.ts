@@ -43,7 +43,7 @@ import http from 'node:http';
 import https from 'node:https';
 import os from 'node:os';
 import { RegistrationSettingsDTO } from '../../../shared/model/engine.model';
-import { createProxyAgent } from './proxy.service';
+import { createProxyAgent } from './proxy-agent';
 import EncryptionService from './encryption.service';
 import EncryptionServiceMock from '../tests/__mocks__/encryption-service.mock';
 import cronstrue from 'cronstrue';
@@ -58,7 +58,7 @@ jest.mock('node-fetch');
 const { Response } = jest.requireActual('node-fetch');
 jest.mock('node:http', () => ({ request: jest.fn() }));
 jest.mock('node:https', () => ({ request: jest.fn() }));
-jest.mock('./proxy.service.ts');
+jest.mock('./proxy-agent');
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
 describe('Service utils', () => {

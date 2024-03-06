@@ -87,6 +87,7 @@ interface NewSouthOIAnalyticsSettings {
 export async function up(knex: Knex): Promise<void> {
   await createRegistrationTable(knex);
   await createCommandTable(knex);
+  await addProxyServerSettings(knex);
   await updateNorthOIAnalyticsConnectors(knex);
   await updateSouthOIAnalyticsConnectors(knex);
   await updateOIAnalyticsHistoryQueries(knex);
@@ -96,6 +97,13 @@ export async function up(knex: Knex): Promise<void> {
 function createDefaultEntityFields(table: CreateTableBuilder): void {
   table.uuid('id').primary();
   table.timestamps(false, true);
+}
+
+async function addProxyServerSettings(knex: Knex) {
+  await knex.schema.alterTable(ENGINES_TABLE, table => {
+    table.boolean('proxy_enabled').defaultTo(false);
+    table.integer('proxy_port').defaultTo(9000);
+  });
 }
 
 async function createRegistrationTable(knex: Knex): Promise<void> {

@@ -8,7 +8,7 @@ import EncryptionService from './encryption.service';
 import pino from 'pino';
 import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
-import { createProxyAgent } from './proxy.service';
+import { createProxyAgent } from './proxy-agent';
 import { OIBusCommand, OIBusCommandDTO } from '../../../shared/model/command.model';
 import CommandService from './command.service';
 

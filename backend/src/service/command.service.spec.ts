@@ -14,7 +14,6 @@ import path from 'node:path';
 jest.mock('node:fs/promises');
 jest.mock('node-fetch');
 jest.mock('./utils');
-jest.mock('./proxy.service');
 
 // @ts-ignore
 jest.spyOn(process, 'exit').mockImplementation(() => {});

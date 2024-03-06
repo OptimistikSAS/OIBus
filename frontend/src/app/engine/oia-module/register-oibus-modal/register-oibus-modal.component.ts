@@ -19,7 +19,7 @@ export class RegisterOibusModalComponent {
   state = new ObservableState();
   form = this.fb.group({
     host: ['', Validators.required],
-    useProxy: [false, Validators.required],
+    useProxy: [false as boolean, Validators.required],
     proxyUrl: '',
     proxyUsername: '',
     proxyPassword: '',
@@ -37,7 +37,12 @@ export class RegisterOibusModalComponent {
    */
   prepare(registration: RegistrationSettingsDTO) {
     this.form.patchValue({
-      host: registration.host
+      host: registration.host,
+      useProxy: registration.useProxy,
+      proxyUrl: registration.proxyUrl,
+      proxyUsername: registration.proxyUsername,
+      proxyPassword: '',
+      acceptUnauthorized: registration.acceptUnauthorized
     });
   }
 

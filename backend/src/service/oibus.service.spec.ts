@@ -12,7 +12,7 @@ import EncryptionServiceMock from '../tests/__mocks__/encryption-service.mock';
 import EncryptionService from './encryption.service';
 import pino from 'pino';
 import PinoLogger from '../tests/__mocks__/logger.mock';
-import { createProxyAgent } from './proxy.service';
+import { createProxyAgent } from './proxy-agent';
 import { OIBusCommandDTO } from '../../../shared/model/command.model';
 import { getNetworkSettingsFromRegistration } from './utils';
 import CommandService from './command.service';
@@ -22,7 +22,7 @@ jest.mock('node:fs/promises');
 jest.mock('node-fetch');
 const { Response } = jest.requireActual('node-fetch');
 jest.mock('./utils');
-jest.mock('./proxy.service');
+jest.mock('./proxy-agent');
 
 const oibusEngine: OIBusEngine = new OibusEngineMock();
 const historyQueryEngine: HistoryQueryEngine = new HistoryQueryEngineMock();

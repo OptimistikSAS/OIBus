@@ -69,6 +69,8 @@ export interface LogSettings {
 export interface EngineSettingsDTO extends BaseEntity {
   name: string;
   port: number;
+  proxyEnabled: boolean;
+  proxyPort: number;
   logParameters: LogSettings;
 }
 
@@ -114,6 +116,8 @@ export interface CryptoSettings {
 export interface EngineSettingsCommandDTO {
   name: string;
   port: number;
+  proxyEnabled: boolean;
+  proxyPort: number;
   logParameters: LogSettings;
 }
 

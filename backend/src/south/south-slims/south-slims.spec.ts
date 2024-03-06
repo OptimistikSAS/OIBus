@@ -13,10 +13,10 @@ import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock
 import path from 'node:path';
 import { SouthSlimsItemSettings, SouthSlimsSettings } from '../../../../shared/model/south-settings.model';
 import { DateTime } from 'luxon';
-import { createProxyAgent } from '../../service/proxy.service';
+import { createProxyAgent } from '../../service/proxy-agent';
 
 jest.mock('../../service/utils');
-jest.mock('../../service/proxy.service');
+jest.mock('../../service/proxy-agent');
 
 // Mock node-fetch
 jest.mock('node-fetch');

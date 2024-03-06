@@ -16,13 +16,13 @@ import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.moc
 import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
 import { NorthOIBusSettings } from '../../../../shared/model/north-settings.model';
 import ArchiveServiceMock from '../../tests/__mocks__/archive-service.mock';
-import { createProxyAgent } from '../../service/proxy.service';
+import { createProxyAgent } from '../../service/proxy-agent';
 import { OIBusDataValue } from '../../../../shared/model/engine.model';
 
 jest.mock('node:fs/promises');
 jest.mock('node:fs');
 jest.mock('../../service/utils');
-jest.mock('../../service/proxy.service');
+jest.mock('../../service/proxy-agent');
 
 jest.mock('node-fetch');
 const { Response } = jest.requireActual('node-fetch');

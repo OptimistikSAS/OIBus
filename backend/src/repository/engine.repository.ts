@@ -7,6 +7,8 @@ export const ENGINES_TABLE = 'engines';
 const defaultEngineSettings: EngineSettingsCommandDTO = {
   name: 'OIBus',
   port: 2223,
+  proxyEnabled: false,
+  proxyPort: 9000,
   logParameters: {
     console: {
       level: 'silent'
@@ -51,7 +53,7 @@ export default class EngineRepository {
    */
   getEngineSettings(): EngineSettingsDTO | null {
     const query =
-      'SELECT id, name, port, ' +
+      'SELECT id, name, port, proxy_enabled AS proxyEnabled, proxy_port AS proxyPort, ' +
       'log_console_level AS consoleLogLevel, ' +
       'log_file_level AS fileLogLevel, ' +
       'log_file_max_file_size AS fileLogMaxFileSize, ' +
@@ -73,6 +75,8 @@ export default class EngineRepository {
         id: results[0].id,
         name: results[0].name,
         port: results[0].port,
+        proxyEnabled: Boolean(results[0].proxyEnabled),
+        proxyPort: results[0].proxyPort,
         logParameters: {
           console: {
             level: results[0].consoleLogLevel
@@ -109,7 +113,7 @@ export default class EngineRepository {
    */
   updateEngineSettings(command: EngineSettingsCommandDTO): void {
     const query =
-      `UPDATE ${ENGINES_TABLE} SET name = ?, port = ?, ` +
+      `UPDATE ${ENGINES_TABLE} SET name = ?, port = ?, proxy_enabled = ?, proxy_port = ?, ` +
       'log_console_level = ?, ' +
       'log_file_level = ?, ' +
       'log_file_max_file_size = ?, ' +
@@ -130,6 +134,8 @@ export default class EngineRepository {
       .run(
         command.name,
         command.port,
+        +command.proxyEnabled,
+        command.proxyPort,
         command.logParameters.console.level,
         command.logParameters.file.level,
         command.logParameters.file.maxFileSize,
@@ -155,7 +161,7 @@ export default class EngineRepository {
     }
 
     const query =
-      `INSERT INTO ${ENGINES_TABLE} (id, name, port, log_console_level, ` +
+      `INSERT INTO ${ENGINES_TABLE} (id, name, port, proxy_enabled, proxy_port, log_console_level, ` +
       'log_file_level, log_file_max_file_size, log_file_number_of_files, log_database_level, ' +
       'log_database_max_number_of_logs, log_loki_level, log_loki_interval, log_loki_address, log_loki_token_address, ' +
       'log_loki_username, log_loki_password, log_oia_level) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);';
@@ -165,6 +171,8 @@ export default class EngineRepository {
         generateRandomId(),
         command.name,
         command.port,
+        +command.proxyEnabled,
+        command.proxyPort,
         command.logParameters.console.level,
         command.logParameters.file.level,
         command.logParameters.file.maxFileSize,

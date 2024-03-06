@@ -13,7 +13,7 @@ import { Instant } from '../../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
 import { SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../../../shared/model/south-settings.model';
-import { createProxyAgent } from '../../service/proxy.service';
+import { createProxyAgent } from '../../service/proxy-agent';
 import { OIBusDataValue } from '../../../../shared/model/engine.model';
 import { ClientSecretCredential, ClientCertificateCredential } from '@azure/identity';
 

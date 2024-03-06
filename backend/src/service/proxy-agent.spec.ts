@@ -1,7 +1,7 @@
-import { createProxyAgent, ProxyConfig } from './proxy.service';
 import { HttpProxyAgent } from 'http-proxy-agent';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import https from 'node:https';
+import { createProxyAgent, ProxyConfig } from './proxy-agent';
 
 jest.mock('http-proxy-agent', () => {
   return { HttpProxyAgent: jest.fn().mockImplementation(() => ({ host: 'http://localhost:8080' })) };

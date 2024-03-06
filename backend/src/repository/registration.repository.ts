@@ -34,11 +34,11 @@ export default class RegistrationRepository {
         activationDate: results[0].activationDate,
         activationExpirationDate: results[0].activationExpirationDate,
         checkUrl: results[0].checkUrl,
-        useProxy: results[0].useProxy,
+        useProxy: Boolean(results[0].useProxy),
         proxyUrl: results[0].proxyUrl,
         proxyUsername: results[0].proxyUsername,
         proxyPassword: results[0].proxyPassword,
-        acceptUnauthorized: results[0].acceptUnauthorized
+        acceptUnauthorized: Boolean(results[0].acceptUnauthorized)
       };
     } else {
       return null;

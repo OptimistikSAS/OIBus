@@ -141,6 +141,6 @@ export default class WebServer {
    * Stop the web server
    */
   async stop(): Promise<void> {
-    await this.webServer?.close();
+    this.webServer?.close();
   }
 }

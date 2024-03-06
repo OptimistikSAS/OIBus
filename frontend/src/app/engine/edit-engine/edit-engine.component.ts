@@ -23,6 +23,8 @@ export class EditEngineComponent implements OnInit {
   engineForm = this.fb.group({
     name: ['', Validators.required],
     port: [null as number | null, Validators.required],
+    proxyEnabled: [false as boolean, Validators.required],
+    proxyPort: [null as number | null, Validators.required],
     logParameters: this.fb.group({
       console: this.fb.group({
         level: ['silent' as LogLevel, Validators.required]
@@ -74,6 +76,8 @@ export class EditEngineComponent implements OnInit {
     const updatedSettings: EngineSettingsCommandDTO = {
       name: formValue.name!,
       port: formValue.port!,
+      proxyEnabled: formValue.proxyEnabled!,
+      proxyPort: formValue.proxyPort!,
       logParameters: {
         console: {
           level: formValue.logParameters!.console!.level!
