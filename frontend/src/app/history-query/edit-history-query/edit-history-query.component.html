@@ -1,241 +1,248 @@
 <div class="oib-padded-container">
   <div class="row justify-content-center">
     <div class="col-md-10 col-lg-8" *ngIf="southManifest && northManifest && historyQueryForm">
-      <h1 *ngIf="mode === 'create'" translate="history-query.create-title"></h1>
-      <h1 *ngIf="mode === 'edit' && historyQuery" translate="history-query.edit-title" [translateParams]="{ name: historyQuery.name }"></h1>
+      <div class="d-flex">
+        <h1 *ngIf="mode === 'create'" translate="history-query.create-title"></h1>
+        <h1
+          *ngIf="mode === 'edit' && historyQuery"
+          translate="history-query.edit-title"
+          [translateParams]="{ name: historyQuery.name }"
+        ></h1>
+        <button class="ms-2 btn btn-cancel" translate="common.back" id="cancel-edit-button" oibBackButton></button>
+      </div>
 
       <form [formGroup]="historyQueryForm" (ngSubmit)="save()" id="history-query-form" class="mt-3">
-        <!-- General settings -->
-        <oib-box boxTitle="south.general-settings">
-          <div class="row">
-            <!-- Name -->
-            <div class="col-4">
-              <div class="form-group">
-                <label class="form-label" for="history-query-name" translate="history-query.name"></label>
-                <input formControlName="name" id="history-query-name" class="form-control" />
-                <val-errors controlName="name"></val-errors>
+        <div [class]="mode === 'edit' && historyQuery ? 'save-zone' : ''">
+          <!-- General settings -->
+          <oib-box boxTitle="south.general-settings">
+            <div class="row">
+              <!-- Name -->
+              <div class="col-4">
+                <div class="form-group">
+                  <label class="form-label" for="history-query-name" translate="history-query.name"></label>
+                  <input formControlName="name" id="history-query-name" class="form-control" />
+                  <val-errors controlName="name"></val-errors>
+                </div>
               </div>
-            </div>
 
-            <!-- Description -->
-            <div class="col-5">
-              <div class="form-group">
-                <label class="form-label" for="history-query-description" translate="history-query.description"></label>
-                <input formControlName="description" id="history-query-description" class="form-control" />
-              </div>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="col">
-              <div class="form-group">
-                <label class="col-auto col-form-label" translate="history-query.start"></label>
-                <oib-datetimepicker formControlName="startTime"></oib-datetimepicker>
-                <val-errors controlName="startTime"></val-errors>
-              </div>
-            </div>
-            <div class="col">
-              <div class="form-group">
-                <label class="col-auto col-form-label" translate="history-query.end"></label>
-                <oib-datetimepicker formControlName="endTime"></oib-datetimepicker>
-                <val-errors controlName="endTime"></val-errors>
-              </div>
-            </div>
-          </div>
-
-          <div class="row" formGroupName="history">
-            <div class="col-4">
-              <div class="form-group">
-                <label class="form-label" for="south-max-read-interval" translate="south.history.max-read-interval"></label>
-                <div class="input-group">
-                  <input formControlName="maxReadInterval" id="south-max-read-interval" type="number" class="form-control" />
-                  <span class="input-group-text" translate="common.unit.s"></span>
+              <!-- Description -->
+              <div class="col-5">
+                <div class="form-group">
+                  <label class="form-label" for="history-query-description" translate="history-query.description"></label>
+                  <input formControlName="description" id="history-query-description" class="form-control" />
                 </div>
               </div>
             </div>
-            <div class="col-4">
-              <div class="form-group">
-                <label class="form-label" for="south-read-delay" translate="south.history.read-delay"></label>
-                <div class="input-group">
-                  <input formControlName="readDelay" id="south-read-delay" type="number" class="form-control" />
-                  <span class="input-group-text" translate="common.unit.ms"></span>
+
+            <div class="row">
+              <div class="col">
+                <div class="form-group">
+                  <label class="col-auto col-form-label" translate="history-query.start"></label>
+                  <oib-datetimepicker formControlName="startTime"></oib-datetimepicker>
+                  <val-errors controlName="startTime"></val-errors>
+                </div>
+              </div>
+              <div class="col">
+                <div class="form-group">
+                  <label class="col-auto col-form-label" translate="history-query.end"></label>
+                  <oib-datetimepicker formControlName="endTime"></oib-datetimepicker>
+                  <val-errors controlName="endTime"></val-errors>
                 </div>
               </div>
             </div>
-            <div class="col-4">
-              <div class="form-group">
-                <div class="form-check form-switch padded">
-                  <input formControlName="maxInstantPerItem" id="south-max-instant-per-item" type="checkbox" class="form-check-input" />
-                  <label class="form-check-label" for="south-max-instant-per-item" translate="south.history.max-instant-per-item"></label>
+
+            <div class="row" formGroupName="history">
+              <div class="col-4">
+                <div class="form-group">
+                  <label class="form-label" for="south-max-read-interval" translate="south.history.max-read-interval"></label>
+                  <div class="input-group">
+                    <input formControlName="maxReadInterval" id="south-max-read-interval" type="number" class="form-control" />
+                    <span class="input-group-text" translate="common.unit.s"></span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="form-group">
+                  <label class="form-label" for="south-read-delay" translate="south.history.read-delay"></label>
+                  <div class="input-group">
+                    <input formControlName="readDelay" id="south-read-delay" type="number" class="form-control" />
+                    <span class="input-group-text" translate="common.unit.ms"></span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="form-group">
+                  <div class="form-check form-switch padded">
+                    <input formControlName="maxInstantPerItem" id="south-max-instant-per-item" type="checkbox" class="form-check-input" />
+                    <label class="form-check-label" for="south-max-instant-per-item" translate="south.history.max-instant-per-item"></label>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </oib-box>
+          </oib-box>
 
-        <!-- Cache settings -->
-        <oib-box formGroupName="caching">
-          <ng-template oibBoxTitle>
-            <span translate="north.cache-settings.title" id="cache-settings-title"></span>
-          </ng-template>
-          <div class="row">
-            <div class="col-3">
-              <div class="form-group">
-                <oib-scan-mode
-                  key="cache-scan-mode"
-                  formControlName="scanModeId"
-                  [scanModes]="scanModes"
-                  [label]="'north.cache-settings.send-scan-mode' | translate "
-                ></oib-scan-mode>
-                <val-errors controlName="scanModeId"></val-errors>
-              </div>
-            </div>
-            <!-- Retry interval -->
-            <div class="col-3">
-              <div class="form-group">
-                <label class="form-label" for="retry-interval" translate="north.cache-settings.retry-interval"></label>
-                <div class="input-group">
-                  <input type="number" formControlName="retryInterval" id="retry-interval" class="form-control" />
-                  <span class="input-group-text" translate="common.unit.ms"></span>
+          <!-- Cache settings -->
+          <oib-box formGroupName="caching">
+            <ng-template oibBoxTitle>
+              <span translate="north.cache-settings.title" id="cache-settings-title"></span>
+            </ng-template>
+            <div class="row">
+              <div class="col-3">
+                <div class="form-group">
+                  <oib-scan-mode
+                    key="cache-scan-mode"
+                    formControlName="scanModeId"
+                    [scanModes]="scanModes"
+                    [label]="'north.cache-settings.send-scan-mode' | translate "
+                  ></oib-scan-mode>
+                  <val-errors controlName="scanModeId"></val-errors>
                 </div>
-                <val-errors controlName="retryInterval"></val-errors>
               </div>
-            </div>
-            <!-- Retry count -->
-            <div class="col-3">
-              <div class="form-group">
-                <label class="form-label" for="retry-count" translate="north.cache-settings.retry-count"></label>
-                <input type="number" formControlName="retryCount" id="retry-count" class="form-control" />
-                <val-errors controlName="retryCount"></val-errors>
-              </div>
-            </div>
-            <!-- Max size -->
-            <div class="col-3">
-              <div class="form-group">
-                <label class="form-label" for="maxSize" translate="north.cache-settings.max-size"></label>
-                <div class="input-group">
-                  <input type="number" formControlName="maxSize" id="maxSize" class="form-control" />
-                  <span class="input-group-text" translate="common.unit.MB"></span>
+              <!-- Retry interval -->
+              <div class="col-3">
+                <div class="form-group">
+                  <label class="form-label" for="retry-interval" translate="north.cache-settings.retry-interval"></label>
+                  <div class="input-group">
+                    <input type="number" formControlName="retryInterval" id="retry-interval" class="form-control" />
+                    <span class="input-group-text" translate="common.unit.ms"></span>
+                  </div>
+                  <val-errors controlName="retryInterval"></val-errors>
                 </div>
-                <val-errors controlName="maxSize"></val-errors>
               </div>
-            </div>
-          </div>
-          <div class="row" *ngIf="northManifest.modes?.points">
-            <!-- Group count -->
-            <div class="col-4">
-              <div class="form-group">
-                <label class="form-label" for="group-count" translate="north.cache-settings.group-count"></label>
-                <input type="number" formControlName="groupCount" id="group-count" class="form-control" />
-                <val-errors controlName="groupCount"></val-errors>
+              <!-- Retry count -->
+              <div class="col-3">
+                <div class="form-group">
+                  <label class="form-label" for="retry-count" translate="north.cache-settings.retry-count"></label>
+                  <input type="number" formControlName="retryCount" id="retry-count" class="form-control" />
+                  <val-errors controlName="retryCount"></val-errors>
+                </div>
               </div>
-            </div>
-            <!-- Max send count -->
-            <div class="col-4">
-              <div class="form-group">
-                <label class="form-label" for="max-send-count" translate="north.cache-settings.max-send-count"></label>
-                <input type="number" formControlName="maxSendCount" id="max-send-count" class="form-control" />
-                <val-errors controlName="maxSendCount"></val-errors>
-              </div>
-            </div>
-          </div>
-          <div class="row" *ngIf="northManifest.modes?.files">
-            <!-- Send file immediately -->
-            <div class="col-4">
-              <div class="form-group">
-                <div class="form-check form-switch">
-                  <input formControlName="sendFileImmediately" id="send-file-immediately" type="checkbox" class="form-check-input" />
-                  <label
-                    class="form-check-label"
-                    for="send-file-immediately"
-                    translate="north.cache-settings.send-file-immediately"
-                  ></label>
+              <!-- Max size -->
+              <div class="col-3">
+                <div class="form-group">
+                  <label class="form-label" for="maxSize" translate="north.cache-settings.max-size"></label>
+                  <div class="input-group">
+                    <input type="number" formControlName="maxSize" id="maxSize" class="form-control" />
+                    <span class="input-group-text" translate="common.unit.MB"></span>
+                  </div>
+                  <val-errors controlName="maxSize"></val-errors>
                 </div>
               </div>
             </div>
-          </div>
-        </oib-box>
-
-        <!-- Archive settings -->
-        <oib-box boxTitle="north.archive-settings.title">
-          <div class="row" formGroupName="archive">
-            <!-- Archive Enabled -->
-            <div class="col-4">
-              <div class="form-group">
-                <div class="form-check form-switch padded">
-                  <label class="form-check-label" for="archive-enabled" translate="north.archive-settings.enabled"></label>
-                  <input formControlName="enabled" id="archive-enabled" type="checkbox" class="form-check-input" />
+            <div class="row" *ngIf="northManifest.modes?.points">
+              <!-- Group count -->
+              <div class="col-4">
+                <div class="form-group">
+                  <label class="form-label" for="group-count" translate="north.cache-settings.group-count"></label>
+                  <input type="number" formControlName="groupCount" id="group-count" class="form-control" />
+                  <val-errors controlName="groupCount"></val-errors>
+                </div>
+              </div>
+              <!-- Max send count -->
+              <div class="col-4">
+                <div class="form-group">
+                  <label class="form-label" for="max-send-count" translate="north.cache-settings.max-send-count"></label>
+                  <input type="number" formControlName="maxSendCount" id="max-send-count" class="form-control" />
+                  <val-errors controlName="maxSendCount"></val-errors>
                 </div>
               </div>
             </div>
-            <!-- Retention duration -->
-            <div class="col-4">
-              <div class="form-group">
-                <label class="form-label" for="archive-retention-duration" translate="north.archive-settings.retention-duration"></label>
-                <div class="input-group">
-                  <input type="number" formControlName="retentionDuration" id="archive-retention-duration" class="form-control" />
-                  <span class="input-group-text" translate="common.unit.hr"></span>
+            <div class="row" *ngIf="northManifest.modes?.files">
+              <!-- Send file immediately -->
+              <div class="col-4">
+                <div class="form-group">
+                  <div class="form-check form-switch">
+                    <input formControlName="sendFileImmediately" id="send-file-immediately" type="checkbox" class="form-check-input" />
+                    <label
+                      class="form-check-label"
+                      for="send-file-immediately"
+                      translate="north.cache-settings.send-file-immediately"
+                    ></label>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </oib-box>
+          </oib-box>
 
-        <!-- North settings -->
-        <oib-box>
-          <ng-template oibBoxTitle>
-            <div class="d-flex justify-content-between align-items-center">
-              <span
-                translate="north.specific-settings"
-                [translateParams]="{ type: northManifest.name}"
-                id="north-specific-settings-title"
-              ></span>
-              <button type="button" class="btn btn-primary btn-sm" id="test-connection-north" (click)="test('north')">
-                <span translate="north.test-connection.button"></span>
-              </button>
+          <!-- Archive settings -->
+          <oib-box boxTitle="north.archive-settings.title">
+            <div class="row" formGroupName="archive">
+              <!-- Archive Enabled -->
+              <div class="col-4">
+                <div class="form-group">
+                  <div class="form-check form-switch padded">
+                    <label class="form-check-label" for="archive-enabled" translate="north.archive-settings.enabled"></label>
+                    <input formControlName="enabled" id="archive-enabled" type="checkbox" class="form-check-input" />
+                  </div>
+                </div>
+              </div>
+              <!-- Retention duration -->
+              <div class="col-4">
+                <div class="form-group">
+                  <label class="form-label" for="archive-retention-duration" translate="north.archive-settings.retention-duration"></label>
+                  <div class="input-group">
+                    <input type="number" formControlName="retentionDuration" id="archive-retention-duration" class="form-control" />
+                    <span class="input-group-text" translate="common.unit.hr"></span>
+                  </div>
+                </div>
+              </div>
             </div>
-          </ng-template>
+          </oib-box>
 
-          <oib-form
-            *ngIf="northSettingsControls.length > 0"
-            formGroupName="northSettings"
-            [form]="historyQueryForm.controls.northSettings"
-            [settingsSchema]="northSettingsControls"
-            [scanModes]="scanModes"
-          ></oib-form>
-        </oib-box>
+          <!-- North settings -->
+          <oib-box>
+            <ng-template oibBoxTitle>
+              <div class="d-flex justify-content-between align-items-center">
+                <span
+                  translate="north.specific-settings"
+                  [translateParams]="{ type: northManifest.name}"
+                  id="north-specific-settings-title"
+                ></span>
+                <button type="button" class="btn btn-primary btn-sm" id="test-connection-north" (click)="test('north')">
+                  <span translate="north.test-connection.button"></span>
+                </button>
+              </div>
+            </ng-template>
 
-        <!-- South settings -->
-        <oib-box>
-          <ng-template oibBoxTitle>
-            <div class="d-flex justify-content-between align-items-center">
-              <span
-                translate="history-query.south.specific-settings"
-                [translateParams]="{ type: southManifest.name }"
-                id="south-specific-settings-title"
-              ></span>
-              <button type="button" class="btn btn-primary btn-sm" id="test-connection-south" (click)="test('south')">
-                <span translate="south.test-connection.button"></span>
-              </button>
+            <oib-form
+              *ngIf="northSettingsControls.length > 0"
+              formGroupName="northSettings"
+              [form]="historyQueryForm.controls.northSettings"
+              [settingsSchema]="northSettingsControls"
+              [scanModes]="scanModes"
+            ></oib-form>
+          </oib-box>
+
+          <!-- South settings -->
+          <oib-box>
+            <ng-template oibBoxTitle>
+              <div class="d-flex justify-content-between align-items-center">
+                <span
+                  translate="history-query.south.specific-settings"
+                  [translateParams]="{ type: southManifest.name }"
+                  id="south-specific-settings-title"
+                ></span>
+                <button type="button" class="btn btn-primary btn-sm" id="test-connection-south" (click)="test('south')">
+                  <span translate="south.test-connection.button"></span>
+                </button>
+              </div>
+            </ng-template>
+
+            <oib-form
+              *ngIf="southSettingsControls.length > 0"
+              formGroupName="southSettings"
+              [form]="historyQueryForm.controls.southSettings"
+              [settingsSchema]="southSettingsControls"
+              [scanModes]="scanModes"
+            ></oib-form>
+          </oib-box>
+
+          <div *ngIf="mode === 'edit' && historyQuery" id="actions" class="mx-2 d-flex justify-content-end">
+            <div class="btn-group">
+              <oib-save-button [insideOfGroup]="false" form="history-query-form" [state]="state"></oib-save-button>
             </div>
-          </ng-template>
-
-          <oib-form
-            *ngIf="southSettingsControls.length > 0"
-            formGroupName="southSettings"
-            [form]="historyQueryForm.controls.southSettings"
-            [settingsSchema]="southSettingsControls"
-            [scanModes]="scanModes"
-          ></oib-form>
-        </oib-box>
-
-        <div *ngIf="mode === 'edit' && historyQuery" id="actions" class="mt-2 d-flex justify-content-end">
-          <div class="btn-group">
-            <oib-save-button form="history-query-form" [state]="state"></oib-save-button>
-            <button class="btn btn-cancel" translate="common.cancel" id="cancel-edit-button" oibBackButton></button>
           </div>
         </div>
-
         <!-- items -->
         <oib-history-query-items
           *ngIf="mode === 'edit' && historyQuery"
@@ -258,8 +265,7 @@
 
       <div *ngIf="mode === 'create'" id="actions" class="mt-2 d-flex justify-content-end">
         <div class="btn-group">
-          <oib-save-button form="history-query-form" [state]="state"></oib-save-button>
-          <button class="btn btn-cancel" translate="common.cancel" id="cancel-edit-button" oibBackButton></button>
+          <oib-save-button [insideOfGroup]="false" form="history-query-form" [state]="state"></oib-save-button>
         </div>
       </div>
     </div>
