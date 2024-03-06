@@ -1,10 +1,14 @@
 <div class="oib-padded-container">
   <div class="row justify-content-center">
     <div class="col-md-10 col-lg-8" *ngIf="southManifest && northManifest && historyQueryForm">
-      <h1 *ngIf="mode === 'create'" translate="history-query.create-title"></h1>
-      <h1 *ngIf="mode === 'edit' && historyQuery" translate="history-query.edit-title" [translateParams]="{ name: historyQuery.name }"></h1>
+      <div class="d-flex">
+        <h1 *ngIf="mode === 'create'" translate="history-query.create-title"></h1>
+        <h1 *ngIf="mode === 'edit' && historyQuery" translate="history-query.edit-title" [translateParams]="{ name: historyQuery.name }"></h1>
+        <button class="ms-2 btn btn-cancel" translate="common.back" id="cancel-edit-button" oibBackButton></button>
+      </div>
 
       <form [formGroup]="historyQueryForm" (ngSubmit)="save()" id="history-query-form" class="mt-3">
+        <div [class]="mode === 'edit' && historyQuery ? 'save-zone' : ''">
         <!-- General settings -->
         <oib-box boxTitle="south.general-settings">
           <div class="row">
@@ -229,13 +233,12 @@
           ></oib-form>
         </oib-box>
 
-        <div *ngIf="mode === 'edit' && historyQuery" id="actions" class="mt-2 d-flex justify-content-end">
+        <div *ngIf="mode === 'edit' && historyQuery" id="actions" class="mx-2 d-flex justify-content-end">
           <div class="btn-group">
-            <oib-save-button form="history-query-form" [state]="state"></oib-save-button>
-            <button class="btn btn-cancel" translate="common.cancel" id="cancel-edit-button" oibBackButton></button>
+            <oib-save-button [insideOfGroup]="false" form="history-query-form" [state]="state"></oib-save-button>
           </div>
         </div>
-
+        </div>
         <!-- items -->
         <oib-history-query-items
           *ngIf="mode === 'edit' && historyQuery"
@@ -258,8 +261,7 @@
 
       <div *ngIf="mode === 'create'" id="actions" class="mt-2 d-flex justify-content-end">
         <div class="btn-group">
-          <oib-save-button form="history-query-form" [state]="state"></oib-save-button>
-          <button class="btn btn-cancel" translate="common.cancel" id="cancel-edit-button" oibBackButton></button>
+          <oib-save-button [insideOfGroup]="false" form="history-query-form" [state]="state"></oib-save-button>
         </div>
       </div>
     </div>
