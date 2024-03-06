@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgForOf, NgIf } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -8,7 +8,7 @@ import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component'
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { ModalService } from '../../shared/modal.service';
 import { RegisterOibusModalComponent } from './register-oibus-modal/register-oibus-modal.component';
-import { catchError, EMPTY, switchMap, tap } from 'rxjs';
+import { catchError, EMPTY, exhaustMap, map, Subscription, switchMap, tap, timer } from 'rxjs';
 import { NotificationService } from '../../shared/notification.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { MultiSelectComponent } from '../../shared/multi-select/multi-select.component';
@@ -29,6 +29,8 @@ import { NonNullableFormBuilder } from '@angular/forms';
 import { OibusCommandService } from '../../services/oibus-command.service';
 import { OibusCommandTypeEnumPipe } from '../../shared/oibus-command-type-enum.pipe';
 import { OibusCommandStatusEnumPipe } from '../../shared/oibus-command-status-enum.pipe';
+
+const REGISTRATION_CHECK_DURATION = 3000;
 
 @Component({
   selector: 'oib-oia-module',
@@ -52,11 +54,14 @@ import { OibusCommandStatusEnumPipe } from '../../shared/oibus-command-status-en
   styleUrls: ['./oia-module.component.scss'],
   providers: [PageLoader]
 })
-export class OiaModuleComponent implements OnInit {
+export class OiaModuleComponent implements OnInit, OnDestroy {
   registration: RegistrationSettingsDTO | null = null;
   oibusCommands: Page<OIBusCommandDTO> = emptyPage();
   readonly statusList = OIBUS_COMMAND_STATUS;
   readonly typeList = OIBUS_COMMAND_TYPES;
+  // subscription to reload the page periodically
+  subscription = new Subscription();
+  registrationSubscription = new Subscription();
   readonly searchForm = this.fb.group({
     types: this.route.snapshot.queryParamMap.getAll('types'),
     status: this.route.snapshot.queryParamMap.getAll('status')
@@ -75,35 +80,61 @@ export class OiaModuleComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.pageLoader.pageLoads$
-      .pipe(
-        switchMap(pageNumber => {
-          const queryParamMap = this.route.snapshot.queryParamMap;
-          const types: Array<OIBusCommandType> = queryParamMap.getAll('types') as Array<OIBusCommandType>;
-          const status: Array<OIBusCommandStatus> = queryParamMap.getAll('status') as Array<OIBusCommandStatus>;
-          return this.oibusCommandService.searchCommands({ page: pageNumber, types, status }).pipe(catchError(() => EMPTY));
+    this.createRegistrationSubscription();
+    this.subscription.add(
+      this.pageLoader.pageLoads$
+        .pipe(
+          switchMap(page => {
+            // only reload the page if the page is 0
+            if (page === 0) {
+              return timer(0, 10_000).pipe(map(() => page));
+            }
+            return [page];
+          }),
+          exhaustMap(page => {
+            const queryParamMap = this.route.snapshot.queryParamMap;
+            const types: Array<OIBusCommandType> = queryParamMap.getAll('types') as Array<OIBusCommandType>;
+            const status: Array<OIBusCommandStatus> = queryParamMap.getAll('status') as Array<OIBusCommandStatus>;
+            return this.oibusCommandService.searchCommands({ page, types, status }).pipe(catchError(() => EMPTY));
+          })
+        )
+        .subscribe(oibusCommands => {
+          this.oibusCommands = oibusCommands;
         })
-      )
-      .subscribe(oibusCommands => {
-        this.oibusCommands = oibusCommands;
-      });
+    );
+  }
 
-    this.oibusService.getRegistrationSettings().subscribe(registration => {
-      this.registration = registration;
-    });
+  ngOnDestroy() {
+    this.subscription.unsubscribe();
+    this.registrationSubscription.unsubscribe();
   }
 
   register(): void {
     const modalRef = this.modalService.open(RegisterOibusModalComponent, { size: 'xl' });
     modalRef.componentInstance.prepare(this.registration!);
-    modalRef.result
-      .pipe(
-        tap(() => this.notificationService.success('oia-module.registration.saved')),
-        switchMap(() => this.oibusService.getRegistrationSettings())
-      )
-      .subscribe(registration => {
-        this.registration = registration;
-      });
+
+    modalRef.result.pipe(tap(() => this.notificationService.success('oia-module.registration.saved'))).subscribe(() => {
+      this.createRegistrationSubscription();
+    });
+  }
+
+  createRegistrationSubscription(): void {
+    this.registrationSubscription.unsubscribe();
+    this.registrationSubscription = new Subscription();
+    this.registrationSubscription.add(
+      timer(0, REGISTRATION_CHECK_DURATION)
+        .pipe(
+          exhaustMap(() => {
+            return this.oibusService.getRegistrationSettings();
+          })
+        )
+        .subscribe(registration => {
+          this.registration = registration;
+          if (this.registration.status !== 'PENDING') {
+            this.registrationSubscription.unsubscribe();
+          }
+        })
+    );
   }
 
   unregister() {
@@ -118,6 +149,7 @@ export class OiaModuleComponent implements OnInit {
       )
       .subscribe(registration => {
         this.registration = registration;
+        this.registrationSubscription.unsubscribe();
       });
   }
 

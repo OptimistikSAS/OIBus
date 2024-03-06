@@ -237,7 +237,7 @@ export default class OIBusService {
       return;
     }
 
-    const endpoint = `/api/oianalytics/oibus/commands/ack`;
+    const endpoint = `/api/oianalytics/oibus/commands/status`;
     const registrationSettings = this.getRegistrationSettings();
     const connectionSettings = await getNetworkSettingsFromRegistration(registrationSettings, endpoint, this.encryptionService);
     let response;

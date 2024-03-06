@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { discardPeriodicTasks, fakeAsync, TestBed, tick } from '@angular/core/testing';
 
 import { OiaModuleComponent } from './oia-module.component';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
@@ -57,18 +57,23 @@ describe('OiaModuleComponent', () => {
         provideHttpClient(),
         provideRouter([]),
         { provide: ActivatedRoute, useValue: route },
-        { provide: EngineService, useValue: engineService }
+        { provide: EngineService, useValue: engineService },
+        { provide: OibusCommandService, useValue: commandService }
       ]
     });
 
     commandService.searchCommands.and.returnValue(of(emptyPage<OIBusCommandDTO>()));
+    engineService.getRegistrationSettings.and.returnValue(of(registrationSettings));
+
     tester = new OiaModuleComponentTester();
   });
 
-  it('should display title and settings', () => {
-    engineService.getRegistrationSettings.and.returnValue(of(registrationSettings));
+  it('should display title and settings', fakeAsync(() => {
+    tester.detectChanges();
+    tick(3000);
     tester.detectChanges();
 
-    expect(tester.title).toContainText('OIA Module');
-  });
+    expect(tester.title).toContainText('OIAnalytics registration');
+    discardPeriodicTasks();
+  }));
 });
