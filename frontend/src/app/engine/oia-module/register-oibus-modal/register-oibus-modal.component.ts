@@ -39,8 +39,8 @@ export class RegisterOibusModalComponent {
     this.form.patchValue({
       host: registration.host,
       useProxy: registration.useProxy,
-      proxyUrl: registration.proxyUrl,
-      proxyUsername: registration.proxyUsername,
+      proxyUrl: registration.proxyUrl || '',
+      proxyUsername: registration.proxyUsername || '',
       proxyPassword: '',
       acceptUnauthorized: registration.acceptUnauthorized
     });

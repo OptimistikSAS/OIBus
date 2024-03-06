@@ -91,7 +91,7 @@ export default class CommandRepository {
       `upgrade_asset_id) VALUES (?, ?, ?, ?, ?, ?, ?);`;
     const result = this.database
       .prepare(insertQuery)
-      .run(id, DateTime.now().toUTC().toISO(), command.type, 'PENDING', 0, command.version, command.assetId);
+      .run(id, DateTime.now().toUTC().toISO(), command.type, 'RETRIEVED', 0, command.version, command.assetId);
 
     const query =
       `SELECT id, type, status, ack, retrieved_date as retrievedDate, completed_date as completedDate, result, ` +
@@ -100,22 +100,22 @@ export default class CommandRepository {
   }
 
   cancel(id: string): void {
-    const query = `UPDATE ${COMMANDS_TABLE} SET status = 'CANCELLED' WHERE id = ?;`;
+    const query = `UPDATE ${COMMANDS_TABLE} SET status = 'CANCELLED', ack = 0 WHERE id = ?;`;
     this.database.prepare(query).run(id);
   }
 
   markAsCompleted(id: string, completedDate: Instant, result: string): void {
-    const query = `UPDATE ${COMMANDS_TABLE} SET status = 'COMPLETED', completed_date = ?, result = ? WHERE id = ?;`;
+    const query = `UPDATE ${COMMANDS_TABLE} SET status = 'COMPLETED', completed_date = ?, result = ?, ack = 0 WHERE id = ?;`;
     this.database.prepare(query).run(completedDate, result, id);
   }
 
   markAsErrored(id: string, result: string): void {
-    const query = `UPDATE ${COMMANDS_TABLE} SET status = 'ERRORED', result = ? WHERE id = ?;`;
+    const query = `UPDATE ${COMMANDS_TABLE} SET status = 'ERRORED', result = ?, ack = 0 WHERE id = ?;`;
     this.database.prepare(query).run(result, id);
   }
 
   markAsRunning(id: string): void {
-    const query = `UPDATE ${COMMANDS_TABLE} SET status = 'RUNNING' WHERE id = ?;`;
+    const query = `UPDATE ${COMMANDS_TABLE} SET status = 'RUNNING', ack = 0 WHERE id = ?;`;
     this.database.prepare(query).run(id);
   }
 
