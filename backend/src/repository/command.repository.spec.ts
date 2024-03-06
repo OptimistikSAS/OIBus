@@ -131,26 +131,26 @@ describe('Command repository', () => {
       `INSERT INTO ${COMMANDS_TABLE} (id, retrieved_date, type, status, ack, upgrade_version, ` +
       `upgrade_asset_id) VALUES (?, ?, ?, ?, ?, ?, ?);`;
     expect(database.prepare).toHaveBeenCalledWith(insertQuery);
-    expect(run).toHaveBeenCalledWith('id1', nowDateString, command.type, 'PENDING', 0, command.version, command.assetId);
+    expect(run).toHaveBeenCalledWith('id1', nowDateString, command.type, 'RETRIEVED', 0, command.version, command.assetId);
   });
 
   it('should mark a command as COMPLETED', () => {
     repository.markAsCompleted('id1', nowDateString, 'ok');
-    const query = `UPDATE ${COMMANDS_TABLE} SET status = 'COMPLETED', completed_date = ?, result = ? WHERE id = ?;`;
+    const query = `UPDATE ${COMMANDS_TABLE} SET status = 'COMPLETED', completed_date = ?, result = ?, ack = 0 WHERE id = ?;`;
     expect(database.prepare).toHaveBeenCalledWith(query);
     expect(run).toHaveBeenCalledWith(nowDateString, 'ok', 'id1');
   });
 
   it('should mark a command as ERRORED', () => {
     repository.markAsErrored('id1', 'not ok');
-    const query = `UPDATE ${COMMANDS_TABLE} SET status = 'ERRORED', result = ? WHERE id = ?;`;
+    const query = `UPDATE ${COMMANDS_TABLE} SET status = 'ERRORED', result = ?, ack = 0 WHERE id = ?;`;
     expect(database.prepare).toHaveBeenCalledWith(query);
     expect(run).toHaveBeenCalledWith('not ok', 'id1');
   });
 
   it('should mark a command as RUNNING', () => {
     repository.markAsRunning('id1');
-    const query = `UPDATE ${COMMANDS_TABLE} SET status = 'RUNNING' WHERE id = ?;`;
+    const query = `UPDATE ${COMMANDS_TABLE} SET status = 'RUNNING', ack = 0 WHERE id = ?;`;
     expect(database.prepare).toHaveBeenCalledWith(query);
     expect(run).toHaveBeenCalledWith('id1');
   });
@@ -164,7 +164,7 @@ describe('Command repository', () => {
 
   it('should cancel a command', () => {
     repository.cancel('id1');
-    const query = `UPDATE ${COMMANDS_TABLE} SET status = 'CANCELLED' WHERE id = ?;`;
+    const query = `UPDATE ${COMMANDS_TABLE} SET status = 'CANCELLED', ack = 0 WHERE id = ?;`;
     expect(database.prepare).toHaveBeenCalledWith(query);
     expect(run).toHaveBeenCalledWith('id1');
   });

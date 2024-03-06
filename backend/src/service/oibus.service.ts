@@ -265,6 +265,9 @@ export default class OIBusService {
     }
   }
 
+  /**
+   * Check if retrieved commands have been cancelled on OIAnalytics before running them
+   */
   async checkRetrievedCommands(): Promise<void> {
     const pendingCommands = this.repositoryService.commandRepository.searchCommandsList({ status: ['RETRIEVED'], types: [] });
     if (pendingCommands.length === 0) {
