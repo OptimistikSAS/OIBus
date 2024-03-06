@@ -19,6 +19,7 @@ import HistoryQueryEngine from '../engine/history-query-engine';
 import { Instant } from '../../../shared/model/types';
 import { ScanModeCommandDTO } from '../../../shared/model/scan-mode.model';
 import HomeMetricsService from './home-metrics.service';
+import ProxyServer from '../web-server/proxy-server';
 
 export default class ReloadService {
   private webServerChangeLoggerCallback: (logger: pino.Logger) => void = () => {};
@@ -32,7 +33,8 @@ export default class ReloadService {
     private readonly _northService: NorthService,
     private readonly _southService: SouthService,
     private readonly _oibusEngine: OIBusEngine,
-    private readonly _historyEngine: HistoryQueryEngine
+    private readonly _historyEngine: HistoryQueryEngine,
+    private readonly _proxyServer: ProxyServer
   ) {}
 
   get repositoryService(): RepositoryService {
@@ -67,6 +69,10 @@ export default class ReloadService {
     return this._historyEngine;
   }
 
+  get proxyServer(): ProxyServer {
+    return this._proxyServer;
+  }
+
   setWebServerChangeLogger(callback: (logger: pino.Logger) => void): void {
     this.webServerChangeLoggerCallback = callback;
   }
@@ -86,9 +92,16 @@ export default class ReloadService {
       this.webServerChangeLoggerCallback(this.loggerService.createChildLogger('web-server'));
       this.engineMetricsService.setLogger(this.loggerService.createChildLogger('internal'));
       this.oibusEngine.setLogger(this.loggerService.createChildLogger('internal'));
+      this.proxyServer.setLogger(this.loggerService.createChildLogger('internal'));
     }
     if (!oldSettings || oldSettings.port !== newSettings.port) {
       await this.webServerChangePortCallback(newSettings.port);
+    }
+    if (!oldSettings || oldSettings.proxyEnabled !== newSettings.proxyEnabled || oldSettings.proxyPort !== newSettings.proxyPort) {
+      await this.proxyServer.stop();
+      if (newSettings.proxyEnabled) {
+        await this.proxyServer.start(newSettings.proxyPort);
+      }
     }
   }
 

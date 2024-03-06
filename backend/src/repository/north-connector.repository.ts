@@ -28,7 +28,7 @@ export default class NorthConnectorRepository {
         name: result.name,
         type: result.type,
         description: result.description,
-        enabled: result.enabled,
+        enabled: Boolean(result.enabled),
         settings: JSON.parse(result.settings),
         caching: {
           scanModeId: result.cachingScanModeId,
@@ -36,11 +36,11 @@ export default class NorthConnectorRepository {
           retryInterval: result.cachingRetryInterval,
           retryCount: result.cachingRetryCount,
           maxSendCount: result.cachingMaxSendCount,
-          sendFileImmediately: result.cachingSendFileImmediately,
+          sendFileImmediately: Boolean(result.cachingSendFileImmediately),
           maxSize: result.cachingMaxSize
         },
         archive: {
-          enabled: result.archiveEnabled,
+          enabled: Boolean(result.archiveEnabled),
           retentionDuration: result.archiveRetentionDuration
         }
       }))
@@ -68,7 +68,7 @@ export default class NorthConnectorRepository {
       name: result.name,
       type: result.type,
       description: result.description,
-      enabled: result.enabled,
+      enabled: Boolean(result.enabled),
       settings: JSON.parse(result.settings),
       caching: {
         scanModeId: result.cachingScanModeId,
@@ -76,11 +76,11 @@ export default class NorthConnectorRepository {
         retryInterval: result.cachingRetryInterval,
         retryCount: result.cachingRetryCount,
         maxSendCount: result.cachingMaxSendCount,
-        sendFileImmediately: result.cachingSendFileImmediately,
+        sendFileImmediately: Boolean(result.cachingSendFileImmediately),
         maxSize: result.cachingMaxSize
       },
       archive: {
-        enabled: result.archiveEnabled,
+        enabled: Boolean(result.archiveEnabled),
         retentionDuration: result.archiveRetentionDuration
       }
     };
@@ -128,7 +128,7 @@ export default class NorthConnectorRepository {
       name: result.name,
       type: result.type,
       description: result.description,
-      enabled: result.enabled,
+      enabled: Boolean(result.enabled),
       settings: JSON.parse(result.settings),
       caching: {
         scanModeId: result.cachingScanModeId,
@@ -136,11 +136,11 @@ export default class NorthConnectorRepository {
         retryInterval: result.cachingRetryInterval,
         retryCount: result.cachingRetryCount,
         maxSendCount: result.cachingMaxSendCount,
-        sendFileImmediately: result.cachingSendFileImmediately,
+        sendFileImmediately: Boolean(result.cachingSendFileImmediately),
         maxSize: result.cachingMaxSize
       },
       archive: {
-        enabled: result.archiveEnabled,
+        enabled: Boolean(result.archiveEnabled),
         retentionDuration: result.archiveRetentionDuration
       }
     };

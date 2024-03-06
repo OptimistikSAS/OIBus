@@ -26,9 +26,9 @@ export default class SouthConnectorRepository {
         name: result.name,
         type: result.type,
         description: result.description,
-        enabled: result.enabled,
+        enabled: Boolean(result.enabled),
         history: {
-          maxInstantPerItem: result.maxInstantPerItem,
+          maxInstantPerItem: Boolean(result.maxInstantPerItem),
           maxReadInterval: result.maxReadInterval,
           readDelay: result.readDelay,
           overlap: result.overlap
@@ -56,9 +56,9 @@ export default class SouthConnectorRepository {
       name: result.name,
       type: result.type,
       description: result.description,
-      enabled: result.enabled,
+      enabled: Boolean(result.enabled),
       history: {
-        maxInstantPerItem: result.maxInstantPerItem,
+        maxInstantPerItem: Boolean(result.maxInstantPerItem),
         maxReadInterval: result.maxReadInterval,
         readDelay: result.readDelay,
         overlap: result.overlap
@@ -101,9 +101,9 @@ export default class SouthConnectorRepository {
       name: result.name,
       type: result.type,
       description: result.description,
-      enabled: result.enabled,
+      enabled: Boolean(result.enabled),
       history: {
-        maxInstantPerItem: result.maxInstantPerItem,
+        maxInstantPerItem: Boolean(result.maxInstantPerItem),
         maxReadInterval: result.maxReadInterval,
         readDelay: result.readDelay,
         overlap: result.overlap

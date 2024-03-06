@@ -16,6 +16,7 @@ import OIBusService from './service/oibus.service';
 import { migrateCrypto, migrateEntities, migrateLogsAndMetrics, migrateSouthCache } from './db/migration-service';
 import HomeMetricsService from './service/home-metrics.service';
 import CommandService from './service/command.service';
+import ProxyServer from './web-server/proxy-server';
 
 const CONFIG_DATABASE = 'oibus.db';
 const CRYPTO_DATABASE = 'crypto.db';
@@ -115,6 +116,11 @@ const LOG_DB_NAME = 'logs.db';
   await engine.start();
   await historyQueryEngine.start();
 
+  const proxyServer = new ProxyServer(loggerService.logger!);
+  if (oibusSettings.proxyEnabled) {
+    await proxyServer.start(oibusSettings.proxyPort);
+  }
+
   const reloadService = new ReloadService(
     loggerService,
     repositoryService,
@@ -123,7 +129,8 @@ const LOG_DB_NAME = 'logs.db';
     northService,
     southService,
     engine,
-    historyQueryEngine
+    historyQueryEngine,
+    proxyServer
   );
   const server = new WebServer(
     oibusSettings.id,
@@ -147,6 +154,7 @@ const LOG_DB_NAME = 'logs.db';
     stopping = true;
     await oibusService.stopOIBus();
     await commandService.stop();
+    await proxyServer.stop();
     await server.stop();
     loggerService.stop();
     console.info('OIBus stopped');

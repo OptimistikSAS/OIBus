@@ -12,10 +12,10 @@ import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
 import path from 'node:path';
 import { SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../../../shared/model/south-settings.model';
-import { createProxyAgent } from '../../service/proxy.service';
+import { createProxyAgent } from '../../service/proxy-agent';
 import { RegistrationSettingsDTO } from '../../../../shared/model/engine.model';
 
-jest.mock('../../service/proxy.service');
+jest.mock('../../service/proxy-agent');
 jest.mock('../../service/utils', () => ({
   formatInstant: jest.fn((instant: string) => instant),
   persistResults: jest.fn(),

@@ -29,7 +29,7 @@ export default class SouthItemRepository {
       .map((result: any) => ({
         id: result.id,
         name: result.name,
-        enabled: result.enabled,
+        enabled: Boolean(result.enabled),
         connectorId: result.connectorId,
         scanModeId: result.scanModeId,
         settings: JSON.parse(result.settings)
@@ -56,7 +56,7 @@ export default class SouthItemRepository {
       .map((result: any) => ({
         id: result.id,
         name: result.name,
-        enabled: result.enabled,
+        enabled: Boolean(result.enabled),
         connectorId: result.connectorId,
         scanModeId: result.scanModeId,
         settings: JSON.parse(result.settings)
@@ -86,7 +86,7 @@ export default class SouthItemRepository {
       .map((result: any) => ({
         id: result.id,
         name: result.name,
-        enabled: result.enabled,
+        enabled: Boolean(result.enabled),
         connectorId: result.connectorId,
         scanModeId: result.scanModeId,
         settings: JSON.parse(result.settings)
@@ -103,7 +103,7 @@ export default class SouthItemRepository {
     return {
       id: result.id,
       name: result.name,
-      enabled: result.enabled,
+      enabled: Boolean(result.enabled),
       connectorId: result.connectorId,
       scanModeId: result.scanModeId,
       settings: JSON.parse(result.settings)
@@ -126,7 +126,7 @@ export default class SouthItemRepository {
     return {
       id: result.id,
       name: result.name,
-      enabled: result.enabled,
+      enabled: Boolean(result.enabled),
       connectorId: result.connectorId,
       scanModeId: result.scanModeId,
       settings: JSON.parse(result.settings)

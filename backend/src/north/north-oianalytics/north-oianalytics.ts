@@ -4,7 +4,7 @@ import manifest from './manifest';
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 
 import EncryptionService from '../../service/encryption.service';
-import { createProxyAgent } from '../../service/proxy.service';
+import { createProxyAgent } from '../../service/proxy-agent';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { createReadStream } from 'node:fs';

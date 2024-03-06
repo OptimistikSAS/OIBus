@@ -11,7 +11,7 @@ import FormData from 'form-data';
 import { HandlesFile, HandlesValues } from '../north-interface';
 import { filesExists } from '../../service/utils';
 import { NorthRestAPISettings } from '../../../../shared/model/north-settings.model';
-import { createProxyAgent } from '../../service/proxy.service';
+import { createProxyAgent } from '../../service/proxy-agent';
 import { OIBusDataValue } from '../../../../shared/model/engine.model';
 
 /**

@@ -14,7 +14,7 @@ jest.mock('../service/south.service');
 jest.mock('../service/north.service');
 jest.mock('../service/repository.service');
 jest.mock('../service/encryption.service');
-jest.mock('../service/proxy.service');
+jest.mock('../service/proxy-agent');
 jest.mock('../service/utils');
 
 const logger: pino.Logger = new PinoLogger();

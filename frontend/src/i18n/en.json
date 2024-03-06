@@ -316,6 +316,13 @@
       "database": "Database",
       "loki": "Loki"
     },
+    "proxy-settings": {
+      "title": "Proxy server",
+      "proxy-enabled": "Enabled",
+      "enabled-details": "Enabled on port {{ port }}",
+      "disabled-details": "Disabled",
+      "proxy-port": "Port"
+    },
     "logger": {
       "title": "Logger",
       "console": {

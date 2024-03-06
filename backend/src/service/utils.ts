@@ -8,14 +8,7 @@ import { DateTime } from 'luxon';
 import fetch, { HeadersInit } from 'node-fetch';
 import AdmZip from 'adm-zip';
 
-import {
-  CsvCharacter,
-  DateTimeType,
-  Instant,
-  Interval,
-  SerializationSettings,
-  Timezone
-} from '../../../shared/model/types';
+import { CsvCharacter, DateTimeType, Instant, Interval, SerializationSettings, Timezone } from '../../../shared/model/types';
 import pino from 'pino';
 import csv from 'papaparse';
 import https from 'node:https';
@@ -25,7 +18,7 @@ import os from 'node:os';
 import { version } from '../../package.json';
 import { NorthCacheFiles } from '../../../shared/model/north-connector.model';
 import EncryptionService from './encryption.service';
-import { createProxyAgent } from './proxy.service';
+import { createProxyAgent } from './proxy-agent';
 import cronstrue from 'cronstrue';
 import cronparser from 'cron-parser';
 import { ValidatedCronExpression } from '../../../shared/model/scan-mode.model';

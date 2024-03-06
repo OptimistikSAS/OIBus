@@ -27,6 +27,8 @@ import HistoryQueryEngine from '../engine/history-query-engine';
 import { ScanModeCommandDTO } from '../../../shared/model/scan-mode.model';
 import HomeMetricsService from './home-metrics.service';
 import HomeMetricsServiceMock from '../tests/__mocks__/home-metrics-service.mock';
+import ProxyServer from '../web-server/proxy-server';
+import ProxyServerMock from '../tests/__mocks__/proxy-server.mock';
 
 jest.mock('./encryption.service');
 jest.mock('./logger/logger.service');
@@ -35,6 +37,7 @@ jest.mock('./engine-metrics.service');
 const oibusEngine: OIBusEngine = new OibusEngineMock();
 const historyQueryEngine: HistoryQueryEngine = new HistoryQueryEngineMock();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
+const proxyServer: ProxyServer = new ProxyServerMock();
 const repositoryService: RepositoryService = new RepositoryServiceMock('', '');
 const engineMetricsService: EngineMetricsService = new EngineMetricsServiceMock();
 const homeMetrics: HomeMetricsService = new HomeMetricsServiceMock();
@@ -54,7 +57,8 @@ describe('reload service', () => {
       northService,
       southService,
       oibusEngine,
-      historyQueryEngine
+      historyQueryEngine,
+      proxyServer
     );
   });
 
@@ -70,18 +74,24 @@ describe('reload service', () => {
 
   it('should update port', async () => {
     const changePortFn = jest.fn();
-    const oldSettings = { port: 2223 };
-    const newSettings = { port: 2224 };
+    const oldSettings = { port: 2223, proxyEnabled: false, proxyPort: 8888 };
+    const newSettings = { port: 2224, proxyEnabled: true, proxyPort: 9000 };
     service.setWebServerChangePort(changePortFn);
 
     await service.onUpdateOibusSettings(oldSettings as EngineSettingsDTO, newSettings as EngineSettingsDTO);
     expect(changePortFn).toHaveBeenCalledTimes(1);
+    expect(proxyServer.stop).toHaveBeenCalledTimes(1);
+    expect(proxyServer.start).toHaveBeenCalledTimes(1);
 
     await service.onUpdateOibusSettings(null, newSettings as EngineSettingsDTO);
     expect(changePortFn).toHaveBeenCalledTimes(2);
+    expect(proxyServer.stop).toHaveBeenCalledTimes(2);
+    expect(proxyServer.start).toHaveBeenCalledTimes(2);
 
     await service.onUpdateOibusSettings(newSettings as EngineSettingsDTO, newSettings as EngineSettingsDTO);
     expect(changePortFn).toHaveBeenCalledTimes(2);
+    expect(proxyServer.stop).toHaveBeenCalledTimes(2);
+    expect(proxyServer.start).toHaveBeenCalledTimes(2);
   });
 
   it('should update log parameters', async () => {

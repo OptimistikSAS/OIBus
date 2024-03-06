@@ -5,7 +5,7 @@
 
       <form [formGroup]="engineForm" (ngSubmit)="save()" id="engine-form" class="mt-3">
         <!-- General settings -->
-        <oib-box boxTitle="south.general-settings">
+        <oib-box boxTitle="engine.general-settings.title">
           <div class="row">
             <!-- Name -->
             <div class="col-4">
@@ -21,6 +21,28 @@
                 <label class="form-label" for="port" translate="engine.general-settings.port"></label>
                 <input formControlName="port" type="number" id="port" class="form-control" />
                 <val-errors controlName="port"></val-errors>
+              </div>
+            </div>
+          </div>
+        </oib-box>
+
+        <oib-box boxTitle="engine.proxy-settings.title">
+          <div class="row">
+            <!-- Enabled -->
+            <div class="col-3">
+              <div class="form-group">
+                <div class="form-check form-switch padded">
+                  <input formControlName="proxyEnabled" id="proxy-enabled" type="checkbox" class="form-check-input" />
+                  <label class="form-check-label" for="proxy-enabled" translate="engine.proxy-settings.proxy-enabled"></label>
+                </div>
+              </div>
+            </div>
+            <!-- Proxy port -->
+            <div class="col-4" *ngIf="engineForm.controls.proxyEnabled.value">
+              <div class="form-group">
+                <label class="form-label" for="proxy-port" translate="engine.proxy-settings.proxy-port"></label>
+                <input formControlName="proxyPort" type="number" id="proxy-port" class="form-control" />
+                <val-errors controlName="proxyPort"></val-errors>
               </div>
             </div>
           </div>

@@ -83,6 +83,15 @@
                 >
               </td>
             </tr>
+            <tr>
+              <td translate="engine.proxy-settings.title"></td>
+              <td
+                *ngIf="engineSettings.proxyEnabled"
+                translate="engine.proxy-settings.enabled-details"
+                [translateParams]="{ port: engineSettings.proxyPort }"
+              ></td>
+              <td *ngIf="!engineSettings.proxyEnabled" translate="engine.proxy-settings.disabled-details"></td>
+            </tr>
           </tbody>
         </table>
       </oib-box>
