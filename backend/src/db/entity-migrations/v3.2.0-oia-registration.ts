@@ -33,6 +33,7 @@ interface OldNorthOIAnalyticsSettings {
 interface NewNorthOIAnalyticsSettings {
   useOiaModule: boolean;
   timeout: number;
+  compress: boolean;
   specificSettings: {
     host: string;
     acceptUnauthorized: boolean;
@@ -147,6 +148,7 @@ async function updateNorthOIAnalyticsConnectors(knex: Knex): Promise<void> {
     const newSettings: NewNorthOIAnalyticsSettings = {
       useOiaModule: false,
       timeout: settings.timeout,
+      compress: false,
       specificSettings: {
         host: settings.host,
         acceptUnauthorized: settings.acceptUnauthorized,
@@ -215,6 +217,7 @@ async function updateOIAnalyticsHistoryQueries(knex: Knex): Promise<void> {
     const newSettings: NewNorthOIAnalyticsSettings = {
       useOiaModule: false,
       timeout: settings.timeout,
+      compress: false,
       specificSettings: {
         host: settings.host,
         acceptUnauthorized: settings.acceptUnauthorized,

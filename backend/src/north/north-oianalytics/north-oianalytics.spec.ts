@@ -10,7 +10,7 @@ import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 
 import fetch from 'node-fetch';
-import { filesExists } from '../../service/utils';
+import { compress, filesExists } from '../../service/utils';
 
 import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.mock';
 import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
@@ -18,9 +18,13 @@ import { NorthOIAnalyticsSettings } from '../../../../shared/model/north-setting
 import ArchiveServiceMock from '../../tests/__mocks__/archive-service.mock';
 import { createProxyAgent } from '../../service/proxy-agent';
 import { OIBusDataValue, RegistrationSettingsDTO } from '../../../../shared/model/engine.model';
+import zlib from 'node:zlib';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 
 jest.mock('node:fs/promises');
 jest.mock('node:fs');
+jest.mock('node:zlib');
 jest.mock('../../service/utils');
 jest.mock('../../service/proxy-agent');
 jest.mock('@azure/identity', () => ({
@@ -104,6 +108,7 @@ describe('NorthOIAnalytics without proxy', () => {
     settings: {
       useOiaModule: false,
       timeout: 30,
+      compress: false,
       specificSettings: {
         host: 'https://hostname/',
         acceptUnauthorized: false,
@@ -363,6 +368,7 @@ describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
     settings: {
       useOiaModule: false,
       timeout: 30,
+      compress: false,
       specificSettings: {
         host: 'https://hostname',
         acceptUnauthorized: true,
@@ -478,6 +484,7 @@ describe('NorthOIAnalytics with proxy', () => {
     settings: {
       useOiaModule: false,
       timeout: 30,
+      compress: false,
       specificSettings: {
         host: 'https://hostname',
         acceptUnauthorized: false,
@@ -605,6 +612,7 @@ describe('NorthOIAnalytics with proxy but without proxy password', () => {
     settings: {
       useOiaModule: false,
       timeout: 30,
+      compress: true,
       specificSettings: {
         host: 'https://hostname',
         acceptUnauthorized: false,
@@ -666,7 +674,7 @@ describe('NorthOIAnalytics with proxy but without proxy password', () => {
     await north.handleValues([]);
     expect(createProxyAgent).toHaveBeenCalledWith(
       true,
-      `${configuration.settings.specificSettings!.host}/api/oianalytics/oibus/time-values?dataSourceId=${configuration.name}`,
+      `${configuration.settings.specificSettings!.host}/api/oianalytics/oibus/time-values/compressed?dataSourceId=${configuration.name}`,
       {
         url: configuration.settings.specificSettings!.proxyUrl!,
         username: configuration.settings.specificSettings!.proxyUsername!,
@@ -674,11 +682,13 @@ describe('NorthOIAnalytics with proxy but without proxy password', () => {
       },
       configuration.settings.specificSettings!.acceptUnauthorized
     );
+    expect(zlib.gzipSync).toHaveBeenCalledWith(JSON.stringify([]));
   });
 
-  it('should properly handle files', async () => {
-    const filePath = '/path/to/file/example.file';
+  it('should properly handle files and compress it', async () => {
+    const filePath = '/path/to/file/example-123456.file';
     (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('Ok')));
+    (filesExists as jest.Mock).mockReturnValueOnce(true).mockReturnValueOnce(false);
     await north.handleFile(filePath);
     expect(createProxyAgent).toHaveBeenCalledWith(
       true,
@@ -690,10 +700,31 @@ describe('NorthOIAnalytics with proxy but without proxy password', () => {
       },
       configuration.settings.specificSettings!.acceptUnauthorized
     );
+    expect(compress).toHaveBeenCalledWith(filePath, path.resolve('/path', 'to', 'file', 'example.file-123456.gz'));
+    expect(fs.unlink).toHaveBeenCalledWith(path.resolve('/path', 'to', 'file', 'example.file-123456.gz'));
+  });
+
+  it('should properly handle files and not compress it', async () => {
+    const filePath = '/path/to/file/example-123456.file';
+    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('Ok')));
+    (filesExists as jest.Mock).mockReturnValueOnce(true).mockReturnValueOnce(true);
+    await north.handleFile(filePath);
+    expect(createProxyAgent).toHaveBeenCalledWith(
+      true,
+      `${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
+      {
+        url: configuration.settings.specificSettings!.proxyUrl!,
+        username: configuration.settings.specificSettings!.proxyUsername!,
+        password: null
+      },
+      configuration.settings.specificSettings!.acceptUnauthorized
+    );
+    expect(compress).not.toHaveBeenCalled();
+    expect(fs.unlink).toHaveBeenCalledWith(path.resolve('/path', 'to', 'file', 'example.file-123456.gz'));
   });
 
   it('should properly handle files without secret key', async () => {
-    const filePath = '/path/to/file/example.file';
+    const filePath = '/path/to/file/example-123456.file';
     (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('Ok')));
 
     const expectedFetchOptions = {
@@ -726,6 +757,7 @@ describe('NorthOIAnalytics with aad-certificate', () => {
     settings: {
       useOiaModule: false,
       timeout: 30,
+      compress: false,
       specificSettings: {
         host: 'https://hostname/',
         acceptUnauthorized: false,
@@ -789,7 +821,8 @@ describe('NorthOIAnalytics with OIA module', () => {
     enabled: true,
     settings: {
       useOiaModule: true,
-      timeout: 30
+      timeout: 30,
+      compress: false
     },
     caching: {
       scanModeId: 'id1',
