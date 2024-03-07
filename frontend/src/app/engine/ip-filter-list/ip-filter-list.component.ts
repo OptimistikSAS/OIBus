@@ -9,11 +9,12 @@ import { IpFilterService } from '../../services/ip-filter.service';
 import { IpFilterDTO } from '../../../../../shared/model/ip-filter.model';
 import { EditIpFilterModalComponent } from '../edit-ip-filter-modal/edit-ip-filter-modal.component';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
+import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 
 @Component({
   selector: 'oib-ip-filter-list',
   standalone: true,
-  imports: [NgIf, NgForOf, TranslateModule, BoxComponent, BoxTitleDirective],
+  imports: [NgIf, NgForOf, TranslateModule, BoxComponent, BoxTitleDirective, OibHelpComponent],
   templateUrl: './ip-filter-list.component.html',
   styleUrl: './ip-filter-list.component.scss'
 })

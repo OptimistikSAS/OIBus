@@ -5,9 +5,12 @@
         <span translate="engine.external-source.list" id="title"></span>
         <span class="mx-1" *ngIf="this.externalSources.length">({{this.externalSources.length}})</span>
       </div>
-      <button type="button" class="btn btn-primary btn-sm oib-box-btn" (click)="addExternalSource()">
-        <span class="fa fa-plus" id="add-external-source"></span>
-      </button>
+      <div>
+        <button type="button" class="btn btn-primary btn-sm oib-box-btn" (click)="addExternalSource()">
+          <span class="fa fa-plus" id="add-external-source"></span>
+        </button>
+        <oib-help url="https://oibus.optimistik.com/docs/guide/engine/external-sources"></oib-help>
+      </div>
     </div>
   </ng-template>
 </oib-box>

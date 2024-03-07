@@ -9,11 +9,12 @@ import { ExternalSourceDTO } from '../../../../../shared/model/external-sources.
 import { ExternalSourceService } from '../../services/external-source.service';
 import { EditExternalSourceModalComponent } from '../edit-external-source-modal/edit-external-source-modal.component';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
+import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 
 @Component({
   selector: 'oib-external-source-list',
   standalone: true,
-  imports: [NgIf, NgForOf, TranslateModule, BoxComponent, BoxTitleDirective],
+  imports: [NgIf, NgForOf, TranslateModule, BoxComponent, BoxTitleDirective, OibHelpComponent],
   templateUrl: './external-source-list.component.html',
   styleUrl: './external-source-list.component.scss'
 })

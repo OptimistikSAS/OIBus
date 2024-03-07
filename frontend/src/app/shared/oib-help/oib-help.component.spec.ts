@@ -18,7 +18,7 @@ class TestComponentTester extends ComponentTester<TestComponent> {
   }
 
   get infoCircle() {
-    return this.element('.fa-info-circle')!;
+    return this.element('.fa-question-circle')!;
   }
 }
 

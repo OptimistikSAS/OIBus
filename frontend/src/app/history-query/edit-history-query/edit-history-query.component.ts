@@ -33,6 +33,7 @@ import { HistoryQueryItemsComponent } from '../history-query-items/history-query
 import { DateTime } from 'luxon';
 import { ModalService } from '../../shared/modal.service';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
+import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 
 @Component({
   selector: 'oib-edit-history-query',
@@ -51,7 +52,8 @@ import { TestConnectionResultModalComponent } from '../../shared/test-connection
     BoxComponent,
     BoxTitleDirective,
     SouthItemsComponent,
-    HistoryQueryItemsComponent
+    HistoryQueryItemsComponent,
+    OibHelpComponent
   ],
   templateUrl: './edit-history-query.component.html',
   styleUrl: './edit-history-query.component.scss'

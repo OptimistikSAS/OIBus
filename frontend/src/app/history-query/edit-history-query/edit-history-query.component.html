@@ -14,7 +14,7 @@
       <form [formGroup]="historyQueryForm" (ngSubmit)="save()" id="history-query-form" class="mt-3">
         <div [class]="mode === 'edit' && historyQuery ? 'save-zone' : ''">
           <!-- General settings -->
-          <oib-box boxTitle="south.general-settings">
+          <oib-box boxTitle="south.general-settings" helpUrl="https://oibus.optimistik.com/docs/guide/history-queries">
             <div class="row">
               <!-- Name -->
               <div class="col-4">
@@ -82,7 +82,7 @@
           </oib-box>
 
           <!-- Cache settings -->
-          <oib-box formGroupName="caching">
+          <oib-box formGroupName="caching" helpUrl="https://oibus.optimistik.com/docs/guide/north-connectors/common-settings#caching">
             <ng-template oibBoxTitle>
               <span translate="north.cache-settings.title" id="cache-settings-title"></span>
             </ng-template>
@@ -165,7 +165,10 @@
           </oib-box>
 
           <!-- Archive settings -->
-          <oib-box boxTitle="north.archive-settings.title">
+          <oib-box
+            boxTitle="north.archive-settings.title"
+            helpUrl="https://oibus.optimistik.com/docs/guide/north-connectors/common-settings#archive"
+          >
             <div class="row" formGroupName="archive">
               <!-- Archive Enabled -->
               <div class="col-4">
@@ -198,9 +201,12 @@
                   [translateParams]="{ type: northManifest.name}"
                   id="north-specific-settings-title"
                 ></span>
-                <button type="button" class="btn btn-primary btn-sm" id="test-connection-north" (click)="test('north')">
-                  <span translate="north.test-connection.button"></span>
-                </button>
+                <div>
+                  <button type="button" class="btn btn-primary btn-sm" id="test-connection-north" (click)="test('north')">
+                    <span translate="north.test-connection.button"></span>
+                  </button>
+                  <oib-help [url]="'https://oibus.optimistik.com/docs/guide/north-connectors/' + northType"></oib-help>
+                </div>
               </div>
             </ng-template>
 
@@ -222,9 +228,12 @@
                   [translateParams]="{ type: southManifest.name }"
                   id="south-specific-settings-title"
                 ></span>
-                <button type="button" class="btn btn-primary btn-sm" id="test-connection-south" (click)="test('south')">
-                  <span translate="south.test-connection.button"></span>
-                </button>
+                <div>
+                  <button type="button" class="btn btn-primary btn-sm" id="test-connection-south" (click)="test('south')">
+                    <span translate="south.test-connection.button"></span>
+                  </button>
+                  <oib-help [url]="'https://oibus.optimistik.com/docs/guide/south-connectors/' + southType"></oib-help>
+                </div>
               </div>
             </ng-template>
 

@@ -13,6 +13,7 @@ import { DatetimePipe } from '../../shared/datetime.pipe';
 import { TruncatedStringComponent } from '../../shared/truncated-string/truncated-string.component';
 import { ClipboardCopyDirective } from '../../shared/clipboard-copy-directive';
 import { DownloadService } from '../../services/download.service';
+import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 
 @Component({
   selector: 'oib-certificate-list',
@@ -25,7 +26,8 @@ import { DownloadService } from '../../services/download.service';
     BoxTitleDirective,
     DatetimePipe,
     TruncatedStringComponent,
-    ClipboardCopyDirective
+    ClipboardCopyDirective,
+    OibHelpComponent
   ],
   templateUrl: './certificate-list.component.html',
   styleUrl: './certificate-list.component.scss'

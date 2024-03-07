@@ -14,11 +14,12 @@ import { ExternalSourceService } from '../../services/external-source.service';
 import { ExternalSourceDTO } from '../../../../../shared/model/external-sources.model';
 import { CreateNorthSubscriptionModalComponent } from '../create-north-subscription-modal/create-north-subscription-modal.component';
 import { Modal, ModalService } from '../../shared/modal.service';
+import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 
 @Component({
   selector: 'oib-north-subscriptions',
   standalone: true,
-  imports: [NgIf, NgForOf, TranslateModule, BoxComponent, BoxTitleDirective],
+  imports: [NgIf, NgForOf, TranslateModule, BoxComponent, BoxTitleDirective, OibHelpComponent],
   templateUrl: './north-subscriptions.component.html',
   styleUrl: './north-subscriptions.component.scss'
 })
