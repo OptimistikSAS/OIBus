@@ -23,6 +23,7 @@ import { CertificateDTO } from '../../../../../shared/model/certificate.model';
 import { CertificateService } from '../../services/certificate.service';
 import { NorthSubscriptionsComponent } from '../north-subscriptions/north-subscriptions.component';
 import { OIBusSubscription } from '../../../../../shared/model/subscription.model';
+import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 
 @Component({
   selector: 'oib-edit-north',
@@ -39,7 +40,8 @@ import { OIBusSubscription } from '../../../../../shared/model/subscription.mode
     BackNavigationDirective,
     BoxComponent,
     BoxTitleDirective,
-    NorthSubscriptionsComponent
+    NorthSubscriptionsComponent,
+    OibHelpComponent
   ],
   templateUrl: './edit-north.component.html',
   styleUrl: './edit-north.component.scss'

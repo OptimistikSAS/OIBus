@@ -5,9 +5,12 @@
         <span translate="engine.certificate.list" id="title"></span>
         <span class="mx-1" *ngIf="this.certificates.length">({{this.certificates.length}})</span>
       </div>
-      <button type="button" class="btn btn-primary btn-sm oib-box-btn" (click)="addCertificate()">
-        <span class="fa fa-plus" id="add-certificate"></span>
-      </button>
+      <div>
+        <button type="button" class="btn btn-primary btn-sm oib-box-btn" (click)="addCertificate()">
+          <span class="fa fa-plus" id="add-certificate"></span>
+        </button>
+        <oib-help url="https://oibus.optimistik.com/docs/guide/engine/engine-settings"></oib-help>
+      </div>
     </div>
   </ng-template>
 </oib-box>

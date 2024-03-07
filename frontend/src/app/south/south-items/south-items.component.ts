@@ -27,6 +27,7 @@ import { emptyPage } from '../../shared/test-utils';
 import { PipeProviderService } from '../../shared/form/pipe-provider.service';
 import { ImportSouthItemsModalComponent } from '../import-south-items-modal/import-south-items-modal.component';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
+import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 
 const PAGE_SIZE = 20;
 
@@ -46,7 +47,8 @@ const PAGE_SIZE = 20;
     BoxTitleDirective,
     DatetimePipe,
     DurationPipe,
-    PaginationComponent
+    PaginationComponent,
+    OibHelpComponent
   ],
   templateUrl: './south-items.component.html',
   styleUrl: './south-items.component.scss'

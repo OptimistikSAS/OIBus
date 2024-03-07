@@ -8,6 +8,7 @@
         <img class="oib-image-header" *ngIf="imagePath" [src]="imagePath" alt="Image" />
         {{ boxTitle | translate }}
       </ng-template>
+      <oib-help class="pull-right" *ngIf="helpUrl" [url]="helpUrl"></oib-help>
     </div>
   </div>
   <div [class]="removePadding ? 'p-0 box-content' : 'px-2 py-1 box-content'" #boxContent>

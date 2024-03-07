@@ -25,6 +25,7 @@ import { SouthItemsComponent } from '../south-items/south-items.component';
 import { EditElementComponent } from '../../shared/form/oib-form-array/edit-element/edit-element.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { ModalService } from '../../shared/modal.service';
+import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 
 @Component({
   selector: 'oib-edit-south',
@@ -41,7 +42,8 @@ import { ModalService } from '../../shared/modal.service';
     BoxComponent,
     BoxTitleDirective,
     SouthItemsComponent,
-    EditElementComponent
+    EditElementComponent,
+    OibHelpComponent
   ],
   templateUrl: './edit-south.component.html',
   styleUrl: './edit-south.component.scss'

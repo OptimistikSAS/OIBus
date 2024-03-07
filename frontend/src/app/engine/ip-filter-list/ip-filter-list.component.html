@@ -5,9 +5,13 @@
         <span translate="engine.ip-filter.list" id="title"></span>
         <span class="mx-1" *ngIf="this.ipFilters.length">({{this.ipFilters.length}})</span>
       </div>
-      <button type="button" class="btn btn-primary btn-sm oib-box-btn" (click)="addIpFilter()">
-        <span class="fa fa-plus" id="add-ip-filter"></span>
-      </button>
+      <div>
+        <button type="button" class="btn btn-primary btn-sm oib-box-btn" (click)="addIpFilter()">
+          <span class="fa fa-plus" id="add-ip-filter"></span>
+        </button>
+
+        <oib-help url="https://oibus.optimistik.com/docs/guide/engine/ip-filters"></oib-help>
+      </div>
     </div>
   </ng-template>
 </oib-box>

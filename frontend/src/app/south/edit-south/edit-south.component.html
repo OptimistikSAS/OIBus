@@ -14,7 +14,7 @@
       <form [formGroup]="southForm" (ngSubmit)="submit('save')" id="south-form" class="mt-3">
         <div [class]="mode === 'edit' && southConnector ? 'save-zone' : ''">
           <!-- General settings -->
-          <oib-box boxTitle="south.general-settings">
+          <oib-box boxTitle="south.general-settings" helpUrl="https://oibus.optimistik.com/docs/guide/south-connectors/common-settings">
             <div class="row">
               <!-- Name -->
               <div class="col-4">
@@ -46,7 +46,11 @@
           </oib-box>
 
           <!-- History settings -->
-          <oib-box *ngIf="manifest.modes.history" formGroupName="history">
+          <oib-box
+            *ngIf="manifest.modes.history"
+            formGroupName="history"
+            helpUrl="https://oibus.optimistik.com/docs/guide/south-connectors/common-settings#history-settings"
+          >
             <ng-template oibBoxTitle>
               <span translate="south.history.settings" [translateParams]="{ type: southType }" id="history-settings-title"></span>
             </ng-template>
@@ -115,6 +119,7 @@
                   >
                     <span translate="south.test-connection.button"></span>
                   </button>
+                  <oib-help [url]="'https://oibus.optimistik.com/docs/guide/south-connectors/' + southType"></oib-help>
                 </div>
               </div>
             </ng-template>

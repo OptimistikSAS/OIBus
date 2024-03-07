@@ -25,6 +25,7 @@ import { HistoryQueryService } from '../../services/history-query.service';
 import { EditSouthItemModalComponent } from '../../south/edit-south-item-modal/edit-south-item-modal.component';
 import { ImportSouthItemsModalComponent } from '../../south/import-south-items-modal/import-south-items-modal.component';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
+import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 
 const PAGE_SIZE = 20;
 
@@ -44,7 +45,8 @@ const PAGE_SIZE = 20;
     BoxComponent,
     BoxTitleDirective,
     DatetimePipe,
-    DurationPipe
+    DurationPipe,
+    OibHelpComponent
   ],
   templateUrl: './history-query-items.component.html',
   styleUrl: './history-query-items.component.scss'
