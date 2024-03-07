@@ -6,7 +6,7 @@ sidebar_position: 2
 OPCUA, which stands for OPC Unified Architecture, is a protocol designed for accessing data in both read and write modes. 
 The data is organized within a tree-like address space and is referenced using unique identifiers known as node IDs. 
 OPCUA is a modern standard that is based on TCP/IP and has replaced older OPC HDA/DA technologies (refer to the 
-[OPCHDA connector](./opchda.md)). It is often natively embedded in industrial controllers.
+[OPCHDA connector](./opc-hda.md)). It is often natively embedded in industrial controllers.
 
 OPCUA incorporates two variants of the protocol: HA (Historical Access) and DA (Data Access). In HA mode, you can access 
 a history of values over a specified time interval for the requested data points, whereas in DA mode, you can access the 
