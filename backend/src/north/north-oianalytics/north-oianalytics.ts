@@ -8,14 +8,16 @@ import { createProxyAgent } from '../../service/proxy-agent';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { createReadStream } from 'node:fs';
+import zlib from 'node:zlib';
 import FormData from 'form-data';
 import path from 'node:path';
 import fetch, { HeadersInit, RequestInit } from 'node-fetch';
 import { HandlesFile, HandlesValues } from '../north-interface';
-import { filesExists } from '../../service/utils';
+import { compress, filesExists } from '../../service/utils';
 import { NorthOIAnalyticsSettings } from '../../../../shared/model/north-settings.model';
 import { OIBusDataValue } from '../../../../shared/model/engine.model';
 import { ClientCertificateCredential, ClientSecretCredential } from '@azure/identity';
+import fs from 'node:fs/promises';
 
 /**
  * Class NorthOIAnalytics - Send files to a POST Multipart HTTP request and values as JSON payload
@@ -59,20 +61,25 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
    * Handle values by sending them to OIAnalytics
    */
   async handleValues(values: Array<OIBusDataValue>): Promise<void> {
-    const connectionSettings = await this.getNetworkSettings(`/api/oianalytics/oibus/time-values?dataSourceId=${this.connector.name}`);
+    const endpoint = this.connector.settings.compress
+      ? `/api/oianalytics/oibus/time-values/compressed?dataSourceId=${encodeURI(this.connector.name)}`
+      : `/api/oianalytics/oibus/time-values?dataSourceId=${encodeURI(this.connector.name)}`;
+    const connectionSettings = await this.getNetworkSettings(endpoint);
 
-    // @ts-ignore
-    connectionSettings.headers['Content-Type'] = 'application/json';
     let response;
-    const valuesUrl = `${connectionSettings.host}/api/oianalytics/oibus/time-values?dataSourceId=${this.connector.name}`;
+    const valuesUrl = `${connectionSettings.host}${endpoint}`;
+    const fetchOptions = {
+      method: 'POST',
+      headers: {
+        ...connectionSettings.headers,
+        'Content-Type': 'application/json'
+      },
+      timeout: this.connector.settings.timeout * 1000,
+      body: this.connector.settings.compress ? zlib.gzipSync(JSON.stringify(values)) : JSON.stringify(values),
+      agent: connectionSettings.agent
+    };
     try {
-      response = await fetch(valuesUrl, {
-        method: 'POST',
-        headers: connectionSettings.headers,
-        timeout: this.connector.settings.timeout * 1000,
-        body: JSON.stringify(values),
-        agent: connectionSettings.agent
-      });
+      response = await fetch(valuesUrl, fetchOptions);
     } catch (fetchError) {
       throw {
         message: `Fail to reach values endpoint ${valuesUrl}. ${fetchError}`,
@@ -92,18 +99,31 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
    * Handle the file by sending it to OIAnalytics.
    */
   async handleFile(filePath: string): Promise<void> {
-    const connectionSettings = await this.getNetworkSettings(`/api/oianalytics/file-uploads?dataSourceId=${this.connector.name}`);
+    const endpoint = `/api/oianalytics/file-uploads?dataSourceId=${encodeURI(this.connector.name)}`;
+    const connectionSettings = await this.getNetworkSettings(endpoint);
 
     if (!(await filesExists(filePath))) {
       throw new Error(`File ${filePath} does not exist`);
     }
-    const readStream = createReadStream(filePath);
-    // Remove timestamp from the file path
-    const { name, ext } = path.parse(filePath);
-    const filename = name.slice(0, name.lastIndexOf('-'));
 
+    const { name, ext, dir } = path.parse(filePath);
+    const timestamp = name.slice(name.lastIndexOf('-'));
+
+    let fileToSend = filePath;
+    if (this.connector.settings.compress && !filePath.endsWith('.gz')) {
+      // compress if enabled and file to send is not a compressed one
+      fileToSend = `${name.slice(0, name.lastIndexOf('-'))}${ext}${timestamp}.gz`;
+      if (!(await filesExists(path.resolve(dir, fileToSend)))) {
+        // Compress only if the file has not been compressed by another try first
+        await compress(filePath, path.resolve(dir, fileToSend));
+      }
+    }
+
+    const readStream = createReadStream(path.resolve(dir, fileToSend));
     const body = new FormData();
-    body.append('file', readStream, { filename: `${filename}${ext}` });
+    body.append('file', readStream, {
+      filename: `${fileToSend.slice(0, fileToSend.lastIndexOf('-'))}${this.connector.settings.compress ? '.gz' : ext}`
+    });
     const formHeaders = body.getHeaders();
     Object.keys(formHeaders).forEach(key => {
       // @ts-ignore
@@ -111,7 +131,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     });
 
     let response;
-    const fileUrl = `${connectionSettings.host}/api/oianalytics/file-uploads?dataSourceId=${this.connector.name}`;
+    const fileUrl = `${connectionSettings.host}${endpoint}`;
     try {
       response = await fetch(fileUrl, {
         method: 'POST',
@@ -121,6 +141,10 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
         agent: connectionSettings.agent
       });
       readStream.close();
+      if (this.connector.settings.compress) {
+        // Remove only the compressed file. The uncompressed file will be removed by north connector logic
+        await fs.unlink(path.resolve(dir, fileToSend));
+      }
     } catch (fetchError) {
       readStream.close();
       throw {

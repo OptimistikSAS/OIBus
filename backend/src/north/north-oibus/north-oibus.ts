@@ -83,7 +83,7 @@ export default class NorthOibus extends NorthConnector<NorthOIBusSettings> imple
     ).toString('base64')}`;
 
     let response;
-    const valuesUrl = `${this.connector.settings.host}/api/add-values?name=${this.connector.name}`;
+    const valuesUrl = `${this.connector.settings.host}/api/add-values?name=${encodeURI(this.connector.name)}`;
     try {
       response = await fetch(valuesUrl, {
         method: 'POST',
@@ -145,7 +145,7 @@ export default class NorthOibus extends NorthConnector<NorthOIBusSettings> imple
     });
 
     let response;
-    const fileUrl = `${this.connector.settings.host}/api/add-file?name=${this.connector.name}`;
+    const fileUrl = `${this.connector.settings.host}/api/add-file?name=${encodeURI(this.connector.name)}`;
     try {
       response = await fetch(fileUrl, {
         method: 'POST',

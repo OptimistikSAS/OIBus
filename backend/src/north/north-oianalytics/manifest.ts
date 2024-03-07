@@ -30,6 +30,15 @@ const manifest: NorthConnectorManifest = {
       class: 'col-3'
     },
     {
+      key: 'compress',
+      type: 'OibCheckbox',
+      label: 'Compress data?',
+      validators: [{ key: 'required' }],
+      defaultValue: false,
+      displayInViewMode: true,
+      class: 'col-3'
+    },
+    {
       key: 'specificSettings',
       type: 'OibFormGroup',
       label: 'Specific settings',

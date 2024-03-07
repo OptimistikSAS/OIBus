@@ -144,6 +144,7 @@ export interface NorthMqttSettings extends BaseNorthSettings {
 export interface NorthOIAnalyticsSettings extends BaseNorthSettings {
   useOiaModule: boolean;
   timeout: number;
+  compress: boolean;
   specificSettings?: NorthOIAnalyticsSettingsSpecificSettings | null;
 }
 
