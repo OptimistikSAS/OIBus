@@ -10,7 +10,7 @@ Details regarding the configurations can be located on the [North OIAnalytics](.
 and [South OPCUA](../guide/south-connectors/opcua.md) connectors pages.
 
 Additionally, ensure that the selected protocol for connection is OPCUA, distinguishing it from 
-[OPCDA or OPCHDA](../guide/south-connectors/opchda.md), which represent entirely distinct technologies.
+[OPCDA or OPCHDA](../guide/south-connectors/opc-hda.md), which represent entirely distinct technologies.
 
 ## South OPCUA
 ### What you need to know

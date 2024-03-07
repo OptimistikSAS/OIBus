@@ -8,7 +8,7 @@ sidebar_position: 1
 ## 事前
 相关配置的详细信息可以在[North OIAnalytics](../guide/north-connectors/oianalytics.md)和[South OPCUA](../guide/south-connectors/opcua.md)连接器页面上找到。
 
-另外，请确保所选的连接协议为OPCUA，以将其与代表完全不同技术的[OPCDA或OPCHDA](../guide/south-connectors/opchda.md)区分开。
+另外，请确保所选的连接协议为OPCUA，以将其与代表完全不同技术的[OPCDA或OPCHDA](../guide/south-connectors/opc-hda.md)区分开。
 
 ## 南方OPCUA
 ### 您需要了解的信息

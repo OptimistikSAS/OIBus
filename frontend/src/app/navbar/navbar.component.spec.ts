@@ -64,7 +64,7 @@ describe('NavbarComponent', () => {
 
   it('should have a navbar with nav items', () => {
     tester.detectChanges();
-    expect(tester.navItems.length).toBe(9);
+    expect(tester.navItems.length).toBe(11);
     expect(tester.navItems[0]).toContainText('Engine');
     expect(tester.navItems[1]).toContainText('North');
     expect(tester.navItems[2]).toContainText('South');
