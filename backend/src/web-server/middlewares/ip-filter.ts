@@ -5,14 +5,7 @@ import { KoaContext } from '../koa';
  * Return ipFilter middleware
  */
 const ipFilter = () => async (ctx: KoaContext<any, any>, next: () => Promise<any>) => {
-  const filterToTest = [
-    '127.0.0.1',
-    '::1',
-    '::ffff:127.0.0.1',
-    ...ctx.app.repositoryService.ipFilterRepository.getIpFilters().map(filter => filter.address)
-  ];
-
-  const allowed = filterToTest.some(ipToTest => {
+  const allowed = ctx.app.ipFilters.some(ipToTest => {
     const formattedRegext = `^${ipToTest.replace(/\./g, '\\.').replace(/\*$/g, '.*')}$`;
     return new RegExp(formattedRegext).test(ctx.request.ip);
   });

@@ -117,6 +117,14 @@ const LOG_DB_NAME = 'logs.db';
   await historyQueryEngine.start();
 
   const proxyServer = new ProxyServer(loggerService.logger!);
+  const ipFilters = [
+    '127.0.0.1',
+    '::1',
+    '::ffff:127.0.0.1',
+    ...repositoryService.ipFilterRepository.getIpFilters().map(filter => filter.address)
+  ];
+  proxyServer.refreshIpFilter(ipFilters);
+
   if (oibusSettings.proxyEnabled) {
     await proxyServer.start(oibusSettings.proxyPort);
   }

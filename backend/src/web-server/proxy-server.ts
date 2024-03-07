@@ -8,9 +8,11 @@ import httpProxy from 'http-proxy';
 export default class ProxyServer {
   private _logger: pino.Logger;
   private webServer: http.Server | null = null;
+  private ipFilter: Array<string> = [];
 
   constructor(logger: pino.Logger) {
     this._logger = logger;
+    this.refreshIpFilter([]);
   }
 
   get logger(): pino.Logger {
@@ -21,12 +23,21 @@ export default class ProxyServer {
     this._logger = value;
   }
 
+  refreshIpFilter(ipFilter: Array<string>) {
+    this.ipFilter = ['127.0.0.1', '::1', '::ffff:127.0.0.1', ...ipFilter];
+  }
+
   async start(port: number): Promise<void> {
     const proxy = httpProxy.createProxyServer({});
     this.webServer = http
       .createServer((req, res) => {
-        this._logger.trace(`Forward ${req.method} request to ${req.url}`);
-        proxy.web(req, res, { target: req.url?.startsWith('https://') ? `https://${req.headers.host}` : `http://${req.headers.host}` });
+        const ip = req.socket.remoteAddress;
+        if (ip && this.ipFilter.includes(ip)) {
+          this._logger.trace(`Forward ${req.method} request to ${req.url} from IP ${ip}`);
+          proxy.web(req, res, { target: req.url?.startsWith('https://') ? `https://${req.headers.host}` : `http://${req.headers.host}` });
+        } else {
+          this._logger.trace(`Ignore ${req.method} request to ${req.url} from IP ${ip}`);
+        }
       })
       .listen(port, () => {
         this._logger.info(`Start proxy server on port ${port}.`);

@@ -164,7 +164,7 @@ export default class EngineRepository {
       `INSERT INTO ${ENGINES_TABLE} (id, name, port, proxy_enabled, proxy_port, log_console_level, ` +
       'log_file_level, log_file_max_file_size, log_file_number_of_files, log_database_level, ' +
       'log_database_max_number_of_logs, log_loki_level, log_loki_interval, log_loki_address, log_loki_token_address, ' +
-      'log_loki_username, log_loki_password, log_oia_level) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);';
+      'log_loki_username, log_loki_password, log_oia_level) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);';
     this.database
       .prepare(query)
       .run(
