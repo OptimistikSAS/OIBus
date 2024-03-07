@@ -15,6 +15,7 @@ interface KoaRequest<RequestBody> extends Request {
 export interface KoaApplication extends Koa {
   id: string;
   repositoryService: RepositoryService;
+  ipFilters: Array<string>;
   southService: SouthService;
   northService: NorthService;
   oibusService: OIBusService;

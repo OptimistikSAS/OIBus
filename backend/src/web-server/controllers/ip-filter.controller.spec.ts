@@ -60,6 +60,7 @@ describe('IP filter controller', () => {
   it('createIpFilter() should create ip filter', async () => {
     ctx.request.body = ipFilterCommand;
     ctx.app.repositoryService.ipFilterRepository.createIpFilter.mockReturnValue(ipFilter);
+    ctx.app.repositoryService.ipFilterRepository.getIpFilters.mockReturnValue([ipFilter]);
 
     await ipFilterController.createIpFilter(ctx);
 
@@ -86,6 +87,7 @@ describe('IP filter controller', () => {
     const id = 'id';
     ctx.params.id = id;
     ctx.request.body = ipFilterCommand;
+    ctx.app.repositoryService.ipFilterRepository.getIpFilters.mockReturnValue([ipFilter]);
 
     await ipFilterController.updateIpFilter(ctx);
 
@@ -112,6 +114,7 @@ describe('IP filter controller', () => {
     const id = 'id';
     ctx.params.id = id;
     ctx.app.repositoryService.ipFilterRepository.getIpFilter.mockReturnValue(ipFilter);
+    ctx.app.repositoryService.ipFilterRepository.getIpFilters.mockReturnValue([ipFilter]);
 
     await ipFilterController.deleteIpFilter(ctx);
 
