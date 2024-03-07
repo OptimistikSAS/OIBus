@@ -41,8 +41,8 @@ const FeatureList = [
   {
     title: (
       <>
-        <Translate description="Real code title">
-          Real code
+        <Translate description="Real time title">
+          Real time
         </Translate>
       </>
     ),
