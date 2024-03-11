@@ -173,6 +173,10 @@ begin
     Result := False
   else if not ExecCmd('nssm.exe', 'stop OIBus >nul 2>&1', ExpandConstant('{app}')) then
     Result := False
+  else if not SaveStringToFile(LogPath, 'nssm.exe remove OIBus confirm >nul 2>&1 "' + ExpandConstant('{app}') + '"' + #13#10, True) then
+      Result := False
+  else if not ExecCmd('nssm.exe', 'remove OIBus confirm >nul 2>&1', ExpandConstant('{app}')) then
+    Result := False
   else if not SaveStringToFile(LogPath, 'nssm.exe install OIBus "' + ExpandConstant('{app}') + '\oibus-launcher.exe" "--config ""' + OIBus_DataDirPage.Values[0] + '"""' + #13#10, True) then
     Result := False
   else  if not ExecCmd('nssm.exe', 'install OIBus "' + ExpandConstant('{app}') + '\oibus-launcher.exe" "--config ""' + OIBus_DataDirPage.Values[0] + '"""', ExpandConstant('{app}')) then
