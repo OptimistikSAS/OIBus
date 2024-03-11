@@ -29,12 +29,20 @@ export default class ProxyServer {
 
   async start(port: number): Promise<void> {
     const proxy = httpProxy.createProxyServer({});
+
     this.webServer = http
       .createServer((req, res) => {
         const ip = req.socket.remoteAddress;
         if (ip && this.ipFilter.includes(ip)) {
           this._logger.trace(`Forward ${req.method} request to ${req.url} from IP ${ip}`);
-          proxy.web(req, res, { target: req.url?.startsWith('https://') ? `https://${req.headers.host}` : `http://${req.headers.host}` });
+          proxy.web(
+            req,
+            res,
+            { target: req.url?.startsWith('https://') ? `https://${req.headers.host}` : `http://${req.headers.host}` },
+            err => {
+              this._logger.error(`Proxy server error. ${err}`);
+            }
+          );
         } else {
           this._logger.trace(`Ignore ${req.method} request to ${req.url} from IP ${ip}`);
         }
@@ -42,6 +50,14 @@ export default class ProxyServer {
       .listen(port, () => {
         this._logger.info(`Start proxy server on port ${port}.`);
       });
+    // Listen for the `error` event on `proxy`.
+    this.webServer.on('error', (err: Error, req: http.IncomingMessage, res: http.ServerResponse) => {
+      res.writeHead(500, {
+        'Content-Type': 'text/plain'
+      });
+
+      res.end(err);
+    });
   }
 
   /**
