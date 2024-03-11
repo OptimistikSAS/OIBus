@@ -100,7 +100,7 @@
     "oracledb": "6.3.0"
   },
   "devDependencies": {
-    "@types/adm-zip": "0.5.0",
+    "@types/adm-zip": "0.5.5",
     "@types/basic-auth": "1.1.8",
     "@types/better-sqlite3": "7.6.9",
     "@types/cron": "2.0.1",
