@@ -35,12 +35,12 @@
     "zone.js": "0.14.4"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "17.2.1",
+    "@angular-devkit/build-angular": "17.2.3",
     "@angular-eslint/builder": "17.2.1",
     "@angular-eslint/eslint-plugin": "17.2.1",
     "@angular-eslint/eslint-plugin-template": "17.2.1",
     "@angular-eslint/template-parser": "17.2.1",
-    "@angular/cli": "17.2.1",
+    "@angular/cli": "17.2.3",
     "@angular/compiler-cli": "17.2.3",
     "@types/jasmine": "5.1.4",
     "@types/luxon": "3.4.2",
