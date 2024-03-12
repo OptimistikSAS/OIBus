@@ -173,21 +173,25 @@ begin
     Result := False
   else if not ExecCmd('nssm.exe', 'stop OIBus >nul 2>&1', ExpandConstant('{app}')) then
     Result := False
-  else if not SaveStringToFile(LogPath, 'nssm.exe remove OIBus confirm >nul 2>&1 "' + ExpandConstant('{app}') + '"' + #13#10, True) then
-      Result := False
-  else if not ExecCmd('nssm.exe', 'remove OIBus confirm >nul 2>&1', ExpandConstant('{app}')) then
-    Result := False
   else if not SaveStringToFile(LogPath, 'nssm.exe install OIBus "' + ExpandConstant('{app}') + '\oibus-launcher.exe" "--config ""' + OIBus_DataDirPage.Values[0] + '"""' + #13#10, True) then
     Result := False
   else  if not ExecCmd('nssm.exe', 'install OIBus "' + ExpandConstant('{app}') + '\oibus-launcher.exe" "--config ""' + OIBus_DataDirPage.Values[0] + '"""', ExpandConstant('{app}')) then
+    Result := False
+  else if not SaveStringToFile(LogPath, 'nssm.exe set OIBus Application "' + ExpandConstant('{app}') + '\oibus-launcher.exe' + #13#10, True) then
+      Result := False
+    else  if not ExecCmd('nssm.exe', 'set OIBus Application "' + ExpandConstant('{app}') + '\oibus-launcher.exe', ExpandConstant('{app}')) then
+      Result := False
+  else if not SaveStringToFile(LogPath, 'nssm.exe set OIBus AppParameters --config "' + OIBus_DataDirPage.Values[0] + '"' + #13#10, True) then
+    Result := False
+  else  if not ExecCmd('nssm.exe', 'set OIBus AppParameters "--config "' + OIBus_DataDirPage.Values[0] + '"', ExpandConstant('{app}')) then
     Result := False
   else if not SaveStringToFile(LogPath, 'nssm.exe set OIBus AppDirectory "' + ExpandConstant('{app}') + '"' + #13#10, True) then
     Result := False
   else if not ExecCmd('nssm.exe', 'set OIBus AppDirectory "' + ExpandConstant('{app}') + '"', ExpandConstant('{app}')) then
     Result := False
-  else if not SaveStringToFile(LogPath, 'nssm set OIBus AppNoConsole 1' + #13#10, True) then
+  else if not SaveStringToFile(LogPath, 'nssm.exe set OIBus AppNoConsole 1' + #13#10, True) then
     Result := False
-  else if not ExecCmd('nssm', 'set OIBus AppNoConsole 1', ExpandConstant('{app}')) then
+  else if not ExecCmd('nssm.exe', 'set OIBus AppNoConsole 1', ExpandConstant('{app}')) then
     Result := False
   else if not SaveStringToFile(LogPath, 'nssm.exe start OIBus "' + ExpandConstant('{app}') + '"' + #13#10, True) then
     Result := False
