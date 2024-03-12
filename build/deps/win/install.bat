@@ -12,20 +12,16 @@ if NOT %errorLevel% == 0 (
 set c=
 set n="OIBus"
 
-:initial
-if "%1"=="" goto done
-echo              %1
-set aux=%1
-if "%aux:~0,1%"=="-" (
-   set nome=%aux:~1,250%
-) else (
-   set "%nome%=%1"
-   set nome=
+:PARSE_PARAMETERS
+set parameter=%~1
+if "%parameter%"=="" goto PARSE_PARAMETERS_DONE
+if "%parameter:~0,1%"=="-" (
+    set %parameter:~1%=%~2
+    shift
+    shift
+    goto PARSE_PARAMETERS
 )
-shift
-goto initial
-:done
-
+:PARSE_PARAMETERS_DONE
 
 goto CHECK
 :INPUT
@@ -43,16 +39,23 @@ nssm.exe stop %n% >nul 2>&1
 @echo Installing %n% as Windows service...
 date /T >> install.log
 time /T >> install.log
-nssm.exe install %n% "%cd%\oibus-launcher.exe" "--config ""%c%"""
-@echo nssm.exe install %n% "%cd%\oibus-launcher.exe" "--config ""%c%""" >> install.log
-nssm.exe set %n% AppDirectory "%cd%"
-@echo nssm.exe set %n% AppDirectory "%cd%" >> install.log
-nssm set OIBus AppNoConsole 1 >> install.log
-@echo nssm set %n% AppNoConsole 1
-@echo Starting %n% service...
-nssm.exe start %n%
+nssm.exe install "%n%" "%cd%\oibus-launcher.exe --config %c%"
+@echo nssm.exe install "%n%" "%cd%\oibus-launcher.exe --config %c%" >> install.log
+
+nssm.exe set "%n%" Application "%cd%\oibus-launcher.exe"
+@echo nssm.exe set "%n%" Application "%cd%\oibus-launcher.exe" >> install.log
+
+nssm.exe set "%n%" AppParameters "--config %c%"
+@echo nssm.exe set "%n%" AppParameters "--config %c%" >> install.log
+
+nssm.exe set "%n%" AppDirectory "%cd%"
+@echo nssm.exe set "%n%" AppDirectory "%cd%" >> install.log
+nssm.exe set "%n%" AppNoConsole 1 >> install.log
+@echo nssm.exe set "%n%" AppNoConsole 1
+@echo Starting "%n%" service...
+nssm.exe start "%n%"
 @echo Creating go.bat
-@echo> go.bat echo Stopping %n% service... You can restart it from the Windows Service Manager
-@echo>> go.bat nssm.exe stop %n%
+@echo> go.bat echo Stopping "%n%" service... You can restart it from the Windows Service Manager
+@echo>> go.bat nssm.exe stop "%n%"
 @echo>> go.bat "%cd%\oibus-launcher.exe" --config "%c%"
 type go.bat
