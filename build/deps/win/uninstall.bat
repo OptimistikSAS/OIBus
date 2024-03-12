@@ -12,24 +12,21 @@ if NOT %errorLevel% == 0 (
 
 set n="OIBus"
 
-:initial
-if "%1"=="" goto done
-echo              %1
-set aux=%1
-if "%aux:~0,1%"=="-" (
-   set nome=%aux:~1,250%
-) else (
-   set "%nome%=%1"
-   set nome=
+:PARSE_PARAMETERS
+set parameter=%~1
+if "%parameter%"=="" goto PARSE_PARAMETERS_DONE
+if "%parameter:~0,1%"=="-" (
+    set %parameter:~1%=%~2
+    shift
+    shift
+    goto PARSE_PARAMETERS
 )
-shift
-goto initial
-:done
+:PARSE_PARAMETERS_DONE
 
-echo Stopping %n% service...
-START nssm.exe stop %n%
+echo Stopping "%n%" service...
+nssm.exe stop "%n%"
 
-echo Removing %n% service...
-START nssm.exe remove %n% confirm
+echo Removing "%n%" service...
+nssm.exe remove "%n%" confirm
 pause
 

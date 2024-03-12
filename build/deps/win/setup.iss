@@ -178,9 +178,9 @@ begin
   else  if not ExecCmd('nssm.exe', 'install OIBus "' + ExpandConstant('{app}') + '\oibus-launcher.exe" "--config ""' + OIBus_DataDirPage.Values[0] + '"""', ExpandConstant('{app}')) then
     Result := False
   else if not SaveStringToFile(LogPath, 'nssm.exe set OIBus Application "' + ExpandConstant('{app}') + '\oibus-launcher.exe' + #13#10, True) then
-      Result := False
-    else  if not ExecCmd('nssm.exe', 'set OIBus Application "' + ExpandConstant('{app}') + '\oibus-launcher.exe', ExpandConstant('{app}')) then
-      Result := False
+    Result := False
+  else  if not ExecCmd('nssm.exe', 'set OIBus Application "' + ExpandConstant('{app}') + '\oibus-launcher.exe', ExpandConstant('{app}')) then
+    Result := False
   else if not SaveStringToFile(LogPath, 'nssm.exe set OIBus AppParameters --config "' + OIBus_DataDirPage.Values[0] + '"' + #13#10, True) then
     Result := False
   else  if not ExecCmd('nssm.exe', 'set OIBus AppParameters "--config "' + OIBus_DataDirPage.Values[0] + '"', ExpandConstant('{app}')) then
