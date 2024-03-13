@@ -20,6 +20,7 @@ import { Instant } from '../../../shared/model/types';
 import { ScanModeCommandDTO } from '../../../shared/model/scan-mode.model';
 import HomeMetricsService from './home-metrics.service';
 import ProxyServer from '../web-server/proxy-server';
+import OIBusService from './oibus.service';
 
 export default class ReloadService {
   private webServerChangeLoggerCallback: (logger: pino.Logger) => void = () => {};
@@ -34,6 +35,7 @@ export default class ReloadService {
     private readonly _southService: SouthService,
     private readonly _oibusEngine: OIBusEngine,
     private readonly _historyEngine: HistoryQueryEngine,
+    private readonly _oibusService: OIBusService,
     private readonly _proxyServer: ProxyServer
   ) {}
 
@@ -69,6 +71,10 @@ export default class ReloadService {
     return this._historyEngine;
   }
 
+  get oibusService(): OIBusService {
+    return this._oibusService;
+  }
+
   get proxyServer(): ProxyServer {
     return this._proxyServer;
   }
@@ -87,12 +93,7 @@ export default class ReloadService {
       JSON.stringify(oldSettings.logParameters) !== JSON.stringify(newSettings.logParameters) ||
       oldSettings.name !== newSettings.name
     ) {
-      this.loggerService.stop();
-      await this.loggerService.start(newSettings.id, newSettings.name, newSettings.logParameters);
-      this.webServerChangeLoggerCallback(this.loggerService.createChildLogger('web-server'));
-      this.engineMetricsService.setLogger(this.loggerService.createChildLogger('internal'));
-      this.oibusEngine.setLogger(this.loggerService.createChildLogger('internal'));
-      this.proxyServer.setLogger(this.loggerService.createChildLogger('internal'));
+      await this.restartLogger(newSettings);
     }
     if (!oldSettings || oldSettings.port !== newSettings.port) {
       await this.webServerChangePortCallback(newSettings.port);
@@ -103,6 +104,16 @@ export default class ReloadService {
         await this.proxyServer.start(newSettings.proxyPort);
       }
     }
+  }
+
+  public async restartLogger(newSettings: EngineSettingsDTO) {
+    this.loggerService.stop();
+    const registration = this.repositoryService.registrationRepository.getRegistrationSettings()!;
+    await this.loggerService.start(newSettings.id, newSettings.name, newSettings.logParameters, registration);
+    this.webServerChangeLoggerCallback(this.loggerService.createChildLogger('web-server'));
+    this.oibusService.setLogger(this.loggerService.createChildLogger('internal'));
+    this.engineMetricsService.setLogger(this.loggerService.createChildLogger('internal'));
+    this.proxyServer.setLogger(this.loggerService.createChildLogger('internal'));
   }
 
   async onCreateSouth(command: SouthConnectorCommandDTO): Promise<SouthConnectorDTO> {

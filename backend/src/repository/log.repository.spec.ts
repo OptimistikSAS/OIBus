@@ -78,21 +78,35 @@ describe('Log repository', () => {
 
   it('should add logs', () => {
     repository.addLogs([
-      { msg: 'my message 1', scopeType: 'myScopeType', scopeId: 'scopeId', scopeName: 'scope name', time: 0, level: '30' },
-      { msg: 'my message 1', scopeType: 'myScopeType', scopeId: 'scopeId', scopeName: 'scope name', time: 1, level: '10' }
+      {
+        msg: 'my message 1',
+        scopeType: 'myScopeType',
+        scopeId: 'scopeId',
+        scopeName: 'scope name',
+        time: '2020-01-01T00:00:00.000Z',
+        level: '30'
+      },
+      {
+        msg: 'my message 1',
+        scopeType: 'myScopeType',
+        scopeId: 'scopeId',
+        scopeName: 'scope name',
+        time: '2020-01-01T01:00:00.000Z',
+        level: '10'
+      }
     ]);
 
     expect(database.prepare).toHaveBeenCalledWith(
       'INSERT INTO logs (timestamp, level, scope_type, scope_id, scope_name, message) VALUES (?,?,?,?,?,?), (?,?,?,?,?,?);'
     );
     expect(run).toHaveBeenCalledWith(
-      0,
+      '2020-01-01T00:00:00.000Z',
       'info',
       'myScopeType',
       'scopeId',
       'scope name',
       'my message 1',
-      1,
+      '2020-01-01T01:00:00.000Z',
       'trace',
       'myScopeType',
       'scopeId',

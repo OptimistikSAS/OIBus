@@ -38,6 +38,7 @@ export default jest.fn().mockImplementation(() => ({
   onDeleteNorthSubscription: jest.fn(),
   onDeleteExternalNorthSubscription: jest.fn(),
   onUpdateScanMode: jest.fn(),
+  restartLogger: jest.fn(),
   oibusEngine: {
     resetSouthMetrics: jest.fn(),
     resetNorthMetrics: jest.fn(),

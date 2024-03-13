@@ -7,6 +7,7 @@ import SouthService from '../service/south.service';
 import OIBusService from '../service/oibus.service';
 import NorthService from '../service/north.service';
 import EngineMetricsService from '../service/engine-metrics.service';
+import RegistrationService from '../service/oia/registration.service';
 
 interface KoaRequest<RequestBody> extends Request {
   body?: RequestBody;
@@ -19,6 +20,7 @@ export interface KoaApplication extends Koa {
   southService: SouthService;
   northService: NorthService;
   oibusService: OIBusService;
+  registrationService: RegistrationService;
   engineMetricsService: EngineMetricsService;
   reloadService: ReloadService;
   encryptionService: EncryptionService;

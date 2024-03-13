@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import pino from 'pino';
 
-import { LogSettings, ScopeType } from '../../../../shared/model/engine.model';
+import { LogSettings, RegistrationSettingsDTO, ScopeType } from '../../../../shared/model/engine.model';
 
 import FileCleanupService from './file-cleanup.service';
 import EncryptionService from '../encryption.service';
@@ -31,7 +31,7 @@ class LoggerService {
   /**
    * Run the appropriate pino log transports according to the configuration
    */
-  async start(oibusId: string, oibusName: string, logParameters: LogSettings): Promise<void> {
+  async start(oibusId: string, oibusName: string, logParameters: LogSettings, registration: RegistrationSettingsDTO | null): Promise<void> {
     const targets = [];
     targets.push({ target: 'pino-pretty', options: { colorize: true, singleLine: true }, level: logParameters.console.level });
 
@@ -58,17 +58,41 @@ class LoggerService {
     if (logParameters.loki.address) {
       try {
         targets.push({
-          target: path.join(__dirname, './loki-transport.js'),
+          target: 'pino-loki',
           options: {
-            username: logParameters.loki.username,
-            password: logParameters.loki.password ? await this.encryptionService.decryptText(logParameters.loki.password) : '',
-            address: logParameters.loki.address,
-            tokenAddress: logParameters.loki.tokenAddress,
-            id: oibusId,
-            name: oibusName,
-            interval: logParameters.loki.interval
+            batching: true,
+            interval: logParameters.loki.interval,
+            host: logParameters.loki.address,
+            basicAuth: {
+              username: logParameters.loki.username,
+              password: logParameters.loki.password ? await this.encryptionService.decryptText(logParameters.loki.password) : ''
+            },
+            labels: { name: oibusName }
           },
           level: logParameters.loki.level
+        });
+      } catch (error) {
+        // In case of bad decryption, an error is triggered, so instead of leaving the process, the error will just be
+        // logged in the console and loki won't be activated
+        console.error(error);
+      }
+    }
+
+    if (registration && registration.status === 'REGISTERED') {
+      try {
+        targets.push({
+          target: path.join(__dirname, './oianalytics-transport.js'),
+          options: {
+            interval: logParameters.oia.interval,
+            host: registration.host,
+            token: registration.token ? await this.encryptionService.decryptText(registration.token) : '',
+            useProxy: registration.useProxy,
+            proxyUrl: registration.proxyUrl,
+            proxyUsername: registration.proxyUsername,
+            proxyPassword: registration.proxyPassword ? await this.encryptionService.decryptText(registration.proxyPassword) : '',
+            acceptUnauthorized: registration.acceptUnauthorized
+          },
+          level: logParameters.oia.level
         });
       } catch (error) {
         // In case of bad decryption, an error is triggered, so instead of leaving the process, the error will just be

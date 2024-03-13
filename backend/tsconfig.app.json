@@ -6,7 +6,7 @@
   "files": [
     "src/index.ts",
     "src/service/logger/sqlite-transport.ts",
-    "src/service/logger/loki-transport.ts",
+    "src/service/logger/oianalytics-transport.ts",
   ],
   "include": [
     "src/db/**/*.ts",

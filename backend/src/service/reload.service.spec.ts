@@ -13,7 +13,7 @@ import LoggerService from './logger/logger.service';
 import EngineMetricsService from './engine-metrics.service';
 import NorthService from './north.service';
 import OIBusEngine from '../engine/oibus-engine';
-import { EngineSettingsDTO, LogSettings } from '../../../shared/model/engine.model';
+import { EngineSettingsDTO, LogSettings, RegistrationSettingsDTO } from '../../../shared/model/engine.model';
 import {
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
@@ -29,6 +29,8 @@ import HomeMetricsService from './home-metrics.service';
 import HomeMetricsServiceMock from '../tests/__mocks__/home-metrics-service.mock';
 import ProxyServer from '../web-server/proxy-server';
 import ProxyServerMock from '../tests/__mocks__/proxy-server.mock';
+import OIBusService from './oibus.service';
+import OibusServiceMock from '../tests/__mocks__/oibus-service.mock';
 
 jest.mock('./encryption.service');
 jest.mock('./logger/logger.service');
@@ -43,12 +45,16 @@ const engineMetricsService: EngineMetricsService = new EngineMetricsServiceMock(
 const homeMetrics: HomeMetricsService = new HomeMetricsServiceMock();
 const northService: NorthService = new NorthServiceMock();
 const southService: SouthService = new SouthServiceMock();
+const oibusService: OIBusService = new OibusServiceMock();
 const loggerService: LoggerService = new LoggerService(encryptionService, 'folder');
 
 let service: ReloadService;
 describe('reload service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue({
+      id: 'id1'
+    } as RegistrationSettingsDTO);
     service = new ReloadService(
       loggerService,
       repositoryService,
@@ -58,6 +64,7 @@ describe('reload service', () => {
       southService,
       oibusEngine,
       historyQueryEngine,
+      oibusService,
       proxyServer
     );
   });
@@ -70,6 +77,8 @@ describe('reload service', () => {
     expect(service.northService).toBeDefined();
     expect(service.southService).toBeDefined();
     expect(service.oibusEngine).toBeDefined();
+    expect(service.oibusService).toBeDefined();
+    expect(service.proxyServer).toBeDefined();
   });
 
   it('should update port', async () => {
@@ -100,7 +109,7 @@ describe('reload service', () => {
     service.setWebServerChangeLogger(changeLoggerFn);
     await service.onUpdateOibusSettings(null, newSettings as EngineSettingsDTO);
     expect(loggerService.stop).toHaveBeenCalledTimes(1);
-    expect(loggerService.start).toHaveBeenCalledWith(newSettings.id, newSettings.name, newSettings.logParameters);
+    expect(loggerService.start).toHaveBeenCalledWith(newSettings.id, newSettings.name, newSettings.logParameters, { id: 'id1' });
     expect(changeLoggerFn).toHaveBeenCalledTimes(1);
     expect(engineMetricsService.setLogger).toHaveBeenCalledTimes(1);
   });

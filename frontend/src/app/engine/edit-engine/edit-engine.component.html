@@ -152,19 +152,11 @@
 
                 <div class="row">
                   <!-- Address -->
-                  <div class="col-4">
+                  <div class="col-6">
                     <div class="form-group">
                       <label class="form-label" for="loki-address" translate="engine.logger.loki.address"></label>
                       <input formControlName="address" id="loki-address" class="form-control" />
                       <val-errors controlName="address"></val-errors>
-                    </div>
-                  </div>
-                  <!-- Token address -->
-                  <div class="col-4">
-                    <div class="form-group">
-                      <label class="form-label" for="loki-token-address" translate="engine.logger.loki.token-address"></label>
-                      <input formControlName="tokenAddress" id="loki-token-address" class="form-control" />
-                      <val-errors controlName="tokenAddress"></val-errors>
                     </div>
                   </div>
                 </div>
@@ -197,6 +189,18 @@
                       <select formControlName="level" class="form-select mb-2 mr-sm-2" id="oia-level">
                         <option *ngFor="let level of logLevels" [ngValue]="level">{{ 'enums.log-levels.' + level | translate }}</option>
                       </select>
+                    </div>
+                  </div>
+
+                  <!-- Interval -->
+                  <div class="col-4">
+                    <div class="form-group">
+                      <label class="form-label" for="oia-interval" translate="engine.logger.oia.interval"></label>
+                      <div class="input-group">
+                        <input type="number" formControlName="interval" id="oia-interval" class="form-control" />
+                        <span class="input-group-text" translate="common.unit.s"></span>
+                      </div>
+                      <val-errors controlName="interval"></val-errors>
                     </div>
                   </div>
                 </div>

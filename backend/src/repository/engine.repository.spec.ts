@@ -47,12 +47,12 @@ describe('Empty engine repository', () => {
           level: 'silent',
           interval: 60,
           address: '',
-          tokenAddress: '',
           username: '',
           password: ''
         },
         oia: {
-          level: 'silent'
+          level: 'silent',
+          interval: 10
         }
       }
     };
@@ -62,7 +62,7 @@ describe('Empty engine repository', () => {
     expect(database.prepare).toHaveBeenCalledWith(
       'INSERT INTO engines (id, name, port, proxy_enabled, proxy_port, log_console_level, log_file_level, log_file_max_file_size, ' +
         'log_file_number_of_files, log_database_level, log_database_max_number_of_logs, log_loki_level, ' +
-        'log_loki_interval, log_loki_address, log_loki_token_address, log_loki_username, log_loki_password, log_oia_level) ' +
+        'log_loki_interval, log_loki_address, log_loki_username, log_loki_password, log_oia_level, log_oia_interval) ' +
         'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);'
     );
     expect(run).toHaveBeenCalledWith(
@@ -80,10 +80,10 @@ describe('Empty engine repository', () => {
       command.logParameters.loki.level,
       command.logParameters.loki.interval,
       command.logParameters.loki.address,
-      command.logParameters.loki.tokenAddress,
       command.logParameters.loki.username,
       command.logParameters.loki.password,
-      command.logParameters.oia.level
+      command.logParameters.oia.level,
+      command.logParameters.oia.interval
     );
 
     expect(run).toHaveBeenCalledTimes(2);
@@ -112,12 +112,12 @@ describe('Empty engine repository', () => {
           level: 'silent',
           interval: 60,
           address: '',
-          tokenAddress: '',
           username: '',
           password: ''
         },
         oia: {
-          level: 'silent'
+          level: 'silent',
+          interval: 10
         }
       }
     };
@@ -125,8 +125,8 @@ describe('Empty engine repository', () => {
     expect(database.prepare).toHaveBeenCalledWith(
       'UPDATE engines SET name = ?, port = ?, proxy_enabled = ?, proxy_port = ?, log_console_level = ?, log_file_level = ?, log_file_max_file_size = ?, ' +
         'log_file_number_of_files = ?, log_database_level = ?, log_database_max_number_of_logs = ?, log_loki_level = ?, ' +
-        'log_loki_interval = ?, log_loki_address = ?, log_loki_token_address = ?, log_loki_username = ?, ' +
-        'log_loki_password = ?, log_oia_level = ? WHERE rowid=(SELECT MIN(rowid) FROM engines);'
+        'log_loki_interval = ?, log_loki_address = ?, log_loki_username = ?, ' +
+        'log_loki_password = ?, log_oia_level = ?, log_oia_interval = ? WHERE rowid=(SELECT MIN(rowid) FROM engines);'
     );
     expect(run).toHaveBeenCalledWith(
       command.name,
@@ -142,10 +142,10 @@ describe('Empty engine repository', () => {
       command.logParameters.loki.level,
       command.logParameters.loki.interval,
       command.logParameters.loki.address,
-      command.logParameters.loki.tokenAddress,
       command.logParameters.loki.username,
       command.logParameters.loki.password,
-      command.logParameters.oia.level
+      command.logParameters.oia.level,
+      command.logParameters.oia.interval
     );
   });
 });
@@ -166,10 +166,10 @@ describe('Non-empty Engine repository', () => {
     lokiLogLevel: 'silent',
     lokiLogInterval: 60,
     lokiLogAddress: '',
-    lokiLogTokenAddress: '',
     lokiLogUsername: '',
     lokiLogPassword: '',
-    oiaLogLevel: 'silent'
+    oiaLogLevel: 'silent',
+    oiaLogInterval: 10
   };
   beforeEach(() => {
     jest.clearAllMocks();
@@ -207,12 +207,12 @@ describe('Non-empty Engine repository', () => {
           level: 'silent',
           interval: 60,
           address: '',
-          tokenAddress: '',
           username: '',
           password: ''
         },
         oia: {
-          level: 'silent'
+          level: 'silent',
+          interval: 10
         }
       }
     };
@@ -222,8 +222,8 @@ describe('Non-empty Engine repository', () => {
         'log_file_max_file_size AS fileLogMaxFileSize, log_file_number_of_files AS fileLogNumberOfFiles, ' +
         'log_database_level AS databaseLogLevel, log_database_max_number_of_logs AS databaseLogMaxNumberOfLogs, ' +
         'log_loki_level AS lokiLogLevel, log_loki_interval AS lokiLogInterval, log_loki_address AS lokiLogAddress, ' +
-        'log_loki_token_address AS lokiLogTokenAddress, log_loki_username AS lokiLogUsername, ' +
-        'log_loki_password AS lokiLogPassword, log_oia_level AS oiaLogLevel FROM engines;'
+        'log_loki_username AS lokiLogUsername, log_loki_password AS lokiLogPassword, ' +
+        'log_oia_level AS oiaLogLevel, log_oia_interval AS oiaLogInterval FROM engines;'
     );
     expect(all).toHaveBeenCalledTimes(2);
     expect(engineSettings).toEqual(expectedValue);
@@ -252,12 +252,12 @@ describe('Non-empty Engine repository', () => {
           level: 'silent',
           interval: 60,
           address: '',
-          tokenAddress: '',
           username: '',
           password: ''
         },
         oia: {
-          level: 'silent'
+          level: 'silent',
+          interval: 10
         }
       }
     };

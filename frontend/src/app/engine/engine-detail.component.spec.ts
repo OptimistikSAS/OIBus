@@ -76,8 +76,13 @@ describe('EngineDetailComponent', () => {
       },
       loki: {
         level: 'error'
+      },
+      oia: {
+        level: 'silent'
       }
-    }
+    },
+    proxyEnabled: true,
+    proxyPort: 8888
   } as EngineSettingsDTO;
 
   beforeEach(() => {
@@ -120,10 +125,11 @@ describe('EngineDetailComponent', () => {
     expect(table[1]).toContainText('Port');
     expect(table[1]).toContainText('2223');
     expect(table[2]).toContainText('Log levels');
-    expect(table[2]).toContainText('Console:silent');
-    expect(table[2]).toContainText('File:trace');
-    expect(table[2]).toContainText('Database:silent');
-    expect(table[2]).toContainText('Loki:error');
+    expect(table[2]).toContainText('Console: silent|');
+    expect(table[2]).toContainText('File: trace|');
+    expect(table[2]).toContainText('Database: silent|');
+    expect(table[2]).toContainText('Loki: error');
+    expect(table[3]).toContainText('Proxy serverEnabled on port 8888');
 
     expect(tester.scanModeList).toBeDefined();
     expect(tester.externalSourceList).toBeDefined();

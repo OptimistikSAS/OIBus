@@ -1,6 +1,6 @@
 import path from 'node:path';
 import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
-import { LogSettings } from '../../../../shared/model/engine.model';
+import { LogSettings, RegistrationSettingsDTO } from '../../../../shared/model/engine.model';
 
 import pino from 'pino';
 
@@ -59,12 +59,12 @@ describe('Logger', () => {
         level: 'debug',
         username: 'user',
         password: 'loki-pass',
-        tokenAddress: 'token-url',
         address: 'loki-url',
         interval: 60
       },
       oia: {
-        level: 'error'
+        level: 'error',
+        interval: 60
       }
     };
     service = new LoggerService(encryptionService, 'folder');
@@ -72,6 +72,17 @@ describe('Logger', () => {
 
   it('should be properly initialized', async () => {
     service.createChildLogger = jest.fn();
+    const registration: RegistrationSettingsDTO = {
+      id: 'id',
+      host: 'http://localhost:4200',
+      acceptUnauthorized: false,
+      useProxy: false,
+      proxyUrl: 'http://localhost:9000',
+      proxyUsername: 'username',
+      proxyPassword: 'password',
+      token: 'token',
+      status: 'REGISTERED'
+    } as RegistrationSettingsDTO;
     const expectedTargets = [
       { target: 'pino-pretty', options: { colorize: true, singleLine: true }, level: logSettings.console.level },
       {
@@ -91,21 +102,36 @@ describe('Logger', () => {
         level: logSettings.database.level
       },
       {
-        target: path.join(__dirname, 'loki-transport.js'),
+        target: 'pino-loki',
         options: {
-          username: logSettings.loki.username,
-          password: logSettings.loki.password,
-          tokenAddress: logSettings.loki.tokenAddress,
-          address: logSettings.loki.address,
-          id: oibusId,
-          name: oibusName,
-          interval: logSettings.loki.interval
+          batching: true,
+          interval: logSettings.loki.interval,
+          host: logSettings.loki.address,
+          basicAuth: {
+            username: logSettings.loki.username,
+            password: logSettings.loki.password
+          },
+          labels: { name: oibusName }
         },
         level: logSettings.loki.level
+      },
+      {
+        target: path.join(__dirname, 'oianalytics-transport.js'),
+        options: {
+          interval: logSettings.oia.interval,
+          host: registration.host,
+          token: registration.token,
+          useProxy: registration.useProxy,
+          proxyUrl: registration.proxyUrl,
+          proxyUsername: registration.proxyUsername,
+          proxyPassword: registration.proxyPassword,
+          acceptUnauthorized: registration.acceptUnauthorized
+        },
+        level: logSettings.oia.level
       }
     ];
 
-    await service.start(oibusId, oibusName, logSettings);
+    await service.start(oibusId, oibusName, logSettings, registration);
 
     expect(pino).toHaveBeenCalledTimes(1);
     expect(pino).toHaveBeenCalledWith({
@@ -117,22 +143,39 @@ describe('Logger', () => {
   });
 
   it('should be properly initialized with loki error and standard file names', async () => {
+    const registration: RegistrationSettingsDTO = {
+      id: 'id',
+      status: 'REGISTERED',
+      token: 'token'
+    } as RegistrationSettingsDTO;
     service.createChildLogger = jest.fn();
 
-    jest.spyOn(console, 'error').mockImplementationOnce(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
 
     (encryptionService.decryptText as jest.Mock).mockImplementation(() => {
       throw new Error('decrypt-error');
     });
 
     logSettings.database.maxNumberOfLogs = 0;
-    await service.start(oibusId, oibusName, logSettings);
+    await service.start(oibusId, oibusName, logSettings, registration);
 
-    expect(console.error).toHaveBeenCalledTimes(1);
+    expect(console.error).toHaveBeenCalledTimes(2);
     expect(console.error).toHaveBeenCalledWith(new Error('decrypt-error'));
   });
 
-  it('should be properly initialized without loki password and without sqliteLog', async () => {
+  it('should be properly initialized without loki password, without oia token and without sqliteLog', async () => {
+    const registration: RegistrationSettingsDTO = {
+      id: 'id',
+      host: 'http://localhost:4200',
+      acceptUnauthorized: false,
+      useProxy: true,
+      proxyUrl: 'http://localhost:9000',
+      proxyUsername: 'username',
+      proxyPassword: '',
+      token: '',
+      status: 'REGISTERED'
+    } as RegistrationSettingsDTO;
+
     jest.spyOn(console, 'error').mockImplementationOnce(() => {});
     service.createChildLogger = jest.fn();
 
@@ -149,21 +192,36 @@ describe('Logger', () => {
         level: logSettings.file.level
       },
       {
-        target: path.join(__dirname, 'loki-transport.js'),
+        target: 'pino-loki',
         options: {
-          username: logSettings.loki.username,
-          password: logSettings.loki.password,
-          tokenAddress: logSettings.loki.tokenAddress,
-          address: logSettings.loki.address,
-          id: oibusId,
-          name: oibusName,
-          interval: logSettings.loki.interval
+          batching: true,
+          interval: logSettings.loki.interval,
+          host: logSettings.loki.address,
+          basicAuth: {
+            username: logSettings.loki.username,
+            password: logSettings.loki.password
+          },
+          labels: { name: oibusName }
         },
         level: logSettings.loki.level
+      },
+      {
+        target: path.join(__dirname, 'oianalytics-transport.js'),
+        options: {
+          interval: logSettings.oia.interval,
+          host: registration.host,
+          token: registration.token,
+          useProxy: registration.useProxy,
+          proxyUrl: registration.proxyUrl,
+          proxyUsername: registration.proxyUsername,
+          proxyPassword: registration.proxyPassword,
+          acceptUnauthorized: registration.acceptUnauthorized
+        },
+        level: logSettings.oia.level
       }
     ];
 
-    await service.start(oibusId, oibusName, logSettings);
+    await service.start(oibusId, oibusName, logSettings, registration);
 
     expect(pino).toHaveBeenCalledTimes(1);
     expect(pino).toHaveBeenCalledWith({
@@ -174,7 +232,11 @@ describe('Logger', () => {
     });
   });
 
-  it('should be properly initialized without lokiLog nor sqliteLog', async () => {
+  it('should be properly initialized without lokiLog, nor oianalytics nor sqliteLog', async () => {
+    const registration: RegistrationSettingsDTO = {
+      status: 'NOT_REGISTERED'
+    } as RegistrationSettingsDTO;
+
     jest.spyOn(console, 'error').mockImplementationOnce(() => {});
     service.createChildLogger = jest.fn();
 
@@ -192,7 +254,7 @@ describe('Logger', () => {
       }
     ];
 
-    await service.start(oibusId, oibusName, logSettings);
+    await service.start(oibusId, oibusName, logSettings, registration);
 
     expect(pino).toHaveBeenCalledTimes(1);
     expect(pino).toHaveBeenCalledWith({

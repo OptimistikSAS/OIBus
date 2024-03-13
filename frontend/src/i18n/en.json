@@ -311,10 +311,11 @@
       "name": "Name",
       "port": "Port",
       "log-levels": "Log levels",
-      "console": "Console",
-      "file": "File",
-      "database": "Database",
-      "loki": "Loki"
+      "console": "Console: {{ level }}",
+      "file": "File: {{ level }}",
+      "database": "Database: {{ level }}",
+      "loki": "Loki: {{ level }}",
+      "oia": "OIAnalytics: {{ level }}"
     },
     "proxy-settings": {
       "title": "Proxy server",
@@ -343,17 +344,17 @@
       "loki": {
         "title": "Loki",
         "level": "Loki level",
-        "interval": "Loki Interval",
+        "interval": "Loki interval",
         "address": "Loki url",
         "proxy": "Loki proxy",
         "no-proxy": "No proxy",
-        "token-address": "Loki token url",
         "username": "Loki username",
         "password": "Loki password"
       },
       "oia": {
         "title": "OIAnalytics logs",
-        "level": "OIA level"
+        "level": "OIAnalytics level",
+        "interval": "OIAnalytics interval"
       }
     },
     "monitoring": {
