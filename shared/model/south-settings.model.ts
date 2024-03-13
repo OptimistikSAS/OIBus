@@ -76,6 +76,15 @@ export type SouthOIAnalyticsItemSettingsSerializationType = (typeof SOUTH_O_I_AN
 const SOUTH_O_I_ANALYTICS_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const
 export type SouthOIAnalyticsItemSettingsSerializationDelimiter = (typeof SOUTH_O_I_ANALYTICS_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
 
+const SOUTH_O_L_E_D_B_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const
+export type SouthOLEDBItemSettingsDateTimeFieldsType = (typeof SOUTH_O_L_E_D_B_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
+
+const SOUTH_O_L_E_D_B_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const
+export type SouthOLEDBItemSettingsSerializationType = (typeof SOUTH_O_L_E_D_B_ITEM_SETTINGS_SERIALIZATION_TYPES)[number];
+
+const SOUTH_O_L_E_D_B_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const
+export type SouthOLEDBItemSettingsSerializationDelimiter = (typeof SOUTH_O_L_E_D_B_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
+
 const SOUTH_O_P_C_H_D_A_ITEM_SETTINGS_AGGREGATES = ['raw', 'average', 'minimum', 'maximum'] as const
 export type SouthOPCHDAItemSettingsAggregate = (typeof SOUTH_O_P_C_H_D_A_ITEM_SETTINGS_AGGREGATES)[number];
 
@@ -255,6 +264,15 @@ export interface SouthOIAnalyticsSettings extends BaseSouthSettings {
   specificSettings?: SouthOIAnalyticsSettingsSpecificSettings | null;
 }
 
+export interface SouthOLEDBSettings extends BaseSouthSettings {
+  agentUrl: string;
+  connectionTimeout: number;
+  retryInterval: number;
+  connectionString: string;
+  password: string | null;
+  requestTimeout: number;
+}
+
 export interface SouthOPCHDASettings extends BaseSouthSettings {
   agentUrl: string;
   retryInterval: number;
@@ -316,6 +334,7 @@ export type SouthSettings =
   | SouthMySQLSettings
   | SouthODBCSettings
   | SouthOIAnalyticsSettings
+  | SouthOLEDBSettings
   | SouthOPCHDASettings
   | SouthOPCUASettings
   | SouthOracleSettings
@@ -409,6 +428,24 @@ export interface SouthOIAnalyticsItemSettingsSerialization {
   type: SouthOIAnalyticsItemSettingsSerializationType;
   filename: string;
   delimiter: SouthOIAnalyticsItemSettingsSerializationDelimiter;
+  compression: boolean;
+  outputTimestampFormat: string;
+  outputTimezone: Timezone;
+}
+
+export interface SouthOLEDBItemSettingsDateTimeFields {
+  fieldName: string;
+  useAsReference: boolean;
+  type: SouthOLEDBItemSettingsDateTimeFieldsType;
+  timezone?: Timezone;
+  format?: string;
+  locale?: string;
+}
+
+export interface SouthOLEDBItemSettingsSerialization {
+  type: SouthOLEDBItemSettingsSerializationType;
+  filename: string;
+  delimiter: SouthOLEDBItemSettingsSerializationDelimiter;
   compression: boolean;
   outputTimestampFormat: string;
   outputTimezone: Timezone;
@@ -548,6 +585,12 @@ export interface SouthOIAnalyticsItemSettings extends BaseSouthItemSettings {
   serialization: SouthOIAnalyticsItemSettingsSerialization;
 }
 
+export interface SouthOLEDBItemSettings extends BaseSouthItemSettings {
+  query: string;
+  dateTimeFields: Array<SouthOLEDBItemSettingsDateTimeFields> | null;
+  serialization: SouthOLEDBItemSettingsSerialization;
+}
+
 export interface SouthOPCHDAItemSettings extends BaseSouthItemSettings {
   nodeId: string;
   aggregate: SouthOPCHDAItemSettingsAggregate;
@@ -596,6 +639,7 @@ export type SouthItemSettings =
   | SouthMySQLItemSettings
   | SouthODBCItemSettings
   | SouthOIAnalyticsItemSettings
+  | SouthOLEDBItemSettings
   | SouthOPCHDAItemSettings
   | SouthOPCUAItemSettings
   | SouthOracleItemSettings
