@@ -4,7 +4,7 @@ import AbstractController from './abstract.controller';
 
 export default class RegistrationController extends AbstractController {
   async getRegistrationSettings(ctx: KoaContext<void, RegistrationSettingsDTO>): Promise<RegistrationSettingsDTO> {
-    const registrationSettings = ctx.app.oibusService.getRegistrationSettings();
+    const registrationSettings = ctx.app.repositoryService.registrationRepository.getRegistrationSettings();
     if (!registrationSettings) {
       return ctx.notFound();
     }
@@ -17,15 +17,15 @@ export default class RegistrationController extends AbstractController {
     try {
       await this.validate(ctx.request.body);
       const command = ctx.request.body as RegistrationSettingsCommandDTO;
-      await ctx.app.oibusService.updateRegistrationSettings(command);
+      await ctx.app.registrationService.updateRegistrationSettings(command);
       return ctx.noContent();
     } catch (error: any) {
       ctx.badRequest(error.message);
     }
   }
 
-  unregister(ctx: KoaContext<any, any>) {
-    ctx.app.oibusService.unregister();
+  async unregister(ctx: KoaContext<any, any>) {
+    await ctx.app.registrationService.onUnregister();
     return ctx.noContent();
   }
 }

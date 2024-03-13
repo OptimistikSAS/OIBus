@@ -7,6 +7,7 @@ import OIBusService from '../../service/oibus.service';
 import NorthService from '../../service/north.service';
 import SouthService from '../../service/south.service';
 import EngineMetricsService from '../../service/engine-metrics.service';
+import RegistrationService from '../../service/oia/registration.service';
 
 /**
  * OIBus middleware for Koa
@@ -15,6 +16,7 @@ const oibus = (
   id: string,
   repositoryService: RepositoryService,
   reloadService: ReloadService,
+  registrationService: RegistrationService,
   encryptionService: EncryptionService,
   southService: SouthService,
   northService: NorthService,
@@ -27,6 +29,7 @@ const oibus = (
     ctx.app.id = id;
     ctx.app.repositoryService = repositoryService;
     ctx.app.reloadService = reloadService;
+    ctx.app.registrationService = registrationService;
     ctx.app.encryptionService = encryptionService;
     ctx.app.southService = southService;
     ctx.app.northService = northService;

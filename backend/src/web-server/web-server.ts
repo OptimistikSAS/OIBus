@@ -22,6 +22,7 @@ import SouthService from '../service/south.service';
 import OIBusService from '../service/oibus.service';
 import NorthService from '../service/north.service';
 import EngineMetricsService from '../service/engine-metrics.service';
+import RegistrationService from '../service/oia/registration.service';
 
 /**
  * Class Server - Provides the web client and establish socket connections.
@@ -38,6 +39,7 @@ export default class WebServer {
     port: number,
     private readonly encryptionService: EncryptionService,
     private readonly reloadService: ReloadService,
+    private readonly registrationService: RegistrationService,
     private readonly repositoryService: RepositoryService,
     private readonly southService: SouthService,
     private readonly northService: NorthService,
@@ -88,6 +90,7 @@ export default class WebServer {
         this._id,
         this.repositoryService,
         this.reloadService,
+        this.registrationService,
         this.encryptionService,
         this.southService,
         this.northService,

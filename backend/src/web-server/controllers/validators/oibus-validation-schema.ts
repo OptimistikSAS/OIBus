@@ -51,12 +51,12 @@ const engineSchema: Joi.ObjectSchema = Joi.object({
       level: Joi.string().required().allow('silent', 'error', 'warning', 'info', 'debug', 'trace'),
       interval: Joi.number().integer().required().min(10),
       address: Joi.string().required().allow(''),
-      tokenAddress: Joi.string().required().allow(''),
       username: Joi.string().required().allow(''),
       password: Joi.string().required().allow('')
     }),
     oia: Joi.object({
-      level: Joi.string().required().allow('silent', 'error', 'warning', 'info', 'debug', 'trace')
+      level: Joi.string().required().allow('silent', 'error', 'warning', 'info', 'debug', 'trace'),
+      interval: Joi.number().integer().required().min(10)
     })
   })
 });

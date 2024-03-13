@@ -1,13 +1,13 @@
 import fs from 'node:fs/promises';
-import { delay, downloadFile, getNetworkSettingsFromRegistration, getOIBusInfo, unzip } from './utils';
-import RepositoryService from './repository.service';
-import EncryptionService from './encryption.service';
+import { delay, downloadFile, getNetworkSettingsFromRegistration, getOIBusInfo, unzip } from '../utils';
+import RepositoryService from '../repository.service';
+import EncryptionService from '../encryption.service';
 import pino from 'pino';
-import { OIBusCommandDTO } from '../../../shared/model/command.model';
+import { OIBusCommandDTO } from '../../../../shared/model/command.model';
 import { EventEmitter } from 'node:events';
-import DeferredPromise from './deferred-promise';
+import DeferredPromise from '../deferred-promise';
 import { DateTime } from 'luxon';
-import { RegistrationSettingsDTO } from '../../../shared/model/engine.model';
+import { RegistrationSettingsDTO } from '../../../../shared/model/engine.model';
 import path from 'node:path';
 
 const DOWNLOAD_TIMEOUT = 600_000;
@@ -19,7 +19,6 @@ export default class CommandService {
   private runProgress$: DeferredPromise | null = null;
 
   constructor(
-    private oibusId: string,
     private repositoryService: RepositoryService,
     private encryptionService: EncryptionService,
     private logger: pino.Logger,
@@ -135,5 +134,9 @@ export default class CommandService {
       await this.runProgress$.promise;
     }
     this.logger.debug(`Command service stopped`);
+  }
+
+  setLogger(logger: pino.Logger) {
+    this.logger = logger;
   }
 }

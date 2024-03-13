@@ -39,20 +39,20 @@ describe('Registration controller', () => {
   });
 
   it('getRegistrationSettings() should return registration settings', async () => {
-    ctx.app.oibusService.getRegistrationSettings.mockReturnValue(registrationSettings);
+    ctx.app.repositoryService.registrationRepository.getRegistrationSettings.mockReturnValue(registrationSettings);
 
     await registrationController.getRegistrationSettings(ctx);
 
-    expect(ctx.app.oibusService.getRegistrationSettings).toHaveBeenCalled();
+    expect(ctx.app.repositoryService.registrationRepository.getRegistrationSettings).toHaveBeenCalled();
     expect(ctx.ok).toHaveBeenCalledWith(registrationSettings);
   });
 
   it('getRegistrationSettings() should return not found', async () => {
-    ctx.app.oibusService.getRegistrationSettings.mockReturnValue(null);
+    ctx.app.repositoryService.registrationRepository.getRegistrationSettings.mockReturnValue(null);
 
     await registrationController.getRegistrationSettings(ctx);
 
-    expect(ctx.app.oibusService.getRegistrationSettings).toHaveBeenCalled();
+    expect(ctx.app.repositoryService.registrationRepository.getRegistrationSettings).toHaveBeenCalled();
     expect(ctx.notFound).toHaveBeenCalledWith();
   });
 
@@ -62,7 +62,7 @@ describe('Registration controller', () => {
     await registrationController.updateRegistrationSettings(ctx);
 
     expect(validator.validate).toHaveBeenCalledWith(schema, registrationCommand);
-    expect(ctx.app.oibusService.updateRegistrationSettings).toHaveBeenCalledWith(registrationCommand);
+    expect(ctx.app.registrationService.updateRegistrationSettings).toHaveBeenCalledWith(registrationCommand);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
@@ -76,14 +76,14 @@ describe('Registration controller', () => {
     await registrationController.updateRegistrationSettings(ctx);
 
     expect(validator.validate).toHaveBeenCalledWith(schema, registrationCommand);
-    expect(ctx.app.oibusService.updateRegistrationSettings).not.toHaveBeenCalledWith();
+    expect(ctx.app.registrationService.updateRegistrationSettings).not.toHaveBeenCalledWith();
     expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
   });
 
   it('unregister() should call unregister from oibus service', async () => {
     await registrationController.unregister(ctx);
 
-    expect(ctx.app.oibusService.unregister).toHaveBeenCalledTimes(1);
+    expect(ctx.app.registrationService.onUnregister).toHaveBeenCalledTimes(1);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 });

@@ -1,4 +1,5 @@
 import { LogLevel, ScopeType } from './engine.model';
+import { Instant } from './types';
 
 /**
  * DTO used for Log entries
@@ -22,7 +23,7 @@ export interface PinoLog {
   scopeType: ScopeType;
   scopeId: string | null;
   scopeName: string | null;
-  time: number;
+  time: Instant;
   level: string;
 }
 

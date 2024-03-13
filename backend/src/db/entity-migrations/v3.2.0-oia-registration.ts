@@ -88,11 +88,10 @@ interface NewSouthOIAnalyticsSettings {
 export async function up(knex: Knex): Promise<void> {
   await createRegistrationTable(knex);
   await createCommandTable(knex);
-  await addProxyServerSettings(knex);
+  await updateEngineSettings(knex);
   await updateNorthOIAnalyticsConnectors(knex);
   await updateSouthOIAnalyticsConnectors(knex);
   await updateOIAnalyticsHistoryQueries(knex);
-  await updateEngineLogSettings(knex);
 }
 
 function createDefaultEntityFields(table: CreateTableBuilder): void {
@@ -100,10 +99,13 @@ function createDefaultEntityFields(table: CreateTableBuilder): void {
   table.timestamps(false, true);
 }
 
-async function addProxyServerSettings(knex: Knex) {
+async function updateEngineSettings(knex: Knex) {
   await knex.schema.alterTable(ENGINES_TABLE, table => {
     table.boolean('proxy_enabled').defaultTo(false);
     table.integer('proxy_port').defaultTo(9000);
+    table.enum('log_oia_level', LOG_LEVELS).notNullable().defaultTo('silent');
+    table.integer('log_oia_interval').notNullable().defaultTo(10);
+    table.dropColumn('log_loki_token_address');
   });
 }
 
@@ -265,13 +267,6 @@ async function updateOIAnalyticsHistoryQueries(knex: Knex): Promise<void> {
       .update({ south_settings: JSON.stringify(newSettings) })
       .where('id', id);
   }
-}
-
-async function updateEngineLogSettings(knex: Knex): Promise<void> {
-  await knex.schema.table(ENGINES_TABLE, table => {
-    table.enum('log_oia_level', LOG_LEVELS).notNullable().defaultTo('silent');
-    // TODO: simplify pino-loki
-  });
 }
 
 export async function down(knex: Knex): Promise<void> {

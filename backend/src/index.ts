@@ -15,7 +15,8 @@ import HistoryQueryService from './service/history-query.service';
 import OIBusService from './service/oibus.service';
 import { migrateCrypto, migrateEntities, migrateLogsAndMetrics, migrateSouthCache } from './db/migration-service';
 import HomeMetricsService from './service/home-metrics.service';
-import CommandService from './service/command.service';
+import CommandService from './service/oia/command.service';
+import RegistrationService from './service/oia/registration.service';
 import ProxyServer from './web-server/proxy-server';
 
 const CONFIG_DATABASE = 'oibus.db';
@@ -77,7 +78,12 @@ const LOG_DB_NAME = 'logs.db';
 
   await createFolder(LOG_FOLDER_NAME);
   const loggerService = new LoggerService(encryptionService, path.resolve(LOG_FOLDER_NAME));
-  await loggerService.start(oibusSettings.id, oibusSettings.name, oibusSettings.logParameters);
+  await loggerService.start(
+    oibusSettings.id,
+    oibusSettings.name,
+    oibusSettings.logParameters,
+    repositoryService.registrationRepository.getRegistrationSettings()
+  );
 
   const northService = new NorthService(encryptionService, repositoryService);
   const southService = new SouthService(encryptionService, repositoryService);
@@ -101,17 +107,10 @@ const LOG_DB_NAME = 'logs.db';
     loggerService.logger!
   );
 
-  const commandService = new CommandService(oibusSettings.id, repositoryService, encryptionService, loggerService.logger!, binaryFolder);
+  const commandService = new CommandService(repositoryService, encryptionService, loggerService.logger!, binaryFolder);
   commandService.start();
 
-  const oibusService = new OIBusService(
-    engine,
-    historyQueryEngine,
-    repositoryService,
-    encryptionService,
-    commandService,
-    loggerService.logger!
-  );
+  const oibusService = new OIBusService(engine, historyQueryEngine);
 
   await engine.start();
   await historyQueryEngine.start();
@@ -138,13 +137,24 @@ const LOG_DB_NAME = 'logs.db';
     southService,
     engine,
     historyQueryEngine,
+    oibusService,
     proxyServer
   );
+
+  const registrationService = new RegistrationService(
+    repositoryService,
+    encryptionService,
+    commandService,
+    reloadService,
+    loggerService.logger!
+  );
+  registrationService.start();
   const server = new WebServer(
     oibusSettings.id,
     oibusSettings.port,
     encryptionService,
     reloadService,
+    registrationService,
     repositoryService,
     southService,
     northService,
@@ -164,6 +174,7 @@ const LOG_DB_NAME = 'logs.db';
     await commandService.stop();
     await proxyServer.stop();
     await server.stop();
+    registrationService.stop();
     loggerService.stop();
     console.info('OIBus stopped');
     stopping = false;

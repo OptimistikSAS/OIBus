@@ -30,12 +30,13 @@ const dataProviders: DataProvider[] = [
         console: null,
         file: null,
         database: null,
-        loki: null
+        loki: null,
+        oia: null
       }
     },
     isValid: false,
     errorMessage:
-      '"logParameters.console" must be of type object. "logParameters.file" must be of type object. "logParameters.database" must be of type object. "logParameters.loki" must be of type object'
+      '"logParameters.console" must be of type object. "logParameters.file" must be of type object. "logParameters.database" must be of type object. "logParameters.loki" must be of type object. "logParameters.oia" must be of type object'
   },
   {
     dto: {
@@ -60,15 +61,18 @@ const dataProviders: DataProvider[] = [
           level: null,
           interval: null,
           address: null,
-          tokenAddress: null,
           username: null,
           password: null
+        },
+        oia: {
+          level: null,
+          interval: null
         }
       }
     },
     isValid: false,
     errorMessage:
-      '"name" must be a string. "port" must be a number. "proxyEnabled" must be a boolean. "proxyPort" must be a number. "logParameters.console.level" must be a string. "logParameters.file.level" must be a string. "logParameters.file.maxFileSize" must be a number. "logParameters.file.numberOfFiles" must be a number. "logParameters.database.level" must be a string. "logParameters.database.maxNumberOfLogs" must be a number. "logParameters.loki.level" must be a string. "logParameters.loki.interval" must be a number. "logParameters.loki.address" must be a string. "logParameters.loki.tokenAddress" must be a string. "logParameters.loki.username" must be a string. "logParameters.loki.password" must be a string'
+      '"name" must be a string. "port" must be a number. "proxyEnabled" must be a boolean. "proxyPort" must be a number. "logParameters.console.level" must be a string. "logParameters.file.level" must be a string. "logParameters.file.maxFileSize" must be a number. "logParameters.file.numberOfFiles" must be a number. "logParameters.database.level" must be a string. "logParameters.database.maxNumberOfLogs" must be a number. "logParameters.loki.level" must be a string. "logParameters.loki.interval" must be a number. "logParameters.loki.address" must be a string. "logParameters.loki.username" must be a string. "logParameters.loki.password" must be a string. "logParameters.oia.level" must be a string. "logParameters.oia.interval" must be a number'
   },
   {
     dto: {
@@ -93,15 +97,18 @@ const dataProviders: DataProvider[] = [
           level: '',
           interval: '',
           address: '',
-          tokenAddress: '',
           username: '',
           password: ''
+        },
+        oia: {
+          level: '',
+          interval: ''
         }
       }
     },
     isValid: false,
     errorMessage:
-      '"name" is not allowed to be empty. "port" must be a number. "proxyEnabled" must be a boolean. "proxyPort" must be a number. "logParameters.console.level" is not allowed to be empty. "logParameters.file.level" is not allowed to be empty. "logParameters.file.maxFileSize" must be a number. "logParameters.file.numberOfFiles" must be a number. "logParameters.database.level" is not allowed to be empty. "logParameters.database.maxNumberOfLogs" must be a number. "logParameters.loki.level" is not allowed to be empty. "logParameters.loki.interval" must be a number'
+      '"name" is not allowed to be empty. "port" must be a number. "proxyEnabled" must be a boolean. "proxyPort" must be a number. "logParameters.console.level" is not allowed to be empty. "logParameters.file.level" is not allowed to be empty. "logParameters.file.maxFileSize" must be a number. "logParameters.file.numberOfFiles" must be a number. "logParameters.database.level" is not allowed to be empty. "logParameters.database.maxNumberOfLogs" must be a number. "logParameters.loki.level" is not allowed to be empty. "logParameters.loki.interval" must be a number. "logParameters.oia.level" is not allowed to be empty. "logParameters.oia.interval" must be a number'
   },
   {
     dto: {
@@ -126,9 +133,12 @@ const dataProviders: DataProvider[] = [
           level: 'silent',
           interval: 60,
           address: '',
-          tokenAddress: '',
           username: '',
           password: ''
+        },
+        oia: {
+          level: 'silent',
+          interval: 60
         }
       }
     },

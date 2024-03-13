@@ -43,12 +43,12 @@ export class EditEngineComponent implements OnInit {
         level: ['silent' as LogLevel, Validators.required],
         interval: [null as number | null, [Validators.required, Validators.min(10)]],
         address: ['', Validators.pattern(/http.*/)],
-        tokenAddress: ['', Validators.pattern(/http.*/)],
         username: null as string | null,
         password: null as string | null
       }),
       oia: this.fb.group({
-        level: ['silent' as LogLevel, Validators.required]
+        level: ['silent' as LogLevel, Validators.required],
+        interval: [null as number | null, [Validators.required, Validators.min(10)]]
       })
     })
   });
@@ -96,12 +96,12 @@ export class EditEngineComponent implements OnInit {
           level: formValue.logParameters!.loki!.level!,
           interval: formValue.logParameters!.loki!.interval!,
           address: formValue.logParameters!.loki!.address!,
-          tokenAddress: formValue.logParameters!.loki!.tokenAddress!,
           username: formValue.logParameters!.loki!.username!,
           password: formValue.logParameters!.loki!.password!
         },
         oia: {
-          level: formValue.logParameters!.oia!.level!
+          level: formValue.logParameters!.oia!.level!,
+          interval: formValue.logParameters!.oia!.interval!
         }
       }
     };

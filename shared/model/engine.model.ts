@@ -42,7 +42,6 @@ interface DatabaseLogSettings extends BaseLogSettings {
 interface LokiLogSettings extends BaseLogSettings {
   interval: number;
   address: string;
-  tokenAddress: string;
   username: string;
   password: string;
 }
@@ -50,7 +49,9 @@ interface LokiLogSettings extends BaseLogSettings {
 /**
  * Settings to write logs into a remote loki instance
  */
-interface OiaLogSettings extends BaseLogSettings {}
+interface OiaLogSettings extends BaseLogSettings {
+  interval: number;
+}
 
 /**
  * Logs settings used in the engine

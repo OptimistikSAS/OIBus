@@ -5,6 +5,7 @@ import NorthServiceMock from './north-service.mock';
 import SouthServiceMock from './south-service.mock';
 import OIBusServiceMock from './oibus-service.mock';
 import EngineMetricsServiceMock from './engine-metrics-service.mock';
+import RegistrationServiceMock from './registration-service.mock';
 
 /**
  * Create a mock object for Koa Context
@@ -17,6 +18,7 @@ export default jest.fn().mockImplementation(() => ({
     northService: new NorthServiceMock(),
     southService: new SouthServiceMock(),
     oibusService: new OIBusServiceMock(),
+    registrationService: new RegistrationServiceMock(),
     engineMetricsService: new EngineMetricsServiceMock(),
     logger: {
       trace: jest.fn(),
