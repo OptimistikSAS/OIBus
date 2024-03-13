@@ -329,6 +329,8 @@ function buildSouthInterfaceName(connectorId: string, itemInterface: boolean): s
       return `SouthMySQL${prefix}Settings`;
     case 'odbc':
       return `SouthODBC${prefix}Settings`;
+    case 'oledb':
+      return `SouthOLEDB${prefix}Settings`;
     case 'oianalytics':
       return `SouthOIAnalytics${prefix}Settings`;
     case 'opc-hda':
