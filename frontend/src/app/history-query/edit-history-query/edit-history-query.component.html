@@ -8,7 +8,7 @@
           translate="history-query.edit-title"
           [translateParams]="{ name: historyQuery.name }"
         ></h1>
-        <button class="ms-2 btn btn-cancel" translate="common.back" id="cancel-edit-button" oibBackButton></button>
+        <button class="ms-2 btn btn-cancel-edit" translate="common.back" id="cancel-edit-button" oibBackButton></button>
       </div>
 
       <form [formGroup]="historyQueryForm" (ngSubmit)="save()" id="history-query-form" class="mt-3">
@@ -202,9 +202,13 @@
                   id="north-specific-settings-title"
                 ></span>
                 <div>
-                  <button type="button" class="btn btn-primary btn-sm" id="test-connection-north" (click)="test('north')">
-                    <span translate="north.test-connection.button"></span>
-                  </button>
+                  <button
+                    translate="north.test-connection.button"
+                    type="button"
+                    class="ms-3 btn btn-secondary btn-sm oib-box-btn"
+                    id="test-connection-north"
+                    (click)="test('north')"
+                  ></button>
                   <oib-help [url]="'https://oibus.optimistik.com/docs/guide/north-connectors/' + northType"></oib-help>
                 </div>
               </div>
@@ -229,9 +233,13 @@
                   id="south-specific-settings-title"
                 ></span>
                 <div>
-                  <button type="button" class="btn btn-primary btn-sm" id="test-connection-south" (click)="test('south')">
-                    <span translate="south.test-connection.button"></span>
-                  </button>
+                  <button
+                    translate="south.test-connection.button"
+                    type="button"
+                    class="ms-3 btn btn-secondary btn-sm oib-box-btn"
+                    id="test-connection-south"
+                    (click)="test('south')"
+                  ></button>
                   <oib-help [url]="'https://oibus.optimistik.com/docs/guide/south-connectors/' + southType"></oib-help>
                 </div>
               </div>
@@ -246,7 +254,7 @@
             ></oib-form>
           </oib-box>
 
-          <div *ngIf="mode === 'edit' && historyQuery" id="actions" class="mx-2 d-flex justify-content-end">
+          <div *ngIf="mode === 'edit' && historyQuery" id="actions" class="mx-3 d-flex justify-content-end">
             <div class="btn-group">
               <oib-save-button [insideOfGroup]="false" form="history-query-form" [state]="state"></oib-save-button>
             </div>

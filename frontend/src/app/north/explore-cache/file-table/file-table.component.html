@@ -13,19 +13,23 @@
           /><label></label>
         </th>
         <th>
-          <button class="py-1" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('modificationDate')">
+          <button
+            class="py-1 px-0"
+            style="background: none; border: none; font-weight: bold"
+            (click)="toggleColumnSort('modificationDate')"
+          >
             <span translate="north.cache-settings.file-date" class="me-2"></span>
             <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.modificationDate] }}"></span>
           </button>
         </th>
         <th>
-          <button class="py-1" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('filename')">
+          <button class="py-1 px-0" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('filename')">
             <span translate="north.cache-settings.filename" class="me-2"></span>
             <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.filename] }}"></span>
           </button>
         </th>
         <th>
-          <button class="py-1" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('size')">
+          <button class="py-1 px-0" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('size')">
             <span translate="north.cache-settings.file-size" class="me-2"></span>
             <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.size] }}"></span>
           </button>

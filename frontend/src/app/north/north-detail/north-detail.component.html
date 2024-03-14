@@ -40,9 +40,13 @@
               <span translate="north.specific-settings" [translateParams]="{ type: manifest.name }" id="specific-settings-title"></span>
             </div>
             <div>
-              <button type="button" class="btn btn-primary btn-sm" id="test-connection" (click)="testConnection()">
-                <span translate="north.test-connection.button"></span>
-              </button>
+              <button
+                translate="north.test-connection.button"
+                type="button"
+                class="btn btn-secondary btn-sm oib-box-btn ms-3"
+                id="test-connection"
+                (click)="testConnection()"
+              ></button>
             </div>
           </div>
         </ng-template>
@@ -65,10 +69,8 @@
         <ng-template oibBoxTitle>
           <div class="d-flex justify-content-between align-items-center">
             <span translate="north.cache-settings.title"></span>
-            <a
-              class="ms-3 btn btn-primary btn-sm oib-box-btn"
-              [routerLink]="['/north', northConnector.id, 'cache']"
-              translate="north.cache-settings.explore-cache"
+            <a class="ms-3 btn btn-secondary btn-sm oib-box-btn" [routerLink]="['/north', northConnector.id, 'cache']"
+              ><span class="fa fa-search"></span><span class="mx-1" translate="north.cache-settings.explore-cache"></span
             ></a>
           </div>
         </ng-template>

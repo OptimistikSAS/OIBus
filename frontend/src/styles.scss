@@ -204,6 +204,9 @@ img.oib-image-header {
     th {
       padding-left: 1rem;
       border-style: none;
+        .btn {
+          padding-right: 0;
+        }
     }
     // first case of the first line
     th:first-child {
@@ -228,7 +231,6 @@ img.oib-image-header {
       vertical-align: middle;
       padding-left: 1rem;
       border-bottom-width: 0;
-      max-width: 0;
       text-overflow: clip;
       overflow: hidden;
       white-space: nowrap;
@@ -284,17 +286,63 @@ img.oib-image-header {
   border-top-left-radius: 1rem;
   border-top-right-radius: 1rem;
   // style in oib-box-title of primary button
-  .btn-primary {
+  .btn-primary, .btn-secondary, .btn-danger {
     margin-right: 0.75rem;
   }
-  // style in oib-box-title of link button
-  .btn-link {
+  .btn-primary, .btn-primary:focus {
+    border-radius: 0.5rem;
     color: $white;
-    padding: 0 0.75rem;
-    // style in oib-box-title of link button when hover
-    &:hover {
-      color: $yellow;
+    background-color: transparent;
+    border: none;
+    outline: 2px solid $electricBlue;
+    outline-offset: -2px;
+      &:hover {
+        border-radius: 0.5rem;
+        background-color: $electricBlue;
+        color: $white;
     }
+  }
+  .btn-secondary, .btn-secondary:focus {
+    border-radius: 0.5rem;
+    color: $white;
+    background-color: transparent;
+    border: none;
+    outline: 2px solid $yellow;
+    outline-offset: -2px;
+      &:hover, &:active {
+        border-radius: 0.5rem;
+        background-color: $yellow;
+        color: $darkGrey;
+    }
+  }
+  .btn-danger, .btn-danger:focus {
+    border-radius: 0.5rem;
+    color: $white;
+    background-color: transparent;
+    border: none;
+    outline: 2px solid $red;
+    outline-offset: -2px;
+      &:hover {
+        border-radius: 0.5rem;
+        background-color: $red;
+        color: $white;
+    }
+  }
+  .btn:disabled, .btn.disabled, fieldset:disabled .btn {
+    color: var(--bs-btn-disabled-color);
+    pointer-events: none;
+    outline: 2px solid $red;
+    outline-offset: -2px;
+    opacity: 0.4;
+  }
+}
+// style in oib-box-title of link button
+.btn-link {
+  color: $white;
+  padding: 0 0.75rem;
+  // style in oib-box-title of link button when hover
+  &:hover {
+    color: $yellow;
   }
 }
 
@@ -325,33 +373,54 @@ img.oib-image-header {
   &:hover {
     border-radius: 0.5rem;
     border: none;
-    background-color: $yellow !important;
+    background-color: $yellow;
     color: $darkGrey;
   }
 }
+
+// override of some bootstrap styles to better fit Optimistik branding
+.btn-secondary {
+  border-radius: 0.5rem;
+  color: $white;
+  background-color: $yellow;
+  border: none;
+    &:hover, &:active {
+      border-radius: 0.5rem;
+      background-color: $blue;
+      color: $darkGrey;
+  }
+}
+
 // override of some bootstrap styles to better fit Optimistik branding
 .btn-cancel {
-  @extend .btn-primary;
-  background-color: $blue !important;
-
+  border-radius: 0.5rem;
+  border: none;
+  color: $white;
+  background-color: $blue;
   &:hover {
     background-color: $yellow;
   }
 }
+.btn-cancel-edit {
+  height: 27px;
+  border-radius: 0.5rem;
+  border: none;
+  color: $white;
+  background-color: $blue;
+    &:hover {
+      background-color: $yellow;
+  }
+}
 // override of some bootstrap styles to better fit Optimistik branding
 .btn-danger {
-  @extend .btn-primary;
+  border-radius: 0.5rem;
+  border: none;
+  color: $white;
   background-color: $red;
 }
 
-.btn-outline-secondary {
-  border: 1px $blue solid;
-  color: $blue;
-  &:hover {
-    background-color: $blue;
-    color: white;
-    border: 1px $blue solid;
-  }
+btn.disable {
+  background-color: $blue;
 }
 
 // margin for better readability
@@ -610,7 +679,7 @@ val-errors > div {
   border-radius: 1rem;
   //background-color: $lightGrey;
   border: solid $lightGrey;
-    padding-bottom: 0.5em;
+    padding-bottom: 1em;
   .box {
     margin-top: -2px;
     margin-right: -2px;

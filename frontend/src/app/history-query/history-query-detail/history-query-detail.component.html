@@ -116,9 +116,13 @@
               [translateParams]="{ type: northManifest.name }"
               id="north-specific-settings-title"
             ></span>
-            <button type="button" class="btn btn-primary btn-sm" id="test-connection-north" (click)="test('north')">
-              <span translate="north.test-connection.button"></span>
-            </button>
+            <button
+              translate="north.test-connection.button"
+              type="button"
+              class="ms-3 btn btn-secondary btn-sm oib-box-btn"
+              id="test-connection-north"
+              (click)="test('north')"
+            ></button>
           </div>
         </ng-template>
         <table class="table table-sm table-hover oib-table">
@@ -140,9 +144,13 @@
               [translateParams]="{ type: southManifest.name }"
               id="south-specific-settings-title"
             ></span>
-            <button type="button" class="btn btn-primary btn-sm" id="test-connection-south" (click)="test('south')">
-              <span translate="south.test-connection.button"></span>
-            </button>
+            <button
+              translate="south.test-connection.button"
+              type="button"
+              class="ms-3 btn btn-secondary btn-sm oib-box-btn"
+              id="test-connection-south"
+              (click)="test('south')"
+            ></button>
           </div>
         </ng-template>
         <table class="table table-sm table-hover oib-table">
