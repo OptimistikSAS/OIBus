@@ -40,9 +40,13 @@
               <span translate="south.specific-settings" [translateParams]="{ type: manifest.name }" id="specific-settings-title"></span>
             </div>
             <div>
-              <button type="button" class="btn btn-primary btn-sm" id="test-connection" (click)="testConnection()">
-                <span translate="south.test-connection.button"></span>
-              </button>
+              <button
+                translate="south.test-connection.button"
+                type="button"
+                class="btn btn-secondary btn-sm oib-box-btn ms-3"
+                id="test-connection"
+                (click)="testConnection()"
+              ></button>
             </div>
           </div>
         </ng-template>

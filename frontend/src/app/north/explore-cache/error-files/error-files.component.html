@@ -11,14 +11,14 @@
       <div *ngIf="errorFiles.length !== 0">
         <button
           type="button"
-          class="btn btn-primary btn-sm oib-box-btn me-1"
+          class="btn btn-secondary btn-sm oib-box-btn ms-3"
           (click)="retryErrorFiles()"
           translate="north.cache-settings.retry-selected-files"
           id="retry-selected-files"
         ></button>
         <button
           type="button"
-          class="btn btn-primary btn-sm oib-box-btn"
+          class="btn btn-danger btn-sm oib-box-btn"
           (click)="removeErrorFiles()"
           translate="north.cache-settings.remove-selected-files"
           id="remove-selected-files"

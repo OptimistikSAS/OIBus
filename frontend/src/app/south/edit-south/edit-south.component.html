@@ -8,7 +8,7 @@
           [translate]="'south.edit-title'"
           [translateParams]="{ name: southConnector.name }"
         ></h1>
-        <button class="ms-2 btn btn-cancel" translate="common.back" id="cancel-edit-button" oibBackButton></button>
+        <button class="ms-2 btn btn-cancel-edit" translate="common.back" id="cancel-edit-button" oibBackButton></button>
       </div>
 
       <form [formGroup]="southForm" (ngSubmit)="submit('save')" id="south-form" class="mt-3">
@@ -113,12 +113,11 @@
                 <div>
                   <button
                     type="button"
-                    class="btn btn-primary btn-sm"
+                    class="btn btn-secondary btn-sm oib-box-btn ms-3"
                     id="test-connection"
                     (click)="southForm.markAllAsTouched(); submit('test')"
-                  >
-                    <span translate="south.test-connection.button"></span>
-                  </button>
+                    translate="south.test-connection.button"
+                  ></button>
                   <oib-help [url]="'https://oibus.optimistik.com/docs/guide/south-connectors/' + southType"></oib-help>
                 </div>
               </div>
@@ -133,7 +132,7 @@
             ></oib-form>
           </oib-box>
 
-          <div *ngIf="mode === 'edit' && southConnector" id="actions" class="mx-2 d-flex justify-content-end">
+          <div *ngIf="mode === 'edit' && southConnector" id="actions" class="mx-3 d-flex justify-content-end">
             <div class="btn-group">
               <oib-save-button [insideOfGroup]="false" form="south-form" [state]="state"></oib-save-button>
             </div>
