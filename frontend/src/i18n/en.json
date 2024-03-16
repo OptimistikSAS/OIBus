@@ -12,6 +12,8 @@
     "enabled": "Enabled",
     "disabled": "Disabled",
     "colon-separator": ": ",
+    "forbidden": "You don't have the access rights for this entity.\n{{ url }}",
+    "not-found": "It looks like this entity does not exist.\n{{ url }}",
     "confirmation-modal-title": "Confirmation",
     "date-hour-format": "yyyy-MM-dd HH:mm",
     "validation-errors": {
