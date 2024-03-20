@@ -1,4 +1,4 @@
-<div class="oib-box-title align-items-center ps-2 py-1 d-flex">
+<div class="oib-box-title align-items-center d-flex">
   <span>
     <b>{{ label }}</b>
   </span>
@@ -12,7 +12,7 @@
 </div>
 <div>
   <div class="component-drop-list" [class.empty]="elementsIncludingNew.length === 0">
-    <div *ngIf="elementsIncludingNew.length === 0" class="p-2 oib-grey-container" translate="oib-array.no-elements"></div>
+    <div *ngIf="elementsIncludingNew.length === 0" class="oib-grey-container" translate="oib-array.no-elements"></div>
     <div class="oib-fake-container" *ngFor="let element of elementsIncludingNew; index as index; last as last">
       <oib-edit-element
         *ngIf="isEdited(element); else displayElement"
