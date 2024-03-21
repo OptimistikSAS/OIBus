@@ -78,7 +78,7 @@ export default class WebServer {
   async init(): Promise<void> {
     this.app = new Koa() as KoaApplication;
 
-    const ipFilters = [
+    this.app.ipFilters = [
       '127.0.0.1',
       '::1',
       '::ffff:127.0.0.1',
@@ -96,7 +96,6 @@ export default class WebServer {
         this.northService,
         this.oibusService,
         this.engineMetricsService,
-        ipFilters,
         this.logger
       )
     );

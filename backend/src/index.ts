@@ -122,7 +122,7 @@ const LOG_DB_NAME = 'logs.db';
     '::ffff:127.0.0.1',
     ...repositoryService.ipFilterRepository.getIpFilters().map(filter => filter.address)
   ];
-  proxyServer.refreshIpFilter(ipFilters);
+  proxyServer.refreshIpFilters(ipFilters);
 
   if (oibusSettings.proxyEnabled) {
     await proxyServer.start(oibusSettings.proxyPort);

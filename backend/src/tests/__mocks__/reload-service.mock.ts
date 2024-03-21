@@ -69,6 +69,6 @@ export default jest.fn().mockImplementation(() => ({
     retryAllValueErrors: jest.fn()
   },
   proxyServer: {
-    refreshIpFilter: jest.fn()
+    refreshIpFilters: jest.fn()
   }
 }));
