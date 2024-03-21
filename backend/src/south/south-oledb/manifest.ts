@@ -49,13 +49,6 @@ const manifest: SouthConnectorManifest = {
       displayInViewMode: true
     },
     {
-      key: 'password',
-      type: 'OibSecret',
-      label: 'Password',
-      newRow: false,
-      displayInViewMode: false
-    },
-    {
       key: 'requestTimeout',
       type: 'OibNumber',
       label: 'Request timeout',
