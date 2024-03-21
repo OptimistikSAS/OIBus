@@ -171,7 +171,6 @@ describe('SouthOLEDB with authentication', () => {
     settings: {
       agentUrl: 'http://localhost:2224',
       connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
-      password: '',
       connectionTimeout: 1000,
       retryInterval: 1000,
       requestTimeout: 1000
@@ -414,7 +413,6 @@ describe('SouthOLEDB test connection', () => {
     settings: {
       agentUrl: 'http://localhost:2224',
       connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
-      password: 'password',
       connectionTimeout: 1000,
       retryInterval: 1000,
       requestTimeout: 1000

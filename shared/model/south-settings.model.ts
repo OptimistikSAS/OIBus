@@ -269,7 +269,6 @@ export interface SouthOLEDBSettings extends BaseSouthSettings {
   connectionTimeout: number;
   retryInterval: number;
   connectionString: string;
-  password: string | null;
   requestTimeout: number;
 }
 
