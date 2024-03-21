@@ -22,7 +22,6 @@ const oibus = (
   northService: NorthService,
   oibusService: OIBusService,
   engineMetricsService: EngineMetricsService,
-  ipFilters: Array<string>,
   logger: pino.Logger
 ) => {
   return async (ctx: KoaContext<any, any>, next: () => Promise<any>) => {
@@ -35,7 +34,6 @@ const oibus = (
     ctx.app.northService = northService;
     ctx.app.oibusService = oibusService;
     ctx.app.engineMetricsService = engineMetricsService;
-    ctx.app.ipFilters = ipFilters;
     ctx.app.logger = logger;
     return next();
   };

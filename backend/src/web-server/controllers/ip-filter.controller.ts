@@ -23,7 +23,7 @@ export default class IpFilterController extends AbstractController {
       const ipFilter = ctx.app.repositoryService.ipFilterRepository.createIpFilter(ctx.request.body as IpFilterCommandDTO);
       const ipFilters = ctx.app.repositoryService.ipFilterRepository.getIpFilters();
 
-      ctx.app.reloadService.proxyServer.refreshIpFilter(ipFilters.map(ip => ip.address));
+      ctx.app.reloadService.proxyServer.refreshIpFilters(ipFilters.map(ip => ip.address));
       ctx.app.ipFilters = ['127.0.0.1', '::1', '::ffff:127.0.0.1', ...ipFilters.map(ip => ip.address)];
       ctx.created(ipFilter);
     } catch (error: any) {
@@ -37,7 +37,7 @@ export default class IpFilterController extends AbstractController {
       ctx.app.repositoryService.ipFilterRepository.updateIpFilter(ctx.params.id, ctx.request.body as IpFilterCommandDTO);
       const ipFilters = ctx.app.repositoryService.ipFilterRepository.getIpFilters();
 
-      ctx.app.reloadService.proxyServer.refreshIpFilter(ipFilters.map(ip => ip.address));
+      ctx.app.reloadService.proxyServer.refreshIpFilters(ipFilters.map(ip => ip.address));
       ctx.app.ipFilters = ['127.0.0.1', '::1', '::ffff:127.0.0.1', ...ipFilters.map(ip => ip.address)];
       ctx.noContent();
     } catch (error: any) {
@@ -51,7 +51,7 @@ export default class IpFilterController extends AbstractController {
       ctx.app.repositoryService.ipFilterRepository.deleteIpFilter(ctx.params.id);
       const ipFilters = ctx.app.repositoryService.ipFilterRepository.getIpFilters();
 
-      ctx.app.reloadService.proxyServer.refreshIpFilter(ipFilters.map(ip => ip.address));
+      ctx.app.reloadService.proxyServer.refreshIpFilters(ipFilters.map(ip => ip.address));
       ctx.app.ipFilters = ['127.0.0.1', '::1', '::ffff:127.0.0.1', ...ipFilters.map(ip => ip.address)];
       ctx.noContent();
     } else {

@@ -12,7 +12,7 @@ export default class ProxyServer {
 
   constructor(logger: pino.Logger) {
     this._logger = logger;
-    this.refreshIpFilter([]);
+    this.refreshIpFilters([]);
   }
 
   get logger(): pino.Logger {
@@ -23,8 +23,8 @@ export default class ProxyServer {
     this._logger = value;
   }
 
-  refreshIpFilter(ipFilter: Array<string>) {
-    this.ipFilter = ['127.0.0.1', '::1', '::ffff:127.0.0.1', ...ipFilter];
+  refreshIpFilters(ipFilters: Array<string>) {
+    this.ipFilter = ['127.0.0.1', '::1', '::ffff:127.0.0.1', ...ipFilters];
   }
 
   async start(port: number): Promise<void> {
