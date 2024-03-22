@@ -1,5 +1,5 @@
 ---
-sidebar_position: 3
+sidebar_position: 4
 ---
 
 # IP过滤
@@ -11,3 +11,7 @@ sidebar_position: 3
 ```curl title="curl command"
 curl --location --request POST "http://localhost:2223/api/ip-filters" --header "Content-Type: application/json" --data-raw "{\"address\": \"*\", \"description\": \"All\" }" -u "admin:pass"
 ```
+
+:::caution 使用代理服务器允许所有
+在允许所有 IP 地址和使用代理服务器时要小心：由于代理服务器只是转发而不对请求进行验证，因此接受所有来源可能会很危险。
+:::

@@ -16,6 +16,7 @@ OIBus agent 可以根据其[文档](../oibus-agent/installation)中的说明单�
 - **远程代理 URL**：指定远程 OIBus agent 的 URL，例如，http://ip-address-or-host:2224。
 - **重试间隔**：在重新尝试连接前的等待时间。
 - **请求超时**：确定每个查询的超时持续时间。
+- **连接超时**：建立连接的超时设置。
 - **连接字符串**：ODBC 连接字符串。
 - **密码**：认证密码，在 OIBus 配置中安全存储。如果直接包含在连接字符串中，密码将以明文存储。当使用密码时，OIBus 会在连接字符串的末尾附加 `PWD=<password>`。
 
@@ -32,6 +33,12 @@ OIBus agent 可以根据其[文档](../oibus-agent/installation)中的说明单�
 在 Windows 上，您可以方便地访问 ODBC 驱动程序管理工具，在那里您可以在连接字符串中指定驱动程序的名称，例如 `MySQL ODBC 3.51 驱动程序` 或 `SQL Server`。
 
 在类 UNIX 系统上，您应该先在您的机器上安装驱动程序，然后在连接字符串中指定驱动程序的路径，例如 `/opt/lib/libmsodbcsql.18.dylib`。
+
+:::info MacOS 上的 ODBC 潜水器
+安装 unixodbc：`brew install unixodbc`.
+检查安装是否成功，并列出 ODBC 配置文件：`odbcinst -j`
+检查已安装的驱动程序：`cat /opt/homebrew/etc/odbcinst.ini`
+:::
 
 ### 与 IP21 使用 OIBus
 ODBC 连接通常会遇到延迟问题，特别是在大型历史查询期间，例如涉及 IP21 的查询。这可能会对网络和服务器造成重大负载。

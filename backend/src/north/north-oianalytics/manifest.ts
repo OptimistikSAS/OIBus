@@ -14,7 +14,7 @@ const manifest: NorthConnectorManifest = {
     {
       key: 'useOiaModule',
       type: 'OibCheckbox',
-      label: 'Use OIA Module',
+      label: 'Use OIAnalytics Module',
       validators: [{ key: 'required' }],
       defaultValue: true,
       displayInViewMode: true,
@@ -32,7 +32,7 @@ const manifest: NorthConnectorManifest = {
     {
       key: 'compress',
       type: 'OibCheckbox',
-      label: 'Compress data?',
+      label: 'Compress data',
       validators: [{ key: 'required' }],
       defaultValue: false,
       displayInViewMode: true,

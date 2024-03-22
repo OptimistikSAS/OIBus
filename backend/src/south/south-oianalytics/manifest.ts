@@ -17,7 +17,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'useOiaModule',
       type: 'OibCheckbox',
-      label: 'Use OIA Module',
+      label: 'Use OIAnalytics Module',
       validators: [{ key: 'required' }],
       defaultValue: true,
       displayInViewMode: true,
