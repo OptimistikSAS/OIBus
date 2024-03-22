@@ -1,0 +1,21 @@
+---
+sidebar_position: 15
+---
+
+import ItemSettings from './_south-sql-item-settings.mdx';
+
+# OLEDB
+Send SQL queries to a remote [OIBus Agent](../oibus-agent/odbc.md) that can manage OLEDB queries on the same machine as the server.
+
+The OIBus agent can be installed separately, as specified in its [documentation](../oibus-agent/installation).
+
+This connector proves valuable when retrieving data from OSIsoft PI OLEDB interfaces or other OLEDB-compatible applications.
+
+## Specific settings
+- **Remote agent URL**: Specify the URL of the remote OIBus agent, e.g., http://ip-address-or-host:2224.
+- **Connection string**: The OLEDB connection string.
+- **Connection timeout**: Timeout setting for establishing the connection.
+- **Request timeout**: Determine the timeout duration for each query.
+- **Retry interval**: Time to wait before retrying connection.
+
+<ItemSettings></ItemSettings>

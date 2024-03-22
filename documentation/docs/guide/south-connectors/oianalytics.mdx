@@ -5,14 +5,22 @@ sidebar_position: 13
 # OIAnalytics (Rest API)
 Retrieve data from the [Optimistik OIAnalytics](https://optimistik.com/oianalytics/) application.
 
-## Specific settings
-Here are the configuration details:
+## Settings
+Here are the important parameters for configuring connectivity with the OIAnalytics SaaS application:
+
+- **Use OIAnalytics module**: Use the connection settings of the OIAnalytics module
+- **Timeout**: The duration before a connection failure is reported in HTTP requests.
+
+If OIAnalytics module is not used, the following fields will be used:
 
 - **URL**: This is the address of the OIAnalytics application.
 - **Accept unauthorized certificate**: Decide whether to accept certificates even if they are outdated or self-signed.
 - **Access key**: Provide the access key used for authentication.
 - **Secret key**: Enter the secret key used for authentication.
 - **Use proxy**: Choose whether to route the request through a proxy.
+- **Proxy URL**: The URL of the proxy server to pass through.
+- **Proxy username**: The username associated with the proxy.
+- **Proxy password**: The password linked to the proxy.
 
 ## Item settings
 In the South connector, each item can be configured to be queried according to the chosen scan mode. Multiple queries to

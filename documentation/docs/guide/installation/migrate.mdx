@@ -13,7 +13,8 @@ Migrate from OIBus v1 and v2 into the new OIBus v3 version with our migration to
 <Tabs>
   <TabItem value="windows" label="Windows" default>
     <div style={{ display: "flex", justifyContent: "space-around" }}>
-      <DownloadButton link='https://github.com/OptimistikSAS/OIBus-upgrade-v3/releases/latest/download/oibus-upgrade-tool-win_x64.zip'>
+      <DownloadButton
+        link='https://github.com/OptimistikSAS/OIBus-upgrade-v3/releases/latest/download/oibus-upgrade-tool-win_x64.zip'>
         <div>
           <div>{`OIBus migration tool`}</div>
           <div>Windows (x64)</div>
@@ -23,7 +24,8 @@ Migrate from OIBus v1 and v2 into the new OIBus v3 version with our migration to
   </TabItem>
   <TabItem value="linux" label="Linux">
     <div style={{ display: "flex", justifyContent: "space-around" }}>
-      <DownloadButton link='https://github.com/OptimistikSAS/OIBus-upgrade-v3/releases/latest/download/oibus-upgrade-tool-linux_x64.zip'>
+      <DownloadButton
+        link='https://github.com/OptimistikSAS/OIBus-upgrade-v3/releases/latest/download/oibus-upgrade-tool-linux_x64.zip'>
         <div>
           <div>{`OIBus migration tool`}</div>
           <div>Linux (x64)</div>
@@ -33,7 +35,8 @@ Migrate from OIBus v1 and v2 into the new OIBus v3 version with our migration to
   </TabItem>
   <TabItem value="macos" label="MacOS">
     <div style={{ display: "flex", justifyContent: "space-around" }}>
-      <DownloadButton link='https://github.com/OptimistikSAS/OIBus-upgrade-v3/releases/latest/download/oibus-upgrade-tool-macos_x64.zip'>
+      <DownloadButton
+        link='https://github.com/OptimistikSAS/OIBus-upgrade-v3/releases/latest/download/oibus-upgrade-tool-macos_x64.zip'>
         <div>
           <div>{`OIBus migration tool`}</div>
           <div>macOS (Intel chip)</div>
@@ -45,22 +48,23 @@ Migrate from OIBus v1 and v2 into the new OIBus v3 version with our migration to
 
 ## Download specific version
 :::caution OIBus version
-The migration will work only with the 3.1.0 OIBus version. If you want to migrate to a later version, first install OIBus v3.1.0
-from one of the links below, and then update OIBus from v3.1.0 to a later version.
+The migration will work only with the 3.2.0 OIBus version. If you want to migrate to a later version, first install OIBus v3.2.0
+from one of the links below, and then update OIBus from v3.2.0 to a later version.
 :::
 
 <Tabs>
   <TabItem value="windows" label="Windows" default>
     <div style={{ display: "flex", justifyContent: "space-around" }}>
-      <DownloadButton link='https://github.com/OptimistikSAS/OIBus/releases/download/v3.1.0/oibus-setup-win_x64-v3.1.0.exe'>
+      <DownloadButton
+        link='https://github.com/OptimistikSAS/OIBus/releases/download/v3.2.0/oibus-setup-win_x64-v3.2.0.exe'>
         <div>
-          <div>{`OIBus v3.1.0 (installer)`}</div>
+          <div>{`OIBus v3.2.0 (installer)`}</div>
           <div>Windows (x64)</div>
         </div>
       </DownloadButton>
-      <DownloadButton link='https://github.com/OptimistikSAS/OIBus/releases/download/v3.1.0/oibus-win_x64-v3.1.0.zip'>
+      <DownloadButton link='https://github.com/OptimistikSAS/OIBus/releases/download/v3.2.0/oibus-win_x64-v3.2.0.zip'>
         <div>
-          <div>{`OIBus v3.1.0 (zip)`}</div>
+          <div>{`OIBus v3.2.0 (zip)`}</div>
           <div>Windows (x64)</div>
         </div>
       </DownloadButton>
@@ -71,9 +75,10 @@ from one of the links below, and then update OIBus from v3.1.0 to a later versio
   </TabItem>
   <TabItem value="linux" label="Linux">
     <div style={{ display: "flex", justifyContent: "space-around" }}>
-      <DownloadButton link={`https://github.com/OptimistikSAS/OIBus/releases/download/v3.1.0/oibus-linux_x64-v3.1.0.zip`}>
+      <DownloadButton
+        link={`https://github.com/OptimistikSAS/OIBus/releases/download/v3.2.0/oibus-linux_x64-v3.2.0.zip`}>
         <div>
-          <div>{`OIBus v3.1.0`}</div>
+          <div>{`OIBus v3.2.0`}</div>
           <div>Linux (x64)</div>
         </div>
       </DownloadButton>
@@ -84,9 +89,10 @@ from one of the links below, and then update OIBus from v3.1.0 to a later versio
   </TabItem>
   <TabItem value="macos" label="MacOS">
     <div style={{ display: "flex", justifyContent: "space-around" }}>
-      <DownloadButton link={`https://github.com/OptimistikSAS/OIBus/releases/download/v3.1.0/oibus-macos_x64-v3.1.0.zip`}>
+      <DownloadButton
+        link={`https://github.com/OptimistikSAS/OIBus/releases/download/v3.2.0/oibus-macos_x64-v3.2.0.zip`}>
         <div>
-          <div>{`OIBus v3.1.0`}</div>
+          <div>{`OIBus v3.2.0`}</div>
           <div>MacOS (Intel chip)</div>
         </div>
       </DownloadButton>
@@ -100,11 +106,11 @@ from one of the links below, and then update OIBus from v3.1.0 to a later versio
 ## Migration steps
 1. Stop the OIBus service.
 :::tip
-You can zip the data folder, or at least the configuration file `oibus.json` and its `keys` as a backup
+You can zip the data folder, or at least the configuration file `oibus.json` and its `keys` as a backup.
 :::
 
-2. Install [OIBus v3.1.0](#download-specific-version). Be careful to specify the **same data folder**. Check
-that OIBus v3 run properly by login on `http::localhost:2223` with admin / pass. If everything works, go on with the next step.
+2. Install [OIBus v3.2.0](#download-specific-version). Be careful to specify the **same data folder**. Check
+that OIBus v3 run properly by login on `http://localhost:2223` with admin / pass. If everything works, go on with the next step.
 
 3. Stop OIBus v3.
 
