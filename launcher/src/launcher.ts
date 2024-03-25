@@ -128,7 +128,7 @@ export default class Launcher {
 
     for (const file of await fs.readdir(this.updateDir)) {
       try {
-        await fs.unlink(path.join(this.updateDir, file));
+        await fs.rm(path.join(this.updateDir, file), { recursive: true, force: true });
       } catch (e) {
         console.error(e);
       }
