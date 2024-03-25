@@ -3,7 +3,7 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { ChildProcessWithoutNullStreams } from 'child_process';
 import * as os from 'os';
-import { filesExists } from './utils';
+import { createFolder, filesExists } from './utils';
 
 const STARTED_DELAY = 30000;
 
@@ -117,6 +117,7 @@ export default class Launcher {
 
     await fs.rm(path.resolve(this.backupDir, 'data-folder'), { recursive: true, force: true });
 
+    await createFolder(this.backupDir);
     console.log(`Backup OIBus: ${oibusPath} -> ${oibusBackupPath}`);
     await fs.rename(oibusPath, oibusBackupPath);
     console.log(`Backup OIBus data folder: ${this.config} -> ${path.resolve(this.backupDir, 'data-folder')}`);
