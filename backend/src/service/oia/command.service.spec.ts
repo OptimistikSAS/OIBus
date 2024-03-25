@@ -92,7 +92,6 @@ describe('Command service with running command', () => {
 
     service.stop();
 
-    // await flushPromises();
     jest.advanceTimersByTime(1000);
     await service.stop();
     service.removeCommandFromQueue(command.id);
@@ -100,6 +99,26 @@ describe('Command service with running command', () => {
     expect(service.executeCommand).toHaveBeenCalledTimes(1);
     expect(logger.debug).toHaveBeenCalledWith('Waiting for command to finish');
     service.addCommandToQueue(command);
+  });
+
+  it('should properly run command and trigger timeout', async () => {
+    service.executeCommand = jest.fn().mockImplementation(() => {
+      return new Promise<void>(resolve => {
+        setTimeout(resolve, 100_000);
+      });
+    });
+
+    service.start();
+    service.stop();
+    jest.advanceTimersByTime(10_000);
+
+    service.stop();
+
+    expect(logger.debug).toHaveBeenCalledWith('Waiting for command to finish');
+    jest.advanceTimersByTime(20_000);
+
+    await service.stop();
+    expect(logger.debug).toHaveBeenCalledWith(`Command service stopped`);
   });
 
   it('should properly catch command exception', async () => {
@@ -170,7 +189,6 @@ describe('Command service without command', () => {
 
     service.run = jest.fn();
     service.start();
-    expect(logger.trace).toHaveBeenCalledWith('No command to run');
     expect(service.run).not.toHaveBeenCalled();
   });
 

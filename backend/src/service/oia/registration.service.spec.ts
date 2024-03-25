@@ -754,7 +754,6 @@ describe('OIBus service should interact with OIA and', () => {
     (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response(JSON.stringify(fetchResponse))));
 
     await service.retrieveCommands();
-    expect(logger.trace).toHaveBeenCalledWith(`No command to create`);
     expect(fetch).toHaveBeenCalledWith('http://localhost:4200/api/oianalytics/oibus/commands/pending', {
       method: 'GET',
       headers: {},

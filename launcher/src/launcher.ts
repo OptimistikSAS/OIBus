@@ -126,7 +126,11 @@ export default class Launcher {
     await fs.rename(oibusUpdatePath, oibusPath);
 
     for (const file of await fs.readdir(this.updateDir)) {
-      await fs.unlink(path.join(this.updateDir, file));
+      try {
+        await fs.unlink(path.join(this.updateDir, file));
+      } catch (e) {
+        console.error(e);
+      }
     }
     this.updated = true;
   }

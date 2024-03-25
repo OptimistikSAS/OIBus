@@ -306,7 +306,6 @@ export default class RegistrationService {
       }
       const newCommands: Array<OIBusCommandDTO> = await response.json();
       if (newCommands.length === 0) {
-        this.logger.trace(`No command to create`);
         return;
       }
       this.logger.trace(`${newCommands.length} commands to add`);
