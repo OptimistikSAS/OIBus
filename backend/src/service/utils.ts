@@ -100,17 +100,10 @@ export const compress = async (input: string, output: string): Promise<void> =>
       });
   });
 
-export const unzip = async (input: string, output: string): Promise<void> =>
-  new Promise((resolve, reject) => {
-    const zip = new AdmZip(input);
-    zip.extractAllToAsync(output, true, true, error => {
-      if (error) {
-        reject(error);
-      } else {
-        resolve();
-      }
-    });
-  });
+export const unzip = (input: string, output: string) => {
+  const zip = new AdmZip(input);
+  zip.extractAllTo(output, true, true);
+};
 
 /**
  * Check if a file exists in async way

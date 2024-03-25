@@ -14,6 +14,7 @@ import {
   createFolder,
   delay,
   dirSize,
+  downloadFile,
   filesExists,
   formatInstant,
   formatQueryParams,
@@ -21,6 +22,7 @@ import {
   generateRandomId,
   generateReplacementParameters,
   getCommandLineArguments,
+  getFilesFiltered,
   getNetworkSettingsFromRegistration,
   getOIBusInfo,
   getPlatformFromOsType,
@@ -28,8 +30,6 @@ import {
   logQuery,
   persistResults,
   unzip,
-  downloadFile,
-  getFilesFiltered,
   validateCronExpression
 } from './utils';
 import csv from 'papaparse';
@@ -318,32 +318,30 @@ describe('Service utils', () => {
   });
 
   describe('unzip', () => {
-    it('should properly unzip file', async () => {
-      const extractAllToAsync = jest.fn().mockImplementation((output, overwrite, keepOriginal, callback) => {
-        callback();
-      });
-      (AdmZip as jest.Mock).mockImplementation(() => ({ extractAllToAsync }));
+    it('should properly unzip file', () => {
+      const extractAllTo = jest.fn();
+      (AdmZip as jest.Mock).mockImplementation(() => ({ extractAllTo }));
 
-      await unzip('myInputFile', 'myOutputFolder');
+      unzip('myInputFile', 'myOutputFolder');
 
-      expect(extractAllToAsync).toHaveBeenCalledTimes(1);
+      expect(extractAllTo).toHaveBeenCalledTimes(1);
     });
 
-    it('should properly manage unzip errors', async () => {
-      const extractAllToAsync = jest.fn().mockImplementation((output, overwrite, keepOriginal, callback) => {
-        callback('unzip error');
+    it('should properly manage unzip errors', () => {
+      const extractAllTo = jest.fn().mockImplementation(() => {
+        throw new Error('unzip error');
       });
-      (AdmZip as jest.Mock).mockImplementation(() => ({ extractAllToAsync }));
+      (AdmZip as jest.Mock).mockImplementation(() => ({ extractAllTo }));
 
       let expectedError = null;
       try {
-        await unzip('myInputFile', 'myOutputFolder');
+        unzip('myInputFile', 'myOutputFolder');
       } catch (error) {
         expectedError = error;
       }
 
-      expect(expectedError).toEqual('unzip error');
-      expect(extractAllToAsync).toHaveBeenCalledTimes(1);
+      expect(expectedError).toEqual(new Error('unzip error'));
+      expect(extractAllTo).toHaveBeenCalledTimes(1);
     });
   });
 

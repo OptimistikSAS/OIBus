@@ -11,12 +11,14 @@ import { RegistrationSettingsDTO } from '../../../../shared/model/engine.model';
 import path from 'node:path';
 
 const DOWNLOAD_TIMEOUT = 600_000;
+const STOP_TIMEOUT = 30_000;
 
 export default class CommandService {
   private commandsQueue: Array<OIBusCommandDTO> = [];
   private registration: RegistrationSettingsDTO | null = null;
   private triggerRun: EventEmitter = new EventEmitter();
   private runProgress$: DeferredPromise | null = null;
+  private stopTimeout: NodeJS.Timeout | null = null;
 
   constructor(
     private repositoryService: RepositoryService,
@@ -47,8 +49,6 @@ export default class CommandService {
       if (!this.runProgress$) {
         if (this.commandsQueue.length > 0) {
           await this.run();
-        } else {
-          this.logger.trace('No command to run');
         }
       }
     });
@@ -109,8 +109,11 @@ export default class CommandService {
     const connectionSettings = await getNetworkSettingsFromRegistration(registrationSettings, endpoint, this.encryptionService);
     const filename = `oibus-${oibusInfo.platform}_${oibusInfo.architecture}.zip`;
     await downloadFile(connectionSettings, endpoint, filename, DOWNLOAD_TIMEOUT);
-    await unzip(filename, path.resolve(this.binaryFolder, '..', 'update'));
+    this.logger.debug(`File ${filename} downloaded`);
+    unzip(filename, path.resolve(this.binaryFolder, '..', 'update'));
+    this.logger.debug(`File ${filename} unzipped`);
     await fs.unlink(filename);
+    this.logger.debug(`File ${filename} removed`);
 
     const duration = DateTime.now().toMillis() - runStart.toMillis();
     this.logger.debug(
@@ -130,8 +133,14 @@ export default class CommandService {
 
     this.triggerRun.removeAllListeners();
     if (this.runProgress$) {
+      if (!this.stopTimeout) {
+        this.stopTimeout = setTimeout(() => {
+          this.runProgress$!.resolve();
+        }, STOP_TIMEOUT);
+      }
       this.logger.debug('Waiting for command to finish');
       await this.runProgress$.promise;
+      clearTimeout(this.stopTimeout);
     }
     this.logger.debug(`Command service stopped`);
   }
