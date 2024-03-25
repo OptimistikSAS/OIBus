@@ -104,7 +104,6 @@
     "@types/adm-zip": "0.5.5",
     "@types/basic-auth": "1.1.8",
     "@types/better-sqlite3": "7.6.9",
-    "@types/cron": "2.0.1",
     "@types/http-proxy": "1.17.14",
     "@types/jest": "29.5.12",
     "@types/jsonwebtoken": "9.0.6",
