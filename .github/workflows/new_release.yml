@@ -22,10 +22,8 @@ jobs:
       - uses: google-github-actions/release-please-action@v4
         id: release
         with:
-          command: manifest
           token: ${{ secrets.REPO_ACCESS_TOKEN }}
-          signoff: "Optimistik SAS <optimistiksas@users.noreply.github.com>"
-          default-branch: stable
+          target-branch: stable
           config-file: .github/release-please-config.json
           manifest-file: .github/release-please-manifest.json
 
