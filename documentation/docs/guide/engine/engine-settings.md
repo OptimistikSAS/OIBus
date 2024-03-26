@@ -10,7 +10,7 @@ The default port for accessing OIBus settings through a web interface is 2223, a
 at `http://localhost:2223`.
 You have the option to modify this port in the event of conflicts or for security purposes.
 
-# Proxy server
+## Proxy server
 
 OIBus can play the role of a proxy server by enabling this option and setting the port to listen from. Be sure that your
 firewall allows inbound connection on this port.
@@ -28,7 +28,7 @@ Using such a proxy can be done in the OIAnalytics registration settings. Retriev
 data (from [North OIAnalytics connector](../north-connectors/oianalytics.md)) will then send data through this proxy.
 :::
 
-# Logging parameters
+## Logging parameters
 
 OIBus logs encompass six levels, ranging from the most critical to the least:
 
@@ -45,23 +45,23 @@ display Error logs. It's worth noting that activating **Trace** logs will genera
 primarily intended for advanced troubleshooting. Therefore, it's advisable to use **Trace** and **Debug** log levels
 specifically for troubleshooting purposes.
 
-## Console
+### Console
 
 This section displays logs in the Console, alongside values if a [North Console connector
 ](../../guide/north-connectors/console) is used. To access these logs, execute OIBus from a terminal.
 
-## File
+### File
 
 To store logs in one or more files, you can configure the maximum file size and specify the number of files for log
 rotation.
 
-## SQLite
+### SQLite
 
 To save logs in a local SQLite database for viewing in the **Logs tab** of OIBus, you can set a **maximum number of logs
 **
 to prevent the database from becoming overly large. Older entries will be automatically purged.
 
-## Loki
+### Loki
 
 To transmit logs to a remote **Loki** instance, the logs are sent to the designated host in batches at a configurable
 time interval (default is 60 seconds). You have the flexibility to adjust this interval to control the batch size.
@@ -73,7 +73,7 @@ Logs sent to Loki are identified by the OIBus ID. The name is sent alongside the
 correctly to locate your OIBus logs within your Loki instance, specially if you have several OIBus.
 :::
 
-## OIAnalytics
+### OIAnalytics
 
 If OIBus [is registered](./oianalytics-module.md), logs can be forwarded to OIAnalytics. Otherwise, these settings will
 be disregarded.
