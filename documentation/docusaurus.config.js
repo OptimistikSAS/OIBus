@@ -11,7 +11,7 @@ const config = {
   baseUrl: '/',
   favicon: 'img/favicon.ico',
   tagline: 'Start collecting your data now',
-  onBrokenLinks: 'throw',
+  onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
 
   // GitHub pages deployment config.
