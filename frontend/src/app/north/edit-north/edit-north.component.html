@@ -183,10 +183,10 @@
               </div>
             </div>
           </oib-box>
-          <div *ngIf="mode === 'edit' && northConnector" id="actions" class="mx-3 d-flex justify-content-end">
-            <div class="btn-group">
-              <oib-save-button [insideOfGroup]="false" form="north-form" [state]="state"></oib-save-button>
-            </div>
+        </div>
+        <div *ngIf="mode === 'edit' && northConnector" id="actions" class="d-flex justify-content-end">
+          <div class="btn-group">
+            <oib-save-button [insideOfGroup]="false" form="north-form" [state]="state"></oib-save-button>
           </div>
         </div>
         <!-- subscription -->
