@@ -218,6 +218,12 @@ img.oib-image-header {
       border-top-right-radius: 1rem;
       width: 9rem;
     }
+    th.first-column {
+      width: 9rem;
+    }
+    th.last-column {
+      width: 5rem;
+    }
     // alternative case if oib-box-title is on top of table
     .light {
       background-color: $white;
@@ -257,6 +263,15 @@ img.oib-image-header {
         text-align: right;
         padding-right: 1em;
         overflow: visible;
+      }
+      .first-column-body {
+        width: 15%;
+      }
+      .last-column-body {
+        text-align: right;
+        padding-right: 1em;
+        overflow: hidden !important;
+        text-overflow: clip;
       }
     }
     // customised colours on the lines (one out of two)
@@ -679,12 +694,12 @@ val-errors > div {
   box-sizing: content-box;
   border-radius: 1rem;
   //background-color: $lightGrey;
-  border: solid $lightGrey;
-    padding-bottom: 1em;
+  border: 0.20rem solid $lightGrey;
+  margin-bottom: 1rem;
   .box {
-    margin-top: -2px;
-    margin-right: -2px;
-    margin-left: -2px;
+    margin-top: -0.15rem;
+    margin-right: -0.15rem;
+    margin-left: -0.15rem;
   }
 }
 

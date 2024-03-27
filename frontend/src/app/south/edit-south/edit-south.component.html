@@ -12,7 +12,7 @@
       </div>
 
       <form [formGroup]="southForm" (ngSubmit)="submit('save')" id="south-form" class="mt-3">
-        <div [class]="mode === 'edit' && southConnector ? 'save-zone' : ''">
+        <div class="save-zone">
           <!-- General settings -->
           <oib-box boxTitle="south.general-settings" helpUrl="https://oibus.optimistik.com/docs/guide/south-connectors/common-settings">
             <div class="row">
@@ -131,11 +131,10 @@
               [scanModes]="scanModes"
             ></oib-form>
           </oib-box>
-
-          <div *ngIf="mode === 'edit' && southConnector" id="actions" class="mx-3 d-flex justify-content-end">
-            <div class="btn-group">
-              <oib-save-button [insideOfGroup]="false" form="south-form" [state]="state"></oib-save-button>
-            </div>
+        </div>
+        <div *ngIf="mode === 'edit' && southConnector" id="actions" class="d-flex justify-content-end">
+          <div class="btn-group">
+            <oib-save-button [insideOfGroup]="false" form="south-form" [state]="state"></oib-save-button>
           </div>
         </div>
         <!-- items -->

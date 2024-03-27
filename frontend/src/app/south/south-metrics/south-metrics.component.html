@@ -7,7 +7,6 @@
           *ngIf="connectorMetrics"
           translate="south.monitoring.since"
           [translateParams]="{ date: connectorMetrics.metricsStart | datetime:'mediumWithSeconds' }"
-          class="mx-1"
         ></span>
         <a *ngIf="displayButton" class="btn btn-link display-south px-1 py-0" id="display-link" (click)="navigateToDisplay()">
           <span class="fa fa-search"></span>
@@ -27,23 +26,23 @@
       <tbody *ngIf="connectorMetrics">
         <!-- number of values for point connectors -->
         <tr *ngIf="connectorMetrics.numberOfValuesRetrieved">
-          <td style="width: 33%" translate="south.monitoring.number-of-values"></td>
-          <td>{{ connectorMetrics.numberOfValuesRetrieved }}</td>
+          <td translate="south.monitoring.number-of-values"></td>
+          <td class="last-column-body">{{ connectorMetrics.numberOfValuesRetrieved }}</td>
         </tr>
         <!-- number of files for file connectors -->
         <tr *ngIf="connectorMetrics.numberOfFilesRetrieved">
           <td translate="south.monitoring.number-of-files"></td>
-          <td>{{ connectorMetrics.numberOfFilesRetrieved }}</td>
+          <td class="last-column-body">{{ connectorMetrics.numberOfFilesRetrieved }}</td>
         </tr>
         <!-- last connection -->
         <tr *ngIf="connectorMetrics.lastConnection !== null">
           <td translate="south.monitoring.last-connection"></td>
-          <td>{{ connectorMetrics.lastConnection | datetime:'mediumWithSeconds' }}</td>
+          <td class="last-column-body">{{ connectorMetrics.lastConnection | datetime:'mediumWithSeconds' }}</td>
         </tr>
         <!-- last value -->
         <tr *ngIf="connectorMetrics.lastValueRetrieved !== null">
           <td translate="south.monitoring.last-value"></td>
-          <td>
+          <td class="last-column-body">
             <span
               translate="south.monitoring.last-value-content"
               [translateParams]="{ pointId: connectorMetrics.lastValueRetrieved.pointId, timestamp: connectorMetrics.lastValueRetrieved.timestamp, data: connectorMetrics.lastValueRetrieved.data | json }"
@@ -53,17 +52,17 @@
         <!-- last file -->
         <tr *ngIf="connectorMetrics.lastFileRetrieved !== null">
           <td translate="south.monitoring.last-file"></td>
-          <td>{{ connectorMetrics.lastFileRetrieved }}</td>
+          <td class="last-column-body">{{ connectorMetrics.lastFileRetrieved }}</td>
         </tr>
         <!-- last run -->
         <tr *ngIf="connectorMetrics.lastRunStart !== null">
           <td translate="south.monitoring.last-run-start"></td>
-          <td>{{ connectorMetrics.lastRunStart | datetime:'mediumWithSeconds' }}</td>
+          <td class="last-column-body">{{ connectorMetrics.lastRunStart | datetime:'mediumWithSeconds' }}</td>
         </tr>
         <!-- last duration -->
         <tr *ngIf="connectorMetrics.lastRunDuration !== null">
           <td translate="south.monitoring.last-run-duration"></td>
-          <td>{{ connectorMetrics.lastRunDuration | duration:'short' }}</td>
+          <td class="last-column-body">{{ connectorMetrics.lastRunDuration | duration:'short' }}</td>
         </tr>
       </tbody>
     </table>
