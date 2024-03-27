@@ -94,12 +94,12 @@ describe('CertificateListComponent', () => {
     it('should display a list of certificates', () => {
       expect(tester.title).toContainText('Certificates');
       expect(tester.certificates.length).toEqual(2);
-      expect(tester.certificates[0].elements('td').length).toEqual(6);
+      expect(tester.certificates[0].elements('td').length).toEqual(8);
       expect(tester.certificates[1].elements('td')[0]).toContainText('Cert2');
       expect(tester.certificates[1].elements('td')[1]).toContainText('My certificate 2');
       expect(tester.certificates[1].elements('td')[2]).toContainText('pub2');
-      expect(tester.certificates[1].elements('td')[3]).toContainText('cert2');
-      expect(tester.certificates[1].elements('td')[4]).toContainText('1 Jan 2033');
+      expect(tester.certificates[1].elements('td')[4]).toContainText('cert2');
+      expect(tester.certificates[1].elements('td')[6]).toContainText('1 Jan 2033');
       expect(tester.editButtons.length).toBe(2);
       expect(tester.deleteButtons.length).toBe(2);
     });

@@ -24,47 +24,47 @@
       <tbody>
         <!-- Instant percentage of CPU usage -->
         <tr>
-          <td style="width: 33%" translate="engine.monitoring.cpu-usage-instant"></td>
+          <td translate="engine.monitoring.cpu-usage-instant"></td>
           <td>{{ metrics.processCpuUsageInstant | percent:'.2' }}</td>
         </tr>
         <!-- Average percentage of CPU usage -->
         <tr>
-          <td style="width: 33%" translate="engine.monitoring.cpu-usage-average"></td>
+          <td translate="engine.monitoring.cpu-usage-average"></td>
           <td>{{ metrics.processCpuUsageAverage | percent:'.2' }}</td>
         </tr>
         <!-- Percentage of CPU up time -->
         <tr>
-          <td style="width: 33%" translate="engine.monitoring.uptime"></td>
+          <td translate="engine.monitoring.uptime"></td>
           <td>{{ metrics.processUptime | duration }}</td>
         </tr>
         <!-- Memory use -->
         <tr>
-          <td style="width: 33%" translate="engine.monitoring.free-memory"></td>
+          <td translate="engine.monitoring.free-memory"></td>
           <td>{{ (metrics.freeMemory / metrics.totalMemory) | percent }}</td>
         </tr>
         <!-- RSS -->
         <tr>
-          <td style="width: 33%" translate="engine.monitoring.rss"></td>
+          <td translate="engine.monitoring.rss"></td>
           <td>{{ metrics.minRss | fileSize }} / {{ metrics.currentRss | fileSize }} / {{ metrics.maxRss | fileSize }}</td>
         </tr>
         <!-- Heap Total -->
         <tr>
-          <td style="width: 33%" translate="engine.monitoring.heap-total"></td>
+          <td translate="engine.monitoring.heap-total"></td>
           <td>{{ metrics.minHeapTotal | fileSize }} / {{ metrics.currentHeapTotal | fileSize}} / {{ metrics.maxHeapTotal | fileSize }}</td>
         </tr>
         <!-- Heap Used -->
         <tr>
-          <td style="width: 33%" translate="engine.monitoring.heap-used"></td>
+          <td translate="engine.monitoring.heap-used"></td>
           <td>{{ metrics.minHeapUsed | fileSize }} / {{ metrics.currentHeapUsed | fileSize }} / {{ metrics.maxHeapUsed | fileSize }}</td>
         </tr>
         <!-- External -->
         <tr>
-          <td style="width: 33%" translate="engine.monitoring.external"></td>
+          <td translate="engine.monitoring.external"></td>
           <td>{{ metrics.minExternal | fileSize }} / {{ metrics.currentExternal| fileSize }} / {{ metrics.maxExternal | fileSize }}</td>
         </tr>
         <!-- Array Buffers -->
         <tr>
-          <td style="width: 33%" translate="engine.monitoring.array-buffer"></td>
+          <td translate="engine.monitoring.array-buffer"></td>
           <td>
             {{ metrics.minArrayBuffers | fileSize }} / {{ metrics.currentArrayBuffers | fileSize }} / {{ metrics.maxArrayBuffers | fileSize
             }}
