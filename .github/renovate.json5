@@ -3,7 +3,7 @@
     "config:base",
     ":semanticCommitTypeAll(chore)"
   ],
-  "baseBranches": ["main", "oibus-v2"],
+  "baseBranches": ["main"],
   "labels": ["dependencies"],
   "lockFileMaintenance": { "enabled": true },
   "schedule": [
