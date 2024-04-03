@@ -31,7 +31,8 @@ import packageInfo from '../../../../../../package.json'
 
 已提取以下文件
 ```
-oibus                   // OIBus binary
+oibus-launcher          // OIBus launcher to run the binary
+binaries/oibus          // OIBus binary
 oibus-setup.sh          // installation script
 oibus-uninstall.sh      // uninstallation script that will be updated during the installation process
 ```
@@ -127,6 +128,6 @@ OIBus service was successfully removed.
 如果您喜欢在不将 OIBus 安装为服务的情况下运行它，在下载并解压缩归档文件后，您可以执行以下命令：
 
 ```
-./oibus --config ./OIBusData
+./oibus-launcher --config ./OIBusData
 ```
 确保 OIBusData 目录已经就绪，因为它用作缓存、日志和配置数据库（例如中的 `OIBusData`）的存储位置。

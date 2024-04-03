@@ -20,7 +20,7 @@ import packageInfo from '../../../../../../package.json'
 macOS OIBus 二进制文件可以通过其可执行文件运行。解压缩后，启动终端并输入以下命令：
 
 <CodeBlock>
-  {`./oibus --config ./data-folder`}
+  {`./oibus-launcher --config ./data-folder`}
 </CodeBlock>
 
 `./data-folder` 路径必须根据存储OIBus缓存和配置的位置进行调整。
@@ -29,11 +29,15 @@ macOS OIBus 二进制文件可以通过其可执行文件运行。解压缩后�
 `~/test/oibus-data`，命令将会是：
 
 <CodeBlock>
-  {`/bin/oibus --config ~/test/oibus-data`}
+  {`/bin/oibus-launcher --config ~/test/oibus-data`}
 </CodeBlock>
 
 :::caution
 确保拥有 admin 权限来运行二进制文件
+:::
+
+:::caution 允许执行应用程序
+在 macOS 上，你可能需要允许执行二进制文件。首次运行时，进入 "系统设置 "的 "隐私与安全 "菜单，在 "安全 "部分允许执行 oibus-launcher。
 :::
 
 在[首次访问页面](./first-access.mdx)上熟悉OIBus界面。
