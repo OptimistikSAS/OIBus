@@ -77,7 +77,7 @@ describe('User repository', () => {
 
     const users = repository.searchUsers({ login: 'user', page: 2 });
     expect(database.prepare).toHaveBeenCalledWith(
-      "SELECT id, login, first_name as firstName, last_name as lastName FROM users WHERE login like '%user%' LIMIT 50 OFFSET 100;"
+      "SELECT id, login, first_name as firstName, last_name as lastName FROM users WHERE login like '%' || ? || '%' LIMIT 50 OFFSET 100;"
     );
     expect(users).toEqual(expectedValue);
   });

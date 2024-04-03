@@ -35,7 +35,7 @@ export default class UserRepository {
     let whereClause = '';
 
     if (searchParams.login) {
-      whereClause += `WHERE login like '%${searchParams.login}%'`;
+      whereClause += `WHERE login like '%' || ? || '%'`;
       queryParams.push(searchParams.login);
     }
     const query =
