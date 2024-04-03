@@ -146,15 +146,15 @@ export default class ReloadService {
     const subscribedNorthIds = this.repositoryService.subscriptionRepository.getSubscribedNorthConnectors(southId);
     await Promise.allSettled(subscribedNorthIds.map(northId => this.onDeleteNorthSubscription(northId, southId)));
 
-    const { name } = this.repositoryService.southConnectorRepository.getSouthConnector(southId)!;
-    await this.oibusEngine.deleteSouth(southId, name);
+    const { name, id } = this.repositoryService.southConnectorRepository.getSouthConnector(southId)!;
+    await this.oibusEngine.deleteSouth(id, name);
 
-    this.repositoryService.southItemRepository.deleteAllSouthItems(southId);
-    this.repositoryService.southConnectorRepository.deleteSouthConnector(southId);
+    this.repositoryService.southItemRepository.deleteAllSouthItems(id);
+    this.repositoryService.southConnectorRepository.deleteSouthConnector(id);
 
-    this.repositoryService.logRepository.deleteLogsByScopeId('south', southId);
-    this.repositoryService.southMetricsRepository.removeMetrics(southId);
-    this.repositoryService.southCacheRepository.deleteAllCacheScanModes(southId);
+    this.repositoryService.logRepository.deleteLogsByScopeId('south', id);
+    this.repositoryService.southMetricsRepository.removeMetrics(id);
+    this.repositoryService.southCacheRepository.deleteAllCacheScanModes(id);
   }
 
   async onStartSouth(southId: string): Promise<void> {
@@ -256,11 +256,11 @@ export default class ReloadService {
   }
 
   async onDeleteNorth(northId: string): Promise<void> {
-    const { name } = this.repositoryService.northConnectorRepository.getNorthConnector(northId)!;
-    await this.oibusEngine.deleteNorth(northId, name);
-    this.repositoryService.northConnectorRepository.deleteNorthConnector(northId);
-    this.repositoryService.logRepository.deleteLogsByScopeId('north', northId);
-    this.repositoryService.northMetricsRepository.removeMetrics(northId);
+    const { name, id } = this.repositoryService.northConnectorRepository.getNorthConnector(northId)!;
+    await this.oibusEngine.deleteNorth(id, name);
+    this.repositoryService.northConnectorRepository.deleteNorthConnector(id);
+    this.repositoryService.logRepository.deleteLogsByScopeId('north', id);
+    this.repositoryService.northMetricsRepository.removeMetrics(id);
   }
 
   async onStartNorth(northId: string): Promise<void> {
@@ -348,12 +348,12 @@ export default class ReloadService {
   }
 
   async onDeleteHistoryQuery(historyId: string): Promise<void> {
-    const { name } = this.repositoryService.historyQueryRepository.getHistoryQuery(historyId)!;
-    await this.historyEngine.deleteHistoryQuery(historyId, name);
+    const { name, id } = this.repositoryService.historyQueryRepository.getHistoryQuery(historyId)!;
+    await this.historyEngine.deleteHistoryQuery(id, name);
 
-    this.repositoryService.historyQueryItemRepository.deleteAllItems(historyId);
-    this.repositoryService.historyQueryRepository.deleteHistoryQuery(historyId);
-    this.repositoryService.logRepository.deleteLogsByScopeId('history-query', historyId);
+    this.repositoryService.historyQueryItemRepository.deleteAllItems(id);
+    this.repositoryService.historyQueryRepository.deleteHistoryQuery(id);
+    this.repositoryService.logRepository.deleteLogsByScopeId('history-query', id);
   }
 
   async onCreateHistoryItem(historyId: string, command: SouthConnectorItemCommandDTO): Promise<SouthConnectorItemDTO> {
