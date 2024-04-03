@@ -167,7 +167,7 @@ describe('reload service', () => {
     (repositoryService.northConnectorRepository.getNorthConnector as jest.Mock)
       .mockReturnValueOnce({ id: 'northId1', enabled: true })
       .mockReturnValueOnce({ id: 'northId2', enabled: true });
-    (repositoryService.southConnectorRepository.getSouthConnector as jest.Mock).mockReturnValueOnce({ name: 'southName' });
+    (repositoryService.southConnectorRepository.getSouthConnector as jest.Mock).mockReturnValueOnce({ name: 'southName', id: 'southId' });
 
     await service.onDeleteSouth('southId');
 
@@ -367,7 +367,7 @@ describe('reload service', () => {
   });
 
   it('should delete north', async () => {
-    (repositoryService.northConnectorRepository.getNorthConnector as jest.Mock).mockReturnValueOnce({ name: 'northName' });
+    (repositoryService.northConnectorRepository.getNorthConnector as jest.Mock).mockReturnValueOnce({ name: 'northName', id: 'northId' });
 
     await service.onDeleteNorth('northId');
 
@@ -429,7 +429,7 @@ describe('reload service', () => {
   });
 
   it('should delete history query', async () => {
-    (repositoryService.historyQueryRepository.getHistoryQuery as jest.Mock).mockReturnValueOnce({ name: 'historyName' });
+    (repositoryService.historyQueryRepository.getHistoryQuery as jest.Mock).mockReturnValueOnce({ name: 'historyName', id: 'historyId' });
 
     await service.onDeleteHistoryQuery('historyId');
 
