@@ -32,7 +32,8 @@ You also have the option to obtain the files using this command:
 
 The following files have been extracted:
 ```
-oibus                   // OIBus binary
+oibus-launcher          // OIBus launcher to run the binary
+binaries/oibus          // OIBus binary
 oibus-setup.sh          // installation script
 oibus-uninstall.sh      // uninstallation script that will be updated during the installation process
 ```
@@ -127,7 +128,7 @@ If you prefer to run OIBus without installing it as a service, after downloading
 execute the following command:
 
 ```
-./oibus --config ./OIBusData
+./oibus-launcher --config ./OIBusData
 ```
 
 Ensure that the OIBusData directory is already in place, as it serves as the storage location for cache, logs, and

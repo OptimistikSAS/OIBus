@@ -9,7 +9,8 @@ import packageInfo from '../../../package.json'
 # macOS
 ## Download
 <div style={{ display: "flex", justifyContent: "space-around" }}>
-  <DownloadButton link={`https://github.com/OptimistikSAS/OIBus/releases/download/v${packageInfo.version}/oibus-macos_x64-v${packageInfo.version}.zip`}>
+  <DownloadButton
+    link={`https://github.com/OptimistikSAS/OIBus/releases/download/v${packageInfo.version}/oibus-macos_x64-v${packageInfo.version}.zip`}>
     <div>
       <div>{`OIBus v${packageInfo.version}`}</div>
       <div>MacOS (Intel chip)</div>
@@ -20,7 +21,7 @@ import packageInfo from '../../../package.json'
 macOS OIBus binary can be run through its executable. Once unzipped, start a Terminal and enter the following command:
 
 <CodeBlock>
-    {`./oibus --config ./data-folder`}
+  {`./oibus-launcher --config ./data-folder`}
 </CodeBlock>
 
 The `./data-folder` path must be adapted according to the place where the OIBus cache and config will be stored.
@@ -29,11 +30,17 @@ For example, if the binary is stored in `/bin/` and the cache and configuration 
 `~/test/oibus-data`, the command will be:
 
 <CodeBlock>
-    {`/bin/oibus --config ~/test/oibus-data`}
+  {`/bin/oibus-launcher --config ~/test/oibus-data`}
 </CodeBlock>
 
 :::caution
 Be sure to have admin permissions to run the binary
 :::
+
+:::caution Allow the app to be executed
+On macOS, you may need to allow the execution of the binary. When first run, go to the System Settings, on the Privacy &
+Security menu, and allow the oibus-launcher in the Security section.
+:::
+
 
 Get familiar with the OIBus interface on the [first access page](./first-access.mdx).
