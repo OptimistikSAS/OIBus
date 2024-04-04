@@ -118,6 +118,9 @@ export type SouthOracleItemSettingsSerializationType = (typeof SOUTH_ORACLE_ITEM
 const SOUTH_ORACLE_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const
 export type SouthOracleItemSettingsSerializationDelimiter = (typeof SOUTH_ORACLE_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
 
+const SOUTH_P_I_ITEM_SETTINGS_TYPES = ['pointId', 'pointQuery'] as const
+export type SouthPIItemSettingsType = (typeof SOUTH_P_I_ITEM_SETTINGS_TYPES)[number];
+
 const SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms', 'timestamp', 'timestamptz'] as const
 export type SouthPostgreSQLItemSettingsDateTimeFieldsType = (typeof SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
 
@@ -297,6 +300,11 @@ export interface SouthOracleSettings extends BaseSouthSettings {
   password: string | null;
 }
 
+export interface SouthPISettings extends BaseSouthSettings {
+  agentUrl: string;
+  retryInterval: number;
+}
+
 export interface SouthPostgreSQLSettings extends BaseSouthSettings {
   host: string;
   port: number;
@@ -337,6 +345,7 @@ export type SouthSettings =
   | SouthOPCHDASettings
   | SouthOPCUASettings
   | SouthOracleSettings
+  | SouthPISettings
   | SouthPostgreSQLSettings
   | SouthSlimsSettings
   | SouthSQLiteSettings
@@ -609,6 +618,12 @@ export interface SouthOracleItemSettings extends BaseSouthItemSettings {
   serialization: SouthOracleItemSettingsSerialization;
 }
 
+export interface SouthPIItemSettings extends BaseSouthItemSettings {
+  type: SouthPIItemSettingsType;
+  piPoint?: string;
+  piQuery?: string;
+}
+
 export interface SouthPostgreSQLItemSettings extends BaseSouthItemSettings {
   query: string;
   dateTimeFields: Array<SouthPostgreSQLItemSettingsDateTimeFields> | null;
@@ -642,6 +657,7 @@ export type SouthItemSettings =
   | SouthOPCHDAItemSettings
   | SouthOPCUAItemSettings
   | SouthOracleItemSettings
+  | SouthPIItemSettings
   | SouthPostgreSQLItemSettings
   | SouthSlimsItemSettings
   | SouthSQLiteItemSettings

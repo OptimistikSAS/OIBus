@@ -13,8 +13,7 @@ import { OIBusDataValue } from '../../../../shared/model/engine.model';
 
 /**
  * Class SouthOPCHDA - Run a HDA agent to connect to an OPCHDA server.
- * This connector communicates with the Agent through a TCP connection thanks to the TCP server created on OIBus
- * and associated to this connector
+ * This connector communicates with the Agent through a HTTP connection
  */
 export default class SouthOPCHDA extends SouthConnector implements QueriesHistory {
   static type = manifest.id;
@@ -71,7 +70,7 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
       headers
     };
     const response = await fetch(`${this.connector.settings.agentUrl!}/api/opc/${this.connector.id}/connect`, fetchOptions);
-    if (response.status === 200) {
+    if (response.status === 204) {
       await fetch(`${this.connector.settings.agentUrl}/api/opc/${this.connector.id}/disconnect`, { method: 'DELETE' });
     } else if (response.status === 400) {
       const errorMessage = await response.text();
