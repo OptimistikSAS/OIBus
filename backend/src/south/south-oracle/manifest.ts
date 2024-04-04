@@ -15,6 +15,25 @@ const manifest: SouthConnectorManifest = {
   },
   settings: [
     {
+      key: 'thickMode',
+      type: 'OibCheckbox',
+      label: 'Thick mode',
+      defaultValue: false,
+      class: 'col-3',
+      validators: [{ key: 'required' }],
+      displayInViewMode: true
+    },
+    {
+      key: 'oracleClient',
+      type: 'OibText',
+      label: 'Oracle Client Library',
+      defaultValue: '',
+      class: 'col-9',
+      conditionalDisplay: { field: 'thickMode', values: [true] },
+      validators: [{ key: 'required' }],
+      displayInViewMode: true
+    },
+    {
       key: 'host',
       type: 'OibText',
       label: 'Host',

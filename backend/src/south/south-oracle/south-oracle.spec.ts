@@ -178,6 +178,7 @@ describe('SouthOracle with authentication', () => {
       overlap: 0
     },
     settings: {
+      thickMode: true,
       host: 'localhost',
       port: 1521,
       database: 'db',
@@ -350,8 +351,8 @@ describe('SouthOracle with authentication', () => {
   });
 });
 
-describe('SouthOracle without authentication', () => {
-  const configuration: SouthConnectorDTO = {
+describe('SouthOracle without authentication but with thick mode', () => {
+  const configuration: SouthConnectorDTO<SouthOracleSettings> = {
     id: 'southId',
     name: 'south',
     type: 'oracle',
@@ -367,21 +368,24 @@ describe('SouthOracle without authentication', () => {
       host: 'localhost',
       port: 1521,
       database: 'db',
-      username: '',
-      password: '',
+      username: null,
+      password: null,
       connectionTimeout: 1000,
-      requestTimeout: 1000,
-      compression: false
+      thickMode: true,
+      oracleClient: 'path'
     }
   };
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
+    oracledb.initOracleClient = jest.fn();
+
     south = new SouthOracle(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should manage connection error', async () => {
+    expect(oracledb.initOracleClient).toHaveBeenCalledWith({ libDir: path.resolve(configuration.settings.oracleClient!) });
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
 
@@ -397,8 +401,6 @@ describe('SouthOracle without authentication', () => {
     }
 
     expect(oracledb.getConnection).toHaveBeenCalledWith({
-      user: '',
-      password: '',
       connectString: `${configuration.settings.host}:${configuration.settings.port}/${configuration.settings.database}`
     });
     expect(error).toEqual(new Error('connection error'));
@@ -549,6 +551,7 @@ describe('SouthOracle test connection', () => {
   });
 
   it('Unable to ping database without password', async () => {
+    configuration.settings.username = '';
     configuration.settings.password = '';
     let code: ErrorCodes;
     const errorMessage = 'Error pinging database';
