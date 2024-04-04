@@ -289,6 +289,8 @@ export interface SouthOPCUASettings extends BaseSouthSettings {
 }
 
 export interface SouthOracleSettings extends BaseSouthSettings {
+  thickMode: boolean;
+  oracleClient?: string;
   host: string;
   port: number;
   connectionTimeout: number;
