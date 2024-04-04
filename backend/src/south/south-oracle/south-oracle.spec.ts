@@ -178,6 +178,7 @@ describe('SouthOracle with authentication', () => {
       overlap: 0
     },
     settings: {
+      thickMode: true,
       host: 'localhost',
       port: 1521,
       database: 'db',
@@ -397,8 +398,6 @@ describe('SouthOracle without authentication', () => {
     }
 
     expect(oracledb.getConnection).toHaveBeenCalledWith({
-      user: '',
-      password: '',
       connectString: `${configuration.settings.host}:${configuration.settings.port}/${configuration.settings.database}`
     });
     expect(error).toEqual(new Error('connection error'));

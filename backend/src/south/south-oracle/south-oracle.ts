@@ -20,20 +20,7 @@ import { DateTime } from 'luxon';
 import { SouthOracleItemSettings, SouthOracleSettings } from '../../../../shared/model/south-settings.model';
 import { OIBusDataValue } from '../../../../shared/model/engine.model';
 
-let oracledb: {
-  outFormat: any;
-  OUT_FORMAT_OBJECT: any;
-  getConnection: (arg0: { user: any; password: string; connectString: string }) => any;
-} | null = null;
-// @ts-ignore
-import('oracledb')
-  .then(obj => {
-    oracledb = obj.default;
-    console.info('oracledb library loaded');
-  })
-  .catch(() => {
-    console.error('Could not load oracledb');
-  });
+import oracledb, { ConnectionAttributes } from 'oracledb';
 
 /**
  * Class SouthOracle - Retrieve data from Oracle databases and send them to the cache as CSV files.
@@ -55,6 +42,9 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
   ) {
     super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
     this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
+    if (this.connector.settings.thickMode && this.connector.settings.oracleClient) {
+      oracledb.initOracleClient({ libDir: path.resolve(this.connector.settings.oracleClient) });
+    }
   }
 
   /**
@@ -66,12 +56,9 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
   }
 
   override async testConnection(): Promise<void> {
-    if (!oracledb) {
-      throw new Error('oracledb library not loaded');
-    }
-    const config: Parameters<typeof oracledb.getConnection>[0] = {
-      user: this.connector.settings.username,
-      password: this.connector.settings.password ? await this.encryptionService.decryptText(this.connector.settings.password) : '',
+    const config: ConnectionAttributes = {
+      user: this.connector.settings.username || undefined,
+      password: this.connector.settings.password ? await this.encryptionService.decryptText(this.connector.settings.password) : undefined,
       connectString: `${this.connector.settings.host}:${this.connector.settings.port}/${this.connector.settings.database}`
     };
 
@@ -108,7 +95,10 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
         FROM ALL_TABLES
         WHERE OWNER = SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA')
       `);
-      table_count = rows[0]?.TABLE_COUNT ?? 0;
+      if (rows) {
+        const result: any = rows[0];
+        table_count = result?.TABLE_COUNT || 0;
+      }
     } catch (error: any) {
       await connection.close();
       throw new Error(`Unable to read tables in database "${this.connector.settings.database}". ${error.message}`);
@@ -182,13 +172,9 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
    * Apply the SQL query to the target Oracle database
    */
   async queryData(item: SouthConnectorItemDTO<SouthOracleItemSettings>, startTime: Instant, endTime: Instant): Promise<Array<any>> {
-    if (!oracledb) {
-      throw new Error('oracledb library not loaded');
-    }
-
-    const config = {
-      user: this.connector.settings.username,
-      password: this.connector.settings.password ? await this.encryptionService.decryptText(this.connector.settings.password) : '',
+    const config: ConnectionAttributes = {
+      user: this.connector.settings.username || undefined,
+      password: this.connector.settings.password ? await this.encryptionService.decryptText(this.connector.settings.password) : undefined,
       connectString: `${this.connector.settings.host}:${this.connector.settings.port}/${this.connector.settings.database}`
     };
 
