@@ -1,4 +1,4 @@
-import SouthOPCHDA from './south-opchda';
+import SouthPi from './south-pi';
 import DatabaseMock from '../../tests/__mocks__/database.mock';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/logger.mock';
@@ -7,7 +7,7 @@ import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock
 import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
 import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
-import { SouthOPCHDAItemSettings, SouthOPCHDASettings } from '../../../../shared/model/south-settings.model';
+import { SouthPIItemSettings, SouthPISettings } from '../../../../shared/model/south-settings.model';
 import fetch from 'node-fetch';
 
 jest.mock('node-fetch');
@@ -52,16 +52,15 @@ const logger: pino.Logger = new PinoLogger();
 
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
-const items: Array<SouthConnectorItemDTO<SouthOPCHDAItemSettings>> = [
+const items: Array<SouthConnectorItemDTO<SouthPIItemSettings>> = [
   {
     id: 'id1',
     name: 'item1',
     enabled: true,
     connectorId: 'southId',
     settings: {
-      nodeId: 'ns=3;s=Random',
-      aggregate: 'raw',
-      resampling: 'none'
+      type: 'pointId',
+      piPoint: 'FACTORY.WORKSHOP.POINT.ID1'
     },
     scanModeId: 'scanModeId1'
   },
@@ -71,26 +70,14 @@ const items: Array<SouthConnectorItemDTO<SouthOPCHDAItemSettings>> = [
     enabled: true,
     connectorId: 'southId',
     settings: {
-      nodeId: 'ns=3;s=Counter',
-      aggregate: 'raw'
+      type: 'pointQuery',
+      piQuery: '*'
     },
     scanModeId: 'scanModeId1'
-  },
-  {
-    id: 'id3',
-    name: 'item3',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {
-      nodeId: 'ns=3;s=Triangle',
-      aggregate: 'average',
-      resampling: '10Seconds'
-    },
-    scanModeId: 'scanModeId2'
   }
 ];
 
-const configuration: SouthConnectorDTO<SouthOPCHDASettings> = {
+const configuration: SouthConnectorDTO<SouthPISettings> = {
   id: 'southId',
   name: 'south',
   type: 'test',
@@ -104,36 +91,30 @@ const configuration: SouthConnectorDTO<SouthOPCHDASettings> = {
   },
   settings: {
     agentUrl: 'http://localhost:2224',
-    retryInterval: 1000,
-    host: 'localhost',
-    serverName: 'Matrikon.OPC.Simulation'
+    retryInterval: 1000
   }
 };
-let south: SouthOPCHDA;
+let south: SouthPi;
 
-describe('South OPCHDA', () => {
+describe('South PI', () => {
   beforeEach(async () => {
     jest.resetAllMocks();
     jest.useFakeTimers();
 
-    south = new SouthOPCHDA(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthPi(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should properly connect to remote agent and disconnect ', async () => {
     await south.connect();
-    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/opc/${configuration.id}/connect`, {
+    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/pi/${configuration.id}/connect`, {
       method: 'PUT',
-      body: JSON.stringify({
-        host: configuration.settings.host,
-        serverName: configuration.settings.serverName
-      }),
       headers: {
         'Content-Type': 'application/json'
       }
     });
 
     await south.disconnect();
-    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/opc/${configuration.id}/disconnect`, {
+    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/pi/${configuration.id}/disconnect`, {
       method: 'DELETE'
     });
   });
@@ -144,12 +125,8 @@ describe('South OPCHDA', () => {
     });
 
     await south.connect();
-    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/opc/${configuration.id}/connect`, {
+    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/pi/${configuration.id}/connect`, {
       method: 'PUT',
-      body: JSON.stringify({
-        host: configuration.settings.host,
-        serverName: configuration.settings.serverName
-      }),
       headers: {
         'Content-Type': 'application/json'
       }
@@ -252,6 +229,7 @@ describe('South OPCHDA', () => {
           json: () => ({
             recordCount: 2,
             content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
+            logs: ['log1', 'log2'],
             maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
           })
         })
@@ -262,6 +240,7 @@ describe('South OPCHDA', () => {
           json: () => ({
             recordCount: 0,
             content: [],
+            logs: [],
             maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
           })
         })
@@ -269,35 +248,15 @@ describe('South OPCHDA', () => {
 
     const result = await south.historyQuery(items, startTime, endTime);
 
-    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/opc/${configuration.id}/read`, {
+    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/pi/${configuration.id}/read`, {
       method: 'PUT',
       body: JSON.stringify({
-        host: configuration.settings.host,
-        serverName: configuration.settings.serverName,
-        aggregate: 'raw',
-        resampling: 'none',
         startTime,
         endTime,
         items: [
-          { name: 'item1', nodeId: 'ns=3;s=Random' },
-          { name: 'item2', nodeId: 'ns=3;s=Counter' }
+          { name: 'item1', type: 'pointId', piPoint: 'FACTORY.WORKSHOP.POINT.ID1' },
+          { name: 'item2', type: 'pointQuery', piQuery: '*' }
         ]
-      }),
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-
-    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/opc/${configuration.id}/read`, {
-      method: 'PUT',
-      body: JSON.stringify({
-        host: configuration.settings.host,
-        serverName: configuration.settings.serverName,
-        aggregate: 'average',
-        resampling: '10Seconds',
-        startTime,
-        endTime,
-        items: [{ name: 'item3', nodeId: 'ns=3;s=Triangle' }]
       }),
       headers: {
         'Content-Type': 'application/json'
@@ -306,8 +265,13 @@ describe('South OPCHDA', () => {
 
     expect(result).toEqual('2020-03-01T00:00:00.000Z');
     expect(south.addValues).toHaveBeenCalledWith([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
+    expect(logger.warn).toHaveBeenCalledWith('log1');
+    expect(logger.warn).toHaveBeenCalledWith('log2');
 
-    expect(logger.debug).toHaveBeenCalledWith(`No result found. Request done in 0 ms`);
+    const noResult = await south.historyQuery(items, startTime, endTime);
+    expect(noResult).toEqual('2020-01-01T00:00:00.000Z');
+    expect(logger.debug).toHaveBeenCalledWith('No result found. Request done in 0 ms');
+    expect(logger.warn).toHaveBeenCalledTimes(2);
   });
 
   it('should manage query error', async () => {
@@ -327,6 +291,7 @@ describe('South OPCHDA', () => {
         })
       );
 
+    await south.historyQuery(items, startTime, endTime);
     await south.historyQuery(items, startTime, endTime);
     expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 400: bad request`);
     expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 500`);

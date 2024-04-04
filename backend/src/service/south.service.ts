@@ -18,6 +18,7 @@ import SouthOIAnalytics from '../south/south-oianalytics/south-oianalytics';
 import SouthSlims from '../south/south-slims/south-slims';
 import SouthOPCHDA from '../south/south-opchda/south-opchda';
 import SouthOLEDB from '../south/south-oledb/south-oledb';
+import SouthPI from '../south/south-pi/south-pi';
 
 import { SouthConnectorDTO, SouthConnectorItemDTO, SouthConnectorManifest } from '../../../shared/model/south-connector.model';
 import SouthConnector from '../south/south-connector';
@@ -37,6 +38,7 @@ import odbcManifest from '../south/south-odbc/manifest';
 import sqliteManifest from '../south/south-sqlite/manifest';
 import opchdaManifest from '../south/south-opchda/manifest';
 import oledbManifest from '../south/south-oledb/manifest';
+import piManifest from '../south/south-pi/manifest';
 
 const southList: Array<{ class: typeof SouthConnector<any, any>; manifest: SouthConnectorManifest }> = [
   { class: SouthFolderScanner, manifest: folderScannerManifest },
@@ -53,7 +55,8 @@ const southList: Array<{ class: typeof SouthConnector<any, any>; manifest: South
   { class: SouthADS, manifest: adsManifest },
   { class: SouthModbus, manifest: modbusManifest },
   { class: SouthOIAnalytics, manifest: oianalyticsManifest },
-  { class: SouthSlims, manifest: slimsManifest }
+  { class: SouthSlims, manifest: slimsManifest },
+  { class: SouthPI, manifest: piManifest }
 ];
 
 export default class SouthService {
