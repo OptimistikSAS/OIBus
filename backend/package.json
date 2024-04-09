@@ -58,7 +58,7 @@
     "argon2": "0.40.1",
     "basic-auth": "2.0.1",
     "better-sqlite3": "9.4.5",
-    "cron": "3.1.6",
+    "cron": "3.1.7",
     "cron-parser": "4.9.0",
     "cronstrue": "2.49.0",
     "form-data": "4.0.0",
