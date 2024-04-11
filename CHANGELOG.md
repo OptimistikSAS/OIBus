@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.3.0](https://github.com/OptimistikSAS/OIBus/compare/v3.2.0...v3.3.0) (2024-04-11)
+
+
+### Features
+
+* **south:** Add South OSIsoft PI connector ([dd07f7e](https://github.com/OptimistikSAS/OIBus/commit/dd07f7e5ab858174614e36778af3eb41ad8e0e20))
+
+
+### Bug Fixes
+
+* Fix user search ([4cb1c19](https://github.com/OptimistikSAS/OIBus/commit/4cb1c19c996af6f75e629d654a46013a815e631b))
+* **oracle:** Manage thick / thin mode oracle client ([f7d5cd0](https://github.com/OptimistikSAS/OIBus/commit/f7d5cd0712d7f42fbfd0251ec9050c6808fffd04))
+* sanitize IP filter and filePath ([1b53363](https://github.com/OptimistikSAS/OIBus/commit/1b533634d0184dd47e4a5a37106ef4bafdd7176e))
+* Simplify proxy redirection ([49b1c9d](https://github.com/OptimistikSAS/OIBus/commit/49b1c9d1e9018376d069bbf91e98cf18ddee1e42))
+
 ## [3.2.0](https://github.com/OptimistikSAS/OIBus/compare/v3.1.0...v3.2.0) (2024-03-26)
 
 
