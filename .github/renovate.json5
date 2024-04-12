@@ -6,9 +6,6 @@
   "baseBranches": ["main"],
   "labels": ["dependencies"],
   "lockFileMaintenance": { "enabled": true },
-  "schedule": [
-    "before 3am on Monday"
-  ],
   "packageRules": [
     // allow patch updates for TypeScript
     // but we'll handle minor and major updates ourselves
@@ -21,6 +18,22 @@
       "minor": {
         "enabled": false
       }
+    },
+    // group all minor dependencies, once a week
+    {
+      "matchPackagePatterns": [
+        "*"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "matchCurrentVersion": ">=1",
+      "groupName": "all non-major dependencies",
+      "groupSlug": "all-minor-patch",
+      "schedule": [
+        "before 3am on Monday"
+      ]
     }
   ]
 }
