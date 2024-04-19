@@ -142,30 +142,31 @@ async function createCommandTable(knex: Knex): Promise<void> {
 }
 
 async function updateNorthOIAnalyticsConnectors(knex: Knex): Promise<void> {
-  const oldNorthSettings: Array<{ id: string; settings: OldNorthOIAnalyticsSettings }> = await knex(NORTH_CONNECTORS_TABLE)
+  const oldNorthSettings: Array<{ id: string; settings: string }> = await knex(NORTH_CONNECTORS_TABLE)
     .select('id', 'settings')
     .where('type', 'oianalytics');
 
   for (const { id, settings } of oldNorthSettings) {
+    const jsonSettings: OldNorthOIAnalyticsSettings = JSON.parse(settings);
     const newSettings: NewNorthOIAnalyticsSettings = {
       useOiaModule: false,
-      timeout: settings.timeout,
+      timeout: jsonSettings.timeout,
       compress: false,
       specificSettings: {
-        host: settings.host,
-        acceptUnauthorized: settings.acceptUnauthorized,
-        authentication: settings.authentication,
-        accessKey: settings.accessKey || undefined,
-        secretKey: settings.secretKey || undefined,
-        tenantId: settings.tenantId || undefined,
-        clientId: settings.clientId || undefined,
-        clientSecret: settings.clientSecret || undefined,
-        certificateId: settings.certificateId || undefined,
-        scope: settings.scope || undefined,
-        useProxy: settings.useProxy || false,
-        proxyUrl: settings.proxyUrl,
-        proxyUsername: settings.proxyUsername,
-        proxyPassword: settings.proxyPassword
+        host: jsonSettings.host,
+        acceptUnauthorized: jsonSettings.acceptUnauthorized,
+        authentication: jsonSettings.authentication,
+        accessKey: jsonSettings.accessKey || undefined,
+        secretKey: jsonSettings.secretKey || undefined,
+        tenantId: jsonSettings.tenantId || undefined,
+        clientId: jsonSettings.clientId || undefined,
+        clientSecret: jsonSettings.clientSecret || undefined,
+        certificateId: jsonSettings.certificateId || undefined,
+        scope: jsonSettings.scope || undefined,
+        useProxy: jsonSettings.useProxy || false,
+        proxyUrl: jsonSettings.proxyUrl,
+        proxyUsername: jsonSettings.proxyUsername,
+        proxyPassword: jsonSettings.proxyPassword
       }
     };
     await knex(NORTH_CONNECTORS_TABLE)
@@ -175,29 +176,31 @@ async function updateNorthOIAnalyticsConnectors(knex: Knex): Promise<void> {
 }
 
 async function updateSouthOIAnalyticsConnectors(knex: Knex): Promise<void> {
-  const oldSouthSettings: Array<{ id: string; settings: OldSouthOIAnalyticsSettings }> = await knex(SOUTH_CONNECTORS_TABLE)
+  const oldSouthSettings: Array<{ id: string; settings: string }> = await knex(SOUTH_CONNECTORS_TABLE)
     .select('id', 'settings')
     .where('type', 'oianalytics');
 
   for (const { id, settings } of oldSouthSettings) {
+    const jsonSettings: OldSouthOIAnalyticsSettings = JSON.parse(settings);
+
     const newSettings: NewSouthOIAnalyticsSettings = {
       useOiaModule: false,
-      timeout: settings.timeout,
+      timeout: jsonSettings.timeout,
       specificSettings: {
-        host: settings.host,
-        acceptUnauthorized: settings.acceptUnauthorized,
+        host: jsonSettings.host,
+        acceptUnauthorized: jsonSettings.acceptUnauthorized,
         authentication: 'basic',
-        accessKey: settings.accessKey || undefined,
-        secretKey: settings.secretKey || undefined,
+        accessKey: jsonSettings.accessKey || undefined,
+        secretKey: jsonSettings.secretKey || undefined,
         tenantId: undefined,
         clientId: undefined,
         clientSecret: undefined,
         certificateId: undefined,
         scope: undefined,
-        useProxy: settings.useProxy || false,
-        proxyUrl: settings.proxyUrl,
-        proxyUsername: settings.proxyUsername,
-        proxyPassword: settings.proxyPassword
+        useProxy: jsonSettings.useProxy || false,
+        proxyUrl: jsonSettings.proxyUrl,
+        proxyUsername: jsonSettings.proxyUsername,
+        proxyPassword: jsonSettings.proxyPassword
       }
     };
     await knex(SOUTH_CONNECTORS_TABLE)
@@ -207,34 +210,36 @@ async function updateSouthOIAnalyticsConnectors(knex: Knex): Promise<void> {
 }
 
 async function updateOIAnalyticsHistoryQueries(knex: Knex): Promise<void> {
-  const oldNorthSettings: Array<{ id: string; settings: OldNorthOIAnalyticsSettings }> = await knex(HISTORY_QUERIES_TABLE)
+  const oldNorthSettings: Array<{ id: string; settings: string }> = await knex(HISTORY_QUERIES_TABLE)
     .select('id', 'north_settings as settings')
     .where('north_type', 'oianalytics');
 
-  const oldSouthSettings: Array<{ id: string; settings: OldSouthOIAnalyticsSettings }> = await knex(HISTORY_QUERIES_TABLE)
+  const oldSouthSettings: Array<{ id: string; settings: string }> = await knex(HISTORY_QUERIES_TABLE)
     .select('id', 'south_settings as settings')
     .where('south_type', 'oianalytics');
 
   for (const { id, settings } of oldNorthSettings) {
+    const jsonSettings: OldNorthOIAnalyticsSettings = JSON.parse(settings);
+
     const newSettings: NewNorthOIAnalyticsSettings = {
       useOiaModule: false,
-      timeout: settings.timeout,
+      timeout: jsonSettings.timeout,
       compress: false,
       specificSettings: {
-        host: settings.host,
-        acceptUnauthorized: settings.acceptUnauthorized,
-        authentication: settings.authentication,
-        accessKey: settings.accessKey || undefined,
-        secretKey: settings.secretKey || undefined,
-        tenantId: settings.tenantId || undefined,
-        clientId: settings.clientId || undefined,
-        clientSecret: settings.clientSecret || undefined,
-        certificateId: settings.certificateId || undefined,
-        scope: settings.scope || undefined,
-        useProxy: settings.useProxy || false,
-        proxyUrl: settings.proxyUrl,
-        proxyUsername: settings.proxyUsername,
-        proxyPassword: settings.proxyPassword
+        host: jsonSettings.host,
+        acceptUnauthorized: jsonSettings.acceptUnauthorized,
+        authentication: jsonSettings.authentication,
+        accessKey: jsonSettings.accessKey || undefined,
+        secretKey: jsonSettings.secretKey || undefined,
+        tenantId: jsonSettings.tenantId || undefined,
+        clientId: jsonSettings.clientId || undefined,
+        clientSecret: jsonSettings.clientSecret || undefined,
+        certificateId: jsonSettings.certificateId || undefined,
+        scope: jsonSettings.scope || undefined,
+        useProxy: jsonSettings.useProxy || false,
+        proxyUrl: jsonSettings.proxyUrl,
+        proxyUsername: jsonSettings.proxyUsername,
+        proxyPassword: jsonSettings.proxyPassword
       }
     };
     await knex(HISTORY_QUERIES_TABLE)
@@ -243,24 +248,26 @@ async function updateOIAnalyticsHistoryQueries(knex: Knex): Promise<void> {
   }
 
   for (const { id, settings } of oldSouthSettings) {
+    const jsonSettings: OldSouthOIAnalyticsSettings = JSON.parse(settings);
+
     const newSettings: NewSouthOIAnalyticsSettings = {
       useOiaModule: false,
-      timeout: settings.timeout,
+      timeout: jsonSettings.timeout,
       specificSettings: {
-        host: settings.host,
-        acceptUnauthorized: settings.acceptUnauthorized,
+        host: jsonSettings.host,
+        acceptUnauthorized: jsonSettings.acceptUnauthorized,
         authentication: 'basic',
-        accessKey: settings.accessKey || undefined,
-        secretKey: settings.secretKey || undefined,
+        accessKey: jsonSettings.accessKey || undefined,
+        secretKey: jsonSettings.secretKey || undefined,
         tenantId: undefined,
         clientId: undefined,
         clientSecret: undefined,
         certificateId: undefined,
         scope: undefined,
-        useProxy: settings.useProxy || false,
-        proxyUrl: settings.proxyUrl,
-        proxyUsername: settings.proxyUsername,
-        proxyPassword: settings.proxyPassword
+        useProxy: jsonSettings.useProxy || false,
+        proxyUrl: jsonSettings.proxyUrl,
+        proxyUsername: jsonSettings.proxyUsername,
+        proxyPassword: jsonSettings.proxyPassword
       }
     };
     await knex(HISTORY_QUERIES_TABLE)
