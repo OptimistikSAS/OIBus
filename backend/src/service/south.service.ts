@@ -39,6 +39,7 @@ import sqliteManifest from '../south/south-sqlite/manifest';
 import opchdaManifest from '../south/south-opchda/manifest';
 import oledbManifest from '../south/south-oledb/manifest';
 import piManifest from '../south/south-pi/manifest';
+import ConnectionService from './connection.service';
 
 const southList: Array<{ class: typeof SouthConnector<any, any>; manifest: SouthConnectorManifest }> = [
   { class: SouthFolderScanner, manifest: folderScannerManifest },
@@ -62,7 +63,8 @@ const southList: Array<{ class: typeof SouthConnector<any, any>; manifest: South
 export default class SouthService {
   constructor(
     private readonly encryptionService: EncryptionService,
-    private readonly repositoryService: RepositoryService
+    private readonly repositoryService: RepositoryService,
+    private readonly _connectionService: ConnectionService
   ) {}
 
   /**
@@ -79,7 +81,15 @@ export default class SouthService {
     if (!SouthConnector) {
       throw Error(`South connector of type ${settings.type} not installed`);
     }
-    return new SouthConnector.class(settings, addValues, addFile, this.encryptionService, this.repositoryService, logger, baseFolder);
+    return new SouthConnector.class(settings,
+      addValues,
+      addFile,
+      this.encryptionService,
+      this.repositoryService,
+      logger,
+      baseFolder,
+      this._connectionService
+    );
   }
 
   /**
