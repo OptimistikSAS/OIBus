@@ -12,11 +12,12 @@ import DeferredPromise from '../service/deferred-promise';
 import { DateTime } from 'luxon';
 import SouthCacheService from '../service/south-cache.service';
 import { PassThrough } from 'node:stream';
-import { QueriesFile, QueriesHistory, QueriesLastPoint, QueriesSubscription } from './south-interface';
+import { QueriesFile, QueriesHistory, QueriesLastPoint, QueriesSubscription, DelegatesConnection } from './south-interface';
 import SouthConnectorMetricsService from '../service/south-connector-metrics.service';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { OIBusDataValue } from '../../../shared/model/engine.model';
 import path from 'node:path';
+import ConnectionService, { ManagedConnectionDTO } from '../service/connection.service';
 
 /**
  * Class SouthConnector : provides general attributes and methods for south connectors.
@@ -64,7 +65,9 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
     protected readonly encryptionService: EncryptionService,
     protected readonly repositoryService: RepositoryService,
     protected logger: pino.Logger,
-    protected readonly baseFolder: string
+    protected readonly baseFolder: string,
+    // The value is null in order to incrementally refactor connectors to use the ConnectionService
+    private readonly connectionService: ConnectionService | null = null
   ) {
     if (this.connector.id !== 'test') {
       this.metricsService = new SouthConnectorMetricsService(this.connector.id, this.repositoryService.southMetricsRepository);
@@ -105,6 +108,18 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
         lastConnection: DateTime.now().toUTC().toISO()
       });
     }
+
+    if (this.delegatesConnection()) {
+      const connectionDTO: ManagedConnectionDTO<any> = {
+        type: this.connector.type,
+        connectorSettings: this.connector.settings,
+        createSessionFn: this.createSession.bind(this),
+        settings: this.connectionSettings
+      };
+
+      this.connection = this.connectionService!.create(this.connector.id, connectionDTO);
+    }
+
     this.logger.info(`South connector "${this.connector.name}" of type ${this.connector.type} started`);
 
     for (const cronJob of this.cronByScanModeIds.values()) {
@@ -497,6 +512,12 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
       cronJob.stop();
     }
     this.cronByScanModeIds.clear();
+    this.taskJobQueue = [];
+
+    if (this.delegatesConnection()) {
+      await this.connectionService!.remove(this.connector.type, this.connector.id);
+    }
+
     this.logger.debug(`South connector "${this.connector.name}" (${this.connector.id}) disconnected`);
   }
 
@@ -553,6 +574,10 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
 
   queriesSubscription(): this is QueriesSubscription {
     return 'subscribe' in this && 'unsubscribe' in this;
+  }
+
+  delegatesConnection(): this is DelegatesConnection {
+    return 'connectionSettings' in this && 'createSession' in this;
   }
 
   async testConnection(): Promise<void> {
