@@ -28,6 +28,7 @@ import {
 import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
 import Stream from 'node:stream';
 import { createFolder } from '../../service/utils';
+import ConnectionService from '../../service/connection.service';
 
 class CustomStream extends Stream {
   constructor() {
@@ -39,7 +40,7 @@ class CustomStream extends Stream {
 
 // Mock node-opcua-client
 jest.mock('node-opcua-client', () => ({
-  OPCUAClient: { createSession: jest.fn() },
+  OPCUAClient: { createSession: jest.fn(() => ({})) },
   ClientSubscription: { create: jest.fn() },
   ClientMonitoredItem: { create: jest.fn() },
   MessageSecurityMode: { None: 1 },
@@ -218,16 +219,29 @@ describe('SouthOPCUA', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
-    south = new SouthOPCUA(connector, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    const connectionService = new ConnectionService(logger);
+    south = new SouthOPCUA(
+      connector,
+      items,
+      addValues,
+      addFile,
+      encryptionService,
+      repositoryService,
+      logger,
+      'baseFolder',
+      connectionService
+    );
   });
 
   it('should be properly initialized', async () => {
-    south.connectToOpcuaServer = jest.fn();
+    south.createSession = jest.fn();
     south.initOpcuaCertificateFolders = jest.fn();
     await south.start();
     await south.start();
     expect(south.initOpcuaCertificateFolders).toHaveBeenCalledTimes(2);
-    expect(south.connectToOpcuaServer).toHaveBeenCalledTimes(2);
+    // createSession should not be called right after starting, because
+    // it will be eventually called when the first session is needed
+    expect(south.createSession).not.toHaveBeenCalled();
   });
 
   it('should properly connect and disconnect to OPCUA server without password', async () => {
@@ -252,23 +266,26 @@ describe('SouthOPCUA', () => {
 
     await south.start();
 
+    // retrieving a session to trigger the creation of a session
+    await south.connection.getSession();
     expect(nodeOPCUAClient.OPCUAClient.createSession).toHaveBeenCalledWith(connector.settings.url, expectedUserIdentity, expectedOptions);
     expect(logger.info).toHaveBeenCalledWith(`OPCUA ${connector.name} connected`);
     expect(setTimeoutSpy).not.toHaveBeenCalled();
   });
 
   it('should properly manage connection error', async () => {
-    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
-
     (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockImplementationOnce(() => {
       throw new Error('connection error');
     });
 
     await south.start();
 
-    expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), connector.settings.retryInterval);
-    expect(logger.error).toHaveBeenCalledWith(`Error while connecting to the OPCUA server. ${new Error('connection error')}`);
-    await south.disconnect();
+    try {
+      await south.connection.getSession();
+    } catch (error) {
+      expect(logger.error).toHaveBeenCalledWith(`Error while connecting to the OPCUA server. ${new Error('connection error')}`);
+      await south.disconnect();
+    }
   });
 
   it('should properly manage history query', async () => {
@@ -504,6 +521,10 @@ describe('SouthOPCUA', () => {
     south.addValues = jest.fn();
 
     await south.start();
+    // In order to trigger the call to the 'close' function, there needs to be a session created,
+    // because otherwise the 'close' function will not be called
+    // If this is not called, the 'disconnect' function will resolve right away, without calling the 'close' function
+    await south.connection.getSession();
     south.disconnect();
     await expect(
       south.historyQuery(
@@ -597,6 +618,10 @@ describe('SouthOPCUA', () => {
     south.addValues = jest.fn();
 
     await south.start();
+    // In order to trigger the call to the 'close' function, there needs to be a session created,
+    // because otherwise the 'close' function will not be called
+    // If this is not called, the 'disconnect' function will resolve right away, without calling the 'close' function
+    await south.connection.getSession();
     south.disconnect();
     await expect(south.lastPointQuery(items)).rejects.toThrow('opcua read error');
     const expectedItemsToRead = items.filter(item => item.settings.mode === 'DA');
@@ -762,7 +787,18 @@ describe('SouthOPCUA with basic auth', () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
 
-    south = new SouthOPCUA(connector, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    const connectionService = new ConnectionService(logger);
+    south = new SouthOPCUA(
+      connector,
+      items,
+      addValues,
+      addFile,
+      encryptionService,
+      repositoryService,
+      logger,
+      'baseFolder',
+      connectionService
+    );
   });
 
   it('should properly connect to OPCUA server with basic auth', async () => {
@@ -786,7 +822,7 @@ describe('SouthOPCUA with basic auth', () => {
       password: connector.settings.authentication.password
     };
 
-    await south.connectToOpcuaServer();
+    await south.createSession();
 
     expect(nodeOPCUAClient.OPCUAClient.createSession).toHaveBeenCalledWith(connector.settings.url, expectedUserIdentity, expectedOptions);
     expect(logger.info).toHaveBeenCalledWith(`OPCUA ${connector.name} connected`);
@@ -825,7 +861,19 @@ describe('SouthOPCUA with certificate', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
-    south = new SouthOPCUA(connector, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+
+    const connectionService = new ConnectionService(logger);
+    south = new SouthOPCUA(
+      connector,
+      items,
+      addValues,
+      addFile,
+      encryptionService,
+      repositoryService,
+      logger,
+      'baseFolder',
+      connectionService
+    );
   });
 
   it('should properly connect to OPCUA server with basic auth', async () => {
@@ -854,7 +902,7 @@ describe('SouthOPCUA with certificate', () => {
       privateKey: Buffer.from('key content').toString('utf8')
     };
 
-    await south.connectToOpcuaServer();
+    await south.createSession();
 
     expect(nodeOPCUAClient.OPCUAClient.createSession).toHaveBeenCalledWith(connector.settings.url, expectedUserIdentity, expectedOptions);
     expect(logger.info).toHaveBeenCalledWith(`OPCUA ${connector.name} connected`);
@@ -1006,7 +1054,18 @@ describe('SouthOPCUA test connection', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime();
 
-    south = new SouthOPCUA(connector, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    const connectionService = new ConnectionService(logger);
+    south = new SouthOPCUA(
+      connector,
+      items,
+      addValues,
+      addFile,
+      encryptionService,
+      repositoryService,
+      logger,
+      'baseFolder',
+      connectionService
+    );
   });
 
   it('Connection settings are correct', async () => {
@@ -1134,5 +1193,75 @@ describe('SouthOPCUA test connection', () => {
     });
 
     await expect(south.testConnection()).rejects.toThrow(new Error('Unknown error'));
+  });
+});
+
+describe('SouthOPCUA with shared connection', () => {
+  const connector: SouthConnectorDTO<SouthOPCUASettings> = {
+    id: 'southId',
+    name: 'south',
+    type: 'test',
+    description: 'my test connector',
+    enabled: true,
+    sharedConnection: true,
+    history: {
+      maxInstantPerItem: true,
+      maxReadInterval: 3600,
+      readDelay: 0,
+      overlap: 0
+    },
+    settings: {
+      url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
+      retryInterval: 10000,
+      authentication: {
+        type: 'none',
+        username: null,
+        password: null,
+        certFilePath: null,
+        keyFilePath: null
+      } as unknown as SouthOPCUASettingsAuthentication,
+      securityMode: 'None',
+      securityPolicy: 'None',
+      keepSessionAlive: false
+    }
+  };
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime();
+
+    const connectionService = new ConnectionService(logger);
+    south = new SouthOPCUA(
+      connector,
+      items,
+      addValues,
+      addFile,
+      encryptionService,
+      repositoryService,
+      logger,
+      'baseFolder',
+      connectionService
+    );
+  });
+
+  it('should initialize connectionSettings', () => {
+    // Initially sharedConnection is true
+    expect(south.connectionSettings).toEqual({
+      closeFnName: 'close',
+      sharedConnection: true
+    });
+  });
+
+  it('should properly name the connection', async () => {
+    const createSessionConfigsSpy = jest.spyOn(south, 'createSessionConfigs');
+
+    await south.createSession();
+
+    expect(createSessionConfigsSpy).toHaveBeenCalledWith(
+      connector.settings,
+      south['clientCertificateManager'],
+      encryptionService,
+      'Shared session'
+    );
   });
 });
