@@ -40,7 +40,6 @@ import opchdaManifest from '../south/south-opchda/manifest';
 import oledbManifest from '../south/south-oledb/manifest';
 import piManifest from '../south/south-pi/manifest';
 import ConnectionService from './connection.service';
-import { OIBusContent } from '../../../shared/model/engine.model';
 
 const southList: Array<{ class: typeof SouthConnector<any, any>; manifest: SouthConnectorManifest }> = [
   { class: SouthFolderScanner, manifest: folderScannerManifest },

@@ -223,7 +223,8 @@ describe('SouthOPCUA', () => {
     south = new SouthOPCUA(
       connector,
       items,
-      addContentCallback,
+      addValues,
+      addFile,
       encryptionService,
       repositoryService,
       logger,
@@ -804,7 +805,8 @@ describe('SouthOPCUA with basic auth', () => {
     south = new SouthOPCUA(
       connector,
       items,
-      addContentCallback,
+      addValues,
+      addFile,
       encryptionService,
       repositoryService,
       logger,
@@ -880,7 +882,8 @@ describe('SouthOPCUA with certificate', () => {
     south = new SouthOPCUA(
       connector,
       items,
-      addContentCallback,
+      addValues,
+      addFile,
       encryptionService,
       repositoryService,
       logger,
@@ -1073,7 +1076,8 @@ describe('SouthOPCUA test connection', () => {
     south = new SouthOPCUA(
       connector,
       items,
-      addContentCallback,
+      addValues,
+      addFile,
       encryptionService,
       repositoryService,
       logger,
@@ -1249,7 +1253,8 @@ describe('SouthOPCUA with shared connection', () => {
     south = new SouthOPCUA(
       connector,
       items,
-      addContentCallback,
+      addValues,
+      addFile,
       encryptionService,
       repositoryService,
       logger,

@@ -27,7 +27,7 @@ export default class SouthConnectorRepository {
         type: result.type,
         description: result.description,
         enabled: Boolean(result.enabled),
-        sharedConnection: Boolean(result.sharedConnection),
+        sharedConnection: result.sharedConnection,
         history: {
           maxInstantPerItem: Boolean(result.maxInstantPerItem),
           maxReadInterval: result.maxReadInterval,
@@ -58,7 +58,7 @@ export default class SouthConnectorRepository {
       type: result.type,
       description: result.description,
       enabled: Boolean(result.enabled),
-      sharedConnection: Boolean(result.sharedConnection),
+      sharedConnection: result.sharedConnection,
       history: {
         maxInstantPerItem: Boolean(result.maxInstantPerItem),
         maxReadInterval: result.maxReadInterval,

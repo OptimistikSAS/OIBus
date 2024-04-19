@@ -19,7 +19,6 @@ import CommandService from './service/oia/command.service';
 import RegistrationService from './service/oia/registration.service';
 import ProxyServer from './web-server/proxy-server';
 import ConnectionService from './service/connection.service';
-import OIAnalyticsMessageService from './service/oia/message.service';
 
 const CONFIG_DATABASE = 'oibus.db';
 const CRYPTO_DATABASE = 'crypto.db';
