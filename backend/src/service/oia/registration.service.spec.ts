@@ -114,7 +114,7 @@ describe('Registration service', () => {
     (generateRandomId as jest.Mock).mockReturnValue('1234');
 
     const command: RegistrationSettingsCommandDTO = {
-      host: 'http://localhost:4200',
+      host: 'http://localhost:4200/',
       acceptUnauthorized: false,
       useProxy: true,
       proxyUrl: 'http://localhost:3128',
