@@ -18,6 +18,7 @@ import HomeMetricsService from './service/home-metrics.service';
 import CommandService from './service/oia/command.service';
 import RegistrationService from './service/oia/registration.service';
 import ProxyServer from './web-server/proxy-server';
+import ConnectionService from './service/connection.service';
 import OIAnalyticsMessageService from './service/oia/message.service';
 
 const CONFIG_DATABASE = 'oibus.db';
@@ -86,8 +87,9 @@ const LOG_DB_NAME = 'logs.db';
     repositoryService.registrationRepository.getRegistrationSettings()
   );
 
+  const connectionService = new ConnectionService(loggerService.logger!);
   const northService = new NorthService(encryptionService, repositoryService);
-  const southService = new SouthService(encryptionService, repositoryService);
+  const southService = new SouthService(encryptionService, repositoryService, connectionService);
   const historyQueryService = new HistoryQueryService(repositoryService);
 
   const engineMetricsService = new EngineMetricsService(loggerService.logger!, oibusSettings.id, repositoryService.engineMetricsRepository);
