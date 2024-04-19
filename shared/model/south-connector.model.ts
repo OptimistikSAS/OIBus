@@ -30,6 +30,7 @@ export interface SouthConnectorDTO<T extends SouthSettings = any> extends BaseEn
   type: string;
   description: string;
   enabled: boolean;
+  sharedConnection?: boolean;
   settings: T;
   history: SouthConnectorHistorySettings;
 }
@@ -104,6 +105,7 @@ export interface SouthConnectorManifest {
     lastFile: boolean;
     history: boolean;
     forceMaxInstantPerItem: boolean;
+    sharedConnection?: boolean;
   };
   settings: Array<OibFormControl>;
   items: SouthConnectorItemManifest;

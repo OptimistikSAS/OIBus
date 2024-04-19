@@ -15,7 +15,7 @@ export default class SouthConnectorRepository {
    */
   getSouthConnectors(): Array<SouthConnectorDTO> {
     const query =
-      `SELECT id, name, type, description, enabled, history_max_instant_per_item AS maxInstantPerItem, ` +
+      `SELECT id, name, type, description, enabled, history_max_instant_per_item AS maxInstantPerItem, shared_connection as sharedConnection, ` +
       `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, history_read_overlap AS overlap, ` +
       `settings FROM ${SOUTH_CONNECTORS_TABLE};`;
     return this.database
@@ -27,6 +27,7 @@ export default class SouthConnectorRepository {
         type: result.type,
         description: result.description,
         enabled: Boolean(result.enabled),
+        sharedConnection: result.sharedConnection,
         history: {
           maxInstantPerItem: Boolean(result.maxInstantPerItem),
           maxReadInterval: result.maxReadInterval,
@@ -42,7 +43,7 @@ export default class SouthConnectorRepository {
    */
   getSouthConnector(id: string): SouthConnectorDTO | null {
     const query =
-      `SELECT id, name, type, description, enabled, history_max_instant_per_item AS maxInstantPerItem, ` +
+      `SELECT id, name, type, description, enabled, history_max_instant_per_item AS maxInstantPerItem, shared_connection as sharedConnection, ` +
       `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, history_read_overlap AS overlap, ` +
       `settings FROM ${SOUTH_CONNECTORS_TABLE} WHERE id = ?;`;
     const result: any = this.database.prepare(query).get(id);
@@ -57,6 +58,7 @@ export default class SouthConnectorRepository {
       type: result.type,
       description: result.description,
       enabled: Boolean(result.enabled),
+      sharedConnection: result.sharedConnection,
       history: {
         maxInstantPerItem: Boolean(result.maxInstantPerItem),
         maxReadInterval: result.maxReadInterval,
