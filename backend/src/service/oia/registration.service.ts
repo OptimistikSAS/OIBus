@@ -66,6 +66,9 @@ export default class RegistrationService {
     };
     let response;
     try {
+      if (command.host.endsWith('/')) {
+        command.host = command.host.slice(0, command.host.length - 1);
+      }
       const url = `${command.host}/api/oianalytics/oibus/registration`;
       const agent = createProxyAgent(
         command.useProxy,
