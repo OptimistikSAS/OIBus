@@ -326,11 +326,14 @@ export default class HistoryQueryController extends AbstractController {
   }
 
   async exportSouthItems(ctx: KoaContext<void, any>): Promise<void> {
+    const columns: Set<string> = new Set<string>(['name', 'enabled']);
+
     const southItems = ctx.app.repositoryService.historyQueryItemRepository.getHistoryItems(ctx.params.historyQueryId).map(item => {
       const flattenedItem: Record<string, any> = {
         ...item
       };
       for (const [itemSettingsKey, itemSettingsValue] of Object.entries(item.settings)) {
+        columns.add(`settings_${itemSettingsKey}`);
         if (typeof itemSettingsValue === 'object') {
           flattenedItem[`settings_${itemSettingsKey}`] = JSON.stringify(itemSettingsValue);
         } else {
@@ -343,7 +346,7 @@ export default class HistoryQueryController extends AbstractController {
       delete flattenedItem.connectorId;
       return flattenedItem;
     });
-    ctx.body = csv.unparse(southItems);
+    ctx.body = csv.unparse(southItems, { columns: Array.from(columns) });
     ctx.set('Content-disposition', 'attachment; filename=items.csv');
     ctx.set('Content-Type', 'application/force-download');
     ctx.ok();
@@ -356,9 +359,6 @@ export default class HistoryQueryController extends AbstractController {
     }
 
     const file = ctx.request.file;
-    // if (file.mimetype !== 'text/csv') {
-    //   return ctx.badRequest();
-    // }
 
     const existingItems: Array<SouthConnectorItemDTO> =
       ctx.params.historyQueryId === 'create'
@@ -388,7 +388,7 @@ export default class HistoryQueryController extends AbstractController {
               if (!manifestSettings) {
                 throw new Error(`Settings "${settingsKey}" not accepted in manifest`);
               }
-              if (manifestSettings.type === 'OibArray' || manifestSettings.type === 'OibFormGroup') {
+              if ((manifestSettings.type === 'OibArray' || manifestSettings.type === 'OibFormGroup') && value) {
                 item.settings[settingsKey] = JSON.parse(value as string);
               } else {
                 item.settings[settingsKey] = value;

@@ -934,20 +934,23 @@ describe('History query controller', () => {
 
     expect(ctx.ok).toHaveBeenCalled();
     expect(ctx.body).toEqual('csv content');
-    expect(csv.unparse).toHaveBeenCalledWith([
-      {
-        name: 'name',
-        enabled: true,
-        settings_field: 'value'
-      },
-      {
-        name: 'item2',
-        enabled: true,
-        settings_objectArray: '[]',
-        settings_objectSettings: '{}',
-        settings_objectValue: 1
-      }
-    ]);
+    expect(csv.unparse).toHaveBeenCalledWith(
+      [
+        {
+          name: 'name',
+          enabled: true,
+          settings_field: 'value'
+        },
+        {
+          name: 'item2',
+          enabled: true,
+          settings_objectArray: '[]',
+          settings_objectSettings: '{}',
+          settings_objectValue: 1
+        }
+      ],
+      { columns: ['name', 'enabled', 'settings_field', 'settings_objectSettings', 'settings_objectArray', 'settings_objectValue'] }
+    );
   });
 
   it('checkImportSouthItems() should check import of items in a csv file with new history', async () => {

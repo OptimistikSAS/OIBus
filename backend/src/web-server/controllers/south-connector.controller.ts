@@ -267,12 +267,14 @@ export default class SouthConnectorController {
 
   async exportSouthItems(ctx: KoaContext<void, any>): Promise<void> {
     const scanModes = ctx.app.repositoryService.scanModeRepository.getScanModes();
+    const columns: Set<string> = new Set<string>(['name', 'enabled', 'scanMode']);
     const southItems = ctx.app.repositoryService.southItemRepository.getSouthItems(ctx.params.southId).map(item => {
       const flattenedItem: Record<string, any> = {
         ...item
       };
       flattenedItem.scanMode = scanModes.find(scanMode => scanMode.id === flattenedItem.scanModeId)?.name ?? '';
       for (const [itemSettingsKey, itemSettingsValue] of Object.entries(item.settings)) {
+        columns.add(`settings_${itemSettingsKey}`);
         if (typeof itemSettingsValue === 'object') {
           flattenedItem[`settings_${itemSettingsKey}`] = JSON.stringify(itemSettingsValue);
         } else {
@@ -285,7 +287,7 @@ export default class SouthConnectorController {
       delete flattenedItem.connectorId;
       return flattenedItem;
     });
-    ctx.body = csv.unparse(southItems);
+    ctx.body = csv.unparse(southItems, { columns: Array.from(columns) });
     ctx.set('Content-disposition', 'attachment; filename=items.csv');
     ctx.set('Content-Type', 'application/force-download');
     ctx.ok();
@@ -305,9 +307,6 @@ export default class SouthConnectorController {
       return ctx.throw(400, 'Could not parse item ids to delete array');
     }
 
-    // if (file.mimetype !== 'text/csv') {
-    //   return ctx.badRequest('Bad type of file');
-    // }
     const scanModes = ctx.app.repositoryService.scanModeRepository.getScanModes();
 
     const existingItems: Array<SouthConnectorItemDTO> =
@@ -340,7 +339,8 @@ export default class SouthConnectorController {
               if (!manifestSettings) {
                 throw new Error(`Settings "${settingsKey}" not accepted in manifest`);
               }
-              if (manifestSettings.type === 'OibArray' || manifestSettings.type === 'OibFormGroup') {
+
+              if ((manifestSettings.type === 'OibArray' || manifestSettings.type === 'OibFormGroup') && value) {
                 item.settings[settingsKey] = JSON.parse(value as string);
               } else {
                 item.settings[settingsKey] = value;

@@ -810,22 +810,35 @@ describe('South connector controller', () => {
 
     expect(ctx.ok).toHaveBeenCalled();
     expect(ctx.body).toEqual('csv content');
-    expect(csv.unparse).toHaveBeenCalledWith([
+    expect(csv.unparse).toHaveBeenCalledWith(
+      [
+        {
+          name: 'name',
+          enabled: true,
+          scanMode: 'scanMode',
+          settings_regex: '.*'
+        },
+        {
+          name: 'item2',
+          enabled: true,
+          scanMode: '',
+          settings_objectArray: '[]',
+          settings_objectSettings: '{}',
+          settings_objectValue: 1
+        }
+      ],
       {
-        name: 'name',
-        enabled: true,
-        scanMode: 'scanMode',
-        settings_regex: '.*'
-      },
-      {
-        name: 'item2',
-        enabled: true,
-        scanMode: '',
-        settings_objectArray: '[]',
-        settings_objectSettings: '{}',
-        settings_objectValue: 1
+        columns: [
+          'name',
+          'enabled',
+          'scanMode',
+          'settings_regex',
+          'settings_objectSettings',
+          'settings_objectArray',
+          'settings_objectValue'
+        ]
       }
-    ]);
+    );
   });
 
   it('checkImportSouthItems() should check import of items in a csv file with new south', async () => {
