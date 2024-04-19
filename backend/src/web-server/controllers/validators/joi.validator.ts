@@ -177,6 +177,7 @@ export default class JoiValidator {
           break;
       }
     });
+    schema = this.handleConditionalDisplay(formControl, schema) as Joi.ObjectSchema;
     return {
       [formControl.key]: schema
     };
