@@ -82,7 +82,7 @@ describe('South connector repository', () => {
     ]);
     const southConnectors = repository.getSouthConnectors();
     expect(database.prepare).toHaveBeenCalledWith(
-      'SELECT id, name, type, description, enabled, history_max_instant_per_item AS maxInstantPerItem, ' +
+      'SELECT id, name, type, description, enabled, history_max_instant_per_item AS maxInstantPerItem, shared_connection as sharedConnection, ' +
         'history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, history_read_overlap AS overlap, settings FROM south_connectors;'
     );
     expect(southConnectors).toEqual(expectedValue);
@@ -117,7 +117,7 @@ describe('South connector repository', () => {
     });
     const southConnector = repository.getSouthConnector('id1');
     expect(database.prepare).toHaveBeenCalledWith(
-      'SELECT id, name, type, description, enabled, history_max_instant_per_item AS maxInstantPerItem, ' +
+      'SELECT id, name, type, description, enabled, history_max_instant_per_item AS maxInstantPerItem, shared_connection as sharedConnection, ' +
         'history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, history_read_overlap AS overlap, settings FROM south_connectors WHERE id = ?;'
     );
     expect(get).toHaveBeenCalledWith('id1');
@@ -128,7 +128,7 @@ describe('South connector repository', () => {
     get.mockReturnValueOnce(null);
     const southConnector = repository.getSouthConnector('id1');
     expect(database.prepare).toHaveBeenCalledWith(
-      'SELECT id, name, type, description, enabled, history_max_instant_per_item AS maxInstantPerItem, ' +
+      'SELECT id, name, type, description, enabled, history_max_instant_per_item AS maxInstantPerItem, shared_connection as sharedConnection, ' +
         'history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, history_read_overlap AS overlap, settings FROM south_connectors WHERE id = ?;'
     );
     expect(get).toHaveBeenCalledWith('id1');
