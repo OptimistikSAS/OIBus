@@ -5,10 +5,12 @@ import EncryptionService from './encryption.service';
 import RepositoryService from './repository.service';
 import pino from 'pino';
 import SouthService from './south.service';
+import ConnectionService from './connection.service';
 
 jest.mock('./encryption.service');
 jest.mock('./south-cache.service');
 jest.mock('./south-connector-metrics.service');
+jest.mock('./connection.service');
 
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryRepository: RepositoryService = new RepositoryServiceMock('', '');
@@ -18,7 +20,8 @@ let service: SouthService;
 describe('south service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new SouthService(encryptionService, repositoryRepository);
+    const connectionService = new ConnectionService(logger);
+    service = new SouthService(encryptionService, repositoryRepository, connectionService);
   });
 
   it('should get a South connector settings', () => {
