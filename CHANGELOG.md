@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.3.1](https://github.com/OptimistikSAS/OIBus/compare/v3.3.0...v3.3.1) (2024-04-19)
+
+
+### Bug Fixes
+
+* fix OIAnalytics connector migration ([7438e36](https://github.com/OptimistikSAS/OIBus/commit/7438e36de4b84ea8ae448ae17b117b5c88e83ee7))
+* fix OIAnalytics registration url and accept unauthorized ([bad2d9a](https://github.com/OptimistikSAS/OIBus/commit/bad2d9a1e3c8e9177684c4361102db4492a42df0))
+* **south:** fix export/import of items with group forms and optional fields ([0bd328b](https://github.com/OptimistikSAS/OIBus/commit/0bd328b1ed6b11fd94e4e4b18c13f94c9a2137a1))
+
 ## [3.3.0](https://github.com/OptimistikSAS/OIBus/compare/v3.2.0...v3.3.0) (2024-04-11)
 
 
