@@ -18,7 +18,7 @@
     "moduleResolution": "Node",
     "importHelpers": true,
     "allowJs": true,
-    "target": "ES5",
+    "target": "ES6",
     "module": "CommonJS",
     "esModuleInterop": true,
     "useDefineForClassFields": false,
