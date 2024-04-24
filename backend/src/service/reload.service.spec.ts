@@ -188,6 +188,20 @@ describe('reload service', () => {
     expect(oibusEngine.createSouth).not.toHaveBeenCalled();
   });
 
+  it('should update and not start south', async () => {
+    const command = { enabled: true, history: { maxInstantPerItem: false } };
+    const previousSettings = { history: { maxInstantPerItem: 0 } };
+    (repositoryService.southConnectorRepository.getSouthConnector as jest.Mock).mockReturnValueOnce(previousSettings);
+    const onSouthMaxInstantPerItemChangeSpy = jest.spyOn(service as any, 'onSouthMaxInstantPerItemChange').mockImplementation();
+
+    await service.onUpdateSouth('southId', command as SouthConnectorCommandDTO, false);
+    expect(oibusEngine.stopSouth).toHaveBeenCalledWith('southId');
+    expect(repositoryService.southConnectorRepository.updateSouthConnector).toHaveBeenCalledWith('southId', command);
+    expect(onSouthMaxInstantPerItemChangeSpy).toHaveBeenCalledWith('southId', previousSettings, command);
+
+    expect(oibusEngine.startSouth).not.toHaveBeenCalled();
+  });
+
   it('should delete south', async () => {
     (repositoryService.subscriptionRepository.getSubscribedNorthConnectors as jest.Mock).mockReturnValueOnce(['northId1', 'northId2']);
 
