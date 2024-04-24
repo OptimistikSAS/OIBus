@@ -62,6 +62,7 @@ export class EditSouthComponent implements OnInit {
     name: FormControl<string>;
     description: FormControl<string>;
     enabled: FormControl<boolean>;
+    sharedConnection: FormControl<boolean>;
     history: FormGroup<{
       maxInstantPerItem: FormControl<boolean>;
       maxReadInterval: FormControl<number>;
@@ -129,6 +130,7 @@ export class EditSouthComponent implements OnInit {
           name: ['', Validators.required],
           description: '',
           enabled: true as boolean,
+          sharedConnection: false as boolean,
           history: this.fb.group({
             maxInstantPerItem: manifest.modes.forceMaxInstantPerItem,
             maxReadInterval: 0,
@@ -181,6 +183,7 @@ export class EditSouthComponent implements OnInit {
       type: this.southType,
       description: formValue.description!,
       enabled: formValue.enabled!,
+      sharedConnection: formValue.sharedConnection!,
       history: {
         maxInstantPerItem: formValue.history!.maxInstantPerItem!,
         maxReadInterval: formValue.history!.maxReadInterval!,

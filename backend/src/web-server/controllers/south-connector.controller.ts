@@ -186,7 +186,7 @@ export default class SouthConnectorController {
         await this.validator.validateSettings(manifest.items.settings, item.settings);
       }
 
-      const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.id);
+      let southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.id);
       if (!southConnector) {
         return ctx.notFound();
       }
@@ -204,8 +204,9 @@ export default class SouthConnectorController {
       }
       // Update south connector first, because updating items takes into account the max instant per item setting,
       // which might be changed in the south connector update
-      await ctx.app.reloadService.onUpdateSouth(ctx.params.id, command);
-      await ctx.app.reloadService.onCreateOrUpdateSouthItems(southConnector, itemsToAdd, itemsToUpdate, false);
+      await ctx.app.reloadService.onUpdateSouth(ctx.params.id, command, false);
+      southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.id)!; // Updated south connector
+      await ctx.app.reloadService.onCreateOrUpdateSouthItems(southConnector, itemsToAdd, itemsToUpdate);
       ctx.noContent();
     } catch (error: any) {
       ctx.badRequest(error.message);

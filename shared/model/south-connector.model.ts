@@ -43,6 +43,7 @@ export interface SouthConnectorCommandDTO<T = any> {
   type: string;
   description: string;
   enabled: boolean;
+  sharedConnection?: boolean;
   history: SouthConnectorHistorySettings;
   settings: T;
 }

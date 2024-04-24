@@ -33,12 +33,22 @@
                 </div>
               </div>
 
-              <!-- Enabled -->
-              <div class="col-3">
+              <div class="col">
+                <!-- Enabled -->
                 <div class="form-group">
                   <div class="form-check form-switch padded">
                     <input formControlName="enabled" id="south-enabled" type="checkbox" class="form-check-input" />
                     <label class="form-check-label" for="south-enabled" translate="south.enabled"></label>
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="manifest.modes.sharedConnection" class="col">
+                <!-- Shared connection -->
+                <div class="form-group">
+                  <div class="form-check form-switch padded">
+                    <input formControlName="sharedConnection" id="south-shared-connection" type="checkbox" class="form-check-input" />
+                    <label class="form-check-label" for="south-shared-connection" translate="south.shared-connection"></label>
                   </div>
                 </div>
               </div>
