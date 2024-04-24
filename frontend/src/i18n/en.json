@@ -498,6 +498,7 @@
     "disabled": "Disabled",
     "started": "South connector {{ name }} started",
     "stopped": "South connector {{ name }} stopped",
+    "shared-connection": "Shared connection",
     "cache-path-copy": {
       "success": "Cache path copied into clipboard",
       "error": "Error while copying cache path into clipboard"
