@@ -124,7 +124,7 @@ export default class ReloadService {
     return southConnector;
   }
 
-  async onUpdateSouth(southId: string, command: SouthConnectorCommandDTO): Promise<void> {
+  async onUpdateSouth(southId: string, command: SouthConnectorCommandDTO, restart: boolean = true): Promise<void> {
     await this.oibusEngine.stopSouth(southId);
 
     const previousSettings = this.repositoryService.southConnectorRepository.getSouthConnector(southId)!;
@@ -135,8 +135,11 @@ export default class ReloadService {
 
     if (command.enabled) {
       this.repositoryService.southConnectorRepository.startSouthConnector(southId);
-      const settings = this.repositoryService.southConnectorRepository.getSouthConnector(southId)!;
-      await this.oibusEngine.startSouth(southId, settings);
+
+      if (restart) {
+        const settings = this.repositoryService.southConnectorRepository.getSouthConnector(southId)!;
+        await this.oibusEngine.startSouth(southId, settings);
+      }
     } else {
       this.repositoryService.southConnectorRepository.stopSouthConnector(southId);
     }
