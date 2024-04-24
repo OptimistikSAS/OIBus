@@ -138,7 +138,7 @@ export default class FileCacheService {
     const cacheFilename = appendTimestamp
       ? `${filenameInfo.name}-${timestamp}${filenameInfo.ext}`
       : `${filenameInfo.name}${filenameInfo.ext}`;
-    const cachePath = path.join(this._fileFolder, cacheFilename);
+    const cachePath = path.resolve(this._fileFolder, cacheFilename);
 
     await fs.copyFile(filePath, cachePath);
     const fileStat = await fs.stat(cachePath);
@@ -157,7 +157,7 @@ export default class FileCacheService {
    */
   async manageErroredFiles(filePathInCache: string, errorCount: number): Promise<void> {
     const filenameInfo = path.parse(filePathInCache);
-    const errorPath = path.join(this._errorFolder, filenameInfo.base);
+    const errorPath = path.resolve(this._errorFolder, filenameInfo.base);
     try {
       await fs.rename(filePathInCache, errorPath);
       this._logger.warn(`File "${filePathInCache}" moved to "${errorPath}" after ${errorCount} errors`);
@@ -193,12 +193,12 @@ export default class FileCacheService {
    */
   async getErrorFileContent(filename: string): Promise<ReadStream | null> {
     try {
-      await fs.stat(path.join(this._errorFolder, filename));
+      await fs.stat(path.resolve(this._errorFolder, filename));
     } catch (error) {
-      this._logger.error(`Error while reading file "${path.join(this._errorFolder, filename)}": ${error}`);
+      this._logger.error(`Error while reading file "${path.resolve(this._errorFolder, filename)}": ${error}`);
       return null;
     }
-    return createReadStream(path.join(this._errorFolder, filename));
+    return createReadStream(path.resolve(this._errorFolder, filename));
   }
 
   /**
@@ -206,7 +206,7 @@ export default class FileCacheService {
    */
   async removeFiles(folder: string, filenames: Array<string>): Promise<void> {
     for (const filename of filenames) {
-      const filePath = path.join(folder, filename);
+      const filePath = path.resolve(folder, filename);
       this._logger.debug(`Removing file "${filePath}`);
       const fileStat = await fs.stat(filePath);
       await fs.unlink(filePath);
@@ -267,13 +267,13 @@ export default class FileCacheService {
    */
   async getCacheFileContent(filename: string): Promise<ReadStream | null> {
     try {
-      await fs.stat(path.join(this._fileFolder, filename));
+      await fs.stat(path.resolve(this._fileFolder, filename));
     } catch (error) {
-      this._logger.error(`Error while reading file "${path.join(this._fileFolder, filename)}": ${error}`);
+      this._logger.error(`Error while reading file "${path.resolve(this._fileFolder, filename)}": ${error}`);
       return null;
     }
 
-    return createReadStream(path.join(this._fileFolder, filename));
+    return createReadStream(path.resolve(this._fileFolder, filename));
   }
 
   /**
@@ -282,8 +282,8 @@ export default class FileCacheService {
   async retryFiles(folder: string, filenames: Array<string>): Promise<void> {
     await Promise.allSettled(
       filenames.map(async filename => {
-        const fromFilePath = path.join(folder, filename);
-        const cacheFilePath = path.join(this._fileFolder, filename);
+        const fromFilePath = path.resolve(folder, filename);
+        const cacheFilePath = path.resolve(this._fileFolder, filename);
         this._logger.debug(`Moving file "${fromFilePath}" back to cache "${cacheFilePath}"`);
 
         await this.cacheFile(fromFilePath, false);

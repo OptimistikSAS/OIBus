@@ -114,8 +114,8 @@ describe('ArchiveService', () => {
         .mockImplementationOnce(() => ({ mtimeMs: new Date('2020-02-02T02:02:01.222Z').getTime() }));
 
       await archiveService.removeFileIfTooOld('myOldFile.csv', new Date().getTime(), 'archiveFolder');
-      expect(fs.unlink).toHaveBeenCalledWith(path.join('archiveFolder', 'myOldFile.csv'));
-      expect(logger.debug).toHaveBeenCalledWith(`File "${path.join('archiveFolder', 'myOldFile.csv')}" removed from archive`);
+      expect(fs.unlink).toHaveBeenCalledWith(path.resolve('archiveFolder', 'myOldFile.csv'));
+      expect(logger.debug).toHaveBeenCalledWith(`File "${path.resolve('archiveFolder', 'myOldFile.csv')}" removed from archive`);
       await archiveService.removeFileIfTooOld('myNewFile.csv', new Date().getTime(), 'archiveFolder');
       expect(logger.debug).toHaveBeenCalledTimes(1);
       expect(fs.unlink).toHaveBeenCalledTimes(1);
@@ -129,7 +129,7 @@ describe('ArchiveService', () => {
 
       await archiveService.removeFileIfTooOld('myOldFile.csv', new Date().getTime(), 'archiveFolder');
       expect(logger.error).toHaveBeenCalledWith(
-        `Could not remove old file "${path.join('archiveFolder', 'myOldFile.csv')}" from archive: ${new Error('unlink error')}`
+        `Could not remove old file "${path.resolve('archiveFolder', 'myOldFile.csv')}" from archive: ${new Error('unlink error')}`
       );
     });
 
@@ -141,7 +141,7 @@ describe('ArchiveService', () => {
       await archiveService.removeFileIfTooOld('myOldFile.csv', new Date().getTime(), 'archiveFolder');
       expect(fs.unlink).not.toHaveBeenCalled();
       expect(logger.error).toHaveBeenCalledWith(
-        `Could not read stats from archive file "${path.join('archiveFolder', 'myOldFile.csv')}": ${new Error('stat error')}`
+        `Could not read stats from archive file "${path.resolve('archiveFolder', 'myOldFile.csv')}": ${new Error('stat error')}`
       );
       expect(logger.error).toHaveBeenCalledTimes(1);
     });
