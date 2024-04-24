@@ -322,7 +322,7 @@ describe('South connector controller', () => {
       southConnector.settings,
       southTestManifest.settings
     );
-    expect(ctx.app.reloadService.onUpdateSouth).toHaveBeenCalledWith('id', southConnectorCommand);
+    expect(ctx.app.reloadService.onUpdateSouth).toHaveBeenCalledWith('id', southConnectorCommand, false);
     expect(ctx.app.reloadService.onDeleteSouthItem).toHaveBeenCalledWith('id1');
     expect(ctx.noContent).toHaveBeenCalled();
   });
