@@ -62,7 +62,7 @@ export default class ArchiveService {
   async archiveOrRemoveFile(filePathInCache: string) {
     if (this.enabled) {
       const filenameInfo = path.parse(filePathInCache);
-      const archivePath = path.join(this.archiveFolder, filenameInfo.base);
+      const archivePath = path.resolve(this.archiveFolder, filenameInfo.base);
       // Move cache file into the archive folder
       try {
         await fs.rename(filePathInCache, archivePath);
@@ -118,19 +118,19 @@ export default class ArchiveService {
     let stats;
     try {
       // If a file is being written or corrupted, the stat method can fail an error is logged
-      stats = await fs.stat(path.join(archiveFolder, filename));
+      stats = await fs.stat(path.resolve(archiveFolder, filename));
     } catch (error) {
-      this._logger.error(`Could not read stats from archive file "${path.join(archiveFolder, filename)}": ${error}`);
+      this._logger.error(`Could not read stats from archive file "${path.resolve(archiveFolder, filename)}": ${error}`);
     }
     if (stats && stats.mtimeMs + this.retentionDuration < referenceDate) {
       try {
-        const filePath = path.join(archiveFolder, filename);
+        const filePath = path.resolve(archiveFolder, filename);
         const fileStat = await fs.stat(filePath);
         await fs.unlink(filePath);
-        this._logger.debug(`File "${path.join(archiveFolder, filename)}" removed from archive`);
+        this._logger.debug(`File "${path.resolve(archiveFolder, filename)}" removed from archive`);
         this.triggerRun.emit('cache-size', -fileStat.size);
       } catch (unlinkError) {
-        this._logger.error(`Could not remove old file "${path.join(archiveFolder, filename)}" from archive: ${unlinkError}`);
+        this._logger.error(`Could not remove old file "${path.resolve(archiveFolder, filename)}" from archive: ${unlinkError}`);
       }
     }
   }
@@ -143,7 +143,7 @@ export default class ArchiveService {
     const filteredFilenames: Array<NorthArchiveFiles> = [];
     for (const filename of filenames) {
       try {
-        const stats = await fs.stat(path.join(this.archiveFolder, filename));
+        const stats = await fs.stat(path.resolve(this.archiveFolder, filename));
 
         const dateIsSuperiorToStart = fromDate ? stats.mtimeMs >= DateTime.fromISO(fromDate).toMillis() : true;
         const dateIsInferiorToEnd = toDate ? stats.mtimeMs <= DateTime.fromISO(toDate).toMillis() : true;
@@ -157,7 +157,7 @@ export default class ArchiveService {
           });
         }
       } catch (error) {
-        this._logger.error(`Error while reading in archive folder file stats "${path.join(this.archiveFolder, filename)}": ${error}`);
+        this._logger.error(`Error while reading in archive folder file stats "${path.resolve(this.archiveFolder, filename)}": ${error}`);
       }
     }
     return filteredFilenames;
@@ -168,12 +168,12 @@ export default class ArchiveService {
    */
   async getArchiveFileContent(filename: string): Promise<ReadStream | null> {
     try {
-      await fs.stat(path.join(this.archiveFolder, filename));
+      await fs.stat(path.resolve(this.archiveFolder, filename));
     } catch (error) {
-      this._logger.error(`Error while reading file "${path.join(this.archiveFolder, filename)}": ${error}`);
+      this._logger.error(`Error while reading file "${path.resolve(this.archiveFolder, filename)}": ${error}`);
       return null;
     }
-    return createReadStream(path.join(this.archiveFolder, filename));
+    return createReadStream(path.resolve(this.archiveFolder, filename));
   }
 
   /**
@@ -181,7 +181,7 @@ export default class ArchiveService {
    */
   async removeFiles(filenames: Array<string>): Promise<void> {
     for (const filename of filenames) {
-      const filePath = path.join(this.archiveFolder, filename);
+      const filePath = path.resolve(this.archiveFolder, filename);
       try {
         this._logger.debug(`Removing archived file "${filePath}`);
         const fileStat = await fs.stat(filePath);
