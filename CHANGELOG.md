@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.3.2](https://github.com/OptimistikSAS/OIBus/compare/v3.3.1...v3.3.2) (2024-04-26)
+
+
+### Bug Fixes
+
+* fix secrets duplication ([28b5849](https://github.com/OptimistikSAS/OIBus/commit/28b5849ecf63e3af35ab47a764a240f32c6433fe))
+* **items:** fix items duplication ([b523aae](https://github.com/OptimistikSAS/OIBus/commit/b523aaea192f65ee1bb42c2088ffaaf9ffc36f33))
+
 ## [3.3.1](https://github.com/OptimistikSAS/OIBus/compare/v3.3.0...v3.3.1) (2024-04-19)
 
 
