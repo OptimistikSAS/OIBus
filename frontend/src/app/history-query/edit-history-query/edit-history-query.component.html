@@ -262,7 +262,6 @@
         <!-- items -->
         <oib-history-query-items
           *ngIf="mode === 'edit' && historyQuery"
-          (inMemoryItems)="updateInMemoryItems($event)"
           [historyQuery]="historyQuery"
           [southManifest]="southManifest"
           [initItems]="inMemoryItems"
