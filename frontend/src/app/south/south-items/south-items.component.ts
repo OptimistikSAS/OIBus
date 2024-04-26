@@ -96,6 +96,7 @@ export class SouthItemsComponent implements OnInit {
         this.allItems = items;
         this.filteredItems = this.filter(items);
         this.changePage(0);
+        this.inMemoryItems.emit({ items: this.allItems, itemIdsToDelete: this.itemIdsToDelete });
       });
     } else {
       this.filteredItems = this.filter(this.allItems);
