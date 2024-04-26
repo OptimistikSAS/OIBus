@@ -155,7 +155,7 @@ describe('North connector controller', () => {
     expect(validator.validateSettings).toHaveBeenCalledWith(northTestManifest.settings, northConnectorCommand.settings);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
       northConnectorCommand.settings,
-      null,
+      undefined,
       northTestManifest.settings
     );
     expect(ctx.app.reloadService.onCreateNorth).toHaveBeenCalledWith(northConnectorCommand);
@@ -179,6 +179,51 @@ describe('North connector controller', () => {
     expect(ctx.app.reloadService.onCreateNorth).toHaveBeenCalledWith({ ...northConnectorCommand, enabled: false });
     expect(ctx.app.reloadService.onStartNorth).not.toHaveBeenCalled();
     expect(ctx.created).toHaveBeenCalledWith(northConnector);
+  });
+
+  it('createNorthConnector() should create North connector with duplicate', async () => {
+    ctx.request.body = {
+      north: { ...northConnectorCommand, enabled: false },
+      subscriptions: [
+        { type: 'south', subscription: { id: 'id1' } },
+        { type: 'external-source', externalSubscription: { id: 'id2' } }
+      ]
+    };
+    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(northConnectorCommand.settings);
+    ctx.app.reloadService.onCreateNorth.mockReturnValue(northConnector);
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValueOnce(northConnector);
+    ctx.query.duplicateId = 'duplicateId';
+
+    await northConnectorController.createNorthConnector(ctx);
+
+    expect(ctx.app.reloadService.onCreateNorth).toHaveBeenCalledWith({ ...northConnectorCommand, enabled: false });
+    expect(ctx.app.reloadService.onStartNorth).not.toHaveBeenCalled();
+    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('duplicateId');
+    expect(ctx.created).toHaveBeenCalledWith(northConnector);
+    ctx.query.duplicateId = null;
+  });
+
+  it('createNorthConnector() should throw not found when creating North connector with undefined duplicate', async () => {
+    ctx.request.body = {
+      north: { ...northConnectorCommand, enabled: false },
+      subscriptions: [
+        { type: 'south', subscription: { id: 'id1' } },
+        { type: 'external-source', externalSubscription: { id: 'id2' } }
+      ]
+    };
+    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(northConnectorCommand.settings);
+    ctx.app.reloadService.onCreateNorth.mockReturnValue(northConnector);
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValueOnce(null);
+    ctx.query.duplicateId = 'bad';
+
+    await northConnectorController.createNorthConnector(ctx);
+
+    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('bad');
+    expect(ctx.app.reloadService.onCreateNorth).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.onStartNorth).not.toHaveBeenCalled();
+    expect(ctx.created).not.toHaveBeenCalled();
+    expect(ctx.notFound).toHaveBeenCalled();
+    ctx.query.duplicateId = null;
   });
 
   it('createNorthConnector() should return 404 when manifest not found', async () => {
@@ -1277,7 +1322,7 @@ describe('North connector controller', () => {
     expect(ctx.throw).toHaveBeenCalledWith(404, 'North manifest not found');
   });
 
-  it('testNorthConnection() should return 404 when Nouth connector is not found', async () => {
+  it('testNorthConnection() should return 404 when North connector is not found', async () => {
     ctx.request.body = {
       ...northConnectorCommand
     };
@@ -1305,10 +1350,50 @@ describe('North connector controller', () => {
     expect(validator.validateSettings).toHaveBeenCalledTimes(1);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
       northConnectorCommand.settings,
-      null,
+      undefined,
       northTestManifest.settings
     );
     expect(ctx.notFound).not.toHaveBeenCalled();
+  });
+
+  it('testNorthConnection() should test connector with duplicate', async () => {
+    ctx.request.body = {
+      ...northConnectorCommand
+    };
+    ctx.params.id = 'create';
+    ctx.query.duplicateId = 'duplicateId';
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(northConnector);
+    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(northConnectorCommand.settings);
+
+    await northConnectorController.testNorthConnection(ctx);
+
+    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('duplicateId');
+    expect(validator.validateSettings).toHaveBeenCalledTimes(1);
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
+      northConnectorCommand.settings,
+      northConnector.settings,
+      northTestManifest.settings
+    );
+    expect(ctx.notFound).not.toHaveBeenCalled();
+    ctx.query.duplicateId = null;
+  });
+
+  it('testNorthConnection() should test connector with not found duplicate', async () => {
+    ctx.request.body = {
+      ...northConnectorCommand
+    };
+    ctx.params.id = 'create';
+    ctx.query.duplicateId = 'bad';
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(null);
+    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(northConnectorCommand.settings);
+
+    await northConnectorController.testNorthConnection(ctx);
+
+    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('bad');
+    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.notFound).toHaveBeenCalled();
+    ctx.query.duplicateId = null;
   });
 
   it('testNorthConnection() should return 404 when body is null', async () => {

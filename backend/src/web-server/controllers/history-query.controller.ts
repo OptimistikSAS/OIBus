@@ -75,7 +75,7 @@ export default class HistoryQueryController extends AbstractController {
     }
     let southSource;
     if (ctx.request.body.fromSouthId) {
-      southSource = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.request.body.fromSouthId);
+      southSource = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.request.body.fromSouthId)?.settings;
       if (!southSource) {
         return ctx.notFound();
       }
@@ -87,12 +87,25 @@ export default class HistoryQueryController extends AbstractController {
     }
     let northSource;
     if (ctx.request.body.fromNorthId) {
-      northSource = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.request.body.fromNorthId);
+      northSource = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.request.body.fromNorthId)?.settings;
       if (!northSource) {
         return ctx.notFound();
       }
     }
 
+    let duplicatedHistory: HistoryQueryDTO | null = null;
+    if (ctx.query.duplicateId) {
+      duplicatedHistory = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.query.duplicateId);
+      if (!duplicatedHistory) {
+        return ctx.notFound();
+      }
+      if (!southSource) {
+        southSource = duplicatedHistory.southSettings;
+      }
+      if (!northSource) {
+        northSource = duplicatedHistory.northSettings;
+      }
+    }
     try {
       await this.validator.validateSettings(southManifest.settings, command.southSettings);
       await this.validator.validateSettings(northManifest.settings, command.northSettings);
@@ -103,12 +116,12 @@ export default class HistoryQueryController extends AbstractController {
 
       command.southSettings = await ctx.app.encryptionService.encryptConnectorSecrets(
         command.southSettings,
-        southSource?.settings,
+        southSource,
         southManifest.settings
       );
       command.northSettings = await ctx.app.encryptionService.encryptConnectorSecrets(
         command.northSettings,
-        northSource?.settings,
+        northSource,
         northManifest.settings
       );
 
@@ -472,6 +485,13 @@ export default class HistoryQueryController extends AbstractController {
           return ctx.notFound();
         }
       }
+
+      if (ctx.query.duplicateId && !southSettings) {
+        southSettings = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.query.duplicateId)?.southSettings;
+        if (!southSettings) {
+          return ctx.notFound();
+        }
+      }
       await this.validator.validateSettings(manifest.settings, ctx.request.body!.settings);
 
       const command: SouthConnectorDTO = {
@@ -522,6 +542,13 @@ export default class HistoryQueryController extends AbstractController {
       // When creating a new history query from exising connector, we can retrieve old connector settings using connector id
       else if (ctx.request.query?.fromConnectorId && typeof ctx.request.query.fromConnectorId === 'string') {
         northSettings = ctx.app.northService.getNorth(ctx.request.query!.fromConnectorId)?.settings;
+        if (!northSettings) {
+          return ctx.notFound();
+        }
+      }
+
+      if (ctx.query.duplicateId && !northSettings) {
+        northSettings = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.query.duplicateId)?.northSettings;
         if (!northSettings) {
           return ctx.notFound();
         }

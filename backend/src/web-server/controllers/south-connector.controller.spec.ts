@@ -196,11 +196,34 @@ describe('South connector controller', () => {
     expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.settings, southConnectorCommand.settings);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
       southConnectorCommand.settings,
-      null,
+      undefined,
       southTestManifest.settings
     );
     expect(ctx.app.reloadService.onCreateSouth).toHaveBeenCalledWith(southConnectorCommand);
     expect(ctx.created).toHaveBeenCalledWith(southConnector);
+  });
+
+  it('createSouthConnector() should create South connector with duplicate', async () => {
+    ctx.request.body = {
+      south: southConnectorCommand,
+      items: []
+    };
+    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
+    ctx.app.reloadService.onCreateSouth.mockReturnValue(southConnector);
+    ctx.query.duplicateId = 'duplicateId';
+
+    await southConnectorController.createSouthConnector(ctx);
+
+    expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.settings, southConnectorCommand.settings);
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
+      southConnectorCommand.settings,
+      southConnectorCommand.settings,
+      southTestManifest.settings
+    );
+    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('duplicateId');
+    expect(ctx.app.reloadService.onCreateSouth).toHaveBeenCalledWith(southConnectorCommand);
+    expect(ctx.created).toHaveBeenCalledWith(southConnector);
+    ctx.query.duplicateId = null;
   });
 
   it('createSouthConnector() should create South connector with forceMaxInstantPerItem', async () => {
@@ -216,11 +239,30 @@ describe('South connector controller', () => {
     expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.settings, sqliteConnectorCommand.settings);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
       sqliteConnectorCommand.settings,
-      null,
+      undefined,
       southTestManifest.settings
     );
     expect(ctx.app.reloadService.onCreateSouth).toHaveBeenCalledWith(sqliteConnectorCommand);
     expect(ctx.created).toHaveBeenCalledWith(southConnector);
+  });
+
+  it('createSouthConnector() should return 404 when duplicate not found', async () => {
+    ctx.request.body = {
+      south: sqliteConnectorCommand,
+      items: []
+    };
+
+    ctx.query.duplicateId = 'notFound';
+
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValueOnce(null);
+
+    await southConnectorController.createSouthConnector(ctx);
+
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.onCreateSouth).not.toHaveBeenCalled();
+    expect(ctx.notFound).toHaveBeenCalled();
+
+    ctx.query.duplicateId = null;
   });
 
   it('createSouthConnector() should return 404 when manifest not found', async () => {
@@ -1272,10 +1314,50 @@ describe('South connector controller', () => {
     expect(validator.validateSettings).toHaveBeenCalledTimes(1);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
       southConnectorCommand.settings,
-      null,
+      undefined,
       southTestManifest.settings
     );
     expect(ctx.notFound).not.toHaveBeenCalled();
+  });
+
+  it('testSouthConnection() should test connector on connector creation with duplicate', async () => {
+    ctx.request.body = {
+      ...southConnectorCommand
+    };
+    ctx.params.id = 'create';
+    ctx.query.duplicateId = 'duplicateId';
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
+    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
+
+    await southConnectorController.testSouthConnection(ctx);
+
+    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('duplicateId');
+    expect(validator.validateSettings).toHaveBeenCalledTimes(1);
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
+      southConnectorCommand.settings,
+      southConnector.settings,
+      southTestManifest.settings
+    );
+    expect(ctx.notFound).not.toHaveBeenCalled();
+    ctx.query.duplicateId = null;
+  });
+
+  it('testSouthConnection() should return 404 when duplicate is not found', async () => {
+    ctx.request.body = {
+      ...southConnectorCommand
+    };
+    ctx.params.id = 'create';
+    ctx.query.duplicateId = 'duplicateId';
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(null);
+    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
+
+    await southConnectorController.testSouthConnection(ctx);
+
+    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('duplicateId');
+    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.notFound).toHaveBeenCalled();
+    ctx.query.duplicateId = null;
   });
 
   it('testSouthConnection() should return 404 when body is null', async () => {

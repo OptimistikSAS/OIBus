@@ -61,9 +61,18 @@ export class NorthConnectorService {
    * Create a new North connector
    * @param command - the new North connector
    * @param subscriptions - The subscriptions to create
+   * @param duplicateId - The ID of the duplicated North used to retrieved secrets in the backend
    */
-  create(command: NorthConnectorCommandDTO<any>, subscriptions: Array<OIBusSubscription>): Observable<NorthConnectorDTO<any>> {
-    return this.http.post<NorthConnectorDTO<any>>(`/api/north`, { north: command, subscriptions });
+  create(
+    command: NorthConnectorCommandDTO<any>,
+    subscriptions: Array<OIBusSubscription>,
+    duplicateId: string
+  ): Observable<NorthConnectorDTO<any>> {
+    const params: { [key: string]: string | string[] } = {};
+    if (duplicateId) {
+      params['duplicateId'] = duplicateId;
+    }
+    return this.http.post<NorthConnectorDTO<any>>(`/api/north`, { north: command, subscriptions }, { params });
   }
 
   /**

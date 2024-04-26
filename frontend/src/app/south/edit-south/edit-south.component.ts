@@ -52,6 +52,7 @@ export class EditSouthComponent implements OnInit {
   mode: 'create' | 'edit' = 'create';
   southConnector: SouthConnectorDTO | null = null;
   southType = '';
+  duplicateId = '';
   state = new ObservableState();
 
   southSettingsControls: Array<Array<OibFormControl>> = [];
@@ -102,6 +103,7 @@ export class EditSouthComponent implements OnInit {
           }
 
           if (paramSouthId) {
+            this.duplicateId = paramSouthId;
             return this.southConnectorService.get(paramSouthId).pipe(this.state.pendingUntilFinalization());
           }
           // otherwise, we are creating one
@@ -160,7 +162,7 @@ export class EditSouthComponent implements OnInit {
         );
     } else {
       createOrUpdate = this.southConnectorService
-        .create(command, this.inMemoryItems)
+        .create(command, this.inMemoryItems, this.duplicateId)
         .pipe(tap(() => this.notificationService.success('south.created', { name: command.name })));
     }
     createOrUpdate.pipe(this.state.pendingUntilFinalization()).subscribe(southConnector => {

@@ -13,7 +13,7 @@ import {
   NorthValueFiles
 } from '../../../../shared/model/north-connector.model';
 import { SubscriptionDTO } from '../../../../shared/model/subscription.model';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 
 describe('NorthConnectorService', () => {
   let http: HttpTestingController;
@@ -102,7 +102,7 @@ describe('NorthConnectorService', () => {
       }
     };
 
-    service.create(command, []).subscribe(() => (done = true));
+    service.create(command, [], '').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/north' });
     expect(testRequest.request.body).toEqual({ north: command, subscriptions: [] });
     testRequest.flush(null);
@@ -184,7 +184,7 @@ describe('NorthConnectorService', () => {
   });
 
   it('should get error cache file content', () => {
-    let httpResponse;
+    let httpResponse: HttpResponse<Blob>;
     const northCacheFileContent = new Blob(['test'], { type: 'text/plain' });
     service.getCacheErrorFileContent('id1', 'file1').subscribe(c => (httpResponse = c));
 
@@ -235,7 +235,7 @@ describe('NorthConnectorService', () => {
   });
 
   it('should get cache file content', () => {
-    let httpResponse;
+    let httpResponse: HttpResponse<Blob>;
     const northCacheFileContent = new Blob(['test'], { type: 'text/plain' });
     service.getCacheFileContent('id1', 'file1').subscribe(c => (httpResponse = c));
 
@@ -270,7 +270,7 @@ describe('NorthConnectorService', () => {
   });
 
   it('should get archive file content', () => {
-    let httpResponse;
+    let httpResponse: HttpResponse<Blob>;
     const northCacheFileContent = new Blob(['test'], { type: 'text/plain' });
     service.getCacheArchiveFileContent('id1', 'file1').subscribe(c => (httpResponse = c));
 
