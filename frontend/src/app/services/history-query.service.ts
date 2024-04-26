@@ -45,14 +45,20 @@ export class HistoryQueryService {
    * @param items - the new History query items
    * @param fromSouthId - The source south (used to encrypt password in the backend)
    * @param fromNorthId - The source north (used to encrypt password in the backend)
+   * @param duplicateId - The ID of the duplicated History Query used to retrieved secrets in the backend
    */
   create(
     command: HistoryQueryCommandDTO,
     items: Array<SouthConnectorItemDTO>,
     fromSouthId: string | null,
-    fromNorthId: string | null
+    fromNorthId: string | null,
+    duplicateId: string
   ): Observable<HistoryQueryDTO> {
-    return this.http.post<HistoryQueryDTO>(`/api/history-queries`, { historyQuery: command, items, fromSouthId, fromNorthId });
+    const params: { [key: string]: string | string[] } = {};
+    if (duplicateId) {
+      params['duplicateId'] = duplicateId;
+    }
+    return this.http.post<HistoryQueryDTO>(`/api/history-queries`, { historyQuery: command, items, fromSouthId, fromNorthId }, { params });
   }
 
   /**

@@ -97,7 +97,7 @@ describe('SouthConnectorService', () => {
       settings: {}
     };
 
-    service.create(command, []).subscribe(() => (done = true));
+    service.create(command, [], '').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/south' });
     expect(testRequest.request.body).toEqual({ south: command, items: [] });
     testRequest.flush(null);

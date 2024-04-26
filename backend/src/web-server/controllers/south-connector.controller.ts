@@ -80,12 +80,18 @@ export default class SouthConnectorController {
           return ctx.notFound();
         }
       }
+      if (!southConnector && ctx.query.duplicateId) {
+        southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.query.duplicateId);
+        if (!southConnector) {
+          return ctx.notFound();
+        }
+      }
       await this.validator.validateSettings(manifest.settings, ctx.request.body!.settings);
 
       const command: SouthConnectorDTO = { id: southConnector?.id || 'test', ...ctx.request.body! };
       command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(
         command.settings,
-        southConnector?.settings || null,
+        southConnector?.settings,
         manifest.settings
       );
       ctx.request.body!.name = southConnector ? southConnector.name : `${ctx.request.body!.type}:test-connection`;
@@ -121,7 +127,18 @@ export default class SouthConnectorController {
       if (manifest.modes.forceMaxInstantPerItem) {
         command.history.maxInstantPerItem = true;
       }
-      command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(command.settings, null, manifest.settings);
+      let duplicatedConnector: SouthConnectorDTO | null = null;
+      if (ctx.query.duplicateId) {
+        duplicatedConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.query.duplicateId);
+        if (!duplicatedConnector) {
+          return ctx.notFound();
+        }
+      }
+      command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(
+        command.settings,
+        duplicatedConnector?.settings,
+        manifest.settings
+      );
       const southConnector = await ctx.app.reloadService.onCreateSouth(command);
       await ctx.app.reloadService.onCreateOrUpdateSouthItems(southConnector, ctx.request.body!.items, []);
 

@@ -72,7 +72,19 @@ export default class NorthConnectorController {
       }
 
       await this.validator.validateSettings(manifest.settings, command.settings);
-      command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(command.settings, null, manifest.settings);
+
+      let duplicatedConnector: NorthConnectorDTO | null = null;
+      if (ctx.query.duplicateId) {
+        duplicatedConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.query.duplicateId);
+        if (!duplicatedConnector) {
+          return ctx.notFound();
+        }
+      }
+      command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(
+        command.settings,
+        duplicatedConnector?.settings,
+        manifest.settings
+      );
 
       const subscriptionsToAdd = ctx.request.body.subscriptions
         .filter(element => element.type === 'south')
@@ -524,6 +536,13 @@ export default class NorthConnectorController {
           return ctx.notFound();
         }
       }
+      if (!northConnector && ctx.query.duplicateId) {
+        northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.query.duplicateId);
+        if (!northConnector) {
+          return ctx.notFound();
+        }
+      }
+
       await this.validator.validateSettings(manifest.settings, ctx.request.body!.settings);
       const command: NorthConnectorDTO = {
         id: northConnector?.id || 'test',
@@ -532,7 +551,7 @@ export default class NorthConnectorController {
       };
       command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(
         command.settings,
-        northConnector?.settings || null,
+        northConnector?.settings,
         manifest.settings
       );
       const logger = ctx.app.logger.child({ scopeType: 'north', scopeId: command.id, scopeName: command.name }, { level: 'silent' });

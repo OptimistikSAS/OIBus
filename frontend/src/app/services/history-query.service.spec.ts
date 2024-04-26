@@ -59,7 +59,7 @@ describe('HistoryQueryService', () => {
       northType: 'OIConnect'
     } as HistoryQueryCommandDTO;
 
-    service.create(command, [], null, null).subscribe(() => (done = true));
+    service.create(command, [], null, null, '').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/history-queries' });
     expect(testRequest.request.body).toEqual({ historyQuery: command, items: [], fromSouthId: null, fromNorthId: null });
     testRequest.flush(null);

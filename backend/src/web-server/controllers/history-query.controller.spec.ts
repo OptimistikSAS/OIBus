@@ -251,6 +251,68 @@ describe('History query controller', () => {
     expect(ctx.created).toHaveBeenCalledWith(historyQuery);
   });
 
+  it('createHistoryQuery() should create History query with duplicate', async () => {
+    ctx.request.body = {
+      ...JSON.parse(JSON.stringify(historyQueryCreateCommand))
+    };
+    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValueOnce({}).mockReturnValueOnce({});
+    ctx.app.reloadService.onCreateHistoryQuery.mockReturnValue(historyQuery);
+    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+    ctx.query.duplicateId = 'duplicateId';
+
+    await historyQueryController.createHistoryQuery(ctx);
+
+    const southManifest = southTestManifest;
+    const northManifest = northTestManifest;
+    expect(validator.validateSettings).toHaveBeenCalledWith(southManifest.settings, historyQueryCommand.southSettings);
+    expect(validator.validateSettings).toHaveBeenCalledWith(northManifest.settings, historyQueryCommand.northSettings);
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
+      historyQueryCommand.southSettings,
+      historyQuery.southSettings,
+      southManifest.settings
+    );
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
+      historyQueryCommand.northSettings,
+      historyQuery.northSettings,
+      northManifest.settings
+    );
+    expect(ctx.app.reloadService.onCreateHistoryQuery).toHaveBeenCalledWith(
+      {
+        name: 'name',
+        description: 'description',
+        history: southConnector.history,
+        startTime: '2020-02-01T02:02:59.999Z',
+        endTime: '2020-02-02T02:02:59.999Z',
+        southType: 'south-test',
+        northType: 'north-test',
+        southSettings: {},
+        northSettings: {},
+        caching: northCacheSettings,
+        archive: northArchiveSettings
+      },
+      historyQueryCreateCommand.items
+    );
+    expect(ctx.created).toHaveBeenCalledWith(historyQuery);
+    ctx.query.duplicateId = null;
+  });
+
+  it('createHistoryQuery() should not create History query and return not found because of duplicate', async () => {
+    ctx.request.body = {
+      ...JSON.parse(JSON.stringify(historyQueryCreateCommand))
+    };
+    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValueOnce(null);
+    ctx.query.duplicateId = 'bad';
+
+    await historyQueryController.createHistoryQuery(ctx);
+
+    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.onCreateHistoryQuery).not.toHaveBeenCalled();
+    expect(ctx.created).not.toHaveBeenCalled();
+    expect(ctx.notFound).toHaveBeenCalled();
+    ctx.query.duplicateId = null;
+  });
+
   it('createHistoryQuery() should create History query with existing connectors', async () => {
     ctx.request.body = { ...JSON.parse(JSON.stringify(historyQueryCreateCommand)), fromNorthId: 'id1', fromSouthId: 'id2' };
     ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
@@ -1289,6 +1351,53 @@ describe('History query controller', () => {
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
+  it('testSouthConnection() should test South connector settings from duplicate', async () => {
+    const createdSouth = {
+      testConnection: jest.fn()
+    };
+    ctx.request.body = southConnectorCommand;
+    ctx.params.id = 'create';
+    ctx.query.duplicateId = 'duplicateId';
+
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
+    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
+    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQueryCommand);
+    (ctx.app.southService.createSouth as jest.Mock).mockReturnValue(createdSouth);
+
+    await historyQueryController.testSouthConnection(ctx);
+
+    expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('duplicateId');
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
+      southConnectorCommand.settings,
+      historyQueryCommand.southSettings,
+      southTestManifest.settings
+    );
+    expect(ctx.noContent).toHaveBeenCalled();
+    ctx.query.duplicateId = null;
+  });
+
+  it('testSouthConnection() should test South connector and throw not found because of duplicate', async () => {
+    const createdSouth = {
+      testConnection: jest.fn()
+    };
+    ctx.request.body = southConnectorCommand;
+    ctx.params.id = 'create';
+    ctx.query.duplicateId = 'bad';
+
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
+    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
+    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValueOnce(null);
+    (ctx.app.southService.createSouth as jest.Mock).mockReturnValue(createdSouth);
+
+    await historyQueryController.testSouthConnection(ctx);
+
+    expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('bad');
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.noContent).not.toHaveBeenCalled();
+    expect(ctx.notFound).toHaveBeenCalled();
+    ctx.query.duplicateId = null;
+  });
+
   it('testSouthConnection() should throw 404 when manifest not found', async () => {
     ctx.request.body = {
       ...southConnectorCommand,
@@ -1364,7 +1473,7 @@ describe('History query controller', () => {
     const createdNorth = {
       testConnection: jest.fn()
     };
-    ctx.request.body = northConnectorCommand;
+    ctx.request = { body: northConnectorCommand };
     ctx.params.id = 'historyId';
 
     ctx.app.northService.getInstalledNorthManifests.mockReturnValue([northTestManifest]);
@@ -1380,6 +1489,51 @@ describe('History query controller', () => {
       northTestManifest.settings
     );
     expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('testNorthConnection() should test North connector settings from duplicate', async () => {
+    const createdNorth = {
+      testConnection: jest.fn()
+    };
+    ctx.request.body = northConnectorCommand;
+    ctx.params.id = 'create';
+    ctx.query.duplicateId = 'duplicateId';
+
+    ctx.app.northService.getInstalledNorthManifests.mockReturnValue([northTestManifest]);
+    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(northConnectorCommand.settings);
+    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQueryCommand);
+    (ctx.app.northService.createNorth as jest.Mock).mockReturnValue(createdNorth);
+
+    await historyQueryController.testNorthConnection(ctx);
+    expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('duplicateId');
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
+      northConnectorCommand.settings,
+      historyQueryCommand.northSettings,
+      northTestManifest.settings
+    );
+    expect(ctx.noContent).toHaveBeenCalled();
+    ctx.query.duplicateId = null;
+  });
+
+  it('testNorthConnection() should test North connector and throw not found because of duplicate', async () => {
+    const createdNorth = {
+      testConnection: jest.fn()
+    };
+    ctx.request.body = northConnectorCommand;
+    ctx.params.id = 'create';
+    ctx.query.duplicateId = 'bad';
+
+    ctx.app.northService.getInstalledNorthManifests.mockReturnValue([northTestManifest]);
+    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(northConnectorCommand.settings);
+    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValueOnce(null);
+    (ctx.app.northService.createNorth as jest.Mock).mockReturnValue(createdNorth);
+
+    await historyQueryController.testNorthConnection(ctx);
+    expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('bad');
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.noContent).not.toHaveBeenCalled();
+    expect(ctx.notFound).toHaveBeenCalled();
+    ctx.query.duplicateId = null;
   });
 
   it('testNorthConnection() should throw 404 when manifest not found', async () => {

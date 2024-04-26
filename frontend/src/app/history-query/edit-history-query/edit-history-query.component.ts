@@ -71,6 +71,7 @@ export class EditHistoryQueryComponent implements OnInit {
   fromSouthId = '';
   northType = '';
   fromNorthId = '';
+  duplicateId = '';
 
   historyQueryForm: FormGroup<{
     name: FormControl<string>;
@@ -135,6 +136,7 @@ export class EditHistoryQueryComponent implements OnInit {
           } else if (paramDuplicateHistoryQuery) {
             // fetch the existing history query in case of duplicate
             historyQueryObs = this.historyQueryService.get(paramDuplicateHistoryQuery);
+            this.duplicateId = paramDuplicateHistoryQuery;
           } else {
             // In creation mode, check if we create a history query from new or existing connectors
             if (southId) {
@@ -278,7 +280,7 @@ export class EditHistoryQueryComponent implements OnInit {
         );
     } else {
       createOrUpdate = this.historyQueryService
-        .create(command, this.inMemoryItems, this.fromSouthId, this.fromNorthId)
+        .create(command, this.inMemoryItems, this.fromSouthId, this.fromNorthId, this.duplicateId)
         .pipe(tap(() => this.notificationService.success('history-query.created', { name: command.name })));
     }
     createOrUpdate.pipe(this.state.pendingUntilFinalization()).subscribe(historyQuery => {

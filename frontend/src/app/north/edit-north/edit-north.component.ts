@@ -50,6 +50,7 @@ export class EditNorthComponent implements OnInit {
   mode: 'create' | 'edit' = 'create';
   northConnector: NorthConnectorDTO | null = null;
   northType = '';
+  duplicateId = '';
   state = new ObservableState();
   loading = true;
   northSettingsControls: Array<Array<OibFormControl>> = [];
@@ -108,6 +109,7 @@ export class EditNorthComponent implements OnInit {
           }
 
           if (paramNorthId) {
+            this.duplicateId = paramNorthId;
             return this.northConnectorService.get(paramNorthId).pipe(this.state.pendingUntilFinalization());
           }
           // otherwise, we are creating one
@@ -174,7 +176,7 @@ export class EditNorthComponent implements OnInit {
         );
     } else {
       createOrUpdate = this.northConnectorService
-        .create(command, this.inMemorySubscriptions)
+        .create(command, this.inMemorySubscriptions, this.duplicateId)
         .pipe(tap(() => this.notificationService.success('north.created', { name: command.name })));
     }
     createOrUpdate.pipe(this.state.pendingUntilFinalization()).subscribe(northConnector => {
