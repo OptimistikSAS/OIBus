@@ -704,7 +704,7 @@ describe('NorthConnector enabled', () => {
     // Adding items
     const pushSpy = jest.spyOn(north['items'], 'push');
     north.addItem(item);
-    expect(pushSpy).not.toBeCalled();
+    expect(pushSpy).not.toHaveBeenCalled();
 
     // Updating items
     north.addItem = jest.fn();
@@ -718,13 +718,13 @@ describe('NorthConnector enabled', () => {
       settings: {}
     });
 
-    expect(north.deleteItem).not.toBeCalled();
-    expect(north.addItem).not.toBeCalled();
+    expect(north.deleteItem).not.toHaveBeenCalled();
+    expect(north.addItem).not.toHaveBeenCalled();
 
     // Deleting items
     const filterSpy = jest.spyOn(north['items'], 'filter');
     north.deleteItem(item);
-    expect(filterSpy).not.toBeCalled();
+    expect(filterSpy).not.toHaveBeenCalled();
   });
 });
 
