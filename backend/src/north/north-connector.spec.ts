@@ -60,9 +60,7 @@ const logger: pino.Logger = new PinoLogger();
 const anotherLogger: pino.Logger = new PinoLogger();
 
 let north: NorthConnector<NorthSettings>;
-class TestNorthWithItems extends NorthConnector {
-  async handleItemValues(): Promise<void> {}
-}
+class TestNorthWithItems extends NorthConnector {}
 let northWithItems: TestNorthWithItems;
 
 describe('NorthConnector', () => {
