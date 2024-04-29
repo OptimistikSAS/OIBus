@@ -611,6 +611,7 @@ describe('North connector controller', () => {
     ctx.params.id = 'id';
 
     await northConnectorController.updateNorthConnector(ctx);
+
     expect(validator.validateSettings).not.toHaveBeenCalled();
     expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).not.toHaveBeenCalled();
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
