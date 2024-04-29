@@ -127,9 +127,8 @@ let configuration: NorthConnectorDTO;
 class TestNorth extends NorthConnector {}
 let north: TestNorth;
 
-class TestNorthWithItems extends NorthConnector {
-  async handleItemValues(): Promise<void> {}
-}
+class TestNorthWithItems extends NorthConnector {}
+
 let northWithItems: TestNorthWithItems;
 
 describe('NorthConnector enabled', () => {
