@@ -4,8 +4,8 @@ import {
   NorthArchiveFiles,
   NorthCacheFiles,
   NorthConnectorDTO,
-  NorthValueFiles,
-  NorthConnectorItemDTO
+  NorthConnectorItemDTO,
+  NorthValueFiles
 } from '../../../shared/model/north-connector.model';
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
@@ -22,7 +22,6 @@ import { DateTime } from 'luxon';
 import { PassThrough } from 'node:stream';
 import { ReadStream } from 'node:fs';
 import path from 'node:path';
-import { HandlesItemValues } from './north-interface';
 import NorthConnectorMetricsService from '../service/north-connector-metrics.service';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { dirSize, validateCronExpression } from '../service/utils';
@@ -634,31 +633,19 @@ export default class NorthConnector<T extends NorthSettings = any, I = any> {
   }
 
   addItem(item: NorthConnectorItemDTO<I>): void {
-    if (!this.handlesItemValues()) {
-      return;
-    }
     this.items.push(item);
   }
 
   updateItem(oldItem: NorthConnectorItemDTO<I>, newItem: NorthConnectorItemDTO<I>): void {
-    if (!this.handlesItemValues()) {
-      return;
-    }
     this.deleteItem(oldItem);
     this.addItem(newItem);
   }
 
   deleteItem(itemToRemove: NorthConnectorItemDTO<I>): void {
-    if (!this.handlesItemValues()) {
-      return;
-    }
     this.items = this.items.filter(item => item.id !== itemToRemove.id);
   }
 
   deleteAllItems(): void {
-    if (!this.handlesItemValues()) {
-      return;
-    }
     this.items = [];
   }
 

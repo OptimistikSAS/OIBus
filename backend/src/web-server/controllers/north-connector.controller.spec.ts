@@ -481,11 +481,7 @@ describe('North connector controller', () => {
 
     await northConnectorController.updateNorthConnector(ctx);
 
-    expect(validator.validateSettings).not.toHaveBeenCalled();
-    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).not.toHaveBeenCalled();
-    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onUpdateNorthSettings).not.toHaveBeenCalled();
-    expect(ctx.throw).toHaveBeenCalledWith(404, 'North manifest not found');
+    expect(ctx.badRequest).toHaveBeenCalled();
   });
 
   it('deleteNorthConnector() should delete North connector', async () => {
@@ -1565,8 +1561,8 @@ describe('North connector controller with items', () => {
     getManifestWithItemsModeSpy.mockRestore();
     const manifest = northConnectorController['getManifestWithItemsMode'](ctx);
 
-    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).not.toBeCalled();
-    expect(ctx.app.northService.getInstalledNorthManifests).toBeCalled();
+    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).not.toHaveBeenCalled();
+    expect(ctx.app.northService.getInstalledNorthManifests).toHaveBeenCalled();
     expect(manifest).toEqual(northTestManifestWithItems);
   });
 

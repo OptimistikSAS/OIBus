@@ -127,9 +127,7 @@ let configuration: NorthConnectorDTO;
 class TestNorth extends NorthConnector {}
 let north: TestNorth;
 
-class TestNorthWithItems extends NorthConnector implements HandlesItemValues {
-  async handleItemValues(): Promise<void> {}
-}
+class TestNorthWithItems extends NorthConnector {}
 let northWithItems: TestNorthWithItems;
 
 describe('NorthConnector enabled', () => {
@@ -681,41 +679,6 @@ describe('NorthConnector enabled', () => {
 
     northWithItems.deleteAllItems();
     expect(northWithItems['items']).toEqual([]);
-  });
-
-  it('should do nothing with items if does not support items mode', () => {
-    const item: NorthConnectorItemDTO = {
-      id: 'itemId',
-      enabled: true,
-      connectorId: 'id',
-      name: 'my item',
-      settings: {}
-    };
-
-    // Adding items
-    const pushSpy = jest.spyOn(north['items'], 'push');
-    north.addItem(item);
-    expect(pushSpy).not.toBeCalled();
-
-    // Updating items
-    north.addItem = jest.fn();
-    north.deleteItem = jest.fn();
-
-    north.updateItem(item, {
-      id: 'itemId',
-      enabled: true,
-      connectorId: 'id',
-      name: 'my updated item',
-      settings: {}
-    });
-
-    expect(north.deleteItem).not.toBeCalled();
-    expect(north.addItem).not.toBeCalled();
-
-    // Deleting items
-    const filterSpy = jest.spyOn(north['items'], 'filter');
-    north.deleteItem(item);
-    expect(filterSpy).not.toBeCalled();
   });
 });
 
