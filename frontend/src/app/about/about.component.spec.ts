@@ -82,7 +82,9 @@ describe('AboutComponent', () => {
         hostname: 'hostname',
         binaryDirectory: 'bin-directory',
         operatingSystem: 'Windows',
-        platform: 'windows'
+        platform: 'windows',
+        oibusId: 'id',
+        oibusName: 'name'
       })
     );
     tester.detectChanges();

@@ -51,7 +51,8 @@ export default class OibusController extends AbstractController {
   }
 
   async getOIBusInfo(ctx: KoaContext<void, OIBusInfo>): Promise<void> {
-    const oibusInfo = getOIBusInfo();
+    const engineSettings = ctx.app.repositoryService.engineRepository.getEngineSettings()!;
+    const oibusInfo = getOIBusInfo(engineSettings);
     ctx.ok(oibusInfo);
   }
 

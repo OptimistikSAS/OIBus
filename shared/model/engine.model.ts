@@ -129,6 +129,8 @@ export interface OIBusError {
 
 export interface OIBusInfo {
   version: string;
+  oibusName: string;
+  oibusId: string;
   dataDirectory: string;
   binaryDirectory: string;
   processId: string;

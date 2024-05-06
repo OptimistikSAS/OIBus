@@ -94,7 +94,9 @@ describe('SouthDetailComponent', () => {
     hostname: 'hostname',
     binaryDirectory: 'bin-directory',
     operatingSystem: 'Windows',
-    platform: 'windows'
+    platform: 'windows',
+    oibusId: 'id',
+    oibusName: 'name'
   };
 
   beforeEach(() => {

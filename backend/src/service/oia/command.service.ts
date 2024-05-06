@@ -28,7 +28,8 @@ export default class CommandService {
   ) {
     const currentUpgradeCommand = this.repositoryService.commandRepository.searchCommandsList({ status: ['RUNNING'], types: ['UPGRADE'] });
     if (currentUpgradeCommand.length > 0) {
-      const info = getOIBusInfo();
+      const engineSettings = this.repositoryService.engineRepository.getEngineSettings()!;
+      const info = getOIBusInfo(engineSettings);
       this.repositoryService.commandRepository.markAsCompleted(
         currentUpgradeCommand[0].id,
         DateTime.now().toUTC().toISO(),
@@ -99,7 +100,8 @@ export default class CommandService {
 
   async executeCommand(command: OIBusCommandDTO): Promise<void> {
     const runStart = DateTime.now();
-    const oibusInfo = getOIBusInfo();
+    const engineSettings = this.repositoryService.engineRepository.getEngineSettings()!;
+    const oibusInfo = getOIBusInfo(engineSettings);
     const endpoint = `/api/oianalytics/oibus/upgrade/asset?assetId=${command.assetId}`;
 
     this.logger.info(
