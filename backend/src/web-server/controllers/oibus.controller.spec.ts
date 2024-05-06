@@ -119,6 +119,7 @@ describe('Oibus controller', () => {
 
   it('should get OIBus info', async () => {
     (getOIBusInfo as jest.Mock).mockReturnValue({ version: '3.0' } as OIBusInfo);
+    ctx.app.repositoryService.engineRepository.getEngineSettings.mockReturnValueOnce(engine);
     await oibusController.getOIBusInfo(ctx);
     expect(getOIBusInfo).toHaveBeenCalledTimes(1);
     expect(ctx.ok).toHaveBeenCalledWith({ version: '3.0' });

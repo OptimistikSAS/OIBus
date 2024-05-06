@@ -13,7 +13,7 @@ import pino from 'pino';
 import csv from 'papaparse';
 import https from 'node:https';
 import http from 'node:http';
-import { OIBusInfo, RegistrationSettingsDTO } from '../../../shared/model/engine.model';
+import { EngineSettingsDTO, OIBusInfo, RegistrationSettingsDTO } from '../../../shared/model/engine.model';
 import os from 'node:os';
 import { version } from '../../package.json';
 import { NorthCacheFiles } from '../../../shared/model/north-connector.model';
@@ -480,7 +480,7 @@ export const downloadFile = async (
   await fs.writeFile(filePath, buffer);
 };
 
-export const getOIBusInfo = (): OIBusInfo => {
+export const getOIBusInfo = (oibusSettings: EngineSettingsDTO): OIBusInfo => {
   return {
     dataDirectory: process.cwd(),
     binaryDirectory: process.execPath,
@@ -489,6 +489,8 @@ export const getOIBusInfo = (): OIBusInfo => {
     operatingSystem: `${os.type()} ${os.release()}`,
     architecture: process.arch,
     version,
+    oibusId: oibusSettings.id,
+    oibusName: oibusSettings.name,
     platform: getPlatformFromOsType(os.type())
   };
 };

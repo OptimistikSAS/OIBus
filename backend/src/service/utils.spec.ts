@@ -42,7 +42,7 @@ import Stream from 'node:stream';
 import http from 'node:http';
 import https from 'node:https';
 import os from 'node:os';
-import { RegistrationSettingsDTO } from '../../../shared/model/engine.model';
+import { EngineSettingsDTO, OIBusInfo, RegistrationSettingsDTO } from '../../../shared/model/engine.model';
 import { createProxyAgent } from './proxy-agent';
 import EncryptionService from './encryption.service';
 import EncryptionServiceMock from '../tests/__mocks__/encryption-service.mock';
@@ -1126,7 +1126,7 @@ describe('Service utils', () => {
   });
 
   it('should get OIBus info', () => {
-    const expectedResult = {
+    const expectedResult: OIBusInfo = {
       architecture: process.arch,
       binaryDirectory: process.execPath,
       dataDirectory: process.cwd(),
@@ -1134,9 +1134,11 @@ describe('Service utils', () => {
       operatingSystem: `${os.type()} ${os.release()}`,
       processId: process.pid.toString(),
       version: version,
+      oibusId: 'id',
+      oibusName: 'name',
       platform: getPlatformFromOsType(os.type())
     };
-    const result = getOIBusInfo();
+    const result = getOIBusInfo({ id: 'id', name: 'name' } as EngineSettingsDTO);
     expect(result).toEqual(expectedResult);
   });
 

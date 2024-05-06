@@ -8,11 +8,12 @@ import { NgIf } from '@angular/common';
 import { EngineService } from '../services/engine.service';
 import { OIBusInfo } from '../../../../shared/model/engine.model';
 import { of, switchMap } from 'rxjs';
+import { PageTitleDirective } from '../services/page-title.directive';
 
 @Component({
   selector: 'oib-navbar',
   standalone: true,
-  imports: [RouterLink, TranslateModule, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgIf],
+  imports: [RouterLink, TranslateModule, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgIf, PageTitleDirective],
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.scss'
 })

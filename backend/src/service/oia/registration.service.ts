@@ -55,14 +55,14 @@ export default class RegistrationService {
 
     const engineSettings = this.repositoryService.engineRepository.getEngineSettings()!;
 
-    const oibusInfo = getOIBusInfo();
+    const oibusInfo = getOIBusInfo(engineSettings);
     const body = {
       activationCode,
       oibusVersion: oibusInfo.version,
       oibusArch: oibusInfo.architecture,
       oibusOs: oibusInfo.operatingSystem,
-      oibusId: engineSettings.id,
-      oibusName: engineSettings.name
+      oibusId: oibusInfo.oibusId,
+      oibusName: oibusInfo.oibusName
     };
     let response;
     try {
