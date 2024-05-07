@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.3.3](https://github.com/OptimistikSAS/OIBus/compare/v3.3.2...v3.3.3) (2024-05-07)
+
+
+### Bug Fixes
+
+* **web-client:** add OIBus name in tab name ([6e2a8b7](https://github.com/OptimistikSAS/OIBus/commit/6e2a8b7fc33deb6724289feb50f23b7bb9964e02))
+
 ## [3.3.2](https://github.com/OptimistikSAS/OIBus/compare/v3.3.1...v3.3.2) (2024-04-26)
 
 
