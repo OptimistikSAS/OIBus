@@ -1,7 +1,7 @@
 FROM ubuntu
 
 ARG arch="x64"
-ARG version="v3.0.4"
+ARG version="v3.3.2"
 
 # Install git
 RUN apt update -y && apt install -y curl unzip
@@ -19,4 +19,4 @@ RUN mkdir OIBusData
 EXPOSE 2223
 
 # Start OIBus
-CMD ["./oibus", "--config", "./OIBusData"]
+CMD ["./oibus-launcher", "--config", "./OIBusData"]
