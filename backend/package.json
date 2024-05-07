@@ -30,8 +30,8 @@
     "lint": "eslint . --ext .ts --fix --ignore-path .gitignore",
     "lint:fix": "npm run lint -- --fix",
     "build": "tsc --project tsconfig.app.json",
-    "internal:build:lib-win": "npm run --prefix node_modules/better-sqlite3 install -- --target=v18.15.0 --arch=x64 && npm run --prefix node_modules/argon2 install --update-binary -- --target_platform=win --target_arch=x64 ",
-    "internal:build:lib-macos": "npm run --prefix node_modules/better-sqlite3 install -- --target=v18.15.0 --arch=x64 && npm run --prefix node_modules/argon2 install --update-binary -- --target_platform=darwin --target_arch=x64 ",
+    "internal:build:lib-win": "npm run --prefix node_modules/better-sqlite3 install -- --target=v18.15.0 --arch=x64 && npm run --prefix node_modules/argon2 install --update-binary -- --target_platform=win --target_arch=x64",
+    "internal:build:lib-macos": "npm run --prefix node_modules/better-sqlite3 install -- --target=v18.15.0 --arch=x64 && npm run --prefix node_modules/argon2 install --update-binary -- --target_platform=darwin --target_arch=x64",
     "internal:build:lib-macos-arm64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v18.15.0 --arch=arm64 && npm run --prefix node_modules/argon2 install -- --target_arch=arm64 --target_platform=darwin",
     "internal:build:lib-linux": "npm run --prefix node_modules/better-sqlite3 install -- --target=v18.15.0 --arch=x64 && npm run --prefix node_modules/argon2 install --update-binary -- --target_arch=x64 --target_platform=linux",
     "internal:build:lib-linux-arm64": "npm run --prefix node_modules/better-sqlite3 install --update-binary -- --target=v18.15.0 --arch=arm64 && npm run --prefix node_modules/argon2 install --update-binary -- --target_arch=arm64 --target_platform=linux"
