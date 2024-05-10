@@ -18,7 +18,7 @@ import { Instant } from '../../../../shared/model/types';
 import { QueriesHistory } from '../south-interface';
 import { DateTime } from 'luxon';
 import { SouthOracleItemSettings, SouthOracleSettings } from '../../../../shared/model/south-settings.model';
-import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import { OIBusTimeValue } from '../../../../shared/model/engine.model';
 
 import oracledb, { ConnectionAttributes } from 'oracledb';
 
@@ -32,7 +32,7 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
 
   constructor(
     connector: SouthConnectorDTO<SouthOracleSettings>,
-    engineAddValuesCallback: (southId: string, values: Array<OIBusDataValue>) => Promise<void>,
+    engineAddValuesCallback: (southId: string, values: Array<OIBusTimeValue>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,

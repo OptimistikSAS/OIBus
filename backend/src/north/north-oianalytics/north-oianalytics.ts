@@ -12,10 +12,9 @@ import zlib from 'node:zlib';
 import FormData from 'form-data';
 import path from 'node:path';
 import fetch, { HeadersInit, RequestInit } from 'node-fetch';
-import { HandlesFile, HandlesValues } from '../north-interface';
 import { compress, filesExists } from '../../service/utils';
 import { NorthOIAnalyticsSettings } from '../../../../shared/model/north-settings.model';
-import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
 import { ClientCertificateCredential, ClientSecretCredential } from '@azure/identity';
 import fs from 'node:fs/promises';
 
@@ -23,7 +22,7 @@ import fs from 'node:fs/promises';
  * Class NorthOIAnalytics - Send files to a POST Multipart HTTP request and values as JSON payload
  * OIAnalytics endpoints are set in this connector
  */
-export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSettings> implements HandlesFile, HandlesValues {
+export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSettings> {
   static type = manifest.id;
 
   constructor(
@@ -57,10 +56,20 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     }
   }
 
+  async handleContent(data: OIBusContent): Promise<void> {
+    switch (data.type) {
+      case 'raw':
+        return this.handleFile(data.filePath);
+
+      case 'time-values':
+        return this.handleValues(data.content);
+    }
+  }
+
   /**
    * Handle values by sending them to OIAnalytics
    */
-  async handleValues(values: Array<OIBusDataValue>): Promise<void> {
+  async handleValues(values: Array<OIBusTimeValue>): Promise<void> {
     const endpoint = this.connector.settings.compress
       ? `/api/oianalytics/oibus/time-values/compressed?dataSourceId=${encodeURI(this.connector.name)}`
       : `/api/oianalytics/oibus/time-values?dataSourceId=${encodeURI(this.connector.name)}`;

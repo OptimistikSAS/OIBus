@@ -10,13 +10,12 @@ import { CronJob } from 'cron';
 import { EventEmitter } from 'node:events';
 import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 import DeferredPromise from '../service/deferred-promise';
-import { OIBusDataValue, OIBusError } from '../../../shared/model/engine.model';
+import { OIBusContent, OIBusError, OIBusRawContent, OIBusTimeValue, OIBusTimeValueContent } from '../../../shared/model/engine.model';
 import { ExternalSubscriptionDTO, SubscriptionDTO } from '../../../shared/model/subscription.model';
 import { DateTime } from 'luxon';
 import { PassThrough } from 'node:stream';
 import { ReadStream } from 'node:fs';
 import path from 'node:path';
-import { HandlesFile, HandlesValues } from './north-interface';
 import NorthConnectorMetricsService from '../service/north-connector-metrics.service';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { dirSize, validateCronExpression } from '../service/utils';
@@ -51,7 +50,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
 
   private fileBeingSent: string | null = null;
   private fileErrorCount = 0;
-  private valuesBeingSent: Map<string, Array<OIBusDataValue>> = new Map();
+  private valuesBeingSent: Map<string, Array<OIBusTimeValue>> = new Map();
   private valueErrorCount = 0;
 
   private taskJobQueue: Array<ScanModeDTO> = [];
@@ -251,14 +250,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
       this.metricsService!.updateMetrics(this.connector.id, { ...this.metricsService!.metrics, lastRunStart: runStart.toUTC().toISO() });
     }
 
-    if (this.handlesValues() && (flag === 'scan' || flag === 'value-trigger')) {
-      await this.handleValuesWrapper();
-    }
-
-    if (this.handlesFile() && (flag === 'scan' || flag === 'file-trigger')) {
-      await this.handleFilesWrapper();
-    }
-
+    await this.handleContentWrapper(flag);
     if (this.connector.id !== 'test') {
       this.metricsService!.updateMetrics(this.connector.id, {
         ...this.metricsService!.metrics,
@@ -271,12 +263,23 @@ export default class NorthConnector<T extends NorthSettings = any> {
     this.taskRunner.emit('next');
   }
 
+  async handleContentWrapper(flag: 'scan' | 'file-trigger' | 'value-trigger') {
+    // TODO: check connector compatibility, including transformer (to be developed)
+    if (flag === 'scan' || flag === 'value-trigger') {
+      await this.handleValuesWrapper();
+    }
+
+    if (flag === 'scan' || flag === 'file-trigger') {
+      await this.handleFilesWrapper();
+    }
+  }
+
   /**
    * Method called by the Engine to handle an array of values in order for example
    * to send them to a third party applications
    */
   async handleValuesWrapper(): Promise<void> {
-    const arrayValues = [];
+    const arrayValues: Array<OIBusTimeValue> = [];
     if (!this.valuesBeingSent.size) {
       this.valuesBeingSent = await this.valueCacheService.getValuesToSend();
       this.valueErrorCount = 0;
@@ -286,8 +289,12 @@ export default class NorthConnector<T extends NorthSettings = any> {
         arrayValues.push(...array);
       }
       try {
-        // @ts-ignore
-        await this.handleValues(arrayValues);
+        const content: OIBusTimeValueContent = {
+          type: 'time-values',
+          content: arrayValues
+        };
+        await this.handleContent(content);
+
         await this.valueCacheService.removeSentValues(this.valuesBeingSent);
         const currentMetrics = this.metricsService!.metrics;
         this.metricsService!.updateMetrics(this.connector.id, {
@@ -319,8 +326,11 @@ export default class NorthConnector<T extends NorthSettings = any> {
     }
     if (this.fileBeingSent) {
       try {
-        // @ts-ignore
-        await this.handleFile(this.fileBeingSent);
+        const content: OIBusRawContent = {
+          type: 'raw',
+          filePath: this.fileBeingSent
+        };
+        await this.handleContent(content);
         const currentMetrics = this.metricsService!.metrics;
         this.metricsService!.updateMetrics(this.connector.id, {
           ...currentMetrics,
@@ -369,7 +379,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
    * Method called by the Engine to cache an array of values in order to cache them
    * and send them to a third party application.
    */
-  async cacheValues(values: Array<OIBusDataValue>): Promise<void> {
+  async cacheValues(values: Array<OIBusTimeValue>): Promise<void> {
     if (this.connector.caching.maxSize !== 0 && this.cacheSize >= this.connector.caching.maxSize * 1024 * 1024) {
       this.logger.debug(
         `North cache is exceeding the maximum allowed size ` +
@@ -616,7 +626,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
   }
 
   async removeCacheValues(filenames: Array<string>): Promise<void> {
-    const sentValues = new Map<string, OIBusDataValue[]>(
+    const sentValues = new Map<string, OIBusTimeValue[]>(
       filenames.map(filename => [path.join(this.valueCacheService.valueFolder, filename), []])
     );
     await this.valueCacheService.removeSentValues(sentValues);
@@ -658,19 +668,15 @@ export default class NorthConnector<T extends NorthSettings = any> {
     this.metricsService!.resetMetrics();
   }
 
-  handlesFile(): this is HandlesFile {
-    return 'handleFile' in this;
-  }
-
-  handlesValues(): this is HandlesValues {
-    return 'handleValues' in this;
-  }
-
   /**
    * @throws {Error} Error with a message specifying wrong settings
    */
   async testConnection(): Promise<void> {
     this.logger.warn('testConnection must be override');
+  }
+
+  async handleContent(_data: OIBusContent): Promise<void> {
+    this.logger.warn('handleContent must be override');
   }
 
   async updateScanMode(scanMode: ScanModeDTO): Promise<void> {
