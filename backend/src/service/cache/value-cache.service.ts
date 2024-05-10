@@ -6,7 +6,7 @@ import pino from 'pino';
 
 import { NorthCacheFiles, NorthCacheSettingsDTO, NorthValueFiles } from '../../../../shared/model/north-connector.model';
 import { EventEmitter } from 'node:events';
-import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import { OIBusTimeValue } from '../../../../shared/model/engine.model';
 import { Instant } from '../../../../shared/model/types';
 
 const BUFFER_MAX = 250;
@@ -27,8 +27,8 @@ export default class ValueCacheService {
 
   private bufferTimeout: NodeJS.Timeout | undefined;
   private compactedQueue: Array<{ filename: string; createdAt: number }> = []; // List of compact filename (randomId.compact.tmp)
-  private bufferFiles: Map<string, Array<OIBusDataValue>> = new Map(); // key: buffer filename (randomId.buffer.tmp, value: the values in the queue file)
-  private queue: Map<string, Array<OIBusDataValue>> = new Map(); // key: queue filename (randomId.queue.tmp, value: the values in the queue file)
+  private bufferFiles: Map<string, Array<OIBusTimeValue>> = new Map(); // key: buffer filename (randomId.buffer.tmp, value: the values in the queue file)
+  private queue: Map<string, Array<OIBusTimeValue>> = new Map(); // key: queue filename (randomId.queue.tmp, value: the values in the queue file)
 
   private _triggerRun: EventEmitter = new EventEmitter();
 
@@ -128,7 +128,7 @@ export default class ValueCacheService {
     this.bufferTimeout = undefined;
 
     const fileInBuffer: Array<string> = [];
-    let valuesToFlush: Array<OIBusDataValue> = [];
+    let valuesToFlush: Array<OIBusTimeValue> = [];
 
     for (const [key, values] of this.bufferFiles.entries()) {
       fileInBuffer.push(key);
@@ -185,9 +185,9 @@ export default class ValueCacheService {
   /**
    * Take values from the queue and store them in a compact file
    */
-  async compactQueueCache(cacheQueue: Map<string, Array<OIBusDataValue>>): Promise<void> {
+  async compactQueueCache(cacheQueue: Map<string, Array<OIBusTimeValue>>): Promise<void> {
     const fileInBuffer: Array<string> = [];
-    let valuesInQueue: Array<OIBusDataValue> = [];
+    let valuesInQueue: Array<OIBusTimeValue> = [];
 
     cacheQueue.forEach((values, key) => {
       fileInBuffer.push(key);
@@ -219,8 +219,8 @@ export default class ValueCacheService {
    * Retrieve the values from the queue or the compacted cache in form of an array of key, values where 'values' are the
    * values to send associated to the key (reference in the queue Map and filename where the data are persisted on disk)
    */
-  async getValuesToSend(): Promise<Map<string, Array<OIBusDataValue>>> {
-    const valuesInQueue: Map<string, Array<OIBusDataValue>> = new Map();
+  async getValuesToSend(): Promise<Map<string, Array<OIBusTimeValue>>> {
+    const valuesInQueue: Map<string, Array<OIBusTimeValue>> = new Map();
     // If there is no file in the compacted queue, the values are retrieved from the regular queue
     if (this.compactedQueue.length === 0) {
       this._logger.trace('Retrieving values from queue');
@@ -247,7 +247,7 @@ export default class ValueCacheService {
    * The key is the filename to remove from disk and the Map key to remove from the queue.
    * Values are not used in this case
    */
-  async removeSentValues(sentValues: Map<string, Array<OIBusDataValue>>): Promise<void> {
+  async removeSentValues(sentValues: Map<string, Array<OIBusTimeValue>>): Promise<void> {
     for (const key of sentValues.keys()) {
       await this.deleteKeyFromCache(key);
     }
@@ -287,7 +287,7 @@ export default class ValueCacheService {
   /**
    * Remove values from North connector cache and save them to the values error cache db
    */
-  async manageErroredValues(values: Map<string, Array<OIBusDataValue>>, errorCount: number): Promise<void> {
+  async manageErroredValues(values: Map<string, Array<OIBusTimeValue>>, errorCount: number): Promise<void> {
     for (const key of values.keys()) {
       // Remove values from queues
       const indexToRemove = this.compactedQueue.findIndex(queueFile => queueFile.filename === key);
@@ -315,7 +315,7 @@ export default class ValueCacheService {
   /**
    * Persist values into a tmp file and keep them in a local buffer to flush them in the queue later
    */
-  async cacheValues(values: Array<OIBusDataValue>): Promise<void> {
+  async cacheValues(values: Array<OIBusTimeValue>): Promise<void> {
     const tmpFileName = path.resolve(this.valueFolder, `${generateRandomId()}.buffer.tmp`);
 
     // Immediately write the values into the buffer.tmp file to persist them on disk

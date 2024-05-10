@@ -17,7 +17,7 @@ import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock'
 import { NorthOIAnalyticsSettings } from '../../../../shared/model/north-settings.model';
 import ArchiveServiceMock from '../../tests/__mocks__/archive-service.mock';
 import { createProxyAgent } from '../../service/proxy-agent';
-import { OIBusDataValue, RegistrationSettingsDTO } from '../../../../shared/model/engine.model';
+import { OIBusTimeValue, RegistrationSettingsDTO } from '../../../../shared/model/engine.model';
 import zlib from 'node:zlib';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -164,7 +164,7 @@ describe('NorthOIAnalytics without proxy', () => {
 
   it('should properly handle values', async () => {
     await north.start();
-    const values: Array<OIBusDataValue> = [
+    const values: Array<OIBusTimeValue> = [
       {
         pointId: 'pointId1',
         timestamp: nowDateString,
@@ -212,7 +212,7 @@ describe('NorthOIAnalytics without proxy', () => {
 
   it('should properly throw fetch error with values', async () => {
     await north.start();
-    const values: Array<OIBusDataValue> = [
+    const values: Array<OIBusTimeValue> = [
       {
         pointId: 'pointId1',
         timestamp: nowDateString,
@@ -239,7 +239,7 @@ describe('NorthOIAnalytics without proxy', () => {
 
   it('should properly throw error on values bad response', async () => {
     await north.start();
-    const values: Array<OIBusDataValue> = [
+    const values: Array<OIBusTimeValue> = [
       {
         pointId: 'pointId1',
         timestamp: nowDateString,
@@ -428,7 +428,7 @@ describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
 
   it('should properly handle values', async () => {
     await north.start();
-    const values: Array<OIBusDataValue> = [
+    const values: Array<OIBusTimeValue> = [
       {
         pointId: 'pointId1',
         timestamp: nowDateString,
