@@ -17,6 +17,7 @@ export interface HistoryQueryDTO extends BaseEntity {
   southType: string;
   northType: string;
   southSettings: any;
+  southSharedConnection: boolean;
   northSettings: any;
   history: SouthConnectorHistorySettings;
   caching: NorthCacheSettingsDTO;
@@ -34,6 +35,7 @@ export interface HistoryQueryCommandDTO {
   southType: string;
   northType: string;
   southSettings: object;
+  southSharedConnection: boolean;
   northSettings: object;
   history: SouthConnectorHistorySettings;
   caching: NorthCacheSettingsDTO;
