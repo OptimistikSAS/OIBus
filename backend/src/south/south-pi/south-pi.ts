@@ -9,7 +9,7 @@ import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
 import { SouthPIItemSettings, SouthPISettings } from '../../../../shared/model/south-settings.model';
 import fetch from 'node-fetch';
-import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import { OIBusTimeValue } from '../../../../shared/model/engine.model';
 
 /**
  * Class SouthPI - Run a PI Agent to connect to a PI server.
@@ -25,7 +25,7 @@ export default class SouthPI extends SouthConnector implements QueriesHistory {
   constructor(
     connector: SouthConnectorDTO<SouthPISettings>,
     items: Array<SouthConnectorItemDTO<SouthPIItemSettings>>,
-    engineAddValuesCallback: (southId: string, values: Array<OIBusDataValue>) => Promise<void>,
+    engineAddValuesCallback: (southId: string, values: Array<OIBusTimeValue>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
@@ -103,10 +103,10 @@ export default class SouthPI extends SouthConnector implements QueriesHistory {
     };
     const response = await fetch(`${this.connector.settings.agentUrl}/api/pi/${this.connector.id}/read`, fetchOptions);
     if (response.status === 200) {
-      const result: { recordCount: number; content: Array<OIBusDataValue>; logs: Array<string>; maxInstantRetrieved: Instant } =
+      const result: { recordCount: number; content: Array<OIBusTimeValue>; logs: Array<string>; maxInstantRetrieved: Instant } =
         (await response.json()) as {
           recordCount: number;
-          content: OIBusDataValue[];
+          content: OIBusTimeValue[];
           logs: string[];
           maxInstantRetrieved: string;
         };

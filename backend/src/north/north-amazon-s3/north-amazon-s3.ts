@@ -10,14 +10,14 @@ import { NorthConnectorDTO } from '../../../../shared/model/north-connector.mode
 import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
-import { HandlesFile } from '../north-interface';
 import { NorthAmazonS3Settings } from '../../../../shared/model/north-settings.model';
 import { createProxyAgent } from '../../service/proxy-agent';
+import { OIBusContent } from '../../../../shared/model/engine.model';
 
 /**
  * Class NorthAmazonS3 - sends files to Amazon AWS S3
  */
-export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings> implements HandlesFile {
+export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings> {
   static type = manifest.id;
   private s3: S3Client | undefined;
 
@@ -70,6 +70,16 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
           }) as any)
         : undefined
     });
+  }
+
+  async handleContent(data: OIBusContent): Promise<void> {
+    switch (data.type) {
+      case 'raw':
+        return this.handleFile(data.filePath);
+
+      case 'time-values':
+        throw new Error('Can not manage time values');
+    }
   }
 
   /**

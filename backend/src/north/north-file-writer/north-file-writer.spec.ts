@@ -12,7 +12,7 @@ import { NorthConnectorDTO } from '../../../../shared/model/north-connector.mode
 import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.mock';
 import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
 import ArchiveServiceMock from '../../tests/__mocks__/archive-service.mock';
-import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import { OIBusTimeValue } from '../../../../shared/model/engine.model';
 
 jest.mock('node:fs/promises');
 
@@ -101,7 +101,7 @@ describe('NorthFileWriter', () => {
   });
 
   it('should properly handle values', async () => {
-    const values: Array<OIBusDataValue> = [
+    const values: Array<OIBusTimeValue> = [
       {
         timestamp: '2021-07-29T12:13:31.883Z',
         data: { value: '666', quality: 'good' },
@@ -117,7 +117,7 @@ describe('NorthFileWriter', () => {
   });
 
   it('should properly catch handle values error', async () => {
-    const values: Array<OIBusDataValue> = [
+    const values: Array<OIBusTimeValue> = [
       {
         timestamp: '2021-07-29T12:13:31.883Z',
         data: { value: '666', quality: 'good' },
@@ -185,7 +185,7 @@ describe('NorthFileWriter without suffix or prefix', () => {
   });
 
   it('should properly handle values', async () => {
-    const values: Array<OIBusDataValue> = [
+    const values: Array<OIBusTimeValue> = [
       {
         timestamp: '2021-07-29T12:13:31.883Z',
         data: { value: '666', quality: 'good' },

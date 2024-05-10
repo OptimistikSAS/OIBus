@@ -21,7 +21,7 @@ import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
 import { SouthSlimsItemSettings, SouthSlimsSettings } from '../../../../shared/model/south-settings.model';
 import { createProxyAgent } from '../../service/proxy-agent';
-import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import { OIBusTimeValue } from '../../../../shared/model/engine.model';
 
 export interface SlimsColumn {
   name: string;
@@ -55,7 +55,7 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
   constructor(
     connector: SouthConnectorDTO<SouthSlimsSettings>,
     items: Array<SouthConnectorItemDTO<SouthSlimsItemSettings>>,
-    engineAddValuesCallback: (southId: string, values: Array<OIBusDataValue>) => Promise<void>,
+    engineAddValuesCallback: (southId: string, values: Array<OIBusTimeValue>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,

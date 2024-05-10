@@ -20,7 +20,7 @@ import { Instant } from '../../../../shared/model/types';
 import { QueriesHistory } from '../south-interface';
 import { DateTime } from 'luxon';
 import { SouthPostgreSQLItemSettings, SouthPostgreSQLSettings } from '../../../../shared/model/south-settings.model';
-import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import { OIBusTimeValue } from '../../../../shared/model/engine.model';
 
 /**
  * Class SouthPostgreSQL - Retrieve data from PostgreSQL databases and send them to the cache as CSV files.
@@ -36,7 +36,7 @@ export default class SouthPostgreSQL
   constructor(
     connector: SouthConnectorDTO<SouthPostgreSQLSettings>,
     items: Array<SouthConnectorItemDTO<SouthPostgreSQLItemSettings>>,
-    engineAddValuesCallback: (southId: string, values: Array<OIBusDataValue>) => Promise<void>,
+    engineAddValuesCallback: (southId: string, values: Array<OIBusTimeValue>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,

@@ -20,7 +20,7 @@ import {
   SouthMQTTSettings
 } from '../../../../shared/model/south-settings.model';
 import { convertDateTimeToInstant } from '../../service/utils';
-import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import { OIBusTimeValue } from '../../../../shared/model/engine.model';
 
 /**
  * Class SouthMQTT - Subscribe to data topic from a MQTT broker
@@ -33,7 +33,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
   constructor(
     connector: SouthConnectorDTO<SouthMQTTSettings>,
     items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>>,
-    engineAddValuesCallback: (southId: string, values: Array<OIBusDataValue>) => Promise<void>,
+    engineAddValuesCallback: (southId: string, values: Array<OIBusTimeValue>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
@@ -178,7 +178,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     }
   }
 
-  formatValues(item: SouthConnectorItemDTO<SouthMQTTItemSettings>, data: any, messageTimestamp: Instant): Array<OIBusDataValue> {
+  formatValues(item: SouthConnectorItemDTO<SouthMQTTItemSettings>, data: any, messageTimestamp: Instant): Array<OIBusTimeValue> {
     if (item.settings.jsonPayload!.useArray) {
       const array = objectPath.get(data, item.settings.jsonPayload!.dataArrayPath!);
       if (!array || !Array.isArray(array)) {
@@ -189,7 +189,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     return [this.formatValue(item, data, messageTimestamp)];
   }
 
-  formatValue(item: SouthConnectorItemDTO<SouthMQTTItemSettings>, data: any, messageTimestamp: Instant): OIBusDataValue {
+  formatValue(item: SouthConnectorItemDTO<SouthMQTTItemSettings>, data: any, messageTimestamp: Instant): OIBusTimeValue {
     const dataTimestamp =
       item.settings.jsonPayload!.timestampOrigin === 'oibus'
         ? messageTimestamp
