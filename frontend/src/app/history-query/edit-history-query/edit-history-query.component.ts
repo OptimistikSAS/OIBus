@@ -97,6 +97,7 @@ export class EditHistoryQueryComponent implements OnInit {
       retentionDuration: FormControl<number>;
     }>;
     northSettings: FormGroup;
+    southSharedConnection: FormControl<boolean>;
     southSettings: FormGroup;
   }> | null = null;
 
@@ -208,7 +209,8 @@ export class EditHistoryQueryComponent implements OnInit {
             retentionDuration: [72, Validators.required]
           }),
           northSettings: createFormGroup(northManifest.settings, this.fb),
-          southSettings: createFormGroup(southManifest.settings, this.fb)
+          southSettings: createFormGroup(southManifest.settings, this.fb),
+          southSharedConnection: this.fb.control(false)
         });
 
         if (this.historyQuery) {
@@ -244,6 +246,7 @@ export class EditHistoryQueryComponent implements OnInit {
       northType: this.northType,
       southType: this.southType,
       southSettings: formValue.southSettings,
+      southSharedConnection: formValue.southSharedConnection ?? false,
       northSettings: formValue.northSettings,
       history: {
         maxInstantPerItem: formValue.history!.maxInstantPerItem!,
