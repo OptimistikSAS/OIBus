@@ -82,6 +82,7 @@ describe('HistoryQueryService', () => {
       southType: 'SQL',
       northType: 'OIConnect',
       southSettings: {},
+      southSharedConnection: false,
       northSettings: {},
       caching: {
         scanModeId: 'scanModeId1',
