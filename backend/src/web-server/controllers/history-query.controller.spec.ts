@@ -96,6 +96,7 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
   southSettings: {
     key: 'value'
   },
+  southSharedConnection: false,
   northSettings: {
     key: 'value'
   },
@@ -242,6 +243,7 @@ describe('History query controller', () => {
         southType: 'south-test',
         northType: 'north-test',
         southSettings: {},
+        southSharedConnection: false,
         northSettings: {},
         caching: northCacheSettings,
         archive: northArchiveSettings
@@ -286,6 +288,7 @@ describe('History query controller', () => {
         southType: 'south-test',
         northType: 'north-test',
         southSettings: {},
+        southSharedConnection: false,
         northSettings: {},
         caching: northCacheSettings,
         archive: northArchiveSettings
@@ -355,6 +358,7 @@ describe('History query controller', () => {
         southType: 'south-test',
         northType: 'north-test',
         southSettings: southConnector.settings,
+        southSharedConnection: false,
         northSettings: northConnector.settings,
         caching: northCacheSettings,
         archive: northArchiveSettings
