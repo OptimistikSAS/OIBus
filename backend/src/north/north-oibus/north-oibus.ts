@@ -8,16 +8,15 @@ import fetch, { HeadersInit, RequestInit } from 'node-fetch';
 import { createReadStream } from 'node:fs';
 import path from 'node:path';
 import FormData from 'form-data';
-import { HandlesFile, HandlesValues } from '../north-interface';
 import { filesExists } from '../../service/utils';
 import { NorthOIBusSettings } from '../../../../shared/model/north-settings.model';
 import { createProxyAgent } from '../../service/proxy-agent';
-import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
 
 /**
  * Class NorthOIBus - Send files through a POST Multipart HTTP request and values as JSON payload into another OIBus
  */
-export default class NorthOibus extends NorthConnector<NorthOIBusSettings> implements HandlesFile, HandlesValues {
+export default class NorthOibus extends NorthConnector<NorthOIBusSettings> {
   static type = manifest.id;
 
   constructor(
@@ -71,10 +70,20 @@ export default class NorthOibus extends NorthConnector<NorthOIBusSettings> imple
     }
   }
 
+  async handleContent(data: OIBusContent): Promise<void> {
+    switch (data.type) {
+      case 'raw':
+        return this.handleFile(data.filePath);
+
+      case 'time-values':
+        return this.handleValues(data.content);
+    }
+  }
+
   /**
    * Handle values by sending them to the specified endpoint
    */
-  async handleValues(values: Array<OIBusDataValue>): Promise<void> {
+  async handleValues(values: Array<OIBusTimeValue>): Promise<void> {
     const headers: HeadersInit = {
       'Content-Type': 'application/json'
     };

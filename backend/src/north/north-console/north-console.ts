@@ -7,14 +7,13 @@ import pino from 'pino';
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
-import { HandlesFile, HandlesValues } from '../north-interface';
 import { NorthConsoleSettings } from '../../../../shared/model/north-settings.model';
-import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
 
 /**
  * Class Console - display values and file path into the console
  */
-export default class NorthConsole extends NorthConnector<NorthConsoleSettings> implements HandlesFile, HandlesValues {
+export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
   static type = manifest.id;
 
   constructor(
@@ -27,10 +26,20 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> i
     super(configuration, encryptionService, repositoryService, logger, baseFolder);
   }
 
+  async handleContent(data: OIBusContent): Promise<void> {
+    switch (data.type) {
+      case 'raw':
+        return this.handleFile(data.filePath);
+
+      case 'time-values':
+        return this.handleValues(data.content);
+    }
+  }
+
   /**
    * Handle values by printing them to the console.
    */
-  async handleValues(values: Array<OIBusDataValue>): Promise<void> {
+  async handleValues(values: Array<OIBusTimeValue>): Promise<void> {
     if (this.connector.settings.verbose) {
       console.table(values, ['pointId', 'timestamp', 'data']);
     } else {
