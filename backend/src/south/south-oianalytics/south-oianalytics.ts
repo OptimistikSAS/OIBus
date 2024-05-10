@@ -14,7 +14,7 @@ import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
 import { SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../../../shared/model/south-settings.model';
 import { createProxyAgent } from '../../service/proxy-agent';
-import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import { OIBusTimeValue } from '../../../../shared/model/engine.model';
 import { ClientSecretCredential, ClientCertificateCredential } from '@azure/identity';
 
 interface OIATimeValues {
@@ -46,7 +46,7 @@ export default class SouthOIAnalytics
 
   constructor(
     connector: SouthConnectorDTO<SouthOIAnalyticsSettings>,
-    engineAddValuesCallback: (southId: string, values: Array<OIBusDataValue>) => Promise<void>,
+    engineAddValuesCallback: (southId: string, values: Array<OIBusTimeValue>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
@@ -279,7 +279,7 @@ export default class SouthOIAnalytics
    * Return the formatted results flattened for easier access
    * (into csv files for example) and the latestDateRetrieved in ISO String format
    */
-  parseData(httpResult: Array<OIATimeValues>): { formattedResult: Array<OIBusDataValue>; maxInstant: Instant } {
+  parseData(httpResult: Array<OIATimeValues>): { formattedResult: Array<OIBusTimeValue>; maxInstant: Instant } {
     if (!Array.isArray(httpResult)) {
       throw Error('Bad data: expect OIAnalytics time values to be an array');
     }
