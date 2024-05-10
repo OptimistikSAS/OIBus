@@ -36,7 +36,7 @@ import { randomUUID } from 'crypto';
 import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
 import { createFolder } from '../../service/utils';
 import { OPCUACertificateManager } from 'node-opcua-certificate-manager';
-import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import { OIBusTimeValue } from '../../../../shared/model/engine.model';
 import ConnectionService, { ManagedConnection, ManagedConnectionSettings } from '../../service/connection.service';
 
 export const MAX_NUMBER_OF_NODE_TO_LOG = 10;
@@ -61,7 +61,7 @@ export default class SouthOPCUA
 
   constructor(
     connector: SouthConnectorDTO<SouthOPCUASettings>,
-    engineAddValuesCallback: (southId: string, values: Array<OIBusDataValue>) => Promise<void>,
+    engineAddValuesCallback: (southId: string, values: Array<OIBusTimeValue>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
@@ -264,7 +264,7 @@ export default class SouthOPCUA
 
             if (response.results) {
               this.logger.debug(`Received a response of ${response.results.length} nodes`);
-              let dataByItems: Array<OIBusDataValue> = [];
+              let dataByItems: Array<OIBusTimeValue> = [];
 
               nodesToRead = nodesToRead
                 .map((node, i) => {
