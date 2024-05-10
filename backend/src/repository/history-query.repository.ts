@@ -17,6 +17,7 @@ interface HistoryQueryResult {
   southType: string;
   northType: string;
   southSettings: string;
+  southSharedConnection: boolean;
   northSettings: string;
   cachingScanModeId: string;
   cachingGroupCount: number;
@@ -39,7 +40,7 @@ export default class HistoryQueryRepository {
     const query =
       `SELECT id, name, description, status, history_max_instant_per_item AS maxInstantPerItem, ` +
       `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, start_time AS startTime, end_time AS endTime, ` +
-      `south_type AS southType, north_type AS northType, south_settings AS southSettings, north_settings AS northSettings, ` +
+      `south_type AS southType, north_type AS northType, south_settings AS southSettings, south_shared_connection as southSharedConnection, north_settings AS northSettings, ` +
       `caching_scan_mode_id AS cachingScanModeId, caching_group_count AS cachingGroupCount, caching_retry_interval AS ` +
       `cachingRetryInterval, caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ` +
       `caching_send_file_immediately AS cachingSendFileImmediately, caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
@@ -55,7 +56,7 @@ export default class HistoryQueryRepository {
     const query =
       `SELECT id, name, description, status, history_max_instant_per_item AS maxInstantPerItem, ` +
       `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, start_time AS startTime, end_time AS endTime, ` +
-      `south_type AS southType, north_type AS northType, south_settings AS southSettings, north_settings AS northSettings, ` +
+      `south_type AS southType, north_type AS northType, south_settings AS southSettings, south_shared_connection as southSharedConnection, north_settings AS northSettings, ` +
       `caching_scan_mode_id AS cachingScanModeId, caching_group_count AS cachingGroupCount, caching_retry_interval AS ` +
       `cachingRetryInterval, caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ` +
       `caching_send_file_immediately AS cachingSendFileImmediately, caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
@@ -77,9 +78,9 @@ export default class HistoryQueryRepository {
 
     const insertQuery =
       `INSERT INTO ${HISTORY_QUERIES_TABLE} (id, name, description, status, history_max_instant_per_item, history_max_read_interval, ` +
-      `history_read_delay, start_time, end_time, south_type, north_type, south_settings, north_settings, caching_scan_mode_id, caching_group_count, ` +
+      `history_read_delay, start_time, end_time, south_type, north_type, south_settings, south_shared_connection, north_settings, caching_scan_mode_id, caching_group_count, ` +
       `caching_retry_interval, caching_retry_count, caching_max_send_count, caching_send_file_immediately, caching_max_size, archive_enabled, ` +
-      `archive_retention_duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      `archive_retention_duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
     const insertResult = this.database.prepare(insertQuery).run(
       id,
       command.name,
@@ -93,6 +94,7 @@ export default class HistoryQueryRepository {
       command.southType,
       command.northType,
       JSON.stringify(command.southSettings),
+      +command.southSharedConnection,
       JSON.stringify(command.northSettings),
       command.caching.scanModeId,
       command.caching.groupCount,
@@ -108,7 +110,7 @@ export default class HistoryQueryRepository {
     const query =
       `SELECT id, name, description, status, history_max_instant_per_item AS maxInstantPerItem, ` +
       `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, start_time AS startTime, end_time AS endTime, ` +
-      `south_type AS southType, north_type AS northType, south_settings AS southSettings, north_settings AS northSettings, ` +
+      `south_type AS southType, north_type AS northType, south_settings AS southSettings, south_shared_connection as southSharedConnection, north_settings AS northSettings, ` +
       `caching_scan_mode_id AS cachingScanModeId, caching_group_count AS cachingGroupCount, caching_retry_interval AS ` +
       `cachingRetryInterval, caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ` +
       `caching_send_file_immediately AS cachingSendFileImmediately, caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
@@ -130,7 +132,7 @@ export default class HistoryQueryRepository {
     const query =
       `UPDATE ${HISTORY_QUERIES_TABLE} SET name = ?, description = ?, history_max_instant_per_item = ?, ` +
       `history_max_read_interval = ?, history_read_delay = ?, start_time = ?, ` +
-      `end_time = ?, south_type = ?, north_type = ?, south_settings = ?, north_settings = ?,` +
+      `end_time = ?, south_type = ?, north_type = ?, south_settings = ?, south_shared_connection = ?, north_settings = ?,` +
       `caching_scan_mode_id = ?, caching_group_count = ?, caching_retry_interval = ?, caching_retry_count = ?, ` +
       `caching_max_send_count = ?, caching_send_file_immediately = ?, caching_max_size = ?, archive_enabled = ?, archive_retention_duration = ? ` +
       `WHERE id = ?;`;
@@ -147,6 +149,7 @@ export default class HistoryQueryRepository {
         command.southType,
         command.northType,
         JSON.stringify(command.southSettings),
+        +command.southSharedConnection,
         JSON.stringify(command.northSettings),
         command.caching.scanModeId,
         command.caching.groupCount,
@@ -186,6 +189,7 @@ export default class HistoryQueryRepository {
       southType: result.southType,
       northType: result.northType,
       southSettings: JSON.parse(result.southSettings),
+      southSharedConnection: Boolean(result.southSharedConnection),
       northSettings: JSON.parse(result.northSettings),
       caching: {
         scanModeId: result.cachingScanModeId,
