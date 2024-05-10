@@ -56,6 +56,10 @@ class EditHistoryQueryComponentTester extends ComponentTester<EditHistoryQueryCo
   get save() {
     return this.button('#save-button')!;
   }
+
+  get sharedConnection() {
+    return this.input('#south-shared-connection');
+  }
 }
 describe('EditHistoryQueryComponent', () => {
   let tester: EditHistoryQueryComponentTester;
@@ -82,6 +86,7 @@ describe('EditHistoryQueryComponent', () => {
     southType: 'SQL',
     northSettings: {},
     southSettings: {},
+    southSharedConnection: false,
     caching: {
       scanModeId: 'scanModeId1',
       retryInterval: 1000,
@@ -192,6 +197,39 @@ describe('EditHistoryQueryComponent', () => {
     expect(tester.specificForm).toBeDefined();
     expect(tester.northSpecificTitle).toContainText('Console settings');
     expect(tester.southSpecificTitle).toContainText('SQL settings');
+    expect(tester.sharedConnection).toBeNull();
+  });
+
+  it('should display south sharing input when connection can be shared', () => {
+    southConnectorService.getSouthConnectorTypeManifest.and.returnValue(
+      of({
+        id: 'sql',
+        category: 'database',
+        name: 'SQL',
+        description: 'SQL description',
+        modes: {
+          history: true,
+          lastFile: false,
+          lastPoint: false,
+          subscription: false,
+          forceMaxInstantPerItem: false,
+          sharedConnection: true
+        },
+        settings: [],
+        items: {
+          scanMode: {
+            acceptSubscription: false,
+            subscriptionOnly: false
+          },
+          settings: [],
+          schema: {} as unknown
+        },
+        schema: {} as unknown
+      } as SouthConnectorManifest)
+    );
+    tester = new EditHistoryQueryComponentTester();
+    tester.detectChanges();
+    expect(tester.sharedConnection).toBeDefined();
   });
 
   it('should test north connection', () => {
@@ -217,7 +255,7 @@ describe('EditHistoryQueryComponent', () => {
   });
 
   it('should test south connection', () => {
-    tester.componentInstance.southManifest = { id: 'southId1' } as SouthConnectorManifest;
+    tester.componentInstance.southManifest = { id: 'southId1', modes: {} } as SouthConnectorManifest;
     tester.componentInstance.historyQuery = historyQuery;
 
     const command = {
