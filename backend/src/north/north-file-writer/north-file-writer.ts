@@ -8,14 +8,13 @@ import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { DateTime } from 'luxon';
-import { HandlesFile, HandlesValues } from '../north-interface';
 import { NorthFileWriterSettings } from '../../../../shared/model/north-settings.model';
-import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
 
 /**
  * Class NorthFileWriter - Write file in an output folder. Values are stored in JSON files
  */
-export default class NorthFileWriter extends NorthConnector<NorthFileWriterSettings> implements HandlesFile, HandlesValues {
+export default class NorthFileWriter extends NorthConnector<NorthFileWriterSettings> {
   static type = manifest.id;
 
   constructor(
@@ -28,7 +27,17 @@ export default class NorthFileWriter extends NorthConnector<NorthFileWriterSetti
     super(configuration, encryptionService, repositoryService, logger, baseFolder);
   }
 
-  async handleValues(values: Array<OIBusDataValue>): Promise<void> {
+  async handleContent(data: OIBusContent): Promise<void> {
+    switch (data.type) {
+      case 'raw':
+        return this.handleFile(data.filePath);
+
+      case 'time-values':
+        return this.handleValues(data.content);
+    }
+  }
+
+  async handleValues(values: Array<OIBusTimeValue>): Promise<void> {
     const nowDate = DateTime.now().toUTC();
     const prefix = (this.connector.settings.prefix || '')
       .replace('@CurrentDate', nowDate.toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))
