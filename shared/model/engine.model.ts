@@ -150,7 +150,7 @@ export interface BaseConnectorMetrics {
 export interface NorthConnectorMetrics extends BaseConnectorMetrics {
   numberOfValuesSent: number;
   numberOfFilesSent: number;
-  lastValueSent: OIBusDataValue | null;
+  lastValueSent: OIBusTimeValue | null;
   lastFileSent: string | null;
   cacheSize: number;
 }
@@ -172,7 +172,7 @@ export interface SouthHistoryMetrics {
 export interface SouthConnectorMetrics extends BaseConnectorMetrics {
   numberOfValuesRetrieved: number;
   numberOfFilesRetrieved: number;
-  lastValueRetrieved: OIBusDataValue | null;
+  lastValueRetrieved: OIBusTimeValue | null;
   lastFileRetrieved: string | null;
   historyMetrics: SouthHistoryMetrics;
 }
@@ -212,11 +212,29 @@ export interface HomeMetrics {
   souths: Record<string, SouthConnectorMetrics>;
 }
 
-export interface OIBusDataValue {
+interface BaseOIBusContent {
+  type: string;
+}
+
+export interface OIBusTimeValue {
   pointId: string;
   timestamp: Instant;
   data: {
-    value: string;
+    value: string | number;
     [key: string]: any;
   };
 }
+
+// OIBusTimeValueContent is currently called OIBusDataValue
+export interface OIBusTimeValueContent extends BaseOIBusContent {
+  type: 'time-values';
+  content: Array<OIBusTimeValue>;
+}
+
+export interface OIBusRawContent extends BaseOIBusContent {
+  type: 'raw';
+  filePath: string;
+}
+
+
+export type OIBusContent = OIBusTimeValueContent | OIBusRawContent;
