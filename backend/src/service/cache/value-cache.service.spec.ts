@@ -7,7 +7,7 @@ import { createFolder, generateRandomId, dirSize, getFilesFiltered } from '../ut
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/logger.mock';
 import { NorthCacheSettingsDTO } from '../../../../shared/model/north-connector.model';
-import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import { OIBusTimeValue } from '../../../../shared/model/engine.model';
 
 jest.mock('../utils', () => ({
   generateRandomId: jest.fn(() => 'generated-uuid'),
@@ -250,10 +250,10 @@ describe('ValueCache', () => {
   it('should cache values and flush because of timer', async () => {
     (generateRandomId as jest.Mock).mockReturnValueOnce('generated-uuid1').mockReturnValueOnce('generated-uuid2');
 
-    const valuesToCache: Array<OIBusDataValue> = [
+    const valuesToCache: Array<OIBusTimeValue> = [
       { data: { value: 'myFirstValue' } },
       { data: { value: 'mySecondValue' } }
-    ] as Array<OIBusDataValue>;
+    ] as Array<OIBusTimeValue>;
     cache.flush = jest.fn();
     await cache.cacheValues(valuesToCache);
     expect(fs.writeFile).toHaveBeenCalledWith(
@@ -293,9 +293,9 @@ describe('ValueCache', () => {
         throw new Error('write error');
       });
 
-    const valuesToCache: Array<OIBusDataValue> = [];
+    const valuesToCache: Array<OIBusTimeValue> = [];
     for (let i = 0; i < 251; i += 1) {
-      valuesToCache.push({} as OIBusDataValue);
+      valuesToCache.push({} as OIBusTimeValue);
     }
     await cache.cacheValues([valuesToCache[0], valuesToCache[0]]);
     expect(clearTimeoutSpy).not.toHaveBeenCalled();
