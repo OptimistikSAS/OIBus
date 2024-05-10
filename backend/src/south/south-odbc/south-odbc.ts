@@ -12,7 +12,7 @@ import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
 import { SouthODBCItemSettings, SouthODBCSettings } from '../../../../shared/model/south-settings.model';
 import fetch, { HeadersInit, RequestInit } from 'node-fetch';
-import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import { OIBusTimeValue } from '../../../../shared/model/engine.model';
 
 let odbc: any | null = null;
 // @ts-ignore
@@ -37,7 +37,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
 
   constructor(
     connector: SouthConnectorDTO<SouthODBCSettings>,
-    engineAddValuesCallback: (southId: string, values: Array<OIBusDataValue>) => Promise<void>,
+    engineAddValuesCallback: (southId: string, values: Array<OIBusTimeValue>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
@@ -240,7 +240,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     if (response.status === 200) {
       const result: { recordCount: number; content: Array<any>; maxInstantRetrieved: Instant } = (await response.json()) as {
         recordCount: number;
-        content: OIBusDataValue[];
+        content: OIBusTimeValue[];
         maxInstantRetrieved: string;
       };
       const requestDuration = DateTime.now().toMillis() - startRequest;
