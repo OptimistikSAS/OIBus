@@ -15,7 +15,7 @@ import { PassThrough } from 'node:stream';
 import { QueriesFile, QueriesHistory, QueriesLastPoint, QueriesSubscription, DelegatesConnection } from './south-interface';
 import SouthConnectorMetricsService from '../service/south-connector-metrics.service';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import { OIBusDataValue } from '../../../shared/model/engine.model';
+import { OIBusTimeValue } from '../../../shared/model/engine.model';
 import path from 'node:path';
 import ConnectionService, { ManagedConnectionDTO } from '../service/connection.service';
 
@@ -60,7 +60,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
    */
   constructor(
     protected connector: SouthConnectorDTO<T>,
-    private engineAddValuesCallback: (southId: string, values: Array<OIBusDataValue>) => Promise<void>,
+    private engineAddValuesCallback: (southId: string, values: Array<OIBusTimeValue>) => Promise<void>,
     private engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     protected readonly encryptionService: EncryptionService,
     protected readonly repositoryService: RepositoryService,
@@ -477,7 +477,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
   /**
    * Add new values to the South connector buffer.
    */
-  async addValues(values: Array<OIBusDataValue>): Promise<void> {
+  async addValues(values: Array<OIBusTimeValue>): Promise<void> {
     if (values.length > 0 && this.connector.id !== 'test') {
       this.logger.debug(`Add ${values.length} values to cache from South "${this.connector.name}"`);
       await this.engineAddValuesCallback(this.connector.id, values);
