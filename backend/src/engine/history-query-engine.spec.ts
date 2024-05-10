@@ -60,6 +60,7 @@ describe('HistoryQueryEngine', () => {
       },
       northSettings: {},
       southSettings: {},
+      southSharedConnection: false,
       startTime: '2021-02-02T02:02:02.222Z',
       endTime: '2022-02-02T02:02:02.222Z',
       caching: {
