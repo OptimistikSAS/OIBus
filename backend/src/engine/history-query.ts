@@ -53,7 +53,8 @@ export default class HistoryQuery {
       enabled: true,
       history: this.historyConfiguration.history,
       type: this.historyConfiguration.southType,
-      settings: this.historyConfiguration.southSettings
+      settings: this.historyConfiguration.southSettings,
+      sharedConnection: this.historyConfiguration.southSharedConnection
     };
     const southFolder = path.resolve(this.baseFolder, 'south');
     await createFolder(southFolder);

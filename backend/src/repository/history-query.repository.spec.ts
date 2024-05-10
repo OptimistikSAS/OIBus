@@ -41,6 +41,7 @@ describe('History Query repository', () => {
         southType: 'SQL',
         northType: 'OIConnect',
         southSettings: {},
+        southSharedConnection: false,
         northSettings: {},
         caching: {
           scanModeId: 'scanId1',
@@ -72,6 +73,7 @@ describe('History Query repository', () => {
         southType: 'SQL',
         northType: 'OIConnect',
         southSettings: {},
+        southSharedConnection: false,
         northSettings: {},
         caching: {
           scanModeId: 'scanId1',
@@ -142,7 +144,7 @@ describe('History Query repository', () => {
     expect(database.prepare).toHaveBeenCalledWith(
       `SELECT id, name, description, status, history_max_instant_per_item AS maxInstantPerItem, ` +
         `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, start_time AS startTime, end_time AS endTime, ` +
-        `south_type AS southType, north_type AS northType, south_settings AS southSettings, north_settings AS northSettings, ` +
+        `south_type AS southType, north_type AS northType, south_settings AS southSettings, south_shared_connection as southSharedConnection, north_settings AS northSettings, ` +
         `caching_scan_mode_id AS cachingScanModeId, caching_group_count AS cachingGroupCount, caching_retry_interval AS ` +
         `cachingRetryInterval, caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ` +
         `caching_send_file_immediately AS cachingSendFileImmediately, caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
@@ -168,6 +170,7 @@ describe('History Query repository', () => {
       southType: 'SQL',
       northType: 'OIConnect',
       southSettings: {},
+      southSharedConnection: false,
       northSettings: {},
       caching: {
         scanModeId: 'scanId1',
@@ -211,7 +214,7 @@ describe('History Query repository', () => {
     expect(database.prepare).toHaveBeenCalledWith(
       `SELECT id, name, description, status, history_max_instant_per_item AS maxInstantPerItem, ` +
         `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, start_time AS startTime, end_time AS endTime, ` +
-        `south_type AS southType, north_type AS northType, south_settings AS southSettings, north_settings AS northSettings, ` +
+        `south_type AS southType, north_type AS northType, south_settings AS southSettings, south_shared_connection as southSharedConnection, north_settings AS northSettings, ` +
         `caching_scan_mode_id AS cachingScanModeId, caching_group_count AS cachingGroupCount, caching_retry_interval AS ` +
         `cachingRetryInterval, caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ` +
         `caching_send_file_immediately AS cachingSendFileImmediately, caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
@@ -227,7 +230,7 @@ describe('History Query repository', () => {
     expect(database.prepare).toHaveBeenCalledWith(
       `SELECT id, name, description, status, history_max_instant_per_item AS maxInstantPerItem, ` +
         `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, start_time AS startTime, end_time AS endTime, ` +
-        `south_type AS southType, north_type AS northType, south_settings AS southSettings, north_settings AS northSettings, ` +
+        `south_type AS southType, north_type AS northType, south_settings AS southSettings, south_shared_connection as southSharedConnection, north_settings AS northSettings, ` +
         `caching_scan_mode_id AS cachingScanModeId, caching_group_count AS cachingGroupCount, caching_retry_interval AS ` +
         `cachingRetryInterval, caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ` +
         `caching_send_file_immediately AS cachingSendFileImmediately, caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
@@ -252,6 +255,7 @@ describe('History Query repository', () => {
       southType: 'SQL',
       northType: 'OIConnect',
       southSettings: {},
+      southSharedConnection: false,
       northSettings: {},
       caching: {
         scanModeId: 'scanId1',
@@ -299,9 +303,9 @@ describe('History Query repository', () => {
     expect(generateRandomId).toHaveBeenCalledWith(6);
     expect(database.prepare).toHaveBeenCalledWith(
       `INSERT INTO history_queries (id, name, description, status, history_max_instant_per_item, history_max_read_interval, ` +
-        `history_read_delay, start_time, end_time, south_type, north_type, south_settings, north_settings, caching_scan_mode_id, caching_group_count, ` +
+        `history_read_delay, start_time, end_time, south_type, north_type, south_settings, south_shared_connection, north_settings, caching_scan_mode_id, caching_group_count, ` +
         `caching_retry_interval, caching_retry_count, caching_max_send_count, caching_send_file_immediately, caching_max_size, archive_enabled, ` +
-        `archive_retention_duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        `archive_retention_duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     );
     expect(runFn).toHaveBeenCalledWith(
       '123456',
@@ -316,6 +320,7 @@ describe('History Query repository', () => {
       command.southType,
       command.northType,
       JSON.stringify(command.southSettings),
+      +command.southSharedConnection,
       JSON.stringify(command.northSettings),
       command.caching.scanModeId,
       command.caching.groupCount,
@@ -331,7 +336,7 @@ describe('History Query repository', () => {
     expect(database.prepare).toHaveBeenCalledWith(
       `SELECT id, name, description, status, history_max_instant_per_item AS maxInstantPerItem, ` +
         `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, start_time AS startTime, end_time AS endTime, ` +
-        `south_type AS southType, north_type AS northType, south_settings AS southSettings, north_settings AS northSettings, ` +
+        `south_type AS southType, north_type AS northType, south_settings AS southSettings, south_shared_connection as southSharedConnection, north_settings AS northSettings, ` +
         `caching_scan_mode_id AS cachingScanModeId, caching_group_count AS cachingGroupCount, caching_retry_interval AS ` +
         `cachingRetryInterval, caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ` +
         `caching_send_file_immediately AS cachingSendFileImmediately, caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
@@ -354,6 +359,7 @@ describe('History Query repository', () => {
       southType: 'SQL',
       northType: 'OIConnect',
       southSettings: {},
+      southSharedConnection: false,
       northSettings: {},
       caching: {
         scanModeId: 'scanId1',
@@ -373,7 +379,7 @@ describe('History Query repository', () => {
     expect(database.prepare).toHaveBeenCalledWith(
       `UPDATE history_queries SET name = ?, description = ?, history_max_instant_per_item = ?, ` +
         `history_max_read_interval = ?, history_read_delay = ?, start_time = ?, ` +
-        `end_time = ?, south_type = ?, north_type = ?, south_settings = ?, north_settings = ?,` +
+        `end_time = ?, south_type = ?, north_type = ?, south_settings = ?, south_shared_connection = ?, north_settings = ?,` +
         `caching_scan_mode_id = ?, caching_group_count = ?, caching_retry_interval = ?, caching_retry_count = ?, ` +
         `caching_max_send_count = ?, caching_send_file_immediately = ?, caching_max_size = ?, archive_enabled = ?, archive_retention_duration = ? ` +
         `WHERE id = ?;`
@@ -389,6 +395,7 @@ describe('History Query repository', () => {
       command.southType,
       command.northType,
       JSON.stringify(command.southSettings),
+      +command.southSharedConnection,
       JSON.stringify(command.northSettings),
       command.caching.scanModeId,
       command.caching.groupCount,

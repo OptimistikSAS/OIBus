@@ -133,6 +133,7 @@ describe('HistoryQuery enabled', () => {
       },
       northSettings: {},
       southSettings: {},
+      southSharedConnection: false,
       startTime: '2021-02-02T02:02:02.222Z',
       endTime: '2022-02-02T02:02:02.222Z',
       caching: {
@@ -363,6 +364,7 @@ describe('HistoryQuery disabled', () => {
       },
       northSettings: {},
       southSettings: {},
+      southSharedConnection: false,
       startTime: '2021-02-02T02:02:02.222Z',
       endTime: '2022-02-02T02:02:02.222Z',
       caching: {

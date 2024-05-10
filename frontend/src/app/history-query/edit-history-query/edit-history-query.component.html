@@ -225,6 +225,15 @@
 
           <!-- South settings -->
           <oib-box>
+            <div *ngIf="southManifest.modes.sharedConnection" class="col">
+              <!-- Shared connection -->
+              <div class="form-group">
+                <div class="form-check form-switch pt-2">
+                  <input formControlName="southSharedConnection" id="south-shared-connection" type="checkbox" class="form-check-input" />
+                  <label class="form-check-label" for="south-shared-connection" translate="south.shared-connection"></label>
+                </div>
+              </div>
+            </div>
             <ng-template oibBoxTitle>
               <div class="d-flex justify-content-between align-items-center">
                 <span

@@ -101,6 +101,7 @@ class TestComponent {
     southSettings: {
       database: 'my database'
     },
+    southSharedConnection: false,
     northSettings: {
       host: 'localhost'
     },
