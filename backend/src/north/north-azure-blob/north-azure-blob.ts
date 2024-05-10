@@ -8,13 +8,13 @@ import manifest from '../north-azure-blob/manifest';
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
-import { HandlesFile } from '../north-interface';
 import { NorthAzureBlobSettings } from '../../../../shared/model/north-settings.model';
 import { ProxyOptions } from '@azure/core-http';
+import { OIBusContent } from '../../../../shared/model/engine.model';
 
 const TEST_FILE = 'oibus-azure-test.txt';
 
-export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSettings> implements HandlesFile {
+export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSettings> {
   static type = manifest.id;
   private blobClient: BlobServiceClient | null = null;
 
@@ -101,6 +101,16 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
         break;
       default:
         throw new Error(`Authentication "${this.connector.settings.authentication}" not supported for North "${this.connector.name}"`);
+    }
+  }
+
+  async handleContent(data: OIBusContent): Promise<void> {
+    switch (data.type) {
+      case 'raw':
+        return this.handleFile(data.filePath);
+
+      case 'time-values':
+        throw new Error('Can not manage time values');
     }
   }
 

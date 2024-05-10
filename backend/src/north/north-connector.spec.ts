@@ -12,11 +12,10 @@ import ValueCacheServiceMock from '../tests/__mocks__/value-cache-service.mock';
 import FileCacheServiceMock from '../tests/__mocks__/file-cache-service.mock';
 import ArchiveServiceMock from '../tests/__mocks__/archive-service.mock';
 import { EventEmitter } from 'node:events';
-import { HandlesFile, HandlesValues } from './north-interface';
 import fs from 'node:fs/promises';
 import { dirSize, validateCronExpression } from '../service/utils';
 import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
-import { OIBusDataValue } from '../../../shared/model/engine.model';
+import { OIBusTimeValue } from '../../../shared/model/engine.model';
 import path from 'node:path';
 
 // Mock fs
@@ -125,11 +124,15 @@ const flushPromises = () => new Promise(jest.requireActual('timers').setImmediat
 
 let configuration: NorthConnectorDTO;
 
-class TestNorth extends NorthConnector implements HandlesFile, HandlesValues {
-  async handleValues(): Promise<void> {}
-  async handleFile(): Promise<void> {}
+class TestNorth extends NorthConnector {
+  async handleContent(): Promise<void> {}
 }
 let north: TestNorth;
+
+class TestNorthWithItems extends NorthConnector {
+  async handleContent(): Promise<void> {}
+}
+let northWithItems: TestNorthWithItems;
 
 describe('NorthConnector enabled', () => {
   beforeEach(async () => {
@@ -351,7 +354,7 @@ describe('NorthConnector enabled', () => {
   });
 
   it('should properly cache values', async () => {
-    await north.cacheValues([{}, {}] as Array<OIBusDataValue>);
+    await north.cacheValues([{}, {}] as Array<OIBusTimeValue>);
     expect(logger.debug).toHaveBeenCalledWith(`Caching 2 values (cache size: 0 MB)`);
   });
 
@@ -485,7 +488,7 @@ describe('NorthConnector enabled', () => {
 
   it('should handle values properly', async () => {
     jest.clearAllMocks();
-    north.handleValues = jest
+    north.handleContent = jest
       .fn()
       .mockImplementationOnce(() => null)
       .mockImplementationOnce(() => {
@@ -516,7 +519,7 @@ describe('NorthConnector enabled', () => {
 
   it('should handle files properly', async () => {
     jest.clearAllMocks();
-    north.handleFile = jest
+    north.handleContent = jest
       .fn()
       .mockImplementationOnce(() => null)
       .mockImplementationOnce(() => {
@@ -621,6 +624,117 @@ describe('NorthConnector enabled', () => {
     await north.getArchiveFileContent('file1.queue.tmp');
     expect(getArchiveFileContent).toHaveBeenCalledWith('file1.queue.tmp');
   });
+
+  it('should properly add item', () => {
+    const item: NorthConnectorItemDTO = {
+      id: 'itemId',
+      enabled: true,
+      connectorId: 'id',
+      name: 'my item',
+      settings: {}
+    };
+
+    northWithItems.addItem(item);
+    expect(northWithItems['items']).toEqual([item]);
+  });
+
+  it('should properly update item', () => {
+    const item: NorthConnectorItemDTO = {
+      id: 'itemId',
+      enabled: true,
+      connectorId: 'id',
+      name: 'my item',
+      settings: {}
+    };
+    northWithItems.addItem = jest.fn();
+    northWithItems.deleteItem = jest.fn();
+
+    northWithItems.updateItem(item, {
+      id: 'itemId',
+      enabled: true,
+      connectorId: 'id',
+      name: 'my updated item',
+      settings: {}
+    });
+
+    expect(northWithItems.deleteItem).toHaveBeenCalledTimes(1);
+    expect(northWithItems.addItem).toHaveBeenCalledTimes(1);
+  });
+
+  it('should properly delete item', () => {
+    const item1: NorthConnectorItemDTO = {
+      id: 'itemId1',
+      enabled: true,
+      connectorId: 'id',
+      name: 'my item',
+      settings: {}
+    };
+    const item2: NorthConnectorItemDTO = {
+      id: 'itemId2',
+      enabled: true,
+      connectorId: 'id',
+      name: 'my item',
+      settings: {}
+    };
+    const item3: NorthConnectorItemDTO = {
+      id: 'itemId3',
+      enabled: true,
+      connectorId: 'id',
+      name: 'my item',
+      settings: {}
+    };
+    const item4: NorthConnectorItemDTO = {
+      id: 'itemId4',
+      enabled: true,
+      connectorId: 'id',
+      name: 'my item',
+      settings: {}
+    };
+
+    northWithItems['items'] = [item1, item2, item3, item4];
+
+    northWithItems.deleteItem(item1);
+    northWithItems.deleteItem(item1); // Second deletion should do nothing
+    expect(northWithItems['items']).toEqual([item2, item3, item4]);
+
+    northWithItems.deleteAllItems();
+    expect(northWithItems['items']).toEqual([]);
+  });
+
+  xit('should do nothing with items if does not support items mode', () => {
+    const item: NorthConnectorItemDTO = {
+      id: 'itemId',
+      enabled: true,
+      connectorId: 'id',
+      name: 'my item',
+      settings: {}
+    };
+
+    // Adding items
+    const pushSpy = jest.spyOn(north['items'], 'push');
+    north.addItem(item);
+    expect(pushSpy).not.toHaveBeenCalled();
+
+    // Updating items
+    north.addItem = jest.fn();
+    north.deleteItem = jest.fn();
+
+    north.updateItem(item, {
+      id: 'itemId',
+      enabled: true,
+      connectorId: 'id',
+      name: 'my updated item',
+      settings: {}
+    });
+
+    expect(north.deleteItem).not.toHaveBeenCalled();
+    expect(north.addItem).not.toHaveBeenCalled();
+
+    // Deleting items
+    const filterSpy = jest.spyOn(north['items'], 'filter');
+    north.deleteItem(item);
+    expect(filterSpy).not.toHaveBeenCalled();
+  });
 });
 
 describe('NorthConnector disabled', () => {
@@ -669,27 +783,18 @@ describe('NorthConnector disabled', () => {
     archiveTrigger.removeAllListeners();
   });
 
-  it('should not call handle values and handle file', async () => {
-    const basicNorth = new NorthConnector(configuration, encryptionService, repositoryService, logger, 'baseFolder');
-    basicNorth.handleValuesWrapper = jest.fn();
-    basicNorth.handleFilesWrapper = jest.fn();
-    await basicNorth.run('scan');
-    expect(basicNorth.handleValuesWrapper).not.toHaveBeenCalled();
-    expect(basicNorth.handleFilesWrapper).not.toHaveBeenCalled();
-  });
-
   it('should not call handle values if no values in queue', async () => {
-    north.handleValues = jest.fn();
+    north.handleContent = jest.fn();
     await north.handleValuesWrapper();
     expect(logger.error).not.toHaveBeenCalled();
-    expect(north.handleValues).not.toHaveBeenCalled();
+    expect(north.handleContent).not.toHaveBeenCalled();
   });
 
   it('should not call handle file if no file in queue', async () => {
-    north.handleFile = jest.fn();
+    north.handleContent = jest.fn();
     await north.handleFilesWrapper();
     expect(logger.error).not.toHaveBeenCalled();
-    expect(north.handleFile).not.toHaveBeenCalled();
+    expect(north.handleContent).not.toHaveBeenCalled();
   });
 
   it('should properly create an OIBus error', () => {

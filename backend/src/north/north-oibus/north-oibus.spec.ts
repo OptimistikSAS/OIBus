@@ -17,7 +17,7 @@ import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock'
 import { NorthOIBusSettings } from '../../../../shared/model/north-settings.model';
 import ArchiveServiceMock from '../../tests/__mocks__/archive-service.mock';
 import { createProxyAgent } from '../../service/proxy-agent';
-import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import { OIBusTimeValue } from '../../../../shared/model/engine.model';
 
 jest.mock('node:fs/promises');
 jest.mock('node:fs');
@@ -131,7 +131,7 @@ describe('NorthOIBus with proxy', () => {
 
   it('should properly handle values', async () => {
     await north.start();
-    const values: Array<OIBusDataValue> = [
+    const values: Array<OIBusTimeValue> = [
       {
         pointId: 'pointId1',
         timestamp: nowDateString,
@@ -158,7 +158,7 @@ describe('NorthOIBus with proxy', () => {
 
   it('should properly throw fetch error with values', async () => {
     await north.start();
-    const values: Array<OIBusDataValue> = [
+    const values: Array<OIBusTimeValue> = [
       {
         pointId: 'pointId1',
         timestamp: nowDateString,
@@ -185,7 +185,7 @@ describe('NorthOIBus with proxy', () => {
 
   it('should properly throw error on values bad response', async () => {
     await north.start();
-    const values: Array<OIBusDataValue> = [
+    const values: Array<OIBusTimeValue> = [
       {
         pointId: 'pointId1',
         timestamp: nowDateString,
@@ -510,7 +510,7 @@ describe('NorthOIBus without proxy', () => {
 
   it('should properly handle values without password', async () => {
     await north.start();
-    const values: Array<OIBusDataValue> = [
+    const values: Array<OIBusTimeValue> = [
       {
         pointId: 'pointId1',
         timestamp: nowDateString,
