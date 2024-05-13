@@ -12,7 +12,7 @@ import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
 import { QueriesLastPoint } from '../south-interface';
 import { DateTime } from 'luxon';
 import { SouthModbusItemSettings, SouthModbusSettings } from '../../../../shared/model/south-settings.model';
-import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { OIBusContent } from '../../../../shared/model/engine.model';
 
 /**
  * Class SouthModbus - Provides instruction for Modbus client connection
@@ -95,13 +95,16 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
       default:
         throw new Error(`Wrong Modbus type "${item.settings.modbusType}" for point ${item.name}`);
     }
-    return [
-      {
-        pointId: item.name,
-        timestamp: DateTime.now().toUTC().toISO()!,
-        data: { value: JSON.stringify(value) }
-      }
-    ];
+    await this.addContent({
+      type: 'time-values',
+      content: [
+        {
+          pointId: item.name,
+          timestamp: DateTime.now().toUTC().toISO()!,
+          data: { value: JSON.stringify(value) }
+        }
+      ]
+    });
   }
 
   /**

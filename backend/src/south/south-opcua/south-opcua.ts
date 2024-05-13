@@ -33,7 +33,7 @@ import { randomUUID } from 'crypto';
 import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
 import { createFolder } from '../../service/utils';
 import { OPCUACertificateManager } from 'node-opcua-certificate-manager';
-import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
 import ConnectionService, { ManagedConnection, ManagedConnectionSettings } from '../../service/connection.service';
 
 export const MAX_NUMBER_OF_NODE_TO_LOG = 10;
@@ -64,17 +64,7 @@ export default class SouthOPCUA
     baseFolder: string,
     connectionService: ConnectionService
   ) {
-    super(
-      connector,
-      items,
-      engineAddValuesCallback,
-      engineAddFileCallback,
-      encryptionService,
-      repositoryService,
-      logger,
-      baseFolder,
-      connectionService
-    );
+    super(connector, items, engineAddContentCallback, encryptionService, repositoryService, logger, baseFolder, connectionService);
 
     this.connectionSettings = {
       closeFnName: 'close',

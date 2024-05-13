@@ -14,9 +14,8 @@ import csv from 'papaparse';
 import fs from 'node:fs/promises';
 import AbstractController from './abstract.controller';
 import Joi from 'joi';
-import { NorthCacheSettingsDTO, NorthConnectorCommandDTO, NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
+import { NorthConnectorCommandDTO, NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import { OIBusContent } from '../../../../shared/model/engine.model';
-import { TransformerDTO, TransformerFilterDTO } from '../../../../shared/model/transformer.model';
 
 interface HistoryQueryWithItemsCommandDTO {
   historyQuery: HistoryQueryCommandDTO;

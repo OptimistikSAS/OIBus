@@ -152,7 +152,6 @@ export {
   userSchema,
   historyQuerySchema,
   logSchema,
-  transformerSchema,
   commandSchema,
   contentSchema
 };

@@ -310,54 +310,74 @@ describe('SouthModbus', () => {
 
   it('should call read coil method', async () => {
     south.readCoil = jest.fn().mockReturnValue(123);
-    const values = await south.modbusFunction(items[4]);
+    south.addContent = jest.fn();
+    await south.modbusFunction(items[4]);
     expect(south.readCoil).toHaveBeenCalledTimes(1);
-    expect(values).toEqual([
-      {
-        pointId: items[4].name,
-        timestamp: nowDateString,
-        data: { value: JSON.stringify(123) }
-      }
-    ]);
+    expect(south.addContent).toHaveBeenCalledTimes(1);
+    expect(south.addContent).toHaveBeenCalledWith({
+      type: 'time-values',
+      content: [
+        {
+          pointId: items[4].name,
+          timestamp: nowDateString,
+          data: { value: JSON.stringify(123) }
+        }
+      ]
+    });
   });
 
   it('should call readDiscreteInputRegister method', async () => {
     south.readDiscreteInputRegister = jest.fn().mockReturnValue(123);
-    const values = await south.modbusFunction(items[3]);
+    south.addContent = jest.fn();
+    await south.modbusFunction(items[3]);
     expect(south.readDiscreteInputRegister).toHaveBeenCalledTimes(1);
-    expect(values).toEqual([
-      {
-        pointId: items[3].name,
-        timestamp: nowDateString,
-        data: { value: JSON.stringify(123) }
-      }
-    ]);
+    expect(south.addContent).toHaveBeenCalledTimes(1);
+    expect(south.addContent).toHaveBeenCalledWith({
+      type: 'time-values',
+      content: [
+        {
+          pointId: items[3].name,
+          timestamp: nowDateString,
+          data: { value: JSON.stringify(123) }
+        }
+      ]
+    });
   });
 
   it('should call readInputRegister method', async () => {
     south.readInputRegister = jest.fn().mockReturnValue(123);
-    const values = await south.modbusFunction(items[2]);
+    south.addContent = jest.fn();
+    await south.modbusFunction(items[2]);
     expect(south.readInputRegister).toHaveBeenCalledTimes(1);
-    expect(values).toEqual([
-      {
-        pointId: items[2].name,
-        timestamp: nowDateString,
-        data: { value: JSON.stringify(123) }
-      }
-    ]);
+    expect(south.addContent).toHaveBeenCalledTimes(1);
+    expect(south.addContent).toHaveBeenCalledWith({
+      type: 'time-values',
+      content: [
+        {
+          pointId: items[2].name,
+          timestamp: nowDateString,
+          data: { value: JSON.stringify(123) }
+        }
+      ]
+    });
   });
 
   it('should call readHoldingRegister method', async () => {
     south.readHoldingRegister = jest.fn().mockReturnValue(123);
-    const values = await south.modbusFunction(items[1]);
+    south.addContent = jest.fn();
+    await south.modbusFunction(items[1]);
     expect(south.readHoldingRegister).toHaveBeenCalledTimes(1);
-    expect(values).toEqual([
-      {
-        pointId: items[1].name,
-        timestamp: nowDateString,
-        data: { value: JSON.stringify(123) }
-      }
-    ]);
+    expect(south.addContent).toHaveBeenCalledTimes(1);
+    expect(south.addContent).toHaveBeenCalledWith({
+      type: 'time-values',
+      content: [
+        {
+          pointId: items[1].name,
+          timestamp: nowDateString,
+          data: { value: JSON.stringify(123) }
+        }
+      ]
+    });
   });
 
   it('should call readHoldingRegister method', async () => {
@@ -375,6 +395,7 @@ describe('SouthModbus', () => {
       }
     };
     await expect(south.modbusFunction(item)).rejects.toThrow(`Wrong Modbus type "${item.settings.modbusType}" for point ${item.name}`);
+    expect(south.addContent).not.toHaveBeenCalled();
   });
 
   it('should generate buffer function name', () => {

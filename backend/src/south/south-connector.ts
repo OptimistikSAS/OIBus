@@ -12,7 +12,7 @@ import DeferredPromise from '../service/deferred-promise';
 import { DateTime } from 'luxon';
 import SouthCacheService from '../service/south-cache.service';
 import { PassThrough } from 'node:stream';
-import { QueriesFile, QueriesHistory, QueriesLastPoint, QueriesSubscription, DelegatesConnection } from './south-interface';
+import { DelegatesConnection, QueriesFile, QueriesHistory, QueriesLastPoint, QueriesSubscription } from './south-interface';
 import SouthConnectorMetricsService from '../service/south-connector-metrics.service';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { OIBusContent, OIBusRawContent, OIBusTimeValueContent } from '../../../shared/model/engine.model';
