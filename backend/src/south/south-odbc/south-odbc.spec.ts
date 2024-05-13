@@ -57,8 +57,7 @@ jest.mock(
       };
     }
 );
-const addValues = jest.fn();
-const addFile = jest.fn();
+const addContentCallback = jest.fn();
 
 const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
@@ -194,7 +193,7 @@ describe('SouthODBC odbc driver with authentication', () => {
 
     (convertDateTimeToInstant as jest.Mock).mockImplementation(value => value);
 
-    south = new SouthODBC(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthODBC(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should create temp folder', async () => {
@@ -259,7 +258,6 @@ describe('SouthODBC odbc driver with authentication', () => {
       configuration.name,
       items[0].name,
       path.resolve('baseFolder', 'tmp'),
-      expect.any(Function),
       expect.any(Function),
       logger
     );
@@ -359,7 +357,7 @@ describe('SouthODBC odbc driver without authentication', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
-    south = new SouthODBC(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthODBC(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should get data from ODBC without auth', async () => {
@@ -389,7 +387,6 @@ describe('SouthODBC odbc driver without authentication', () => {
       configuration.name,
       items[0].name,
       path.resolve('baseFolder', 'tmp'),
-      expect.any(Function),
       expect.any(Function),
       logger
     );
@@ -516,7 +513,7 @@ describe('SouthODBC odbc driver test connection', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
-    south = new SouthODBC(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthODBC(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('Database is reachable and has tables', async () => {
@@ -641,7 +638,7 @@ describe('SouthODBC odbc remote with authentication', () => {
     (convertDateTimeToInstant as jest.Mock).mockImplementation(value => value);
     (convertDelimiter as jest.Mock).mockImplementation(value => value);
 
-    south = new SouthODBC(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthODBC(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should properly connect to remote agent and disconnect ', async () => {
@@ -785,7 +782,6 @@ describe('SouthODBC odbc remote with authentication', () => {
       items[0].name,
       path.resolve('baseFolder', 'tmp'),
       expect.any(Function),
-      expect.any(Function),
       logger
     );
 
@@ -888,7 +884,7 @@ describe('SouthODBC odbc remote test connection', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
-    south = new SouthODBC(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthODBC(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should test connection successfully', async () => {

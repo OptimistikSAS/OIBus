@@ -42,14 +42,9 @@ describe('OIBus service', () => {
     expect(historyQueryEngine.stop).toHaveBeenCalled();
   });
 
-  it('should add values', async () => {
-    await service.addValues('source', []);
-    expect(oibusEngine.addExternalValues).toHaveBeenCalledWith('source', []);
-  });
-
-  it('should add file', async () => {
-    await service.addFile('source', 'filePath');
-    expect(oibusEngine.addExternalFile).toHaveBeenCalledWith('source', 'filePath');
+  it('should add content', async () => {
+    await service.addExternalContent('northId', { type: 'time-values', content: [] });
+    expect(oibusEngine.addExternalContent).toHaveBeenCalledWith('northId', { type: 'time-values', content: [] });
   });
 
   it('should set logger', () => {

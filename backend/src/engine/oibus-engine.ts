@@ -15,7 +15,7 @@ import { Instant } from '../../../shared/model/types';
 import { PassThrough } from 'node:stream';
 import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 import HomeMetricsService from '../service/home-metrics.service';
-import { OIBusTimeValue } from '../../../shared/model/engine.model';
+import { OIBusContent } from '../../../shared/model/engine.model';
 
 const CACHE_FOLDER = './cache/data-stream';
 
@@ -37,49 +37,38 @@ export default class OIBusEngine extends BaseEngine {
   }
 
   /**
-   * Add new values from a South connector to the Engine.
-   * The Engine will forward the values to the Cache.
+   * Method called by South connectors to add content to the appropriate Norths
    */
-  async addValues(southId: string, values: Array<OIBusTimeValue>): Promise<void> {
+  async addContent(southId: string, data: OIBusContent) {
     for (const north of this.northConnectors.values()) {
       if (north.isEnabled() && north.isSubscribed(southId)) {
-        await north.cacheValues(values);
+        switch (data.type) {
+          case 'time-values':
+            await north.cacheValues(data.content);
+            return;
+          case 'raw':
+            await north.cacheFile(data.filePath);
+            return;
+        }
       }
     }
   }
 
   /**
-   * Add new values from an external source to the Engine.
-   * The Engine will forward the values to the Cache.
+   * Add content to a north connector from the OIBus API endpoints
+   * @param northId - the north id
+   * @param data - the content to be added
    */
-  async addExternalValues(externalSourceId: string | null, values: Array<any>): Promise<void> {
-    for (const north of this.northConnectors.values()) {
-      if (north.isEnabled() && (!externalSourceId || north.isSubscribedToExternalSource(externalSourceId))) {
-        await north.cacheValues(values);
-      }
-    }
-  }
-
-  /**
-   * Add a new file from a South connector to the Engine.
-   * The Engine will forward the file to the Cache.
-   */
-  async addFile(southId: string, filePath: string): Promise<void> {
-    for (const north of this.northConnectors.values()) {
-      if (north.isEnabled() && north.isSubscribed(southId)) {
-        await north.cacheFile(filePath);
-      }
-    }
-  }
-
-  /**
-   * Add a new file from an external source to the Engine.
-   * The Engine will forward the file to the Cache.
-   */
-  async addExternalFile(externalSourceId: string | null, filePath: string): Promise<void> {
-    for (const north of this.northConnectors.values()) {
-      if (north.isEnabled() && (!externalSourceId || north.isSubscribedToExternalSource(externalSourceId))) {
-        await north.cacheFile(filePath);
+  async addExternalContent(northId: string, data: OIBusContent): Promise<void> {
+    const north = this.northConnectors.get(northId);
+    if (north && north.isEnabled()) {
+      switch (data.type) {
+        case 'time-values':
+          await north.cacheValues(data.content);
+          return;
+        case 'raw':
+          await north.cacheFile(data.filePath);
+          return;
       }
     }
   }
@@ -137,8 +126,7 @@ export default class OIBusEngine extends BaseEngine {
 
     const south = this.southService.createSouth(
       settings,
-      this.addValues.bind(this),
-      this.addFile.bind(this),
+      this.addContent.bind(this),
       baseFolder,
       this.logger.child({ scopeType: 'south', scopeId: settings.id, scopeName: settings.name })
     );

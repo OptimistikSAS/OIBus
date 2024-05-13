@@ -10,7 +10,7 @@ import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
 import { NorthAzureBlobSettings } from '../../../../shared/model/north-settings.model';
 import { ProxyOptions } from '@azure/core-http';
-import { OIBusContent } from '../../../../shared/model/engine.model';
+import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
 import csv from 'papaparse';
 
@@ -134,7 +134,7 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
     this.logger.info(`Upload block blob "${blobName}" successfully with requestId: ${uploadBlobResponse.requestId}`);
   }
 
-  async handleValues(values: Array<OIBusDataValue>): Promise<void> {
+  async handleValues(values: Array<OIBusTimeValue>): Promise<void> {
     const filename = `${this.connector.name}-${DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS')}.csv`;
     const container = this.connector.settings.container;
     const blobPath = this.connector.settings.path ? `${this.connector.settings.path}/${filename}` : filename;

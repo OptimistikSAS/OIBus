@@ -72,8 +72,7 @@ const repositoryService: RepositoryService = new RepositoryServiceMock();
 const nowDateString = '2020-02-02T02:02:02.222Z';
 const flushPromises = () => new Promise(jest.requireActual('timers').setImmediate);
 
-const addValues = jest.fn();
-const addFile = jest.fn();
+const addContentCallback = jest.fn();
 
 let configuration: SouthConnectorDTO;
 const manifest: SouthConnectorManifest = {
@@ -168,7 +167,8 @@ describe('SouthConnector enabled', () => {
       settings: {}
     };
     repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
-    south = new TestSouth(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+
+    south = new TestSouth(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
     await south.start();
   });
 
@@ -347,19 +347,19 @@ describe('SouthConnector enabled', () => {
 
   it('should add values', async () => {
     jest.clearAllMocks();
-    await south.addValues([]);
+    await south.addContent({ type: 'time-values', content: [] });
     expect(logger.debug).not.toHaveBeenCalled();
-    expect(addValues).not.toHaveBeenCalled();
+    expect(addContentCallback).not.toHaveBeenCalled();
 
-    await south.addValues([{}, {}] as Array<OIBusTimeValue>);
+    await south.addContent({ type: 'time-values', content: [{}, {}] as Array<OIBusTimeValue> });
     expect(logger.debug).toHaveBeenCalledWith(`Add 2 values to cache from South "${configuration.name}"`);
-    expect(addValues).toHaveBeenCalledWith(configuration.id, [{}, {}]);
+    expect(addContentCallback).toHaveBeenCalledWith(configuration.id, { type: 'time-values', content: [{}, {}] });
   });
 
   it('should add file', async () => {
-    await south.addFile('file.csv');
+    await south.addContent({ type: 'raw', filePath: 'file.csv' });
     expect(logger.debug).toHaveBeenCalledWith(`Add file "file.csv" to cache from South "${configuration.name}"`);
-    expect(addFile).toHaveBeenCalledWith(configuration.id, 'file.csv');
+    expect(addContentCallback).toHaveBeenCalledWith(configuration.id, { type: 'raw', filePath: 'file.csv' });
   });
 
   it('should manage history query with several intervals', async () => {
@@ -643,10 +643,9 @@ describe('SouthConnector with max instant per item', () => {
       settings: {}
     };
     repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
-
     (repositoryService.southItemRepository.listSouthItems as jest.Mock).mockReturnValue(items);
 
-    south = new TestSouth(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new TestSouth(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
     await south.start();
   });
 
@@ -833,7 +832,7 @@ describe('SouthConnector disabled', () => {
     };
     repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
-    basicSouth = new SouthConnector(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    basicSouth = new SouthConnector(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
     await basicSouth.start();
   });
 

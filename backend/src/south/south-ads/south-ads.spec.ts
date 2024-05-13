@@ -47,8 +47,7 @@ jest.mock(
     }
 );
 
-const addValues = jest.fn();
-const addFile = jest.fn();
+const addContentCallback = jest.fn();
 const readSymbol = jest.fn();
 const disconnect = jest.fn();
 const logger: pino.Logger = new PinoLogger();
@@ -137,7 +136,7 @@ describe('South ADS', () => {
       readSymbol
     });
 
-    south = new SouthADS(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthADS(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should properly connect to a remote instance', async () => {
@@ -384,22 +383,22 @@ describe('South ADS', () => {
   });
 
   it('should query last point', async () => {
-    south.addValues = jest.fn();
+    south.addContent = jest.fn();
     south.readAdsSymbol = jest.fn().mockReturnValue([1]);
     await south.lastPointQuery(items);
-    expect(south.addValues).toHaveBeenCalledWith([1, 1]);
+    expect(south.addContent).toHaveBeenCalledWith({ type: 'time-values', content: [1, 1] });
   });
 
   it('should manage query last point disconnect errors', async () => {
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
 
-    south.addValues = jest.fn();
+    south.addContent = jest.fn();
     south.readAdsSymbol = jest.fn().mockImplementationOnce(() => {
       throw { ...new Error(''), message: 'Client is not connected' };
     });
     await south.lastPointQuery(items);
     expect(logger.error).toHaveBeenCalledWith('ADS client disconnected. Reconnecting');
-    expect(south.addValues).not.toHaveBeenCalledWith();
+    expect(south.addContent).not.toHaveBeenCalledWith();
     expect(clearTimeoutSpy).not.toHaveBeenCalled();
 
     jest.advanceTimersByTime(configuration.settings.retryInterval);
@@ -408,14 +407,14 @@ describe('South ADS', () => {
   });
 
   it('should manage query last point errors', async () => {
-    south.addValues = jest.fn();
+    south.addContent = jest.fn();
     south.disconnect = jest.fn();
     south.readAdsSymbol = jest.fn().mockImplementationOnce(() => {
       throw new Error('read error');
     });
     await expect(south.lastPointQuery(items)).rejects.toThrow('read error');
     expect(south.disconnect).not.toHaveBeenCalled();
-    expect(south.addValues).not.toHaveBeenCalledWith();
+    expect(south.addContent).not.toHaveBeenCalled();
   });
 
   it('should test ADS connection', async () => {

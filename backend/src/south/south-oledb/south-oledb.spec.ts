@@ -55,8 +55,7 @@ jest.mock(
       };
     }
 );
-const addValues = jest.fn();
-const addFile = jest.fn();
+const addContentCallback = jest.fn();
 
 const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
@@ -185,7 +184,7 @@ describe('SouthOLEDB with authentication', () => {
     (formatInstant as jest.Mock).mockImplementation(value => value);
     repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
-    south = new SouthOLEDB(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthOLEDB(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should create temp folder', async () => {
@@ -334,7 +333,6 @@ describe('SouthOLEDB with authentication', () => {
       items[0].name,
       path.resolve('baseFolder', 'tmp'),
       expect.any(Function),
-      expect.any(Function),
       logger
     );
 
@@ -434,7 +432,7 @@ describe('SouthOLEDB test connection', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
-    south = new SouthOLEDB(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthOLEDB(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should test connection successfully', async () => {
