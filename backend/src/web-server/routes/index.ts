@@ -5,7 +5,7 @@ import multer from '@koa/multer';
 import LogController from '../controllers/log.controller';
 import ScanModeController from '../controllers/scan-mode.controller';
 import ExternalSourceController from '../controllers/external-source.controller';
-import OibusController from '../controllers/oibus.controller';
+import EngineController from '../controllers/engine.controller';
 import IpFilterController from '../controllers/ip-filter.controller';
 import NorthConnectorController from '../controllers/north-connector.controller';
 import SouthConnectorController from '../controllers/south-connector.controller';
@@ -19,6 +19,7 @@ import RegistrationController from '../controllers/registration.controller';
 import {
   certificateSchema,
   commandSchema,
+  contentSchema,
   engineSchema,
   externalSourceSchema,
   historyQuerySchema,
@@ -29,13 +30,15 @@ import {
   userSchema
 } from '../controllers/validators/oibus-validation-schema';
 import CommandController from '../controllers/command.controller';
+import ContentController from '../controllers/content.controller';
 
 const joiValidator = new JoiValidator();
 const scanModeController = new ScanModeController(joiValidator, scanModeSchema);
 const certificateController = new CertificateController(joiValidator, certificateSchema);
 const commandController = new CommandController(joiValidator, commandSchema);
 const externalSourceController = new ExternalSourceController(joiValidator, externalSourceSchema);
-const oibusController = new OibusController(joiValidator, engineSchema);
+const engineController = new EngineController(joiValidator, engineSchema);
+const contentController = new ContentController(joiValidator, contentSchema);
 const registrationController = new RegistrationController(joiValidator, registrationSchema);
 const ipFilterController = new IpFilterController(joiValidator, ipFilterSchema);
 const northConnectorController = new NorthConnectorController(joiValidator);
@@ -80,14 +83,13 @@ router.post('/api/external-sources', (ctx: KoaContext<any, any>) => externalSour
 router.put('/api/external-sources/:id', (ctx: KoaContext<any, any>) => externalSourceController.updateExternalSource(ctx));
 router.delete('/api/external-sources/:id', (ctx: KoaContext<any, any>) => externalSourceController.deleteExternalSource(ctx));
 
-router.get('/api/engine', (ctx: KoaContext<any, any>) => oibusController.getEngineSettings(ctx));
-router.put('/api/engine', (ctx: KoaContext<any, any>) => oibusController.updateEngineSettings(ctx));
-router.put('/api/engine/reset-metrics', (ctx: KoaContext<any, any>) => oibusController.resetEngineMetrics(ctx));
-router.put('/api/restart', (ctx: KoaContext<any, any>) => oibusController.restart(ctx));
-router.put('/api/shutdown', (ctx: KoaContext<any, any>) => oibusController.shutdown(ctx));
-router.post('/api/add-values', (ctx: KoaContext<any, any>) => oibusController.addValues(ctx));
-router.post('/api/add-file', upload.single('file'), (ctx: KoaContext<any, any>) => oibusController.addFile(ctx));
-router.get('/api/info', (ctx: KoaContext<any, any>) => oibusController.getOIBusInfo(ctx));
+router.get('/api/engine', (ctx: KoaContext<any, any>) => engineController.getEngineSettings(ctx));
+router.put('/api/engine', (ctx: KoaContext<any, any>) => engineController.updateEngineSettings(ctx));
+router.put('/api/engine/reset-metrics', (ctx: KoaContext<any, any>) => engineController.resetEngineMetrics(ctx));
+router.put('/api/restart', (ctx: KoaContext<any, any>) => engineController.restart(ctx));
+router.put('/api/shutdown', (ctx: KoaContext<any, any>) => engineController.shutdown(ctx));
+router.post('/api/add-content', upload.single('file'), (ctx: KoaContext<any, any>) => contentController.addContent(ctx));
+router.get('/api/info', (ctx: KoaContext<any, any>) => engineController.getOIBusInfo(ctx));
 router.get('/api/status', (ctx: KoaContext<any, any>) => oibusController.getStatus(ctx));
 
 router.get('/api/registration', (ctx: KoaContext<any, any>) => registrationController.getRegistrationSettings(ctx));

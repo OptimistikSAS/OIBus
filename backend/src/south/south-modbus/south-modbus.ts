@@ -12,7 +12,7 @@ import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
 import { QueriesLastPoint } from '../south-interface';
 import { DateTime } from 'luxon';
 import { SouthModbusItemSettings, SouthModbusSettings } from '../../../../shared/model/south-settings.model';
-import { OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
 
 /**
  * Class SouthModbus - Provides instruction for Modbus client connection
@@ -27,18 +27,17 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
 
   constructor(
     connector: SouthConnectorDTO<SouthModbusSettings>,
-    engineAddValuesCallback: (southId: string, values: Array<OIBusTimeValue>) => Promise<void>,
-    engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
+    engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(connector, engineAddContentCallback, encryptionService, repositoryService, logger, baseFolder);
   }
 
   async lastPointQuery(items: Array<SouthConnectorItemDTO<SouthModbusItemSettings>>): Promise<void> {
-    const dataValues: Array<OIBusDataValue> = [];
+    const dataValues: Array<OIBusTimeValue> = [];
     try {
       const startRequest = DateTime.now().toMillis();
       for (const item of items) {
@@ -46,9 +45,15 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
       }
       const requestDuration = DateTime.now().toMillis() - startRequest;
       this.logger.debug(`Requested ${items.length} items in ${requestDuration} ms`);
-      await this.addValues(dataValues);
+      await this.addContent({
+        type: 'time-values',
+        content: dataValues
+      });
     } catch (error: any) {
-      await this.addValues(dataValues);
+      await this.addContent({
+        type: 'time-values',
+        content: dataValues
+      });
       await this.disconnect();
       if (!this.disconnecting && this.connector.enabled && !this.reconnectTimeout) {
         this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
@@ -64,7 +69,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
   /**
    * Dynamically call the right function based on the given point settings
    */
-  async modbusFunction(item: SouthConnectorItemDTO<SouthModbusItemSettings>): Promise<Array<OIBusDataValue>> {
+  async modbusFunction(item: SouthConnectorItemDTO<SouthModbusItemSettings>): Promise<Array<OIBusTimeValue>> {
     const offset = this.connector.settings.addressOffset === 'Modbus' ? 0 : -1;
     const address =
       (item.settings.address.match(/^0x[0-9a-f]+$/i) ? parseInt(item.settings.address, 16) : parseInt(item.settings.address, 10)) + offset;
