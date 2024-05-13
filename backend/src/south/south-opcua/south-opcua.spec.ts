@@ -95,8 +95,7 @@ jest.mock('crypto', () => ({
   randomUUID: jest.fn()
 }));
 
-const addValues = jest.fn();
-const addFile = jest.fn();
+const addContentCallback = jest.fn();
 
 const logger: pino.Logger = new PinoLogger();
 
@@ -223,8 +222,7 @@ describe('SouthOPCUA', () => {
     south = new SouthOPCUA(
       connector,
       items,
-      addValues,
-      addFile,
+      addContentCallback,
       encryptionService,
       repositoryService,
       logger,
@@ -391,38 +389,41 @@ describe('SouthOPCUA', () => {
       close: jest.fn()
     });
 
-    south.addValues = jest.fn();
+    south.addContent = jest.fn();
     await south.start();
 
     await south.historyQuery([items[0], items[1], items[2]], nowDateString, nowDateString);
 
-    expect(south.addValues).toHaveBeenCalledWith([
-      {
-        data: { value: 123, quality: JSON.stringify({ value: StatusCodes.Good, description: 'ok' }) },
-        pointId: items[0].name,
-        timestamp: nowDateString
-      },
-      {
-        data: { value: 123, quality: JSON.stringify({ value: StatusCodes.Good, description: 'ok' }) },
-        pointId: items[0].name,
-        timestamp: nowDateString
-      },
-      {
-        data: { value: 456, quality: JSON.stringify({ value: StatusCodes.Good, description: 'ok' }) },
-        pointId: items[0].name,
-        timestamp: '2023-12-12T00:00:00.000Z'
-      },
-      {
-        data: { value: 123, quality: JSON.stringify({ value: StatusCodes.Good, description: 'ok' }) },
-        pointId: items[1].name,
-        timestamp: nowDateString
-      },
-      {
-        data: { value: 123, quality: JSON.stringify({ value: StatusCodes.Bad, description: 'not ok' }) },
-        pointId: items[1].name,
-        timestamp: nowDateString
-      }
-    ]);
+    expect(south.addContent).toHaveBeenCalledWith({
+      type: 'time-values',
+      content: [
+        {
+          data: { value: 123, quality: JSON.stringify({ value: StatusCodes.Good, description: 'ok' }) },
+          pointId: items[0].name,
+          timestamp: nowDateString
+        },
+        {
+          data: { value: 123, quality: JSON.stringify({ value: StatusCodes.Good, description: 'ok' }) },
+          pointId: items[0].name,
+          timestamp: nowDateString
+        },
+        {
+          data: { value: 456, quality: JSON.stringify({ value: StatusCodes.Good, description: 'ok' }) },
+          pointId: items[0].name,
+          timestamp: '2023-12-12T00:00:00.000Z'
+        },
+        {
+          data: { value: 123, quality: JSON.stringify({ value: StatusCodes.Good, description: 'ok' }) },
+          pointId: items[1].name,
+          timestamp: nowDateString
+        },
+        {
+          data: { value: 123, quality: JSON.stringify({ value: StatusCodes.Bad, description: 'not ok' }) },
+          pointId: items[1].name,
+          timestamp: nowDateString
+        }
+      ]
+    });
   });
 
   it('should properly manage history query with status not good', async () => {
@@ -439,7 +440,7 @@ describe('SouthOPCUA', () => {
       close: jest.fn()
     });
 
-    south.addValues = jest.fn();
+    south.addContent = jest.fn();
     await south.start();
 
     await south.historyQuery([items[0], items[1]], nowDateString, nowDateString);
@@ -473,7 +474,7 @@ describe('SouthOPCUA', () => {
       close: jest.fn()
     });
 
-    south.addValues = jest.fn();
+    south.addContent = jest.fn();
     await south.start();
 
     await south.historyQuery(
@@ -499,7 +500,7 @@ describe('SouthOPCUA', () => {
       close: jest.fn()
     });
 
-    south.addValues = jest.fn();
+    south.addContent = jest.fn();
     await south.start();
 
     await south.historyQuery([items[0], items[1]], nowDateString, nowDateString);
@@ -518,7 +519,7 @@ describe('SouthOPCUA', () => {
       });
     });
     (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ performMessageTransaction, close });
-    south.addValues = jest.fn();
+    south.addContent = jest.fn();
 
     await south.start();
     // In order to trigger the call to the 'close' function, there needs to be a session created,
@@ -533,7 +534,7 @@ describe('SouthOPCUA', () => {
         nowDateString
       )
     ).rejects.toThrow('opcua read error');
-    expect(south.addValues).not.toHaveBeenCalled();
+    expect(south.addContent).not.toHaveBeenCalled();
     jest.advanceTimersByTime(1000);
     await south.start();
     await expect(
@@ -553,9 +554,9 @@ describe('SouthOPCUA', () => {
   });
 
   it('should not query items if session is not set', async () => {
-    south.addValues = jest.fn();
+    south.addContent = jest.fn();
     await south.historyQuery(items, nowDateString, nowDateString);
-    expect(south.addValues).not.toHaveBeenCalled();
+    expect(south.addContent).not.toHaveBeenCalled();
     expect(logger.error).toHaveBeenCalledWith('OPCUA session not set. The connector cannot read values');
   });
 
@@ -566,7 +567,7 @@ describe('SouthOPCUA', () => {
       { value: { value: 3 }, statusCode: { value: 0 } }
     ]);
     (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ read });
-    south.addValues = jest.fn();
+    south.addContent = jest.fn();
 
     await south.start();
     await south.lastPointQuery(items);
@@ -577,32 +578,35 @@ describe('SouthOPCUA', () => {
         `[${expectedItemsToRead[0].settings.nodeId}...${expectedItemsToRead[expectedItemsToRead.length - 1].settings.nodeId}]`
     );
     expect(read).toHaveBeenCalledWith(expectedItemsToRead.map(item => ({ nodeId: item.settings.nodeId })));
-    expect(south.addValues).toHaveBeenCalledWith([
-      {
-        pointId: expectedItemsToRead[0].name,
-        timestamp: nowDateString,
-        data: {
-          value: 1,
-          quality: JSON.stringify({ value: 0 })
+    expect(south.addContent).toHaveBeenCalledWith({
+      type: 'time-values',
+      content: [
+        {
+          pointId: expectedItemsToRead[0].name,
+          timestamp: nowDateString,
+          data: {
+            value: 1,
+            quality: JSON.stringify({ value: 0 })
+          }
+        },
+        {
+          pointId: expectedItemsToRead[1].name,
+          timestamp: nowDateString,
+          data: {
+            value: 2,
+            quality: JSON.stringify({ value: 0 })
+          }
+        },
+        {
+          pointId: expectedItemsToRead[2].name,
+          timestamp: nowDateString,
+          data: {
+            value: 3,
+            quality: JSON.stringify({ value: 0 })
+          }
         }
-      },
-      {
-        pointId: expectedItemsToRead[1].name,
-        timestamp: nowDateString,
-        data: {
-          value: 2,
-          quality: JSON.stringify({ value: 0 })
-        }
-      },
-      {
-        pointId: expectedItemsToRead[2].name,
-        timestamp: nowDateString,
-        data: {
-          value: 3,
-          quality: JSON.stringify({ value: 0 })
-        }
-      }
-    ]);
+      ]
+    });
   });
 
   it('should properly query items and catch read error', async () => {
@@ -615,7 +619,7 @@ describe('SouthOPCUA', () => {
       });
     });
     (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ read, close });
-    south.addValues = jest.fn();
+    south.addContent = jest.fn();
 
     await south.start();
     // In order to trigger the call to the 'close' function, there needs to be a session created,
@@ -627,7 +631,7 @@ describe('SouthOPCUA', () => {
     const expectedItemsToRead = items.filter(item => item.settings.mode === 'DA');
 
     expect(read).toHaveBeenCalledWith(expectedItemsToRead.map(item => ({ nodeId: item.settings.nodeId })));
-    expect(south.addValues).not.toHaveBeenCalled();
+    expect(south.addContent).not.toHaveBeenCalled();
     jest.advanceTimersByTime(1000);
     await south.start();
     await expect(south.lastPointQuery(items)).rejects.toThrow('opcua read error');
@@ -638,25 +642,25 @@ describe('SouthOPCUA', () => {
   it('should not query items when no DA items', async () => {
     const read = jest.fn().mockReturnValue(null);
     (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ read });
-    south.addValues = jest.fn();
+    south.addContent = jest.fn();
 
     await south.start();
     await south.lastPointQuery([items[0], items[1], items[2]]);
-    expect(south.addValues).not.toHaveBeenCalled();
+    expect(south.addContent).not.toHaveBeenCalled();
     expect(read).not.toHaveBeenCalled();
   });
 
   it('should properly query items and manage null result', async () => {
     const read = jest.fn().mockReturnValue(null);
     (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ read });
-    south.addValues = jest.fn();
+    south.addContent = jest.fn();
 
     await south.start();
     await south.lastPointQuery([items[3]]);
     expect(logger.debug).toHaveBeenCalledWith(`Read node ${items[3].settings.nodeId}`);
     expect(logger.error).toHaveBeenCalledWith(`Could not read nodes`);
     expect(read).toHaveBeenCalledWith([{ nodeId: items[3].settings.nodeId }]);
-    expect(south.addValues).not.toHaveBeenCalled();
+    expect(south.addContent).not.toHaveBeenCalled();
   });
 
   it('should properly query items and log error when not same number of items and values', async () => {
@@ -665,37 +669,40 @@ describe('SouthOPCUA', () => {
       { value: { value: 2 }, statusCode: { value: 0 } }
     ]);
     (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ read });
-    south.addValues = jest.fn();
+    south.addContent = jest.fn();
 
     await south.start();
     await south.lastPointQuery(items);
     const expectedItemsToRead = items.filter(item => item.settings.mode === 'DA');
     expect(logger.error).toHaveBeenCalledWith(`Received 2 node results, requested ${expectedItemsToRead.length} nodes`);
     expect(read).toHaveBeenCalledWith(expectedItemsToRead.map(item => ({ nodeId: item.settings.nodeId })));
-    expect(south.addValues).toHaveBeenCalledWith([
-      {
-        pointId: expectedItemsToRead[0].name,
-        timestamp: nowDateString,
-        data: {
-          value: 1,
-          quality: JSON.stringify({ value: 0 })
+    expect(south.addContent).toHaveBeenCalledWith({
+      type: 'time-values',
+      content: [
+        {
+          pointId: expectedItemsToRead[0].name,
+          timestamp: nowDateString,
+          data: {
+            value: 1,
+            quality: JSON.stringify({ value: 0 })
+          }
+        },
+        {
+          pointId: expectedItemsToRead[1].name,
+          timestamp: nowDateString,
+          data: {
+            value: 2,
+            quality: JSON.stringify({ value: 0 })
+          }
         }
-      },
-      {
-        pointId: expectedItemsToRead[1].name,
-        timestamp: nowDateString,
-        data: {
-          value: 2,
-          quality: JSON.stringify({ value: 0 })
-        }
-      }
-    ]);
+      ]
+    });
   });
 
   it('should not query items if session is not set', async () => {
-    south.addValues = jest.fn();
+    south.addContent = jest.fn();
     await south.lastPointQuery(items);
-    expect(south.addValues).not.toHaveBeenCalled();
+    expect(south.addContent).not.toHaveBeenCalled();
     expect(logger.error).toHaveBeenCalledWith('OPCUA session not set. The connector cannot read values');
   });
 
@@ -715,25 +722,28 @@ describe('SouthOPCUA', () => {
     (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ close: jest.fn() });
     (nodeOPCUAClient.ClientSubscription.create as jest.Mock).mockReturnValue({ terminate: jest.fn() });
     (nodeOPCUAClient.ClientMonitoredItem.create as jest.Mock).mockReturnValue(stream);
-    south.addValues = jest.fn();
+    south.addContent = jest.fn();
 
     await south.start();
     await south.subscribe([items[0]]);
     expect(nodeOPCUAClient.ClientSubscription.create).toHaveBeenCalledTimes(1);
     expect(nodeOPCUAClient.ClientMonitoredItem.create).toHaveBeenCalledTimes(1);
-    expect(south.addValues).not.toHaveBeenCalled();
+    expect(south.addContent).not.toHaveBeenCalled();
 
     stream.emit('changed', { value: { value: 1 }, statusCode: { value: 0 } });
-    expect(south.addValues).toHaveBeenCalledWith([
-      {
-        pointId: items[0].name,
-        timestamp: nowDateString,
-        data: {
-          value: 1,
-          quality: JSON.stringify({ value: 0 })
+    expect(south.addContent).toHaveBeenCalledWith({
+      type: 'time-values',
+      content: [
+        {
+          pointId: items[0].name,
+          timestamp: nowDateString,
+          data: {
+            value: 1,
+            quality: JSON.stringify({ value: 0 })
+          }
         }
-      }
-    ]);
+      ]
+    });
 
     await south.unsubscribe([items[0]]);
     expect(stream.terminate).toHaveBeenCalledTimes(1);
@@ -791,8 +801,7 @@ describe('SouthOPCUA with basic auth', () => {
     south = new SouthOPCUA(
       connector,
       items,
-      addValues,
-      addFile,
+      addContentCallback,
       encryptionService,
       repositoryService,
       logger,
@@ -866,8 +875,7 @@ describe('SouthOPCUA with certificate', () => {
     south = new SouthOPCUA(
       connector,
       items,
-      addValues,
-      addFile,
+      addContentCallback,
       encryptionService,
       repositoryService,
       logger,
@@ -1058,8 +1066,7 @@ describe('SouthOPCUA test connection', () => {
     south = new SouthOPCUA(
       connector,
       items,
-      addValues,
-      addFile,
+      addContentCallback,
       encryptionService,
       repositoryService,
       logger,
@@ -1234,8 +1241,7 @@ describe('SouthOPCUA with shared connection', () => {
     south = new SouthOPCUA(
       connector,
       items,
-      addValues,
-      addFile,
+      addContentCallback,
       encryptionService,
       repositoryService,
       logger,
