@@ -36,7 +36,7 @@ import { randomUUID } from 'crypto';
 import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
 import { createFolder } from '../../service/utils';
 import { OPCUACertificateManager } from 'node-opcua-certificate-manager';
-import { OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
 import ConnectionService, { ManagedConnection, ManagedConnectionSettings } from '../../service/connection.service';
 
 export const MAX_NUMBER_OF_NODE_TO_LOG = 10;
@@ -61,25 +61,14 @@ export default class SouthOPCUA
 
   constructor(
     connector: SouthConnectorDTO<SouthOPCUASettings>,
-    engineAddValuesCallback: (southId: string, values: Array<OIBusTimeValue>) => Promise<void>,
-    engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
+    engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
     baseFolder: string,
     connectionService: ConnectionService
   ) {
-    super(
-      connector,
-
-      engineAddValuesCallback,
-      engineAddFileCallback,
-      encryptionService,
-      repositoryService,
-      logger,
-      baseFolder,
-      connectionService
-    );
+    super(connector, engineAddContentCallback, encryptionService, repositoryService, logger, baseFolder, connectionService);
 
     this.connectionSettings = {
       closeFnName: 'close',
@@ -99,33 +88,6 @@ export default class SouthOPCUA
       this.clientCertificateManager.state = 2;
     }
     await super.start(dataStream);
-  }
-
-  override async createSession(): Promise<void> {
-    await this.session?.close(); // close the session if it already exists
-
-    if (this.reconnectTimeout) {
-      clearTimeout(this.reconnectTimeout);
-      this.reconnectTimeout = null;
-    }
-    try {
-      const clientName = this.connectionSettings.sharedConnection ? 'Shared session' : this.connector.id;
-
-      const { options, userIdentity } = await this.createSessionConfigs(
-        this.connector.settings,
-        this.clientCertificateManager!,
-        this.encryptionService,
-        clientName
-      );
-
-      this.logger.debug(`Connecting to OPCUA on ${this.connector.settings.url}`);
-      this.session = await OPCUAClient.createSession(this.connector.settings.url, userIdentity, options);
-      this.logger.info(`OPCUA ${this.connector.name} connected`);
-      return session;
-    } catch (error) {
-      this.logger.error(`Error while connecting to the OPCUA server. ${error}`);
-      return null;
-    }
   }
 
   override async testConnection(): Promise<void> {
@@ -197,6 +159,30 @@ export default class SouthOPCUA
     items: Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>>
   ): Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>> {
     return items.filter(item => item.settings.mode === 'HA');
+  }
+
+  async createSession(): Promise<ClientSession | null> {
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
+    }
+    try {
+      const clientName = this.connectionSettings.sharedConnection ? 'Shared session' : this.connector.id;
+      const { options, userIdentity } = await this.createSessionConfigs(
+        this.connector.settings,
+        this.clientCertificateManager!,
+        this.encryptionService,
+        clientName
+      );
+
+      this.logger.debug(`Connecting to OPCUA on ${this.connector.settings.url}`);
+      const session = await OPCUAClient.createSession(this.connector.settings.url, userIdentity, options);
+      this.logger.info(`OPCUA ${this.connector.name} connected`);
+      return session;
+    } catch (error) {
+      this.logger.error(`Error while connecting to the OPCUA server. ${error}`);
+      return null;
+    }
   }
 
   /**
@@ -319,7 +305,7 @@ export default class SouthOPCUA
                 .filter(node => !!node.continuationPoint);
 
               this.logger.debug(`Adding ${dataByItems.length} values between ${startTime} and ${endTime}`);
-              await this.addValues(dataByItems.filter(parsedData => parsedData.data.value));
+              await this.addContent({ type: 'time-values', content: dataByItems.filter(parsedData => parsedData.data.value) });
 
               this.logger.trace(`Continue read for ${nodesToRead.length} points`);
             } else {
@@ -552,7 +538,7 @@ export default class SouthOPCUA
           quality: JSON.stringify(dataValue.statusCode)
         }
       }));
-      await this.addValues(values.filter(parsedValue => parsedValue.data.value));
+      await this.addContent({ type: 'time-values', content: values.filter(parsedValue => parsedValue.data.value) });
     } catch (error) {
       await this.disconnect();
       if (!this.disconnecting && this.connector.enabled) {
@@ -604,16 +590,19 @@ export default class SouthOPCUA
       monitoredItem.on('changed', async (dataValue: DataValue) => {
         const parsedValue = this.parseOPCUAValue(item.name, dataValue.value);
         if (parsedValue) {
-          await this.addValues([
-            {
-              pointId: item.name,
-              timestamp: DateTime.now().toUTC().toISO()!,
-              data: {
-                value: parsedValue,
-                quality: JSON.stringify(dataValue.statusCode)
+          await this.addContent({
+            type: 'time-values',
+            content: [
+              {
+                pointId: item.name,
+                timestamp: DateTime.now().toUTC().toISO()!,
+                data: {
+                  value: parsedValue,
+                  quality: JSON.stringify(dataValue.statusCode)
+                }
               }
-            }
-          ]);
+            ]
+          });
         }
       });
       this.monitoredItems.set(item.id, monitoredItem);
