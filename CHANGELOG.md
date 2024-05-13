@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.3.4](https://github.com/OptimistikSAS/OIBus/compare/v3.3.3...v3.3.4) (2024-05-13)
+
+
+### Bug Fixes
+
+* **web-client:** display certificate list on connector forms ([83d601e](https://github.com/OptimistikSAS/OIBus/commit/83d601e7aa9b2c23723dc1d361380714f3809397))
+
 ## [3.3.3](https://github.com/OptimistikSAS/OIBus/compare/v3.3.2...v3.3.3) (2024-05-07)
 
 
