@@ -18,7 +18,7 @@ import { Instant } from '../../../../shared/model/types';
 import { QueriesHistory } from '../south-interface';
 import { DateTime } from 'luxon';
 import { SouthOracleItemSettings, SouthOracleSettings } from '../../../../shared/model/south-settings.model';
-import { OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { OIBusContent } from '../../../../shared/model/engine.model';
 
 import oracledb, { ConnectionAttributes } from 'oracledb';
 
@@ -33,14 +33,13 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
   constructor(
     connector: SouthConnectorDTO<SouthOracleSettings>,
     items: Array<SouthConnectorItemDTO<SouthOracleItemSettings>>,
-    engineAddValuesCallback: (southId: string, values: Array<OIBusTimeValue>) => Promise<void>,
-    engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
+    engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(connector, items, engineAddContentCallback, encryptionService, repositoryService, logger, baseFolder);
     this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
     if (this.connector.settings.thickMode && this.connector.settings.oracleClient) {
       oracledb.initOracleClient({ libDir: path.resolve(this.connector.settings.oracleClient) });
@@ -154,8 +153,7 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
           item.settings.serialization,
           this.connector.name,
           this.tmpFolder,
-          this.addFile.bind(this),
-          this.addValues.bind(this),
+          this.addContent.bind(this),
           this.logger
         );
       } else {

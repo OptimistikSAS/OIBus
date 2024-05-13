@@ -12,7 +12,7 @@ import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
 import { QueriesLastPoint } from '../south-interface';
 import { DateTime } from 'luxon';
 import { SouthModbusItemSettings, SouthModbusSettings } from '../../../../shared/model/south-settings.model';
-import { OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { OIBusContent } from '../../../../shared/model/engine.model';
 
 /**
  * Class SouthModbus - Provides instruction for Modbus client connection
@@ -27,14 +27,13 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
   constructor(
     connector: SouthConnectorDTO<SouthModbusSettings>,
     items: Array<SouthConnectorItemDTO<SouthModbusItemSettings>>,
-    engineAddValuesCallback: (southId: string, values: Array<OIBusTimeValue>) => Promise<void>,
-    engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
+    engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(connector, items, engineAddContentCallback, encryptionService, repositoryService, logger, baseFolder);
   }
 
   async lastPointQuery(items: Array<SouthConnectorItemDTO<SouthModbusItemSettings>>): Promise<void> {
@@ -88,13 +87,16 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
       default:
         throw new Error(`Wrong Modbus type "${item.settings.modbusType}" for point ${item.name}`);
     }
-    await this.addValues([
-      {
-        pointId: item.name,
-        timestamp: DateTime.now().toUTC().toISO()!,
-        data: { value: JSON.stringify(value) }
-      }
-    ]);
+    await this.addContent({
+      type: 'time-values',
+      content: [
+        {
+          pointId: item.name,
+          timestamp: DateTime.now().toUTC().toISO()!,
+          data: { value: JSON.stringify(value) }
+        }
+      ]
+    });
   }
 
   /**

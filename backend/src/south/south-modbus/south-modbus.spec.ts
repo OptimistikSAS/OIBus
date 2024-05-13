@@ -58,8 +58,7 @@ jest.mock(
     }
 );
 
-const addValues = jest.fn();
-const addFile = jest.fn();
+const addContentCallback = jest.fn();
 
 const logger: pino.Logger = new PinoLogger();
 
@@ -199,7 +198,7 @@ describe('SouthModbus', () => {
       }
     });
 
-    south = new SouthModbus(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthModbus(configuration, items, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should fail to connect and try again', async () => {
@@ -313,66 +312,78 @@ describe('SouthModbus', () => {
 
   it('should call read coil method', async () => {
     south.readCoil = jest.fn().mockReturnValue(123);
-    south.addValues = jest.fn();
+    south.addContent = jest.fn();
     await south.modbusFunction(items[4]);
     expect(south.readCoil).toHaveBeenCalledTimes(1);
-    expect(south.addValues).toHaveBeenCalledTimes(1);
-    expect(south.addValues).toHaveBeenCalledWith([
-      {
-        pointId: items[4].name,
-        timestamp: nowDateString,
-        data: { value: JSON.stringify(123) }
-      }
-    ]);
+    expect(south.addContent).toHaveBeenCalledTimes(1);
+    expect(south.addContent).toHaveBeenCalledWith({
+      type: 'time-values',
+      content: [
+        {
+          pointId: items[4].name,
+          timestamp: nowDateString,
+          data: { value: JSON.stringify(123) }
+        }
+      ]
+    });
   });
 
   it('should call readDiscreteInputRegister method', async () => {
     south.readDiscreteInputRegister = jest.fn().mockReturnValue(123);
-    south.addValues = jest.fn();
+    south.addContent = jest.fn();
     await south.modbusFunction(items[3]);
     expect(south.readDiscreteInputRegister).toHaveBeenCalledTimes(1);
-    expect(south.addValues).toHaveBeenCalledTimes(1);
-    expect(south.addValues).toHaveBeenCalledWith([
-      {
-        pointId: items[3].name,
-        timestamp: nowDateString,
-        data: { value: JSON.stringify(123) }
-      }
-    ]);
+    expect(south.addContent).toHaveBeenCalledTimes(1);
+    expect(south.addContent).toHaveBeenCalledWith({
+      type: 'time-values',
+      content: [
+        {
+          pointId: items[3].name,
+          timestamp: nowDateString,
+          data: { value: JSON.stringify(123) }
+        }
+      ]
+    });
   });
 
   it('should call readInputRegister method', async () => {
     south.readInputRegister = jest.fn().mockReturnValue(123);
-    south.addValues = jest.fn();
+    south.addContent = jest.fn();
     await south.modbusFunction(items[2]);
     expect(south.readInputRegister).toHaveBeenCalledTimes(1);
-    expect(south.addValues).toHaveBeenCalledTimes(1);
-    expect(south.addValues).toHaveBeenCalledWith([
-      {
-        pointId: items[2].name,
-        timestamp: nowDateString,
-        data: { value: JSON.stringify(123) }
-      }
-    ]);
+    expect(south.addContent).toHaveBeenCalledTimes(1);
+    expect(south.addContent).toHaveBeenCalledWith({
+      type: 'time-values',
+      content: [
+        {
+          pointId: items[2].name,
+          timestamp: nowDateString,
+          data: { value: JSON.stringify(123) }
+        }
+      ]
+    });
   });
 
   it('should call readHoldingRegister method', async () => {
     south.readHoldingRegister = jest.fn().mockReturnValue(123);
-    south.addValues = jest.fn();
+    south.addContent = jest.fn();
     await south.modbusFunction(items[1]);
     expect(south.readHoldingRegister).toHaveBeenCalledTimes(1);
-    expect(south.addValues).toHaveBeenCalledTimes(1);
-    expect(south.addValues).toHaveBeenCalledWith([
-      {
-        pointId: items[1].name,
-        timestamp: nowDateString,
-        data: { value: JSON.stringify(123) }
-      }
-    ]);
+    expect(south.addContent).toHaveBeenCalledTimes(1);
+    expect(south.addContent).toHaveBeenCalledWith({
+      type: 'time-values',
+      content: [
+        {
+          pointId: items[1].name,
+          timestamp: nowDateString,
+          data: { value: JSON.stringify(123) }
+        }
+      ]
+    });
   });
 
   it('should call readHoldingRegister method', async () => {
-    south.addValues = jest.fn();
+    south.addContent = jest.fn();
     configuration.settings.addressOffset = 'JBus';
     const item: SouthConnectorItemDTO = {
       id: 'bad',
@@ -386,7 +397,7 @@ describe('SouthModbus', () => {
       }
     };
     await expect(south.modbusFunction(item)).rejects.toThrow(`Wrong Modbus type "${item.settings.modbusType}" for point ${item.name}`);
-    expect(south.addValues).not.toHaveBeenCalled();
+    expect(south.addContent).not.toHaveBeenCalled();
   });
 
   it('should generate buffer function name', () => {
@@ -456,7 +467,7 @@ describe('SouthModbus test connection', () => {
   }
 
   it('Connecting to socket successfully', async () => {
-    testingSouth = new SouthModbus(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    testingSouth = new SouthModbus(configuration, items, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
 
     // Mock node:net Socket constructor and the used function
     (net.Socket as unknown as jest.Mock).mockReturnValue({
@@ -492,7 +503,7 @@ describe('SouthModbus test connection', () => {
   });
 
   it('should fail to connect', async () => {
-    testingSouth = new SouthModbus(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    testingSouth = new SouthModbus(configuration, items, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
 
     const mockedEmitter = new CustomStream();
     mockedEmitter.connect = (_connectionObject: any, _callback: any) => {};
