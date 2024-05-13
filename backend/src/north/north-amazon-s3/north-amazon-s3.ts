@@ -12,7 +12,7 @@ import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { NorthAmazonS3Settings } from '../../../../shared/model/north-settings.model';
 import { createProxyAgent } from '../../service/proxy-agent';
-import { OIBusContent, OIBusDataValue } from '../../../../shared/model/engine.model';
+import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
 import csv from 'papaparse';
 
@@ -97,7 +97,7 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
     await this.s3!.send(new PutObjectCommand(params));
   }
 
-  async handleValues(values: Array<OIBusDataValue>): Promise<void> {
+  async handleValues(values: Array<OIBusTimeValue>): Promise<void> {
     const filename = `${this.connector.name}-${DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS')}.csv`;
     const csvContent = csv.unparse(
       values.map(value => ({
