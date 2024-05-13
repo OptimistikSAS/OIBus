@@ -11,7 +11,7 @@ import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
 import { QueriesFile } from '../south-interface';
 import { SouthFolderScannerItemSettings, SouthFolderScannerSettings } from '../../../../shared/model/south-settings.model';
-import { OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { OIBusContent } from '../../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
 
 /**
@@ -31,14 +31,13 @@ export default class SouthFolderScanner
   constructor(
     connector: SouthConnectorDTO<SouthFolderScannerSettings>,
     items: Array<SouthConnectorItemDTO<SouthFolderScannerItemSettings>>,
-    engineAddValuesCallback: (southId: string, values: Array<OIBusTimeValue>) => Promise<void>,
-    engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
+    engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(connector, items, engineAddContentCallback, encryptionService, repositoryService, logger, baseFolder);
     this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
   }
 
@@ -173,7 +172,7 @@ export default class SouthFolderScanner
         // Compress and send the compressed file
         const gzipPath = path.resolve(this.tmpFolder, `${filename}.gz`);
         await compress(filePath, gzipPath);
-        await this.addFile(gzipPath);
+        await this.addContent({ type: 'raw', filePath: gzipPath });
         try {
           await fs.unlink(gzipPath);
         } catch (unlinkError) {
@@ -181,10 +180,10 @@ export default class SouthFolderScanner
         }
       } catch (compressionError) {
         this.logger.error(`Error compressing file "${filePath}". Sending it raw instead.`);
-        await this.addFile(filePath);
+        await this.addContent({ type: 'raw', filePath });
       }
     } else {
-      await this.addFile(filePath);
+      await this.addContent({ type: 'raw', filePath });
     }
 
     // Delete original file if preserveFile is not set

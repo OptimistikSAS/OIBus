@@ -14,8 +14,8 @@ import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
 import { SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../../../shared/model/south-settings.model';
 import { createProxyAgent } from '../../service/proxy-agent';
-import { OIBusTimeValue } from '../../../../shared/model/engine.model';
-import { ClientSecretCredential, ClientCertificateCredential } from '@azure/identity';
+import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { ClientCertificateCredential, ClientSecretCredential } from '@azure/identity';
 
 interface OIATimeValues {
   type: string;
@@ -47,14 +47,13 @@ export default class SouthOIAnalytics
   constructor(
     connector: SouthConnectorDTO<SouthOIAnalyticsSettings>,
     items: Array<SouthConnectorItemDTO<SouthOIAnalyticsItemSettings>>,
-    engineAddValuesCallback: (southId: string, values: Array<OIBusTimeValue>) => Promise<void>,
-    engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
+    engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(connector, items, engineAddContentCallback, encryptionService, repositoryService, logger, baseFolder);
     this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
   }
 
@@ -115,8 +114,7 @@ export default class SouthOIAnalytics
           item.settings.serialization,
           this.connector.name,
           this.tmpFolder,
-          this.addFile.bind(this),
-          this.addValues.bind(this),
+          this.addContent.bind(this),
           this.logger
         );
       } else {

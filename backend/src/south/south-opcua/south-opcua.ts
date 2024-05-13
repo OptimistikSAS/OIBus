@@ -33,7 +33,7 @@ import { randomUUID } from 'crypto';
 import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
 import { createFolder } from '../../service/utils';
 import { OPCUACertificateManager } from 'node-opcua-certificate-manager';
-import { OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
 import ConnectionService, { ManagedConnection, ManagedConnectionSettings } from '../../service/connection.service';
 
 export const MAX_NUMBER_OF_NODE_TO_LOG = 10;
@@ -58,25 +58,14 @@ export default class SouthOPCUA
   constructor(
     connector: SouthConnectorDTO<SouthOPCUASettings>,
     items: Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>>,
-    engineAddValuesCallback: (southId: string, values: Array<OIBusTimeValue>) => Promise<void>,
-    engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
+    engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
     baseFolder: string,
     connectionService: ConnectionService
   ) {
-    super(
-      connector,
-      items,
-      engineAddValuesCallback,
-      engineAddFileCallback,
-      encryptionService,
-      repositoryService,
-      logger,
-      baseFolder,
-      connectionService
-    );
+    super(connector, items, engineAddContentCallback, encryptionService, repositoryService, logger, baseFolder, connectionService);
 
     this.connectionSettings = {
       closeFnName: 'close',
@@ -308,7 +297,7 @@ export default class SouthOPCUA
                 .filter(node => !!node.continuationPoint);
 
               this.logger.debug(`Adding ${dataByItems.length} values between ${startTime} and ${endTime}`);
-              await this.addValues(dataByItems);
+              await this.addContent({ type: 'time-values', content: dataByItems });
 
               this.logger.trace(`Continue read for ${nodesToRead.length} points`);
             } else {
@@ -540,7 +529,7 @@ export default class SouthOPCUA
           quality: JSON.stringify(dataValue.statusCode)
         }
       }));
-      await this.addValues(values);
+      await this.addContent({ type: 'time-values', content: values });
     } catch (error) {
       if (!this.disconnecting) {
         await this.disconnect();
@@ -590,16 +579,19 @@ export default class SouthOPCUA
         TimestampsToReturn.Neither
       );
       monitoredItem.on('changed', async dataValue => {
-        await this.addValues([
-          {
-            pointId: item.name,
-            timestamp: DateTime.now().toUTC().toISO()!,
-            data: {
-              value: dataValue.value.value,
-              quality: JSON.stringify(dataValue.statusCode)
+        await this.addContent({
+          type: 'time-values',
+          content: [
+            {
+              pointId: item.name,
+              timestamp: DateTime.now().toUTC().toISO()!,
+              data: {
+                value: dataValue.value.value,
+                quality: JSON.stringify(dataValue.statusCode)
+              }
             }
-          }
-        ]);
+          ]
+        });
       });
       this.monitoredItems.set(item.id, monitoredItem);
     });
