@@ -1,9 +1,0 @@
-# Node
-/node_modules
-npm-debug.log
-yarn-error.log
-
-/dist
-/src/tests/coverage
-/src/tests/legacy-coverage
-/src/tests/out-tsc
