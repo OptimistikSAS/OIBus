@@ -3,7 +3,7 @@ import { KoaContext } from '../koa';
 import AbstractController from './abstract.controller';
 import { getOIBusInfo } from '../../service/utils';
 
-export default class OibusController extends AbstractController {
+export default class EngineController extends AbstractController {
   async getEngineSettings(ctx: KoaContext<void, EngineSettingsDTO>): Promise<void> {
     const settings = ctx.app.repositoryService.engineRepository.getEngineSettings();
     if (settings) {
@@ -54,44 +54,5 @@ export default class OibusController extends AbstractController {
     const engineSettings = ctx.app.repositoryService.engineRepository.getEngineSettings()!;
     const oibusInfo = getOIBusInfo(engineSettings);
     ctx.ok(oibusInfo);
-  }
-
-  async addValues(ctx: KoaContext<void, void>): Promise<void> {
-    const { name } = ctx.request.query;
-    if (name && Array.isArray(ctx.request.body)) {
-      const externalSource = ctx.app.repositoryService.externalSourceRepository.findExternalSourceByReference(name as string);
-      if (!externalSource) {
-        ctx.app.logger.info(`External source "${name}" not found`);
-        return ctx.badRequest();
-      }
-
-      try {
-        await ctx.app.oibusService.addValues(externalSource.id, ctx.request.body);
-        return ctx.noContent();
-      } catch (error) {
-        return ctx.internalServerError();
-      }
-    }
-    return ctx.badRequest();
-  }
-
-  async addFile(ctx: KoaContext<void, void>): Promise<void> {
-    const { name } = ctx.request.query;
-    const file = ctx.request.file;
-    if (name && file) {
-      const externalSource = ctx.app.repositoryService.externalSourceRepository.findExternalSourceByReference(name as string);
-      if (!externalSource) {
-        ctx.app.logger.info(`External source "${name}" not found`);
-        return ctx.badRequest();
-      }
-
-      try {
-        await ctx.app.oibusService.addFile(externalSource.id, ctx.request.file.path);
-        return ctx.noContent();
-      } catch (error) {
-        return ctx.internalServerError();
-      }
-    }
-    return ctx.badRequest();
   }
 }
