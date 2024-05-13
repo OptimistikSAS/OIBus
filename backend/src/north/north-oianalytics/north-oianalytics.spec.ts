@@ -202,7 +202,7 @@ describe('NorthOIAnalytics without proxy', () => {
       agent: undefined
     };
 
-    await north.handleValues(values);
+    await north.handleContent({ type: 'time-values', content: values });
 
     expect(fetch).toHaveBeenCalledWith(
       `${configuration.settings.specificSettings!.host}/api/oianalytics/oibus/time-values?dataSourceId=${configuration.name}`,
@@ -296,7 +296,7 @@ describe('NorthOIAnalytics without proxy', () => {
       agent: undefined
     };
 
-    await north.handleFile(filePath);
+    await north.handleContent({ type: 'raw', filePath });
 
     expect(fetch).toHaveBeenCalledWith(
       `${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,

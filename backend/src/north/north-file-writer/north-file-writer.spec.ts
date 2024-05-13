@@ -113,7 +113,7 @@ describe('NorthFileWriter', () => {
         pointId: 'pointId'
       }
     ];
-    await north.handleValues(values);
+    await north.handleContent({ type: 'time-values', content: values });
 
     const expectedFileName = `${configuration.settings.prefix}${new Date().getTime()}${configuration.settings.suffix}.csv`;
     const expectedOutputFolder = path.resolve(configuration.settings.outputFolder);
@@ -140,7 +140,7 @@ describe('NorthFileWriter', () => {
     const filePath = '/path/to/file/example-123456.file';
     const expectedFileName = `${configuration.settings.prefix}example${configuration.settings.suffix}.file`;
     const expectedOutputFolder = path.resolve(configuration.settings.outputFolder);
-    await north.handleFile(filePath);
+    await north.handleContent({ type: 'raw', filePath });
     expect(fs.copyFile).toHaveBeenCalledWith(filePath, path.join(expectedOutputFolder, expectedFileName));
   });
 

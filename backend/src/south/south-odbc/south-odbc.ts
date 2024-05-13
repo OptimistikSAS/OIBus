@@ -12,7 +12,7 @@ import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
 import { SouthODBCItemSettings, SouthODBCSettings } from '../../../../shared/model/south-settings.model';
 import fetch, { HeadersInit, RequestInit } from 'node-fetch';
-import { OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
 
 let odbc: any | null = null;
 // @ts-ignore
@@ -37,14 +37,13 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
 
   constructor(
     connector: SouthConnectorDTO<SouthODBCSettings>,
-    engineAddValuesCallback: (southId: string, values: Array<OIBusTimeValue>) => Promise<void>,
-    engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
+    engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(connector, engineAddContentCallback, encryptionService, repositoryService, logger, baseFolder);
     this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
   }
 
@@ -258,8 +257,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
           this.connector.name,
           item.name,
           this.tmpFolder,
-          this.addFile.bind(this),
-          this.addValues.bind(this),
+          this.addContent.bind(this),
           this.logger
         );
         if (result.maxInstantRetrieved > updatedStartTime) {
@@ -341,8 +339,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
         this.connector.name,
         item.name,
         this.tmpFolder,
-        this.addFile.bind(this),
-        this.addValues.bind(this),
+        this.addContent.bind(this),
         this.logger
       );
     } else {
