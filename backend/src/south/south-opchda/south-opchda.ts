@@ -9,7 +9,7 @@ import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
 import { SouthOPCHDAItemSettings, SouthOPCHDASettings } from '../../../../shared/model/south-settings.model';
 import fetch from 'node-fetch';
-import { OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
 
 /**
  * Class SouthOPCHDA - Run a HDA agent to connect to an OPCHDA server.
@@ -24,14 +24,13 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
 
   constructor(
     connector: SouthConnectorDTO<SouthOPCHDASettings>,
-    engineAddValuesCallback: (southId: string, values: Array<OIBusTimeValue>) => Promise<void>,
-    engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
+    engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(connector, engineAddContentCallback, encryptionService, repositoryService, logger, baseFolder);
   }
 
   async connect(): Promise<void> {
@@ -179,7 +178,7 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
 
             if (result.content.length > 0) {
               this.logger.debug(`Found ${result.recordCount} results for ${resampledItems.length} items in ${requestDuration} ms`);
-              await this.addValues(result.content);
+              await this.addContent({ type: 'time-values', content: result.content });
               if (result.maxInstantRetrieved > updatedStartTime) {
                 // 1ms is added to the maxInstantRetrieved, so it does not take the last retrieve value on the last run
                 updatedStartTime = DateTime.fromISO(result.maxInstantRetrieved).plus({ millisecond: 1 }).toUTC().toISO()!;

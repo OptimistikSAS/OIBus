@@ -3,7 +3,7 @@ import { KoaContext } from '../koa';
 import AbstractController from './abstract.controller';
 import { getOIBusInfo } from '../../service/utils';
 
-export default class OibusController extends AbstractController {
+export default class EngineController extends AbstractController {
   async getEngineSettings(ctx: KoaContext<void, EngineSettingsDTO>): Promise<void> {
     const settings = ctx.app.repositoryService.engineRepository.getEngineSettings();
     if (settings) {
@@ -55,6 +55,7 @@ export default class OibusController extends AbstractController {
     const oibusInfo = getOIBusInfo(engineSettings);
     ctx.ok(oibusInfo);
   }
+
   async getStatus(ctx: KoaContext<void, void>): Promise<void> {
     ctx.ok();
   }

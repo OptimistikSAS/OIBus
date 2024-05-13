@@ -51,8 +51,7 @@ jest.mock(
     }
 );
 
-const addValues = jest.fn();
-const addFile = jest.fn();
+const addContentCallback = jest.fn();
 const flushPromises = () => new Promise(jest.requireActual('timers').setImmediate);
 const logger: pino.Logger = new PinoLogger();
 
@@ -227,7 +226,7 @@ describe('SouthMQTT without authentication', () => {
     repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
     (mqtt.connect as jest.Mock).mockImplementation(() => mqttStream);
 
-    south = new SouthMQTT(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthMQTT(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should properly connect', async () => {
@@ -305,7 +304,7 @@ describe('SouthMQTT with Basic Auth', () => {
     repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
     (mqtt.connect as jest.Mock).mockImplementation(() => mqttStream);
 
-    south = new SouthMQTT(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthMQTT(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should properly connect', async () => {
@@ -576,28 +575,34 @@ describe('SouthMQTT with Basic Auth', () => {
 
   it('should handle message', async () => {
     south.getItem = jest.fn().mockReturnValueOnce(items[0]).mockReturnValueOnce(items[1]).mockReturnValue(items[5]);
-    south.addValues = jest.fn();
+    south.addContent = jest.fn();
     await south.handleMessage(items[0].settings.topic, Buffer.from('12'));
-    expect(south.addValues).toHaveBeenCalledWith([
-      {
-        pointId: items[0].name,
-        timestamp: nowDateString,
-        data: {
-          value: '12'
+    expect(south.addContent).toHaveBeenCalledWith({
+      type: 'time-values',
+      content: [
+        {
+          pointId: items[0].name,
+          timestamp: nowDateString,
+          data: {
+            value: '12'
+          }
         }
-      }
-    ]);
+      ]
+    });
 
     await south.handleMessage(items[1].settings.topic, Buffer.from('my value'));
-    expect(south.addValues).toHaveBeenCalledWith([
-      {
-        pointId: items[1].name,
-        timestamp: nowDateString,
-        data: {
-          value: 'my value'
+    expect(south.addContent).toHaveBeenCalledWith({
+      type: 'time-values',
+      content: [
+        {
+          pointId: items[1].name,
+          timestamp: nowDateString,
+          data: {
+            value: 'my value'
+          }
         }
-      }
-    ]);
+      ]
+    });
 
     const expectValue = [
       {
@@ -610,7 +615,7 @@ describe('SouthMQTT with Basic Auth', () => {
     ];
     south.formatValues = jest.fn().mockReturnValue(expectValue);
     await south.handleMessage(items[5].settings.topic, Buffer.from(JSON.stringify({ json: 'object' })));
-    expect(south.addValues).toHaveBeenCalledWith(expectValue);
+    expect(south.addContent).toHaveBeenCalledWith({ type: 'time-values', content: expectValue });
 
     await south.handleMessage(items[5].settings.topic, Buffer.from('not a json object'));
     expect(logger.error).toHaveBeenCalledWith(
@@ -659,7 +664,7 @@ describe('SouthMQTT with Cert', () => {
     repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
     (mqtt.connect as jest.Mock).mockImplementation(() => mqttStream);
 
-    south = new SouthMQTT(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthMQTT(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should properly connect', async () => {
@@ -730,7 +735,7 @@ describe('SouthMQTT without Cert', () => {
     mqttStream.removeAllListeners();
     (mqtt.connect as jest.Mock).mockImplementation(() => mqttStream);
 
-    south = new SouthMQTT(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthMQTT(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should properly connect', async () => {
