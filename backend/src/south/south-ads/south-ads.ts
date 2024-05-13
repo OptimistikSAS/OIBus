@@ -11,7 +11,7 @@ import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { QueriesLastPoint } from '../south-interface';
 import { SouthADSItemSettings, SouthADSSettings } from '../../../../shared/model/south-settings.model';
-import { OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
 
 interface ADSOptions {
   targetAmsNetId: string;
@@ -35,14 +35,13 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
   constructor(
     connector: SouthConnectorDTO<SouthADSSettings>,
     items: Array<SouthConnectorItemDTO<SouthADSItemSettings>>,
-    engineAddValuesCallback: (southId: string, values: Array<OIBusTimeValue>) => Promise<void>,
-    engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
+    engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(connector, items, engineAddContentCallback, encryptionService, repositoryService, logger, baseFolder);
   }
 
   /**
@@ -167,7 +166,10 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
       const requestDuration = DateTime.now().toMillis() - startRequest;
       this.logger.debug(`Requested ${items.length} items in ${requestDuration} ms`);
 
-      await this.addValues(results.reduce((concatenatedResults, result) => [...concatenatedResults, ...result], []));
+      await this.addContent({
+        type: 'time-values',
+        content: results.reduce((concatenatedResults, result) => [...concatenatedResults, ...result], [])
+      });
     } catch (error: any) {
       if (error.message.startsWith('Client is not connected')) {
         this.logger.error('ADS client disconnected. Reconnecting');

@@ -12,7 +12,7 @@ import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
 import { SouthOLEDBItemSettings, SouthOLEDBSettings } from '../../../../shared/model/south-settings.model';
 import fetch, { HeadersInit, RequestInit } from 'node-fetch';
-import { OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
 
 /**
  * Class SouthOLEDB - Retrieve data from SQL databases with OLEDB driver and send them to the cache as CSV files.
@@ -28,14 +28,13 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
   constructor(
     connector: SouthConnectorDTO<SouthOLEDBSettings>,
     items: Array<SouthConnectorItemDTO<SouthOLEDBItemSettings>>,
-    engineAddValuesCallback: (southId: string, values: Array<OIBusTimeValue>) => Promise<void>,
-    engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
+    engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(connector, items, engineAddContentCallback, encryptionService, repositoryService, logger, baseFolder);
     this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
   }
 
@@ -179,8 +178,7 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
           { type: 'file', filename: item.settings.serialization.filename, compression: item.settings.serialization.compression },
           this.connector.name,
           this.tmpFolder,
-          this.addFile.bind(this),
-          this.addValues.bind(this),
+          this.addContent.bind(this),
           this.logger
         );
         if (result.maxInstantRetrieved > updatedStartTime) {

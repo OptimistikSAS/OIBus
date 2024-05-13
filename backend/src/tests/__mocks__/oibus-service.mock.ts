@@ -3,8 +3,7 @@
  */
 export default jest.fn().mockImplementation(() => ({
   setLogger: jest.fn(),
-  addFile: jest.fn(),
-  addValues: jest.fn(),
+  addExternalContent: jest.fn(),
   stopOIBus: jest.fn(),
   restartOIBus: jest.fn()
 }));

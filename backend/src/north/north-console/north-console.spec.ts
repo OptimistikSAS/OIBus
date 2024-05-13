@@ -106,7 +106,7 @@ describe('NorthConsole with verbose mode', () => {
         data: { value: '666', quality: 'good' }
       }
     ];
-    await north.handleValues(values);
+    await north.handleContent({ type: 'time-values', content: values });
 
     expect(console.table).toHaveBeenCalledWith(values, ['pointId', 'timestamp', 'data']);
     expect(process.stdout.write).not.toHaveBeenCalled();
@@ -115,7 +115,7 @@ describe('NorthConsole with verbose mode', () => {
   it('should properly handle values in verbose mode', async () => {
     const filePath = '/path/to/file/example.file';
     (fs.stat as jest.Mock).mockImplementationOnce(() => Promise.resolve({ size: 666 }));
-    await north.handleFile(filePath);
+    await north.handleContent({ type: 'raw', filePath });
     expect(fs.stat).toHaveBeenCalledWith(filePath);
     expect(console.table).toHaveBeenCalledWith([{ filePath, fileSize: 666 }]);
     expect(process.stdout.write).not.toHaveBeenCalled();

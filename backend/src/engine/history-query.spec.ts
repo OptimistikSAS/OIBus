@@ -224,7 +224,7 @@ describe('HistoryQuery enabled', () => {
   it('should cache values', async () => {
     await historyQuery.start();
 
-    await historyQuery.addValues('southId', [{}, {}] as Array<OIBusTimeValue>);
+    await historyQuery.addContent('southId', { type: 'time-values', content: [{}, {}] as Array<OIBusTimeValue> });
     expect(logger.info).toHaveBeenCalledWith(`Add 2 values from History Query "${configuration.name}" to north connector`);
     expect(createdNorth.cacheValues).toHaveBeenCalledWith([{}, {}]);
   });
@@ -232,7 +232,7 @@ describe('HistoryQuery enabled', () => {
   it('should cache file', async () => {
     await historyQuery.start();
 
-    await historyQuery.addFile('southId', 'myFile');
+    await historyQuery.addContent('southId', { type: 'raw', filePath: 'myFile' });
     expect(logger.info).toHaveBeenCalledWith(`Add file "myFile" from History Query "${configuration.name}" to north connector`);
     expect(createdNorth.cacheFile).toHaveBeenCalledWith('myFile');
   });
@@ -392,12 +392,12 @@ describe('HistoryQuery disabled', () => {
   });
 
   it('should not cache values if north is not defined', async () => {
-    await historyQuery.addValues('southId', []);
+    await historyQuery.addContent('southId', { type: 'time-values', content: [] });
     expect(logger.info).not.toHaveBeenCalled();
   });
 
   it('should not cache file if north is not defined', async () => {
-    await historyQuery.addFile('southId', 'filePath');
+    await historyQuery.addContent('southId', { type: 'raw', filePath: 'filePath' });
     expect(logger.info).not.toHaveBeenCalled();
   });
 

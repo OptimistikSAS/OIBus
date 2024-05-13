@@ -53,8 +53,7 @@ jest.mock(
     }
 );
 
-const addValues = jest.fn();
-const addFile = jest.fn();
+const addContentCallback = jest.fn();
 
 const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
@@ -195,7 +194,7 @@ describe('SouthMSSQL with authentication', () => {
 
     jest.spyOn(mssql, 'ConnectionPool').mockImplementation(() => ({ connect }) as unknown as ConnectionPool);
 
-    south = new SouthMSSQL(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthMSSQL(configuration, items, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should create temp folder', async () => {
@@ -318,7 +317,7 @@ describe('SouthMSSQL without authentication', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
-    south = new SouthMSSQL(connector, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthMSSQL(connector, items, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should manage query error', async () => {
@@ -410,7 +409,7 @@ describe('SouthMSSQL test connection', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
     jest.spyOn(mssql, 'ConnectionPool').mockImplementation(() => ({ connect }) as unknown as ConnectionPool);
-    south = new SouthMSSQL(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthMSSQL(configuration, items, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('Database is reachable and has tables', async () => {

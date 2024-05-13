@@ -15,6 +15,7 @@ import fs from 'node:fs/promises';
 import AbstractController from './abstract.controller';
 import Joi from 'joi';
 import { NorthCacheSettingsDTO, NorthConnectorCommandDTO, NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
+import { OIBusContent } from '../../../../shared/model/engine.model';
 
 interface HistoryQueryWithItemsCommandDTO {
   historyQuery: HistoryQueryCommandDTO;
@@ -508,9 +509,7 @@ export default class HistoryQueryController extends AbstractController {
         command,
         [],
         /* istanbul ignore next: noop function */
-        async (_southId: string, _values: Array<any>) => {},
-        /* istanbul ignore next: noop function */
-        async (_southId: string, _filename: string) => {},
+        async (_southId: string, _content: OIBusContent) => {},
         'baseFolder',
         logger
       );

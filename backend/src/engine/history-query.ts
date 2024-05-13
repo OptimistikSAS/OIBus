@@ -14,7 +14,7 @@ import HistoryQueryService from '../service/history-query.service';
 import { PassThrough } from 'node:stream';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
-import { OIBusTimeValue } from '../../../shared/model/engine.model';
+import { OIBusContent } from '../../../shared/model/engine.model';
 
 const FINISH_INTERVAL = 5000;
 
@@ -58,14 +58,7 @@ export default class HistoryQuery {
     };
     const southFolder = path.resolve(this.baseFolder, 'south');
     await createFolder(southFolder);
-    this.south = this.southService.createSouth(
-      southConfiguration,
-      this.items,
-      this.addValues.bind(this),
-      this.addFile.bind(this),
-      southFolder,
-      this.logger
-    );
+    this.south = this.southService.createSouth(southConfiguration, this.items, this.addContent.bind(this), southFolder, this.logger);
     const northConfiguration: NorthConnectorDTO<N> = {
       id: this.historyConfiguration.id,
       name: this.historyConfiguration.name,
@@ -126,25 +119,16 @@ export default class HistoryQuery {
     await this.south.start();
   }
 
-  /**
-   * Add new values from a South connector to the Engine.
-   * The Engine will forward the values to the Cache.
-   */
-  async addValues(_historyId: string, values: Array<OIBusTimeValue>): Promise<void> {
+  async addContent(_historyId: string, data: OIBusContent) {
     if (this.north) {
-      this.logger.info(`Add ${values.length} values from History Query "${this.historyConfiguration.name}" to north connector`);
-      await this.north.cacheValues(values);
-    }
-  }
-
-  /**
-   * Add a new file from a South connector to the Engine.
-   * The Engine will forward the file to the Cache.
-   */
-  async addFile(_historyId: string, filePath: string): Promise<void> {
-    if (this.north) {
-      this.logger.info(`Add file "${filePath}" from History Query "${this.historyConfiguration.name}" to north connector`);
-      await this.north.cacheFile(filePath);
+      switch (data.type) {
+        case 'time-values':
+          this.logger.info(`Add ${data.content.length} values from History Query "${this.historyConfiguration.name}" to north connector`);
+          return await this.north.cacheValues(data.content);
+        case 'raw':
+          this.logger.info(`Add file "${data.filePath}" from History Query "${this.historyConfiguration.name}" to north connector`);
+          return await this.north.cacheFile(data.filePath);
+      }
     }
   }
 

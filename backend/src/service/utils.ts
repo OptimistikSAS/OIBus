@@ -13,7 +13,7 @@ import pino from 'pino';
 import csv from 'papaparse';
 import https from 'node:https';
 import http from 'node:http';
-import { EngineSettingsDTO, OIBusInfo, RegistrationSettingsDTO } from '../../../shared/model/engine.model';
+import { EngineSettingsDTO, OIBusContent, OIBusInfo, RegistrationSettingsDTO } from '../../../shared/model/engine.model';
 import os from 'node:os';
 import { NorthCacheFiles } from '../../../shared/model/north-connector.model';
 import EncryptionService from './encryption.service';
@@ -209,14 +209,12 @@ export const persistResults = async (
   serializationSettings: SerializationSettings,
   connectorName: string,
   baseFolder: string,
-  addFileFn: (filePath: string) => Promise<void>,
-  addValueFn: (values: Array<any>) => Promise<void>,
+  addContentFn: (data: OIBusContent) => Promise<void>,
   logger: pino.Logger
 ): Promise<void> => {
   switch (serializationSettings.type) {
     case 'json':
-      await addValueFn(data);
-      break;
+      return addContentFn({ type: 'time-values', content: data });
     case 'file':
       const filePath = path.join(
         baseFolder,
@@ -240,7 +238,7 @@ export const persistResults = async (
         }
 
         logger.debug(`Sending compressed file "${gzipPath}" to Engine`);
-        await addFileFn(gzipPath);
+        await addContentFn({ type: 'raw', filePath: gzipPath });
         try {
           await fs.unlink(gzipPath);
           logger.trace(`File "${gzipPath}" deleted`);
@@ -249,7 +247,7 @@ export const persistResults = async (
         }
       } else {
         logger.debug(`Sending file "${filePath}" to Engine`);
-        await addFileFn(filePath);
+        await addContentFn({ type: 'raw', filePath });
         try {
           await fs.unlink(filePath);
           logger.trace(`File ${filePath} deleted`);
@@ -287,7 +285,8 @@ export const persistResults = async (
         }
 
         logger.debug(`Sending compressed CSV file "${gzipPath}" to Engine`);
-        await addFileFn(gzipPath);
+        await addContentFn({ type: 'raw', filePath: gzipPath });
+
         try {
           await fs.unlink(gzipPath);
           logger.trace(`CSV file "${gzipPath}" deleted`);
@@ -296,7 +295,8 @@ export const persistResults = async (
         }
       } else {
         logger.debug(`Sending CSV file "${csvPath}" to Engine`);
-        await addFileFn(csvPath);
+        await addContentFn({ type: 'raw', filePath: csvPath });
+
         try {
           await fs.unlink(csvPath);
           logger.trace(`CSV file ${csvPath} deleted`);

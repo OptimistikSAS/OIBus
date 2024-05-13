@@ -52,8 +52,7 @@ jest.mock(
       };
     }
 );
-const addValues = jest.fn();
-const addFile = jest.fn();
+const addContentCallback = jest.fn();
 
 const logger: pino.Logger = new PinoLogger();
 
@@ -190,7 +189,7 @@ describe('SouthSlims with body', () => {
       '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
     );
 
-    south = new SouthSlims(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthSlims(configuration, items, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should test connection', async () => {
@@ -333,7 +332,7 @@ describe('SouthSlims with body and accept self signed', () => {
       '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
     );
 
-    south = new SouthSlims(connector, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthSlims(connector, items, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should test connection', async () => {
@@ -408,7 +407,7 @@ describe('SouthSlims with query params', () => {
     (utils.formatInstant as jest.Mock).mockImplementation((instant: string) => instant);
     (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
 
-    south = new SouthSlims(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthSlims(configuration, items, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should properly fetch with Body', async () => {
@@ -1030,7 +1029,7 @@ describe('SouthSlims with query params and accept self signed', () => {
     jest.clearAllMocks();
     (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
     (utils.formatInstant as jest.Mock).mockImplementation((instant: string) => instant);
-    south = new SouthSlims(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthSlims(configuration, items, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should properly fetch with Body', async () => {

@@ -20,7 +20,7 @@ import {
   SouthMQTTSettings
 } from '../../../../shared/model/south-settings.model';
 import { convertDateTimeToInstant } from '../../service/utils';
-import { OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
 
 /**
  * Class SouthMQTT - Subscribe to data topic from a MQTT broker
@@ -33,14 +33,13 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
   constructor(
     connector: SouthConnectorDTO<SouthMQTTSettings>,
     items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>>,
-    engineAddValuesCallback: (southId: string, values: Array<OIBusTimeValue>) => Promise<void>,
-    engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
+    engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(connector, items, engineAddContentCallback, encryptionService, repositoryService, logger, baseFolder);
   }
 
   override async connect(): Promise<void> {
@@ -148,29 +147,38 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
 
       switch (associatedItem.settings.valueType) {
         case 'number':
-          await this.addValues([
-            {
-              pointId: associatedItem.name,
-              timestamp: messageTimestamp,
-              data: {
-                value: message.toString()
+          await this.addContent({
+            type: 'time-values',
+            content: [
+              {
+                pointId: associatedItem.name,
+                timestamp: messageTimestamp,
+                data: {
+                  value: message.toString()
+                }
               }
-            }
-          ]);
+            ]
+          });
           break;
         case 'string':
-          await this.addValues([
-            {
-              pointId: associatedItem.name,
-              timestamp: messageTimestamp,
-              data: {
-                value: message.toString()
+          await this.addContent({
+            type: 'time-values',
+            content: [
+              {
+                pointId: associatedItem.name,
+                timestamp: messageTimestamp,
+                data: {
+                  value: message.toString()
+                }
               }
-            }
-          ]);
+            ]
+          });
           break;
         case 'json':
-          await this.addValues(this.formatValues(associatedItem, JSON.parse(message.toString()), messageTimestamp));
+          await this.addContent({
+            type: 'time-values',
+            content: this.formatValues(associatedItem, JSON.parse(message.toString()), messageTimestamp)
+          });
           break;
       }
     } catch (error) {

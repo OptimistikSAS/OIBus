@@ -66,8 +66,7 @@ jest.mock(
       };
     }
 );
-const addValues = jest.fn();
-const addFile = jest.fn();
+const addContentCallback = jest.fn();
 
 const logger: pino.Logger = new PinoLogger();
 
@@ -170,7 +169,7 @@ describe('SouthOIAnalytics with Basic auth', () => {
       '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
     );
 
-    south = new SouthOianalytics(connector, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthOianalytics(connector, items, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should test connection', async () => {
@@ -319,7 +318,7 @@ describe('SouthOIAnalytics without proxy but with accept self signed', () => {
       '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
     );
 
-    south = new SouthOianalytics(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthOianalytics(configuration, items, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should test connection', async () => {
@@ -530,7 +529,7 @@ describe('SouthOIAnalytics with proxy', () => {
       '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
     );
 
-    south = new SouthOianalytics(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthOianalytics(configuration, items, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should test connection', async () => {
@@ -610,7 +609,7 @@ describe('SouthOIAnalytics with proxy but without proxy password', () => {
       '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
     );
 
-    south = new SouthOianalytics(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthOianalytics(configuration, items, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should test connection', async () => {
@@ -698,7 +697,7 @@ describe('SouthOIAnalytics without proxy but with acceptUnauthorized', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
     (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
-    south = new SouthOianalytics(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthOianalytics(configuration, items, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
     await south.start();
   });
 
@@ -740,7 +739,7 @@ describe('SouthOIAnalytics with aad-certificate', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     (createProxyAgent as jest.Mock).mockReturnValue({});
-    south = new SouthOianalytics(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthOianalytics(configuration, items, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
     await south.start();
   });
 
@@ -801,7 +800,7 @@ describe('SouthOIAnalytics with OIA module', () => {
       useProxy: false,
       acceptUnauthorized: false
     };
-    south = new SouthOianalytics(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthOianalytics(configuration, items, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
     await south.start();
   });
 

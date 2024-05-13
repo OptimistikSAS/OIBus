@@ -59,8 +59,7 @@ jest.mock(
     }
 );
 
-const addValues = jest.fn();
-const addFile = jest.fn();
+const addContentCallback = jest.fn();
 
 const logger: pino.Logger = new PinoLogger();
 
@@ -204,7 +203,7 @@ describe('SouthModbus', () => {
       }
     });
 
-    south = new SouthModbus(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthModbus(configuration, items, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should fail to connect and try again', async () => {
@@ -361,7 +360,7 @@ describe('SouthModbus', () => {
   });
 
   it('should call readHoldingRegister method', async () => {
-    south.addValues = jest.fn();
+    south.addContent = jest.fn();
     configuration.settings.addressOffset = 'JBus';
     const item: SouthConnectorItemDTO = {
       id: 'bad',
@@ -444,7 +443,7 @@ describe('SouthModbus test connection', () => {
   }
 
   it('Connecting to socket successfully', async () => {
-    testingSouth = new SouthModbus(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    testingSouth = new SouthModbus(configuration, items, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
 
     // Mock node:net Socket constructor and the used function
     (net.Socket as unknown as jest.Mock).mockReturnValue({
@@ -480,7 +479,7 @@ describe('SouthModbus test connection', () => {
   });
 
   it('should fail to connect', async () => {
-    testingSouth = new SouthModbus(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    testingSouth = new SouthModbus(configuration, items, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
 
     const mockedEmitter = new CustomStream();
     mockedEmitter.connect = (_connectionObject: any, _callback: any) => {};
