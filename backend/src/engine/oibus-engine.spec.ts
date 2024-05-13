@@ -138,7 +138,6 @@ const createdNorth = {
   cacheValues: jest.fn(),
   cacheFile: jest.fn(),
   isSubscribed: jest.fn(),
-  isSubscribedToExternalSource: jest.fn(),
   setLogger: jest.fn(),
   updateScanMode: jest.fn(),
   getErrorFiles: jest.fn(),
@@ -225,12 +224,8 @@ describe('OIBusEngine', () => {
         reject('error');
       });
     });
-
-    createdNorth.isEnabled.mockReturnValueOnce(true).mockReturnValueOnce(false);
-    createdNorth.isSubscribed.mockReturnValue(true);
-    createdNorth.isSubscribedToExternalSource.mockReturnValue(true);
-    createdSouth.isEnabled.mockReturnValueOnce(true).mockReturnValueOnce(false);
     (southService.getSouthItems as jest.Mock).mockReturnValue(items);
+    createdNorth.isSubscribed.mockReturnValue(true);
 
     await engine.createSouth(southConnectors[0]);
     expect(southService.createSouth).toHaveBeenCalledTimes(1);
@@ -256,39 +251,27 @@ describe('OIBusEngine', () => {
     expect(logger.trace).toHaveBeenCalledWith(`North connector ${northConnectors[1].id} not set`);
 
     createdNorth.isEnabled.mockReturnValueOnce(true).mockReturnValueOnce(false);
-    await engine.addValues('southId', [{}, {}] as Array<OIBusTimeValue>);
-    await engine.addValues('southId', [{}, {}] as Array<OIBusDataValue>);
+    await engine.addContent('southId', { type: 'time-values', content: [{}, {}] as Array<OIBusTimeValue> });
+    await engine.addContent('southId', { type: 'time-values', content: [{}, {}] as Array<OIBusTimeValue> });
     expect(createdNorth.cacheValues).toHaveBeenCalledTimes(1);
     expect(createdNorth.cacheValues).toHaveBeenCalledWith([{}, {}]);
 
     createdNorth.isEnabled.mockReturnValueOnce(true).mockReturnValueOnce(false);
-    await engine.addExternalValues('externalSourceId', [{}, {}] as Array<OIBusTimeValue>);
-    await engine.addExternalValues('externalSourceId', [{}, {}] as Array<OIBusDataValue>);
+    await engine.addExternalContent('id1', { type: 'time-values', content: [{}, {}] as Array<OIBusTimeValue> });
+    await engine.addExternalContent('id1', { type: 'time-values', content: [{}, {}] as Array<OIBusTimeValue> });
     expect(createdNorth.cacheValues).toHaveBeenCalledTimes(2);
     expect(createdNorth.cacheValues).toHaveBeenCalledWith([{}, {}]);
 
     createdNorth.isEnabled.mockReturnValueOnce(true).mockReturnValueOnce(false);
-    await engine.addExternalValues(null, ['', '']);
-    await engine.addExternalValues(null, ['', '']);
-    expect(createdNorth.cacheValues).toHaveBeenCalledTimes(3);
-    expect(createdNorth.cacheValues).toHaveBeenCalledWith(['', '']);
-
-    createdNorth.isEnabled.mockReturnValueOnce(true).mockReturnValueOnce(false);
-    await engine.addFile('southId', 'filePath');
-    await engine.addFile('southId', 'filePath');
+    await engine.addContent('southId', { type: 'raw', filePath: 'filePath' });
+    await engine.addContent('southId', { type: 'raw', filePath: 'filePath' });
     expect(createdNorth.cacheFile).toHaveBeenCalledTimes(1);
     expect(createdNorth.cacheFile).toHaveBeenCalledWith('filePath');
 
     createdNorth.isEnabled.mockReturnValueOnce(true).mockReturnValueOnce(false);
-    await engine.addExternalFile('externalSourceId', 'filePath');
-    await engine.addExternalFile('externalSourceId', 'filePath');
+    await engine.addExternalContent('id1', { type: 'raw', filePath: 'filePath' });
+    await engine.addExternalContent('id1', { type: 'raw', filePath: 'filePath' });
     expect(createdNorth.cacheFile).toHaveBeenCalledTimes(2);
-    expect(createdNorth.cacheFile).toHaveBeenCalledWith('filePath');
-
-    createdNorth.isEnabled.mockReturnValueOnce(true).mockReturnValueOnce(false);
-    await engine.addExternalFile(null, 'filePath');
-    await engine.addExternalFile(null, 'filePath');
-    expect(createdNorth.cacheFile).toHaveBeenCalledTimes(3);
     expect(createdNorth.cacheFile).toHaveBeenCalledWith('filePath');
 
     await engine.getErrorFiles('northId', '2020-02-02T02:02:02.222Z', '2022-02-02T02:02:02.222Z', '');

@@ -1350,8 +1350,7 @@ describe('South connector controller', () => {
     (ctx.app.southService.createSouth as jest.Mock).mockReturnValue(createdSouth);
 
     await southConnectorController.testSouthConnection(ctx);
-    await southConnectorController.addValues('id1', []);
-    await southConnectorController.addFile('id1', 'filename');
+    await southConnectorController.addContent('id1', { type: 'time-values', content: [] });
     expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.settings, southConnectorCommand.settings);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
       southConnectorCommand.settings,
