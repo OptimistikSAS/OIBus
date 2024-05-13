@@ -66,8 +66,7 @@ jest.mock(
       };
     }
 );
-const addValues = jest.fn();
-const addFile = jest.fn();
+const addContentCallback = jest.fn();
 
 const logger: pino.Logger = new PinoLogger();
 
@@ -172,7 +171,7 @@ describe('SouthOIAnalytics with Basic auth', () => {
       '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
     );
 
-    south = new SouthOianalytics(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthOianalytics(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should test connection', async () => {
@@ -322,7 +321,7 @@ describe('SouthOIAnalytics without proxy but with accept self signed', () => {
       '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
     );
 
-    south = new SouthOianalytics(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthOianalytics(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should test connection', async () => {
@@ -534,7 +533,7 @@ describe('SouthOIAnalytics with proxy', () => {
       '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
     );
 
-    south = new SouthOianalytics(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthOianalytics(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should test connection', async () => {
@@ -615,7 +614,7 @@ describe('SouthOIAnalytics with proxy but without proxy password', () => {
       '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
     );
 
-    south = new SouthOianalytics(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthOianalytics(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should test connection', async () => {
@@ -704,7 +703,7 @@ describe('SouthOIAnalytics without proxy but with acceptUnauthorized', () => {
     repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
     (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
-    south = new SouthOianalytics(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthOianalytics(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
     await south.start();
   });
 
@@ -748,7 +747,7 @@ describe('SouthOIAnalytics with aad-certificate', () => {
     (createProxyAgent as jest.Mock).mockReturnValue({});
     repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
-    south = new SouthOianalytics(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthOianalytics(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
     await south.start();
   });
 
@@ -763,7 +762,7 @@ describe('SouthOIAnalytics with aad-certificate', () => {
     });
     const result = await south.getNetworkSettings('/endpoint');
     expect(result.headers).toEqual({ authorization: 'Bearer token' });
-    expect(result.host).toEqual(configuration.settings.specificSettings!.host);
+    expect(result.host).toEqual('https://hostname');
     expect(result.agent).toEqual({});
   });
 
@@ -810,7 +809,7 @@ describe('SouthOIAnalytics with OIA module', () => {
       useProxy: false,
       acceptUnauthorized: false
     };
-    south = new SouthOianalytics(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthOianalytics(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
     await south.start();
   });
 
