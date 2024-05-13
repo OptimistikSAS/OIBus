@@ -42,6 +42,7 @@ import oledbManifest from '../south/south-oledb/manifest';
 import piManifest from '../south/south-pi/manifest';
 import sftpManifest from '../south/south-sftp/manifest';
 import ConnectionService from './connection.service';
+import { OIBusContent } from '../../../shared/model/engine.model';
 
 const southList: Array<{ class: typeof SouthConnector<any, any>; manifest: SouthConnectorManifest }> = [
   { class: SouthFolderScanner, manifest: folderScannerManifest },
@@ -75,8 +76,7 @@ export default class SouthService {
    */
   createSouth(
     settings: SouthConnectorDTO,
-    addValues: (southId: string, values: Array<any>) => Promise<void>,
-    addFile: (southId: string, filePath: string) => Promise<void>,
+    addContent: (southId: string, data: OIBusContent) => Promise<void>,
     baseFolder: string,
     logger: pino.Logger
   ): SouthConnector {
@@ -84,9 +84,9 @@ export default class SouthService {
     if (!SouthConnector) {
       throw Error(`South connector of type ${settings.type} not installed`);
     }
-    return new SouthConnector.class(settings,
-      addValues,
-      addFile,
+    return new SouthConnector.class(
+      settings,
+      addContent,
       this.encryptionService,
       this.repositoryService,
       logger,

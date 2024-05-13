@@ -466,8 +466,7 @@ describe('Service utils', () => {
 
   describe('persistResults', () => {
     const logger: pino.Logger = new PinoLogger();
-    const addFile = jest.fn();
-    const addValues = jest.fn();
+    const addContent = jest.fn();
     const dataToWrite = [{ data1: 1 }, { data2: 2 }];
 
     describe('without compression', () => {
@@ -487,12 +486,11 @@ describe('Service utils', () => {
           'connectorName',
           'itemName',
           'myTmpFolder',
-          addFile,
-          addValues,
+          addContent,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addFile).toHaveBeenCalledWith(filePath);
+        expect(addContent).toHaveBeenCalledWith({ type: 'raw', filePath });
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledTimes(1);
       });
@@ -511,12 +509,11 @@ describe('Service utils', () => {
           'connectorName',
           'itemName',
           'myTmpFolder',
-          addFile,
-          addValues,
+          addContent,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addFile).toHaveBeenCalledWith(filePath);
+        expect(addContent).toHaveBeenCalledWith({ type: 'raw', filePath });
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledTimes(1);
       });
@@ -538,12 +535,11 @@ describe('Service utils', () => {
           'connectorName',
           'itemName',
           'myTmpFolder',
-          addFile,
-          addValues,
+          addContent,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addFile).toHaveBeenCalledWith(filePath);
+        expect(addContent).toHaveBeenCalledWith({ type: 'raw', filePath });
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledTimes(1);
         expect(logger.error).toHaveBeenCalledWith(
@@ -565,12 +561,11 @@ describe('Service utils', () => {
           'connectorName',
           'itemName',
           'myTmpFolder',
-          addFile,
-          addValues,
+          addContent,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addFile).toHaveBeenCalledWith(filePath);
+        expect(addContent).toHaveBeenCalledWith({ type: 'raw', filePath });
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledTimes(1);
         expect(logger.error).toHaveBeenCalledWith(`Error when deleting file "${filePath}" after caching it. ${new Error('unlink error')}`);
@@ -617,12 +612,11 @@ describe('Service utils', () => {
           'connectorName',
           'itemName',
           'myTmpFolder',
-          addFile,
-          addValues,
+          addContent,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addFile).toHaveBeenCalledWith(`${filePath}.gz`);
+        expect(addContent).toHaveBeenCalledWith({ type: 'raw', filePath: `${filePath}.gz` });
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledWith(`${filePath}.gz`);
         expect(fs.unlink).toHaveBeenCalledTimes(2);
@@ -639,12 +633,11 @@ describe('Service utils', () => {
           'connectorName',
           'itemName',
           'myTmpFolder',
-          addFile,
-          addValues,
+          addContent,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addFile).toHaveBeenCalledWith(`${filePath}.gz`);
+        expect(addContent).toHaveBeenCalledWith({ type: 'raw', filePath: `${filePath}.gz` });
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledWith(`${filePath}.gz`);
         expect(fs.unlink).toHaveBeenCalledTimes(2);
@@ -659,11 +652,10 @@ describe('Service utils', () => {
           'connectorName',
           'itemName',
           'myTmpFolder',
-          addFile,
-          addValues,
+          addContent,
           logger
         );
-        expect(addValues).toHaveBeenCalledWith(dataToWrite);
+        expect(addContent).toHaveBeenCalledWith({ type: 'time-values', content: dataToWrite });
       });
 
       it('should properly persists results into CSV file and log unlink errors', async () => {
@@ -683,8 +675,7 @@ describe('Service utils', () => {
           'connectorName',
           'itemName',
           'myTmpFolder',
-          addFile,
-          addValues,
+          addContent,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
@@ -693,7 +684,7 @@ describe('Service utils', () => {
         expect(logger.error).toHaveBeenCalledWith(
           `Error when deleting compressed CSV file "${filePath}.gz" after caching it. Error: unlink error`
         );
-        expect(addFile).toHaveBeenCalledWith(`${filePath}.gz`);
+        expect(addContent).toHaveBeenCalledWith({ type: 'raw', filePath: `${filePath}.gz` });
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledWith(`${filePath}.gz`);
         expect(fs.unlink).toHaveBeenCalledTimes(2);
@@ -713,8 +704,7 @@ describe('Service utils', () => {
           'connectorName',
           'itemName',
           'myTmpFolder',
-          addFile,
-          addValues,
+          addContent,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
@@ -723,7 +713,7 @@ describe('Service utils', () => {
         expect(logger.error).toHaveBeenCalledWith(
           `Error when deleting compressed file "${filePath}.gz" after caching it. Error: unlink error`
         );
-        expect(addFile).toHaveBeenCalledWith(`${filePath}.gz`);
+        expect(addContent).toHaveBeenCalledWith({ type: 'raw', filePath: `${filePath}.gz` });
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledWith(`${filePath}.gz`);
         expect(fs.unlink).toHaveBeenCalledTimes(2);

@@ -54,8 +54,7 @@ jest.mock(
       };
     }
 );
-const addValues = jest.fn();
-const addFile = jest.fn();
+const addContentCallback = jest.fn();
 
 const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
@@ -194,7 +193,7 @@ describe('SouthOracle with authentication', () => {
     (utils.generateReplacementParameters as jest.Mock).mockReturnValue([new Date(nowDateString), new Date(nowDateString)]);
     repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
-    south = new SouthOracle(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthOracle(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should create temp folder', async () => {
@@ -383,7 +382,7 @@ describe('SouthOracle without authentication but with thick mode', () => {
 
     oracledb.initOracleClient = jest.fn();
 
-    south = new SouthOracle(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthOracle(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should manage connection error', async () => {
@@ -462,7 +461,7 @@ describe('SouthOracle test connection', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
-    south = new SouthOracle(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthOracle(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('Database is reachable and has tables', async () => {
