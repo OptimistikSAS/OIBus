@@ -12,6 +12,7 @@ import {
 import { Page } from '../../../../shared/model/types';
 import JoiValidator from './validators/joi.validator';
 import fs from 'node:fs/promises';
+import { OIBusContent } from '../../../../shared/model/engine.model';
 
 export default class SouthConnectorController {
   constructor(protected readonly validator: JoiValidator) {}
@@ -96,7 +97,7 @@ export default class SouthConnectorController {
       );
       ctx.request.body!.name = southConnector ? southConnector.name : `${ctx.request.body!.type}:test-connection`;
       const logger = ctx.app.logger.child({ scopeType: 'south', scopeId: command.id, scopeName: command.name }, { level: 'silent' });
-      const southToTest = ctx.app.southService.createSouth(command, [], this.addValues, this.addFile, 'baseFolder', logger);
+      const southToTest = ctx.app.southService.createSouth(command, [], this.addContent, 'baseFolder', logger);
       await southToTest.testConnection();
 
       ctx.noContent();
@@ -504,7 +505,5 @@ export default class SouthConnectorController {
     ctx.noContent();
   }
 
-  async addValues(_southId: string, _values: Array<any>): Promise<void> {}
-
-  async addFile(_southId: string, _filename: string): Promise<void> {}
+  async addContent(_southId: string, _content: OIBusContent): Promise<void> {}
 }

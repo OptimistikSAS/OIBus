@@ -47,8 +47,7 @@ jest.mock(
       };
     }
 );
-const addValues = jest.fn();
-const addFile = jest.fn();
+const addContentCallback = jest.fn();
 
 const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
@@ -87,7 +86,7 @@ describe('SouthODBC without ODBC Library', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    south = new SouthODBC(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthODBC(configuration, items, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should throw error if library not loaded', async () => {
