@@ -132,7 +132,7 @@ describe('NorthAzureBlob without proxy', () => {
     const north = new NorthAzureBlob(configuration, encryptionService, repositoryService, logger, 'baseFolder');
 
     await north.start();
-    await north.handleFile(filePath);
+    await north.handleContent({ type: 'raw', filePath });
 
     expect(fs.stat).toHaveBeenCalledWith(filePath);
     expect(fs.readFile).toHaveBeenCalledWith(filePath);
@@ -144,6 +144,8 @@ describe('NorthAzureBlob without proxy', () => {
     expect(getContainerClientMock).toHaveBeenCalledWith(configuration.settings.container);
     expect(getBlockBlobClientMock).toHaveBeenCalledWith('example.file');
     expect(uploadMock).toHaveBeenCalledWith('content', 666);
+
+    await expect(north.handleContent({ type: 'time-values', content: [] })).rejects.toThrow(new Error(`Can not manage time values`));
   });
 
   it('should properly handle files with Access Key authentication', async () => {

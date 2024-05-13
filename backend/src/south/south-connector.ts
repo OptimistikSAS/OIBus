@@ -12,10 +12,10 @@ import DeferredPromise from '../service/deferred-promise';
 import { DateTime } from 'luxon';
 import SouthCacheService from '../service/south-cache.service';
 import { PassThrough } from 'node:stream';
-import { QueriesFile, QueriesHistory, QueriesLastPoint, QueriesSubscription, DelegatesConnection } from './south-interface';
+import { DelegatesConnection, QueriesFile, QueriesHistory, QueriesLastPoint, QueriesSubscription } from './south-interface';
 import SouthConnectorMetricsService from '../service/south-connector-metrics.service';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import { OIBusTimeValue } from '../../../shared/model/engine.model';
+import { OIBusContent, OIBusRawContent, OIBusTimeValueContent } from '../../../shared/model/engine.model';
 import path from 'node:path';
 import ConnectionService, { ManagedConnectionDTO } from '../service/connection.service';
 
@@ -60,8 +60,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
   constructor(
     protected connector: SouthConnectorDTO<T>,
     protected items: Array<SouthConnectorItemDTO<I>>,
-    private engineAddValuesCallback: (southId: string, values: Array<OIBusTimeValue>) => Promise<void>,
-    private engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
+    private engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     protected readonly encryptionService: EncryptionService,
     protected readonly repositoryService: RepositoryService,
     protected logger: pino.Logger,
@@ -415,18 +414,27 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
     return roundedProgress;
   }
 
+  async addContent(data: OIBusContent) {
+    switch (data.type) {
+      case 'time-values':
+        return this.addValues(data);
+      case 'raw':
+        return this.addFile(data);
+    }
+  }
+
   /**
    * Add new values to the South connector buffer.
    */
-  async addValues(values: Array<OIBusTimeValue>): Promise<void> {
-    if (values.length > 0 && this.connector.id !== 'test') {
-      this.logger.debug(`Add ${values.length} values to cache from South "${this.connector.name}"`);
-      await this.engineAddValuesCallback(this.connector.id, values);
+  private async addValues(data: OIBusTimeValueContent): Promise<void> {
+    if (data.content.length > 0 && this.connector.id !== 'test') {
+      this.logger.debug(`Add ${data.content.length} values to cache from South "${this.connector.name}"`);
+      await this.engineAddContentCallback(this.connector.id, data);
       const currentMetrics = this.metricsService!.metrics;
       this.metricsService!.updateMetrics(this.connector.id, {
         ...currentMetrics,
-        numberOfValuesRetrieved: currentMetrics.numberOfValuesRetrieved + values.length,
-        lastValueRetrieved: values[values.length - 1]
+        numberOfValuesRetrieved: currentMetrics.numberOfValuesRetrieved + data.content.length,
+        lastValueRetrieved: data.content[data.content.length - 1]
       });
     }
   }
@@ -434,14 +442,14 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
   /**
    * Add a new file to the Engine.
    */
-  async addFile(filePath: string): Promise<void> {
-    this.logger.debug(`Add file "${filePath}" to cache from South "${this.connector.name}"`);
-    await this.engineAddFileCallback(this.connector.id, filePath);
+  private async addFile(data: OIBusRawContent): Promise<void> {
+    this.logger.debug(`Add file "${data.filePath}" to cache from South "${this.connector.name}"`);
+    await this.engineAddContentCallback(this.connector.id, data);
     const currentMetrics = this.metricsService!.metrics;
     this.metricsService!.updateMetrics(this.connector.id, {
       ...currentMetrics,
       numberOfFilesRetrieved: currentMetrics.numberOfFilesRetrieved + 1,
-      lastFileRetrieved: path.parse(filePath).base
+      lastFileRetrieved: path.parse(data.filePath).base
     });
   }
 
