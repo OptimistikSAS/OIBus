@@ -40,6 +40,7 @@ import opchdaManifest from '../south/south-opchda/manifest';
 import oledbManifest from '../south/south-oledb/manifest';
 import piManifest from '../south/south-pi/manifest';
 import ConnectionService from './connection.service';
+import { OIBusContent } from '../../../shared/model/engine.model';
 
 const southList: Array<{ class: typeof SouthConnector<any, any>; manifest: SouthConnectorManifest }> = [
   { class: SouthFolderScanner, manifest: folderScannerManifest },
@@ -73,8 +74,7 @@ export default class SouthService {
   createSouth(
     settings: SouthConnectorDTO,
     items: Array<SouthConnectorItemDTO>,
-    addValues: (southId: string, values: Array<any>) => Promise<void>,
-    addFile: (southId: string, filePath: string) => Promise<void>,
+    addContent: (southId: string, data: OIBusContent) => Promise<void>,
     baseFolder: string,
     logger: pino.Logger
   ): SouthConnector {
@@ -85,8 +85,7 @@ export default class SouthService {
     return new SouthConnector.class(
       settings,
       items,
-      addValues,
-      addFile,
+      addContent,
       this.encryptionService,
       this.repositoryService,
       logger,

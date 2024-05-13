@@ -1,6 +1,7 @@
 import OIBusEngine from '../engine/oibus-engine';
 import HistoryQueryEngine from '../engine/history-query-engine';
 import pino from 'pino';
+import { OIBusContent } from '../../../shared/model/engine.model';
 
 export default class OIBusService {
   constructor(
@@ -20,12 +21,8 @@ export default class OIBusService {
     await this.historyEngine.stop();
   }
 
-  async addValues(externalSourceId: string | null, values: Array<any>): Promise<void> {
-    await this.engine.addExternalValues(externalSourceId, values);
-  }
-
-  async addFile(externalSourceId: string | null, filePath: string): Promise<void> {
-    await this.engine.addExternalFile(externalSourceId, filePath);
+  async addExternalContent(northId: string, content: OIBusContent): Promise<void> {
+    await this.engine.addExternalContent(northId, content);
   }
 
   setLogger(logger: pino.Logger) {
