@@ -61,6 +61,20 @@ const engineSchema: Joi.ObjectSchema = Joi.object({
   })
 });
 
+const contentSchema: Joi.ObjectSchema = Joi.object({
+  type: Joi.string().required().allow('raw', 'time-values'),
+  content: Joi.array().when('type', {
+    is: Joi.string().valid('time-values'),
+    then: Joi.required(),
+    otherwise: Joi.allow('').optional()
+  }),
+  filePath: Joi.string().when('type', {
+    is: Joi.string().valid('raw'),
+    then: Joi.required(),
+    otherwise: Joi.allow('').optional()
+  })
+});
+
 const registrationSchema: Joi.ObjectSchema = Joi.object({
   host: Joi.string().required(),
   acceptUnauthorized: Joi.boolean().required(),
@@ -129,5 +143,6 @@ export {
   userSchema,
   historyQuerySchema,
   logSchema,
-  commandSchema
+  commandSchema,
+  contentSchema
 };

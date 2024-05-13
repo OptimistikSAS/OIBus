@@ -55,8 +55,7 @@ jest.mock(
       };
     }
 );
-const addValues = jest.fn();
-const addFile = jest.fn();
+const addContentCallback = jest.fn();
 
 const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
@@ -183,7 +182,7 @@ describe('SouthSQLite', () => {
 
     (utils.generateReplacementParameters as jest.Mock).mockReturnValue([new Date(nowDateString), new Date(nowDateString)]);
 
-    south = new SouthSQLite(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthSQLite(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should create temp folder', async () => {
@@ -280,8 +279,7 @@ describe('SouthSQLite test connection', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
-
-    south = new SouthSQLite(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthSQLite(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   const dbPath = path.resolve(configuration.settings.databasePath);

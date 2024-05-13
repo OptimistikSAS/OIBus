@@ -51,8 +51,7 @@ jest.mock(
     }
 );
 
-const addValues = jest.fn();
-const addFile = jest.fn();
+const addContentCallback = jest.fn();
 
 const logger: pino.Logger = new PinoLogger();
 
@@ -127,7 +126,7 @@ describe('SouthFolderScanner', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
-    south = new SouthFolderScanner(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthFolderScanner(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('fileQuery should manage file query', async () => {
@@ -183,7 +182,7 @@ describe('SouthFolderScanner', () => {
   });
 
   it('should properly send file', async () => {
-    south.addFile = jest.fn();
+    south.addContent = jest.fn();
     south.updateModifiedTime = jest.fn();
     (fs.unlink as jest.Mock)
       .mockImplementationOnce(() => null)
@@ -192,7 +191,7 @@ describe('SouthFolderScanner', () => {
       });
     await south.sendFile(items[0], 'myFile1');
 
-    expect(south.addFile).toHaveBeenCalledTimes(1);
+    expect(south.addContent).toHaveBeenCalledTimes(1);
     expect(logger.info).toHaveBeenCalledWith(`Sending file "${path.resolve(configuration.settings.inputFolder, 'myFile1')}" to the engine`);
     expect(fs.unlink).toHaveBeenCalledTimes(1);
     expect(logger.error).not.toHaveBeenCalled();
@@ -234,7 +233,8 @@ describe('SouthFolderScanner with preserve file and compression', () => {
     }));
     configuration.settings.compression = true;
     repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
-    south = new SouthFolderScanner(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    south = new SouthFolderScanner(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
     await south.start();
   });
 
@@ -255,7 +255,7 @@ describe('SouthFolderScanner with preserve file and compression', () => {
   it('should properly send compressed file', async () => {
     const mtimeMs = new Date('2020-02-02T02:02:02.222Z').getTime();
 
-    south.addFile = jest.fn();
+    south.addContent = jest.fn();
     south.updateModifiedTime = jest.fn();
     (fs.unlink as jest.Mock)
       .mockImplementationOnce(() => null)
@@ -270,7 +270,7 @@ describe('SouthFolderScanner with preserve file and compression', () => {
       path.resolve(configuration.settings.inputFolder, 'myFile1'),
       `${path.resolve('baseFolder', 'tmp', 'myFile1')}.gz`
     );
-    expect(south.addFile).toHaveBeenCalledWith(`${path.resolve('baseFolder', 'tmp', 'myFile1')}.gz`);
+    expect(south.addContent).toHaveBeenCalledWith({ type: 'raw', filePath: `${path.resolve('baseFolder', 'tmp', 'myFile1')}.gz` });
     expect(fs.unlink).toHaveBeenCalledWith(`${path.resolve('baseFolder', 'tmp', 'myFile1')}.gz`);
     expect(logger.error).not.toHaveBeenCalled();
     expect(south.updateModifiedTime).toHaveBeenCalledWith('myFile1', mtimeMs);
@@ -300,7 +300,7 @@ describe('SouthFolderScanner with preserve file ignore modified date', () => {
     configuration.settings.compression = false;
     repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
-    south = new SouthFolderScanner(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthFolderScanner(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should properly check age with ignore modified date', async () => {
@@ -321,7 +321,7 @@ describe('SouthFolderScanner test connection', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
     repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
-    south = new SouthFolderScanner(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthFolderScanner(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('Folder does not exist', async () => {

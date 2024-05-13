@@ -45,8 +45,7 @@ jest.mock(
     }
 );
 
-const addValues = jest.fn();
-const addFile = jest.fn();
+const addContentCallback = jest.fn();
 
 const logger: pino.Logger = new PinoLogger();
 const flushPromises = () => new Promise(jest.requireActual('timers').setImmediate);
@@ -103,7 +102,7 @@ describe('South PI', () => {
     jest.useFakeTimers();
     repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
-    south = new SouthPi(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthPi(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should properly connect to remote agent and disconnect ', async () => {
@@ -223,7 +222,7 @@ describe('South PI', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
 
-    south.addValues = jest.fn();
+    south.addContent = jest.fn();
     (fetch as unknown as jest.Mock)
       .mockReturnValueOnce(
         Promise.resolve({
@@ -266,7 +265,10 @@ describe('South PI', () => {
     });
 
     expect(result).toEqual('2020-03-01T00:00:00.000Z');
-    expect(south.addValues).toHaveBeenCalledWith([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
+    expect(south.addContent).toHaveBeenCalledWith({
+      type: 'time-values',
+      content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
+    });
     expect(logger.warn).toHaveBeenCalledWith('log1');
     expect(logger.warn).toHaveBeenCalledWith('log2');
 
