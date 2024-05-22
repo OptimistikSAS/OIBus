@@ -34,9 +34,7 @@ export default jest.fn().mockImplementation(() => ({
   onCreateOrUpdateHistoryQueryItems: jest.fn(),
   onCreateHistoryItem: jest.fn(),
   onCreateNorthSubscription: jest.fn(),
-  onCreateExternalNorthSubscription: jest.fn(),
   onDeleteNorthSubscription: jest.fn(),
-  onDeleteExternalNorthSubscription: jest.fn(),
   onUpdateScanMode: jest.fn(),
   restartLogger: jest.fn(),
   oibusEngine: {
