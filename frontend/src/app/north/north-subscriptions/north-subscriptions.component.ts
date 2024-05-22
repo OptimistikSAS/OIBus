@@ -1,17 +1,15 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { NgForOf, NgIf } from '@angular/common';
-import { combineLatest, Observable, of, switchMap, tap } from 'rxjs';
+import { combineLatest, of, switchMap, tap } from 'rxjs';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 import { TranslateModule } from '@ngx-translate/core';
-import { ExternalSubscriptionDTO, OIBusSubscription, SubscriptionDTO } from '../../../../../shared/model/subscription.model';
+import { OIBusSubscription, SubscriptionDTO } from '../../../../../shared/model/subscription.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { NorthConnectorDTO } from '../../../../../shared/model/north-connector.model';
 import { SouthConnectorDTO } from '../../../../../shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
-import { ExternalSourceService } from '../../services/external-source.service';
-import { ExternalSourceDTO } from '../../../../../shared/model/external-sources.model';
 import { CreateNorthSubscriptionModalComponent } from '../create-north-subscription-modal/create-north-subscription-modal.component';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
@@ -36,14 +34,12 @@ export class NorthSubscriptionsComponent implements OnInit {
   subscriptionsToDelete: Array<OIBusSubscription> = [];
 
   southConnectors: Array<SouthConnectorDTO> = [];
-  externalSources: Array<ExternalSourceDTO> = [];
 
   constructor(
     private confirmationService: ConfirmationService,
     private modalService: ModalService,
     private notificationService: NotificationService,
     private northConnectorService: NorthConnectorService,
-    private externalSourceService: ExternalSourceService,
     private southConnectorService: SouthConnectorService
   ) {}
 
@@ -53,24 +49,17 @@ export class NorthSubscriptionsComponent implements OnInit {
 
   fetchSubscriptionsAndResetPage(fromMemory: boolean) {
     if (this.northConnector && !fromMemory) {
-      combineLatest([
-        this.northConnectorService.getSubscriptions(this.northConnector.id),
-        this.northConnectorService.getExternalSubscriptions(this.northConnector.id),
-        this.southConnectorService.list(),
-        this.externalSourceService.list()
-      ]).subscribe(([subscriptions, externalSubscriptions, southConnectors, externalSources]) => {
-        this.southConnectors = southConnectors;
-        this.externalSources = externalSources;
-        this.createSubscriptionList(subscriptions, externalSubscriptions);
-        this.inMemorySubscriptions.emit({ subscriptions: this.subscriptions, subscriptionsToDelete: this.subscriptionsToDelete });
-      });
-    } else {
-      combineLatest([this.southConnectorService.list(), this.externalSourceService.list()]).subscribe(
-        ([southConnectors, externalSources]) => {
+      combineLatest([this.northConnectorService.getSubscriptions(this.northConnector.id), this.southConnectorService.list()]).subscribe(
+        ([subscriptions, southConnectors]) => {
           this.southConnectors = southConnectors;
-          this.externalSources = externalSources;
+          this.createSubscriptionList(subscriptions);
+          this.inMemorySubscriptions.emit({ subscriptions: this.subscriptions, subscriptionsToDelete: this.subscriptionsToDelete });
         }
       );
+    } else {
+      this.southConnectorService.list().subscribe(southConnectors => {
+        this.southConnectors = southConnectors;
+      });
       this.inMemorySubscriptions.emit({ subscriptions: this.subscriptions, subscriptionsToDelete: this.subscriptionsToDelete });
     }
   }
@@ -84,10 +73,7 @@ export class NorthSubscriptionsComponent implements OnInit {
     const component: CreateNorthSubscriptionModalComponent = modalRef.componentInstance;
 
     component.prepareForCreation(
-      this.southConnectors.filter(south => !this.subscriptions.some(subscription => subscription.subscription?.id === south.id)),
-      this.externalSources.filter(
-        externalSource => !this.subscriptions.some(subscription => subscription.externalSubscription?.id === externalSource.id)
-      )
+      this.southConnectors.filter(south => !this.subscriptions.some(subscription => subscription.subscription?.id === south.id))
     );
     this.refreshAfterAddSubscriptionModalClosed(modalRef);
   }
@@ -100,38 +86,22 @@ export class NorthSubscriptionsComponent implements OnInit {
       .pipe(
         switchMap((subscription: OIBusSubscription) => {
           if (!this.inMemory) {
-            let obs: Observable<void>;
-            if (subscription.type === 'south') {
-              obs = this.northConnectorService.createSubscription(this.northConnector!.id, subscription.subscription!.id).pipe(
+            return this.northConnectorService
+              .createSubscription(this.northConnector!.id, subscription.subscription!.id)
+              .pipe(
                 tap(() =>
                   this.notificationService.success(`north.subscriptions.south.created`, {
                     name: subscription.subscription!.name
                   })
                 )
+              )
+              .pipe(
+                switchMap(() => this.northConnectorService.getSubscriptions(this.northConnector!.id)),
+                switchMap(subscriptions => {
+                  this.createSubscriptionList(subscriptions);
+                  return of(null);
+                })
               );
-            } else {
-              obs = this.northConnectorService
-                .createExternalSubscription(this.northConnector!.id, subscription.externalSubscription!.id)
-                .pipe(
-                  tap(() =>
-                    this.notificationService.success(`north.subscriptions.external-source.created`, {
-                      name: subscription.externalSubscription!.reference
-                    })
-                  )
-                );
-            }
-            return obs.pipe(
-              switchMap(() =>
-                combineLatest([
-                  this.northConnectorService.getSubscriptions(this.northConnector!.id),
-                  this.northConnectorService.getExternalSubscriptions(this.northConnector!.id)
-                ])
-              ),
-              switchMap(([subscriptions, externalSubscriptions]) => {
-                this.createSubscriptionList(subscriptions, externalSubscriptions);
-                return of(null);
-              })
-            );
           } else {
             this.subscriptions.push(subscription);
             return of(null);
@@ -151,16 +121,13 @@ export class NorthSubscriptionsComponent implements OnInit {
       .confirm({
         messageKey: `north.subscriptions.${subscription.type}.confirm-deletion`,
         interpolateParams: {
-          name: subscription.type === 'south' ? subscription.subscription!.name : subscription.externalSubscription!.reference
+          name: subscription.subscription.name
         }
       })
       .pipe(
         switchMap(() => {
           if (!this.inMemory) {
-            if (subscription.type === 'south') {
-              return this.northConnectorService.deleteSubscription(this.northConnector!.id, subscription.subscription!.id);
-            }
-            return this.northConnectorService.deleteExternalSubscription(this.northConnector!.id, subscription.externalSubscription!.id);
+            return this.northConnectorService.deleteSubscription(this.northConnector!.id, subscription.subscription!.id);
           } else {
             this.subscriptionsToDelete.push(subscription);
             return of(null);
@@ -168,16 +135,11 @@ export class NorthSubscriptionsComponent implements OnInit {
         })
       )
       .subscribe(() => {
-        this.subscriptions = this.subscriptions.filter(
-          element =>
-            element.type !== subscription.type ||
-            (element.type === subscription.type &&
-              ((subscription.type === 'south' && element.subscription?.id !== subscription.subscription?.id) ||
-                (subscription.type === 'external-source' && element.externalSubscription?.id !== subscription.externalSubscription?.id)))
-        );
+        this.subscriptions = this.subscriptions.filter(element => element.subscription.id !== subscription.subscription.id);
+
         if (!this.inMemory) {
           this.notificationService.success(`north.subscriptions.${subscription.type}.deleted`, {
-            name: subscription.type === 'south' ? subscription.subscription!.name : subscription.externalSubscription!.reference
+            name: subscription.subscription.name
           });
         } else {
           this.fetchSubscriptionsAndResetPage(true);
@@ -185,18 +147,12 @@ export class NorthSubscriptionsComponent implements OnInit {
       });
   }
 
-  private createSubscriptionList(subscriptions: Array<SubscriptionDTO>, externalSubscriptions: Array<ExternalSubscriptionDTO>) {
+  private createSubscriptionList(subscriptions: Array<SubscriptionDTO>) {
     this.subscriptions = [];
     subscriptions.forEach(subscription => {
       const southConnector = this.southConnectors.find(south => south.id === subscription);
       if (southConnector) {
         this.subscriptions.push({ type: 'south', subscription: southConnector });
-      }
-    });
-    externalSubscriptions.forEach(subscription => {
-      const foundExternalSource = this.externalSources.find(externalSource => externalSource.id === subscription);
-      if (foundExternalSource) {
-        this.subscriptions.push({ type: 'external-source', externalSubscription: foundExternalSource });
       }
     });
   }
