@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-
+import { NgForOf, NgIf } from '@angular/common';
 import { combineLatest, of, switchMap, tap } from 'rxjs';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';

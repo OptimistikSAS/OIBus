@@ -117,6 +117,68 @@
           <oib-certificate-list></oib-certificate-list>
         </div>
       </div>
+
+      <!-- Engine metrics -->
+      <oib-engine-metrics *ngIf="metrics" [metrics]="metrics"></oib-engine-metrics>
+
+      <oib-box boxTitle="engine.general-settings.title">
+        <table class="table table-sm table-hover oib-table mb-3">
+          <tbody class="general-settings">
+            <tr>
+              <td class="first-column-body" translate="engine.general-settings.name"></td>
+              <td class="last-column-body">{{ engineSettings.name }}</td>
+            </tr>
+            <tr>
+              <td class="first-column-body" translate="engine.general-settings.port"></td>
+              <td class="last-column-body">{{ engineSettings.port }}</td>
+            </tr>
+            <tr>
+              <td class="first-column-body" translate="engine.general-settings.log-levels"></td>
+              <td class="last-column-body">
+                <span
+                  translate="engine.general-settings.console"
+                  [translateParams]="{ level: engineSettings.logParameters.console.level }"
+                ></span>
+                <span class="mx-1">|</span>
+                <span
+                  translate="engine.general-settings.file"
+                  [translateParams]="{ level: engineSettings.logParameters.file.level }"
+                ></span>
+                <span class="mx-1">|</span>
+                <span
+                  translate="engine.general-settings.database"
+                  [translateParams]="{ level: engineSettings.logParameters.database.level }"
+                ></span>
+                <span class="mx-1">|</span>
+                <span
+                  translate="engine.general-settings.loki"
+                  [translateParams]="{ level: engineSettings.logParameters.loki.level }"
+                ></span>
+                <span class="mx-1">|</span>
+                <span translate="engine.general-settings.oia" [translateParams]="{ level: engineSettings.logParameters.oia.level }"></span>
+              </td>
+            </tr>
+            <tr>
+              <td class="first-column-body" translate="engine.proxy-settings.title"></td>
+              <td
+                class="last-column-body"
+                *ngIf="engineSettings.proxyEnabled"
+                translate="engine.proxy-settings.enabled-details"
+                [translateParams]="{ port: engineSettings.proxyPort }"
+              ></td>
+              <td class="last-column-body" *ngIf="!engineSettings.proxyEnabled" translate="engine.proxy-settings.disabled-details"></td>
+            </tr>
+          </tbody>
+        </table>
+      </oib-box>
+
+      <oib-scan-mode-list></oib-scan-mode-list>
+      <div class="mt-2">
+        <oib-ip-filter-list></oib-ip-filter-list>
+      </div>
+      <div class="mt-2">
+        <oib-certificate-list></oib-certificate-list>
+      </div>
     </div>
   </div>
 }

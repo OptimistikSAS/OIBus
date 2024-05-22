@@ -5,7 +5,7 @@ import { ObservableState, SaveButtonComponent } from '../../shared/save-button/s
 import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
 import { SouthConnectorDTO } from '../../../../../shared/model/south-connector.model';
-
+import { NgForOf, NgIf } from '@angular/common';
 import { OIBusSubscription } from '../../../../../shared/model/subscription.model';
 
 @Component({

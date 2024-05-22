@@ -4,7 +4,6 @@ import multer from '@koa/multer';
 
 import LogController from '../controllers/log.controller';
 import ScanModeController from '../controllers/scan-mode.controller';
-import ExternalSourceController from '../controllers/external-source.controller';
 import EngineController from '../controllers/engine.controller';
 import IpFilterController from '../controllers/ip-filter.controller';
 import NorthConnectorController from '../controllers/north-connector.controller';
@@ -36,7 +35,6 @@ const joiValidator = new JoiValidator();
 const scanModeController = new ScanModeController(joiValidator, scanModeSchema);
 const certificateController = new CertificateController(joiValidator, certificateSchema);
 const commandController = new CommandController(joiValidator, commandSchema);
-const externalSourceController = new ExternalSourceController(joiValidator, externalSourceSchema);
 const engineController = new EngineController(joiValidator, engineSchema);
 const contentController = new ContentController(joiValidator, contentSchema);
 const registrationController = new RegistrationController(joiValidator, registrationSchema);
@@ -77,12 +75,6 @@ router.get('/api/certificates/:id', (ctx: KoaContext<any, any>) => certificateCo
 router.post('/api/certificates', (ctx: KoaContext<any, any>) => certificateController.create(ctx));
 router.put('/api/certificates/:id', (ctx: KoaContext<any, any>) => certificateController.update(ctx));
 router.delete('/api/certificates/:id', (ctx: KoaContext<any, any>) => certificateController.delete(ctx));
-
-router.get('/api/external-sources', (ctx: KoaContext<any, any>) => externalSourceController.getExternalSources(ctx));
-router.get('/api/external-sources/:id', (ctx: KoaContext<any, any>) => externalSourceController.getExternalSource(ctx));
-router.post('/api/external-sources', (ctx: KoaContext<any, any>) => externalSourceController.createExternalSource(ctx));
-router.put('/api/external-sources/:id', (ctx: KoaContext<any, any>) => externalSourceController.updateExternalSource(ctx));
-router.delete('/api/external-sources/:id', (ctx: KoaContext<any, any>) => externalSourceController.deleteExternalSource(ctx));
 
 router.get('/api/engine', (ctx: KoaContext<any, any>) => engineController.getEngineSettings(ctx));
 router.put('/api/engine', (ctx: KoaContext<any, any>) => engineController.updateEngineSettings(ctx));

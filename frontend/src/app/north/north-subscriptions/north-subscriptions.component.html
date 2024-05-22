@@ -19,42 +19,42 @@
         }
       </div>
       <div>
-        @if (southConnectors.length !== subscriptions.length) {
-          <button class="btn btn-primary btn-sm oib-box-btn" (click)="addSubscription($event)" translate="north.subscriptions.add"></button>
-        }
+        <button
+          class="btn btn-primary btn-sm oib-box-btn"
+          *ngIf="southConnectors.length !== subscriptions.length"
+          (click)="addSubscription($event)"
+          translate="north.subscriptions.add"
+        ></button>
         <oib-help url="https://oibus.optimistik.com/docs/guide/north-connectors/common-settings#subscriptions"></oib-help>
       </div>
     </div>
   </ng-template>
 
-  @if (subscriptions.length !== 0) {
-    <div class="mb-3">
-      <table class="table table-sm table-hover oib-table">
-        <thead class="light">
-          <tr>
-            <th translate="north.subscriptions.name"></th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (subscription of subscriptions; track subscription) {
-            <tr>
-              <td>{{ 'north.subscriptions.' + subscription.type + '.title' | translate }}</td>
-              <td>{{ subscription.subscription.name }}</td>
-              <td class="text-nowrap action-buttons">
-                <div class="pull-right">
-                  <!-- Delete button -->
-                  <button type="button" class="btn btn-link delete-scan-mode px-1 py-0" (click)="deleteSubscription(subscription)">
-                    <span class="fa fa-trash"></span>
-                  </button>
-                </div>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  } @else {
+  <div class="mb-3" *ngIf="subscriptions.length !== 0; else emptySubscriptions">
+    <table class="table table-sm table-hover oib-table">
+      <thead class="light">
+        <tr>
+          <th translate="north.subscriptions.name"></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let subscription of subscriptions">
+          <td>{{ 'north.subscriptions.' + subscription.type + '.title' | translate }}</td>
+          <td>{{ subscription.subscription.name }}</td>
+          <td class="text-nowrap action-buttons">
+            <div class="pull-right">
+              <!-- Delete button -->
+              <button type="button" class="btn btn-link delete-scan-mode px-1 py-0" (click)="deleteSubscription(subscription)">
+                <span class="fa fa-trash"></span>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <ng-template #emptySubscriptions>
     <div class="mb-3 oib-grey-container" id="no-subscription" translate="north.subscriptions.none"></div>
   }
 </oib-box>
