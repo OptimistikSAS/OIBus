@@ -9,13 +9,11 @@ import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { ScanModeListComponent } from './scan-mode-list/scan-mode-list.component';
-import { ExternalSourceListComponent } from './external-source-list/external-source-list.component';
 import { IpFilterListComponent } from './ip-filter-list/ip-filter-list.component';
 import { ConfirmationService } from '../shared/confirmation.service';
 import { NotificationService } from '../shared/notification.service';
 import { ScanModeService } from '../services/scan-mode.service';
 import { IpFilterService } from '../services/ip-filter.service';
-import { ExternalSourceService } from '../services/external-source.service';
 
 class EngineComponentTester extends ComponentTester<EngineDetailComponent> {
   constructor() {
@@ -32,10 +30,6 @@ class EngineComponentTester extends ComponentTester<EngineDetailComponent> {
 
   get scanModeList() {
     return this.element(ScanModeListComponent);
-  }
-
-  get externalSourceList() {
-    return this.element(ExternalSourceListComponent);
   }
 
   get ipFilterList() {
@@ -56,7 +50,6 @@ describe('EngineDetailComponent', () => {
   let engineService: jasmine.SpyObj<EngineService>;
   let scanModeService: jasmine.SpyObj<ScanModeService>;
   let ipFilterService: jasmine.SpyObj<IpFilterService>;
-  let externalSourceService: jasmine.SpyObj<ExternalSourceService>;
   let confirmationService: jasmine.SpyObj<ConfirmationService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
 
@@ -89,7 +82,6 @@ describe('EngineDetailComponent', () => {
     engineService = createMock(EngineService);
     scanModeService = createMock(ScanModeService);
     ipFilterService = createMock(IpFilterService);
-    externalSourceService = createMock(ExternalSourceService);
     confirmationService = createMock(ConfirmationService);
     notificationService = createMock(NotificationService);
 
@@ -101,7 +93,6 @@ describe('EngineDetailComponent', () => {
         { provide: EngineService, useValue: engineService },
         { provide: ScanModeService, useValue: scanModeService },
         { provide: IpFilterService, useValue: ipFilterService },
-        { provide: ExternalSourceService, useValue: externalSourceService },
         { provide: ConfirmationService, useValue: confirmationService },
         { provide: NotificationService, useValue: notificationService }
       ]
@@ -110,7 +101,6 @@ describe('EngineDetailComponent', () => {
     engineService.getEngineSettings.and.returnValue(of(engineSettings));
     scanModeService.list.and.returnValue(of([]));
     ipFilterService.list.and.returnValue(of([]));
-    externalSourceService.list.and.returnValue(of([]));
 
     tester = new EngineComponentTester();
     tester.detectChanges();
@@ -132,7 +122,6 @@ describe('EngineDetailComponent', () => {
     expect(table[3]).toContainText('Proxy serverEnabled on port 8888');
 
     expect(tester.scanModeList).toBeDefined();
-    expect(tester.externalSourceList).toBeDefined();
     expect(tester.ipFilterList).toBeDefined();
   });
 
