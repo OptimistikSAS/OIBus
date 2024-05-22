@@ -16,7 +16,7 @@
       <div>
         <button
           class="btn btn-primary btn-sm oib-box-btn"
-          *ngIf="externalSources.length + southConnectors.length !== subscriptions.length"
+          *ngIf="southConnectors.length !== subscriptions.length"
           (click)="addSubscription($event)"
           translate="north.subscriptions.add"
         ></button>
@@ -29,7 +29,6 @@
     <table class="table table-sm table-hover oib-table">
       <thead class="light">
         <tr>
-          <th translate="north.subscriptions.type" style="width: 17%"></th>
           <th translate="north.subscriptions.name"></th>
           <th></th>
         </tr>
@@ -37,8 +36,7 @@
       <tbody>
         <tr *ngFor="let subscription of subscriptions">
           <td>{{ 'north.subscriptions.' + subscription.type + '.title' | translate }}</td>
-          <td *ngIf="subscription.type === 'south'">{{ subscription.subscription!.name }}</td>
-          <td *ngIf="subscription.type === 'external-source'">{{ subscription.externalSubscription!.reference }}</td>
+          <td>{{ subscription.subscription.name }}</td>
           <td class="text-nowrap action-buttons">
             <div class="pull-right">
               <!-- Delete button -->

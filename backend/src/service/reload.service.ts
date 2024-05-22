@@ -286,18 +286,8 @@ export default class ReloadService {
     this.oibusEngine.updateNorthConnectorSubscriptions(northId);
   }
 
-  async onCreateExternalNorthSubscription(northId: string, externalSourceId: string): Promise<void> {
-    this.repositoryService.subscriptionRepository.createExternalNorthSubscription(northId, externalSourceId);
-    this.oibusEngine.updateNorthConnectorSubscriptions(northId);
-  }
-
   async onDeleteNorthSubscription(northId: string, southId: string): Promise<void> {
     this.repositoryService.subscriptionRepository.deleteNorthSubscription(northId, southId);
-    this.oibusEngine.updateNorthConnectorSubscriptions(northId);
-  }
-
-  async onDeleteExternalNorthSubscription(northId: string, externalSourceId: string): Promise<void> {
-    this.repositoryService.subscriptionRepository.deleteExternalNorthSubscription(northId, externalSourceId);
     this.oibusEngine.updateNorthConnectorSubscriptions(northId);
   }
 

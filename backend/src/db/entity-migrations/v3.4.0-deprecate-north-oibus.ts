@@ -6,9 +6,13 @@ import { filesExists } from '../../service/utils';
 import fs from 'node:fs/promises';
 import { HISTORY_ITEMS_TABLE } from '../../repository/history-query-item.repository';
 
+const EXTERNAL_SOURCES_TABLE = 'external_sources';
+const EXTERNAL_SUBSCRIPTION_TABLE = 'external_subscription';
+
 export async function up(knex: Knex): Promise<void> {
   await removeNorthOIBusConnectors(knex);
   await removeNorthOIBusHistoryQueries(knex);
+  await removeExternalSubscriptions(knex);
 }
 
 async function removeNorthOIBusConnectors(knex: Knex): Promise<void> {
@@ -37,6 +41,11 @@ async function removeNorthOIBusHistoryQueries(knex: Knex): Promise<void> {
     }
   }
   await knex(HISTORY_QUERIES_TABLE).delete().where('north_type', 'oibus');
+}
+
+async function removeExternalSubscriptions(knex: Knex): Promise<void> {
+  await knex.schema.dropTableIfExists(EXTERNAL_SUBSCRIPTION_TABLE);
+  await knex.schema.dropTableIfExists(EXTERNAL_SOURCES_TABLE);
 }
 
 export async function down(): Promise<void> {}
