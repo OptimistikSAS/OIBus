@@ -1,7 +1,6 @@
 import Database from 'better-sqlite3';
 
 import EngineRepository from '../repository/engine.repository';
-import ExternalSourceRepository from '../repository/external-source.repository';
 import IpFilterRepository from '../repository/ip-filter.repository';
 import ScanModeRepository from '../repository/scan-mode.repository';
 import SouthConnectorRepository from '../repository/south-connector.repository';
@@ -24,7 +23,6 @@ import CommandRepository from '../repository/command.repository';
 export default class RepositoryService {
   private readonly _engineRepository: EngineRepository;
   private readonly _cryptoRepository: CryptoRepository;
-  private readonly _externalSourceRepository: ExternalSourceRepository;
   private readonly _ipFilterRepository: IpFilterRepository;
   private readonly _scanModeRepository: ScanModeRepository;
   private readonly _certificateRepository: CertificateRepository;
@@ -49,7 +47,6 @@ export default class RepositoryService {
     const cryptoDatabase = Database(cryptoDatabasePath);
     const cacheDatabase = Database(cacheDatabasePath);
 
-    this._externalSourceRepository = new ExternalSourceRepository(oibusDatabase);
     this._ipFilterRepository = new IpFilterRepository(oibusDatabase);
     this._scanModeRepository = new ScanModeRepository(oibusDatabase);
     this._certificateRepository = new CertificateRepository(oibusDatabase);
@@ -110,10 +107,6 @@ export default class RepositoryService {
 
   get engineRepository(): EngineRepository {
     return this._engineRepository;
-  }
-
-  get externalSourceRepository(): ExternalSourceRepository {
-    return this._externalSourceRepository;
   }
 
   get ipFilterRepository(): IpFilterRepository {
