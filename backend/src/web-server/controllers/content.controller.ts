@@ -4,15 +4,7 @@ import AbstractController from './abstract.controller';
 
 export default class ContentController extends AbstractController {
   async addContent(ctx: KoaContext<OIBusContent, void>): Promise<void> {
-    const { name, northId } = ctx.request.query;
-    if (!name) {
-      return ctx.badRequest();
-    }
-    const externalSource = ctx.app.repositoryService.externalSourceRepository.findExternalSourceByReference(name as string);
-    if (!externalSource) {
-      ctx.app.logger.info(`External source "${name}" not found`);
-      return ctx.badRequest();
-    }
+    const { northId } = ctx.request.query;
 
     const ids = [];
     if (typeof northId === 'string') {

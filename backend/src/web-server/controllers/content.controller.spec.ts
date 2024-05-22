@@ -32,47 +32,18 @@ describe('Content controller', () => {
 
   it('should add values', async () => {
     ctx.request.body = content;
-    ctx.request.query = { name: 'source', northId: 'northId' };
-    ctx.app.repositoryService.externalSourceRepository.findExternalSourceByReference.mockReturnValue({
-      id: '1',
-      reference: 'source',
-      description: 'description'
-    });
+    ctx.request.query = { northId: 'northId' };
     await oibusController.addContent(ctx);
     expect(ctx.noContent).toHaveBeenCalled();
     expect(ctx.app.oibusService.addExternalContent).toHaveBeenCalledWith('northId', content);
-  });
-
-  it('should add values with null as external source', async () => {
-    ctx.request.body = content;
-    ctx.request.query = { name: 'source', northId: 'northId' };
-    ctx.app.repositoryService.externalSourceRepository.findExternalSourceByReference.mockReturnValue(null);
-    await oibusController.addContent(ctx);
-    expect(ctx.badRequest).toHaveBeenCalled();
-    expect(ctx.noContent).not.toHaveBeenCalled();
-    expect(ctx.app.oibusService.addExternalContent).not.toHaveBeenCalled();
-  });
-
-  it('should not add values if no source name provided', async () => {
-    ctx.request.body = content;
-    ctx.request.query = { northId: 'northId' };
-
-    await oibusController.addContent(ctx);
-    expect(ctx.badRequest).toHaveBeenCalled();
-    expect(ctx.app.oibusService.addExternalContent).not.toHaveBeenCalled();
   });
 
   it('should properly manage internal error when adding values', async () => {
     (ctx.app.oibusService.addExternalContent as jest.Mock).mockImplementationOnce(() => {
       throw new Error('internal error');
     });
-    ctx.app.repositoryService.externalSourceRepository.findExternalSourceByReference.mockReturnValue({
-      id: '1',
-      reference: 'source',
-      description: 'description'
-    });
     ctx.request.body = content;
-    ctx.request.query = { name: 'source', northId: ['northId1', 'northId2'] };
+    ctx.request.query = { northId: ['northId1', 'northId2'] };
     await oibusController.addContent(ctx);
     expect(ctx.internalServerError).toHaveBeenCalled();
     expect(ctx.badRequest).not.toHaveBeenCalled();
@@ -80,14 +51,9 @@ describe('Content controller', () => {
   });
 
   it('should add file', async () => {
-    ctx.request.query = { name: 'source', northId: 'northId' };
+    ctx.request.query = { northId: 'northId' };
     ctx.request.body = fileContent;
     ctx.request.file = { path: 'filePath' };
-    ctx.app.repositoryService.externalSourceRepository.findExternalSourceByReference.mockReturnValue({
-      id: '1',
-      reference: 'source',
-      description: 'description'
-    });
     await oibusController.addContent(ctx);
     expect(ctx.noContent).toHaveBeenCalled();
     expect(ctx.app.oibusService.addExternalContent).toHaveBeenCalledWith('northId', { type: 'raw', filePath: 'filePath' });
