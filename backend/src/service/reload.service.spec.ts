@@ -549,21 +549,9 @@ describe('reload service', () => {
     expect(oibusEngine.updateNorthConnectorSubscriptions).toHaveBeenCalledWith('northId');
   });
 
-  it('should create external North subscription', async () => {
-    await service.onCreateExternalNorthSubscription('northId', 'externalId');
-    expect(repositoryService.subscriptionRepository.createExternalNorthSubscription).toHaveBeenCalledWith('northId', 'externalId');
-    expect(oibusEngine.updateNorthConnectorSubscriptions).toHaveBeenCalledWith('northId');
-  });
-
   it('should delete North subscription', async () => {
     await service.onDeleteNorthSubscription('northId', 'southId');
     expect(repositoryService.subscriptionRepository.deleteNorthSubscription).toHaveBeenCalledWith('northId', 'southId');
-    expect(oibusEngine.updateNorthConnectorSubscriptions).toHaveBeenCalledWith('northId');
-  });
-
-  it('should delete external North subscription', async () => {
-    await service.onDeleteExternalNorthSubscription('northId', 'externalId');
-    expect(repositoryService.subscriptionRepository.deleteExternalNorthSubscription).toHaveBeenCalledWith('northId', 'externalId');
     expect(oibusEngine.updateNorthConnectorSubscriptions).toHaveBeenCalledWith('northId');
   });
 

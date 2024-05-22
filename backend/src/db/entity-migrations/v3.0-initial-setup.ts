@@ -2,7 +2,6 @@ import { Knex } from 'knex';
 import { LOG_LEVELS } from '../../../../shared/model/engine.model';
 import { ENGINES_TABLE } from '../../repository/engine.repository';
 import { USERS_TABLE } from '../../repository/user.repository';
-import { EXTERNAL_SOURCES_TABLE } from '../../repository/external-source.repository';
 import { IP_FILTERS_TABLE } from '../../repository/ip-filter.repository';
 import { SCAN_MODES_TABLE } from '../../repository/scan-mode.repository';
 import { HISTORY_QUERIES_TABLE } from '../../repository/history-query.repository';
@@ -11,7 +10,10 @@ import { SOUTH_CONNECTORS_TABLE } from '../../repository/south-connector.reposit
 import { SOUTH_ITEMS_TABLE } from '../../repository/south-item.repository';
 import { NORTH_CONNECTORS_TABLE } from '../../repository/north-connector.repository';
 import CreateTableBuilder = Knex.CreateTableBuilder;
-import { EXTERNAL_SUBSCRIPTION_TABLE, SUBSCRIPTION_TABLE } from '../../repository/subscription.repository';
+import { SUBSCRIPTION_TABLE } from '../../repository/subscription.repository';
+
+const EXTERNAL_SOURCES_TABLE = 'external_sources';
+const EXTERNAL_SUBSCRIPTION_TABLE = 'external_subscription';
 
 export async function up(knex: Knex): Promise<void> {
   await createEnginesTable(knex);
