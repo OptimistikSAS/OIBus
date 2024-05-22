@@ -89,17 +89,11 @@ export default class NorthConnectorController {
       const subscriptionsToAdd = ctx.request.body.subscriptions
         .filter(element => element.type === 'south')
         .map(element => element.subscription!.id);
-      const externalSubscriptionsToAdd = ctx.request.body.subscriptions
-        .filter(element => element.type === 'external-source')
-        .map(element => element.externalSubscription!.id);
 
       const northConnector = await ctx.app.reloadService.onCreateNorth(command);
 
       for (const subscription of subscriptionsToAdd) {
         ctx.app.repositoryService.subscriptionRepository.createNorthSubscription(northConnector.id, subscription);
-      }
-      for (const subscription of externalSubscriptionsToAdd) {
-        ctx.app.repositoryService.subscriptionRepository.createExternalNorthSubscription(northConnector.id, subscription);
       }
 
       if (command.enabled) {
@@ -137,7 +131,6 @@ export default class NorthConnectorController {
       );
 
       const existingSubscriptions = ctx.app.repositoryService.subscriptionRepository.getNorthSubscriptions(ctx.params.id);
-      const existingExternalSubscriptions = ctx.app.repositoryService.subscriptionRepository.getExternalNorthSubscriptions(ctx.params.id);
       const subscriptionsToAdd = ctx.request.body.subscriptions
         .filter(
           element =>
@@ -145,31 +138,15 @@ export default class NorthConnectorController {
             !existingSubscriptions.find(existingSubscription => existingSubscription === element.subscription!.id)
         )
         .map(element => element.subscription!.id);
-      const externalSubscriptionsToAdd = ctx.request.body.subscriptions
-        .filter(
-          element =>
-            element.type === 'external-source' &&
-            !existingExternalSubscriptions.find(existingSubscription => existingSubscription === element.externalSubscription!.id)
-        )
-        .map(element => element.externalSubscription!.id);
 
       const subscriptionsToRemove = ctx.request.body.subscriptionsToDelete
         .filter(element => element.type === 'south')
         .map(element => element.subscription!.id);
-      const externalSubscriptionsToRemove = ctx.request.body.subscriptionsToDelete
-        .filter(element => element.type === 'external-source')
-        .map(element => element.externalSubscription!.id);
       for (const subscription of subscriptionsToAdd) {
         ctx.app.repositoryService.subscriptionRepository.createNorthSubscription(ctx.params.id, subscription);
       }
-      for (const subscription of externalSubscriptionsToAdd) {
-        ctx.app.repositoryService.subscriptionRepository.createExternalNorthSubscription(ctx.params.id, subscription);
-      }
       for (const subscription of subscriptionsToRemove) {
         ctx.app.repositoryService.subscriptionRepository.deleteNorthSubscription(ctx.params.id, subscription);
-      }
-      for (const subscription of externalSubscriptionsToRemove) {
-        ctx.app.repositoryService.subscriptionRepository.deleteExternalNorthSubscription(ctx.params.id, subscription);
       }
       await ctx.app.reloadService.onUpdateNorthSettings(ctx.params.id, command);
       ctx.noContent();
@@ -182,7 +159,6 @@ export default class NorthConnectorController {
     const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
     if (northConnector) {
       await ctx.app.repositoryService.subscriptionRepository.deleteNorthSubscriptions(ctx.params.id);
-      await ctx.app.repositoryService.subscriptionRepository.deleteExternalNorthSubscriptions(ctx.params.id);
       await ctx.app.reloadService.onDeleteNorth(ctx.params.id);
       ctx.noContent();
     } else {
