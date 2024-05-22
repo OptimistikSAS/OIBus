@@ -143,16 +143,11 @@ export default jest.fn().mockImplementation(() => ({
   },
   subscriptionRepository: {
     getNorthSubscriptions: jest.fn(),
-    getExternalNorthSubscriptions: jest.fn(),
     getSubscribedNorthConnectors: jest.fn(),
     checkNorthSubscription: jest.fn(),
-    checkExternalNorthSubscription: jest.fn(),
     createNorthSubscription: jest.fn(),
-    createExternalNorthSubscription: jest.fn(),
     deleteNorthSubscription: jest.fn(),
-    deleteExternalNorthSubscription: jest.fn(),
-    deleteNorthSubscriptions: jest.fn(),
-    deleteExternalNorthSubscriptions: jest.fn()
+    deleteNorthSubscriptions: jest.fn()
   },
   southMetricsRepository: new SouthMetricsRepositoryMock(),
   northMetricsRepository: new NorthMetricsRepositoryMock(),
