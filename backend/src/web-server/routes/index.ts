@@ -4,7 +4,6 @@ import multer from '@koa/multer';
 
 import LogController from '../controllers/log.controller';
 import ScanModeController from '../controllers/scan-mode.controller';
-import ExternalSourceController from '../controllers/external-source.controller';
 import EngineController from '../controllers/engine.controller';
 import IpFilterController from '../controllers/ip-filter.controller';
 import NorthConnectorController from '../controllers/north-connector.controller';
@@ -21,7 +20,6 @@ import {
   commandSchema,
   contentSchema,
   engineSchema,
-  externalSourceSchema,
   historyQuerySchema,
   ipFilterSchema,
   logSchema,
@@ -36,7 +34,6 @@ const joiValidator = new JoiValidator();
 const scanModeController = new ScanModeController(joiValidator, scanModeSchema);
 const certificateController = new CertificateController(joiValidator, certificateSchema);
 const commandController = new CommandController(joiValidator, commandSchema);
-const externalSourceController = new ExternalSourceController(joiValidator, externalSourceSchema);
 const engineController = new EngineController(joiValidator, engineSchema);
 const contentController = new ContentController(joiValidator, contentSchema);
 const registrationController = new RegistrationController(joiValidator, registrationSchema);
@@ -77,12 +74,6 @@ router.post('/api/certificates', (ctx: KoaContext<any, any>) => certificateContr
 router.put('/api/certificates/:id', (ctx: KoaContext<any, any>) => certificateController.update(ctx));
 router.delete('/api/certificates/:id', (ctx: KoaContext<any, any>) => certificateController.delete(ctx));
 
-router.get('/api/external-sources', (ctx: KoaContext<any, any>) => externalSourceController.getExternalSources(ctx));
-router.get('/api/external-sources/:id', (ctx: KoaContext<any, any>) => externalSourceController.getExternalSource(ctx));
-router.post('/api/external-sources', (ctx: KoaContext<any, any>) => externalSourceController.createExternalSource(ctx));
-router.put('/api/external-sources/:id', (ctx: KoaContext<any, any>) => externalSourceController.updateExternalSource(ctx));
-router.delete('/api/external-sources/:id', (ctx: KoaContext<any, any>) => externalSourceController.deleteExternalSource(ctx));
-
 router.get('/api/engine', (ctx: KoaContext<any, any>) => engineController.getEngineSettings(ctx));
 router.put('/api/engine', (ctx: KoaContext<any, any>) => engineController.updateEngineSettings(ctx));
 router.put('/api/engine/reset-metrics', (ctx: KoaContext<any, any>) => engineController.resetEngineMetrics(ctx));
@@ -118,15 +109,6 @@ router.post('/api/north/:northId/subscriptions/:southId', (ctx: KoaContext<any, 
 );
 router.delete('/api/north/:northId/subscriptions/:southId', (ctx: KoaContext<any, any>) =>
   subscriptionController.deleteNorthSubscription(ctx)
-);
-router.get('/api/north/:northId/external-subscriptions', (ctx: KoaContext<any, any>) =>
-  subscriptionController.getExternalNorthSubscriptions(ctx)
-);
-router.post('/api/north/:northId/external-subscriptions/:externalSourceId', (ctx: KoaContext<any, any>) =>
-  subscriptionController.createExternalNorthSubscription(ctx)
-);
-router.delete('/api/north/:northId/external-subscriptions/:externalSourceId', (ctx: KoaContext<any, any>) =>
-  subscriptionController.deleteExternalNorthSubscription(ctx)
 );
 router.get('/api/north/:northId/cache/file-errors', (ctx: KoaContext<any, any>) => northConnectorController.getFileErrors(ctx));
 router.get('/api/north/:northId/cache/file-errors/:filename', (ctx: KoaContext<any, any>) =>

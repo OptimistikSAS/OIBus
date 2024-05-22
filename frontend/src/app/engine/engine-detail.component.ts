@@ -4,7 +4,6 @@ import { EngineService } from '../services/engine.service';
 import { EngineMetrics, EngineSettingsDTO } from '../../../../shared/model/engine.model';
 import { AsyncPipe, NgForOf, NgIf } from '@angular/common';
 import { ScanModeListComponent } from './scan-mode-list/scan-mode-list.component';
-import { ExternalSourceListComponent } from './external-source-list/external-source-list.component';
 import { IpFilterListComponent } from './ip-filter-list/ip-filter-list.component';
 import { NotificationService } from '../shared/notification.service';
 import { ConfirmationService } from '../shared/confirmation.service';
@@ -24,7 +23,6 @@ import { CertificateListComponent } from './certificate-list/certificate-list.co
     TranslateModule,
     ScanModeListComponent,
     CertificateListComponent,
-    ExternalSourceListComponent,
     IpFilterListComponent,
     AsyncPipe,
     NgForOf,

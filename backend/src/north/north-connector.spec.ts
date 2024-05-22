@@ -366,34 +366,16 @@ describe('NorthConnector enabled', () => {
     expect(north.isSubscribed('southId')).toBeTruthy();
   });
 
-  it('should check if North is subscribed to all external sources', async () => {
-    (repositoryService.subscriptionRepository.getExternalNorthSubscriptions as jest.Mock).mockReturnValue([]);
-    await north.start();
-    expect(north.isSubscribedToExternalSource('externalSourceId')).toBeTruthy();
-  });
-
   it('should check if North is subscribed to South', async () => {
     (repositoryService.subscriptionRepository.getNorthSubscriptions as jest.Mock).mockReturnValue(['southId']);
     await north.start();
     expect(north.isSubscribed('southId')).toBeTruthy();
   });
 
-  it('should check if North is subscribed to external source', async () => {
-    (repositoryService.subscriptionRepository.getExternalNorthSubscriptions as jest.Mock).mockReturnValue(['externalSourceId']);
-    await north.start();
-    expect(north.isSubscribedToExternalSource('externalSourceId')).toBeTruthy();
-  });
-
   it('should check if North is not subscribed to South', async () => {
     (repositoryService.subscriptionRepository.getNorthSubscriptions as jest.Mock).mockReturnValue(['southId1']);
     await north.start();
     expect(north.isSubscribed('southId2')).toBeFalsy();
-  });
-
-  it('should check if North is not subscribed to external source', async () => {
-    (repositoryService.subscriptionRepository.getExternalNorthSubscriptions as jest.Mock).mockReturnValue(['externalSourceId1']);
-    await north.start();
-    expect(north.isSubscribedToExternalSource('externalSourceId2')).toBeFalsy();
   });
 
   it('should get error files', async () => {

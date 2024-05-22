@@ -3,30 +3,12 @@
 </div>
 <div class="modal-body">
   <form [formGroup]="form" (ngSubmit)="save()" id="form">
-    <!-- Type -->
-    <div class="form-group" *ngIf="southConnectors.length > 0 && externalSources.length > 0">
-      <label class="form-label" for="type" translate="north.subscriptions.type"></label>
-      <select formControlName="type" id="type" class="form-select mb-2 mr-sm-2">
-        <option ngValue="south">{{ 'north.subscriptions.south.title' | translate }}</option>
-        <option ngValue="external-source">{{ 'north.subscriptions.external-source.title' | translate }}</option>
-      </select>
-    </div>
-    <!-- South -->
-    <div class="form-group" *ngIf="form.controls.type.getRawValue() === 'south'">
+    <div class="form-group">
       <label class="form-label" for="south" translate="north.subscriptions.south.title"></label>
       <select formControlName="southConnector" id="south" class="form-select mb-2 mr-sm-2">
         <option *ngFor="let southConnector of southConnectors" [ngValue]="southConnector">{{ southConnector.name }}</option>
       </select>
       <val-errors controlName="southConnector"></val-errors>
-    </div>
-
-    <!-- External source -->
-    <div class="form-group" *ngIf="form.controls.type.getRawValue() === 'external-source'">
-      <label class="form-label" for="external-source" translate="north.subscriptions.external-source.title"></label>
-      <select formControlName="externalSource" id="external-source" class="form-select mb-2 mr-sm-2">
-        <option *ngFor="let externalSource of externalSources" [ngValue]="externalSource">{{ externalSource.reference }}</option>
-      </select>
-      <val-errors controlName="externalSource"></val-errors>
     </div>
   </form>
 </div>

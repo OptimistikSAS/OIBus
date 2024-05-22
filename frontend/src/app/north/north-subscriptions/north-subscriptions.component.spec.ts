@@ -10,7 +10,6 @@ import { SouthConnectorDTO } from '../../../../../shared/model/south-connector.m
 import { SubscriptionDTO } from '../../../../../shared/model/subscription.model';
 import { Component } from '@angular/core';
 import { NorthConnectorDTO } from '../../../../../shared/model/north-connector.model';
-import { ExternalSourceService } from '../../services/external-source.service';
 
 @Component({
   template: `<oib-north-subscriptions [northConnector]="northConnector"></oib-north-subscriptions>`,
@@ -50,7 +49,6 @@ describe('NorthSubscriptionsComponent', () => {
   let tester: NorthSubscriptionsComponentTester;
   let northService: jasmine.SpyObj<NorthConnectorService>;
   let southService: jasmine.SpyObj<SouthConnectorService>;
-  let externalSourceService: jasmine.SpyObj<ExternalSourceService>;
 
   const southConnectors: Array<SouthConnectorDTO> = [
     {
@@ -68,21 +66,17 @@ describe('NorthSubscriptionsComponent', () => {
   beforeEach(() => {
     northService = createMock(NorthConnectorService);
     southService = createMock(SouthConnectorService);
-    externalSourceService = createMock(ExternalSourceService);
 
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
         { provide: NorthConnectorService, useValue: northService },
-        { provide: SouthConnectorService, useValue: southService },
-        { provide: ExternalSourceService, useValue: externalSourceService }
+        { provide: SouthConnectorService, useValue: southService }
       ]
     });
 
     southService.list.and.returnValue(of(southConnectors));
-    externalSourceService.list.and.returnValue(of([]));
     northService.getSubscriptions.and.returnValue(of(northSubscriptions));
-    northService.getExternalSubscriptions.and.returnValue(of([]));
 
     tester = new NorthSubscriptionsComponentTester();
   });
