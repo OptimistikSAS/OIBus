@@ -11,7 +11,7 @@ import { EventEmitter } from 'node:events';
 import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 import DeferredPromise from '../service/deferred-promise';
 import { OIBusContent, OIBusError, OIBusRawContent, OIBusTimeValue, OIBusTimeValueContent } from '../../../shared/model/engine.model';
-import { ExternalSubscriptionDTO, SubscriptionDTO } from '../../../shared/model/subscription.model';
+import { SubscriptionDTO } from '../../../shared/model/subscription.model';
 import { DateTime } from 'luxon';
 import { PassThrough } from 'node:stream';
 import { ReadStream } from 'node:fs';
@@ -45,7 +45,6 @@ export default class NorthConnector<T extends NorthSettings = any> {
   private fileCacheService: FileCacheService;
   protected metricsService: NorthConnectorMetricsService | null = null;
   private subscribedTo: Array<SubscriptionDTO> = [];
-  private subscribedToExternalSources: Array<ExternalSubscriptionDTO> = [];
   private cacheSize = 0;
 
   private fileBeingSent: string | null = null;
@@ -142,7 +141,6 @@ export default class NorthConnector<T extends NorthSettings = any> {
         cacheSize: this.cacheSize
       });
       this.subscribedTo = this.repositoryService.subscriptionRepository.getNorthSubscriptions(this.connector.id);
-      this.subscribedToExternalSources = this.repositoryService.subscriptionRepository.getExternalNorthSubscriptions(this.connector.id);
     }
     await this.valueCacheService.start();
     await this.fileCacheService.start();
@@ -392,14 +390,6 @@ export default class NorthConnector<T extends NorthSettings = any> {
    */
   isSubscribed(southId: string): boolean {
     return this.subscribedTo.length === 0 || this.subscribedTo.includes(southId);
-  }
-
-  /**
-   * Check whether the North is subscribed to an external source.
-   * If subscribedToExternalSources is not defined or an empty array, the subscription is true.
-   */
-  isSubscribedToExternalSource(externalSourceId: string): boolean {
-    return this.subscribedToExternalSources.length === 0 || this.subscribedToExternalSources.includes(externalSourceId);
   }
 
   /**
