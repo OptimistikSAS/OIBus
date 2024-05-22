@@ -590,24 +590,6 @@ describe('reload service', () => {
     expect(oibusEngine.startNorth).toHaveBeenCalledWith('northId', { id: 'northId', enabled: true });
   });
 
-  it('should create external North subscription', async () => {
-    (repositoryService.northConnectorRepository.getNorthConnector as jest.Mock).mockReturnValue(null);
-
-    await service.onCreateExternalNorthSubscription('northId', 'externalId');
-    expect(oibusEngine.stopNorth).toHaveBeenCalledWith('northId');
-    expect(repositoryService.subscriptionRepository.createExternalNorthSubscription).toHaveBeenCalledWith('northId', 'externalId');
-    expect(oibusEngine.startNorth).not.toHaveBeenCalled();
-  });
-
-  it('should create external North subscription and restart', async () => {
-    (repositoryService.northConnectorRepository.getNorthConnector as jest.Mock).mockReturnValue({ id: 'northId', enabled: true });
-
-    await service.onCreateExternalNorthSubscription('northId', 'externalId');
-    expect(oibusEngine.stopNorth).toHaveBeenCalledWith('northId');
-    expect(repositoryService.subscriptionRepository.createExternalNorthSubscription).toHaveBeenCalledWith('northId', 'externalId');
-    expect(oibusEngine.startNorth).toHaveBeenCalledWith('northId', { id: 'northId', enabled: true });
-  });
-
   it('should delete North subscription', async () => {
     (repositoryService.northConnectorRepository.getNorthConnector as jest.Mock).mockReturnValue(null);
 
@@ -623,24 +605,6 @@ describe('reload service', () => {
     await service.onDeleteNorthSubscription('northId', 'southId');
     expect(oibusEngine.stopNorth).toHaveBeenCalledWith('northId');
     expect(repositoryService.subscriptionRepository.deleteNorthSubscription).toHaveBeenCalledWith('northId', 'southId');
-    expect(oibusEngine.startNorth).toHaveBeenCalledWith('northId', { id: 'northId', enabled: true });
-  });
-
-  it('should delete external North subscription', async () => {
-    (repositoryService.northConnectorRepository.getNorthConnector as jest.Mock).mockReturnValue(null);
-
-    await service.onDeleteExternalNorthSubscription('northId', 'externalId');
-    expect(oibusEngine.stopNorth).toHaveBeenCalledWith('northId');
-    expect(repositoryService.subscriptionRepository.deleteExternalNorthSubscription).toHaveBeenCalledWith('northId', 'externalId');
-    expect(oibusEngine.startNorth).not.toHaveBeenCalled();
-  });
-
-  it('should delete external North subscription and restart', async () => {
-    (repositoryService.northConnectorRepository.getNorthConnector as jest.Mock).mockReturnValue({ id: 'northId', enabled: true });
-
-    await service.onDeleteExternalNorthSubscription('northId', 'externalId');
-    expect(oibusEngine.stopNorth).toHaveBeenCalledWith('northId');
-    expect(repositoryService.subscriptionRepository.deleteExternalNorthSubscription).toHaveBeenCalledWith('northId', 'externalId');
     expect(oibusEngine.startNorth).toHaveBeenCalledWith('northId', { id: 'northId', enabled: true });
   });
 
