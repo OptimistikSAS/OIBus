@@ -32,6 +32,16 @@ const manifest: SouthConnectorManifest = {
       displayInViewMode: true
     },
     {
+      key: 'readTimeout',
+      type: 'OibNumber',
+      label: 'Read timeout',
+      unitLabel: 'ms',
+      defaultValue: 15_000,
+      newRow: false,
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
+      displayInViewMode: false
+    },
+    {
       key: 'retryInterval',
       type: 'OibNumber',
       label: 'Retry interval',
