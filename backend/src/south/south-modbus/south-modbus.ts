@@ -39,9 +39,12 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
 
   async lastPointQuery(items: Array<SouthConnectorItemDTO<SouthModbusItemSettings>>): Promise<void> {
     try {
+      const startRequest = DateTime.now().toMillis();
       for (const item of items) {
         await this.modbusFunction(item);
       }
+      const requestDuration = DateTime.now().toMillis() - startRequest;
+      this.logger.debug(`Requested ${items.length} items in ${requestDuration} ms`);
     } catch (error: any) {
       if (error.err === 'Offline') {
         this.logger.error(`Modbus server ${this.connector.settings.host}:${this.connector.settings.port} offline`);

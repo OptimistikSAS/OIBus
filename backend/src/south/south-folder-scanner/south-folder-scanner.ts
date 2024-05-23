@@ -12,6 +12,7 @@ import RepositoryService from '../../service/repository.service';
 import { QueriesFile } from '../south-interface';
 import { SouthFolderScannerItemSettings, SouthFolderScannerSettings } from '../../../../shared/model/south-settings.model';
 import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import { DateTime } from 'luxon';
 
 /**
  * Class SouthFolderScanner - Retrieve file from a local or remote folder
@@ -78,7 +79,10 @@ export default class SouthFolderScanner
     const inputFolder = path.resolve(this.connector.settings.inputFolder);
     this.logger.trace(`Reading "${inputFolder}" directory`);
     // List files in the inputFolder
+    const startRequest = DateTime.now().toMillis();
     const files = await fs.readdir(inputFolder);
+    const requestDuration = DateTime.now().toMillis() - startRequest;
+    this.logger.debug(`Folder ${inputFolder} read in ${requestDuration} ms`);
 
     if (files.length === 0) {
       this.logger.debug(`The folder "${inputFolder}" is empty`);
