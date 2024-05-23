@@ -30,13 +30,13 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 async function updateSouthOracleSettings(knex: Knex): Promise<void> {
-  const oldSouthSettings: Array<{ id: string; settings: OldSouthOracleSettings }> = await knex(SOUTH_CONNECTORS_TABLE)
+  const oldSouthSettings: Array<{ id: string; settings: string }> = await knex(SOUTH_CONNECTORS_TABLE)
     .select('id', 'settings')
     .where('type', 'oracle');
 
   for (const { id, settings } of oldSouthSettings) {
     const newSettings: NewSouthOracleSettings = {
-      ...settings,
+      ...(JSON.parse(settings) as OldSouthOracleSettings),
       thickMode: false,
       oracleClient: ''
     };
@@ -47,13 +47,13 @@ async function updateSouthOracleSettings(knex: Knex): Promise<void> {
 }
 
 async function updateOracleHistoryQueries(knex: Knex): Promise<void> {
-  const oldSouthSettings: Array<{ id: string; settings: OldSouthOracleSettings }> = await knex(HISTORY_QUERIES_TABLE)
+  const oldSouthSettings: Array<{ id: string; settings: string }> = await knex(HISTORY_QUERIES_TABLE)
     .select('id', 'south_settings as settings')
     .where('south_type', 'oracle');
 
   for (const { id, settings } of oldSouthSettings) {
     const newSettings: NewSouthOracleSettings = {
-      ...settings,
+      ...(JSON.parse(settings) as OldSouthOracleSettings),
       thickMode: false,
       oracleClient: ''
     };

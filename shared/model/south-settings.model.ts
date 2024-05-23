@@ -285,6 +285,7 @@ export interface SouthOPCHDASettings extends BaseSouthSettings {
 export interface SouthOPCUASettings extends BaseSouthSettings {
   url: string;
   keepSessionAlive: boolean;
+  readTimeout: number;
   retryInterval: number;
   securityMode: SouthOPCUASettingsSecurityMode;
   securityPolicy?: SouthOPCUASettingsSecurityPolicy | null;

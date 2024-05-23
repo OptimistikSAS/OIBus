@@ -201,6 +201,7 @@ describe('SouthOPCUA', () => {
     settings: {
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
       retryInterval: 10000,
+      readTimeout: 15000,
       authentication: {
         type: 'none',
         username: null,
@@ -246,6 +247,7 @@ describe('SouthOPCUA', () => {
       endpointMustExist: false,
       keepSessionAlive: false,
       keepPendingSessionsOnDisconnect: false,
+      requestedSessionTimeout: 15000,
       clientCertificateManager: { state: 2 }
     };
     const expectedUserIdentity = { type: 0 };
@@ -621,17 +623,15 @@ describe('SouthOPCUA', () => {
     expect(read).not.toHaveBeenCalled();
   });
 
-  it('should properly query items and manage null result', async () => {
-    const read = jest.fn().mockReturnValue(null);
+  it('should properly query one item', async () => {
+    const read = jest.fn().mockReturnValue([]);
     (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ read });
     south.addValues = jest.fn();
 
     await south.start();
     await south.lastPointQuery([items[3]]);
     expect(logger.debug).toHaveBeenCalledWith(`Read node ${items[3].settings.nodeId}`);
-    expect(logger.error).toHaveBeenCalledWith(`Could not read nodes`);
     expect(read).toHaveBeenCalledWith([{ nodeId: items[3].settings.nodeId }]);
-    expect(south.addValues).not.toHaveBeenCalled();
   });
 
   it('should properly query items and log error when not same number of items and values', async () => {
@@ -645,7 +645,9 @@ describe('SouthOPCUA', () => {
     await south.start();
     await south.lastPointQuery(items);
     const expectedItemsToRead = items.filter(item => item.settings.mode === 'DA');
-    expect(logger.error).toHaveBeenCalledWith(`Received 2 node results, requested ${expectedItemsToRead.length} nodes`);
+    expect(logger.error).toHaveBeenCalledWith(
+      `Received 2 node results, requested ${expectedItemsToRead.length} nodes. Request done in 0 ms`
+    );
     expect(read).toHaveBeenCalledWith(expectedItemsToRead.map(item => ({ nodeId: item.settings.nodeId })));
     expect(south.addValues).toHaveBeenCalledWith([
       {
@@ -745,6 +747,7 @@ describe('SouthOPCUA with basic auth', () => {
     settings: {
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
       retryInterval: 10000,
+      readTimeout: 15000,
       authentication: {
         type: 'basic',
         username: 'myUser',
@@ -778,6 +781,7 @@ describe('SouthOPCUA with basic auth', () => {
       endpointMustExist: false,
       keepSessionAlive: false,
       keepPendingSessionsOnDisconnect: false,
+      requestedSessionTimeout: 15000,
       clientCertificateManager: null
     };
     const expectedUserIdentity = {
@@ -809,6 +813,7 @@ describe('SouthOPCUA with certificate', () => {
     settings: {
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
       retryInterval: 10000,
+      readTimeout: 15000,
       authentication: {
         type: 'cert',
         certFilePath: 'myCertPath',
@@ -845,6 +850,7 @@ describe('SouthOPCUA with certificate', () => {
       securityPolicy: 'None',
       endpointMustExist: false,
       keepSessionAlive: false,
+      requestedSessionTimeout: 15000,
       keepPendingSessionsOnDisconnect: false,
       clientCertificateManager: null
     };
@@ -959,6 +965,7 @@ describe('SouthOPCUA test connection', () => {
     settings: {
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
       retryInterval: 10000,
+      readTimeout: 15000,
       authentication: {
         type: 'none',
         username: null,

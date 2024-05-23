@@ -368,6 +368,7 @@ export default class SouthOPCUA
       securityPolicy: settings.securityPolicy || undefined,
       endpointMustExist: false,
       keepSessionAlive: settings.keepSessionAlive,
+      requestedSessionTimeout: settings.readTimeout,
       keepPendingSessionsOnDisconnect: false,
       clientName,
       // @ts-ignore
@@ -497,13 +498,15 @@ export default class SouthOPCUA
         this.logger.debug(`Read node ${itemsToRead[0].settings.nodeId}`);
       }
 
+      const startRequest = DateTime.now().toMillis();
       const dataValues = await this.session.read(itemsToRead.map(item => ({ nodeId: item.settings.nodeId })));
-      if (!dataValues) {
-        this.logger.error(`Could not read nodes`);
-        return;
-      }
+      const requestDuration = DateTime.now().toMillis() - startRequest;
+      this.logger.debug(`Found ${dataValues.length} results for ${itemsToRead.length} items (DA mode) in ${requestDuration} ms`);
+
       if (dataValues.length !== itemsToRead.length) {
-        this.logger.error(`Received ${dataValues.length} node results, requested ${itemsToRead.length} nodes`);
+        this.logger.error(
+          `Received ${dataValues.length} node results, requested ${itemsToRead.length} nodes. Request done in ${requestDuration} ms`
+        );
       }
 
       const timestamp = new Date().toISOString();
