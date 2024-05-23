@@ -139,6 +139,7 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
           const requestDuration = DateTime.now().toMillis() - startRequest;
 
           if (result.content.length > 0) {
+            this.logger.debug(`Found ${result.recordCount} results for ${resampledItems.length} items in ${requestDuration} ms`);
             await this.addValues(result.content);
             if (result.maxInstantRetrieved > updatedStartTime) {
               updatedStartTime = result.maxInstantRetrieved;

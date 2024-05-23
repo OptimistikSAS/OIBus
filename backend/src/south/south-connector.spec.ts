@@ -184,7 +184,9 @@ describe('SouthConnector enabled', () => {
     expect(south.run).toHaveBeenCalledTimes(1);
     south.addToQueue(scanMode);
 
-    expect(logger.warn).toHaveBeenCalledWith(`Task job not added in South connector queue for cron "${scanMode.name}" (${scanMode.cron})`);
+    expect(logger.warn).toHaveBeenCalledWith(
+      `Task job not added in South connector queue for cron "${scanMode.name}" (${scanMode.cron}). The previous cron was still running`
+    );
     expect(south.run).toHaveBeenCalledTimes(1);
   });
 

@@ -162,7 +162,11 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
   async lastPointQuery(items: Array<SouthConnectorItemDTO<SouthADSItemSettings>>): Promise<void> {
     const timestamp = DateTime.now().toUTC().toISO()!;
     try {
+      const startRequest = DateTime.now().toMillis();
       const results = await Promise.all(items.map(item => this.readAdsSymbol(item, timestamp)));
+      const requestDuration = DateTime.now().toMillis() - startRequest;
+      this.logger.debug(`Requested ${items.length} items in ${requestDuration} ms`);
+
       await this.addValues(results.reduce((concatenatedResults, result) => [...concatenatedResults, ...result], []));
     } catch (error: any) {
       if (error.message.startsWith('Client is not connected')) {

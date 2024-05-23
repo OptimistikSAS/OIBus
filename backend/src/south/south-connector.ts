@@ -160,13 +160,15 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
 
   addToQueue(scanMode: ScanModeDTO): void {
     if (this.stopping) {
-      this.logger.trace(`Connector is exiting. Cron "${scanMode.name}" (${scanMode.cron}) not added.`);
+      this.logger.trace(`Connector is exiting. Cron "${scanMode.name}" (${scanMode.cron}) not added`);
       return;
     }
     const foundJob = this.taskJobQueue.find(element => element.id === scanMode.id);
     if (foundJob) {
       // If a job is already scheduled in queue, it will not be added
-      this.logger.warn(`Task job not added in South connector queue for cron "${scanMode.name}" (${scanMode.cron})`);
+      this.logger.warn(
+        `Task job not added in South connector queue for cron "${scanMode.name}" (${scanMode.cron}). The previous cron was still running`
+      );
       return;
     }
 

@@ -114,6 +114,7 @@ export default class SouthPI extends SouthConnector implements QueriesHistory {
         }
       }
       if (result.content.length > 0) {
+        this.logger.debug(`Found ${result.recordCount} results for ${items.length} items in ${requestDuration} ms`);
         await this.addValues(result.content);
         if (result.maxInstantRetrieved > updatedStartTime) {
           updatedStartTime = result.maxInstantRetrieved;
