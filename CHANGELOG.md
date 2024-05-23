@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.3.5](https://github.com/OptimistikSAS/OIBus/compare/v3.3.4...v3.3.5) (2024-05-23)
+
+
+### Bug Fixes
+
+* **logs:** improve south logging ([d6b4450](https://github.com/OptimistikSAS/OIBus/commit/d6b44507100a683029a5692c041bdef84252b7cd))
+* **opcua:** add read timeout for OPCUA South connector ([9a18071](https://github.com/OptimistikSAS/OIBus/commit/9a1807198915e30d4ac464e3a12b70ac1ffa0d25))
+
 ## [3.3.4](https://github.com/OptimistikSAS/OIBus/compare/v3.3.3...v3.3.4) (2024-05-13)
 
 
