@@ -124,6 +124,13 @@ const logSchema: Joi.ObjectSchema = Joi.object({
   )
 });
 
+const transformerSchema: Joi.ObjectSchema = Joi.object({
+  inputType: Joi.string().required(),
+  outputType: Joi.string().required(),
+  code: Joi.string().required(),
+  fileRegex: Joi.string().allow(null)
+});
+
 function cronValidator(value: string, helper: Joi.CustomHelpers) {
   try {
     validateCronExpression(value);
@@ -143,6 +150,7 @@ export {
   userSchema,
   historyQuerySchema,
   logSchema,
+  transformerSchema,
   commandSchema,
   contentSchema
 };
