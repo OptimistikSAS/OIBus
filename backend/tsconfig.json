@@ -23,5 +23,6 @@
     "esModuleInterop": true,
     "useDefineForClassFields": false,
     "allowSyntheticDefaultImports": true
-  }
+  },
+  "exclude": ["./dist"]
 }
