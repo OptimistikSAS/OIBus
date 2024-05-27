@@ -25,10 +25,12 @@ import {
   logSchema,
   registrationSchema,
   scanModeSchema,
-  userSchema
+  userSchema,
+  transformerSchema
 } from '../controllers/validators/oibus-validation-schema';
 import CommandController from '../controllers/command.controller';
 import ContentController from '../controllers/content.controller';
+import TransformerController from '../controllers/transformer.controller';
 
 const joiValidator = new JoiValidator();
 const scanModeController = new ScanModeController(joiValidator, scanModeSchema);
@@ -44,6 +46,7 @@ const historyQueryController = new HistoryQueryController(joiValidator, historyQ
 const userController = new UserController(joiValidator, userSchema);
 const logController = new LogController(joiValidator, logSchema);
 const subscriptionController = new SubscriptionController();
+const transformerController = new TransformerController(joiValidator, transformerSchema);
 
 const router = new Router();
 
@@ -94,6 +97,12 @@ router.delete('/api/ip-filters/:id', (ctx: KoaContext<any, any>) => ipFilterCont
 
 router.get('/api/north-types', (ctx: KoaContext<any, any>) => northConnectorController.getNorthConnectorTypes(ctx));
 router.get('/api/north-types/:id', (ctx: KoaContext<any, any>) => northConnectorController.getNorthConnectorManifest(ctx));
+
+router.get('/api/transformers', (ctx: KoaContext<any, any>) => transformerController.getTransformers(ctx));
+router.get('/api/transformers/:id', (ctx: KoaContext<any, any>) => transformerController.getTransformer(ctx));
+router.post('/api/transformers', (ctx: KoaContext<any, any>) => transformerController.createTransformer(ctx));
+router.put('/api/transformers/:id', (ctx: KoaContext<any, any>) => transformerController.updateTransformer(ctx));
+router.delete('/api/transformers/:id', (ctx: KoaContext<any, any>) => transformerController.deleteTransformer(ctx));
 
 router.get('/api/north', (ctx: KoaContext<any, any>) => northConnectorController.getNorthConnectors(ctx));
 router.put('/api/north/:id/test-connection', (ctx: KoaContext<any, any>) => northConnectorController.testNorthConnection(ctx));
