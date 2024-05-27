@@ -24,7 +24,8 @@ import {
   logSchema,
   registrationSchema,
   scanModeSchema,
-  userSchema
+  userSchema,
+  transformerSchema
 } from '../controllers/validators/oibus-validation-schema';
 import OianalyticsCommandController from '../controllers/oianalytics-command.controller';
 import ContentController from '../controllers/content.controller';
@@ -70,6 +71,7 @@ import { LogDTO, LogStreamCommandDTO, Scope } from '../../../shared/model/logs.m
 import { OIBusCommandDTO } from '../../../shared/model/command.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
+import TransformerController from '../controllers/transformer.controller';
 
 const joiValidator = new JoiValidator();
 const scanModeController = new ScanModeController(joiValidator, scanModeSchema);
@@ -85,6 +87,7 @@ const historyQueryController = new HistoryQueryController(joiValidator, historyQ
 const userController = new UserController(joiValidator, userSchema);
 const logController = new LogController(joiValidator, logSchema);
 const subscriptionController = new SubscriptionController();
+const transformerController = new TransformerController(joiValidator, transformerSchema);
 
 const router = new Router();
 
@@ -140,6 +143,12 @@ router.get('/api/north-types', (ctx: KoaContext<void, Array<NorthType>>) => nort
 router.get('/api/north-types/:id', (ctx: KoaContext<void, NorthConnectorManifest>) =>
   northConnectorController.getNorthConnectorManifest(ctx)
 );
+
+router.get('/api/transformers', (ctx: KoaContext<any, any>) => transformerController.getTransformers(ctx));
+router.get('/api/transformers/:id', (ctx: KoaContext<any, any>) => transformerController.getTransformer(ctx));
+router.post('/api/transformers', (ctx: KoaContext<any, any>) => transformerController.createTransformer(ctx));
+router.put('/api/transformers/:id', (ctx: KoaContext<any, any>) => transformerController.updateTransformer(ctx));
+router.delete('/api/transformers/:id', (ctx: KoaContext<any, any>) => transformerController.deleteTransformer(ctx));
 
 router.get('/api/north', (ctx: KoaContext<void, Array<NorthConnectorLightDTO>>) => northConnectorController.findAll(ctx));
 router.put('/api/north/:id/test-connection', (ctx: KoaContext<NorthConnectorCommandDTO<NorthSettings>, void>) =>
