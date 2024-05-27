@@ -20,6 +20,7 @@ import CertificateRepository from '../repository/certificate.repository';
 import RegistrationRepository from '../repository/registration.repository';
 import CommandRepository from '../repository/command.repository';
 import NorthItemRepository from '../repository/north-item.repository';
+import TransformerRepository from '../repository/transformer.repository';
 
 export default class RepositoryService {
   private readonly _engineRepository: EngineRepository;
@@ -42,6 +43,7 @@ export default class RepositoryService {
   private readonly _registrationRepository: RegistrationRepository;
   private readonly _commandRepository: CommandRepository;
   private readonly _northItemRepository: NorthItemRepository;
+  private readonly _transformerRepository: TransformerRepository;
 
   constructor(oibusDatabasePath: string, logsDatabasePath: string, cryptoDatabasePath: string, cacheDatabasePath: string) {
     const oibusDatabase = Database(oibusDatabasePath);
@@ -73,6 +75,8 @@ export default class RepositoryService {
     this._southMetricsRepository = new SouthConnectorMetricsRepository(logsDatabase);
     this._northMetricsRepository = new NorthConnectorMetricsRepository(logsDatabase);
     this._logRepository = new LogRepository(logsDatabase);
+
+    this._transformerRepository = new TransformerRepository(oibusDatabase);
   }
 
   get cryptoRepository(): CryptoRepository {
@@ -153,5 +157,9 @@ export default class RepositoryService {
 
   get commandRepository(): CommandRepository {
     return this._commandRepository;
+  }
+
+  get transformerRepository(): TransformerRepository {
+    return this._transformerRepository;
   }
 }
