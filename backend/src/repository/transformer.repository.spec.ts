@@ -26,8 +26,6 @@ describe('TransformerRepository', () => {
 
   it('should create a new transformer', () => {
     const command: TransformerCommandDTO = {
-      name: 'name',
-      description: 'description',
       inputType: 'input',
       outputType: 'output',
       code: 'code',
@@ -41,16 +39,14 @@ describe('TransformerRepository', () => {
     const created = repository.createTransformer(command);
     expect(generateRandomId).toHaveBeenCalledWith(6);
     expect(database.prepare).toHaveBeenCalledWith(
-      `INSERT INTO ${TRANSFORMERS_TABLE} (id, name, description, input_type, output_type, code, file_regex) VALUES (?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO ${TRANSFORMERS_TABLE} (id, input_type, output_type, code, file_regex) VALUES (?, ?, ?, ?, ?)`
     );
-    expect(run).toHaveBeenCalledWith('123456', 'name', 'description', 'input', 'output', 'code', 'fileRegex');
+    expect(run).toHaveBeenCalledWith('123456', 'input', 'output', 'code', 'fileRegex');
     expect(created).toEqual(expectedTransformer);
   });
 
   it('should update an existing transformer', () => {
     const command: TransformerCommandDTO = {
-      name: 'name',
-      description: 'description',
       inputType: 'input',
       outputType: 'output',
       code: 'code',
@@ -59,9 +55,9 @@ describe('TransformerRepository', () => {
 
     repository.updateTransformer('123456', command);
     expect(database.prepare).toHaveBeenCalledWith(
-      `UPDATE ${TRANSFORMERS_TABLE} SET name = ?, description = ?, input_type = ?, output_type = ?, code = ?, file_regex = ? WHERE id = ?`
+      `UPDATE ${TRANSFORMERS_TABLE} SET input_type = ?, output_type = ?, code = ?, file_regex = ? WHERE id = ?`
     );
-    expect(run).toHaveBeenCalledWith('name', 'description', 'input', 'output', 'code', null, '123456');
+    expect(run).toHaveBeenCalledWith('input', 'output', 'code', null, '123456');
   });
 
   it('should delete an existing transformer', () => {
@@ -73,8 +69,6 @@ describe('TransformerRepository', () => {
   it('should return a transformer by id', () => {
     const transformer = {
       id: '123456',
-      name: 'name',
-      description: 'description',
       inputType: 'input',
       outputType: 'output',
       code: 'code',
@@ -84,7 +78,7 @@ describe('TransformerRepository', () => {
 
     const result = repository.getTransformer('123456');
     expect(database.prepare).toHaveBeenCalledWith(
-      `SELECT id, name, description, input_type AS inputType, output_type AS outputType, code, file_regex AS fileRegex FROM ${TRANSFORMERS_TABLE} WHERE id = ?;`
+      `SELECT id, input_type AS inputType, output_type AS outputType, code, file_regex AS fileRegex FROM ${TRANSFORMERS_TABLE} WHERE id = ?;`
     );
     expect(get).toHaveBeenCalledWith('123456');
     expect(result).toEqual(transformer);
@@ -95,18 +89,16 @@ describe('TransformerRepository', () => {
 
     const result = repository.getTransformer('123456');
     expect(database.prepare).toHaveBeenCalledWith(
-      `SELECT id, name, description, input_type AS inputType, output_type AS outputType, code, file_regex AS fileRegex FROM ${TRANSFORMERS_TABLE} WHERE id = ?;`
+      `SELECT id, input_type AS inputType, output_type AS outputType, code, file_regex AS fileRegex FROM ${TRANSFORMERS_TABLE} WHERE id = ?;`
     );
     expect(get).toHaveBeenCalledWith('123456');
     expect(result).toBeNull();
   });
 
-  it('should return all transformers without filters', () => {
+  it('should return all transformers', () => {
     const transformers = [
       {
         id: '123456',
-        name: 'name',
-        description: 'description',
         inputType: 'input',
         outputType: 'output',
         code: 'code',
@@ -114,8 +106,6 @@ describe('TransformerRepository', () => {
       },
       {
         id: '789012',
-        name: 'name2',
-        description: 'description',
         inputType: 'input',
         outputType: 'output',
         code: 'code',
@@ -126,65 +116,9 @@ describe('TransformerRepository', () => {
 
     const result = repository.getTransformers();
     expect(database.prepare).toHaveBeenCalledWith(
-      `SELECT id, name, description, input_type AS inputType, output_type AS outputType, code, file_regex AS fileRegex FROM ${TRANSFORMERS_TABLE};`
+      `SELECT id, input_type AS inputType, output_type AS outputType, code, file_regex AS fileRegex FROM ${TRANSFORMERS_TABLE};`
     );
     expect(all).toHaveBeenCalled();
-    expect(result).toEqual(transformers);
-  });
-
-  it('should return transformers with filters', () => {
-    const transformers = [
-      {
-        id: '123456',
-        name: 'name',
-        description: 'description',
-        inputType: 'input',
-        outputType: 'output',
-        code: 'code',
-        fileRegex: 'fileRegex'
-      }
-    ];
-    all.mockReturnValue(transformers);
-    let result;
-
-    // inputType
-    result = repository.getTransformers({ inputType: 'input' });
-    expect(database.prepare).toHaveBeenCalledWith(
-      `SELECT id, name, description, input_type AS inputType, output_type AS outputType, code, file_regex AS fileRegex FROM ${TRANSFORMERS_TABLE} WHERE input_type = ?;`
-    );
-    expect(all).toHaveBeenCalledWith('input');
-    expect(result).toEqual(transformers);
-
-    // outputType
-    result = repository.getTransformers({ outputType: 'output' });
-    expect(database.prepare).toHaveBeenCalledWith(
-      `SELECT id, name, description, input_type AS inputType, output_type AS outputType, code, file_regex AS fileRegex FROM ${TRANSFORMERS_TABLE} WHERE output_type = ?;`
-    );
-    expect(all).toHaveBeenCalledWith('output');
-    expect(result).toEqual(transformers);
-
-    // name
-    result = repository.getTransformers({ name: 'name' });
-    expect(database.prepare).toHaveBeenCalledWith(
-      `SELECT id, name, description, input_type AS inputType, output_type AS outputType, code, file_regex AS fileRegex FROM ${TRANSFORMERS_TABLE} WHERE name LIKE '%' || ? || '%';`
-    );
-    expect(all).toHaveBeenCalledWith('name');
-    expect(result).toEqual(transformers);
-
-    // empty filter
-    result = repository.getTransformers({});
-    expect(database.prepare).toHaveBeenCalledWith(
-      `SELECT id, name, description, input_type AS inputType, output_type AS outputType, code, file_regex AS fileRegex FROM ${TRANSFORMERS_TABLE};`
-    );
-    expect(all).toHaveBeenCalledWith();
-    expect(result).toEqual(transformers);
-
-    // multiple filters
-    result = repository.getTransformers({ inputType: 'input', outputType: 'output', name: 'name' });
-    expect(database.prepare).toHaveBeenCalledWith(
-      `SELECT id, name, description, input_type AS inputType, output_type AS outputType, code, file_regex AS fileRegex FROM ${TRANSFORMERS_TABLE} WHERE input_type = ? AND output_type = ? AND name LIKE '%' || ? || '%';`
-    );
-    expect(all).toHaveBeenCalledWith('input', 'output', 'name');
     expect(result).toEqual(transformers);
   });
 });

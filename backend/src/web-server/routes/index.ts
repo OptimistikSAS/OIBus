@@ -30,6 +30,7 @@ import {
 } from '../controllers/validators/oibus-validation-schema';
 import CommandController from '../controllers/command.controller';
 import ContentController from '../controllers/content.controller';
+import TransformerController from '../controllers/transformer.controller';
 
 const joiValidator = new JoiValidator();
 const scanModeController = new ScanModeController(joiValidator, scanModeSchema);

@@ -20,6 +20,7 @@ import CertificateRepository from '../repository/certificate.repository';
 import RegistrationRepository from '../repository/registration.repository';
 import CommandRepository from '../repository/command.repository';
 import NorthItemRepository from '../repository/north-item.repository';
+import TransformerRepository from '../repository/transformer.repository';
 
 export default class RepositoryService {
   private readonly _engineRepository: EngineRepository;
@@ -42,6 +43,7 @@ export default class RepositoryService {
   private readonly _registrationRepository: RegistrationRepository;
   private readonly _commandRepository: CommandRepository;
   private readonly _northItemRepository: NorthItemRepository;
+  private readonly _transformerRepository: TransformerRepository;
 
   constructor(oibusDatabasePath: string, logsDatabasePath: string, cryptoDatabasePath: string, cacheDatabasePath: string) {
     const oibusDatabase = Database(oibusDatabasePath);
@@ -76,9 +78,6 @@ export default class RepositoryService {
     this._logRepository = new LogRepository(logsDatabase);
 
     this._transformerRepository = new TransformerRepository(oibusDatabase);
-    this._northTransformerRepository = new NorthTransformerRepository(oibusDatabase);
-    this._southTransformerRepository = new SouthTransformerRepository(oibusDatabase);
-    this._historyTransformerRepository = new HistoryTransformerRepository(oibusDatabase);
   }
 
   get cryptoRepository(): CryptoRepository {
@@ -161,23 +160,7 @@ export default class RepositoryService {
     return this._commandRepository;
   }
 
-  get oianalyticsMessageRepository(): OianalyticsMessageRepository {
-    return this._oianalyticsMessageRepository;
-  }
-
   get transformerRepository(): TransformerRepository {
     return this._transformerRepository;
-  }
-
-  get northTransformerRepository(): NorthTransformerRepository {
-    return this._northTransformerRepository;
-  }
-
-  get southTransformerRepository(): SouthTransformerRepository {
-    return this._southTransformerRepository;
-  }
-
-  get historyTransformerRepository(): HistoryTransformerRepository {
-    return this._historyTransformerRepository;
   }
 }
