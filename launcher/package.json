@@ -1,6 +1,6 @@
 {
   "name": "oibus-launcher",
-  "version": "3.3.5",
+  "version": "3.3.6",
   "description": "OIBus launcher",
   "main": "index.js",
   "author": "Optimistik SAS",
