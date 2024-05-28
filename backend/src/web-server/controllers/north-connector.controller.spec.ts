@@ -1705,6 +1705,9 @@ describe('North connector controller with items', () => {
   });
 
   it('createNorthItem() should return bad request when north connector or manifest not found', async () => {
+    ctx.request.body = {
+      ...itemCommand
+    };
     getManifestWithItemsModeSpy.mockImplementationOnce(throwError);
 
     await northConnectorController.createNorthItem(ctx);
@@ -1719,7 +1722,7 @@ describe('North connector controller with items', () => {
     ctx.request.body = {
       ...itemCommand
     };
-    const validationError = new Error('invalid body');
+    const validationError = new Error('invalid settings');
     validator.validateSettings = jest.fn().mockImplementationOnce(() => {
       throw validationError;
     });
@@ -1730,6 +1733,28 @@ describe('North connector controller with items', () => {
     expect(validator.validateSettings).toHaveBeenCalledWith(northTestManifestWithItems.items.settings, itemCommand.settings);
     expect(ctx.app.reloadService.onCreateNorthItem).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
+  });
+
+  it('createNorthItem() should return bad request when validation fails due to missing body', async () => {
+    ctx.request.body = undefined;
+
+    await northConnectorController.createNorthItem(ctx);
+
+    expect(getManifestWithItemsModeSpy).not.toHaveBeenCalled();
+    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.onCreateNorthItem).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalled();
+  });
+
+  it('createNorthItem() should return bad request when validation fails due to missing settings', async () => {
+    ctx.request.body = {};
+
+    await northConnectorController.createNorthItem(ctx);
+
+    expect(getManifestWithItemsModeSpy).not.toHaveBeenCalled();
+    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.onCreateNorthItem).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalled();
   });
 
   it('updateNorthItem() should update north item', async () => {
@@ -1780,15 +1805,43 @@ describe('North connector controller with items', () => {
     expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
   });
 
-  it('updateNorthItem() should return not found when item is not found', async () => {
+  it('updateNorthItem() should return not found when north item is not found', async () => {
     ctx.request.body = {
       ...itemCommand
     };
+    ctx.app.repositoryService.northItemRepository.getNorthItem.mockReturnValue(null);
 
-    (ctx.app.repositoryService.northItemRepository.getNorthItem as jest.Mock).mockReturnValueOnce(null);
     await northConnectorController.updateNorthItem(ctx);
 
-    expect(ctx.notFound).toHaveBeenCalledTimes(1);
+    expect(getManifestWithItemsModeSpy).toHaveBeenCalled();
+    expect(ctx.app.repositoryService.northItemRepository.getNorthItem).toHaveBeenCalledWith('itemId');
+    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.onUpdateNorthItemsSettings).not.toHaveBeenCalled();
+    expect(ctx.notFound).toHaveBeenCalled();
+  });
+
+  it('updateNorthItem() should return bad request when validation fails due to missing body', async () => {
+    ctx.request.body = undefined;
+
+    await northConnectorController.updateNorthItem(ctx);
+
+    expect(getManifestWithItemsModeSpy).not.toHaveBeenCalled();
+    expect(ctx.app.repositoryService.northItemRepository.getNorthItem).not.toHaveBeenCalled();
+    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.onUpdateNorthItemsSettings).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalled();
+  });
+
+  it('updateNorthItem() should return bad request when validation fails due to missing settings', async () => {
+    ctx.request.body = {};
+
+    await northConnectorController.updateNorthItem(ctx);
+
+    expect(getManifestWithItemsModeSpy).not.toHaveBeenCalled();
+    expect(ctx.app.repositoryService.northItemRepository.getNorthItem).not.toHaveBeenCalled();
+    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.onUpdateNorthItemsSettings).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalled();
   });
 
   it('deleteNorthItem() should delete north item', async () => {
@@ -2281,5 +2334,14 @@ describe('North connector controller with items', () => {
       expect(ctx.noContent).not.toHaveBeenCalled();
       expect(error).toEqual(new Error('jest mock error'));
     }
+  });
+
+  it('importNorthItems() should return not found when north connector is not found', async () => {
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(null);
+
+    await northConnectorController.importNorthItems(ctx);
+
+    expect(getManifestWithItemsModeSpy).toHaveBeenCalled();
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'North not found');
   });
 });

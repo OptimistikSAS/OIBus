@@ -744,10 +744,14 @@ export default class NorthConnectorController {
   }
 
   async createNorthItem(ctx: KoaContext<NorthConnectorItemCommandDTO, NorthConnectorItemDTO>): Promise<void> {
+    if (!ctx.request.body || !ctx.request.body.settings) {
+      return ctx.badRequest();
+    }
+
     try {
       const manifest = this.getManifestWithItemsMode(ctx);
 
-      await this.validator.validateSettings(manifest.items.settings, ctx.request.body?.settings);
+      await this.validator.validateSettings(manifest.items.settings, ctx.request.body.settings);
 
       const command: NorthConnectorItemCommandDTO = ctx.request.body!;
       const northItem = await ctx.app.reloadService.onCreateNorthItem(ctx.params.northId, command);
@@ -758,12 +762,16 @@ export default class NorthConnectorController {
   }
 
   async updateNorthItem(ctx: KoaContext<NorthConnectorItemCommandDTO, void>): Promise<void> {
+    if (!ctx.request.body || !ctx.request.body.settings) {
+      return ctx.badRequest();
+    }
+
     try {
       const manifest = this.getManifestWithItemsMode(ctx);
 
       const northItem = ctx.app.repositoryService.northItemRepository.getNorthItem(ctx.params.id);
       if (northItem) {
-        await this.validator.validateSettings(manifest.items.settings, ctx.request.body?.settings);
+        await this.validator.validateSettings(manifest.items.settings, ctx.request.body.settings);
         const command: NorthConnectorItemCommandDTO = ctx.request.body!;
         await ctx.app.reloadService.onUpdateNorthItemSettings(ctx.params.northId, northItem, command);
         ctx.noContent();
