@@ -35,7 +35,7 @@ export default class ProxyServer {
         const ip = req.socket.remoteAddress;
         if (ip && this.ipFilter.includes(ip)) {
           this._logger.trace(`Forward ${req.method} request to ${req.url} from IP ${ip}`);
-          proxy.web(req, res, { target: `${req.url?.startsWith('https://') ? `https://` : `http://`}${req.headers.host}` }, err => {
+          proxy.web(req, res, { target: `https://${req.headers.host}` }, err => {
             this._logger.error(`Proxy server error. ${err}`);
           });
         } else {
