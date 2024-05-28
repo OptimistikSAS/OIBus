@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.3.6](https://github.com/OptimistikSAS/OIBus/compare/v3.3.5...v3.3.6) (2024-05-28)
+
+
+### Bug Fixes
+
+* **proxy-server:** force redirect into https ([1341d0d](https://github.com/OptimistikSAS/OIBus/commit/1341d0dc0ff077a6cf798e0bce0581b5e30a2c82))
+
 ## [3.3.5](https://github.com/OptimistikSAS/OIBus/compare/v3.3.4...v3.3.5) (2024-05-23)
 
 
