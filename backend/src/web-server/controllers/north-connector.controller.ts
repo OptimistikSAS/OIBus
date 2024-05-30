@@ -13,6 +13,7 @@ import {
 import JoiValidator from './validators/joi.validator';
 import { Page } from '../../../../shared/model/types';
 import fs from 'node:fs/promises';
+import { TransformerDTO, TransformerFilterDTO } from '../../../../shared/model/transformer.model';
 
 export default class NorthConnectorController {
   constructor(protected readonly validator: JoiValidator) {}
@@ -786,6 +787,64 @@ export default class NorthConnectorController {
     this.getManifestWithItemsMode(ctx);
     await ctx.app.reloadService.onDeleteAllNorthItems(ctx.params.northId);
     ctx.noContent();
+  }
+
+  async addTransformer(ctx: KoaContext<void, void>): Promise<void> {
+    try {
+      const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
+      if (!northConnector) {
+        return ctx.throw(404, 'North not found');
+      }
+
+      const transformer = ctx.app.repositoryService.transformerRepository.getTransformer(ctx.params.transformerId);
+      if (!transformer) {
+        return ctx.throw(404, 'Transformer not found');
+      }
+
+      ctx.app.repositoryService.northTransformerRepository.addTransformer(ctx.params.northId, ctx.params.transformerId);
+      ctx.noContent();
+    } catch (error: any) {
+      ctx.badRequest(error.message);
+    }
+  }
+
+  async getTransformers(ctx: KoaContext<void, Array<TransformerDTO>>): Promise<void> {
+    try {
+      const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
+      if (!northConnector) {
+        return ctx.throw(404, 'North not found');
+      }
+
+      const filter: TransformerFilterDTO = {
+        inputType: ctx.query.inputType as string,
+        outputType: ctx.query.outputType as string,
+        name: ctx.query.name as string
+      };
+
+      const transformers = ctx.app.repositoryService.northTransformerRepository.getTransformers(ctx.params.northId, filter);
+      ctx.ok(transformers);
+    } catch (error: any) {
+      ctx.badRequest(error.message);
+    }
+  }
+
+  async removeTransformer(ctx: KoaContext<void, void>): Promise<void> {
+    try {
+      const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
+      if (!northConnector) {
+        return ctx.throw(404, 'North not found');
+      }
+
+      const transformer = ctx.app.repositoryService.transformerRepository.getTransformer(ctx.params.transformerId);
+      if (!transformer) {
+        return ctx.throw(404, 'Transformer not found');
+      }
+
+      ctx.app.repositoryService.northTransformerRepository.removeTransformer(ctx.params.northId, ctx.params.transformerId);
+      ctx.noContent();
+    } catch (error: any) {
+      ctx.badRequest(error.message);
+    }
   }
 
   /**
