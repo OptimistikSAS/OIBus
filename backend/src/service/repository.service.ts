@@ -21,6 +21,9 @@ import RegistrationRepository from '../repository/registration.repository';
 import CommandRepository from '../repository/command.repository';
 import NorthItemRepository from '../repository/north-item.repository';
 import TransformerRepository from '../repository/transformer.repository';
+import NorthTransformerRepository from '../repository/north-transformer.repository';
+import SouthTransformerRepository from '../repository/south-transformer.repository';
+import HistoryTransformerRepository from '../repository/history-transformer.repository';
 
 export default class RepositoryService {
   private readonly _engineRepository: EngineRepository;
@@ -44,6 +47,9 @@ export default class RepositoryService {
   private readonly _commandRepository: CommandRepository;
   private readonly _northItemRepository: NorthItemRepository;
   private readonly _transformerRepository: TransformerRepository;
+  private readonly _northTransformerRepository: NorthTransformerRepository;
+  private readonly _southTransformerRepository: SouthTransformerRepository;
+  private readonly _historyTransformerRepository: HistoryTransformerRepository;
 
   constructor(oibusDatabasePath: string, logsDatabasePath: string, cryptoDatabasePath: string, cacheDatabasePath: string) {
     const oibusDatabase = Database(oibusDatabasePath);
@@ -78,6 +84,9 @@ export default class RepositoryService {
     this._logRepository = new LogRepository(logsDatabase);
 
     this._transformerRepository = new TransformerRepository(oibusDatabase);
+    this._northTransformerRepository = new NorthTransformerRepository(oibusDatabase);
+    this._southTransformerRepository = new SouthTransformerRepository(oibusDatabase);
+    this._historyTransformerRepository = new HistoryTransformerRepository(oibusDatabase);
   }
 
   get cryptoRepository(): CryptoRepository {
@@ -162,5 +171,17 @@ export default class RepositoryService {
 
   get transformerRepository(): TransformerRepository {
     return this._transformerRepository;
+  }
+
+  get northTransformerRepository(): NorthTransformerRepository {
+    return this._northTransformerRepository;
+  }
+
+  get southTransformerRepository(): SouthTransformerRepository {
+    return this._southTransformerRepository;
+  }
+
+  get historyTransformerRepository(): HistoryTransformerRepository {
+    return this._historyTransformerRepository;
   }
 }

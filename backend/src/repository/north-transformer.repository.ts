@@ -1,7 +1,5 @@
 import { Database } from 'better-sqlite3';
 import { TransformerDTO, TransformerFilterDTO } from '../../../shared/model/transformer.model';
-import { TRANSFORMERS_TABLE } from './transformer.repository';
-
 export const NORTH_TRANSFORMERS_TABLE = 'north_transformers';
 
 export default class NorthTransformerRepository {
@@ -21,13 +19,13 @@ export default class NorthTransformerRepository {
   getTransformers(northId: string, filter?: TransformerFilterDTO): Array<TransformerDTO> {
     if (!filter) {
       const query = `SELECT t.id, t.name, t.description, t.input_type AS inputType, t.output_type AS outputType, t.code, t.file_regex AS fileRegex FROM ${NORTH_TRANSFORMERS_TABLE} nt
-        JOIN ${TRANSFORMERS_TABLE} t ON nt.transformer_id = t.id
+        JOIN transformers t ON nt.transformer_id = t.id
         WHERE nt.north_id = ?;`;
       return this.database.prepare(query).all(northId) as Array<TransformerDTO>;
     }
 
     let query = `SELECT t.id, t.name, t.description, t.input_type AS inputType, t.output_type AS outputType, t.code, t.file_regex AS fileRegex FROM ${NORTH_TRANSFORMERS_TABLE} nt
-      JOIN ${TRANSFORMERS_TABLE} t ON nt.transformer_id = t.id`;
+      JOIN transformers t ON nt.transformer_id = t.id`;
 
     const conditions = ['nt.north_id = ?'];
     const params = [northId];
