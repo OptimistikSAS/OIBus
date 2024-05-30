@@ -253,6 +253,11 @@ router.post('/api/north/:northId/cache/value-errors/retry', (ctx: KoaContext<Arr
 router.delete('/api/north/:northId/cache/value-errors/retry-all', (ctx: KoaContext<void, void>) =>
   northConnectorController.retryAllErrorValues(ctx)
 );
+router.get('/api/north/:northId/transformers', (ctx: KoaContext<any, any>) => northConnectorController.getTransformers(ctx));
+router.post('/api/north/:northId/transformers/:transformerId', (ctx: KoaContext<any, any>) => northConnectorController.addTransformer(ctx));
+router.delete('/api/north/:northId/transformers/:transformerId', (ctx: KoaContext<any, any>) =>
+  northConnectorController.removeTransformer(ctx)
+);
 
 router.get('/api/south-types', (ctx: KoaContext<void, Array<SouthType>>) => southConnectorController.getSouthConnectorTypes(ctx));
 router.get('/api/south-types/:id', (ctx: KoaContext<void, SouthConnectorManifest>) =>
@@ -338,6 +343,11 @@ router.put('/api/south/:southId/items/:id/disable', (ctx: KoaContext<void, void>
 router.delete('/api/south/:southId/items/all', (ctx: KoaContext<void, void>) => southConnectorController.deleteAllSouthItem(ctx));
 router.delete('/api/south/:southId/items/:id', (ctx: KoaContext<void, void>) => southConnectorController.deleteSouthItem(ctx));
 router.put('/api/south/:southId/cache/reset-metrics', (ctx: KoaContext<void, void>) => southConnectorController.resetSouthMetrics(ctx));
+router.get('/api/south/:southId/transformers', (ctx: KoaContext<any, any>) => southConnectorController.getTransformers(ctx));
+router.post('/api/south/:southId/transformers/:transformerId', (ctx: KoaContext<any, any>) => southConnectorController.addTransformer(ctx));
+router.delete('/api/south/:southId/transformers/:transformerId', (ctx: KoaContext<any, any>) =>
+  southConnectorController.removeTransformer(ctx)
+);
 
 router.get('/api/history-queries', (ctx: KoaContext<void, Array<HistoryQueryLightDTO>>) => historyQueryController.findAll(ctx));
 router.get('/api/history-queries/:id', (ctx: KoaContext<void, HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>>) =>
@@ -430,6 +440,24 @@ router.put(
       void
     >
   ) => historyQueryController.testHistoryQueryItem(ctx)
+);
+router.get('/api/history-queries/:historyQueryId/south-transformers', (ctx: KoaContext<any, any>) =>
+  historyQueryController.getTransformers(ctx, 'south')
+);
+router.post('/api/history-queries/:historyQueryId/south-transformers/:transformerId', (ctx: KoaContext<any, any>) =>
+  historyQueryController.addTransformer(ctx, 'south')
+);
+router.delete('/api/history-queries/:historyQueryId/south-transformers/:transformerId', (ctx: KoaContext<any, any>) =>
+  historyQueryController.removeTransformer(ctx, 'south')
+);
+router.get('/api/history-queries/:historyQueryId/north-transformers', (ctx: KoaContext<any, any>) =>
+  historyQueryController.getTransformers(ctx, 'north')
+);
+router.post('/api/history-queries/:historyQueryId/north-transformers/:transformerId', (ctx: KoaContext<any, any>) =>
+  historyQueryController.addTransformer(ctx, 'north')
+);
+router.delete('/api/history-queries/:historyQueryId/north-transformers/:transformerId', (ctx: KoaContext<any, any>) =>
+  historyQueryController.removeTransformer(ctx, 'north')
 );
 
 router.get('/api/logs', (ctx: KoaContext<void, Page<LogDTO>>) => logController.search(ctx));

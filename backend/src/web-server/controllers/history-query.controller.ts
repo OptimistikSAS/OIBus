@@ -13,6 +13,16 @@ import { SouthConnectorCommandDTO, SouthConnectorItemTestingSettings } from '../
 import { Page } from '../../../shared/model/types';
 import AbstractController from './abstract.controller';
 import Joi from 'joi';
+import { NorthCacheSettingsDTO, NorthConnectorCommandDTO, NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
+import { OIBusContent } from '../../../../shared/model/engine.model';
+import { TransformerDTO, TransformerFilterDTO } from '../../../../shared/model/transformer.model';
+
+interface HistoryQueryWithItemsCommandDTO {
+  historyQuery: HistoryQueryCommandDTO;
+  items: Array<SouthHistoryQueryItemDTO>;
+  itemIdsToDelete: Array<string>;
+  resetCache: boolean;
+}
 import { NorthConnectorCommandDTO } from '../../../shared/model/north-connector.model';
 import { toHistoryQueryDTO, toHistoryQueryItemDTO, toHistoryQueryLightDTO } from '../../service/history-query.service';
 import { itemToFlattenedCSV } from '../../service/utils';
