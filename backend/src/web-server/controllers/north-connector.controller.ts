@@ -618,9 +618,6 @@ export default class NorthConnectorController {
     const manifest = this.getManifestWithItemsMode(ctx);
 
     const file = ctx.request.file;
-    if (file.mimetype !== 'text/csv') {
-      return ctx.badRequest();
-    }
 
     let itemIdsToDelete: Array<string>;
     try {
