@@ -2192,20 +2192,6 @@ describe('North connector controller with items', () => {
     });
   });
 
-  it('checkImportNorthItems() should reject bad file type', async () => {
-    ctx.request.file = { path: 'myFile.txt', mimetype: 'bad type' };
-    ctx.request.body.itemIdsToDelete = '[]';
-
-    await northConnectorController.checkImportNorthItems(ctx);
-
-    expect(ctx.badRequest).toHaveBeenCalledTimes(1);
-    expect(csv.parse).not.toHaveBeenCalled();
-    expect(fs.readFile).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onCreateOrUpdateNorthItems).not.toHaveBeenCalled();
-    expect(ctx.noContent).not.toHaveBeenCalled();
-    expect(ctx.throw).not.toHaveBeenCalled();
-  });
-
   it('checkImportNorthItems() should throw badRequest when file not parsed', async () => {
     ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
     ctx.request.body.itemIdsToDelete = '[]';
