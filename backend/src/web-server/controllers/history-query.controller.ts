@@ -16,6 +16,7 @@ import AbstractController from './abstract.controller';
 import Joi from 'joi';
 import { NorthConnectorCommandDTO, NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import { OIBusContent } from '../../../../shared/model/engine.model';
+import { TransformerDTO, TransformerFilterDTO } from '../../../../shared/model/transformer.model';
 
 interface HistoryQueryWithItemsCommandDTO {
   historyQuery: HistoryQueryCommandDTO;
@@ -567,6 +568,76 @@ export default class HistoryQueryController extends AbstractController {
       const northToTest = ctx.app.northService.createNorth(command, 'baseFolder', logger);
       await northToTest.testConnection();
 
+      ctx.noContent();
+    } catch (error: any) {
+      ctx.badRequest(error.message);
+    }
+  }
+
+  async addTransformer(ctx: KoaContext<void, void>, connectorType: 'south' | 'north'): Promise<void> {
+    try {
+      const historyQuery = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.historyQueryId);
+      if (!historyQuery) {
+        return ctx.throw(404, 'History query not found');
+      }
+
+      const transformer = ctx.app.repositoryService.transformerRepository.getTransformer(ctx.params.transformerId);
+      if (!transformer) {
+        return ctx.throw(404, 'Transformer not found');
+      }
+
+      ctx.app.repositoryService.historyTransformerRepository.addTransformer(
+        ctx.params.historyQueryId,
+        connectorType,
+        ctx.params.transformerId
+      );
+      ctx.noContent();
+    } catch (error: any) {
+      ctx.badRequest(error.message);
+    }
+  }
+
+  async getTransformers(ctx: KoaContext<void, Array<TransformerDTO>>, connectorType: 'south' | 'north'): Promise<void> {
+    try {
+      const historyQuery = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.historyQueryId);
+      if (!historyQuery) {
+        return ctx.throw(404, 'History query not found');
+      }
+
+      const filter: TransformerFilterDTO = {
+        inputType: ctx.query.inputType as string,
+        outputType: ctx.query.outputType as string,
+        name: ctx.query.name as string
+      };
+
+      const southTransformers = ctx.app.repositoryService.historyTransformerRepository.getTransformers(
+        ctx.params.historyQueryId,
+        connectorType,
+        filter
+      );
+      ctx.ok(southTransformers);
+    } catch (error: any) {
+      ctx.badRequest(error.message);
+    }
+  }
+
+  async removeTransformer(ctx: KoaContext<void, void>, connectorType: 'south' | 'north'): Promise<void> {
+    try {
+      const historyQuery = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.historyQueryId);
+      if (!historyQuery) {
+        return ctx.throw(404, 'History query not found');
+      }
+
+      const transformer = ctx.app.repositoryService.transformerRepository.getTransformer(ctx.params.transformerId);
+      if (!transformer) {
+        return ctx.throw(404, 'Transformer not found');
+      }
+
+      ctx.app.repositoryService.historyTransformerRepository.removeTransformer(
+        ctx.params.historyQueryId,
+        connectorType,
+        ctx.params.transformerId
+      );
       ctx.noContent();
     } catch (error: any) {
       ctx.badRequest(error.message);
