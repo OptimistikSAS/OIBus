@@ -1208,20 +1208,6 @@ describe('History query controller', () => {
     expect(ctx.throw).toHaveBeenCalledTimes(1);
   });
 
-  // it('checkImportSouthItems() should reject bad file type', async () => {
-  //   ctx.params.southType = 'south-test';
-  //   ctx.request.file = { path: 'myFile.txt', mimetype: 'bad type' };
-  //
-  //   await historyQueryController.checkImportSouthItems(ctx);
-  //
-  //   expect(ctx.badRequest).toHaveBeenCalledTimes(1);
-  //   expect(csv.parse).not.toHaveBeenCalled();
-  //   expect(fs.readFile).not.toHaveBeenCalled();
-  //   expect(ctx.app.reloadService.onCreateOrUpdateSouthItems).not.toHaveBeenCalled();
-  //   expect(ctx.noContent).not.toHaveBeenCalled();
-  //   expect(ctx.throw).not.toHaveBeenCalled();
-  // });
-
   it('checkImportSouthItems() should throw badRequest when file not parsed', async () => {
     ctx.params.southType = 'south-test';
     ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
