@@ -161,7 +161,7 @@ router.post('/api/north/:northId/items', (ctx: KoaContext<any, any>) => northCon
 router.post('/api/north/:northType/items/check-import/:northId', upload.single('file'), (ctx: KoaContext<any, any>) =>
   northConnectorController.checkImportNorthItems(ctx)
 );
-router.post('/api/south/:northId/items/import', (ctx: KoaContext<any, any>) => northConnectorController.importNorthItems(ctx));
+router.post('/api/north/:northId/items/import', (ctx: KoaContext<any, any>) => northConnectorController.importNorthItems(ctx));
 router.get('/api/north/:northId/items/export', (ctx: KoaContext<any, any>) => northConnectorController.exportNorthItems(ctx));
 router.put('/api/north/items/to-csv', (ctx: KoaContext<any, any>) => northConnectorController.northItemsToCsv(ctx));
 router.get('/api/north/:northId/items/:id', (ctx: KoaContext<any, any>) => northConnectorController.getNorthItem(ctx));
