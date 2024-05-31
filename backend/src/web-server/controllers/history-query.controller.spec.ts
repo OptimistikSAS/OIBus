@@ -15,12 +15,13 @@ import fs from 'node:fs/promises';
 import { southTestManifest } from '../../tests/__mocks__/south-service.mock';
 import { northTestManifest } from '../../tests/__mocks__/north-service.mock';
 import { historyQuerySchema } from './validators/oibus-validation-schema';
+import { TransformerDTO, TransformerFilterDTO } from '../../../../shared/model/transformer.model';
 
 jest.mock('papaparse');
 jest.mock('node:fs/promises');
 jest.mock('./validators/joi.validator');
 
-const ctx = new KoaContextMock();
+let ctx = new KoaContextMock();
 const validator = new JoiValidator();
 const historyQueryController = new HistoryQueryConnectorController(validator, historyQuerySchema);
 
@@ -135,11 +136,21 @@ const page = {
   totalPages: 1
 };
 const nowDateString = '2020-02-02T02:02:02.222Z';
+const transformer: TransformerDTO = {
+  id: 'transformerId',
+  name: 'Transformer',
+  description: 'Transformer description',
+  code: 'code',
+  inputType: 'time-values',
+  outputType: 'values',
+  fileRegex: null
+};
 
 describe('History query controller', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    ctx = new KoaContextMock();
   });
 
   it('getHistoryQueries() should return history queries', async () => {
@@ -202,6 +213,7 @@ describe('History query controller', () => {
   });
 
   it.each(invalidHistoryQueries)('getHistoryQuery() should return not found when history manifest not found', async invalidHistoryQuery => {
+    ctx.params.id = 'id';
     ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(invalidHistoryQuery);
 
     await historyQueryController.getHistoryQuery(ctx);
@@ -688,6 +700,7 @@ describe('History query controller', () => {
   });
 
   it('searchSouthItems() should return South items with default search params', async () => {
+    ctx.params.historyQueryId = 'id';
     ctx.params.southId = 'id';
     ctx.query = {};
     const searchParams = {
@@ -806,6 +819,7 @@ describe('History query controller', () => {
 
   it('updateHistoryQueryItem() should update item', async () => {
     ctx.params.historyQueryId = 'historyId';
+    ctx.params.id = 'id';
     ctx.request.body = {
       ...oibusItemCommand
     };
@@ -889,6 +903,7 @@ describe('History query controller', () => {
 
   it('updateHistoryQueryItem() should return bad request when validation fails', async () => {
     ctx.params.historyQueryId = 'historyId';
+    ctx.params.id = 'id';
     ctx.request.body = {
       ...oibusItemCommand
     };
@@ -1446,6 +1461,7 @@ describe('History query controller', () => {
   it('testSouthConnection() should return bad request when validation fails', async () => {
     ctx.request.body = southConnectorCommand;
     ctx.params.id = 'historyId';
+    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQueryCommand);
     const validationError = new Error('invalid body');
     validator.validateSettings = jest.fn().mockImplementationOnce(() => {
       throw validationError;
@@ -1584,6 +1600,7 @@ describe('History query controller', () => {
   it('testNorthConnection() should return bad request when validation fails', async () => {
     ctx.request.body = northConnectorCommand;
     ctx.params.id = 'historyId';
+    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQueryCommand);
     const validationError = new Error('invalid body');
     validator.validateSettings = jest.fn().mockImplementationOnce(() => {
       throw validationError;
@@ -1595,6 +1612,236 @@ describe('History query controller', () => {
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
   });
+
+  it.each(['south', 'north'] as const)('addTransformer() should add a transformer to the %s connector', async connectorType => {
+    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+    ctx.app.repositoryService.transformerRepository.getTransformer.mockReturnValue(transformer);
+    ctx.params.historyQueryId = 'historyId';
+    ctx.params.transformerId = 'transformerId';
+
+    await historyQueryController.addTransformer(ctx, connectorType);
+
+    expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
+    expect(ctx.app.repositoryService.transformerRepository.getTransformer).toHaveBeenCalledWith('transformerId');
+    expect(ctx.app.repositoryService.historyTransformerRepository.addTransformer).toHaveBeenCalledWith(
+      'historyId',
+      connectorType,
+      'transformerId'
+    );
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it.each(['south', 'north'] as const)(
+    'addTransformer() should not add a transformer to the %s connector when history query is not found',
+    async connectorType => {
+      ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(null);
+      ctx.params.historyQueryId = 'historyId';
+
+      await historyQueryController.addTransformer(ctx, connectorType);
+
+      expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
+      expect(ctx.app.repositoryService.transformerRepository.getTransformer).not.toHaveBeenCalled();
+      expect(ctx.app.repositoryService.historyTransformerRepository.addTransformer).not.toHaveBeenCalled();
+      expect(ctx.noContent).not.toHaveBeenCalled();
+      expect(ctx.throw).toHaveBeenCalledWith(404, 'History query not found');
+    }
+  );
+
+  it.each(['south', 'north'] as const)(
+    'addTransformer() should not add a transformer to the %s connector when transformer is not found',
+    async connectorType => {
+      ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+      ctx.app.repositoryService.transformerRepository.getTransformer.mockReturnValue(null);
+      ctx.params.historyQueryId = 'historyId';
+      ctx.params.transformerId = 'transformerId';
+
+      await historyQueryController.addTransformer(ctx, connectorType);
+
+      expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
+      expect(ctx.app.repositoryService.transformerRepository.getTransformer).toHaveBeenCalledWith('transformerId');
+      expect(ctx.app.repositoryService.historyTransformerRepository.addTransformer).not.toHaveBeenCalled();
+      expect(ctx.noContent).not.toHaveBeenCalled();
+      expect(ctx.throw).toHaveBeenCalledWith(404, 'Transformer not found');
+    }
+  );
+
+  it.each(['south', 'north'] as const)(
+    'addTransformer() should not add transformer to the %s connector when error is thrown',
+    async connectorType => {
+      ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+      ctx.app.repositoryService.transformerRepository.getTransformer.mockReturnValue(transformer);
+      ctx.app.repositoryService.historyTransformerRepository.addTransformer.mockImplementationOnce(() => {
+        throw new Error('SQL Duplicate key constraint failed');
+      });
+      ctx.params.historyQueryId = 'historyId';
+      ctx.params.transformerId = 'transformerId';
+
+      await historyQueryController.addTransformer(ctx, connectorType);
+
+      expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
+      expect(ctx.app.repositoryService.transformerRepository.getTransformer).toHaveBeenCalledWith('transformerId');
+      expect(ctx.app.repositoryService.historyTransformerRepository.addTransformer).toHaveBeenCalledWith(
+        'historyId',
+        connectorType,
+        'transformerId'
+      );
+      expect(ctx.noContent).not.toHaveBeenCalled();
+      expect(ctx.badRequest).toHaveBeenCalledWith('SQL Duplicate key constraint failed');
+    }
+  );
+
+  it.each(['south', 'north'] as const)('getTransformers() should return transformers added to the %s connector', async connectorType => {
+    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+    ctx.app.repositoryService.historyTransformerRepository.getTransformers.mockReturnValue([transformer]);
+    ctx.params.historyQueryId = 'historyId';
+    const filter = {};
+
+    await historyQueryController.getTransformers(ctx, connectorType);
+    expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
+    expect(ctx.app.repositoryService.historyTransformerRepository.getTransformers).toHaveBeenCalledWith('historyId', connectorType, filter);
+    expect(ctx.ok).toHaveBeenCalledWith([transformer]);
+  });
+
+  it.each(['south', 'north'] as const)(
+    'getTransformers() should return transformers added to the %s connector with filters',
+    async connectorType => {
+      ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+      ctx.app.repositoryService.historyTransformerRepository.getTransformers.mockReturnValue([transformer]);
+      ctx.params.historyQueryId = 'historyId';
+      ctx.query.inputType = 'time-values';
+      ctx.query.outputType = 'values';
+      ctx.query.name = 'name';
+      const filter: TransformerFilterDTO = {
+        inputType: 'time-values',
+        outputType: 'values',
+        name: 'name'
+      };
+
+      await historyQueryController.getTransformers(ctx, connectorType);
+      expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
+      expect(ctx.app.repositoryService.historyTransformerRepository.getTransformers).toHaveBeenCalledWith(
+        'historyId',
+        connectorType,
+        filter
+      );
+      expect(ctx.ok).toHaveBeenCalledWith([transformer]);
+    }
+  );
+
+  it.each(['south', 'north'] as const)(
+    'getTransformers() should not return transformers added to the %s connector when history query is not found',
+    async connectorType => {
+      ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(null);
+      ctx.params.historyQueryId = 'historyId';
+
+      await historyQueryController.getTransformers(ctx, connectorType);
+
+      expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
+      expect(ctx.app.repositoryService.historyTransformerRepository.getTransformers).not.toHaveBeenCalled();
+      expect(ctx.ok).not.toHaveBeenCalled();
+      expect(ctx.throw).toHaveBeenCalledWith(404, 'History query not found');
+    }
+  );
+
+  it.each(['south', 'north'] as const)(
+    'getTransformers() should not return transformers added to the %s connector when error is thrown',
+    async connectorType => {
+      ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+      ctx.app.repositoryService.historyTransformerRepository.getTransformers.mockImplementationOnce(() => {
+        throw new Error('Unexpected filter value');
+      });
+      ctx.params.historyQueryId = 'historyId';
+      const filter = {};
+
+      await historyQueryController.getTransformers(ctx, connectorType);
+
+      expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
+      expect(ctx.app.repositoryService.historyTransformerRepository.getTransformers).toHaveBeenCalledWith(
+        'historyId',
+        connectorType,
+        filter
+      );
+      expect(ctx.ok).not.toHaveBeenCalled();
+      expect(ctx.badRequest).toHaveBeenCalledWith('Unexpected filter value');
+    }
+  );
+
+  it.each(['south', 'north'] as const)('removeTransformer() should remove a transformer from the %s connector', async connectorType => {
+    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+    ctx.app.repositoryService.transformerRepository.getTransformer.mockReturnValue(transformer);
+    ctx.params.historyQueryId = 'historyId';
+    ctx.params.transformerId = 'transformerId';
+
+    await historyQueryController.removeTransformer(ctx, connectorType);
+
+    expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
+    expect(ctx.app.repositoryService.transformerRepository.getTransformer).toHaveBeenCalledWith('transformerId');
+    expect(ctx.app.repositoryService.historyTransformerRepository.removeTransformer).toHaveBeenCalledWith(
+      'historyId',
+      connectorType,
+      'transformerId'
+    );
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it.each(['south', 'north'] as const)(
+    'removeTransformer() should not remove a transformer from the %s connector when history query is not found',
+    async connectorType => {
+      ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(null);
+      ctx.params.historyQueryId = 'historyId';
+
+      await historyQueryController.removeTransformer(ctx, connectorType);
+
+      expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
+      expect(ctx.app.repositoryService.transformerRepository.getTransformer).not.toHaveBeenCalled();
+      expect(ctx.app.repositoryService.historyTransformerRepository.removeTransformer).not.toHaveBeenCalled();
+      expect(ctx.noContent).not.toHaveBeenCalled();
+      expect(ctx.throw).toHaveBeenCalledWith(404, 'History query not found');
+    }
+  );
+
+  it.each(['south', 'north'] as const)(
+    'removeTransformer() should not remove a transformer from the %s connector when transformer is not found',
+    async connectorType => {
+      ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+      ctx.app.repositoryService.transformerRepository.getTransformer.mockReturnValue(null);
+      ctx.params.historyQueryId = 'historyId';
+      ctx.params.transformerId = 'transformerId';
+
+      await historyQueryController.removeTransformer(ctx, connectorType);
+
+      expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
+      expect(ctx.app.repositoryService.transformerRepository.getTransformer).toHaveBeenCalledWith('transformerId');
+      expect(ctx.app.repositoryService.historyTransformerRepository.removeTransformer).not.toHaveBeenCalled();
+      expect(ctx.noContent).not.toHaveBeenCalled();
+      expect(ctx.throw).toHaveBeenCalledWith(404, 'Transformer not found');
+    }
+  );
+
+  it.each(['south', 'north'] as const)(
+    'removeTransformer() should not remove a transformer from the %s connector when error is thrown',
+    async connectorType => {
+      ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+      ctx.app.repositoryService.transformerRepository.getTransformer.mockReturnValue(transformer);
+      ctx.app.repositoryService.historyTransformerRepository.removeTransformer.mockImplementationOnce(() => {
+        throw new Error('Unexpected error occurred');
+      });
+      ctx.params.historyQueryId = 'historyId';
+      ctx.params.transformerId = 'transformerId';
+
+      await historyQueryController.removeTransformer(ctx, connectorType);
+
+      expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
+      expect(ctx.app.repositoryService.transformerRepository.getTransformer).toHaveBeenCalledWith('transformerId');
+      expect(ctx.app.repositoryService.historyTransformerRepository.removeTransformer).toHaveBeenCalledWith(
+        'historyId',
+        connectorType,
+        'transformerId'
+      );
+      expect(ctx.noContent).not.toHaveBeenCalled();
+      expect(ctx.badRequest).toHaveBeenCalledWith('Unexpected error occurred');
+    }
+  );
 });
 
 describe('South connection tests', () => {
