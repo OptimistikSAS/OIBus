@@ -10,13 +10,14 @@ import {
   SouthConnectorItemDTO
 } from '../../../../shared/model/south-connector.model';
 import { southTestManifest } from '../../tests/__mocks__/south-service.mock';
+import { TransformerDTO, TransformerFilterDTO } from '../../../../shared/model/transformer.model';
 import { ScanModeDTO } from '../../../../shared/model/scan-mode.model';
 
 jest.mock('./validators/joi.validator');
 jest.mock('papaparse');
 jest.mock('node:fs/promises');
 
-const ctx = new KoaContextMock();
+let ctx = new KoaContextMock();
 const validator = new JoiValidator();
 const southConnectorController = new SouthConnectorController(validator);
 
@@ -83,10 +84,21 @@ const page = {
   totalElements: 1,
   totalPages: 1
 };
+const transformer: TransformerDTO = {
+  id: 'transformerId',
+  name: 'Transformer',
+  description: 'Transformer description',
+  code: 'code',
+  inputType: 'time-values',
+  outputType: 'values',
+  fileRegex: null
+};
 
 describe('South connector controller', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
+    // Resetting context to prevent variables set in one test to pass into others
+    ctx = new KoaContextMock();
   });
 
   it('getSouthConnectorTypes() should return South connector types', async () => {
@@ -216,6 +228,7 @@ describe('South connector controller', () => {
     };
     ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
     ctx.app.reloadService.onCreateSouth.mockReturnValue(southConnector);
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
     ctx.query.duplicateId = 'duplicateId';
 
     await southConnectorController.createSouthConnector(ctx);
@@ -716,6 +729,7 @@ describe('South connector controller', () => {
   });
 
   it('updateSouthItem() should update South item', async () => {
+    ctx.params.id = 'id';
     ctx.params.southId = 'southId';
     ctx.request.body = {
       ...itemCommand
@@ -770,7 +784,7 @@ describe('South connector controller', () => {
   });
 
   it('updateSouthItem() should return not found when South item is not found', async () => {
-    ctx.params.southId = 'id';
+    ctx.params.id = 'id';
     ctx.params.southId = 'southId';
     ctx.request.body = null;
     ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
@@ -786,6 +800,7 @@ describe('South connector controller', () => {
   });
 
   it('updateSouthItem() should return bad request when body is missing', async () => {
+    ctx.params.id = 'id';
     ctx.params.southId = 'southId';
     ctx.request.body = null;
     ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
@@ -805,6 +820,7 @@ describe('South connector controller', () => {
   });
 
   it('updateSouthItem() should return bad request when validation fails', async () => {
+    ctx.params.id = 'id';
     ctx.params.southId = 'southId';
     ctx.request.body = {
       ...itemCommand
@@ -977,7 +993,7 @@ describe('South connector controller', () => {
 
     ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
     ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
-    ctx.request.body.itemIdsToDelete = '[]';
+    ctx.request.body = { itemIdsToDelete: '[]' };
     (fs.readFile as jest.Mock).mockReturnValue('file content');
     (validator.validateSettings as jest.Mock)
       .mockImplementationOnce(() => {
@@ -1090,7 +1106,7 @@ describe('South connector controller', () => {
 
     ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
     ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
-    ctx.request.body.itemIdsToDelete = JSON.stringify(['itemIdToDelete']);
+    ctx.request.body = { itemIdsToDelete: JSON.stringify(['itemIdToDelete']) };
     (fs.readFile as jest.Mock).mockReturnValue('file content');
     (validator.validateSettings as jest.Mock).mockImplementationOnce(() => {
       return true;
@@ -1192,7 +1208,7 @@ describe('South connector controller', () => {
   it('checkImportSouthItems() should throw badRequest when file not parsed', async () => {
     ctx.params.southType = 'south-test';
     ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
-    ctx.request.body.itemIdsToDelete = '[]';
+    ctx.request.body = { itemIdsToDelete: '[]' };
     (fs.readFile as jest.Mock).mockReturnValue('file content');
     ctx.app.repositoryService.southItemRepository.getSouthItems.mockReturnValueOnce([]);
     (csv.parse as jest.Mock).mockImplementationOnce(() => {
@@ -1214,7 +1230,7 @@ describe('South connector controller', () => {
   it('checkImportSouthItems() should throw when itemIdsToDelete not parsed', async () => {
     ctx.params.southType = 'south-test';
     ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
-    ctx.request.body.itemIdsToDelete = 'not json';
+    ctx.request.body = { itemIdsToDelete: 'not json' };
     (fs.readFile as jest.Mock).mockReturnValue('file content');
     ctx.app.repositoryService.southItemRepository.getSouthItems.mockReturnValueOnce([]);
 
@@ -1446,6 +1462,8 @@ describe('South connector controller', () => {
     ctx.request.body = {
       ...southConnectorCommand
     };
+    ctx.params.id = 'id1';
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
     const validationError = new Error('invalid body');
     validator.validateSettings = jest.fn().mockImplementationOnce(() => {
       throw validationError;
@@ -1457,5 +1475,184 @@ describe('South connector controller', () => {
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.oibusEngine.testSouth).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
+  });
+
+  it('addTransformer() should add a transformer to the south connector', async () => {
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
+    ctx.app.repositoryService.transformerRepository.getTransformer.mockReturnValue(transformer);
+    ctx.params.southId = 'southId';
+    ctx.params.transformerId = 'transformerId';
+
+    await southConnectorController.addTransformer(ctx);
+
+    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
+    expect(ctx.app.repositoryService.transformerRepository.getTransformer).toHaveBeenCalledWith('transformerId');
+    expect(ctx.app.repositoryService.southTransformerRepository.addTransformer).toHaveBeenCalledWith('southId', 'transformerId');
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('addTransformer() should not add a transformer to the south connector when south connector is not found', async () => {
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(null);
+    ctx.params.southId = 'southId';
+
+    await southConnectorController.addTransformer(ctx);
+
+    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
+    expect(ctx.app.repositoryService.transformerRepository.getTransformer).not.toHaveBeenCalled();
+    expect(ctx.app.repositoryService.southTransformerRepository.addTransformer).not.toHaveBeenCalled();
+    expect(ctx.noContent).not.toHaveBeenCalled();
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'South not found');
+  });
+
+  it('addTransformer() should not add a transformer to the south connector when transformer is not found', async () => {
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
+    ctx.app.repositoryService.transformerRepository.getTransformer.mockReturnValue(null);
+    ctx.params.southId = 'southId';
+    ctx.params.transformerId = 'transformerId';
+
+    await southConnectorController.addTransformer(ctx);
+
+    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
+    expect(ctx.app.repositoryService.transformerRepository.getTransformer).toHaveBeenCalledWith('transformerId');
+    expect(ctx.app.repositoryService.southTransformerRepository.addTransformer).not.toHaveBeenCalled();
+    expect(ctx.noContent).not.toHaveBeenCalled();
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'Transformer not found');
+  });
+
+  it('addTransformer() should not add transformer to the south connector when error is thrown', async () => {
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
+    ctx.app.repositoryService.transformerRepository.getTransformer.mockReturnValue(transformer);
+    ctx.app.repositoryService.southTransformerRepository.addTransformer.mockImplementationOnce(() => {
+      throw new Error('SQL Duplicate key constraint failed');
+    });
+    ctx.params.southId = 'southId';
+    ctx.params.transformerId = 'transformerId';
+
+    await southConnectorController.addTransformer(ctx);
+
+    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
+    expect(ctx.app.repositoryService.transformerRepository.getTransformer).toHaveBeenCalledWith('transformerId');
+    expect(ctx.app.repositoryService.southTransformerRepository.addTransformer).toHaveBeenCalledWith('southId', 'transformerId');
+    expect(ctx.noContent).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('SQL Duplicate key constraint failed');
+  });
+
+  it('getTransformers() should return transformers added to the south connector', async () => {
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
+    ctx.app.repositoryService.southTransformerRepository.getTransformers.mockReturnValue([transformer]);
+    ctx.params.southId = 'southId';
+    const filter = {};
+
+    await southConnectorController.getTransformers(ctx);
+    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
+    expect(ctx.app.repositoryService.southTransformerRepository.getTransformers).toHaveBeenCalledWith('southId', filter);
+    expect(ctx.ok).toHaveBeenCalledWith([transformer]);
+  });
+
+  it('getTransformers() should return transformers added to the south connector with filters', async () => {
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
+    ctx.app.repositoryService.southTransformerRepository.getTransformers.mockReturnValue([transformer]);
+    ctx.params.southId = 'southId';
+    ctx.query.inputType = 'time-values';
+    ctx.query.outputType = 'values';
+    ctx.query.name = 'name';
+    const filter: TransformerFilterDTO = {
+      inputType: 'time-values',
+      outputType: 'values',
+      name: 'name'
+    };
+
+    await southConnectorController.getTransformers(ctx);
+    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
+    expect(ctx.app.repositoryService.southTransformerRepository.getTransformers).toHaveBeenCalledWith('southId', filter);
+    expect(ctx.ok).toHaveBeenCalledWith([transformer]);
+  });
+
+  it('getTransformers() should not return transformers added to the south connector when south connector is not found', async () => {
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(null);
+    ctx.params.southId = 'southId';
+
+    await southConnectorController.getTransformers(ctx);
+
+    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
+    expect(ctx.app.repositoryService.southTransformerRepository.getTransformers).not.toHaveBeenCalled();
+    expect(ctx.ok).not.toHaveBeenCalled();
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'South not found');
+  });
+
+  it('getTransformers() should not return transformers added to the south connector when error is thrown', async () => {
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
+    ctx.app.repositoryService.southTransformerRepository.getTransformers.mockImplementationOnce(() => {
+      throw new Error('Unexpected filter value');
+    });
+    ctx.params.southId = 'southId';
+    const filter = {};
+
+    await southConnectorController.getTransformers(ctx);
+
+    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
+    expect(ctx.app.repositoryService.southTransformerRepository.getTransformers).toHaveBeenCalledWith('southId', filter);
+    expect(ctx.ok).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('Unexpected filter value');
+  });
+
+  it('removeTransformer() should remove a transformer from the south connector', async () => {
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
+    ctx.app.repositoryService.transformerRepository.getTransformer.mockReturnValue(transformer);
+    ctx.params.southId = 'southId';
+    ctx.params.transformerId = 'transformerId';
+
+    await southConnectorController.removeTransformer(ctx);
+
+    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
+    expect(ctx.app.repositoryService.transformerRepository.getTransformer).toHaveBeenCalledWith('transformerId');
+    expect(ctx.app.repositoryService.southTransformerRepository.removeTransformer).toHaveBeenCalledWith('southId', 'transformerId');
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('removeTransformer() should not remove a transformer from the south connector when south connector is not found', async () => {
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(null);
+    ctx.params.southId = 'southId';
+
+    await southConnectorController.removeTransformer(ctx);
+
+    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
+    expect(ctx.app.repositoryService.transformerRepository.getTransformer).not.toHaveBeenCalled();
+    expect(ctx.app.repositoryService.southTransformerRepository.removeTransformer).not.toHaveBeenCalled();
+    expect(ctx.noContent).not.toHaveBeenCalled();
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'South not found');
+  });
+
+  it('removeTransformer() should not remove a transformer from the south connector when transformer is not found', async () => {
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
+    ctx.app.repositoryService.transformerRepository.getTransformer.mockReturnValue(null);
+    ctx.params.southId = 'southId';
+    ctx.params.transformerId = 'transformerId';
+
+    await southConnectorController.removeTransformer(ctx);
+
+    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
+    expect(ctx.app.repositoryService.transformerRepository.getTransformer).toHaveBeenCalledWith('transformerId');
+    expect(ctx.app.repositoryService.southTransformerRepository.removeTransformer).not.toHaveBeenCalled();
+    expect(ctx.noContent).not.toHaveBeenCalled();
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'Transformer not found');
+  });
+
+  it('removeTransformer() should not remove a transformer from the south connector when error is thrown', async () => {
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
+    ctx.app.repositoryService.transformerRepository.getTransformer.mockReturnValue(transformer);
+    ctx.app.repositoryService.southTransformerRepository.removeTransformer.mockImplementationOnce(() => {
+      throw new Error('Unexpected error occurred');
+    });
+    ctx.params.southId = 'southId';
+    ctx.params.transformerId = 'transformerId';
+
+    await southConnectorController.removeTransformer(ctx);
+
+    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
+    expect(ctx.app.repositoryService.transformerRepository.getTransformer).toHaveBeenCalledWith('transformerId');
+    expect(ctx.app.repositoryService.southTransformerRepository.removeTransformer).toHaveBeenCalledWith('southId', 'transformerId');
+    expect(ctx.noContent).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('Unexpected error occurred');
   });
 });

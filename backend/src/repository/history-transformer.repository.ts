@@ -12,7 +12,7 @@ export default class HistoryTransformerRepository {
    */
   addTransformer(historyId: string, connectorType: 'south' | 'north', transformerId: string): void {
     if (connectorType !== 'south' && connectorType !== 'north') {
-      throw new Error('Invalid connectory type');
+      throw new Error('Invalid connector type');
     }
 
     this.database
@@ -26,7 +26,7 @@ export default class HistoryTransformerRepository {
    */
   getTransformers(historyId: string, connectorType: 'south' | 'north', filter?: TransformerFilterDTO): Array<TransformerDTO> {
     if (connectorType !== 'south' && connectorType !== 'north') {
-      throw new Error('Invalid connectory type');
+      throw new Error('Invalid connector type');
     }
 
     if (!filter) {
@@ -64,7 +64,7 @@ export default class HistoryTransformerRepository {
    */
   removeTransformer(historyId: string, connectorType: 'south' | 'north', transformerId: string): void {
     if (connectorType !== 'south' && connectorType !== 'north') {
-      throw new Error('Invalid connectory type');
+      throw new Error('Invalid connector type');
     }
 
     this.database
