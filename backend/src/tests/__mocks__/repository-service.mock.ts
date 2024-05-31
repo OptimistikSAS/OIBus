@@ -174,5 +174,27 @@ export default jest.fn().mockImplementation(() => ({
     createOrUpdateCacheScanMode: jest.fn(),
     deleteCacheScanMode: jest.fn(),
     getSouthCacheScanMode: jest.fn()
+  },
+  transformerRepository: {
+    createTransformer: jest.fn(),
+    updateTransformer: jest.fn(),
+    deleteTransformer: jest.fn(),
+    getTransformer: jest.fn(),
+    getTransformers: jest.fn()
+  },
+  northTransformerRepository: {
+    addTransformer: jest.fn(),
+    getTransformers: jest.fn(),
+    removeTransformer: jest.fn()
+  },
+  southTransformerRepository: {
+    addTransformer: jest.fn(),
+    getTransformers: jest.fn(),
+    removeTransformer: jest.fn()
+  },
+  historyTransformerRepository: {
+    addTransformer: jest.fn(),
+    getTransformers: jest.fn(),
+    removeTransformer: jest.fn()
   }
 }));
