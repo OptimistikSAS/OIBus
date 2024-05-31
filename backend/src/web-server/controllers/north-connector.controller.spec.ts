@@ -5,6 +5,7 @@ import { northTestManifest, northTestManifestWithItems } from '../../tests/__moc
 import { NorthConnectorItemCommandDTO, NorthConnectorItemDTO } from '../../../../shared/model/north-connector.model';
 import csv from 'papaparse';
 import fs from 'node:fs/promises';
+import { TransformerDTO, TransformerFilterDTO } from '../../../../shared/model/transformer.model';
 
 jest.mock('./validators/joi.validator');
 jest.mock('papaparse');
@@ -64,6 +65,15 @@ const page = {
   totalPages: 1
 };
 let getManifestWithItemsModeSpy: jest.SpyInstance;
+const transformer: TransformerDTO = {
+  id: 'transformerId',
+  name: 'Transformer',
+  description: 'Transformer description',
+  code: 'code',
+  inputType: 'time-values',
+  outputType: 'values',
+  fileRegex: null
+};
 
 describe('North connector controller', () => {
   beforeEach(async () => {

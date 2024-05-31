@@ -11,7 +11,6 @@ import {
 } from '../../../../shared/model/south-connector.model';
 import { southTestManifest } from '../../tests/__mocks__/south-service.mock';
 import { TransformerDTO, TransformerFilterDTO } from '../../../../shared/model/transformer.model';
-import { ScanModeDTO } from '../../../../shared/model/scan-mode.model';
 
 jest.mock('./validators/joi.validator');
 jest.mock('papaparse');
