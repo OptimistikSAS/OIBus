@@ -5,13 +5,14 @@ import { northTestManifest, northTestManifestWithItems } from '../../tests/__moc
 import { NorthConnectorItemCommandDTO, NorthConnectorItemDTO } from '../../../../shared/model/north-connector.model';
 import csv from 'papaparse';
 import fs from 'node:fs/promises';
+import { TransformerDTO, TransformerFilterDTO } from '../../../../shared/model/transformer.model';
 import { ScanModeDTO } from '../../../../shared/model/scan-mode.model';
 
 jest.mock('./validators/joi.validator');
 jest.mock('papaparse');
 jest.mock('node:fs/promises');
 
-const ctx = new KoaContextMock();
+let ctx = new KoaContextMock();
 const validator = new JoiValidator();
 const northConnectorController = new NorthConnectorController(validator);
 
@@ -67,10 +68,21 @@ const page = {
   totalPages: 1
 };
 let getManifestWithItemsModeSpy: jest.SpyInstance;
+const transformer: TransformerDTO = {
+  id: 'transformerId',
+  name: 'Transformer',
+  description: 'Transformer description',
+  code: 'code',
+  inputType: 'time-values',
+  outputType: 'values',
+  fileRegex: null
+};
 
 describe('North connector controller', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
+    // Resetting context to prevent variables set in one test to pass into others
+    ctx = new KoaContextMock();
   });
 
   it('getNorthConnectorTypes() should return North connector types', async () => {
@@ -1512,6 +1524,8 @@ describe('North connector controller', () => {
     ctx.request.body = {
       ...northConnectorCommand
     };
+    ctx.params.id = 'id';
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(northConnector);
     const validationError = new Error('invalid body');
     validator.validateSettings = jest.fn().mockImplementationOnce(() => {
       throw validationError;
@@ -1523,6 +1537,185 @@ describe('North connector controller', () => {
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.app.northService.createNorth).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
+  });
+
+  it('addTransformer() should add a transformer to the north connector', async () => {
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(northConnector);
+    ctx.app.repositoryService.transformerRepository.getTransformer.mockReturnValue(transformer);
+    ctx.params.northId = 'northId';
+    ctx.params.transformerId = 'transformerId';
+
+    await northConnectorController.addTransformer(ctx);
+
+    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('northId');
+    expect(ctx.app.repositoryService.transformerRepository.getTransformer).toHaveBeenCalledWith('transformerId');
+    expect(ctx.app.repositoryService.northTransformerRepository.addTransformer).toHaveBeenCalledWith('northId', 'transformerId');
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('addTransformer() should not add a transformer to the north connector when north connector is not found', async () => {
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(null);
+    ctx.params.northId = 'northId';
+
+    await northConnectorController.addTransformer(ctx);
+
+    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('northId');
+    expect(ctx.app.repositoryService.transformerRepository.getTransformer).not.toHaveBeenCalled();
+    expect(ctx.app.repositoryService.northTransformerRepository.addTransformer).not.toHaveBeenCalled();
+    expect(ctx.noContent).not.toHaveBeenCalled();
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'North not found');
+  });
+
+  it('addTransformer() should not add a transformer to the north connector when transformer is not found', async () => {
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(northConnector);
+    ctx.app.repositoryService.transformerRepository.getTransformer.mockReturnValue(null);
+    ctx.params.northId = 'northId';
+    ctx.params.transformerId = 'transformerId';
+
+    await northConnectorController.addTransformer(ctx);
+
+    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('northId');
+    expect(ctx.app.repositoryService.transformerRepository.getTransformer).toHaveBeenCalledWith('transformerId');
+    expect(ctx.app.repositoryService.northTransformerRepository.addTransformer).not.toHaveBeenCalled();
+    expect(ctx.noContent).not.toHaveBeenCalled();
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'Transformer not found');
+  });
+
+  it('addTransformer() should not add transformer to the north connector when error is thrown', async () => {
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(northConnector);
+    ctx.app.repositoryService.transformerRepository.getTransformer.mockReturnValue(transformer);
+    ctx.app.repositoryService.northTransformerRepository.addTransformer.mockImplementationOnce(() => {
+      throw new Error('SQL Duplicate key constraint failed');
+    });
+    ctx.params.northId = 'northId';
+    ctx.params.transformerId = 'transformerId';
+
+    await northConnectorController.addTransformer(ctx);
+
+    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('northId');
+    expect(ctx.app.repositoryService.transformerRepository.getTransformer).toHaveBeenCalledWith('transformerId');
+    expect(ctx.app.repositoryService.northTransformerRepository.addTransformer).toHaveBeenCalledWith('northId', 'transformerId');
+    expect(ctx.noContent).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('SQL Duplicate key constraint failed');
+  });
+
+  it('getTransformers() should return transformers added to the north connector', async () => {
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(northConnector);
+    ctx.app.repositoryService.northTransformerRepository.getTransformers.mockReturnValue([transformer]);
+    ctx.params.northId = 'northId';
+    const filter = {};
+
+    await northConnectorController.getTransformers(ctx);
+    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('northId');
+    expect(ctx.app.repositoryService.northTransformerRepository.getTransformers).toHaveBeenCalledWith('northId', filter);
+    expect(ctx.ok).toHaveBeenCalledWith([transformer]);
+  });
+
+  it('getTransformers() should return transformers added to the north connector with filters', async () => {
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(northConnector);
+    ctx.app.repositoryService.northTransformerRepository.getTransformers.mockReturnValue([transformer]);
+    ctx.params.northId = 'northId';
+    ctx.query.inputType = 'time-values';
+    ctx.query.outputType = 'values';
+    ctx.query.name = 'name';
+    const filter: TransformerFilterDTO = {
+      inputType: 'time-values',
+      outputType: 'values',
+      name: 'name'
+    };
+
+    await northConnectorController.getTransformers(ctx);
+    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('northId');
+    expect(ctx.app.repositoryService.northTransformerRepository.getTransformers).toHaveBeenCalledWith('northId', filter);
+    expect(ctx.ok).toHaveBeenCalledWith([transformer]);
+  });
+
+  it('getTransformers() should not return transformers added to the north connector when north connector is not found', async () => {
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(null);
+    ctx.params.northId = 'northId';
+
+    await northConnectorController.getTransformers(ctx);
+
+    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('northId');
+    expect(ctx.app.repositoryService.northTransformerRepository.getTransformers).not.toHaveBeenCalled();
+    expect(ctx.ok).not.toHaveBeenCalled();
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'North not found');
+  });
+
+  it('getTransformers() should not return transformers added to the north connector when error is thrown', async () => {
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(northConnector);
+    ctx.app.repositoryService.northTransformerRepository.getTransformers.mockImplementationOnce(() => {
+      throw new Error('Unexpected filter value');
+    });
+    ctx.params.northId = 'northId';
+    const filter = {};
+
+    await northConnectorController.getTransformers(ctx);
+
+    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('northId');
+    expect(ctx.app.repositoryService.northTransformerRepository.getTransformers).toHaveBeenCalledWith('northId', filter);
+    expect(ctx.ok).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('Unexpected filter value');
+  });
+
+  it('removeTransformer() should remove a transformer from the north connector', async () => {
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(northConnector);
+    ctx.app.repositoryService.transformerRepository.getTransformer.mockReturnValue(transformer);
+    ctx.params.northId = 'northId';
+    ctx.params.transformerId = 'transformerId';
+
+    await northConnectorController.removeTransformer(ctx);
+
+    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('northId');
+    expect(ctx.app.repositoryService.transformerRepository.getTransformer).toHaveBeenCalledWith('transformerId');
+    expect(ctx.app.repositoryService.northTransformerRepository.removeTransformer).toHaveBeenCalledWith('northId', 'transformerId');
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('removeTransformer() should not remove a transformer from the north connector when north connector is not found', async () => {
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(null);
+    ctx.params.northId = 'northId';
+
+    await northConnectorController.removeTransformer(ctx);
+
+    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('northId');
+    expect(ctx.app.repositoryService.transformerRepository.getTransformer).not.toHaveBeenCalled();
+    expect(ctx.app.repositoryService.northTransformerRepository.removeTransformer).not.toHaveBeenCalled();
+    expect(ctx.noContent).not.toHaveBeenCalled();
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'North not found');
+  });
+
+  it('removeTransformer() should not remove a transformer from the north connector when transformer is not found', async () => {
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(northConnector);
+    ctx.app.repositoryService.transformerRepository.getTransformer.mockReturnValue(null);
+    ctx.params.northId = 'northId';
+    ctx.params.transformerId = 'transformerId';
+
+    await northConnectorController.removeTransformer(ctx);
+
+    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('northId');
+    expect(ctx.app.repositoryService.transformerRepository.getTransformer).toHaveBeenCalledWith('transformerId');
+    expect(ctx.app.repositoryService.northTransformerRepository.removeTransformer).not.toHaveBeenCalled();
+    expect(ctx.noContent).not.toHaveBeenCalled();
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'Transformer not found');
+  });
+
+  it('removeTransformer() should not remove a transformer from the north connector when error is thrown', async () => {
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(northConnector);
+    ctx.app.repositoryService.transformerRepository.getTransformer.mockReturnValue(transformer);
+    ctx.app.repositoryService.northTransformerRepository.removeTransformer.mockImplementationOnce(() => {
+      throw new Error('Unexpected error occurred');
+    });
+    ctx.params.northId = 'northId';
+    ctx.params.transformerId = 'transformerId';
+
+    await northConnectorController.removeTransformer(ctx);
+
+    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('northId');
+    expect(ctx.app.repositoryService.transformerRepository.getTransformer).toHaveBeenCalledWith('transformerId');
+    expect(ctx.app.repositoryService.northTransformerRepository.removeTransformer).toHaveBeenCalledWith('northId', 'transformerId');
+    expect(ctx.noContent).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('Unexpected error occurred');
   });
 });
 
