@@ -3,6 +3,7 @@ import HistoryQueryConnectorController from './history-query.controller';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
 import JoiValidator from './validators/joi.validator';
 import { historyQuerySchema } from './validators/oibus-validation-schema';
+import { TransformerDTO, TransformerFilterDTO } from '../../../../shared/model/transformer.model';
 import testData from '../../tests/utils/test-data';
 import { toHistoryQueryDTO, toHistoryQueryItemDTO, toHistoryQueryLightDTO } from '../../service/history-query.service';
 import { itemToFlattenedCSV } from '../../service/utils';
@@ -34,6 +35,7 @@ describe('History query controller', () => {
 
   it('findById() should return history query', async () => {
     ctx.params.id = testData.historyQueries.list[0].id;
+    ctx.params.id = 'id';
     ctx.app.historyQueryService.findById.mockReturnValueOnce(testData.historyQueries.list[0]);
 
     await historyQueryController.findById(ctx);
@@ -326,6 +328,7 @@ describe('History query controller', () => {
   });
 
   it('searchHistoryQueryItems() should return South items with default search params', async () => {
+    ctx.params.historyQueryId = 'id';
     ctx.params.historyQueryId = testData.historyQueries.list[0].id;
     ctx.query = {};
     const searchParams = {
