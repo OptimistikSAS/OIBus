@@ -39,7 +39,7 @@ OIBus集成了两种OPCUA模式（HA和DA），仅用于只读模式，使用[no
 使用除_None_之外的安全模式时，需要一个证书来签名并可能加密通信。OIBus在启动时生成了一个自签名证书，用于保护与OPCUA服务器的通信。您可以在南向缓存的`opcua`文件夹中找到OPCUA使用的证书。这个证书必须得到OPCUA服务器的信任，以启用安全通信。
 
 :::info 在Prosys OPCUA模拟服务器上的示例
-![Prosys OPCUA模拟服务器证书](../../../static/img/guide/south/opcua/prosys-opcua-simulation-server-certificates.png)
+![Prosys OPCUA模拟服务器证书](../../../../../../static/img/guide/south/opcua/prosys-opcua-simulation-server-certificates.png)
 如果证书没有被OPCUA服务器信任，您可能会遇到包含信息：`Error: The connection may have been rejected by the server` 的错误。
 :::
 
