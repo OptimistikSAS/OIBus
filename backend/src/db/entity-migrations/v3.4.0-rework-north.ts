@@ -24,6 +24,20 @@ export async function up(knex: Knex): Promise<void> {
   await createNorthTransformersTable(knex);
   await createSouthTransformersTable(knex);
   await createHistoryTransformersTable(knex);
+  await updateSouthConnectorsTable(knex);
+  await updateHistoryQueriesTable(knex);
+}
+
+async function updateSouthConnectorsTable(knex: Knex): Promise<void> {
+  await knex.schema.alterTable(SOUTH_CONNECTORS_TABLE, table => {
+    table.boolean('shared_connection').defaultTo(false);
+  });
+}
+
+async function updateHistoryQueriesTable(knex: Knex): Promise<void> {
+  await knex.schema.alterTable(HISTORY_QUERIES_TABLE, table => {
+    table.boolean('south_shared_connection').defaultTo(false);
+  });
 }
 
 async function removeNorthOIBusConnectors(knex: Knex): Promise<void> {

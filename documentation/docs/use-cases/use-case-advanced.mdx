@@ -1,0 +1,76 @@
+---
+displayed_sidebar: useCasesSidebar
+sidebar_position: 7
+---
+
+# Advanced use case
+## Beforehand
+This use case shows an advanced setup of a heterogeneous network:
+- Operational Technology (OT) in the industrial network with PLCs
+- Information Technology (IT) in the enterprise network
+
+<div style={{ textAlign: 'center' }}>
+  <div>
+
+    ![Complex integration](../../static/img/use-cases/advanced-integration.svg)
+
+  </div>
+</div>
+
+## Several OIBus
+In this configuration, two OIBus are set up: **OIBus OT** and **OIBus IT**. This way, only one connection between the OT and
+IT networks needs to be allowed through the internal firewall.
+**OIBus OT** sends data to OIAnalytics through the proxy server of **OIBus IT**.
+
+In such a scenario, it is better to first set up the **OIBus IT** with its proxy server and the proper network firewall rules.
+
+## OIBus IT
+### South Connectors
+#### MSSQL
+The connection to the MSSQL database is straightforward and can be simply set up from [this use case](./use-case-mssql)
+and the [connector documentation](../guide/south-connectors/mssql).
+
+#### MQTT
+This connector can be used to subscribe to MQTT topic, as specified in [this page](../guide/south-connectors/mqtt).
+
+#### Folder Scanner
+In this example, a script generates data files (like CSV files) in a folder which OIBus can scan to retrieve the files according
+to a regex, as specified in [this page](../guide/south-connectors/folder-scanner).
+
+This scenario is useful when OIBus does not have a direct access to the database.
+
+#### ODBC (with Remote OIBus Agent)
+In the network example, the [ODBC South connector](../guide/south-connectors/odbc) uses an [OIBus Agent](../guide/oibus-agent/installation) that must be installed on the
+IP21 machine. It is possible to refer to the [IP21 use case](./use-case-ip21) for a proper setup.
+
+#### OSIsoft PI (with Remote OIBus Agent)
+In the network example, the [OSIsoft PI South connector](../guide/south-connectors/osisoft-pi) uses an [OIBus Agent](../guide/oibus-agent/installation) that must be installed on the
+IP21 machine. It is possible to refer to the [OSIsoft PI use case](./use-case-ip21) for a proper setup.
+
+### North Connectors
+#### OIAnalytics
+It is strongly suggested to first [register OIBus into OIAnalytics](../guide/engine/oianalytics-module) and to use the
+registration inside the [North OIAnalytics connector](../guide/north-connectors/oianalytics).
+
+### Proxy server
+Enable the [proxy server](../guide/engine/engine-settings#proxy-server) and be sure the selected port is not used and is allowed on the firewall for inbound connections.
+
+## OIBus OT
+This OIBus can be used to access PLCs located in the industrial network.
+
+### South Connectors
+#### TwinCAT ADS
+Refer to the [TwinCAT ADS use case](./use-case-ads) to properly set up the connector. Here, the ADS server is remote.
+
+#### OPCUA
+Refer to the [OPCUA use case](./use-case-opcua) to properly set up the connector.
+
+#### Modbus
+Refer to the [Modbus use case](./use-case-modbus) to properly set up the connector.
+
+### North Connectors
+#### OIAnalytics
+It is strongly suggested to first [register OIBus into OIAnalytics](../guide/engine/oianalytics-module) with the help of
+a proxy and to use the registration inside the [North OIAnalytics connector](../guide/north-connectors/oianalytics).
+
+The proxy to use is the one set up on the **OIBus IT**. Be sure that a connection is possible through the firewall.
