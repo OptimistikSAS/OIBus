@@ -1,0 +1,72 @@
+---
+displayed_sidebar: useCasesSidebar
+sidebar_position: 6
+---
+
+import NorthOIAnalytics from './_north_oianalytics.mdx';
+
+# OSIsoftPI → OIAnalytics
+## Beforehand
+OSIsoft PI is a software suite used for real-time data management and analytics in industrial settings, providing
+tools to collect, store, and analyze time-series data from various sources. It supports operational efficiency, process
+optimization, and decision-making across industries like manufacturing, energy, and utilities.
+
+Details regarding the configurations can be located on the [North OIAnalytics](../guide/north-connectors/oianalytics)
+and [South OSIsoft PI](../guide/south-connectors/osisoft-pi) connectors pages.
+
+This use case requires the installation of an [OIBus Agent](../guide/oibus-agent/installation) and is based on the
+depicted fictional network scenario.
+
+<div style={{ textAlign: 'center' }}>
+  <div>
+
+    ![OSIsoft PI -> OIAnalytics use case](../../../../../static/img/use-cases/pi-oia.svg)
+
+  </div>
+</div>
+
+You can either install the OIBus Agent on the same machine as OSIsoft PI, or install it on a remote machine where the
+OSIsoft PI SDK is installed. More information can be found on the [OSIsoft PI SDK settings](../guide/south-connectors/osisoft-pi#osisoft-pi-sdk-configuration).
+
+## South PI
+Enter the `Remote agent URL`. From the example, the value here is `http://localhost:2224`.
+
+<div style={{ textAlign: 'center' }}>
+  <div>
+
+    ![OSIsoft PI settings](../../../../../static/img/use-cases/pi-settings.png)
+
+  </div>
+</div>
+
+:::tip Testing connection
+You can verify the connection by testing the settings using the `Test settings` button.
+:::
+
+### Items
+OSIsoft PI items can be of two types:
+- **Point ID**: Retrieve time values for a single point.
+- **Query**: Retrieve time values for a list of points that match a regex-like query.
+
+#### Point ID
+<div style={{ textAlign: 'center' }}>
+  <div>
+
+    ![OSIsoft PI item point ID settings](../../../../../static/img/use-cases/pi-item-point-id.png)
+
+  </div>
+</div>
+
+#### Query
+When using a query, the item name is used solely for logging purposes. The actual name attached to the data corresponds
+to the references of the points found by the query.
+
+<div style={{ textAlign: 'center' }}>
+  <div>
+
+    ![OSIsoft PI item query settings](../../../../../static/img/use-cases/pi-item-query.png)
+
+  </div>
+</div>
+
+<NorthOIAnalytics></NorthOIAnalytics>
