@@ -3,7 +3,7 @@
     <div class="d-flex justify-content-between align-items-center">
       <span translate="engine.monitoring.title" id="title"></span>
       <div class="d-flex align-items-center">
-        <span translate="engine.monitoring.since" [translateParams]="{ date: metrics.metricsStart | datetime:'mediumWithSeconds' }"></span>
+        <span translate="engine.monitoring.since" [translateParams]="{ date: metrics.metricsStart | datetime: 'mediumWithSeconds' }"></span>
         <!-- Display button -->
         <a *ngIf="displayButton" class="btn btn-link display-engine px-1 py-0" id="display-link" (click)="navigateToDisplay()">
           <span class="fa fa-search"></span>
@@ -25,12 +25,12 @@
         <!-- Instant percentage of CPU usage -->
         <tr>
           <td translate="engine.monitoring.cpu-usage-instant"></td>
-          <td>{{ metrics.processCpuUsageInstant | percent:'.2' }}</td>
+          <td>{{ metrics.processCpuUsageInstant | percent: '.2' }}</td>
         </tr>
         <!-- Average percentage of CPU usage -->
         <tr>
           <td translate="engine.monitoring.cpu-usage-average"></td>
-          <td>{{ metrics.processCpuUsageAverage | percent:'.2' }}</td>
+          <td>{{ metrics.processCpuUsageAverage | percent: '.2' }}</td>
         </tr>
         <!-- Percentage of CPU up time -->
         <tr>
@@ -40,7 +40,7 @@
         <!-- Memory use -->
         <tr>
           <td translate="engine.monitoring.free-memory"></td>
-          <td>{{ (metrics.freeMemory / metrics.totalMemory) | percent }}</td>
+          <td>{{ metrics.freeMemory / metrics.totalMemory | percent }}</td>
         </tr>
         <!-- RSS -->
         <tr>
@@ -50,7 +50,7 @@
         <!-- Heap Total -->
         <tr>
           <td translate="engine.monitoring.heap-total"></td>
-          <td>{{ metrics.minHeapTotal | fileSize }} / {{ metrics.currentHeapTotal | fileSize}} / {{ metrics.maxHeapTotal | fileSize }}</td>
+          <td>{{ metrics.minHeapTotal | fileSize }} / {{ metrics.currentHeapTotal | fileSize }} / {{ metrics.maxHeapTotal | fileSize }}</td>
         </tr>
         <!-- Heap Used -->
         <tr>
@@ -60,14 +60,14 @@
         <!-- External -->
         <tr>
           <td translate="engine.monitoring.external"></td>
-          <td>{{ metrics.minExternal | fileSize }} / {{ metrics.currentExternal| fileSize }} / {{ metrics.maxExternal | fileSize }}</td>
+          <td>{{ metrics.minExternal | fileSize }} / {{ metrics.currentExternal | fileSize }} / {{ metrics.maxExternal | fileSize }}</td>
         </tr>
         <!-- Array Buffers -->
         <tr>
           <td translate="engine.monitoring.array-buffer"></td>
           <td>
-            {{ metrics.minArrayBuffers | fileSize }} / {{ metrics.currentArrayBuffers | fileSize }} / {{ metrics.maxArrayBuffers | fileSize
-            }}
+            {{ metrics.minArrayBuffers | fileSize }} / {{ metrics.currentArrayBuffers | fileSize }} /
+            {{ metrics.maxArrayBuffers | fileSize }}
           </td>
         </tr>
       </tbody>

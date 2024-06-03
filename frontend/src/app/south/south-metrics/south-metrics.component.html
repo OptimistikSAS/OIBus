@@ -6,7 +6,7 @@
         <span
           *ngIf="connectorMetrics"
           translate="south.monitoring.since"
-          [translateParams]="{ date: connectorMetrics.metricsStart | datetime:'mediumWithSeconds' }"
+          [translateParams]="{ date: connectorMetrics.metricsStart | datetime: 'mediumWithSeconds' }"
         ></span>
         <a *ngIf="displayButton" class="btn btn-link display-south px-1 py-0" id="display-link" (click)="navigateToDisplay()">
           <span class="fa fa-search"></span>
@@ -37,7 +37,7 @@
         <!-- last connection -->
         <tr *ngIf="connectorMetrics.lastConnection !== null">
           <td translate="south.monitoring.last-connection"></td>
-          <td class="last-column-body">{{ connectorMetrics.lastConnection | datetime:'mediumWithSeconds' }}</td>
+          <td class="last-column-body">{{ connectorMetrics.lastConnection | datetime: 'mediumWithSeconds' }}</td>
         </tr>
         <!-- last value -->
         <tr *ngIf="connectorMetrics.lastValueRetrieved !== null">
@@ -45,7 +45,11 @@
           <td class="last-column-body">
             <span
               translate="south.monitoring.last-value-content"
-              [translateParams]="{ pointId: connectorMetrics.lastValueRetrieved.pointId, timestamp: connectorMetrics.lastValueRetrieved.timestamp, data: connectorMetrics.lastValueRetrieved.data | json }"
+              [translateParams]="{
+                pointId: connectorMetrics.lastValueRetrieved.pointId,
+                timestamp: connectorMetrics.lastValueRetrieved.timestamp,
+                data: connectorMetrics.lastValueRetrieved.data | json
+              }"
             ></span>
           </td>
         </tr>
@@ -57,12 +61,12 @@
         <!-- last run -->
         <tr *ngIf="connectorMetrics.lastRunStart !== null">
           <td translate="south.monitoring.last-run-start"></td>
-          <td class="last-column-body">{{ connectorMetrics.lastRunStart | datetime:'mediumWithSeconds' }}</td>
+          <td class="last-column-body">{{ connectorMetrics.lastRunStart | datetime: 'mediumWithSeconds' }}</td>
         </tr>
         <!-- last duration -->
         <tr *ngIf="connectorMetrics.lastRunDuration !== null">
           <td translate="south.monitoring.last-run-duration"></td>
-          <td class="last-column-body">{{ connectorMetrics.lastRunDuration | duration:'short' }}</td>
+          <td class="last-column-body">{{ connectorMetrics.lastRunDuration | duration: 'short' }}</td>
         </tr>
       </tbody>
     </table>
