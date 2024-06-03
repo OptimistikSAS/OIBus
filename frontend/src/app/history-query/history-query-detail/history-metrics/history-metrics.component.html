@@ -34,7 +34,7 @@
         <!-- last connection -->
         <tr *ngIf="historyMetrics.north.lastConnection !== null">
           <td translate="history-query.monitoring.north.last-connection"></td>
-          <td>{{ historyMetrics.north.lastConnection | datetime:'mediumWithSeconds' }}</td>
+          <td>{{ historyMetrics.north.lastConnection | datetime: 'mediumWithSeconds' }}</td>
         </tr>
         <!-- last value -->
         <tr *ngIf="northManifest.modes.points && historyMetrics.north.lastValueSent">
@@ -42,7 +42,11 @@
           <td>
             <span
               translate="history-query.monitoring.north.last-value-content"
-              [translateParams]="{ pointId: historyMetrics.north.lastValueSent.pointId, timestamp: historyMetrics.north.lastValueSent.timestamp, data: historyMetrics.north.lastValueSent.data | json }"
+              [translateParams]="{
+                pointId: historyMetrics.north.lastValueSent.pointId,
+                timestamp: historyMetrics.north.lastValueSent.timestamp,
+                data: historyMetrics.north.lastValueSent.data | json
+              }"
             ></span>
           </td>
         </tr>
@@ -54,12 +58,12 @@
         <!-- last run -->
         <tr *ngIf="historyMetrics.north.lastRunStart !== null">
           <td translate="history-query.monitoring.north.last-run-start"></td>
-          <td>{{ historyMetrics.north.lastRunStart | datetime:'mediumWithSeconds' }}</td>
+          <td>{{ historyMetrics.north.lastRunStart | datetime: 'mediumWithSeconds' }}</td>
         </tr>
         <!-- last duration -->
         <tr *ngIf="historyMetrics.north.lastRunDuration !== null">
           <td translate="history-query.monitoring.north.last-run-duration"></td>
-          <td>{{ historyMetrics.north.lastRunDuration | duration:'short' }}</td>
+          <td>{{ historyMetrics.north.lastRunDuration | duration: 'short' }}</td>
         </tr>
       </tbody>
     </table>
@@ -99,7 +103,7 @@
         <!-- last connection -->
         <tr *ngIf="historyMetrics.south.lastConnection !== null">
           <td translate="history-query.monitoring.south.last-connection"></td>
-          <td>{{ historyMetrics.south.lastConnection | datetime:'mediumWithSeconds' }}</td>
+          <td>{{ historyMetrics.south.lastConnection | datetime: 'mediumWithSeconds' }}</td>
         </tr>
         <!-- last value -->
         <tr *ngIf="historyMetrics.south.lastValueRetrieved">
@@ -107,7 +111,11 @@
           <td>
             <span
               translate="history-query.monitoring.south.last-value-content"
-              [translateParams]="{ pointId: historyMetrics.south.lastValueRetrieved.pointId, timestamp: historyMetrics.south.lastValueRetrieved.timestamp, data: historyMetrics.south.lastValueRetrieved.data | json }"
+              [translateParams]="{
+                pointId: historyMetrics.south.lastValueRetrieved.pointId,
+                timestamp: historyMetrics.south.lastValueRetrieved.timestamp,
+                data: historyMetrics.south.lastValueRetrieved.data | json
+              }"
             ></span>
           </td>
         </tr>
@@ -119,12 +127,12 @@
         <!-- last run -->
         <tr *ngIf="historyMetrics.south.lastRunStart !== null">
           <td translate="history-query.monitoring.south.last-run-start"></td>
-          <td>{{ historyMetrics.south.lastRunStart | datetime:'mediumWithSeconds' }}</td>
+          <td>{{ historyMetrics.south.lastRunStart | datetime: 'mediumWithSeconds' }}</td>
         </tr>
         <!-- last duration -->
         <tr *ngIf="historyMetrics.south.lastRunDuration !== null">
           <td translate="history-query.monitoring.south.last-run-duration"></td>
-          <td>{{ historyMetrics.south.lastRunDuration | duration:'short' }}</td>
+          <td>{{ historyMetrics.south.lastRunDuration | duration: 'short' }}</td>
         </tr>
       </tbody>
     </table>

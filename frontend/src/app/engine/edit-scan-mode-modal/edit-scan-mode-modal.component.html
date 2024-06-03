@@ -25,7 +25,7 @@
         <div>{{ humanReadableCron }}</div>
 
         <label translate="engine.scan-mode.cron-next-occurrences"></label>
-        <div *ngFor="let date of nextCronExecutions">{{date | datetime:'mediumWithSecondsLocalized'}}</div>
+        <div *ngFor="let date of nextCronExecutions">{{ date | datetime: 'mediumWithSecondsLocalized' }}</div>
       </div>
     </div>
   </form>
