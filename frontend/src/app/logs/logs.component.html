@@ -100,7 +100,7 @@
                 <!-- need to not be "display: inline" -->
                 <span style="display: block" [class]="getLevelClass(log.level)"></span>
               </td>
-              <td class="text-nowrap">{{ log.timestamp | datetime:'mediumWithSeconds'}}</td>
+              <td class="text-nowrap">{{ log.timestamp | datetime: 'mediumWithSeconds' }}</td>
               <td>{{ log.scopeType | scopeTypesEnum }}</td>
               <td>{{ log.scopeName }}</td>
               <td class="text-break">{{ log.message }}</td>
