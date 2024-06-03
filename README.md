@@ -1,4 +1,4 @@
-![OIBus](frontend/src/assets/oibus.png)
+![OIBus](frontend/src/oibus.png)
 
 ## OIBus
 OIBus is a software application that can be run on Windows, Linux, and Mac operating systems. It is designed to extract 

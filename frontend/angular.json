@@ -26,8 +26,10 @@
             ],
             "tsConfig": "tsconfig.app.json",
             "assets": [
-              "src/favicon.ico",
-              "src/assets",
+              {
+                "glob": "**/*",
+                "input": "public"
+              },
               {
                 "glob": "**/*",
                 "input": "node_modules/monaco-editor/min",
@@ -44,13 +46,13 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "1500kb",
-                  "maximumError": "2mb"
+                  "maximumWarning": "1500kB",
+                  "maximumError": "2MB"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "2kb",
-                  "maximumError": "4kb"
+                  "maximumWarning": "2kB",
+                  "maximumError": "4kB"
                 }
               ],
               "outputHashing": "all"
@@ -84,10 +86,7 @@
           "defaultConfiguration": "development"
         },
         "extract-i18n": {
-          "builder": "@angular-devkit/build-angular:extract-i18n",
-          "options": {
-            "buildTarget": "frontend:build"
-          }
+          "builder": "@angular-devkit/build-angular:extract-i18n"
         },
         "lint": {
           "builder": "@angular-eslint/builder:lint",
@@ -109,8 +108,10 @@
             ],
             "tsConfig": "tsconfig.spec.json",
             "assets": [
-              "src/favicon.ico",
-              "src/assets"
+              {
+                "glob": "**/*",
+                "input": "public"
+              }
             ],
             "styles": [
               "src/styles.scss"
