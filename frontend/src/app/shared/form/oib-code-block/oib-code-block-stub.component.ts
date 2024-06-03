@@ -3,8 +3,8 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Component({
   selector: 'oib-code-block',
-  templateUrl: './code-block.component.html',
-  styleUrl: './code-block.component.scss',
+  templateUrl: './oib-code-block.component.html',
+  styleUrl: './oib-code-block.component.scss',
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
