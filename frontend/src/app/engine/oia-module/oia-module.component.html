@@ -31,7 +31,7 @@
           <div>
             <span translate="oia-module.registration.expiration-date"></span>
             <span translate="common.colon-separator"></span>
-            <span>{{ registration.activationExpirationDate! | datetime:'mediumWithSeconds' }}</span>
+            <span>{{ registration.activationExpirationDate! | datetime: 'mediumWithSeconds' }}</span>
           </div>
           <button type="button" class="btn btn-outline-secondary btn-sm" id="unregister-button" (click)="unregister()">
             <span translate="oia-module.registration.unregister"></span>
@@ -43,7 +43,7 @@
         <div class="w-100 text-center">
           <span
             translate="oia-module.registration.registered"
-            [translateParams]="{ activationDate: registration.activationDate | datetime:'mediumWithSeconds' }"
+            [translateParams]="{ activationDate: registration.activationDate | datetime: 'mediumWithSeconds' }"
           ></span>
         </div>
         <div class="w-100 text-center mb-2">
@@ -107,10 +107,12 @@
             </thead>
             <tbody>
               <tr *ngFor="let command of oibusCommands.content">
-                <td>{{ command.retrievedDate! | datetime:'mediumWithSeconds' }}</td>
+                <td>{{ command.retrievedDate! | datetime: 'mediumWithSeconds' }}</td>
                 <td>{{ command.type | oibusCommandTypeEnum }}</td>
                 <td>{{ command.status | oibusCommandStatusEnum }}</td>
-                <td><span *ngIf="command.completedDate">{{ command.completedDate | datetime:'mediumWithSeconds' }}</span></td>
+                <td>
+                  <span *ngIf="command.completedDate">{{ command.completedDate | datetime: 'mediumWithSeconds' }}</span>
+                </td>
               </tr>
             </tbody>
           </table>
