@@ -3,7 +3,7 @@ import { SaveButtonComponent } from '../../../shared/save-button/save-button.com
 import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../../shared/form-directives';
 import { NorthConnectorService } from '../../../services/north-connector.service';
-import { NgForOf, NgIf } from '@angular/common';
+
 import { NorthCacheFiles, NorthConnectorDTO } from '../../../../../../shared/model/north-connector.model';
 import { RouterLink } from '@angular/router';
 import { DatetimePipe } from '../../../shared/datetime.pipe';
@@ -23,9 +23,7 @@ import { ModalService } from '../../../shared/modal.service';
     ...formDirectives,
     TranslateModule,
     SaveButtonComponent,
-    NgForOf,
     DatetimePipe,
-    NgIf,
     PaginationComponent,
     FileSizePipe,
     RouterLink,
