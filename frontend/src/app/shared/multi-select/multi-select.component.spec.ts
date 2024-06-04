@@ -7,7 +7,7 @@ import { ComponentTester, TestButton } from 'ngx-speculoos';
 import { MultiSelectOptionDirective } from './multi-select-option.directive';
 import { noAnimation } from '../test-utils';
 import { formDirectives } from '../form-directives';
-import { NgForOf } from '@angular/common';
+
 import { byIdComparisonFn } from '../form-utils';
 
 interface User {
@@ -20,12 +20,14 @@ interface User {
   template: `
     <form [formGroup]="form">
       <oib-multi-select [placeholder]="placeholder" formControlName="users" (selectionChange)="changeEvent = $event">
-        <oib-multi-select-option *ngFor="let user of users" [value]="user.id" [label]="user.name"></oib-multi-select-option>
+        @for (user of users; track user.id) {
+          <oib-multi-select-option [value]="user.id" [label]="user.name"></oib-multi-select-option>
+        }
       </oib-multi-select>
     </form>
   `,
   standalone: true,
-  imports: [...formDirectives, NgForOf, MultiSelectComponent, MultiSelectOptionDirective]
+  imports: [...formDirectives, MultiSelectComponent, MultiSelectOptionDirective]
 })
 class TestComponent {
   users: Array<User> = [
@@ -197,7 +199,9 @@ describe('MultiSelectComponent', () => {
         `
         <form [formGroup]="form">
           <oib-multi-select [placeholder]="placeholder" formControlName="users" (selectionChange)="changeEvent = $event" [compareWith]="byId">
-            <oib-multi-select-option *ngFor="let user of users" [value]="user" [label]="user.name"></oib-multi-select-option>
+            @for (user of users; track user.id) {
+              <oib-multi-select-option [value]="user" [label]="user.name"></oib-multi-select-option>
+            }
           </oib-multi-select>
         </form>
       `
