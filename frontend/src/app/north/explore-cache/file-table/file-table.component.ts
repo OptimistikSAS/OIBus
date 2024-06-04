@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../../shared/form-directives';
-import { NgForOf, NgIf } from '@angular/common';
+
 import { NorthCacheFiles } from '../../../../../../shared/model/north-connector.model';
 import { RouterLink } from '@angular/router';
 import { DatetimePipe } from '../../../shared/datetime.pipe';
@@ -39,9 +39,7 @@ export type ItemActionEvent = {
     ...formDirectives,
     TranslateModule,
     SaveButtonComponent,
-    NgForOf,
     DatetimePipe,
-    NgIf,
     PaginationComponent,
     FileSizePipe,
     RouterLink,

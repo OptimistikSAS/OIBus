@@ -3,7 +3,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { formDirectives } from '../../shared/form-directives';
-import { NgForOf } from '@angular/common';
+
 import { NorthType } from '../../../../../shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
 
@@ -11,7 +11,7 @@ import { NorthConnectorService } from '../../services/north-connector.service';
   selector: 'oib-choose-north-connector-type-modal',
   templateUrl: './choose-north-connector-type-modal.component.html',
   styleUrl: './choose-north-connector-type-modal.component.scss',
-  imports: [...formDirectives, TranslateModule, NgForOf],
+  imports: [...formDirectives, TranslateModule],
   standalone: true
 })
 export class ChooseNorthConnectorTypeModalComponent implements OnInit {

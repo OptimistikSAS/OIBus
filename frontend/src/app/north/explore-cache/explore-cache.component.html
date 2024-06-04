@@ -1,31 +1,43 @@
-<div class="oib-padded-container" *ngIf="northConnector">
-  <div class="row justify-content-center align-items-center">
-    <div class="col-md-10 col-lg-8">
-      <div class="oib-header-container">
-        <h1 class="d-flex justify-content-between">
-          <div>
-            <span translate="north.cache.title" [translateParams]="{ name: northConnector.name }" id="title"></span>
-            <button class="ms-2 btn btn-cancel" translate="common.back" id="cancel-edit-button" oibBackButton></button>
-          </div>
-          <button class="ms-2 btn btn-primary" id="refresh-cache-button" (click)="refreshCache()">
-            <span class="fa fa-refresh me-1"></span>
-            <span translate="north.cache-settings.refresh-cache"></span>
-          </button>
-        </h1>
+@if (northConnector) {
+  <div class="oib-padded-container">
+    <div class="row justify-content-center align-items-center">
+      <div class="col-md-10 col-lg-8">
+        <div class="oib-header-container">
+          <h1 class="d-flex justify-content-between">
+            <div>
+              <span translate="north.cache.title" [translateParams]="{ name: northConnector.name }" id="title"></span>
+              <button class="ms-2 btn btn-cancel" translate="common.back" id="cancel-edit-button" oibBackButton></button>
+            </div>
+            <button class="ms-2 btn btn-primary" id="refresh-cache-button" (click)="refreshCache()">
+              <span class="fa fa-refresh me-1"></span>
+              <span translate="north.cache-settings.refresh-cache"></span>
+            </button>
+          </h1>
+        </div>
+        <div class="mb-3">
+          @if (northConnector) {
+            <oib-cache-files [northConnector]="northConnector"></oib-cache-files>
+          }
+        </div>
+        <div class="mb-3">
+          @if (northConnector) {
+            <oib-error-files [northConnector]="northConnector"></oib-error-files>
+          }
+        </div>
+        <div class="mb-3">
+          @if (northConnector) {
+            <oib-archive-files [northConnector]="northConnector"></oib-archive-files>
+          }
+        </div>
+        <div class="mb-3">
+          @if (northConnector) {
+            <oib-cache-values [northConnector]="northConnector"></oib-cache-values>
+          }
+        </div>
+        @if (northConnector) {
+          <oib-error-values [northConnector]="northConnector"></oib-error-values>
+        }
       </div>
-      <div class="mb-3">
-        <oib-cache-files *ngIf="northConnector" [northConnector]="northConnector"></oib-cache-files>
-      </div>
-      <div class="mb-3">
-        <oib-error-files *ngIf="northConnector" [northConnector]="northConnector"></oib-error-files>
-      </div>
-      <div class="mb-3">
-        <oib-archive-files *ngIf="northConnector" [northConnector]="northConnector"></oib-archive-files>
-      </div>
-      <div class="mb-3">
-        <oib-cache-values *ngIf="northConnector" [northConnector]="northConnector"></oib-cache-values>
-      </div>
-      <oib-error-values *ngIf="northConnector" [northConnector]="northConnector"></oib-error-values>
     </div>
   </div>
-</div>
+}

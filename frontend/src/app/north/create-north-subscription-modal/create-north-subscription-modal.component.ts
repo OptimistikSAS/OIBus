@@ -5,14 +5,14 @@ import { ObservableState, SaveButtonComponent } from '../../shared/save-button/s
 import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
 import { SouthConnectorDTO } from '../../../../../shared/model/south-connector.model';
-import { NgForOf, NgIf } from '@angular/common';
+
 import { OIBusSubscription } from '../../../../../shared/model/subscription.model';
 
 @Component({
   selector: 'oib-create-north-subscription-modal',
   templateUrl: './create-north-subscription-modal.component.html',
   styleUrl: './create-north-subscription-modal.component.scss',
-  imports: [...formDirectives, TranslateModule, SaveButtonComponent, NgForOf, NgIf],
+  imports: [...formDirectives, TranslateModule, SaveButtonComponent],
   standalone: true
 })
 export class CreateNorthSubscriptionModalComponent {
