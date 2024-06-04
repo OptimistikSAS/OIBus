@@ -1,13 +1,22 @@
 {
-  "ignorePatterns": ["dist", "results", "coverage", "*.d.ts"],
+  "ignorePatterns": [
+    "dist",
+    "results",
+    "coverage",
+    "*.d.ts"
+  ],
   "parserOptions": {
     "ecmaVersion": 2020
   },
   "overrides": [
     {
-      "files": ["*.ts"],
+      "files": [
+        "*.ts"
+      ],
       "parserOptions": {
-        "project": ["tsconfig.json"],
+        "project": [
+          "tsconfig.json"
+        ],
         "createDefaultProgram": true
       },
       "extends": [
@@ -16,7 +25,10 @@
         "plugin:@typescript-eslint/recommended",
         "plugin:prettier/recommended"
       ],
-      "plugins": ["ban", "deprecation"],
+      "plugins": [
+        "ban",
+        "deprecation"
+      ],
       "rules": {
         "@angular-eslint/component-selector": [
           "error",
@@ -43,8 +55,14 @@
         "no-case-declarations": "off",
         "ban/ban": [
           "error",
-          {"name": "fit", "message": "Do not use focused tests (fit)"},
-          {"name": "fdescribe", "message": "Do not use focused test suites (fdescribe)"}
+          {
+            "name": "fit",
+            "message": "Do not use focused tests (fit)"
+          },
+          {
+            "name": "fdescribe",
+            "message": "Do not use focused test suites (fdescribe)"
+          }
         ],
         "deprecation/deprecation": "error",
         "no-console": "error",
@@ -59,9 +77,15 @@
       }
     },
     {
-      "files": ["*.html"],
-      "extends": ["plugin:@angular-eslint/template/recommended", "plugin:prettier/recommended"],
+      "files": [
+        "*.html"
+      ],
+      "extends": [
+        "plugin:@angular-eslint/template/recommended",
+        "plugin:prettier/recommended"
+      ],
       "rules": {
+        "@angular-eslint/template/prefer-control-flow": "error",
         "@angular-eslint/template/eqeqeq": [
           "error",
           {
