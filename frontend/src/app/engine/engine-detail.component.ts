@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { EngineService } from '../services/engine.service';
 import { EngineMetrics, EngineSettingsDTO } from '../../../../shared/model/engine.model';
-import { AsyncPipe, NgForOf, NgIf } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { ScanModeListComponent } from './scan-mode-list/scan-mode-list.component';
 import { IpFilterListComponent } from './ip-filter-list/ip-filter-list.component';
 import { NotificationService } from '../shared/notification.service';
@@ -19,13 +19,11 @@ import { CertificateListComponent } from './certificate-list/certificate-list.co
   selector: 'oib-engine-detail',
   standalone: true,
   imports: [
-    NgIf,
     TranslateModule,
     ScanModeListComponent,
     CertificateListComponent,
     IpFilterListComponent,
     AsyncPipe,
-    NgForOf,
     BoxComponent,
     EngineMetricsComponent,
     RouterLink
