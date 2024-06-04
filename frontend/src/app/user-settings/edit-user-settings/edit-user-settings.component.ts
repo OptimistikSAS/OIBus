@@ -12,7 +12,7 @@ import { NotificationService } from '../../shared/notification.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { WindowService } from '../../shared/window.service';
 import { formDirectives } from '../../shared/form-directives';
-import { NgForOf, NgIf } from '@angular/common';
+
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 
@@ -27,7 +27,7 @@ declare namespace Intl {
   selector: 'oib-edit-user-settings',
   templateUrl: './edit-user-settings.component.html',
   styleUrl: './edit-user-settings.component.scss',
-  imports: [...formDirectives, TranslateModule, NgIf, NgForOf, NgbTypeahead, SaveButtonComponent],
+  imports: [...formDirectives, TranslateModule, NgbTypeahead, SaveButtonComponent],
   standalone: true
 })
 export class EditUserSettingsComponent {

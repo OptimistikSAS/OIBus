@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { NgForOf, NgIf } from '@angular/common';
+
 import { TranslateModule } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { formDirectives } from '../../shared/form-directives';
@@ -39,8 +39,6 @@ import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
   selector: 'oib-edit-history-query',
   standalone: true,
   imports: [
-    NgIf,
-    NgForOf,
     TranslateModule,
     ...formDirectives,
     RouterLink,

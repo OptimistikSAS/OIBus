@@ -5,7 +5,7 @@ import { NotificationService } from '../../shared/notification.service';
 import { ChangePasswordCommand } from '../../../../../shared/model/user.model';
 import { UserSettingsService } from '../../services/user-settings.service';
 import { formDirectives } from '../../shared/form-directives';
-import { NgIf } from '@angular/common';
+
 import { TranslateModule } from '@ngx-translate/core';
 import { switchMap } from 'rxjs';
 
@@ -25,7 +25,7 @@ function samePasswordValidator(newPasswordForm: AbstractControl): ValidationErro
   selector: 'oib-change-password-modal',
   templateUrl: './change-password-modal.component.html',
   styleUrl: './change-password-modal.component.scss',
-  imports: [...formDirectives, TranslateModule, NgbCollapse, NgIf],
+  imports: [...formDirectives, TranslateModule, NgbCollapse],
   standalone: true
 })
 export class ChangePasswordModalComponent {

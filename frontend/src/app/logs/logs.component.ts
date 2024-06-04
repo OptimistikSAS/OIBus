@@ -25,7 +25,7 @@ import {
 import { emptyPage } from '../shared/test-utils';
 import { LogService } from '../services/log.service';
 import { formDirectives } from '../shared/form-directives';
-import { NgForOf, NgIf } from '@angular/common';
+
 import { PaginationComponent } from '../shared/pagination/pagination.component';
 import { MultiSelectComponent } from '../shared/multi-select/multi-select.component';
 import { MultiSelectOptionDirective } from '../shared/multi-select/multi-select-option.directive';
@@ -44,8 +44,6 @@ import { LegendComponent } from '../shared/legend/legend.component';
   imports: [
     TranslateModule,
     ...formDirectives,
-    NgForOf,
-    NgIf,
     PaginationComponent,
     MultiSelectComponent,
     MultiSelectOptionDirective,
