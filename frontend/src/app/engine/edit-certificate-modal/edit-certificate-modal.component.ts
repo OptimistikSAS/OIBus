@@ -7,13 +7,12 @@ import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
 import { CertificateCommandDTO, CertificateDTO } from '../../../../../shared/model/certificate.model';
 import { CertificateService } from '../../services/certificate.service';
-import { NgIf } from '@angular/common';
 
 @Component({
   selector: 'oib-edit-certificate-modal',
   templateUrl: './edit-certificate-modal.component.html',
   styleUrl: './edit-certificate-modal.component.scss',
-  imports: [...formDirectives, TranslateModule, SaveButtonComponent, NgIf],
+  imports: [...formDirectives, TranslateModule, SaveButtonComponent],
   standalone: true
 })
 export class EditCertificateModalComponent {
