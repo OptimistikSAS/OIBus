@@ -3,7 +3,7 @@ import { map, merge, Observable, scan, Subject } from 'rxjs';
 
 import { Notification, NotificationService } from '../notification.service';
 import { NgbToastModule } from '@ng-bootstrap/ng-bootstrap';
-import { AsyncPipe, NgForOf, NgIf } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 
 interface Action {
@@ -16,7 +16,7 @@ interface Action {
   templateUrl: './notification.component.html',
   styleUrl: './notification.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIf, NgForOf, NgbToastModule, TranslateModule, AsyncPipe],
+  imports: [NgbToastModule, TranslateModule, AsyncPipe],
   standalone: true
 })
 export class NotificationComponent {
