@@ -7,38 +7,48 @@
   </button>
 </div>
 
-<div class="row mx-1 mt-1 px-1" *ngIf="elementsIncludingNew.length > 0">
-  <div class="col-2" *ngFor="let field of displayedFields">
-    <b>{{ field.label }}</b>
+@if (elementsIncludingNew.length > 0) {
+  <div class="row mx-1 mt-1 px-1">
+    @for (field of displayedFields; track field) {
+      <div class="col-2">
+        <b>{{ field.label }}</b>
+      </div>
+    }
   </div>
-</div>
+}
 <div>
   <div class="component-drop-list" [class.empty]="elementsIncludingNew.length === 0">
-    <div *ngIf="elementsIncludingNew.length === 0" class="oib-grey-container" translate="oib-array.no-elements"></div>
-    <div class="oib-fake-container" *ngFor="let element of elementsIncludingNew; index as index; last as last">
-      <oib-edit-element
-        *ngIf="isEdited(element); else displayElement"
-        class="my-1 oib-editing-element"
-        [formDescription]="formDescription"
-        [element]="element"
-        [existingElements]="elements"
-        (saved)="save($event)"
-        (cancelled)="cancelEdition()"
-      >
-      </oib-edit-element>
-      <ng-template #displayElement>
-        <div class="row form-data px-1 field-display mx-1 oib-fake-table">
-          <div class="col-2" *ngFor="let field of displayedFields">{{ getFieldValue(element, field.key, field.pipe) }}</div>
-          <div class="col-2 text-end text-nowrap">
-            <button type="button" [disabled]="editDisabled" class="btn btn-link px-1 py-0 edit-button" (click)="edit(element)">
-              <span class="fa fa-pencil"></span>
-            </button>
-            <button type="button" [disabled]="editDisabled" class="btn btn-link px-1 py-0 delete-button" (click)="remove(index)">
-              <span class="fa fa-trash"></span>
-            </button>
+    @if (elementsIncludingNew.length === 0) {
+      <div class="oib-grey-container" translate="oib-array.no-elements"></div>
+    }
+    @for (element of elementsIncludingNew; track element) {
+      <div class="oib-fake-container">
+        @if (isEdited(element)) {
+          <oib-edit-element
+            class="my-1 oib-editing-element"
+            [formDescription]="formDescription"
+            [element]="element"
+            [existingElements]="elements"
+            (saved)="save($event)"
+            (cancelled)="cancelEdition()"
+          >
+          </oib-edit-element>
+        } @else {
+          <div class="row form-data px-1 field-display mx-1 oib-fake-table">
+            @for (field of displayedFields; track field) {
+              <div class="col-2">{{ getFieldValue(element, field.key, field.pipe) }}</div>
+            }
+            <div class="col-2 text-end text-nowrap">
+              <button type="button" [disabled]="editDisabled" class="btn btn-link px-1 py-0 edit-button" (click)="edit(element)">
+                <span class="fa fa-pencil"></span>
+              </button>
+              <button type="button" [disabled]="editDisabled" class="btn btn-link px-1 py-0 delete-button" (click)="remove($index)">
+                <span class="fa fa-trash"></span>
+              </button>
+            </div>
           </div>
-        </div>
-      </ng-template>
-    </div>
+        }
+      </div>
+    }
   </div>
 </div>

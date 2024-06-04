@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, Input, OnChanges } from '@angular/core';
-import { NgIf } from '@angular/common';
+
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
@@ -7,7 +7,7 @@ import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
   standalone: true,
   templateUrl: './truncated-string.component.html',
   styleUrl: './truncated-string.component.scss',
-  imports: [NgIf, NgbPopover],
+  imports: [NgbPopover],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TruncatedStringComponent implements OnChanges {

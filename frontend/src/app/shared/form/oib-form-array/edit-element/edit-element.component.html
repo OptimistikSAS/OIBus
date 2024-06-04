@@ -1,4 +1,4 @@
-<ng-container *ngIf="controlsByRow && form">
+@if (controlsByRow && form) {
   <form [formGroup]="form" (ngSubmit)="ok()" class="oib-inner-form">
     <oib-form formGroupName="wrapper" [form]="getFormGroup()" [settingsSchema]="controlsByRow"></oib-form>
     <div class="row">
@@ -14,4 +14,4 @@
       </div>
     </div>
   </form>
-</ng-container>
+}
