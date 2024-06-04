@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { NgForOf, NgIf } from '@angular/common';
+
 import { switchMap } from 'rxjs';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
@@ -14,7 +14,7 @@ import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 @Component({
   selector: 'oib-ip-filter-list',
   standalone: true,
-  imports: [NgIf, NgForOf, TranslateModule, BoxComponent, BoxTitleDirective, OibHelpComponent],
+  imports: [TranslateModule, BoxComponent, BoxTitleDirective, OibHelpComponent],
   templateUrl: './ip-filter-list.component.html',
   styleUrl: './ip-filter-list.component.scss'
 })

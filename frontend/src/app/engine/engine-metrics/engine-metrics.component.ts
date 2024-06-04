@@ -1,7 +1,7 @@
 import { Component, Input, NgZone } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { EngineMetrics } from '../../../../../shared/model/engine.model';
-import { NgIf, PercentPipe } from '@angular/common';
+import { PercentPipe } from '@angular/common';
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { DurationPipe } from '../../shared/duration.pipe';
 import { NotificationService } from '../../shared/notification.service';
@@ -13,7 +13,7 @@ import { Router } from '@angular/router';
 @Component({
   selector: 'oib-engine-metrics',
   standalone: true,
-  imports: [TranslateModule, NgIf, BoxComponent, BoxTitleDirective, PercentPipe, FileSizePipe, DatetimePipe, DurationPipe],
+  imports: [TranslateModule, BoxComponent, BoxTitleDirective, PercentPipe, FileSizePipe, DatetimePipe, DurationPipe],
   templateUrl: './engine-metrics.component.html',
   styleUrl: './engine-metrics.component.scss'
 })

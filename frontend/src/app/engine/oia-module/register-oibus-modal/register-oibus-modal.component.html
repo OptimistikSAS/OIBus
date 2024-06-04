@@ -36,33 +36,34 @@
       </div>
     </div>
 
-    <div class="row" *ngIf="form.controls.useProxy.value">
-      <!-- Proxy URL -->
-      <div class="col-6">
-        <div class="form-group">
-          <label class="form-label" for="proxy-url" translate="oia-module.registration.proxy-url"></label>
-          <input formControlName="proxyUrl" id="proxy-url" class="form-control" />
-          <val-errors controlName="proxyUrl"></val-errors>
+    @if (form.controls.useProxy.value) {
+      <div class="row">
+        <!-- Proxy URL -->
+        <div class="col-6">
+          <div class="form-group">
+            <label class="form-label" for="proxy-url" translate="oia-module.registration.proxy-url"></label>
+            <input formControlName="proxyUrl" id="proxy-url" class="form-control" />
+            <val-errors controlName="proxyUrl"></val-errors>
+          </div>
         </div>
       </div>
-    </div>
-
-    <div class="row" *ngIf="form.controls.useProxy.value">
-      <div class="col-6">
-        <div class="form-group">
-          <label class="form-label" for="proxy-username" translate="oia-module.registration.proxy-username"></label>
-          <input formControlName="proxyUsername" id="proxy-username" class="form-control" />
-          <val-errors controlName="proxyUsername"></val-errors>
+      <div class="row">
+        <div class="col-6">
+          <div class="form-group">
+            <label class="form-label" for="proxy-username" translate="oia-module.registration.proxy-username"></label>
+            <input formControlName="proxyUsername" id="proxy-username" class="form-control" />
+            <val-errors controlName="proxyUsername"></val-errors>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="form-group">
+            <label class="form-label" for="proxy-password" translate="oia-module.registration.proxy-password"></label>
+            <input type="password" formControlName="proxyPassword" id="proxy-password" class="form-control" />
+            <val-errors controlName="proxyPassword"></val-errors>
+          </div>
         </div>
       </div>
-      <div class="col-6">
-        <div class="form-group">
-          <label class="form-label" for="proxy-password" translate="oia-module.registration.proxy-password"></label>
-          <input type="password" formControlName="proxyPassword" id="proxy-password" class="form-control" />
-          <val-errors controlName="proxyPassword"></val-errors>
-        </div>
-      </div>
-    </div>
+    }
   </form>
 </div>
 <div class="modal-footer">
