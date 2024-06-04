@@ -2,13 +2,12 @@ import { Component, EventEmitter, Input, Optional, Output } from '@angular/core'
 import { ActivatedRoute, Router } from '@angular/router';
 import { Page } from '../../../../../shared/model/types';
 import { NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
-import { NgIf } from '@angular/common';
 
 @Component({
   selector: 'oib-pagination',
   templateUrl: './pagination.component.html',
   styleUrl: './pagination.component.scss',
-  imports: [NgbPaginationModule, NgIf],
+  imports: [NgbPaginationModule],
   standalone: true
 })
 export class PaginationComponent {
