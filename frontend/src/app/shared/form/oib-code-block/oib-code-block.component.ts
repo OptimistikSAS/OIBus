@@ -4,7 +4,6 @@ import { AfterViewInit, Component, ElementRef, forwardRef, Input, ViewChild } fr
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MonacoEditorLoaderService } from './monaco-editor-loader.service';
 import { formDirectives } from '../../form-directives';
-import { NgIf } from '@angular/common';
 
 // This component relies on the monaco editor, and needs it to load it if it is not already available.
 // It delegates this task to the MonacoEditorLoaderService, that returns a Promise which resolves when the loading is done.
@@ -12,7 +11,7 @@ import { NgIf } from '@angular/common';
   selector: 'oib-code-block',
   templateUrl: './oib-code-block.component.html',
   styleUrl: './oib-code-block.component.scss',
-  imports: [...formDirectives, NgIf],
+  imports: [...formDirectives],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
