@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { NonNullableFormBuilder, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { NgForOf, NgIf } from '@angular/common';
+
 import { EngineService } from '../../services/engine.service';
 import { EngineSettingsCommandDTO, LOG_LEVELS, LogLevel } from '../../../../../shared/model/engine.model';
 import { NotificationService } from '../../shared/notification.service';
@@ -14,7 +14,7 @@ import { BackNavigationDirective } from '../../shared/back-navigation.directives
 @Component({
   selector: 'oib-edit-engine',
   standalone: true,
-  imports: [TranslateModule, ...formDirectives, RouterLink, NgForOf, NgIf, SaveButtonComponent, BoxComponent, BackNavigationDirective],
+  imports: [TranslateModule, ...formDirectives, RouterLink, SaveButtonComponent, BoxComponent, BackNavigationDirective],
   templateUrl: './edit-engine.component.html',
   styleUrl: './edit-engine.component.scss'
 })
