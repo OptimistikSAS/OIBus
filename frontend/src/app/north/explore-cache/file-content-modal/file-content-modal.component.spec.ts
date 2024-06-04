@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
-import { CommonModule } from '@angular/common';
 import { FileContentModalComponent } from './file-content-modal.component';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock } from 'ngx-speculoos';
@@ -13,7 +12,7 @@ describe('FileContentModalComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [TranslateModule, CommonModule],
+      imports: [TranslateModule],
       providers: [provideI18nTesting(), { provide: NgbActiveModal, useValue: mockModal }]
     }).compileComponents();
 
