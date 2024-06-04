@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import { NgClass, NgForOf, NgIf } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
@@ -7,7 +7,7 @@ import { TranslateModule } from '@ngx-translate/core';
   templateUrl: './legend.component.html',
   styleUrl: './legend.component.scss',
   standalone: true,
-  imports: [NgClass, NgIf, NgForOf, TranslateModule],
+  imports: [NgClass, TranslateModule],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LegendComponent {

@@ -1,7 +1,7 @@
 import { Component, forwardRef, Input, OnInit, AfterViewChecked } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { formDirectives } from '../../form-directives';
-import { NgForOf, NgIf } from '@angular/common';
+
 import { TranslateModule } from '@ngx-translate/core';
 import { EditElementComponent } from './edit-element/edit-element.component';
 import { OibFormControl } from '../../../../../../shared/model/form.model';
@@ -11,7 +11,7 @@ import { PipeProviderService } from '../pipe-provider.service';
   selector: 'oib-array',
   templateUrl: './oib-array.component.html',
   styleUrl: './oib-array.component.scss',
-  imports: [...formDirectives, NgIf, NgForOf, TranslateModule, EditElementComponent],
+  imports: [...formDirectives, TranslateModule, EditElementComponent],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

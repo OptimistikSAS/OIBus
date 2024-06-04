@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { BehaviorSubject, defer, finalize, Observable } from 'rxjs';
-import { AsyncPipe, NgClass, NgIf } from '@angular/common';
+import { AsyncPipe, NgClass } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 
 /**
@@ -33,7 +33,7 @@ export class ObservableState {
   templateUrl: './save-button.component.html',
   styleUrl: './save-button.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [AsyncPipe, NgIf, NgClass, TranslateModule],
+  imports: [AsyncPipe, NgClass, TranslateModule],
   standalone: true
 })
 export class SaveButtonComponent {
