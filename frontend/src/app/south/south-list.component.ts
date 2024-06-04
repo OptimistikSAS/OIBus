@@ -5,7 +5,7 @@ import { SouthConnectorService } from '../services/south-connector.service';
 import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
 import { ConfirmationService } from '../shared/confirmation.service';
 import { NotificationService } from '../shared/notification.service';
-import { AsyncPipe, NgForOf, NgIf } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ModalService } from '../shared/modal.service';
 import { ChooseSouthConnectorTypeModalComponent } from './choose-south-connector-type-modal/choose-south-connector-type-modal.component';
@@ -27,8 +27,6 @@ const PAGE_SIZE = 15;
   imports: [
     TranslateModule,
     RouterLink,
-    NgIf,
-    NgForOf,
     EnabledEnumPipe,
     FormControlValidationDirective,
     FormsModule,
