@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
-import { DecimalPipe, NgForOf, NgIf, NgSwitch } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ClipboardModule } from '@angular/cdk/clipboard';
@@ -28,11 +28,8 @@ import { EngineService } from '../../services/engine.service';
   selector: 'oib-north-detail',
   standalone: true,
   imports: [
-    NgIf,
     TranslateModule,
     RouterLink,
-    NgSwitch,
-    NgForOf,
     DecimalPipe,
     BackNavigationDirective,
     NorthSubscriptionsComponent,

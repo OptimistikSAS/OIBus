@@ -27,20 +27,22 @@
       </tr>
     </thead>
     <tbody>
-      <tr class="data" *ngFor="let file of pages.content">
-        <td>
-          <input
-            type="checkbox"
-            (click)="onFileCheckboxClick(checkbox.checked, file)"
-            #checkbox
-            [checked]="checkboxByFiles.get(file.filename)"
-            class="toggle-parameter"
-            [id]="'error-file-' + file.filename"
-          /><label></label>
-        </td>
-        <td>{{ file.filename }}</td>
-        <td>{{ file.valuesCount }}</td>
-      </tr>
+      @for (file of pages.content; track file) {
+        <tr class="data">
+          <td>
+            <input
+              type="checkbox"
+              (click)="onFileCheckboxClick(checkbox.checked, file)"
+              #checkbox
+              [checked]="checkboxByFiles.get(file.filename)"
+              class="toggle-parameter"
+              [id]="'error-file-' + file.filename"
+            /><label></label>
+          </td>
+          <td>{{ file.filename }}</td>
+          <td>{{ file.valuesCount }}</td>
+        </tr>
+      }
     </tbody>
   </table>
 </div>

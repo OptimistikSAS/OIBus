@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
 import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-code-block.component';
@@ -7,7 +7,7 @@ import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-c
 @Component({
   selector: 'oib-file-content-modal',
   standalone: true,
-  imports: [TranslateModule, CommonModule, OibCodeBlockComponent],
+  imports: [TranslateModule, OibCodeBlockComponent],
   templateUrl: './file-content-modal.component.html',
   styleUrl: './file-content-modal.component.scss'
 })
