@@ -1,6 +1,6 @@
 import { Component, forwardRef, Input } from '@angular/core';
 import { formDirectives } from '../../form-directives';
-import { NgForOf, NgIf } from '@angular/common';
+
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, NonNullableFormBuilder } from '@angular/forms';
 import { ScanModeDTO } from '../../../../../../shared/model/scan-mode.model';
 import { TranslateModule } from '@ngx-translate/core';
@@ -8,7 +8,7 @@ import { TranslateModule } from '@ngx-translate/core';
 @Component({
   selector: 'oib-scan-mode',
   standalone: true,
-  imports: [...formDirectives, NgIf, NgForOf, TranslateModule],
+  imports: [...formDirectives, TranslateModule],
   templateUrl: './oib-scan-mode.component.html',
   styleUrl: './oib-scan-mode.component.scss',
   providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => OibScanModeComponent), multi: true }]
