@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
-import { AsyncPipe, DecimalPipe, NgForOf, NgIf, NgSwitch } from '@angular/common';
+import { AsyncPipe, DecimalPipe } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { combineLatest, of, switchMap } from 'rxjs';
@@ -39,11 +39,8 @@ import { TestConnectionResultModalComponent } from '../../shared/test-connection
   selector: 'oib-history-query-detail',
   standalone: true,
   imports: [
-    NgIf,
     TranslateModule,
     RouterLink,
-    NgSwitch,
-    NgForOf,
     DecimalPipe,
     BackNavigationDirective,
     PaginationComponent,
