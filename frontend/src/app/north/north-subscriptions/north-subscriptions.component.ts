@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { NgForOf, NgIf } from '@angular/common';
+
 import { combineLatest, of, switchMap, tap } from 'rxjs';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
@@ -17,7 +17,7 @@ import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 @Component({
   selector: 'oib-north-subscriptions',
   standalone: true,
-  imports: [NgIf, NgForOf, TranslateModule, BoxComponent, BoxTitleDirective, OibHelpComponent],
+  imports: [TranslateModule, BoxComponent, BoxTitleDirective, OibHelpComponent],
   templateUrl: './north-subscriptions.component.html',
   styleUrl: './north-subscriptions.component.scss'
 })
