@@ -1,10 +1,11 @@
-<ngb-pagination
-  *ngIf="page && page.totalPages > 1"
-  [boundaryLinks]="true"
-  [collectionSize]="page.totalElements"
-  [page]="page.number + 1"
-  [pageSize]="page.size"
-  [maxSize]="5"
-  [rotate]="true"
-  (pageChange)="onPageChanged($event)"
-></ngb-pagination>
+@if (page && page.totalPages > 1) {
+  <ngb-pagination
+    [boundaryLinks]="true"
+    [collectionSize]="page.totalElements"
+    [page]="page.number + 1"
+    [pageSize]="page.size"
+    [maxSize]="5"
+    [rotate]="true"
+    (pageChange)="onPageChanged($event)"
+  ></ngb-pagination>
+}

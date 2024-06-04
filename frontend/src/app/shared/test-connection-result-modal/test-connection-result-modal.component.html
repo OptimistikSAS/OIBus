@@ -2,25 +2,23 @@
   <h4 class="modal-title" [translate]="type + '.test-connection.title'"></h4>
 </div>
 <div class="modal-body">
-  <ng-container *ngIf="!loading; else spinning">
-    <ng-container *ngIf="error; else noError">
+  @if (!loading) {
+    @if (error) {
       <div class="alert alert-danger" id="connection-error">
         <div [translate]="type + '.test-connection.error'"></div>
         <hr />
         <div style="overflow-wrap: break-word">{{ error }}</div>
       </div>
-    </ng-container>
-    <ng-template #noError>
-      <ng-container *ngIf="success">
+    } @else {
+      @if (success) {
         <div class="alert alert-info" id="success" [translate]="type + '.test-connection.success'"></div>
-      </ng-container>
-    </ng-template>
-  </ng-container>
-  <ng-template #spinning>
+      }
+    }
+  } @else {
     <div class="text-center">
       <div class="spinner-border" id="spinner" role="status"></div>
     </div>
-  </ng-template>
+  }
 </div>
 <div class="modal-footer">
   <div class="btn-group">
