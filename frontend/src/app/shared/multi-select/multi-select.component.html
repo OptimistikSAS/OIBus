@@ -15,24 +15,30 @@
     [class.form-select-sm]="isSmall"
     ngbDropdownToggle
   >
-    <span *ngIf="selectedLabels; else placeholderSpan">{{ selectedLabels }}</span>
-    <ng-template #placeholderSpan>
+    @if (selectedLabels) {
+      <span>{{ selectedLabels }}</span>
+    } @else {
       <span class="placeholder">{{ placeholder }}</span>
-    </ng-template>
+    }
   </button>
   <div ngbDropdownMenu (keyup.esc)="dropdown.close(); $event.stopPropagation()">
-    <button
-      type="button"
-      *ngFor="let option of options"
-      ngbDropdownItem
-      (click)="toggle(option)"
-      [class.selected]="isSelected(option)"
-      (keydown.esc)="$event.stopPropagation()"
-    >
-      <div class="d-flex">
-        <div class="flex-grow-1 me-3">{{ option.label }}</div>
-        <div class="fa-fw"><span *ngIf="isSelected(option)" class="fa fa-check"></span></div>
-      </div>
-    </button>
+    @for (option of options; track option) {
+      <button
+        type="button"
+        ngbDropdownItem
+        (click)="toggle(option)"
+        [class.selected]="isSelected(option)"
+        (keydown.esc)="$event.stopPropagation()"
+      >
+        <div class="d-flex">
+          <div class="flex-grow-1 me-3">{{ option.label }}</div>
+          <div class="fa-fw">
+            @if (isSelected(option)) {
+              <span class="fa fa-check"></span>
+            }
+          </div>
+        </div>
+      </button>
+    }
   </div>
 </div>
