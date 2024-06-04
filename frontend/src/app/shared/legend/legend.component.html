@@ -1,8 +1,8 @@
 <div class="legend-container d-flex mb-3">
-  <ng-container *ngFor="let item of legendList">
+  @for (item of legendList; track item) {
     <div class="d-flex m-1 px-2 legend-item">
       <div [class]="item.class"></div>
       <span style="font-weight: bold" class="mx-1 mt-1">{{ item.label | translate }}</span>
     </div>
-  </ng-container>
+  }
 </div>
