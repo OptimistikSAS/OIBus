@@ -6,7 +6,9 @@
     <div class="form-group">
       <label class="form-label" for="south" translate="north.subscriptions.south.title"></label>
       <select formControlName="southConnector" id="south" class="form-select mb-2 mr-sm-2">
-        <option *ngFor="let southConnector of southConnectors" [ngValue]="southConnector">{{ southConnector.name }}</option>
+        @for (southConnector of southConnectors; track southConnector.id) {
+          <option [ngValue]="southConnector">{{ southConnector.name }}</option>
+        }
       </select>
       <val-errors controlName="southConnector"></val-errors>
     </div>
