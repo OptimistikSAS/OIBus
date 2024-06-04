@@ -61,6 +61,7 @@ class EditHistoryQueryComponentTester extends ComponentTester<EditHistoryQueryCo
     return this.input('#south-shared-connection');
   }
 }
+
 describe('EditHistoryQueryComponent', () => {
   let tester: EditHistoryQueryComponentTester;
   let northConnectorService: jasmine.SpyObj<NorthConnectorService>;
@@ -233,7 +234,7 @@ describe('EditHistoryQueryComponent', () => {
   });
 
   it('should test north connection', () => {
-    tester.componentInstance.northManifest = { id: 'northId1' } as NorthConnectorManifest;
+    tester.componentInstance.northManifest = { id: 'northId1', modes: {} } as NorthConnectorManifest;
     tester.componentInstance.historyQuery = historyQuery;
 
     const command = {
