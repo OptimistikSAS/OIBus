@@ -11,7 +11,7 @@ import {
   SouthConnectorItemManifest
 } from '../../../../../shared/model/south-connector.model';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
-import { NgForOf, NgIf, NgSwitch, NgSwitchCase } from '@angular/common';
+
 import { OibCodeBlockComponent } from '../../shared/form/oib-code-block/oib-code-block.component';
 import { createFormGroup, groupFormControlsByRow } from '../../shared/form-utils';
 import { OibScanModeComponent } from '../../shared/form/oib-scan-mode/oib-scan-mode.component';
@@ -36,10 +36,6 @@ declare namespace Intl {
     ...formDirectives,
     TranslateModule,
     SaveButtonComponent,
-    NgForOf,
-    NgSwitch,
-    NgSwitchCase,
-    NgIf,
     OibCodeBlockComponent,
     OibScanModeComponent,
     NgbTypeahead,
