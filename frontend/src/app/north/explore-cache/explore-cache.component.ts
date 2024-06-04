@@ -3,7 +3,7 @@ import { SaveButtonComponent } from '../../shared/save-button/save-button.compon
 import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
 import { NorthConnectorService } from '../../services/north-connector.service';
-import { NgForOf, NgIf } from '@angular/common';
+
 import { NorthConnectorDTO } from '../../../../../shared/model/north-connector.model';
 import { of, switchMap } from 'rxjs';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -25,9 +25,7 @@ import { ErrorValuesComponent } from './error-values/error-values.component';
     ...formDirectives,
     TranslateModule,
     SaveButtonComponent,
-    NgForOf,
     DatetimePipe,
-    NgIf,
     PaginationComponent,
     BackNavigationDirective,
     FileSizePipe,
