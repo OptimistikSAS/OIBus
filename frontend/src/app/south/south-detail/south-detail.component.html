@@ -1,77 +1,78 @@
-<div class="oib-padded-container" *ngIf="southConnector && manifest">
-  <div class="row justify-content-center">
-    <div class="col-md-10 col-lg-8">
-      <div class="oib-header-container mb-3">
-        <h1 id="title" translate="south.title" [translateParams]="{ name: southConnector.name, type: southConnector.type }">
-          <span class="ms-2">
-            <button class="btn btn-primary" id="edit-link" routerLink="edit">
-              <i class="fa fa-pencil"></i>
+@if (southConnector && manifest) {
+  <div class="oib-padded-container">
+    <div class="row justify-content-center">
+      <div class="col-md-10 col-lg-8">
+        <div class="oib-header-container mb-3">
+          <h1 id="title" translate="south.title" [translateParams]="{ name: southConnector.name, type: southConnector.type }">
+            <span class="ms-2">
+              <button class="btn btn-primary" id="edit-link" routerLink="edit">
+                <i class="fa fa-pencil"></i>
+              </button>
+            </span>
+            <button class="ms-2 btn btn-cancel" translate="common.back" id="cancel-edit-button" oibBackButton></button>
+            <button class="btn btn-primary pull-right me-2" id="south-enabled" (click)="toggleConnector(!southConnector.enabled)">
+              <i [class]="southConnector.enabled ? 'fa fa-pause' : 'fa fa-play'"></i>
             </button>
+          </h1>
+          <span class="text-disabled pull-right me-2">
+            <span translate="south.copy-cache-path" [translateParams]="{ id: southConnector.id }"></span>
+            <i
+              class="fa fa-copy ms-1"
+              role="button"
+              [cdkCopyToClipboard]="oibusInfo!.dataDirectory + '/cache/data-stream/south-' + southConnector.id"
+              (cdkCopyToClipboardCopied)="onClipboardCopy($event)"
+            ></i>
           </span>
-          <button class="ms-2 btn btn-cancel" translate="common.back" id="cancel-edit-button" oibBackButton></button>
-          <button class="btn btn-primary pull-right me-2" id="south-enabled" (click)="toggleConnector(!southConnector.enabled)">
-            <i [class]="southConnector.enabled ? 'fa fa-pause' : 'fa fa-play'"></i>
-          </button>
-        </h1>
-        <span class="text-disabled pull-right me-2">
-          <span translate="south.copy-cache-path" [translateParams]="{ id: southConnector.id }"></span>
-          <i
-            class="fa fa-copy ms-1"
-            role="button"
-            [cdkCopyToClipboard]="oibusInfo!.dataDirectory + '/cache/data-stream/south-' + southConnector.id"
-            (cdkCopyToClipboardCopied)="onClipboardCopy($event)"
-          ></i>
-        </span>
+        </div>
+        <!-- South metrics -->
+        @if (connectorMetrics) {
+          <oib-south-metrics
+            [connectorMetrics]="connectorMetrics"
+            [manifest]="manifest"
+            [southConnector]="southConnector"
+          ></oib-south-metrics>
+        }
+        <!-- Specific settings -->
+        <oib-box>
+          <ng-template oibBoxTitle>
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <span translate="south.specific-settings" [translateParams]="{ type: manifest.name }" id="specific-settings-title"></span>
+              </div>
+              <div>
+                <button
+                  translate="south.test-connection.button"
+                  type="button"
+                  class="btn btn-secondary btn-sm oib-box-btn ms-3"
+                  id="test-connection"
+                  (click)="testConnection()"
+                ></button>
+              </div>
+            </div>
+          </ng-template>
+          <table class="table table-sm table-hover oib-table mb-3">
+            <tbody class="south-settings">
+              <tr>
+                <td translate="south.status"></td>
+                <td>{{ southConnector.enabled | enabled }}</td>
+              </tr>
+              @for (setting of displayedSettings; track setting) {
+                <tr>
+                  <td>{{ setting.key }}</td>
+                  <td>{{ setting.value }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </oib-box>
+        <!-- Items -->
+        <oib-south-items
+          [southConnector]="southConnector"
+          [southManifest]="manifest"
+          [scanModes]="scanModes"
+          [inMemory]="false"
+        ></oib-south-items>
       </div>
-
-      <!-- South metrics -->
-      <oib-south-metrics
-        *ngIf="connectorMetrics"
-        [connectorMetrics]="connectorMetrics"
-        [manifest]="manifest"
-        [southConnector]="southConnector"
-      ></oib-south-metrics>
-
-      <!-- Specific settings -->
-      <oib-box>
-        <ng-template oibBoxTitle>
-          <div class="d-flex justify-content-between align-items-center">
-            <div>
-              <span translate="south.specific-settings" [translateParams]="{ type: manifest.name }" id="specific-settings-title"></span>
-            </div>
-            <div>
-              <button
-                translate="south.test-connection.button"
-                type="button"
-                class="btn btn-secondary btn-sm oib-box-btn ms-3"
-                id="test-connection"
-                (click)="testConnection()"
-              ></button>
-            </div>
-          </div>
-        </ng-template>
-
-        <table class="table table-sm table-hover oib-table mb-3">
-          <tbody class="south-settings">
-            <tr>
-              <td translate="south.status"></td>
-              <td>{{ southConnector.enabled | enabled }}</td>
-            </tr>
-            <tr *ngFor="let setting of displayedSettings">
-              <td>{{ setting.key }}</td>
-              <td>{{ setting.value }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </oib-box>
-
-      <!-- Items -->
-      <oib-south-items
-        [southConnector]="southConnector"
-        [southManifest]="manifest"
-        [scanModes]="scanModes"
-        [inMemory]="false"
-      ></oib-south-items>
     </div>
   </div>
-</div>
+}

@@ -1,177 +1,188 @@
 <div class="oib-padded-container">
   <div class="row justify-content-center">
-    <div class="col-md-10 col-lg-8" *ngIf="manifest && southForm">
-      <div class="d-flex">
-        <h1 *ngIf="mode === 'create'" [translate]="'south.create-title'" [translateParams]="{ type: manifest.name }"></h1>
-        <h1
-          *ngIf="mode === 'edit' && southConnector"
-          [translate]="'south.edit-title'"
-          [translateParams]="{ name: southConnector.name }"
-        ></h1>
-        <button class="ms-2 btn btn-cancel-edit" translate="common.back" id="cancel-edit-button" oibBackButton></button>
-      </div>
-
-      <form [formGroup]="southForm" (ngSubmit)="submit('save')" id="south-form" class="mt-3">
-        <div class="save-zone">
-          <!-- General settings -->
-          <oib-box boxTitle="south.general-settings" helpUrl="https://oibus.optimistik.com/docs/guide/south-connectors/common-settings">
-            <div class="row">
-              <!-- Name -->
-              <div class="col-4">
-                <div class="form-group">
-                  <label class="form-label" for="south-name" translate="south.name"></label>
-                  <input formControlName="name" id="south-name" class="form-control" />
-                  <val-errors controlName="name"></val-errors>
-                </div>
-              </div>
-
-              <!-- Description -->
-              <div class="col-5">
-                <div class="form-group">
-                  <label class="form-label" for="south-description" translate="south.description"></label>
-                  <input formControlName="description" id="south-description" class="form-control" />
-                </div>
-              </div>
-
-              <div class="col">
-                <!-- Enabled -->
-                <div class="form-group">
-                  <div class="form-check form-switch padded">
-                    <input formControlName="enabled" id="south-enabled" type="checkbox" class="form-check-input" />
-                    <label class="form-check-label" for="south-enabled" translate="south.enabled"></label>
+    @if (manifest && southForm) {
+      <div class="col-md-10 col-lg-8">
+        <div class="d-flex">
+          @if (mode === 'create') {
+            <h1 [translate]="'south.create-title'" [translateParams]="{ type: manifest.name }"></h1>
+          }
+          @if (mode === 'edit' && southConnector) {
+            <h1 [translate]="'south.edit-title'" [translateParams]="{ name: southConnector.name }"></h1>
+          }
+          <button class="ms-2 btn btn-cancel-edit" translate="common.back" id="cancel-edit-button" oibBackButton></button>
+        </div>
+        <form [formGroup]="southForm" (ngSubmit)="submit('save')" id="south-form" class="mt-3">
+          <div class="save-zone">
+            <!-- General settings -->
+            <oib-box boxTitle="south.general-settings" helpUrl="https://oibus.optimistik.com/docs/guide/south-connectors/common-settings">
+              <div class="row">
+                <!-- Name -->
+                <div class="col-4">
+                  <div class="form-group">
+                    <label class="form-label" for="south-name" translate="south.name"></label>
+                    <input formControlName="name" id="south-name" class="form-control" />
+                    <val-errors controlName="name"></val-errors>
                   </div>
                 </div>
-              </div>
-
-              <div *ngIf="manifest.modes.sharedConnection" class="col">
-                <!-- Shared connection -->
-                <div class="form-group">
-                  <div class="form-check form-switch padded">
-                    <input formControlName="sharedConnection" id="south-shared-connection" type="checkbox" class="form-check-input" />
-                    <label class="form-check-label" for="south-shared-connection" translate="south.shared-connection"></label>
+                <!-- Description -->
+                <div class="col-5">
+                  <div class="form-group">
+                    <label class="form-label" for="south-description" translate="south.description"></label>
+                    <input formControlName="description" id="south-description" class="form-control" />
                   </div>
                 </div>
+                <div class="col">
+                  <!-- Enabled -->
+                  <div class="form-group">
+                    <div class="form-check form-switch padded">
+                      <input formControlName="enabled" id="south-enabled" type="checkbox" class="form-check-input" />
+                      <label class="form-check-label" for="south-enabled" translate="south.enabled"></label>
+                    </div>
+                  </div>
+                </div>
+                @if (manifest.modes.sharedConnection) {
+                  <div class="col">
+                    <!-- Shared connection -->
+                    <div class="form-group">
+                      <div class="form-check form-switch padded">
+                        <input formControlName="sharedConnection" id="south-shared-connection" type="checkbox" class="form-check-input" />
+                        <label class="form-check-label" for="south-shared-connection" translate="south.shared-connection"></label>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            </oib-box>
+            <!-- History settings -->
+            @if (manifest.modes.history) {
+              <oib-box
+                formGroupName="history"
+                helpUrl="https://oibus.optimistik.com/docs/guide/south-connectors/common-settings#history-settings"
+              >
+                <ng-template oibBoxTitle>
+                  <span translate="south.history.settings" [translateParams]="{ type: southType }" id="history-settings-title"></span>
+                </ng-template>
+                <div class="row">
+                  <div class="col-4">
+                    <div class="form-group">
+                      <label class="form-label" for="south-max-read-interval" translate="south.history.max-read-interval"></label>
+                      <div class="input-group">
+                        <input formControlName="maxReadInterval" id="south-max-read-interval" type="number" class="form-control" />
+                        <span class="input-group-text" translate="common.unit.s"></span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-4">
+                    <div class="form-group">
+                      <label class="form-label" for="south-read-delay" translate="south.history.read-delay"></label>
+                      <div class="input-group">
+                        <input formControlName="readDelay" id="south-read-delay" type="number" class="form-control" />
+                        <span class="input-group-text" translate="common.unit.ms"></span>
+                      </div>
+                    </div>
+                  </div>
+                  @if (!manifest.modes.forceMaxInstantPerItem) {
+                    <div class="col-4">
+                      <div class="form-group">
+                        <div class="form-check form-switch padded">
+                          <input
+                            (change)="onMaxInstantPerItemChange()"
+                            formControlName="maxInstantPerItem"
+                            id="south-max-instant-per-item"
+                            type="checkbox"
+                            class="form-check-input"
+                          />
+                          <label
+                            class="form-check-label"
+                            for="south-max-instant-per-item"
+                            translate="south.history.max-instant-per-item"
+                          ></label>
+                        </div>
+                        @if (showMaxInstantPerItemWarning) {
+                          <div>
+                            <span class="fa fa-warning mx-1" style="color: orange"></span>
+                            <span translate="south.history.max-instant-per-item-disabling-warning"></span>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+                  <div class="col-4">
+                    <div class="form-group">
+                      <label class="form-label" for="south-overlap" translate="south.history.overlap"></label>
+                      <div class="input-group">
+                        <input formControlName="overlap" id="south-overlap" type="number" class="form-control" />
+                        <span class="input-group-text" translate="common.unit.ms"></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </oib-box>
+            }
+            <!-- Specific settings -->
+            <oib-box>
+              <ng-template oibBoxTitle>
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <span
+                      translate="south.specific-settings"
+                      [translateParams]="{ type: manifest.name }"
+                      id="specific-settings-title"
+                    ></span>
+                  </div>
+                  <div>
+                    <button
+                      type="button"
+                      class="btn btn-secondary btn-sm oib-box-btn ms-3"
+                      id="test-connection"
+                      (click)="southForm.markAllAsTouched(); submit('test')"
+                      translate="south.test-connection.button"
+                    ></button>
+                    <oib-help [url]="'https://oibus.optimistik.com/docs/guide/south-connectors/' + southType"></oib-help>
+                  </div>
+                </div>
+              </ng-template>
+              @if (southSettingsControls.length > 0) {
+                <oib-form
+                  formGroupName="settings"
+                  [form]="southForm.controls.settings"
+                  [settingsSchema]="southSettingsControls"
+                  [scanModes]="scanModes"
+                ></oib-form>
+              }
+            </oib-box>
+          </div>
+          @if (mode === 'edit' && southConnector) {
+            <div id="actions" class="d-flex justify-content-end">
+              <div class="btn-group">
+                <oib-save-button [insideOfGroup]="false" form="south-form" [state]="state"></oib-save-button>
               </div>
             </div>
-          </oib-box>
-
-          <!-- History settings -->
-          <oib-box
-            *ngIf="manifest.modes.history"
-            formGroupName="history"
-            helpUrl="https://oibus.optimistik.com/docs/guide/south-connectors/common-settings#history-settings"
-          >
-            <ng-template oibBoxTitle>
-              <span translate="south.history.settings" [translateParams]="{ type: southType }" id="history-settings-title"></span>
-            </ng-template>
-            <div class="row">
-              <div class="col-4">
-                <div class="form-group">
-                  <label class="form-label" for="south-max-read-interval" translate="south.history.max-read-interval"></label>
-                  <div class="input-group">
-                    <input formControlName="maxReadInterval" id="south-max-read-interval" type="number" class="form-control" />
-                    <span class="input-group-text" translate="common.unit.s"></span>
-                  </div>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="form-group">
-                  <label class="form-label" for="south-read-delay" translate="south.history.read-delay"></label>
-                  <div class="input-group">
-                    <input formControlName="readDelay" id="south-read-delay" type="number" class="form-control" />
-                    <span class="input-group-text" translate="common.unit.ms"></span>
-                  </div>
-                </div>
-              </div>
-              <div class="col-4" *ngIf="!manifest.modes.forceMaxInstantPerItem">
-                <div class="form-group">
-                  <div class="form-check form-switch padded">
-                    <input
-                      (change)="onMaxInstantPerItemChange()"
-                      formControlName="maxInstantPerItem"
-                      id="south-max-instant-per-item"
-                      type="checkbox"
-                      class="form-check-input"
-                    />
-                    <label class="form-check-label" for="south-max-instant-per-item" translate="south.history.max-instant-per-item"></label>
-                  </div>
-                  <div *ngIf="showMaxInstantPerItemWarning">
-                    <span class="fa fa-warning mx-1" style="color: orange"></span>
-                    <span translate="south.history.max-instant-per-item-disabling-warning"></span>
-                  </div>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="form-group">
-                  <label class="form-label" for="south-overlap" translate="south.history.overlap"></label>
-                  <div class="input-group">
-                    <input formControlName="overlap" id="south-overlap" type="number" class="form-control" />
-                    <span class="input-group-text" translate="common.unit.ms"></span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </oib-box>
-
-          <!-- Specific settings -->
-          <oib-box>
-            <ng-template oibBoxTitle>
-              <div class="d-flex justify-content-between align-items-center">
-                <div>
-                  <span translate="south.specific-settings" [translateParams]="{ type: manifest.name }" id="specific-settings-title"></span>
-                </div>
-                <div>
-                  <button
-                    type="button"
-                    class="btn btn-secondary btn-sm oib-box-btn ms-3"
-                    id="test-connection"
-                    (click)="southForm.markAllAsTouched(); submit('test')"
-                    translate="south.test-connection.button"
-                  ></button>
-                  <oib-help [url]="'https://oibus.optimistik.com/docs/guide/south-connectors/' + southType"></oib-help>
-                </div>
-              </div>
-            </ng-template>
-
-            <oib-form
-              *ngIf="southSettingsControls.length > 0"
-              formGroupName="settings"
-              [form]="southForm.controls.settings"
-              [settingsSchema]="southSettingsControls"
+            <!-- items -->
+            <oib-south-items
+              [southConnector]="southConnector"
+              [southManifest]="manifest"
               [scanModes]="scanModes"
-            ></oib-form>
-          </oib-box>
-        </div>
-        <div *ngIf="mode === 'edit' && southConnector" id="actions" class="d-flex justify-content-end">
-          <div class="btn-group">
-            <oib-save-button [insideOfGroup]="false" form="south-form" [state]="state"></oib-save-button>
-          </div>
-        </div>
-        <!-- items -->
-        <oib-south-items
-          *ngIf="mode === 'edit' && southConnector"
-          [southConnector]="southConnector"
-          [southManifest]="manifest"
-          [scanModes]="scanModes"
-          [inMemory]="false"
-          [maxInstantPerItem]="maxInstantPerItem"
-        ></oib-south-items>
-
-        <oib-south-items
-          *ngIf="mode === 'create'"
-          [southConnector]="southConnector"
-          [southManifest]="manifest"
-          [scanModes]="scanModes"
-          (inMemoryItems)="updateInMemoryItems($event)"
-          [inMemory]="true"
-        ></oib-south-items>
-
-        <div *ngIf="mode === 'create'" id="actions" class="mt-2 d-flex justify-content-end">
-          <div class="btn-group">
-            <oib-save-button [insideOfGroup]="false" form="south-form" [state]="state"></oib-save-button>
-          </div>
-        </div>
-      </form>
-    </div>
+              [inMemory]="false"
+              [maxInstantPerItem]="maxInstantPerItem"
+            ></oib-south-items>
+          }
+          @if (mode === 'create') {
+            <oib-south-items
+              [southConnector]="southConnector"
+              [southManifest]="manifest"
+              [scanModes]="scanModes"
+              (inMemoryItems)="updateInMemoryItems($event)"
+              [inMemory]="true"
+            ></oib-south-items>
+            <div id="actions" class="mt-2 d-flex justify-content-end">
+              <div class="btn-group">
+                <oib-save-button [insideOfGroup]="false" form="south-form" [state]="state"></oib-save-button>
+              </div>
+            </div>
+          }
+        </form>
+      </div>
+    }
   </div>
 </div>

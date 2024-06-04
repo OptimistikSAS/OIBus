@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
-import { NgForOf, NgIf, NgSwitch } from '@angular/common';
+
 import { TranslateModule } from '@ngx-translate/core';
 import { SouthConnectorCommandDTO, SouthConnectorDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
@@ -27,11 +27,8 @@ import { ClipboardModule } from '@angular/cdk/clipboard';
   selector: 'oib-south-detail',
   standalone: true,
   imports: [
-    NgIf,
     TranslateModule,
     RouterLink,
-    NgSwitch,
-    NgForOf,
     PaginationComponent,
     BackNavigationDirective,
     SouthMetricsComponent,
