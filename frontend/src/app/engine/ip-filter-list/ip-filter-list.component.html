@@ -3,7 +3,9 @@
     <div class="d-flex justify-content-between align-items-center">
       <div>
         <span translate="engine.ip-filter.list" id="title"></span>
-        <span class="mx-1" *ngIf="this.ipFilters.length">({{ this.ipFilters.length }})</span>
+        @if (this.ipFilters.length) {
+          <span class="mx-1">({{ this.ipFilters.length }})</span>
+        }
       </div>
       <div>
         <button type="button" class="btn btn-primary btn-sm oib-box-btn" (click)="addIpFilter()">
@@ -17,35 +19,38 @@
 </oib-box>
 
 <!-- the IP filter list -->
-<div *ngIf="ipFilters.length !== 0; else emptyIpFilters">
-  <table class="mb-2 table table-sm table-hover oib-table">
-    <thead class="light">
-      <tr>
-        <th translate="engine.ip-filter.address"></th>
-        <th translate="engine.ip-filter.description"></th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let ipFilter of ipFilters">
-        <td>{{ ipFilter.address }}</td>
-        <td>{{ ipFilter.description }}</td>
-        <td class="text-nowrap action-buttons">
-          <div class="pull-right">
-            <!-- Edit button -->
-            <button type="button" class="btn btn-link edit-ip-filter px-1 py-0" (click)="editIpFilter(ipFilter)">
-              <span class="fa fa-pencil"></span>
-            </button>
-            <!-- Delete button -->
-            <button type="button" class="btn btn-link delete-ip-filter px-1 py-0" (click)="deleteIpFilter(ipFilter)">
-              <span class="fa fa-trash"></span>
-            </button>
-          </div>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-<ng-template #emptyIpFilters>
+@if (ipFilters.length !== 0) {
+  <div>
+    <table class="mb-2 table table-sm table-hover oib-table">
+      <thead class="light">
+        <tr>
+          <th translate="engine.ip-filter.address"></th>
+          <th translate="engine.ip-filter.description"></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (ipFilter of ipFilters; track ipFilter.id) {
+          <tr>
+            <td>{{ ipFilter.address }}</td>
+            <td>{{ ipFilter.description }}</td>
+            <td class="text-nowrap action-buttons">
+              <div class="pull-right">
+                <!-- Edit button -->
+                <button type="button" class="btn btn-link edit-ip-filter px-1 py-0" (click)="editIpFilter(ipFilter)">
+                  <span class="fa fa-pencil"></span>
+                </button>
+                <!-- Delete button -->
+                <button type="button" class="btn btn-link delete-ip-filter px-1 py-0" (click)="deleteIpFilter(ipFilter)">
+                  <span class="fa fa-trash"></span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+} @else {
   <div class="oib-grey-container" id="no-ip-filter" translate="engine.ip-filter.none"></div>
-</ng-template>
+}
