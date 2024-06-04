@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
-import { NgForOf, NgIf } from '@angular/common';
+
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import { SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import { SouthConnectorService } from '../services/south-connector.service';
@@ -18,7 +18,7 @@ const NUMBER_OF_COLUMN = 3;
 @Component({
   selector: 'oib-home',
   standalone: true,
-  imports: [TranslateModule, NgForOf, NgIf, EngineMetricsComponent, NorthMetricsComponent, SouthMetricsComponent, RouterLink],
+  imports: [TranslateModule, EngineMetricsComponent, NorthMetricsComponent, SouthMetricsComponent, RouterLink],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss'
 })

@@ -17,18 +17,25 @@
             <label class="form-check-label" for="from-existing-south" translate="history-query.from-existing-south"></label>
           </div>
         </div>
-        <div class="form-group" *ngIf="!createForm.controls.fromExistingSouth.value">
-          <select [formControl]="createForm.controls.southType" id="south-type" class="form-select mb-2 mr-sm-2">
-            <option *ngFor="let southType of southTypes" [ngValue]="southType.id">{{ southType.name }}</option>
-          </select>
-          <val-errors [control]="createForm.controls.southType"></val-errors>
-        </div>
-        <div class="form-group" *ngIf="createForm.controls.fromExistingSouth.value">
-          <select [formControl]="createForm.controls.southId" id="south-connector" class="form-select mb-2 mr-sm-2">
-            <option *ngFor="let connector of southList" [ngValue]="connector.id">{{ connector.name + ' (' + connector.type + ')' }}</option>
-          </select>
-          <val-errors [control]="createForm.controls.southId"></val-errors>
-        </div>
+        @if (!createForm.controls.fromExistingSouth.value) {
+          <div class="form-group">
+            <select [formControl]="createForm.controls.southType" id="south-type" class="form-select mb-2 mr-sm-2">
+              @for (southType of southTypes; track southType) {
+                <option [ngValue]="southType.id">{{ southType.name }}</option>
+              }
+            </select>
+            <val-errors [control]="createForm.controls.southType"></val-errors>
+          </div>
+        } @else {
+          <div class="form-group">
+            <select [formControl]="createForm.controls.southId" id="south-connector" class="form-select mb-2 mr-sm-2">
+              @for (connector of southList; track connector.id) {
+                <option [ngValue]="connector.id">{{ connector.name + ' (' + connector.type + ')' }}</option>
+              }
+            </select>
+            <val-errors [control]="createForm.controls.southId"></val-errors>
+          </div>
+        }
       </div>
       <div class="col">
         <div class="form-group">
@@ -42,18 +49,26 @@
             <label for="from-existing-north" class="form-check-label" translate="history-query.from-existing-north"></label>
           </div>
         </div>
-        <div class="form-group" *ngIf="!createForm.controls.fromExistingNorth.value">
-          <select [formControl]="createForm.controls.northType" id="north-type" class="form-select mb-2 mr-sm-2">
-            <option *ngFor="let northType of northTypes" [ngValue]="northType.id">{{ northType.name }}</option>
-          </select>
-          <val-errors [control]="createForm.controls.northType"></val-errors>
-        </div>
-        <div class="form-group" *ngIf="createForm.controls.fromExistingNorth.value">
-          <select [formControl]="createForm.controls.northId" id="north-connector" class="form-select mb-2 mr-sm-2">
-            <option *ngFor="let connector of northList" [ngValue]="connector.id">{{ connector.name + ' (' + connector.type + ')' }}</option>
-          </select>
-          <val-errors [control]="createForm.controls.northId"></val-errors>
-        </div>
+        @if (!createForm.controls.fromExistingNorth.value) {
+          <div class="form-group">
+            <select [formControl]="createForm.controls.northType" id="north-type" class="form-select mb-2 mr-sm-2">
+              @for (northType of northTypes; track northType.id) {
+                <option [ngValue]="northType.id">{{ northType.name }}</option>
+              }
+            </select>
+            <val-errors [control]="createForm.controls.northType"></val-errors>
+          </div>
+        }
+        @if (createForm.controls.fromExistingNorth.value) {
+          <div class="form-group">
+            <select [formControl]="createForm.controls.northId" id="north-connector" class="form-select mb-2 mr-sm-2">
+              @for (connector of northList; track connector) {
+                <option [ngValue]="connector.id">{{ connector.name + ' (' + connector.type + ')' }}</option>
+              }
+            </select>
+            <val-errors [control]="createForm.controls.northId"></val-errors>
+          </div>
+        }
       </div>
     </div>
   </form>

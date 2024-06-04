@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { HistoryMetrics } from '../../../../../../shared/model/engine.model';
-import { JsonPipe, NgIf } from '@angular/common';
+import { JsonPipe } from '@angular/common';
 import { DatetimePipe } from '../../../shared/datetime.pipe';
 import { DurationPipe } from '../../../shared/duration.pipe';
 import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
@@ -14,7 +14,7 @@ import { ProgressbarComponent } from './progressbar/progressbar.component';
   selector: 'oib-history-metrics',
   templateUrl: './history-metrics.component.html',
   styleUrl: './history-metrics.component.scss',
-  imports: [TranslateModule, NgIf, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe, ProgressbarComponent],
+  imports: [TranslateModule, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe, ProgressbarComponent],
   standalone: true
 })
 export class HistoryMetricsComponent {

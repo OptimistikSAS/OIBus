@@ -26,112 +26,138 @@
   </form>
 
   <div class="justify-content-between d-flex">
-    <oib-legend *ngIf="this.allHistoryQueries && this.allHistoryQueries.length > 0" [legendList]="LEGEND"></oib-legend>
+    @if (this.allHistoryQueries && this.allHistoryQueries.length > 0) {
+      <oib-legend [legendList]="LEGEND"></oib-legend>
+    }
     <!-- only display it if there is more than 1 page -->
-    <oib-pagination
-      *ngIf="displayedHistoryQueries.totalPages > 1"
-      class="d-flex justify-content-end"
-      [page]="displayedHistoryQueries"
-      (pageChanged)="changePage($event)"
-    ></oib-pagination>
+    @if (displayedHistoryQueries.totalPages > 1) {
+      <oib-pagination
+        class="d-flex justify-content-end"
+        [page]="displayedHistoryQueries"
+        (pageChanged)="changePage($event)"
+      ></oib-pagination>
+    }
   </div>
 
   <!-- the loading spinner when queries are not yet loaded -->
-  <oib-loading-spinner *ngIf="!allHistoryQueries"></oib-loading-spinner>
-
-  <!-- the list of queries or a caption if empty -->
-  <ng-container *ngIf="allHistoryQueries">
-    <div *ngIf="displayedHistoryQueries.content.length !== 0; else empty">
-      <table class="mt-2 table table-sm table-hover oib-table">
-        <thead>
-          <tr>
-            <th></th>
-            <th translate="history-query.name"></th>
-            <th translate="history-query.interval" style="width: 22rem"></th>
-            <th translate="history-query.description"></th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let query of displayedHistoryQueries.content">
-            <td>
-              <div [class]="getStatusClass(query.status)"></div>
-            </td>
-            <td>{{ query.name }}</td>
-            <td>
-              <div>
-                {{ query.startTime | datetime: 'ff' }}
-                <div class="fa fa-arrow-right oib-fa-arrow"></div>
-                {{ query.endTime | datetime: 'ff' }}
-              </div>
-            </td>
-            <td>{{ query.description }}</td>
-            <td class="text-nowrap action-buttons">
-              <div class="pull-right">
-                <button
-                  *ngIf="query.status === 'PENDING'"
-                  class="btn btn-link py-0 px-1 m-0"
-                  id="history-query-start"
-                  (click)="toggleHistoryQuery(query, 'RUNNING')"
-                  [disabled]="states.get(query.id)?.isPending | async"
-                >
-                  <span class="fa fa-spinner fa-spin" role="status" *ngIf="states.get(query.id)?.isPending | async"></span>
-                  <span class="fa fa-play" role="status" *ngIf="(states.get(query.id)?.isPending | async) === false"></span>
-                </button>
-                <button
-                  *ngIf="query.status === 'RUNNING'"
-                  class="btn btn-link py-0 px-1 m-0"
-                  id="history-query-pause"
-                  (click)="toggleHistoryQuery(query, 'PAUSED')"
-                  [disabled]="states.get(query.id)?.isPending | async"
-                >
-                  <span class="fa fa-spinner fa-spin" role="status" *ngIf="states.get(query.id)?.isPending | async"></span>
-                  <span class="fa fa-pause" role="status" *ngIf="(states.get(query.id)?.isPending | async) === false"></span>
-                </button>
-                <button
-                  *ngIf="query.status === 'PAUSED'"
-                  class="btn btn-link py-0 px-1 m-0"
-                  id="history-query-unpause"
-                  (click)="toggleHistoryQuery(query, 'RUNNING')"
-                  [disabled]="states.get(query.id)?.isPending | async"
-                >
-                  <span class="fa fa-spinner fa-spin" role="status" *ngIf="states.get(query.id)?.isPending | async"></span>
-                  <span class="fa fa-play" role="status" *ngIf="(states.get(query.id)?.isPending | async) === false"></span>
-                </button>
-                <button
-                  *ngIf="query.status === 'FINISHED' || query.status === 'ERRORED'"
-                  class="btn btn-link py-0 px-1 m-0"
-                  id="history-query-restart"
-                  (click)="toggleHistoryQuery(query, 'RUNNING')"
-                  [disabled]="states.get(query.id)?.isPending | async"
-                >
-                  <span class="fa fa-spinner fa-spin" role="status" *ngIf="states.get(query.id)?.isPending | async"></span>
-                  <span class="fa fa-repeat" role="status" *ngIf="(states.get(query.id)?.isPending | async) === false"></span>
-                </button>
-                <!-- Display button -->
-                <a class="btn btn-link display-history-query px-1 py-0" id="display-link" [routerLink]="[query.id]">
-                  <span class="fa fa-search"></span>
-                </a>
-                <!-- Edit button -->
-                <a class="btn btn-link edit-history-query px-1 py-0" id="edit-link" [routerLink]="[query.id, 'edit']">
-                  <span class="fa fa-pencil"></span>
-                </a>
-                <!-- Duplicate button -->
-                <a class="btn btn-link duplicate-history-query px-1 py-0" routerLink="create" [queryParams]="{ duplicate: query.id }">
-                  <span class="fa fa-copy"></span>
-                </a>
-                <!-- Delete button -->
-                <button type="button" class="btn btn-link delete-history-query px-1 py-0" (click)="delete(query)">
-                  <span class="fa fa-trash"></span>
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <ng-template #empty>
+  @if (!allHistoryQueries) {
+    <oib-loading-spinner></oib-loading-spinner>
+  } @else {
+    <!-- the list of queries or a caption if empty -->
+    @if (displayedHistoryQueries.content.length !== 0) {
+      <div>
+        <table class="mt-2 table table-sm table-hover oib-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th translate="history-query.name"></th>
+              <th translate="history-query.interval" style="width: 22rem"></th>
+              <th translate="history-query.description"></th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (query of displayedHistoryQueries.content; track query.id) {
+              <tr>
+                <td>
+                  <div [class]="getStatusClass(query.status)"></div>
+                </td>
+                <td>{{ query.name }}</td>
+                <td>
+                  <div>
+                    {{ query.startTime | datetime: 'ff' }}
+                    <div class="fa fa-arrow-right oib-fa-arrow"></div>
+                    {{ query.endTime | datetime: 'ff' }}
+                  </div>
+                </td>
+                <td>{{ query.description }}</td>
+                <td class="text-nowrap action-buttons">
+                  <div class="pull-right">
+                    @if (query.status === 'PENDING') {
+                      <button
+                        class="btn btn-link py-0 px-1 m-0"
+                        id="history-query-start"
+                        (click)="toggleHistoryQuery(query, 'RUNNING')"
+                        [disabled]="states.get(query.id)?.isPending | async"
+                      >
+                        @if (states.get(query.id)?.isPending | async) {
+                          <span class="fa fa-spinner fa-spin" role="status"></span>
+                        }
+                        @if ((states.get(query.id)?.isPending | async) === false) {
+                          <span class="fa fa-play" role="status"></span>
+                        }
+                      </button>
+                    }
+                    @if (query.status === 'RUNNING') {
+                      <button
+                        class="btn btn-link py-0 px-1 m-0"
+                        id="history-query-pause"
+                        (click)="toggleHistoryQuery(query, 'PAUSED')"
+                        [disabled]="states.get(query.id)?.isPending | async"
+                      >
+                        @if (states.get(query.id)?.isPending | async) {
+                          <span class="fa fa-spinner fa-spin" role="status"></span>
+                        }
+                        @if ((states.get(query.id)?.isPending | async) === false) {
+                          <span class="fa fa-pause" role="status"></span>
+                        }
+                      </button>
+                    }
+                    @if (query.status === 'PAUSED') {
+                      <button
+                        class="btn btn-link py-0 px-1 m-0"
+                        id="history-query-unpause"
+                        (click)="toggleHistoryQuery(query, 'RUNNING')"
+                        [disabled]="states.get(query.id)?.isPending | async"
+                      >
+                        @if (states.get(query.id)?.isPending | async) {
+                          <span class="fa fa-spinner fa-spin" role="status"></span>
+                        }
+                        @if ((states.get(query.id)?.isPending | async) === false) {
+                          <span class="fa fa-play" role="status"></span>
+                        }
+                      </button>
+                    }
+                    @if (query.status === 'FINISHED' || query.status === 'ERRORED') {
+                      <button
+                        class="btn btn-link py-0 px-1 m-0"
+                        id="history-query-restart"
+                        (click)="toggleHistoryQuery(query, 'RUNNING')"
+                        [disabled]="states.get(query.id)?.isPending | async"
+                      >
+                        @if (states.get(query.id)?.isPending | async) {
+                          <span class="fa fa-spinner fa-spin" role="status"></span>
+                        }
+                        @if ((states.get(query.id)?.isPending | async) === false) {
+                          <span class="fa fa-repeat" role="status"></span>
+                        }
+                      </button>
+                    }
+                    <!-- Display button -->
+                    <a class="btn btn-link display-history-query px-1 py-0" id="display-link" [routerLink]="[query.id]">
+                      <span class="fa fa-search"></span>
+                    </a>
+                    <!-- Edit button -->
+                    <a class="btn btn-link edit-history-query px-1 py-0" id="edit-link" [routerLink]="[query.id, 'edit']">
+                      <span class="fa fa-pencil"></span>
+                    </a>
+                    <!-- Duplicate button -->
+                    <a class="btn btn-link duplicate-history-query px-1 py-0" routerLink="create" [queryParams]="{ duplicate: query.id }">
+                      <span class="fa fa-copy"></span>
+                    </a>
+                    <!-- Delete button -->
+                    <button type="button" class="btn btn-link delete-history-query px-1 py-0" (click)="delete(query)">
+                      <span class="fa fa-trash"></span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
       <div class="oib-grey-container empty" translate="history-query.none"></div>
-    </ng-template>
-  </ng-container>
+    }
+  }
 </div>

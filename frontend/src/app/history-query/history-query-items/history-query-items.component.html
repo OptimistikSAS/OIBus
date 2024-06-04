@@ -1,18 +1,23 @@
-<div *ngIf="inMemory" class="my-2">
-  <span class="fa fa-warning mx-1" style="color: orange"></span>
-  <span translate="south.items.edit-mode-info"></span>
-</div>
-<div *ngIf="!inMemory" class="my-2">
-  <span class="fa fa-info-circle mx-1" style="color: grey"></span>
-  <span translate="south.items.display-mode-info"></span>
-</div>
+@if (inMemory) {
+  <div class="my-2">
+    <span class="fa fa-warning mx-1" style="color: orange"></span>
+    <span translate="south.items.edit-mode-info"></span>
+  </div>
+} @else {
+  <div class="my-2">
+    <span class="fa fa-info-circle mx-1" style="color: grey"></span>
+    <span translate="south.items.display-mode-info"></span>
+  </div>
+}
 <oib-box>
   <ng-template oibBoxTitle>
     <div class="d-flex justify-content-between align-items-center">
       <div class="d-flex align-items-center">
         <div>
           <span translate="south.items.title"></span>
-          <span class="mx-1" *ngIf="this.filteredItems.length">({{ this.filteredItems.length }})</span>
+          @if (this.filteredItems.length) {
+            <span class="mx-1">({{ this.filteredItems.length }})</span>
+          }
         </div>
         <input
           class="ms-4 form form-control oib-box-input-header"
@@ -57,53 +62,67 @@
   <input #fileInput (change)="onImportClick($event)" id="file" type="file" accept=".csv" class="d-none" />
 
   <div class="mb-3">
-    <ng-container *ngIf="displayedItems.content.length > 0; else empty">
+    @if (displayedItems.content.length > 0) {
       <table class="table table-sm table-hover oib-table">
         <thead class="light">
           <tr>
-            <th *ngIf="!inMemory"></th>
+            @if (!inMemory) {
+              <th></th>
+            }
             <th translate="history-query.items.name"></th>
-            <th *ngFor="let setting of displaySettings">{{ setting.label }}</th>
+            @for (setting of displaySettings; track setting) {
+              <th>{{ setting.label }}</th>
+            }
             <th></th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let item of displayedItems.content" class="south-item">
-            <td *ngIf="!inMemory">
-              <div class="form-check form-switch">
-                <input (click)="toggleItem(item, !item.enabled)" [checked]="item.enabled" type="checkbox" class="form-check-input" />
-              </div>
-            </td>
-            <td>{{ item.name }}</td>
-            <td *ngFor="let setting of displaySettings">{{ item.settings[setting.key] }}</td>
-            <td class="text-nowrap action-buttons">
-              <div class="pull-right">
-                <!-- Edit button -->
-                <button type="button" class="btn btn-link edit-south-item px-1 py-0" (click)="editItem(item)">
-                  <span class="fa fa-pencil"></span>
-                </button>
-                <!-- Duplicate button -->
-                <button type="button" class="btn btn-link duplicate-south-item px-1 py-0" (click)="duplicateItem(item)">
-                  <span class="fa fa-copy"></span>
-                </button>
-                <!-- Delete button -->
-                <button type="button" class="btn btn-link delete-south-item px-1 py-0" (click)="deleteItem(item)">
-                  <span class="fa fa-trash"></span>
-                </button>
-              </div>
-            </td>
-          </tr>
+          @for (item of displayedItems.content; track item) {
+            <tr class="south-item">
+              @if (!inMemory) {
+                <td>
+                  <div class="form-check form-switch">
+                    <input (click)="toggleItem(item, !item.enabled)" [checked]="item.enabled" type="checkbox" class="form-check-input" />
+                  </div>
+                </td>
+              }
+              <td>{{ item.name }}</td>
+              @for (setting of displaySettings; track setting) {
+                <td>{{ item.settings[setting.key] }}</td>
+              }
+              <td class="text-nowrap action-buttons">
+                <div class="pull-right">
+                  <!-- Edit button -->
+                  <button type="button" class="btn btn-link edit-south-item px-1 py-0" (click)="editItem(item)">
+                    <span class="fa fa-pencil"></span>
+                  </button>
+                  <!-- Duplicate button -->
+                  <button type="button" class="btn btn-link duplicate-south-item px-1 py-0" (click)="duplicateItem(item)">
+                    <span class="fa fa-copy"></span>
+                  </button>
+                  <!-- Delete button -->
+                  <button type="button" class="btn btn-link delete-south-item px-1 py-0" (click)="deleteItem(item)">
+                    <span class="fa fa-trash"></span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
         </tbody>
       </table>
-    </ng-container>
-    <div class="d-flex flex-row-reverse" *ngIf="displayedItems.totalElements">
-      <div [class]="displayedItems.totalPages > 1 ? 'ms-2' : ''">
-        <oib-pagination [page]="displayedItems" (pageChanged)="changePage($event)"></oib-pagination>
+    } @else {
+      @if (allItems.length !== 0) {
+        <div class="oib-grey-container" translate="south.items.none-match"></div>
+      } @else {
+        <div class="oib-grey-container" translate="south.items.none"></div>
+      }
+    }
+    @if (displayedItems.totalElements) {
+      <div class="d-flex flex-row-reverse">
+        <div [class]="displayedItems.totalPages > 1 ? 'ms-2' : ''">
+          <oib-pagination [page]="displayedItems" (pageChanged)="changePage($event)"></oib-pagination>
+        </div>
       </div>
-    </div>
-    <ng-template #empty>
-      <div class="oib-grey-container" translate="south.items.none-match" *ngIf="allItems.length !== 0"></div>
-      <div class="oib-grey-container" translate="south.items.none" *ngIf="allItems.length === 0"></div>
-    </ng-template>
+    }
   </div>
 </oib-box>

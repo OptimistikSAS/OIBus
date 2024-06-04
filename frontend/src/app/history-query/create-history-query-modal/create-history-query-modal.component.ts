@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
-import { NgForOf, NgIf } from '@angular/common';
+
 import { NorthConnectorDTO, NorthType } from '../../../../../shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { SouthConnectorDTO, SouthType } from '../../../../../shared/model/south-connector.model';
@@ -15,7 +15,7 @@ import { ObservableState, SaveButtonComponent } from '../../shared/save-button/s
   selector: 'oib-create-history-query-modal',
   templateUrl: './create-history-query-modal.component.html',
   styleUrl: './create-history-query-modal.component.scss',
-  imports: [...formDirectives, TranslateModule, NgForOf, NgIf, SaveButtonComponent],
+  imports: [...formDirectives, TranslateModule, SaveButtonComponent],
   standalone: true
 })
 export class CreateHistoryQueryModalComponent implements OnInit {
