@@ -37,37 +37,40 @@
       </tr>
     </thead>
     <tbody>
-      <tr class="data" *ngFor="let file of pages.content">
-        <td>
-          <input
-            type="checkbox"
-            (click)="onFileCheckboxClick(checkbox.checked, file)"
-            #checkbox
-            [checked]="checkboxByFiles.get(file.filename)"
-            class="toggle-parameter"
-            [id]="'error-file-' + file.filename"
-          /><label></label>
-        </td>
-        <td>{{ file.modificationDate | datetime: 'mediumWithSeconds' }}</td>
-        <td>{{ file.filename }}</td>
-        <td>{{ file.size | fileSize }}</td>
-        <td class="text-nowrap action-buttons">
-          <div class="pull-right">
-            <button
-              *ngFor="let action of actions"
-              type="button"
-              class="btn btn-link px-1 py-0"
-              (click)="onItemActionClick(action, file)"
-              triggers="hover"
-              placement="top"
-              [ngbTooltip]="tipContent"
-            >
-              <ng-template #tipContent><span translate="{{ actionButtonData[action].text }}"></span></ng-template>
-              <span class="fa {{ actionButtonData[action].icon }}"></span>
-            </button>
-          </div>
-        </td>
-      </tr>
+      @for (file of pages.content; track file) {
+        <tr class="data">
+          <td>
+            <input
+              type="checkbox"
+              (click)="onFileCheckboxClick(checkbox.checked, file)"
+              #checkbox
+              [checked]="checkboxByFiles.get(file.filename)"
+              class="toggle-parameter"
+              [id]="'error-file-' + file.filename"
+            /><label></label>
+          </td>
+          <td>{{ file.modificationDate | datetime: 'mediumWithSeconds' }}</td>
+          <td>{{ file.filename }}</td>
+          <td>{{ file.size | fileSize }}</td>
+          <td class="text-nowrap action-buttons">
+            <div class="pull-right">
+              @for (action of actions; track action) {
+                <button
+                  type="button"
+                  class="btn btn-link px-1 py-0"
+                  (click)="onItemActionClick(action, file)"
+                  triggers="hover"
+                  placement="top"
+                  [ngbTooltip]="tipContent"
+                >
+                  <ng-template #tipContent><span translate="{{ actionButtonData[action].text }}"></span></ng-template>
+                  <span class="fa {{ actionButtonData[action].icon }}"></span>
+                </button>
+              }
+            </div>
+          </td>
+        </tr>
+      }
     </tbody>
   </table>
 </div>
