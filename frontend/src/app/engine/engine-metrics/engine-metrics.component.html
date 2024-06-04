@@ -5,16 +5,18 @@
       <div class="d-flex align-items-center">
         <span translate="engine.monitoring.since" [translateParams]="{ date: metrics.metricsStart | datetime: 'mediumWithSeconds' }"></span>
         <!-- Display button -->
-        <a *ngIf="displayButton" class="btn btn-link display-engine px-1 py-0" id="display-link" (click)="navigateToDisplay()">
-          <span class="fa fa-search"></span>
-        </a>
-        <!-- Reset button -->
-        <button
-          *ngIf="!displayButton"
-          class="ms-3 btn btn-danger btn-sm oib-box-btn"
-          (click)="resetMetrics()"
-          translate="engine.monitoring.reset-metrics"
-        ></button>
+        @if (displayButton) {
+          <a class="btn btn-link display-engine px-1 py-0" id="display-link" (click)="navigateToDisplay()">
+            <span class="fa fa-search"></span>
+          </a>
+        } @else {
+          <!-- Reset button -->
+          <button
+            class="ms-3 btn btn-danger btn-sm oib-box-btn"
+            (click)="resetMetrics()"
+            translate="engine.monitoring.reset-metrics"
+          ></button>
+        }
       </div>
     </div>
   </ng-template>
