@@ -3,7 +3,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
-import { NgForOf, NgIf } from '@angular/common';
+
 import { RouterLink } from '@angular/router';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { FormControlValidationDirective } from '../../shared/form-control-validation.directive';
@@ -37,8 +37,6 @@ const PAGE_SIZE = 20;
   imports: [
     TranslateModule,
     RouterLink,
-    NgIf,
-    NgForOf,
     FormControlValidationDirective,
     FormsModule,
     LoadingSpinnerComponent,

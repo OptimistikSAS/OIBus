@@ -5,13 +5,12 @@ import { Router } from '@angular/router';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { SouthType } from '../../../../../shared/model/south-connector.model';
 import { formDirectives } from '../../shared/form-directives';
-import { NgForOf } from '@angular/common';
 
 @Component({
   selector: 'oib-choose-south-connector-type-modal',
   templateUrl: './choose-south-connector-type-modal.component.html',
   styleUrl: './choose-south-connector-type-modal.component.scss',
-  imports: [...formDirectives, TranslateModule, NgForOf],
+  imports: [...formDirectives, TranslateModule],
   standalone: true
 })
 export class ChooseSouthConnectorTypeModalComponent implements OnInit {

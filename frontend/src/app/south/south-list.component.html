@@ -29,83 +29,90 @@
   </form>
 
   <div class="justify-content-between d-flex">
-    <oib-legend *ngIf="allSouths && allSouths.length > 0" [legendList]="LEGEND"></oib-legend>
+    @if (allSouths && allSouths.length > 0) {
+      <oib-legend [legendList]="LEGEND"></oib-legend>
+    }
     <!-- only display it if there is more than 1 page -->
-    <oib-pagination
-      *ngIf="displayedSouths.totalPages > 1"
-      class="d-flex justify-content-end"
-      [page]="displayedSouths"
-      (pageChanged)="changePage($event)"
-    ></oib-pagination>
+    @if (displayedSouths.totalPages > 1) {
+      <oib-pagination class="d-flex justify-content-end" [page]="displayedSouths" (pageChanged)="changePage($event)"></oib-pagination>
+    }
   </div>
 
   <!-- the loading spinner when south are not yet loaded -->
-  <oib-loading-spinner *ngIf="!allSouths"></oib-loading-spinner>
-
-  <!-- the list of south or a caption if empty -->
-  <ng-container *ngIf="allSouths">
-    <div *ngIf="displayedSouths.content.length !== 0; else empty">
-      <table class="mt-2 table table-sm table-hover oib-table">
-        <thead>
-          <tr>
-            <th></th>
-            <th translate="south.name"></th>
-            <th translate="south.type" style="width: 9rem"></th>
-            <th translate="south.description"></th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let south of displayedSouths.content">
-            <td *ngIf="!south.enabled"><div class="grey-dot"></div></td>
-            <td *ngIf="south.enabled"><div class="green-dot"></div></td>
-            <td>{{ south.name }}</td>
-            <td>{{ south.type }}</td>
-            <td>{{ south.description }}</td>
-            <td class="text-nowrap action-buttons">
-              <div class="pull-right">
-                <button
-                  class="btn btn-link py-0 px-1 m-0"
-                  id="south-enable"
-                  (click)="toggleConnector(south.id, south.name, !south.enabled)"
-                  [disabled]="states.get(south.id)?.isPending | async"
-                >
-                  <span class="fa fa-spinner fa-spin" role="status" *ngIf="states.get(south.id)?.isPending | async"></span>
-                  <span
-                    class="fa fa-pause"
-                    role="status"
-                    *ngIf="south.enabled && (states.get(south.id)?.isPending | async) === false"
-                  ></span>
-                  <span
-                    class="fa fa-play"
-                    role="status"
-                    *ngIf="!south.enabled && (states.get(south.id)?.isPending | async) === false"
-                  ></span>
-                </button>
-                <!-- Display button -->
-                <a class="btn btn-link display-south px-1 py-0" id="display-link" [routerLink]="[south.id]">
-                  <span class="fa fa-search"></span>
-                </a>
-                <!-- Edit button -->
-                <a class="btn btn-link edit-south px-1 py-0" id="edit-link" [routerLink]="[south.id, 'edit']">
-                  <span class="fa fa-pencil"></span>
-                </a>
-                <!-- Duplicate button -->
-                <a class="btn btn-link duplicate-south px-1 py-0" routerLink="create" [queryParams]="{ duplicate: south.id }">
-                  <span class="fa fa-copy"></span>
-                </a>
-                <!-- Delete button -->
-                <button type="button" class="btn btn-link delete-south px-1 py-0" (click)="deleteSouth(south)">
-                  <span class="fa fa-trash"></span>
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <ng-template #empty>
+  @if (!allSouths) {
+    <oib-loading-spinner></oib-loading-spinner>
+  } @else {
+    <!-- the list of south or a caption if empty -->
+    @if (displayedSouths.content.length !== 0) {
+      <div>
+        <table class="mt-2 table table-sm table-hover oib-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th translate="south.name"></th>
+              <th translate="south.type" style="width: 9rem"></th>
+              <th translate="south.description"></th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (south of displayedSouths.content; track south.id) {
+              <tr>
+                @if (!south.enabled) {
+                  <td>
+                    <div class="grey-dot"></div>
+                  </td>
+                } @else {
+                  <td>
+                    <div class="green-dot"></div>
+                  </td>
+                }
+                <td>{{ south.name }}</td>
+                <td>{{ south.type }}</td>
+                <td>{{ south.description }}</td>
+                <td class="text-nowrap action-buttons">
+                  <div class="pull-right">
+                    <button
+                      class="btn btn-link py-0 px-1 m-0"
+                      id="south-enable"
+                      (click)="toggleConnector(south.id, south.name, !south.enabled)"
+                      [disabled]="states.get(south.id)?.isPending | async"
+                    >
+                      @if (states.get(south.id)?.isPending | async) {
+                        <span class="fa fa-spinner fa-spin" role="status"></span>
+                      }
+                      @if (south.enabled && (states.get(south.id)?.isPending | async) === false) {
+                        <span class="fa fa-pause" role="status"></span>
+                      }
+                      @if (!south.enabled && (states.get(south.id)?.isPending | async) === false) {
+                        <span class="fa fa-play" role="status"></span>
+                      }
+                    </button>
+                    <!-- Display button -->
+                    <a class="btn btn-link display-south px-1 py-0" id="display-link" [routerLink]="[south.id]">
+                      <span class="fa fa-search"></span>
+                    </a>
+                    <!-- Edit button -->
+                    <a class="btn btn-link edit-south px-1 py-0" id="edit-link" [routerLink]="[south.id, 'edit']">
+                      <span class="fa fa-pencil"></span>
+                    </a>
+                    <!-- Duplicate button -->
+                    <a class="btn btn-link duplicate-south px-1 py-0" routerLink="create" [queryParams]="{ duplicate: south.id }">
+                      <span class="fa fa-copy"></span>
+                    </a>
+                    <!-- Delete button -->
+                    <button type="button" class="btn btn-link delete-south px-1 py-0" (click)="deleteSouth(south)">
+                      <span class="fa fa-trash"></span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
       <div class="oib-grey-container empty" translate="south.none"></div>
-    </ng-template>
-  </ng-container>
+    }
+  }
 </div>

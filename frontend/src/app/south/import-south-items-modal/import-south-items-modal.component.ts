@@ -5,7 +5,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
 import { SouthConnectorItemDTO, SouthConnectorItemManifest } from '../../../../../shared/model/south-connector.model';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
-import { NgForOf, NgIf, NgSwitch, NgSwitchCase } from '@angular/common';
+
 import { OibCodeBlockComponent } from '../../shared/form/oib-code-block/oib-code-block.component';
 import { groupFormControlsByRow } from '../../shared/form-utils';
 import { OibScanModeComponent } from '../../shared/form/oib-scan-mode/oib-scan-mode.component';
@@ -21,10 +21,6 @@ import { PipeProviderService } from '../../shared/form/pipe-provider.service';
     ...formDirectives,
     TranslateModule,
     SaveButtonComponent,
-    NgForOf,
-    NgSwitch,
-    NgSwitchCase,
-    NgIf,
     OibCodeBlockComponent,
     OibScanModeComponent,
     NgbTypeahead,

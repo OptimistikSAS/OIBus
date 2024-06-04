@@ -2,7 +2,7 @@ import { Component, Input, NgZone, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { SouthConnectorDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
 import { SouthConnectorMetrics } from '../../../../../shared/model/engine.model';
-import { JsonPipe, NgIf } from '@angular/common';
+import { JsonPipe } from '@angular/common';
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { DurationPipe } from '../../shared/duration.pipe';
 import { NotificationService } from '../../shared/notification.service';
@@ -15,7 +15,7 @@ import { Router } from '@angular/router';
   templateUrl: './south-metrics.component.html',
   styleUrl: './south-metrics.component.scss',
   standalone: true,
-  imports: [TranslateModule, NgIf, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe]
+  imports: [TranslateModule, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe]
 })
 export class SouthMetricsComponent implements OnInit {
   @Input({ required: true }) southConnector!: SouthConnectorDTO;
