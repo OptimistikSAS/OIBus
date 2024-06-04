@@ -7,14 +7,14 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '../../../../../shared/model/scan-mode.model';
 import { formDirectives } from '../../shared/form-directives';
-import { NgFor, NgIf } from '@angular/common';
+
 import { DatetimePipe } from '../../shared/datetime.pipe';
 
 @Component({
   selector: 'oib-edit-scan-mode-modal',
   templateUrl: './edit-scan-mode-modal.component.html',
   styleUrl: './edit-scan-mode-modal.component.scss',
-  imports: [...formDirectives, TranslateModule, SaveButtonComponent, NgIf, NgFor, DatetimePipe],
+  imports: [...formDirectives, TranslateModule, SaveButtonComponent, DatetimePipe],
   standalone: true
 })
 export class EditScanModeModalComponent {

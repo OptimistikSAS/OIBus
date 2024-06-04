@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { NgForOf, NgIf } from '@angular/common';
+
 import { switchMap } from 'rxjs';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
@@ -19,8 +19,6 @@ import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
   selector: 'oib-certificate-list',
   standalone: true,
   imports: [
-    NgIf,
-    NgForOf,
     TranslateModule,
     BoxComponent,
     BoxTitleDirective,

@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
-import { NgForOf, NgIf } from '@angular/common';
+
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { EngineService } from '../../services/engine.service';
 import { RegistrationSettingsDTO } from '../../../../../shared/model/engine.model';
@@ -38,8 +38,6 @@ const REGISTRATION_CHECK_DURATION = 3000;
   imports: [
     TranslateModule,
     ...formDirectives,
-    NgForOf,
-    NgIf,
     RouterLink,
     BoxComponent,
     BoxTitleDirective,
