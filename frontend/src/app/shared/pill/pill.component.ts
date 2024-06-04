@@ -1,12 +1,12 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
-import { NgClass, NgIf } from '@angular/common';
+import { NgClass } from '@angular/common';
 
 @Component({
   selector: 'oib-pill',
   templateUrl: './pill.component.html',
   styleUrl: './pill.component.scss',
   standalone: true,
-  imports: [NgClass, NgIf],
+  imports: [NgClass],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PillComponent {
