@@ -3,26 +3,28 @@
 </div>
 <div class="modal-body">
   <div class="row">
-    <ng-container *ngFor="let group of groupedSouthTypes">
+    @for (group of groupedSouthTypes; track group) {
       <div class="col-lg-12 col-md-12">
         <h1 class="mt-2">{{ 'enums.categories.' + group.category | translate }}</h1>
       </div>
-      <div class="col-lg-4 col-md-4 oib-modal-container-list" *ngFor="let southType of group.types">
-        <button class="btn d-flex align-items-center category-button oib-modal-content-list" (click)="selectType(southType.id)">
-          <div class="oib-modal-image-block col-2">
-            <img
-              class="oib-modal-category-image"
-              [src]="'/' + southType.category + '.svg'"
-              [alt]="'enums.categories.' + southType.category | translate"
-            />
-          </div>
-          <div class="ms-3 text-start">
-            <h6 class="mb-0">{{ southType.name }}</h6>
-            <p class="mb-0">{{ southType.description }}</p>
-          </div>
-        </button>
-      </div>
-    </ng-container>
+      @for (southType of group.types; track southType.id) {
+        <div class="col-lg-4 col-md-4 oib-modal-container-list">
+          <button class="btn d-flex align-items-center category-button oib-modal-content-list" (click)="selectType(southType.id)">
+            <div class="oib-modal-image-block col-2">
+              <img
+                class="oib-modal-category-image"
+                [src]="'/' + southType.category + '.svg'"
+                [alt]="'enums.categories.' + southType.category | translate"
+              />
+            </div>
+            <div class="ms-3 text-start">
+              <h6 class="mb-0">{{ southType.name }}</h6>
+              <p class="mb-0">{{ southType.description }}</p>
+            </div>
+          </button>
+        </div>
+      }
+    }
   </div>
 </div>
 <div class="modal-footer">
