@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
-import { AsyncPipe, CommonModule, NgClass, NgForOf, NgIf } from '@angular/common';
+import { AsyncPipe, CommonModule, NgClass } from '@angular/common';
 import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
 import { ConfirmationService } from '../shared/confirmation.service';
 import { NotificationService } from '../shared/notification.service';
@@ -30,8 +30,6 @@ const PAGE_SIZE = 15;
     CommonModule,
     TranslateModule,
     RouterLink,
-    NgIf,
-    NgForOf,
     PaginationComponent,
     FormControlValidationDirective,
     FormsModule,
