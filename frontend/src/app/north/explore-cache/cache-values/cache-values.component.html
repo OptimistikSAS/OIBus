@@ -1,28 +1,32 @@
-<div class="d-flex flex-row-reverse" *ngIf="valueTablePages.totalElements">
-  <div [class]="valueTablePages.totalPages > 1 ? 'ms-2' : ''">
-    <oib-pagination [page]="valueTablePages" (pageChanged)="valueTable.changePage($event)"></oib-pagination>
+@if (valueTablePages.totalElements) {
+  <div class="d-flex flex-row-reverse">
+    <div [class]="valueTablePages.totalPages > 1 ? 'ms-2' : ''">
+      <oib-pagination [page]="valueTablePages" (pageChanged)="valueTable.changePage($event)"></oib-pagination>
+    </div>
   </div>
-</div>
+}
 
 <oib-box>
   <ng-template oibBoxTitle>
     <div class="d-flex justify-content-between align-items-center">
       <span translate="north.cache-settings.cache-values"></span>
-      <div *ngIf="cacheValues.length !== 0">
-        <button
-          type="button"
-          class="btn btn-danger btn-sm oib-box-btn"
-          (click)="removeCacheValues()"
-          translate="north.cache-settings.remove-selected-files"
-          id="remove-selected-files"
-        ></button>
-      </div>
+      @if (cacheValues.length !== 0) {
+        <div>
+          <button
+            type="button"
+            class="btn btn-danger btn-sm oib-box-btn"
+            (click)="removeCacheValues()"
+            translate="north.cache-settings.remove-selected-files"
+            id="remove-selected-files"
+          ></button>
+        </div>
+      }
     </div>
   </ng-template>
 
-  <oib-value-table #valueTable [files]="cacheValues" *ngIf="cacheValues?.length !== 0; else emptyCacheValues"></oib-value-table>
+  @if (cacheValues?.length !== 0) {
+    <oib-value-table #valueTable [files]="cacheValues"></oib-value-table>
+  } @else {
+    <div class="mb-3 oib-grey-container" translate="north.cache-settings.cache-values-none"></div>
+  }
 </oib-box>
-
-<ng-template #emptyCacheValues>
-  <div class="mb-3 oib-grey-container" translate="north.cache-settings.cache-values-none"></div>
-</ng-template>
