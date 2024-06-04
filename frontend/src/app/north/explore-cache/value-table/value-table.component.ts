@@ -2,7 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../../shared/form-directives';
-import { NgForOf, NgIf } from '@angular/common';
+
 import { RouterLink } from '@angular/router';
 import { DatetimePipe } from '../../../shared/datetime.pipe';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
@@ -31,9 +31,7 @@ export type ValueTableData = {
     ...formDirectives,
     TranslateModule,
     SaveButtonComponent,
-    NgForOf,
     DatetimePipe,
-    NgIf,
     PaginationComponent,
     FileSizePipe,
     RouterLink,
