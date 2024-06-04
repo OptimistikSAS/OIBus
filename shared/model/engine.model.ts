@@ -236,5 +236,4 @@ export interface OIBusRawContent extends BaseOIBusContent {
   filePath: string;
 }
 
-
 export type OIBusContent = OIBusTimeValueContent | OIBusRawContent;
