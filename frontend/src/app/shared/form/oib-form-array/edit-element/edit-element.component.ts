@@ -1,7 +1,7 @@
 import { Component, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
 import { FormGroup, NonNullableFormBuilder } from '@angular/forms';
 import { formDirectives } from '../../../form-directives';
-import { NgForOf, NgIf } from '@angular/common';
+
 import { TranslateModule } from '@ngx-translate/core';
 import { OibFormControl } from '../../../../../../../shared/model/form.model';
 import { createFormGroup, groupFormControlsByRow } from '../../../form-utils';
@@ -11,7 +11,7 @@ import { FormComponent } from '../../form.component';
   selector: 'oib-edit-element',
   templateUrl: './edit-element.component.html',
   styleUrl: './edit-element.component.scss',
-  imports: [...formDirectives, NgIf, NgForOf, TranslateModule, forwardRef(() => FormComponent)],
+  imports: [...formDirectives, TranslateModule, forwardRef(() => FormComponent)],
   standalone: true
 })
 export class EditElementComponent implements OnInit {
