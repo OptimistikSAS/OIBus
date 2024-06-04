@@ -10,7 +10,7 @@ import {
   ViewChild
 } from '@angular/core';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
-import { NgIf, NgTemplateOutlet } from '@angular/common';
+import { NgTemplateOutlet } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { OibHelpComponent } from '../oib-help/oib-help.component';
 
@@ -32,7 +32,7 @@ export class BoxTitleDirective {
   standalone: true,
   templateUrl: './box.component.html',
   styleUrl: './box.component.scss',
-  imports: [NgbCollapse, NgIf, NgTemplateOutlet, TranslateModule, OibHelpComponent],
+  imports: [NgbCollapse, NgTemplateOutlet, TranslateModule, OibHelpComponent],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BoxComponent implements AfterContentInit {
