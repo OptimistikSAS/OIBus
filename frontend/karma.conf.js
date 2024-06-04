@@ -32,6 +32,10 @@ module.exports = function (config) {
     reporters: process.env.CI === 'true' ? ['dots'] : ['mocha', 'kjhtml'],
     browsers: ['ChromeHeadless'],
     restartOnFileChange: true,
-    proxies: {}
+    proxies: {
+      '/api/certificates': '',
+      '/api/south': '',
+      '/vendor/monaco-editor/vs/loader.js': ''
+    }
   });
 };
