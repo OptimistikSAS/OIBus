@@ -12,7 +12,9 @@ import { FormControlValidationDirective } from '../form-control-validation.direc
  *
  * ```
  * <oib-multi-select formControlName="users" placeholder="Choose a user">
- *   <oib-multi-select-option *ngFor="let user of users" [value]="user.id" [label]="user.name">
+ *   @for (user of users; track user.id) {
+ *    <oib-multi-select-option [value]="user.id" [label]="user.name">
+ *   }
  *   </oib-multi-select-option>
  * </oib-multi-select>
  * ```
