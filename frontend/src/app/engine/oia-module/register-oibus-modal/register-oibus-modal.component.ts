@@ -6,13 +6,12 @@ import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../../shared/form-directives';
 import { EngineService } from '../../../services/engine.service';
 import { LOG_LEVELS, RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../../../../shared/model/engine.model';
-import { NgForOf, NgIf } from '@angular/common';
 
 @Component({
   selector: 'oib-register-oibus-modal',
   templateUrl: './register-oibus-modal.component.html',
   styleUrl: './register-oibus-modal.component.scss',
-  imports: [...formDirectives, TranslateModule, SaveButtonComponent, NgForOf, NgIf],
+  imports: [...formDirectives, TranslateModule, SaveButtonComponent],
   standalone: true
 })
 export class RegisterOibusModalComponent {
