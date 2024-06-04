@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { NgForOf, NgIf } from '@angular/common';
+
 import { ControlContainer, FormGroup, FormGroupName } from '@angular/forms';
 import { formDirectives } from '../form-directives';
 import { OibFormControl, OibFormGroup, OibSelectFormControl } from '../../../../../shared/model/form.model';
@@ -26,7 +26,7 @@ declare namespace Intl {
 @Component({
   selector: 'oib-form',
   standalone: true,
-  imports: [...formDirectives, NgIf, NgForOf, OibCodeBlockComponent, NgbTypeahead, TranslateModule, OibArrayComponent],
+  imports: [...formDirectives, OibCodeBlockComponent, NgbTypeahead, TranslateModule, OibArrayComponent],
   templateUrl: './form.component.html',
   styleUrl: './form.component.scss',
   viewProviders: [
