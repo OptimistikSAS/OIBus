@@ -8,7 +8,7 @@ import { NorthConnectorDTO } from '../../../../shared/model/north-connector.mode
 import { NorthConnectorService } from '../services/north-connector.service';
 import { ChooseNorthConnectorTypeModalComponent } from './choose-north-connector-type-modal/choose-north-connector-type-modal.component';
 import { RouterLink } from '@angular/router';
-import { AsyncPipe, NgForOf, NgIf } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
 import { NonNullableFormBuilder } from '@angular/forms';
 import { formDirectives } from '../shared/form-directives';
@@ -27,8 +27,6 @@ const PAGE_SIZE = 15;
   imports: [
     TranslateModule,
     RouterLink,
-    NgIf,
-    NgForOf,
     LoadingSpinnerComponent,
     ...formDirectives,
     EnabledEnumPipe,

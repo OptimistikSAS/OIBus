@@ -1,41 +1,44 @@
-<div class="d-flex flex-row-reverse" *ngIf="fileTablePages">
-  <div [class]="fileTablePages.totalPages > 1 ? 'ms-2' : ''">
-    <oib-pagination [page]="fileTablePages" (pageChanged)="fileTable.changePage($event)"></oib-pagination>
+@if (fileTablePages) {
+  <div class="d-flex flex-row-reverse">
+    <div [class]="fileTablePages.totalPages > 1 ? 'ms-2' : ''">
+      <oib-pagination [page]="fileTablePages" (pageChanged)="fileTable.changePage($event)"></oib-pagination>
+    </div>
   </div>
-</div>
+}
 
 <oib-box>
   <ng-template oibBoxTitle>
     <div class="d-flex justify-content-between">
       <span translate="north.cache-settings.error-files"></span>
-      <div *ngIf="errorFiles.length !== 0">
-        <button
-          type="button"
-          class="btn btn-secondary btn-sm oib-box-btn ms-3"
-          (click)="retryErrorFiles()"
-          translate="north.cache-settings.retry-selected-files"
-          id="retry-selected-files"
-        ></button>
-        <button
-          type="button"
-          class="btn btn-danger btn-sm oib-box-btn"
-          (click)="removeErrorFiles()"
-          translate="north.cache-settings.remove-selected-files"
-          id="remove-selected-files"
-        ></button>
-      </div>
+      @if (errorFiles.length !== 0) {
+        <div>
+          <button
+            type="button"
+            class="btn btn-secondary btn-sm oib-box-btn ms-3"
+            (click)="retryErrorFiles()"
+            translate="north.cache-settings.retry-selected-files"
+            id="retry-selected-files"
+          ></button>
+          <button
+            type="button"
+            class="btn btn-danger btn-sm oib-box-btn"
+            (click)="removeErrorFiles()"
+            translate="north.cache-settings.remove-selected-files"
+            id="remove-selected-files"
+          ></button>
+        </div>
+      }
     </div>
   </ng-template>
 
-  <oib-file-table
-    #fileTable
-    [actions]="['view', 'retry', 'remove']"
-    (itemAction)="onItemAction($event)"
-    [files]="errorFiles"
-    *ngIf="errorFiles?.length !== 0; else emptyErrorFiles"
-  ></oib-file-table>
+  @if (errorFiles?.length !== 0) {
+    <oib-file-table
+      #fileTable
+      [actions]="['view', 'retry', 'remove']"
+      (itemAction)="onItemAction($event)"
+      [files]="errorFiles"
+    ></oib-file-table>
+  } @else {
+    <div class="mb-3 oib-grey-container" translate="north.cache-settings.error-files-none"></div>
+  }
 </oib-box>
-
-<ng-template #emptyErrorFiles>
-  <div class="mb-3 oib-grey-container" translate="north.cache-settings.error-files-none"></div>
-</ng-template>

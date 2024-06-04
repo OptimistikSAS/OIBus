@@ -1,41 +1,44 @@
-<div class="d-flex flex-row-reverse" *ngIf="fileTablePages.totalElements">
-  <div [class]="fileTablePages.totalPages > 1 ? 'ms-2' : ''">
-    <oib-pagination [page]="fileTablePages" (pageChanged)="fileTable.changePage($event)"></oib-pagination>
+@if (fileTablePages.totalElements) {
+  <div class="d-flex flex-row-reverse">
+    <div [class]="fileTablePages.totalPages > 1 ? 'ms-2' : ''">
+      <oib-pagination [page]="fileTablePages" (pageChanged)="fileTable.changePage($event)"></oib-pagination>
+    </div>
   </div>
-</div>
+}
 
 <oib-box>
   <ng-template oibBoxTitle>
     <div class="d-flex justify-content-between">
       <span translate="north.cache-settings.cache-files"></span>
-      <div *ngIf="cacheFiles.length !== 0">
-        <button
-          type="button"
-          class="btn btn-secondary btn-sm oib-box-btn ms-3"
-          (click)="archiveCacheFiles()"
-          translate="north.cache-settings.archive-selected-files"
-          id="archive-selected-files"
-        ></button>
-        <button
-          type="button"
-          class="btn btn-danger btn-sm oib-box-btn"
-          (click)="removeCacheFiles()"
-          translate="north.cache-settings.remove-selected-files"
-          id="remove-selected-files"
-        ></button>
-      </div>
+      @if (cacheFiles.length !== 0) {
+        <div>
+          <button
+            type="button"
+            class="btn btn-secondary btn-sm oib-box-btn ms-3"
+            (click)="archiveCacheFiles()"
+            translate="north.cache-settings.archive-selected-files"
+            id="archive-selected-files"
+          ></button>
+          <button
+            type="button"
+            class="btn btn-danger btn-sm oib-box-btn"
+            (click)="removeCacheFiles()"
+            translate="north.cache-settings.remove-selected-files"
+            id="remove-selected-files"
+          ></button>
+        </div>
+      }
     </div>
   </ng-template>
 
-  <oib-file-table
-    #fileTable
-    [actions]="['view', 'archive', 'remove']"
-    (itemAction)="onItemAction($event)"
-    [files]="cacheFiles"
-    *ngIf="cacheFiles?.length !== 0; else emptyCacheFiles"
-  ></oib-file-table>
+  @if (cacheFiles?.length !== 0) {
+    <oib-file-table
+      #fileTable
+      [actions]="['view', 'archive', 'remove']"
+      (itemAction)="onItemAction($event)"
+      [files]="cacheFiles"
+    ></oib-file-table>
+  } @else {
+    <div class="mb-3 oib-grey-container" translate="north.cache-settings.cache-files-none"></div>
+  }
 </oib-box>
-
-<ng-template #emptyCacheFiles>
-  <div class="mb-3 oib-grey-container" translate="north.cache-settings.cache-files-none"></div>
-</ng-template>

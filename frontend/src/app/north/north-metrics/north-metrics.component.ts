@@ -1,7 +1,7 @@
 import { Component, Input, NgZone, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { NorthConnectorMetrics } from '../../../../../shared/model/engine.model';
-import { JsonPipe, NgIf } from '@angular/common';
+import { JsonPipe } from '@angular/common';
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { DurationPipe } from '../../shared/duration.pipe';
 import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
@@ -15,7 +15,7 @@ import { Router } from '@angular/router';
   selector: 'oib-north-metrics',
   templateUrl: './north-metrics.component.html',
   styleUrl: './north-metrics.component.scss',
-  imports: [TranslateModule, NgIf, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe, FileSizePipe],
+  imports: [TranslateModule, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe, FileSizePipe],
   standalone: true
 })
 export class NorthMetricsComponent implements OnInit {
