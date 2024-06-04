@@ -24,22 +24,18 @@
           <label for="levels" class="col-auto col-form-label" translate="logs.search.levels"></label>
           <div class="col-1">
             <oib-multi-select formControlName="levels" id="levels">
-              <oib-multi-select-option
-                *ngFor="let level of levels"
-                [value]="level"
-                [label]="level | logLevelsEnum"
-              ></oib-multi-select-option>
+              @for (level of levels; track level) {
+                <oib-multi-select-option [value]="level" [label]="level | logLevelsEnum"></oib-multi-select-option>
+              }
             </oib-multi-select>
           </div>
 
           <label for="scope-types" class="col-auto col-form-label" translate="logs.search.scope-type"></label>
           <div class="col-2">
             <oib-multi-select formControlName="scopeTypes" id="scope-types">
-              <oib-multi-select-option
-                *ngFor="let scopeType of scopeTypes"
-                [value]="scopeType"
-                [label]="scopeType | scopeTypesEnum"
-              ></oib-multi-select-option>
+              @for (scopeType of scopeTypes; track scopeType) {
+                <oib-multi-select-option [value]="scopeType" [label]="scopeType | scopeTypesEnum"></oib-multi-select-option>
+              }
             </oib-multi-select>
           </div>
         </div>
@@ -57,9 +53,9 @@
               (selectItem)="selectScope($event)"
             />
             <div [style.margin-top.rem]="selectedScopes.length ? -0.75 : 0">
-              <oib-pill *ngFor="let scope of selectedScopes" type="secondary" [removable]="true" (removed)="removeScope(scope)">
-                {{ scope.scopeName }}
-              </oib-pill>
+              @for (scope of selectedScopes; track scope.scopeId) {
+                <oib-pill type="secondary" [removable]="true" (removed)="removeScope(scope)"> {{ scope.scopeName }} </oib-pill>
+              }
             </div>
           </div>
 
@@ -70,47 +66,57 @@
 
           <div class="col">
             <button class="btn btn-primary pull-right" id="search-button" [disabled]="loading">
-              <span *ngIf="loading" class="fa fa-spin fa-spinner"></span>
-              <span *ngIf="!loading" translate="common.search"></span>
+              @if (loading) {
+                <span class="fa fa-spin fa-spinner"></span>
+              } @else {
+                <span translate="common.search"></span>
+              }
             </button>
           </div>
         </div>
       </form>
 
-      <div class="d-flex justify-content-between mb-2" *ngIf="logs?.totalElements">
-        <oib-legend *ngIf="this.levels && this.levels.length > 0" [legendList]="LEGEND"></oib-legend>
-        <div [class]="logs.totalPages > 1 ? 'ms-2' : ''">
-          <oib-pagination [page]="logs" [navigate]="true"></oib-pagination>
+      @if (logs?.totalElements) {
+        <div class="d-flex justify-content-between mb-2">
+          @if (this.levels && this.levels.length > 0) {
+            <oib-legend [legendList]="LEGEND"></oib-legend>
+          }
+          <div [class]="logs.totalPages > 1 ? 'ms-2' : ''">
+            <oib-pagination [page]="logs" [navigate]="true"></oib-pagination>
+          </div>
         </div>
-      </div>
-      <div class="table-container" *ngIf="logs.totalElements !== 0; else empty">
-        <table class="table table-sm table-hover oib-table-logs">
-          <thead>
-            <tr>
-              <th style="width: 1%"></th>
-              <th translate="logs.date"></th>
-              <th translate="logs.scope-type" style="width: 8%"></th>
-              <th translate="logs.scope" style="width: 4%"></th>
-              <th translate="logs.message"></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr class="data" *ngFor="let log of logs.content">
-              <td>
-                <!-- need to not be "display: inline" -->
-                <span style="display: block" [class]="getLevelClass(log.level)"></span>
-              </td>
-              <td class="text-nowrap">{{ log.timestamp | datetime: 'mediumWithSeconds' }}</td>
-              <td>{{ log.scopeType | scopeTypesEnum }}</td>
-              <td>{{ log.scopeName }}</td>
-              <td class="text-break">{{ log.message }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <ng-template #empty>
+      }
+      @if (logs.totalElements !== 0) {
+        <div class="table-container">
+          <table class="table table-sm table-hover oib-table-logs">
+            <thead>
+              <tr>
+                <th style="width: 1%"></th>
+                <th translate="logs.date"></th>
+                <th translate="logs.scope-type" style="width: 8%"></th>
+                <th translate="logs.scope" style="width: 4%"></th>
+                <th translate="logs.message"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (log of logs.content; track log) {
+                <tr class="data">
+                  <td>
+                    <!-- need to not be "display: inline" -->
+                    <span style="display: block" [class]="getLevelClass(log.level)"></span>
+                  </td>
+                  <td class="text-nowrap">{{ log.timestamp | datetime: 'mediumWithSeconds' }}</td>
+                  <td>{{ log.scopeType | scopeTypesEnum }}</td>
+                  <td>{{ log.scopeName }}</td>
+                  <td class="text-break">{{ log.message }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
         <div class="oi-details empty" translate="logs.none"></div>
-      </ng-template>
+      }
     </div>
   </div>
 </div>

@@ -13,50 +13,71 @@
           <div id="version">
             <strong translate="about.version"></strong>
             <span translate="common.colon-separator"></span>
-            <span *ngIf="oibusInfo">{{ oibusInfo.version }}</span>
-            <span *ngIf="!oibusInfo" id="version-spinner" class="fa fa-spinner fa-spin"></span>
+            @if (oibusInfo) {
+              <span>{{ oibusInfo.version }}</span>
+            } @else {
+              <span id="version-spinner" class="fa fa-spinner fa-spin"></span>
+            }
           </div>
 
           <div id="executable">
             <strong translate="about.executable"></strong>
             <span translate="common.colon-separator"></span>
-            <span class="text-wrap text-break" *ngIf="oibusInfo">{{ oibusInfo.binaryDirectory }}</span>
-            <span *ngIf="!oibusInfo" class="fa fa-spinner fa-spin"></span>
+            @if (oibusInfo) {
+              <span class="text-wrap text-break">{{ oibusInfo.binaryDirectory }}</span>
+            } @else {
+              <span class="fa fa-spinner fa-spin"></span>
+            }
           </div>
 
           <div id="data-folder">
             <strong translate="about.data-folder"></strong>
             <span translate="common.colon-separator"></span>
-            <span class="text-wrap text-break" *ngIf="oibusInfo">{{ oibusInfo.dataDirectory }}</span>
-            <span *ngIf="!oibusInfo" class="fa fa-spinner fa-spin"></span>
+            @if (oibusInfo) {
+              <span class="text-wrap text-break">{{ oibusInfo.dataDirectory }}</span>
+            } @else {
+              <span class="fa fa-spinner fa-spin"></span>
+            }
           </div>
 
           <div id="operating-system">
             <strong translate="about.operating-system"></strong>
             <span translate="common.colon-separator"></span>
-            <span *ngIf="oibusInfo">{{ oibusInfo.operatingSystem }}</span>
-            <span *ngIf="!oibusInfo" class="fa fa-spinner fa-spin"></span>
+            @if (oibusInfo) {
+              <span>{{ oibusInfo.operatingSystem }}</span>
+            } @else {
+              <span class="fa fa-spinner fa-spin"></span>
+            }
           </div>
 
           <div id="architecture">
             <strong translate="about.architecture"></strong>
             <span translate="common.colon-separator"></span>
-            <span *ngIf="oibusInfo">{{ oibusInfo.architecture }}</span>
-            <span *ngIf="!oibusInfo" class="fa fa-spinner fa-spin"></span>
+            @if (oibusInfo) {
+              <span>{{ oibusInfo.architecture }}</span>
+            } @else {
+              <span class="fa fa-spinner fa-spin"></span>
+            }
           </div>
 
           <div id="process-id">
             <strong translate="about.process-id"></strong>
             <span translate="common.colon-separator"></span>
-            <span *ngIf="oibusInfo">{{ oibusInfo.processId }}</span>
-            <span *ngIf="!oibusInfo" class="fa fa-spinner fa-spin"></span>
+            @if (oibusInfo) {
+              <span>{{ oibusInfo.processId }}</span>
+            } @else {
+              <span class="fa fa-spinner fa-spin"></span>
+            }
           </div>
 
           <div id="hostname">
             <strong translate="about.hostname"></strong>
             <span translate="common.colon-separator"></span>
-            <span *ngIf="oibusInfo">{{ oibusInfo.hostname }}</span>
-            <span *ngIf="!oibusInfo" class="fa fa-spinner fa-spin"></span>
+            @if (oibusInfo) {
+              <span>{{ oibusInfo.hostname }}</span>
+            } @else {
+              <span class="fa fa-spinner fa-spin"></span>
+            }
           </div>
 
           <div id="license">

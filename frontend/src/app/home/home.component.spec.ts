@@ -60,17 +60,17 @@ describe('HomeComponent', () => {
 
     southService.list.and.returnValue(
       of([
-        { name: 'south1', enabled: true },
-        { name: 'south2', enabled: false },
-        { name: 'south3', enabled: true }
+        { id: 'south1', name: 'south1', enabled: true },
+        { id: 'south2', name: 'south2', enabled: false },
+        { id: 'south3', name: 'south3', enabled: true }
       ] as Array<SouthConnectorDTO>)
     );
 
     northService.list.and.returnValue(
       of([
-        { name: 'north1', enabled: true },
-        { name: 'north2', enabled: false },
-        { name: 'north2', enabled: true }
+        { id: 'north1', name: 'north1', enabled: true },
+        { id: 'north2', name: 'north2', enabled: false },
+        { id: 'north3', name: 'north3', enabled: true }
       ] as Array<NorthConnectorDTO>)
     );
     northService.getNorthConnectorTypeManifest.and.returnValue(of({} as NorthConnectorManifest));
