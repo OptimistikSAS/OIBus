@@ -167,7 +167,11 @@ export default class SouthItemRepository {
     this.database.prepare(query).run(southId);
   }
 
-  createAndUpdateSouthItems(southId: string, itemsToAdd: Array<SouthConnectorItemDTO>, itemsToUpdate: Array<SouthConnectorItemDTO>): void {
+  createAndUpdateSouthItems(
+    southId: string,
+    itemsToAdd: Array<SouthConnectorItemCommandDTO>,
+    itemsToUpdate: Array<SouthConnectorItemCommandDTO>
+  ): void {
     const insert = this.database.prepare(
       `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings) VALUES (?, ?, ?, ?, ?, ?);`
     );

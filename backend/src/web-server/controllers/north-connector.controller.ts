@@ -1,5 +1,6 @@
 import { KoaContext } from '../koa';
 import {
+  NorthCacheSettingsDTO,
   NorthConnectorCommandDTO,
   NorthConnectorDTO,
   NorthConnectorWithItemsCommandDTO,
@@ -72,6 +73,17 @@ export default class NorthConnectorController {
       }
 
       await this.validator.validateSettings(manifest.settings, command.settings);
+
+      if (!command.caching.scanModeId && !command.caching.scanModeName) {
+        throw new Error(`Scan mode not specified`);
+      } else if (!command.caching.scanModeId && command.caching.scanModeName) {
+        const scanModes = ctx.app.repositoryService.scanModeRepository.getScanModes();
+        const scanMode = scanModes.find(element => element.name === command.caching.scanModeName);
+        if (!scanMode) {
+          throw new Error(`Scan mode ${command.caching.scanModeName} not found`);
+        }
+        command.caching.scanModeId = scanMode.id;
+      }
 
       let duplicatedConnector: NorthConnectorDTO | null = null;
       if (ctx.query.duplicateId) {
@@ -544,9 +556,13 @@ export default class NorthConnectorController {
       }
 
       await this.validator.validateSettings(manifest.settings, ctx.request.body!.settings);
+      const northCaching = { ...ctx.request.body!.caching };
+      delete northCaching.scanModeName;
+      northCaching.scanModeId = '';
       const command: NorthConnectorDTO = {
         id: northConnector?.id || 'test',
         ...ctx.request.body!,
+        caching: northCaching as NorthCacheSettingsDTO,
         name: northConnector?.name || `${ctx.request.body!.type}:test-connection`
       };
       command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(

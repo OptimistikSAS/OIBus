@@ -95,7 +95,14 @@ export default class SouthConnectorController {
         manifest.settings
       );
       ctx.request.body!.name = southConnector ? southConnector.name : `${ctx.request.body!.type}:test-connection`;
-      const logger = ctx.app.logger.child({ scopeType: 'south', scopeId: command.id, scopeName: command.name }, { level: 'silent' });
+      const logger = ctx.app.logger.child(
+        {
+          scopeType: 'south',
+          scopeId: command.id,
+          scopeName: command.name
+        },
+        { level: 'silent' }
+      );
       const southToTest = ctx.app.southService.createSouth(command, [], this.addValues, this.addFile, 'baseFolder', logger);
       await southToTest.testConnection();
 
@@ -118,10 +125,21 @@ export default class SouthConnectorController {
         return ctx.throw(404, 'South manifest not found');
       }
 
+      const scanModes = ctx.app.repositoryService.scanModeRepository.getScanModes();
+
       await this.validator.validateSettings(manifest.settings, command.settings);
       // Check if item settings match the item schema, throw an error otherwise
       for (const item of ctx.request.body!.items) {
         await this.validator.validateSettings(manifest.items.settings, item.settings);
+        if (!item.scanModeId && !item.scanModeName) {
+          throw new Error(`Scan mode not specified for item ${item.name}`);
+        } else if (!item.scanModeId && item.scanModeName) {
+          const scanMode = scanModes.find(element => element.name === item.scanModeName);
+          if (!scanMode) {
+            throw new Error(`Scan mode ${item.scanModeName} not found for item ${item.name}`);
+          }
+          item.scanModeId = scanMode.id;
+        }
       }
 
       if (manifest.modes.forceMaxInstantPerItem) {
@@ -140,6 +158,7 @@ export default class SouthConnectorController {
         manifest.settings
       );
       const southConnector = await ctx.app.reloadService.onCreateSouth(command);
+
       await ctx.app.reloadService.onCreateOrUpdateSouthItems(southConnector, ctx.request.body!.items, []);
 
       ctx.created(southConnector);
@@ -203,7 +222,7 @@ export default class SouthConnectorController {
     }
   }
 
-  startSouthConnector = async (ctx: KoaContext<void, void>) => {
+  async startSouthConnector(ctx: KoaContext<void, void>): Promise<void> {
     const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.id);
     if (!southConnector) {
       return ctx.notFound();
@@ -215,9 +234,9 @@ export default class SouthConnectorController {
     } catch (error: any) {
       ctx.badRequest(error.message);
     }
-  };
+  }
 
-  stopSouthConnector = async (ctx: KoaContext<void, void>) => {
+  async stopSouthConnector(ctx: KoaContext<void, void>): Promise<void> {
     const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.id);
     if (!southConnector) {
       return ctx.notFound();
@@ -229,7 +248,7 @@ export default class SouthConnectorController {
     } catch (error: any) {
       ctx.badRequest(error.message);
     }
-  };
+  }
 
   async resetSouthMetrics(ctx: KoaContext<void, void>): Promise<void> {
     const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.southId);
@@ -255,6 +274,10 @@ export default class SouthConnectorController {
     ctx.ok(southItems);
   }
 
+  /**
+   * Endpoint used to download a CSV from a list of items when creating a connector (before the items are saved on
+   * the database). When the items are already saved, it is downloaded with the export method
+   */
   async southItemsToCsv(ctx: KoaContext<{ items: Array<SouthConnectorItemDTO> }, any>): Promise<void> {
     const scanModes = ctx.app.repositoryService.scanModeRepository.getScanModes();
     const southItems = ctx.request.body!.items.map(item => {

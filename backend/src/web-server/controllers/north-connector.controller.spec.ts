@@ -2,6 +2,7 @@ import NorthConnectorController from './north-connector.controller';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
 import JoiValidator from './validators/joi.validator';
 import { northTestManifest } from '../../tests/__mocks__/north-service.mock';
+import { ScanModeDTO } from '../../../../shared/model/scan-mode.model';
 
 jest.mock('./validators/joi.validator');
 
@@ -160,6 +161,73 @@ describe('North connector controller', () => {
     );
     expect(ctx.app.reloadService.onCreateNorth).toHaveBeenCalledWith(northConnectorCommand);
     expect(ctx.app.reloadService.onStartNorth).toHaveBeenCalledWith('id');
+    expect(ctx.created).toHaveBeenCalledWith(northConnector);
+  });
+
+  it('createNorthConnector() should throw an error if scan mode not specifiec', async () => {
+    ctx.request.body = {
+      north: JSON.parse(JSON.stringify(northConnectorCommand)),
+      subscriptions: [
+        { type: 'south', subscription: { id: 'id1' } },
+        { type: 'external-source', externalSubscription: { id: 'id2' } }
+      ]
+    };
+    delete ctx.request.body.north.caching.scanModeId;
+    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(northConnectorCommand.settings);
+    ctx.app.reloadService.onCreateNorth.mockReturnValue(northConnector);
+
+    await northConnectorController.createNorthConnector(ctx);
+
+    expect(ctx.badRequest).toHaveBeenCalledWith('Scan mode not specified');
+  });
+
+  it('createNorthConnector() should throw an error if scan mode not found', async () => {
+    ctx.request.body = {
+      north: JSON.parse(JSON.stringify(northConnectorCommand)),
+      subscriptions: [
+        { type: 'south', subscription: { id: 'id1' } },
+        { type: 'external-source', externalSubscription: { id: 'id2' } }
+      ]
+    };
+    delete ctx.request.body.north.caching.scanModeId;
+    ctx.request.body.north.caching.scanModeName = 'invalid';
+    const scanMode: ScanModeDTO = {
+      id: '1',
+      name: 'scan mode',
+      description: 'description',
+      cron: '* * * * *'
+    };
+    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValue([scanMode]);
+    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(northConnectorCommand.settings);
+    ctx.app.reloadService.onCreateNorth.mockReturnValue(northConnector);
+
+    await northConnectorController.createNorthConnector(ctx);
+
+    expect(ctx.badRequest).toHaveBeenCalledWith('Scan mode invalid not found');
+  });
+
+  it('createNorthConnector() should create North connector with found scan mode', async () => {
+    ctx.request.body = {
+      north: JSON.parse(JSON.stringify(northConnectorCommand)),
+      subscriptions: [
+        { type: 'south', subscription: { id: 'id1' } },
+        { type: 'external-source', externalSubscription: { id: 'id2' } }
+      ]
+    };
+    delete ctx.request.body.north.caching.scanModeId;
+    ctx.request.body.north.caching.scanModeName = 'scan mode';
+    const scanMode: ScanModeDTO = {
+      id: '1',
+      name: 'scan mode',
+      description: 'description',
+      cron: '* * * * *'
+    };
+    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValue([scanMode]);
+    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(northConnectorCommand.settings);
+    ctx.app.reloadService.onCreateNorth.mockReturnValue(northConnector);
+
+    await northConnectorController.createNorthConnector(ctx);
+
     expect(ctx.created).toHaveBeenCalledWith(northConnector);
   });
 

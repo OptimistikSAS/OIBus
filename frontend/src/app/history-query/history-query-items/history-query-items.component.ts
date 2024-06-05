@@ -150,7 +150,14 @@ export class HistoryQueryItemsComponent implements OnInit {
           if (!this.inMemory) {
             return this.historyQueryService.createItem(this.historyQuery!.id, command);
           } else {
-            this.allItems.push({ id: command.id ?? '', connectorId: this.historyQuery?.id ?? '', ...command });
+            this.allItems.push({
+              id: command.id ?? '',
+              name: command.name,
+              enabled: command.enabled,
+              connectorId: this.historyQuery?.id ?? '',
+              scanModeId: command.scanModeId!,
+              settings: { ...command.settings }
+            });
             return of(null);
           }
         })

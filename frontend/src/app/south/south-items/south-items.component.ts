@@ -151,7 +151,14 @@ export class SouthItemsComponent implements OnInit {
           if (!this.inMemory) {
             return this.southConnectorService.createItem(this.southConnector!.id, command);
           } else {
-            this.allItems.push({ id: command.id ?? '', connectorId: this.southConnector?.id ?? '', ...command });
+            this.allItems.push({
+              id: command.id ?? '',
+              name: command.name,
+              enabled: command.enabled,
+              connectorId: this.southConnector?.id ?? '',
+              scanModeId: command.scanModeId!,
+              settings: { ...command.settings }
+            });
             return of(null);
           }
         })
