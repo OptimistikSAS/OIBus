@@ -51,7 +51,7 @@ export interface SouthConnectorCommandDTO<T = any> {
  */
 export interface SouthConnectorWithItemsCommandDTO<> {
   south: SouthConnectorDTO;
-  items: Array<SouthConnectorItemDTO>;
+  items: Array<SouthConnectorItemCommandDTO>;
   itemIdsToDelete: Array<string>;
 }
 
@@ -74,7 +74,8 @@ export interface SouthConnectorItemCommandDTO<T extends SouthItemSettings = any>
   enabled: boolean;
   name: string;
   settings: T;
-  scanModeId: string;
+  scanModeId?: string;
+  scanModeName?: string;
 }
 
 export interface SouthConnectorItemSearchParam {

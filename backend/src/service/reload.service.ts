@@ -190,8 +190,8 @@ export default class ReloadService {
 
   async onCreateOrUpdateSouthItems(
     southConnector: SouthConnectorDTO,
-    itemsToAdd: Array<SouthConnectorItemDTO>,
-    itemsToUpdate: Array<SouthConnectorItemDTO>,
+    itemsToAdd: Array<SouthConnectorItemCommandDTO>,
+    itemsToUpdate: Array<SouthConnectorItemCommandDTO>,
     restart = true
   ): Promise<void> {
     await this.oibusEngine.stopSouth(southConnector.id);
@@ -425,10 +425,10 @@ export default class ReloadService {
   /**
    * Handle the change of a south item's scan mode
    */
-  private onSouthItemScanModeChange(southId: string, previousItem: SouthConnectorItemDTO, newItem: SouthConnectorItemDTO) {
+  private onSouthItemScanModeChange(southId: string, previousItem: SouthConnectorItemDTO, newItem: SouthConnectorItemCommandDTO) {
     const settings = this.repositoryService.southConnectorRepository.getSouthConnector(southId)!;
     const oldScanModeId = previousItem.scanModeId;
-    const newScanModeId = newItem.scanModeId;
+    const newScanModeId = newItem.scanModeId!;
 
     if (oldScanModeId === newScanModeId) {
       return;

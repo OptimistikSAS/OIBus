@@ -200,6 +200,7 @@ router.post('/api/south/:southType/items/check-import/:southId', upload.single('
 );
 router.post('/api/south/:southId/items/import', (ctx: KoaContext<any, any>) => southConnectorController.importSouthItems(ctx));
 router.get('/api/south/:southId/items/export', (ctx: KoaContext<any, any>) => southConnectorController.exportSouthItems(ctx));
+router.get('/api/south/:southId/items/export', (ctx: KoaContext<any, any>) => southConnectorController.exportSouthItems(ctx));
 router.put('/api/south/items/to-csv', (ctx: KoaContext<any, any>) => southConnectorController.southItemsToCsv(ctx));
 router.get('/api/south/:southId/items/:id', (ctx: KoaContext<any, any>) => southConnectorController.getSouthItem(ctx));
 router.put('/api/south/:southId/items/:id', (ctx: KoaContext<any, any>) => southConnectorController.updateSouthItem(ctx));

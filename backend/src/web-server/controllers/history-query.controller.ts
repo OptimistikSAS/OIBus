@@ -14,7 +14,7 @@ import csv from 'papaparse';
 import fs from 'node:fs/promises';
 import AbstractController from './abstract.controller';
 import Joi from 'joi';
-import { NorthConnectorCommandDTO, NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
+import { NorthCacheSettingsDTO, NorthConnectorCommandDTO, NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 
 interface HistoryQueryWithItemsCommandDTO {
   historyQuery: HistoryQueryCommandDTO;
@@ -555,9 +555,14 @@ export default class HistoryQueryController extends AbstractController {
       }
       await this.validator.validateSettings(manifest.settings, ctx.request.body!.settings);
 
+      const northCaching = { ...ctx.request.body!.caching };
+      delete northCaching.scanModeName;
+      northCaching.scanModeId = '';
+
       const command: NorthConnectorDTO = {
         id: 'test',
         ...ctx.request.body!,
+        caching: northCaching as NorthCacheSettingsDTO,
         name: `${ctx.request.body!.type}:test-connection`
       };
       command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(command.settings, northSettings, manifest.settings);

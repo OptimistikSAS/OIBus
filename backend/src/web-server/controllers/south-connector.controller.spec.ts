@@ -10,6 +10,7 @@ import {
   SouthConnectorItemDTO
 } from '../../../../shared/model/south-connector.model';
 import { southTestManifest } from '../../tests/__mocks__/south-service.mock';
+import { ScanModeDTO } from '../../../../shared/model/scan-mode.model';
 
 jest.mock('./validators/joi.validator');
 jest.mock('papaparse');
@@ -68,7 +69,12 @@ const itemCommand: SouthConnectorItemCommandDTO = {
 const item: SouthConnectorItemDTO = {
   id: 'id',
   connectorId: 'connectorId',
-  ...itemCommand
+  enabled: true,
+  name: 'name',
+  settings: {
+    regex: '.*'
+  },
+  scanModeId: 'scanModeId'
 };
 const page = {
   content: [item],
@@ -226,10 +232,91 @@ describe('South connector controller', () => {
     ctx.query.duplicateId = null;
   });
 
+  it('createSouthConnector() should throw error when scan mode is not specified in item', async () => {
+    ctx.request.body = {
+      south: southConnectorCommand,
+      items: [
+        {
+          name: 'name',
+          enabled: true,
+          settings: {
+            regex: '.*'
+          }
+        }
+      ]
+    };
+    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(sqliteConnectorCommand.settings);
+    ctx.app.reloadService.onCreateSouth.mockReturnValue(southConnector);
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
+
+    await southConnectorController.createSouthConnector(ctx);
+    expect(ctx.badRequest).toHaveBeenCalledWith('Scan mode not specified for item name');
+  });
+
+  it('createSouthConnector() should throw error when scan mode is not found', async () => {
+    ctx.request.body = {
+      south: southConnectorCommand,
+      items: [
+        {
+          name: 'name',
+          scanModeName: 'invalid',
+          enabled: true,
+          settings: {
+            regex: '.*'
+          }
+        }
+      ]
+    };
+    const scanMode: ScanModeDTO = {
+      id: '1',
+      name: 'scan mode',
+      description: 'description',
+      cron: '* * * * *'
+    };
+    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValue([scanMode]);
+
+    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(sqliteConnectorCommand.settings);
+    ctx.app.reloadService.onCreateSouth.mockReturnValue(southConnector);
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
+
+    await southConnectorController.createSouthConnector(ctx);
+    expect(ctx.badRequest).toHaveBeenCalledWith('Scan mode invalid not found for item name');
+  });
+
+  it('createSouthConnector() should create connector with items', async () => {
+    ctx.request.body = {
+      south: southConnectorCommand,
+      items: [
+        {
+          name: 'name',
+          scanModeName: 'scan mode',
+          enabled: true,
+          settings: {
+            regex: '.*'
+          }
+        }
+      ]
+    };
+    const scanMode: ScanModeDTO = {
+      id: '1',
+      name: 'scan mode',
+      description: 'description',
+      cron: '* * * * *'
+    };
+    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValue([scanMode]);
+    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(sqliteConnectorCommand.settings);
+    ctx.app.reloadService.onCreateSouth.mockReturnValue(southConnector);
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
+
+    await southConnectorController.createSouthConnector(ctx);
+    expect(ctx.app.reloadService.onCreateSouth).toHaveBeenCalledWith(sqliteConnectorCommand);
+    expect(ctx.created).toHaveBeenCalledWith(southConnector);
+  });
+
   it('createSouthConnector() should create South connector with forceMaxInstantPerItem', async () => {
     ctx.request.body = {
       south: sqliteConnectorCommand,
-      items: [{}]
+      items: [itemCommand]
     };
     ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(sqliteConnectorCommand.settings);
     ctx.app.reloadService.onCreateSouth.mockReturnValue(southConnector);

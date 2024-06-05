@@ -13,6 +13,17 @@ export interface NorthCacheSettingsDTO {
   maxSize: number;
 }
 
+export interface NorthCacheSettingsCommandDTO {
+  scanModeId?: string;
+  scanModeName?: string;
+  retryInterval: number;
+  retryCount: number;
+  groupCount: number;
+  maxSendCount: number;
+  sendFileImmediately: boolean;
+  maxSize: number;
+}
+
 export interface NorthArchiveSettings {
   enabled: boolean;
   retentionDuration: number;
@@ -51,7 +62,7 @@ export interface NorthConnectorCommandDTO<T extends NorthSettings = any> {
   description: string;
   enabled: boolean;
   settings: T;
-  caching: NorthCacheSettingsDTO;
+  caching: NorthCacheSettingsCommandDTO;
   archive: NorthArchiveSettings;
 }
 
@@ -59,7 +70,7 @@ export interface NorthConnectorCommandDTO<T extends NorthSettings = any> {
  * Command DTO for South connector
  */
 export interface NorthConnectorWithItemsCommandDTO<> {
-  north: NorthConnectorDTO;
+  north: NorthConnectorCommandDTO;
   subscriptions: Array<OIBusSubscription>;
   subscriptionsToDelete: Array<OIBusSubscription>;
 }
