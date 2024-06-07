@@ -10,6 +10,7 @@ import fetch from 'node-fetch';
 import { Instant } from '../../../../shared/model/types';
 import CommandService from './command.service';
 import ReloadService from '../reload.service';
+import OIAnalyticsMessageService from './message.service';
 
 const CHECK_TIMEOUT = 10_000;
 export default class RegistrationService {
@@ -22,6 +23,7 @@ export default class RegistrationService {
     private repositoryService: RepositoryService,
     private encryptionService: EncryptionService,
     private commandService: CommandService,
+    private oianalyticsMessageService: OIAnalyticsMessageService,
     private reloadService: ReloadService,
     private logger: pino.Logger
   ) {}
@@ -184,6 +186,10 @@ export default class RegistrationService {
       } else {
         await this.activateRegistration(DateTime.now().toUTC().toISO()!, responseData.accessToken);
         this.logger.info(`OIBus registered on ${registrationSettings.host}`);
+        await this.commandService.stop();
+        this.commandService.start();
+        await this.oianalyticsMessageService.stop();
+        this.oianalyticsMessageService.start();
         const engineSettings = this.repositoryService.engineRepository.getEngineSettings()!;
         if (engineSettings.logParameters.oia.level !== 'silent') {
           await this.reloadService.restartLogger(engineSettings);
@@ -323,7 +329,7 @@ export default class RegistrationService {
       }
       await this.sendAckCommands();
     } catch (fetchError) {
-      this.logger.error(`Error while retrieving commands on ${url}. ${fetchError}`);
+      this.logger.debug(`Error while retrieving commands on ${url}. ${fetchError}`);
     }
   }
 

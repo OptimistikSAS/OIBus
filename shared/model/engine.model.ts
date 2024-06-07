@@ -70,6 +70,7 @@ export interface LogSettings {
 export interface EngineSettingsDTO extends BaseEntity {
   name: string;
   port: number;
+  version: string;
   proxyEnabled: boolean;
   proxyPort: number;
   logParameters: LogSettings;

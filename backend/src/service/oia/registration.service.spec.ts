@@ -11,6 +11,8 @@ import { OIBusCommandDTO } from '../../../../shared/model/command.model';
 import { generateRandomId, getNetworkSettingsFromRegistration, getOIBusInfo } from '../utils';
 import CommandService from './command.service';
 import CommandServiceMock from '../../tests/__mocks__/command-service.mock';
+import OIAnalyticsMessageService from './message.service';
+import OIAnalyticsMessageServiceMock from '../../tests/__mocks__/message-service.mock';
 import RegistrationService from './registration.service';
 import ReloadServiceMock from '../../tests/__mocks__/reload-service.mock';
 import ReloadService from '../reload.service';
@@ -24,6 +26,7 @@ jest.mock('../proxy-agent');
 const repositoryService: RepositoryService = new RepositoryServiceMock('', '');
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const commandService: CommandService = new CommandServiceMock();
+const oianalyticsMessageService: OIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
 const reloadService: ReloadService = new ReloadServiceMock();
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
@@ -59,7 +62,14 @@ describe('Registration service', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     (createProxyAgent as jest.Mock).mockReturnValue(undefined);
 
-    service = new RegistrationService(repositoryService, encryptionService, commandService, reloadService, logger);
+    service = new RegistrationService(
+      repositoryService,
+      encryptionService,
+      commandService,
+      oianalyticsMessageService,
+      reloadService,
+      logger
+    );
   });
 
   it('should get NOT_REGISTERED registration settings', () => {
@@ -486,7 +496,14 @@ describe('Registration service with PENDING registration', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     (createProxyAgent as jest.Mock).mockReturnValue(undefined);
     (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(mockResult);
-    service = new RegistrationService(repositoryService, encryptionService, commandService, reloadService, logger);
+    service = new RegistrationService(
+      repositoryService,
+      encryptionService,
+      commandService,
+      oianalyticsMessageService,
+      reloadService,
+      logger
+    );
   });
 
   it('should get PENDING registration settings', () => {
@@ -550,7 +567,14 @@ describe('Registration service with REGISTERED registration', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     (createProxyAgent as jest.Mock).mockReturnValue(undefined);
     (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(mockResult);
-    service = new RegistrationService(repositoryService, encryptionService, commandService, reloadService, logger);
+    service = new RegistrationService(
+      repositoryService,
+      encryptionService,
+      commandService,
+      oianalyticsMessageService,
+      reloadService,
+      logger
+    );
   });
 
   it('should get REGISTERED registration settings', () => {
@@ -629,7 +653,14 @@ describe('OIBus service should interact with OIA and', () => {
     (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(mockResult);
     (repositoryService.engineRepository.getEngineSettings as jest.Mock).mockReturnValue(mockEngineSettings);
     (getNetworkSettingsFromRegistration as jest.Mock).mockReturnValue({ host: 'http://localhost:4200', headers: {}, agent: undefined });
-    service = new RegistrationService(repositoryService, encryptionService, commandService, reloadService, logger);
+    service = new RegistrationService(
+      repositoryService,
+      encryptionService,
+      commandService,
+      oianalyticsMessageService,
+      reloadService,
+      logger
+    );
   });
 
   it('should ack commands and return if no commands in OIBus', async () => {
@@ -796,7 +827,7 @@ describe('OIBus service should interact with OIA and', () => {
     });
 
     await service.retrieveCommands();
-    expect(logger.error).toHaveBeenCalledWith(
+    expect(logger.debug).toHaveBeenCalledWith(
       `Error while retrieving commands on http://localhost:4200/api/oianalytics/oibus/commands/pending. ${new Error('error')}`
     );
   });
