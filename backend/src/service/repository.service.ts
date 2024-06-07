@@ -20,6 +20,7 @@ import EngineMetricsRepository from '../repository/engine-metrics.repository';
 import CertificateRepository from '../repository/certificate.repository';
 import RegistrationRepository from '../repository/registration.repository';
 import CommandRepository from '../repository/command.repository';
+import OianalyticsMessageRepository from '../repository/oianalytics-message.repository';
 
 export default class RepositoryService {
   private readonly _engineRepository: EngineRepository;
@@ -42,6 +43,7 @@ export default class RepositoryService {
   private readonly _subscriptionRepository: SubscriptionRepository;
   private readonly _registrationRepository: RegistrationRepository;
   private readonly _commandRepository: CommandRepository;
+  private readonly _oianalyticsMessageRepository: OianalyticsMessageRepository;
 
   constructor(oibusDatabasePath: string, logsDatabasePath: string, cryptoDatabasePath: string, cacheDatabasePath: string) {
     const oibusDatabase = Database(oibusDatabasePath);
@@ -64,6 +66,7 @@ export default class RepositoryService {
     this._subscriptionRepository = new SubscriptionRepository(oibusDatabase);
     this._registrationRepository = new RegistrationRepository(oibusDatabase);
     this._commandRepository = new CommandRepository(oibusDatabase);
+    this._oianalyticsMessageRepository = new OianalyticsMessageRepository(oibusDatabase);
 
     this._cryptoRepository = new CryptoRepository(cryptoDatabase);
 
@@ -154,5 +157,9 @@ export default class RepositoryService {
 
   get commandRepository(): CommandRepository {
     return this._commandRepository;
+  }
+
+  get oianalyticsMessageRepository(): OianalyticsMessageRepository {
+    return this._oianalyticsMessageRepository;
   }
 }

@@ -53,7 +53,7 @@ export default class EngineRepository {
    */
   getEngineSettings(): EngineSettingsDTO | null {
     const query =
-      'SELECT id, name, port, proxy_enabled AS proxyEnabled, proxy_port AS proxyPort, ' +
+      'SELECT id, name, port, oibus_version AS version, proxy_enabled AS proxyEnabled, proxy_port AS proxyPort, ' +
       'log_console_level AS consoleLogLevel, ' +
       'log_file_level AS fileLogLevel, ' +
       'log_file_max_file_size AS fileLogMaxFileSize, ' +
@@ -75,6 +75,7 @@ export default class EngineRepository {
         id: results[0].id,
         name: results[0].name,
         port: results[0].port,
+        version: results[0].version,
         proxyEnabled: Boolean(results[0].proxyEnabled),
         proxyPort: results[0].proxyPort,
         logParameters: {
@@ -150,6 +151,15 @@ export default class EngineRepository {
         command.logParameters.oia.level,
         command.logParameters.oia.interval
       );
+  }
+
+  /**
+   * Update OIBus version
+   */
+  updateVersion(version: string): void {
+    const query = `UPDATE ${ENGINES_TABLE} SET oibus_version = ? WHERE rowid=(SELECT MIN(rowid) FROM ${ENGINES_TABLE});`;
+
+    this.database.prepare(query).run(version);
   }
 
   /**

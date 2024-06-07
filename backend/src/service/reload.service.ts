@@ -21,6 +21,9 @@ import { ScanModeCommandDTO } from '../../../shared/model/scan-mode.model';
 import HomeMetricsService from './home-metrics.service';
 import ProxyServer from '../web-server/proxy-server';
 import OIBusService from './oibus.service';
+import { getOIBusInfo } from './utils';
+import { OIAnalyticsMessageInfoCommandDTO } from '../../../shared/model/oianalytics-message.model';
+import OIAnalyticsMessageService from './oia/message.service';
 
 export default class ReloadService {
   private webServerChangeLoggerCallback: (logger: pino.Logger) => void = () => {};
@@ -36,6 +39,7 @@ export default class ReloadService {
     private readonly _oibusEngine: OIBusEngine,
     private readonly _historyEngine: HistoryQueryEngine,
     private readonly _oibusService: OIBusService,
+    private readonly _oianalyticsMessageService: OIAnalyticsMessageService,
     private readonly _proxyServer: ProxyServer
   ) {}
 
@@ -94,6 +98,16 @@ export default class ReloadService {
       oldSettings.name !== newSettings.name
     ) {
       await this.restartLogger(newSettings);
+      const registration = this.repositoryService.registrationRepository.getRegistrationSettings()!;
+      if (oldSettings?.name !== newSettings.name && registration.status !== 'NOT_REGISTERED') {
+        const info = getOIBusInfo(newSettings);
+        const infoMessageCommand: OIAnalyticsMessageInfoCommandDTO = {
+          type: 'INFO',
+          content: info
+        };
+        const createdMessage = this.repositoryService.oianalyticsMessageRepository.createOIAnalyticsMessages(infoMessageCommand);
+        this._oianalyticsMessageService.addMessageToQueue(createdMessage);
+      }
     }
     if (!oldSettings || oldSettings.port !== newSettings.port) {
       await this.webServerChangePortCallback(newSettings.port);

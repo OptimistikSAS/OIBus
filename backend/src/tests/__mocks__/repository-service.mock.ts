@@ -128,9 +128,18 @@ export default jest.fn().mockImplementation(() => ({
     markAsAcknowledged: jest.fn(),
     delete: jest.fn()
   },
+  oianalyticsMessageRepository: {
+    searchMessagesPage: jest.fn(),
+    searchMessagesList: jest.fn(),
+    updateOIAnalyticsMessages: jest.fn(),
+    createOIAnalyticsMessages: jest.fn(),
+    markAsCompleted: jest.fn(),
+    markAsErrored: jest.fn()
+  },
   engineRepository: {
     getEngineSettings: jest.fn(),
-    updateEngineSettings: jest.fn()
+    updateEngineSettings: jest.fn(),
+    updateVersion: jest.fn()
   },
   subscriptionRepository: {
     getNorthSubscriptions: jest.fn(),

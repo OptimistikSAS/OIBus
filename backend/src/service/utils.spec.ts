@@ -2,7 +2,6 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import fsSync, { Dirent, Stats } from 'node:fs';
 import zlib from 'node:zlib';
-import { version } from '../../package.json';
 
 import minimist from 'minimist';
 
@@ -1133,12 +1132,12 @@ describe('Service utils', () => {
       hostname: os.hostname(),
       operatingSystem: `${os.type()} ${os.release()}`,
       processId: process.pid.toString(),
-      version: version,
+      version: '3.3.3',
       oibusId: 'id',
       oibusName: 'name',
       platform: getPlatformFromOsType(os.type())
     };
-    const result = getOIBusInfo({ id: 'id', name: 'name' } as EngineSettingsDTO);
+    const result = getOIBusInfo({ id: 'id', name: 'name', version: '3.3.3' } as EngineSettingsDTO);
     expect(result).toEqual(expectedResult);
   });
 

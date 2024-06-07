@@ -18,6 +18,7 @@ import HomeMetricsService from './service/home-metrics.service';
 import CommandService from './service/oia/command.service';
 import RegistrationService from './service/oia/registration.service';
 import ProxyServer from './web-server/proxy-server';
+import OIAnalyticsMessageService from './service/oia/message.service';
 
 const CONFIG_DATABASE = 'oibus.db';
 const CRYPTO_DATABASE = 'crypto.db';
@@ -107,7 +108,15 @@ const LOG_DB_NAME = 'logs.db';
     loggerService.logger!
   );
 
-  const commandService = new CommandService(repositoryService, encryptionService, loggerService.logger!, binaryFolder);
+  const oianalyticsMessageService = new OIAnalyticsMessageService(repositoryService, encryptionService, loggerService.logger!);
+  oianalyticsMessageService.start();
+  const commandService = new CommandService(
+    repositoryService,
+    encryptionService,
+    oianalyticsMessageService,
+    loggerService.logger!,
+    binaryFolder
+  );
   commandService.start();
 
   const oibusService = new OIBusService(engine, historyQueryEngine);
@@ -138,6 +147,7 @@ const LOG_DB_NAME = 'logs.db';
     engine,
     historyQueryEngine,
     oibusService,
+    oianalyticsMessageService,
     proxyServer
   );
 
@@ -145,6 +155,7 @@ const LOG_DB_NAME = 'logs.db';
     repositoryService,
     encryptionService,
     commandService,
+    oianalyticsMessageService,
     reloadService,
     loggerService.logger!
   );
@@ -172,6 +183,7 @@ const LOG_DB_NAME = 'logs.db';
     stopping = true;
     await oibusService.stopOIBus();
     await commandService.stop();
+    await oianalyticsMessageService.stop();
     await proxyServer.stop();
     await server.stop();
     registrationService.stop();

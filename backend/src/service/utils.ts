@@ -15,7 +15,6 @@ import https from 'node:https';
 import http from 'node:http';
 import { EngineSettingsDTO, OIBusInfo, RegistrationSettingsDTO } from '../../../shared/model/engine.model';
 import os from 'node:os';
-import { version } from '../../package.json';
 import { NorthCacheFiles } from '../../../shared/model/north-connector.model';
 import EncryptionService from './encryption.service';
 import { createProxyAgent } from './proxy-agent';
@@ -488,7 +487,7 @@ export const getOIBusInfo = (oibusSettings: EngineSettingsDTO): OIBusInfo => {
     hostname: os.hostname(),
     operatingSystem: `${os.type()} ${os.release()}`,
     architecture: process.arch,
-    version,
+    version: oibusSettings.version,
     oibusId: oibusSettings.id,
     oibusName: oibusSettings.name,
     platform: getPlatformFromOsType(os.type())

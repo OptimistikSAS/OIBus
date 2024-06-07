@@ -9,6 +9,9 @@ import DeferredPromise from '../deferred-promise';
 import { DateTime } from 'luxon';
 import { RegistrationSettingsDTO } from '../../../../shared/model/engine.model';
 import path from 'node:path';
+import { version } from '../../../package.json';
+import { OIAnalyticsMessageInfoCommandDTO } from '../../../../shared/model/oianalytics-message.model';
+import OIAnalyticsMessageService from './message.service';
 
 const DOWNLOAD_TIMEOUT = 600_000;
 const STOP_TIMEOUT = 30_000;
@@ -23,18 +26,34 @@ export default class CommandService {
   constructor(
     private repositoryService: RepositoryService,
     private encryptionService: EncryptionService,
+    private oianalyticsMessageService: OIAnalyticsMessageService,
     private logger: pino.Logger,
     private binaryFolder: string
   ) {
     const currentUpgradeCommand = this.repositoryService.commandRepository.searchCommandsList({ status: ['RUNNING'], types: ['UPGRADE'] });
     if (currentUpgradeCommand.length > 0) {
       const engineSettings = this.repositoryService.engineRepository.getEngineSettings()!;
-      const info = getOIBusInfo(engineSettings);
-      this.repositoryService.commandRepository.markAsCompleted(
-        currentUpgradeCommand[0].id,
-        DateTime.now().toUTC().toISO(),
-        `OIBus updated to version ${info.version}`
-      );
+      if (engineSettings.version !== version) {
+        this.repositoryService.engineRepository.updateVersion(version);
+        this.repositoryService.commandRepository.markAsCompleted(
+          currentUpgradeCommand[0].id,
+          DateTime.now().toUTC().toISO(),
+          `OIBus updated to version ${version}`
+        );
+        engineSettings.version = version;
+        const info = getOIBusInfo(engineSettings);
+        const infoMessageCommand: OIAnalyticsMessageInfoCommandDTO = {
+          type: 'INFO',
+          content: info
+        };
+        const createdMessage = this.repositoryService.oianalyticsMessageRepository.createOIAnalyticsMessages(infoMessageCommand);
+        this.oianalyticsMessageService.addMessageToQueue(createdMessage);
+      } else {
+        this.repositoryService.commandRepository.markAsErrored(
+          currentUpgradeCommand[0].id,
+          `OIBus has not been updated. Rollback to version ${version}`
+        );
+      }
     }
   }
 

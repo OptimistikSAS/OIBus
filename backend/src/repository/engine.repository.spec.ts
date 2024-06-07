@@ -155,6 +155,7 @@ describe('Non-empty Engine repository', () => {
     id: 'id1',
     name: 'OIBus',
     port: 2223,
+    version: '3.3.3',
     proxyEnabled: false,
     proxyPort: 9000,
     consoleLogLevel: 'silent',
@@ -188,6 +189,7 @@ describe('Non-empty Engine repository', () => {
       id: 'id1',
       name: 'OIBus',
       port: 2223,
+      version: '3.3.3',
       proxyEnabled: false,
       proxyPort: 9000,
       logParameters: {
@@ -218,7 +220,7 @@ describe('Non-empty Engine repository', () => {
     };
     const engineSettings = repository.getEngineSettings();
     expect(database.prepare).toHaveBeenCalledWith(
-      'SELECT id, name, port, proxy_enabled AS proxyEnabled, proxy_port AS proxyPort, log_console_level AS consoleLogLevel, log_file_level AS fileLogLevel, ' +
+      'SELECT id, name, port, oibus_version AS version, proxy_enabled AS proxyEnabled, proxy_port AS proxyPort, log_console_level AS consoleLogLevel, log_file_level AS fileLogLevel, ' +
         'log_file_max_file_size AS fileLogMaxFileSize, log_file_number_of_files AS fileLogNumberOfFiles, ' +
         'log_database_level AS databaseLogLevel, log_database_max_number_of_logs AS databaseLogMaxNumberOfLogs, ' +
         'log_loki_level AS lokiLogLevel, log_loki_interval AS lokiLogInterval, log_loki_address AS lokiLogAddress, ' +
@@ -263,5 +265,12 @@ describe('Non-empty Engine repository', () => {
     };
     repository.createEngineSettings(command);
     expect(generateRandomId).not.toHaveBeenCalled();
+  });
+
+  it('should update version', () => {
+    repository.updateVersion('3.4.0');
+
+    expect(database.prepare).toHaveBeenCalledWith('UPDATE engines SET oibus_version = ? WHERE rowid=(SELECT MIN(rowid) FROM engines);');
+    expect(run).toHaveBeenCalledWith('3.4.0');
   });
 });

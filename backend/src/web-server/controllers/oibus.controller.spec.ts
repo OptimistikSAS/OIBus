@@ -35,6 +35,7 @@ describe('Oibus controller', () => {
     } as EngineSettingsCommandDTO;
     engine = {
       id: '1',
+      version: '3.3.4',
       ...engineCommand
     };
   });
