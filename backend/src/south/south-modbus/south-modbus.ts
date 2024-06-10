@@ -38,28 +38,27 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
   }
 
   async lastPointQuery(items: Array<SouthConnectorItemDTO<SouthModbusItemSettings>>): Promise<void> {
+    const dataValues: Array<OIBusDataValue> = [];
     try {
       const startRequest = DateTime.now().toMillis();
       for (const item of items) {
-        await this.modbusFunction(item);
+        dataValues.push(...(await this.modbusFunction(item)));
       }
       const requestDuration = DateTime.now().toMillis() - startRequest;
       this.logger.debug(`Requested ${items.length} items in ${requestDuration} ms`);
+      await this.addValues(dataValues);
     } catch (error: any) {
-      if (error.err === 'Offline') {
-        this.logger.error(`Modbus server ${this.connector.settings.host}:${this.connector.settings.port} offline`);
-        await this.disconnect();
-        this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
-      } else {
-        throw new Error(error.err);
-      }
+      await this.addValues(dataValues);
+      await this.disconnect();
+      this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
+      throw error;
     }
   }
 
   /**
    * Dynamically call the right function based on the given point settings
    */
-  async modbusFunction(item: SouthConnectorItemDTO<SouthModbusItemSettings>): Promise<void> {
+  async modbusFunction(item: SouthConnectorItemDTO<SouthModbusItemSettings>): Promise<Array<OIBusDataValue>> {
     const offset = this.connector.settings.addressOffset === 'Modbus' ? 0 : -1;
     const address =
       (item.settings.address.match(/^0x[0-9a-f]+$/i) ? parseInt(item.settings.address, 16) : parseInt(item.settings.address, 10)) + offset;
@@ -91,13 +90,13 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
       default:
         throw new Error(`Wrong Modbus type "${item.settings.modbusType}" for point ${item.name}`);
     }
-    await this.addValues([
+    return [
       {
         pointId: item.name,
         timestamp: DateTime.now().toUTC().toISO()!,
         data: { value: JSON.stringify(value) }
       }
-    ]);
+    ];
   }
 
   /**
