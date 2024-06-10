@@ -22,7 +22,6 @@ import HomeMetricsService from './home-metrics.service';
 import ProxyServer from '../web-server/proxy-server';
 import OIBusService from './oibus.service';
 import { getOIBusInfo } from './utils';
-import { OIAnalyticsMessageInfoCommandDTO } from '../../../shared/model/oianalytics-message.model';
 import OIAnalyticsMessageService from './oia/message.service';
 
 export default class ReloadService {
@@ -101,11 +100,7 @@ export default class ReloadService {
       const registration = this.repositoryService.registrationRepository.getRegistrationSettings()!;
       if (oldSettings?.name !== newSettings.name && registration.status !== 'NOT_REGISTERED') {
         const info = getOIBusInfo(newSettings);
-        const infoMessageCommand: OIAnalyticsMessageInfoCommandDTO = {
-          type: 'INFO',
-          content: info
-        };
-        const createdMessage = this.repositoryService.oianalyticsMessageRepository.createOIAnalyticsMessages(infoMessageCommand);
+        const createdMessage = this.repositoryService.oianalyticsMessageRepository.createOIAnalyticsMessages('INFO', info);
         this._oianalyticsMessageService.addMessageToQueue(createdMessage);
       }
     }

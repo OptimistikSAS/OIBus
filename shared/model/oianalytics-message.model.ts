@@ -6,15 +6,16 @@ export type OIAnalyticsMessageStatus = (typeof OIANALYTICS_MESSAGE_STATUS)[numbe
 export const OIANALYTICS_MESSAGE_TYPES = ['INFO'] as const;
 export type OIAnalyticsMessageType = (typeof OIANALYTICS_MESSAGE_TYPES)[number];
 
-interface BaseOIAnalyticsMessageDTO<T> extends BaseEntity {
+interface BaseOIAnalyticsMessageDTO extends BaseEntity {
   type: OIAnalyticsMessageType;
   status: OIAnalyticsMessageStatus;
   error?: string;
   completedDate?: Instant;
-  content: T;
 }
 
-interface OIAnalyticsMessageCommandDTO<T> extends Omit<BaseOIAnalyticsMessageDTO<T>, 'id' | 'creationDate' | 'lastEditInstant' | 'status'| 'error' | 'completedDate' > {}
+interface BaseOIAnalyticsMessageCommandDTO {
+  type: string;
+}
 
 export interface OIAnalyticsMessageSearchParam {
   types: Array<OIAnalyticsMessageType>;
@@ -36,13 +37,27 @@ export interface InfoMessageContent {
   platform: string;
 }
 
-export interface OIAnalyticsMessageInfoDTO extends BaseOIAnalyticsMessageDTO<InfoMessageContent> {
-  type: 'INFO'
+
+
+export interface OIAnalyticsMessageInfoDTO extends BaseOIAnalyticsMessageDTO {
+  type: 'INFO',
+  content: InfoMessageContent
 }
 
-export interface OIAnalyticsMessageInfoCommandDTO extends OIAnalyticsMessageCommandDTO<InfoMessageContent> {
-  type: 'INFO'
+export interface OIAnalyticsMessageInfoCommandDTO extends BaseOIAnalyticsMessageCommandDTO {
+  type: 'INFO';
+  version: string;
+  oibusName: string;
+  oibusId: string;
+  dataDirectory: string;
+  binaryDirectory: string;
+  processId: string;
+  hostname: string;
+  operatingSystem: string;
+  architecture: string;
+  platform: string;
 }
 
 export type OIAnalyticsMessageCommand = OIAnalyticsMessageInfoCommandDTO
 export type OIAnalyticsMessageDTO = OIAnalyticsMessageInfoDTO
+export type InfoMessage = InfoMessageContent

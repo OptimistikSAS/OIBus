@@ -2,7 +2,7 @@ import SqliteDatabaseMock, { all, get, run } from '../tests/__mocks__/database.m
 import { Database } from 'better-sqlite3';
 import OianalyticsMessageRepository from './oianalytics-message.repository';
 import { Page } from '../../../shared/model/types';
-import { InfoMessageContent, OIAnalyticsMessageCommand, OIAnalyticsMessageDTO } from '../../../shared/model/oianalytics-message.model';
+import { InfoMessageContent, OIAnalyticsMessageDTO } from '../../../shared/model/oianalytics-message.model';
 
 jest.mock('../tests/__mocks__/database.mock');
 jest.mock('../service/utils', () => ({
@@ -35,23 +35,16 @@ describe('OIAnalytics Message repository', () => {
   it('should create message', () => {
     run.mockReturnValueOnce({ lastInsertRowid: 1 });
     get.mockReturnValueOnce({ ...existingMessage, content: '{}' });
-    const command: OIAnalyticsMessageCommand = {
-      type: 'INFO',
-      content: {} as InfoMessageContent
-    };
-    repository.createOIAnalyticsMessages(command);
+
+    repository.createOIAnalyticsMessages('INFO', {} as InfoMessageContent);
     expect(database.prepare).toHaveBeenCalledWith('INSERT INTO oianalytics_messages (id, type, status, content) VALUES (?, ?, ?, ?);');
-    expect(run).toHaveBeenCalledWith('123456', command.type, 'PENDING', JSON.stringify(command.content));
+    expect(run).toHaveBeenCalledWith('123456', 'INFO', 'PENDING', JSON.stringify({}));
   });
 
   it('should update message', () => {
-    const command: OIAnalyticsMessageCommand = {
-      type: 'INFO',
-      content: {} as InfoMessageContent
-    };
-    repository.updateOIAnalyticsMessages('id', command);
+    repository.updateOIAnalyticsMessages('id', {} as InfoMessageContent);
     expect(database.prepare).toHaveBeenCalledWith('UPDATE oianalytics_messages SET content = ? WHERE id = ?;');
-    expect(run).toHaveBeenCalledWith(JSON.stringify(command.content), 'id');
+    expect(run).toHaveBeenCalledWith(JSON.stringify({}), 'id');
   });
 
   it('should properly get messages page by search criteria', () => {

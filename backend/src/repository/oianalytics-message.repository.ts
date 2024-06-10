@@ -1,11 +1,7 @@
 import { generateRandomId } from '../service/utils';
 import { Database } from 'better-sqlite3';
 import { Instant, Page } from '../../../shared/model/types';
-import {
-  OIAnalyticsMessageCommand,
-  OIAnalyticsMessageDTO,
-  OIAnalyticsMessageSearchParam
-} from '../../../shared/model/oianalytics-message.model';
+import { InfoMessage, OIAnalyticsMessageDTO, OIAnalyticsMessageSearchParam } from '../../../shared/model/oianalytics-message.model';
 
 export const OIANALYTICS_MESSAGE_TABLE = 'oianalytics_messages';
 const PAGE_SIZE = 50;
@@ -103,19 +99,17 @@ export default class OianalyticsMessageRepository {
   /**
    * Update a message
    */
-  updateOIAnalyticsMessages(id: string, command: OIAnalyticsMessageCommand): void {
+  updateOIAnalyticsMessages(id: string, content: InfoMessage): void {
     const query = `UPDATE ${OIANALYTICS_MESSAGE_TABLE} SET content = ? WHERE id = ?;`;
-    this.database.prepare(query).run(JSON.stringify(command.content), id);
+    this.database.prepare(query).run(JSON.stringify(content), id);
   }
 
   /**
    * Create a message
    */
-  createOIAnalyticsMessages(command: OIAnalyticsMessageCommand): OIAnalyticsMessageDTO {
+  createOIAnalyticsMessages(type: string, content: InfoMessage): OIAnalyticsMessageDTO {
     const insertQuery = `INSERT INTO ${OIANALYTICS_MESSAGE_TABLE} (id, type, status, content) VALUES (?, ?, ?, ?);`;
-    const insertResult = this.database
-      .prepare(insertQuery)
-      .run(generateRandomId(), command.type, 'PENDING', JSON.stringify(command.content));
+    const insertResult = this.database.prepare(insertQuery).run(generateRandomId(), type, 'PENDING', JSON.stringify(content));
 
     const query =
       `SELECT id, created_at as creationDate, completed_date as compeltedDate, type, status, error, content FROM ${OIANALYTICS_MESSAGE_TABLE} ` +

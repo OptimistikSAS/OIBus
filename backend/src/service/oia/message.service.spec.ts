@@ -28,7 +28,18 @@ const existingMessage: OIAnalyticsMessageDTO = {
   id: '1234',
   status: 'ERRORED',
   type: 'INFO',
-  content: {} as InfoMessageContent
+  content: {
+    version: 'version',
+    oibusName: 'oibusName',
+    oibusId: 'oibusId',
+    dataDirectory: 'dataDirectory',
+    binaryDirectory: 'binaryDirectory',
+    processId: 'processId',
+    hostname: 'hostname',
+    operatingSystem: 'operatingSystem',
+    architecture: 'architecture',
+    platform: 'platform'
+  } as InfoMessageContent
 };
 
 let service: OIAnalyticsMessageService;
@@ -196,7 +207,7 @@ describe('OIAnalytics message service without message', () => {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(existingMessage),
+      body: JSON.stringify({ type: existingMessage.type, ...existingMessage.content }),
       timeout: 15_000,
       agent: undefined
     });
@@ -204,6 +215,17 @@ describe('OIAnalytics message service without message', () => {
 
     jest.advanceTimersByTime(15000);
     expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('should not send message if message type is not recognized', async () => {
+    service.removeMessageFromQueue = jest.fn();
+    await service.sendMessage({ id: 'badId', type: 'BAD TYPE' } as any);
+    expect(logger.debug).toHaveBeenCalledWith(
+      `Error while sending message badId (created ${existingMessage.creationDate}) of type ` +
+        `BAD TYPE on http://localhost:4200/api/oianalytics/oibus/message. Error: ` +
+        `Unrecognized type BAD TYPE. Message badId removed from queue`
+    );
+    expect(service.removeMessageFromQueue).toHaveBeenCalledWith('badId');
   });
 
   it('should send message and manage 404 error', async () => {
