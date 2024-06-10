@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.3.7](https://github.com/OptimistikSAS/OIBus/compare/v3.3.6...v3.3.7) (2024-06-10)
+
+
+### Bug Fixes
+
+* **modbus:** fix modbus item data model for optional fields ([a228601](https://github.com/OptimistikSAS/OIBus/commit/a228601432daa6f44e744885d2296d0e780ee537))
+* **modbus:** optimize last point query ([3f683c4](https://github.com/OptimistikSAS/OIBus/commit/3f683c4c8424b7da7e09236b231aef36fb000b89))
+* **oianalytics:** send oibus info to oianalytics on engine name or version update ([314f8ff](https://github.com/OptimistikSAS/OIBus/commit/314f8ff112025e46738b8643fcbabe6680f4d2d5))
+* **scan-mode:** allow creation of connectors with scan mode name ([fb5de79](https://github.com/OptimistikSAS/OIBus/commit/fb5de7918b70bb67ac3a167e3764232544444c58))
+
 ## [3.3.6](https://github.com/OptimistikSAS/OIBus/compare/v3.3.5...v3.3.6) (2024-05-28)
 
 
