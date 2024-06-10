@@ -16,11 +16,11 @@ export type SouthModbusSettingsAddressOffset = (typeof SOUTH_MODBUS_SETTINGS_ADD
 const SOUTH_MODBUS_SETTINGS_ENDIANNESSS = ['Big Endian', 'Little Endian'] as const
 export type SouthModbusSettingsEndianness = (typeof SOUTH_MODBUS_SETTINGS_ENDIANNESSS)[number];
 
+const SOUTH_MODBUS_ITEM_SETTINGS_DATA_DATA_TYPES = ['Bit', 'UInt16', 'Int16', 'UInt32', 'Int32', 'BigUInt64', 'BigInt64', 'Float', 'Double'] as const
+export type SouthModbusItemSettingsDataDataType = (typeof SOUTH_MODBUS_ITEM_SETTINGS_DATA_DATA_TYPES)[number];
+
 const SOUTH_MODBUS_ITEM_SETTINGS_MODBUS_TYPES = ['coil', 'discreteInput', 'inputRegister', 'holdingRegister'] as const
 export type SouthModbusItemSettingsModbusType = (typeof SOUTH_MODBUS_ITEM_SETTINGS_MODBUS_TYPES)[number];
-
-const SOUTH_MODBUS_ITEM_SETTINGS_DATA_TYPES = ['Bit', 'UInt16', 'Int16', 'UInt32', 'Int32', 'BigUInt64', 'BigInt64', 'Float', 'Double'] as const
-export type SouthModbusItemSettingsDataType = (typeof SOUTH_MODBUS_ITEM_SETTINGS_DATA_TYPES)[number];
 
 const SOUTH_M_Q_T_T_SETTINGS_AUTHENTICATION_TYPES = ['none', 'basic', 'cert'] as const
 export type SouthMQTTSettingsAuthenticationType = (typeof SOUTH_M_Q_T_T_SETTINGS_AUTHENTICATION_TYPES)[number];
@@ -353,6 +353,12 @@ export type SouthSettings =
   | SouthSlimsSettings
   | SouthSQLiteSettings
 
+export interface SouthModbusItemSettingsData {
+  dataType: SouthModbusItemSettingsDataDataType;
+  bitIndex?: number;
+  multiplierCoefficient: number;
+}
+
 export interface SouthMQTTItemSettingsJsonPayloadTimestampPayload {
   timestampPath: string;
   timestampType: SouthMQTTItemSettingsJsonPayloadTimestampPayloadTimestampType;
@@ -560,9 +566,7 @@ export interface SouthFolderScannerItemSettings extends BaseSouthItemSettings {
 export interface SouthModbusItemSettings extends BaseSouthItemSettings {
   address: string;
   modbusType: SouthModbusItemSettingsModbusType;
-  dataType?: SouthModbusItemSettingsDataType;
-  bitIndex?: number;
-  multiplierCoefficient?: number;
+  data?: SouthModbusItemSettingsData;
 }
 
 export interface SouthMQTTItemSettings extends BaseSouthItemSettings {
