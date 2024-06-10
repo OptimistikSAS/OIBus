@@ -16,6 +16,12 @@ import packageInfo from '../../../package.json'
       <div>MacOS (Intel chip)</div>
     </div>
   </DownloadButton>
+  <DownloadButton link={`https://github.com/OptimistikSAS/OIBus/releases/download/v${packageInfo.version}/oibus-macos_arm64-v${packageInfo.version}.zip`}>
+    <div>
+      <div>{`OIBus v${packageInfo.version} (zip)`}</div>
+      <div>MacOS (ARM 64)</div>
+    </div>
+  </DownloadButton>
 </div>
 
 macOS OIBus binary can be run through its executable. Once unzipped, start a Terminal and enter the following command:
