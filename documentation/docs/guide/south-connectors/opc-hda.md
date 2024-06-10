@@ -24,7 +24,7 @@ The HDA module can also be used as a standalone, to perform OPC history extracti
 ## Specific settings
 OIBus exchanges commands and data with the HDA agent through a TCP server/client communication. Therefore, several 
 fields must be filled to make OIBus communicate with the HDA Agent:
-- **Remote agent URL**: Specify the URL of the remote OIBus agent, e.g., http://ip-address-or-host:2224.
+- **Remote agent URL**: Specify the URL of the remote OIBus agent, e.g., `http://ip-address-or-host:2224`.
 - **Connection timeout**: Set the timeout for establishing a connection.
 - **Retry interval**: Time to wait before retrying connection.
 - **Server host**: Address of the OPC server (from the remote OIBus agent machine).
