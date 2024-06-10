@@ -286,43 +286,33 @@ describe('SouthModbus', () => {
 
     south.disconnect = jest.fn();
     south.connect = jest.fn();
+    south.addValues = jest.fn();
     south.modbusFunction = jest
       .fn()
       .mockImplementationOnce(() => {
-        const error = { ...new Error('modbus function error'), err: 'Offline' };
-        error.err = 'Offline';
-        throw error;
-      })
-      .mockImplementationOnce(() => {
-        const error = { ...new Error('modbus function error'), err: 'Offline' };
-        error.err = 'another error';
-        throw error;
+        throw new Error('modbus function error');
       })
       .mockImplementation(() => {
-        return true;
+        return [];
       });
-    await south.lastPointQuery([items[1]]);
-    expect(logger.error).toHaveBeenCalledWith(`Modbus server ${configuration.settings.host}:${configuration.settings.port} offline`);
+    await expect(south.lastPointQuery([items[1]])).rejects.toThrow();
     expect(south.disconnect).toHaveBeenCalledTimes(1);
     expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
     jest.advanceTimersByTime(configuration.settings.retryInterval);
     expect(south.connect).toHaveBeenCalledTimes(1);
-    await expect(south.lastPointQuery([items[0]])).rejects.toThrow('another error');
     jest.clearAllMocks();
     await south.lastPointQuery([items[2]]);
     expect(south.modbusFunction).toHaveBeenCalledTimes(1);
     expect(south.disconnect).not.toHaveBeenCalled();
     expect(south.connect).not.toHaveBeenCalled();
-    expect(logger.error).not.toHaveBeenCalled();
+    expect(south.addValues).toHaveBeenCalledWith([]);
   });
 
   it('should call read coil method', async () => {
     south.readCoil = jest.fn().mockReturnValue(123);
-    south.addValues = jest.fn();
-    await south.modbusFunction(items[4]);
+    const values = await south.modbusFunction(items[4]);
     expect(south.readCoil).toHaveBeenCalledTimes(1);
-    expect(south.addValues).toHaveBeenCalledTimes(1);
-    expect(south.addValues).toHaveBeenCalledWith([
+    expect(values).toEqual([
       {
         pointId: items[4].name,
         timestamp: nowDateString,
@@ -333,11 +323,9 @@ describe('SouthModbus', () => {
 
   it('should call readDiscreteInputRegister method', async () => {
     south.readDiscreteInputRegister = jest.fn().mockReturnValue(123);
-    south.addValues = jest.fn();
-    await south.modbusFunction(items[3]);
+    const values = await south.modbusFunction(items[3]);
     expect(south.readDiscreteInputRegister).toHaveBeenCalledTimes(1);
-    expect(south.addValues).toHaveBeenCalledTimes(1);
-    expect(south.addValues).toHaveBeenCalledWith([
+    expect(values).toEqual([
       {
         pointId: items[3].name,
         timestamp: nowDateString,
@@ -348,11 +336,9 @@ describe('SouthModbus', () => {
 
   it('should call readInputRegister method', async () => {
     south.readInputRegister = jest.fn().mockReturnValue(123);
-    south.addValues = jest.fn();
-    await south.modbusFunction(items[2]);
+    const values = await south.modbusFunction(items[2]);
     expect(south.readInputRegister).toHaveBeenCalledTimes(1);
-    expect(south.addValues).toHaveBeenCalledTimes(1);
-    expect(south.addValues).toHaveBeenCalledWith([
+    expect(values).toEqual([
       {
         pointId: items[2].name,
         timestamp: nowDateString,
@@ -363,11 +349,9 @@ describe('SouthModbus', () => {
 
   it('should call readHoldingRegister method', async () => {
     south.readHoldingRegister = jest.fn().mockReturnValue(123);
-    south.addValues = jest.fn();
-    await south.modbusFunction(items[1]);
+    const values = await south.modbusFunction(items[1]);
     expect(south.readHoldingRegister).toHaveBeenCalledTimes(1);
-    expect(south.addValues).toHaveBeenCalledTimes(1);
-    expect(south.addValues).toHaveBeenCalledWith([
+    expect(values).toEqual([
       {
         pointId: items[1].name,
         timestamp: nowDateString,
@@ -391,7 +375,6 @@ describe('SouthModbus', () => {
       }
     };
     await expect(south.modbusFunction(item)).rejects.toThrow(`Wrong Modbus type "${item.settings.modbusType}" for point ${item.name}`);
-    expect(south.addValues).not.toHaveBeenCalled();
   });
 
   it('should generate buffer function name', () => {
