@@ -115,32 +115,41 @@ const manifest: SouthConnectorManifest = {
         displayInViewMode: true
       },
       {
-        key: 'dataType',
-        type: 'OibSelect',
-        options: ['Bit', 'UInt16', 'Int16', 'UInt32', 'Int32', 'BigUInt64', 'BigInt64', 'Float', 'Double'],
-        label: 'Data Type',
-        defaultValue: 'UInt16',
+        key: 'data',
+        type: 'OibFormGroup',
+        label: '',
+        newRow: true,
+        displayInViewMode: false,
         validators: [{ key: 'required' }],
         conditionalDisplay: { field: 'modbusType', values: ['inputRegister', 'holdingRegister'] },
-        displayInViewMode: false
-      },
-      {
-        key: 'bitIndex',
-        type: 'OibNumber',
-        label: 'Bit Index',
-        defaultValue: 1,
-        validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }, { key: 'max', params: { max: 15 } }],
-        conditionalDisplay: { field: 'dataType', values: ['Bit'] },
-        displayInViewMode: false
-      },
-      {
-        key: 'multiplierCoefficient',
-        type: 'OibNumber',
-        label: 'Multiplier Coefficient',
-        defaultValue: 1,
-        validators: [{ key: 'required' }],
-        conditionalDisplay: { field: 'modbusType', values: ['inputRegister', 'holdingRegister'] },
-        displayInViewMode: false
+        content: [
+          {
+            key: 'dataType',
+            type: 'OibSelect',
+            options: ['UInt16', 'Int16', 'UInt32', 'Int32', 'BigUInt64', 'BigInt64', 'Float', 'Double', 'Bit'],
+            label: 'Data Type',
+            defaultValue: 'UInt16',
+            validators: [{ key: 'required' }],
+            displayInViewMode: false
+          },
+          {
+            key: 'bitIndex',
+            type: 'OibNumber',
+            label: 'Bit Index',
+            defaultValue: 1,
+            validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }, { key: 'max', params: { max: 15 } }],
+            conditionalDisplay: { field: 'dataType', values: ['Bit'] },
+            displayInViewMode: false
+          },
+          {
+            key: 'multiplierCoefficient',
+            type: 'OibNumber',
+            label: 'Multiplier Coefficient',
+            defaultValue: 1,
+            validators: [{ key: 'required' }],
+            displayInViewMode: false
+          }
+        ]
       }
     ]
   }

@@ -75,17 +75,17 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
       case 'inputRegister':
         value = await this.readInputRegister(
           address,
-          item.settings.multiplierCoefficient!,
-          item.settings.dataType!,
-          item.settings.bitIndex
+          item.settings.data!.multiplierCoefficient!,
+          item.settings.data!.dataType!,
+          item.settings.data!.bitIndex
         );
         break;
       case 'holdingRegister':
         value = await this.readHoldingRegister(
           address,
-          item.settings.multiplierCoefficient!,
-          item.settings.dataType!,
-          item.settings.bitIndex
+          item.settings.data!.multiplierCoefficient!,
+          item.settings.data!.dataType!,
+          item.settings.data!.bitIndex
         );
         break;
       default:

@@ -9,6 +9,7 @@ import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock
 import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import net from 'node:net';
 import Stream from 'node:stream';
+import { SouthModbusItemSettings } from '../../../../shared/model/south-settings.model';
 
 jest.mock('node:fs/promises');
 jest.mock('node:net');
@@ -66,17 +67,19 @@ const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
 
-const items: Array<SouthConnectorItemDTO> = [
+const items: Array<SouthConnectorItemDTO<SouthModbusItemSettings>> = [
   {
     id: 'id1',
     name: 'HoldingRegister',
     enabled: true,
     connectorId: 'southId',
     settings: {
-      modbusType: 'holdingRegister',
-      dataType: 'UInt16',
       address: '0x4E80',
-      multiplierCoefficient: 1
+      modbusType: 'holdingRegister',
+      data: {
+        dataType: 'UInt16',
+        multiplierCoefficient: 1
+      }
     },
     scanModeId: 'scanModeId1'
   },
@@ -86,10 +89,12 @@ const items: Array<SouthConnectorItemDTO> = [
     enabled: true,
     connectorId: 'southId',
     settings: {
-      modbusType: 'holdingRegister',
-      dataType: 'UInt16',
       address: '20097',
-      multiplierCoefficient: 1
+      modbusType: 'holdingRegister',
+      data: {
+        dataType: 'UInt16',
+        multiplierCoefficient: 1
+      }
     },
     scanModeId: 'scanModeId1'
   },
@@ -99,10 +104,12 @@ const items: Array<SouthConnectorItemDTO> = [
     enabled: true,
     connectorId: 'southId',
     settings: {
-      modbusType: 'inputRegister',
-      dataType: 'UInt16',
       address: '0x3E81',
-      multiplierCoefficient: 1
+      modbusType: 'inputRegister',
+      data: {
+        dataType: 'UInt16',
+        multiplierCoefficient: 1
+      }
     },
     scanModeId: 'scanModeId1'
   },
@@ -112,10 +119,8 @@ const items: Array<SouthConnectorItemDTO> = [
     enabled: true,
     connectorId: 'southId',
     settings: {
-      modbusType: 'discreteInput',
-      dataType: 'UInt16',
       address: '0x1E82',
-      multiplierCoefficient: 1
+      modbusType: 'discreteInput'
     },
     scanModeId: 'scanModeId1'
   },
@@ -125,10 +130,8 @@ const items: Array<SouthConnectorItemDTO> = [
     enabled: true,
     connectorId: 'southId',
     settings: {
-      modbusType: 'coil',
-      dataType: 'UInt16',
       address: '0x0E83',
-      multiplierCoefficient: 1
+      modbusType: 'coil'
     },
     scanModeId: 'scanModeId1'
   },
@@ -138,11 +141,13 @@ const items: Array<SouthConnectorItemDTO> = [
     enabled: true,
     connectorId: 'southId',
     settings: {
-      modbusType: 'holdingRegister',
-      dataType: 'Bit',
       address: '0x0E88',
-      bitIndex: 1,
-      multiplierCoefficient: 1
+      modbusType: 'holdingRegister',
+      data: {
+        dataType: 'Bit',
+        bitIndex: 1,
+        multiplierCoefficient: 1
+      }
     },
     scanModeId: 'scanModeId1'
   }
