@@ -185,6 +185,7 @@ class CustomStream extends Stream {
   }
 
   connect(_connectionObject: any, _callback: any) {}
+
   end() {}
 }
 repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
@@ -451,8 +452,10 @@ describe('SouthModbus test connection', () => {
   } as const;
 
   type ErrorCodes = keyof typeof ERROR_CODES;
+
   class ModbusError extends Error {
     private code: ErrorCodes;
+
     constructor(message: string, code: ErrorCodes) {
       super();
       this.name = 'ModbusError';
