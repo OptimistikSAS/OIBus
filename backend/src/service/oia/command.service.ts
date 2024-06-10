@@ -10,7 +10,6 @@ import { DateTime } from 'luxon';
 import { RegistrationSettingsDTO } from '../../../../shared/model/engine.model';
 import path from 'node:path';
 import { version } from '../../../package.json';
-import { OIAnalyticsMessageInfoCommandDTO } from '../../../../shared/model/oianalytics-message.model';
 import OIAnalyticsMessageService from './message.service';
 
 const DOWNLOAD_TIMEOUT = 600_000;
@@ -42,11 +41,7 @@ export default class CommandService {
         );
         engineSettings.version = version;
         const info = getOIBusInfo(engineSettings);
-        const infoMessageCommand: OIAnalyticsMessageInfoCommandDTO = {
-          type: 'INFO',
-          content: info
-        };
-        const createdMessage = this.repositoryService.oianalyticsMessageRepository.createOIAnalyticsMessages(infoMessageCommand);
+        const createdMessage = this.repositoryService.oianalyticsMessageRepository.createOIAnalyticsMessages('INFO', info);
         this.oianalyticsMessageService.addMessageToQueue(createdMessage);
       } else {
         this.repositoryService.commandRepository.markAsErrored(

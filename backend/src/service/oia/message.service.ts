@@ -7,7 +7,7 @@ import DeferredPromise from '../deferred-promise';
 import { DateTime } from 'luxon';
 import { RegistrationSettingsDTO } from '../../../../shared/model/engine.model';
 import fetch from 'node-fetch';
-import { OIAnalyticsMessageDTO } from '../../../../shared/model/oianalytics-message.model';
+import { OIAnalyticsMessageCommand, OIAnalyticsMessageDTO } from '../../../../shared/model/oianalytics-message.model';
 
 const STOP_TIMEOUT = 30_000;
 const MESSAGE_TIMEOUT = 15_000;
@@ -85,6 +85,29 @@ export default class OIAnalyticsMessageService {
     this.triggerRun.emit('next');
   }
 
+  messageToCommandDTO(message: OIAnalyticsMessageDTO): OIAnalyticsMessageCommand {
+    switch (message.type) {
+      case 'INFO':
+        return {
+          type: 'INFO',
+          version: message.content.version,
+          oibusName: message.content.oibusName,
+          oibusId: message.content.oibusId,
+          dataDirectory: message.content.dataDirectory,
+          binaryDirectory: message.content.binaryDirectory,
+          processId: message.content.processId,
+          hostname: message.content.hostname,
+          operatingSystem: message.content.operatingSystem,
+          architecture: message.content.architecture,
+          platform: message.content.platform
+        };
+
+      default:
+        this.removeMessageFromQueue(message.id);
+        throw new Error(`Unrecognized type ${message.type}. Message ${message.id} removed from queue`);
+    }
+  }
+
   async sendMessage(message: OIAnalyticsMessageDTO): Promise<void> {
     if (this.retryTimeout) {
       clearTimeout(this.retryTimeout);
@@ -98,7 +121,7 @@ export default class OIAnalyticsMessageService {
     try {
       const response = await fetch(url, {
         method: 'POST',
-        body: JSON.stringify(message),
+        body: JSON.stringify(this.messageToCommandDTO(message)),
         headers: { ...connectionSettings.headers, 'Content-Type': 'application/json' },
         timeout: MESSAGE_TIMEOUT,
         agent: connectionSettings.agent
