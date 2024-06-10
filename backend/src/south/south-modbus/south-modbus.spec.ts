@@ -185,6 +185,7 @@ class CustomStream extends Stream {
   }
 
   connect(_connectionObject: any, _callback: any) {}
+
   end() {}
 }
 
@@ -285,7 +286,7 @@ describe('SouthModbus', () => {
 
     south.disconnect = jest.fn();
     south.connect = jest.fn();
-    south.addValues = jest.fn();
+    south.addContent = jest.fn();
     south.modbusFunction = jest
       .fn()
       .mockImplementationOnce(() => {
@@ -304,7 +305,7 @@ describe('SouthModbus', () => {
     expect(south.modbusFunction).toHaveBeenCalledTimes(1);
     expect(south.disconnect).not.toHaveBeenCalled();
     expect(south.connect).not.toHaveBeenCalled();
-    expect(south.addValues).toHaveBeenCalledWith([]);
+    expect(south.addContent).toHaveBeenCalledWith({ type: 'time-values', content: [] });
   });
 
   it('should call read coil method', async () => {
@@ -432,8 +433,10 @@ describe('SouthModbus test connection', () => {
   } as const;
 
   type ErrorCodes = keyof typeof ERROR_CODES;
+
   class ModbusError extends Error {
     private code: ErrorCodes;
+
     constructor(message: string, code: ErrorCodes) {
       super();
       this.name = 'ModbusError';
