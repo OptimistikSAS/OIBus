@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.3.8](https://github.com/OptimistikSAS/OIBus/compare/v3.3.7...v3.3.8) (2024-06-11)
+
+
+### Bug Fixes
+
+* **oianalytics:** fix OIAnalytics message models ([ffd9046](https://github.com/OptimistikSAS/OIBus/commit/ffd904630d5775e327dc3751fcec10f85ecefb37))
+
 ## [3.3.7](https://github.com/OptimistikSAS/OIBus/compare/v3.3.6...v3.3.7) (2024-06-10)
 
 
