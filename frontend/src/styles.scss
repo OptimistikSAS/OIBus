@@ -293,6 +293,85 @@ img.oib-image-header {
   }
 }
 
+.oib-simple-table {
+  :not(caption) > * > * {
+    border-bottom-width: 0;
+  }
+  --bs-table-bg: $white;
+  --bs-table-color: $white;
+  // table header
+  thead {
+    color: $white;
+    background-color: $darkGrey;
+    // alternative case
+    &.light {
+      color: $darkGrey;
+      background-color: white;
+    }
+    // case of table header
+    th {
+      padding-left: 1rem;
+      border-style: none;
+      .btn {
+        padding-right: 0;
+      }
+    }
+
+    // alternative case if oib-box-title is on top of table
+    .light {
+      background-color: $white;
+    }
+  }
+  // body of the table
+  tbody {
+    padding: 0;
+    // case of table
+    td {
+      vertical-align: middle;
+      padding-left: 1rem;
+      border-bottom-width: 0;
+      max-width: 0;
+      text-overflow: clip;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    // line
+    tr {
+      // color of button in table in line
+      .btn {
+        color: $blue;
+      }
+      // hover settings
+      &:hover {
+        // color of button in line when hover the line
+        .btn {
+          color: $darkGrey;
+          // color of button when hover it
+          &:hover {
+            color: $yellow;
+          }
+        }
+      }
+    }
+    // customised colours on the lines (one out of two)
+    tr:nth-child(even) {
+      background-color: $white;
+      // changes color when hover
+      &:hover {
+        background-color: $mediumGrey;
+      }
+    }
+    // customised colours on the lines (one out of two)
+    tr:nth-child(odd) {
+      background-color: $veryLightGrey;
+      // changes color when hover
+      &:hover {
+        background-color: $mediumGrey;
+      }
+    }
+  }
+}
+
 // darkGrey container for title
 .oib-box-title {
   background-color: $darkGrey;
