@@ -12,6 +12,11 @@ import { OibScanModeComponent } from '../../shared/form/oib-scan-mode/oib-scan-m
 import { OibFormControl } from '../../../../../shared/model/form.model';
 import { FormComponent } from '../../shared/form/form.component';
 import { PipeProviderService } from '../../shared/form/pipe-provider.service';
+import { PaginationComponent } from '../../shared/pagination/pagination.component';
+import { createPageFromArray, Page } from '../../../../../shared/model/types';
+import { emptyPage } from '../../shared/test-utils';
+
+const PAGE_SIZE = 20;
 
 @Component({
   selector: 'oib-import-south-items-modal',
@@ -24,7 +29,8 @@ import { PipeProviderService } from '../../shared/form/pipe-provider.service';
     OibCodeBlockComponent,
     OibScanModeComponent,
     NgbTypeahead,
-    FormComponent
+    FormComponent,
+    PaginationComponent
   ],
   standalone: true
 })
@@ -37,6 +43,8 @@ export class ImportSouthItemsModalComponent {
   errorList: Array<{ item: SouthConnectorItemDTO; message: string }> = [];
   scanModes: Array<ScanModeDTO> = [];
   displaySettings: Array<OibFormControl> = [];
+  displayedItemsNew: Page<SouthConnectorItemDTO> = emptyPage();
+  displayedItemsError: Page<{ item: SouthConnectorItemDTO; message: string }> = emptyPage();
 
   constructor(
     private modal: NgbActiveModal,
@@ -58,6 +66,8 @@ export class ImportSouthItemsModalComponent {
 
     this.southItemSchema = southItemSchema;
     this.scanModes = scanModes;
+    this.changePageNew(0);
+    this.changePageError(0);
   }
 
   cancel() {
@@ -78,5 +88,29 @@ export class ImportSouthItemsModalComponent {
       return this.pipeProviderService.getPipeForString(pipeIdentifier).transform(value);
     }
     return value;
+  }
+
+  changePageNew(pageNumber: number) {
+    this.displayedItemsNew = this.createPageNew(pageNumber);
+  }
+
+  changePageError(pageNumber: number) {
+    this.displayedItemsError = this.createPageError(pageNumber);
+  }
+
+  private createPageNew(pageNumber: number): Page<SouthConnectorItemDTO> {
+    return createPageFromArray(this.newItemList, PAGE_SIZE, pageNumber);
+  }
+
+  private createPageError(pageNumber: number): Page<{ item: SouthConnectorItemDTO; message: string }> {
+    return createPageFromArray(this.errorList, PAGE_SIZE, pageNumber);
+  }
+
+  toggleItemNew() {
+    this.changePageNew(this.displayedItemsNew.number);
+  }
+
+  toggleItemError() {
+    this.changePageNew(this.displayedItemsError.number);
   }
 }
