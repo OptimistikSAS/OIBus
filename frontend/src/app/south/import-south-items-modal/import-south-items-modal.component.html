@@ -25,6 +25,13 @@
       </table>
     </div>
   }
+  @if (displayedItemsError.totalElements > 0) {
+    <div class="d-flex flex-row-reverse">
+      <div [class]="displayedItemsError.totalPages > 1 ? 'ms-2' : ''">
+        <oib-pagination [page]="displayedItemsError" (pageChanged)="changePageError($event)"></oib-pagination>
+      </div>
+    </div>
+  }
   @if (newItemList.length > 0) {
     <div>
       <h6 translate="south.items.import.valid-title"></h6>
@@ -61,6 +68,14 @@
       </table>
     </div>
   }
+  @if (displayedItemsNew.totalElements > 0) {
+    <div class="d-flex flex-row-reverse">
+      <div [class]="displayedItemsNew.totalPages > 1 ? 'ms-2' : ''">
+        <oib-pagination [page]="displayedItemsNew" (pageChanged)="changePageNew($event)"></oib-pagination>
+      </div>
+    </div>
+  }
+
 </div>
 <div class="modal-footer">
   <div class="btn-group">
