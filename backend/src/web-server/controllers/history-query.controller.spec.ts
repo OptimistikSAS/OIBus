@@ -550,7 +550,8 @@ describe('History query controller', () => {
     ctx.request.body = {
       historyQuery: { ...historyQueryCommand },
       items: [{}],
-      itemIdsToDelete: ['id1']
+      itemIdsToDelete: ['id1'],
+      resetCache: true
     };
     ctx.params.id = 'id';
     ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
@@ -575,9 +576,9 @@ describe('History query controller', () => {
       historyQuery.northSettings,
       northManifest.settings
     );
-    expect(ctx.app.reloadService.onDeleteHistoryItem).toHaveBeenCalledWith('id', 'id1');
+    expect(ctx.app.reloadService.onDeleteHistoryItem).toHaveBeenCalledWith('id', 'id1', false);
 
-    expect(ctx.app.reloadService.onUpdateHistoryQuerySettings).toHaveBeenCalledWith('id', historyQueryCommand);
+    expect(ctx.app.reloadService.onUpdateHistoryQuerySettings).toHaveBeenCalledWith('id', historyQueryCommand, true);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
@@ -930,7 +931,7 @@ describe('History query controller', () => {
 
     await historyQueryController.deleteHistoryQueryItem(ctx);
 
-    expect(ctx.app.reloadService.onDeleteHistoryItem).toHaveBeenCalledWith('historyId', 'id');
+    expect(ctx.app.reloadService.onDeleteHistoryItem).toHaveBeenCalledWith('historyId', 'id', true);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
