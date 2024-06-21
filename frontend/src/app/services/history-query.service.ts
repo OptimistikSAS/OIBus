@@ -67,9 +67,16 @@ export class HistoryQueryService {
    * @param command - the new values of the selected History query
    * @param items - the new History query items
    * @param itemIdsToDelete - The item ids to delete
+   * @param resetCache - The user wants to reset the history cache to restart from scratch
    */
-  update(historyQueryId: string, command: HistoryQueryCommandDTO, items: Array<SouthConnectorItemDTO>, itemIdsToDelete: Array<string>) {
-    return this.http.put<void>(`/api/history-queries/${historyQueryId}`, { historyQuery: command, items, itemIdsToDelete });
+  update(
+    historyQueryId: string,
+    command: HistoryQueryCommandDTO,
+    items: Array<SouthConnectorItemDTO>,
+    itemIdsToDelete: Array<string>,
+    resetCache: boolean
+  ) {
+    return this.http.put<void>(`/api/history-queries/${historyQueryId}`, { historyQuery: command, items, itemIdsToDelete, resetCache });
   }
 
   /**
