@@ -494,7 +494,8 @@ describe('History query controller', () => {
     ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue({ ...historyQuery, status: 'ERRORED' });
     await historyQueryController.startHistoryQuery(ctx);
 
-    expect(ctx.app.reloadService.onRestartHistoryQuery).toHaveBeenCalledTimes(2);
+    expect(ctx.app.reloadService.historyEngine.stopHistoryQuery).toHaveBeenCalledTimes(2);
+    expect(ctx.app.reloadService.historyEngine.resetCache).toHaveBeenCalledTimes(2);
     expect(ctx.badRequest).not.toHaveBeenCalled();
   });
 
@@ -538,7 +539,8 @@ describe('History query controller', () => {
     ctx.request.body = {
       historyQuery: { ...historyQueryCommand },
       items: [{}],
-      itemIdsToDelete: ['id1']
+      itemIdsToDelete: ['id1'],
+      resetCache: true
     };
     ctx.params.id = 'id';
     ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
@@ -566,6 +568,7 @@ describe('History query controller', () => {
     expect(ctx.app.reloadService.onDeleteHistoryItem).toHaveBeenCalledWith('id', 'id1');
 
     expect(ctx.app.reloadService.onUpdateHistoryQuerySettings).toHaveBeenCalledWith('id', historyQueryCommand);
+    expect(ctx.app.reloadService.historyEngine.resetCache).toHaveBeenCalledTimes(1);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 

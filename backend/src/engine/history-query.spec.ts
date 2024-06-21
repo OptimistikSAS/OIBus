@@ -266,11 +266,13 @@ describe('HistoryQuery enabled', () => {
     expect(createdSouth.resetCache).not.toHaveBeenCalled();
     expect(resetMetrics).not.toHaveBeenCalled();
 
-    await historyQuery.stop(true);
+    await historyQuery.stop();
+    expect(logger.debug).not.toHaveBeenCalled();
+
+    await historyQuery.resetCache();
+    expect(resetMetrics).toHaveBeenCalled();
     expect(createdNorth.resetCache).toHaveBeenCalledTimes(1);
     expect(createdSouth.resetCache).toHaveBeenCalledTimes(1);
-    expect(logger.debug).not.toHaveBeenCalled();
-    expect(resetMetrics).toHaveBeenCalled();
   });
 
   it('should properly finish and not stop', async () => {
