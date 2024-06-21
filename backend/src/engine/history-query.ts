@@ -59,7 +59,7 @@ export default class HistoryQuery {
     };
     const southFolder = path.resolve(this.baseFolder, 'south');
     await createFolder(southFolder);
-    this.south = this.southService.createSouth(southConfiguration,  this.addContent.bind(this), southFolder, this.logger);
+    this.south = this.southService.createSouth(southConfiguration, this.addContent.bind(this), southFolder, this.logger);
     const northConfiguration: NorthConnectorDTO<N> = {
       id: this.historyConfiguration.id,
       name: this.historyConfiguration.name,
@@ -141,7 +141,7 @@ export default class HistoryQuery {
   /**
    * Stop history query
    */
-  async stop(resetCache = false): Promise<void> {
+  async stop(): Promise<void> {
     this.stopping = true;
     if (this.finishInterval) {
       clearInterval(this.finishInterval);
@@ -150,21 +150,23 @@ export default class HistoryQuery {
     if (this.south) {
       this.south.connectedEvent.removeAllListeners();
       await this.south.stop(false);
-      if (resetCache) {
-        await this.south.resetCache();
-      }
     }
     if (this.north) {
       await this.north.stop(false);
-      if (resetCache) {
-        await this.north.resetCache();
-      }
-    }
-    // Also reset the metrics service
-    if (this._metricsService && resetCache) {
-      this._metricsService.resetMetrics();
     }
     this.stopping = false;
+  }
+
+  async resetCache(): Promise<void> {
+    if (this.south) {
+      await this.south.resetCache();
+    }
+    if (this.north) {
+      await this.north.resetCache();
+    }
+    if (this._metricsService) {
+      this._metricsService.resetMetrics();
+    }
   }
 
   /**

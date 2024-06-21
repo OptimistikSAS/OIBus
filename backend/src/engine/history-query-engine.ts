@@ -80,13 +80,17 @@ export default class HistoryQueryEngine extends BaseEngine {
     }
   }
 
-  async stopHistoryQuery(historyId: string, resetCache = false): Promise<void> {
+  async stopHistoryQuery(historyId: string): Promise<void> {
     const historyQuery = this.historyQueries.get(historyId);
     if (!historyQuery) {
       return;
     }
 
-    await historyQuery.stop(resetCache);
+    await historyQuery.stop();
+  }
+
+  async resetCache(historyId: string) {
+    await this.historyQueries.get(historyId)?.resetCache();
   }
 
   setLogger(value: pino.Logger) {
@@ -108,7 +112,8 @@ export default class HistoryQueryEngine extends BaseEngine {
    * Stops the History query and deletes all cache inside the base folder
    */
   async deleteHistoryQuery(historyId: string, name: string): Promise<void> {
-    await this.stopHistoryQuery(historyId, true);
+    await this.stopHistoryQuery(historyId);
+    await this.resetCache(historyId);
     const baseFolder = path.resolve(this.cacheFolder, `history-${historyId}`);
     try {
       this.logger.trace(`Deleting base folder "${baseFolder}" of History query "${name}" (${historyId})`);

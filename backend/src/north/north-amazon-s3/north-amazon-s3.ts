@@ -12,7 +12,7 @@ import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { NorthAmazonS3Settings } from '../../../../shared/model/north-settings.model';
 import { createProxyAgent } from '../../service/proxy-agent';
-import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { OIBusContent, OIBusTimeValue } from "../../../../shared/model/engine.model";
 import { DateTime } from 'luxon';
 import csv from 'papaparse';
 
