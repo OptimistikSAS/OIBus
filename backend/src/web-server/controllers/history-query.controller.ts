@@ -22,6 +22,7 @@ interface HistoryQueryWithItemsCommandDTO {
   historyQuery: HistoryQueryCommandDTO;
   items: Array<SouthConnectorItemDTO>;
   itemIdsToDelete: Array<string>;
+  isCacheRestart: boolean;
 }
 
 export default class HistoryQueryController extends AbstractController {
@@ -174,13 +175,14 @@ export default class HistoryQueryController extends AbstractController {
         northManifest.settings
       );
 
+      const isCacheRestart = ctx.request.body.isCacheRestart as boolean;
       const itemsToAdd = ctx.request.body!.items.filter(item => !item.id);
       const itemsToUpdate = ctx.request.body!.items.filter(item => item.id);
       for (const itemId of ctx.request.body!.itemIdsToDelete) {
-        await ctx.app.reloadService.onDeleteHistoryItem(historyQuery.id, itemId);
+        await ctx.app.reloadService.onDeleteHistoryItem(historyQuery.id, itemId, isCacheRestart);
       }
-      await ctx.app.reloadService.onCreateOrUpdateHistoryQueryItems(historyQuery, itemsToAdd, itemsToUpdate);
-      await ctx.app.reloadService.onUpdateHistoryQuerySettings(ctx.params.id, command);
+      await ctx.app.reloadService.onCreateOrUpdateHistoryQueryItems(historyQuery, itemsToAdd, itemsToUpdate, isCacheRestart);
+      await ctx.app.reloadService.onUpdateHistoryQuerySettings(ctx.params.id, command, isCacheRestart);
       ctx.noContent();
     } catch (error: any) {
       ctx.badRequest(error.message);
@@ -297,7 +299,7 @@ export default class HistoryQueryController extends AbstractController {
   }
 
   async deleteHistoryQueryItem(ctx: KoaContext<void, void>): Promise<void> {
-    await ctx.app.reloadService.onDeleteHistoryItem(ctx.params.historyQueryId, ctx.params.id);
+    await ctx.app.reloadService.onDeleteHistoryItem(ctx.params.historyQueryId, ctx.params.id, true);
     ctx.noContent();
   }
 
@@ -456,7 +458,7 @@ export default class HistoryQueryController extends AbstractController {
     }
 
     try {
-      await ctx.app.reloadService.onCreateOrUpdateHistoryQueryItems(historyQuery, items, []);
+      await ctx.app.reloadService.onCreateOrUpdateHistoryQueryItems(historyQuery, items, [], true);
     } catch (error: any) {
       return ctx.badRequest(error.message);
     }
