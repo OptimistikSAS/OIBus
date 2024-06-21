@@ -22,6 +22,7 @@ interface HistoryQueryWithItemsCommandDTO {
   historyQuery: HistoryQueryCommandDTO;
   items: Array<SouthConnectorItemDTO>;
   itemIdsToDelete: Array<string>;
+  resetCache: boolean;
 }
 
 export default class HistoryQueryController extends AbstractController {
@@ -174,14 +175,18 @@ export default class HistoryQueryController extends AbstractController {
         northManifest.settings
       );
 
+      const resetCache = ctx.request.body.resetCache;
       const itemsToAdd = ctx.request.body!.items.filter(item => !item.id);
       const itemsToUpdate = ctx.request.body!.items.filter(item => item.id);
-      await ctx.app.reloadService.historyEngine.stopHistoryQuery(historyQuery.id, true);
+      await ctx.app.reloadService.historyEngine.stopHistoryQuery(historyQuery.id);
       for (const itemId of ctx.request.body!.itemIdsToDelete) {
         await ctx.app.reloadService.onDeleteHistoryItem(historyQuery.id, itemId);
       }
       await ctx.app.reloadService.onCreateOrUpdateHistoryQueryItems(historyQuery, itemsToAdd, itemsToUpdate);
       await ctx.app.reloadService.onUpdateHistoryQuerySettings(ctx.params.id, command);
+      if (resetCache) {
+        await ctx.app.reloadService.historyEngine.resetCache(ctx.params.id); // Reset cache to start the history from scratch when changing the settings
+      }
       await ctx.app.reloadService.historyEngine.startHistoryQuery(historyQuery.id);
       ctx.noContent();
     } catch (error: any) {
@@ -197,10 +202,10 @@ export default class HistoryQueryController extends AbstractController {
 
     try {
       if (historyQuery.status === 'FINISHED' || historyQuery.status === 'ERRORED') {
-        await ctx.app.reloadService.onRestartHistoryQuery(ctx.params.id);
-      } else {
-        await ctx.app.reloadService.onStartHistoryQuery(ctx.params.id);
+        await ctx.app.reloadService.historyEngine.stopHistoryQuery(ctx.params.id);
+        await ctx.app.reloadService.historyEngine.resetCache(ctx.params.id);
       }
+      await ctx.app.reloadService.onStartHistoryQuery(ctx.params.id);
 
       ctx.noContent();
     } catch (error: any) {
@@ -299,7 +304,7 @@ export default class HistoryQueryController extends AbstractController {
   }
 
   async deleteHistoryQueryItem(ctx: KoaContext<void, void>): Promise<void> {
-    await ctx.app.reloadService.historyEngine.stopHistoryQuery(ctx.params.historyQueryId, true);
+    await ctx.app.reloadService.historyEngine.stopHistoryQuery(ctx.params.historyQueryId);
     await ctx.app.reloadService.onDeleteHistoryItem(ctx.params.historyQueryId, ctx.params.id);
     await ctx.app.reloadService.historyEngine.startHistoryQuery(ctx.params.historyQueryId);
     ctx.noContent();
@@ -316,7 +321,8 @@ export default class HistoryQueryController extends AbstractController {
   }
 
   async deleteAllItems(ctx: KoaContext<void, void>): Promise<void> {
-    await ctx.app.reloadService.historyEngine.stopHistoryQuery(ctx.params.historyQueryId, true);
+    await ctx.app.reloadService.historyEngine.stopHistoryQuery(ctx.params.historyQueryId);
+    await ctx.app.reloadService.historyEngine.resetCache(ctx.params.id); // Reset cache to start the history from scratch when changing the settings
     await ctx.app.reloadService.onDeleteAllHistoryItems(ctx.params.historyQueryId);
     ctx.noContent();
   }
@@ -463,6 +469,7 @@ export default class HistoryQueryController extends AbstractController {
     try {
       await ctx.app.reloadService.historyEngine.stopHistoryQuery(historyQuery.id);
       await ctx.app.reloadService.onCreateOrUpdateHistoryQueryItems(historyQuery, items, []);
+      await ctx.app.reloadService.historyEngine.resetCache(ctx.params.id); // Reset cache to start the history from scratch when changing the settings
       await ctx.app.reloadService.historyEngine.startHistoryQuery(historyQuery.id);
     } catch (error: any) {
       return ctx.badRequest(error.message);
