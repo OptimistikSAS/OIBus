@@ -79,7 +79,8 @@ export default jest.fn().mockImplementation(() => ({
   },
   historyEngine: {
     startHistoryQuery: jest.fn(),
-    stopHistoryQuery: jest.fn()
+    stopHistoryQuery: jest.fn(),
+    resetCache: jest.fn()
   },
   proxyServer: {
     refreshIpFilters: jest.fn()
