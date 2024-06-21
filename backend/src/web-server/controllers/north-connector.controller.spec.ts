@@ -2009,7 +2009,7 @@ describe('North connector controller with items', () => {
     expect(getManifestWithItemsModeSpy).toHaveBeenCalled();
     expect(ctx.app.repositoryService.northItemRepository.getNorthItem).toHaveBeenCalledWith('itemId');
     expect(validator.validateSettings).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onUpdateNorthItemsSettings).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.onUpdateNorthItemSettings).not.toHaveBeenCalled();
     expect(ctx.notFound).toHaveBeenCalled();
   });
 
@@ -2021,7 +2021,7 @@ describe('North connector controller with items', () => {
     expect(getManifestWithItemsModeSpy).not.toHaveBeenCalled();
     expect(ctx.app.repositoryService.northItemRepository.getNorthItem).not.toHaveBeenCalled();
     expect(validator.validateSettings).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onUpdateNorthItemsSettings).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.onUpdateNorthItemSettings).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalled();
   });
 
@@ -2033,7 +2033,7 @@ describe('North connector controller with items', () => {
     expect(getManifestWithItemsModeSpy).not.toHaveBeenCalled();
     expect(ctx.app.repositoryService.northItemRepository.getNorthItem).not.toHaveBeenCalled();
     expect(validator.validateSettings).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onUpdateNorthItemsSettings).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.onUpdateNorthItemSettings).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalled();
   });
 
