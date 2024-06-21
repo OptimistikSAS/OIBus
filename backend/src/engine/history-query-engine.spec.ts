@@ -96,6 +96,7 @@ describe('HistoryQueryEngine', () => {
     await engine.createHistoryQuery(configuration);
     await engine.stop();
     await engine.stopHistoryQuery('anotherId');
+    await engine.resetCache('anotherId');
   });
 
   it('should properly set logger', async () => {
