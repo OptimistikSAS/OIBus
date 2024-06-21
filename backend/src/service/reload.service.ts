@@ -360,7 +360,6 @@ export default class ReloadService {
   async onUpdateHistoryQuerySettings(historyId: string, command: HistoryQueryCommandDTO): Promise<void> {
     const previousSettings = this.repositoryService.historyQueryRepository.getHistoryQuery(historyId)!;
     this.repositoryService.historyQueryRepository.setHistoryQueryStatus(historyId, 'PENDING');
-    await this.historyEngine.stopHistoryQuery(historyId, true); // Reset cache to start the history from scratch when changing the settings
     this.repositoryService.historyQueryRepository.updateHistoryQuery(historyId, command);
     if (previousSettings.name !== command.name) {
       this.historyEngine.setLogger(this.historyEngine.logger);
@@ -368,12 +367,6 @@ export default class ReloadService {
   }
 
   async onStartHistoryQuery(historyId: string): Promise<void> {
-    this.repositoryService.historyQueryRepository.setHistoryQueryStatus(historyId, 'RUNNING');
-    await this.historyEngine.startHistoryQuery(historyId);
-  }
-
-  async onRestartHistoryQuery(historyId: string): Promise<void> {
-    await this.historyEngine.stopHistoryQuery(historyId, true);
     this.repositoryService.historyQueryRepository.setHistoryQueryStatus(historyId, 'RUNNING');
     await this.historyEngine.startHistoryQuery(historyId);
   }
@@ -393,14 +386,14 @@ export default class ReloadService {
   }
 
   async onCreateHistoryItem(historyId: string, command: SouthConnectorItemCommandDTO): Promise<SouthConnectorItemDTO> {
-    await this.historyEngine.stopHistoryQuery(historyId, true);
+    await this.historyEngine.stopHistoryQuery(historyId);
     const historyItem = this.repositoryService.historyQueryItemRepository.createHistoryItem(historyId, command);
     await this.historyEngine.startHistoryQuery(historyId);
     return historyItem;
   }
 
   async onUpdateHistoryItemsSettings(historyId: string, item: SouthConnectorItemDTO, command: SouthConnectorItemCommandDTO): Promise<void> {
-    await this.historyEngine.stopHistoryQuery(historyId, true);
+    await this.historyEngine.stopHistoryQuery(historyId);
     this.repositoryService.historyQueryItemRepository.updateHistoryItem(item.id, command);
     await this.historyEngine.startHistoryQuery(historyId);
   }
@@ -428,7 +421,6 @@ export default class ReloadService {
   }
 
   async onDeleteAllHistoryItems(historyId: string): Promise<void> {
-    await this.historyEngine.stopHistoryQuery(historyId, true);
     this.repositoryService.historyQueryItemRepository.deleteAllItems(historyId);
   }
 
