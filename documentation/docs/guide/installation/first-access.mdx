@@ -37,7 +37,19 @@ The restart button and the shutdown button has an effect on the engine only, not
 the connectors, but not the web service, which allows you to still access the OIBus interface.
 
 When installing OIBus, remember to choose an appropriate name. The _Engine name_ is important mainly if you use several
-OIBus and send the logs to a remote [loki instance](../engine/engine-settings.md#loki).
+OIBus and send the logs to a remote [loki instance](../engine/engine-settings.md#loki) or when you register OIBus into OIAnalytics.
+
+[Registering OIBus into OIAnalytics](../engine/oianalytics-module) is useful when sending data to a [North OIAnalytics](../north-connectors/oianalytics)
+connector and when sending logs to OIAnalytics. From OIAnalytics, once registered, you can update OIBus remotely or parse the logs.
+
+:::tip Allow remote access by adding an IP filter with curl
+If you want to automatize the setup of OIBus, and access it remotely, you can send a curl command to accept connection
+from various IP addresses. Here is an example that accepts all IP addresses.
+
+```curl title="curl command"
+curl --location --request POST "http://localhost:2223/api/ip-filters" --header "Content-Type: application/json" --data-raw "{\"address\": \"*\", \"description\": \"All\" }" -u "admin:pass"
+```
+:::
 
 
 ### North
