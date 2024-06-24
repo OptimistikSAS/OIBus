@@ -168,6 +168,16 @@ describe('NorthOIAnalytics without proxy', () => {
         pointId: 'pointId1',
         timestamp: nowDateString,
         data: { value: '666', quality: 'good' }
+      },
+      {
+        pointId: 'pointId2',
+        timestamp: nowDateString,
+        data: { value: 666 as unknown as string, quality: 'good' }
+      },
+      {
+        pointId: 'pointId3',
+        timestamp: nowDateString,
+        data: { value: [] as unknown as string, quality: 'good' }
       }
     ];
     (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('Ok')));
@@ -181,7 +191,18 @@ describe('NorthOIAnalytics without proxy', () => {
         'Content-Type': 'application/json'
       },
       timeout: 30000,
-      body: JSON.stringify(values),
+      body: JSON.stringify([
+        {
+          pointId: 'pointId1',
+          timestamp: nowDateString,
+          data: { value: '666', quality: 'good' }
+        },
+        {
+          pointId: 'pointId2',
+          timestamp: nowDateString,
+          data: { value: 666 as unknown as string, quality: 'good' }
+        }
+      ]),
       agent: undefined
     };
 
