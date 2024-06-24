@@ -22,12 +22,6 @@ OIBus能够通过两个不同的端点接收数据：
 这两个端点都需要包含查询参数`name`，它指定了与数据相关联的外部来源。
 OIBus引擎处理这些数据并将其储存在订阅了指定外部来源的北部缓存中。
 
-## 数据来自另一个OIBus和OIConnect
-如果您打算使用
-[OIConnect北部连接器](../../guide/north-connectors/oibus.md)将数据从一个OIBus实例传输到另一个实例，结果的`name`查询参数是`MyFirstOIBus:MyOIConnect`。
-因此，您的外部来源配置也必须定义为`MyFirstOIBus:MyOIConnect`来建立
-两个OIBus实例之间的连接。
-
 ## 数据来自另一个应用程序
 ### JSON载荷
 要使用JSON载荷将数据传输到OIBus，您可以使用以下载荷进行HTTP请求：
