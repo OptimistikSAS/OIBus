@@ -66,6 +66,11 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
       : `/api/oianalytics/oibus/time-values?dataSourceId=${encodeURI(this.connector.name)}`;
     const connectionSettings = await this.getNetworkSettings(endpoint);
 
+    // TODO: remove once south connectors payload are consistent
+    const filteredValues = values.filter(
+      oibusTimeValue => typeof oibusTimeValue.data.value === 'string' || typeof oibusTimeValue.data.value === 'number'
+    );
+
     let response;
     const valuesUrl = `${connectionSettings.host}${endpoint}`;
     const fetchOptions = {
@@ -75,7 +80,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
         'Content-Type': 'application/json'
       },
       timeout: this.connector.settings.timeout * 1000,
-      body: this.connector.settings.compress ? zlib.gzipSync(JSON.stringify(values)) : JSON.stringify(values),
+      body: this.connector.settings.compress ? zlib.gzipSync(JSON.stringify(filteredValues)) : JSON.stringify(filteredValues),
       agent: connectionSettings.agent
     };
     try {
