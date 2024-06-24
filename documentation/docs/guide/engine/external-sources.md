@@ -23,12 +23,6 @@ Both of these endpoints necessitate the inclusion of the query parameter `name`,
 associated with the data. The OIBus engine processes this data and stores it within the North caches that are subscribed 
 to the specified external source.
 
-## Data from another OIBus with OIConnect
-If you intend to transfer data from one OIBus instance to another using an 
-[OIConnect North connector](../../guide/north-connectors/oibus.md), the resulting `name` query parameter is `MyFirstOIBus:MyOIConnect`.
-Consequently, your external source configuration must also be defined as `MyFirstOIBus:MyOIConnect` to establish the 
-connection between the two OIBus instances.
-
 ## Data from another application
 ### JSON payload
 To transmit data to OIBus using a JSON payload, you can make an HTTP request with the following payload:
