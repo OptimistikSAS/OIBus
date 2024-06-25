@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.3.9](https://github.com/OptimistikSAS/OIBus/compare/v3.3.8...v3.3.9) (2024-06-25)
+
+
+### Bug Fixes
+
+* **oianalytics:** filter payload before sending it to OIAnalytics ([56959fe](https://github.com/OptimistikSAS/OIBus/commit/56959fe98921ff2ae9ccdbafa1a42dd3329984b9))
+* **pi:** fix reconnection on history failure ([fba7dbf](https://github.com/OptimistikSAS/OIBus/commit/fba7dbf83c679fff04db36d423d1e946b0803d5f))
+* **reload:** fix async/await reload and clear timeout for south opcua ([a308063](https://github.com/OptimistikSAS/OIBus/commit/a308063276287ff0fa21c7a98109500ad61b1e17))
+
 ## [3.3.8](https://github.com/OptimistikSAS/OIBus/compare/v3.3.7...v3.3.8) (2024-06-11)
 
 
