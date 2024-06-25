@@ -49,6 +49,7 @@ const addValues = jest.fn();
 const addFile = jest.fn();
 
 const logger: pino.Logger = new PinoLogger();
+const flushPromises = () => new Promise(jest.requireActual('timers').setImmediate);
 
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
@@ -285,7 +286,7 @@ describe('South PI', () => {
           text: () => 'bad request'
         })
       )
-      .mockReturnValueOnce(
+      .mockReturnValue(
         Promise.resolve({
           status: 500
         })
@@ -295,5 +296,9 @@ describe('South PI', () => {
     await south.historyQuery(items, startTime, endTime);
     expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 400: bad request`);
     expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 500`);
+
+    south.disconnect();
+    await south.historyQuery(items, startTime, endTime);
+    await flushPromises();
   });
 });
