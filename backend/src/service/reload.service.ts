@@ -179,7 +179,7 @@ export default class ReloadService {
 
   async onCreateSouthItem(southId: string, command: SouthConnectorItemCommandDTO): Promise<SouthConnectorItemDTO> {
     const southItem = this.repositoryService.southItemRepository.createSouthItem(southId, command);
-    this.oibusEngine.addItemToSouth(southId, southItem);
+    await this.oibusEngine.addItemToSouth(southId, southItem);
     return southItem;
   }
 
@@ -194,7 +194,7 @@ export default class ReloadService {
     // Handle all cases regarding cache changes when the scan mode changes
     this.onSouthItemScanModeChange(southId, southItem, newItem);
 
-    this.oibusEngine.updateItemInSouth(southId, southItem, newItem);
+    await this.oibusEngine.updateItemInSouth(southId, southItem, newItem);
   }
 
   async onCreateOrUpdateSouthItems(
@@ -223,7 +223,7 @@ export default class ReloadService {
   async onDeleteSouthItem(itemId: string): Promise<void> {
     const southItem = this.repositoryService.southItemRepository.getSouthItem(itemId);
     if (!southItem) throw new Error('South item not found');
-    this.oibusEngine.deleteItemFromSouth(southItem.connectorId, southItem);
+    await this.oibusEngine.deleteItemFromSouth(southItem.connectorId, southItem);
     this.repositoryService.southItemRepository.deleteSouthItem(itemId);
     this.safeDeleteSouthCacheEntry(southItem);
   }
@@ -232,18 +232,18 @@ export default class ReloadService {
     const southItem = this.repositoryService.southItemRepository.getSouthItem(itemId);
     if (!southItem) throw new Error('South item not found');
     this.repositoryService.southItemRepository.enableSouthItem(itemId);
-    this.oibusEngine.updateItemInSouth(southItem.connectorId, southItem, { ...southItem, enabled: true });
+    await this.oibusEngine.updateItemInSouth(southItem.connectorId, southItem, { ...southItem, enabled: true });
   }
 
   async onDisableSouthItem(itemId: string): Promise<void> {
     const southItem = this.repositoryService.southItemRepository.getSouthItem(itemId);
     if (!southItem) throw new Error('South item not found');
     this.repositoryService.southItemRepository.disableSouthItem(itemId);
-    this.oibusEngine.updateItemInSouth(southItem.connectorId, southItem, { ...southItem, enabled: false });
+    await this.oibusEngine.updateItemInSouth(southItem.connectorId, southItem, { ...southItem, enabled: false });
   }
 
   async onDeleteAllSouthItems(southId: string): Promise<void> {
-    this.oibusEngine.deleteAllItemsFromSouth(southId);
+    await this.oibusEngine.deleteAllItemsFromSouth(southId);
     this.repositoryService.southItemRepository.deleteAllSouthItems(southId);
     this.repositoryService.southCacheRepository.deleteAllCacheScanModes(southId);
   }

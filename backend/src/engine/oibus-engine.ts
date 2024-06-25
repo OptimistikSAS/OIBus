@@ -175,20 +175,20 @@ export default class OIBusEngine extends BaseEngine {
     this.northConnectors.set(settings.id, north);
   }
 
-  addItemToSouth(southId: string, item: SouthConnectorItemDTO): void {
-    this.southConnectors.get(southId)?.addItem(item);
+  async addItemToSouth(southId: string, item: SouthConnectorItemDTO): Promise<void> {
+    await this.southConnectors.get(southId)?.addItem(item);
   }
 
-  deleteItemFromSouth(southId: string, item: SouthConnectorItemDTO): void {
-    this.southConnectors.get(southId)?.deleteItem(item);
+  async deleteItemFromSouth(southId: string, item: SouthConnectorItemDTO): Promise<void> {
+    await this.southConnectors.get(southId)?.deleteItem(item);
   }
 
-  deleteAllItemsFromSouth(southId: string): void {
-    this.southConnectors.get(southId)?.deleteAllItems();
+  async deleteAllItemsFromSouth(southId: string): Promise<void> {
+    await this.southConnectors.get(southId)?.deleteAllItems();
   }
 
-  updateItemInSouth(southId: string, oldItem: SouthConnectorItemDTO, newItem: SouthConnectorItemDTO): void {
-    this.southConnectors.get(southId)?.updateItem(oldItem, newItem);
+  async updateItemInSouth(southId: string, oldItem: SouthConnectorItemDTO, newItem: SouthConnectorItemDTO): Promise<void> {
+    await this.southConnectors.get(southId)?.updateItem(oldItem, newItem);
   }
 
   async stopSouth(southId: string): Promise<void> {

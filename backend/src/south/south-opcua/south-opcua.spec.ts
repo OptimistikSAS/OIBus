@@ -261,16 +261,26 @@ describe('SouthOPCUA', () => {
 
   it('should properly manage connection error', async () => {
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
 
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('connection error');
-    });
+    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock)
+      .mockImplementationOnce(() => {
+        throw new Error('connection error');
+      })
+      .mockImplementationOnce(() => {
+        throw new Error('connection error');
+      });
 
     await south.start();
 
     expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), connector.settings.retryInterval);
     expect(logger.error).toHaveBeenCalledWith(`Error while connecting to the OPCUA server. ${new Error('connection error')}`);
+
+    await south.connectToOpcuaServer();
+    expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
+
     await south.disconnect();
+    expect(clearTimeoutSpy).toHaveBeenCalledTimes(2);
   });
 
   it('should properly manage history query', async () => {
