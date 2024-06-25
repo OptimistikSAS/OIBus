@@ -117,12 +117,15 @@ that OIBus v3 run properly by login on `http://localhost:2223` with admin / pass
 4. Copy the migration tool in the OIBus **binary folder**.
 
 5. Run the OIBus migration tool. Be sure to specify the appropriate data folder.
+
+**Windows command**
 ````
-./oibus-upgrade --config ./data-folder
+oibus-upgrade.exe --config D:\\OIBusData
 ````
 
+**Linux / macOS command**
 ````
-./build/bin/macos-arm64/oibus-upgrade --config ./data-folder
+./oibus-upgrade --config /usr/oibus/OIBusData
 ````
 
 6. Start OIBus v3.
