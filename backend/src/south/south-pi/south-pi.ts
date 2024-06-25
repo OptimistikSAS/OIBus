@@ -19,6 +19,7 @@ export default class SouthPI extends SouthConnector implements QueriesHistory {
   static type = manifest.id;
 
   private connected = false;
+  private disconnecting = false;
   private reconnectTimeout: NodeJS.Timeout | null = null;
 
   constructor(
@@ -35,6 +36,10 @@ export default class SouthPI extends SouthConnector implements QueriesHistory {
   }
 
   async connect(): Promise<void> {
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
+    }
     try {
       const headers: Record<string, string> = {};
       headers['Content-Type'] = 'application/json';
@@ -78,7 +83,6 @@ export default class SouthPI extends SouthConnector implements QueriesHistory {
    */
   async historyQuery(items: Array<SouthConnectorItemDTO<SouthPIItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
     let updatedStartTime = startTime;
-
     this.logger.debug(`Requesting ${items.length} items`);
     const startRequest = DateTime.now().toMillis();
     const headers: Record<string, string> = {};
@@ -127,17 +131,21 @@ export default class SouthPI extends SouthConnector implements QueriesHistory {
       this.logger.error(`Error occurred when querying remote agent with status ${response.status}: ${errorMessage}`);
     } else {
       this.logger.error(`Error occurred when querying remote agent with status ${response.status}`);
+      if (!this.disconnecting) {
+        await this.disconnect();
+        await this.connect();
+      }
     }
 
     return updatedStartTime;
   }
 
   async disconnect(): Promise<void> {
+    this.disconnecting = true;
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
     }
-    this.reconnectTimeout = null;
-
     if (this.connected) {
       try {
         const fetchOptions = { method: 'DELETE' };
@@ -148,5 +156,6 @@ export default class SouthPI extends SouthConnector implements QueriesHistory {
     }
     this.connected = false;
     await super.disconnect();
+    this.disconnecting = false;
   }
 }
