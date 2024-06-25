@@ -52,7 +52,6 @@ export default class SouthOPCUA
   static type = manifest.id;
 
   private clientCertificateManager: OPCUACertificateManager | null = null;
-  private reconnectTimeout: NodeJS.Timeout | null = null;
   private disconnecting = false;
   private monitoredItems = new Map<string, ClientMonitoredItem>();
   private subscription: ClientSubscription | null = null;
@@ -162,10 +161,6 @@ export default class SouthOPCUA
   }
 
   async createSession(): Promise<ClientSession | null> {
-    if (this.reconnectTimeout) {
-      clearTimeout(this.reconnectTimeout);
-      this.reconnectTimeout = null;
-    }
     try {
       const clientName = this.connectionSettings.sharedConnection ? 'Shared session' : this.connector.id;
       const { options, userIdentity } = await this.createSessionConfigs(
@@ -350,10 +345,6 @@ export default class SouthOPCUA
 
   override async disconnect(): Promise<void> {
     this.disconnecting = true;
-    if (this.reconnectTimeout) {
-      clearTimeout(this.reconnectTimeout);
-      this.reconnectTimeout = null;
-    }
 
     await this.subscription?.terminate();
     this.subscription = null;
