@@ -159,6 +159,10 @@ export default class SouthOPCUA
    * Connect to OPCUA server with retry.
    */
   async connectToOpcuaServer(): Promise<void> {
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
+    }
     try {
       const { options, userIdentity } = await this.createSessionConfigs(
         this.connector.settings,
@@ -340,6 +344,7 @@ export default class SouthOPCUA
     this.disconnecting = true;
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
     }
 
     await this.subscription?.terminate();
