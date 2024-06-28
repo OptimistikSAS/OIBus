@@ -6,7 +6,8 @@ import {
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
   SouthConnectorItemCommandDTO,
-  SouthConnectorItemDTO
+  SouthConnectorItemDTO,
+  SouthConnectorItemScanModeNameDTO
 } from '../../../shared/model/south-connector.model';
 import {
   NorthCacheFiles,
@@ -15,7 +16,7 @@ import {
   NorthConnectorItemCommandDTO,
   NorthConnectorItemDTO
 } from '../../../shared/model/north-connector.model';
-import { HistoryQueryCommandDTO, HistoryQueryDTO } from '../../../shared/model/history-query.model';
+import { HistoryQueryCommandDTO, HistoryQueryDTO, SouthHistoryQueryItemDTO } from '../../../shared/model/history-query.model';
 import pino from 'pino';
 import EngineMetricsService from './engine-metrics.service';
 import NorthService from './north.service';
@@ -352,7 +353,10 @@ export default class ReloadService {
     await this.oibusEngine.onNorthItemsChange(northId);
   }
 
-  async onCreateHistoryQuery(command: HistoryQueryCommandDTO, southItems: Array<SouthConnectorItemDTO>): Promise<HistoryQueryDTO> {
+  async onCreateHistoryQuery(
+    command: HistoryQueryCommandDTO,
+    southItems: Array<SouthConnectorItemDTO> | Array<SouthConnectorItemScanModeNameDTO>
+  ): Promise<HistoryQueryDTO> {
     const historyQuery = this.repositoryService.historyQueryRepository.createHistoryQuery(command);
     for (const item of southItems) {
       this.repositoryService.historyQueryItemRepository.createHistoryItem(historyQuery.id, {
@@ -436,8 +440,8 @@ export default class ReloadService {
 
   async onCreateOrUpdateHistoryQueryItems(
     historyQuery: HistoryQueryDTO,
-    itemsToAdd: Array<SouthConnectorItemDTO>,
-    itemsToUpdate: Array<SouthConnectorItemDTO>
+    itemsToAdd: Array<SouthHistoryQueryItemDTO>,
+    itemsToUpdate: Array<SouthHistoryQueryItemDTO>
   ): Promise<void> {
     this.repositoryService.historyQueryItemRepository.createAndUpdateItems(historyQuery.id, itemsToAdd, itemsToUpdate);
   }
