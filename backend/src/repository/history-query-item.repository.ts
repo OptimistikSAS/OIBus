@@ -6,6 +6,7 @@ import {
 } from '../../../shared/model/south-connector.model';
 import { Page } from '../../../shared/model/types';
 import { Database } from 'better-sqlite3';
+import { SouthHistoryQueryItemDTO } from '../../../shared/model/history-query.model';
 
 export const HISTORY_ITEMS_TABLE = 'history_items';
 const PAGE_SIZE = 50;
@@ -145,7 +146,11 @@ export default class HistoryQueryItemRepository {
     this.database.prepare(query).run(id);
   }
 
-  createAndUpdateItems(historyId: string, itemsToAdd: Array<SouthConnectorItemDTO>, itemsToUpdate: Array<SouthConnectorItemDTO>): void {
+  createAndUpdateItems(
+    historyId: string,
+    itemsToAdd: Array<SouthHistoryQueryItemDTO>,
+    itemsToUpdate: Array<SouthHistoryQueryItemDTO>
+  ): void {
     const insert = this.database.prepare(
       `INSERT INTO ${HISTORY_ITEMS_TABLE} (id, name, enabled, history_id, settings) VALUES (?, ?, ?, ?, ?);`
     );
