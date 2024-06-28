@@ -68,6 +68,15 @@ export interface SouthConnectorItemDTO<T extends SouthItemSettings = any> extend
   scanModeId: string;
 }
 
+export interface SouthConnectorItemScanModeNameDTO<T extends SouthItemSettings = any> extends BaseEntity {
+  name: string;
+  enabled: boolean;
+  connectorId: string;
+  settings: T;
+  scanModeId?: string;
+  scanModeName?: string;
+}
+
 /**
  * Command DTO used to create an SouthConnectorItem
  */
