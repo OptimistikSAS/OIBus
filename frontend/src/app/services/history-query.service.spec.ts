@@ -101,7 +101,7 @@ describe('HistoryQueryService', () => {
 
     service.update('id1', command, [], [], true).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1' });
-    expect(testRequest.request.body).toEqual({ historyQuery: command, items: [], itemIdsToDelete: [], isCacheRestart: true });
+    expect(testRequest.request.body).toEqual({ historyQuery: command, items: [], itemIdsToDelete: [], resetCache: true });
     testRequest.flush(null);
     expect(done).toBe(true);
   });

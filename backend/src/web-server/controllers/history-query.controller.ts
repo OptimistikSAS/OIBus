@@ -22,7 +22,7 @@ interface HistoryQueryWithItemsCommandDTO {
   historyQuery: HistoryQueryCommandDTO;
   items: Array<SouthConnectorItemDTO>;
   itemIdsToDelete: Array<string>;
-  isCacheRestart: boolean;
+  resetCache: boolean;
 }
 
 export default class HistoryQueryController extends AbstractController {
@@ -175,14 +175,14 @@ export default class HistoryQueryController extends AbstractController {
         northManifest.settings
       );
 
-      const isCacheRestart = ctx.request.body.isCacheRestart as boolean;
+      const resetCache = ctx.request.body.resetCache as boolean;
       const itemsToAdd = ctx.request.body!.items.filter(item => !item.id);
       const itemsToUpdate = ctx.request.body!.items.filter(item => item.id);
       for (const itemId of ctx.request.body!.itemIdsToDelete) {
-        await ctx.app.reloadService.onDeleteHistoryItem(historyQuery.id, itemId, isCacheRestart);
+        await ctx.app.reloadService.onDeleteHistoryItem(historyQuery.id, itemId, false);
       }
-      await ctx.app.reloadService.onCreateOrUpdateHistoryQueryItems(historyQuery, itemsToAdd, itemsToUpdate, isCacheRestart);
-      await ctx.app.reloadService.onUpdateHistoryQuerySettings(ctx.params.id, command, isCacheRestart);
+      await ctx.app.reloadService.onCreateOrUpdateHistoryQueryItems(historyQuery, itemsToAdd, itemsToUpdate, false);
+      await ctx.app.reloadService.onUpdateHistoryQuerySettings(ctx.params.id, command, resetCache);
       ctx.noContent();
     } catch (error: any) {
       ctx.badRequest(error.message);

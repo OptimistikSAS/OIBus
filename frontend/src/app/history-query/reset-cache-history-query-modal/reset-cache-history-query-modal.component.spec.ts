@@ -1,12 +1,12 @@
-import { resetCacheHistoryQueryModalComponent } from './resetCache-history-query-modal.component';
+import { ResetCacheHistoryQueryModalComponent } from './reset-cache-history-query-modal.component';
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TestBed } from '@angular/core/testing';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
-class ResetCacheModalComponentTester extends ComponentTester<resetCacheHistoryQueryModalComponent> {
+class ResetCacheModalComponentTester extends ComponentTester<ResetCacheHistoryQueryModalComponent> {
   constructor() {
-    super(resetCacheHistoryQueryModalComponent);
+    super(ResetCacheHistoryQueryModalComponent);
   }
 
   get yesButton() {
