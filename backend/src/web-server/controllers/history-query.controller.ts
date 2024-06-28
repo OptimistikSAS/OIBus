@@ -174,15 +174,13 @@ export default class HistoryQueryController extends AbstractController {
         northManifest.settings
       );
 
-      const isCacheRestart = false; // ephemeral variable for tests, should to be included in parameters 
-
       const itemsToAdd = ctx.request.body!.items.filter(item => !item.id);
       const itemsToUpdate = ctx.request.body!.items.filter(item => item.id);
       for (const itemId of ctx.request.body!.itemIdsToDelete) {
-        await ctx.app.reloadService.onDeleteHistoryItem(historyQuery.id, itemId, isCacheRestart);
+        await ctx.app.reloadService.onDeleteHistoryItem(historyQuery.id, itemId);
       }
-      await ctx.app.reloadService.onCreateOrUpdateHistoryQueryItems(historyQuery, itemsToAdd, itemsToUpdate, isCacheRestart);
-      await ctx.app.reloadService.onUpdateHistoryQuerySettings(ctx.params.id, command, isCacheRestart);
+      await ctx.app.reloadService.onCreateOrUpdateHistoryQueryItems(historyQuery, itemsToAdd, itemsToUpdate);
+      await ctx.app.reloadService.onUpdateHistoryQuerySettings(ctx.params.id, command);
       ctx.noContent();
     } catch (error: any) {
       ctx.badRequest(error.message);
