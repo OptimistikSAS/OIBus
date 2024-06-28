@@ -1,5 +1,10 @@
 import { KoaContext } from '../koa';
-import { HistoryQueryCommandDTO, HistoryQueryCreateCommandDTO, HistoryQueryDTO } from '../../../../shared/model/history-query.model';
+import {
+  HistoryQueryCommandDTO,
+  HistoryQueryCreateCommandDTO,
+  HistoryQueryDTO,
+  SouthHistoryQueryItemDTO
+} from '../../../../shared/model/history-query.model';
 import JoiValidator from './validators/joi.validator';
 
 import {
@@ -19,7 +24,7 @@ import { OIBusContent } from '../../../../shared/model/engine.model';
 
 interface HistoryQueryWithItemsCommandDTO {
   historyQuery: HistoryQueryCommandDTO;
-  items: Array<SouthConnectorItemDTO>;
+  items: Array<SouthHistoryQueryItemDTO>;
   itemIdsToDelete: Array<string>;
   resetCache: boolean;
 }
@@ -109,6 +114,17 @@ export default class HistoryQueryController extends AbstractController {
       }
     }
     try {
+      if (!command.caching.scanModeId && !command.caching.scanModeName) {
+        throw new Error(`Scan mode not specified`);
+      } else if (!command.caching.scanModeId && command.caching.scanModeName) {
+        const scanModes = ctx.app.repositoryService.scanModeRepository.getScanModes();
+        const scanMode = scanModes.find(element => element.name === command.caching.scanModeName);
+        if (!scanMode) {
+          throw new Error(`Scan mode ${command.caching.scanModeName} not found`);
+        }
+        command.caching.scanModeId = scanMode.id;
+      }
+
       await this.validator.validateSettings(southManifest.settings, command.southSettings);
       await this.validator.validateSettings(northManifest.settings, command.northSettings);
       // Check if item settings match the item schema, throw an error otherwise
@@ -155,6 +171,17 @@ export default class HistoryQueryController extends AbstractController {
 
     const command = ctx.request.body.historyQuery as HistoryQueryCommandDTO;
     try {
+      const scanModes = ctx.app.repositoryService.scanModeRepository.getScanModes();
+      if (!command.caching.scanModeId && !command.caching.scanModeName) {
+        throw new Error(`Scan mode not specified`);
+      } else if (!command.caching.scanModeId && command.caching.scanModeName) {
+        const scanMode = scanModes.find(element => element.name === command.caching.scanModeName);
+        if (!scanMode) {
+          throw new Error(`Scan mode ${command.caching.scanModeName} not found`);
+        }
+        command.caching.scanModeId = scanMode.id;
+      }
+
       await this.validator.validateSettings(southManifest.settings, historyQuery.southSettings);
       await this.validator.validateSettings(northManifest.settings, historyQuery.northSettings);
       // Check if item settings match the item schema, throw an error otherwise
@@ -444,7 +471,7 @@ export default class HistoryQueryController extends AbstractController {
     ctx.ok({ items: validItems, errors });
   }
 
-  async importSouthItems(ctx: KoaContext<{ items: Array<SouthConnectorItemDTO> }, any>): Promise<void> {
+  async importSouthItems(ctx: KoaContext<{ items: Array<SouthHistoryQueryItemDTO> }, any>): Promise<void> {
     const historyQuery = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.historyQueryId);
     if (!historyQuery) {
       return ctx.throw(404, 'History query not found');

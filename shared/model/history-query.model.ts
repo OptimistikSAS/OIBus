@@ -1,6 +1,7 @@
-import { NorthArchiveSettings, NorthCacheSettingsDTO } from './north-connector.model';
+import { NorthArchiveSettings, NorthCacheSettingsCommandDTO, NorthCacheSettingsDTO } from "./north-connector.model";
 import { SouthConnectorHistorySettings, SouthConnectorItemDTO } from './south-connector.model';
 import { BaseEntity } from './types';
+import { SouthItemSettings } from './south-settings.model';
 
 export const HISTORY_QUERY_STATUS = ['PENDING', 'RUNNING', 'PAUSED', 'FINISHED', 'ERRORED'] as const;
 export type HistoryQueryStatus = (typeof HISTORY_QUERY_STATUS)[number];
@@ -38,7 +39,7 @@ export interface HistoryQueryCommandDTO {
   southSharedConnection: boolean;
   northSettings: object;
   history: SouthConnectorHistorySettings;
-  caching: NorthCacheSettingsDTO;
+  caching: NorthCacheSettingsCommandDTO;
   archive: NorthArchiveSettings;
 }
 
@@ -47,7 +48,15 @@ export interface HistoryQueryCommandDTO {
  */
 export interface HistoryQueryCreateCommandDTO {
   historyQuery: HistoryQueryCommandDTO;
-  items: Array<SouthConnectorItemDTO>;
+  items: Array<SouthHistoryQueryItemDTO>;
   fromSouthId: string | null; // used to retrieve passwords
   fromNorthId: string | null; // used to retrieve passwords
+}
+
+
+export interface  SouthHistoryQueryItemDTO<T extends SouthItemSettings = any> extends Omit<SouthConnectorItemDTO,'scanModeId'> {
+  name: string;
+  enabled: boolean;
+  connectorId: string;
+  settings: T;
 }
