@@ -7,7 +7,8 @@ import {
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
   SouthConnectorItemSearchParam,
-  SouthType
+  SouthType,
+  SouthConnectorItemScanModeNameDTO
 } from '../../../../shared/model/south-connector.model';
 import { Page } from '../../../../shared/model/types';
 import JoiValidator from './validators/joi.validator';
@@ -184,10 +185,21 @@ export default class SouthConnectorController {
         return ctx.throw(404, 'South manifest not found');
       }
 
+      const scanModes = ctx.app.repositoryService.scanModeRepository.getScanModes();
+
       await this.validator.validateSettings(manifest.settings, command!.settings);
       // Check if item settings match the item schema, throw an error otherwise
       for (const item of ctx.request.body!.items) {
         await this.validator.validateSettings(manifest.items.settings, item.settings);
+        if (!item.scanModeId && !item.scanModeName) {
+          throw new Error(`Scan mode not specified for item ${item.name}`);
+        } else if (!item.scanModeId && item.scanModeName) {
+          const scanMode = scanModes.find(element => element.name === item.scanModeName);
+          if (!scanMode) {
+            throw new Error(`Scan mode ${item.scanModeName} not found for item ${item.name}`);
+          }
+          item.scanModeId = scanMode.id;
+        }
       }
 
       const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.id);
@@ -418,7 +430,7 @@ export default class SouthConnectorController {
     ctx.ok({ items: validItems, errors });
   }
 
-  async importSouthItems(ctx: KoaContext<{ items: Array<SouthConnectorItemDTO> }, any>): Promise<void> {
+  async importSouthItems(ctx: KoaContext<{ items: Array<SouthConnectorItemScanModeNameDTO> }, any>): Promise<void> {
     const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.southId);
     if (!southConnector) {
       return ctx.throw(404, 'South not found');
@@ -431,9 +443,20 @@ export default class SouthConnectorController {
 
     const items = ctx.request.body!.items;
     try {
+      const scanModes = ctx.app.repositoryService.scanModeRepository.getScanModes();
+
       // Check if item settings match the item schema, throw an error otherwise
       for (const item of items) {
         await this.validator.validateSettings(manifest.items.settings, item.settings);
+        if (!item.scanModeId && !item.scanModeName) {
+          throw new Error(`Scan mode not specified for item ${item.name}`);
+        } else if (!item.scanModeId && item.scanModeName) {
+          const scanMode = scanModes.find(element => element.name === item.scanModeName);
+          if (!scanMode) {
+            throw new Error(`Scan mode ${item.scanModeName} not found for item ${item.name}`);
+          }
+          item.scanModeId = scanMode.id;
+        }
       }
     } catch (error: any) {
       return ctx.badRequest(error.message);
