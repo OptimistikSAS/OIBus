@@ -82,6 +82,18 @@ export default class NorthConnectorController {
 
       await this.validator.validateSettings(manifest.settings, command.settings);
 
+      const scanModes = ctx.app.repositoryService.scanModeRepository.getScanModes();
+
+      if (!command.caching.scanModeId && !command.caching.scanModeName) {
+        throw new Error(`Scan mode not specified`);
+      } else if (!command.caching.scanModeId && command.caching.scanModeName) {
+        const scanMode = scanModes.find(element => element.name === command.caching.scanModeName);
+        if (!scanMode) {
+          throw new Error(`Scan mode ${command.caching.scanModeName} not found`);
+        }
+        command.caching.scanModeId = scanMode.id;
+      }
+
       if (!command.caching.scanModeId && !command.caching.scanModeName) {
         throw new Error(`Scan mode not specified`);
       } else if (!command.caching.scanModeId && command.caching.scanModeName) {
@@ -138,6 +150,18 @@ export default class NorthConnectorController {
       }
 
       await this.validator.validateSettings(manifest.settings, command!.settings);
+
+      const scanModes = ctx.app.repositoryService.scanModeRepository.getScanModes();
+
+      if (!command.caching.scanModeId && !command.caching.scanModeName) {
+        throw new Error(`Scan mode not specified`);
+      } else if (!command.caching.scanModeId && command.caching.scanModeName) {
+        const scanMode = scanModes.find(element => element.name === command.caching.scanModeName);
+        if (!scanMode) {
+          throw new Error(`Scan mode ${command.caching.scanModeName} not found`);
+        }
+        command.caching.scanModeId = scanMode.id;
+      }
 
       const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
       if (!northConnector) {

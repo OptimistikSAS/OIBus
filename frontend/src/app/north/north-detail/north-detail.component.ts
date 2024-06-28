@@ -132,7 +132,7 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
       });
   }
 
-  getScanMode(scanModeId: string) {
+  getScanMode(scanModeId: string | undefined) {
     return this.scanModes.find(scanMode => scanMode.id === scanModeId)?.name || scanModeId;
   }
 

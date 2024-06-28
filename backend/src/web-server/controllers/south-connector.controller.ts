@@ -182,10 +182,21 @@ export default class SouthConnectorController {
         return ctx.throw(404, 'South manifest not found');
       }
 
+      const scanModes = ctx.app.repositoryService.scanModeRepository.getScanModes();
+
       await this.validator.validateSettings(manifest.settings, command!.settings);
       // Check if item settings match the item schema, throw an error otherwise
       for (const item of ctx.request.body!.items) {
         await this.validator.validateSettings(manifest.items.settings, item.settings);
+        if (!item.scanModeId && !item.scanModeName) {
+          throw new Error(`Scan mode not specified for item ${item.name}`);
+        } else if (!item.scanModeId && item.scanModeName) {
+          const scanMode = scanModes.find(element => element.name === item.scanModeName);
+          if (!scanMode) {
+            throw new Error(`Scan mode ${item.scanModeName} not found for item ${item.name}`);
+          }
+          item.scanModeId = scanMode.id;
+        }
       }
 
       let southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.id);

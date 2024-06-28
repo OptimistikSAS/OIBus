@@ -554,7 +554,7 @@ export default class ReloadService {
       // 2. Create new cache entries for each item
       // The max instant of these new entries, will be the max instant of the previously removed ones, based on scan mode
       for (const item of southItems) {
-        const maxInstant = maxInstantsByScanMode.get(item.scanModeId);
+        const maxInstant = maxInstantsByScanMode.get(item.scanModeId as string);
         if (maxInstant) {
           this.repositoryService.southCacheRepository.createOrUpdateCacheScanMode({
             southId,

@@ -532,8 +532,8 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
       }
       this.items = this.items.filter(item => item.id !== itemToRemove.id);
       if (this.items.filter(item => item.scanModeId === itemToRemove.scanModeId).length === 0) {
-        this.cronByScanModeIds.get(itemToRemove.scanModeId)?.stop();
-        this.cronByScanModeIds.delete(itemToRemove.scanModeId);
+        this.cronByScanModeIds.get(itemToRemove.scanModeId as string)?.stop();
+        this.cronByScanModeIds.delete(itemToRemove.scanModeId as string);
       }
     }
   }
