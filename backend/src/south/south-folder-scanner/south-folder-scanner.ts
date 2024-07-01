@@ -114,7 +114,9 @@ export default class SouthFolderScanner
       // The files remaining after these checks need to be sent to the engine
       this.logger.trace(`Sending ${matchedFiles.length} files`);
 
-      await Promise.allSettled(matchedFiles.map(file => this.sendFile(item, file)));
+      for (const file of matchedFiles) {
+        await this.sendFile(item, file);
+      }
     }
   }
 

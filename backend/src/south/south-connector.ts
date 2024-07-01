@@ -147,7 +147,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
       const job = new CronJob(
         scanMode.cron,
         () => {
-          this.addToQueue(scanMode);
+          this.addToQueue.bind(this).call(this, scanMode);
         },
         null,
         true
@@ -224,9 +224,9 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
       ...this.metricsService!.metrics,
       lastRunDuration: DateTime.now().toMillis() - runStart.toMillis()
     });
+    this.taskJobQueue.shift();
     this.resolveDeferredPromise();
 
-    this.taskJobQueue.shift();
     if (!this.stopping) {
       this.taskRunner.emit('next');
     }
