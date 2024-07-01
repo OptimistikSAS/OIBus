@@ -1,6 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { FormBuilder, Validators } from '@angular/forms';
+import { NonNullableFormBuilder, Validators } from '@angular/forms';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../../shared/form-directives';
@@ -16,7 +16,7 @@ import { LOG_LEVELS, RegistrationSettingsCommandDTO, RegistrationSettingsDTO } f
 })
 export class RegisterOibusModalComponent {
   state = new ObservableState();
-  form = this.fb.group({
+  form = inject(NonNullableFormBuilder).group({
     host: ['', Validators.required],
     useProxy: [false as boolean, Validators.required],
     proxyUrl: '',
@@ -27,7 +27,6 @@ export class RegisterOibusModalComponent {
 
   constructor(
     private modal: NgbActiveModal,
-    private fb: FormBuilder,
     private oibusService: EngineService
   ) {}
 

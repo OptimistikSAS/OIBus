@@ -1,6 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { FormBuilder, Validators } from '@angular/forms';
+import { NonNullableFormBuilder, Validators } from '@angular/forms';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
@@ -18,14 +18,11 @@ import { OIBusSubscription } from '../../../../../shared/model/subscription.mode
 export class CreateNorthSubscriptionModalComponent {
   state = new ObservableState();
   southConnectors: Array<SouthConnectorDTO> = [];
-  form = this.fb.group({
+  form = inject(NonNullableFormBuilder).group({
     southConnector: [null as SouthConnectorDTO | null, Validators.required]
   });
 
-  constructor(
-    private modal: NgbActiveModal,
-    private fb: FormBuilder
-  ) {}
+  constructor(private modal: NgbActiveModal) {}
 
   /**
    * Prepares the component for creation.

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
@@ -25,19 +25,19 @@ export class CreateHistoryQueryModalComponent implements OnInit {
   southList: Array<SouthConnectorDTO> = [];
   state = new ObservableState();
 
-  createForm = this.fb.group({
-    fromExistingSouth: this.fb.control(true),
-    fromExistingNorth: this.fb.control(true),
-    southType: this.fb.control(null as string | null, Validators.required),
-    northType: this.fb.control(null as string | null, Validators.required),
-    southId: this.fb.control(null as string | null, Validators.required),
-    northId: this.fb.control(null as string | null, Validators.required)
+  createForm = inject(NonNullableFormBuilder).group({
+    fromExistingSouth: true,
+    fromExistingNorth: true,
+    southType: [null as string | null, Validators.required],
+    northType: [null as string | null, Validators.required],
+    southId: [null as string | null, Validators.required],
+    northId: [null as string | null, Validators.required]
   });
+
   constructor(
     private modal: NgbActiveModal,
     private northConnectorService: NorthConnectorService,
-    private southConnectorService: SouthConnectorService,
-    private fb: NonNullableFormBuilder
+    private southConnectorService: SouthConnectorService
   ) {
     this.createForm.controls.southType.disable();
     this.createForm.controls.northType.disable();
