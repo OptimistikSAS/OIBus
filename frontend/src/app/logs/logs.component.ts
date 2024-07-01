@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PageLoader } from '../shared/page-loader.service';
@@ -60,7 +60,7 @@ import { LegendComponent } from '../shared/legend/legend.component';
   providers: [PageLoader]
 })
 export class LogsComponent implements OnInit, OnDestroy {
-  readonly searchForm = this.fb.group(
+  readonly searchForm = inject(NonNullableFormBuilder).group(
     {
       messageContent: null as string | null,
       start: null as Instant | null,
@@ -106,7 +106,6 @@ export class LogsComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private pageLoader: PageLoader,
-    private fb: NonNullableFormBuilder,
     private logService: LogService
   ) {
     this.searchParams = this.toSearchParams(this.route);
