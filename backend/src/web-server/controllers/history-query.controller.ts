@@ -109,11 +109,23 @@ export default class HistoryQueryController extends AbstractController {
       }
     }
     try {
+
+      const scanModes = ctx.app.repositoryService.scanModeRepository.getScanModes();
+
       await this.validator.validateSettings(southManifest.settings, command.southSettings);
       await this.validator.validateSettings(northManifest.settings, command.northSettings);
       // Check if item settings match the item schema, throw an error otherwise
       for (const item of itemsToAdd) {
         await this.validator.validateSettings(southManifest.items.settings, item.settings);
+        if (!item.scanModeId && !item.scanModeName) {
+          throw new Error(`Scan mode not specified for item ${item.name}`);
+        } else if (!item.scanModeId && item.scanModeName) {
+          const scanMode = scanModes.find(element => element.name === item.scanModeName);
+          if (!scanMode) {
+            throw new Error(`Scan mode ${item.scanModeName} not found for item ${item.name}`);
+          }
+          item.scanModeId = scanMode.id;
+       }
       }
 
       command.southSettings = await ctx.app.encryptionService.encryptConnectorSecrets(
@@ -155,11 +167,23 @@ export default class HistoryQueryController extends AbstractController {
 
     const command = ctx.request.body.historyQuery as HistoryQueryCommandDTO;
     try {
+
+      const scanModes = ctx.app.repositoryService.scanModeRepository.getScanModes();
+
       await this.validator.validateSettings(southManifest.settings, historyQuery.southSettings);
       await this.validator.validateSettings(northManifest.settings, historyQuery.northSettings);
       // Check if item settings match the item schema, throw an error otherwise
       for (const item of ctx.request.body!.items) {
         await this.validator.validateSettings(southManifest.items.settings, item.settings);
+        if (!item.scanModeId && !item.scanModeName) {
+          throw new Error(`Scan mode not specified for item ${item.name}`);
+        } else if (!item.scanModeId && item.scanModeName) {
+          const scanMode = scanModes.find(element => element.name === item.scanModeName);
+          if (!scanMode) {
+            throw new Error(`Scan mode ${item.scanModeName} not found for item ${item.name}`);
+          }
+          item.scanModeId = scanMode.id;
+       }
       }
 
       command.southSettings = await ctx.app.encryptionService.encryptConnectorSecrets(
