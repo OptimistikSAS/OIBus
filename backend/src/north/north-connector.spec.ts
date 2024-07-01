@@ -680,23 +680,23 @@ describe('NorthConnector disabled', () => {
   });
 
   it('should properly create an OIBus error', () => {
-    expect(north.createOIBusError(new Error('node error'))).toEqual({ retry: true, message: 'node error' });
-    expect(north.createOIBusError('string error')).toEqual({ retry: true, message: 'string error' });
-    expect(north.createOIBusError({ retry: false, message: 'oibus error' })).toEqual({ retry: false, message: 'oibus error' });
+    expect(north.createOIBusError(new Error('node error'))).toEqual({ retry: false, message: 'node error' });
+    expect(north.createOIBusError('string error')).toEqual({ retry: false, message: 'string error' });
+    expect(north.createOIBusError({ retry: true, message: 'oibus error' })).toEqual({ retry: true, message: 'oibus error' });
     expect(north.createOIBusError({ field: 'another error' })).toEqual({
-      retry: true,
+      retry: false,
       message: JSON.stringify({ field: 'another error' })
     });
     expect(north.createOIBusError(undefined)).toEqual({
-      retry: true,
+      retry: false,
       message: undefined
     });
     expect(north.createOIBusError(null)).toEqual({
-      retry: true,
+      retry: false,
       message: 'null'
     });
     expect(north.createOIBusError(20)).toEqual({
-      retry: true,
+      retry: false,
       message: '20'
     });
   });

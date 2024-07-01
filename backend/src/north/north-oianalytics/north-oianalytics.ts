@@ -95,7 +95,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     if (!response.ok) {
       throw {
         message: `Error ${response.status}: ${response.statusText}`,
-        retry: response.status === 401 || response.status === 403 || response.status === 404 || response.status === 504
+        retry: [401, 403, 404, 500, 502, 503, 504].includes(response.status)
       };
     }
   }

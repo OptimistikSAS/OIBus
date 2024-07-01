@@ -80,7 +80,9 @@ export default class NorthConnector<T extends NorthSettings = any> {
     this.taskRunner.on('next', async () => {
       if (this.taskJobQueue.length > 0) {
         this.logger.trace(`Next trigger: ${!this.runProgress$}`);
-        await this.run('scan');
+        if (!this.runProgress$) {
+          await this.run('scan');
+        }
       } else {
         this.logger.trace('No more task to run');
       }
@@ -330,8 +332,8 @@ export default class NorthConnector<T extends NorthSettings = any> {
       message = JSON.stringify(error);
     }
 
-    // Retry by default, other retrieve the retry flag from the OIBusError object
-    const retry = typeof error === 'object' ? (error as any)?.retry ?? true : true;
+    // Do not retry by default, other retrieve the retry flag from the OIBusError object
+    const retry = typeof error === 'object' ? (error as any)?.retry ?? false : false;
     return {
       message: message,
       retry
