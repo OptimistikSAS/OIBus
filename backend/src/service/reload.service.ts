@@ -375,9 +375,9 @@ export default class ReloadService {
     return historyQuery;
   }
 
-  async onUpdateHistoryQuerySettings(historyId: string, command: HistoryQueryCommandDTO): Promise<void> {
+  async onUpdateHistoryQuerySettings(historyId: string, command: HistoryQueryCommandDTO, isCacheRestart: boolean): Promise<void> {
     this.repositoryService.historyQueryRepository.setHistoryQueryStatus(historyId, 'PENDING');
-    await this.historyEngine.stopHistoryQuery(historyId, true); // Reset cache to start the history from scratch when changing the settings
+    await this.historyEngine.stopHistoryQuery(historyId, isCacheRestart); // Reset cache to start the history from scratch when changing the settings
     this.repositoryService.historyQueryRepository.updateHistoryQuery(historyId, command);
   }
 
@@ -422,8 +422,8 @@ export default class ReloadService {
     await this.historyEngine.updateItemInHistoryQuery(historyId, historyItem);
   }
 
-  async onDeleteHistoryItem(historyId: string, itemId: string): Promise<void> {
-    await this.historyEngine.stopHistoryQuery(historyId, true);
+  async onDeleteHistoryItem(historyId: string, itemId: string, isCacheRestart: boolean): Promise<void> {
+    await this.historyEngine.stopHistoryQuery(historyId, isCacheRestart);
     const item = this.repositoryService.historyQueryItemRepository.getHistoryItem(itemId);
     this.repositoryService.historyQueryItemRepository.deleteHistoryItem(itemId);
     await this.historyEngine.deleteItemFromHistoryQuery(historyId, item);
@@ -452,9 +452,10 @@ export default class ReloadService {
   async onCreateOrUpdateHistoryQueryItems(
     historyQuery: HistoryQueryDTO,
     itemsToAdd: Array<SouthConnectorItemDTO>,
-    itemsToUpdate: Array<SouthConnectorItemDTO>
+    itemsToUpdate: Array<SouthConnectorItemDTO>,
+    isCacheRestart: boolean
   ): Promise<void> {
-    await this.historyEngine.stopHistoryQuery(historyQuery.id, true);
+    await this.historyEngine.stopHistoryQuery(historyQuery.id, isCacheRestart);
     this.repositoryService.historyQueryItemRepository.createAndUpdateItems(historyQuery.id, itemsToAdd, itemsToUpdate);
   }
 

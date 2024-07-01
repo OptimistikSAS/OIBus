@@ -34,6 +34,7 @@ import { DateTime } from 'luxon';
 import { ModalService } from '../../shared/modal.service';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
+import { ResetCacheHistoryQueryModalComponent } from '../reset-cache-history-query-modal/reset-cache-history-query-modal.component';
 
 @Component({
   selector: 'oib-edit-history-query',
@@ -235,46 +236,49 @@ export class EditHistoryQueryComponent implements OnInit {
       return;
     }
 
-    const formValue = this.historyQueryForm!.value;
-    const command: HistoryQueryCommandDTO = {
-      name: formValue.name!,
-      description: formValue.description!,
-      startTime: formValue.startTime!,
-      endTime: formValue.endTime!,
-      northType: this.northType,
-      southType: this.southType,
-      southSettings: formValue.southSettings,
-      southSharedConnection: formValue.southSharedConnection ?? false,
-      northSettings: formValue.northSettings,
-      history: {
-        maxInstantPerItem: formValue.history!.maxInstantPerItem!,
-        maxReadInterval: formValue.history!.maxReadInterval!,
-        readDelay: formValue.history!.readDelay!,
-        overlap: 0
-      },
-      caching: {
-        scanModeId: formValue.caching!.scanModeId!,
-        retryInterval: formValue.caching!.retryInterval!,
-        retryCount: formValue.caching!.retryCount!,
-        groupCount: formValue.caching!.groupCount!,
-        maxSendCount: formValue.caching!.maxSendCount!,
-        sendFileImmediately: formValue.caching!.sendFileImmediately!,
-        maxSize: formValue.caching!.maxSize!
-      },
-      archive: {
-        enabled: formValue.archive!.enabled!,
-        retentionDuration: formValue.archive!.retentionDuration!
-      }
-    };
-    this.createOrUpdateHistoryQuery(command);
+    const modalRef = this.modalService.open(ResetCacheHistoryQueryModalComponent);
+    modalRef.result.subscribe(resetCache => {
+      const formValue = this.historyQueryForm!.value;
+      const command: HistoryQueryCommandDTO = {
+        name: formValue.name!,
+        description: formValue.description!,
+        startTime: formValue.startTime!,
+        endTime: formValue.endTime!,
+        northType: this.northType,
+        southType: this.southType,
+        southSettings: formValue.southSettings,
+        southSharedConnection: formValue.southSharedConnection ?? false,
+        northSettings: formValue.northSettings,
+        history: {
+          maxInstantPerItem: formValue.history!.maxInstantPerItem!,
+          maxReadInterval: formValue.history!.maxReadInterval!,
+          readDelay: formValue.history!.readDelay!,
+          overlap: 0
+        },
+        caching: {
+          scanModeId: formValue.caching!.scanModeId!,
+          retryInterval: formValue.caching!.retryInterval!,
+          retryCount: formValue.caching!.retryCount!,
+          groupCount: formValue.caching!.groupCount!,
+          maxSendCount: formValue.caching!.maxSendCount!,
+          sendFileImmediately: formValue.caching!.sendFileImmediately!,
+          maxSize: formValue.caching!.maxSize!
+        },
+        archive: {
+          enabled: formValue.archive!.enabled!,
+          retentionDuration: formValue.archive!.retentionDuration!
+        }
+      };
+      this.createOrUpdateHistoryQuery(command, resetCache);
+    });
   }
 
-  createOrUpdateHistoryQuery(command: HistoryQueryCommandDTO): void {
+  createOrUpdateHistoryQuery(command: HistoryQueryCommandDTO, resetCache: boolean): void {
     let createOrUpdate: Observable<HistoryQueryDTO>;
     // if we are editing
     if (this.mode === 'edit') {
       createOrUpdate = this.historyQueryService
-        .update(this.historyQuery!.id, command, this.inMemoryItems, this.inMemoryItemIdsToDelete)
+        .update(this.historyQuery!.id, command, this.inMemoryItems, this.inMemoryItemIdsToDelete, resetCache)
         .pipe(
           tap(() => this.notificationService.success('history-query.updated', { name: command.name })),
           switchMap(() => this.historyQueryService.get(this.historyQuery!.id))
