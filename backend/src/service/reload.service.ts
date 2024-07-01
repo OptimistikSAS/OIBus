@@ -110,13 +110,23 @@ export default class ReloadService {
         this._oianalyticsMessageService.addMessageToQueue(createdMessage);
       }
     }
-    if (!oldSettings || oldSettings.port !== newSettings.port) {
-      await this.webServerChangePortCallback(newSettings.port);
-    }
-    if (!oldSettings || oldSettings.proxyEnabled !== newSettings.proxyEnabled || oldSettings.proxyPort !== newSettings.proxyPort) {
+    if (newSettings.port === newSettings.proxyPort) {
+      throw new Error('same port on general and proxy');
+    } else if (oldSettings && oldSettings.port !== newSettings.port && oldSettings.proxyPort !== newSettings.proxyPort) {
       await this.proxyServer.stop();
+      await this.webServerChangePortCallback(newSettings.port);
       if (newSettings.proxyEnabled) {
         await this.proxyServer.start(newSettings.proxyPort);
+      }
+    } else {
+      if (!oldSettings || oldSettings.port !== newSettings.port) {
+        await this.webServerChangePortCallback(newSettings.port);
+      }
+      if (!oldSettings || oldSettings.proxyEnabled !== newSettings.proxyEnabled || oldSettings.proxyPort !== newSettings.proxyPort) {
+        await this.proxyServer.stop();
+        if (newSettings.proxyEnabled) {
+          await this.proxyServer.start(newSettings.proxyPort);
+        }
       }
     }
   }
