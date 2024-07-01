@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { NgbActiveModal, NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { AbstractControl, NonNullableFormBuilder, ValidationErrors, Validators } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
@@ -29,9 +29,9 @@ function samePasswordValidator(newPasswordForm: AbstractControl): ValidationErro
   standalone: true
 })
 export class ChangePasswordModalComponent {
-  form = this.fb.group({
+  form = inject(NonNullableFormBuilder).group({
     currentPassword: ['', Validators.required],
-    newPasswordForm: this.fb.group(
+    newPasswordForm: inject(NonNullableFormBuilder).group(
       {
         newPassword: ['', Validators.required],
         newPasswordConfirmation: ['', Validators.required]
@@ -42,7 +42,6 @@ export class ChangePasswordModalComponent {
   error = false;
 
   constructor(
-    private fb: NonNullableFormBuilder,
     private modal: NgbActiveModal,
     private notificationService: NotificationService,
     private userSettingsService: UserSettingsService

@@ -1,6 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { AbstractControl, FormBuilder, ValidationErrors, Validators } from '@angular/forms';
+import { AbstractControl, NonNullableFormBuilder, ValidationErrors, Validators } from '@angular/forms';
 import { firstValueFrom, Observable, switchMap } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
@@ -21,7 +21,7 @@ export class EditScanModeModalComponent {
   mode: 'create' | 'edit' = 'create';
   state = new ObservableState();
   scanMode: ScanModeDTO | null = null;
-  form = this.fb.group({
+  form = inject(NonNullableFormBuilder).group({
     name: ['', Validators.required],
     description: '',
     cron: ['', Validators.required, this.cronValidator()]
@@ -30,7 +30,6 @@ export class EditScanModeModalComponent {
 
   constructor(
     private modal: NgbActiveModal,
-    private fb: FormBuilder,
     private scanModeService: ScanModeService
   ) {}
 
