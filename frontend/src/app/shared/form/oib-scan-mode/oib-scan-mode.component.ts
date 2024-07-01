@@ -1,4 +1,4 @@
-import { Component, forwardRef, Input } from '@angular/core';
+import { Component, forwardRef, inject, Input } from '@angular/core';
 import { formDirectives } from '../../form-directives';
 
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, NonNullableFormBuilder } from '@angular/forms';
@@ -19,12 +19,12 @@ export class OibScanModeComponent implements ControlValueAccessor {
   @Input() scanModes: Array<ScanModeDTO> = [];
   @Input() acceptSubscription = false;
   @Input() subscriptionOnly = false;
-  scanModeInputCtrl = this.fb.control(null as string | null);
+  scanModeInputCtrl = inject(NonNullableFormBuilder).control(null as string | null);
   disabled = false;
   onChange: (value: string) => void = () => {};
   onTouched = () => {};
 
-  constructor(private fb: NonNullableFormBuilder) {
+  constructor() {
     this.scanModeInputCtrl.valueChanges.subscribe(newValue => {
       this.onChange(newValue!);
     });

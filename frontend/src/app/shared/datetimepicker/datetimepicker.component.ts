@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ContentChild, ElementRef, forwardRef, Input, OnInit, TemplateRef } from '@angular/core';
+import { AfterViewInit, Component, ContentChild, ElementRef, forwardRef, inject, Input, OnInit, TemplateRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALIDATORS, NG_VALUE_ACCESSOR, NonNullableFormBuilder, Validator } from '@angular/forms';
 import { combineLatest } from 'rxjs';
 import { DateTime } from 'luxon';
@@ -67,16 +67,13 @@ export class DatetimepickerComponent implements OnInit, AfterViewInit, ControlVa
   @Input()
   timeZone = 'Europe/Paris';
 
-  dateCtrl = this.fb.control(null as LocalDate | null);
-  timeCtrl = this.fb.control(null as LocalTime | null);
+  dateCtrl = inject(NonNullableFormBuilder).control(null as LocalDate | null);
+  timeCtrl = inject(NonNullableFormBuilder).control(null as LocalTime | null);
 
   private onChange: (value: any) => void = () => {};
   private onTouched: () => void = () => {};
 
-  constructor(
-    private fb: NonNullableFormBuilder,
-    private element: ElementRef<HTMLElement>
-  ) {}
+  constructor(private element: ElementRef<HTMLElement>) {}
 
   registerOnChange(fn: any): void {
     this.onChange = fn;
