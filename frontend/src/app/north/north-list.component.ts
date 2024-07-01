@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
 import { ConfirmationService } from '../shared/confirmation.service';
@@ -43,7 +43,7 @@ export class NorthListComponent implements OnInit {
   displayedNorths: Page<NorthConnectorDTO> = emptyPage();
   states = new Map<string, ObservableState>();
 
-  searchForm = this.fb.group({
+  searchForm = inject(NonNullableFormBuilder).group({
     name: [null as string | null]
   });
 
@@ -56,8 +56,7 @@ export class NorthListComponent implements OnInit {
     private confirmationService: ConfirmationService,
     private notificationService: NotificationService,
     private modalService: ModalService,
-    private northConnectorService: NorthConnectorService,
-    private fb: NonNullableFormBuilder
+    private northConnectorService: NorthConnectorService
   ) {}
 
   ngOnInit() {

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { NonNullableFormBuilder, Validators } from '@angular/forms';
 import { Language, LANGUAGES, Timezone } from '../../../../../shared/model/types';
 import { Observable, of, switchMap, tap, timer } from 'rxjs';
@@ -23,6 +23,7 @@ declare namespace Intl {
 
   function supportedValuesOf(input: Key): string[];
 }
+
 @Component({
   selector: 'oib-edit-user-settings',
   templateUrl: './edit-user-settings.component.html',
@@ -31,7 +32,7 @@ declare namespace Intl {
   standalone: true
 })
 export class EditUserSettingsComponent {
-  form = this.fb.group({
+  form = inject(NonNullableFormBuilder).group({
     firstName: ['', [Validators.maxLength(50)]],
     lastName: ['', [Validators.maxLength(50)]],
     timezone: ['' as Timezone, Validators.required]
@@ -48,7 +49,6 @@ export class EditUserSettingsComponent {
   );
 
   constructor(
-    private fb: NonNullableFormBuilder,
     private modalService: ModalService,
     private userSettingsService: UserSettingsService,
     private notificationService: NotificationService,
