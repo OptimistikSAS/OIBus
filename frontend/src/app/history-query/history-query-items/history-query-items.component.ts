@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, inject, Input, OnInit, Output } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
@@ -53,7 +53,10 @@ export class HistoryQueryItemsComponent implements OnInit {
   @Input() historyQuery: HistoryQueryDTO | null = null;
   @Input({ required: true }) southManifest!: SouthConnectorManifest;
   @Input() initItems: Array<SouthConnectorItemDTO> = [];
-  @Output() readonly inMemoryItems = new EventEmitter<{ items: Array<SouthConnectorItemDTO>; itemIdsToDelete: Array<string> }>();
+  @Output() readonly inMemoryItems = new EventEmitter<{
+    items: Array<SouthConnectorItemDTO>;
+    itemIdsToDelete: Array<string>;
+  }>();
   @Input() inMemory = false;
 
   allItems: Array<SouthConnectorItemDTO> = [];
@@ -62,14 +65,13 @@ export class HistoryQueryItemsComponent implements OnInit {
   displayedItems: Page<SouthConnectorItemDTO> = emptyPage();
   displaySettings: Array<OibFormControl> = [];
 
-  searchControl = this.fb.control(null as string | null);
+  searchControl = inject(NonNullableFormBuilder).control(null as string | null);
 
   constructor(
     private confirmationService: ConfirmationService,
     private notificationService: NotificationService,
     private modalService: ModalService,
-    private historyQueryService: HistoryQueryService,
-    private fb: NonNullableFormBuilder
+    private historyQueryService: HistoryQueryService
   ) {}
 
   ngOnInit() {
