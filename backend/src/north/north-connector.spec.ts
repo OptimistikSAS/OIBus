@@ -250,6 +250,19 @@ describe('NorthConnector enabled', () => {
     expect(north.run).toHaveBeenCalledTimes(1);
   });
 
+  it('should properly add to queue a new task and not trigger next run', async () => {
+    north.run = jest.fn();
+    const scanMode = {
+      id: 'id1',
+      name: 'my scan mode',
+      description: 'my description',
+      cron: '* * * * * *'
+    };
+    north.createDeferredPromise();
+    north.addToQueue(scanMode);
+    expect(north.run).not.toHaveBeenCalled();
+  });
+
   it('should properly run task a task', async () => {
     north.handleValuesWrapper = jest.fn();
     north.handleFilesWrapper = jest.fn();

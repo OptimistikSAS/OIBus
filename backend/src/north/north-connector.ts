@@ -215,8 +215,26 @@ export default class NorthConnector<T extends NorthSettings = any> {
     }
   }
 
-  async run(flag: 'scan' | 'file-trigger' | 'value-trigger'): Promise<void> {
+  /**
+   * Method used to set the runProgress$ variable with a DeferredPromise
+   */
+  createDeferredPromise(): void {
     this.runProgress$ = new DeferredPromise();
+  }
+
+  /**
+   * Method used to resolve and unset the DeferredPromise kept in the runProgress$ variable
+   * This allows to control the promise from an outside class
+   */
+  resolveDeferredPromise(): void {
+    if (this.runProgress$) {
+      this.runProgress$.resolve();
+      this.runProgress$ = null;
+    }
+  }
+
+  async run(flag: 'scan' | 'file-trigger' | 'value-trigger'): Promise<void> {
+    this.createDeferredPromise();
     this.logger.trace(`North run triggered with flag ${flag}`);
 
     const runStart = DateTime.now();
@@ -239,9 +257,8 @@ export default class NorthConnector<T extends NorthSettings = any> {
       });
     }
 
-    this.runProgress$.resolve();
-    this.runProgress$ = null;
     this.taskJobQueue.shift();
+    this.resolveDeferredPromise();
     this.taskRunner.emit('next');
   }
 

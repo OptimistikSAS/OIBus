@@ -18,7 +18,7 @@ const anotherLogger: pino.Logger = new PinoLogger();
 const nowDateString = '2020-02-02T02:02:02.222Z';
 let settings: NorthCacheSettingsDTO;
 let cache: FileCache;
-describe('FileCache', () => {
+describe('FileCache without sendFileImmediately', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
@@ -219,6 +219,11 @@ describe('FileCache', () => {
   it('should remove files from folder', async () => {
     // Used to remove files from error and archive folders
     const filenames = ['file1.name', 'file2.name', 'file3.name'];
+    fs.stat = jest
+      .fn()
+      .mockImplementationOnce(() => ({ size: 1 }))
+      .mockImplementationOnce(() => ({ size: 2 }))
+      .mockImplementationOnce(() => ({ size: 3 }));
 
     await cache.removeFiles(cache.errorFolder, filenames);
 
@@ -327,7 +332,7 @@ describe('FileCache', () => {
   it('should send file immediately', async () => {
     (fs.stat as jest.Mock).mockImplementation(() => ({ size: 123 }));
 
-    const otherSettings: NorthCacheSettingsDTO = {
+    cache.settings = {
       scanModeId: 'id1',
       groupCount: 1000,
       maxSendCount: 1000,
@@ -336,7 +341,6 @@ describe('FileCache', () => {
       sendFileImmediately: true,
       maxSize: 1000
     };
-    cache.settings = otherSettings;
     await cache.cacheFile('myFile.csv');
   });
 
@@ -378,5 +382,45 @@ describe('FileCache', () => {
     await cache.getCacheFileContent(filename);
 
     expect(logger.error).toHaveBeenCalledWith(`Error while reading file "${path.resolve('myCacheFolder', 'files', filename)}": ${error}`);
+  });
+});
+
+describe('FileCache with sendFileImmediately', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    settings = {
+      scanModeId: 'id1',
+      groupCount: 1000,
+      maxSendCount: 1000,
+      retryCount: 3,
+      retryInterval: 5000,
+      sendFileImmediately: true,
+      maxSize: 1000
+    };
+
+    cache = new FileCache(logger, 'myCacheFolder', settings);
+  });
+
+  it('should be properly initialized with files in cache', async () => {
+    (fs.readdir as jest.Mock).mockImplementation(() => ['file1', 'file2']);
+    (fs.stat as jest.Mock).mockImplementationOnce(() => ({ ctimeMs: 2 })).mockImplementationOnce(() => ({ ctimeMs: 1 }));
+
+    await cache.start();
+    expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'files'));
+    expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'files-errors'));
+
+    expect(logger.debug).toHaveBeenCalledWith('2 files in cache');
+    expect(logger.warn).toHaveBeenCalledWith('2 files in error cache');
+    expect(logger.trace).toHaveBeenCalledWith('Trigger next file send');
+  });
+
+  it('should be properly initialized with files in cache and properly remove and trigger', async () => {
+    (fs.readdir as jest.Mock).mockImplementation(() => ['file1', 'file2']);
+    (fs.stat as jest.Mock).mockImplementationOnce(() => ({ ctimeMs: 2 })).mockImplementationOnce(() => ({ ctimeMs: 1 }));
+
+    await cache.start();
+    cache.removeFileFromQueue();
+    expect(`There are 1 files in queue left. Triggering next send`);
   });
 });

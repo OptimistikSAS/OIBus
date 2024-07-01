@@ -71,6 +71,10 @@ export default class FileCacheService {
     this.filesQueue = filesWithCreationDate.sort((a, b) => a.createdAt - b.createdAt).map(file => file.filename);
     if (this.filesQueue.length > 0) {
       this._logger.debug(`${this.filesQueue.length} files in cache`);
+      if (this._settings.sendFileImmediately) {
+        this._logger.trace(`Trigger next file send`);
+        this.triggerRun.emit('next');
+      }
     } else {
       this._logger.debug('No files in cache');
     }
@@ -116,6 +120,10 @@ export default class FileCacheService {
       this.filesQueue.splice(idx, 1);
     } else {
       this.filesQueue.shift();
+      if (this.filesQueue.length > 0 && this._settings.sendFileImmediately) {
+        this._logger.trace(`There are ${this.filesQueue.length} files in queue left. Triggering next send`);
+        this.triggerRun.emit('next');
+      }
     }
   }
 
@@ -196,16 +204,14 @@ export default class FileCacheService {
    * Remove files from folder.
    */
   async removeFiles(folder: string, filenames: Array<string>): Promise<void> {
-    await Promise.allSettled(
-      filenames.map(async filename => {
-        const filePath = path.join(folder, filename);
-        this._logger.debug(`Removing file "${filePath}`);
-        const fileStat = await fs.stat(filePath);
-        await fs.unlink(filePath);
-        this.removeFileFromQueue(filePath);
-        this.triggerRun.emit('cache-size', -fileStat.size);
-      })
-    );
+    for (const filename of filenames) {
+      const filePath = path.join(folder, filename);
+      this._logger.debug(`Removing file "${filePath}`);
+      const fileStat = await fs.stat(filePath);
+      await fs.unlink(filePath);
+      this.removeFileFromQueue(filePath);
+      this.triggerRun.emit('cache-size', -fileStat.size);
+    }
   }
 
   /**

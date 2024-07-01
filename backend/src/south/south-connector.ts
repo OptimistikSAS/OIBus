@@ -233,7 +233,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
   }
 
   /**
-   * Methode used to set the runProgress$ variable with a DeferredPromise
+   * Method used to set the runProgress$ variable with a DeferredPromise
    * This allows to call historyQueryHandler from outside (like history query engine) in a blocking way for other
    * calls
    */
