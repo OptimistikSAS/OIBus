@@ -258,7 +258,7 @@ export default class ValueCacheService {
    * Values are not used in this case
    */
   async removeAllValues(): Promise<void> {
-    this.removeSentValues(this.queue);
+    await this.removeSentValues(this.queue);
   }
 
   /**
@@ -350,13 +350,12 @@ export default class ValueCacheService {
    * Returns metadata about files in the current queue.
    */
   getQueuedFilesMetadata(fileNameContains: string): Array<NorthValueFiles> {
-    const files: Array<NorthValueFiles> = [...this.queue.entries()]
+    return [...this.queue.entries()]
       .map(([filepath, value]) => ({
         filename: path.basename(filepath),
         valuesCount: value.length
       }))
       .filter(file => file.filename.toUpperCase().includes(fileNameContains.toUpperCase()));
-    return files;
   }
 
   /**
