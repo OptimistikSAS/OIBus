@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.3.10](https://github.com/OptimistikSAS/OIBus/compare/v3.3.9...v3.3.10) (2024-07-01)
+
+
+### Bug Fixes
+
+* **north-connector:** fix default behaviour for retry to false and fix run on scan mode ([35af100](https://github.com/OptimistikSAS/OIBus/commit/35af100a0681471472ac523e00bf6ea4f411113a))
+
 ## [3.3.9](https://github.com/OptimistikSAS/OIBus/compare/v3.3.8...v3.3.9) (2024-06-25)
 
 
