@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import { SouthConnectorService } from '../services/south-connector.service';
@@ -45,7 +45,7 @@ export class SouthListComponent implements OnInit {
   displayedSouths: Page<SouthConnectorDTO> = emptyPage();
   states = new Map<string, ObservableState>();
 
-  searchForm = this.fb.group({
+  searchForm = inject(NonNullableFormBuilder).group({
     name: [null as string | null]
   });
 
@@ -58,8 +58,7 @@ export class SouthListComponent implements OnInit {
     private confirmationService: ConfirmationService,
     private notificationService: NotificationService,
     private modalService: ModalService,
-    private southConnectorService: SouthConnectorService,
-    private fb: NonNullableFormBuilder
+    private southConnectorService: SouthConnectorService
   ) {}
 
   ngOnInit() {

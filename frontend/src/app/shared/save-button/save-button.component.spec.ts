@@ -1,9 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { ObservableState, SaveButtonComponent } from './save-button.component';
 import { ComponentTester } from 'ngx-speculoos';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { delay, of } from 'rxjs';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
 @Component({
@@ -18,9 +18,9 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 class TestComponent {
   state = new ObservableState();
   save$ = of(null).pipe(delay(500), this.state.pendingUntilFinalization());
-  form = this.fb.group({ name: '' });
+  form = inject(NonNullableFormBuilder).group({ name: '' });
 
-  constructor(private fb: FormBuilder) {}
+  constructor() {}
 
   save() {
     this.save$.subscribe();

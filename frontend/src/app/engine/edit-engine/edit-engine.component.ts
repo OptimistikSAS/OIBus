@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { NonNullableFormBuilder, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -21,6 +21,7 @@ import { BackNavigationDirective } from '../../shared/back-navigation.directives
 export class EditEngineComponent implements OnInit {
   readonly logLevels = LOG_LEVELS;
 
+  private fb = inject(NonNullableFormBuilder);
   engineForm = this.fb.group({
     name: ['', Validators.required],
     port: [null as number | null, Validators.required],
@@ -56,7 +57,6 @@ export class EditEngineComponent implements OnInit {
   state = new ObservableState();
 
   constructor(
-    private fb: NonNullableFormBuilder,
     private notificationService: NotificationService,
     private engineService: EngineService,
     private router: Router
