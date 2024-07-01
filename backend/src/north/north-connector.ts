@@ -190,7 +190,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
       const job = new CronJob(
         scanMode.cron,
         () => {
-          this.addToQueue(scanMode);
+          this.addToQueue.bind(this).call(this, scanMode);
         },
         null,
         true
@@ -322,8 +322,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
    */
   createOIBusError(error: unknown): OIBusError {
     // The error is unknown by default, but it can be overridden with an OIBusError. In this case, we can retrieve the message
-    let message = '';
-
+    let message;
     if (typeof error === 'object') {
       message = (error as any)?.message ?? JSON.stringify(error);
     } else if (typeof error === 'string') {
@@ -505,10 +504,10 @@ export default class NorthConnector<T extends NorthSettings = any> {
    */
   async archiveCacheFiles(filenames: Array<string>): Promise<void> {
     this.logger.trace(`Moving ${filenames.length} cache files into archive from North connector "${this.connector.name}"...`);
-    filenames.forEach(async filename => {
+    for (const filename of filenames) {
       await this.archiveService.archiveOrRemoveFile(path.join(this.fileCacheService.fileFolder, filename));
       this.fileCacheService.removeFileFromQueue(path.join(this.fileCacheService.fileFolder, filename));
-    });
+    }
   }
 
   /**
