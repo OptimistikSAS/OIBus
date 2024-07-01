@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { AsyncPipe, NgClass } from '@angular/common';
 import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
@@ -48,7 +48,7 @@ export class HistoryQueryListComponent implements OnInit {
   displayedHistoryQueries: Page<HistoryQueryDTO> = emptyPage();
   states = new Map<string, ObservableState>();
 
-  searchForm = this.fb.group({
+  searchForm = inject(NonNullableFormBuilder).group({
     name: [null as string | null]
   });
 
@@ -65,8 +65,7 @@ export class HistoryQueryListComponent implements OnInit {
     private notificationService: NotificationService,
     private modalService: ModalService,
     private historyQueryService: HistoryQueryService,
-    private router: Router,
-    private fb: NonNullableFormBuilder
+    private router: Router
   ) {}
 
   ngOnInit() {
