@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.3.11](https://github.com/OptimistikSAS/OIBus/compare/v3.3.10...v3.3.11) (2024-07-01)
+
+
+### Bug Fixes
+
+* **cron:** attach context to CronJob and fix async call when archiving files ([4b6920c](https://github.com/OptimistikSAS/OIBus/commit/4b6920c3710c6941e3f4d2614cb74786e8279d4d))
+* **north-oianalytics:** log references that are filtered out because of bad data type ([6c8e92b](https://github.com/OptimistikSAS/OIBus/commit/6c8e92b96405c887655ee88ae24fc9ea463a2303))
+* **north:** fix file cache trigger when send file immediately is enabled ([9060709](https://github.com/OptimistikSAS/OIBus/commit/9060709a1f4c6281b91c07fff600277cf4ce9fb6))
+
 ## [3.3.10](https://github.com/OptimistikSAS/OIBus/compare/v3.3.9...v3.3.10) (2024-07-01)
 
 
