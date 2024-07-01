@@ -1,6 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { FormBuilder, Validators } from '@angular/forms';
+import { NonNullableFormBuilder, Validators } from '@angular/forms';
 import { Observable, switchMap } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
@@ -19,14 +19,13 @@ export class EditIpFilterModalComponent {
   mode: 'create' | 'edit' = 'create';
   state = new ObservableState();
   ipFilter: IpFilterDTO | null = null;
-  form = this.fb.group({
+  form = inject(NonNullableFormBuilder).group({
     address: ['', Validators.required],
     description: ''
   });
 
   constructor(
     private modal: NgbActiveModal,
-    private fb: FormBuilder,
     private ipFilterService: IpFilterService
   ) {}
 

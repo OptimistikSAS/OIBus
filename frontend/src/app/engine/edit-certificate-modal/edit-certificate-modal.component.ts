@@ -1,6 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { FormBuilder, Validators } from '@angular/forms';
+import { NonNullableFormBuilder, Validators } from '@angular/forms';
 import { Observable, switchMap } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
@@ -19,11 +19,11 @@ export class EditCertificateModalComponent {
   mode: 'create' | 'edit' = 'create';
   state = new ObservableState();
   certificate: CertificateDTO | null = null;
-  form = this.fb.group({
+  form = inject(NonNullableFormBuilder).group({
     name: ['', Validators.required],
     description: '',
     regenerateCertificate: true,
-    certificateOptions: this.fb.group({
+    certificateOptions: inject(NonNullableFormBuilder).group({
       commonName: ['', Validators.required],
       countryName: ['', Validators.required],
       stateOrProvinceName: ['', Validators.required],
@@ -36,7 +36,6 @@ export class EditCertificateModalComponent {
 
   constructor(
     private modal: NgbActiveModal,
-    private fb: FormBuilder,
     private certificateService: CertificateService
   ) {
     this.form.controls.regenerateCertificate.valueChanges.subscribe(next => {

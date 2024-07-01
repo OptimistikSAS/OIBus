@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -60,7 +60,8 @@ export class OiaModuleComponent implements OnInit, OnDestroy {
   // subscription to reload the page periodically
   subscription = new Subscription();
   registrationSubscription = new Subscription();
-  readonly searchForm = this.fb.group({
+  route = inject(ActivatedRoute);
+  readonly searchForm = inject(NonNullableFormBuilder).group({
     types: this.route.snapshot.queryParamMap.getAll('types'),
     status: this.route.snapshot.queryParamMap.getAll('status')
   });
@@ -71,10 +72,8 @@ export class OiaModuleComponent implements OnInit, OnDestroy {
     private notificationService: NotificationService,
     private confirmationService: ConfirmationService,
     private modalService: ModalService,
-    private route: ActivatedRoute,
     private router: Router,
-    private pageLoader: PageLoader,
-    private fb: NonNullableFormBuilder
+    private pageLoader: PageLoader
   ) {}
 
   ngOnInit(): void {

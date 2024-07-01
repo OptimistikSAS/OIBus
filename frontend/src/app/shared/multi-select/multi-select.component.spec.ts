@@ -1,8 +1,8 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 
 import { MultiSelectComponent } from './multi-select.component';
-import { Component } from '@angular/core';
-import { FormBuilder } from '@angular/forms';
+import { Component, inject } from '@angular/core';
+import { NonNullableFormBuilder } from '@angular/forms';
 import { ComponentTester, TestButton } from 'ngx-speculoos';
 import { MultiSelectOptionDirective } from './multi-select-option.directive';
 import { noAnimation } from '../test-utils';
@@ -45,7 +45,7 @@ class TestComponent {
     }
   ];
 
-  form = this.fb.group({
+  form = inject(NonNullableFormBuilder).group({
     users: [[] as Array<number | User>]
   });
   placeholder = '';
@@ -53,8 +53,6 @@ class TestComponent {
   changeEvent: Array<number> = [];
 
   byId = byIdComparisonFn;
-
-  constructor(private fb: FormBuilder) {}
 }
 
 class TestComponentTester extends ComponentTester<TestComponent> {
