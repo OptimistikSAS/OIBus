@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, inject, Input, OnInit, Output } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
@@ -58,7 +58,10 @@ export class SouthItemsComponent implements OnInit {
   @Input() inMemory = false;
   @Input() maxInstantPerItem: boolean | null = null;
 
-  @Output() readonly inMemoryItems = new EventEmitter<{ items: Array<SouthConnectorItemDTO>; itemIdsToDelete: Array<string> }>();
+  @Output() readonly inMemoryItems = new EventEmitter<{
+    items: Array<SouthConnectorItemDTO>;
+    itemIdsToDelete: Array<string>;
+  }>();
 
   allItems: Array<SouthConnectorItemDTO> = [];
   itemIdsToDelete: Array<string> = [];
@@ -66,15 +69,14 @@ export class SouthItemsComponent implements OnInit {
   displayedItems: Page<SouthConnectorItemDTO> = emptyPage();
   displaySettings: Array<OibFormControl> = [];
 
-  searchControl = this.fb.control(null as string | null);
+  searchControl = inject(NonNullableFormBuilder).control(null as string | null);
 
   constructor(
     private confirmationService: ConfirmationService,
     private notificationService: NotificationService,
     private modalService: ModalService,
     private southConnectorService: SouthConnectorService,
-    private pipeProviderService: PipeProviderService,
-    private fb: NonNullableFormBuilder
+    private pipeProviderService: PipeProviderService
   ) {}
 
   ngOnInit() {

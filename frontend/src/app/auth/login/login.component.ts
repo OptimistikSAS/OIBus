@@ -1,6 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
 import { RequestedUrlService } from '../authentication.guard';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { formDirectives } from '../../shared/form-directives';
@@ -20,13 +20,12 @@ import { WindowService } from '../../shared/window.service';
 })
 export class LoginComponent {
   loginError = false;
-  form: FormGroup = this.fb.group({
+  form: FormGroup = inject(NonNullableFormBuilder).group({
     login: ['', Validators.required],
     password: ['', Validators.required]
   });
 
   constructor(
-    private fb: FormBuilder,
     private currentUserService: CurrentUserService,
     private router: Router,
     private requestedUrlService: RequestedUrlService,
