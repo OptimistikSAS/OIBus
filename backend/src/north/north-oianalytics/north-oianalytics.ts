@@ -160,7 +160,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
         agent: connectionSettings.agent
       });
       readStream.close();
-      if (this.connector.settings.compress) {
+      if (this.connector.settings.compress && !filePath.endsWith('.gz')) {
         // Remove only the compressed file. The uncompressed file will be removed by north connector logic
         await fs.unlink(path.resolve(dir, fileToSend));
       }
