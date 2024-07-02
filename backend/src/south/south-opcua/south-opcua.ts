@@ -36,6 +36,7 @@ import { OPCUACertificateManager } from 'node-opcua-certificate-manager';
 import { OIBusDataValue } from '../../../../shared/model/engine.model';
 
 export const MAX_NUMBER_OF_NODE_TO_LOG = 10;
+export const NUM_VALUES_PER_NODE = 1000;
 
 /**
  * Class SouthOPCUA - Connect to an OPCUA server
@@ -228,11 +229,11 @@ export default class SouthOPCUA
             indexRange: undefined,
             nodeId: item.nodeId
           }));
-
           this.logger.trace(`Reading ${resampledItems.length} items with aggregate ${aggregate} and resampling ${resampling}`);
 
           do {
             const request: HistoryReadRequest = this.getHistoryReadRequest(startTime, endTime, aggregate, resampling, nodesToRead);
+            request.requestHeader.timeoutHint = this.connector.settings.readTimeout;
 
             // @ts-ignore
             const response = await this.session.performMessageTransaction(request);
@@ -452,7 +453,8 @@ export default class SouthOPCUA
           startTime: new Date(startTime),
           endTime: new Date(endTime),
           isReadModified: false,
-          returnBounds: false
+          returnBounds: false,
+          numValuesPerNode: NUM_VALUES_PER_NODE
         });
         break;
     }
