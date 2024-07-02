@@ -148,7 +148,7 @@ export class EditNorthComponent implements OnInit {
           }),
           archive: this.fb.group({
             enabled: [false, Validators.required],
-            retentionDuration: [720, Validators.required]
+            retentionDuration: [72, Validators.required]
           })
         });
 
