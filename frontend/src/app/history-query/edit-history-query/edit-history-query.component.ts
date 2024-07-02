@@ -205,7 +205,7 @@ export class EditHistoryQueryComponent implements OnInit {
           }),
           archive: this.fb.group({
             enabled: [false, Validators.required],
-            retentionDuration: [720, Validators.required]
+            retentionDuration: [72, Validators.required]
           }),
           northSettings: createFormGroup(northManifest.settings, this.fb),
           southSettings: createFormGroup(southManifest.settings, this.fb)
