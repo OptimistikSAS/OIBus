@@ -1,6 +1,6 @@
 {
   "name": "frontend",
-  "version": "3.3.11",
+  "version": "3.3.12",
   "scripts": {
     "ng": "ng",
     "start": "ng build --watch --configuration development",
