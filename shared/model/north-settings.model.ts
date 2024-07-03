@@ -64,7 +64,9 @@ export interface NorthAmazonS3Settings extends BaseNorthSettings {
 }
 
 export interface NorthAzureBlobSettings extends BaseNorthSettings {
-  account: string;
+  useCustomUrl: boolean;
+  account?: string;
+  customUrl?: string;
   container: string;
   path: string | null;
   authentication: NorthAzureBlobSettingsAuthentication;
@@ -73,6 +75,10 @@ export interface NorthAzureBlobSettings extends BaseNorthSettings {
   tenantId?: string | null;
   clientId?: string | null;
   clientSecret?: string | null;
+  useProxy: boolean;
+  proxyUrl?: string;
+  proxyUsername?: string | null;
+  proxyPassword?: string | null;
 }
 
 export interface NorthConsoleSettings extends BaseNorthSettings {

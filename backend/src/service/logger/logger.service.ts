@@ -55,7 +55,7 @@ class LoggerService {
       });
     }
 
-    if (logParameters.loki.address) {
+    if (logParameters.loki.address && logParameters.loki.level !== 'silent') {
       try {
         targets.push({
           target: 'pino-loki',
