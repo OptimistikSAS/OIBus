@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.3.13](https://github.com/OptimistikSAS/OIBus/compare/v3.3.12...v3.3.13) (2024-07-03)
+
+
+### Bug Fixes
+
+* **north:** remove errored file from file queue ([6aa3a97](https://github.com/OptimistikSAS/OIBus/commit/6aa3a976928a17f7e8848e27d1c0e485591493ad))
+
 ## [3.3.12](https://github.com/OptimistikSAS/OIBus/compare/v3.3.11...v3.3.12) (2024-07-03)
 
 
