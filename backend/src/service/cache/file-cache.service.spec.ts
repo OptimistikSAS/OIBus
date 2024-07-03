@@ -141,11 +141,14 @@ describe('FileCache without sendFileImmediately', () => {
       .mockImplementationOnce(() => {
         throw new Error('rename error');
       });
+    cache.removeFileFromQueue = jest.fn();
 
     await cache.manageErroredFiles('myFile.csv', 1);
     expect(logger.warn).toHaveBeenCalledWith(
       `File "myFile.csv" moved to "${path.resolve('myCacheFolder', 'files-errors', 'myFile.csv')}" after 1 errors`
     );
+    expect(cache.removeFileFromQueue).toHaveBeenCalledWith('myFile.csv');
+    expect(cache.removeFileFromQueue).toHaveBeenCalledTimes(1);
 
     await cache.manageErroredFiles('myFile.csv', 1);
     expect(logger.error).toHaveBeenCalledWith(
@@ -153,6 +156,7 @@ describe('FileCache without sendFileImmediately', () => {
         'rename error'
       )}`
     );
+    expect(cache.removeFileFromQueue).toHaveBeenCalledTimes(2);
   });
 
   it('should retry files from folder', async () => {
