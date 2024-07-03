@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.3.12](https://github.com/OptimistikSAS/OIBus/compare/v3.3.11...v3.3.12) (2024-07-03)
+
+
+### Bug Fixes
+
+* **azure-blob:** connect through proxy and custom url ([b8aec6a](https://github.com/OptimistikSAS/OIBus/commit/b8aec6a3bf5a3303fb9aa499f7accbc723ed4656))
+* **north-oianalytics:** remove compressed file only if not already compressed ([770708a](https://github.com/OptimistikSAS/OIBus/commit/770708a5cbfb0d194df50b88c28f4fdc144f9160))
+* **south-opcua:** add numValuesPerNode when querying raw data and add timeoutHint in request header ([3381c82](https://github.com/OptimistikSAS/OIBus/commit/3381c826545e4abfa513d9215dcb306c82d79413))
+* **web-client:** fix default retention duration for archive files to 72 hours ([7cabc19](https://github.com/OptimistikSAS/OIBus/commit/7cabc192773d7e176eeea5b0e517db442cdd2be3))
+
 ## [3.3.11](https://github.com/OptimistikSAS/OIBus/compare/v3.3.10...v3.3.11) (2024-07-01)
 
 
