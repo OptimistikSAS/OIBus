@@ -207,6 +207,7 @@ describe('North connector controller', () => {
 
     await northConnectorController.createNorthConnector(ctx);
 
+    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).toHaveBeenCalled();
     expect(validator.validateSettings).toHaveBeenCalledWith(northTestManifest.settings, northConnectorCommand.settings);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
       northConnectorCommand.settings,
@@ -214,6 +215,49 @@ describe('North connector controller', () => {
       northTestManifest.settings
     );
     expect(ctx.app.reloadService.onCreateNorth).toHaveBeenCalledWith(northConnectorCommand);
+    expect(ctx.app.reloadService.onStartNorth).toHaveBeenCalledWith('id');
+    expect(ctx.created).toHaveBeenCalledWith(northConnector);
+  });
+
+  it('createNorthConnector() should create North connector with scan mode name', async () => {
+    ctx.request.body = {
+      north: { ...northConnectorCommand },
+      subscriptions: [
+        { type: 'south', subscription: { id: 'id1' } },
+        { type: 'external-source', externalSubscription: { id: 'id2' } }
+      ]
+    };
+    ctx.request.body.north.caching = {
+      scanModeName: 'scanModeName',
+      retryInterval: 1000,
+      retryCount: 3,
+      groupCount: 100,
+      maxSendCount: 1000,
+      timeout: 10000
+    };
+
+    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(northConnectorCommand.settings);
+    ctx.app.reloadService.onCreateNorth.mockReturnValue(northConnector);
+    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValue(
+      [
+        {
+          name: "scanModeName",
+          description: "",
+          cron: "cron"
+        }
+      ]
+    );
+
+    await northConnectorController.createNorthConnector(ctx);
+
+    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).toHaveBeenCalled();
+    expect(validator.validateSettings).toHaveBeenCalledWith(northTestManifest.settings, northConnectorCommand.settings);
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
+      northConnectorCommand.settings,
+      undefined,
+      northTestManifest.settings
+    );
+    expect(ctx.app.reloadService.onCreateNorth).toHaveBeenCalledWith(ctx.request.body.north);
     expect(ctx.app.reloadService.onStartNorth).toHaveBeenCalledWith('id');
     expect(ctx.created).toHaveBeenCalledWith(northConnector);
   });
@@ -413,6 +457,7 @@ describe('North connector controller', () => {
 
     await northConnectorController.updateNorthConnector(ctx);
 
+    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).toHaveBeenCalled();
     expect(validator.validateSettings).toHaveBeenCalledWith(northTestManifest.settings, northConnectorCommand.settings);
     expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('id');
     expect(ctx.app.repositoryService.subscriptionRepository.getNorthSubscriptions).toHaveBeenCalledWith('id');
@@ -424,6 +469,54 @@ describe('North connector controller', () => {
     expect(ctx.app.repositoryService.subscriptionRepository.createNorthSubscription).toHaveBeenCalledWith('id', 'id2');
     expect(ctx.app.repositoryService.subscriptionRepository.deleteNorthSubscription).toHaveBeenCalledWith('id', 'id5');
     expect(ctx.app.reloadService.onUpdateNorthSettings).toHaveBeenCalledWith('id', northConnectorCommand);
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('updateNorthConnector() should update North connector with scan mode name', async () => {
+    ctx.request.body = {
+      north: { ...northConnectorCommand },
+      subscriptions: [
+        { type: 'south', subscription: { id: 'id1' } },
+        { type: 'south', subscription: { id: 'id2' } }
+      ],
+      subscriptionsToDelete: [{ type: 'south', subscription: { id: 'id5' } }]
+    };
+    ctx.request.body.north.caching = {
+      scanModeName: 'scanModeName',
+      retryInterval: 1000,
+      retryCount: 3,
+      groupCount: 100,
+      maxSendCount: 1000,
+      timeout: 10000
+    };
+    ctx.params.id = 'id';
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(northConnector);
+    ctx.app.repositoryService.subscriptionRepository.getNorthSubscriptions.mockReturnValue(['id1']);
+    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(northConnectorCommand.settings);
+    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValue(
+      [
+        {
+          name: "scanModeName",
+          description: "",
+          cron: "cron"
+        }
+      ]
+    );
+
+    await northConnectorController.updateNorthConnector(ctx);
+
+    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).toHaveBeenCalled();
+    expect(validator.validateSettings).toHaveBeenCalledWith(northTestManifest.settings, northConnectorCommand.settings);
+    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('id');
+    expect(ctx.app.repositoryService.subscriptionRepository.getNorthSubscriptions).toHaveBeenCalledWith('id');
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
+      northConnectorCommand.settings,
+      northConnector.settings,
+      northTestManifest.settings
+    );
+    expect(ctx.app.repositoryService.subscriptionRepository.createNorthSubscription).toHaveBeenCalledWith('id', 'id2');
+    expect(ctx.app.repositoryService.subscriptionRepository.deleteNorthSubscription).toHaveBeenCalledWith('id', 'id5');
+    expect(ctx.app.reloadService.onUpdateNorthSettings).toHaveBeenCalledWith('id', ctx.request.body.north);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 

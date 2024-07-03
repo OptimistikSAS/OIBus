@@ -211,6 +211,46 @@ describe('South connector controller', () => {
 
     await southConnectorController.createSouthConnector(ctx);
 
+    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).toHaveBeenCalled();
+    expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.settings, southConnectorCommand.settings);
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
+      southConnectorCommand.settings,
+      undefined,
+      southTestManifest.settings
+    );
+    expect(ctx.app.reloadService.onCreateSouth).toHaveBeenCalledWith(southConnectorCommand);
+    expect(ctx.created).toHaveBeenCalledWith(southConnector);
+  });
+
+  it('createSouthConnector() should create South connector with scanModeName', async () => {
+    ctx.request.body = {
+      south: southConnectorCommand,
+      items: [
+        item,
+        {
+          id: 'id2',
+          name: 'item2',
+          scanModeName: 'scanModeName2',
+          enabled: true,
+          settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
+        }
+      ]
+    };
+    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
+    ctx.app.reloadService.onCreateSouth.mockReturnValue(southConnector);
+    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValue(
+      [
+        {
+          name: "scanModeName2",
+          description: "",
+          cron: "cron"
+        }
+      ]
+    );
+
+    await southConnectorController.createSouthConnector(ctx);
+
+    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).toHaveBeenCalled();
     expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.settings, southConnectorCommand.settings);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
       southConnectorCommand.settings,
@@ -408,13 +448,55 @@ describe('South connector controller', () => {
   });
 
   it('updateSouthConnector() should update South connector', async () => {
-    ctx.request.body = { south: { ...southConnectorCommand }, items: [{}], itemIdsToDelete: ['id1'] };
+    ctx.request.body = { south: { ...southConnectorCommand }, items: [], itemIdsToDelete: ['id1'] };
     ctx.params.id = 'id';
     ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
     ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
 
     await southConnectorController.updateSouthConnector(ctx);
 
+    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).toHaveBeenCalled();
+    expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.settings, southConnectorCommand.settings);
+    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('id');
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
+      southConnectorCommand.settings,
+      southConnector.settings,
+      southTestManifest.settings
+    );
+    expect(ctx.app.reloadService.onUpdateSouth).toHaveBeenCalledWith('id', southConnectorCommand, false);
+    expect(ctx.app.reloadService.onDeleteSouthItem).toHaveBeenCalledWith('id1');
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('updateSouthConnector() should update South connector with scanModeName', async () => {
+    ctx.request.body = { 
+      south: { ...southConnectorCommand }, 
+      items: [
+        item,
+        {
+          id: 'id2',
+          name: 'item2',
+          scanModeName: 'scanModeName2',
+          enabled: true,
+          settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
+        }], 
+      itemIdsToDelete: ['id1'] };
+    ctx.params.id = 'id';
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
+    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
+    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValue(
+      [
+        {
+          name: "scanModeName2",
+          description: "",
+          cron: "cron"
+        }
+      ]
+    );
+
+    await southConnectorController.updateSouthConnector(ctx);
+
+    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).toHaveBeenCalled();
     expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.settings, southConnectorCommand.settings);
     expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('id');
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
