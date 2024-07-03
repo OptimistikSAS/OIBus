@@ -9,7 +9,7 @@ import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import { BlobServiceClient, StorageSharedKeyCredential } from '@azure/storage-blob';
-import { DefaultAzureCredential, ClientSecretCredential } from '@azure/identity';
+import { ClientSecretCredential, DefaultAzureCredential } from '@azure/identity';
 import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.mock';
 import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
 import { NorthAzureBlobSettings } from '../../../../shared/model/north-settings.model';
@@ -83,39 +83,41 @@ const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
 
-const configuration: NorthConnectorDTO<NorthAzureBlobSettings> = {
-  id: 'id',
-  name: 'north',
-  type: 'test',
-  description: 'my test connector',
-  enabled: true,
-  settings: {
-    account: 'account',
-    container: 'container',
-    path: '',
-    authentication: 'sasToken',
-    sasToken: 'sas',
-    accessKey: '',
-    tenantId: '',
-    clientId: '',
-    clientSecret: ''
-  },
-  caching: {
-    scanModeId: 'id1',
-    retryInterval: 5000,
-    groupCount: 10000,
-    maxSendCount: 10000,
-    retryCount: 2,
-    sendFileImmediately: true,
-    maxSize: 1000
-  },
-  archive: {
+describe('NorthAzureBlob without proxy', () => {
+  const configuration: NorthConnectorDTO<NorthAzureBlobSettings> = {
+    id: 'id',
+    name: 'north',
+    type: 'test',
+    description: 'my test connector',
     enabled: true,
-    retentionDuration: 720
-  }
-};
+    settings: {
+      useCustomUrl: false,
+      account: 'account',
+      container: 'container',
+      path: '',
+      authentication: 'sasToken',
+      sasToken: 'sas',
+      accessKey: '',
+      tenantId: '',
+      clientId: '',
+      clientSecret: '',
+      useProxy: false
+    },
+    caching: {
+      scanModeId: 'id1',
+      retryInterval: 5000,
+      groupCount: 10000,
+      maxSendCount: 10000,
+      retryCount: 2,
+      sendFileImmediately: true,
+      maxSize: 1000
+    },
+    archive: {
+      enabled: true,
+      retentionDuration: 720
+    }
+  };
 
-describe('NorthAzureBlob', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
   });
@@ -135,7 +137,9 @@ describe('NorthAzureBlob', () => {
     expect(fs.stat).toHaveBeenCalledWith(filePath);
     expect(fs.readFile).toHaveBeenCalledWith(filePath);
     expect(BlobServiceClient).toHaveBeenCalledWith(
-      `https://${configuration.settings.account}.blob.core.windows.net?${configuration.settings.sasToken}`
+      `https://${configuration.settings.account}.blob.core.windows.net?${configuration.settings.sasToken}`,
+      undefined,
+      { proxyOptions: undefined }
     );
     expect(getContainerClientMock).toHaveBeenCalledWith(configuration.settings.container);
     expect(getBlockBlobClientMock).toHaveBeenCalledWith('example.file');
@@ -159,7 +163,9 @@ describe('NorthAzureBlob', () => {
     expect(fs.stat).toHaveBeenCalledWith(filePath);
     expect(fs.readFile).toHaveBeenCalledWith(filePath);
     expect(StorageSharedKeyCredential).toHaveBeenCalledWith(configuration.settings.account, configuration.settings.accessKey);
-    expect(BlobServiceClient).toHaveBeenCalledWith(`https://${configuration.settings.account}.blob.core.windows.net`, sharedKeyCredential);
+    expect(BlobServiceClient).toHaveBeenCalledWith(`https://${configuration.settings.account}.blob.core.windows.net`, sharedKeyCredential, {
+      proxyOptions: undefined
+    });
     expect(getContainerClientMock).toHaveBeenCalledWith(configuration.settings.container);
     expect(getBlockBlobClientMock).toHaveBeenCalledWith('example.file');
     expect(uploadMock).toHaveBeenCalledWith('content', 666);
@@ -186,7 +192,8 @@ describe('NorthAzureBlob', () => {
     expect(ClientSecretCredential).toHaveBeenCalled();
     expect(BlobServiceClient).toHaveBeenCalledWith(
       `https://${configuration.settings.account}.blob.core.windows.net`,
-      clientSecretCredential
+      clientSecretCredential,
+      { proxyOptions: undefined }
     );
     expect(getContainerClientMock).toHaveBeenCalledWith(configuration.settings.container);
     expect(getBlockBlobClientMock).toHaveBeenCalledWith('example.file');
@@ -213,7 +220,8 @@ describe('NorthAzureBlob', () => {
     expect(DefaultAzureCredential).toHaveBeenCalled();
     expect(BlobServiceClient).toHaveBeenCalledWith(
       `https://${configuration.settings.account}.blob.core.windows.net`,
-      defaultAzureCredential
+      defaultAzureCredential,
+      { proxyOptions: undefined }
     );
     expect(getContainerClientMock).toHaveBeenCalledWith(configuration.settings.container);
     expect(getBlockBlobClientMock).toHaveBeenCalledWith('my path/example.file');
@@ -229,7 +237,8 @@ describe('NorthAzureBlob', () => {
     expect(DefaultAzureCredential).toHaveBeenCalled();
     expect(BlobServiceClient).toHaveBeenCalledWith(
       `https://${configuration.settings.account}.blob.core.windows.net`,
-      defaultAzureCredential
+      defaultAzureCredential,
+      { proxyOptions: undefined }
     );
     expect(getContainerClientMock).toHaveBeenCalledWith(configuration.settings.container);
     await expect(north.testConnection()).rejects.toThrow(
@@ -249,7 +258,8 @@ describe('NorthAzureBlob', () => {
     expect(DefaultAzureCredential).toHaveBeenCalled();
     expect(BlobServiceClient).toHaveBeenCalledWith(
       `https://${configuration.settings.account}.blob.core.windows.net`,
-      defaultAzureCredential
+      defaultAzureCredential,
+      { proxyOptions: undefined }
     );
     expect(getContainerClientMock).toHaveBeenCalledWith(configuration.settings.container);
     expect(logger.error).toHaveBeenCalledWith(`Could not delete file "my path/oibus-azure-test.txt"`);
@@ -265,7 +275,8 @@ describe('NorthAzureBlob', () => {
     expect(DefaultAzureCredential).toHaveBeenCalled();
     expect(BlobServiceClient).toHaveBeenCalledWith(
       `https://${configuration.settings.account}.blob.core.windows.net`,
-      defaultAzureCredential
+      defaultAzureCredential,
+      { proxyOptions: undefined }
     );
     expect(getContainerClientMock).toHaveBeenCalledWith(configuration.settings.container);
   });
@@ -273,7 +284,7 @@ describe('NorthAzureBlob', () => {
   it('should manage test error', async () => {
     const defaultAzureCredential = jest.fn();
     (DefaultAzureCredential as jest.Mock).mockImplementationOnce(() => defaultAzureCredential);
-    (getContainerClientMock as jest.Mock).mockImplementation(() => {
+    (getContainerClientMock as jest.Mock).mockImplementationOnce(() => {
       throw new Error('connection error');
     });
     const north = new NorthAzureBlob(configuration, encryptionService, repositoryService, logger, 'baseFolder');
@@ -293,5 +304,125 @@ describe('NorthAzureBlob', () => {
     await expect(north.start()).rejects.toThrow(
       new Error(`Authentication "${configuration.settings.authentication}" not supported for North "${configuration.name}"`)
     );
+  });
+});
+
+describe('NorthAzureBlob with proxy', () => {
+  const configuration: NorthConnectorDTO<NorthAzureBlobSettings> = {
+    id: 'id',
+    name: 'north',
+    type: 'test',
+    description: 'my test connector',
+    enabled: true,
+    settings: {
+      useCustomUrl: true,
+      customUrl: 'https://custom.url.blob.core.windows.net',
+      container: 'container',
+      path: '',
+      authentication: 'sasToken',
+      sasToken: 'sas',
+      accessKey: '',
+      tenantId: '',
+      clientId: '',
+      clientSecret: '',
+      useProxy: true,
+      proxyUrl: 'http://localhost:3128',
+      proxyUsername: 'oibus',
+      proxyPassword: 'pass'
+    },
+    caching: {
+      scanModeId: 'id1',
+      retryInterval: 5000,
+      groupCount: 10000,
+      maxSendCount: 10000,
+      retryCount: 2,
+      sendFileImmediately: true,
+      maxSize: 1000
+    },
+    archive: {
+      enabled: true,
+      retentionDuration: 720
+    }
+  };
+  beforeEach(async () => {
+    jest.clearAllMocks();
+  });
+
+  it('should properly handle files with proxy auth', async () => {
+    const filePath = '/path/to/file/example-123.file';
+    (fs.stat as jest.Mock).mockImplementationOnce(() => Promise.resolve({ size: 666 }));
+    (fs.readFile as jest.Mock).mockImplementationOnce(() => Promise.resolve('content'));
+
+    configuration.settings.authentication = 'sasToken';
+    configuration.settings.sasToken = 'sas token';
+    const north = new NorthAzureBlob(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+
+    await north.start();
+    await north.handleFile(filePath);
+
+    expect(fs.stat).toHaveBeenCalledWith(filePath);
+    expect(fs.readFile).toHaveBeenCalledWith(filePath);
+    expect(BlobServiceClient).toHaveBeenCalledWith(`${configuration.settings.customUrl}?${configuration.settings.sasToken}`, undefined, {
+      proxyOptions: {
+        host: 'http://localhost',
+        password: 'pass',
+        port: 3128,
+        username: 'oibus'
+      }
+    });
+    expect(getContainerClientMock).toHaveBeenCalledWith(configuration.settings.container);
+    expect(getBlockBlobClientMock).toHaveBeenCalledWith('example.file');
+    expect(uploadMock).toHaveBeenCalledWith('content', 666);
+  });
+
+  it('should properly handle files without proxy auth', async () => {
+    const filePath = '/path/to/file/example-123.file';
+    (fs.stat as jest.Mock).mockImplementationOnce(() => Promise.resolve({ size: 666 }));
+    (fs.readFile as jest.Mock).mockImplementationOnce(() => Promise.resolve('content'));
+
+    configuration.settings.proxyUsername = '';
+    configuration.settings.proxyPassword = '';
+    configuration.settings.proxyUrl = 'https://proxy.com';
+    const north = new NorthAzureBlob(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+
+    await north.start();
+    await north.handleFile(filePath);
+
+    expect(fs.stat).toHaveBeenCalledWith(filePath);
+    expect(fs.readFile).toHaveBeenCalledWith(filePath);
+    expect(BlobServiceClient).toHaveBeenCalledWith(`${configuration.settings.customUrl}?${configuration.settings.sasToken}`, undefined, {
+      proxyOptions: {
+        host: 'https://proxy.com',
+        port: 443
+      }
+    });
+    expect(getContainerClientMock).toHaveBeenCalledWith(configuration.settings.container);
+    expect(getBlockBlobClientMock).toHaveBeenCalledWith('example.file');
+    expect(uploadMock).toHaveBeenCalledWith('content', 666);
+  });
+
+  it('should properly parse proxy url', async () => {
+    const north = new NorthAzureBlob(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+
+    const proxy1 = north.parseProxyUrl('127.0.0.1');
+    expect(proxy1.proxyHost).toBe('127.0.0.1');
+    expect(proxy1.proxyPort).toBe(80);
+
+    const proxy2 = north.parseProxyUrl('http://127.0.0.1');
+    expect(proxy2.proxyHost).toBe('http://127.0.0.1');
+    expect(proxy2.proxyPort).toBe(80);
+
+    const proxy3 = north.parseProxyUrl('127.0.0.1:3128');
+    expect(proxy3.proxyHost).toBe('http://127.0.0.1');
+    expect(proxy3.proxyPort).toBe(3128);
+
+    let error;
+    try {
+      north.parseProxyUrl('http://127.0.0.1:3128:3128');
+    } catch (err: any) {
+      error = err.toString();
+    }
+
+    expect(error).toBe(`Error: Bad proxy url http://127.0.0.1:3128:3128`);
   });
 });

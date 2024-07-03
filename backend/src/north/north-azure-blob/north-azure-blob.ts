@@ -10,6 +10,7 @@ import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
 import { HandlesFile } from '../north-interface';
 import { NorthAzureBlobSettings } from '../../../../shared/model/north-settings.model';
+import { ProxyOptions } from '@azure/core-http';
 
 const TEST_FILE = 'oibus-azure-test.txt';
 
@@ -32,19 +33,59 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
     await this.prepareConnection();
   }
 
+  parseProxyUrl(url: string): { proxyHost: string; proxyPort: number } {
+    const splitUrl = url.split(':');
+    if (splitUrl.length === 1) {
+      return { proxyHost: splitUrl[0], proxyPort: 80 };
+    } else if (splitUrl.length === 2) {
+      if (splitUrl[0].startsWith('https')) {
+        // case https://1.2.3.4
+        return { proxyHost: url, proxyPort: 443 };
+      } else if (splitUrl[0].startsWith('http')) {
+        // case http://1.2.3.4
+        return { proxyHost: url, proxyPort: 80 };
+      } else {
+        // case 1.2.3.4:3198
+        return { proxyHost: `http://${splitUrl[0]}`, proxyPort: parseInt(splitUrl[1]) };
+      }
+    } else if (splitUrl.length === 3) {
+      // case http://1.2.3.4:8080
+      return { proxyHost: `${splitUrl[0]}:${splitUrl[1]}`, proxyPort: parseInt(splitUrl[2]) };
+    } else {
+      throw new Error(`Bad proxy url ${url}`);
+    }
+  }
+
   async prepareConnection(): Promise<void> {
     this.logger.info(
       `Connecting to Azure Blob Storage for account ${this.connector.settings.account} and container ${this.connector.settings.container} with authentication ${this.connector.settings.authentication}`
     );
+    let proxyOptions: ProxyOptions | undefined = undefined;
+    if (this.connector.settings.useProxy) {
+      const { proxyHost, proxyPort } = this.parseProxyUrl(this.connector.settings.proxyUrl!);
+      proxyOptions = {
+        host: proxyHost,
+        port: proxyPort,
+        username: this.connector.settings.proxyUsername || undefined,
+        password: this.connector.settings.proxyPassword
+          ? await this.encryptionService.decryptText(this.connector.settings.proxyPassword)
+          : undefined
+      };
+    }
+    const url = this.connector.settings.useCustomUrl
+      ? `${this.connector.settings.customUrl}`
+      : `https://${this.connector.settings.account}.blob.core.windows.net`;
     switch (this.connector.settings.authentication) {
       case 'sasToken':
         const decryptedToken = await this.encryptionService.decryptText(this.connector.settings.sasToken!);
-        this.blobClient = new BlobServiceClient(`https://${this.connector.settings.account}.blob.core.windows.net?${decryptedToken}`);
+        this.blobClient = new BlobServiceClient(`${url}?${decryptedToken}`, undefined, { proxyOptions });
         break;
       case 'accessKey':
         const decryptedAccessKey = await this.encryptionService.decryptText(this.connector.settings.accessKey!);
         const sharedKeyCredential = new StorageSharedKeyCredential(this.connector.settings.account!, decryptedAccessKey);
-        this.blobClient = new BlobServiceClient(`https://${this.connector.settings.account}.blob.core.windows.net`, sharedKeyCredential);
+        this.blobClient = new BlobServiceClient(url, sharedKeyCredential, {
+          proxyOptions
+        });
         break;
       case 'aad':
         const clientSecretCredential = new ClientSecretCredential(
@@ -52,14 +93,11 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
           this.connector.settings.clientId!,
           await this.encryptionService.decryptText(this.connector.settings.clientSecret!)
         );
-        this.blobClient = new BlobServiceClient(`https://${this.connector.settings.account}.blob.core.windows.net`, clientSecretCredential);
+        this.blobClient = new BlobServiceClient(url, clientSecretCredential, { proxyOptions });
         break;
       case 'external':
         const externalAzureCredential = new DefaultAzureCredential();
-        this.blobClient = new BlobServiceClient(
-          `https://${this.connector.settings.account}.blob.core.windows.net`,
-          externalAzureCredential
-        );
+        this.blobClient = new BlobServiceClient(url, externalAzureCredential, { proxyOptions });
         break;
       default:
         throw new Error(`Authentication "${this.connector.settings.authentication}" not supported for North "${this.connector.name}"`);

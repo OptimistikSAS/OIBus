@@ -1,4 +1,5 @@
 import { NorthConnectorManifest } from '../../../../shared/model/north-connector.model';
+import { proxy } from '../../../../shared/model/manifest-factory';
 
 const manifest: NorthConnectorManifest = {
   id: 'azure-blob',
@@ -11,18 +12,44 @@ const manifest: NorthConnectorManifest = {
   },
   settings: [
     {
+      key: 'useCustomUrl',
+      type: 'OibCheckbox',
+      label: 'Use Custom URL',
+      validators: [{ key: 'required' }],
+      defaultValue: false,
+      displayInViewMode: true,
+      class: 'col-3'
+    },
+    {
       key: 'account',
       type: 'OibText',
       label: 'Account',
-      newRow: true,
+      class: 'col-9',
       validators: [{ key: 'required' }],
-      displayInViewMode: true
+      displayInViewMode: true,
+      conditionalDisplay: { field: 'useCustomUrl', values: [false] }
+    },
+    {
+      key: 'customUrl',
+      type: 'OibText',
+      label: 'Custom URL',
+      class: 'col-9',
+      validators: [
+        { key: 'required' },
+        {
+          key: 'pattern',
+          params: { pattern: '^(http:\\/\\/|https:\\/\\/|HTTP:\\/\\/|HTTPS:\\/\\/).*' }
+        }
+      ],
+      displayInViewMode: true,
+      conditionalDisplay: { field: 'useCustomUrl', values: [true] }
     },
     {
       key: 'container',
       type: 'OibText',
       label: 'Container',
       validators: [{ key: 'required' }],
+      newRow: true,
       displayInViewMode: true
     },
     {
@@ -74,7 +101,8 @@ const manifest: NorthConnectorManifest = {
       label: 'Client secret',
       newRow: false,
       conditionalDisplay: { field: 'authentication', values: ['aad'] }
-    }
+    },
+    ...proxy
   ]
 };
 
