@@ -164,6 +164,7 @@ export default class FileCacheService {
     } catch (renameError) {
       this._logger.error(`Error while moving file "${filePathInCache}" to "${errorPath}": ${renameError}`);
     }
+    this.removeFileFromQueue(filePathInCache);
   }
 
   /**
