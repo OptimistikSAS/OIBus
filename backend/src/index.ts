@@ -193,6 +193,7 @@ const LOG_DB_NAME = 'logs.db';
     process.exit();
   });
 
-  loggerService.logger!.info(`OIBus fully started: ${JSON.stringify(getOIBusInfo(oibusSettings))}`);
-  console.info(`OIBus fully started: ${JSON.stringify(getOIBusInfo(oibusSettings))}`);
+  const updatedOIBusSettings = repositoryService.engineRepository.getEngineSettings()!;
+  loggerService.logger!.info(`OIBus fully started: ${JSON.stringify(getOIBusInfo(updatedOIBusSettings))}`);
+  console.info(`OIBus fully started: ${JSON.stringify(getOIBusInfo(updatedOIBusSettings))}`);
 })();
