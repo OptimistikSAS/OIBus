@@ -1417,6 +1417,43 @@ describe('South connector controller', () => {
     expect(ctx.noContent).toHaveBeenCalledTimes(1);
   });
 
+  it('importSouthItems() should import items with scanModeName', async () => {
+    ctx.params.southId = 'id';
+    ctx.request.body = {
+      items: [
+        item,
+        {
+          id: 'id2',
+          name: 'item2',
+          scanModeName: 'scanModeName',
+          enabled: true,
+          settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
+        }
+      ]
+    };
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
+    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValue(
+      [
+        {
+          name: "scanModeName",
+          description: "",
+          cron: "cron"
+        }
+      ]
+    );
+    (validator.validateSettings as jest.Mock).mockImplementation(() => {
+      return true;
+    });
+    ctx.app.reloadService.onCreateOrUpdateSouthItems.mockImplementation(() => {
+      return true;
+    });
+    await southConnectorController.importSouthItems(ctx);
+    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).toHaveBeenCalled();
+    expect(validator.validateSettings).toHaveBeenCalled();
+    expect(ctx.noContent).toHaveBeenCalledTimes(1);
+  });
+
   it('testSouthConnection() should test South connector settings on connector update', async () => {
     const createdSouth = {
       testConnection: jest.fn()

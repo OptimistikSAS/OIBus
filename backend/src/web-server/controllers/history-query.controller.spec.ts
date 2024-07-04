@@ -1431,11 +1431,11 @@ describe('History query controller', () => {
     ctx.params.historyId = 'id';
     ctx.request.body = {
       items: [
-        oibusItem,
         {
           id: 'id2',
+          connectorId: 'connectorId',
           name: 'item2',
-          scanModeId: '',
+          scanModeId: 'scanModeId',
           enabled: true,
           settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
         }
@@ -1450,6 +1450,8 @@ describe('History query controller', () => {
       throw new Error('onCreateOrUpdateHistoryQueryItems error');
     });
     await historyQueryController.importSouthItems(ctx);
+    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).toHaveBeenCalled();
+    expect(validator.validateSettings).toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalledWith('onCreateOrUpdateHistoryQueryItems error');
   });
 
@@ -1457,11 +1459,11 @@ describe('History query controller', () => {
     ctx.params.historyId = 'id';
     ctx.request.body = {
       items: [
-        oibusItem,
         {
           id: 'id2',
+          connectorId: 'connectorId',
           name: 'item2',
-          scanModeId: '',
+          scanModeId: 'scanModeId',
           enabled: true,
           settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
         }
@@ -1476,6 +1478,45 @@ describe('History query controller', () => {
       return true;
     });
     await historyQueryController.importSouthItems(ctx);
+    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).toHaveBeenCalled();
+    expect(validator.validateSettings).toHaveBeenCalled();
+    expect(ctx.noContent).toHaveBeenCalledTimes(1);
+  });
+
+  it('importSouthItems() should import items with scanModeName', async () => {
+    ctx.params.historyId = 'id';
+    ctx.request.body = {
+      items: [
+        {
+          id: 'id2',
+          connectorId: 'connectorId',
+          name: 'item2',
+          scanModeName: 'scanModeName',
+          enabled: true,
+          settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
+        }
+      ]
+    };
+    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
+    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValue(
+      [
+        {
+          name: "scanModeName",
+          description: "",
+          cron: "cron"
+        }
+      ]
+    );
+    (validator.validateSettings as jest.Mock).mockImplementation(() => {
+      return true;
+    });
+    ctx.app.reloadService.onCreateOrUpdateHistoryQueryItems.mockImplementation(() => {
+      return true;
+    });
+    await historyQueryController.importSouthItems(ctx);
+    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).toHaveBeenCalled();
+    expect(validator.validateSettings).toHaveBeenCalled();
     expect(ctx.noContent).toHaveBeenCalledTimes(1);
   });
 
