@@ -237,14 +237,14 @@ export default class RegistrationService {
         timeout: CHECK_TIMEOUT,
         agent: connectionSettings.agent
       });
+      for (const command of commandsToAck) {
+        this.repositoryService.commandRepository.markAsAcknowledged(command.id);
+      }
       if (!response.ok) {
         this.logger.error(
           `Error ${response.status} while acknowledging ${commandsToAck.length} commands on ${url}: ${response.statusText}`
         );
         return;
-      }
-      for (const command of commandsToAck) {
-        this.repositoryService.commandRepository.markAsAcknowledged(command.id);
       }
       this.logger.trace(`${commandsToAck.length} commands acknowledged`);
     } catch (fetchError) {

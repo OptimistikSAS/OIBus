@@ -78,7 +78,7 @@ class LoggerService {
       }
     }
 
-    if (registration && registration.status === 'REGISTERED') {
+    if (registration && registration.status === 'REGISTERED' && logParameters.oia.level !== 'silent') {
       try {
         targets.push({
           target: path.join(__dirname, './oianalytics-transport.js'),
