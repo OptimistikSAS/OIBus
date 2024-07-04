@@ -105,8 +105,12 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
 
   async createSubscriptions(items: Array<SouthConnectorItemDTO>) {
     if (this.queriesSubscription()) {
-      this.logger.debug(`Subscribing to ${items.length} items`);
-      await this.subscribe(items);
+      try {
+        this.logger.debug(`Subscribing to ${items.length} items`);
+        await this.subscribe(items);
+      } catch (error) {
+        this.logger.error(`Error when subscribing. ${error}`);
+      }
     }
   }
 

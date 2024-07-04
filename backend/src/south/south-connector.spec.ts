@@ -644,6 +644,15 @@ describe('SouthConnector enabled', () => {
     expect(south.subscribe).not.toHaveBeenCalled();
   });
 
+  it('should catch error if subscription fails', async () => {
+    south.subscribe = jest.fn().mockImplementationOnce(() => {
+      throw new Error('subscription error');
+    });
+    await south.createSubscriptions([items[1]]);
+    expect(south.subscribe).toHaveBeenCalledWith([items[1]]);
+    expect(logger.error).toHaveBeenCalledWith(`Error when subscribing. Error: subscription error`);
+  });
+
   it('should create cron jobs', async () => {
     (repositoryService.scanModeRepository.getScanMode as jest.Mock)
       .mockReturnValueOnce({
