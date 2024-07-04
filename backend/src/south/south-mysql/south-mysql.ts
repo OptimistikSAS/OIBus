@@ -7,6 +7,8 @@ import {
   convertDateTimeToInstant,
   createFolder,
   formatInstant,
+  generateCsvContent,
+  generateFilenameForSerialization,
   generateReplacementParameters,
   logQuery,
   persistResults
@@ -110,6 +112,65 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
     if (table_count === 0) {
       throw new Error(`Database "${this.connector.settings.database}" has no tables`);
     }
+  }
+
+  override async testItem(item: SouthConnectorItemDTO<SouthMySQLItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
+    await this.testConnection();
+
+    const config = await this.createConnectionOptions();
+    let connection;
+    try {
+      connection = await mysql.createConnection(config);
+      await connection.ping();
+    } catch {
+      await connection?.end();
+    }
+
+    const startTime = DateTime.now()
+      .minus(3600 * 1000)
+      .toUTC()
+      .toISO() as Instant;
+    const endTime = DateTime.now().toUTC().toISO() as Instant;
+    const result: Array<any> = await this.queryData(item, startTime, endTime);
+    await connection?.end();
+
+    const formattedResults = result.map(entry => {
+      const formattedEntry: Record<string, any> = {};
+      Object.entries(entry).forEach(([key, value]) => {
+        const datetimeField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.fieldName === key) || null;
+        if (!datetimeField) {
+          formattedEntry[key] = value;
+        } else {
+          const entryDate = convertDateTimeToInstant(value, datetimeField);
+          formattedEntry[key] = formatInstant(entryDate, {
+            type: 'string',
+            format: item.settings.serialization.outputTimestampFormat,
+            timezone: item.settings.serialization.outputTimezone,
+            locale: 'en-En'
+          });
+        }
+      });
+      return formattedEntry;
+    });
+
+    let oibusContent: OIBusContent;
+    switch (item.settings.serialization.type) {
+      case 'csv': {
+        const filePath = generateFilenameForSerialization(
+          this.tmpFolder,
+          item.settings.serialization.filename,
+          this.connector.name,
+          item.name
+        );
+        const content = generateCsvContent(formattedResults, item.settings.serialization.delimiter);
+        oibusContent = { type: 'raw', filePath, content };
+        break;
+      }
+      default: {
+        oibusContent = { type: 'time-values', content: formattedResults as Array<any> };
+      }
+    }
+    callback(oibusContent);
   }
 
   /**

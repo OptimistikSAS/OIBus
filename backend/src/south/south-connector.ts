@@ -593,6 +593,10 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
     this.logger.warn('testConnection must be override');
   }
 
+  async testItem(item: SouthConnectorItemDTO, _callback: (data: OIBusContent) => Promise<void>): Promise<void> {
+    this.logger.warn(`testItem must be override to test item ${item.name}`);
+  }
+
   get settings(): SouthConnectorDTO<T> {
     return this.connector;
   }
