@@ -8,7 +8,8 @@ import {
   SouthConnectorItemDTO,
   SouthConnectorItemSearchParam,
   SouthType,
-  SouthConnectorItemScanModeNameDTO
+  SouthConnectorItemScanModeNameDTO,
+  SouthConnectorItemTestCommandDTO
 } from '../../../../shared/model/south-connector.model';
 import { Page } from '../../../../shared/model/types';
 import JoiValidator from './validators/joi.validator';
@@ -272,6 +273,79 @@ export default class SouthConnectorController {
       ctx.noContent();
     } else {
       ctx.notFound();
+    }
+  }
+
+  async testSouthItem(ctx: KoaContext<SouthConnectorItemTestCommandDTO, void>): Promise<void> {
+    try {
+      // South validation
+      const manifest = ctx.request.body
+        ? ctx.app.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === ctx.request.body!.south.type)
+        : null;
+      if (!manifest) {
+        return ctx.notFound('South manifest not found');
+      }
+
+      let southConnector: SouthConnectorDTO | null = null;
+      if (ctx.params.id !== 'create') {
+        southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.id);
+        if (!southConnector) {
+          return ctx.notFound(`South not found: ${ctx.params.id}`);
+        }
+      }
+      if (!southConnector && ctx.query.duplicateId) {
+        southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.query.duplicateId);
+        if (!southConnector) {
+          return ctx.notFound(`South not found: ${ctx.query.duplicateId}`);
+        }
+      }
+      await this.validator.validateSettings(manifest.settings, ctx.request.body!.south.settings);
+
+      // South item validation
+      const itemCommand = ctx.request.body!.item;
+      if (!itemCommand.scanModeId && !itemCommand.scanModeName) {
+        return ctx.badRequest(`Scan mode not specified for item ${itemCommand.name}`);
+      }
+
+      let scanModeId = itemCommand.scanModeId;
+      if (!itemCommand.scanModeId && itemCommand.scanModeName) {
+        const scanModes = ctx.app.repositoryService.scanModeRepository.getScanModes();
+        const scanMode = scanModes.find(element => element.name === itemCommand.scanModeName);
+        if (!scanMode) {
+          return ctx.badRequest(`Scan mode ${itemCommand.scanModeName} not found for item ${itemCommand.name}`);
+        }
+        scanModeId = scanMode.id;
+      }
+      await this.validator.validateSettings(manifest.items.settings, ctx.request.body!.item.settings);
+
+      // Prepare South and South item to test
+      const southCommand: SouthConnectorDTO = { id: southConnector?.id || 'test', ...ctx.request.body!.south };
+      southCommand.settings = await ctx.app.encryptionService.encryptConnectorSecrets(
+        southCommand.settings,
+        southConnector?.settings,
+        manifest.settings
+      );
+      ctx.request.body!.south.name = southConnector ? southConnector.name : `${ctx.request.body!.south.type}:test-connection`;
+      const logger = ctx.app.logger.child(
+        {
+          scopeType: 'south',
+          scopeId: southCommand.id,
+          scopeName: southCommand.name
+        },
+        { level: 'silent' }
+      );
+      const southToTest = ctx.app.southService.createSouth(southCommand, this.addContent, 'baseFolder', logger);
+
+      const southItemToTest: SouthConnectorItemDTO = {
+        id: 'test',
+        connectorId: southCommand.id,
+        scanModeId: scanModeId!,
+        ...ctx.request.body!.item
+      };
+
+      await southToTest.testItem(southItemToTest, ctx.ok);
+    } catch (error: any) {
+      ctx.badRequest(error.message);
     }
   }
 
