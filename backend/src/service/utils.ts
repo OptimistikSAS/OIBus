@@ -224,13 +224,7 @@ export const persistResults = async (
     case 'json':
       return addContentFn({ type: 'time-values', content: data });
     case 'file':
-      const filePath = path.join(
-        baseFolder,
-        serializationSettings.filename
-          .replace('@CurrentDate', DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))
-          .replace('@ConnectorName', connectorName)
-          .replace('@ItemName', itemName)
-      );
+      const filePath = generateFilenameForSerialization(baseFolder, serializationSettings.filename, connectorName, itemName);
       logger.debug(`Writing ${data.length} bytes into file at "${filePath}"`);
       await fs.writeFile(filePath, data);
 
@@ -266,18 +260,8 @@ export const persistResults = async (
       }
       break;
     case 'csv':
-      const options = {
-        header: true,
-        delimiter: convertDelimiter(serializationSettings.delimiter)
-      };
-      const csvPath = path.join(
-        baseFolder,
-        serializationSettings.filename
-          .replace('@CurrentDate', DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))
-          .replace('@ConnectorName', connectorName)
-          .replace('@ItemName', itemName)
-      );
-      const csvContent = csv.unparse(data, options);
+      const csvPath = generateFilenameForSerialization(baseFolder, serializationSettings.filename, connectorName, itemName);
+      const csvContent = generateCsvContent(data, serializationSettings.delimiter);
 
       logger.debug(`Writing ${csvContent.length} bytes into CSV file at "${csvPath}"`);
       await fs.writeFile(csvPath, csvContent);
@@ -318,6 +302,23 @@ export const persistResults = async (
   }
 };
 
+export const generateFilenameForSerialization = (baseFolder: string, filename: string, connectorName: string, itemName: string): string => {
+  return path.join(
+    baseFolder,
+    filename
+      .replace('@CurrentDate', DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))
+      .replace('@ConnectorName', connectorName)
+      .replace('@ItemName', itemName)
+  );
+};
+
+export const generateCsvContent = (data: Array<any>, delimiter: CsvCharacter): string => {
+  const options = {
+    header: true,
+    delimiter: convertDelimiter(delimiter)
+  };
+  return csv.unparse(data, options);
+};
 /**
  * Log the executed query with replacements values for query variables
  */

@@ -244,6 +244,41 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
     }
   }
 
+  override async testItem(item: SouthConnectorItemDTO<SouthModbusItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
+    try {
+      await new Promise<void>((resolve, reject) => {
+        this.socket = new net.Socket();
+        this.client = new client.TCP(this.socket, this.connector.settings.slaveId);
+        this.socket.connect(
+          {
+            host: this.connector.settings.host,
+            port: this.connector.settings.port
+          },
+          async () => {
+            const dataValues: OIBusTimeValue[] = await this.modbusFunction(item);
+            callback({
+              type: 'time-values',
+              content: dataValues
+            });
+            await this.disconnect();
+            resolve();
+          }
+        );
+        this.socket.on('error', async error => {
+          reject(error);
+        });
+      });
+    } catch (error: any) {
+      switch (error.code) {
+        case 'ENOTFOUND':
+        case 'ECONNREFUSED':
+          throw new Error(`Please check host and port. ${error.message}`);
+        default:
+          throw new Error(`Unable to connect to socket. ${error.message}`);
+      }
+    }
+  }
+
   /**
    * Retrieve the right buffer function name according to the data type
    */
