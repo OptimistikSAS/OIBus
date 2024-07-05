@@ -3,6 +3,8 @@ import {
   AttributeIds,
   ClientMonitoredItem,
   ClientSubscription,
+  DataType,
+  DataValue,
   HistoryReadRequest,
   MessageSecurityMode,
   OPCUAClient,
@@ -10,7 +12,8 @@ import {
   ReadRawModifiedDetails,
   StatusCodes,
   TimestampsToReturn,
-  UserTokenType
+  UserTokenType,
+  Variant
 } from 'node-opcua-client';
 
 import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
@@ -258,15 +261,15 @@ export default class SouthOPCUA
                     );
                     dataByItems = [
                       ...dataByItems,
-                      ...result.historyData.dataValues.map((dataValue: any) => {
+                      ...result.historyData.dataValues.map((dataValue: DataValue) => {
                         const selectedTimestamp = dataValue.sourceTimestamp ?? dataValue.serverTimestamp;
-                        const selectedTime = selectedTimestamp.getTime();
+                        const selectedTime = selectedTimestamp!.getTime();
                         maxTimestamp = selectedTime > maxTimestamp ? selectedTime : maxTimestamp;
                         return {
                           pointId: associatedItem.itemName,
-                          timestamp: selectedTimestamp.toISOString(),
+                          timestamp: selectedTimestamp!.toISOString(),
                           data: {
-                            value: dataValue.value.value,
+                            value: this.parseOPCUAValue(associatedItem.itemName, dataValue.value),
                             quality: JSON.stringify(dataValue.statusCode)
                           }
                         };
@@ -293,7 +296,7 @@ export default class SouthOPCUA
                 .filter(node => !!node.continuationPoint);
 
               this.logger.debug(`Adding ${dataByItems.length} values between ${startTime} and ${endTime}`);
-              await this.addValues(dataByItems);
+              await this.addValues(dataByItems.filter(parsedData => parsedData.data.value));
 
               this.logger.trace(`Continue read for ${nodesToRead.length} points`);
             } else {
@@ -516,16 +519,16 @@ export default class SouthOPCUA
         );
       }
 
-      const timestamp = new Date().toISOString();
-      const values = dataValues.map((dataValue, i) => ({
+      const timestamp = DateTime.now().toUTC().toISO()!;
+      const values = dataValues.map((dataValue: DataValue, i) => ({
         pointId: itemsToRead[i].name,
         timestamp,
         data: {
-          value: dataValue.value.value,
+          value: this.parseOPCUAValue(itemsToRead[i].name, dataValue.value),
           quality: JSON.stringify(dataValue.statusCode)
         }
       }));
-      await this.addValues(values);
+      await this.addValues(values.filter(parsedValue => parsedValue.data.value));
     } catch (error) {
       if (!this.disconnecting) {
         await this.disconnect();
@@ -568,17 +571,20 @@ export default class SouthOPCUA
         },
         TimestampsToReturn.Neither
       );
-      monitoredItem.on('changed', async dataValue => {
-        await this.addValues([
-          {
-            pointId: item.name,
-            timestamp: DateTime.now().toUTC().toISO()!,
-            data: {
-              value: dataValue.value.value,
-              quality: JSON.stringify(dataValue.statusCode)
+      monitoredItem.on('changed', async (dataValue: DataValue) => {
+        const parsedValue = this.parseOPCUAValue(item.name, dataValue.value);
+        if (parsedValue) {
+          await this.addValues([
+            {
+              pointId: item.name,
+              timestamp: DateTime.now().toUTC().toISO()!,
+              data: {
+                value: parsedValue,
+                quality: JSON.stringify(dataValue.statusCode)
+              }
             }
-          }
-        ]);
+          ]);
+        }
       });
       this.monitoredItems.set(item.id, monitoredItem);
     });
@@ -609,5 +615,59 @@ export default class SouthOPCUA
 
     await fs.copyFile(path.resolve(`./`, CERT_FOLDER, CERT_PRIVATE_KEY_FILE_NAME), `${opcuaBaseFolder}/own/private/private_key.pem`);
     await fs.copyFile(path.resolve(`./`, CERT_FOLDER, CERT_FILE_NAME), `${opcuaBaseFolder}/own/certs/client_certificate.pem`);
+  }
+
+  parseOPCUAValue(itemName: string, opcuaVariant: Variant): string {
+    switch (opcuaVariant.dataType) {
+      case DataType.String:
+      case DataType.Float:
+      case DataType.Double:
+      case DataType.SByte:
+      case DataType.Int16:
+      case DataType.Int32:
+      case DataType.Byte:
+      case DataType.UInt16:
+      case DataType.UInt32:
+        return opcuaVariant.value.toString();
+
+      case DataType.UInt64:
+        return Buffer.concat([
+          new Uint8Array(Uint32Array.of(opcuaVariant.value[0]).buffer).reverse(),
+          new Uint8Array(Uint32Array.of(opcuaVariant.value[1]).buffer).reverse()
+        ])
+          .readBigUInt64BE()
+          .toString();
+      case DataType.Int64:
+        return Buffer.concat([
+          new Uint8Array(Uint32Array.of(opcuaVariant.value[0]).buffer).reverse(),
+          new Uint8Array(Uint32Array.of(opcuaVariant.value[1]).buffer).reverse()
+        ])
+          .readBigInt64BE()
+          .toString();
+
+      case DataType.ByteString:
+        return Buffer.from(opcuaVariant.value).readUInt8().toString();
+
+      case DataType.Boolean:
+        return opcuaVariant.value ? '1' : '0';
+
+      case DataType.DateTime:
+        return DateTime.fromJSDate(opcuaVariant.value).toUTC().toISO()!;
+
+      case DataType.Null:
+      case DataType.Variant:
+      case DataType.DataValue:
+      case DataType.DiagnosticInfo:
+      case DataType.ExpandedNodeId:
+      case DataType.ExtensionObject:
+      case DataType.XmlElement:
+      case DataType.NodeId:
+      case DataType.LocalizedText:
+      case DataType.QualifiedName:
+      case DataType.Guid:
+      case DataType.StatusCode:
+        this.logger.warn(`Item ${itemName} with value ${opcuaVariant.value} of type ${opcuaVariant.dataType} could not be parsed`);
+        return '';
+    }
   }
 }

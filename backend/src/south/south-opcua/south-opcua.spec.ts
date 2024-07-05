@@ -4,7 +4,8 @@ import nodeOPCUAClient, {
   ReadProcessedDetails,
   ReadRawModifiedDetails,
   StatusCodes,
-  TimestampsToReturn
+  TimestampsToReturn,
+  DataType
 } from 'node-opcua-client';
 
 import fs from 'node:fs/promises';
@@ -19,7 +20,7 @@ import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock
 import { randomUUID } from 'crypto';
 import path from 'node:path';
 
-import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import {
   SouthOPCUAItemSettings,
   SouthOPCUASettings,
@@ -43,6 +44,7 @@ jest.mock('node-opcua-client', () => ({
   ClientSubscription: { create: jest.fn() },
   ClientMonitoredItem: { create: jest.fn() },
   MessageSecurityMode: { None: 1 },
+  DataType: jest.requireActual('node-opcua-client').DataType,
   StatusCodes: jest.requireActual('node-opcua-client').StatusCodes,
   SecurityPolicy: jest.requireActual('node-opcua-client').SecurityPolicy,
   AttributeIds: jest.requireActual('node-opcua-client').AttributeIds,
@@ -299,7 +301,8 @@ describe('SouthOPCUA', () => {
                 {
                   sourceTimestamp: new Date(nowDateString),
                   value: {
-                    value: 123
+                    value: '123',
+                    dataType: DataType.String
                   },
                   statusCode: {
                     value: StatusCodes.Good,
@@ -309,7 +312,8 @@ describe('SouthOPCUA', () => {
                 {
                   serverTimestamp: new Date(nowDateString),
                   value: {
-                    value: 123
+                    value: [0, 456],
+                    dataType: DataType.UInt64
                   },
                   statusCode: {
                     value: StatusCodes.Good,
@@ -319,7 +323,41 @@ describe('SouthOPCUA', () => {
                 {
                   serverTimestamp: new Date('2023-12-12T00:00:00.000Z'),
                   value: {
-                    value: 456
+                    value: [0, 789],
+                    dataType: DataType.Int64
+                  },
+                  statusCode: {
+                    value: StatusCodes.Good,
+                    description: 'ok'
+                  }
+                },
+                {
+                  serverTimestamp: new Date('2023-12-12T00:00:00.000Z'),
+                  value: {
+                    value: [0x0a],
+                    dataType: DataType.ByteString
+                  },
+                  statusCode: {
+                    value: StatusCodes.Good,
+                    description: 'ok'
+                  }
+                },
+                {
+                  serverTimestamp: new Date('2023-12-12T00:00:00.000Z'),
+                  value: {
+                    value: new Date('2023-12-12T00:00:00.000Z'),
+                    dataType: DataType.DateTime
+                  },
+                  statusCode: {
+                    value: StatusCodes.Good,
+                    description: 'ok'
+                  }
+                },
+                {
+                  serverTimestamp: new Date('2023-12-12T00:00:00.000Z'),
+                  value: {
+                    value: null,
+                    dataType: DataType.Null
                   },
                   statusCode: {
                     value: StatusCodes.Good,
@@ -337,7 +375,8 @@ describe('SouthOPCUA', () => {
                 {
                   sourceTimestamp: new Date(nowDateString),
                   value: {
-                    value: 123
+                    value: true,
+                    dataType: DataType.Boolean
                   },
                   statusCode: {
                     value: StatusCodes.Good,
@@ -347,7 +386,8 @@ describe('SouthOPCUA', () => {
                 {
                   sourceTimestamp: new Date(nowDateString),
                   value: {
-                    value: 123
+                    value: false,
+                    dataType: DataType.Boolean
                   },
                   statusCode: {
                     value: StatusCodes.Bad,
@@ -393,27 +433,37 @@ describe('SouthOPCUA', () => {
 
     expect(south.addValues).toHaveBeenCalledWith([
       {
-        data: { value: 123, quality: JSON.stringify({ value: StatusCodes.Good, description: 'ok' }) },
+        data: { value: '123', quality: JSON.stringify({ value: StatusCodes.Good, description: 'ok' }) },
         pointId: items[0].name,
         timestamp: nowDateString
       },
       {
-        data: { value: 123, quality: JSON.stringify({ value: StatusCodes.Good, description: 'ok' }) },
+        data: { value: '456', quality: JSON.stringify({ value: StatusCodes.Good, description: 'ok' }) },
         pointId: items[0].name,
         timestamp: nowDateString
       },
       {
-        data: { value: 456, quality: JSON.stringify({ value: StatusCodes.Good, description: 'ok' }) },
+        data: { value: '789', quality: JSON.stringify({ value: StatusCodes.Good, description: 'ok' }) },
         pointId: items[0].name,
         timestamp: '2023-12-12T00:00:00.000Z'
       },
       {
-        data: { value: 123, quality: JSON.stringify({ value: StatusCodes.Good, description: 'ok' }) },
+        data: { value: '10', quality: JSON.stringify({ value: StatusCodes.Good, description: 'ok' }) },
+        pointId: items[0].name,
+        timestamp: '2023-12-12T00:00:00.000Z'
+      },
+      {
+        data: { value: '2023-12-12T00:00:00.000Z', quality: JSON.stringify({ value: StatusCodes.Good, description: 'ok' }) },
+        pointId: items[0].name,
+        timestamp: '2023-12-12T00:00:00.000Z'
+      },
+      {
+        data: { value: '1', quality: JSON.stringify({ value: StatusCodes.Good, description: 'ok' }) },
         pointId: items[1].name,
         timestamp: nowDateString
       },
       {
-        data: { value: 123, quality: JSON.stringify({ value: StatusCodes.Bad, description: 'not ok' }) },
+        data: { value: '0', quality: JSON.stringify({ value: StatusCodes.Bad, description: 'not ok' }) },
         pointId: items[1].name,
         timestamp: nowDateString
       }
@@ -552,9 +602,9 @@ describe('SouthOPCUA', () => {
 
   it('should properly query items', async () => {
     const read = jest.fn().mockReturnValue([
-      { value: { value: 1 }, statusCode: { value: 0 } },
-      { value: { value: 2 }, statusCode: { value: 0 } },
-      { value: { value: 3 }, statusCode: { value: 0 } }
+      { value: { value: 1, dataType: DataType.Float }, statusCode: { value: 0 } },
+      { value: { value: 2, dataType: DataType.Double }, statusCode: { value: 0 } },
+      { value: { value: 3, dataType: DataType.UInt16 }, statusCode: { value: 0 } }
     ]);
     (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ read });
     south.addValues = jest.fn();
@@ -573,7 +623,7 @@ describe('SouthOPCUA', () => {
         pointId: expectedItemsToRead[0].name,
         timestamp: nowDateString,
         data: {
-          value: 1,
+          value: '1',
           quality: JSON.stringify({ value: 0 })
         }
       },
@@ -581,7 +631,7 @@ describe('SouthOPCUA', () => {
         pointId: expectedItemsToRead[1].name,
         timestamp: nowDateString,
         data: {
-          value: 2,
+          value: '2',
           quality: JSON.stringify({ value: 0 })
         }
       },
@@ -589,7 +639,7 @@ describe('SouthOPCUA', () => {
         pointId: expectedItemsToRead[2].name,
         timestamp: nowDateString,
         data: {
-          value: 3,
+          value: '3',
           quality: JSON.stringify({ value: 0 })
         }
       }
@@ -646,8 +696,8 @@ describe('SouthOPCUA', () => {
 
   it('should properly query items and log error when not same number of items and values', async () => {
     const read = jest.fn().mockReturnValue([
-      { value: { value: 1 }, statusCode: { value: 0 } },
-      { value: { value: 2 }, statusCode: { value: 0 } }
+      { value: { value: 1, dataType: DataType.Float }, statusCode: { value: 0 } },
+      { value: { value: 2, dataType: DataType.Double }, statusCode: { value: 0 } }
     ]);
     (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ read });
     south.addValues = jest.fn();
@@ -664,7 +714,7 @@ describe('SouthOPCUA', () => {
         pointId: expectedItemsToRead[0].name,
         timestamp: nowDateString,
         data: {
-          value: 1,
+          value: '1',
           quality: JSON.stringify({ value: 0 })
         }
       },
@@ -672,7 +722,7 @@ describe('SouthOPCUA', () => {
         pointId: expectedItemsToRead[1].name,
         timestamp: nowDateString,
         data: {
-          value: 2,
+          value: '2',
           quality: JSON.stringify({ value: 0 })
         }
       }
@@ -708,15 +758,15 @@ describe('SouthOPCUA', () => {
     await south.subscribe([items[0]]);
     expect(nodeOPCUAClient.ClientSubscription.create).toHaveBeenCalledTimes(1);
     expect(nodeOPCUAClient.ClientMonitoredItem.create).toHaveBeenCalledTimes(1);
+    stream.emit('changed', { value: { value: 1, dataType: DataType.Null }, statusCode: { value: 0 } });
     expect(south.addValues).not.toHaveBeenCalled();
-
-    stream.emit('changed', { value: { value: 1 }, statusCode: { value: 0 } });
+    stream.emit('changed', { value: { value: 1, dataType: DataType.Float }, statusCode: { value: 0 } });
     expect(south.addValues).toHaveBeenCalledWith([
       {
         pointId: items[0].name,
         timestamp: nowDateString,
         data: {
-          value: 1,
+          value: '1',
           quality: JSON.stringify({ value: 0 })
         }
       }
