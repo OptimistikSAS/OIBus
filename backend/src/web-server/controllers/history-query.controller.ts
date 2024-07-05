@@ -391,7 +391,7 @@ export default class HistoryQueryController extends AbstractController {
         const item: SouthConnectorItemDTO = {
           id: '',
           name: (data as any).name,
-          enabled: true,
+          enabled: (data as any).enabled.toLowerCase() === 'true',
           connectorId: ctx.params.historyQueryId !== 'create' ? ctx.params.historyQueryId : '',
           scanModeId: '',
           settings: {}

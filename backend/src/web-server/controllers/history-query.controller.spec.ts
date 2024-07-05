@@ -1055,20 +1055,24 @@ describe('History query controller', () => {
     (csv.parse as jest.Mock).mockReturnValue({
       data: [
         {
-          name: 'item1'
+          name: 'item1',
+          enabled: 'false'
         },
         {
           name: 'item2',
+          enabled: 'true',
           settings_badField: 'badField'
         },
         {
           name: 'item3',
+          enabled: 'true',
           settings_objectArray: '[]',
           settings_objectSettings: '{}',
           settings_objectValue: 1
         },
         {
           name: 'item4',
+          enabled: 'true',
           settings_objectArray: '[]',
           settings_objectSettings: '{}',
           settings_objectValue: 1
@@ -1104,7 +1108,7 @@ describe('History query controller', () => {
           item: {
             id: '',
             name: 'item1',
-            enabled: true,
+            enabled: false,
             connectorId: '',
             scanModeId: '',
             settings: {}
@@ -1156,12 +1160,14 @@ describe('History query controller', () => {
       data: [
         {
           name: 'existingItem',
+          enabled: 'true',
           settings_objectArray: '[]',
           settings_objectSettings: '{}',
           settings_objectValue: 1
         },
         {
           name: 'newItem',
+          enabled: 'true',
           settings_objectArray: '[]',
           settings_objectSettings: '{}',
           settings_objectValue: 1
