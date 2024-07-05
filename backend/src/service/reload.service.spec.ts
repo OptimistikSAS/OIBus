@@ -258,15 +258,22 @@ describe('reload service', () => {
   });
 
   it('should create or update south items', async () => {
-    await service.onCreateOrUpdateSouthItems({ id: 'southId' } as SouthConnectorDTO, [], []);
-    expect(repositoryService.southItemRepository.createAndUpdateSouthItems).toHaveBeenCalledWith('southId', [], []);
+    await service.onCreateOrUpdateSouthItems({ id: 'southId' } as SouthConnectorDTO, [], [], false);
+    expect(repositoryService.southItemRepository.createAndUpdateSouthItems).toHaveBeenCalledWith('southId', [], [], false);
+    expect(oibusEngine.stopSouth).toHaveBeenCalledWith('southId');
+    expect(oibusEngine.startSouth).toHaveBeenCalledWith('southId', { id: 'southId' });
+  });
+
+  it('should create a copy of south items', async () => {
+    await service.onCreateOrUpdateSouthItems({ id: 'southId' } as SouthConnectorDTO, [], [], true);
+    expect(repositoryService.southItemRepository.createAndUpdateSouthItems).toHaveBeenCalledWith('southId', [], [], true);
     expect(oibusEngine.stopSouth).toHaveBeenCalledWith('southId');
     expect(oibusEngine.startSouth).toHaveBeenCalledWith('southId', { id: 'southId' });
   });
 
   it('should create or update south items without restarting', async () => {
-    await service.onCreateOrUpdateSouthItems({ id: 'southId' } as SouthConnectorDTO, [], [], false);
-    expect(repositoryService.southItemRepository.createAndUpdateSouthItems).toHaveBeenCalledWith('southId', [], []);
+    await service.onCreateOrUpdateSouthItems({ id: 'southId' } as SouthConnectorDTO, [], [], false, false);
+    expect(repositoryService.southItemRepository.createAndUpdateSouthItems).toHaveBeenCalledWith('southId', [], [], false);
     expect(oibusEngine.stopSouth).toHaveBeenCalledWith('southId');
     expect(oibusEngine.startSouth).not.toHaveBeenCalled();
   });
@@ -283,10 +290,10 @@ describe('reload service', () => {
     (repositoryService.southItemRepository.getSouthItems as jest.Mock).mockReturnValueOnce(previousSouthItems);
     const onSouthItemScanModeChangeSpy = jest.spyOn(service as any, 'onSouthItemScanModeChange').mockImplementation();
 
-    await service.onCreateOrUpdateSouthItems({ id: 'southId' } as SouthConnectorDTO, [], southItemsToUpdate);
+    await service.onCreateOrUpdateSouthItems({ id: 'southId' } as SouthConnectorDTO, [], southItemsToUpdate, false);
 
     expect(repositoryService.southItemRepository.getSouthItems).toHaveBeenCalledWith('southId');
-    expect(repositoryService.southItemRepository.createAndUpdateSouthItems).toHaveBeenCalledWith('southId', [], southItemsToUpdate);
+    expect(repositoryService.southItemRepository.createAndUpdateSouthItems).toHaveBeenCalledWith('southId', [], southItemsToUpdate, false);
     expect(oibusEngine.stopSouth).toHaveBeenCalledWith('southId');
     expect(onSouthItemScanModeChangeSpy).toHaveBeenCalledWith('southId', previousSouthItems[0], southItemsToUpdate[0]);
     expect(onSouthItemScanModeChangeSpy).toHaveBeenCalledWith('southId', previousSouthItems[1], southItemsToUpdate[1]);
