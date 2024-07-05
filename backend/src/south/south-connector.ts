@@ -78,7 +78,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
           return;
         }
         const scanMode = this.taskJobQueue[0];
-        const items = this.items.filter(item => item.scanModeId === scanMode.id && item.enabled);
+        const items = this.items.filter(item => item.scanModeId === scanMode.id);
         this.logger.trace(`Running South with scan mode ${scanMode.name}`);
         await this.run(scanMode.id, items);
       } else {
@@ -468,16 +468,19 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
         this.logger.error(`Error when creating South item in cron jobs: scan mode ${item.scanModeId} not found`);
         return;
       }
-      this.items.push(item);
       if (!this.isEnabled() || !item.enabled) {
         return;
       }
+      this.items.push(item);
       if (item.scanModeId === 'subscription' && item.enabled) {
         await this.createSubscriptions([item]);
       } else if (!this.cronByScanModeIds.get(scanMode.id) && item.enabled) {
         this.createCronJob(scanMode);
       }
     } else {
+      if (!this.isEnabled() || !item.enabled) {
+        return;
+      }
       this.items.push(item);
     }
   }

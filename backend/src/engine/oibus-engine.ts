@@ -132,7 +132,7 @@ export default class OIBusEngine extends BaseEngine {
     const items = this.southService.getSouthItems(settings.id);
     const south = this.southService.createSouth(
       settings,
-      items,
+      items.filter(item => item.enabled),
       this.addValues.bind(this),
       this.addFile.bind(this),
       baseFolder,
