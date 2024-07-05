@@ -208,7 +208,7 @@ export default class SouthConnectorController {
       // which might be changed in the south connector update
       await ctx.app.reloadService.onUpdateSouth(ctx.params.id, command, false);
       southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.id)!; // Updated south connector
-      await ctx.app.reloadService.onCreateOrUpdateSouthItems(southConnector, itemsToAdd, itemsToUpdate);
+      await ctx.app.reloadService.onCreateOrUpdateSouthItems(southConnector, itemsToAdd, itemsToUpdate, false);
       ctx.noContent();
     } catch (error: any) {
       ctx.badRequest(error.message);
@@ -369,7 +369,7 @@ export default class SouthConnectorController {
         const item: SouthConnectorItemDTO = {
           id: '',
           name: (data as any).name,
-          enabled: true,
+          enabled: (data as any).enabled.toLowerCase() === 'true',
           connectorId: ctx.params.southId !== 'create' ? ctx.params.southId : '',
           scanModeId: '',
           settings: {}
@@ -442,7 +442,7 @@ export default class SouthConnectorController {
     }
 
     try {
-      await ctx.app.reloadService.onCreateOrUpdateSouthItems(southConnector, items, []);
+      await ctx.app.reloadService.onCreateOrUpdateSouthItems(southConnector, items, [], true);
     } catch (error: any) {
       return ctx.badRequest(error.message);
     }
