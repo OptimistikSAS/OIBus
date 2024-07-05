@@ -495,6 +495,7 @@ describe('SouthConnector enabled', () => {
 
     await south.addItem(item);
     await south.addItem({ ...item, scanModeId: '' });
+    await south.addItem({ ...item, scanModeId: '', enabled: false });
 
     expect(south.createCronJob).toHaveBeenCalledTimes(1);
   });
