@@ -205,7 +205,7 @@ export default class SouthConnectorController {
       for (const itemId of ctx.request.body!.itemIdsToDelete) {
         await ctx.app.reloadService.onDeleteSouthItem(itemId);
       }
-      await ctx.app.reloadService.onUpdateSouth(southConnector, command, itemsToAdd, itemsToUpdate);
+      await ctx.app.reloadService.onUpdateSouth(southConnector, command, itemsToAdd, itemsToUpdate, false);
       ctx.noContent();
     } catch (error: any) {
       ctx.badRequest(error.message);
@@ -365,7 +365,7 @@ export default class SouthConnectorController {
         const item: SouthConnectorItemDTO = {
           id: '',
           name: (data as any).name,
-          enabled: true,
+          enabled: (data as any).enabled.toLowerCase() === 'true',
           connectorId: ctx.params.southId !== 'create' ? ctx.params.southId : '',
           scanModeId: '',
           settings: {}
@@ -438,7 +438,7 @@ export default class SouthConnectorController {
     }
 
     try {
-      ctx.app.reloadService.onCreateOrUpdateSouthItems(southConnector, items, []);
+      ctx.app.reloadService.onCreateOrUpdateSouthItems(southConnector, items, [], true);
       await ctx.app.reloadService.oibusEngine.onSouthItemsChange(southConnector.id);
     } catch (error: any) {
       return ctx.badRequest(error.message);
