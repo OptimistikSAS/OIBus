@@ -992,15 +992,18 @@ describe('South connector controller', () => {
       data: [
         {
           name: 'item1',
+          enabled: 'false',
           scanMode: 'badScanMode'
         },
         {
           name: 'item2',
+          enabled: 'true',
           scanMode: 'scanMode',
           settings_badField: 'badField'
         },
         {
           name: 'item3',
+          enabled: 'true',
           scanMode: 'scanMode',
           settings_objectArray: '[]',
           settings_objectSettings: '{}',
@@ -1008,6 +1011,7 @@ describe('South connector controller', () => {
         },
         {
           name: 'item4',
+          enabled: 'true',
           scanMode: 'scanMode',
           settings_objectArray: '[]',
           settings_objectSettings: '{}',
@@ -1044,7 +1048,7 @@ describe('South connector controller', () => {
           item: {
             id: '',
             name: 'item1',
-            enabled: true,
+            enabled: false,
             connectorId: '',
             scanModeId: '',
             settings: {}
@@ -1101,6 +1105,7 @@ describe('South connector controller', () => {
       data: [
         {
           name: 'existingItem',
+          enabled: 'true',
           scanMode: 'scanMode',
           settings_objectArray: '[]',
           settings_objectSettings: '{}',
@@ -1108,6 +1113,7 @@ describe('South connector controller', () => {
         },
         {
           name: 'newItem',
+          enabled: 'true',
           scanMode: 'scanMode',
           settings_objectArray: '[]',
           settings_objectSettings: '{}',
@@ -1115,6 +1121,7 @@ describe('South connector controller', () => {
         },
         {
           name: 'willBeDeleted',
+          enabled: 'true',
           scanMode: 'scanMode',
           settings_objectArray: '[]',
           settings_objectSettings: '{}',
