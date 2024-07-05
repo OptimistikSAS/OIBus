@@ -170,7 +170,8 @@ export default class SouthItemRepository {
   createAndUpdateSouthItems(
     southId: string,
     itemsToAdd: Array<SouthConnectorItemCommandDTO>,
-    itemsToUpdate: Array<SouthConnectorItemCommandDTO>
+    itemsToUpdate: Array<SouthConnectorItemCommandDTO>,
+    duplicated: boolean
   ): void {
     const insert = this.database.prepare(
       `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings) VALUES (?, ?, ?, ?, ?, ?);`
@@ -183,9 +184,16 @@ export default class SouthItemRepository {
       for (const item of itemsToUpdate) {
         update.run(item.name, +item.enabled, item.scanModeId, JSON.stringify(item.settings), item.id);
       }
-      for (const item of itemsToAdd) {
-        const id = generateRandomId(6);
-        insert.run(id, item.name, 1, southId, item.scanModeId, JSON.stringify(item.settings));
+      if(duplicated){
+        for (const item of itemsToAdd) {
+          const id = generateRandomId(6);
+          insert.run(id, item.name, +item.enabled, southId, item.scanModeId, JSON.stringify(item.settings));
+        }
+      }else{
+        for (const item of itemsToAdd) {
+          const id = generateRandomId(6);
+          insert.run(id, item.name, 1, southId, item.scanModeId, JSON.stringify(item.settings));
+        }
       }
     });
     transaction();

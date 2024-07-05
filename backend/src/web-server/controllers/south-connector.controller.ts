@@ -148,8 +148,10 @@ export default class SouthConnectorController {
         command.history.maxInstantPerItem = true;
       }
       let duplicatedConnector: SouthConnectorDTO | null = null;
+      let duplicated = false;
       if (ctx.query.duplicateId) {
         duplicatedConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.query.duplicateId);
+        duplicated = true;
         if (!duplicatedConnector) {
           return ctx.notFound();
         }
@@ -161,7 +163,7 @@ export default class SouthConnectorController {
       );
       const southConnector = await ctx.app.reloadService.onCreateSouth(command);
 
-      await ctx.app.reloadService.onCreateOrUpdateSouthItems(southConnector, ctx.request.body!.items, []);
+      await ctx.app.reloadService.onCreateOrUpdateSouthItems(southConnector, ctx.request.body!.items, [], duplicated);
 
       ctx.created(southConnector);
     } catch (error: any) {
@@ -208,7 +210,7 @@ export default class SouthConnectorController {
       // which might be changed in the south connector update
       await ctx.app.reloadService.onUpdateSouth(ctx.params.id, command, false);
       southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.id)!; // Updated south connector
-      await ctx.app.reloadService.onCreateOrUpdateSouthItems(southConnector, itemsToAdd, itemsToUpdate);
+      await ctx.app.reloadService.onCreateOrUpdateSouthItems(southConnector, itemsToAdd, itemsToUpdate, false);
       ctx.noContent();
     } catch (error: any) {
       ctx.badRequest(error.message);
@@ -442,7 +444,7 @@ export default class SouthConnectorController {
     }
 
     try {
-      await ctx.app.reloadService.onCreateOrUpdateSouthItems(southConnector, items, []);
+      await ctx.app.reloadService.onCreateOrUpdateSouthItems(southConnector, items, [], true);
     } catch (error: any) {
       return ctx.badRequest(error.message);
     }

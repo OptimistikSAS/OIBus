@@ -210,12 +210,13 @@ export default class ReloadService {
     southConnector: SouthConnectorDTO,
     itemsToAdd: Array<SouthConnectorItemCommandDTO>,
     itemsToUpdate: Array<SouthConnectorItemCommandDTO>,
+    duplicated : boolean,
     restart = true
   ): Promise<void> {
     await this.oibusEngine.stopSouth(southConnector.id);
 
     const allPreviousSouthItems = this.repositoryService.southItemRepository.getSouthItems(southConnector.id);
-    this.repositoryService.southItemRepository.createAndUpdateSouthItems(southConnector.id, itemsToAdd, itemsToUpdate);
+    this.repositoryService.southItemRepository.createAndUpdateSouthItems(southConnector.id, itemsToAdd, itemsToUpdate, duplicated);
 
     for (const newItem of itemsToUpdate) {
       const previousItem = allPreviousSouthItems.find(i => i.id === newItem.id);
