@@ -172,12 +172,7 @@ describe('NorthOIAnalytics without proxy', () => {
       {
         pointId: 'pointId2',
         timestamp: nowDateString,
-        data: { value: 666 as unknown as string, quality: 'good' }
-      },
-      {
-        pointId: 'pointId3',
-        timestamp: nowDateString,
-        data: { value: [] as unknown as string, quality: 'good' }
+        data: { value: '777', quality: 'good' }
       }
     ];
     (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('Ok')));
@@ -200,7 +195,7 @@ describe('NorthOIAnalytics without proxy', () => {
         {
           pointId: 'pointId2',
           timestamp: nowDateString,
-          data: { value: 666 as unknown as string, quality: 'good' }
+          data: { value: '777', quality: 'good' }
         }
       ]),
       agent: undefined

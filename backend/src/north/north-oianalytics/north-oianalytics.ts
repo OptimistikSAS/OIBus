@@ -66,25 +66,6 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
       : `/api/oianalytics/oibus/time-values?dataSourceId=${encodeURI(this.connector.name)}`;
     const connectionSettings = await this.getNetworkSettings(endpoint);
 
-    const badTypes = new Map<string, string>();
-    // TODO: remove once south connectors payload are consistent
-    const filteredValues = values.filter(oibusTimeValue => {
-      if (typeof oibusTimeValue.data.value === 'string' || typeof oibusTimeValue.data.value === 'number') {
-        return true;
-      } else {
-        badTypes.set(oibusTimeValue.pointId, oibusTimeValue.data.value);
-        return false;
-      }
-    });
-
-    if (badTypes.size > 0) {
-      let warnMessage = 'Some references have an incompatible data type. These values are filtered.';
-      for (const [reference, badType] of badTypes.entries()) {
-        warnMessage += ` ${reference}: ${typeof badType} (${badType}) ;`;
-      }
-      this.logger.warn(warnMessage);
-    }
-
     let response;
     const valuesUrl = `${connectionSettings.host}${endpoint}`;
     const fetchOptions = {
@@ -94,7 +75,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
         'Content-Type': 'application/json'
       },
       timeout: this.connector.settings.timeout * 1000,
-      body: this.connector.settings.compress ? zlib.gzipSync(JSON.stringify(filteredValues)) : JSON.stringify(filteredValues),
+      body: this.connector.settings.compress ? zlib.gzipSync(JSON.stringify(values)) : JSON.stringify(values),
       agent: connectionSettings.agent
     };
     try {
