@@ -163,12 +163,13 @@ export default class HistoryQueryItemRepository {
     const update = this.database.prepare(`UPDATE ${HISTORY_ITEMS_TABLE} SET name = ?, settings = ? WHERE id = ?;`);
 
     const transaction = this.database.transaction(() => {
-      for (const item of itemsToAdd) {
-        const id = generateRandomId(6);
-        insert.run(id, item.name, 1, historyId, JSON.stringify(item.settings));
-      }
       for (const item of itemsToUpdate) {
         update.run(item.name, JSON.stringify(item.settings), item.id);
+      }
+
+      for (const item of itemsToAdd) {
+        const id = generateRandomId(6);
+        insert.run(id, item.name, +item.enabled, historyId, JSON.stringify(item.settings));
       }
     });
     transaction();

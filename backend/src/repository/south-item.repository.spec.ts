@@ -303,6 +303,39 @@ describe('South item repository', () => {
     expect(run).toHaveBeenCalledWith('southScan2', 0, 'scanModeId', '{}', 'id2');
   });
 
+  it('should create a copy of south items', () => {
+    (database.transaction as jest.Mock).mockImplementationOnce(callback => {
+      return () => callback();
+    });
+    const itemToAdd: SouthConnectorItemDTO = {
+      id: 'id1',
+      name: 'southScan1',
+      enabled: true,
+      connectorId: 'southId',
+      scanModeId: 'scanModeId',
+      settings: {}
+    };
+
+    const itemToUpdate: SouthConnectorItemDTO = {
+      id: 'id2',
+      name: 'southScan2',
+      enabled: false,
+      connectorId: 'southId',
+      scanModeId: 'scanModeId',
+      settings: {}
+    };
+
+    repository.createAndUpdateSouthItems('connectorId', [itemToAdd], [itemToUpdate]);
+    expect(database.prepare).toHaveBeenCalledWith(
+      `INSERT INTO south_items (id, name, enabled, connector_id, scan_mode_id, settings) VALUES (?, ?, ?, ?, ?, ?);`
+    );
+    expect(database.prepare).toHaveBeenCalledWith(
+      `UPDATE south_items SET name = ?, enabled = ?, scan_mode_id = ?, settings = ? WHERE id = ?;`
+    );
+    expect(run).toHaveBeenCalledWith('123456', 'southScan1', 1, 'connectorId', 'scanModeId', '{}');
+    expect(run).toHaveBeenCalledWith('southScan2', 0, 'scanModeId', '{}', 'id2');
+  });
+
   it('should enable south item', () => {
     repository.enableSouthItem('id1');
     expect(database.prepare).toHaveBeenCalledWith('UPDATE south_items SET enabled = 1 WHERE id = ?;');
