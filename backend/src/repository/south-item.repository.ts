@@ -197,7 +197,7 @@ export default class SouthItemRepository {
       }
       for (const item of itemsToAdd) {
         const id = generateRandomId(6);
-        insert.run(id, item.name, 1, southId, item.scanModeId, JSON.stringify(item.settings));
+        insert.run(id, item.name, +item.enabled, southId, item.scanModeId, JSON.stringify(item.settings));
       }
     });
     transaction();
