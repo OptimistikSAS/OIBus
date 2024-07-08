@@ -654,6 +654,7 @@ describe('History query controller', () => {
 
     const southManifest = southTestManifest;
     const northManifest = northTestManifest;
+    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).toHaveBeenCalled();
     expect(validator.validateSettings).toHaveBeenCalledWith(southManifest.settings, historyQueryCommand.southSettings);
     expect(validator.validateSettings).toHaveBeenCalledWith(northManifest.settings, historyQueryCommand.northSettings);
     expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('id');

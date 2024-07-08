@@ -207,7 +207,6 @@ describe('North connector controller', () => {
 
     await northConnectorController.createNorthConnector(ctx);
 
-    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).toHaveBeenCalled();
     expect(validator.validateSettings).toHaveBeenCalledWith(northTestManifest.settings, northConnectorCommand.settings);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
       northConnectorCommand.settings,
@@ -2530,13 +2529,12 @@ describe('North connector controller with items', () => {
   it('importNorthItems() should import items', async () => {
     ctx.request.body = {
       items: [
+        item,
         {
           id: 'id2',
-          connectorId: 'connectorId',
           name: 'item2',
           enabled: true,
-          settings: { objectSettings: {}, objectArray: [], objectValue: 1 },
-          scanModeId: 'scanModeId'
+          settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
         }
       ]
     };
@@ -2548,56 +2546,18 @@ describe('North connector controller with items', () => {
       return true;
     });
     await northConnectorController.importNorthItems(ctx);
-    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).toHaveBeenCalled();
-    expect(validator.validateSettings).toHaveBeenCalled();
-    expect(ctx.noContent).toHaveBeenCalledTimes(1);
-  });
-
-  it('importNorthItems() should import items with scanModeName', async () => {
-    ctx.request.body = {
-      items: [
-        {
-          id: 'id2',
-          connectorId: 'connectorId',
-          name: 'item2',
-          enabled: true,
-          settings: { objectSettings: {}, objectArray: [], objectValue: 1 },
-          scanModeName: 'scanModeName'
-        }
-      ]
-    };
-    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(northConnectorWithItems);
-    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValue(
-      [
-        {
-          name: "scanModeName",
-          description: "",
-          cron: "cron"
-        }
-      ]
-    );
-    (validator.validateSettings as jest.Mock).mockImplementation(() => {
-      return true;
-    });
-    ctx.app.reloadService.onCreateOrUpdateNorthItems.mockImplementation(() => {
-      return true;
-    });
-    await northConnectorController.importNorthItems(ctx);
-    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).toHaveBeenCalled();
-    expect(validator.validateSettings).toHaveBeenCalled();
     expect(ctx.noContent).toHaveBeenCalledTimes(1);
   });
 
   it('importNorthItems() should throw error on creation fail', async () => {
     ctx.request.body = {
       items: [
+        item,
         {
           id: 'id2',
-          connectorId: 'connectorId',
           name: 'item2',
           enabled: true,
-          settings: { objectSettings: {}, objectArray: [], objectValue: 1 },
-          scanModeId: 'scanModeId'
+          settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
         }
       ]
     };
@@ -2609,8 +2569,6 @@ describe('North connector controller with items', () => {
       throw new Error('onCreateOrUpdateNorthItems error');
     });
     await northConnectorController.importNorthItems(ctx);
-    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).toHaveBeenCalled();
-    expect(validator.validateSettings).toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalledWith('onCreateOrUpdateNorthItems error');
   });
 
