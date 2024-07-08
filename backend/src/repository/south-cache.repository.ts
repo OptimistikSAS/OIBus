@@ -16,7 +16,7 @@ export default class SouthCacheRepository {
   /**
    * Retrieve a South connector cache scan mode
    */
-  getSouthCacheScanMode(southId: string, scanModeId: string | undefined, itemId: string): SouthCache | null {
+  getSouthCacheScanMode(southId: string, scanModeId: string, itemId: string): SouthCache | null {
     const query = `SELECT south_id AS southId, scan_mode_id AS scanModeId, item_id AS itemId, max_instant AS maxInstant FROM ${SOUTH_CACHE_TABLE} WHERE south_id = ? AND scan_mode_id = ? AND item_id = ?;`;
     const result: SouthCache | undefined = this._database.prepare(query).get(southId, scanModeId, itemId) as SouthCache;
     if (!result) return null;
@@ -68,7 +68,7 @@ export default class SouthCacheRepository {
   /**
    * Delete a South connector cache scan mode by its scan mode ID
    */
-  deleteCacheScanMode(southId: string, scanModeId: string | undefined, itemId: string): void {
+  deleteCacheScanMode(southId: string, scanModeId: string, itemId: string): void {
     const query = `DELETE FROM ${SOUTH_CACHE_TABLE} WHERE south_id = ? AND scan_mode_id = ? AND item_id = ?;`;
     this._database.prepare(query).run(southId, scanModeId, itemId);
   }

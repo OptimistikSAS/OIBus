@@ -7,7 +7,8 @@ import {
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
   SouthConnectorItemSearchParam,
-  SouthType
+  SouthType,
+  SouthConnectorItemScanModeNameDTO
 } from '../../../../shared/model/south-connector.model';
 import { Page } from '../../../../shared/model/types';
 import JoiValidator from './validators/joi.validator';
@@ -431,7 +432,7 @@ export default class SouthConnectorController {
     ctx.ok({ items: validItems, errors });
   }
 
-  async importSouthItems(ctx: KoaContext<{ items: Array<SouthConnectorItemDTO> }, any>): Promise<void> {
+  async importSouthItems(ctx: KoaContext<{ items: Array<SouthConnectorItemScanModeNameDTO> }, any>): Promise<void> {
     const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.southId);
     if (!southConnector) {
       return ctx.throw(404, 'South not found');

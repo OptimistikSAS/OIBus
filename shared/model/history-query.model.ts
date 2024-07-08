@@ -1,5 +1,5 @@
 import { NorthArchiveSettings, NorthCacheSettingsDTO } from './north-connector.model';
-import { SouthConnectorHistorySettings, SouthConnectorItemDTO } from './south-connector.model';
+import { SouthConnectorHistorySettings, SouthConnectorItemDTO, SouthConnectorItemScanModeNameDTO } from './south-connector.model';
 import { BaseEntity } from './types';
 
 export const HISTORY_QUERY_STATUS = ['PENDING', 'RUNNING', 'PAUSED', 'FINISHED', 'ERRORED'] as const;
@@ -47,7 +47,14 @@ export interface HistoryQueryCommandDTO {
  */
 export interface HistoryQueryCreateCommandDTO {
   historyQuery: HistoryQueryCommandDTO;
-  items: Array<SouthConnectorItemDTO>;
+  items: Array<SouthConnectorItemDTO> | Array<SouthConnectorItemScanModeNameDTO>;
+  fromSouthId: string | null; // used to retrieve passwords
+  fromNorthId: string | null; // used to retrieve passwords
+}
+
+export interface HistoryQueryCreateCommandScanModeNameDTO {
+  historyQuery: HistoryQueryCommandDTO;
+  items: Array<SouthConnectorItemScanModeNameDTO>;
   fromSouthId: string | null; // used to retrieve passwords
   fromNorthId: string | null; // used to retrieve passwords
 }

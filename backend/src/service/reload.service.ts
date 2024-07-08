@@ -6,7 +6,8 @@ import {
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
   SouthConnectorItemCommandDTO,
-  SouthConnectorItemDTO
+  SouthConnectorItemDTO,
+  SouthConnectorItemScanModeNameDTO
 } from '../../../shared/model/south-connector.model';
 import {
   NorthCacheFiles,
@@ -362,7 +363,7 @@ export default class ReloadService {
     this.repositoryService.northItemRepository.deleteAllNorthItems(northId);
   }
 
-  async onCreateHistoryQuery(command: HistoryQueryCommandDTO, southItems: Array<SouthConnectorItemDTO>): Promise<HistoryQueryDTO> {
+  async onCreateHistoryQuery(command: HistoryQueryCommandDTO, southItems: Array<SouthConnectorItemDTO> |  Array<SouthConnectorItemScanModeNameDTO>): Promise<HistoryQueryDTO> {
     const historyQuery = this.repositoryService.historyQueryRepository.createHistoryQuery(command);
     for (const item of southItems) {
       this.repositoryService.historyQueryItemRepository.createHistoryItem(historyQuery.id, {
@@ -451,8 +452,8 @@ export default class ReloadService {
 
   async onCreateOrUpdateHistoryQueryItems(
     historyQuery: HistoryQueryDTO,
-    itemsToAdd: Array<SouthConnectorItemDTO>,
-    itemsToUpdate: Array<SouthConnectorItemDTO>
+    itemsToAdd: Array<SouthConnectorItemDTO> | Array<SouthConnectorItemScanModeNameDTO>,
+    itemsToUpdate: Array<SouthConnectorItemDTO> | Array<SouthConnectorItemScanModeNameDTO>
   ): Promise<void> {
     await this.historyEngine.stopHistoryQuery(historyQuery.id, true);
     this.repositoryService.historyQueryItemRepository.createAndUpdateItems(historyQuery.id, itemsToAdd, itemsToUpdate);
@@ -554,7 +555,7 @@ export default class ReloadService {
       // 2. Create new cache entries for each item
       // The max instant of these new entries, will be the max instant of the previously removed ones, based on scan mode
       for (const item of southItems) {
-        const maxInstant = maxInstantsByScanMode.get(item.scanModeId as string);
+        const maxInstant = maxInstantsByScanMode.get(item.scanModeId);
         if (maxInstant) {
           this.repositoryService.southCacheRepository.createOrUpdateCacheScanMode({
             southId,

@@ -1,5 +1,5 @@
 import { KoaContext } from '../koa';
-import { HistoryQueryCommandDTO, HistoryQueryCreateCommandDTO, HistoryQueryDTO } from '../../../../shared/model/history-query.model';
+import { HistoryQueryCommandDTO, HistoryQueryCreateCommandScanModeNameDTO, HistoryQueryDTO } from '../../../../shared/model/history-query.model';
 import JoiValidator from './validators/joi.validator';
 
 import {
@@ -7,7 +7,8 @@ import {
   SouthConnectorDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
-  SouthConnectorItemSearchParam
+  SouthConnectorItemSearchParam,
+  SouthConnectorItemScanModeNameDTO
 } from '../../../../shared/model/south-connector.model';
 import { Page } from '../../../../shared/model/types';
 import csv from 'papaparse';
@@ -21,6 +22,12 @@ import { TransformerDTO, TransformerFilterDTO } from '../../../../shared/model/t
 interface HistoryQueryWithItemsCommandDTO {
   historyQuery: HistoryQueryCommandDTO;
   items: Array<SouthConnectorItemDTO>;
+  itemIdsToDelete: Array<string>;
+}
+
+interface HistoryQueryWithItemsCommandScanModeNameDTO {
+  historyQuery: HistoryQueryCommandDTO;
+  items: Array<SouthConnectorItemScanModeNameDTO>;
   itemIdsToDelete: Array<string>;
 }
 
@@ -64,7 +71,7 @@ export default class HistoryQueryController extends AbstractController {
     }
   };
 
-  createHistoryQuery = async (ctx: KoaContext<HistoryQueryCreateCommandDTO, void>) => {
+  createHistoryQuery = async (ctx: KoaContext<HistoryQueryCreateCommandScanModeNameDTO, void>) => {
     if (!ctx.request.body || !ctx.request.body.items || !ctx.request.body.historyQuery) {
       return ctx.badRequest();
     }
@@ -146,7 +153,7 @@ export default class HistoryQueryController extends AbstractController {
     }
   };
 
-  updateHistoryQuery = async (ctx: KoaContext<HistoryQueryWithItemsCommandDTO, void>) => {
+  updateHistoryQuery = async (ctx: KoaContext<HistoryQueryWithItemsCommandScanModeNameDTO, void>) => {
     if (!ctx.request.body || !ctx.request.body.items || !ctx.request.body.historyQuery) {
       return ctx.badRequest();
     }
@@ -458,7 +465,7 @@ export default class HistoryQueryController extends AbstractController {
     ctx.ok({ items: validItems, errors });
   }
 
-  async importSouthItems(ctx: KoaContext<{ items: Array<SouthConnectorItemDTO> }, any>): Promise<void> {
+  async importSouthItems(ctx: KoaContext<{ items: Array<SouthConnectorItemScanModeNameDTO> }, any>): Promise<void> {
     const historyQuery = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.historyQueryId);
     if (!historyQuery) {
       return ctx.throw(404, 'History query not found');
@@ -471,7 +478,6 @@ export default class HistoryQueryController extends AbstractController {
 
     const items = ctx.request.body!.items;
     try {
-
       const scanModes = ctx.app.repositoryService.scanModeRepository.getScanModes();
 
       // Check if item settings match the item schema, throw an error otherwise

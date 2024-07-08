@@ -119,12 +119,8 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
 
   async createSubscriptions(items: Array<SouthConnectorItemDTO>) {
     if (this.queriesSubscription()) {
-      try {
-        this.logger.debug(`Subscribing to ${items.length} items`);
-        await this.subscribe(items);
-      } catch (error) {
-        this.logger.error(`Error when subscribing. ${error}`);
-      }
+      this.logger.debug(`Subscribing to ${items.length} items`);
+      await this.subscribe(items);
     }
   }
 
@@ -532,8 +528,8 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
       }
       this.items = this.items.filter(item => item.id !== itemToRemove.id);
       if (this.items.filter(item => item.scanModeId === itemToRemove.scanModeId).length === 0) {
-        this.cronByScanModeIds.get(itemToRemove.scanModeId as string)?.stop();
-        this.cronByScanModeIds.delete(itemToRemove.scanModeId as string);
+        this.cronByScanModeIds.get(itemToRemove.scanModeId)?.stop();
+        this.cronByScanModeIds.delete(itemToRemove.scanModeId);
       }
     }
   }

@@ -2,7 +2,8 @@ import { generateRandomId } from '../service/utils';
 import {
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
-  SouthConnectorItemSearchParam
+  SouthConnectorItemSearchParam,
+  SouthConnectorItemScanModeNameDTO
 } from '../../../shared/model/south-connector.model';
 import { Page } from '../../../shared/model/types';
 import { Database } from 'better-sqlite3';
@@ -145,7 +146,7 @@ export default class HistoryQueryItemRepository {
     this.database.prepare(query).run(id);
   }
 
-  createAndUpdateItems(historyId: string, itemsToAdd: Array<SouthConnectorItemDTO>, itemsToUpdate: Array<SouthConnectorItemDTO>): void {
+  createAndUpdateItems(historyId: string, itemsToAdd: Array<SouthConnectorItemDTO> | Array<SouthConnectorItemScanModeNameDTO>, itemsToUpdate: Array<SouthConnectorItemDTO> | Array<SouthConnectorItemScanModeNameDTO>): void {
     const insert = this.database.prepare(
       `INSERT INTO ${HISTORY_ITEMS_TABLE} (id, name, enabled, history_id, settings) VALUES (?, ?, ?, ?, ?);`
     );

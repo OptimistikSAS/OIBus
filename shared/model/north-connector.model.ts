@@ -4,8 +4,7 @@ import { NorthSettings } from './north-settings.model';
 import { OIBusSubscription } from './subscription.model';
 
 export interface NorthCacheSettingsDTO {
-  scanModeId?: string;
-  scanModeName?: string;
+  scanModeId: string;
   retryInterval: number;
   retryCount: number;
   groupCount: number;
@@ -122,8 +121,6 @@ export interface NorthConnectorItemDTO<T extends NorthItemSettings = any> extend
   enabled: boolean;
   connectorId: string;
   settings: T;
-  scanModeId?: string;
-  scanModeName?: string;
 }
 
 /**

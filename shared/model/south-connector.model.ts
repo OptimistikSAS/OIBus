@@ -65,6 +65,14 @@ export interface SouthConnectorItemDTO<T extends SouthItemSettings = any> extend
   enabled: boolean;
   connectorId: string;
   settings: T;
+  scanModeId: string;
+}
+
+export interface SouthConnectorItemScanModeNameDTO<T extends SouthItemSettings = any> extends BaseEntity {
+  name: string;
+  enabled: boolean;
+  connectorId: string;
+  settings: T;
   scanModeId?: string;
   scanModeName?: string;
 }
@@ -113,7 +121,7 @@ export interface SouthConnectorManifest {
 
 export interface SouthCache {
   southId: string;
-  scanModeId: string | undefined;
+  scanModeId: string;
   itemId: string;
   maxInstant: Instant;
 }

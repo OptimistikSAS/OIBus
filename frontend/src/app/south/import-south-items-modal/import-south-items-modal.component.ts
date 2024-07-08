@@ -68,7 +68,7 @@ export class ImportSouthItemsModalComponent {
     this.modal.close(this.newItemList);
   }
 
-  getScanMode(scanModeId: string | null | undefined): ScanModeDTO | undefined {
+  getScanMode(scanModeId: string | null): ScanModeDTO | undefined {
     return this.scanModes.find(scanMode => scanMode.id === scanModeId);
   }
 
