@@ -12,6 +12,7 @@ import { DatepickerContainerComponent } from '../datepicker-container/datepicker
 import { NgbInputDatepicker, NgbTimepicker } from '@ng-bootstrap/ng-bootstrap';
 import { NgTemplateOutlet } from '@angular/common';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import { provideCurrentUser } from '../current-user-testing';
 
 @Component({
   template: '',
@@ -51,7 +52,7 @@ describe('DatetimepickerComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideI18nTesting()]
+      providers: [provideI18nTesting(), provideCurrentUser()]
     });
   });
 
@@ -131,7 +132,7 @@ describe('DatetimepickerComponent', () => {
         TestComponent,
         `
         <form [formGroup]="form">
-          <oib-datetimepicker timeZone="UTC" formControlName="from"></oib-datetimepicker>
+          <oib-datetimepicker timezone="UTC" formControlName="from"></oib-datetimepicker>
         </form>`
       );
       tester = new TestComponentTester();
@@ -179,7 +180,7 @@ describe('DatetimepickerComponent', () => {
       expect(tester.datetimepicker.second).toHaveValue('00');
 
       tester.toggle.click();
-      expect(tester.firstWeekDay).toContainText('Su');
+      expect(tester.firstWeekDay).toContainText('S');
     });
   });
 });
