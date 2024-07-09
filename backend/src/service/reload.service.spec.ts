@@ -88,6 +88,50 @@ describe('reload service', () => {
     expect(service.proxyServer).toBeDefined();
   });
 
+  it('should throw an error', async () => {
+    const changePortFn = jest.fn();
+    const newSettings = { port: 2224, proxyEnabled: true, proxyPort: 2224 };
+    service.setWebServerChangePort(changePortFn);
+
+    await expect(service.onUpdateOibusSettings(newSettings as EngineSettingsDTO, newSettings as EngineSettingsDTO)).rejects.toThrow(
+      'same port on general and proxy'
+    );
+  });
+
+  it('should update web port and proxy port', async () => {
+    const changePortFn = jest.fn();
+    const oldSettings = { port: 2223, proxyEnabled: true, proxyPort: 2224 };
+    const newSettings = { port: 2224, proxyEnabled: true, proxyPort: 2223 };
+    service.setWebServerChangePort(changePortFn);
+
+    await service.onUpdateOibusSettings(oldSettings as EngineSettingsDTO, newSettings as EngineSettingsDTO);
+    expect(changePortFn).toHaveBeenCalledTimes(1);
+    expect(proxyServer.stop).toHaveBeenCalledTimes(1);
+    expect(proxyServer.start).toHaveBeenCalledTimes(1);
+  });
+
+  it('should stop proxy port and not start it', async () => {
+    const changePortFn = jest.fn();
+    const oldSettings = { port: 2223, proxyEnabled: true, proxyPort: 2224 };
+    const newSettings = { port: 2224, proxyEnabled: false, proxyPort: 2223 };
+    service.setWebServerChangePort(changePortFn);
+
+    await service.onUpdateOibusSettings(oldSettings as EngineSettingsDTO, newSettings as EngineSettingsDTO);
+    expect(changePortFn).toHaveBeenCalledTimes(1);
+    expect(proxyServer.stop).toHaveBeenCalledTimes(1);
+    expect(proxyServer.start).toHaveBeenCalledTimes(0);
+
+    await service.onUpdateOibusSettings(null, newSettings as EngineSettingsDTO);
+    expect(changePortFn).toHaveBeenCalledTimes(2);
+    expect(proxyServer.stop).toHaveBeenCalledTimes(2);
+    expect(proxyServer.start).toHaveBeenCalledTimes(0);
+
+    await service.onUpdateOibusSettings(newSettings as EngineSettingsDTO, newSettings as EngineSettingsDTO);
+    expect(changePortFn).toHaveBeenCalledTimes(2);
+    expect(proxyServer.stop).toHaveBeenCalledTimes(2);
+    expect(proxyServer.start).toHaveBeenCalledTimes(0);
+  });
+
   it('should update port', async () => {
     const changePortFn = jest.fn();
     const oldSettings = { name: 'oibus name', port: 2223, proxyEnabled: false, proxyPort: 8888 };
@@ -117,7 +161,7 @@ describe('reload service', () => {
 
   it('should update log parameters', async () => {
     const changeLoggerFn = jest.fn();
-    const newSettings = { id: 'oibusId', name: 'oibusName', logParameters: {} as LogSettings };
+    const newSettings = { id: 'oibusId', name: 'oibusName', logParameters: {} as LogSettings, port: 2223 };
     service.setWebServerChangeLogger(changeLoggerFn);
     await service.onUpdateOibusSettings(null, newSettings as EngineSettingsDTO);
     expect(getOIBusInfo).toHaveBeenCalledTimes(1);
