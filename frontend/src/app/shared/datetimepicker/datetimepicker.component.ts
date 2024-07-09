@@ -7,6 +7,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { NgbInputDatepicker, NgbTimepicker } from '@ng-bootstrap/ng-bootstrap';
 import { DatepickerContainerComponent } from '../datepicker-container/datepicker-container.component';
 import { formDirectives } from '../form-directives';
+import { CurrentUserService } from '../current-user.service';
 
 /**
  * Component combining a ng-bootstrap input date picker and a ng-bootstrap time picker, which can be used
@@ -65,7 +66,7 @@ export class DatetimepickerComponent implements OnInit, AfterViewInit, ControlVa
   timeTemplate: TemplateRef<any> | null = null;
 
   @Input()
-  timeZone = 'Europe/Paris';
+  timezone = 'UTC';
 
   dateCtrl = inject(NonNullableFormBuilder).control(null as LocalDate | null);
   timeCtrl = inject(NonNullableFormBuilder).control(null as LocalTime | null);
@@ -73,7 +74,12 @@ export class DatetimepickerComponent implements OnInit, AfterViewInit, ControlVa
   private onChange: (value: any) => void = () => {};
   private onTouched: () => void = () => {};
 
-  constructor(private element: ElementRef<HTMLElement>) {}
+  constructor(
+    private element: ElementRef<HTMLElement>,
+    private currentUserService: CurrentUserService
+  ) {
+    this.timezone = this.currentUserService.getTimezone();
+  }
 
   registerOnChange(fn: any): void {
     this.onChange = fn;
@@ -95,7 +101,7 @@ export class DatetimepickerComponent implements OnInit, AfterViewInit, ControlVa
 
   writeValue(value: Instant): void {
     if (value) {
-      const local = DateTime.fromISO(value).setZone(this.timeZone);
+      const local = DateTime.fromISO(value).setZone(this.timezone);
       this.dateCtrl.setValue(local.toFormat('yyyy-MM-dd'));
       this.timeCtrl.setValue(local.toFormat('HH:mm:ss'));
     } else {
@@ -124,7 +130,7 @@ export class DatetimepickerComponent implements OnInit, AfterViewInit, ControlVa
     combineLatest([this.dateCtrl.valueChanges, this.timeCtrl.valueChanges]).subscribe(
       ([date, time]: [LocalDate | null, LocalTime | null]) => {
         if (this.dateCtrl.valid && this.timeCtrl.valid && date && time) {
-          const local = DateTime.fromFormat(`${date} ${time}`, 'yyyy-MM-dd HH:mm:ss', { zone: this.timeZone });
+          const local = DateTime.fromFormat(`${date} ${time}`, 'yyyy-MM-dd HH:mm:ss', { zone: this.timezone });
           this.onChange(local.toUTC().toISO());
         } else {
           this.onChange(null);
