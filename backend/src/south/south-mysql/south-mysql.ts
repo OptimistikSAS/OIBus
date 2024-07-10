@@ -156,6 +156,7 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
           formattedResult,
           item.settings.serialization,
           this.connector.name,
+          item.name,
           this.tmpFolder,
           this.addFile.bind(this),
           this.addValues.bind(this),

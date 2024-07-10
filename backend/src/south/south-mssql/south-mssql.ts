@@ -150,6 +150,7 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
           formattedResult,
           item.settings.serialization,
           this.connector.name,
+          item.name,
           this.tmpFolder,
           this.addFile.bind(this),
           this.addValues.bind(this),

@@ -467,6 +467,7 @@ describe('Service utils', () => {
             compression: false
           },
           'connectorName',
+          'itemName',
           'myTmpFolder',
           addFile,
           addValues,
@@ -490,6 +491,7 @@ describe('Service utils', () => {
             outputTimezone: 'UTC'
           },
           'connectorName',
+          'itemName',
           'myTmpFolder',
           addFile,
           addValues,
@@ -516,6 +518,7 @@ describe('Service utils', () => {
             outputTimezone: 'UTC'
           },
           'connectorName',
+          'itemName',
           'myTmpFolder',
           addFile,
           addValues,
@@ -542,6 +545,7 @@ describe('Service utils', () => {
             compression: false
           },
           'connectorName',
+          'itemName',
           'myTmpFolder',
           addFile,
           addValues,
@@ -593,6 +597,7 @@ describe('Service utils', () => {
             outputTimezone: 'UTC'
           },
           'connectorName',
+          'itemName',
           'myTmpFolder',
           addFile,
           addValues,
@@ -614,6 +619,7 @@ describe('Service utils', () => {
             compression: true
           },
           'connectorName',
+          'itemName',
           'myTmpFolder',
           addFile,
           addValues,
@@ -633,6 +639,7 @@ describe('Service utils', () => {
             type: 'json'
           },
           'connectorName',
+          'itemName',
           'myTmpFolder',
           addFile,
           addValues,
@@ -656,6 +663,7 @@ describe('Service utils', () => {
             outputTimezone: 'UTC'
           },
           'connectorName',
+          'itemName',
           'myTmpFolder',
           addFile,
           addValues,
@@ -685,6 +693,7 @@ describe('Service utils', () => {
             compression: true
           },
           'connectorName',
+          'itemName',
           'myTmpFolder',
           addFile,
           addValues,

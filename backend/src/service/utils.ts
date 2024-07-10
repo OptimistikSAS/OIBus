@@ -208,6 +208,7 @@ export const persistResults = async (
   data: Array<any>,
   serializationSettings: SerializationSettings,
   connectorName: string,
+  itemName: string,
   baseFolder: string,
   addFileFn: (filePath: string) => Promise<void>,
   addValueFn: (values: Array<any>) => Promise<void>,
@@ -223,6 +224,7 @@ export const persistResults = async (
         serializationSettings.filename
           .replace('@CurrentDate', DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))
           .replace('@ConnectorName', connectorName)
+          .replace('@ItemName', itemName)
       );
       logger.debug(`Writing ${data.length} bytes into file at "${filePath}"`);
       await fs.writeFile(filePath, data);
@@ -268,6 +270,7 @@ export const persistResults = async (
         serializationSettings.filename
           .replace('@CurrentDate', DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))
           .replace('@ConnectorName', connectorName)
+          .replace('@ItemName', itemName)
       );
       const csvContent = csv.unparse(data, options);
 
