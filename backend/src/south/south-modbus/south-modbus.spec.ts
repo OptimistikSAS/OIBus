@@ -292,15 +292,25 @@ describe('SouthModbus', () => {
       .mockImplementationOnce(() => {
         throw new Error('modbus function error');
       })
+      .mockImplementationOnce(() => {
+        throw {
+          err: 'Offline',
+          message: 'no connection to modbus server'
+        };
+      })
       .mockImplementation(() => {
         return [];
       });
-    await expect(south.lastPointQuery([items[1]])).rejects.toThrow();
+    await expect(south.lastPointQuery([items[1]])).rejects.toThrow(new Error('modbus function error'));
     expect(south.disconnect).toHaveBeenCalledTimes(1);
     expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
     jest.advanceTimersByTime(configuration.settings.retryInterval);
     expect(south.connect).toHaveBeenCalledTimes(1);
     jest.clearAllMocks();
+
+    await expect(south.lastPointQuery([items[1]])).rejects.toThrow(new Error('Offline - no connection to modbus server'));
+    jest.clearAllMocks();
+
     await south.lastPointQuery([items[2]]);
     expect(south.modbusFunction).toHaveBeenCalledTimes(1);
     expect(south.disconnect).not.toHaveBeenCalled();
