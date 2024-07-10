@@ -51,6 +51,9 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
       await this.addValues(dataValues);
       await this.disconnect();
       this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
+      if (error.err) {
+        throw new Error(`${error.err} - ${error.message}`);
+      }
       throw error;
     }
   }
