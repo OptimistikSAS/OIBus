@@ -144,6 +144,7 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
           formattedResult,
           item.settings.serialization,
           this.connector.name,
+          item.name,
           this.tmpFolder,
           this.addFile.bind(this),
           this.addValues.bind(this),

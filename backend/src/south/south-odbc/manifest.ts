@@ -87,7 +87,8 @@ const manifest: SouthConnectorManifest = {
         type: 'OibCodeBlock',
         label: 'Query',
         contentType: 'sql',
-        defaultValue: 'SELECT * FROM Table WHERE timestamp > @StartTime',
+        defaultValue:
+          'SELECT level, message, timestamp, scope_name as scopeName FROM logs WHERE timestamp > @StartTime AND timestamp <= @EndTime',
         class: 'col-12 text-nowrap',
         validators: [{ key: 'required' }],
         displayInViewMode: true

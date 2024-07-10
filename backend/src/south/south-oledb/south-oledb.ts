@@ -178,6 +178,7 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
           result.content,
           { type: 'file', filename: item.settings.serialization.filename, compression: item.settings.serialization.compression },
           this.connector.name,
+          item.name,
           this.tmpFolder,
           this.addFile.bind(this),
           this.addValues.bind(this),

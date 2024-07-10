@@ -328,6 +328,7 @@ describe('SouthOLEDB with authentication', () => {
       [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
       { type: 'file', filename: items[0].settings.serialization.filename, compression: items[0].settings.serialization.compression },
       configuration.name,
+      items[0].name,
       path.resolve('baseFolder', 'tmp'),
       expect.any(Function),
       expect.any(Function),
