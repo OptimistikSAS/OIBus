@@ -19,9 +19,19 @@ export default class SouthItemRepository {
   /**
    * Retrieve all items associated to a South connector
    */
-  listSouthItems(southId: string): Array<SouthConnectorItemDTO> {
+  listSouthItems(southId: string, searchParams: SouthConnectorItemSearchParam): Array<SouthConnectorItemDTO> {
+    let whereClause = `WHERE connector_id = ?`;
     const queryParams = [southId];
-    const query = `SELECT id, name, enabled, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`;
+
+    if (searchParams.scanModeId) {
+      queryParams.push(searchParams.scanModeId);
+      whereClause += ` AND scan_mode_id = ?`;
+    }
+    if (searchParams.enabled !== undefined) {
+      queryParams.push(`${+searchParams.enabled}`);
+      whereClause += ` AND enabled = ?`;
+    }
+    const query = `SELECT id, name, enabled, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM ${SOUTH_ITEMS_TABLE} ${whereClause};`;
 
     return this.database
       .prepare(query)
@@ -43,13 +53,15 @@ export default class SouthItemRepository {
     let whereClause = `WHERE connector_id = ?`;
     const queryParams = [southId];
 
+    const page = searchParams.page ?? 0;
+
     if (searchParams.name) {
       queryParams.push(searchParams.name);
       whereClause += ` AND name like '%' || ? || '%'`;
     }
     const query =
       `SELECT id, name, enabled, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM ${SOUTH_ITEMS_TABLE} ${whereClause}` +
-      ` LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * searchParams.page};`;
+      ` LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * page};`;
     const results = this.database
       .prepare(query)
       .all(...queryParams)
@@ -69,7 +81,7 @@ export default class SouthItemRepository {
     return {
       content: results,
       size: PAGE_SIZE,
-      number: searchParams.page,
+      number: page,
       totalElements,
       totalPages
     };

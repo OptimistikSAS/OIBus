@@ -133,7 +133,7 @@ let north: TestNorth;
 
 describe('NorthConnector enabled', () => {
   beforeEach(async () => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
     const valuesInQueue = new Map();
@@ -163,16 +163,11 @@ describe('NorthConnector enabled', () => {
         retentionDuration: 720
       }
     };
+    repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
+
     north = new TestNorth(configuration, encryptionService, repositoryService, logger, 'baseFolder');
     (dirSize as jest.Mock).mockReturnValue(123);
     await north.start();
-  });
-
-  afterEach(() => {
-    jest.clearAllTimers();
-    valueTrigger.removeAllListeners();
-    fileTrigger.removeAllListeners();
-    archiveTrigger.removeAllListeners();
   });
 
   it('should be properly initialized', async () => {
@@ -180,6 +175,7 @@ describe('NorthConnector enabled', () => {
     expect(logger.debug).toHaveBeenCalledWith(`North connector "${configuration.name}" enabled. Starting services...`);
     expect(logger.error).toHaveBeenCalledWith(`Scan mode ${configuration.caching.scanModeId} not found`);
     expect(logger.info).toHaveBeenCalledWith(`North connector "${configuration.name}" of type ${configuration.type} started`);
+    expect(north.settings).toEqual(configuration);
   });
 
   it('should properly create cron job and add to queue', async () => {
@@ -658,6 +654,7 @@ describe('NorthConnector disabled', () => {
         retentionDuration: 720
       }
     };
+    repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
 
     north = new TestNorth(configuration, encryptionService, repositoryService, logger, 'baseFolder');
   });
@@ -727,6 +724,16 @@ describe('NorthConnector disabled', () => {
     await north.resetCache();
     expect(removeAllErrorFiles).toHaveBeenCalledTimes(1);
     expect(removeAllCacheFiles).toHaveBeenCalledTimes(1);
+
+    removeAllErrorFiles.mockImplementationOnce(() => {
+      throw new Error('removeAllErrorFiles error');
+    });
+    removeAllCacheFiles.mockImplementationOnce(() => {
+      throw new Error('removeAllCacheFiles error');
+    });
+    await north.resetCache();
+    expect(logger.error).toHaveBeenCalledWith(`Error while removing error files. ${new Error('removeAllErrorFiles error')}`);
+    expect(logger.error).toHaveBeenCalledWith(`Error while removing cache files. ${new Error('removeAllCacheFiles error')}`);
   });
 
   it('should get metrics stream', () => {
@@ -786,6 +793,7 @@ describe('NorthConnector test', () => {
         retentionDuration: 720
       }
     };
+    repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
 
     north = new TestNorth(configuration, encryptionService, repositoryService, logger, 'baseFolder');
   });

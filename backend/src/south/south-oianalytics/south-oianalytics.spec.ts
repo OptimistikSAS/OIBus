@@ -137,7 +137,7 @@ const nowDateString = '2020-02-02T02:02:02.222Z';
 let south: SouthOianalytics;
 
 describe('SouthOIAnalytics with Basic auth', () => {
-  const connector: SouthConnectorDTO<SouthOIAnalyticsSettings> = {
+  const configuration: SouthConnectorDTO<SouthOIAnalyticsSettings> = {
     id: 'southId',
     name: 'south',
     type: 'test',
@@ -162,15 +162,17 @@ describe('SouthOIAnalytics with Basic auth', () => {
       }
     }
   };
+
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
     (utils.formatQueryParams as jest.Mock).mockReturnValue(
       '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
     );
 
-    south = new SouthOianalytics(connector, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthOianalytics(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should test connection', async () => {
@@ -314,12 +316,13 @@ describe('SouthOIAnalytics without proxy but with accept self signed', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
     (utils.formatQueryParams as jest.Mock).mockReturnValue(
       '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
     );
 
-    south = new SouthOianalytics(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthOianalytics(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should test connection', async () => {
@@ -525,12 +528,13 @@ describe('SouthOIAnalytics with proxy', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
     (utils.formatQueryParams as jest.Mock).mockReturnValue(
       '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
     );
 
-    south = new SouthOianalytics(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthOianalytics(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should test connection', async () => {
@@ -604,13 +608,14 @@ describe('SouthOIAnalytics with proxy but without proxy password', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
     (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
     (utils.formatQueryParams as jest.Mock).mockReturnValue(
       '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
     );
 
-    south = new SouthOianalytics(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthOianalytics(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should test connection', async () => {
@@ -696,9 +701,10 @@ describe('SouthOIAnalytics without proxy but with acceptUnauthorized', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
     (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
-    south = new SouthOianalytics(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthOianalytics(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
     await south.start();
   });
 
@@ -740,7 +746,9 @@ describe('SouthOIAnalytics with aad-certificate', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     (createProxyAgent as jest.Mock).mockReturnValue({});
-    south = new SouthOianalytics(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+
+    south = new SouthOianalytics(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
     await south.start();
   });
 
@@ -790,6 +798,7 @@ describe('SouthOIAnalytics with OIA module', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
     (createProxyAgent as jest.Mock).mockReturnValue({});
     registrationSettings = {
@@ -801,7 +810,7 @@ describe('SouthOIAnalytics with OIA module', () => {
       useProxy: false,
       acceptUnauthorized: false
     };
-    south = new SouthOianalytics(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthOianalytics(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
     await south.start();
   });
 

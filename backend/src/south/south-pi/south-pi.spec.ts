@@ -101,8 +101,9 @@ describe('South PI', () => {
   beforeEach(async () => {
     jest.resetAllMocks();
     jest.useFakeTimers();
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
-    south = new SouthPi(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthPi(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should properly connect to remote agent and disconnect ', async () => {
@@ -300,5 +301,20 @@ describe('South PI', () => {
     south.disconnect();
     await south.historyQuery(items, startTime, endTime);
     await flushPromises();
+  });
+
+  it('should manage fetch error', async () => {
+    const startTime = '2020-01-01T00:00:00.000Z';
+    const endTime = '2022-01-01T00:00:00.000Z';
+
+    (fetch as unknown as jest.Mock).mockImplementation(() => {
+      throw new Error('bad request');
+    });
+
+    await expect(south.historyQuery(items, startTime, endTime)).rejects.toThrow(new Error('bad request'));
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue({ ...configuration, enabled: false });
+
+    await south.start();
+    await expect(south.historyQuery(items, startTime, endTime)).rejects.toThrow(new Error('bad request'));
   });
 });

@@ -95,6 +95,7 @@ describe('NorthFileWriter', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
 
     north = new NorthFileWriter(configuration, encryptionService, repositoryService, logger, 'baseFolder');
     await north.start();
@@ -180,6 +181,7 @@ describe('NorthFileWriter without suffix or prefix', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
 
     north = new NorthFileWriter(configuration, encryptionService, repositoryService, logger, 'baseFolder');
   });

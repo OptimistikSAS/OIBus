@@ -79,8 +79,10 @@ export interface SouthConnectorItemCommandDTO<T extends SouthItemSettings = any>
 }
 
 export interface SouthConnectorItemSearchParam {
-  name: string | null;
-  page: number;
+  name?: string;
+  scanModeId?: string;
+  enabled?: boolean;
+  page?: number;
 }
 
 export interface SouthConnectorItemManifest {

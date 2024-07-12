@@ -23,13 +23,15 @@ export default class HistoryQueryItemRepository {
     let whereClause = `WHERE history_id = ?`;
     const queryParams = [historyId];
 
+    const page = searchParams.page ?? 0;
+
     if (searchParams.name) {
       queryParams.push(searchParams.name);
       whereClause += ` AND name like '%' || ? || '%'`;
     }
     const query =
       `SELECT id, name, enabled, history_id AS historyId, settings FROM ${HISTORY_ITEMS_TABLE} ${whereClause}` +
-      ` LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * searchParams.page};`;
+      ` LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * page};`;
     const results: Array<SouthConnectorItemDTO> = this.database
       .prepare(query)
       .all(...queryParams)
@@ -49,7 +51,7 @@ export default class HistoryQueryItemRepository {
     return {
       content: results,
       size: PAGE_SIZE,
-      number: searchParams.page,
+      number: page,
       totalElements,
       totalPages
     };
@@ -58,11 +60,20 @@ export default class HistoryQueryItemRepository {
   /**
    * Retrieve all History items (point, query, folder...) associated to a History Query
    */
-  getHistoryItems(historyId: string): Array<SouthConnectorItemDTO> {
-    const query = `SELECT id, name, enabled, settings FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ?;`;
+  listHistoryItems(historyId: string, searchParams: SouthConnectorItemSearchParam): Array<SouthConnectorItemDTO> {
+    let whereClause = `WHERE history_id = ?`;
+    const queryParams = [historyId];
+
+    if (searchParams.enabled !== undefined) {
+      queryParams.push(`${+searchParams.enabled}`);
+      whereClause += ` AND enabled = ?`;
+    }
+
+    const query = `SELECT id, name, enabled, settings FROM ${HISTORY_ITEMS_TABLE} ${whereClause};`;
+
     return this.database
       .prepare(query)
-      .all(historyId)
+      .all(...queryParams)
       .map((result: any) => ({
         id: result.id,
         name: result.name,

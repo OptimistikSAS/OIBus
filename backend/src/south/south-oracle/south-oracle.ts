@@ -32,7 +32,6 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
 
   constructor(
     connector: SouthConnectorDTO<SouthOracleSettings>,
-    items: Array<SouthConnectorItemDTO<SouthOracleItemSettings>>,
     engineAddValuesCallback: (southId: string, values: Array<OIBusDataValue>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
@@ -40,7 +39,7 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(connector, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
     this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
     if (this.connector.settings.thickMode && this.connector.settings.oracleClient) {
       oracledb.initOracleClient({ libDir: path.resolve(this.connector.settings.oracleClient) });
@@ -50,9 +49,9 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
   /**
    * Initialize services (logger, certificate, status data) at startup
    */
-  async start(): Promise<void> {
+  async start(dataStream = true): Promise<void> {
     await createFolder(this.tmpFolder);
-    await super.start();
+    await super.start(dataStream);
   }
 
   override async testConnection(): Promise<void> {

@@ -120,6 +120,7 @@ describe('NorthAzureBlob without proxy', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
   });
 
   it('should properly handle files with Shared Access Signature authentication', async () => {
@@ -346,6 +347,7 @@ describe('NorthAzureBlob with proxy', () => {
   };
   beforeEach(async () => {
     jest.clearAllMocks();
+    repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
   });
 
   it('should properly handle files with proxy auth', async () => {

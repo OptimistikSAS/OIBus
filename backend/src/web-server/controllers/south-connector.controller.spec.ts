@@ -211,7 +211,7 @@ describe('South connector controller', () => {
 
   it('createSouthConnector() should create South connector with duplicate', async () => {
     ctx.request.body = {
-      south: southConnectorCommand,
+      south: { ...southConnectorCommand, enabled: false },
       items: []
     };
     ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
@@ -227,7 +227,7 @@ describe('South connector controller', () => {
       southTestManifest.settings
     );
     expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('duplicateId');
-    expect(ctx.app.reloadService.onCreateSouth).toHaveBeenCalledWith(southConnectorCommand);
+    expect(ctx.app.reloadService.onCreateSouth).toHaveBeenCalledWith({ ...southConnectorCommand, enabled: false });
     expect(ctx.created).toHaveBeenCalledWith(southConnector);
     ctx.query.duplicateId = null;
   });
@@ -318,6 +318,7 @@ describe('South connector controller', () => {
       south: sqliteConnectorCommand,
       items: [itemCommand]
     };
+    ctx.query.duplicateId = undefined;
     ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(sqliteConnectorCommand.settings);
     ctx.app.reloadService.onCreateSouth.mockReturnValue(southConnector);
 
@@ -409,7 +410,7 @@ describe('South connector controller', () => {
       southConnector.settings,
       southTestManifest.settings
     );
-    expect(ctx.app.reloadService.onUpdateSouth).toHaveBeenCalledWith('id', southConnectorCommand);
+    expect(ctx.app.reloadService.onUpdateSouth).toHaveBeenCalledWith(southConnector, southConnectorCommand, [{}], []);
     expect(ctx.app.reloadService.onDeleteSouthItem).toHaveBeenCalledWith('id1');
     expect(ctx.noContent).toHaveBeenCalled();
   });
@@ -580,7 +581,7 @@ describe('South connector controller', () => {
     ctx.app.repositoryService.southItemRepository.listSouthItems.mockReturnValue([item]);
 
     await southConnectorController.listSouthItems(ctx);
-    expect(ctx.app.repositoryService.southItemRepository.listSouthItems).toHaveBeenCalledWith('id');
+    expect(ctx.app.repositoryService.southItemRepository.listSouthItems).toHaveBeenCalledWith('id', {});
     expect(ctx.ok).toHaveBeenCalledWith([item]);
   });
 
@@ -606,8 +607,7 @@ describe('South connector controller', () => {
     ctx.params.southId = 'id';
     ctx.query = {};
     const searchParams = {
-      page: 0,
-      name: null
+      page: 0
     };
     ctx.app.repositoryService.southItemRepository.searchSouthItems.mockReturnValue(page);
 
@@ -728,7 +728,7 @@ describe('South connector controller', () => {
     expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
     expect(ctx.app.repositoryService.southItemRepository.getSouthItem).toHaveBeenCalledWith('id');
     expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.items.settings, itemCommand.settings);
-    expect(ctx.app.reloadService.onUpdateSouthItemsSettings).toHaveBeenCalledWith('southId', item, itemCommand);
+    expect(ctx.app.reloadService.onUpdateSouthItemSettings).toHaveBeenCalledWith('southId', item, itemCommand);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
@@ -745,7 +745,7 @@ describe('South connector controller', () => {
     expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
     expect(ctx.app.repositoryService.southItemRepository.getSouthItem).not.toHaveBeenCalled();
     expect(validator.validateSettings).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onUpdateSouthItemsSettings).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.onUpdateSouthItemSettings).not.toHaveBeenCalled();
     expect(ctx.throw).toHaveBeenCalledWith(404, 'South not found');
   });
 
@@ -765,7 +765,7 @@ describe('South connector controller', () => {
     expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
     expect(ctx.app.repositoryService.southItemRepository.getSouthItem).not.toHaveBeenCalled();
     expect(validator.validateSettings).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onUpdateSouthItemsSettings).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.onUpdateSouthItemSettings).not.toHaveBeenCalled();
     expect(ctx.throw).toHaveBeenCalledWith(404, 'South manifest not found');
   });
 
@@ -781,7 +781,7 @@ describe('South connector controller', () => {
     expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
     expect(ctx.app.repositoryService.southItemRepository.getSouthItem).toHaveBeenCalledWith('id');
     expect(validator.validateSettings).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onUpdateSouthItemsSettings).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.onUpdateSouthItemSettings).not.toHaveBeenCalled();
     expect(ctx.notFound).toHaveBeenCalled();
   });
 
@@ -800,7 +800,7 @@ describe('South connector controller', () => {
     expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
     expect(ctx.app.repositoryService.southItemRepository.getSouthItem).toHaveBeenCalledWith('id');
     expect(validator.validateSettings).toHaveBeenCalledTimes(1);
-    expect(ctx.app.reloadService.onUpdateSouthItemsSettings).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.onUpdateSouthItemSettings).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalled();
   });
 
@@ -821,7 +821,7 @@ describe('South connector controller', () => {
     expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
     expect(ctx.app.repositoryService.southItemRepository.getSouthItem).toHaveBeenCalledWith('id');
     expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.items.settings, itemCommand.settings);
-    expect(ctx.app.reloadService.onUpdateSouthItemsSettings).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.onUpdateSouthItemSettings).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
   });
 
@@ -831,6 +831,7 @@ describe('South connector controller', () => {
     await southConnectorController.deleteSouthItem(ctx);
 
     expect(ctx.app.reloadService.onDeleteSouthItem).toHaveBeenCalledWith('id');
+    expect(ctx.app.reloadService.oibusEngine.onSouthItemsChange).toHaveBeenCalledWith('id');
     expect(ctx.noContent).toHaveBeenCalled();
   });
 

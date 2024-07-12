@@ -15,7 +15,7 @@ export default class BaseEngine {
     protected readonly encryptionService: EncryptionService,
     protected readonly northService: NorthService,
     protected readonly southService: SouthService,
-    protected logger: pino.Logger,
+    protected _logger: pino.Logger,
     protected readonly cacheFolder: string
   ) {
     this.cacheFolder = path.resolve(cacheFolder);
@@ -26,17 +26,21 @@ export default class BaseEngine {
    * Creates CronJobs based on the ScanModes and starts them.
    */
   async start(): Promise<void> {
-    this.logger.warn(`start() should be surcharged`);
+    this._logger.warn(`start() should be surcharged`);
   }
 
   /**
    * Gracefully stop every timer, South and North connectors
    */
   async stop(): Promise<void> {
-    this.logger.warn('stop() should be surcharged');
+    this._logger.warn('stop() should be surcharged');
   }
 
   setLogger(value: pino.Logger) {
-    this.logger = value;
+    this._logger = value;
+  }
+
+  get logger() {
+    return this._logger;
   }
 }

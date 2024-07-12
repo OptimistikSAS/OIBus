@@ -14,7 +14,7 @@ export default jest.fn().mockImplementation(() => ({
   onStartSouth: jest.fn(),
   onStopSouth: jest.fn(),
   onCreateSouthItem: jest.fn(),
-  onUpdateSouthItemsSettings: jest.fn(),
+  onUpdateSouthItemSettings: jest.fn(),
   onCreateOrUpdateSouthItems: jest.fn(),
   onDeleteSouthItem: jest.fn(),
   onEnableSouthItem: jest.fn(),
@@ -66,7 +66,14 @@ export default jest.fn().mockImplementation(() => ({
     removeValueErrors: jest.fn(),
     removeAllValueErrors: jest.fn(),
     retryValueErrors: jest.fn(),
-    retryAllValueErrors: jest.fn()
+    retryAllValueErrors: jest.fn(),
+    startNorth: jest.fn(),
+    startSouth: jest.fn(),
+    onSouthItemsChange: jest.fn()
+  },
+  historyEngine: {
+    startHistoryQuery: jest.fn(),
+    stopHistoryQuery: jest.fn()
   },
   proxyServer: {
     refreshIpFilters: jest.fn()

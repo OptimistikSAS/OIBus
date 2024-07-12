@@ -119,7 +119,7 @@ describe('HistoryQueryService', () => {
       { id: 'itemId', name: 'MySouthItem', enabled: true, connectorId: 'id1', scanModeId: 'scanModeId', settings: {} }
     ]);
 
-    service.searchItems('id1', { page: 0, name: null }).subscribe(c => (expectedItems = c));
+    service.searchItems('id1', { page: 0 }).subscribe(c => (expectedItems = c));
 
     http.expectOne({ url: '/api/history-queries/id1/south-items?page=0', method: 'GET' }).flush(southConnectorItems);
     expect(expectedItems!).toEqual(southConnectorItems);

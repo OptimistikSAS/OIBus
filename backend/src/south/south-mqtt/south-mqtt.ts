@@ -32,7 +32,6 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
 
   constructor(
     connector: SouthConnectorDTO<SouthMQTTSettings>,
-    items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>>,
     engineAddValuesCallback: (southId: string, values: Array<OIBusDataValue>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
@@ -40,7 +39,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(connector, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
   }
 
   override async connect(): Promise<void> {
@@ -65,6 +64,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     if (this.client) {
       this.client.end(true);
       this.logger.info(`Disconnected from ${this.connector.settings.url}...`);
+      this.client = null;
     }
     await super.disconnect();
   }
@@ -122,6 +122,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
       this.logger.error('MQTT client could not subscribe to items: client not set');
       return;
     }
+
     for (const item of items) {
       this.client.subscribe(item.settings.topic, { qos: parseInt(this.connector.settings.qos) as QoS }, subscriptionError => {
         if (subscriptionError) {
@@ -144,7 +145,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
   async handleMessage(topic: string, message: Buffer): Promise<void> {
     const messageTimestamp: Instant = DateTime.now().toUTC().toISO()!;
     try {
-      const associatedItem = this.getItem(topic, this.items);
+      const associatedItem = this.getItem(topic);
 
       switch (associatedItem.settings.valueType) {
         case 'number':
@@ -226,10 +227,10 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     return pointId;
   }
 
-  getItem(topic: string, items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>>): SouthConnectorItemDTO<SouthMQTTItemSettings> {
+  getItem(topic: string): SouthConnectorItemDTO<SouthMQTTItemSettings> {
     const matchedPoints: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>> = [];
 
-    for (const item of items) {
+    for (const item of this.subscribedItems) {
       const matchList = this.wildcardTopic(topic, item.settings.topic);
       if (Array.isArray(matchList)) {
         const nrWildcards = (item.name.match(/[+#]/g) || []).length;

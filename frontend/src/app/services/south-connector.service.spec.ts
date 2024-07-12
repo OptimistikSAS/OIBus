@@ -141,7 +141,7 @@ describe('SouthConnectorService', () => {
       { id: 'southItemId', name: 'MySouthItem', enabled: true, connectorId: 'id1', scanModeId: 'scanModeId', settings: {} }
     ]);
 
-    service.searchItems('id1', { page: 0, name: null }).subscribe(c => (expectedSouthConnectorItems = c));
+    service.searchItems('id1', { page: 0 }).subscribe(c => (expectedSouthConnectorItems = c));
 
     http.expectOne({ url: '/api/south/id1/items?page=0', method: 'GET' }).flush(southConnectorItems);
     expect(expectedSouthConnectorItems!).toEqual(southConnectorItems);

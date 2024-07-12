@@ -31,10 +31,10 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
 
   private client: ads.Client | null = null;
   private reconnectTimeout: NodeJS.Timeout | null = null;
+  private disconnecting = false;
 
   constructor(
     connector: SouthConnectorDTO<SouthADSSettings>,
-    items: Array<SouthConnectorItemDTO<SouthADSItemSettings>>,
     engineAddValuesCallback: (southId: string, values: Array<OIBusDataValue>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
@@ -42,7 +42,7 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(connector, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
   }
 
   /**
@@ -228,16 +228,27 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
    * Initiates a connection to the right netId and port.
    */
   async connect(): Promise<void> {
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
+    }
+
     try {
       const options = this.createConnectionOptions();
       this.logger.info(`Connecting to ADS Client with options ${JSON.stringify(options)}`);
 
       this.client = new ads.Client(options);
-      await this.connectToAdsServer();
+      const result = await this.client.connect();
+      this.logger.info(
+        `Connected to the ${result.targetAmsNetId} with local AmsNetId ${result.localAmsNetId} and local port ${result.localAdsPort}`
+      );
+      await super.connect();
     } catch (error) {
       this.logger.error(`ADS connect error: ${JSON.stringify(error)}`);
       await this.disconnect();
-      this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
+      if (!this.disconnecting && this.connector.enabled && !this.reconnectTimeout) {
+        this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
+      }
     }
   }
 
@@ -246,17 +257,6 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
     this.client = new ads.Client(options);
     await this.client.connect();
     await this.disconnect();
-  }
-
-  /**
-   * Connect the ADS client to the ADS server with the already provided connection options
-   */
-  async connectToAdsServer(): Promise<void> {
-    const result = await this.client.connect();
-    this.logger.info(
-      `Connected to the ${result.targetAmsNetId} with local AmsNetId ${result.localAmsNetId} and local port ${result.localAdsPort}`
-    );
-    await super.connect();
   }
 
   /**
@@ -279,8 +279,10 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
    * Close the connection
    */
   async disconnect(): Promise<void> {
+    this.disconnecting = true;
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
     }
     try {
       await this.disconnectAdsClient();
@@ -290,5 +292,6 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
     this.logger.info(`ADS client disconnected from ${this.connector.settings.netId}:${this.connector.settings.port}`);
     this.client = null;
     await super.disconnect();
+    this.disconnecting = false;
   }
 }

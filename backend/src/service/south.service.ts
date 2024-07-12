@@ -70,7 +70,6 @@ export default class SouthService {
    */
   createSouth(
     settings: SouthConnectorDTO,
-    items: Array<SouthConnectorItemDTO>,
     addValues: (southId: string, values: Array<any>) => Promise<void>,
     addFile: (southId: string, filePath: string) => Promise<void>,
     baseFolder: string,
@@ -80,16 +79,7 @@ export default class SouthService {
     if (!SouthConnector) {
       throw Error(`South connector of type ${settings.type} not installed`);
     }
-    return new SouthConnector.class(
-      settings,
-      items,
-      addValues,
-      addFile,
-      this.encryptionService,
-      this.repositoryService,
-      logger,
-      baseFolder
-    );
+    return new SouthConnector.class(settings, addValues, addFile, this.encryptionService, this.repositoryService, logger, baseFolder);
   }
 
   /**

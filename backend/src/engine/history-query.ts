@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { HistoryQueryDTO } from '../../../shared/model/history-query.model';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
+import { SouthConnectorDTO } from '../../../shared/model/south-connector.model';
 import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 
 import { createFolder, delay } from '../service/utils';
@@ -12,7 +12,7 @@ import SouthConnector from '../south/south-connector';
 import HistoryMetricsService from '../service/history-metrics.service';
 import HistoryQueryService from '../service/history-query.service';
 import { PassThrough } from 'node:stream';
-import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
+import { SouthSettings } from '../../../shared/model/south-settings.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { OIBusDataValue } from '../../../shared/model/engine.model';
 
@@ -23,14 +23,14 @@ export default class HistoryQuery {
   private north: NorthConnector<any> | null = null;
   private south: SouthConnector<any, any> | null = null;
   private finishInterval: NodeJS.Timeout | null = null;
-  private _metricsService: HistoryMetricsService;
+  private readonly _metricsService: HistoryMetricsService;
+  private stopping = false;
 
   constructor(
-    private readonly historyConfiguration: HistoryQueryDTO,
+    private historyConfiguration: HistoryQueryDTO,
     private readonly southService: SouthService,
     private readonly northService: NorthService,
     private readonly historyService: HistoryQueryService,
-    private items: Array<SouthConnectorItemDTO>,
     private logger: pino.Logger,
     baseFolder: string
   ) {
@@ -46,6 +46,7 @@ export default class HistoryQuery {
    * Run history query according to its status
    */
   async start<S extends SouthSettings, N extends NorthSettings>(): Promise<void> {
+    this.historyConfiguration = this.historyService.repositoryService.historyQueryRepository.getHistoryQuery(this.historyConfiguration.id)!;
     const southConfiguration: SouthConnectorDTO<S> = {
       id: this.historyConfiguration.id,
       name: this.historyConfiguration.name,
@@ -59,7 +60,6 @@ export default class HistoryQuery {
     await createFolder(southFolder);
     this.south = this.southService.createSouth(
       southConfiguration,
-      this.items,
       this.addValues.bind(this),
       this.addFile.bind(this),
       southFolder,
@@ -91,18 +91,18 @@ export default class HistoryQuery {
       this._metricsService.updateMetrics({ ...this._metricsService.metrics, north: northMetrics });
     });
 
-    const { status } = this.historyService.repositoryService.historyQueryRepository.getHistoryQuery(this.historyConfiguration.id)!;
-    if (status !== 'RUNNING') {
+    if (this.historyConfiguration.status !== 'RUNNING') {
       this.logger.trace(`History Query "${this.historyConfiguration.name}" not enabled`);
       return;
     }
 
-    await this.north.start();
+    await this.north.start(false);
 
     this.south.connectedEvent.on('connected', async () => {
       this.south!.createDeferredPromise();
+
       this.south!.historyQueryHandler(
-        this.items.filter(item => item.enabled),
+        this.historyService.listItems(this.historyConfiguration.id, { enabled: true }),
         this.historyConfiguration.startTime,
         this.historyConfiguration.endTime,
         'history'
@@ -114,15 +114,20 @@ export default class HistoryQuery {
           this.logger.error(`Error while executing history query. ${error}`);
           this.south!.resolveDeferredPromise();
           await delay(FINISH_INTERVAL);
-          await this.south!.stop();
-          await this.south!.start();
+          this.historyConfiguration = this.historyService.repositoryService.historyQueryRepository.getHistoryQuery(
+            this.historyConfiguration.id
+          )!;
+          if (this.historyConfiguration.status === 'RUNNING' && !this.stopping) {
+            await this.south!.stop(false);
+            await this.south!.start(false);
+          }
         });
       if (this.finishInterval) {
         clearInterval(this.finishInterval);
       }
       this.finishInterval = setInterval(this.finish.bind(this), FINISH_INTERVAL);
     });
-    await this.south.start();
+    await this.south.start(false);
   }
 
   /**
@@ -151,19 +156,20 @@ export default class HistoryQuery {
    * Stop history query
    */
   async stop(resetCache = false): Promise<void> {
+    this.stopping = true;
     if (this.finishInterval) {
       clearInterval(this.finishInterval);
+      this.finishInterval = null;
     }
-    this.finishInterval = null;
     if (this.south) {
       this.south.connectedEvent.removeAllListeners();
-      await this.south.stop();
+      await this.south.stop(false);
       if (resetCache) {
         await this.south.resetCache();
       }
     }
     if (this.north) {
-      await this.north.stop();
+      await this.north.stop(false);
       if (resetCache) {
         await this.north.resetCache();
       }
@@ -172,6 +178,7 @@ export default class HistoryQuery {
     if (this._metricsService && resetCache) {
       this._metricsService.resetMetrics();
     }
+    this.stopping = false;
   }
 
   /**
@@ -182,42 +189,12 @@ export default class HistoryQuery {
       this.logger.info(`Finish "${this.historyConfiguration.name}" (${this.historyConfiguration.id})`);
       await this.stop();
       this.historyService.repositoryService.historyQueryRepository.setHistoryQueryStatus(this.historyConfiguration.id, 'FINISHED');
+      this.historyConfiguration = this.historyService.repositoryService.historyQueryRepository.getHistoryQuery(
+        this.historyConfiguration.id
+      )!;
     } else {
       this.logger.debug(`History query "${this.historyConfiguration.name}" is still running`);
     }
-  }
-
-  async addItem<I extends SouthItemSettings>(item: SouthConnectorItemDTO<I>): Promise<void> {
-    if (!this.south) {
-      return;
-    }
-    this.items.push(item);
-    await this.stop();
-    await this.south.addItem(item);
-    await this.start();
-  }
-
-  async updateItem<I extends SouthItemSettings>(item: SouthConnectorItemDTO<I>): Promise<void> {
-    if (!this.south) {
-      return;
-    }
-    await this.deleteItem(item);
-    await this.addItem(item);
-  }
-
-  async deleteItem<I extends SouthItemSettings>(itemToRemove: SouthConnectorItemDTO<I>): Promise<void> {
-    this.items = this.items.filter(item => item.id !== itemToRemove.id);
-    if (!this.south) {
-      return;
-    }
-    await this.south.deleteItem(itemToRemove);
-  }
-
-  async deleteItems(): Promise<void> {
-    if (!this.south) {
-      return;
-    }
-    await this.south.deleteAllItems();
   }
 
   setLogger(value: pino.Logger) {

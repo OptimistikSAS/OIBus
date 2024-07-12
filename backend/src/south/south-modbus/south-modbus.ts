@@ -23,10 +23,10 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
   private socket: net.Socket | null = null;
   private client: ModbusTCPClient | null = null;
   private reconnectTimeout: NodeJS.Timeout | null = null;
+  private disconnecting = false;
 
   constructor(
     connector: SouthConnectorDTO<SouthModbusSettings>,
-    items: Array<SouthConnectorItemDTO<SouthModbusItemSettings>>,
     engineAddValuesCallback: (southId: string, values: Array<OIBusDataValue>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
@@ -34,7 +34,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(connector, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
   }
 
   async lastPointQuery(items: Array<SouthConnectorItemDTO<SouthModbusItemSettings>>): Promise<void> {
@@ -50,7 +50,10 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
     } catch (error: any) {
       await this.addValues(dataValues);
       await this.disconnect();
-      this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
+      if (!this.disconnecting && this.connector.enabled && !this.reconnectTimeout) {
+        this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
+      }
+
       if (error.err) {
         throw new Error(`${error.err} - ${error.message}`);
       }
@@ -185,6 +188,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
     return new Promise(resolve => {
       if (this.reconnectTimeout) {
         clearTimeout(this.reconnectTimeout);
+        this.reconnectTimeout = null;
       }
       this.socket = new net.Socket();
       this.client = new client.TCP(this.socket, this.connector.settings.slaveId);
@@ -204,7 +208,9 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
       this.socket.on('error', async error => {
         this.logger.error(`Modbus socket error: ${error}`);
         await this.disconnect();
-        this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
+        if (!this.disconnecting && this.connector.enabled && !this.reconnectTimeout) {
+          this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
+        }
       });
     });
   }
@@ -248,14 +254,17 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
    * Close the connection
    */
   async disconnect(): Promise<void> {
+    this.disconnecting = true;
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
     }
     this.socket?.end();
     this.socket = null;
     this.client = null;
     this.reconnectTimeout = null;
     await super.disconnect();
+    this.disconnecting = false;
   }
 
   /**

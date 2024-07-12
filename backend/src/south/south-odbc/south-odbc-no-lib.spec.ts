@@ -8,7 +8,7 @@ import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock
 import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
 import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
-import { SouthODBCItemSettings, SouthODBCSettings } from '../../../../shared/model/south-settings.model';
+import { SouthODBCSettings } from '../../../../shared/model/south-settings.model';
 
 jest.mock('../../service/utils');
 jest.mock('odbc', () => {
@@ -53,7 +53,6 @@ const addFile = jest.fn();
 const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
-const items: Array<SouthConnectorItemDTO<SouthODBCItemSettings>> = [];
 
 let south: SouthODBC;
 
@@ -86,8 +85,9 @@ describe('SouthODBC without ODBC Library', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
-    south = new SouthODBC(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthODBC(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should throw error if library not loaded', async () => {

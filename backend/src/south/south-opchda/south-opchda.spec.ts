@@ -115,8 +115,9 @@ describe('South OPCHDA', () => {
   beforeEach(async () => {
     jest.resetAllMocks();
     jest.useFakeTimers();
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
-    south = new SouthOPCHDA(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthOPCHDA(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should properly connect to remote agent and disconnect ', async () => {
@@ -330,5 +331,20 @@ describe('South OPCHDA', () => {
     await south.historyQuery(items, startTime, endTime);
     expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 400: bad request`);
     expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 500`);
+  });
+
+  it('should manage fetch error', async () => {
+    const startTime = '2020-01-01T00:00:00.000Z';
+    const endTime = '2022-01-01T00:00:00.000Z';
+
+    (fetch as unknown as jest.Mock).mockImplementation(() => {
+      throw new Error('bad request');
+    });
+
+    await expect(south.historyQuery(items, startTime, endTime)).rejects.toThrow(new Error('bad request'));
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue({ ...configuration, enabled: false });
+
+    await south.start();
+    await expect(south.historyQuery(items, startTime, endTime)).rejects.toThrow(new Error('bad request'));
   });
 });

@@ -31,7 +31,6 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
 
   constructor(
     connector: SouthConnectorDTO<SouthMySQLSettings>,
-    items: Array<SouthConnectorItemDTO<SouthMySQLItemSettings>>,
     engineAddValuesCallback: (southId: string, values: Array<OIBusDataValue>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
@@ -39,16 +38,16 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(connector, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
     this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
   }
 
   /**
    * Initialize services (logger, certificate, status data) at startup
    */
-  async start(): Promise<void> {
+  async start(dataStream = true): Promise<void> {
     await createFolder(this.tmpFolder);
-    await super.start();
+    await super.start(dataStream);
   }
 
   async createConnectionOptions(): Promise<mysql.ConnectionOptions> {

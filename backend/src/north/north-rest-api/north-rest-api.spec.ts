@@ -126,6 +126,8 @@ describe('NorthRestApi without proxy', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     (utils.filesExists as jest.Mock).mockReturnValue(true);
+    repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
+
     north = new NorthRestApi(configuration, encryptionService, repositoryService, logger, 'baseFolder');
     await north.start();
   });
@@ -307,7 +309,7 @@ describe('NorthRestApi without proxy', () => {
   });
 });
 
-describe('NorthOIConnect with proxy but no password', () => {
+describe('NorthRestApi with proxy but no password', () => {
   const configuration: NorthConnectorDTO<NorthRestAPISettings> = {
     id: 'id',
     name: 'north',
@@ -348,6 +350,7 @@ describe('NorthOIConnect with proxy but no password', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
+    repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
 
     north = new NorthRestApi(configuration, encryptionService, repositoryService, logger, 'baseFolder');
     await north.start();
@@ -418,7 +421,7 @@ describe('NorthOIConnect with proxy but no password', () => {
   });
 });
 
-describe('NorthOIConnect without authentication but with proxy', () => {
+describe('NorthRestApi without authentication but with proxy', () => {
   const configuration: NorthConnectorDTO<NorthRestAPISettings> = {
     id: 'id',
     name: 'north',
@@ -457,6 +460,7 @@ describe('NorthOIConnect without authentication but with proxy', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
 
     north = new NorthRestApi(configuration, encryptionService, repositoryService, logger, 'baseFolder');
     await north.start();

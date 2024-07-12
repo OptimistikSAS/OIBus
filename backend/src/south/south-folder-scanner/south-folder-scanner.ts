@@ -30,7 +30,6 @@ export default class SouthFolderScanner
    */
   constructor(
     connector: SouthConnectorDTO<SouthFolderScannerSettings>,
-    items: Array<SouthConnectorItemDTO<SouthFolderScannerItemSettings>>,
     engineAddValuesCallback: (southId: string, values: Array<OIBusDataValue>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
@@ -38,7 +37,7 @@ export default class SouthFolderScanner
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(connector, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
     this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
   }
 
@@ -63,8 +62,8 @@ export default class SouthFolderScanner
     }
   }
 
-  async start(): Promise<void> {
-    await super.start();
+  async start(dataStream = true): Promise<void> {
+    await super.start(dataStream);
     // Create a custom table in the south cache database to manage file already sent when preserve file is set to true
     this.cacheService!.cacheRepository.createCustomTable(
       `folder_scanner_${this.connector.id}`,

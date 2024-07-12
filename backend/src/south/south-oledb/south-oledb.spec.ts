@@ -183,8 +183,9 @@ describe('SouthOLEDB with authentication', () => {
     (convertDateTimeToInstant as jest.Mock).mockImplementation(value => value);
     (convertDelimiter as jest.Mock).mockImplementation(value => value);
     (formatInstant as jest.Mock).mockImplementation(value => value);
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
-    south = new SouthOLEDB(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthOLEDB(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should create temp folder', async () => {
@@ -423,8 +424,9 @@ describe('SouthOLEDB test connection', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
-    south = new SouthOLEDB(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthOLEDB(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should test connection successfully', async () => {

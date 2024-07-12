@@ -54,7 +54,6 @@ describe('south service', () => {
         },
         settings: { verbose: true }
       },
-      [],
       jest.fn(),
       jest.fn(),
       'myBaseFolder',
@@ -82,7 +81,6 @@ describe('south service', () => {
           },
           settings: { verbose: true }
         },
-        [],
         jest.fn(),
         jest.fn(),
         'myBaseFolder',

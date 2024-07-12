@@ -115,7 +115,7 @@ export default class NorthConnectorController {
       }
 
       if (command.enabled) {
-        await ctx.app.reloadService.onStartNorth(northConnector.id);
+        await ctx.app.reloadService.oibusEngine.startNorth(northConnector.id);
       }
       ctx.created(northConnector);
     } catch (error: any) {

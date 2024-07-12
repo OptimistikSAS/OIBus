@@ -174,11 +174,13 @@ export default class HistoryQueryController extends AbstractController {
 
       const itemsToAdd = ctx.request.body!.items.filter(item => !item.id);
       const itemsToUpdate = ctx.request.body!.items.filter(item => item.id);
+      await ctx.app.reloadService.historyEngine.stopHistoryQuery(historyQuery.id, true);
       for (const itemId of ctx.request.body!.itemIdsToDelete) {
         await ctx.app.reloadService.onDeleteHistoryItem(historyQuery.id, itemId);
       }
       await ctx.app.reloadService.onCreateOrUpdateHistoryQueryItems(historyQuery, itemsToAdd, itemsToUpdate);
       await ctx.app.reloadService.onUpdateHistoryQuerySettings(ctx.params.id, command);
+      await ctx.app.reloadService.historyEngine.startHistoryQuery(historyQuery.id);
       ctx.noContent();
     } catch (error: any) {
       ctx.badRequest(error.message);
@@ -226,14 +228,14 @@ export default class HistoryQueryController extends AbstractController {
   async searchHistoryQueryItems(ctx: KoaContext<void, Page<SouthConnectorItemDTO>>): Promise<void> {
     const searchParams: SouthConnectorItemSearchParam = {
       page: ctx.query.page ? parseInt(ctx.query.page as string, 10) : 0,
-      name: (ctx.query.name as string) || null
+      name: ctx.query.name as string | undefined
     };
     const southItems = ctx.app.repositoryService.historyQueryItemRepository.searchHistoryItems(ctx.params.historyQueryId, searchParams);
     ctx.ok(southItems);
   }
 
   async listItems(ctx: KoaContext<void, Array<SouthConnectorItemDTO>>): Promise<void> {
-    const items = ctx.app.repositoryService.historyQueryItemRepository.getHistoryItems(ctx.params.historyQueryId);
+    const items = ctx.app.repositoryService.historyQueryItemRepository.listHistoryItems(ctx.params.historyQueryId, {});
     ctx.ok(items);
   }
 
@@ -295,7 +297,9 @@ export default class HistoryQueryController extends AbstractController {
   }
 
   async deleteHistoryQueryItem(ctx: KoaContext<void, void>): Promise<void> {
+    await ctx.app.reloadService.historyEngine.stopHistoryQuery(ctx.params.historyQueryId, true);
     await ctx.app.reloadService.onDeleteHistoryItem(ctx.params.historyQueryId, ctx.params.id);
+    await ctx.app.reloadService.historyEngine.startHistoryQuery(ctx.params.historyQueryId);
     ctx.noContent();
   }
 
@@ -310,6 +314,7 @@ export default class HistoryQueryController extends AbstractController {
   }
 
   async deleteAllItems(ctx: KoaContext<void, void>): Promise<void> {
+    await ctx.app.reloadService.historyEngine.stopHistoryQuery(ctx.params.historyQueryId, true);
     await ctx.app.reloadService.onDeleteAllHistoryItems(ctx.params.historyQueryId);
     ctx.noContent();
   }
@@ -341,7 +346,7 @@ export default class HistoryQueryController extends AbstractController {
   async exportSouthItems(ctx: KoaContext<void, any>): Promise<void> {
     const columns: Set<string> = new Set<string>(['name', 'enabled']);
 
-    const southItems = ctx.app.repositoryService.historyQueryItemRepository.getHistoryItems(ctx.params.historyQueryId).map(item => {
+    const southItems = ctx.app.repositoryService.historyQueryItemRepository.listHistoryItems(ctx.params.historyQueryId, {}).map(item => {
       const flattenedItem: Record<string, any> = {
         ...item
       };
@@ -376,7 +381,7 @@ export default class HistoryQueryController extends AbstractController {
     const existingItems: Array<SouthConnectorItemDTO> =
       ctx.params.historyQueryId === 'create'
         ? []
-        : ctx.app.repositoryService.historyQueryItemRepository.getHistoryItems(ctx.params.historyQueryId);
+        : ctx.app.repositoryService.historyQueryItemRepository.listHistoryItems(ctx.params.historyQueryId, {});
     const validItems: Array<any> = [];
     const errors: Array<any> = [];
     try {
@@ -454,7 +459,9 @@ export default class HistoryQueryController extends AbstractController {
     }
 
     try {
+      await ctx.app.reloadService.historyEngine.stopHistoryQuery(historyQuery.id);
       await ctx.app.reloadService.onCreateOrUpdateHistoryQueryItems(historyQuery, items, []);
+      await ctx.app.reloadService.historyEngine.startHistoryQuery(historyQuery.id);
     } catch (error: any) {
       return ctx.badRequest(error.message);
     }
@@ -506,7 +513,6 @@ export default class HistoryQueryController extends AbstractController {
       );
       const southToTest = ctx.app.southService.createSouth(
         command,
-        [],
         /* istanbul ignore next: noop function */
         async (_southId: string, _values: Array<any>) => {},
         /* istanbul ignore next: noop function */

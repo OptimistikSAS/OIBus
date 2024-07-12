@@ -125,8 +125,9 @@ describe('SouthFolderScanner', () => {
   beforeEach(async () => {
     jest.resetAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
-    south = new SouthFolderScanner(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthFolderScanner(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('fileQuery should manage file query', async () => {
@@ -232,7 +233,8 @@ describe('SouthFolderScanner with preserve file and compression', () => {
       run: jest.fn()
     }));
     configuration.settings.compression = true;
-    south = new SouthFolderScanner(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    south = new SouthFolderScanner(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
     await south.start();
   });
 
@@ -296,7 +298,9 @@ describe('SouthFolderScanner with preserve file ignore modified date', () => {
       run: jest.fn()
     }));
     configuration.settings.compression = false;
-    south = new SouthFolderScanner(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+
+    south = new SouthFolderScanner(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should properly check age with ignore modified date', async () => {
@@ -316,7 +320,8 @@ describe('SouthFolderScanner test connection', () => {
     jest.resetAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
-    south = new SouthFolderScanner(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    south = new SouthFolderScanner(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('Folder does not exist', async () => {

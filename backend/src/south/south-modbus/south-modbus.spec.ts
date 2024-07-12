@@ -188,6 +188,7 @@ class CustomStream extends Stream {
   connect(_connectionObject: any, _callback: any) {}
   end() {}
 }
+repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
 describe('SouthModbus', () => {
   beforeEach(async () => {
@@ -204,7 +205,7 @@ describe('SouthModbus', () => {
       }
     });
 
-    south = new SouthModbus(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthModbus(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should fail to connect and try again', async () => {
@@ -224,11 +225,19 @@ describe('SouthModbus', () => {
     expect(net.Socket).toHaveBeenCalledTimes(1);
     mockedEmitter.emit('error', 'connect error');
     await flushPromises();
-    expect(clearTimeoutSpy).not.toHaveBeenCalled();
+    await south.disconnect();
+    expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
+
+    await south.connect();
+    expect(net.Socket).toHaveBeenCalledTimes(2);
+    mockedEmitter.emit('error', 'connect error');
+    await flushPromises();
+    await south.connect();
+    expect(clearTimeoutSpy).toHaveBeenCalledTimes(2);
 
     expect(logger.error).toHaveBeenCalledWith('Modbus socket error: connect error');
     jest.advanceTimersByTime(configuration.settings.retryInterval);
-    expect(net.Socket).toHaveBeenCalledTimes(2);
+    expect(net.Socket).toHaveBeenCalledTimes(3);
     await south.disconnect();
     expect(clearTimeoutSpy).toHaveBeenCalledTimes(2);
   });
@@ -454,7 +463,7 @@ describe('SouthModbus test connection', () => {
   }
 
   it('Connecting to socket successfully', async () => {
-    testingSouth = new SouthModbus(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    testingSouth = new SouthModbus(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
 
     // Mock node:net Socket constructor and the used function
     (net.Socket as unknown as jest.Mock).mockReturnValue({
@@ -490,7 +499,7 @@ describe('SouthModbus test connection', () => {
   });
 
   it('should fail to connect', async () => {
-    testingSouth = new SouthModbus(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    testingSouth = new SouthModbus(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
 
     const mockedEmitter = new CustomStream();
     mockedEmitter.connect = (_connectionObject: any, _callback: any) => {};

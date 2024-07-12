@@ -10,7 +10,6 @@ import fs from 'node:fs/promises';
 import { createFolder, filesExists } from '../service/utils';
 
 import { HistoryQueryDTO } from '../../../shared/model/history-query.model';
-import { SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
 import { PassThrough } from 'node:stream';
 
 const CACHE_FOLDER = './cache/history-query';
@@ -35,7 +34,8 @@ export default class HistoryQueryEngine extends BaseEngine {
   override async start(): Promise<void> {
     const historyQueriesSettings = this.historyQueryService.getHistoryQueryList();
     for (const settings of historyQueriesSettings) {
-      await this.startHistoryQuery(settings);
+      await this.createHistoryQuery(settings);
+      await this.startHistoryQuery(settings.id);
     }
   }
 
@@ -49,8 +49,7 @@ export default class HistoryQueryEngine extends BaseEngine {
     this.historyQueries.clear();
   }
 
-  async startHistoryQuery(settings: HistoryQueryDTO): Promise<void> {
-    const items = this.historyQueryService.getItems(settings.id);
+  async createHistoryQuery(settings: HistoryQueryDTO): Promise<void> {
     const baseFolder = path.resolve(this.cacheFolder, `history-${settings.id}`);
     await createFolder(baseFolder);
     const historyQuery = new HistoryQuery(
@@ -58,7 +57,6 @@ export default class HistoryQueryEngine extends BaseEngine {
       this.southService,
       this.northService,
       this.historyQueryService,
-      items,
       this.logger.child({ scopeType: 'history-query', scopeId: settings.id, scopeName: settings.name }),
       baseFolder
     );
@@ -69,28 +67,17 @@ export default class HistoryQueryEngine extends BaseEngine {
       this.historyQueries.delete(settings.id);
       this.historyQueries.set(settings.id, historyQuery);
     }
-    this.historyQueries
-      .get(settings.id)!
-      .start()
-      .catch(error => {
-        this.logger.error(error);
-      });
   }
 
-  async addItemToHistoryQuery(historyId: string, item: SouthConnectorItemDTO): Promise<void> {
-    await this.historyQueries.get(historyId)?.addItem(item);
-  }
-
-  async deleteItemFromHistoryQuery(historyId: string, item: SouthConnectorItemDTO): Promise<void> {
-    await this.historyQueries.get(historyId)?.deleteItem(item);
-  }
-
-  async deleteAllItemsFromHistoryQuery(historyId: string): Promise<void> {
-    await this.historyQueries.get(historyId)?.deleteItems();
-  }
-
-  async updateItemInHistoryQuery(historyId: string, item: SouthConnectorItemDTO): Promise<void> {
-    await this.historyQueries.get(historyId)?.updateItem(item);
+  async startHistoryQuery(historyId: string): Promise<void> {
+    if (this.historyQueries.has(historyId)) {
+      this.historyQueries
+        .get(historyId)!
+        .start()
+        .catch(error => {
+          this.logger.error(error);
+        });
+    }
   }
 
   async stopHistoryQuery(historyId: string, resetCache = false): Promise<void> {

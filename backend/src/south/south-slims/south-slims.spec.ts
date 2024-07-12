@@ -185,12 +185,13 @@ describe('SouthSlims with body', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
     (utils.formatQueryParams as jest.Mock).mockReturnValue(
       '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
     );
 
-    south = new SouthSlims(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthSlims(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should test connection', async () => {
@@ -303,7 +304,7 @@ describe('SouthSlims with body', () => {
 });
 
 describe('SouthSlims with body and accept self signed', () => {
-  const connector: SouthConnectorDTO<SouthSlimsSettings> = {
+  const configuration: SouthConnectorDTO<SouthSlimsSettings> = {
     id: 'southId',
     name: 'south',
     type: 'test',
@@ -328,12 +329,13 @@ describe('SouthSlims with body and accept self signed', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
     (utils.formatQueryParams as jest.Mock).mockReturnValue(
       '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
     );
 
-    south = new SouthSlims(connector, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthSlims(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should test connection', async () => {
@@ -360,7 +362,7 @@ describe('SouthSlims with body and accept self signed', () => {
       host: 'localhost',
       protocol: 'https:',
       timeout: 30000,
-      port: connector.settings.port,
+      port: configuration.settings.port,
       path: items[3].settings.endpoint,
       headers: {
         authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=',
@@ -407,8 +409,9 @@ describe('SouthSlims with query params', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     (utils.formatInstant as jest.Mock).mockImplementation((instant: string) => instant);
     (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
-    south = new SouthSlims(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthSlims(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should properly fetch with Body', async () => {
@@ -1030,7 +1033,9 @@ describe('SouthSlims with query params and accept self signed', () => {
     jest.clearAllMocks();
     (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
     (utils.formatInstant as jest.Mock).mockImplementation((instant: string) => instant);
-    south = new SouthSlims(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+
+    south = new SouthSlims(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should properly fetch with Body', async () => {
