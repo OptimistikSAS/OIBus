@@ -9,23 +9,33 @@ export interface ProxyConfig {
 }
 
 export function createProxyAgent(useProxy: boolean, targetUrl: string, proxyConfig: ProxyConfig | null, acceptUnauthorized = false) {
+  // HTTPS agent without proxy
   if (!useProxy && acceptUnauthorized && targetUrl.startsWith('https://')) {
     return new https.Agent({ rejectUnauthorized: false });
-  } else if (!useProxy || !proxyConfig) {
+  }
+  // No proxying
+  else if (!useProxy || !proxyConfig) {
     return undefined;
-  } else if (proxyConfig!.url.startsWith('http://')) {
+  }
+  // Proxying
+  else if (proxyConfig!.url.startsWith('http://') || proxyConfig!.url.startsWith('https://')) {
+    const isProxySecure = proxyConfig!.url.startsWith('https://');
+    let proxyUrl = proxyConfig!.url;
+
     if (proxyConfig.username && proxyConfig.password) {
-      const url = 'http://' + `${proxyConfig.username}:${proxyConfig.password}@` + proxyConfig.url.slice(7);
-      return new HttpProxyAgent(url);
+      const protocol = isProxySecure ? 'https://' : 'http://';
+      const restOfUrl = proxyConfig.url.slice(protocol.length);
+      proxyUrl = `${protocol}${proxyConfig.username}:${proxyConfig.password}@${restOfUrl}`;
     }
-    return new HttpProxyAgent(proxyConfig!.url);
-  } else if (proxyConfig!.url.startsWith('https://')) {
-    if (proxyConfig.username && proxyConfig.password) {
-      const url = 'https://' + `${proxyConfig.username}:${proxyConfig.password}@` + proxyConfig.url.slice(8);
-      return new HttpsProxyAgent(url, { rejectUnauthorized: !acceptUnauthorized });
+
+    if (targetUrl.startsWith('https://')) {
+      return new HttpsProxyAgent(proxyUrl, { rejectUnauthorized: !acceptUnauthorized });
+    } else {
+      return new HttpProxyAgent(proxyUrl);
     }
-    return new HttpsProxyAgent(proxyConfig!.url, { rejectUnauthorized: !acceptUnauthorized });
-  } else {
+  }
+  // Wrong proxy url
+  else {
     throw new Error(`Proxy URL ${proxyConfig!.url} should start with http:// or https://`);
   }
 }
