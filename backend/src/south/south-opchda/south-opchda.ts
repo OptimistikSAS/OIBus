@@ -20,10 +20,10 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
 
   private connected = false;
   private reconnectTimeout: NodeJS.Timeout | null = null;
+  private disconnecting = false;
 
   constructor(
     connector: SouthConnectorDTO<SouthOPCHDASettings>,
-    items: Array<SouthConnectorItemDTO<SouthOPCHDAItemSettings>>,
     engineAddValuesCallback: (southId: string, values: Array<OIBusDataValue>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
@@ -31,10 +31,15 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(connector, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
   }
 
   async connect(): Promise<void> {
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
+    }
+
     try {
       const headers: Record<string, string> = {};
       headers['Content-Type'] = 'application/json';
@@ -54,7 +59,10 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
       this.logger.error(
         `Error while sending connection HTTP request into agent. Reconnecting in ${this.connector.settings.retryInterval} ms. ${error}`
       );
-      this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
+      if (!this.disconnecting && this.connector.enabled && !this.reconnectTimeout) {
+        await this.disconnect();
+        this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
+      }
     }
   }
 
@@ -85,84 +93,111 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
    * and write them into the cache and send it to the engine.
    */
   async historyQuery(items: Array<SouthConnectorItemDTO<SouthOPCHDAItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
-    let updatedStartTime = startTime;
-    const itemsByAggregates = new Map<Aggregate, Map<Resampling | undefined, Array<{ nodeId: string; name: string }>>>();
-    items.forEach(item => {
-      if (!itemsByAggregates.has(item.settings.aggregate)) {
-        itemsByAggregates.set(
-          item.settings.aggregate,
-          new Map<
-            Resampling,
-            Array<{
-              nodeId: string;
-              name: string;
-            }>
-          >()
-        );
-      }
-      const resampling = item.settings.resampling ? item.settings.resampling : 'none';
-      if (!itemsByAggregates.get(item.settings.aggregate!)!.has(resampling)) {
-        itemsByAggregates.get(item.settings.aggregate)!.set(resampling, [{ name: item.name, nodeId: item.settings.nodeId }]);
-      } else {
-        const currentList = itemsByAggregates.get(item.settings.aggregate)!.get(resampling)!;
-        currentList.push({ name: item.name, nodeId: item.settings.nodeId });
-        itemsByAggregates.get(item.settings.aggregate)!.set(resampling, currentList);
-      }
-    });
-
-    for (const [aggregate, aggregatedItems] of itemsByAggregates.entries()) {
-      for (const [resampling, resampledItems] of aggregatedItems.entries()) {
-        this.logger.debug(`Requesting ${resampledItems.length} items with aggregate ${aggregate} and resampling ${resampling}`);
-        const startRequest = DateTime.now().toMillis();
-        const headers: Record<string, string> = {};
-        headers['Content-Type'] = 'application/json';
-        const fetchOptions = {
-          method: 'PUT',
-          body: JSON.stringify({
-            host: this.connector.settings.host,
-            serverName: this.connector.settings.serverName,
-            aggregate,
-            resampling,
-            startTime,
-            endTime,
-            items: resampledItems
-          }),
-          headers
-        };
-        const response = await fetch(`${this.connector.settings.agentUrl}/api/opc/${this.connector.id}/read`, fetchOptions);
-        if (response.status === 200) {
-          const result: { recordCount: number; content: Array<OIBusDataValue>; maxInstantRetrieved: Instant } = (await response.json()) as {
-            recordCount: number;
-            content: OIBusDataValue[];
-            maxInstantRetrieved: string;
-          };
-          const requestDuration = DateTime.now().toMillis() - startRequest;
-
-          if (result.content.length > 0) {
-            this.logger.debug(`Found ${result.recordCount} results for ${resampledItems.length} items in ${requestDuration} ms`);
-            await this.addValues(result.content);
-            if (result.maxInstantRetrieved > updatedStartTime) {
-              updatedStartTime = result.maxInstantRetrieved;
+    try {
+      let updatedStartTime = startTime;
+      const itemsByAggregates = new Map<
+        Aggregate,
+        Map<
+          Resampling | undefined,
+          Array<{
+            nodeId: string;
+            name: string;
+          }>
+        >
+      >();
+      items.forEach(item => {
+        if (!itemsByAggregates.has(item.settings.aggregate)) {
+          itemsByAggregates.set(
+            item.settings.aggregate,
+            new Map<
+              Resampling,
+              Array<{
+                nodeId: string;
+                name: string;
+              }>
+            >()
+          );
+        }
+        const resampling = item.settings.resampling ? item.settings.resampling : 'none';
+        if (!itemsByAggregates.get(item.settings.aggregate!)!.has(resampling)) {
+          itemsByAggregates.get(item.settings.aggregate)!.set(resampling, [
+            {
+              name: item.name,
+              nodeId: item.settings.nodeId
             }
-          } else {
-            this.logger.debug(`No result found. Request done in ${requestDuration} ms`);
-          }
-        } else if (response.status === 400) {
-          const errorMessage = await response.text();
-          this.logger.error(`Error occurred when querying remote agent with status ${response.status}: ${errorMessage}`);
+          ]);
         } else {
-          this.logger.error(`Error occurred when querying remote agent with status ${response.status}`);
+          const currentList = itemsByAggregates.get(item.settings.aggregate)!.get(resampling)!;
+          currentList.push({ name: item.name, nodeId: item.settings.nodeId });
+          itemsByAggregates.get(item.settings.aggregate)!.set(resampling, currentList);
+        }
+      });
+
+      for (const [aggregate, aggregatedItems] of itemsByAggregates.entries()) {
+        for (const [resampling, resampledItems] of aggregatedItems.entries()) {
+          this.logger.debug(`Requesting ${resampledItems.length} items with aggregate ${aggregate} and resampling ${resampling}`);
+          const startRequest = DateTime.now().toMillis();
+          const headers: Record<string, string> = {};
+          headers['Content-Type'] = 'application/json';
+          const fetchOptions = {
+            method: 'PUT',
+            body: JSON.stringify({
+              host: this.connector.settings.host,
+              serverName: this.connector.settings.serverName,
+              aggregate,
+              resampling,
+              startTime,
+              endTime,
+              items: resampledItems
+            }),
+            headers
+          };
+          const response = await fetch(`${this.connector.settings.agentUrl}/api/opc/${this.connector.id}/read`, fetchOptions);
+          if (response.status === 200) {
+            const result: {
+              recordCount: number;
+              content: Array<OIBusDataValue>;
+              maxInstantRetrieved: Instant;
+            } = (await response.json()) as {
+              recordCount: number;
+              content: OIBusDataValue[];
+              maxInstantRetrieved: string;
+            };
+            const requestDuration = DateTime.now().toMillis() - startRequest;
+
+            if (result.content.length > 0) {
+              this.logger.debug(`Found ${result.recordCount} results for ${resampledItems.length} items in ${requestDuration} ms`);
+              await this.addValues(result.content);
+              if (result.maxInstantRetrieved > updatedStartTime) {
+                updatedStartTime = result.maxInstantRetrieved;
+              }
+            } else {
+              this.logger.debug(`No result found. Request done in ${requestDuration} ms`);
+            }
+          } else if (response.status === 400) {
+            const errorMessage = await response.text();
+            this.logger.error(`Error occurred when querying remote agent with status ${response.status}: ${errorMessage}`);
+          } else {
+            this.logger.error(`Error occurred when querying remote agent with status ${response.status}`);
+          }
         }
       }
+      return updatedStartTime;
+    } catch (error) {
+      await this.disconnect();
+      if (!this.disconnecting && this.connector.enabled) {
+        await this.connect();
+      }
+      throw error;
     }
-    return updatedStartTime;
   }
 
   async disconnect(): Promise<void> {
+    this.disconnecting = true;
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
     }
-    this.reconnectTimeout = null;
 
     if (this.connected) {
       try {
@@ -174,5 +209,6 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
     }
     this.connected = false;
     await super.disconnect();
+    this.disconnecting = false;
   }
 }

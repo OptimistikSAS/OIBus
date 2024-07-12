@@ -68,7 +68,7 @@ const items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>> = [
       topic: 'my/first/topic',
       valueType: 'number'
     },
-    scanModeId: 'scanModeId1'
+    scanModeId: 'subscription'
   },
   {
     id: 'id2',
@@ -79,7 +79,7 @@ const items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>> = [
       topic: 'my/+/#/topic/with/wildcard/#',
       valueType: 'string'
     },
-    scanModeId: 'scanModeId1'
+    scanModeId: 'subscription'
   },
   {
     id: 'id3',
@@ -90,7 +90,7 @@ const items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>> = [
       topic: 'my/wrong/topic////',
       valueType: 'string'
     },
-    scanModeId: 'scanModeId2'
+    scanModeId: 'subscription'
   },
   {
     id: 'id4',
@@ -118,7 +118,7 @@ const items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>> = [
         }
       }
     },
-    scanModeId: 'scanModeId2'
+    scanModeId: 'subscription'
   },
   {
     id: 'id5',
@@ -145,7 +145,7 @@ const items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>> = [
         }
       }
     },
-    scanModeId: 'scanModeId2'
+    scanModeId: 'subscription'
   },
   {
     id: 'id6',
@@ -168,7 +168,7 @@ const items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>> = [
         timestampOrigin: 'oibus'
       }
     },
-    scanModeId: 'scanModeId2'
+    scanModeId: 'subscription'
   }
 ];
 
@@ -220,13 +220,14 @@ describe('SouthMQTT without authentication', () => {
   const mqttStream = new CustomStream();
   mqttStream.subscribe = jest.fn();
   mqttStream.end = jest.fn();
+
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
-
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
     (mqtt.connect as jest.Mock).mockImplementation(() => mqttStream);
 
-    south = new SouthMQTT(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthMQTT(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should properly connect', async () => {
@@ -297,13 +298,14 @@ describe('SouthMQTT with Basic Auth', () => {
       timestampTimezone: 'Europe/Paris'
     }
   };
+
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
     (mqtt.connect as jest.Mock).mockImplementation(() => mqttStream);
 
-    south = new SouthMQTT(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthMQTT(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should properly connect', async () => {
@@ -409,26 +411,39 @@ describe('SouthMQTT with Basic Auth', () => {
     ).toEqual('PointReference');
   });
 
-  it('should get item', () => {
+  it('should get item', async () => {
     south.wildcardTopic = jest.fn().mockReturnValueOnce(['bad', 'topic']).mockReturnValueOnce(null).mockReturnValue([]);
+    (repositoryService.southItemRepository.listSouthItems as jest.Mock)
+      .mockReturnValueOnce([items[1]])
+      .mockReturnValueOnce([items[1]])
+      .mockReturnValueOnce([items[1], { ...items[1], id: 'anotherId' }])
+      .mockReturnValueOnce([])
+      .mockReturnValue([items[1]]);
 
+    south.subscribe = jest.fn();
+    await south.start();
+    await south.onItemChange();
     let error;
     try {
-      south.getItem(items[1].settings.topic, [items[1]]);
+      south.getItem(items[1].settings.topic);
     } catch (err) {
       error = err;
     }
     expect(error).toEqual(new Error(`Invalid point configuration: ${JSON.stringify(items[1])}`));
 
+    await south.start();
+    await south.onItemChange();
     try {
-      south.getItem(items[1].settings.topic, [items[1]]);
+      south.getItem(items[1].settings.topic);
     } catch (err) {
       error = err;
     }
     expect(error).toEqual(new Error(`Item can't be determined from topic ${items[1].settings.topic}`));
 
+    await south.start();
+    await south.onItemChange();
     try {
-      south.getItem(items[1].settings.topic, [items[1], items[1]]);
+      south.getItem(items[1].settings.topic);
     } catch (err) {
       error = err;
     }
@@ -436,19 +451,23 @@ describe('SouthMQTT with Basic Auth', () => {
       new Error(
         `Topic "${items[1].settings.topic}" should be subscribed only once but it has the following subscriptions: ${JSON.stringify([
           items[1],
-          items[1]
+          { ...items[1], id: 'anotherId' }
         ])}`
       )
     );
 
+    await south.start();
+    await south.onItemChange();
     try {
-      south.getItem(items[1].settings.topic, []);
+      south.getItem(items[1].settings.topic);
     } catch (err) {
       error = err;
     }
     expect(error).toEqual(new Error(`Item can't be determined from topic ${items[1].settings.topic}`));
 
-    expect(south.getItem(items[1].settings.topic, [items[1]])).toEqual(items[1]);
+    await south.start();
+    await south.onItemChange();
+    expect(south.getItem(items[1].settings.topic)).toEqual(items[1]);
   });
 
   it('should format value', () => {
@@ -598,7 +617,7 @@ describe('SouthMQTT with Cert', () => {
   const mqttStream = new CustomStream();
   mqttStream.subscribe = jest.fn();
   mqttStream.end = jest.fn();
-  const connector: SouthConnectorDTO<SouthMQTTSettings> = {
+  const configuration: SouthConnectorDTO<SouthMQTTSettings> = {
     id: 'southId',
     name: 'south',
     type: 'test',
@@ -627,13 +646,14 @@ describe('SouthMQTT with Cert', () => {
       rejectUnauthorized: false
     }
   };
+
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
-
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
     (mqtt.connect as jest.Mock).mockImplementation(() => mqttStream);
 
-    south = new SouthMQTT(connector, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthMQTT(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should properly connect', async () => {
@@ -642,7 +662,7 @@ describe('SouthMQTT with Cert', () => {
     south.subscribe = jest.fn();
     south.handleMessage = jest.fn();
     const expectedOptions = {
-      clientId: connector.id,
+      clientId: configuration.id,
       rejectUnauthorized: false,
       cert: 'myCert',
       key: 'myKey',
@@ -650,7 +670,7 @@ describe('SouthMQTT with Cert', () => {
       connectTimeout: 1000,
       reconnectPeriod: 1000
     };
-    expect(mqtt.connect).toHaveBeenCalledWith(connector.settings.url, expectedOptions);
+    expect(mqtt.connect).toHaveBeenCalledWith(configuration.settings.url, expectedOptions);
 
     await south.disconnect();
     expect(mqttStream.end).toHaveBeenCalledTimes(1);
@@ -696,14 +716,15 @@ describe('SouthMQTT without Cert', () => {
       timestampTimezone: 'Europe/Paris'
     }
   };
+
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
-
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
     mqttStream.removeAllListeners();
     (mqtt.connect as jest.Mock).mockImplementation(() => mqttStream);
 
-    south = new SouthMQTT(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthMQTT(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should properly connect', async () => {

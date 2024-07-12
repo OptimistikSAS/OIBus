@@ -125,6 +125,8 @@ describe('NorthOIBus with proxy', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     (utils.filesExists as jest.Mock).mockReturnValue(true);
     (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
+    repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
+
     north = new NorthOibus(configuration, encryptionService, repositoryService, logger, 'baseFolder');
     await north.start();
   });
@@ -377,6 +379,7 @@ describe('NorthOIBus with proxy but without proxy password', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     (utils.filesExists as jest.Mock).mockReturnValue(true);
     (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
+    repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
 
     north = new NorthOibus(configuration, encryptionService, repositoryService, logger, 'baseFolder');
     await north.start();
@@ -490,6 +493,7 @@ describe('NorthOIBus without proxy', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     (createProxyAgent as jest.Mock).mockReturnValue(undefined);
+    repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
 
     north = new NorthOibus(configuration, encryptionService, repositoryService, logger, 'baseFolder');
     await north.start();

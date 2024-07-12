@@ -189,13 +189,15 @@ describe('SouthMSSQL with authentication', () => {
       trustServerCertificate: true
     }
   };
+
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
     jest.spyOn(mssql, 'ConnectionPool').mockImplementation(() => ({ connect }) as unknown as ConnectionPool);
 
-    south = new SouthMSSQL(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthMSSQL(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should create temp folder', async () => {
@@ -289,7 +291,7 @@ describe('SouthMSSQL with authentication', () => {
 });
 
 describe('SouthMSSQL without authentication', () => {
-  const connector: SouthConnectorDTO<SouthMSSQLSettings> = {
+  const configuration: SouthConnectorDTO<SouthMSSQLSettings> = {
     id: 'southId',
     name: 'south',
     type: 'mssql',
@@ -314,11 +316,13 @@ describe('SouthMSSQL without authentication', () => {
       trustServerCertificate: false
     }
   };
+
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
-    south = new SouthMSSQL(connector, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthMSSQL(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should manage query error', async () => {
@@ -337,14 +341,14 @@ describe('SouthMSSQL without authentication', () => {
     expect(mssql.ConnectionPool).toHaveBeenCalledWith({
       user: undefined,
       password: undefined,
-      server: connector.settings.host,
-      port: connector.settings.port,
-      database: connector.settings.database,
-      connectionTimeout: connector.settings.connectionTimeout,
-      requestTimeout: connector.settings.requestTimeout,
+      server: configuration.settings.host,
+      port: configuration.settings.port,
+      database: configuration.settings.database,
+      connectionTimeout: configuration.settings.connectionTimeout,
+      requestTimeout: configuration.settings.requestTimeout,
       options: {
-        encrypt: connector.settings.encryption,
-        trustServerCertificate: connector.settings.trustServerCertificate,
+        encrypt: configuration.settings.encryption,
+        trustServerCertificate: configuration.settings.trustServerCertificate,
         useUTC: true
       }
     });
@@ -408,9 +412,10 @@ describe('SouthMSSQL test connection', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
     jest.spyOn(mssql, 'ConnectionPool').mockImplementation(() => ({ connect }) as unknown as ConnectionPool);
-    south = new SouthMSSQL(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthMSSQL(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('Database is reachable and has tables', async () => {

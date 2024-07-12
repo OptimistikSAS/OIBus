@@ -20,9 +20,9 @@ describe('history query service', () => {
   });
 
   it('should get a History query items', () => {
-    service.getItems('historyId');
-    expect(repositoryRepository.historyQueryItemRepository.getHistoryItems).toHaveBeenCalledTimes(1);
-    expect(repositoryRepository.historyQueryItemRepository.getHistoryItems).toHaveBeenCalledWith('historyId');
+    service.listItems('historyId', {});
+    expect(repositoryRepository.historyQueryItemRepository.listHistoryItems).toHaveBeenCalledTimes(1);
+    expect(repositoryRepository.historyQueryItemRepository.listHistoryItems).toHaveBeenCalledWith('historyId', {});
   });
 
   it('should get all History queries settings', () => {

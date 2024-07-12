@@ -179,10 +179,11 @@ describe('SouthSQLite', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
     (utils.generateReplacementParameters as jest.Mock).mockReturnValue([new Date(nowDateString), new Date(nowDateString)]);
 
-    south = new SouthSQLite(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthSQLite(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should create temp folder', async () => {
@@ -278,7 +279,9 @@ describe('SouthSQLite test connection', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    south = new SouthSQLite(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+
+    south = new SouthSQLite(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   const dbPath = path.resolve(configuration.settings.databasePath);

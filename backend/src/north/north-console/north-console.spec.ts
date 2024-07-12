@@ -94,6 +94,7 @@ describe('NorthConsole with verbose mode', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
 
     north = new NorthConsole(configuration, encryptionService, repositoryService, logger, 'baseFolder');
   });
@@ -128,6 +129,8 @@ describe('NorthConsole without verbose mode', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
     configuration.settings.verbose = false;
+    repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
+
     north = new NorthConsole(configuration, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
@@ -160,6 +163,7 @@ describe('NorthConsole test connection', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
 
     north = new NorthConsole(configuration, encryptionService, repositoryService, logger, 'baseFolder');
   });

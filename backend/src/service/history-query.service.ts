@@ -1,6 +1,6 @@
 import RepositoryService from './repository.service';
 
-import { SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO, SouthConnectorItemSearchParam } from '../../../shared/model/south-connector.model';
 import { HistoryQueryDTO } from '../../../shared/model/history-query.model';
 import { SouthItemSettings } from '../../../shared/model/south-settings.model';
 
@@ -15,7 +15,10 @@ export default class HistoryQueryService {
     return this.repositoryService.historyQueryRepository.getHistoryQueries();
   }
 
-  getItems<I extends SouthItemSettings>(historyQueryId: string): Array<SouthConnectorItemDTO<I>> {
-    return this.repositoryService.historyQueryItemRepository.getHistoryItems(historyQueryId);
+  listItems<I extends SouthItemSettings>(
+    historyQueryId: string,
+    searchParams: SouthConnectorItemSearchParam
+  ): Array<SouthConnectorItemDTO<I>> {
+    return this.repositoryService.historyQueryItemRepository.listHistoryItems(historyQueryId, searchParams);
   }
 }

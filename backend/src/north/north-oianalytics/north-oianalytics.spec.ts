@@ -136,6 +136,7 @@ describe('NorthOIAnalytics without proxy', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
 
     (filesExists as jest.Mock).mockReturnValue(true);
     north = new NorthOIAnalytics(configuration, encryptionService, repositoryService, logger, 'baseFolder');
@@ -417,6 +418,7 @@ describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
 
     (filesExists as jest.Mock).mockReturnValue(true);
     (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
@@ -537,6 +539,7 @@ describe('NorthOIAnalytics with proxy', () => {
 
     (filesExists as jest.Mock).mockReturnValue(true);
     (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
+    repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
 
     north = new NorthOIAnalytics(configuration, encryptionService, repositoryService, logger, 'baseFolder');
     await north.start();
@@ -662,6 +665,7 @@ describe('NorthOIAnalytics with proxy but without proxy password', () => {
 
     (filesExists as jest.Mock).mockReturnValue(true);
     (createProxyAgent as jest.Mock).mockReturnValue({});
+    repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
 
     north = new NorthOIAnalytics(configuration, encryptionService, repositoryService, logger, 'baseFolder');
     await north.start();
@@ -800,6 +804,7 @@ describe('NorthOIAnalytics with aad-certificate', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
 
     (filesExists as jest.Mock).mockReturnValue(true);
     north = new NorthOIAnalytics(configuration, encryptionService, repositoryService, logger, 'baseFolder');
@@ -860,6 +865,7 @@ describe('NorthOIAnalytics with OIA module', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
 
     (filesExists as jest.Mock).mockReturnValue(true);
 

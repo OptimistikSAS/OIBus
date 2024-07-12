@@ -142,7 +142,7 @@ describe('North connector controller', () => {
 
   it('createNorthConnector() should create North connector', async () => {
     ctx.request.body = {
-      north: { ...northConnectorCommand },
+      north: { ...northConnectorCommand, enabled: true },
       subscriptions: [
         { type: 'south', subscription: { id: 'id1' } },
         { type: 'external-source', externalSubscription: { id: 'id2' } }
@@ -160,7 +160,7 @@ describe('North connector controller', () => {
       northTestManifest.settings
     );
     expect(ctx.app.reloadService.onCreateNorth).toHaveBeenCalledWith(northConnectorCommand);
-    expect(ctx.app.reloadService.onStartNorth).toHaveBeenCalledWith('id');
+    expect(ctx.app.reloadService.oibusEngine.startNorth).toHaveBeenCalledWith('id');
     expect(ctx.created).toHaveBeenCalledWith(northConnector);
   });
 

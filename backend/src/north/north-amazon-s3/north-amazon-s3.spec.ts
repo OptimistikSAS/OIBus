@@ -107,6 +107,7 @@ describe('NorthAmazonS3', () => {
     beforeEach(async () => {
       jest.clearAllMocks();
       jest.useFakeTimers();
+      repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
 
       (S3Client as jest.Mock).mockImplementation(() => ({
         send: sendMock
@@ -186,6 +187,7 @@ describe('NorthAmazonS3', () => {
     beforeEach(async () => {
       jest.clearAllMocks();
       jest.useFakeTimers();
+      repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
 
       (S3Client as jest.Mock).mockImplementation(() => ({
         send: sendMock
@@ -262,6 +264,7 @@ describe('NorthAmazonS3', () => {
     beforeEach(async () => {
       jest.clearAllMocks();
       jest.useFakeTimers();
+      repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
 
       (S3Client as jest.Mock).mockImplementation(() => ({
         send: sendMock

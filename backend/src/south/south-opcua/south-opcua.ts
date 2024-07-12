@@ -59,7 +59,6 @@ export default class SouthOPCUA
 
   constructor(
     connector: SouthConnectorDTO<SouthOPCUASettings>,
-    items: Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>>,
     engineAddValuesCallback: (southId: string, values: Array<OIBusDataValue>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
@@ -67,10 +66,10 @@ export default class SouthOPCUA
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(connector, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
   }
 
-  override async start(): Promise<void> {
+  override async start(dataStream = true): Promise<void> {
     await this.initOpcuaCertificateFolders(this.baseFolder);
     if (!this.clientCertificateManager) {
       this.clientCertificateManager = new OPCUACertificateManager({
@@ -81,12 +80,35 @@ export default class SouthOPCUA
       // It is useful for offline instances of OIBus where downloading openssl is not possible
       this.clientCertificateManager.state = 2;
     }
-    await super.start();
+    await super.start(dataStream);
   }
 
   override async connect(): Promise<void> {
     await this.session?.close(); // close the session if it already exists
-    await this.connectToOpcuaServer();
+
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
+    }
+    try {
+      const { options, userIdentity } = await this.createSessionConfigs(
+        this.connector.settings,
+        this.clientCertificateManager!,
+        this.encryptionService,
+        this.connector.id // the id of the connector
+      );
+
+      this.logger.debug(`Connecting to OPCUA on ${this.connector.settings.url}`);
+      this.session = await OPCUAClient.createSession(this.connector.settings.url, userIdentity, options);
+      this.logger.info(`OPCUA ${this.connector.name} connected`);
+      await super.connect();
+    } catch (error) {
+      this.logger.error(`Error while connecting to the OPCUA server. ${error}`);
+      await this.disconnect();
+      if (!this.disconnecting && this.connector.enabled && !this.reconnectTimeout) {
+        this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
+      }
+    }
   }
 
   override async testConnection(): Promise<void> {
@@ -158,32 +180,6 @@ export default class SouthOPCUA
     items: Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>>
   ): Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>> {
     return items.filter(item => item.settings.mode === 'HA');
-  }
-  /**
-   * Connect to OPCUA server with retry.
-   */
-  async connectToOpcuaServer(): Promise<void> {
-    if (this.reconnectTimeout) {
-      clearTimeout(this.reconnectTimeout);
-      this.reconnectTimeout = null;
-    }
-    try {
-      const { options, userIdentity } = await this.createSessionConfigs(
-        this.connector.settings,
-        this.clientCertificateManager!,
-        this.encryptionService,
-        this.connector.id // the id of the connector
-      );
-
-      this.logger.debug(`Connecting to OPCUA on ${this.connector.settings.url}`);
-      this.session = await OPCUAClient.createSession(this.connector.settings.url, userIdentity, options);
-      this.logger.info(`OPCUA ${this.connector.name} connected`);
-      await super.connect();
-    } catch (error) {
-      this.logger.error(`Error while connecting to the OPCUA server. ${error}`);
-      await this.disconnect();
-      this.reconnectTimeout = setTimeout(this.connectToOpcuaServer.bind(this), this.connector.settings.retryInterval);
-    }
   }
 
   /**
@@ -336,8 +332,8 @@ export default class SouthOPCUA
       }
       return DateTime.fromMillis(maxTimestamp).toUTC().toISO() as Instant;
     } catch (error) {
-      if (!this.disconnecting) {
-        await this.disconnect();
+      await this.disconnect();
+      if (!this.disconnecting && this.connector.enabled) {
         await this.connect();
       }
       throw error;
@@ -530,8 +526,8 @@ export default class SouthOPCUA
       }));
       await this.addValues(values.filter(parsedValue => parsedValue.data.value));
     } catch (error) {
-      if (!this.disconnecting) {
-        await this.disconnect();
+      await this.disconnect();
+      if (!this.disconnecting && this.connector.enabled) {
         await this.connect();
       }
       throw error;

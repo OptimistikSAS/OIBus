@@ -2,8 +2,6 @@ import PinoLogger from '../tests/__mocks__/logger.mock';
 import SouthServiceMock from '../tests/__mocks__/south-service.mock';
 import NorthServiceMock from '../tests/__mocks__/north-service.mock';
 import HistoryQueryServiceMock from '../tests/__mocks__/history-query-service.mock';
-
-import { SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
 import { HistoryQueryDTO } from '../../../shared/model/history-query.model';
 
 import SouthService from '../service/south.service';
@@ -40,25 +38,6 @@ const nowDateString = '2020-02-02T02:02:02.222Z';
 
 let configuration: HistoryQueryDTO;
 let engine: HistoryQueryEngine;
-
-const items: Array<SouthConnectorItemDTO> = [
-  {
-    id: 'id1',
-    name: 'item1',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {},
-    scanModeId: 'scanModeId1'
-  },
-  {
-    id: 'id2',
-    name: 'item2',
-    enabled: false,
-    connectorId: 'southId',
-    settings: {},
-    scanModeId: 'scanModeId2'
-  }
-];
 
 describe('HistoryQueryEngine', () => {
   beforeEach(async () => {
@@ -98,7 +77,7 @@ describe('HistoryQueryEngine', () => {
       }
     };
     (historyQueryService.getHistoryQueryList as jest.Mock).mockReturnValue([configuration]);
-    (historyQueryService.getItems as jest.Mock).mockReturnValue([]);
+    (historyQueryService.listItems as jest.Mock).mockReturnValue([]);
     (historyQueryService.getHistoryQuery as jest.Mock).mockReturnValue(configuration);
 
     engine = new HistoryQueryEngine(encryptionService, northService, southService, historyQueryService, logger);
@@ -107,30 +86,15 @@ describe('HistoryQueryEngine', () => {
   it('it should start connectors and stop all', async () => {
     await engine.start();
     expect(historyQueryService.getHistoryQueryList as jest.Mock).toHaveBeenCalledTimes(1);
-    expect(historyQueryService.getItems as jest.Mock).toHaveBeenCalledTimes(1);
-    expect(historyQueryService.getItems as jest.Mock).toHaveBeenCalledWith(configuration.id);
     expect(logger.child).toHaveBeenCalledWith({ scopeType: 'history-query', scopeId: configuration.id, scopeName: configuration.name });
 
     expect(engine.getHistoryDataStream('bad id')).toEqual(null);
     expect(engine.getHistoryDataStream(configuration.id)).toEqual(expect.any(PassThrough));
 
-    await engine.startHistoryQuery(configuration);
+    await engine.startHistoryQuery(configuration.id);
+    await engine.createHistoryQuery(configuration);
     await engine.stop();
     await engine.stopHistoryQuery('anotherId');
-  });
-
-  it('should properly manage items in History Query', async () => {
-    await engine.start();
-
-    await engine.addItemToHistoryQuery('anotherId', items[0]);
-    await engine.deleteItemFromHistoryQuery('anotherId', items[0]);
-    await engine.deleteAllItemsFromHistoryQuery('anotherId');
-    await engine.updateItemInHistoryQuery('anotherId', items[0]);
-
-    await engine.addItemToHistoryQuery('historyId', items[0]);
-    await engine.deleteItemFromHistoryQuery('historyId', items[0]);
-    await engine.deleteAllItemsFromHistoryQuery('historyId');
-    await engine.updateItemInHistoryQuery('historyId', items[0]);
   });
 
   it('should properly set logger', async () => {

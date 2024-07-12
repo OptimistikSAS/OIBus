@@ -103,7 +103,7 @@ export default class SouthConnectorController {
         },
         { level: 'silent' }
       );
-      const southToTest = ctx.app.southService.createSouth(command, [], this.addValues, this.addFile, 'baseFolder', logger);
+      const southToTest = ctx.app.southService.createSouth(command, this.addValues, this.addFile, 'baseFolder', logger);
       await southToTest.testConnection();
 
       ctx.noContent();
@@ -125,8 +125,6 @@ export default class SouthConnectorController {
         return ctx.throw(404, 'South manifest not found');
       }
 
-      const scanModes = ctx.app.repositoryService.scanModeRepository.getScanModes();
-
       await this.validator.validateSettings(manifest.settings, command.settings);
       // Check if item settings match the item schema, throw an error otherwise
       for (const item of ctx.request.body!.items) {
@@ -134,6 +132,7 @@ export default class SouthConnectorController {
         if (!item.scanModeId && !item.scanModeName) {
           throw new Error(`Scan mode not specified for item ${item.name}`);
         } else if (!item.scanModeId && item.scanModeName) {
+          const scanModes = ctx.app.repositoryService.scanModeRepository.getScanModes();
           const scanMode = scanModes.find(element => element.name === item.scanModeName);
           if (!scanMode) {
             throw new Error(`Scan mode ${item.scanModeName} not found for item ${item.name}`);
@@ -158,8 +157,11 @@ export default class SouthConnectorController {
         manifest.settings
       );
       const southConnector = await ctx.app.reloadService.onCreateSouth(command);
+      ctx.app.reloadService.onCreateOrUpdateSouthItems(southConnector, ctx.request.body!.items, []);
 
-      await ctx.app.reloadService.onCreateOrUpdateSouthItems(southConnector, ctx.request.body!.items, []);
+      if (command.enabled) {
+        await ctx.app.reloadService.oibusEngine.startSouth(southConnector.id);
+      }
 
       ctx.created(southConnector);
     } catch (error: any) {
@@ -202,10 +204,7 @@ export default class SouthConnectorController {
       for (const itemId of ctx.request.body!.itemIdsToDelete) {
         await ctx.app.reloadService.onDeleteSouthItem(itemId);
       }
-      // Update south connector first, because updating items takes into account the max instant per item setting,
-      // which might be changed in the south connector update
-      await ctx.app.reloadService.onUpdateSouth(ctx.params.id, command);
-      await ctx.app.reloadService.onCreateOrUpdateSouthItems(southConnector, itemsToAdd, itemsToUpdate, false);
+      await ctx.app.reloadService.onUpdateSouth(southConnector, command, itemsToAdd, itemsToUpdate);
       ctx.noContent();
     } catch (error: any) {
       ctx.badRequest(error.message);
@@ -261,14 +260,14 @@ export default class SouthConnectorController {
   }
 
   async listSouthItems(ctx: KoaContext<void, Array<SouthConnectorItemDTO>>): Promise<void> {
-    const southItems = ctx.app.repositoryService.southItemRepository.listSouthItems(ctx.params.southId);
+    const southItems = ctx.app.repositoryService.southItemRepository.listSouthItems(ctx.params.southId, {});
     ctx.ok(southItems);
   }
 
   async searchSouthItems(ctx: KoaContext<void, Page<SouthConnectorItemDTO>>): Promise<void> {
     const searchParams: SouthConnectorItemSearchParam = {
       page: ctx.query.page ? parseInt(ctx.query.page as string, 10) : 0,
-      name: (ctx.query.name as string) || null
+      name: ctx.query.name as string | undefined
     };
     const southItems = ctx.app.repositoryService.southItemRepository.searchSouthItems(ctx.params.southId, searchParams);
     ctx.ok(southItems);
@@ -438,7 +437,8 @@ export default class SouthConnectorController {
     }
 
     try {
-      await ctx.app.reloadService.onCreateOrUpdateSouthItems(southConnector, items, []);
+      ctx.app.reloadService.onCreateOrUpdateSouthItems(southConnector, items, []);
+      await ctx.app.reloadService.oibusEngine.onSouthItemsChange(southConnector.id);
     } catch (error: any) {
       return ctx.badRequest(error.message);
     }
@@ -492,7 +492,7 @@ export default class SouthConnectorController {
       if (southItem) {
         await this.validator.validateSettings(manifest.items.settings, ctx.request.body?.settings);
         const command: SouthConnectorItemCommandDTO = ctx.request.body!;
-        await ctx.app.reloadService.onUpdateSouthItemsSettings(ctx.params.southId, southItem, command);
+        await ctx.app.reloadService.onUpdateSouthItemSettings(ctx.params.southId, southItem, command);
         ctx.noContent();
       } else {
         ctx.notFound();
@@ -504,6 +504,7 @@ export default class SouthConnectorController {
 
   async deleteSouthItem(ctx: KoaContext<void, void>): Promise<void> {
     await ctx.app.reloadService.onDeleteSouthItem(ctx.params.id);
+    await ctx.app.reloadService.oibusEngine.onSouthItemsChange(ctx.params.id);
     ctx.noContent();
   }
 

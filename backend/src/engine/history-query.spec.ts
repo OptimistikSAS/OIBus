@@ -47,6 +47,7 @@ const northService: NorthService = new NorthServiceMock();
 const historyService: HistoryQueryService = new HistoryServiceMock();
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
+const flushPromises = () => new Promise(jest.requireActual('timers').setImmediate);
 
 let historyQuery: HistoryQuery;
 let configuration: HistoryQueryDTO;
@@ -117,7 +118,6 @@ describe('HistoryQuery enabled', () => {
 
     (southService.createSouth as jest.Mock).mockReturnValue(createdSouth);
     (northService.createNorth as jest.Mock).mockReturnValue(createdNorth);
-    (historyService.repositoryService.historyQueryRepository.getHistoryQuery as jest.Mock).mockReturnValue({ status: 'RUNNING' });
     configuration = {
       id: 'historyId',
       name: 'history',
@@ -149,12 +149,14 @@ describe('HistoryQuery enabled', () => {
         retentionDuration: 0
       }
     };
+    (historyService.repositoryService.historyQueryRepository.getHistoryQuery as jest.Mock).mockReturnValue(configuration);
+    (historyService.listItems as jest.Mock).mockReturnValue(items);
+
     historyQuery = new HistoryQuery(
       configuration,
       southService,
       northService,
       historyService,
-      items,
       logger,
       path.resolve('baseFolder', configuration.id)
     );
@@ -180,16 +182,12 @@ describe('HistoryQuery enabled', () => {
         resolve('');
       });
     });
+    (historyService.listItems as jest.Mock).mockReturnValue(items);
     await historyQuery.start();
     connectedEvent.emit('connected');
     expect(createdSouth.start).toHaveBeenCalledTimes(1);
     expect(createdSouth.historyQueryHandler).toHaveBeenCalledTimes(1);
-    expect(createdSouth.historyQueryHandler).toHaveBeenCalledWith(
-      items.filter(item => item.enabled),
-      configuration.startTime,
-      configuration.endTime,
-      'history'
-    );
+    expect(createdSouth.historyQueryHandler).toHaveBeenCalledWith(items, configuration.startTime, configuration.endTime, 'history');
     expect(clearIntervalSpy).not.toHaveBeenCalled();
     connectedEvent.emit('connected');
     expect(clearIntervalSpy).toHaveBeenCalledTimes(1);
@@ -202,22 +200,39 @@ describe('HistoryQuery enabled', () => {
           reject('error');
         });
       })
+      .mockImplementationOnce(() => {
+        return new Promise((resolve, reject) => {
+          reject('error');
+        });
+      })
       .mockImplementation(() => {
         return new Promise(resolve => {
           resolve('');
         });
       });
     await historyQuery.start();
+    expect(createdSouth.start).toHaveBeenCalledTimes(1);
+    expect(createdNorth.start).toHaveBeenCalledTimes(1);
+
     connectedEvent.emit('connected');
 
-    expect(createdSouth.start).toHaveBeenCalledTimes(1);
+    await flushPromises();
     expect(createdSouth.historyQueryHandler).toHaveBeenCalledTimes(1);
-    expect(createdSouth.historyQueryHandler).toHaveBeenCalledWith(
-      items.filter(item => item.enabled),
-      configuration.startTime,
-      configuration.endTime,
-      'history'
-    );
+    expect(createdSouth.historyQueryHandler).toHaveBeenCalledWith(items, configuration.startTime, configuration.endTime, 'history');
+
+    expect(createdSouth.start).toHaveBeenCalledTimes(2);
+    expect(createdSouth.stop).toHaveBeenCalledTimes(1);
+
+    (historyService.repositoryService.historyQueryRepository.getHistoryQuery as jest.Mock).mockReturnValueOnce({
+      ...configuration,
+      status: 'PENDING'
+    });
+
+    connectedEvent.emit('connected');
+    await flushPromises();
+
+    expect(createdSouth.start).toHaveBeenCalledTimes(2);
+    expect(createdSouth.stop).toHaveBeenCalledTimes(1);
   });
 
   it('should cache values', async () => {
@@ -274,62 +289,6 @@ describe('HistoryQuery enabled', () => {
     expect(logger.info).toHaveBeenCalledWith(`Finish "${configuration.name}" (${configuration.id})`);
   });
 
-  it('should properly add item', async () => {
-    await historyQuery.start();
-    historyQuery.stop = jest.fn();
-    historyQuery.start = jest.fn();
-    await historyQuery.addItem(items[0]);
-    expect(historyQuery.stop).toHaveBeenCalledTimes(1);
-    expect(historyQuery.start).toHaveBeenCalledTimes(1);
-    expect(createdSouth.addItem).toHaveBeenCalledTimes(1);
-    expect(createdSouth.addItem).toHaveBeenCalledWith(items[0]);
-  });
-
-  it('should properly update item', async () => {
-    await historyQuery.start();
-    historyQuery.deleteItem = jest.fn();
-    historyQuery.addItem = jest.fn();
-    await historyQuery.updateItem(items[0]);
-    expect(historyQuery.deleteItem).toHaveBeenCalledTimes(1);
-    expect(historyQuery.addItem).toHaveBeenCalledTimes(1);
-  });
-
-  it('should properly delete item', async () => {
-    await historyQuery.start();
-    await historyQuery.deleteItem(items[0]);
-    expect(createdSouth.deleteItem).toHaveBeenCalledTimes(1);
-    expect(createdSouth.deleteItem).toHaveBeenCalledWith(items[0]);
-  });
-
-  it('should properly delete items', async () => {
-    await historyQuery.deleteItems();
-    await historyQuery.start();
-    await historyQuery.deleteItems();
-    expect(createdSouth.deleteAllItems).toHaveBeenCalledTimes(1);
-  });
-
-  it('should do nothing when adding item without any south', async () => {
-    historyQuery.stop = jest.fn();
-    historyQuery.start = jest.fn();
-    await historyQuery.addItem(items[0]);
-    expect(historyQuery.stop).not.toHaveBeenCalled();
-    expect(historyQuery.start).not.toHaveBeenCalled();
-    expect(createdSouth.addItem).not.toHaveBeenCalled();
-  });
-
-  it('should do nothing when updating item without any south', async () => {
-    historyQuery.deleteItem = jest.fn();
-    historyQuery.addItem = jest.fn();
-    await historyQuery.updateItem(items[0]);
-    expect(historyQuery.deleteItem).not.toHaveBeenCalled();
-    expect(historyQuery.addItem).not.toHaveBeenCalled();
-  });
-
-  it('should do nothing when deleting item without any south', async () => {
-    await historyQuery.deleteItem(items[0]);
-    expect(createdSouth.deleteItem).not.toHaveBeenCalled();
-  });
-
   it('should properly set another logger', async () => {
     historyQuery.stop = jest.fn();
     historyQuery.setLogger(anotherLogger);
@@ -346,7 +305,6 @@ describe('HistoryQuery disabled', () => {
 
     (southService.createSouth as jest.Mock).mockReturnValue(createdSouth);
     (northService.createNorth as jest.Mock).mockReturnValue(createdNorth);
-    (historyService.repositoryService.historyQueryRepository.getHistoryQuery as jest.Mock).mockReturnValue({ status: 'PENDING' });
 
     configuration = {
       id: 'historyId',
@@ -379,7 +337,9 @@ describe('HistoryQuery disabled', () => {
         retentionDuration: 0
       }
     };
-    historyQuery = new HistoryQuery(configuration, southService, northService, historyService, items, logger, 'baseFolder');
+    (historyService.repositoryService.historyQueryRepository.getHistoryQuery as jest.Mock).mockReturnValue(configuration);
+
+    historyQuery = new HistoryQuery(configuration, southService, northService, historyService, logger, 'baseFolder');
   });
 
   it('should be properly initialized', async () => {

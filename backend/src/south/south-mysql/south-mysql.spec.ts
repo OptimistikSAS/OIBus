@@ -159,7 +159,7 @@ const nowDateString = '2020-02-02T02:02:02.222Z';
 let south: SouthMySQL;
 
 describe('SouthMySQL with authentication', () => {
-  const connector: SouthConnectorDTO<SouthMySQLSettings> = {
+  const configuration: SouthConnectorDTO<SouthMySQLSettings> = {
     id: 'southId',
     name: 'south',
     type: 'mysql',
@@ -180,13 +180,15 @@ describe('SouthMySQL with authentication', () => {
       connectionTimeout: 1000
     }
   };
+
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
     (utils.generateReplacementParameters as jest.Mock).mockReturnValue([new Date(nowDateString), new Date(nowDateString)]);
 
-    south = new SouthMySQL(connector, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthMySQL(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should create temp folder', async () => {
@@ -240,12 +242,12 @@ describe('SouthMySQL with authentication', () => {
 
     expect(utils.logQuery).toHaveBeenCalledWith(items[0].settings.query, startTime, endTime, logger);
     expect(mysql.createConnection).toHaveBeenCalledWith({
-      host: connector.settings.host,
-      port: connector.settings.port,
-      user: connector.settings.username,
-      password: connector.settings.password,
-      database: connector.settings.database,
-      connectTimeout: connector.settings.connectionTimeout,
+      host: configuration.settings.host,
+      port: configuration.settings.port,
+      user: configuration.settings.username,
+      password: configuration.settings.password,
+      database: configuration.settings.database,
+      connectTimeout: configuration.settings.connectionTimeout,
       timezone: 'Z'
     });
     expect(generateReplacementParameters).toHaveBeenCalledWith(items[0].settings.query, startTime, endTime);
@@ -337,11 +339,13 @@ describe('SouthMySQL without authentication', () => {
       connectionTimeout: 1000
     }
   };
+
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
-    south = new SouthMySQL(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthMySQL(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should manage connection error', async () => {
@@ -423,8 +427,9 @@ describe('SouthMySQL test connection', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
-    south = new SouthMySQL(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthMySQL(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('Database is reachable and has tables', async () => {

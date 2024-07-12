@@ -58,6 +58,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
   private cronByScanModeIds: Map<string, CronJob> = new Map<string, CronJob>();
   private taskRunner: EventEmitter = new EventEmitter();
   private runProgress$: DeferredPromise | null = null;
+  private stopping = false;
 
   constructor(
     protected connector: NorthConnectorDTO<T>,
@@ -80,7 +81,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
     this.taskRunner.on('next', async () => {
       if (this.taskJobQueue.length > 0) {
         this.logger.trace(`Next trigger: ${!this.runProgress$}`);
-        if (!this.runProgress$) {
+        if (!this.runProgress$ && !this.stopping) {
           await this.run('scan');
         }
       } else {
@@ -91,7 +92,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
     this.valueCacheService.triggerRun.on('next', async () => {
       this.taskJobQueue.push({ id: 'value-trigger', cron: '', name: '', description: '' });
       this.logger.trace(`Value cache trigger immediately: ${!this.runProgress$}`);
-      if (!this.runProgress$) {
+      if (!this.runProgress$ && !this.stopping) {
         await this.run('value-trigger');
       }
     });
@@ -107,7 +108,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
     this.fileCacheService.triggerRun.on('next', async () => {
       this.taskJobQueue.push({ id: 'file-trigger', cron: '', name: '', description: '' });
       this.logger.trace(`File cache trigger immediately: ${!this.runProgress$}`);
-      if (!this.runProgress$) {
+      if (!this.runProgress$ && !this.stopping) {
         await this.run('file-trigger');
       }
     });
@@ -136,7 +137,11 @@ export default class NorthConnector<T extends NorthSettings = any> {
   /**
    * Initialize services at startup
    */
-  async start(): Promise<void> {
+  async start(dataStream = true): Promise<void> {
+    if (dataStream) {
+      // Reload the settings only on data stream case, otherwise let the history query manage the settings
+      this.connector = this.repositoryService.northConnectorRepository.getNorthConnector(this.connector.id)!;
+    }
     this.logger.debug(`North connector "${this.connector.name}" enabled. Starting services...`);
     if (this.connector.id !== 'test') {
       this.cacheSize = await dirSize(this.baseFolder);
@@ -144,13 +149,17 @@ export default class NorthConnector<T extends NorthSettings = any> {
         ...this.metricsService!.metrics,
         cacheSize: this.cacheSize
       });
-      this.subscribedTo = this.repositoryService.subscriptionRepository.getNorthSubscriptions(this.connector.id);
-      this.subscribedToExternalSources = this.repositoryService.subscriptionRepository.getExternalNorthSubscriptions(this.connector.id);
+      this.updateConnectorSubscription();
     }
     await this.valueCacheService.start();
     await this.fileCacheService.start();
     await this.archiveService.start();
     await this.connect();
+  }
+
+  updateConnectorSubscription() {
+    this.subscribedTo = this.repositoryService.subscriptionRepository.getNorthSubscriptions(this.connector.id);
+    this.subscribedToExternalSources = this.repositoryService.subscriptionRepository.getExternalNorthSubscriptions(this.connector.id);
   }
 
   /**
@@ -428,8 +437,14 @@ export default class NorthConnector<T extends NorthSettings = any> {
   /**
    * Stop services and timer
    */
-  async stop(): Promise<void> {
+  async stop(dataStream = true): Promise<void> {
+    this.stopping = true;
     this.logger.debug(`Stopping North "${this.connector.name}" (${this.connector.id})...`);
+
+    if (dataStream) {
+      // Reload the settings only on data stream case, otherwise let the history query manage the settings
+      this.connector = this.repositoryService.northConnectorRepository.getNorthConnector(this.connector.id)!;
+    }
 
     if (this.runProgress$) {
       this.logger.debug('Waiting for North task to finish');
@@ -445,6 +460,8 @@ export default class NorthConnector<T extends NorthSettings = any> {
     await this.archiveService.stop();
     await this.valueCacheService.stop();
     await this.disconnect();
+
+    this.stopping = false;
     this.logger.info(`North connector "${this.connector.name}" stopped`);
   }
 
@@ -582,8 +599,16 @@ export default class NorthConnector<T extends NorthSettings = any> {
   }
 
   async resetCache(): Promise<void> {
-    await this.fileCacheService.removeAllErrorFiles();
-    await this.fileCacheService.removeAllCacheFiles();
+    try {
+      await this.fileCacheService.removeAllErrorFiles();
+    } catch (err) {
+      this.logger.error(`Error while removing error files. ${err}`);
+    }
+    try {
+      await this.fileCacheService.removeAllCacheFiles();
+    } catch (err) {
+      this.logger.error(`Error while removing cache files. ${err}`);
+    }
   }
 
   getCacheValues(fileNameContains: string): Array<NorthValueFiles> {
@@ -652,5 +677,9 @@ export default class NorthConnector<T extends NorthSettings = any> {
     if (this.cronByScanModeIds.get(scanMode.id)) {
       this.createCronJob(scanMode);
     }
+  }
+
+  get settings(): NorthConnectorDTO<T> {
+    return this.connector;
   }
 }

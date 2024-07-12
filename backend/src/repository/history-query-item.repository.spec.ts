@@ -45,7 +45,7 @@ describe('History query item repository', () => {
         }
       ],
       size: 50,
-      number: 0,
+      number: 1,
       totalElements: 2,
       totalPages: 1
     };
@@ -67,14 +67,26 @@ describe('History query item repository', () => {
     ]);
     get.mockReturnValueOnce({ count: 2 });
     const southScans = repository.searchHistoryItems('historyId', {
-      page: 0,
+      page: 1,
+      name: 'my item'
+    });
+    expect(database.prepare).toHaveBeenCalledWith(
+      'SELECT id, name, enabled, history_id AS historyId, settings FROM history_items WHERE ' +
+        "history_id = ? AND name like '%' || ? || '%' LIMIT 50 OFFSET 50;"
+    );
+    expect(southScans).toEqual(expectedValue);
+  });
+
+  it('should properly search history query items', () => {
+    all.mockReturnValueOnce([]);
+    get.mockReturnValueOnce({ count: 0 });
+    repository.searchHistoryItems('historyId', {
       name: 'my item'
     });
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, name, enabled, history_id AS historyId, settings FROM history_items WHERE ' +
         "history_id = ? AND name like '%' || ? || '%' LIMIT 50 OFFSET 0;"
     );
-    expect(southScans).toEqual(expectedValue);
   });
 
   it('should properly get history query items by History query ID', () => {
@@ -114,8 +126,10 @@ describe('History query item repository', () => {
         settings: JSON.stringify({})
       }
     ]);
-    const southScans = repository.getHistoryItems('historyId');
-    expect(database.prepare).toHaveBeenCalledWith('SELECT id, name, enabled, settings FROM history_items WHERE history_id = ?;');
+    const southScans = repository.listHistoryItems('historyId', { enabled: true });
+    expect(database.prepare).toHaveBeenCalledWith(
+      'SELECT id, name, enabled, settings FROM history_items WHERE history_id = ? AND enabled = ?;'
+    );
     expect(southScans).toEqual(expectedValue);
   });
 

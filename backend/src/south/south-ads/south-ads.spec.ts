@@ -120,8 +120,9 @@ const configuration: SouthConnectorDTO<SouthADSSettings> = {
 
 describe('South ADS', () => {
   beforeEach(async () => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
     // Mock ADS Client constructor and the used function
     ads.Client.mockReturnValue({
@@ -136,7 +137,7 @@ describe('South ADS', () => {
       readSymbol
     });
 
-    south = new SouthADS(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthADS(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should properly connect to a remote instance', async () => {
@@ -154,16 +155,21 @@ describe('South ADS', () => {
   });
 
   it('should retry to connect in case of failure', async () => {
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+
     ads.Client.mockReturnValue({
       connect: () =>
         new Promise((resolve, reject) => {
           reject();
         })
     });
-    south.disconnect = jest.fn();
-    await south.connect();
 
+    south.disconnectAdsClient = jest.fn();
+    await south.connect();
     expect(logger.error).toHaveBeenCalledTimes(1);
+
+    await south.disconnect();
+    expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
   });
 
   it('should parse BYTE value', () => {

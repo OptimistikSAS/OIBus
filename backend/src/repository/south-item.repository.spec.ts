@@ -61,9 +61,10 @@ describe('South item repository', () => {
         settings: JSON.stringify({})
       }
     ]);
-    const southItems = repository.listSouthItems('southId');
+    const southItems = repository.listSouthItems('southId', { scanModeId: 'id1', enabled: false });
     expect(database.prepare).toHaveBeenCalledWith(
-      'SELECT id, name, enabled, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM south_items WHERE connector_id = ?;'
+      'SELECT id, name, enabled, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM south_items ' +
+        'WHERE connector_id = ? AND scan_mode_id = ? AND enabled = ?;'
     );
     expect(southItems).toEqual(expectedValue);
   });
@@ -89,7 +90,7 @@ describe('South item repository', () => {
         }
       ],
       size: 50,
-      number: 0,
+      number: 1,
       totalElements: 2,
       totalPages: 1
     };
@@ -113,14 +114,26 @@ describe('South item repository', () => {
     ]);
     get.mockReturnValueOnce({ count: 2 });
     const southItems = repository.searchSouthItems('southId', {
-      page: 0,
+      page: 1,
+      name: 'my item'
+    });
+    expect(database.prepare).toHaveBeenCalledWith(
+      'SELECT id, name, enabled, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM south_items WHERE ' +
+        "connector_id = ? AND name like '%' || ? || '%' LIMIT 50 OFFSET 50;"
+    );
+    expect(southItems).toEqual(expectedValue);
+  });
+
+  it('should properly search south items without page', () => {
+    all.mockReturnValueOnce([]);
+    get.mockReturnValueOnce({ count: 0 });
+    repository.searchSouthItems('southId', {
       name: 'my item'
     });
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, name, enabled, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM south_items WHERE ' +
         "connector_id = ? AND name like '%' || ? || '%' LIMIT 50 OFFSET 0;"
     );
-    expect(southItems).toEqual(expectedValue);
   });
 
   it('should properly get south items by South ID', () => {

@@ -687,8 +687,7 @@ describe('History query controller', () => {
     ctx.params.southId = 'id';
     ctx.query = {};
     const searchParams = {
-      page: 0,
-      name: null
+      page: 0
     };
     ctx.app.repositoryService.historyQueryItemRepository.searchHistoryItems.mockReturnValue(page);
 
@@ -700,10 +699,10 @@ describe('History query controller', () => {
 
   it('listItems() should return all items', async () => {
     ctx.params.historyQueryId = 'id';
-    ctx.app.repositoryService.historyQueryItemRepository.getHistoryItems.mockReturnValue([oibusItem]);
+    ctx.app.repositoryService.historyQueryItemRepository.listHistoryItems.mockReturnValue([oibusItem]);
 
     await historyQueryController.listItems(ctx);
-    expect(ctx.app.repositoryService.historyQueryItemRepository.getHistoryItems).toHaveBeenCalledWith('id');
+    expect(ctx.app.repositoryService.historyQueryItemRepository.listHistoryItems).toHaveBeenCalledWith('id', {});
     expect(ctx.ok).toHaveBeenCalledWith([oibusItem]);
   });
 
@@ -980,7 +979,7 @@ describe('History query controller', () => {
 
   it('exportSouthItems() should download a csv file', async () => {
     ctx.params.historyQueryId = 'id';
-    ctx.app.repositoryService.historyQueryItemRepository.getHistoryItems.mockReturnValueOnce([
+    ctx.app.repositoryService.historyQueryItemRepository.listHistoryItems.mockReturnValueOnce([
       oibusItem,
       {
         id: 'id2',
@@ -1124,7 +1123,7 @@ describe('History query controller', () => {
   it('checkImportSouthItems() should check import of items in a csv file with existing history', async () => {
     ctx.params.southType = 'south-test';
     ctx.params.historyQueryId = 'historyId';
-    ctx.app.repositoryService.historyQueryItemRepository.getHistoryItems.mockReturnValueOnce([{ id: 'id1', name: 'existingItem' }]);
+    ctx.app.repositoryService.historyQueryItemRepository.listHistoryItems.mockReturnValueOnce([{ id: 'id1', name: 'existingItem' }]);
 
     ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
     ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
