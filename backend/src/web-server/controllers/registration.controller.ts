@@ -24,6 +24,17 @@ export default class RegistrationController extends AbstractController {
     }
   }
 
+  async editRegistrationSettings(ctx: KoaContext<RegistrationSettingsCommandDTO, void>): Promise<void> {
+    try {
+      await this.validate(ctx.request.body);
+      const command = ctx.request.body as RegistrationSettingsCommandDTO;
+      await ctx.app.registrationService.editRegistrationSettings(command);
+      return ctx.noContent();
+    } catch (error: any) {
+      ctx.badRequest(error.message);
+    }
+  }
+
   async unregister(ctx: KoaContext<any, any>) {
     await ctx.app.registrationService.onUnregister();
     return ctx.noContent();
