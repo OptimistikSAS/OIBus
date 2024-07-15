@@ -6,8 +6,6 @@ import { convertDateTimeToInstant, convertDelimiter, formatInstant, persistResul
 import DatabaseMock from '../../tests/__mocks__/database.mock';
 
 import pino from 'pino';
-// eslint-disable-next-line import/no-unresolved
-import odbc from 'odbc';
 import fetch from 'node-fetch';
 import PinoLogger from '../../tests/__mocks__/logger.mock';
 import EncryptionService from '../../service/encryption.service';
@@ -21,10 +19,23 @@ import {
   SouthODBCSettings
 } from '../../../../shared/model/south-settings.model';
 
-jest.mock('../../service/utils');
-jest.mock('odbc');
-jest.mock('node:fs/promises');
+jest.mock(
+  'odbc',
+  () => {
+    return {
+      connect: jest.fn()
+    };
+  },
+  { virtual: true }
+);
+// disable next line for tests purposes because the node module can not be download if odbc native library is not
+// loaded into the OS. Using require instead of import allow the tests to not fail in this case.
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const odbc = require('odbc');
+
 jest.mock('node-fetch');
+jest.mock('../../service/utils');
+jest.mock('node:fs/promises');
 
 const database = new DatabaseMock();
 jest.mock(
@@ -438,8 +449,8 @@ describe('SouthODBC odbc driver test connection', () => {
   };
 
   class NodeOdbcError extends Error {
-    public odbcErrors: odbc.OdbcError[];
-    constructor(message: string, odbcErrors: odbc.OdbcError[]) {
+    public odbcErrors: Array<{ code: number; message: string; state: string }> = [];
+    constructor(message: string, odbcErrors: Array<{ code: number; message: string; state: string }> = []) {
       super();
       this.name = 'ODBCError';
       this.message = message;
