@@ -66,6 +66,13 @@ export class EngineService {
     return this.http.put<void>(`/api/registration`, command);
   }
 
+  /**
+   * Edit the engine settings
+   */
+  editRegistrationSettings(command: RegistrationSettingsCommandDTO): Observable<void> {
+    return this.http.put<void>(`/api/registration/edit`, command);
+  }
+
   unregister(): Observable<void> {
     return this.http.put<void>(`/api/registration/unregister`, null);
   }

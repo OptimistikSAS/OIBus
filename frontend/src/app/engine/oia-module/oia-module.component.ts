@@ -108,11 +108,16 @@ export class OiaModuleComponent implements OnInit, OnDestroy {
 
   register(): void {
     const modalRef = this.modalService.open(RegisterOibusModalComponent, { size: 'xl' });
-    modalRef.componentInstance.prepare(this.registration!);
+    modalRef.componentInstance.prepare(this.registration!, 'register');
 
     modalRef.result.pipe(tap(() => this.notificationService.success('oia-module.registration.saved'))).subscribe(() => {
       this.createRegistrationSubscription();
     });
+  }
+
+  editRegister(): void {
+    const modalRef = this.modalService.open(RegisterOibusModalComponent, { size: 'xl' });
+    modalRef.componentInstance.prepare(this.registration!, 'edit');
   }
 
   createRegistrationSubscription(): void {

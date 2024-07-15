@@ -18,7 +18,7 @@ describe('Registration controller', () => {
   let registrationSettings: RegistrationSettingsDTO;
 
   beforeEach(async () => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
     jest.useFakeTimers();
 
     registrationCommand = {
@@ -78,6 +78,31 @@ describe('Registration controller', () => {
     expect(validator.validate).toHaveBeenCalledWith(schema, registrationCommand);
     expect(ctx.app.registrationService.updateRegistrationSettings).not.toHaveBeenCalledWith();
     expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
+  });
+
+  it('editRegistrationSettings() should edit registration settings', async () => {
+    ctx.request.body = registrationCommand;
+
+    await registrationController.editRegistrationSettings(ctx);
+
+    expect(validator.validate).toHaveBeenCalledWith(schema, registrationCommand);
+    expect(ctx.app.registrationService.editRegistrationSettings).toHaveBeenCalledWith(registrationCommand);
+    expect(ctx.noContent).toHaveBeenCalled();
+    expect(ctx.badRequest).not.toHaveBeenCalled();
+  });
+
+  it('editRegistrationSettings() should return bad request', async () => {
+    ctx.request.body = registrationCommand;
+    const validationError = new Error('invalid body');
+    validator.validate = jest.fn().mockImplementationOnce(() => {
+      throw validationError;
+    });
+
+    await registrationController.editRegistrationSettings(ctx);
+
+    expect(validator.validate).toHaveBeenCalledWith(schema, registrationCommand);
+    expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
+    expect(ctx.app.registrationService.editRegistrationSettings).not.toHaveBeenCalled();
   });
 
   it('unregister() should call unregister from oibus service', async () => {
