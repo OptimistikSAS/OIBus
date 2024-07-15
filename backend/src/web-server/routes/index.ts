@@ -87,6 +87,7 @@ router.get('/api/info', (ctx: KoaContext<any, any>) => engineController.getOIBus
 
 router.get('/api/registration', (ctx: KoaContext<any, any>) => registrationController.getRegistrationSettings(ctx));
 router.put('/api/registration', (ctx: KoaContext<any, any>) => registrationController.updateRegistrationSettings(ctx));
+router.put('/api/registration/edit', (ctx: KoaContext<any, any>) => registrationController.editRegistrationSettings(ctx));
 router.put('/api/registration/unregister', (ctx: KoaContext<any, any>) => registrationController.unregister(ctx));
 
 router.get('/api/ip-filters', (ctx: KoaContext<any, any>) => ipFilterController.getIpFilters(ctx));
