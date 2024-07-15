@@ -24,6 +24,8 @@ export class RegisterOibusModalComponent {
     proxyPassword: '',
     acceptUnauthorized: [false, Validators.required]
   });
+  mode: 'register' | 'edit' = 'register';
+  host: string = '';
 
   constructor(
     private modal: NgbActiveModal,
@@ -33,7 +35,8 @@ export class RegisterOibusModalComponent {
   /**
    * Prepares the component for edition.
    */
-  prepare(registration: RegistrationSettingsDTO) {
+  prepare(registration: RegistrationSettingsDTO, mode: 'edit' | 'register') {
+    this.mode = mode;
     this.form.patchValue({
       host: registration.host,
       useProxy: registration.useProxy,
@@ -42,6 +45,10 @@ export class RegisterOibusModalComponent {
       proxyPassword: '',
       acceptUnauthorized: registration.acceptUnauthorized
     });
+    if (this.mode === 'edit') {
+      this.host = registration.host;
+      this.form.controls.host.disable();
+    }
   }
 
   cancel() {
@@ -55,21 +62,37 @@ export class RegisterOibusModalComponent {
 
     const formValue = this.form.value;
 
-    const command: RegistrationSettingsCommandDTO = {
-      host: formValue.host!,
-      acceptUnauthorized: formValue.acceptUnauthorized!,
-      useProxy: formValue.useProxy!,
-      proxyUrl: formValue.proxyUrl!,
-      proxyUsername: formValue.proxyUsername!,
-      proxyPassword: formValue.proxyPassword!
-    };
-
-    this.oibusService
-      .updateRegistrationSettings(command)
-      .pipe(this.state.pendingUntilFinalization())
-      .subscribe(() => {
-        this.modal.close();
-      });
+    if (this.mode === 'register') {
+      const command: RegistrationSettingsCommandDTO = {
+        host: formValue.host!,
+        acceptUnauthorized: formValue.acceptUnauthorized!,
+        useProxy: formValue.useProxy!,
+        proxyUrl: formValue.proxyUrl!,
+        proxyUsername: formValue.proxyUsername!,
+        proxyPassword: formValue.proxyPassword!
+      };
+      this.oibusService
+        .updateRegistrationSettings(command)
+        .pipe(this.state.pendingUntilFinalization())
+        .subscribe(() => {
+          this.modal.close();
+        });
+    } else {
+      const command: RegistrationSettingsCommandDTO = {
+        host: this.host,
+        acceptUnauthorized: formValue.acceptUnauthorized!,
+        useProxy: formValue.useProxy!,
+        proxyUrl: formValue.proxyUrl!,
+        proxyUsername: formValue.proxyUsername!,
+        proxyPassword: formValue.proxyPassword!
+      };
+      this.oibusService
+        .editRegistrationSettings(command)
+        .pipe(this.state.pendingUntilFinalization())
+        .subscribe(() => {
+          this.modal.close();
+        });
+    }
   }
 
   protected readonly logLevels = LOG_LEVELS;

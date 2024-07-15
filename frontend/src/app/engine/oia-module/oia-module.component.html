@@ -52,9 +52,12 @@
             <div class="w-100 text-center mb-2">
               <a [href]="registration.host" target="_blank">{{ registration.host }}</a>
             </div>
-            <div class="w-100 text-center">
-              <button type="button" class="btn btn-outline-secondary btn-sm" id="register-unregister-button" (click)="unregister()">
+            <div class="text-center">
+              <button type="button" class="btn btn-outline-secondary btn-sm me-2" id="register-unregister-button" (click)="unregister()">
                 <span translate="oia-module.registration.unregister"></span>
+              </button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" id="edit-register-button" (click)="editRegister()">
+                <span>Edit register</span>
               </button>
             </div>
           </div>
