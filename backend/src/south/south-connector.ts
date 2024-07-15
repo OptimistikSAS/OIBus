@@ -356,7 +356,11 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
       const southCache = this.cacheService!.getSouthCacheScanMode(this.connector.id, scanModeId, 'all', startTime);
       // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
       // requests. For example only one hour if maxReadInterval is 3600 (in s)
-      const intervals = generateIntervals(southCache.maxInstant, endTime, this.connector.history.maxReadInterval);
+      const intervals = generateIntervals(
+        DateTime.fromISO(southCache.maxInstant).minus(this.connector.history.overlap).toUTC().toISO()!,
+        endTime,
+        this.connector.history.maxReadInterval
+      );
       this.logIntervals(intervals);
 
       await this.queryIntervals(intervals, itemsToRead, southCache, startTime);
@@ -384,12 +388,16 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
     for (const [index, interval] of intervals.entries()) {
       // @ts-ignore
       const lastInstantRetrieved = await this.historyQuery(items, interval.start, interval.end);
-      this.cacheService!.createOrUpdateCacheScanMode({
-        southId: this.connector.id,
-        scanModeId: southCache.scanModeId,
-        itemId: southCache.itemId,
-        maxInstant: lastInstantRetrieved
-      });
+
+      if (lastInstantRetrieved > southCache.maxInstant) {
+        // With overlap, it may return a lastInstantRetrieved inferio
+        this.cacheService!.createOrUpdateCacheScanMode({
+          southId: this.connector.id,
+          scanModeId: southCache.scanModeId,
+          itemId: southCache.itemId,
+          maxInstant: lastInstantRetrieved
+        });
+      }
 
       this.metricsService!.updateMetrics(this.connector.id, {
         ...this.metricsService!.metrics,
