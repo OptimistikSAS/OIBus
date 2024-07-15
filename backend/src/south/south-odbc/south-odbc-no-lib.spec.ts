@@ -1,7 +1,6 @@
 import SouthODBC from './south-odbc';
 import DatabaseMock from '../../tests/__mocks__/database.mock';
 import pino from 'pino';
-// eslint-disable-next-line import/no-unresolved
 import PinoLogger from '../../tests/__mocks__/logger.mock';
 import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
@@ -11,9 +10,13 @@ import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/mod
 import { SouthODBCSettings } from '../../../../shared/model/south-settings.model';
 
 jest.mock('../../service/utils');
-jest.mock('odbc', () => {
-  throw new Error('bad');
-});
+jest.mock(
+  'odbc',
+  () => {
+    throw new Error('bad');
+  },
+  { virtual: true }
+);
 jest.mock('node:fs/promises');
 
 const database = new DatabaseMock();
