@@ -13,6 +13,9 @@ import pino from 'pino';
 import { HandlesFile } from '../north-interface';
 import { NorthAmazonS3Settings } from '../../../../shared/model/north-settings.model';
 import { createProxyAgent } from '../../service/proxy-agent';
+import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import { DateTime } from 'luxon';
+import csv from 'papaparse';
 
 /**
  * Class NorthAmazonS3 - sends files to Amazon AWS S3
@@ -82,6 +85,27 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
       Key: `${this.connector.settings.folder}/${this.getFilenameWithoutTimestamp(filePath)}`
     };
 
+    await this.s3!.send(new PutObjectCommand(params));
+  }
+
+  async handleValues(values: Array<OIBusDataValue>): Promise<void> {
+    const filename = `${this.connector.name}-${DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS')}.csv`;
+    const csvContent = csv.unparse(
+      values.map(value => ({
+        pointId: value.pointId,
+        timestamp: value.timestamp,
+        value: value.data.value
+      })),
+      {
+        header: true,
+        delimiter: ';'
+      }
+    );
+    const params = {
+      Bucket: this.connector.settings.bucket,
+      Body: csvContent,
+      Key: `${this.connector.settings.folder}/${filename}`
+    };
     await this.s3!.send(new PutObjectCommand(params));
   }
 

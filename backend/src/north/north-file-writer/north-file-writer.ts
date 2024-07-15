@@ -11,6 +11,7 @@ import { DateTime } from 'luxon';
 import { HandlesFile, HandlesValues } from '../north-interface';
 import { NorthFileWriterSettings } from '../../../../shared/model/north-settings.model';
 import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import csv from 'papaparse';
 
 /**
  * Class NorthFileWriter - Write file in an output folder. Values are stored in JSON files
@@ -37,8 +38,20 @@ export default class NorthFileWriter extends NorthConnector<NorthFileWriterSetti
       .replace('@CurrentDate', nowDate.toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))
       .replace('@ConnectorName', this.connector.name);
 
-    const filename = `${prefix}${nowDate.toMillis()}${suffix}.json`;
-    await fs.writeFile(path.join(path.resolve(this.connector.settings.outputFolder), filename), JSON.stringify(values));
+    const filename = `${prefix}${nowDate.toMillis()}${suffix}.csv`;
+
+    const csvContent = csv.unparse(
+      values.map(value => ({
+        pointId: value.pointId,
+        timestamp: value.timestamp,
+        value: value.data.value
+      })),
+      {
+        header: true,
+        delimiter: ';'
+      }
+    );
+    await fs.writeFile(path.join(path.resolve(this.connector.settings.outputFolder), filename), csvContent);
     this.logger.debug(`File "${filename}" created in "${path.resolve(this.connector.settings.outputFolder)}" output folder`);
   }
 

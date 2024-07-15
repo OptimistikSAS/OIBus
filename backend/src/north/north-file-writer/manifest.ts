@@ -23,7 +23,7 @@ const manifest: NorthConnectorManifest = {
       key: 'prefix',
       type: 'OibText',
       label: 'Prefix',
-      defaultValue: '',
+      defaultValue: '@ConnectorName-',
       newRow: true,
       validators: [
         { key: 'minLength', params: { minLength: 1 } },
@@ -35,7 +35,7 @@ const manifest: NorthConnectorManifest = {
       key: 'suffix',
       type: 'OibText',
       label: 'Suffix',
-      defaultValue: '',
+      defaultValue: '-@CurrentDate',
       newRow: false,
       validators: [
         { key: 'minLength', params: { minLength: 1 } },

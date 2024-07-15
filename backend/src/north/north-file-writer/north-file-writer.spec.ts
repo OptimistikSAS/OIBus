@@ -13,6 +13,7 @@ import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.moc
 import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
 import ArchiveServiceMock from '../../tests/__mocks__/archive-service.mock';
 import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import csv from 'papaparse';
 
 jest.mock('node:fs/promises');
 
@@ -61,6 +62,7 @@ jest.mock(
     }
 );
 jest.mock('../../service/utils');
+jest.mock('papaparse');
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
 
@@ -97,6 +99,8 @@ describe('NorthFileWriter', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
 
+    (csv.unparse as jest.Mock).mockReturnValue('csv content');
+
     north = new NorthFileWriter(configuration, encryptionService, repositoryService, logger, 'baseFolder');
     await north.start();
   });
@@ -110,11 +114,11 @@ describe('NorthFileWriter', () => {
       }
     ];
     await north.handleValues(values);
-    const expectedData = JSON.stringify(values);
-    const expectedFileName = `${configuration.settings.prefix}${new Date().getTime()}${configuration.settings.suffix}.json`;
+
+    const expectedFileName = `${configuration.settings.prefix}${new Date().getTime()}${configuration.settings.suffix}.csv`;
     const expectedOutputFolder = path.resolve(configuration.settings.outputFolder);
     const expectedPath = path.join(expectedOutputFolder, expectedFileName);
-    expect(fs.writeFile).toHaveBeenCalledWith(expectedPath, expectedData);
+    expect(fs.writeFile).toHaveBeenCalledWith(expectedPath, 'csv content');
   });
 
   it('should properly catch handle values error', async () => {
@@ -195,11 +199,10 @@ describe('NorthFileWriter without suffix or prefix', () => {
       }
     ];
     await north.handleValues(values);
-    const expectedData = JSON.stringify(values);
-    const expectedFileName = `${new Date().getTime()}.json`;
+    const expectedFileName = `${new Date().getTime()}.csv`;
     const expectedOutputFolder = path.resolve(configuration.settings.outputFolder);
     const expectedPath = path.join(expectedOutputFolder, expectedFileName);
-    expect(fs.writeFile).toHaveBeenCalledWith(expectedPath, expectedData);
+    expect(fs.writeFile).toHaveBeenCalledWith(expectedPath, 'csv content');
   });
 
   it('should properly handle files', async () => {
