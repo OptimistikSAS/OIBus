@@ -205,6 +205,70 @@ describe('Registration service', () => {
     expect(error).toEqual(new Error('Registration failed: Error: error'));
   });
 
+  it('should edit registration', async () => {
+    const command: RegistrationSettingsCommandDTO = {
+      host: 'http://localhost:4200',
+      acceptUnauthorized: false,
+      useProxy: false
+    };
+    (repositoryService.engineRepository.getEngineSettings as jest.Mock).mockReturnValueOnce(fakeEngineSettings);
+
+    await service.editRegistrationSettings(command);
+    expect(repositoryService.registrationRepository.editRegistration).toHaveBeenCalledTimes(1);
+    expect(repositoryService.registrationRepository.editRegistration).toHaveBeenCalledWith(command);
+    expect(reloadService.restartLogger).not.toHaveBeenCalled();
+  });
+
+  it('should edit registration with proxy', async () => {
+    const command: RegistrationSettingsCommandDTO = {
+      host: 'http://localhost:4200/',
+      acceptUnauthorized: false,
+      useProxy: true,
+      proxyUrl: 'http://localhost:3128',
+      proxyUsername: 'user',
+      proxyPassword: 'pass'
+    };
+    (repositoryService.engineRepository.getEngineSettings as jest.Mock).mockReturnValueOnce(fakeEngineSettings);
+    
+    await service.editRegistrationSettings(command);
+    expect(repositoryService.registrationRepository.editRegistration).toHaveBeenCalledTimes(1);
+    expect(repositoryService.registrationRepository.editRegistration).toHaveBeenCalledWith(command);
+  });
+
+  it('should edit registration with proxy and without password', async () => {
+    const command: RegistrationSettingsCommandDTO = {
+      host: 'http://localhost:4200',
+      acceptUnauthorized: false,
+      useProxy: true,
+      proxyUrl: 'http://localhost:3128',
+      proxyUsername: '',
+      proxyPassword: ''
+    };
+    (repositoryService.engineRepository.getEngineSettings as jest.Mock).mockReturnValueOnce(fakeEngineSettings);
+    
+    await service.editRegistrationSettings(command);
+    expect(repositoryService.registrationRepository.editRegistration).toHaveBeenCalledTimes(1);
+    expect(repositoryService.registrationRepository.editRegistration).toHaveBeenCalledWith(command);
+  });
+
+  it('should handle error if registration not found', async () => {
+    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValueOnce(null);
+
+    const command: RegistrationSettingsCommandDTO = {
+      host: 'http://localhost:4200',
+      acceptUnauthorized: false,
+      useProxy: false
+    };
+
+    let error;
+    try {
+      await service.editRegistrationSettings(command);
+    } catch (e) {
+      error = e;
+    }
+    expect(error).toEqual(new Error('Registration settings not found'));
+  });
+
   it('should handle fetch bad response during registration update', async () => {
     (generateRandomId as jest.Mock).mockReturnValue('1234');
 
@@ -866,6 +930,20 @@ describe('OIBus service should interact with OIA and', () => {
       'http://localhost:4200/api/oianalytics/oibus/check-registration?id=id',
       '2020-02-02T02:12:02.222Z'
     );
+  });
+
+  it('should edit registration', async () => {
+    const command: RegistrationSettingsCommandDTO = {
+      host: 'http://localhost:4200',
+      acceptUnauthorized: false,
+      useProxy: false
+    };
+    (repositoryService.engineRepository.getEngineSettings as jest.Mock).mockReturnValueOnce(mockEngineSettings);
+    
+    await service.editRegistrationSettings(command);
+    expect(reloadService.restartLogger).toHaveBeenCalledTimes(1);
+    expect(repositoryService.registrationRepository.editRegistration).toHaveBeenCalledTimes(1);
+    expect(repositoryService.registrationRepository.editRegistration).toHaveBeenCalledWith(command);
   });
 
   it('should check registration', async () => {

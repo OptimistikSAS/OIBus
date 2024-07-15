@@ -112,6 +112,40 @@ export default class RegistrationService {
     }
   }
 
+  async editRegistrationSettings(command: RegistrationSettingsCommandDTO): Promise<void> {
+    const registrationSettings = this.repositoryService.registrationRepository.getRegistrationSettings()!;
+    if (!registrationSettings) {
+      throw new Error(`Registration settings not found`);
+    }
+
+    if (!command.proxyPassword) {
+      command.proxyPassword = registrationSettings.proxyPassword;
+    } else {
+      command.proxyPassword = await this.encryptionService.encryptText(command.proxyPassword);
+    }
+
+    const url = `${command.host}/api/oianalytics/oibus/registration`;
+    createProxyAgent(
+      command.useProxy,
+      url,
+      command.useProxy
+        ? {
+            url: command.proxyUrl!,
+            username: command.proxyUsername!,
+            password: command.proxyPassword ? await this.encryptionService.decryptText(command.proxyPassword) : null
+          }
+        : null,
+      command.acceptUnauthorized
+    );
+
+    this.repositoryService.registrationRepository.editRegistration(command);
+
+    const engineSettings = this.repositoryService.engineRepository.getEngineSettings()!;
+    if (engineSettings.logParameters.oia.level !== 'silent') {
+      await this.reloadService.restartLogger(engineSettings);
+    }
+  }
+
   async activateRegistration(activationDate: string, accessToken: string): Promise<void> {
     const encryptedToken = await this.encryptionService.encryptText(accessToken);
     this.repositoryService.registrationRepository.activateRegistration(activationDate, encryptedToken);
