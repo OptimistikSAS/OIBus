@@ -6,8 +6,6 @@ import { convertDateTimeToInstant, convertDelimiter, formatInstant, persistResul
 import DatabaseMock from '../../tests/__mocks__/database.mock';
 
 import pino from 'pino';
-// eslint-disable-next-line import/no-unresolved
-import odbc from 'odbc';
 import fetch from 'node-fetch';
 import PinoLogger from '../../tests/__mocks__/logger.mock';
 import EncryptionService from '../../service/encryption.service';
@@ -21,10 +19,22 @@ import {
   SouthODBCSettings
 } from '../../../../shared/model/south-settings.model';
 
-jest.mock('../../service/utils');
-jest.mock('odbc');
-jest.mock('node:fs/promises');
+// eslint-disable-next-line @typescript-eslint/no-namespace
+namespace Odbc {
+  export class OdbcError{}
+};
+
+jest.mock('odbc', () => {
+  return {
+    connect: jest.fn()
+  }
+}, { virtual: true });
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const odbc = require('odbc');
+
 jest.mock('node-fetch');
+jest.mock('../../service/utils');
+jest.mock('node:fs/promises');
 
 const database = new DatabaseMock();
 jest.mock(
@@ -444,8 +454,8 @@ describe('SouthODBC odbc driver test connection', () => {
   };
 
   class NodeOdbcError extends Error {
-    public odbcErrors: odbc.OdbcError[];
-    constructor(message: string, odbcErrors: odbc.OdbcError[]) {
+    public odbcErrors: Odbc.OdbcError[];
+    constructor(message: string, odbcErrors: Odbc.OdbcError[]) {
       super();
       this.name = 'ODBCError';
       this.message = message;
