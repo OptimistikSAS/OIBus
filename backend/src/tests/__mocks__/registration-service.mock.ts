@@ -3,5 +3,6 @@
  */
 export default jest.fn().mockImplementation(() => ({
   onUnregister: jest.fn(),
-  updateRegistrationSettings: jest.fn()
+  updateRegistrationSettings: jest.fn(),
+  editRegistrationSettings: jest.fn()
 }));
