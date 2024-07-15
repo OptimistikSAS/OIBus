@@ -377,7 +377,7 @@ describe('SouthConnector enabled', () => {
 
     await south.historyQueryHandler(items, '2020-02-02T02:02:02.222Z', '2023-02-02T02:02:02.222Z', 'scanModeId1');
     expect(generateIntervals).toHaveBeenCalledWith(
-      '2020-02-02T02:02:02.222Z',
+      '2020-02-02T02:02:02.192Z',
       '2023-02-02T02:02:02.222Z',
       configuration.history.maxReadInterval
     );
@@ -418,7 +418,7 @@ describe('SouthConnector enabled', () => {
 
     await south.historyQueryHandler(items, '2020-02-02T02:02:02.222Z', '2023-02-02T02:02:02.222Z', 'scanModeId1');
     expect(generateIntervals).toHaveBeenCalledWith(
-      '2020-02-02T02:02:02.222Z',
+      '2020-02-02T02:02:02.192Z',
       '2023-02-02T02:02:02.222Z',
       configuration.history.maxReadInterval
     );
@@ -449,7 +449,7 @@ describe('SouthConnector enabled', () => {
 
     await south.historyQueryHandler(items, '2020-02-02T02:02:02.222Z', '2023-02-02T02:02:02.222Z', 'scanModeId1');
     expect(generateIntervals).toHaveBeenCalledWith(
-      '2020-02-02T02:02:02.222Z',
+      '2020-02-02T02:02:02.192Z',
       '2023-02-02T02:02:02.222Z',
       configuration.history.maxReadInterval
     );
@@ -672,7 +672,7 @@ describe('SouthConnector with max instant per item', () => {
     expect(generateIntervals).toHaveBeenCalledTimes(3);
     expect(south.historyQuery).toHaveBeenCalledTimes(9);
     expect(delay).toHaveBeenCalledTimes(8);
-    expect(createOrUpdateCacheScanModeMock).toHaveBeenCalledTimes(9);
+    expect(createOrUpdateCacheScanModeMock).toHaveBeenCalledTimes(3);
     expect(createOrUpdateCacheScanModeMock).toHaveBeenCalledWith({
       scanModeId: 'id1',
       maxInstant: '2021-02-02T02:02:02.222Z',
@@ -712,7 +712,7 @@ describe('SouthConnector with max instant per item', () => {
     expect(generateIntervals).toHaveBeenCalledTimes(3);
     expect(south.historyQuery).toHaveBeenCalledTimes(6);
     expect(delay).toHaveBeenCalledTimes(5);
-    expect(createOrUpdateCacheScanModeMock).toHaveBeenCalledTimes(6);
+    expect(createOrUpdateCacheScanModeMock).toHaveBeenCalledTimes(2);
     expect(createOrUpdateCacheScanModeMock).toHaveBeenCalledWith({
       scanModeId: 'id1',
       maxInstant: '2021-02-02T02:02:02.222Z',
@@ -739,7 +739,7 @@ describe('SouthConnector with max instant per item', () => {
     expect(logger.trace).toHaveBeenCalledWith(`Querying interval: ${JSON.stringify(intervals[0], null, 2)}`);
     expect(south.historyQuery).toHaveBeenCalledTimes(3);
     expect(delay).toHaveBeenCalledTimes(2);
-    expect(createOrUpdateCacheScanModeMock).toHaveBeenCalledTimes(3);
+    expect(createOrUpdateCacheScanModeMock).toHaveBeenCalledTimes(1);
     expect(createOrUpdateCacheScanModeMock).toHaveBeenCalledWith({
       scanModeId: 'id1',
       maxInstant: '2023-02-02T02:02:02.222Z',
