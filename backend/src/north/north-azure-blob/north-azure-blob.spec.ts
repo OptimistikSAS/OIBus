@@ -14,6 +14,7 @@ import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.moc
 import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
 import { NorthAzureBlobSettings } from '../../../../shared/model/north-settings.model';
 import ArchiveServiceMock from '../../tests/__mocks__/archive-service.mock';
+import csv from 'papaparse';
 
 const uploadMock = jest.fn().mockReturnValue(Promise.resolve({ requestId: 'requestId' }));
 const deleteMock = jest.fn();
@@ -36,6 +37,7 @@ jest.mock('@azure/identity', () => ({
   DefaultAzureCredential: jest.fn(),
   ClientSecretCredential: jest.fn()
 }));
+jest.mock('papaparse');
 jest.mock('node:fs/promises');
 jest.mock('../../service/utils');
 jest.mock(
@@ -82,6 +84,7 @@ jest.mock(
 const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
+const nowDateString = '2020-02-02T02:02:02.222Z';
 
 describe('NorthAzureBlob without proxy', () => {
   const configuration: NorthConnectorDTO<NorthAzureBlobSettings> = {
@@ -120,6 +123,9 @@ describe('NorthAzureBlob without proxy', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    (csv.unparse as jest.Mock).mockReturnValue('csv content');
+
     repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
   });
 
@@ -145,6 +151,22 @@ describe('NorthAzureBlob without proxy', () => {
     expect(getContainerClientMock).toHaveBeenCalledWith(configuration.settings.container);
     expect(getBlockBlobClientMock).toHaveBeenCalledWith('example.file');
     expect(uploadMock).toHaveBeenCalledWith('content', 666);
+  });
+
+  it('should properly handle values with Shared Access Signature authentication', async () => {
+    const north = new NorthAzureBlob(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+
+    await north.start();
+    await north.handleValues([{ pointId: 'pointId', timestamp: '2020-02-02T02:02:02.222Z', data: { value: '123' } }]);
+
+    expect(BlobServiceClient).toHaveBeenCalledWith(
+      `https://${configuration.settings.account}.blob.core.windows.net?${configuration.settings.sasToken}`,
+      undefined,
+      { proxyOptions: undefined }
+    );
+    expect(getContainerClientMock).toHaveBeenCalledWith(configuration.settings.container);
+    expect(getBlockBlobClientMock).toHaveBeenCalledWith(`${configuration.name}-2020_02_02_02_02_02_222.csv`);
+    expect(uploadMock).toHaveBeenCalledWith('csv content', 11);
   });
 
   it('should properly handle files with Access Key authentication', async () => {
@@ -227,6 +249,24 @@ describe('NorthAzureBlob without proxy', () => {
     expect(getContainerClientMock).toHaveBeenCalledWith(configuration.settings.container);
     expect(getBlockBlobClientMock).toHaveBeenCalledWith('my path/example.file');
     expect(uploadMock).toHaveBeenCalledWith('content', 666);
+  });
+
+  it('should properly handle values with external auth', async () => {
+    const defaultAzureCredential = jest.fn();
+    (DefaultAzureCredential as jest.Mock).mockImplementationOnce(() => defaultAzureCredential);
+
+    const north = new NorthAzureBlob(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+    await north.start();
+    await north.handleValues([{ pointId: 'pointId', timestamp: '2020-02-02T02:02:02.222Z', data: { value: '123' } }]);
+
+    expect(BlobServiceClient).toHaveBeenCalledWith(
+      `https://${configuration.settings.account}.blob.core.windows.net`,
+      defaultAzureCredential,
+      { proxyOptions: undefined }
+    );
+    expect(getContainerClientMock).toHaveBeenCalledWith(configuration.settings.container);
+    expect(getBlockBlobClientMock).toHaveBeenCalledWith(`my path/${configuration.name}-2020_02_02_02_02_02_222.csv`);
+    expect(uploadMock).toHaveBeenCalledWith('csv content', 11);
   });
 
   it('should successfully test', async () => {

@@ -11,6 +11,9 @@ import RepositoryService from '../../service/repository.service';
 import { HandlesFile } from '../north-interface';
 import { NorthAzureBlobSettings } from '../../../../shared/model/north-settings.model';
 import { ProxyOptions } from '@azure/core-http';
+import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import { DateTime } from 'luxon';
+import csv from 'papaparse';
 
 const TEST_FILE = 'oibus-azure-test.txt';
 
@@ -120,6 +123,29 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
     const blockBlobClient = this.blobClient!.getContainerClient(container).getBlockBlobClient(blobName);
     const uploadBlobResponse = await blockBlobClient.upload(content, stats.size);
     this.logger.info(`Upload block blob "${blobName}" successfully with requestId: ${uploadBlobResponse.requestId}`);
+  }
+
+  async handleValues(values: Array<OIBusDataValue>): Promise<void> {
+    const filename = `${this.connector.name}-${DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS')}.csv`;
+    const container = this.connector.settings.container;
+    const blobPath = this.connector.settings.path ? `${this.connector.settings.path}/${filename}` : filename;
+
+    this.logger.info(`Uploading file "${filename}" to Azure Blob Storage for container ${container} and path ${blobPath}`);
+
+    const csvContent = csv.unparse(
+      values.map(value => ({
+        pointId: value.pointId,
+        timestamp: value.timestamp,
+        value: value.data.value
+      })),
+      {
+        header: true,
+        delimiter: ';'
+      }
+    );
+    const blockBlobClient = this.blobClient!.getContainerClient(container).getBlockBlobClient(blobPath);
+    const uploadBlobResponse = await blockBlobClient.upload(csvContent, csvContent.length);
+    this.logger.info(`Upload block blob "${blobPath}" successfully with requestId: ${uploadBlobResponse.requestId}`);
   }
 
   override async testConnection(): Promise<void> {

@@ -15,12 +15,14 @@ import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock'
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import ArchiveServiceMock from '../../tests/__mocks__/archive-service.mock';
 import { NorthAmazonS3Settings } from '../../../../shared/model/north-settings.model';
+import csv from 'papaparse';
 
 const sendMock = jest.fn();
 jest.mock('@aws-sdk/client-s3');
 jest.mock('@aws-sdk/node-http-handler', () => ({ NodeHttpHandler: jest.fn() }));
 jest.mock('node:fs/promises');
 jest.mock('node:fs');
+jest.mock('papaparse');
 (fs.stat as jest.Mock).mockReturnValue({ size: 123 });
 jest.mock('../../service/utils');
 jest.mock(
@@ -69,6 +71,7 @@ const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
 
 let north: NorthAmazonS3;
+const nowDateString = '2020-02-02T02:02:02.222Z';
 
 describe('NorthAmazonS3', () => {
   describe('with proxy', () => {
@@ -107,6 +110,9 @@ describe('NorthAmazonS3', () => {
     beforeEach(async () => {
       jest.clearAllMocks();
       jest.useFakeTimers();
+      jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+      (csv.unparse as jest.Mock).mockReturnValue('csv content');
+
       repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
 
       (S3Client as jest.Mock).mockImplementation(() => ({
@@ -136,6 +142,13 @@ describe('NorthAmazonS3', () => {
       await north.handleFile(filePath);
 
       expect(createReadStream).toHaveBeenCalledWith(filePath);
+    });
+
+    it('should properly handle values', async () => {
+      (createReadStream as jest.Mock).mockImplementation(() => ({}) as ReadStream);
+
+      await north.start();
+      await north.handleValues([{ pointId: 'pointId', timestamp: '2020-02-02T02:02:02.222Z', data: { value: '123' } }]);
     });
 
     it('should properly catch handle file error', async () => {
