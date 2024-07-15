@@ -69,6 +69,25 @@ export default class RegistrationRepository {
   }
 
   /**
+   * Edit registration in the database.
+   */
+  editRegistration(command: RegistrationSettingsCommandDTO): void {
+    const query =
+      `UPDATE ${REGISTRATIONS_TABLE} SET ` +
+      `use_proxy = ?, proxy_url = ?, proxy_username = ?, proxy_password = ?, ` +
+      `accept_unauthorized = ? WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
+    this.database
+      .prepare(query)
+      .run(
+        +command.useProxy,
+        command.proxyUrl,
+        command.proxyUsername,
+        command.proxyPassword,
+        +command.acceptUnauthorized
+      );
+  }
+
+  /**
    * Create registration settings in the database.
    */
   createRegistrationSettings(command: RegistrationSettingsCommandDTO): void {
