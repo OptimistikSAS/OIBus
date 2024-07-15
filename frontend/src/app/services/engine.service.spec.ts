@@ -4,6 +4,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { EngineService } from './engine.service';
 import { EngineSettingsCommandDTO, EngineSettingsDTO, OIBusInfo } from '../../../../shared/model/engine.model';
 import { provideHttpClient } from '@angular/common/http';
+import { RegistrationSettingsCommandDTO } from '../../../../shared/model/engine.model';
 
 describe('EngineService', () => {
   let http: HttpTestingController;
@@ -76,6 +77,19 @@ describe('EngineService', () => {
     service.resetMetrics().subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/engine/reset-metrics' });
     expect(testRequest.request.body).toBeNull();
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should edit registration', () => {
+    let done = false;
+    const command: RegistrationSettingsCommandDTO = {
+      host: 'host',
+      useProxy: false,
+      acceptUnauthorized: false
+    };
+    service.editRegistrationSettings(command).subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/registration/edit' });
     testRequest.flush(null);
     expect(done).toBe(true);
   });
