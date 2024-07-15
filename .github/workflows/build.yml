@@ -102,7 +102,8 @@ jobs:
     strategy:
       matrix:
         config:
-          - { friendlyName: 'Linux ARM64', os: 'ubuntu-latest',  platform: 'linux-arm64', archiveName: 'oibus-linux_arm64', zip: 'zip -r' }
+          - { friendlyName: 'Linux ARM64', os: 'ubuntu-latest', architecture: 'aarch64', platform: 'linux-arm64', archiveName: 'oibus-linux_arm64', zip: 'zip -r' }
+          - { friendlyName: 'Linux ARMv7', os: 'ubuntu-latest', architecture: 'armv7', platform: 'linux-arm64', archiveName: 'oibus-linux_armv7', zip: 'zip -r' }
     timeout-minutes: 440
 
     steps:
@@ -135,20 +136,20 @@ jobs:
         working-directory: ./frontend
         run: npm run build
 
-      - name: Build OIBus launcher for ${{ matrix.config['friendlyName'] }}
+      - name: Build OIBus launcher deps for ${{ matrix.config['friendlyName'] }}
         working-directory: ./launcher
-        run: npm run build:${{ matrix.config['platform'] }}
+        run: npm run build
 
-      - name: Pre build OIBus binary for ${{ matrix.config['friendlyName'] }}
+      - name: Build OIBus deps for ${{ matrix.config['friendlyName'] }}
         working-directory: ./backend
         run: |
           npm run build
           npm run internal:build:lib-${{ matrix.config['platform'] }}
 
-      - name: Run arm64 pkg command
+      - name: Run arm64 pkg command for ${{ matrix.config['architecture'] }}
         uses: uraimo/run-on-arch-action@v2
         with:
-          arch: aarch64
+          arch: ${{ matrix.config['architecture'] }}
           distro: ubuntu22.04
           githubToken: ${{ github.token }}
           # We need to install node and yarn "again" because they don't exist inside our build container
