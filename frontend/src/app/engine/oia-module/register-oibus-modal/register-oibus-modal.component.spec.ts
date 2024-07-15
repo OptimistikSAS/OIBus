@@ -68,20 +68,23 @@ describe('RegisterOibusModalComponent', () => {
     });
 
     engineService.updateRegistrationSettings.and.returnValue(of());
+    engineService.editRegistrationSettings.and.returnValue(of());
     TestBed.createComponent(DefaultValidationErrorsComponent).detectChanges();
 
     tester = new RegisterOibusModalComponentTester();
-    tester.componentInstance.prepare({ host: '' } as RegistrationSettingsDTO);
-    tester.detectChanges();
   });
 
-  it('should have an empty form', () => {
+  it('should have an empty form in register mode', () => {
+    tester.componentInstance.prepare({ host: '' } as RegistrationSettingsDTO, 'register');
+    tester.detectChanges();
     expect(tester.host).toHaveValue('');
     expect(tester.acceptUnauthorized).not.toBeChecked();
     expect(tester.useProxy).not.toBeChecked();
   });
 
   it('should not register if invalid', () => {
+    tester.componentInstance.prepare({ host: '' } as RegistrationSettingsDTO, 'register');
+    tester.detectChanges();
     tester.save.click();
 
     // host
@@ -90,6 +93,8 @@ describe('RegisterOibusModalComponent', () => {
   });
 
   it('should register if valid', fakeAsync(() => {
+    tester.componentInstance.prepare({ host: '' } as RegistrationSettingsDTO, 'register');
+    tester.detectChanges();
     tester.host.fillWith('http://localhost:4200');
     tester.acceptUnauthorized.check();
     tester.useProxy.check();
@@ -111,7 +116,47 @@ describe('RegisterOibusModalComponent', () => {
     expect(engineService.updateRegistrationSettings).toHaveBeenCalledWith(expectedCommand);
   }));
 
-  it('should cancel', () => {
+  it('should cancel in register mode', () => {
+    tester.componentInstance.prepare({ host: '' } as RegistrationSettingsDTO, 'register');
+    tester.detectChanges();
+    tester.cancel.click();
+    expect(fakeActiveModal.dismiss).toHaveBeenCalled();
+  });
+
+  it('should have an empty form in edit mode', () => {
+    tester.componentInstance.prepare({ host: '' } as RegistrationSettingsDTO, 'edit');
+    tester.detectChanges();
+    expect(tester.host).toHaveValue('');
+    expect(tester.acceptUnauthorized).not.toBeChecked();
+    expect(tester.useProxy).not.toBeChecked();
+  });
+
+  it('should edit registration if valid', fakeAsync(() => {
+    tester.componentInstance.prepare({ host: 'http://localhost:4200' } as RegistrationSettingsDTO, 'edit');
+    tester.detectChanges();
+    tester.acceptUnauthorized.check();
+    tester.useProxy.check();
+    tester.proxyUrl.fillWith('http://localhost:8080');
+    tester.proxyUsername.fillWith('user');
+    tester.proxyPassword.fillWith('pass');
+    tester.detectChanges();
+    tester.save.click();
+
+    const expectedCommand: RegistrationSettingsCommandDTO = {
+      host: 'http://localhost:4200',
+      acceptUnauthorized: true,
+      useProxy: true,
+      proxyUrl: 'http://localhost:8080',
+      proxyUsername: 'user',
+      proxyPassword: 'pass'
+    };
+
+    expect(engineService.editRegistrationSettings).toHaveBeenCalledWith(expectedCommand);
+  }));
+
+  it('should cancel in edit mode', () => {
+    tester.componentInstance.prepare({ host: '' } as RegistrationSettingsDTO, 'edit');
+    tester.detectChanges();
     tester.cancel.click();
     expect(fakeActiveModal.dismiss).toHaveBeenCalled();
   });

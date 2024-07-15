@@ -73,6 +73,27 @@ describe('Empty registration repository', () => {
   });
 });
 
+it('should edit registration settings', () => {
+  const command: RegistrationSettingsCommandDTO = {
+    host: 'http://localhost:4200',
+    acceptUnauthorized: false,
+    useProxy: false
+  };
+  repository.editRegistration(command);
+  expect(database.prepare).toHaveBeenCalledWith(
+    `UPDATE registrations SET ` +
+      `use_proxy = ?, proxy_url = ?, proxy_username = ?, proxy_password = ?, ` +
+      `accept_unauthorized = ? WHERE rowid=(SELECT MIN(rowid) FROM registrations);`
+  );
+  expect(run).toHaveBeenCalledWith(
+    +command.useProxy,
+    command.proxyUrl,
+    command.proxyUsername,
+    command.proxyPassword,
+    +command.acceptUnauthorized
+  );
+});
+
 describe('Non-empty Registration repository', () => {
   const existingSettings: RegistrationSettingsDTO = {
     id: 'id1',
