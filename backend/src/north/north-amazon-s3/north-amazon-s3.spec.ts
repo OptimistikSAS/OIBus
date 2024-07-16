@@ -12,7 +12,7 @@ import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
 import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.mock';
 import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
-import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
+import { NorthCacheSettingsDTO, NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import ArchiveServiceMock from '../../tests/__mocks__/archive-service.mock';
 import { NorthAmazonS3Settings } from '../../../../shared/model/north-settings.model';
 import csv from 'papaparse';
@@ -94,17 +94,11 @@ describe('NorthAmazonS3', () => {
       },
       caching: {
         scanModeId: 'id1',
-        retryInterval: 5000,
-        groupCount: 10000,
-        maxSendCount: 10000,
-        retryCount: 2,
-        sendFileImmediately: true,
-        maxSize: 30000
-      },
-      archive: {
-        enabled: true,
-        retentionDuration: 720
-      }
+        oibusTimeValues: {},
+        rawFiles: {
+          archive: {}
+        }
+      } as NorthCacheSettingsDTO
     };
 
     beforeEach(async () => {
@@ -184,17 +178,11 @@ describe('NorthAmazonS3', () => {
       },
       caching: {
         scanModeId: 'id1',
-        retryInterval: 5000,
-        groupCount: 10000,
-        maxSendCount: 10000,
-        retryCount: 2,
-        sendFileImmediately: true,
-        maxSize: 30000
-      },
-      archive: {
-        enabled: true,
-        retentionDuration: 720
-      }
+        oibusTimeValues: {},
+        rawFiles: {
+          archive: {}
+        }
+      } as NorthCacheSettingsDTO
     };
 
     beforeEach(async () => {
@@ -261,17 +249,11 @@ describe('NorthAmazonS3', () => {
       },
       caching: {
         scanModeId: 'id1',
-        retryInterval: 5000,
-        groupCount: 10000,
-        maxSendCount: 10000,
-        retryCount: 2,
-        sendFileImmediately: true,
-        maxSize: 30000
-      },
-      archive: {
-        enabled: true,
-        retentionDuration: 720
-      }
+        oibusTimeValues: {},
+        rawFiles: {
+          archive: {}
+        }
+      } as NorthCacheSettingsDTO
     };
 
     beforeEach(async () => {

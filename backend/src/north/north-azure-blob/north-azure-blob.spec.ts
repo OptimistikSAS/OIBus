@@ -7,7 +7,7 @@ import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
 import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
-import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
+import { NorthCacheSettingsDTO, NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import { BlobServiceClient, StorageSharedKeyCredential } from '@azure/storage-blob';
 import { ClientSecretCredential, DefaultAzureCredential } from '@azure/identity';
 import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.mock';
@@ -108,17 +108,11 @@ describe('NorthAzureBlob without proxy', () => {
     },
     caching: {
       scanModeId: 'id1',
-      retryInterval: 5000,
-      groupCount: 10000,
-      maxSendCount: 10000,
-      retryCount: 2,
-      sendFileImmediately: true,
-      maxSize: 1000
-    },
-    archive: {
-      enabled: true,
-      retentionDuration: 720
-    }
+      oibusTimeValues: {},
+      rawFiles: {
+        archive: {}
+      }
+    } as NorthCacheSettingsDTO
   };
 
   beforeEach(async () => {
@@ -375,17 +369,11 @@ describe('NorthAzureBlob with proxy', () => {
     },
     caching: {
       scanModeId: 'id1',
-      retryInterval: 5000,
-      groupCount: 10000,
-      maxSendCount: 10000,
-      retryCount: 2,
-      sendFileImmediately: true,
-      maxSize: 1000
-    },
-    archive: {
-      enabled: true,
-      retentionDuration: 720
-    }
+      oibusTimeValues: {},
+      rawFiles: {
+        archive: {}
+      }
+    } as NorthCacheSettingsDTO
   };
   beforeEach(async () => {
     jest.clearAllMocks();
