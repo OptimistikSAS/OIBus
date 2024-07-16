@@ -148,15 +148,19 @@ describe('NorthConnector enabled', () => {
       caching: {
         scanModeId: 'id1',
         retryInterval: 5000,
-        groupCount: 10000,
-        maxSendCount: 10000,
         retryCount: 2,
-        sendFileImmediately: true,
-        maxSize: 1000
-      },
-      archive: {
-        enabled: true,
-        retentionDuration: 720
+        maxSize: 1000,
+        oibusTimeValues: {
+          groupCount: 10000,
+          maxSendCount: 10000
+        },
+        rawFiles: {
+          sendFileImmediately: true,
+          archive: {
+            enabled: true,
+            retentionDuration: 720
+          }
+        }
       }
     };
     repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
@@ -621,15 +625,19 @@ describe('NorthConnector disabled', () => {
       caching: {
         scanModeId: 'id1',
         retryInterval: 5000,
-        groupCount: 10000,
-        maxSendCount: 10000,
         retryCount: 2,
-        sendFileImmediately: true,
-        maxSize: 10
-      },
-      archive: {
-        enabled: true,
-        retentionDuration: 720
+        maxSize: 10,
+        oibusTimeValues: {
+          groupCount: 10000,
+          maxSendCount: 10000
+        },
+        rawFiles: {
+          sendFileImmediately: true,
+          archive: {
+            enabled: true,
+            retentionDuration: 720
+          }
+        }
       }
     };
     repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
@@ -751,15 +759,19 @@ describe('NorthConnector test', () => {
       caching: {
         scanModeId: 'id1',
         retryInterval: 5000,
-        groupCount: 10000,
-        maxSendCount: 10000,
         retryCount: 2,
-        sendFileImmediately: true,
-        maxSize: 10
-      },
-      archive: {
-        enabled: true,
-        retentionDuration: 720
+        maxSize: 10,
+        oibusTimeValues: {
+          groupCount: 10000,
+          maxSendCount: 10000
+        },
+        rawFiles: {
+          sendFileImmediately: true,
+          archive: {
+            enabled: true,
+            retentionDuration: 720
+          }
+        }
       }
     };
     repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);

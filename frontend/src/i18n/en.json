@@ -614,6 +614,7 @@
     "specific-settings": "{{ type }} settings",
     "cache-settings": {
       "title": "Cache",
+      "schedule": "Schedule",
       "send-scan-mode": "Send interval",
       "retry-interval": "Retry interval",
       "retry-count": "Retry count",
@@ -645,12 +646,17 @@
       "view-file": "View file",
       "remove-file": "Remove file",
       "retry-file": "Retry file",
-      "archive-file": "Archive file"
+      "archive-file": "Archive file",
+      "oibus-time-values": {
+        "title": "Time values"
+      },
+      "raw-files": {
+        "title": "Files"
+      }
     },
     "archive-settings": {
-      "title": "Archive",
-      "enabled": "Enabled",
-      "retention-duration": "Retention duration"
+      "enabled": "Enable archive",
+      "retention-duration": "Archive retention duration"
     },
     "subscriptions": {
       "title": "Subscriptions",
