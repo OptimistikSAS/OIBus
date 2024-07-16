@@ -129,18 +129,20 @@ export default class SouthConnectorController {
       }
 
       await this.validator.validateSettings(manifest.settings, command.settings);
+      const scanModes = ctx.app.repositoryService.scanModeRepository.getScanModes();
+
       // Check if item settings match the item schema, throw an error otherwise
       for (const item of ctx.request.body!.items) {
         await this.validator.validateSettings(manifest.items.settings, item.settings);
         if (!item.scanModeId && !item.scanModeName) {
           throw new Error(`Scan mode not specified for item ${item.name}`);
         } else if (!item.scanModeId && item.scanModeName) {
-          const scanModes = ctx.app.repositoryService.scanModeRepository.getScanModes();
           const scanMode = scanModes.find(element => element.name === item.scanModeName);
           if (!scanMode) {
             throw new Error(`Scan mode ${item.scanModeName} not found for item ${item.name}`);
           }
           item.scanModeId = scanMode.id;
+          delete item.scanModeName;
         }
       }
 
@@ -199,6 +201,7 @@ export default class SouthConnectorController {
             throw new Error(`Scan mode ${item.scanModeName} not found for item ${item.name}`);
           }
           item.scanModeId = scanMode.id;
+          delete item.scanModeName;
         }
       }
 
@@ -218,7 +221,7 @@ export default class SouthConnectorController {
       for (const itemId of ctx.request.body!.itemIdsToDelete) {
         await ctx.app.reloadService.onDeleteSouthItem(itemId);
       }
-      await ctx.app.reloadService.onUpdateSouth(southConnector, command, itemsToAdd, itemsToUpdate, false);
+      await ctx.app.reloadService.onUpdateSouth(southConnector, command, itemsToAdd, itemsToUpdate);
       ctx.noContent();
     } catch (error: any) {
       ctx.badRequest(error.message);
@@ -456,6 +459,7 @@ export default class SouthConnectorController {
             throw new Error(`Scan mode ${item.scanModeName} not found for item ${item.name}`);
           }
           item.scanModeId = scanMode.id;
+          delete item.scanModeName;
         }
       }
     } catch (error: any) {
@@ -463,7 +467,7 @@ export default class SouthConnectorController {
     }
 
     try {
-      ctx.app.reloadService.onCreateOrUpdateSouthItems(southConnector, items, [], true);
+      ctx.app.reloadService.onCreateOrUpdateSouthItems(southConnector, items, []);
       await ctx.app.reloadService.oibusEngine.onSouthItemsChange(southConnector.id);
     } catch (error: any) {
       return ctx.badRequest(error.message);
