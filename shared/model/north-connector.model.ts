@@ -7,10 +7,15 @@ export interface NorthCacheSettingsDTO {
   scanModeId: string;
   retryInterval: number;
   retryCount: number;
-  groupCount: number;
-  maxSendCount: number;
-  sendFileImmediately: boolean;
   maxSize: number;
+  oibusTimeValues: {
+    groupCount: number;
+    maxSendCount: number;
+  };
+  rawFiles: {
+    sendFileImmediately: boolean;
+    archive: NorthArchiveSettings;
+  };
 }
 
 export interface NorthCacheSettingsCommandDTO {
@@ -18,10 +23,15 @@ export interface NorthCacheSettingsCommandDTO {
   scanModeName?: string;
   retryInterval: number;
   retryCount: number;
-  groupCount: number;
-  maxSendCount: number;
-  sendFileImmediately: boolean;
   maxSize: number;
+  oibusTimeValues: {
+    groupCount: number;
+    maxSendCount: number;
+  };
+  rawFiles: {
+    sendFileImmediately: boolean;
+    archive: NorthArchiveSettings;
+  };
 }
 
 export interface NorthArchiveSettings {
@@ -50,7 +60,6 @@ export interface NorthConnectorDTO<T extends NorthSettings = any> extends BaseEn
   enabled: boolean;
   settings: T;
   caching: NorthCacheSettingsDTO;
-  archive: NorthArchiveSettings;
 }
 
 /**
@@ -63,7 +72,6 @@ export interface NorthConnectorCommandDTO<T extends NorthSettings = any> {
   enabled: boolean;
   settings: T;
   caching: NorthCacheSettingsCommandDTO;
-  archive: NorthArchiveSettings;
 }
 
 /**

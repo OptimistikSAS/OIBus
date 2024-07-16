@@ -172,11 +172,11 @@ export default class ValueCacheService {
       `Flush ${valuesToFlush.length} values (${flag}) into "${path.resolve(this.valueFolder, tmpFileName)}". ${groupCount} values in queue`
     );
 
-    if (groupCount >= this._settings.maxSendCount) {
+    if (groupCount >= this._settings.oibusTimeValues.maxSendCount) {
       const copiedQueue = this.queue;
       await this.compactQueueCache(copiedQueue);
     }
-    if (groupCount >= this._settings.groupCount) {
+    if (groupCount >= this._settings.oibusTimeValues.groupCount) {
       this.triggerRun.emit('next');
     }
     this.flushInProgress = false;
@@ -325,7 +325,7 @@ export default class ValueCacheService {
     for (const valuesInFile of this.bufferFiles.values()) {
       numberOfValuesInBufferFiles += valuesInFile.length;
     }
-    if (numberOfValuesInBufferFiles > BUFFER_MAX || numberOfValuesInBufferFiles > this._settings.groupCount) {
+    if (numberOfValuesInBufferFiles > BUFFER_MAX || numberOfValuesInBufferFiles > this._settings.oibusTimeValues.groupCount) {
       await this.flush('max-flush');
     } else if (!this.bufferTimeout) {
       this.bufferTimeout = setTimeout(this.flush.bind(this), BUFFER_TIMEOUT);

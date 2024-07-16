@@ -1,4 +1,4 @@
-import { NorthArchiveSettings, NorthCacheSettingsCommandDTO, NorthCacheSettingsDTO } from "./north-connector.model";
+import { NorthCacheSettingsCommandDTO, NorthCacheSettingsDTO } from './north-connector.model';
 import { SouthConnectorHistorySettings, SouthConnectorItemDTO } from './south-connector.model';
 import { BaseEntity } from './types';
 import { SouthItemSettings } from './south-settings.model';
@@ -22,7 +22,6 @@ export interface HistoryQueryDTO extends BaseEntity {
   northSettings: any;
   history: SouthConnectorHistorySettings;
   caching: NorthCacheSettingsDTO;
-  archive: NorthArchiveSettings;
 }
 
 /**
@@ -40,7 +39,6 @@ export interface HistoryQueryCommandDTO {
   northSettings: object;
   history: SouthConnectorHistorySettings;
   caching: NorthCacheSettingsCommandDTO;
-  archive: NorthArchiveSettings;
 }
 
 /**
@@ -53,8 +51,7 @@ export interface HistoryQueryCreateCommandDTO {
   fromNorthId: string | null; // used to retrieve passwords
 }
 
-
-export interface  SouthHistoryQueryItemDTO<T extends SouthItemSettings = any> extends Omit<SouthConnectorItemDTO,'scanModeId'> {
+export interface SouthHistoryQueryItemDTO<T extends SouthItemSettings = any> extends Omit<SouthConnectorItemDTO, 'scanModeId'> {
   name: string;
   enabled: boolean;
   connectorId: string;
