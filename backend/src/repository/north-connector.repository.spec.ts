@@ -36,14 +36,18 @@ describe('North connector repository', () => {
           scanModeId: 'scanId1',
           retryInterval: 5000,
           retryCount: 3,
-          groupCount: 1000,
-          maxSendCount: 10000,
-          sendFileImmediately: true,
-          maxSize: 10000
-        },
-        archive: {
-          enabled: true,
-          retentionDuration: 1000
+          maxSize: 10000,
+          oibusTimeValues: {
+            groupCount: 1000,
+            maxSendCount: 10000
+          },
+          rawFiles: {
+            sendFileImmediately: false,
+            archive: {
+              enabled: true,
+              retentionDuration: 1000
+            }
+          }
         }
       },
       {
@@ -57,14 +61,18 @@ describe('North connector repository', () => {
           scanModeId: 'scanId1',
           retryInterval: 5000,
           retryCount: 3,
-          groupCount: 1000,
-          maxSendCount: 10000,
-          sendFileImmediately: true,
-          maxSize: 10000
-        },
-        archive: {
-          enabled: true,
-          retentionDuration: 1000
+          maxSize: 10000,
+          oibusTimeValues: {
+            groupCount: 1000,
+            maxSendCount: 10000
+          },
+          rawFiles: {
+            sendFileImmediately: false,
+            archive: {
+              enabled: true,
+              retentionDuration: 1000
+            }
+          }
         }
       }
     ];
@@ -74,16 +82,16 @@ describe('North connector repository', () => {
         name: 'north1',
         type: 'oianalytics',
         description: 'My north connector',
-        enabled: true,
+        enabled: 1,
         settings: JSON.stringify({}),
         cachingScanModeId: 'scanId1',
         cachingRetryInterval: 5000,
         cachingRetryCount: 3,
         cachingGroupCount: 1000,
         cachingMaxSendCount: 10000,
-        cachingSendFileImmediately: true,
+        cachingSendFileImmediately: 0,
         cachingMaxSize: 10000,
-        archiveEnabled: true,
+        archiveEnabled: 1,
         archiveRetentionDuration: 1000
       },
       {
@@ -91,16 +99,16 @@ describe('North connector repository', () => {
         name: 'north2',
         type: 'oianalytics',
         description: 'My second north connector',
-        enabled: true,
+        enabled: 1,
         settings: JSON.stringify({}),
         cachingScanModeId: 'scanId1',
         cachingRetryInterval: 5000,
         cachingRetryCount: 3,
         cachingGroupCount: 1000,
         cachingMaxSendCount: 10000,
-        cachingSendFileImmediately: true,
+        cachingSendFileImmediately: 0,
         cachingMaxSize: 10000,
-        archiveEnabled: true,
+        archiveEnabled: 1,
         archiveRetentionDuration: 1000
       }
     ]);
@@ -127,14 +135,18 @@ describe('North connector repository', () => {
         scanModeId: 'scanId1',
         retryInterval: 5000,
         retryCount: 3,
-        groupCount: 1000,
-        maxSendCount: 10000,
-        sendFileImmediately: true,
-        maxSize: 10000
-      },
-      archive: {
-        enabled: true,
-        retentionDuration: 1000
+        maxSize: 10000,
+        oibusTimeValues: {
+          groupCount: 1000,
+          maxSendCount: 10000
+        },
+        rawFiles: {
+          sendFileImmediately: false,
+          archive: {
+            enabled: true,
+            retentionDuration: 1000
+          }
+        }
       }
     };
     get.mockReturnValueOnce({
@@ -142,16 +154,16 @@ describe('North connector repository', () => {
       name: 'north1',
       type: 'NorthConnector',
       description: 'My north connector',
-      enabled: true,
+      enabled: 1,
       settings: JSON.stringify({}),
       cachingScanModeId: 'scanId1',
       cachingRetryInterval: 5000,
       cachingRetryCount: 3,
       cachingGroupCount: 1000,
       cachingMaxSendCount: 10000,
-      cachingSendFileImmediately: true,
+      cachingSendFileImmediately: 0,
       cachingMaxSize: 10000,
-      archiveEnabled: true,
+      archiveEnabled: 1,
       archiveRetentionDuration: 1000
     });
     const northConnector = repository.getNorthConnector('id1');
@@ -194,14 +206,18 @@ describe('North connector repository', () => {
         scanModeId: 'scanId1',
         retryInterval: 5000,
         retryCount: 3,
-        groupCount: 1000,
-        maxSendCount: 10000,
-        sendFileImmediately: true,
-        maxSize: 10000
-      },
-      archive: {
-        enabled: true,
-        retentionDuration: 1000
+        maxSize: 10000,
+        oibusTimeValues: {
+          groupCount: 1000,
+          maxSendCount: 10000
+        },
+        rawFiles: {
+          sendFileImmediately: false,
+          archive: {
+            enabled: true,
+            retentionDuration: 1000
+          }
+        }
       }
     };
     repository.createNorthConnector(command);
@@ -219,14 +235,14 @@ describe('North connector repository', () => {
       +command.enabled,
       JSON.stringify(command.settings),
       command.caching.scanModeId,
-      command.caching.groupCount,
+      command.caching.oibusTimeValues.groupCount,
       command.caching.retryInterval,
       command.caching.retryCount,
-      command.caching.maxSendCount,
-      +command.caching.sendFileImmediately,
+      command.caching.oibusTimeValues.maxSendCount,
+      +command.caching.rawFiles.sendFileImmediately,
       command.caching.maxSize,
-      +command.archive.enabled,
-      command.archive.retentionDuration
+      +command.caching.rawFiles.archive.enabled,
+      command.caching.rawFiles.archive.retentionDuration
     );
     expect(get).toHaveBeenCalledWith(1);
 
@@ -250,14 +266,18 @@ describe('North connector repository', () => {
         scanModeId: 'scanId1',
         retryInterval: 5000,
         retryCount: 3,
-        groupCount: 1000,
-        maxSendCount: 10000,
-        sendFileImmediately: true,
-        maxSize: 10000
-      },
-      archive: {
-        enabled: true,
-        retentionDuration: 1000
+        maxSize: 10000,
+        oibusTimeValues: {
+          groupCount: 1000,
+          maxSendCount: 10000
+        },
+        rawFiles: {
+          sendFileImmediately: false,
+          archive: {
+            enabled: true,
+            retentionDuration: 1000
+          }
+        }
       }
     };
     repository.updateNorthConnector('id1', command);
@@ -271,14 +291,14 @@ describe('North connector repository', () => {
       command.description,
       JSON.stringify(command.settings),
       command.caching.scanModeId,
-      command.caching.groupCount,
+      command.caching.oibusTimeValues.groupCount,
       command.caching.retryInterval,
       command.caching.retryCount,
-      command.caching.maxSendCount,
-      +command.caching.sendFileImmediately,
+      command.caching.oibusTimeValues.maxSendCount,
+      +command.caching.rawFiles.sendFileImmediately,
       command.caching.maxSize,
-      +command.archive.enabled,
-      command.archive.retentionDuration,
+      +command.caching.rawFiles.archive.enabled,
+      command.caching.rawFiles.archive.retentionDuration,
       'id1'
     );
   });

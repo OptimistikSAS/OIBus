@@ -57,9 +57,11 @@ describe('ExploreCacheComponent', () => {
       scanModeId: 'scanModeId1',
       retryInterval: 1000,
       retryCount: 3,
-      groupCount: 1000,
-      maxSendCount: 10000,
-      maxSize: 30
+      maxSize: 30,
+      oibusTimeValues: {
+        groupCount: 1000,
+        maxSendCount: 10000
+      }
     }
   } as NorthConnectorDTO;
 

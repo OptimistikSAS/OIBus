@@ -92,14 +92,18 @@ describe('EditHistoryQueryComponent', () => {
       scanModeId: 'scanModeId1',
       retryInterval: 1000,
       retryCount: 3,
-      groupCount: 1000,
-      maxSendCount: 10000,
-      sendFileImmediately: true,
-      maxSize: 30
-    },
-    archive: {
-      enabled: false,
-      retentionDuration: 0
+      maxSize: 30,
+      oibusTimeValues: {
+        groupCount: 1000,
+        maxSendCount: 10000
+      },
+      rawFiles: {
+        sendFileImmediately: true,
+        archive: {
+          enabled: false,
+          retentionDuration: 0
+        }
+      }
     }
   };
 
@@ -239,7 +243,6 @@ describe('EditHistoryQueryComponent', () => {
 
     const command = {
       type: 'northId1',
-      archive: { enabled: false },
       settings: historyQuery.northSettings
     } as NorthConnectorCommandDTO;
 

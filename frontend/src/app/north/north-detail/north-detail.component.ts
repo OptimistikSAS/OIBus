@@ -150,8 +150,7 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
       description: this.northConnector!.description,
       enabled: this.northConnector!.enabled,
       settings: this.northConnector!.settings,
-      caching: this.northConnector!.caching,
-      archive: this.northConnector!.archive
+      caching: this.northConnector!.caching
     };
 
     const modalRef = this.modalService.open(TestConnectionResultModalComponent);
