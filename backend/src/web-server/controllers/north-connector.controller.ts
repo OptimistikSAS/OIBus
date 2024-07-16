@@ -4,11 +4,11 @@ import {
   NorthCacheSettingsDTO,
   NorthConnectorCommandDTO,
   NorthConnectorDTO,
-  NorthConnectorWithItemsCommandDTO,
+  NorthConnectorItemCommandDTO,
   NorthConnectorItemDTO,
   NorthConnectorItemSearchParam,
   NorthConnectorManifest,
-  NorthConnectorItemCommandDTO,
+  NorthConnectorWithItemsCommandDTO,
   NorthType
 } from '../../../../shared/model/north-connector.model';
 import JoiValidator from './validators/joi.validator';

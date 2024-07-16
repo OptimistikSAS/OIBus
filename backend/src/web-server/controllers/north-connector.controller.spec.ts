@@ -220,7 +220,7 @@ describe('North connector controller', () => {
 
   it('createNorthConnector() should create North connector with scan mode name', async () => {
     ctx.request.body = {
-      north: { ...northConnectorCommand },
+      north: { ...northConnectorCommand, enabled: true },
       subscriptions: [
         { type: 'south', subscription: { id: 'id1' } },
         { type: 'external-source', externalSubscription: { id: 'id2' } }
@@ -255,11 +255,11 @@ describe('North connector controller', () => {
       northTestManifest.settings
     );
     expect(ctx.app.reloadService.onCreateNorth).toHaveBeenCalledWith(ctx.request.body.north);
-    expect(ctx.app.reloadService.onStartNorth).toHaveBeenCalledWith('id');
+    expect(ctx.app.reloadService.oibusEngine.startNorth).toHaveBeenCalledWith('id');
     expect(ctx.created).toHaveBeenCalledWith(northConnector);
   });
 
-  it('createNorthConnector() should throw an error if scan mode not specifiec', async () => {
+  it('createNorthConnector() should throw an error if scan mode not specified', async () => {
     ctx.request.body = {
       north: JSON.parse(JSON.stringify(northConnectorCommand)),
       subscriptions: [
