@@ -72,6 +72,17 @@
           [scanModes]="scanModes"
           [inMemory]="false"
         ></oib-south-items>
+        <!-- Logs -->
+        <oib-box>
+          <ng-template oibBoxTitle>
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <span id="logs-title">{{ 'logs.title' | translate }}</span>
+              </div>
+            </div>
+          </ng-template>
+        </oib-box>
+        <oib-logs [scopeId]="southId" scopeType="south"></oib-logs>
       </div>
     </div>
   </div>
