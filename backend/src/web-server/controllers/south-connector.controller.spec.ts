@@ -449,7 +449,7 @@ describe('South connector controller', () => {
       southConnector.settings,
       southTestManifest.settings
     );
-    expect(ctx.app.reloadService.onUpdateSouth).toHaveBeenCalledWith(southConnector, southConnectorCommand, [{}], []);
+    expect(ctx.app.reloadService.onUpdateSouth).toHaveBeenCalledWith(southConnector, southConnectorCommand, [], []);
     expect(ctx.app.reloadService.onDeleteSouthItem).toHaveBeenCalledWith('id1');
     expect(ctx.noContent).toHaveBeenCalled();
   });
@@ -474,6 +474,7 @@ describe('South connector controller', () => {
     ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
     ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValue([
       {
+        id: 'scanModeId2',
         name: 'scanModeName2',
         description: '',
         cron: 'cron'
@@ -490,7 +491,21 @@ describe('South connector controller', () => {
       southConnector.settings,
       southTestManifest.settings
     );
-    expect(ctx.app.reloadService.onUpdateSouth).toHaveBeenCalledWith('id', southConnectorCommand, false);
+    expect(ctx.app.reloadService.onUpdateSouth).toHaveBeenCalledWith(
+      southConnector,
+      southConnectorCommand,
+      [],
+      [
+        item,
+        {
+          id: 'id2',
+          name: 'item2',
+          scanModeId: 'scanModeId2',
+          enabled: true,
+          settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
+        }
+      ]
+    );
     expect(ctx.app.reloadService.onDeleteSouthItem).toHaveBeenCalledWith('id1');
     expect(ctx.noContent).toHaveBeenCalled();
   });
