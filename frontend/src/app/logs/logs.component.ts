@@ -1,4 +1,4 @@
-import { Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, Input } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PageLoader } from '../shared/page-loader.service';
@@ -37,6 +37,7 @@ import { TYPEAHEAD_DEBOUNCE_TIME } from '../shared/typeahead';
 import { NgbTypeahead, NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
 import { PillComponent } from '../shared/pill/pill.component';
 import { LegendComponent } from '../shared/legend/legend.component';
+import { NgClass } from '@angular/common';
 
 @Component({
   selector: 'oib-logs',
@@ -53,13 +54,17 @@ import { LegendComponent } from '../shared/legend/legend.component';
     ScopeTypesEnumPipe,
     NgbTypeahead,
     PillComponent,
-    LegendComponent
+    LegendComponent,
+    NgClass
   ],
   templateUrl: './logs.component.html',
   styleUrl: './logs.component.scss',
   providers: [PageLoader]
 })
 export class LogsComponent implements OnInit, OnDestroy {
+  @Input() scopeId: string | null = null;
+  @Input() scopeType: ScopeType | null = null;
+
   readonly searchForm = inject(NonNullableFormBuilder).group(
     {
       messageContent: null as string | null,
@@ -121,6 +126,10 @@ export class LogsComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    if (this.scopeId !== null && this.scopeType !== null) {
+      this.searchForm.controls.scopeTypes.disable();
+      this.searchForm.controls.scopeIds.disable();
+    }
     const queryScopeIds = this.route.snapshot.queryParamMap.getAll('scopeIds');
     if (queryScopeIds.length > 0) {
       combineLatest(queryScopeIds.map(scopeId => this.logService.getScopeById(scopeId))).subscribe(selectedScopes => {
@@ -155,8 +164,15 @@ export class LogsComponent implements OnInit, OnDestroy {
     const now = DateTime.now().endOf('minute');
     const queryParamMap = route.snapshot.queryParamMap;
     const messageContent = queryParamMap.get('messageContent');
-    const scopeTypes = queryParamMap.getAll('scopeTypes');
-    const scopeIds = queryParamMap.getAll('scopeIds');
+    let scopeTypes = null;
+    let scopeIds = null;
+    if (this.scopeId !== null && this.scopeType !== null) {
+      scopeTypes = [this.scopeType];
+      scopeIds = [this.scopeId];
+    } else {
+      scopeTypes = queryParamMap.getAll('scopeTypes');
+      scopeIds = queryParamMap.getAll('scopeIds');
+    }
     const start = queryParamMap.get('start') ?? now.minus({ days: 1 }).toISO();
     const end = queryParamMap.get('end');
     const levels = queryParamMap.getAll('levels');
@@ -174,11 +190,10 @@ export class LogsComponent implements OnInit, OnDestroy {
       end: formValue.end!,
       messageContent: formValue.messageContent!,
       levels: formValue.levels!,
-      scopeTypes: formValue.scopeTypes!,
-      scopeIds: this.selectedScopes!.map(scope => scope.scopeId),
+      scopeTypes: this.scopeType ? [this.scopeType] : formValue.scopeTypes!,
+      scopeIds: this.scopeId ? [this.scopeId] : this.selectedScopes!.map(scope => scope.scopeId),
       page: 0
     };
-
     this.router.navigate(['.'], { queryParams: criteria, relativeTo: this.route });
   }
 

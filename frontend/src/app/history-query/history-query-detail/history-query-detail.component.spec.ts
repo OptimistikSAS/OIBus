@@ -37,6 +37,10 @@ class HistoryQueryDisplayComponentTester extends ComponentTester<HistoryQueryDet
   get items() {
     return this.elements('tbody tr.south-item');
   }
+
+  get historyQueryLogs() {
+    return this.elements('#logs-title');
+  }
 }
 
 describe('HistoryQueryDisplayComponent', () => {
@@ -238,6 +242,11 @@ describe('HistoryQueryDisplayComponent', () => {
     const item = tester.items[0];
     expect(item.elements('td')[1]).toContainText('item1');
     expect(item.elements('td')[2]).toContainText('sql');
+  });
+
+  it('should display logs', () => {
+    tester.detectChanges();
+    expect(tester.historyQueryLogs.length).toBe(1);
   });
 
   it('should test north connection', () => {

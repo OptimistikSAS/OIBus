@@ -1,13 +1,15 @@
-<div class="oib-padded-container">
+<div [ngClass]="{ 'oib-padded-container': !this.scopeId && !this.scopeType }">
   <div class="oib-header-container">
-    <div class="row mb-2">
-      <div class="col d-flex">
-        <div class="oib-block-title">
-          <img class="oib-title-image pt-2" src="/home/logs.svg" />
+    @if (!this.scopeId && !this.scopeType) {
+      <div class="row mb-2">
+        <div class="col d-flex">
+          <div class="oib-block-title">
+            <img class="oib-title-image pt-2" src="/home/logs.svg" />
+          </div>
+          <h1 class="oib-title">{{ 'logs.title' | translate }}</h1>
         </div>
-        <h1 class="oib-title">{{ 'logs.title' | translate }}</h1>
       </div>
-    </div>
+    }
     <div>
       <form class="px-3 mb-4 oib-search-form" id="logs-form" [formGroup]="searchForm" (ngSubmit)="triggerSearch()">
         <div class="row gx-2 py-3">
@@ -21,46 +23,57 @@
             <oib-datetimepicker formControlName="end" id="end"></oib-datetimepicker>
             <val-errors [control]="searchForm"></val-errors>
           </div>
-          <label for="levels" class="col-auto col-form-label" translate="logs.search.levels"></label>
-          <div class="col-1">
-            <oib-multi-select formControlName="levels" id="levels">
-              @for (level of levels; track level) {
-                <oib-multi-select-option [value]="level" [label]="level | logLevelsEnum"></oib-multi-select-option>
-              }
-            </oib-multi-select>
-          </div>
-
-          <label for="scope-types" class="col-auto col-form-label" translate="logs.search.scope-type"></label>
-          <div class="col-2">
-            <oib-multi-select formControlName="scopeTypes" id="scope-types">
-              @for (scopeType of scopeTypes; track scopeType) {
-                <oib-multi-select-option [value]="scopeType" [label]="scopeType | scopeTypesEnum"></oib-multi-select-option>
-              }
-            </oib-multi-select>
-          </div>
+          @if (!this.scopeId && !this.scopeType) {
+            <label for="levels" class="col-auto col-form-label" translate="logs.search.levels"></label>
+            <div class="col-1">
+              <oib-multi-select formControlName="levels" id="levels">
+                @for (level of levels; track level) {
+                  <oib-multi-select-option [value]="level" [label]="level | logLevelsEnum"></oib-multi-select-option>
+                }
+              </oib-multi-select>
+            </div>
+            <label for="scope-types" class="col-auto col-form-label" translate="logs.search.scope-type"></label>
+            <div class="col-2">
+              <oib-multi-select formControlName="scopeTypes" id="scope-types">
+                @for (scopeType of scopeTypes; track scopeType) {
+                  <oib-multi-select-option [value]="scopeType" [label]="scopeType | scopeTypesEnum"></oib-multi-select-option>
+                }
+              </oib-multi-select>
+            </div>
+          }
         </div>
         <div class="row gx-2 py-3">
-          <label for="scope-ids" class="col-auto col-form-label" translate="logs.search.scope"></label>
-          <div class="col-2">
-            <input
-              id="scope-ids"
-              class="form-control"
-              formControlName="scopeIds"
-              [ngbTypeahead]="scopeTypeahead"
-              [resultFormatter]="scopeFormatter"
-              [inputFormatter]="scopeFormatter"
-              [editable]="false"
-              (selectItem)="selectScope($event)"
-            />
-            <div [style.margin-top.rem]="selectedScopes.length ? -0.75 : 0">
-              @for (scope of selectedScopes; track scope.scopeId) {
-                <oib-pill type="secondary" [removable]="true" (removed)="removeScope(scope)"> {{ scope.scopeName }} </oib-pill>
-              }
+          @if (!this.scopeId && !this.scopeType) {
+            <label for="scope-ids" class="col-auto col-form-label" translate="logs.search.scope"></label>
+            <div class="col-2">
+              <input
+                id="scope-ids"
+                class="form-control"
+                formControlName="scopeIds"
+                [ngbTypeahead]="scopeTypeahead"
+                [resultFormatter]="scopeFormatter"
+                [inputFormatter]="scopeFormatter"
+                [editable]="false"
+                (selectItem)="selectScope($event)"
+              />
+              <div [style.margin-top.rem]="selectedScopes.length ? -0.75 : 0">
+                @for (scope of selectedScopes; track scope.scopeId) {
+                  <oib-pill type="secondary" [removable]="true" (removed)="removeScope(scope)"> {{ scope.scopeName }} </oib-pill>
+                }
+              </div>
             </div>
-          </div>
-
+          } @else {
+            <label for="levels" class="col-auto col-form-label" translate="logs.search.levels"></label>
+            <div class="col-2">
+              <oib-multi-select formControlName="levels" id="levels">
+                @for (level of levels; track level) {
+                  <oib-multi-select-option [value]="level" [label]="level | logLevelsEnum"></oib-multi-select-option>
+                }
+              </oib-multi-select>
+            </div>
+          }
           <label for="message-content" class="col-auto col-form-label" translate="logs.search.message-content"></label>
-          <div class="col-8">
+          <div [ngClass]="!this.scopeId && !this.scopeType ? 'col-8' : 'col-7'">
             <input type="text" class="form-control" id="message-content" formControlName="messageContent" />
           </div>
 
@@ -89,25 +102,28 @@
       @if (logs.totalElements !== 0) {
         <div class="table-container">
           <table class="table table-sm table-hover oib-table-logs">
-            <thead>
+            <thead [ngClass]="{ light: this.scopeId && this.scopeType }">
               <tr>
                 <th style="width: 1%"></th>
                 <th translate="logs.date"></th>
-                <th translate="logs.scope-type" style="width: 8%"></th>
-                <th translate="logs.scope" style="width: 4%"></th>
-                <th translate="logs.message"></th>
+                @if (!this.scopeId && !this.scopeType) {
+                  <th translate="logs.scope-type" style="width: 8%"></th>
+                  <th translate="logs.scope" style="width: 4%"></th>
+                }
+                <th [ngClass]="{ 'w-50': this.scopeId && this.scopeType }" translate="logs.message"></th>
               </tr>
             </thead>
             <tbody>
               @for (log of logs.content; track log) {
                 <tr class="data">
                   <td>
-                    <!-- need to not be "display: inline" -->
                     <span style="display: block" [class]="getLevelClass(log.level)"></span>
                   </td>
                   <td class="text-nowrap">{{ log.timestamp | datetime: 'mediumWithSeconds' }}</td>
-                  <td>{{ log.scopeType | scopeTypesEnum }}</td>
-                  <td>{{ log.scopeName }}</td>
+                  @if (!this.scopeId && !this.scopeType) {
+                    <td>{{ log.scopeType | scopeTypesEnum }}</td>
+                    <td>{{ log.scopeName }}</td>
+                  }
                   <td class="text-break">{{ log.message }}</td>
                 </tr>
               }
