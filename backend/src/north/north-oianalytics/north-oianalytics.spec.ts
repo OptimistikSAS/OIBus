@@ -7,7 +7,7 @@ import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
 import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
-import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
+import { NorthCacheSettingsDTO, NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 
 import fetch from 'node-fetch';
 import { compress, filesExists } from '../../service/utils';
@@ -120,17 +120,11 @@ describe('NorthOIAnalytics without proxy', () => {
     },
     caching: {
       scanModeId: 'id1',
-      retryInterval: 5000,
-      groupCount: 10000,
-      maxSendCount: 10000,
-      retryCount: 2,
-      sendFileImmediately: true,
-      maxSize: 30000
-    },
-    archive: {
-      enabled: true,
-      retentionDuration: 720
-    }
+      oibusTimeValues: {},
+      rawFiles: {
+        archive: {}
+      }
+    } as NorthCacheSettingsDTO
   };
 
   beforeEach(async () => {
@@ -401,17 +395,11 @@ describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
     },
     caching: {
       scanModeId: 'id1',
-      retryInterval: 5000,
-      groupCount: 10000,
-      maxSendCount: 10000,
-      retryCount: 2,
-      sendFileImmediately: true,
-      maxSize: 30000
-    },
-    archive: {
-      enabled: true,
-      retentionDuration: 720
-    }
+      oibusTimeValues: {},
+      rawFiles: {
+        archive: {}
+      }
+    } as NorthCacheSettingsDTO
   };
   const fakeAgent = { rejectUnauthorized: false };
 
@@ -519,17 +507,11 @@ describe('NorthOIAnalytics with proxy', () => {
     },
     caching: {
       scanModeId: 'id1',
-      retryInterval: 5000,
-      groupCount: 10000,
-      maxSendCount: 10000,
-      retryCount: 2,
-      sendFileImmediately: true,
-      maxSize: 30000
-    },
-    archive: {
-      enabled: true,
-      retentionDuration: 720
-    }
+      oibusTimeValues: {},
+      rawFiles: {
+        archive: {}
+      }
+    } as NorthCacheSettingsDTO
   };
   const fakeAgent = { rejectUnauthorized: false };
 
@@ -646,17 +628,11 @@ describe('NorthOIAnalytics with proxy but without proxy password', () => {
     },
     caching: {
       scanModeId: 'id1',
-      retryInterval: 5000,
-      groupCount: 10000,
-      maxSendCount: 10000,
-      retryCount: 2,
-      sendFileImmediately: true,
-      maxSize: 30000
-    },
-    archive: {
-      enabled: true,
-      retentionDuration: 720
-    }
+      oibusTimeValues: {},
+      rawFiles: {
+        archive: {}
+      }
+    } as NorthCacheSettingsDTO
   };
 
   beforeEach(async () => {
@@ -788,17 +764,11 @@ describe('NorthOIAnalytics with aad-certificate', () => {
     },
     caching: {
       scanModeId: 'id1',
-      retryInterval: 5000,
-      groupCount: 10000,
-      maxSendCount: 10000,
-      retryCount: 2,
-      sendFileImmediately: true,
-      maxSize: 30000
-    },
-    archive: {
-      enabled: true,
-      retentionDuration: 720
-    }
+      oibusTimeValues: {},
+      rawFiles: {
+        archive: {}
+      }
+    } as NorthCacheSettingsDTO
   };
 
   beforeEach(async () => {
@@ -847,17 +817,11 @@ describe('NorthOIAnalytics with OIA module', () => {
     },
     caching: {
       scanModeId: 'id1',
-      retryInterval: 5000,
-      groupCount: 10000,
-      maxSendCount: 10000,
-      retryCount: 2,
-      sendFileImmediately: true,
-      maxSize: 30000
-    },
-    archive: {
-      enabled: true,
-      retentionDuration: 720
-    }
+      oibusTimeValues: {},
+      rawFiles: {
+        archive: {}
+      }
+    } as NorthCacheSettingsDTO
   };
 
   let registrationSettings: RegistrationSettingsDTO;
