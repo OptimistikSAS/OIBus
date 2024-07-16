@@ -105,6 +105,17 @@
         </oib-box>
         <!-- subscription -->
         <oib-north-subscriptions [northConnector]="northConnector"></oib-north-subscriptions>
+        <!-- Logs -->
+        <oib-box>
+          <ng-template oibBoxTitle>
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <span id="logs-title">{{ 'logs.title' | translate }}</span>
+              </div>
+            </div>
+          </ng-template>
+        </oib-box>
+        <oib-logs [scopeId]="northId" scopeType="north"></oib-logs>
       </div>
     </div>
   </div>

@@ -22,6 +22,7 @@ import { ModalService } from '../../shared/modal.service';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { EngineService } from '../../services/engine.service';
 import { ClipboardModule } from '@angular/cdk/clipboard';
+import { LogsComponent } from '../../logs/logs.component';
 
 @Component({
   selector: 'oib-south-detail',
@@ -37,7 +38,8 @@ import { ClipboardModule } from '@angular/cdk/clipboard';
     BoxTitleDirective,
     EnabledEnumPipe,
     SouthItemsComponent,
-    ClipboardModule
+    ClipboardModule,
+    LogsComponent
   ],
   templateUrl: './south-detail.component.html',
   styleUrl: './south-detail.component.scss',
@@ -51,6 +53,7 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
   connectorMetrics: SouthConnectorMetrics | null = null;
   connectorStream: EventSource | null = null;
   oibusInfo: OIBusInfo | null = null;
+  southId: string | null = null;
 
   constructor(
     private windowService: WindowService,
@@ -73,10 +76,10 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
     this.route.paramMap
       .pipe(
         switchMap(params => {
-          const paramSouthId = params.get('southId');
+          this.southId = params.get('southId');
 
-          if (paramSouthId) {
-            return this.southConnectorService.get(paramSouthId);
+          if (this.southId) {
+            return this.southConnectorService.get(this.southId);
           }
           return of(null);
         }),
