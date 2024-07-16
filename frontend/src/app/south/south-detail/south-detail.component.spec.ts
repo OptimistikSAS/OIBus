@@ -34,6 +34,10 @@ class SouthDisplayComponentTester extends ComponentTester<SouthDetailComponent> 
   get southItems() {
     return this.elements('tbody tr.south-item');
   }
+
+  get southLogs() {
+    return this.elements('#logs-title');
+  }
 }
 
 describe('SouthDetailComponent', () => {
@@ -176,6 +180,11 @@ describe('SouthDetailComponent', () => {
     expect(item.elements('td')[1]).toContainText('item1');
     expect(item.elements('td')[2]).toContainText('Every mn');
     expect(item.elements('td')[3]).toContainText('sql');
+  });
+
+  it('should display logs', () => {
+    tester.detectChanges();
+    expect(tester.southLogs.length).toBe(1);
   });
 
   it('should stop south', () => {
