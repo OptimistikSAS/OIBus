@@ -32,16 +32,20 @@ export default class NorthConnectorRepository {
         settings: JSON.parse(result.settings),
         caching: {
           scanModeId: result.cachingScanModeId,
-          groupCount: result.cachingGroupCount,
           retryInterval: result.cachingRetryInterval,
           retryCount: result.cachingRetryCount,
-          maxSendCount: result.cachingMaxSendCount,
-          sendFileImmediately: Boolean(result.cachingSendFileImmediately),
-          maxSize: result.cachingMaxSize
-        },
-        archive: {
-          enabled: Boolean(result.archiveEnabled),
-          retentionDuration: result.archiveRetentionDuration
+          maxSize: result.cachingMaxSize,
+          oibusTimeValues: {
+            groupCount: result.cachingGroupCount,
+            maxSendCount: result.cachingMaxSendCount
+          },
+          rawFiles: {
+            sendFileImmediately: Boolean(result.cachingSendFileImmediately),
+            archive: {
+              enabled: Boolean(result.archiveEnabled),
+              retentionDuration: result.archiveRetentionDuration
+            }
+          }
         }
       }))
       .filter(result => ['aws-s3', 'azure-blob', 'console', 'file-writer', 'oianalytics', 'oibus', 'rest-api'].includes(result.type));
@@ -72,16 +76,20 @@ export default class NorthConnectorRepository {
       settings: JSON.parse(result.settings),
       caching: {
         scanModeId: result.cachingScanModeId,
-        groupCount: result.cachingGroupCount,
         retryInterval: result.cachingRetryInterval,
         retryCount: result.cachingRetryCount,
-        maxSendCount: result.cachingMaxSendCount,
-        sendFileImmediately: Boolean(result.cachingSendFileImmediately),
-        maxSize: result.cachingMaxSize
-      },
-      archive: {
-        enabled: Boolean(result.archiveEnabled),
-        retentionDuration: result.archiveRetentionDuration
+        maxSize: result.cachingMaxSize,
+        oibusTimeValues: {
+          groupCount: result.cachingGroupCount,
+          maxSendCount: result.cachingMaxSendCount
+        },
+        rawFiles: {
+          sendFileImmediately: Boolean(result.cachingSendFileImmediately),
+          archive: {
+            enabled: Boolean(result.archiveEnabled),
+            retentionDuration: result.archiveRetentionDuration
+          }
+        }
       }
     };
   }
@@ -106,14 +114,14 @@ export default class NorthConnectorRepository {
         +command.enabled,
         JSON.stringify(command.settings),
         command.caching.scanModeId,
-        command.caching.groupCount,
+        command.caching.oibusTimeValues.groupCount,
         command.caching.retryInterval,
         command.caching.retryCount,
-        command.caching.maxSendCount,
-        +command.caching.sendFileImmediately,
+        command.caching.oibusTimeValues.maxSendCount,
+        +command.caching.rawFiles.sendFileImmediately,
         command.caching.maxSize,
-        +command.archive.enabled,
-        command.archive.retentionDuration
+        +command.caching.rawFiles.archive.enabled,
+        command.caching.rawFiles.archive.retentionDuration
       );
 
     const query =
@@ -132,16 +140,20 @@ export default class NorthConnectorRepository {
       settings: JSON.parse(result.settings),
       caching: {
         scanModeId: result.cachingScanModeId,
-        groupCount: result.cachingGroupCount,
         retryInterval: result.cachingRetryInterval,
         retryCount: result.cachingRetryCount,
-        maxSendCount: result.cachingMaxSendCount,
-        sendFileImmediately: Boolean(result.cachingSendFileImmediately),
-        maxSize: result.cachingMaxSize
-      },
-      archive: {
-        enabled: Boolean(result.archiveEnabled),
-        retentionDuration: result.archiveRetentionDuration
+        maxSize: result.cachingMaxSize,
+        oibusTimeValues: {
+          groupCount: result.cachingGroupCount,
+          maxSendCount: result.cachingMaxSendCount
+        },
+        rawFiles: {
+          sendFileImmediately: Boolean(result.cachingSendFileImmediately),
+          archive: {
+            enabled: Boolean(result.archiveEnabled),
+            retentionDuration: result.archiveRetentionDuration
+          }
+        }
       }
     };
   }
@@ -172,14 +184,14 @@ export default class NorthConnectorRepository {
         command.description,
         JSON.stringify(command.settings),
         command.caching.scanModeId,
-        command.caching.groupCount,
+        command.caching.oibusTimeValues.groupCount,
         command.caching.retryInterval,
         command.caching.retryCount,
-        command.caching.maxSendCount,
-        +command.caching.sendFileImmediately,
+        command.caching.oibusTimeValues.maxSendCount,
+        +command.caching.rawFiles.sendFileImmediately,
         command.caching.maxSize,
-        +command.archive.enabled,
-        command.archive.retentionDuration,
+        +command.caching.rawFiles.archive.enabled,
+        command.caching.rawFiles.archive.retentionDuration,
         id
       );
   }

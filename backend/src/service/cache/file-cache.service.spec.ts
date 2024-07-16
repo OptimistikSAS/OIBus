@@ -24,13 +24,17 @@ describe('FileCache without sendFileImmediately', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     settings = {
       scanModeId: 'id1',
-      groupCount: 1000,
-      maxSendCount: 1000,
-      retryCount: 3,
       retryInterval: 5000,
-      sendFileImmediately: false,
-      maxSize: 1000
-    };
+      retryCount: 3,
+      maxSize: 1000,
+      rawFiles: {
+        sendFileImmediately: false,
+        archive: {
+          enabled: true,
+          retentionDuration: 72
+        }
+      }
+    } as NorthCacheSettingsDTO;
 
     cache = new FileCache(logger, 'myCacheFolder', settings);
   });
@@ -338,13 +342,18 @@ describe('FileCache without sendFileImmediately', () => {
 
     cache.settings = {
       scanModeId: 'id1',
-      groupCount: 1000,
-      maxSendCount: 1000,
-      retryCount: 3,
       retryInterval: 5000,
-      sendFileImmediately: true,
-      maxSize: 1000
-    };
+      retryCount: 3,
+      maxSize: 1000,
+      rawFiles: {
+        sendFileImmediately: true,
+        archive: {
+          enabled: true,
+          retentionDuration: 72
+        }
+      }
+    } as NorthCacheSettingsDTO;
+
     await cache.cacheFile('myFile.csv');
   });
 
@@ -395,13 +404,17 @@ describe('FileCache with sendFileImmediately', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     settings = {
       scanModeId: 'id1',
-      groupCount: 1000,
-      maxSendCount: 1000,
-      retryCount: 3,
       retryInterval: 5000,
-      sendFileImmediately: true,
-      maxSize: 1000
-    };
+      retryCount: 3,
+      maxSize: 1000,
+      rawFiles: {
+        sendFileImmediately: true,
+        archive: {
+          enabled: true,
+          retentionDuration: 72
+        }
+      }
+    } as NorthCacheSettingsDTO;
 
     cache = new FileCache(logger, 'myCacheFolder', settings);
   });
