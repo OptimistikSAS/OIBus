@@ -34,6 +34,7 @@ import { EngineService } from '../../services/engine.service';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { ModalService } from '../../shared/modal.service';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
+import { LogsComponent } from '../../logs/logs.component';
 
 @Component({
   selector: 'oib-history-query-detail',
@@ -53,7 +54,8 @@ import { TestConnectionResultModalComponent } from '../../shared/test-connection
     HistoryMetricsComponent,
     SouthMetricsComponent,
     AsyncPipe,
-    ClipboardModule
+    ClipboardModule,
+    LogsComponent
   ],
   templateUrl: './history-query-detail.component.html',
   styleUrl: './history-query-detail.component.scss',
@@ -76,6 +78,7 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
   historyStream: EventSource | null = null;
   state = new ObservableState();
   oibusInfo: OIBusInfo | null = null;
+  historyQueryId: string | null = null;
 
   constructor(
     private historyQueryService: HistoryQueryService,
@@ -99,9 +102,10 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
     this.route.paramMap
       .pipe(
         switchMap(params => {
-          const paramHistoryQueryId = params.get('historyQueryId') || '';
-          if (paramHistoryQueryId) {
-            return this.historyQueryService.get(paramHistoryQueryId);
+          this.historyQueryId = params.get('historyQueryId') || '';
+
+          if (this.historyQueryId) {
+            return this.historyQueryService.get(this.historyQueryId);
           }
           return of(null);
         }),

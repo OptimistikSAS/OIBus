@@ -23,6 +23,7 @@ import { ModalService } from '../../shared/modal.service';
 import { BooleanEnumPipe } from '../../shared/boolean-enum.pipe';
 import { PipeProviderService } from '../../shared/form/pipe-provider.service';
 import { EngineService } from '../../services/engine.service';
+import { LogsComponent } from '../../logs/logs.component';
 
 @Component({
   selector: 'oib-north-detail',
@@ -38,7 +39,8 @@ import { EngineService } from '../../services/engine.service';
     BoxTitleDirective,
     DurationPipe,
     EnabledEnumPipe,
-    ClipboardModule
+    ClipboardModule,
+    LogsComponent
   ],
   templateUrl: './north-detail.component.html',
   styleUrl: './north-detail.component.scss',
@@ -52,6 +54,7 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
   connectorStream: EventSource | null = null;
   connectorMetrics: NorthConnectorMetrics | null = null;
   oibusInfo: OIBusInfo | null = null;
+  northId: string | null = null;
 
   constructor(
     private windowService: WindowService,
@@ -74,10 +77,10 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
     this.route.paramMap
       .pipe(
         switchMap(params => {
-          const paramNorthId = params.get('northId');
+          this.northId = params.get('northId');
 
-          if (paramNorthId) {
-            return this.northConnectorService.get(paramNorthId);
+          if (this.northId) {
+            return this.northConnectorService.get(this.northId);
           }
           return of(null);
         }),
