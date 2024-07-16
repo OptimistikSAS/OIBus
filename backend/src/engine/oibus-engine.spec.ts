@@ -3,7 +3,7 @@ import SouthServiceMock from '../tests/__mocks__/south-service.mock';
 import NorthServiceMock from '../tests/__mocks__/north-service.mock';
 
 import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
-import { NorthConnectorDTO, NorthConnectorItemDTO } from '../../../shared/model/north-connector.model';
+import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 
 import SouthService from '../service/south.service';
 import NorthService from '../service/north.service';
@@ -67,13 +67,6 @@ const southItems: Array<SouthConnectorItemDTO> = [
     scanModeId: 'subscription'
   }
 ];
-const northItem: NorthConnectorItemDTO = {
-  id: 'northItemId',
-  name: 'item1',
-  enabled: true,
-  connectorId: 'northId',
-  settings: {}
-};
 
 const connectedEvent = new EventEmitter();
 
