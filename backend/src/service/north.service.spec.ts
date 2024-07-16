@@ -41,11 +41,12 @@ describe('north service', () => {
         description: 'my test connector',
         type: 'console',
         enabled: false,
-        caching: {} as NorthCacheSettingsDTO,
-        archive: {
-          enabled: false,
-          retentionDuration: 0
-        },
+        caching: {
+          oibusTimeValues: {},
+          rawFiles: {
+            archive: {}
+          }
+        } as NorthCacheSettingsDTO,
         settings: { verbose: true }
       },
       'myBaseFolder',
@@ -65,11 +66,12 @@ describe('north service', () => {
           description: 'my test connector',
           type: 'another',
           enabled: false,
-          caching: {} as NorthCacheSettingsDTO,
-          archive: {
-            enabled: false,
-            retentionDuration: 0
-          },
+          caching: {
+            oibusTimeValues: {},
+            rawFiles: {
+              archive: {}
+            }
+          } as NorthCacheSettingsDTO,
           settings: { verbose: true }
         },
         'myBaseFolder',

@@ -46,19 +46,23 @@ const southConnector: SouthConnectorDTO = {
     field: 'value'
   }
 };
-
+const northArchiveSettings: NorthArchiveSettings = {
+  enabled: true,
+  retentionDuration: 1000
+};
 const northCacheSettings: NorthCacheSettingsDTO = {
   scanModeId: 'scanModeId',
   retryInterval: 1000,
   retryCount: 3,
-  groupCount: 100,
-  maxSendCount: 1000,
-  sendFileImmediately: false,
-  maxSize: 10000
-};
-const northArchiveSettings: NorthArchiveSettings = {
-  enabled: true,
-  retentionDuration: 1000
+  maxSize: 10000,
+  oibusTimeValues: {
+    groupCount: 100,
+    maxSendCount: 1000
+  },
+  rawFiles: {
+    archive: northArchiveSettings,
+    sendFileImmediately: false
+  }
 };
 
 const northConnectorCommand: NorthConnectorCommandDTO = {
@@ -76,8 +80,7 @@ const northConnector: NorthConnectorDTO = {
   settings: {
     field: 'value'
   },
-  caching: northCacheSettings,
-  archive: northArchiveSettings
+  caching: northCacheSettings
 };
 
 const historyQueryCommand: HistoryQueryCommandDTO = {
@@ -100,8 +103,7 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
   northSettings: {
     key: 'value'
   },
-  caching: northCacheSettings,
-  archive: northArchiveSettings
+  caching: northCacheSettings
 };
 const historyQueryCreateCommand: HistoryQueryCreateCommandDTO = {
   historyQuery: historyQueryCommand,
@@ -254,8 +256,7 @@ describe('History query controller', () => {
         southSettings: {},
         southSharedConnection: false,
         northSettings: {},
-        caching: northCacheSettings,
-        archive: northArchiveSettings
+        caching: northCacheSettings
       },
       ctx.request.body.items
     );
@@ -316,8 +317,7 @@ describe('History query controller', () => {
         southSettings: {},
         southSharedConnection: false,
         northSettings: {},
-        caching: { ...northCacheSettings, scanModeName: 'scanModeName' },
-        archive: northArchiveSettings
+        caching: { ...northCacheSettings, scanModeName: 'scanModeName' }
       },
       ctx.request.body.items
     );
@@ -403,8 +403,7 @@ describe('History query controller', () => {
         southSettings: {},
         southSharedConnection: false,
         northSettings: {},
-        caching: northCacheSettings,
-        archive: northArchiveSettings
+        caching: northCacheSettings
       },
       ctx.request.body.items
     );
@@ -482,8 +481,7 @@ describe('History query controller', () => {
         southSettings: southConnector.settings,
         southSharedConnection: false,
         northSettings: northConnector.settings,
-        caching: northCacheSettings,
-        archive: northArchiveSettings
+        caching: northCacheSettings
       },
       ctx.request.body.items
     );

@@ -47,14 +47,18 @@ describe('History Query repository', () => {
           scanModeId: 'scanId1',
           retryInterval: 5000,
           retryCount: 3,
-          groupCount: 1000,
-          maxSendCount: 10000,
-          sendFileImmediately: false,
-          maxSize: 10000
-        },
-        archive: {
-          enabled: true,
-          retentionDuration: 1000
+          maxSize: 10000,
+          oibusTimeValues: {
+            groupCount: 1000,
+            maxSendCount: 10000
+          },
+          rawFiles: {
+            sendFileImmediately: false,
+            archive: {
+              enabled: true,
+              retentionDuration: 1000
+            }
+          }
         }
       },
       {
@@ -79,14 +83,18 @@ describe('History Query repository', () => {
           scanModeId: 'scanId1',
           retryInterval: 5000,
           retryCount: 3,
-          groupCount: 1000,
-          maxSendCount: 10000,
-          sendFileImmediately: false,
-          maxSize: 10000
-        },
-        archive: {
-          enabled: true,
-          retentionDuration: 1000
+          maxSize: 10000,
+          oibusTimeValues: {
+            groupCount: 1000,
+            maxSendCount: 10000
+          },
+          rawFiles: {
+            sendFileImmediately: false,
+            archive: {
+              enabled: true,
+              retentionDuration: 1000
+            }
+          }
         }
       }
     ];
@@ -176,14 +184,18 @@ describe('History Query repository', () => {
         scanModeId: 'scanId1',
         retryInterval: 5000,
         retryCount: 3,
-        groupCount: 1000,
-        maxSendCount: 10000,
-        sendFileImmediately: false,
-        maxSize: 10000
-      },
-      archive: {
-        enabled: true,
-        retentionDuration: 1000
+        maxSize: 10000,
+        oibusTimeValues: {
+          groupCount: 1000,
+          maxSendCount: 10000
+        },
+        rawFiles: {
+          sendFileImmediately: false,
+          archive: {
+            enabled: true,
+            retentionDuration: 1000
+          }
+        }
       }
     };
     get.mockReturnValueOnce({
@@ -261,14 +273,18 @@ describe('History Query repository', () => {
         scanModeId: 'scanId1',
         retryInterval: 5000,
         retryCount: 3,
-        groupCount: 1000,
-        maxSendCount: 10000,
-        sendFileImmediately: false,
-        maxSize: 10000
-      },
-      archive: {
-        enabled: true,
-        retentionDuration: 1000
+        maxSize: 10000,
+        oibusTimeValues: {
+          groupCount: 1000,
+          maxSendCount: 10000
+        },
+        rawFiles: {
+          sendFileImmediately: false,
+          archive: {
+            enabled: true,
+            retentionDuration: 1000
+          }
+        }
       }
     };
 
@@ -323,14 +339,14 @@ describe('History Query repository', () => {
       +command.southSharedConnection,
       JSON.stringify(command.northSettings),
       command.caching.scanModeId,
-      command.caching.groupCount,
+      command.caching.oibusTimeValues.groupCount,
       command.caching.retryInterval,
       command.caching.retryCount,
-      command.caching.maxSendCount,
-      +command.caching.sendFileImmediately,
+      command.caching.oibusTimeValues.maxSendCount,
+      +command.caching.rawFiles.sendFileImmediately,
       command.caching.maxSize,
-      +command.archive.enabled,
-      command.archive.retentionDuration
+      +command.caching.rawFiles.archive.enabled,
+      command.caching.rawFiles.archive.retentionDuration
     );
 
     expect(database.prepare).toHaveBeenCalledWith(
@@ -365,14 +381,18 @@ describe('History Query repository', () => {
         scanModeId: 'scanId1',
         retryInterval: 5000,
         retryCount: 3,
-        groupCount: 1000,
-        maxSendCount: 10000,
-        sendFileImmediately: false,
-        maxSize: 10000
-      },
-      archive: {
-        enabled: true,
-        retentionDuration: 1000
+        maxSize: 10000,
+        oibusTimeValues: {
+          groupCount: 1000,
+          maxSendCount: 10000
+        },
+        rawFiles: {
+          sendFileImmediately: false,
+          archive: {
+            enabled: true,
+            retentionDuration: 1000
+          }
+        }
       }
     };
     repository.updateHistoryQuery('id1', command);
@@ -398,14 +418,14 @@ describe('History Query repository', () => {
       +command.southSharedConnection,
       JSON.stringify(command.northSettings),
       command.caching.scanModeId,
-      command.caching.groupCount,
+      command.caching.oibusTimeValues.groupCount,
       command.caching.retryInterval,
       command.caching.retryCount,
-      command.caching.maxSendCount,
-      +command.caching.sendFileImmediately,
+      command.caching.oibusTimeValues.maxSendCount,
+      +command.caching.rawFiles.sendFileImmediately,
       command.caching.maxSize,
-      +command.archive.enabled,
-      command.archive.retentionDuration,
+      +command.caching.rawFiles.archive.enabled,
+      command.caching.rawFiles.archive.retentionDuration,
       'id1'
     );
   });

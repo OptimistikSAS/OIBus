@@ -67,8 +67,7 @@ export default class HistoryQuery {
       enabled: true,
       type: this.historyConfiguration.northType,
       settings: this.historyConfiguration.northSettings,
-      caching: this.historyConfiguration.caching,
-      archive: this.historyConfiguration.archive
+      caching: this.historyConfiguration.caching
     };
     const northFolder = path.resolve(this.baseFolder, 'north');
     await createFolder(northFolder);

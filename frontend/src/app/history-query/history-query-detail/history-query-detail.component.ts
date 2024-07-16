@@ -224,7 +224,6 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
     } else {
       command = {
         type: this.northManifest!.id,
-        archive: { enabled: false },
         settings: this.historyQuery!.northSettings
       } as NorthConnectorCommandDTO;
     }
