@@ -29,6 +29,10 @@ class NorthDetailComponentTester extends ComponentTester<NorthDetailComponent> {
   get northSettings() {
     return this.elements('tbody.north-settings tr');
   }
+
+  get northLogs() {
+    return this.elements('#logs-title');
+  }
 }
 
 describe('NorthDetailComponent', () => {
@@ -148,6 +152,11 @@ describe('NorthDetailComponent', () => {
     expect(settings[0]).toContainText('active');
     expect(settings[1]).toContainText('Host');
     expect(settings[1]).toContainText('url');
+  });
+
+  it('should display logs', () => {
+    tester.detectChanges();
+    expect(tester.northLogs.length).toBe(1);
   });
 
   it('should stop north', () => {
