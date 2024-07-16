@@ -8,7 +8,7 @@ import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
 import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
-import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
+import { NorthCacheSettingsDTO, NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.mock';
 import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
 import ArchiveServiceMock from '../../tests/__mocks__/archive-service.mock';
@@ -82,17 +82,11 @@ describe('NorthFileWriter', () => {
     },
     caching: {
       scanModeId: 'id1',
-      retryInterval: 5000,
-      groupCount: 10000,
-      maxSendCount: 10000,
-      retryCount: 2,
-      sendFileImmediately: true,
-      maxSize: 1000
-    },
-    archive: {
-      enabled: true,
-      retentionDuration: 720
-    }
+      oibusTimeValues: {},
+      rawFiles: {
+        archive: {}
+      }
+    } as NorthCacheSettingsDTO
   };
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -168,17 +162,11 @@ describe('NorthFileWriter without suffix or prefix', () => {
     },
     caching: {
       scanModeId: 'id1',
-      retryInterval: 5000,
-      groupCount: 10000,
-      maxSendCount: 10000,
-      retryCount: 2,
-      sendFileImmediately: true,
-      maxSize: 1000
-    },
-    archive: {
-      enabled: true,
-      retentionDuration: 720
-    }
+      oibusTimeValues: {},
+      rawFiles: {
+        archive: {}
+      }
+    } as NorthCacheSettingsDTO
   };
   const outputFolder = path.resolve(configuration.settings.outputFolder);
 

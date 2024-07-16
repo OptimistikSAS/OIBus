@@ -86,14 +86,15 @@ export class EditHistoryQueryComponent implements OnInit {
       scanModeId: FormControl<string | null>;
       retryInterval: FormControl<number>;
       retryCount: FormControl<number>;
-      groupCount: FormControl<number>;
-      maxSendCount: FormControl<number>;
-      sendFileImmediately: FormControl<boolean>;
       maxSize: FormControl<number>;
-    }>;
-    archive: FormGroup<{
-      enabled: FormControl<boolean>;
-      retentionDuration: FormControl<number>;
+      oibusTimeValues: FormGroup<{ groupCount: FormControl<number>; maxSendCount: FormControl<number> }>;
+      rawFiles: FormGroup<{
+        sendFileImmediately: FormControl<boolean>;
+        archive: FormGroup<{
+          enabled: FormControl<boolean>;
+          retentionDuration: FormControl<number>;
+        }>;
+      }>;
     }>;
     northSettings: FormGroup;
     southSharedConnection: FormControl<boolean>;
@@ -198,14 +199,18 @@ export class EditHistoryQueryComponent implements OnInit {
             scanModeId: this.fb.control<string | null>(null, Validators.required),
             retryInterval: [5000, Validators.required],
             retryCount: [3, Validators.required],
-            groupCount: [1000, Validators.required],
-            maxSendCount: [10_000, Validators.required],
-            sendFileImmediately: true,
-            maxSize: [0, Validators.required]
-          }),
-          archive: this.fb.group({
-            enabled: [false, Validators.required],
-            retentionDuration: [72, Validators.required]
+            maxSize: [0, Validators.required],
+            oibusTimeValues: this.fb.group({
+              groupCount: [1000, Validators.required],
+              maxSendCount: [10_000, Validators.required]
+            }),
+            rawFiles: this.fb.group({
+              sendFileImmediately: true as boolean,
+              archive: this.fb.group({
+                enabled: [false, Validators.required],
+                retentionDuration: [72, Validators.required]
+              })
+            })
           }),
           northSettings: createFormGroup(northManifest.settings, this.fb),
           southSettings: createFormGroup(southManifest.settings, this.fb),
@@ -222,7 +227,6 @@ export class EditHistoryQueryComponent implements OnInit {
           if (northConnector) {
             this.historyQueryForm.controls.northSettings.patchValue(northConnector.settings);
             this.historyQueryForm.controls.caching.patchValue(northConnector.caching);
-            this.historyQueryForm.controls.archive.patchValue(northConnector.archive);
           }
         }
 
@@ -257,14 +261,18 @@ export class EditHistoryQueryComponent implements OnInit {
         scanModeId: formValue.caching!.scanModeId!,
         retryInterval: formValue.caching!.retryInterval!,
         retryCount: formValue.caching!.retryCount!,
-        groupCount: formValue.caching!.groupCount!,
-        maxSendCount: formValue.caching!.maxSendCount!,
-        sendFileImmediately: formValue.caching!.sendFileImmediately!,
-        maxSize: formValue.caching!.maxSize!
-      },
-      archive: {
-        enabled: formValue.archive!.enabled!,
-        retentionDuration: formValue.archive!.retentionDuration!
+        maxSize: formValue.caching!.maxSize!,
+        oibusTimeValues: {
+          groupCount: formValue.caching!.oibusTimeValues!.groupCount!,
+          maxSendCount: formValue.caching!.oibusTimeValues!.maxSendCount!
+        },
+        rawFiles: {
+          sendFileImmediately: formValue.caching!.rawFiles!.sendFileImmediately!,
+          archive: {
+            enabled: formValue.caching!.rawFiles!.archive!.enabled!,
+            retentionDuration: formValue.caching!.rawFiles!.archive!.retentionDuration!
+          }
+        }
       }
     };
     if (this.mode === 'edit') {
@@ -322,7 +330,6 @@ export class EditHistoryQueryComponent implements OnInit {
     } else {
       command = {
         type: this.northManifest!.id,
-        archive: { enabled: false },
         settings: formValue.northSettings
       } as NorthConnectorCommandDTO;
       fromConnectorId = this.fromNorthId;
