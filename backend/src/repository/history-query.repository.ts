@@ -97,14 +97,14 @@ export default class HistoryQueryRepository {
       +command.southSharedConnection,
       JSON.stringify(command.northSettings),
       command.caching.scanModeId,
-      command.caching.groupCount,
+      command.caching.oibusTimeValues.groupCount,
       command.caching.retryInterval,
       command.caching.retryCount,
-      command.caching.maxSendCount,
-      +command.caching.sendFileImmediately,
+      command.caching.oibusTimeValues.maxSendCount,
+      +command.caching.rawFiles.sendFileImmediately,
       command.caching.maxSize,
-      +command.archive.enabled,
-      command.archive.retentionDuration
+      +command.caching.rawFiles.archive.enabled,
+      command.caching.rawFiles.archive.retentionDuration
     );
 
     const query =
@@ -152,14 +152,14 @@ export default class HistoryQueryRepository {
         +command.southSharedConnection,
         JSON.stringify(command.northSettings),
         command.caching.scanModeId,
-        command.caching.groupCount,
+        command.caching.oibusTimeValues.groupCount,
         command.caching.retryInterval,
         command.caching.retryCount,
-        command.caching.maxSendCount,
-        +command.caching.sendFileImmediately,
+        command.caching.oibusTimeValues.maxSendCount,
+        +command.caching.rawFiles.sendFileImmediately,
         command.caching.maxSize,
-        +command.archive.enabled,
-        command.archive.retentionDuration,
+        +command.caching.rawFiles.archive.enabled,
+        command.caching.rawFiles.archive.retentionDuration,
         id
       );
   }
@@ -193,16 +193,20 @@ export default class HistoryQueryRepository {
       northSettings: JSON.parse(result.northSettings),
       caching: {
         scanModeId: result.cachingScanModeId,
-        groupCount: result.cachingGroupCount,
         retryInterval: result.cachingRetryInterval,
         retryCount: result.cachingRetryCount,
-        maxSendCount: result.cachingMaxSendCount,
-        sendFileImmediately: Boolean(result.cachingSendFileImmediately),
-        maxSize: result.cachingMaxSize
-      },
-      archive: {
-        enabled: Boolean(result.archiveEnabled),
-        retentionDuration: result.archiveRetentionDuration
+        maxSize: result.cachingMaxSize,
+        oibusTimeValues: {
+          groupCount: result.cachingGroupCount,
+          maxSendCount: result.cachingMaxSendCount
+        },
+        rawFiles: {
+          sendFileImmediately: Boolean(result.cachingSendFileImmediately),
+          archive: {
+            enabled: Boolean(result.archiveEnabled),
+            retentionDuration: result.archiveRetentionDuration
+          }
+        }
       }
     };
   }

@@ -87,6 +87,7 @@
                 <span translate="north.cache-settings.title" id="cache-settings-title"></span>
               </ng-template>
               <div class="row">
+                <h6 class="text-center mt-2" translate="north.cache-settings.schedule"></h6>
                 <div class="col-3">
                   <div class="form-group">
                     <oib-scan-mode
@@ -130,7 +131,9 @@
                 </div>
               </div>
               @if (northManifest.modes.points) {
-                <div class="row">
+                <hr />
+                <h6 class="text-center" translate="north.cache-settings.oibus-time-values.title"></h6>
+                <div class="row" formGroupName="oibusTimeValues">
                   <!-- Group count -->
                   <div class="col-4">
                     <div class="form-group">
@@ -150,11 +153,13 @@
                 </div>
               }
               @if (northManifest.modes.files) {
-                <div class="row">
+                <hr />
+                <h6 class="text-center" translate="north.cache-settings.raw-files.title"></h6>
+                <div class="row" formGroupName="rawFiles">
                   <!-- Send file immediately -->
                   <div class="col-4">
                     <div class="form-group">
-                      <div class="form-check form-switch">
+                      <div class="form-check form-switch padded">
                         <input formControlName="sendFileImmediately" id="send-file-immediately" type="checkbox" class="form-check-input" />
                         <label
                           class="form-check-label"
@@ -164,39 +169,31 @@
                       </div>
                     </div>
                   </div>
+                  <!-- Archive Enabled -->
+                  <div class="col-4" formGroupName="archive">
+                    <div class="form-group">
+                      <div class="form-check form-switch padded">
+                        <label class="form-check-label" for="archive-enabled" translate="north.archive-settings.enabled"></label>
+                        <input formControlName="enabled" id="archive-enabled" type="checkbox" class="form-check-input" />
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Retention duration -->
+                  <div class="col-4" formGroupName="archive">
+                    <div class="form-group">
+                      <label
+                        class="form-label"
+                        for="archive-retention-duration"
+                        translate="north.archive-settings.retention-duration"
+                      ></label>
+                      <div class="input-group">
+                        <input type="number" formControlName="retentionDuration" id="archive-retention-duration" class="form-control" />
+                        <span class="input-group-text" translate="common.unit.hr"></span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               }
-            </oib-box>
-            <!-- Archive settings -->
-            <oib-box
-              boxTitle="north.archive-settings.title"
-              helpUrl="https://oibus.optimistik.com/docs/guide/north-connectors/common-settings#archive"
-            >
-              <div class="row" formGroupName="archive">
-                <!-- Archive Enabled -->
-                <div class="col-4">
-                  <div class="form-group">
-                    <div class="form-check form-switch padded">
-                      <label class="form-check-label" for="archive-enabled" translate="north.archive-settings.enabled"></label>
-                      <input formControlName="enabled" id="archive-enabled" type="checkbox" class="form-check-input" />
-                    </div>
-                  </div>
-                </div>
-                <!-- Retention duration -->
-                <div class="col-4">
-                  <div class="form-group">
-                    <label
-                      class="form-label"
-                      for="archive-retention-duration"
-                      translate="north.archive-settings.retention-duration"
-                    ></label>
-                    <div class="input-group">
-                      <input type="number" formControlName="retentionDuration" id="archive-retention-duration" class="form-control" />
-                      <span class="input-group-text" translate="common.unit.hr"></span>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </oib-box>
             <!-- North settings -->
             <oib-box>

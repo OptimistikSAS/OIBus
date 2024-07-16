@@ -10,7 +10,7 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 
 import { SouthConnectorDTO } from '../../../shared/model/south-connector.model';
-import { NorthConnectorDTO, NorthConnectorItemDTO } from '../../../shared/model/north-connector.model';
+import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 import { Instant } from '../../../shared/model/types';
 import { PassThrough } from 'node:stream';
 import { ScanModeDTO } from '../../../shared/model/scan-mode.model';

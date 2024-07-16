@@ -73,7 +73,7 @@ export default class NorthConnector<T extends NorthSettings = any, I = any> {
     protected logger: pino.Logger,
     protected readonly baseFolder: string
   ) {
-    this.archiveService = new ArchiveService(this.logger, this.baseFolder, this.connector.archive);
+    this.archiveService = new ArchiveService(this.logger, this.baseFolder, this.connector.caching.rawFiles.archive);
     this.valueCacheService = new ValueCacheService(this.logger, this.baseFolder, this.connector.caching);
     this.fileCacheService = new FileCacheService(this.logger, this.baseFolder, this.connector.caching);
 
@@ -374,7 +374,7 @@ export default class NorthConnector<T extends NorthSettings = any, I = any> {
     }
 
     // Do not retry by default, other retrieve the retry flag from the OIBusError object
-    const retry = typeof error === 'object' ? (error as any)?.retry ?? false : false;
+    const retry = typeof error === 'object' ? ((error as any)?.retry ?? false) : false;
     return {
       message: message,
       retry
@@ -395,7 +395,7 @@ export default class NorthConnector<T extends NorthSettings = any, I = any> {
       return;
     }
 
-    const chunkSize = this.connector.caching.maxSendCount;
+    const chunkSize = this.connector.caching.oibusTimeValues.maxSendCount;
     for (let i = 0; i < values.length; i += chunkSize) {
       const chunk = values.slice(i, i + chunkSize);
       this.logger.debug(`Caching ${chunk.length} values (cache size: ${Math.floor((this.cacheSize / 1024 / 1024) * 100) / 100} MB)`);
