@@ -827,11 +827,12 @@ describe('South connector controller', () => {
 
   it('deleteSouthItem() should delete South item', async () => {
     ctx.params.id = 'id';
+    ctx.params.southId = 'southId';
 
     await southConnectorController.deleteSouthItem(ctx);
 
     expect(ctx.app.reloadService.onDeleteSouthItem).toHaveBeenCalledWith('id');
-    expect(ctx.app.reloadService.oibusEngine.onSouthItemsChange).toHaveBeenCalledWith('id');
+    expect(ctx.app.reloadService.oibusEngine.onSouthItemsChange).toHaveBeenCalledWith('southId');
     expect(ctx.noContent).toHaveBeenCalled();
   });
 

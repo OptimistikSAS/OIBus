@@ -504,7 +504,7 @@ export default class SouthConnectorController {
 
   async deleteSouthItem(ctx: KoaContext<void, void>): Promise<void> {
     await ctx.app.reloadService.onDeleteSouthItem(ctx.params.id);
-    await ctx.app.reloadService.oibusEngine.onSouthItemsChange(ctx.params.id);
+    await ctx.app.reloadService.oibusEngine.onSouthItemsChange(ctx.params.southId);
     ctx.noContent();
   }
 
