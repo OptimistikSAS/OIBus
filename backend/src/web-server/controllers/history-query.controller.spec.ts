@@ -688,9 +688,9 @@ describe('History query controller', () => {
       historyQuery.northSettings,
       northManifest.settings
     );
-    expect(ctx.app.reloadService.onDeleteHistoryItem).toHaveBeenCalledWith('id', 'id1', false);
+    expect(ctx.app.reloadService.onDeleteHistoryItem).toHaveBeenCalledWith('id', 'id1');
 
-    expect(ctx.app.reloadService.onUpdateHistoryQuerySettings).toHaveBeenCalledWith('id', historyQueryCommand, true);
+    expect(ctx.app.reloadService.onUpdateHistoryQuerySettings).toHaveBeenCalledWith('id', historyQueryCommand);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
@@ -743,7 +743,7 @@ describe('History query controller', () => {
     );
     expect(ctx.app.reloadService.onDeleteHistoryItem).toHaveBeenCalledWith('id', 'id1');
 
-    expect(ctx.app.reloadService.onUpdateHistoryQuerySettings).toHaveBeenCalledWith('id', historyQueryCommand);
+    expect(ctx.app.reloadService.onUpdateHistoryQuerySettings).toHaveBeenCalledWith('id', ctx.request.body.historyQuery);
     expect(ctx.app.reloadService.historyEngine.resetCache).toHaveBeenCalledTimes(1);
     expect(ctx.noContent).toHaveBeenCalled();
 
