@@ -29,13 +29,14 @@ describe('ValueCache', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     settings = {
       scanModeId: 'id1',
-      groupCount: 1000,
-      maxSendCount: 1000,
-      retryCount: 3,
       retryInterval: 5000,
-      sendFileImmediately: false,
-      maxSize: 1000
-    };
+      retryCount: 3,
+      maxSize: 1000,
+      oibusTimeValues: {
+        groupCount: 1000,
+        maxSendCount: 1000
+      }
+    } as NorthCacheSettingsDTO;
     (dirSize as jest.Mock).mockImplementation(() => 1000);
 
     cache = new ValueCache(logger, 'myCacheFolder', settings);

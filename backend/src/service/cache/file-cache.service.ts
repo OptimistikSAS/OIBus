@@ -71,7 +71,7 @@ export default class FileCacheService {
     this.filesQueue = filesWithCreationDate.sort((a, b) => a.createdAt - b.createdAt).map(file => file.filename);
     if (this.filesQueue.length > 0) {
       this._logger.debug(`${this.filesQueue.length} files in cache`);
-      if (this._settings.sendFileImmediately) {
+      if (this._settings.rawFiles.sendFileImmediately) {
         this._logger.trace(`Trigger next file send`);
         this.triggerRun.emit('next');
       }
@@ -120,7 +120,7 @@ export default class FileCacheService {
       this.filesQueue.splice(idx, 1);
     } else {
       this.filesQueue.shift();
-      if (this.filesQueue.length > 0 && this._settings.sendFileImmediately) {
+      if (this.filesQueue.length > 0 && this._settings.rawFiles.sendFileImmediately) {
         this._logger.trace(`There are ${this.filesQueue.length} files in queue left. Triggering next send`);
         this.triggerRun.emit('next');
       }
@@ -147,7 +147,7 @@ export default class FileCacheService {
     // Add the file to the queue once it is persisted in the cache folder
     this.filesQueue.push(cachePath);
     this._logger.debug(`File "${filePath}" cached in "${cachePath}"`);
-    if (this._settings.sendFileImmediately) {
+    if (this._settings.rawFiles.sendFileImmediately) {
       this.triggerRun.emit('next');
     }
   }

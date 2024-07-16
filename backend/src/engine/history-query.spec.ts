@@ -138,16 +138,20 @@ describe('HistoryQuery enabled', () => {
       endTime: '2022-02-02T02:02:02.222Z',
       caching: {
         scanModeId: 'scanModeId',
-        maxSize: 1,
+        retryInterval: 5000,
         retryCount: 3,
-        groupCount: 1000,
-        maxSendCount: 10000,
-        sendFileImmediately: false,
-        retryInterval: 5000
-      },
-      archive: {
-        enabled: false,
-        retentionDuration: 0
+        maxSize: 1,
+        oibusTimeValues: {
+          groupCount: 1000,
+          maxSendCount: 10000
+        },
+        rawFiles: {
+          sendFileImmediately: false,
+          archive: {
+            enabled: false,
+            retentionDuration: 0
+          }
+        }
       }
     };
     (historyService.repositoryService.historyQueryRepository.getHistoryQuery as jest.Mock).mockReturnValue(configuration);
@@ -329,16 +333,20 @@ describe('HistoryQuery disabled', () => {
       endTime: '2022-02-02T02:02:02.222Z',
       caching: {
         scanModeId: 'scanModeId',
-        maxSize: 1,
+        retryInterval: 5000,
         retryCount: 3,
-        groupCount: 1000,
-        maxSendCount: 10000,
-        sendFileImmediately: false,
-        retryInterval: 5000
-      },
-      archive: {
-        enabled: false,
-        retentionDuration: 0
+        maxSize: 1,
+        oibusTimeValues: {
+          groupCount: 1000,
+          maxSendCount: 10000
+        },
+        rawFiles: {
+          sendFileImmediately: false,
+          archive: {
+            enabled: false,
+            retentionDuration: 0
+          }
+        }
       }
     };
     (historyService.repositoryService.historyQueryRepository.getHistoryQuery as jest.Mock).mockReturnValue(configuration);
