@@ -1,5 +1,24 @@
 # Changelog
 
+## [3.3.14](https://github.com/OptimistikSAS/OIBus/compare/v3.3.13...v3.3.14) (2024-07-17)
+
+
+### Bug Fixes
+
+* **engine:** fix reload of settings and items on change ([51ab9ba](https://github.com/OptimistikSAS/OIBus/commit/51ab9bad8bcd1843b5ce87db11afa288eb609251))
+* **engine:** fix update version log ([6d19fbe](https://github.com/OptimistikSAS/OIBus/commit/6d19fbe5751f1fab88776b00ca05e37d6d7c4761))
+* **north:** transform json into csv for file north connectors ([79f19de](https://github.com/OptimistikSAS/OIBus/commit/79f19dec7b36378bacd9ac6158e4450ed41f30c8))
+* **oia:** fix OIA acknowledgment command and logger service ([8a0fe27](https://github.com/OptimistikSAS/OIBus/commit/8a0fe27463e7272bc815c0afdf95aaf28e6f1976))
+* **proxy-agent:** Fix http and https agent creation ([aba24a4](https://github.com/OptimistikSAS/OIBus/commit/aba24a4136e8ab83b2ac160bf4e86bcb021494c1))
+* **proxy-server:** Fix HTTPS request proxying ([c3e06d9](https://github.com/OptimistikSAS/OIBus/commit/c3e06d931045f0264c15c2345060a2a359819218))
+* **south-modbus:** fix error message thrown on last point query ([9e820df](https://github.com/OptimistikSAS/OIBus/commit/9e820df6013f095ac73d0f50c6fbbc92d76c5ecf))
+* **south-opcua:** parse OPCUA value according to its DataType return by the server ([2cfcfef](https://github.com/OptimistikSAS/OIBus/commit/2cfcfefd801323b6d91157f35a69d68c50b12809))
+* **south:** add ItemName filename variable and change default filename and sql query for sql connectors ([e0c36ea](https://github.com/OptimistikSAS/OIBus/commit/e0c36eae250ed2d9a1c14cacd90cd04e3f3345d9))
+* **south:** catch subscription error ([2fc28f0](https://github.com/OptimistikSAS/OIBus/commit/2fc28f05dc23e7416ef6ac33a2e6539ecb038cb1))
+* **south:** do not add items to list if disabled ([135e9d1](https://github.com/OptimistikSAS/OIBus/commit/135e9d1317df776cccbf107351f1f4db70ddfeb2))
+* **south:** fix update of max instant with overlap ([9c1ddf7](https://github.com/OptimistikSAS/OIBus/commit/9c1ddf7308fa404bad06187a4b169bf7bec7f8b5))
+* **web-server:** fix south id on south item deletion ([7ecc4f3](https://github.com/OptimistikSAS/OIBus/commit/7ecc4f311fc681bb76014161a958aff16449cbfa))
+
 ## [3.3.13](https://github.com/OptimistikSAS/OIBus/compare/v3.3.12...v3.3.13) (2024-07-03)
 
 
