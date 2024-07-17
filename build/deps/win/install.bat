@@ -2,6 +2,7 @@
 
 title Install OIBus as Windows service
 
+
 echo Administrator permissions required. Detecting permission...
 net session >nul 2>&1
 if NOT %errorLevel% == 0 (
