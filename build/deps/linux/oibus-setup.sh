@@ -1,8 +1,21 @@
 #!/bin/bash
 
-# Setup work directory
-read -rp "Enter the directory in which you want to install the OIBus binary (default: ./OIBus): " install_dir
-install_dir="${install_dir:=./OIBus}"
+while getopts b:c:k: flag
+do
+    case "${flag}" in
+        b) install_dir=${OPTARG};;
+        c) my_data_directory=${OPTARG};;
+        k) keep_conf=${OPTARG};;
+        *)
+    esac
+done
+
+
+if [[ ! "$install_dir" ]]; then
+  # Setup work directory
+  read -rp "Enter the directory in which you want to install the OIBus binary (default: ./OIBus): " install_dir
+  install_dir="${install_dir:=./OIBus}"
+fi
 if [[ ! -d "$install_dir" ]]; then
   if ! mkdir "$install_dir"; then
     printf "ERROR: Could not set OIBus binary directory properly. Terminating installation process."
@@ -10,9 +23,12 @@ if [[ ! -d "$install_dir" ]]; then
   fi
 fi
 
-# Setup data directory
-read -rp "Enter the directory in which you want to save all your OIBus related data, caches, and logs (default: ./OIBusData): " my_data_directory
-my_data_directory="${my_data_directory:=./OIBusData}"
+
+if [[ ! "$my_data_directory" ]]; then
+  # Setup data directory
+  read -rp "Enter the directory in which you want to save all your OIBus related data, caches, and logs (default: ./OIBusData): " my_data_directory
+  my_data_directory="${my_data_directory:=./OIBusData}"
+fi
 if [[ ! -d "$my_data_directory" ]]; then
   if ! mkdir "$my_data_directory"; then
     printf "ERROR: Could not create data directory. Terminating installation process."
@@ -20,14 +36,19 @@ if [[ ! -d "$my_data_directory" ]]; then
   fi
 fi
 
-# Check if the configuration file must be kept
-keep_conf="${keep_conf:=N}"
+# Create env file to store the data directory path, used at OIBus startup
+conf_path=$(readlink -m "$my_data_directory")
+touch "$install_dir/oibus-env"
+printf "ARG1=--config\nARG2=%s" "$conf_path" > "$install_dir/oibus-env"
+
 if [[ -f "$my_data_directory/oibus.db" ]]; then
-  read -rp "An OIBus configuration was found. Do you want to keep it? (Y/n) " keep_conf
-  keep_conf="${keep_conf:=Y}"
-  while [[ "$keep_conf" != "Y" && "$keep_conf" != "y" ]] && [[ "$keep_conf" != "N" && "$keep_conf" != "n" ]]; do
-    read -rp "Invalid input. Please type in Y/y (for yes) or N/n (for no): " keep_conf
-  done
+  if [[ ! "$keep_conf" ]]; then
+    read -rp "An OIBus configuration was found. Do you want to keep it? (Y/n) " keep_conf
+    keep_conf="${keep_conf:=Y}"
+    while [[ "$keep_conf" != "Y" && "$keep_conf" != "y" ]] && [[ "$keep_conf" != "N" && "$keep_conf" != "n" ]]; do
+      read -rp "Invalid input. Please type in Y/y (for yes) or N/n (for no): " keep_conf
+    done
+  fi
   if [[ "$keep_conf" == "N" ]] || [[ "$keep_conf" == "n" ]]; then
     read -rp "WARNING: Removing the current configuration will delete all credentials, logs and cache data. Are you sure you want to proceed? (y/N) " confirm
     confirm="${confirm:=N}"
@@ -36,6 +57,16 @@ if [[ -f "$my_data_directory/oibus.db" ]]; then
     done
     if [[ "$confirm" == "N" ]] || [[ "$confirm" == "n" ]]; then
       keep_conf="Y"
+    fi
+
+    if [[ "$keep_conf" == "N" ]] || [[ "$keep_conf" == "n" ]]; then
+    #  Remove configuration, cache, logs and certs. They will be created at first OIBus startup
+      rm "$conf_path/oibus.db"
+      rm "$conf_path/crypto.db"
+      rm -rf "$conf_path/cache"
+      rm -rf "$conf_path/logs"
+      rm -rf "$conf_path/certs"
+      rm -rf "$conf_path/keys"
     fi
   fi
 fi
@@ -59,21 +90,6 @@ fi
 if ! mv oibus-launcher "$install_dir"; then
   printf "ERROR: Could not move OIBus launcher into binary directory. Terminating installation process."
   exit 1
-fi
-
-# Create env file to store the data directory path, used at OIBus startup
-conf_path=$(readlink -m "$my_data_directory")
-touch "$install_dir/oibus-env"
-printf "ARG1=--config\nARG2=%s" "$conf_path" > "$install_dir/oibus-env"
-
-if [[ "$keep_conf" == "N" ]] || [[ "$keep_conf" == "n" ]]; then
-#  Remove configuration, cache, logs and certs. They will be created at first OIBus startup
-  rm "$conf_path/oibus.db"
-  rm "$conf_path/crypto.db"
-  rm -rf "$conf_path/cache"
-  rm -rf "$conf_path/logs"
-  rm -rf "$conf_path/certs"
-  rm -rf "$conf_path/keys"
 fi
 
 # Installing service file
