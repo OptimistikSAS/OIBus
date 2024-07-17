@@ -69,11 +69,11 @@ Get familiar with the OIBus interface on the [first access page](./first-access.
 
 ### With the installation bat script
 ``` commandline title="Usage"
-install.bat <data-path>
+install.bat -c=<data-path>
 ```
 
 ``` commandline title="Example with terminal outputs"
-install.bat C:\OIBusData
+install.bat -c="C:\OIBusData"
 > Administrator permissions required. Detecting permission...
 > Stopping OIBus service...
 > Installing OIBus as Windows service...
@@ -89,7 +89,8 @@ install.bat C:\OIBusData
 ```
 
 :::tip
-If you do not provide the data path argument, the script will prompt you to input it during execution.
+If you do not provide the data path argument, the script will prompt you to input it during execution. You can also
+provide the -n="OIBus Name" argument to change the name of the OIBus service.
 :::
 
 Get familiar with the OIBus interface on the [first access page](./first-access.mdx).
