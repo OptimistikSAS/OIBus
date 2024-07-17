@@ -150,6 +150,7 @@ describe('Command service without command', () => {
     jest.clearAllMocks();
 
     (repositoryService.commandRepository.searchCommandsList as jest.Mock).mockReturnValue([]);
+    (repositoryService.engineRepository.getEngineSettings as jest.Mock).mockReturnValue({ version: '3.2.0' });
     service = new CommandService(repositoryService, encryptionService, oianalyticsMessageService, logger, 'binaryFolder');
   });
 
@@ -169,6 +170,7 @@ describe('Command service without command', () => {
 
     expect(getOIBusInfo).not.toHaveBeenCalled();
     expect(repositoryService.commandRepository.markAsCompleted).not.toHaveBeenCalled();
+    expect(repositoryService.engineRepository.updateVersion).toHaveBeenCalledTimes(1);
 
     service.run = jest.fn();
     service.start();

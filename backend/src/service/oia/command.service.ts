@@ -29,9 +29,9 @@ export default class CommandService {
     private logger: pino.Logger,
     private binaryFolder: string
   ) {
+    const engineSettings = this.repositoryService.engineRepository.getEngineSettings()!;
     const currentUpgradeCommand = this.repositoryService.commandRepository.searchCommandsList({ status: ['RUNNING'], types: ['UPGRADE'] });
     if (currentUpgradeCommand.length > 0) {
-      const engineSettings = this.repositoryService.engineRepository.getEngineSettings()!;
       if (engineSettings.version !== version) {
         this.repositoryService.engineRepository.updateVersion(version);
         this.repositoryService.commandRepository.markAsCompleted(
@@ -49,6 +49,8 @@ export default class CommandService {
           `OIBus has not been updated. Rollback to version ${version}`
         );
       }
+    } else if (engineSettings.version !== version) {
+      this.repositoryService.engineRepository.updateVersion(version);
     }
   }
 
