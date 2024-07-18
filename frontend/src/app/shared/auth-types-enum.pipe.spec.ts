@@ -7,11 +7,12 @@ describe('AuthTypesEnumPipe', () => {
       none: 'None',
       basic: 'Basic auth',
       bearer: 'Bearer',
+      password: 'Password',
       'api-key': 'API key',
       cert: 'Certificate',
       aad: 'Application Active Directory',
       accessKey: 'Access key',
-      powershell: 'Powershell',
+      'private-key': 'Private key',
       sasToken: 'Shared Access Signature token',
       external: 'External'
     });

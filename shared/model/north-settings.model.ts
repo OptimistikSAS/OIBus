@@ -23,6 +23,9 @@ export type NorthOIAnalyticsSettingsSpecificSettingsAuthentication = (typeof NOR
 const NORTH_REST_A_P_I_SETTINGS_AUTHENTICATION_TYPES = ['none', 'basic', 'bearer', 'api-key'] as const
 export type NorthRestAPISettingsAuthenticationType = (typeof NORTH_REST_A_P_I_SETTINGS_AUTHENTICATION_TYPES)[number];
 
+const NORTH_S_F_T_P_SETTINGS_AUTHENTICATIONS = ['password', 'private-key'] as const
+export type NorthSFTPSettingsAuthentication = (typeof NORTH_S_F_T_P_SETTINGS_AUTHENTICATIONS)[number];
+
 export interface NorthOIAnalyticsSettingsSpecificSettings {
   host: string;
   acceptUnauthorized: boolean;
@@ -179,6 +182,19 @@ export interface NorthRestAPISettings extends BaseNorthSettings {
   authentication: NorthRestAPISettingsAuthentication;
 }
 
+export interface NorthSFTPSettings extends BaseNorthSettings {
+  host: string;
+  port: number;
+  authentication: NorthSFTPSettingsAuthentication;
+  username: string | null;
+  password?: string | null;
+  privateKey?: string;
+  passphrase?: string | null;
+  remoteFolder: string;
+  prefix: string | null;
+  suffix: string | null;
+}
+
 export interface NorthTimescaleDBSettings extends BaseNorthSettings {
   username: string;
   password: string | null;
@@ -213,6 +229,7 @@ export type NorthSettings =
   | NorthOIAnalyticsSettings
   | NorthOIBusSettings
   | NorthRestAPISettings
+  | NorthSFTPSettings
   | NorthTimescaleDBSettings
   | NorthWatsySettings
 

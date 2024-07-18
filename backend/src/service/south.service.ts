@@ -19,6 +19,7 @@ import SouthSlims from '../south/south-slims/south-slims';
 import SouthOPCHDA from '../south/south-opchda/south-opchda';
 import SouthOLEDB from '../south/south-oledb/south-oledb';
 import SouthPI from '../south/south-pi/south-pi';
+import SouthSFTP from '../south/south-sftp/south-sftp';
 
 import { SouthConnectorDTO, SouthConnectorItemDTO, SouthConnectorManifest } from '../../../shared/model/south-connector.model';
 import SouthConnector from '../south/south-connector';
@@ -39,6 +40,7 @@ import sqliteManifest from '../south/south-sqlite/manifest';
 import opchdaManifest from '../south/south-opchda/manifest';
 import oledbManifest from '../south/south-oledb/manifest';
 import piManifest from '../south/south-pi/manifest';
+import sftpManifest from '../south/south-sftp/manifest';
 
 const southList: Array<{ class: typeof SouthConnector<any, any>; manifest: SouthConnectorManifest }> = [
   { class: SouthFolderScanner, manifest: folderScannerManifest },
@@ -56,7 +58,8 @@ const southList: Array<{ class: typeof SouthConnector<any, any>; manifest: South
   { class: SouthModbus, manifest: modbusManifest },
   { class: SouthOIAnalytics, manifest: oianalyticsManifest },
   { class: SouthSlims, manifest: slimsManifest },
-  { class: SouthPI, manifest: piManifest }
+  { class: SouthPI, manifest: piManifest },
+  { class: SouthSFTP, manifest: sftpManifest }
 ];
 
 export default class SouthService {

@@ -14,7 +14,7 @@ import { OIBusDataValue } from '../../../../shared/model/engine.model';
 import csv from 'papaparse';
 
 /**
- * Class NorthFileWriter - Write file in an output folder. Values are stored in JSON files
+ * Class NorthFileWriter - Write files in an output folder
  */
 export default class NorthFileWriter extends NorthConnector<NorthFileWriterSettings> implements HandlesFile, HandlesValues {
   static type = manifest.id;

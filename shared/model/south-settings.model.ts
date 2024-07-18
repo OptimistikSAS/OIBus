@@ -16,7 +16,7 @@ export type SouthModbusSettingsAddressOffset = (typeof SOUTH_MODBUS_SETTINGS_ADD
 const SOUTH_MODBUS_SETTINGS_ENDIANNESSS = ['Big Endian', 'Little Endian'] as const
 export type SouthModbusSettingsEndianness = (typeof SOUTH_MODBUS_SETTINGS_ENDIANNESSS)[number];
 
-const SOUTH_MODBUS_ITEM_SETTINGS_DATA_DATA_TYPES = ['Bit', 'UInt16', 'Int16', 'UInt32', 'Int32', 'BigUInt64', 'BigInt64', 'Float', 'Double'] as const
+const SOUTH_MODBUS_ITEM_SETTINGS_DATA_DATA_TYPES = ['UInt16', 'Int16', 'UInt32', 'Int32', 'BigUInt64', 'BigInt64', 'Float', 'Double', 'Bit'] as const
 export type SouthModbusItemSettingsDataDataType = (typeof SOUTH_MODBUS_ITEM_SETTINGS_DATA_DATA_TYPES)[number];
 
 const SOUTH_MODBUS_ITEM_SETTINGS_MODBUS_TYPES = ['coil', 'discreteInput', 'inputRegister', 'holdingRegister'] as const
@@ -129,6 +129,9 @@ export type SouthPostgreSQLItemSettingsSerializationType = (typeof SOUTH_POSTGRE
 
 const SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const
 export type SouthPostgreSQLItemSettingsSerializationDelimiter = (typeof SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
+
+const SOUTH_S_F_T_P_SETTINGS_AUTHENTICATIONS = ['password', 'private-key'] as const
+export type SouthSFTPSettingsAuthentication = (typeof SOUTH_S_F_T_P_SETTINGS_AUTHENTICATIONS)[number];
 
 const SOUTH_SLIMS_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const
 export type SouthSlimsItemSettingsDateTimeFieldsType = (typeof SOUTH_SLIMS_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
@@ -318,6 +321,17 @@ export interface SouthPostgreSQLSettings extends BaseSouthSettings {
   requestTimeout: number;
 }
 
+export interface SouthSFTPSettings extends BaseSouthSettings {
+  host: string;
+  port: number;
+  authentication: SouthSFTPSettingsAuthentication;
+  username: string | null;
+  password?: string | null;
+  privateKey?: string;
+  passphrase?: string | null;
+  compression: boolean;
+}
+
 export interface SouthSlimsSettings extends BaseSouthSettings {
   url: string;
   port: number;
@@ -350,6 +364,7 @@ export type SouthSettings =
   | SouthOracleSettings
   | SouthPISettings
   | SouthPostgreSQLSettings
+  | SouthSFTPSettings
   | SouthSlimsSettings
   | SouthSQLiteSettings
 
@@ -637,6 +652,14 @@ export interface SouthPostgreSQLItemSettings extends BaseSouthItemSettings {
   serialization: SouthPostgreSQLItemSettingsSerialization;
 }
 
+export interface SouthSFTPItemSettings extends BaseSouthItemSettings {
+  remoteFolder: string;
+  regex: string;
+  minAge: number;
+  preserveFiles: boolean;
+  ignoreModifiedDate?: boolean;
+}
+
 export interface SouthSlimsItemSettings extends BaseSouthItemSettings {
   endpoint: string;
   body: string | null;
@@ -666,5 +689,6 @@ export type SouthItemSettings =
   | SouthOracleItemSettings
   | SouthPIItemSettings
   | SouthPostgreSQLItemSettings
+  | SouthSFTPItemSettings
   | SouthSlimsItemSettings
   | SouthSQLiteItemSettings
