@@ -1,5 +1,5 @@
 import { Component, forwardRef, Input, OnInit, AfterViewChecked } from '@angular/core';
-import { NG_VALUE_ACCESSOR } from '@angular/forms';
+import { AbstractControl, ControlValueAccessor, NG_VALIDATORS, NG_VALUE_ACCESSOR, ValidationErrors, Validator } from '@angular/forms';
 import { formDirectives } from '../../form-directives';
 import { NgForOf, NgIf } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
@@ -17,11 +17,16 @@ import { PipeProviderService } from '../pipe-provider.service';
       provide: NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => OibArrayComponent),
       multi: true
+    },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: OibArrayComponent,
+      multi: true
     }
   ],
   standalone: true
 })
-export class OibArrayComponent implements OnInit, AfterViewChecked {
+export class OibArrayComponent implements OnInit, AfterViewChecked, ControlValueAccessor, Validator {
   @Input() label = '';
   @Input() key = '';
   @Input({ required: true }) formDescription!: Array<OibFormControl>;
@@ -125,6 +130,8 @@ export class OibArrayComponent implements OnInit, AfterViewChecked {
       isNew: true,
       element: this.createDefaultValue()
     };
+    // Only change is called, without "touch" to not trigger error validation immediately
+    this.onChange(this.elements);
     this.recomputeElementsIncludingNew();
   }
 
@@ -136,6 +143,7 @@ export class OibArrayComponent implements OnInit, AfterViewChecked {
       isNew: false,
       element
     };
+    this.onChange(this.elements);
     this.recomputeElementsIncludingNew();
   }
 
@@ -167,6 +175,7 @@ export class OibArrayComponent implements OnInit, AfterViewChecked {
   cancelEdition() {
     this.editedElement = null;
     this.recomputeElementsIncludingNew();
+    this.onChange(this.elements);
   }
 
   /**
@@ -216,5 +225,15 @@ export class OibArrayComponent implements OnInit, AfterViewChecked {
       return this.pipeProviderService.getPipeForString(pipeIdentifier).transform(value);
     }
     return value;
+  }
+
+  validate(control: AbstractControl): ValidationErrors | null {
+    // When there are elements being edited/created, throw a validation error
+    // to let the user validate or discard the pending changes
+    if (this.editedElement !== null) {
+      return { resolvePendingChanges: true };
+    }
+
+    return null;
   }
 }

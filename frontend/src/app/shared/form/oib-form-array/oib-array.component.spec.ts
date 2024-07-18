@@ -64,6 +64,10 @@ class TestComponentTester extends ComponentTester<TestComponent> {
   get DatetimeFieldsComponent(): OibArrayComponent {
     return this.component(OibArrayComponent);
   }
+
+  get validationErrors() {
+    return this.componentInstance.control.errors;
+  }
 }
 
 describe('ArrayComponent', () => {
@@ -87,17 +91,20 @@ describe('ArrayComponent', () => {
     expect(tester.displayFields[0]).toContainText('field1');
     expect(tester.displayFields[0]).toContainText('false');
     expect(tester.displayFields[0]).toContainText('UNIX Epoch (ms)');
+    expect(tester.validationErrors).toEqual(null);
   });
 
   it('should edit component', () => {
     tester.editButtons[0].click();
     expect(tester.displayFields.length).toBe(1);
     expect(tester.editComponent).not.toBeNull();
+    expect(tester.validationErrors).toEqual({ resolvePendingChanges: true });
   });
 
   it('should delete component', () => {
     tester.deleteButtons[0].click();
     expect(tester.displayFields.length).toBe(1);
+    expect(tester.validationErrors).toEqual(null);
   });
 
   it('should add a field', () => {
@@ -129,5 +136,31 @@ describe('ArrayComponent', () => {
 
     expect(tester.displayFields.length).toBe(3);
     expect(tester.editComponent).toBeNull();
+    expect(tester.validationErrors).toEqual(null);
+  });
+
+  it('should not be valid with pending changes', () => {
+    tester.addField.click();
+
+    expect(tester.displayFields.length).toBe(2);
+    expect(tester.editComponent).not.toBeNull();
+    [tester.addField, tester.editButtons, tester.deleteButtons].flat().forEach(b => {
+      expect(b.disabled).toBeTrue();
+    });
+
+    expect(tester.editComponent.element).toEqual({
+      fieldName: '',
+      useAsReference: false,
+      type: 'string',
+      timezone: 'UTC',
+      format: 'yyyy-MM-dd HH:mm:ss',
+      locale: 'en-En'
+    });
+
+    tester.detectChanges();
+
+    expect(tester.displayFields.length).toBe(2);
+    expect(tester.editComponent).not.toBeNull();
+    expect(tester.validationErrors).toEqual({ resolvePendingChanges: true });
   });
 });
