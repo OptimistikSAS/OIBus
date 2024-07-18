@@ -121,6 +121,7 @@
     "auth-types": {
       "none": "None",
       "basic": "Basic auth",
+      "password": "Password",
       "bearer": "Bearer",
       "api-key": "API key",
       "cert": "Certificate",
@@ -128,7 +129,7 @@
       "aad-client-secret": "Azure Active Directory with client secret",
       "aad-certificate": "Azure Active Directory with certificate",
       "accessKey": "Access key",
-      "powershell": "Powershell",
+      "private-key": "Private key",
       "sasToken": "Shared Access Signature token",
       "external": "External"
     },

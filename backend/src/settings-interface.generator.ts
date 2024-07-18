@@ -308,6 +308,8 @@ function buildNorthInterfaceName(connectorId: string): string {
       return 'NorthTimescaleDBSettings';
     case 'watsy':
       return 'NorthWatsySettings';
+    case 'sftp':
+      return 'NorthSFTPSettings';
   }
   return '';
 }
@@ -347,6 +349,8 @@ function buildSouthInterfaceName(connectorId: string, itemInterface: boolean): s
       return `SouthSQLite${prefix}Settings`;
     case 'slims':
       return `SouthSlims${prefix}Settings`;
+    case 'sftp':
+      return `SouthSFTP${prefix}Settings`;
   }
   return '';
 }
