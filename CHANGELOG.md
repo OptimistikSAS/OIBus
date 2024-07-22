@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.4.0](https://github.com/OptimistikSAS/OIBus/compare/v3.3.14...v3.4.0) (2024-07-22)
+
+
+### Features
+
+* **sftp:** Implement North and South SFTP connectors ([4115a85](https://github.com/OptimistikSAS/OIBus/commit/4115a853cb560f076b8474f6bd26ec04cef32ab0))
+
+
+### Bug Fixes
+
+* **engine:** update version at startup if local oibus upgrade ([2f6a8fe](https://github.com/OptimistikSAS/OIBus/commit/2f6a8fe2a6fddb2a91a4d1f07439777d6bf55a4f))
+* **frontend:** Add pending changes validation check ([5bd7b7c](https://github.com/OptimistikSAS/OIBus/commit/5bd7b7c6da8c683a1f6567f8fbe03c6a5a24dcfd))
+* **installer:** fix linux script for automating installation ([21a09a2](https://github.com/OptimistikSAS/OIBus/commit/21a09a2a1e9445c314f2c278188211f6d214c07c))
+
 ## [3.3.14](https://github.com/OptimistikSAS/OIBus/compare/v3.3.13...v3.3.14) (2024-07-17)
 
 
