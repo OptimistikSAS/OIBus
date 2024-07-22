@@ -12,7 +12,7 @@ import ArchiveServiceMock from '../../tests/__mocks__/archive-service.mock';
 import csv from 'papaparse';
 import { NorthSFTPSettings } from '../../../../shared/model/north-settings.model';
 import sftpClient from 'ssh2-sftp-client';
-import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import { OIBusTimeValue } from '../../../../shared/model/engine.model';
 
 jest.mock('node:fs/promises');
 
@@ -97,15 +97,19 @@ describe('NorthSFTP', () => {
     caching: {
       scanModeId: 'id1',
       retryInterval: 5000,
-      groupCount: 10000,
-      maxSendCount: 10000,
       retryCount: 2,
-      sendFileImmediately: true,
-      maxSize: 1000
-    },
-    archive: {
-      enabled: true,
-      retentionDuration: 720
+      maxSize: 1000,
+      oibusTimeValues: {
+        groupCount: 10000,
+        maxSendCount: 10000
+      },
+      rawFiles: {
+        sendFileImmediately: true,
+        archive: {
+          enabled: true,
+          retentionDuration: 720
+        }
+      }
     }
   };
   beforeEach(async () => {
@@ -121,7 +125,7 @@ describe('NorthSFTP', () => {
   });
 
   it('should properly handle values', async () => {
-    const values: Array<OIBusDataValue> = [
+    const values: Array<OIBusTimeValue> = [
       {
         timestamp: '2021-07-29T12:13:31.883Z',
         data: { value: '666', quality: 'good' },
@@ -131,7 +135,7 @@ describe('NorthSFTP', () => {
     north.sendToSftpServer = jest.fn();
     csv.unparse = jest.fn().mockReturnValue('csv content');
 
-    await north.handleValues(values);
+    await north.handleContent({ type: 'time-values', content: values });
 
     const expectedFileName = `${configuration.settings.prefix}${new Date().getTime()}${configuration.settings.suffix}.csv`;
     expect(north.sendToSftpServer).toHaveBeenCalledWith(
@@ -141,7 +145,7 @@ describe('NorthSFTP', () => {
   });
 
   it('should properly catch handle values error', async () => {
-    const values: Array<OIBusDataValue> = [
+    const values: Array<OIBusTimeValue> = [
       {
         timestamp: '2021-07-29T12:13:31.883Z',
         data: { value: '666', quality: 'good' },
@@ -151,14 +155,14 @@ describe('NorthSFTP', () => {
     north.sendToSftpServer = jest.fn().mockImplementationOnce(() => {
       throw new Error('Error handling values');
     });
-    await expect(north.handleValues(values)).rejects.toThrow('Error handling values');
+    await expect(north.handleContent({ type: 'time-values', content: values })).rejects.toThrow('Error handling values');
   });
 
   it('should properly handle files', async () => {
     north.sendToSftpServer = jest.fn();
     const filePath = '/path/to/file/example-123456.file';
     const expectedFileName = `${configuration.settings.prefix}example${configuration.settings.suffix}.file`;
-    await north.handleFile(filePath);
+    await north.handleContent({ type: 'raw', filePath });
     expect(north.sendToSftpServer).toHaveBeenCalledWith(filePath, `${configuration.settings.remoteFolder}/${expectedFileName}`);
   });
 
@@ -167,7 +171,7 @@ describe('NorthSFTP', () => {
       throw new Error('Error handling files');
     });
     const filePath = '/path/to/file/example-123456.file';
-    await expect(north.handleFile(filePath)).rejects.toThrow('Error handling files');
+    await expect(north.handleContent({ type: 'raw', filePath })).rejects.toThrow('Error handling files');
   });
 
   it('should send content into SFTP server', async () => {
@@ -210,15 +214,19 @@ describe('NorthSFTP without suffix or prefix', () => {
     caching: {
       scanModeId: 'id1',
       retryInterval: 5000,
-      groupCount: 10000,
-      maxSendCount: 10000,
       retryCount: 2,
-      sendFileImmediately: true,
-      maxSize: 1000
-    },
-    archive: {
-      enabled: true,
-      retentionDuration: 720
+      maxSize: 1000,
+      oibusTimeValues: {
+        groupCount: 10000,
+        maxSendCount: 10000
+      },
+      rawFiles: {
+        sendFileImmediately: true,
+        archive: {
+          enabled: true,
+          retentionDuration: 720
+        }
+      }
     }
   };
 
@@ -232,7 +240,7 @@ describe('NorthSFTP without suffix or prefix', () => {
   });
 
   it('should properly handle values', async () => {
-    const values: Array<OIBusDataValue> = [
+    const values: Array<OIBusTimeValue> = [
       {
         timestamp: '2021-07-29T12:13:31.883Z',
         data: { value: '666', quality: 'good' },
@@ -243,7 +251,7 @@ describe('NorthSFTP without suffix or prefix', () => {
     north.sendToSftpServer = jest.fn();
     csv.unparse = jest.fn().mockReturnValue('csv content');
 
-    await north.handleValues(values);
+    await north.handleContent({ type: 'time-values', content: values });
 
     const expectedFileName = `${new Date().getTime()}.csv`;
     expect(north.sendToSftpServer).toHaveBeenCalledWith(
@@ -251,7 +259,7 @@ describe('NorthSFTP without suffix or prefix', () => {
       `${configuration.settings.remoteFolder}/${expectedFileName}`
     );
 
-    await north.handleValues(values);
+    await north.handleContent({ type: 'time-values', content: values });
     expect(north.sendToSftpServer).toHaveBeenCalledWith(
       Buffer.from('csv content', 'utf8'),
       `${configuration.settings.remoteFolder}/${new Date().getTime()}.csv`
@@ -261,7 +269,7 @@ describe('NorthSFTP without suffix or prefix', () => {
   it('should properly handle files', async () => {
     north.sendToSftpServer = jest.fn();
     const filePath = '/path/to/file/example-123456.file';
-    await north.handleFile(filePath);
+    await north.handleContent({ type: 'raw', filePath });
     expect(north.sendToSftpServer).toHaveBeenCalledWith(filePath, `${configuration.settings.remoteFolder}/example.file`);
   });
 
