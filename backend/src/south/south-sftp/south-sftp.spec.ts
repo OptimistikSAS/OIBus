@@ -62,8 +62,7 @@ jest.mock(
     }
 );
 
-const addValues = jest.fn();
-const addFile = jest.fn();
+const addContentCallback = jest.fn();
 
 const logger: pino.Logger = new PinoLogger();
 
@@ -146,7 +145,7 @@ describe('SouthSFTP', () => {
     repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
     (sftpClient as jest.Mock).mockImplementation(() => mockSftpClient);
 
-    south = new SouthSftp(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthSftp(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('fileQuery should manage file retrieval', async () => {
@@ -212,7 +211,7 @@ describe('SouthSFTP', () => {
   });
 
   it('should properly get file', async () => {
-    south.addFile = jest.fn();
+    south.addContent = jest.fn();
     south.updateModifiedTime = jest.fn();
 
     const fileInfo: FileInfo = {
@@ -225,7 +224,7 @@ describe('SouthSFTP', () => {
     expect(mockSftpClient.fastGet as jest.Mock).toHaveBeenCalledTimes(1);
     expect(mockSftpClient.delete as jest.Mock).toHaveBeenCalledTimes(1);
     expect(mockSftpClient.end as jest.Mock).toHaveBeenCalledTimes(1);
-    expect(south.addFile).toHaveBeenCalledWith(path.resolve('baseFolder', 'tmp', fileInfo.name));
+    expect(south.addContent).toHaveBeenCalledWith({ type: 'raw', filePath: path.resolve('baseFolder', 'tmp', fileInfo.name) });
     expect(fs.unlink).not.toHaveBeenCalled();
     expect(logger.error).not.toHaveBeenCalled();
     expect(south.updateModifiedTime).not.toHaveBeenCalled();
@@ -238,7 +237,7 @@ describe('SouthSFTP', () => {
     expect(logger.error).toHaveBeenCalledWith(
       `Error while removing "${items[0].settings.remoteFolder}/${fileInfo.name}": ${new Error('delete error')}`
     );
-    expect(south.addFile).toHaveBeenCalledTimes(2);
+    expect(south.addContent).toHaveBeenCalledTimes(2);
     expect(mockSftpClient.end).toHaveBeenCalledTimes(2);
   });
 
@@ -287,7 +286,7 @@ describe('SouthFTP with preserve file and compression', () => {
     configuration.settings.compression = true;
     repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
     (sftpClient as jest.Mock).mockImplementation(() => mockSftpClient);
-    south = new SouthSftp(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthSftp(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
     await south.start();
   });
 
@@ -319,7 +318,7 @@ describe('SouthFTP with preserve file and compression', () => {
       modifyTime: mtimeMs
     } as FileInfo;
 
-    south.addFile = jest.fn();
+    south.addContent = jest.fn();
     south.updateModifiedTime = jest.fn();
     (fs.unlink as jest.Mock)
       .mockImplementationOnce(() => null)
@@ -335,7 +334,7 @@ describe('SouthFTP with preserve file and compression', () => {
       path.resolve('baseFolder', 'tmp', fileInfo.name),
       `${path.resolve('baseFolder', 'tmp', 'myFile1')}.gz`
     );
-    expect(south.addFile).toHaveBeenCalledWith(path.resolve('baseFolder', 'tmp', `${fileInfo.name}.gz`));
+    expect(south.addContent).toHaveBeenCalledWith({ type: 'raw', filePath: path.resolve('baseFolder', 'tmp', `${fileInfo.name}.gz`) });
     expect(logger.error).not.toHaveBeenCalled();
     expect(fs.unlink).toHaveBeenCalledWith(`${path.resolve('baseFolder', 'tmp', 'myFile1')}.gz`);
     expect(fs.unlink).toHaveBeenCalledWith(path.resolve('baseFolder', 'tmp', fileInfo.name));
@@ -343,7 +342,7 @@ describe('SouthFTP with preserve file and compression', () => {
 
     fileInfo.name = 'myFile2';
     await south.getFile(fileInfo, items[1]);
-    expect(south.addFile).toHaveBeenCalledWith(`${path.resolve('baseFolder', 'tmp', 'myFile2')}.gz`);
+    expect(south.addContent).toHaveBeenCalledWith({ type: 'raw', filePath: `${path.resolve('baseFolder', 'tmp', 'myFile2')}.gz` });
     expect(logger.error).toHaveBeenCalledWith(
       `Error while removing compressed file "${path.resolve('baseFolder', 'tmp', 'myFile2')}.gz": ${new Error('error')}`
     );
@@ -352,7 +351,7 @@ describe('SouthFTP with preserve file and compression', () => {
       throw new Error('compression error');
     });
     await south.getFile(fileInfo, items[1]);
-    expect(south.addFile).toHaveBeenCalledWith(path.resolve('baseFolder', 'tmp', 'myFile2'));
+    expect(south.addContent).toHaveBeenCalledWith({ type: 'raw', filePath: path.resolve('baseFolder', 'tmp', 'myFile2') });
 
     expect(logger.error).toHaveBeenCalledWith(
       `Error compressing file "${path.resolve('baseFolder', 'tmp', fileInfo.name)}". Sending it raw instead`
@@ -372,7 +371,7 @@ describe('SouthSFTP with preserve file ignore modified date', () => {
 
     repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
 
-    south = new SouthSftp(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthSftp(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should properly check condition with ignore modified date', () => {
@@ -403,7 +402,7 @@ describe('SouthSFTP test connection with private key', () => {
     configuration.settings.privateKey = 'myPrivateKey';
     configuration.settings.passphrase = 'myPassphrase';
     repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
-    south = new SouthSftp(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthSftp(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should throw an error if connection fails', async () => {
