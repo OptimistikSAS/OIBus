@@ -9,7 +9,7 @@ import pino from 'pino';
 import { DateTime } from 'luxon';
 import { NorthSFTPSettings } from '../../../../shared/model/north-settings.model';
 import csv from 'papaparse';
-import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
 
 import sftpClient, { ConnectOptions } from 'ssh2-sftp-client';
 import fs from 'node:fs/promises';
@@ -30,7 +30,17 @@ export default class NorthSFTP extends NorthConnector<NorthSFTPSettings> {
     super(configuration, encryptionService, repositoryService, logger, baseFolder);
   }
 
-  async handleValues(values: Array<OIBusDataValue>): Promise<void> {
+  async handleContent(data: OIBusContent): Promise<void> {
+    switch (data.type) {
+      case 'raw':
+        return this.handleFile(data.filePath);
+
+      case 'time-values':
+        return this.handleValues(data.content);
+    }
+  }
+
+  async handleValues(values: Array<OIBusTimeValue>): Promise<void> {
     const nowDate = DateTime.now().toUTC();
     const prefix = (this.connector.settings.prefix || '')
       .replace('@CurrentDate', nowDate.toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))
