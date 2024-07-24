@@ -1036,7 +1036,8 @@ describe('South connector controller', () => {
           enabled: true,
           settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
         }
-      ]
+      ],
+      delimiter: ";"
     };
     (csv.unparse as jest.Mock).mockReturnValue('csv content');
     ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValueOnce([{ id: 'scanModeId', name: 'scanMode' }]);
@@ -1060,7 +1061,10 @@ describe('South connector controller', () => {
         settings_objectSettings: '{}',
         settings_objectValue: 1
       }
-    ]);
+    ],
+    {
+      "delimiter": ";"
+    });
   });
 
   it('exportSouthItems() should download a csv file', async () => {
@@ -1076,6 +1080,7 @@ describe('South connector controller', () => {
         settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
       }
     ]);
+    ctx.request.body = { delimiter: ";" };
     (csv.unparse as jest.Mock).mockReturnValue('csv content');
 
     await southConnectorController.exportSouthItems(ctx);
@@ -1108,7 +1113,8 @@ describe('South connector controller', () => {
           'settings_objectSettings',
           'settings_objectArray',
           'settings_objectValue'
-        ]
+        ],
+        delimiter: ";"
       }
     );
   });
@@ -1120,7 +1126,7 @@ describe('South connector controller', () => {
 
     ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
     ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
-    ctx.request.body.itemIdsToDelete = '[]';
+    ctx.request.body = { itemIdsToDelete: '[]', delimiter: ',' };
     (fs.readFile as jest.Mock).mockReturnValue('file content');
     (validator.validateSettings as jest.Mock)
       .mockImplementationOnce(() => {
@@ -1130,6 +1136,9 @@ describe('South connector controller', () => {
         return true;
       });
     (csv.parse as jest.Mock).mockReturnValue({
+      meta: {
+        delimiter: ','
+      },
       data: [
         {
           name: 'item1',
@@ -1158,11 +1167,11 @@ describe('South connector controller', () => {
           settings_objectSettings: '{}',
           settings_objectValue: 1
         }
-      ]
+      ],
+      errors: []
     });
 
     await southConnectorController.checkImportSouthItems(ctx);
-
     expect(ctx.badRequest).not.toHaveBeenCalled();
     expect(ctx.throw).not.toHaveBeenCalled();
 
@@ -1237,12 +1246,15 @@ describe('South connector controller', () => {
 
     ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
     ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
-    ctx.request.body.itemIdsToDelete = JSON.stringify(['itemIdToDelete']);
+    ctx.request.body = { itemIdsToDelete: JSON.stringify(['itemIdToDelete']), delimiter: ',' };
     (fs.readFile as jest.Mock).mockReturnValue('file content');
     (validator.validateSettings as jest.Mock).mockImplementationOnce(() => {
       return true;
     });
     (csv.parse as jest.Mock).mockReturnValue({
+      meta: {
+        delimiter: ','
+      },
       data: [
         {
           name: 'existingItem',
@@ -1268,11 +1280,11 @@ describe('South connector controller', () => {
           settings_objectSettings: '{}',
           settings_objectValue: 1
         }
-      ]
+      ],
+      errors: []
     });
 
     await southConnectorController.checkImportSouthItems(ctx);
-
     expect(ctx.badRequest).not.toHaveBeenCalled();
     expect(ctx.throw).not.toHaveBeenCalled();
 
@@ -1321,6 +1333,67 @@ describe('South connector controller', () => {
             }
           },
           message: 'Item name "existingItem" already used'
+        }
+      ]
+    });
+  });
+
+  it('checkImportSouthItems() should check import of items in a csv file with UndetectableDelimiter', async () => {
+    ctx.params.southType = 'south-test';
+    ctx.params.southId = 'create';
+    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValueOnce([{ id: 'scanModeId', name: 'scanMode' }]);
+
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
+    ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
+    ctx.request.body = { itemIdsToDelete: '[]', delimiter: '/' };
+    (fs.readFile as jest.Mock).mockReturnValue('file content');
+    (validator.validateSettings as jest.Mock)
+      .mockImplementationOnce(() => {
+        throw new Error('validation fail');
+      })
+      .mockImplementationOnce(() => {
+        return true;
+      });
+    (csv.parse as jest.Mock).mockReturnValueOnce({
+      meta: {
+        delimiter: ','
+      },
+      data: [],
+      errors: [{ code: 'UndetectableDelimiter' }]
+    });
+    (csv.parse as jest.Mock).mockReturnValue({
+      meta: {
+        delimiter: '/'
+      },
+      data: [
+        {
+          name: 'item1',
+          enabled: 'false',
+          scanMode: 'badScanMode'
+        }
+      ],
+      errors: []
+    });
+
+    await southConnectorController.checkImportSouthItems(ctx);
+    expect(ctx.badRequest).not.toHaveBeenCalled();
+    expect(ctx.throw).not.toHaveBeenCalled();
+
+    expect(csv.parse).toHaveBeenCalledWith('file content', { header: true });
+    expect(fs.readFile).toHaveBeenCalledWith('myFile.csv');
+    expect(ctx.ok).toHaveBeenCalledWith({
+      items: [],
+      errors: [
+        {
+          item: {
+            id: '',
+            name: 'item1',
+            enabled: false,
+            connectorId: '',
+            scanModeId: '',
+            settings: {}
+          },
+          message: 'Scan mode "badScanMode" not found for item item1'
         }
       ]
     });
@@ -1391,6 +1464,91 @@ describe('South connector controller', () => {
     expect(csv.parse).not.toHaveBeenCalled();
     expect(fs.readFile).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onCreateOrUpdateSouthItems).not.toHaveBeenCalled();
+    expect(ctx.noContent).not.toHaveBeenCalled();
+  });
+
+  it('checkImportSouthItems() should throw badRequest when delimiter not the same in file and entered', async () => {
+    ctx.params.southType = 'south-test';
+    ctx.params.southId = 'create';
+    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValueOnce([{ id: 'scanModeId', name: 'scanMode' }]);
+
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
+    ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
+    ctx.request.body = { itemIdsToDelete: '[]', delimiter: ';' };
+    (fs.readFile as jest.Mock).mockReturnValue('file content');
+    (csv.parse as jest.Mock).mockReturnValue({
+      meta: {
+        delimiter: ','
+      },
+      data: [],
+      errors: []
+    });
+
+    await southConnectorController.checkImportSouthItems(ctx);
+
+    expect(ctx.badRequest).toHaveBeenCalledWith('The entered delimiter does not correspond to the file delimiter');
+    expect(ctx.throw).not.toHaveBeenCalled();
+    expect(csv.parse).toHaveBeenCalledWith('file content', { header: true });
+    expect(fs.readFile).toHaveBeenCalledWith('myFile.csv');
+    expect(ctx.noContent).not.toHaveBeenCalled();
+  });
+
+  it('checkImportSouthItems() should throw badRequest when errors in csv parse', async () => {
+    ctx.params.southType = 'south-test';
+    ctx.params.southId = 'create';
+    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValueOnce([{ id: 'scanModeId', name: 'scanMode' }]);
+
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
+    ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
+    ctx.request.body = { itemIdsToDelete: '[]', delimiter: ';' };
+    (fs.readFile as jest.Mock).mockReturnValue('file content');
+    (csv.parse as jest.Mock).mockReturnValue({
+      meta: {
+        delimiter: ','
+      },
+      data: [],
+      errors: [{ message: 'Trailing quote on quoted field is malformed'}]
+    });
+
+    await southConnectorController.checkImportSouthItems(ctx);
+
+    expect(ctx.badRequest).toHaveBeenCalledWith('Trailing quote on quoted field is malformed');
+    expect(ctx.throw).not.toHaveBeenCalled();
+    expect(csv.parse).toHaveBeenCalledWith('file content', { header: true });
+    expect(fs.readFile).toHaveBeenCalledWith('myFile.csv');
+    expect(ctx.noContent).not.toHaveBeenCalled();
+  });
+
+  it('checkImportSouthItems() should throw badRequest whith UndetectableDelimiter', async () => {
+    ctx.params.southType = 'south-test';
+    ctx.params.southId = 'create';
+    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValueOnce([{ id: 'scanModeId', name: 'scanMode' }]);
+
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
+    ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
+    ctx.request.body = { itemIdsToDelete: '[]', delimiter: ';' };
+    (fs.readFile as jest.Mock).mockReturnValue('file content');
+    (csv.parse as jest.Mock).mockReturnValueOnce({
+      meta: {
+        delimiter: ','
+      },
+      data: [{ data: 'yes' }],
+      errors: [{ code: 'UndetectableDelimiter'}]
+    });
+    (csv.parse as jest.Mock).mockReturnValue({
+      meta: {
+        delimiter: '/'
+      },
+      data: [{ data: 'yes' }],
+      errors: []
+    });
+
+    await southConnectorController.checkImportSouthItems(ctx);
+
+    expect(ctx.badRequest).toHaveBeenCalledWith('The entered delimiter does not correspond to the file delimiter');
+    expect(ctx.throw).not.toHaveBeenCalled();
+    expect(csv.parse).toHaveBeenCalledWith('file content', { header: true });
+    expect(fs.readFile).toHaveBeenCalledWith('myFile.csv');
     expect(ctx.noContent).not.toHaveBeenCalled();
   });
 

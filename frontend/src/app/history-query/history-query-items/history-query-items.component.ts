@@ -26,6 +26,8 @@ import { EditSouthItemModalComponent } from '../../south/edit-south-item-modal/e
 import { ImportSouthItemsModalComponent } from '../../south/import-south-items-modal/import-south-items-modal.component';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
+import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
+import { ImportItemModalComponent } from '../../shared/import-item-modal/import-item-modal.component';
 
 const PAGE_SIZE = 20;
 
@@ -242,9 +244,13 @@ export class HistoryQueryItemsComponent implements OnInit {
    * Export items into a csv file
    */
   exportItems() {
-    if (this.historyQuery) {
-      this.historyQueryService.exportItems(this.historyQuery.id, this.historyQuery.name).subscribe();
-    }
+    const modalRef = this.modalService.open(ExportItemModalComponent);
+    modalRef.componentInstance.prepare(this.historyQuery?.name);
+    modalRef.result.subscribe(response => {
+      if (response.delimiter && this.historyQuery) {
+        this.historyQueryService.exportItems(this.historyQuery.id, response.fileName, response.delimiter).subscribe();
+      }
+    });
   }
 
   /**
@@ -274,26 +280,16 @@ export class HistoryQueryItemsComponent implements OnInit {
       });
   }
 
-  onImportDragOver(e: Event) {
-    e.preventDefault();
+  importItems() {
+    const modalRef = this.modalService.open(ImportItemModalComponent);
+    modalRef.result.subscribe(response => {
+      this.checkImportItems(response.file, response.delimiter);
+    });
   }
 
-  onImportDrop(e: DragEvent) {
-    e.preventDefault();
-    const file = e.dataTransfer!.files![0];
-    this.checkImportItems(file!);
-  }
-
-  onImportClick(e: Event) {
-    const fileInput = e.target as HTMLInputElement;
-    const file = fileInput!.files![0];
-    fileInput.value = '';
-    this.checkImportItems(file!);
-  }
-
-  checkImportItems(file: File) {
+  checkImportItems(file: File, delimiter: string) {
     this.historyQueryService
-      .checkImportItems(this.southManifest.id, this.historyQuery?.id || 'create', file)
+      .checkImportItems(this.southManifest.id, this.historyQuery?.id || 'create', file, delimiter)
       .subscribe((result: { items: Array<SouthConnectorItemDTO>; errors: Array<{ item: SouthConnectorItemDTO; message: string }> }) => {
         const modalRef = this.modalService.open(ImportSouthItemsModalComponent, { size: 'xl' });
         const component: ImportSouthItemsModalComponent = modalRef.componentInstance;
