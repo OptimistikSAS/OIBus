@@ -293,7 +293,7 @@ export default class SouthConnectorController {
    * Endpoint used to download a CSV from a list of items when creating a connector (before the items are saved on
    * the database). When the items are already saved, it is downloaded with the export method
    */
-  async southItemsToCsv(ctx: KoaContext<{ items: Array<SouthConnectorItemDTO> }, any>): Promise<void> {
+  async southItemsToCsv(ctx: KoaContext<{ items: Array<SouthConnectorItemDTO>, delimiter: string }, any>): Promise<void> {
     const scanModes = ctx.app.repositoryService.scanModeRepository.getScanModes();
     const southItems = ctx.request.body!.items.map(item => {
       const flattenedItem: Record<string, any> = {
@@ -314,13 +314,13 @@ export default class SouthConnectorController {
       delete flattenedItem.connectorId;
       return flattenedItem;
     });
-    ctx.body = csv.unparse(southItems);
+    ctx.body = csv.unparse(southItems, { delimiter: ctx.request.body!.delimiter });
     ctx.set('Content-disposition', 'attachment; filename=items.csv');
     ctx.set('Content-Type', 'application/force-download');
     ctx.ok();
   }
 
-  async exportSouthItems(ctx: KoaContext<void, any>): Promise<void> {
+  async exportSouthItems(ctx: KoaContext<{ delimiter: string }, any>): Promise<void> {
     const scanModes = ctx.app.repositoryService.scanModeRepository.getScanModes();
     const columns: Set<string> = new Set<string>(['name', 'enabled', 'scanMode']);
     const southItems = ctx.app.repositoryService.southItemRepository.getSouthItems(ctx.params.southId).map(item => {
@@ -342,19 +342,21 @@ export default class SouthConnectorController {
       delete flattenedItem.connectorId;
       return flattenedItem;
     });
-    ctx.body = csv.unparse(southItems, { columns: Array.from(columns) });
+    ctx.body = csv.unparse(southItems, { columns: Array.from(columns), delimiter: ctx.request.body!.delimiter });
     ctx.set('Content-disposition', 'attachment; filename=items.csv');
     ctx.set('Content-Type', 'application/force-download');
     ctx.ok();
   }
 
-  async checkImportSouthItems(ctx: KoaContext<{ itemIdsToDelete: string }, any>): Promise<void> {
+  async checkImportSouthItems(ctx: KoaContext<{ itemIdsToDelete: string, delimiter: string }, any>): Promise<void> {
     const manifest = ctx.app.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === ctx.params.southType);
     if (!manifest) {
       return ctx.throw(404, 'South manifest not found');
     }
 
     const file = ctx.request.file;
+    const delimiter = ctx.request.body!.delimiter;
+
     let itemIdsToDelete: Array<string>;
     try {
       itemIdsToDelete = JSON.parse(ctx.request.body!.itemIdsToDelete);
@@ -373,8 +375,23 @@ export default class SouthConnectorController {
     const validItems: Array<any> = [];
     const errors: Array<any> = [];
     try {
+      let isError = false;
       const fileContent = await fs.readFile(file.path);
-      const csvContent = csv.parse(fileContent.toString('utf8'), { header: true });
+      let csvContent = csv.parse(fileContent.toString('utf8'), { header: true });
+
+      if (csvContent.errors[0]?.code === 'UndetectableDelimiter') {
+        const csvContent2 = csv.parse(fileContent.toString('utf8'), { header: true, delimiter: delimiter });
+        isError = JSON.stringify(csvContent2.data) === JSON.stringify(csvContent.data); // if it's true it means that csvContent2 don't succeed to have the good data with the good delimiter, so it's an error
+        csvContent = csvContent2;
+      }
+
+      for (let error of csvContent.errors) {
+        throw new Error(error.message);
+      }
+
+      if (csvContent.meta.delimiter !== delimiter || isError) {
+        throw new Error(`The entered delimiter does not correspond to the file delimiter`);
+      }
 
       for (const data of csvContent.data) {
         const item: SouthConnectorItemDTO = {
