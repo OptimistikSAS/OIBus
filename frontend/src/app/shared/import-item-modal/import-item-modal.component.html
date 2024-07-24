@@ -1,0 +1,37 @@
+<div class="modal-header">
+  <h4 class="modal-title" translate="history-query.items.import"></h4>
+</div>
+<div class="modal-body">
+  <div class="row justify-content-center mb-3">
+    <div class="text-center">
+      <label class="form-label" for="file" translate="enums.serialization-types.csv"></label>
+    </div>
+    <button
+      type="button"
+      class="m-1 w-50 btn btn-secondary"
+      (click)="fileInput.click()"
+      (drop)="onImportDrop($event)"
+      (dragover)="onImportDragOver($event)"
+      id="import-button"
+    >
+      <span>{{ this.selectedFile.name }}</span>
+    </button>
+  </div>
+  <div [formGroup]="importForm" class="form-group row justify-content-center">
+    <div class="text-center">
+      <label class="form-label" for="delimiter" translate="common.delimiter"></label>
+    </div>
+    <select formControlName="delimiter" class="form-select w-50 m-1" id="delimiter">
+      @for (delimiter of csvDelimiters; track delimiter) {
+        <option [ngValue]="delimiter">{{ 'enums.csv-character.' + delimiter | translate }}</option>
+      }
+    </select>
+  </div>
+</div>
+<input #fileInput (change)="onImportClick($event)" id="file" type="file" accept=".csv" class="d-none" />
+<div class="modal-footer">
+  <div class="btn-group">
+    <button type="button" class="btn btn-primary" (click)="save()" translate="common.save" id="save-button"></button>
+    <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
+  </div>
+</div>
