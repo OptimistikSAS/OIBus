@@ -37,14 +37,7 @@
           (click)="exportItems()"
           translate="south.items.export"
         ></button>
-        <button
-          type="button"
-          class="btn btn-secondary btn-sm oib-box-btn"
-          (click)="fileInput.click()"
-          (drop)="onImportDrop($event)"
-          (dragover)="onImportDragOver($event)"
-          id="import-button"
-        >
+        <button type="button" class="btn btn-secondary btn-sm oib-box-btn" (click)="importItems()" id="import-button">
           <span translate="south.items.import.button"></span>
         </button>
         <button
@@ -59,7 +52,6 @@
       </div>
     </div>
   </ng-template>
-  <input #fileInput (change)="onImportClick($event)" id="file" type="file" accept=".csv" class="d-none" />
 
   <div class="mb-3">
     @if (displayedItems.content.length > 0) {

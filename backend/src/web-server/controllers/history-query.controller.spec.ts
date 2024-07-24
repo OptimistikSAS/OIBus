@@ -1179,6 +1179,7 @@ describe('History query controller', () => {
         settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
       }
     ]);
+    ctx.request.body = { delimiter: ";" };
     (csv.unparse as jest.Mock).mockReturnValue('csv content');
 
     await historyQueryController.exportSouthItems(ctx);
@@ -1200,7 +1201,9 @@ describe('History query controller', () => {
           settings_objectValue: 1
         }
       ],
-      { columns: ['name', 'enabled', 'settings_field', 'settings_objectSettings', 'settings_objectArray', 'settings_objectValue'] }
+      { columns: ['name', 'enabled', 'settings_field', 'settings_objectSettings', 'settings_objectArray', 'settings_objectValue'],
+        delimiter: ";"
+       }
     );
   });
 
@@ -1209,6 +1212,7 @@ describe('History query controller', () => {
     ctx.params.historyQueryId = 'create';
 
     ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
+    ctx.request.body = { delimiter: ',' };
     ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
     (fs.readFile as jest.Mock).mockReturnValue('file content');
     (validator.validateSettings as jest.Mock)
@@ -1222,6 +1226,9 @@ describe('History query controller', () => {
         return true;
       });
     (csv.parse as jest.Mock).mockReturnValue({
+      meta: {
+        delimiter: ','
+      },
       data: [
         {
           name: 'item1',
@@ -1320,12 +1327,16 @@ describe('History query controller', () => {
     ctx.app.repositoryService.historyQueryItemRepository.listHistoryItems.mockReturnValueOnce([{ id: 'id1', name: 'existingItem' }]);
 
     ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
+    ctx.request.body = { delimiter: ',' };
     ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
     (fs.readFile as jest.Mock).mockReturnValue('file content');
     (validator.validateSettings as jest.Mock).mockImplementationOnce(() => {
       return true;
     });
     (csv.parse as jest.Mock).mockReturnValue({
+      meta: {
+        delimiter: ','
+      },
       data: [
         {
           name: 'existingItem',
@@ -1416,6 +1427,7 @@ describe('History query controller', () => {
 
   it('checkImportSouthItems() should throw badRequest when file not parsed', async () => {
     ctx.params.southType = 'south-test';
+    ctx.request.body = { delimiter: ',' };
     ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
     (fs.readFile as jest.Mock).mockReturnValue('file content');
     (csv.parse as jest.Mock).mockImplementationOnce(() => {
@@ -1431,6 +1443,31 @@ describe('History query controller', () => {
     expect(csv.parse).toHaveBeenCalledWith('file content', { header: true });
     expect(fs.readFile).toHaveBeenCalledWith('myFile.csv');
     expect(ctx.app.reloadService.onCreateOrUpdateSouthItems).not.toHaveBeenCalled();
+    expect(ctx.noContent).not.toHaveBeenCalled();
+  });
+
+  it('checkImportSouthItems() should throw badRequest when delimiter not the same in file and entered', async () => {
+    ctx.params.southType = 'south-test';
+    ctx.params.southId = 'create';
+    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValueOnce([{ id: 'scanModeId', name: 'scanMode' }]);
+
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
+    ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
+    ctx.request.body = { itemIdsToDelete: '[]', delimiter: ';' };
+    (fs.readFile as jest.Mock).mockReturnValue('file content');
+    (csv.parse as jest.Mock).mockReturnValue({
+      meta: {
+        delimiter: ','
+      },
+      data: []
+    });
+
+    await historyQueryController.checkImportSouthItems(ctx);
+
+    expect(ctx.badRequest).toHaveBeenCalledWith('The entered delimiter does not correspond to the file delimiter');
+    expect(ctx.throw).not.toHaveBeenCalled();
+    expect(csv.parse).toHaveBeenCalledWith('file content', { header: true });
+    expect(fs.readFile).toHaveBeenCalledWith('myFile.csv');
     expect(ctx.noContent).not.toHaveBeenCalled();
   });
 
