@@ -205,6 +205,7 @@ router.put('/api/south/:id', (ctx: KoaContext<any, any>) => southConnectorContro
 router.delete('/api/south/:id', (ctx: KoaContext<any, any>) => southConnectorController.deleteSouthConnector(ctx));
 router.put('/api/south/:id/start', (ctx: KoaContext<any, any>) => southConnectorController.startSouthConnector(ctx));
 router.put('/api/south/:id/stop', (ctx: KoaContext<any, any>) => southConnectorController.stopSouthConnector(ctx));
+router.put('/api/south/:id/items/test-item', (ctx: KoaContext<any, any>) => southConnectorController.testSouthItem(ctx));
 router.get('/api/south/:southId/items', (ctx: KoaContext<any, any>) => southConnectorController.searchSouthItems(ctx));
 router.get('/api/south/:southId/items/all', (ctx: KoaContext<any, any>) => southConnectorController.listSouthItems(ctx));
 router.post('/api/south/:southId/items', (ctx: KoaContext<any, any>) => southConnectorController.createSouthItem(ctx));

@@ -10,8 +10,11 @@ import pino from 'pino';
 import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
 import { QueriesFile } from '../south-interface';
-import { SouthFolderScannerItemSettings, SouthFolderScannerSettings } from '../../../../shared/model/south-settings.model';
-import { OIBusContent } from '../../../../shared/model/engine.model';
+import {
+  SouthFolderScannerItemSettings,
+  SouthFolderScannerSettings,
+} from '../../../../shared/model/south-settings.model';
+import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
 
 /**
@@ -59,6 +62,22 @@ export default class SouthFolderScanner
     if (!stat.isDirectory()) {
       throw new Error(`${inputFolder} is not a directory`);
     }
+  }
+
+  override async testItem(
+    item: SouthConnectorItemDTO<SouthFolderScannerItemSettings>,
+    callback: (data: OIBusContent) => void
+  ): Promise<void> {
+    await this.testConnection();
+
+    const inputFolder = path.resolve(this.connector.settings.inputFolder);
+    const files = await fs.readdir(inputFolder);
+    const values: OIBusTimeValue[] = files.map(file => ({
+      pointId: item.name,
+      timestamp: DateTime.now().toUTC().toISO()!,
+      data: { value: file }
+    }));
+    callback({ type: 'time-values', content: values });
   }
 
   async start(dataStream = true): Promise<void> {

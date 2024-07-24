@@ -89,6 +89,11 @@ export interface SouthConnectorItemCommandDTO<T extends SouthItemSettings = any>
   scanModeName?: string;
 }
 
+export interface SouthConnectorItemTestCommandDTO {
+  south: SouthConnectorCommandDTO;
+  item: SouthConnectorItemCommandDTO;
+}
+
 export interface SouthConnectorItemSearchParam {
   name?: string;
   scanModeId?: string;
