@@ -235,7 +235,7 @@ describe('SouthConnectorService', () => {
     let downloaded = false;
 
     spyOn(downloadService, 'download');
-    service.itemsToCsv([], 'southName').subscribe(() => (downloaded = true));
+    service.itemsToCsv([], 'southName', ';').subscribe(() => (downloaded = true));
 
     http
       .expectOne({
@@ -252,11 +252,11 @@ describe('SouthConnectorService', () => {
     let downloaded = false;
 
     spyOn(downloadService, 'download');
-    service.exportItems('id1', 'southName').subscribe(() => (downloaded = true));
+    service.exportItems('id1', 'southName', ';').subscribe(() => (downloaded = true));
 
     http
       .expectOne({
-        method: 'GET',
+        method: 'PUT',
         url: '/api/south/id1/items/export'
       })
       .flush(new Blob());
@@ -269,11 +269,12 @@ describe('SouthConnectorService', () => {
     const file = new Blob() as File;
     const expectedFormData = new FormData();
     const expectedItemIdsToDelete = ['id'];
+    const delimiter = ',';
     expectedFormData.set('file', file);
     expectedFormData.set('itemIdsToDelete', JSON.stringify(expectedItemIdsToDelete));
     let actualImportation = false;
 
-    service.checkImportItems('southType', 'southId', file, expectedItemIdsToDelete).subscribe(() => {
+    service.checkImportItems('southType', 'southId', file, expectedItemIdsToDelete, delimiter).subscribe(() => {
       actualImportation = true;
     });
 
