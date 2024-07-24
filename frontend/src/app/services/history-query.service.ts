@@ -176,10 +176,10 @@ export class HistoryQueryService {
   /**
    * Export items in CSV file
    */
-  exportItems(historyQueryId: string, historyQueryName: string): Observable<void> {
+  exportItems(historyQueryId: string, fileName: string, delimiter: string): Observable<void> {
     return this.http
-      .get(`/api/history-queries/${historyQueryId}/south-items/export`, { responseType: 'blob', observe: 'response' })
-      .pipe(map(response => this.downloadService.download(response, `${historyQueryName}-south-items.csv`)));
+      .put(`/api/history-queries/${historyQueryId}/south-items/export`, { delimiter }, { responseType: 'blob', observe: 'response' })
+      .pipe(map(response => this.downloadService.download(response, `${fileName}.csv`)));
   }
 
   /**
@@ -203,7 +203,8 @@ export class HistoryQueryService {
   checkImportItems(
     southType: string,
     historyQueryId: string,
-    file: File
+    file: File,
+    delimiter: string
   ): Observable<{
     items: Array<SouthConnectorItemDTO>;
     errors: Array<{
@@ -213,6 +214,7 @@ export class HistoryQueryService {
   }> {
     const formData = new FormData();
     formData.set('file', file);
+    formData.set('delimiter', delimiter);
     return this.http.post<{ items: Array<SouthConnectorItemDTO>; errors: Array<{ item: SouthConnectorItemDTO; message: string }> }>(
       `/api/history-queries/${southType}/south-items/check-south-import/${historyQueryId}`,
       formData
