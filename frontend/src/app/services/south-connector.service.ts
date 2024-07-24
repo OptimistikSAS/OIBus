@@ -201,25 +201,26 @@ export class SouthConnectorService {
   /**
    * Export south items in CSV file
    */
-  exportItems(southId: string, southName: string): Observable<void> {
+  exportItems(southId: string, fileName: string, delimiter: string): Observable<void> {
     return this.http
-      .get(`/api/south/${southId}/items/export`, { responseType: 'blob', observe: 'response' })
-      .pipe(map(response => this.downloadService.download(response, `${southName}.csv`)));
+      .put(`/api/south/${southId}/items/export`, { delimiter }, { responseType: 'blob', observe: 'response' })
+      .pipe(map(response => this.downloadService.download(response, `${fileName}.csv`)));
   }
 
   /**
    * Export south items in CSV file
    */
-  itemsToCsv(items: Array<SouthConnectorItemDTO>, southName: string): Observable<void> {
+  itemsToCsv(items: Array<SouthConnectorItemDTO>, fileName: string, delimiter: string): Observable<void> {
     return this.http
       .put(
         `/api/south/items/to-csv`,
         {
-          items
+          items,
+          delimiter
         },
         { responseType: 'blob', observe: 'response' }
       )
-      .pipe(map(response => this.downloadService.download(response, `${southName}.csv`)));
+      .pipe(map(response => this.downloadService.download(response, `${fileName}.csv`)));
   }
 
   /**
@@ -229,7 +230,8 @@ export class SouthConnectorService {
     southType: string,
     southId: string,
     file: File,
-    itemIdsToDelete: Array<string>
+    itemIdsToDelete: Array<string>,
+    delimiter: string
   ): Observable<{
     items: Array<SouthConnectorItemDTO>;
     errors: Array<{
@@ -240,6 +242,7 @@ export class SouthConnectorService {
     const formData = new FormData();
     formData.set('file', file);
     formData.set('itemIdsToDelete', JSON.stringify(itemIdsToDelete));
+    formData.set('delimiter', delimiter);
     return this.http.post<{ items: Array<SouthConnectorItemDTO>; errors: Array<{ item: SouthConnectorItemDTO; message: string }> }>(
       `/api/south/${southType}/items/check-import/${southId}`,
       formData

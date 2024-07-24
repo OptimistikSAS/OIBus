@@ -225,11 +225,11 @@ describe('HistoryQueryService', () => {
     let downloaded = false;
 
     spyOn(downloadService, 'download');
-    service.exportItems('id1', 'historyQueryName').subscribe(() => (downloaded = true));
+    service.exportItems('id1', 'historyQueryName', ';').subscribe(() => (downloaded = true));
 
     http
       .expectOne({
-        method: 'GET',
+        method: 'PUT',
         url: '/api/history-queries/id1/south-items/export'
       })
       .flush(new Blob());
@@ -240,11 +240,12 @@ describe('HistoryQueryService', () => {
 
   it('should check import history south items', () => {
     const file = new Blob() as File;
+    const delimiter = ',';
     const expectedFormData = new FormData();
     expectedFormData.set('file', file);
     let actualImportation = false;
 
-    service.checkImportItems('southType', 'historyId', file).subscribe(() => {
+    service.checkImportItems('southType', 'historyId', file, delimiter).subscribe(() => {
       actualImportation = true;
     });
 
