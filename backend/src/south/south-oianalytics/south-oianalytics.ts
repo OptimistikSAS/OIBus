@@ -168,7 +168,7 @@ export default class SouthOIAnalytics
     const headers: HeadersInit = {};
 
     if (this.connector.settings.useOiaModule) {
-      const registrationSettings = this.repositoryService.registrationRepository.getRegistrationSettings();
+      const registrationSettings = this.repositoryService.oianalyticsRegistrationRepository.get();
       if (!registrationSettings || registrationSettings.status !== 'REGISTERED') {
         throw new Error('OIBus not registered in OIAnalytics');
       }

@@ -1,20 +1,34 @@
 import { generateRandomId } from '../service/utils';
 import { Database } from 'better-sqlite3';
 import { Instant, Page } from '../../../shared/model/types';
-import { InfoMessage, OIAnalyticsMessageDTO, OIAnalyticsMessageSearchParam } from '../../../shared/model/oianalytics-message.model';
+import {
+  OIAnalyticsMessage,
+  OIAnalyticsMessageCommandDTO,
+  OIAnalyticsMessageSearchParam,
+  OIAnalyticsMessageStatus,
+  OIAnalyticsMessageType
+} from '../../../shared/model/oianalytics-message.model';
 
 export const OIANALYTICS_MESSAGE_TABLE = 'oianalytics_messages';
 const PAGE_SIZE = 50;
+
+export interface OIAnalyticsMessageResult {
+  id: string;
+  created_at: Instant;
+  completed_date: Instant;
+  type: OIAnalyticsMessageType;
+  status: OIAnalyticsMessageStatus;
+  error: string;
+  content: string;
+}
+
 /**
- * Repository used for engine settings
+ * Repository used for managing actions that need to be managed for OIAnalytics communication
  */
-export default class OianalyticsMessageRepository {
+export default class OIAnalyticsMessageRepository {
   constructor(private readonly database: Database) {}
 
-  /**
-   * Search messages by page
-   */
-  searchMessagesPage(searchParams: OIAnalyticsMessageSearchParam, page: number): Page<OIAnalyticsMessageDTO> {
+  search(searchParams: OIAnalyticsMessageSearchParam, page: number): Page<OIAnalyticsMessage> {
     const queryParams = [];
     let whereClause = 'WHERE id IS NOT NULL';
     if (searchParams.types.length > 0) {
@@ -34,8 +48,11 @@ export default class OianalyticsMessageRepository {
       queryParams.push(searchParams.end);
     }
 
-    const query = `SELECT id, created_at as creationDate, completed_date as compeltedDate, type, status, error, content FROM ${OIANALYTICS_MESSAGE_TABLE} ${whereClause} ORDER BY created_at DESC LIMIT ${PAGE_SIZE} OFFSET ?;`;
-    const results: Array<any> = this.database.prepare(query).all(...queryParams, PAGE_SIZE * page);
+    const query = `SELECT * FROM ${OIANALYTICS_MESSAGE_TABLE} ${whereClause} ORDER BY created_at DESC LIMIT ${PAGE_SIZE} OFFSET ?;`;
+    const results: Array<OIAnalyticsMessage> = this.database
+      .prepare(query)
+      .all(...queryParams, PAGE_SIZE * page)
+      .map(result => this.toMessage(result as OIAnalyticsMessageResult));
     const totalElements = (
       this.database.prepare(`SELECT COUNT(*) as count FROM ${OIANALYTICS_MESSAGE_TABLE} ${whereClause};`).get(...queryParams) as {
         count: number;
@@ -44,15 +61,7 @@ export default class OianalyticsMessageRepository {
     const totalPages = Math.ceil(totalElements / PAGE_SIZE);
 
     return {
-      content: results.map(result => ({
-        id: result.id,
-        creationDate: result.creationDate,
-        type: result.type,
-        status: result.status,
-        error: result.error,
-        completedDate: result.completedDate,
-        content: JSON.parse(result.content)
-      })) as Array<OIAnalyticsMessageDTO>,
+      content: results,
       size: PAGE_SIZE,
       number: page,
       totalElements,
@@ -60,10 +69,7 @@ export default class OianalyticsMessageRepository {
     };
   }
 
-  /**
-   * Search messages by list
-   */
-  searchMessagesList(searchParams: OIAnalyticsMessageSearchParam): Array<OIAnalyticsMessageDTO> {
+  list(searchParams: OIAnalyticsMessageSearchParam): Array<OIAnalyticsMessage> {
     const queryParams = [];
     let whereClause = 'WHERE id IS NOT NULL';
     if (searchParams.types.length > 0) {
@@ -83,42 +89,28 @@ export default class OianalyticsMessageRepository {
       queryParams.push(searchParams.end);
     }
 
-    const query = `SELECT id, created_at as creationDate, completed_date as compeltedDate, type, status, error, content FROM ${OIANALYTICS_MESSAGE_TABLE} ${whereClause} ORDER BY created_at DESC;`;
-    const results: Array<any> = this.database.prepare(query).all(...queryParams);
-    return results.map(result => ({
-      id: result.id,
-      creationDate: result.creationDate,
-      type: result.type,
-      status: result.status,
-      error: result.error,
-      completedDate: result.completedDate,
-      content: JSON.parse(result.content)
-    })) as Array<OIAnalyticsMessageDTO>;
+    const query = `SELECT * FROM ${OIANALYTICS_MESSAGE_TABLE} ${whereClause} ORDER BY created_at DESC;`;
+    return this.database
+      .prepare(query)
+      .all(...queryParams)
+      .map(result => this.toMessage(result as OIAnalyticsMessageResult));
   }
 
-  /**
-   * Update a message
-   */
-  updateOIAnalyticsMessages(id: string, content: InfoMessage): void {
-    const query = `UPDATE ${OIANALYTICS_MESSAGE_TABLE} SET content = ? WHERE id = ?;`;
-    this.database.prepare(query).run(JSON.stringify(content), id);
-  }
+  create(message: OIAnalyticsMessageCommandDTO): OIAnalyticsMessage {
+    // id, type, status
+    const queryParams = [generateRandomId(), message.type, 'PENDING'];
+    let insertQuery = `INSERT INTO ${OIANALYTICS_MESSAGE_TABLE} `;
 
-  /**
-   * Create a message
-   */
-  createOIAnalyticsMessages(type: string, content: InfoMessage): OIAnalyticsMessageDTO {
-    const insertQuery = `INSERT INTO ${OIANALYTICS_MESSAGE_TABLE} (id, type, status, content) VALUES (?, ?, ?, ?);`;
-    const insertResult = this.database.prepare(insertQuery).run(generateRandomId(), type, 'PENDING', JSON.stringify(content));
-
-    const query =
-      `SELECT id, created_at as creationDate, completed_date as compeltedDate, type, status, error, content FROM ${OIANALYTICS_MESSAGE_TABLE} ` +
-      `WHERE ROWID = ?;`;
-    const result: any = this.database.prepare(query).get(insertResult.lastInsertRowid);
-    return {
-      ...result,
-      content: JSON.parse(result.content)
-    } as OIAnalyticsMessageDTO;
+    switch (message.type) {
+      case 'info':
+      case 'full-config':
+        insertQuery += `(id, type, status) VALUES (?, ?, ?);`;
+        break;
+    }
+    const result = this.database.prepare(insertQuery).run(...queryParams);
+    const query = `SELECT * FROM ${OIANALYTICS_MESSAGE_TABLE} WHERE ROWID = ?;`;
+    const createdMessage: OIAnalyticsMessageResult = this.database.prepare(query).get(result.lastInsertRowid) as OIAnalyticsMessageResult;
+    return this.toMessage(createdMessage);
   }
 
   markAsCompleted(id: string, completedDate: Instant): void {
@@ -129,5 +121,20 @@ export default class OianalyticsMessageRepository {
   markAsErrored(id: string, completedDate: Instant, result: string): void {
     const query = `UPDATE ${OIANALYTICS_MESSAGE_TABLE} SET status = 'ERRORED', completed_date = ?, error = ? WHERE id = ?;`;
     this.database.prepare(query).run(completedDate, result, id);
+  }
+
+  private toMessage(result: OIAnalyticsMessageResult): OIAnalyticsMessage {
+    switch (result.type) {
+      case 'info':
+      case 'full-config':
+        return {
+          id: result.id,
+          creationDate: result.created_at,
+          type: result.type,
+          status: result.status,
+          error: result.error,
+          completedDate: result.completed_date
+        };
+    }
   }
 }

@@ -19,8 +19,8 @@ import EngineMetricsRepository from '../repository/engine-metrics.repository';
 import SouthCacheRepository from '../repository/south-cache.repository';
 import NorthConnectorMetricsRepository from '../repository/north-connector-metrics.repository';
 import CertificateRepository from '../repository/certificate.repository';
-import RegistrationRepository from '../repository/registration.repository';
-import CommandRepository from '../repository/command.repository';
+import OianalyticsRegistrationRepository from '../repository/oianalytics-registration.repository';
+import OianalyticsCommandRepository from '../repository/oianalytics-command.repository';
 import OianalyticsMessageRepository from '../repository/oianalytics-message.repository';
 
 jest.mock('better-sqlite3', () => jest.fn(() => 'sqlite database'));
@@ -41,8 +41,8 @@ jest.mock('../repository/history-query-item.repository');
 jest.mock('../repository/user.repository');
 jest.mock('../repository/subscription.repository');
 jest.mock('../repository/certificate.repository');
-jest.mock('../repository/registration.repository');
-jest.mock('../repository/command.repository');
+jest.mock('../repository/oianalytics-registration.repository');
+jest.mock('../repository/oianalytics-command.repository');
 jest.mock('../repository/oianalytics-message.repository');
 
 describe('Repository service', () => {
@@ -68,9 +68,9 @@ describe('Repository service', () => {
     expect(HistoryQueryItemRepository).toHaveBeenCalledWith('sqlite database');
     expect(UserRepository).toHaveBeenCalledWith('sqlite database');
     expect(SubscriptionRepository).toHaveBeenCalledWith('sqlite database');
-    expect(RegistrationRepository).toHaveBeenCalledWith('sqlite database');
+    expect(OianalyticsRegistrationRepository).toHaveBeenCalledWith('sqlite database');
     expect(CertificateRepository).toHaveBeenCalledWith('sqlite database');
-    expect(CommandRepository).toHaveBeenCalledWith('sqlite database');
+    expect(OianalyticsCommandRepository).toHaveBeenCalledWith('sqlite database');
     expect(OianalyticsMessageRepository).toHaveBeenCalledWith('sqlite database');
 
     expect(repositoryService.engineRepository).toBeDefined();
@@ -83,7 +83,7 @@ describe('Repository service', () => {
     expect(repositoryService.southItemRepository).toBeDefined();
     expect(repositoryService.southMetricsRepository).toBeDefined();
     expect(repositoryService.engineMetricsRepository).toBeDefined();
-    expect(repositoryService.registrationRepository).toBeDefined();
+    expect(repositoryService.oianalyticsRegistrationRepository).toBeDefined();
     expect(repositoryService.southCacheRepository).toBeDefined();
     expect(repositoryService.logRepository).toBeDefined();
     expect(repositoryService.historyQueryRepository).toBeDefined();
@@ -91,7 +91,7 @@ describe('Repository service', () => {
     expect(repositoryService.userRepository).toBeDefined();
     expect(repositoryService.subscriptionRepository).toBeDefined();
     expect(repositoryService.certificateRepository).toBeDefined();
-    expect(repositoryService.commandRepository).toBeDefined();
+    expect(repositoryService.oianalyticsCommandRepository).toBeDefined();
     expect(repositoryService.oianalyticsMessageRepository).toBeDefined();
   });
 });

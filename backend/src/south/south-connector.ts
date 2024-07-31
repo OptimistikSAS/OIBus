@@ -95,7 +95,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
   async start(dataStream = true): Promise<void> {
     if (dataStream) {
       // Reload the settings only on data stream case, otherwise let the history query manage the settings
-      this.connector = this.repositoryService.southConnectorRepository.getSouthConnector(this.connector.id)!;
+      this.connector = this.repositoryService.southConnectorRepository.findById(this.connector.id)!;
     }
     this.logger.debug(`South connector ${this.connector.name} enabled. Starting services...`);
     await this.connect();
@@ -134,7 +134,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
    * Reset the cron and subscriptions if necessary on item changes
    */
   async onItemChange(): Promise<void> {
-    this.items = this.repositoryService.southItemRepository.listSouthItems(this.connector.id, {
+    this.items = this.repositoryService.southItemRepository.list(this.connector.id, {
       enabled: true
     });
     const scanModes = new Map<string, ScanModeDTO>();
@@ -142,7 +142,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
       .filter(item => item.scanModeId && item.scanModeId !== 'subscription')
       .forEach(item => {
         if (!scanModes.get(item.scanModeId!)) {
-          const scanMode = this.repositoryService.scanModeRepository.getScanMode(item.scanModeId!)!;
+          const scanMode = this.repositoryService.scanModeRepository.findById(item.scanModeId!)!;
           scanModes.set(scanMode.id, scanMode);
         }
       });
@@ -536,7 +536,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
 
     if (dataStream) {
       // Reload the settings only on data stream case, otherwise let the history query manage the settings
-      this.connector = this.repositoryService.southConnectorRepository.getSouthConnector(this.connector.id)!;
+      this.connector = this.repositoryService.southConnectorRepository.findById(this.connector.id)!;
     }
 
     if (this.runProgress$) {

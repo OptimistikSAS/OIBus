@@ -41,7 +41,7 @@ const defaultEngineSettings: EngineSettingsCommandDTO = {
  */
 export default class EngineRepository {
   constructor(private readonly database: Database) {
-    this.createEngineSettings(defaultEngineSettings);
+    this.createDefault(defaultEngineSettings);
   }
 
   /**
@@ -51,7 +51,7 @@ export default class EngineRepository {
    * Other OIBus settings can be used to test several config or for other OIBus to retrieve their own settings when
    * behind a firewall
    */
-  getEngineSettings(): EngineSettingsDTO | null {
+  get(): EngineSettingsDTO | null {
     const query =
       'SELECT id, name, port, oibus_version AS version, proxy_enabled AS proxyEnabled, proxy_port AS proxyPort, ' +
       'log_console_level AS consoleLogLevel, ' +
@@ -109,10 +109,7 @@ export default class EngineRepository {
     }
   }
 
-  /**
-   * Update engine settings in the database.
-   */
-  updateEngineSettings(command: EngineSettingsCommandDTO): void {
+  update(command: EngineSettingsCommandDTO): void {
     const query =
       `UPDATE ${ENGINES_TABLE} SET name = ?, port = ?, proxy_enabled = ?, proxy_port = ?, ` +
       'log_console_level = ?, ' +
@@ -153,20 +150,14 @@ export default class EngineRepository {
       );
   }
 
-  /**
-   * Update OIBus version
-   */
   updateVersion(version: string): void {
     const query = `UPDATE ${ENGINES_TABLE} SET oibus_version = ? WHERE rowid=(SELECT MIN(rowid) FROM ${ENGINES_TABLE});`;
 
     this.database.prepare(query).run(version);
   }
 
-  /**
-   * Create engine settings in the database.
-   */
-  createEngineSettings(command: EngineSettingsCommandDTO): void {
-    if (this.getEngineSettings()) {
+  createDefault(command: EngineSettingsCommandDTO): void {
+    if (this.get()) {
       return;
     }
 
