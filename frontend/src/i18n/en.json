@@ -215,7 +215,13 @@
       "RUNNING": "Running"
     },
     "oibus-command-type": {
-      "UPGRADE": "Upgrade"
+      "UPGRADE": "Upgrade",
+      "update-version": "Update version",
+      "update-engine-settings":"Update engine settings",
+      "create-south": "Create South connector",
+      "update-south": "Update South connector",
+      "create-north": "Create North connector",
+      "update-north": "Update North connector"
     }
   },
   "nav": {

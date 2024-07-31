@@ -25,113 +25,113 @@ describe('IP filter controller', () => {
     jest.resetAllMocks();
   });
 
-  it('getIpFilters() should return ip filters', async () => {
-    ctx.app.repositoryService.ipFilterRepository.getIpFilters.mockReturnValue([ipFilter]);
+  it('findAll() should return ip filters', async () => {
+    ctx.app.repositoryService.ipFilterRepository.findAll.mockReturnValue([ipFilter]);
 
-    await ipFilterController.getIpFilters(ctx);
+    await ipFilterController.findAll(ctx);
 
-    expect(ctx.app.repositoryService.ipFilterRepository.getIpFilters).toHaveBeenCalled();
+    expect(ctx.app.repositoryService.ipFilterRepository.findAll).toHaveBeenCalled();
     expect(ctx.ok).toHaveBeenCalledWith([ipFilter]);
   });
 
-  it('getIpFilter() should return ip filter', async () => {
+  it('findById() should return ip filter', async () => {
     const id = 'id';
 
     ctx.params.id = id;
-    ctx.app.repositoryService.ipFilterRepository.getIpFilter.mockReturnValue(ipFilter);
+    ctx.app.repositoryService.ipFilterRepository.findById.mockReturnValue(ipFilter);
 
-    await ipFilterController.getIpFilter(ctx);
+    await ipFilterController.findById(ctx);
 
-    expect(ctx.app.repositoryService.ipFilterRepository.getIpFilter).toHaveBeenCalledWith(id);
+    expect(ctx.app.repositoryService.ipFilterRepository.findById).toHaveBeenCalledWith(id);
     expect(ctx.ok).toHaveBeenCalledWith(ipFilter);
   });
 
-  it('getIpFilter() should return not found', async () => {
+  it('findById() should return not found', async () => {
     const id = 'id';
     ctx.params.id = id;
-    ctx.app.repositoryService.ipFilterRepository.getIpFilter.mockReturnValue(null);
+    ctx.app.repositoryService.ipFilterRepository.findById.mockReturnValue(null);
 
-    await ipFilterController.getIpFilter(ctx);
+    await ipFilterController.findById(ctx);
 
-    expect(ctx.app.repositoryService.ipFilterRepository.getIpFilter).toHaveBeenCalledWith(id);
+    expect(ctx.app.repositoryService.ipFilterRepository.findById).toHaveBeenCalledWith(id);
     expect(ctx.notFound).toHaveBeenCalledWith();
   });
 
-  it('createIpFilter() should create ip filter', async () => {
+  it('create() should create ip filter', async () => {
     ctx.request.body = ipFilterCommand;
-    ctx.app.repositoryService.ipFilterRepository.createIpFilter.mockReturnValue(ipFilter);
-    ctx.app.repositoryService.ipFilterRepository.getIpFilters.mockReturnValue([ipFilter]);
+    ctx.app.repositoryService.ipFilterRepository.create.mockReturnValue(ipFilter);
+    ctx.app.repositoryService.ipFilterRepository.findAll.mockReturnValue([ipFilter]);
 
-    await ipFilterController.createIpFilter(ctx);
+    await ipFilterController.create(ctx);
 
     expect(validator.validate).toHaveBeenCalledWith(schema, ipFilterCommand);
-    expect(ctx.app.repositoryService.ipFilterRepository.createIpFilter).toHaveBeenCalledWith(ipFilterCommand);
+    expect(ctx.app.repositoryService.ipFilterRepository.create).toHaveBeenCalledWith(ipFilterCommand);
     expect(ctx.created).toHaveBeenCalledWith(ipFilter);
   });
 
-  it('createIpFilter() should return bad request', async () => {
+  it('create() should return bad request', async () => {
     ctx.request.body = ipFilterCommand;
     const validationError = new Error('invalid body');
     validator.validate = jest.fn().mockImplementationOnce(() => {
       throw validationError;
     });
 
-    await ipFilterController.createIpFilter(ctx);
+    await ipFilterController.create(ctx);
 
     expect(validator.validate).toHaveBeenCalledWith(schema, ipFilterCommand);
-    expect(ctx.app.repositoryService.ipFilterRepository.createIpFilter).not.toHaveBeenCalledWith();
+    expect(ctx.app.repositoryService.ipFilterRepository.create).not.toHaveBeenCalledWith();
     expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
   });
 
-  it('updateIpFilter() should update ip filter', async () => {
+  it('update() should update ip filter', async () => {
     const id = 'id';
     ctx.params.id = id;
     ctx.request.body = ipFilterCommand;
-    ctx.app.repositoryService.ipFilterRepository.getIpFilters.mockReturnValue([ipFilter]);
+    ctx.app.repositoryService.ipFilterRepository.findAll.mockReturnValue([ipFilter]);
 
-    await ipFilterController.updateIpFilter(ctx);
+    await ipFilterController.update(ctx);
 
     expect(validator.validate).toHaveBeenCalledWith(schema, ipFilterCommand);
-    expect(ctx.app.repositoryService.ipFilterRepository.updateIpFilter).toHaveBeenCalledWith(id, ipFilterCommand);
+    expect(ctx.app.repositoryService.ipFilterRepository.update).toHaveBeenCalledWith(id, ipFilterCommand);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
-  it('updateIpFilter() should return bad request', async () => {
+  it('update() should return bad request', async () => {
     ctx.request.body = ipFilterCommand;
     const validationError = new Error('invalid body');
     validator.validate = jest.fn().mockImplementationOnce(() => {
       throw validationError;
     });
 
-    await ipFilterController.updateIpFilter(ctx);
+    await ipFilterController.update(ctx);
 
     expect(validator.validate).toHaveBeenCalledWith(schema, ipFilterCommand);
-    expect(ctx.app.repositoryService.ipFilterRepository.updateIpFilter).not.toHaveBeenCalledWith();
+    expect(ctx.app.repositoryService.ipFilterRepository.update).not.toHaveBeenCalledWith();
     expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
   });
 
-  it('deleteIpFilter() should delete ip filter', async () => {
+  it('delete() should delete ip filter', async () => {
     const id = 'id';
     ctx.params.id = id;
-    ctx.app.repositoryService.ipFilterRepository.getIpFilter.mockReturnValue(ipFilter);
-    ctx.app.repositoryService.ipFilterRepository.getIpFilters.mockReturnValue([ipFilter]);
+    ctx.app.repositoryService.ipFilterRepository.findById.mockReturnValue(ipFilter);
+    ctx.app.repositoryService.ipFilterRepository.findAll.mockReturnValue([ipFilter]);
 
-    await ipFilterController.deleteIpFilter(ctx);
+    await ipFilterController.delete(ctx);
 
-    expect(ctx.app.repositoryService.ipFilterRepository.getIpFilter).toHaveBeenCalledWith(id);
-    expect(ctx.app.repositoryService.ipFilterRepository.deleteIpFilter).toHaveBeenCalledWith(id);
+    expect(ctx.app.repositoryService.ipFilterRepository.findById).toHaveBeenCalledWith(id);
+    expect(ctx.app.repositoryService.ipFilterRepository.delete).toHaveBeenCalledWith(id);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
-  it('deleteIpFilter() should return not found', async () => {
+  it('delete() should return not found', async () => {
     const id = 'id';
     ctx.params.id = id;
-    ctx.app.repositoryService.ipFilterRepository.getIpFilter.mockReturnValue(null);
+    ctx.app.repositoryService.ipFilterRepository.findById.mockReturnValue(null);
 
-    await ipFilterController.deleteIpFilter(ctx);
+    await ipFilterController.delete(ctx);
 
-    expect(ctx.app.repositoryService.ipFilterRepository.getIpFilter).toHaveBeenCalledWith(id);
-    expect(ctx.app.repositoryService.ipFilterRepository.deleteIpFilter).not.toHaveBeenCalled();
+    expect(ctx.app.repositoryService.ipFilterRepository.findById).toHaveBeenCalledWith(id);
+    expect(ctx.app.repositoryService.ipFilterRepository.delete).not.toHaveBeenCalled();
     expect(ctx.notFound).toHaveBeenCalled();
   });
 });

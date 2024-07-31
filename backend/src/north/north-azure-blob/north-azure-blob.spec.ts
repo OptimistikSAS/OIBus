@@ -2,18 +2,18 @@ import fs from 'node:fs/promises';
 
 import NorthAzureBlob from './north-azure-blob';
 import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/logger.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import RepositoryService from '../../service/repository.service';
-import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
+import RepositoryServiceMock from '../../tests/__mocks__/service/repository-service.mock';
 import { NorthCacheSettingsDTO, NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import { BlobServiceClient, StorageSharedKeyCredential } from '@azure/storage-blob';
 import { ClientSecretCredential, DefaultAzureCredential } from '@azure/identity';
-import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.mock';
-import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
+import ValueCacheServiceMock from '../../tests/__mocks__/service/cache/value-cache-service.mock';
+import FileCacheServiceMock from '../../tests/__mocks__/service/cache/file-cache-service.mock';
 import { NorthAzureBlobSettings } from '../../../../shared/model/north-settings.model';
-import ArchiveServiceMock from '../../tests/__mocks__/archive-service.mock';
+import ArchiveServiceMock from '../../tests/__mocks__/service/cache/archive-service.mock';
 import csv from 'papaparse';
 
 const uploadMock = jest.fn().mockReturnValue(Promise.resolve({ requestId: 'requestId' }));
@@ -120,7 +120,7 @@ describe('NorthAzureBlob without proxy', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     (csv.unparse as jest.Mock).mockReturnValue('csv content');
 
-    repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.northConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
   });
 
   it('should properly handle files with Shared Access Signature authentication', async () => {
@@ -377,7 +377,7 @@ describe('NorthAzureBlob with proxy', () => {
   };
   beforeEach(async () => {
     jest.clearAllMocks();
-    repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.northConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
   });
 
   it('should properly handle files with proxy auth', async () => {

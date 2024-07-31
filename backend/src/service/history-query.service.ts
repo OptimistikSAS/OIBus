@@ -8,17 +8,17 @@ export default class HistoryQueryService {
   constructor(readonly repositoryService: RepositoryService) {}
 
   getHistoryQuery(historyQueryId: string): HistoryQueryDTO | null {
-    return this.repositoryService.historyQueryRepository.getHistoryQuery(historyQueryId);
+    return this.repositoryService.historyQueryRepository.findById(historyQueryId);
   }
 
   getHistoryQueryList(): Array<HistoryQueryDTO> {
-    return this.repositoryService.historyQueryRepository.getHistoryQueries();
+    return this.repositoryService.historyQueryRepository.findAll();
   }
 
   listItems<I extends SouthItemSettings>(
     historyQueryId: string,
     searchParams: SouthConnectorItemSearchParam
   ): Array<SouthConnectorItemDTO<I>> {
-    return this.repositoryService.historyQueryItemRepository.listHistoryItems(historyQueryId, searchParams);
+    return this.repositoryService.historyQueryItemRepository.list(historyQueryId, searchParams);
   }
 }

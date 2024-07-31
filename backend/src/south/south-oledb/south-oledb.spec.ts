@@ -3,11 +3,11 @@ import path from 'node:path';
 import pino from 'pino';
 import * as utils from '../../service/utils';
 import { convertDateTimeToInstant, convertDelimiter, formatInstant, persistResults } from '../../service/utils';
-import PinoLogger from '../../tests/__mocks__/logger.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import RepositoryService from '../../service/repository.service';
-import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
+import RepositoryServiceMock from '../../tests/__mocks__/service/repository-service.mock';
 import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import {
   SouthOLEDBItemSettings,
@@ -181,7 +181,7 @@ describe('SouthOLEDB with authentication', () => {
     (convertDateTimeToInstant as jest.Mock).mockImplementation(value => value);
     (convertDelimiter as jest.Mock).mockImplementation(value => value);
     (formatInstant as jest.Mock).mockImplementation(value => value);
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
 
     south = new SouthOLEDB(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
@@ -504,7 +504,7 @@ describe('SouthOLEDB test connection', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
 
     south = new SouthOLEDB(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });

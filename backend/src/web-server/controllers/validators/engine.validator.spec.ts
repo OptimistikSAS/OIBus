@@ -72,7 +72,7 @@ const dataProviders: DataProvider[] = [
     },
     isValid: false,
     errorMessage:
-      '"name" must be a string. "port" must be a number. "proxyEnabled" must be a boolean. "proxyPort" must be a number. "logParameters.console.level" must be a string. "logParameters.file.level" must be a string. "logParameters.file.maxFileSize" must be a number. "logParameters.file.numberOfFiles" must be a number. "logParameters.database.level" must be a string. "logParameters.database.maxNumberOfLogs" must be a number. "logParameters.loki.level" must be a string. "logParameters.loki.interval" must be a number. "logParameters.loki.address" must be a string. "logParameters.loki.username" must be a string. "logParameters.loki.password" must be a string. "logParameters.oia.level" must be a string. "logParameters.oia.interval" must be a number'
+      '"name" must be a string. "port" must be a number. "proxyEnabled" must be a boolean. "proxyPort" must be a number. "logParameters.console.level" must be a string. "logParameters.file.level" must be a string. "logParameters.file.maxFileSize" must be a number. "logParameters.file.numberOfFiles" must be a number. "logParameters.database.level" must be a string. "logParameters.database.maxNumberOfLogs" must be a number. "logParameters.loki.level" must be a string. "logParameters.loki.interval" must be a number. "logParameters.oia.level" must be a string. "logParameters.oia.interval" must be a number'
   },
   {
     dto: {

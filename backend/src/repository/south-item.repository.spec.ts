@@ -61,7 +61,7 @@ describe('South item repository', () => {
         settings: JSON.stringify({})
       }
     ]);
-    const southItems = repository.listSouthItems('southId', { scanModeId: 'id1', enabled: false });
+    const southItems = repository.list('southId', { scanModeId: 'id1', enabled: false });
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, name, enabled, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM south_items ' +
         'WHERE connector_id = ? AND scan_mode_id = ? AND enabled = ?;'
@@ -113,7 +113,7 @@ describe('South item repository', () => {
       }
     ]);
     get.mockReturnValueOnce({ count: 2 });
-    const southItems = repository.searchSouthItems('southId', {
+    const southItems = repository.search('southId', {
       page: 1,
       name: 'my item'
     });
@@ -127,7 +127,7 @@ describe('South item repository', () => {
   it('should properly search south items without page', () => {
     all.mockReturnValueOnce([]);
     get.mockReturnValueOnce({ count: 0 });
-    repository.searchSouthItems('southId', {
+    repository.search('southId', {
       name: 'my item'
     });
     expect(database.prepare).toHaveBeenCalledWith(
@@ -173,7 +173,7 @@ describe('South item repository', () => {
         settings: JSON.stringify({})
       }
     ]);
-    const southItems = repository.getSouthItems('southId');
+    const southItems = repository.findAllForSouthConnector('southId');
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, name, enabled, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM south_items WHERE connector_id = ?;'
     );
@@ -197,7 +197,7 @@ describe('South item repository', () => {
       scanModeId: 'scanModeId',
       settings: JSON.stringify({})
     });
-    const southScan = repository.getSouthItem('id1');
+    const southScan = repository.findById('id1');
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, name, enabled, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM south_items WHERE id = ?;'
     );
@@ -207,7 +207,7 @@ describe('South item repository', () => {
 
   it('should properly get null when south item not found', () => {
     get.mockReturnValueOnce(null);
-    const southScan = repository.getSouthItem('id1');
+    const southScan = repository.findById('id1');
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, name, enabled, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM south_items WHERE id = ?;'
     );
@@ -225,7 +225,7 @@ describe('South item repository', () => {
       scanModeId: 'scanModeId',
       settings: {}
     };
-    repository.createSouthItem('southId', command);
+    repository.create('southId', command);
     expect(generateRandomId).toHaveBeenCalledWith(6);
     expect(database.prepare).toHaveBeenCalledWith(
       'INSERT INTO south_items (id, name, enabled, connector_id, scan_mode_id, settings) VALUES (?, ?, ?, ?, ?, ?);'
@@ -245,7 +245,7 @@ describe('South item repository', () => {
       scanModeId: 'scanModeId',
       settings: {}
     };
-    repository.updateSouthItem('id1', command);
+    repository.update('id1', command);
     expect(database.prepare).toHaveBeenCalledWith(
       'UPDATE south_items SET name = ?, enabled = ?, scan_mode_id = ?, settings = ? WHERE id = ?;'
     );
@@ -253,19 +253,19 @@ describe('South item repository', () => {
   });
 
   it('should delete a south item', () => {
-    repository.deleteSouthItem('id1');
+    repository.delete('id1');
     expect(database.prepare).toHaveBeenCalledWith('DELETE FROM south_items WHERE id = ?;');
     expect(run).toHaveBeenCalledWith('id1');
   });
 
   it('should delete all south items', () => {
-    repository.deleteAllSouthItems('id1');
+    repository.deleteAllBySouthConnector('id1');
     expect(database.prepare).toHaveBeenCalledWith('DELETE FROM south_items WHERE connector_id = ?;');
     expect(run).toHaveBeenCalledWith('id1');
   });
 
   it('should delete all south items associated to a connector id', () => {
-    repository.deleteAllSouthItems('connectorId');
+    repository.deleteAllBySouthConnector('connectorId');
     expect(database.prepare).toHaveBeenCalledWith('DELETE FROM south_items WHERE connector_id = ?;');
     expect(run).toHaveBeenCalledWith('connectorId');
   });
@@ -337,13 +337,13 @@ describe('South item repository', () => {
   });
 
   it('should enable south item', () => {
-    repository.enableSouthItem('id1');
+    repository.enable('id1');
     expect(database.prepare).toHaveBeenCalledWith('UPDATE south_items SET enabled = 1 WHERE id = ?;');
     expect(run).toHaveBeenCalledWith('id1');
   });
 
   it('should disable south item', () => {
-    repository.disableSouthItem('id1');
+    repository.disable('id1');
     expect(database.prepare).toHaveBeenCalledWith('UPDATE south_items SET enabled = 0 WHERE id = ?;');
     expect(run).toHaveBeenCalledWith('id1');
   });

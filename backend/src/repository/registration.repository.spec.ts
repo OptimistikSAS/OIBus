@@ -2,7 +2,7 @@ import SqliteDatabaseMock, { all, get, run } from '../tests/__mocks__/database.m
 import { generateRandomId } from '../service/utils';
 import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../shared/model/engine.model';
 import { Database } from 'better-sqlite3';
-import RegistrationRepository from './registration.repository';
+import OianalyticsRegistrationRepository from './oianalytics-registration.repository';
 
 jest.mock('../tests/__mocks__/database.mock');
 jest.mock('../service/utils', () => ({
@@ -10,7 +10,7 @@ jest.mock('../service/utils', () => ({
 }));
 
 let database: Database;
-let repository: RegistrationRepository;
+let repository: OianalyticsRegistrationRepository;
 describe('Empty registration repository', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -21,7 +21,7 @@ describe('Empty registration repository', () => {
       get,
       all
     });
-    repository = new RegistrationRepository(database);
+    repository = new OianalyticsRegistrationRepository(database);
   });
 
   it('should properly init registration settings table', () => {
@@ -34,7 +34,7 @@ describe('Empty registration repository', () => {
       proxyPassword: ''
     };
 
-    repository.createRegistrationSettings(command);
+    repository.createDefault(command);
     expect(generateRandomId).toHaveBeenCalledWith();
     expect(database.prepare).toHaveBeenCalledWith('INSERT INTO registrations (id, host, status) VALUES (?, ?, ?);');
     expect(run).toHaveBeenCalledWith('123456', command.host, 'NOT_REGISTERED');
@@ -48,12 +48,7 @@ describe('Empty registration repository', () => {
       acceptUnauthorized: false,
       useProxy: false
     };
-    repository.updateRegistration(
-      command,
-      '1234',
-      'http://localhost:4200/api/oianalytics/oibus/registration?id=id',
-      '2020-01-01T00:00:00Z'
-    );
+    repository.register(command, '1234', 'http://localhost:4200/api/oianalytics/oibus/registration?id=id', '2020-01-01T00:00:00Z');
     expect(database.prepare).toHaveBeenCalledWith(
       `UPDATE registrations SET host = ?, status = 'PENDING', token = '', activation_code = ?, check_url = ?, ` +
         `activation_expiration_date = ?, use_proxy = ?, proxy_url = ?, proxy_username = ?, proxy_password = ?, ` +
@@ -79,7 +74,7 @@ it('should edit registration settings', () => {
     acceptUnauthorized: false,
     useProxy: false
   };
-  repository.editRegistration(command);
+  repository.update(command);
   expect(database.prepare).toHaveBeenCalledWith(
     `UPDATE registrations SET ` +
       `use_proxy = ?, proxy_url = ?, proxy_username = ?, proxy_password = ?, ` +
@@ -118,7 +113,7 @@ describe('Non-empty Registration repository', () => {
       get,
       all
     });
-    repository = new RegistrationRepository(database);
+    repository = new OianalyticsRegistrationRepository(database);
   });
 
   it('should properly get the registration settings', () => {
@@ -136,7 +131,7 @@ describe('Non-empty Registration repository', () => {
       activationDate: '2020-20-20T00:00:00.000Z',
       activationExpirationDate: '2020-20-20T00:00:00.000Z'
     };
-    const registration = repository.getRegistrationSettings();
+    const registration = repository.get();
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, host, token, activation_code AS activationCode, status, activation_date AS activationDate, ' +
         'check_url AS checkUrl, activation_expiration_date AS activationExpirationDate, use_proxy AS useProxy, ' +
@@ -156,7 +151,7 @@ describe('Non-empty Registration repository', () => {
       proxyUsername: '',
       proxyPassword: ''
     };
-    repository.createRegistrationSettings(command);
+    repository.createDefault(command);
     expect(generateRandomId).not.toHaveBeenCalled();
   });
 
@@ -170,7 +165,7 @@ describe('Non-empty Registration repository', () => {
   });
 
   it('should activate registration', () => {
-    repository.activateRegistration('2020-01-01T00:00:00.000Z', 'token');
+    repository.activate('2020-01-01T00:00:00.000Z', 'token');
     expect(database.prepare).toHaveBeenCalledWith(
       `UPDATE registrations SET status = 'REGISTERED', activation_expiration_date = '', activation_code = '', ` +
         `check_url = '', activation_date = ?, token = ? WHERE rowid=(SELECT MIN(rowid) FROM registrations);`
