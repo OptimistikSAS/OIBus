@@ -5,7 +5,7 @@ import ValueCache from './value-cache.service';
 
 import { createFolder, generateRandomId, dirSize, getFilesFiltered } from '../utils';
 import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/logger.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { NorthCacheSettingsDTO } from '../../../../shared/model/north-connector.model';
 import { OIBusTimeValue } from '../../../../shared/model/engine.model';
 

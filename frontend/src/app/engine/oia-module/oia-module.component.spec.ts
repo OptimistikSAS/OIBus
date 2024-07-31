@@ -10,7 +10,7 @@ import { RegistrationSettingsDTO } from '../../../../../shared/model/engine.mode
 import { provideHttpClient } from '@angular/common/http';
 import { OibusCommandService } from '../../services/oibus-command.service';
 import { emptyPage } from '../../shared/test-utils';
-import { OIBusCommandDTO } from '../../../../../shared/model/command.model';
+import { OIBusCommand } from '../../../../../shared/model/command.model';
 
 class OiaModuleComponentTester extends ComponentTester<OiaModuleComponent> {
   constructor() {
@@ -62,7 +62,7 @@ describe('OiaModuleComponent', () => {
       ]
     });
 
-    commandService.searchCommands.and.returnValue(of(emptyPage<OIBusCommandDTO>()));
+    commandService.searchCommands.and.returnValue(of(emptyPage<OIBusCommand>()));
     engineService.getRegistrationSettings.and.returnValue(of(registrationSettings));
 
     tester = new OiaModuleComponentTester();

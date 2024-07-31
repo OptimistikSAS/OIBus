@@ -1,19 +1,19 @@
-import { getNetworkSettingsFromRegistration, getOIBusInfo, generateRandomId } from '../utils';
+import { generateRandomId, getNetworkSettingsFromRegistration, getOIBusInfo } from '../utils';
 import RepositoryService from '../repository.service';
 import EncryptionService from '../encryption.service';
 import pino from 'pino';
-import { OIBusCommandDTO, OIBusCommand } from '../../../../shared/model/command.model';
+import { OIBusCommandDTO } from '../../../../shared/model/command.model';
 import { DateTime } from 'luxon';
-import { RegistrationSettingsDTO, RegistrationSettingsCommandDTO } from '../../../../shared/model/engine.model';
+import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../../shared/model/engine.model';
 import { createProxyAgent } from '../proxy-agent';
 import fetch from 'node-fetch';
 import { Instant } from '../../../../shared/model/types';
-import CommandService from './command.service';
+import OianalyticsCommandService from './oianalytics-command.service';
 import ReloadService from '../reload.service';
-import OIAnalyticsMessageService from './message.service';
+import OIAnalyticsMessageService from './oianalytics-message.service';
 
 const CHECK_TIMEOUT = 10_000;
-export default class RegistrationService {
+export default class OIAnalyticsRegistrationService {
   private intervalCheckRegistration: NodeJS.Timeout | null = null;
   private intervalCheckCommands: NodeJS.Timeout | null = null;
   private ongoingCheckRegistration = false;
@@ -22,14 +22,14 @@ export default class RegistrationService {
   constructor(
     private repositoryService: RepositoryService,
     private encryptionService: EncryptionService,
-    private commandService: CommandService,
-    private oianalyticsMessageService: OIAnalyticsMessageService,
+    private commandService: OianalyticsCommandService,
+    private messageService: OIAnalyticsMessageService,
     private reloadService: ReloadService,
     private logger: pino.Logger
   ) {}
 
   start() {
-    const registrationSettings = this.repositoryService.registrationRepository.getRegistrationSettings();
+    const registrationSettings = this.repositoryService.oianalyticsRegistrationRepository.get();
     if (registrationSettings && registrationSettings.checkUrl && registrationSettings.status === 'PENDING') {
       this.intervalCheckRegistration = setInterval(this.checkRegistration.bind(this), CHECK_TIMEOUT);
     }
@@ -39,12 +39,12 @@ export default class RegistrationService {
   }
 
   getRegistrationSettings(): RegistrationSettingsDTO | null {
-    return this.repositoryService.registrationRepository.getRegistrationSettings();
+    return this.repositoryService.oianalyticsRegistrationRepository.get();
   }
 
   async updateRegistrationSettings(command: RegistrationSettingsCommandDTO): Promise<void> {
     const activationCode = generateRandomId(6);
-    const registrationSettings = this.repositoryService.registrationRepository.getRegistrationSettings()!;
+    const registrationSettings = this.repositoryService.oianalyticsRegistrationRepository.get()!;
     if (!registrationSettings) {
       throw new Error(`Registration settings not found`);
     }
@@ -55,7 +55,7 @@ export default class RegistrationService {
       command.proxyPassword = await this.encryptionService.encryptText(command.proxyPassword);
     }
 
-    const engineSettings = this.repositoryService.engineRepository.getEngineSettings()!;
+    const engineSettings = this.repositoryService.engineRepository.get()!;
 
     const oibusInfo = getOIBusInfo(engineSettings);
     const body = {
@@ -102,7 +102,7 @@ export default class RegistrationService {
     }
 
     const result: { redirectUrl: string; expirationDate: Instant } = await response.json();
-    this.repositoryService.registrationRepository.updateRegistration(command, activationCode, result.redirectUrl, result.expirationDate);
+    this.repositoryService.oianalyticsRegistrationRepository.register(command, activationCode, result.redirectUrl, result.expirationDate);
     if (!this.intervalCheckRegistration) {
       this.intervalCheckRegistration = setInterval(this.checkRegistration.bind(this), CHECK_TIMEOUT);
     }
@@ -113,7 +113,7 @@ export default class RegistrationService {
   }
 
   async editRegistrationSettings(command: RegistrationSettingsCommandDTO): Promise<void> {
-    const registrationSettings = this.repositoryService.registrationRepository.getRegistrationSettings()!;
+    const registrationSettings = this.repositoryService.oianalyticsRegistrationRepository.get()!;
     if (!registrationSettings) {
       throw new Error(`Registration settings not found`);
     }
@@ -138,9 +138,9 @@ export default class RegistrationService {
       command.acceptUnauthorized
     );
 
-    this.repositoryService.registrationRepository.editRegistration(command);
+    this.repositoryService.oianalyticsRegistrationRepository.update(command);
 
-    const engineSettings = this.repositoryService.engineRepository.getEngineSettings()!;
+    const engineSettings = this.repositoryService.engineRepository.get()!;
     if (engineSettings.logParameters.oia.level !== 'silent') {
       await this.reloadService.restartLogger(engineSettings);
     }
@@ -148,7 +148,7 @@ export default class RegistrationService {
 
   async activateRegistration(activationDate: string, accessToken: string): Promise<void> {
     const encryptedToken = await this.encryptionService.encryptText(accessToken);
-    this.repositoryService.registrationRepository.activateRegistration(activationDate, encryptedToken);
+    this.repositoryService.oianalyticsRegistrationRepository.activate(activationDate, encryptedToken);
     if (this.intervalCheckRegistration) {
       clearInterval(this.intervalCheckRegistration);
       this.intervalCheckRegistration = null;
@@ -162,7 +162,7 @@ export default class RegistrationService {
   }
 
   unregister() {
-    this.repositoryService.registrationRepository.unregister();
+    this.repositoryService.oianalyticsRegistrationRepository.unregister();
     if (this.intervalCheckRegistration) {
       clearInterval(this.intervalCheckRegistration);
       this.intervalCheckRegistration = null;
@@ -180,7 +180,7 @@ export default class RegistrationService {
       return;
     }
     this.logger.trace(`Registration check`);
-    const registrationSettings = this.repositoryService.registrationRepository.getRegistrationSettings();
+    const registrationSettings = this.repositoryService.oianalyticsRegistrationRepository.get();
     if (!registrationSettings || !registrationSettings.checkUrl) {
       this.logger.error(`Error while checking registration status: Could not retrieve check URL`);
       return;
@@ -222,11 +222,12 @@ export default class RegistrationService {
         this.logger.info(`OIBus registered on ${registrationSettings.host}`);
         await this.commandService.stop();
         this.commandService.start();
-        await this.oianalyticsMessageService.stop();
-        this.oianalyticsMessageService.start();
-        const engineSettings = this.repositoryService.engineRepository.getEngineSettings()!;
+        await this.messageService.stop();
+        this.messageService.start();
+        const engineSettings = this.repositoryService.engineRepository.get()!;
         if (engineSettings.logParameters.oia.level !== 'silent') {
           await this.reloadService.restartLogger(engineSettings);
+          this.logger = this.reloadService.loggerService.createChildLogger('internal');
         }
       }
     } catch (fetchError) {
@@ -249,7 +250,7 @@ export default class RegistrationService {
   }
 
   async sendAckCommands(): Promise<void> {
-    const commandsToAck = this.repositoryService.commandRepository.searchCommandsList({
+    const commandsToAck = this.repositoryService.oianalyticsCommandRepository.list({
       status: [],
       types: [],
       ack: false
@@ -272,7 +273,7 @@ export default class RegistrationService {
         agent: connectionSettings.agent
       });
       for (const command of commandsToAck) {
-        this.repositoryService.commandRepository.markAsAcknowledged(command.id);
+        this.repositoryService.oianalyticsCommandRepository.markAsAcknowledged(command.id);
       }
       if (!response.ok) {
         this.logger.error(
@@ -290,7 +291,7 @@ export default class RegistrationService {
    * Check if retrieved commands have been cancelled on OIAnalytics before running them
    */
   async checkRetrievedCommands(): Promise<void> {
-    const pendingCommands = this.repositoryService.commandRepository.searchCommandsList({ status: ['RETRIEVED'], types: [] });
+    const pendingCommands = this.repositoryService.oianalyticsCommandRepository.list({ status: ['RETRIEVED'], types: [] });
     if (pendingCommands.length === 0) {
       return;
     }
@@ -323,7 +324,7 @@ export default class RegistrationService {
       this.logger.trace(`${commandsToCancel.length} commands cancelled among the ${pendingCommands.length} pending commands`);
       for (const command of commandsToCancel) {
         this.commandService.removeCommandFromQueue(command.id);
-        this.repositoryService.commandRepository.cancel(command.id);
+        this.repositoryService.oianalyticsCommandRepository.cancel(command.id);
       }
     } catch (fetchError) {
       this.logger.error(`Error while checking PENDING commands status on ${url}. ${fetchError}`);
@@ -353,12 +354,7 @@ export default class RegistrationService {
       }
       this.logger.trace(`${newCommands.length} commands to add`);
       for (const command of newCommands) {
-        const creationCommand: OIBusCommand = {
-          type: command.type,
-          version: command.version,
-          assetId: command.assetId
-        };
-        const newCommand = this.repositoryService.commandRepository.create(command.id, creationCommand);
+        const newCommand = this.repositoryService.oianalyticsCommandRepository.create(command.id, command);
         this.commandService.addCommandToQueue(newCommand);
       }
       await this.sendAckCommands();
@@ -381,7 +377,7 @@ export default class RegistrationService {
 
   async onUnregister() {
     this.unregister();
-    const engineSettings = this.repositoryService.engineRepository.getEngineSettings()!;
+    const engineSettings = this.repositoryService.engineRepository.get()!;
     if (engineSettings.logParameters.oia.level !== 'silent') {
       await this.reloadService.restartLogger(engineSettings);
     }

@@ -1,14 +1,14 @@
 import NorthSftp from './north-sftp';
 import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/logger.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import RepositoryService from '../../service/repository.service';
-import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
+import RepositoryServiceMock from '../../tests/__mocks__/service/repository-service.mock';
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
-import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.mock';
-import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
-import ArchiveServiceMock from '../../tests/__mocks__/archive-service.mock';
+import ValueCacheServiceMock from '../../tests/__mocks__/service/cache/value-cache-service.mock';
+import FileCacheServiceMock from '../../tests/__mocks__/service/cache/file-cache-service.mock';
+import ArchiveServiceMock from '../../tests/__mocks__/service/cache/archive-service.mock';
 import csv from 'papaparse';
 import { NorthSFTPSettings } from '../../../../shared/model/north-settings.model';
 import sftpClient from 'ssh2-sftp-client';
@@ -115,7 +115,7 @@ describe('NorthSFTP', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.northConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
     (sftpClient as jest.Mock).mockImplementation(() => mockSftpClient);
 
     (csv.unparse as jest.Mock).mockReturnValue('csv content');
@@ -233,7 +233,7 @@ describe('NorthSFTP without suffix or prefix', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.northConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
     (sftpClient as jest.Mock).mockImplementation(() => mockSftpClient);
 
     north = new NorthSftp(configuration, encryptionService, repositoryService, logger, 'baseFolder');

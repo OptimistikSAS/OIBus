@@ -112,7 +112,7 @@ describe('North connector repository', () => {
         archiveRetentionDuration: 1000
       }
     ]);
-    const northConnectors = repository.getNorthConnectors();
+    const northConnectors = repository.findAll();
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, name, type, description, enabled, settings, caching_scan_mode_id AS cachingScanModeId, ' +
         'caching_group_count AS cachingGroupCount, caching_retry_interval AS cachingRetryInterval, ' +
@@ -166,7 +166,7 @@ describe('North connector repository', () => {
       archiveEnabled: 1,
       archiveRetentionDuration: 1000
     });
-    const northConnector = repository.getNorthConnector('id1');
+    const northConnector = repository.findById('id1');
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, name, type, description, enabled, settings, caching_scan_mode_id AS cachingScanModeId, ' +
         'caching_group_count AS cachingGroupCount, caching_retry_interval AS cachingRetryInterval, ' +
@@ -180,7 +180,7 @@ describe('North connector repository', () => {
 
   it('should return null when north connector not found', () => {
     get.mockReturnValueOnce(null);
-    const northConnector = repository.getNorthConnector('id1');
+    const northConnector = repository.findById('id1');
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, name, type, description, enabled, settings, caching_scan_mode_id AS cachingScanModeId, ' +
         'caching_group_count AS cachingGroupCount, caching_retry_interval AS cachingRetryInterval, ' +
@@ -220,7 +220,7 @@ describe('North connector repository', () => {
         }
       }
     };
-    repository.createNorthConnector(command);
+    repository.create(command);
     expect(generateRandomId).toHaveBeenCalledWith(6);
     expect(database.prepare).toHaveBeenCalledWith(
       'INSERT INTO north_connectors (id, name, type, description, enabled, settings, caching_scan_mode_id, ' +
@@ -280,7 +280,7 @@ describe('North connector repository', () => {
         }
       }
     };
-    repository.updateNorthConnector('id1', command);
+    repository.update('id1', command);
     expect(database.prepare).toHaveBeenCalledWith(
       'UPDATE north_connectors SET name = ?, description = ?, settings = ?, caching_scan_mode_id = ?, ' +
         'caching_group_count = ?, caching_retry_interval = ?, caching_retry_count = ?, caching_max_send_count = ?, ' +
@@ -304,19 +304,19 @@ describe('North connector repository', () => {
   });
 
   it('should delete a north connector', () => {
-    repository.deleteNorthConnector('id1');
+    repository.delete('id1');
     expect(database.prepare).toHaveBeenCalledWith('DELETE FROM north_connectors WHERE id = ?;');
     expect(run).toHaveBeenCalledWith('id1');
   });
 
   it('should start north connector', () => {
-    repository.startNorthConnector('id1');
+    repository.start('id1');
     expect(database.prepare).toHaveBeenCalledWith('UPDATE north_connectors SET enabled = ? WHERE id = ?;');
     expect(run).toHaveBeenCalledWith(1, 'id1');
   });
 
   it('should stop north connector', () => {
-    repository.stopNorthConnector('id1');
+    repository.stop('id1');
     expect(database.prepare).toHaveBeenCalledWith('UPDATE north_connectors SET enabled = ? WHERE id = ?;');
     expect(run).toHaveBeenCalledWith(0, 'id1');
   });

@@ -2,14 +2,14 @@ import fetch from 'node-fetch';
 import SouthOianalytics from './south-oianalytics';
 import * as utils from '../../service/utils';
 import DatabaseMock from '../../tests/__mocks__/database.mock';
-import PinoLogger from '../../tests/__mocks__/logger.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 
 import pino from 'pino';
 import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
-import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
-import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
+import RepositoryServiceMock from '../../tests/__mocks__/service/repository-service.mock';
 import path from 'node:path';
 import { SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../../../shared/model/south-settings.model';
 import { createProxyAgent } from '../../service/proxy-agent';
@@ -165,7 +165,7 @@ describe('SouthOIAnalytics with Basic auth', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
 
     (utils.formatQueryParams as jest.Mock).mockReturnValue(
       '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
@@ -315,7 +315,7 @@ describe('SouthOIAnalytics without proxy but with accept self signed', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
 
     (utils.formatQueryParams as jest.Mock).mockReturnValue(
       '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
@@ -527,7 +527,7 @@ describe('SouthOIAnalytics with proxy', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
 
     (utils.formatQueryParams as jest.Mock).mockReturnValue(
       '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
@@ -607,7 +607,7 @@ describe('SouthOIAnalytics with proxy but without proxy password', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
 
     (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
     (utils.formatQueryParams as jest.Mock).mockReturnValue(
@@ -700,7 +700,7 @@ describe('SouthOIAnalytics without proxy but with acceptUnauthorized', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
 
     (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
     south = new SouthOianalytics(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
@@ -745,7 +745,7 @@ describe('SouthOIAnalytics with aad-certificate', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     (createProxyAgent as jest.Mock).mockReturnValue({});
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
 
     south = new SouthOianalytics(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
     await south.start();
@@ -797,7 +797,7 @@ describe('SouthOIAnalytics with OIA module', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
 
     (createProxyAgent as jest.Mock).mockReturnValue({});
     registrationSettings = {
@@ -814,7 +814,7 @@ describe('SouthOIAnalytics with OIA module', () => {
   });
 
   it('should use oia module', async () => {
-    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValueOnce(registrationSettings);
+    (repositoryService.oianalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(registrationSettings);
     const result = await south.getNetworkSettings('/endpoint');
     expect(result.headers).toEqual({ authorization: 'Bearer my oia token' });
     expect(result.host).toEqual(registrationSettings.host);
@@ -833,7 +833,7 @@ describe('SouthOIAnalytics with OIA module', () => {
     registrationSettings.proxyUrl = 'http://localhost:8080';
     registrationSettings.proxyUsername = 'user';
     registrationSettings.proxyPassword = 'pass';
-    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValueOnce(registrationSettings);
+    (repositoryService.oianalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(registrationSettings);
     const result = await south.getNetworkSettings('/endpoint');
     expect(result.headers).toEqual({ authorization: 'Bearer my oia token' });
     expect(result.host).toEqual('http://localhost:4200');
@@ -850,7 +850,7 @@ describe('SouthOIAnalytics with OIA module', () => {
     registrationSettings.host = 'http://localhost:4200/';
     registrationSettings.useProxy = true;
     registrationSettings.proxyUrl = 'http://localhost:8080';
-    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValueOnce(registrationSettings);
+    (repositoryService.oianalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(registrationSettings);
     const result = await south.getNetworkSettings('/endpoint');
     expect(result.headers).toEqual({ authorization: 'Bearer my oia token' });
     expect(result.host).toEqual('http://localhost:4200');
@@ -865,7 +865,7 @@ describe('SouthOIAnalytics with OIA module', () => {
 
   it('should not use oia module if not registered', async () => {
     registrationSettings.status = 'PENDING';
-    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValueOnce(registrationSettings);
+    (repositoryService.oianalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(registrationSettings);
 
     await expect(south.getNetworkSettings('/endpoint')).rejects.toThrow(new Error('OIBus not registered in OIAnalytics'));
 

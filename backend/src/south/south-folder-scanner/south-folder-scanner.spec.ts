@@ -5,12 +5,12 @@ import SouthFolderScanner from './south-folder-scanner';
 
 import { compress } from '../../service/utils';
 import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/logger.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import DatabaseMock from '../../tests/__mocks__/database.mock';
 import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import RepositoryService from '../../service/repository.service';
-import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
+import RepositoryServiceMock from '../../tests/__mocks__/service/repository-service.mock';
 
 import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import { SouthFolderScannerItemSettings, SouthFolderScannerSettings } from '../../../../shared/model/south-settings.model';
@@ -124,7 +124,7 @@ describe('SouthFolderScanner', () => {
   beforeEach(async () => {
     jest.resetAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
 
     south = new SouthFolderScanner(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
@@ -232,8 +232,7 @@ describe('SouthFolderScanner with preserve file and compression', () => {
       run: jest.fn()
     }));
     configuration.settings.compression = true;
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
     south = new SouthFolderScanner(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
     await south.start();
   });
@@ -298,7 +297,7 @@ describe('SouthFolderScanner with preserve file ignore modified date', () => {
       run: jest.fn()
     }));
     configuration.settings.compression = false;
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
 
     south = new SouthFolderScanner(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
@@ -320,7 +319,7 @@ describe('SouthFolderScanner test connection', () => {
     jest.resetAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
     south = new SouthFolderScanner(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 

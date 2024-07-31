@@ -15,11 +15,17 @@ import HistoryQueryService from './service/history-query.service';
 import OIBusService from './service/oibus.service';
 import { migrateCrypto, migrateEntities, migrateLogsAndMetrics, migrateSouthCache } from './db/migration-service';
 import HomeMetricsService from './service/home-metrics.service';
-import CommandService from './service/oia/command.service';
-import RegistrationService from './service/oia/registration.service';
+import OianalyticsCommandService from './service/oia/oianalytics-command.service';
+import OianalyticsRegistrationService from './service/oia/oianalytics-registration.service';
 import ProxyServer from './web-server/proxy-server';
 import ConnectionService from './service/connection.service';
-import OIAnalyticsMessageService from './service/oia/message.service';
+import OIAnalyticsMessageService from './service/oia/oianalytics-message.service';
+import OIAnalyticsConfigurationClient from './service/oia/oianalytics-configuration.client';
+import SouthConnectorConfigService from './service/south-connector-config.service';
+import JoiValidator from './web-server/controllers/validators/joi.validator';
+import OIAnalyticsCommandClient from './service/oia/oianalytics-command.client';
+import ScanModeConfigService from './service/scan-mode-config.service';
+import NorthConnectorConfigService from './service/north-connector-config.service';
 
 const CONFIG_DATABASE = 'oibus.db';
 const CRYPTO_DATABASE = 'crypto.db';
@@ -56,7 +62,7 @@ const LOG_DB_NAME = 'logs.db';
     path.resolve(CACHE_FOLDER, CACHE_DATABASE)
   );
 
-  const oibusSettings = repositoryService.engineRepository.getEngineSettings();
+  const oibusSettings = repositoryService.engineRepository.get();
   if (!oibusSettings) {
     console.error('Error while loading OIBus settings from database');
     return;
@@ -86,7 +92,7 @@ const LOG_DB_NAME = 'logs.db';
     oibusSettings.id,
     oibusSettings.name,
     oibusSettings.logParameters,
-    repositoryService.registrationRepository.getRegistrationSettings()
+    repositoryService.oianalyticsRegistrationRepository.get()
   );
 
   const connectionService = new ConnectionService(loggerService.logger!);
@@ -112,17 +118,22 @@ const LOG_DB_NAME = 'logs.db';
     loggerService.logger!
   );
 
-  const oianalyticsMessageService = new OIAnalyticsMessageService(repositoryService, encryptionService, loggerService.logger!);
-  oianalyticsMessageService.start();
-  const commandService = new CommandService(
-    repositoryService,
+  const configurationClient = new OIAnalyticsConfigurationClient(
+    repositoryService.oianalyticsRegistrationRepository,
     encryptionService,
     oianalyticsMessageService,
     loggerService.logger!,
-    binaryFolder,
     ignoreRemoteUpdate
   );
-  commandService.start();
+
+  const commandClient = new OIAnalyticsCommandClient(
+    repositoryService.oianalyticsRegistrationRepository,
+    encryptionService,
+    loggerService.logger!
+  );
+
+  const oianalyticsMessageService = new OIAnalyticsMessageService(repositoryService, configurationClient, loggerService.logger!);
+  oianalyticsMessageService.start();
 
   const oibusService = new OIBusService(engine, historyQueryEngine);
 
@@ -134,12 +145,12 @@ const LOG_DB_NAME = 'logs.db';
     '127.0.0.1',
     '::1',
     '::ffff:127.0.0.1',
-    ...repositoryService.ipFilterRepository.getIpFilters().map(filter => filter.address)
+    ...repositoryService.ipFilterRepository.findAll().map(filter => filter.address)
   ];
   proxyServer.refreshIpFilters(ipFilters);
 
   if (oibusSettings.proxyEnabled) {
-    await proxyServer.start(oibusSettings.proxyPort);
+    await proxyServer.start(oibusSettings.proxyPort!);
   }
 
   const reloadService = new ReloadService(
@@ -156,7 +167,51 @@ const LOG_DB_NAME = 'logs.db';
     proxyServer
   );
 
-  const registrationService = new RegistrationService(
+  const scanModeConfigService = new ScanModeConfigService(
+    new JoiValidator(),
+    repositoryService.scanModeRepository,
+    repositoryService.southCacheRepository,
+    reloadService,
+    oianalyticsMessageService
+  );
+
+  const southConnectorConfigService = new SouthConnectorConfigService(
+    new JoiValidator(),
+    repositoryService.southConnectorRepository,
+    repositoryService.southItemRepository,
+    repositoryService.scanModeRepository,
+    southService,
+    reloadService,
+    oianalyticsMessageService,
+    encryptionService
+  );
+
+  const northConnectorConfigService = new NorthConnectorConfigService(
+    new JoiValidator(),
+    repositoryService.northConnectorRepository,
+    repositoryService.subscriptionRepository,
+    repositoryService.scanModeRepository,
+    northService,
+    reloadService,
+    oianalyticsMessageService,
+    encryptionService
+  );
+
+  const commandService = new OianalyticsCommandService(
+    repositoryService,
+    reloadService,
+    encryptionService,
+    oianalyticsMessageService,
+    scanModeConfigService,
+    southConnectorConfigService,
+    northConnectorConfigService,
+    commandClient,
+    loggerService.logger!,
+    binaryFolder
+  );
+  commandService.start();
+
+  const registrationService = new OianalyticsRegistrationService(
     repositoryService,
     encryptionService,
     commandService,
@@ -176,6 +231,9 @@ const LOG_DB_NAME = 'logs.db';
     northService,
     oibusService,
     engineMetricsService,
+    scanModeConfigService,
+    southConnectorConfigService,
+    northConnectorConfigService,
     ignoreIpFilters,
     loggerService.createChildLogger('web-server')
   );
@@ -199,7 +257,7 @@ const LOG_DB_NAME = 'logs.db';
     process.exit();
   });
 
-  const updatedOIBusSettings = repositoryService.engineRepository.getEngineSettings()!;
+  const updatedOIBusSettings = repositoryService.engineRepository.get()!;
   loggerService.logger!.info(`OIBus fully started: ${JSON.stringify(getOIBusInfo(updatedOIBusSettings))}`);
   console.info(`OIBus fully started: ${JSON.stringify(getOIBusInfo(updatedOIBusSettings))}`);
 })();

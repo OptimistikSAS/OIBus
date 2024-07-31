@@ -5,7 +5,7 @@ import HistoryQueryEngine from '../engine/history-query-engine';
 import HistoryQueryEngineMock from '../tests/__mocks__/history-query-engine.mock';
 import { createProxyAgent } from './proxy-agent';
 import pino from 'pino';
-import PinoLogger from '../tests/__mocks__/logger.mock';
+import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 
 jest.mock('node:fs/promises');
 jest.mock('node-fetch');

@@ -35,7 +35,7 @@ import csv from 'papaparse';
 import pino from 'pino';
 import AdmZip from 'adm-zip';
 import fetch from 'node-fetch';
-import PinoLogger from '../tests/__mocks__/logger.mock';
+import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import { DateTimeType } from '../../../shared/model/types';
 import Stream from 'node:stream';
 import http from 'node:http';
@@ -44,7 +44,7 @@ import os from 'node:os';
 import { EngineSettingsDTO, OIBusInfo, RegistrationSettingsDTO } from '../../../shared/model/engine.model';
 import { createProxyAgent } from './proxy-agent';
 import EncryptionService from './encryption.service';
-import EncryptionServiceMock from '../tests/__mocks__/encryption-service.mock';
+import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 import cronstrue from 'cronstrue';
 
 jest.mock('node:zlib');

@@ -1,8 +1,12 @@
 import SqliteDatabaseMock, { all, get, run } from '../tests/__mocks__/database.mock';
 import { Database } from 'better-sqlite3';
-import OianalyticsMessageRepository from './oianalytics-message.repository';
+import OianalyticsMessageRepository, { OIAnalyticsMessageResult } from './oianalytics-message.repository';
 import { Page } from '../../../shared/model/types';
-import { InfoMessageContent, OIAnalyticsMessageDTO } from '../../../shared/model/oianalytics-message.model';
+import {
+  OIAnalyticsMessage,
+  OIAnalyticsMessageFullConfigCommandDTO,
+  OIAnalyticsMessageInfoCommandDTO
+} from '../../../shared/model/oianalytics-message.model';
 
 jest.mock('../tests/__mocks__/database.mock');
 jest.mock('../service/utils', () => ({
@@ -10,12 +14,26 @@ jest.mock('../service/utils', () => ({
 }));
 const nowDateString = '2020-02-02T02:02:02.222Z';
 
-const existingMessage: OIAnalyticsMessageDTO = {
-  id: '1234',
-  status: 'ERRORED',
-  type: 'INFO',
-  content: {} as InfoMessageContent
-};
+const mockResults: Array<OIAnalyticsMessageResult> = [
+  {
+    id: 'id1',
+    created_at: '2020-02-02T02:02:02.222Z',
+    completed_date: '2020-02-02T02:02:02.222Z',
+    type: 'info',
+    status: 'PENDING',
+    error: '',
+    content: '{}'
+  },
+  {
+    id: 'id2',
+    created_at: '2020-02-02T02:02:02.222Z',
+    completed_date: '2020-02-02T02:02:02.222Z',
+    type: 'full-config',
+    status: 'PENDING',
+    error: '',
+    content: ''
+  }
+];
 
 let database: Database;
 let repository: OianalyticsMessageRepository;
@@ -23,7 +41,7 @@ describe('OIAnalytics Message repository', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     database = new SqliteDatabaseMock();
-    all.mockReturnValue([existingMessage]);
+    all.mockReturnValue(mockResults);
     database.prepare = jest.fn().mockReturnValue({
       run,
       get,
@@ -32,64 +50,54 @@ describe('OIAnalytics Message repository', () => {
     repository = new OianalyticsMessageRepository(database);
   });
 
-  it('should create message', () => {
+  it('should create INFO message', () => {
     run.mockReturnValueOnce({ lastInsertRowid: 1 });
-    get.mockReturnValueOnce({ ...existingMessage, content: '{}' });
+    get.mockReturnValueOnce(mockResults[0]);
 
-    repository.createOIAnalyticsMessages('INFO', {} as InfoMessageContent);
-    expect(database.prepare).toHaveBeenCalledWith('INSERT INTO oianalytics_messages (id, type, status, content) VALUES (?, ?, ?, ?);');
-    expect(run).toHaveBeenCalledWith('123456', 'INFO', 'PENDING', JSON.stringify({}));
+    repository.create({ type: 'info' } as OIAnalyticsMessageInfoCommandDTO);
+    expect(database.prepare).toHaveBeenCalledWith('INSERT INTO oianalytics_messages (id, type, status) VALUES (?, ?, ?);');
+    expect(run).toHaveBeenCalledWith('123456', 'info', 'PENDING');
   });
 
-  it('should update message', () => {
-    repository.updateOIAnalyticsMessages('id', {} as InfoMessageContent);
-    expect(database.prepare).toHaveBeenCalledWith('UPDATE oianalytics_messages SET content = ? WHERE id = ?;');
-    expect(run).toHaveBeenCalledWith(JSON.stringify({}), 'id');
+  it('should create FULL_CONFIG message', () => {
+    run.mockReturnValueOnce({ lastInsertRowid: 1 });
+    get.mockReturnValueOnce(mockResults[1]);
+
+    repository.create({ type: 'full-config' } as OIAnalyticsMessageFullConfigCommandDTO);
+    expect(database.prepare).toHaveBeenCalledWith('INSERT INTO oianalytics_messages (id, type, status) VALUES (?, ?, ?);');
+    expect(run).toHaveBeenCalledWith('123456', 'full-config', 'PENDING');
   });
 
   it('should properly get messages page by search criteria', () => {
-    const expectedValue: Page<OIAnalyticsMessageDTO> = {
+    const expectedValue: Page<OIAnalyticsMessage> = {
       content: [
         {
-          id: '1234',
-          creationDate: '2023-01-01T00:00:00.000Z',
-          type: 'INFO',
+          id: 'id1',
+          creationDate: '2020-02-02T02:02:02.222Z',
+          completedDate: '2020-02-02T02:02:02.222Z',
+          type: 'info',
           status: 'PENDING',
-          content: {} as InfoMessageContent
+          error: ''
         },
         {
-          id: '1234',
-          creationDate: '2024-01-01T00:00:00.000Z',
-          type: 'INFO',
-          status: 'ERRORED',
-          content: {} as InfoMessageContent
+          id: 'id2',
+          creationDate: '2020-02-02T02:02:02.222Z',
+          completedDate: '2020-02-02T02:02:02.222Z',
+          type: 'full-config',
+          status: 'PENDING',
+          error: ''
         }
       ],
       size: 50,
       number: 0,
-      totalElements: 2,
+      totalElements: 3,
       totalPages: 1
     };
-    all.mockReturnValueOnce([
+    all.mockReturnValueOnce(mockResults);
+    get.mockReturnValueOnce({ count: 3 });
+    const messages = repository.search(
       {
-        id: '1234',
-        creationDate: '2023-01-01T00:00:00.000Z',
-        type: 'INFO',
-        status: 'PENDING',
-        content: '{}'
-      },
-      {
-        id: '1234',
-        creationDate: '2024-01-01T00:00:00.000Z',
-        type: 'INFO',
-        status: 'ERRORED',
-        content: '{}'
-      }
-    ]);
-    get.mockReturnValueOnce({ count: 2 });
-    const logs = repository.searchMessagesPage(
-      {
-        types: ['INFO'],
+        types: ['info'],
         status: ['PENDING', 'ERRORED'],
         start: '2023-01-01T00:00:00.000Z',
         end: '2023-01-02T00:00:00.000Z'
@@ -97,10 +105,9 @@ describe('OIAnalytics Message repository', () => {
       0
     );
     expect(database.prepare).toHaveBeenCalledWith(
-      'SELECT id, created_at as creationDate, completed_date as compeltedDate, type, status, error, content FROM oianalytics_messages WHERE id IS NOT NULL ' +
-        'AND type IN (?) AND status IN (?,?) AND created_at >= ? AND created_at <= ? ORDER BY created_at DESC LIMIT 50 OFFSET ?;'
+      'SELECT * FROM oianalytics_messages WHERE id IS NOT NULL AND type IN (?) AND status IN (?,?) AND created_at >= ? AND created_at <= ? ORDER BY created_at DESC LIMIT 50 OFFSET ?;'
     );
-    expect(logs).toEqual(expectedValue);
+    expect(messages).toEqual(expectedValue);
 
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT COUNT(*) as count FROM oianalytics_messages WHERE id IS NOT NULL AND type IN (?) AND status IN (?,?) AND created_at >= ? AND created_at <= ?;'
@@ -108,47 +115,33 @@ describe('OIAnalytics Message repository', () => {
   });
 
   it('should properly get messages list by search criteria', () => {
-    const expectedValue: Array<OIAnalyticsMessageDTO> = [
+    const expectedValue: Array<OIAnalyticsMessage> = [
       {
-        id: '1234',
-        creationDate: '2023-01-01T00:00:00.000Z',
-        type: 'INFO',
+        id: 'id1',
+        creationDate: '2020-02-02T02:02:02.222Z',
+        completedDate: '2020-02-02T02:02:02.222Z',
+        type: 'info',
         status: 'PENDING',
-        content: {} as InfoMessageContent
+        error: ''
       },
       {
-        id: '1234',
-        creationDate: '2024-01-01T00:00:00.000Z',
-        type: 'INFO',
-        status: 'ERRORED',
-        content: {} as InfoMessageContent
+        id: 'id2',
+        creationDate: '2020-02-02T02:02:02.222Z',
+        completedDate: '2020-02-02T02:02:02.222Z',
+        type: 'full-config',
+        status: 'PENDING',
+        error: ''
       }
     ];
-    all.mockReturnValueOnce([
-      {
-        id: '1234',
-        creationDate: '2023-01-01T00:00:00.000Z',
-        type: 'INFO',
-        status: 'PENDING',
-        content: '{}'
-      },
-      {
-        id: '1234',
-        creationDate: '2024-01-01T00:00:00.000Z',
-        type: 'INFO',
-        status: 'ERRORED',
-        content: '{}'
-      }
-    ]);
-    const messages = repository.searchMessagesList({
-      types: ['INFO'],
+    all.mockReturnValueOnce(mockResults);
+    const messages = repository.list({
+      types: ['info'],
       status: ['PENDING', 'ERRORED'],
       start: '2023-01-01T00:00:00.000Z',
       end: '2023-01-02T00:00:00.000Z'
     });
     expect(database.prepare).toHaveBeenCalledWith(
-      'SELECT id, created_at as creationDate, completed_date as compeltedDate, type, status, error, content FROM oianalytics_messages WHERE id IS NOT NULL ' +
-        'AND type IN (?) AND status IN (?,?) AND created_at >= ? AND created_at <= ? ORDER BY created_at DESC;'
+      'SELECT * FROM oianalytics_messages WHERE id IS NOT NULL AND type IN (?) AND status IN (?,?) AND created_at >= ? AND created_at <= ? ORDER BY created_at DESC;'
     );
     expect(messages).toEqual(expectedValue);
   });

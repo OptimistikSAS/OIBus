@@ -1,5 +1,5 @@
 import path from 'node:path';
-import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import { LogSettings, RegistrationSettingsDTO } from '../../../../shared/model/engine.model';
 
 import pino from 'pino';

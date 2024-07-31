@@ -4,8 +4,8 @@ import { LogDTO } from '../../../../shared/model/logs.model';
 import AbstractController from './abstract.controller';
 import { CommandSearchParam } from '../../../../shared/model/command.model';
 
-export default class CommandController extends AbstractController {
-  async searchCommands(ctx: KoaContext<void, Page<LogDTO>>): Promise<void> {
+export default class OIAnalyticsCommandController extends AbstractController {
+  async search(ctx: KoaContext<void, Page<LogDTO>>): Promise<void> {
     const types = Array.isArray(ctx.query.types) ? ctx.query.types : [];
     const status = Array.isArray(ctx.query.status) ? ctx.query.status : [];
     if (typeof ctx.query.types === 'string') {
@@ -20,7 +20,7 @@ export default class CommandController extends AbstractController {
       status
     };
 
-    const logs = ctx.app.repositoryService.commandRepository.searchCommandsPage(
+    const logs = ctx.app.repositoryService.oianalyticsCommandRepository.search(
       searchParams,
       ctx.query.page ? parseInt(ctx.query.page as string, 10) : 0
     );

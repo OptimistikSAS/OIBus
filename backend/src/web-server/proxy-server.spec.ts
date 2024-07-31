@@ -3,7 +3,7 @@ import http from 'node:http';
 import httpProxy from 'http-proxy';
 import net from 'node:net';
 import ProxyServer from './proxy-server';
-import PinoLogger from '../tests/__mocks__/logger.mock';
+import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 
 const httpMock = {
   on: jest.fn(),
