@@ -1,7 +1,7 @@
 import HistoryQuery from './history-query';
-import PinoLogger from '../tests/__mocks__/logger.mock';
-import SouthServiceMock from '../tests/__mocks__/south-service.mock';
-import NorthServiceMock from '../tests/__mocks__/north-service.mock';
+import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
+import SouthServiceMock from '../tests/__mocks__/service/south-service.mock';
+import NorthServiceMock from '../tests/__mocks__/service/north-service.mock';
 
 import { SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
 import { HistoryQueryDTO } from '../../../shared/model/history-query.model';
@@ -13,7 +13,7 @@ import { createFolder } from '../service/utils';
 
 import pino from 'pino';
 import path from 'node:path';
-import HistoryServiceMock from '../tests/__mocks__/history-query-service.mock';
+import HistoryServiceMock from '../tests/__mocks__/service/history-query-service.mock';
 import HistoryQueryService from '../service/history-query.service';
 import Stream from 'node:stream';
 import { EventEmitter } from 'node:events';
@@ -154,7 +154,7 @@ describe('HistoryQuery enabled', () => {
         }
       }
     };
-    (historyService.repositoryService.historyQueryRepository.getHistoryQuery as jest.Mock).mockReturnValue(configuration);
+    (historyService.repositoryService.historyQueryRepository.findById as jest.Mock).mockReturnValue(configuration);
     (historyService.listItems as jest.Mock).mockReturnValue(items);
 
     historyQuery = new HistoryQuery(
@@ -228,7 +228,7 @@ describe('HistoryQuery enabled', () => {
     expect(createdSouth.start).toHaveBeenCalledTimes(2);
     expect(createdSouth.stop).toHaveBeenCalledTimes(1);
 
-    (historyService.repositoryService.historyQueryRepository.getHistoryQuery as jest.Mock).mockReturnValueOnce({
+    (historyService.repositoryService.historyQueryRepository.findById as jest.Mock).mockReturnValueOnce({
       ...configuration,
       status: 'PENDING'
     });
@@ -349,7 +349,7 @@ describe('HistoryQuery disabled', () => {
         }
       }
     };
-    (historyService.repositoryService.historyQueryRepository.getHistoryQuery as jest.Mock).mockReturnValue(configuration);
+    (historyService.repositoryService.historyQueryRepository.findById as jest.Mock).mockReturnValue(configuration);
 
     historyQuery = new HistoryQuery(configuration, southService, northService, historyService, logger, 'baseFolder');
   });

@@ -1,6 +1,6 @@
 import { Knex } from 'knex';
-import { REGISTRATIONS_TABLE } from '../../repository/registration.repository';
-import { COMMANDS_TABLE } from '../../repository/command.repository';
+import { REGISTRATIONS_TABLE } from '../../repository/oianalytics-registration.repository';
+import { COMMANDS_TABLE } from '../../repository/oianalytics-command.repository';
 import { SOUTH_CONNECTORS_TABLE } from '../../repository/south-connector.repository';
 import { HISTORY_QUERIES_TABLE } from '../../repository/history-query.repository';
 

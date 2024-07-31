@@ -1,7 +1,7 @@
-import PinoLogger from '../tests/__mocks__/logger.mock';
-import SouthServiceMock from '../tests/__mocks__/south-service.mock';
-import NorthServiceMock from '../tests/__mocks__/north-service.mock';
-import HistoryQueryServiceMock from '../tests/__mocks__/history-query-service.mock';
+import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
+import SouthServiceMock from '../tests/__mocks__/service/south-service.mock';
+import NorthServiceMock from '../tests/__mocks__/service/north-service.mock';
+import HistoryQueryServiceMock from '../tests/__mocks__/service/history-query-service.mock';
 import { HistoryQueryDTO } from '../../../shared/model/history-query.model';
 
 import SouthService from '../service/south.service';
@@ -9,7 +9,7 @@ import NorthService from '../service/north.service';
 
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
-import EncryptionServiceMock from '../tests/__mocks__/encryption-service.mock';
+import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 import HistoryQueryEngine from './history-query-engine';
 import HistoryQueryService from '../service/history-query.service';
 import { PassThrough } from 'node:stream';

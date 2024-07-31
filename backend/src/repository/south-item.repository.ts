@@ -16,10 +16,7 @@ const PAGE_SIZE = 50;
 export default class SouthItemRepository {
   constructor(private readonly database: Database) {}
 
-  /**
-   * Retrieve all items associated to a South connector
-   */
-  listSouthItems(southId: string, searchParams: SouthConnectorItemSearchParam): Array<SouthConnectorItemDTO> {
+  list(southId: string, searchParams: SouthConnectorItemSearchParam): Array<SouthConnectorItemDTO> {
     let whereClause = `WHERE connector_id = ?`;
     const queryParams = [southId];
 
@@ -46,10 +43,7 @@ export default class SouthItemRepository {
       }));
   }
 
-  /**
-   * Search South items (point, query, folder...) associated to a South connector
-   */
-  searchSouthItems(southId: string, searchParams: SouthConnectorItemSearchParam): Page<SouthConnectorItemDTO> {
+  search(southId: string, searchParams: SouthConnectorItemSearchParam): Page<SouthConnectorItemDTO> {
     let whereClause = `WHERE connector_id = ?`;
     const queryParams = [southId];
 
@@ -87,10 +81,7 @@ export default class SouthItemRepository {
     };
   }
 
-  /**
-   * Retrieve all South items (point, query, folder...) associated to a South connector
-   */
-  getSouthItems(southId: string): Array<SouthConnectorItemDTO> {
+  findAllForSouthConnector(southId: string): Array<SouthConnectorItemDTO> {
     const query = `SELECT id, name, enabled, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`;
     return this.database
       .prepare(query)
@@ -105,10 +96,7 @@ export default class SouthItemRepository {
       }));
   }
 
-  /**
-   * Retrieve a South item by its ID
-   */
-  getSouthItem(id: string): SouthConnectorItemDTO | null {
+  findById(id: string): SouthConnectorItemDTO | null {
     const query = `SELECT id, name, enabled, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM ${SOUTH_ITEMS_TABLE} WHERE id = ?;`;
     const result: any = this.database.prepare(query).get(id);
     if (!result) return null;
@@ -122,10 +110,7 @@ export default class SouthItemRepository {
     };
   }
 
-  /**
-   * Create a South item with a random generated ID
-   */
-  createSouthItem(southId: string, command: SouthConnectorItemCommandDTO): SouthConnectorItemDTO {
+  create(southId: string, command: SouthConnectorItemCommandDTO): SouthConnectorItemDTO {
     const id = generateRandomId(6);
     const insertQuery =
       `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings) ` + `VALUES (?, ?, ?, ?, ?, ?);`;
@@ -145,36 +130,27 @@ export default class SouthItemRepository {
     };
   }
 
-  /**
-   * Update a South item by its ID
-   */
-  updateSouthItem(id: string, command: SouthConnectorItemCommandDTO): void {
+  update(id: string, command: SouthConnectorItemCommandDTO): void {
     const query = `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, scan_mode_id = ?, settings = ? WHERE id = ?;`;
     this.database.prepare(query).run(command.name, +command.enabled, command.scanModeId, JSON.stringify(command.settings), id);
   }
 
-  /**
-   * Delete a South item by its ID
-   */
-  deleteSouthItem(id: string): void {
+  delete(id: string): void {
     const query = `DELETE FROM ${SOUTH_ITEMS_TABLE} WHERE id = ?;`;
     this.database.prepare(query).run(id);
   }
 
-  enableSouthItem(id: string): void {
+  enable(id: string): void {
     const query = `UPDATE ${SOUTH_ITEMS_TABLE} SET enabled = 1 WHERE id = ?;`;
     this.database.prepare(query).run(id);
   }
 
-  disableSouthItem(id: string): void {
+  disable(id: string): void {
     const query = `UPDATE ${SOUTH_ITEMS_TABLE} SET enabled = 0 WHERE id = ?;`;
     this.database.prepare(query).run(id);
   }
 
-  /**
-   * Delete all South items of a South connector
-   */
-  deleteAllSouthItems(southId: string): void {
+  deleteAllBySouthConnector(southId: string): void {
     const query = `DELETE FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`;
     this.database.prepare(query).run(southId);
   }

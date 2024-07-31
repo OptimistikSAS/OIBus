@@ -22,7 +22,10 @@ import SouthService from '../service/south.service';
 import OIBusService from '../service/oibus.service';
 import NorthService from '../service/north.service';
 import EngineMetricsService from '../service/engine-metrics.service';
-import RegistrationService from '../service/oia/registration.service';
+import OianalyticsRegistrationService from '../service/oia/oianalytics-registration.service';
+import SouthConnectorConfigService from '../service/south-connector-config.service';
+import ScanModeConfigService from '../service/scan-mode-config.service';
+import NorthConnectorConfigService from '../service/north-connector-config.service';
 
 /**
  * Class Server - Provides the web client and establish socket connections.
@@ -39,12 +42,15 @@ export default class WebServer {
     port: number,
     private readonly encryptionService: EncryptionService,
     private readonly reloadService: ReloadService,
-    private readonly registrationService: RegistrationService,
+    private readonly registrationService: OianalyticsRegistrationService,
     private readonly repositoryService: RepositoryService,
     private readonly southService: SouthService,
     private readonly northService: NorthService,
     private readonly oibusService: OIBusService,
     private readonly engineMetricsService: EngineMetricsService,
+    private readonly scanModeConfigService: ScanModeConfigService,
+    private readonly southConnectorConfigService: SouthConnectorConfigService,
+    private readonly northConnectorConfigService: NorthConnectorConfigService,
     private readonly ignoreIpFilters: boolean,
     logger: pino.Logger
   ) {
@@ -83,7 +89,7 @@ export default class WebServer {
       '127.0.0.1',
       '::1',
       '::ffff:127.0.0.1',
-      ...this.repositoryService.ipFilterRepository.getIpFilters().map(filter => filter.address)
+      ...this.repositoryService.ipFilterRepository.findAll().map(filter => filter.address)
     ];
 
     this.app.use(
@@ -97,6 +103,9 @@ export default class WebServer {
         this.northService,
         this.oibusService,
         this.engineMetricsService,
+        this.scanModeConfigService,
+        this.southConnectorConfigService,
+        this.northConnectorConfigService,
         this.logger
       )
     );

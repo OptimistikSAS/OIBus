@@ -5,7 +5,7 @@ import { DateTime } from 'luxon';
 import AbstractController from './abstract.controller';
 
 export default class LogsConnectorController extends AbstractController {
-  async searchLogs(ctx: KoaContext<void, Page<LogDTO>>): Promise<void> {
+  async search(ctx: KoaContext<void, Page<LogDTO>>): Promise<void> {
     const now = DateTime.now().toMillis();
     const dayAgo = new Date(now - 86400000);
 
@@ -34,7 +34,7 @@ export default class LogsConnectorController extends AbstractController {
       messageContent: (ctx.query.messageContent as string) || null
     };
 
-    const logs = ctx.app.repositoryService.logRepository.searchLogs(searchParams);
+    const logs = ctx.app.repositoryService.logRepository.search(searchParams);
     ctx.ok(logs);
   }
 

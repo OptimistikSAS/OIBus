@@ -13,10 +13,7 @@ export default class SouthCacheRepository {
     this._database = database;
   }
 
-  /**
-   * Retrieve a South connector cache scan mode
-   */
-  getSouthCacheScanMode(southId: string, scanModeId: string, itemId: string): SouthCache | null {
+  getScanMode(southId: string, scanModeId: string, itemId: string): SouthCache | null {
     const query = `SELECT south_id AS southId, scan_mode_id AS scanModeId, item_id AS itemId, max_instant AS maxInstant FROM ${SOUTH_CACHE_TABLE} WHERE south_id = ? AND scan_mode_id = ? AND item_id = ?;`;
     const result: SouthCache | undefined = this._database.prepare(query).get(southId, scanModeId, itemId) as SouthCache;
     if (!result) return null;
@@ -28,11 +25,8 @@ export default class SouthCacheRepository {
     };
   }
 
-  /**
-   * Create or update a South connector cache scan mode with the scan mode ID as primary key
-   */
-  createOrUpdateCacheScanMode(command: SouthCache): void {
-    const foundScanMode = this.getSouthCacheScanMode(command.southId, command.scanModeId, command.itemId);
+  createOrUpdate(command: SouthCache): void {
+    const foundScanMode = this.getScanMode(command.southId, command.scanModeId, command.itemId);
     if (!foundScanMode) {
       const insertQuery = `INSERT INTO ${SOUTH_CACHE_TABLE} (south_id, scan_mode_id, item_id, max_instant) VALUES (?, ?, ?, ?);`;
       this._database.prepare(insertQuery).run(command.southId, command.scanModeId, command.itemId, command.maxInstant);
@@ -54,26 +48,20 @@ export default class SouthCacheRepository {
     return new Map(results.map(r => [r.scanModeId, r.maxInstant]));
   }
 
-  /**
-   * Update a cache row's scan mode ID
-   */
-  updateCacheScanModeId(southId: string, itemId: string, oldScanModeId: string, newScanModeId: string): void {
-    const foundScanMode = this.getSouthCacheScanMode(southId, oldScanModeId, itemId);
+  update(southId: string, itemId: string, oldScanModeId: string, newScanModeId: string): void {
+    const foundScanMode = this.getScanMode(southId, oldScanModeId, itemId);
     if (!foundScanMode) return;
 
     const query = `UPDATE ${SOUTH_CACHE_TABLE} SET scan_mode_id = ? WHERE south_id = ? AND scan_mode_id = ? AND item_id = ?;`;
     this._database.prepare(query).run(newScanModeId, southId, oldScanModeId, itemId);
   }
 
-  /**
-   * Delete a South connector cache scan mode by its scan mode ID
-   */
-  deleteCacheScanMode(southId: string, scanModeId: string, itemId: string): void {
+  delete(southId: string, scanModeId: string, itemId: string): void {
     const query = `DELETE FROM ${SOUTH_CACHE_TABLE} WHERE south_id = ? AND scan_mode_id = ? AND item_id = ?;`;
     this._database.prepare(query).run(southId, scanModeId, itemId);
   }
 
-  resetSouthCacheDatabase(southId: string): void {
+  reset(southId: string): void {
     const query = `DELETE FROM ${SOUTH_CACHE_TABLE} WHERE south_id = ?;`;
     this._database.prepare(query).run(southId);
   }
@@ -90,18 +78,12 @@ export default class SouthCacheRepository {
     return this._database.prepare(query).get(...params);
   }
 
-  /**
-   * Delete all cache scan modes of the South connector
-   */
-  deleteAllCacheScanModes(southId: string): void {
+  deleteAllBySouthConnector(southId: string): void {
     const query = `DELETE FROM ${SOUTH_CACHE_TABLE} WHERE south_id = ?;`;
     this._database.prepare(query).run(southId);
   }
 
-  /**
-   * Delete all cache scan modes of the Item
-   */
-  deleteCacheScanModesByItem(itemId: string): void {
+  deleteAllBySouthItem(itemId: string): void {
     const query = `DELETE FROM ${SOUTH_CACHE_TABLE} WHERE item_id = ?;`;
     this._database.prepare(query).run(itemId);
   }
@@ -109,7 +91,7 @@ export default class SouthCacheRepository {
   /**
    * Delete all cache scan modes of the Scan mode
    */
-  deleteCacheScanModesByScanMode(scanModeId: string): void {
+  deleteAllByScanMode(scanModeId: string): void {
     const query = `DELETE FROM ${SOUTH_CACHE_TABLE} WHERE scan_mode_id = ?;`;
     this._database.prepare(query).run(scanModeId);
   }

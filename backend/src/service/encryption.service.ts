@@ -145,7 +145,7 @@ export default class EncryptionService {
 
   async encryptConnectorSecrets(
     newSettings: any,
-    oldSettings: any,
+    oldSettings: any | null,
     formSettings: Array<OibFormControl>
   ): Promise<SouthSettings | NorthSettings> {
     const encryptedSettings: any = JSON.parse(JSON.stringify(newSettings));

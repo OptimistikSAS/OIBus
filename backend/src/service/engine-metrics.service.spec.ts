@@ -1,10 +1,10 @@
 import EngineMetricsService, { HEALTH_SIGNAL_INTERVAL, UPDATE_INTERVAL } from './engine-metrics.service';
 
 import pino from 'pino';
-import PinoLogger from '../tests/__mocks__/logger.mock';
+import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import os from 'node:os';
 
-import EngineMetricsRepositoryMock from '../tests/__mocks__/engine-metrics-repository.mock';
+import EngineMetricsRepositoryMock from '../tests/__mocks__/repository/engine-metrics-repository.mock';
 import EngineMetricsRepository from '../repository/engine-metrics.repository';
 import { EngineMetrics } from '../../../shared/model/engine.model';
 

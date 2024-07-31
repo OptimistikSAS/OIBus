@@ -4,8 +4,8 @@ import AbstractController from './abstract.controller';
 import { validateCronExpression } from '../../service/utils';
 
 export default class ScanModeController extends AbstractController {
-  async getScanModes(ctx: KoaContext<void, Array<ScanModeDTO>>): Promise<void> {
-    const scanModes = ctx.app.repositoryService.scanModeRepository.getScanModes();
+  async findAll(ctx: KoaContext<void, Array<ScanModeDTO>>): Promise<void> {
+    const scanModes = ctx.app.repositoryService.scanModeRepository.findAll();
     ctx.ok(scanModes);
   }
 
@@ -23,8 +23,8 @@ export default class ScanModeController extends AbstractController {
     }
   }
 
-  async getScanMode(ctx: KoaContext<void, ScanModeDTO>): Promise<void> {
-    const scanMode = ctx.app.repositoryService.scanModeRepository.getScanMode(ctx.params.id);
+  async findById(ctx: KoaContext<void, ScanModeDTO>): Promise<void> {
+    const scanMode = ctx.app.repositoryService.scanModeRepository.findById(ctx.params.id);
     if (scanMode) {
       ctx.ok(scanMode);
     } else {
@@ -32,35 +32,30 @@ export default class ScanModeController extends AbstractController {
     }
   }
 
-  async createScanMode(ctx: KoaContext<ScanModeCommandDTO, void>): Promise<void> {
+  async create(ctx: KoaContext<ScanModeCommandDTO, void>): Promise<void> {
     try {
-      await this.validate(ctx.request.body);
-      const scanMode = ctx.app.repositoryService.scanModeRepository.createScanMode(ctx.request.body as ScanModeCommandDTO);
+      const scanMode = await ctx.app.scanModeConfigService.create(ctx.request.body!);
       ctx.created(scanMode);
     } catch (error: any) {
       ctx.badRequest(error.message);
     }
   }
 
-  async updateScanMode(ctx: KoaContext<ScanModeCommandDTO, void>): Promise<void> {
+  async update(ctx: KoaContext<ScanModeCommandDTO, void>): Promise<void> {
     try {
-      await this.validate(ctx.request.body);
-
-      await ctx.app.reloadService.onUpdateScanMode(ctx.params.id, ctx.request.body as ScanModeCommandDTO);
+      await ctx.app.scanModeConfigService.update(ctx.params.id!, ctx.request.body!);
       ctx.noContent();
     } catch (error: any) {
       ctx.badRequest(error.message);
     }
   }
 
-  async deleteScanMode(ctx: KoaContext<void, void>): Promise<void> {
-    const scanMode = ctx.app.repositoryService.scanModeRepository.getScanMode(ctx.params.id);
-    if (scanMode) {
-      ctx.app.repositoryService.scanModeRepository.deleteScanMode(ctx.params.id);
-      ctx.app.repositoryService.southCacheRepository.deleteCacheScanModesByScanMode(ctx.params.id);
+  async delete(ctx: KoaContext<void, void>): Promise<void> {
+    try {
+      await ctx.app.scanModeConfigService.delete(ctx.params.id!);
       ctx.noContent();
-    } else {
-      ctx.notFound();
+    } catch (error: any) {
+      ctx.badRequest(error.message);
     }
   }
 }
