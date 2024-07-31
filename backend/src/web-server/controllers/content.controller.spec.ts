@@ -1,6 +1,6 @@
 import Joi from 'joi';
 
-import ContentControler from './content.controller';
+import ContentController from './content.controller';
 import JoiValidator from './validators/joi.validator';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
 import { OIBusContent } from '../../../../shared/model/engine.model';
@@ -10,7 +10,7 @@ jest.mock('../../service/utils');
 
 const validator = new JoiValidator();
 const schema = Joi.object({});
-const oibusController = new ContentControler(validator, schema);
+const oibusController = new ContentController(validator, schema);
 
 const ctx = new KoaContextMock();
 

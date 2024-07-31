@@ -6,17 +6,14 @@ import { Instant } from '../../../shared/model/types';
 export const REGISTRATIONS_TABLE = 'registrations';
 
 /**
- * Repository used for registration settings
+ * Repository used for OIAnalytics registration settings
  */
-export default class RegistrationRepository {
+export default class OIAnalyticsRegistrationRepository {
   constructor(private readonly database: Database) {
-    this.createRegistrationSettings({ host: '', useProxy: false, acceptUnauthorized: false });
+    this.createDefault({ host: '', useProxy: false, acceptUnauthorized: false });
   }
 
-  /**
-   * Retrieve registration settings
-   */
-  getRegistrationSettings(): RegistrationSettingsDTO | null {
+  get(): RegistrationSettingsDTO | null {
     const query =
       `SELECT id, host, token, activation_code AS activationCode, status, activation_date AS activationDate, ` +
       `check_url AS checkUrl, activation_expiration_date AS activationExpirationDate, use_proxy AS useProxy, ` +
@@ -45,10 +42,7 @@ export default class RegistrationRepository {
     }
   }
 
-  /**
-   * Update registration in the database.
-   */
-  updateRegistration(command: RegistrationSettingsCommandDTO, activationCode: string, checkUrl: string, expirationDate: Instant): void {
+  register(command: RegistrationSettingsCommandDTO, activationCode: string, checkUrl: string, expirationDate: Instant): void {
     const query =
       `UPDATE ${REGISTRATIONS_TABLE} SET host = ?, status = 'PENDING', token = '', activation_code = ?, ` +
       `check_url = ?, activation_expiration_date = ?, use_proxy = ?, proxy_url = ?, proxy_username = ?, proxy_password = ?, ` +
@@ -68,10 +62,7 @@ export default class RegistrationRepository {
       );
   }
 
-  /**
-   * Edit registration in the database.
-   */
-  editRegistration(command: RegistrationSettingsCommandDTO): void {
+  update(command: RegistrationSettingsCommandDTO): void {
     const query =
       `UPDATE ${REGISTRATIONS_TABLE} SET ` +
       `use_proxy = ?, proxy_url = ?, proxy_username = ?, proxy_password = ?, ` +
@@ -81,11 +72,8 @@ export default class RegistrationRepository {
       .run(+command.useProxy, command.proxyUrl, command.proxyUsername, command.proxyPassword, +command.acceptUnauthorized);
   }
 
-  /**
-   * Create registration settings in the database.
-   */
-  createRegistrationSettings(command: RegistrationSettingsCommandDTO): void {
-    if (this.getRegistrationSettings()) {
+  createDefault(command: RegistrationSettingsCommandDTO): void {
+    if (this.get()) {
       return;
     }
 
@@ -93,7 +81,7 @@ export default class RegistrationRepository {
     this.database.prepare(query).run(generateRandomId(), command.host, 'NOT_REGISTERED');
   }
 
-  activateRegistration(activationDate: Instant, token: string) {
+  activate(activationDate: Instant, token: string) {
     const query = `UPDATE ${REGISTRATIONS_TABLE} SET status = 'REGISTERED', activation_expiration_date = '', activation_code = '', check_url = '', activation_date = ?, token = ? WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
     this.database.prepare(query).run(activationDate, token);
   }

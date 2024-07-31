@@ -36,7 +36,7 @@ class SqliteTransport {
       }
       const logsToStore = this.batchLogs;
       this.batchLogs = [];
-      this.repository.addLogs(logsToStore);
+      this.repository.createAll(logsToStore);
     } catch (error) {
       console.error(error);
     }
@@ -53,12 +53,12 @@ class SqliteTransport {
    * Delete old logs.
    */
   deleteOldLogsIfDatabaseTooLarge = (): void => {
-    const numberOfLogs = this.repository.countLogs();
+    const numberOfLogs = this.repository.count();
     const maxNumberOfLogs = this.options.maxNumberOfLogs || DEFAULT_MAX_NUMBER_OF_LOGS;
     if (numberOfLogs > maxNumberOfLogs) {
       // Remove the excess of logs and one tenth of the max allowed size
       const numberOfRecordToDelete = numberOfLogs - maxNumberOfLogs + maxNumberOfLogs / 10;
-      this.repository.deleteLogs(numberOfRecordToDelete);
+      this.repository.delete(numberOfRecordToDelete);
     }
   };
 

@@ -64,7 +64,7 @@ export const generateIntervals = (start: Instant, end: Instant, maxInterval: num
       const newStartTime = DateTime.fromMillis(startTime.toMillis() + i * 1000 * maxInterval);
       const newEndTime = DateTime.fromMillis(startTime.toMillis() + (i + 1) * 1000 * maxInterval);
 
-      // If the newEndTime is bigger than the original end, the definitive end of the interval must be end
+      // If the newEndTime is bigger than the original end, the definitive end of the interval must be the end
       intervalLists.push({
         start: newStartTime.toUTC().toISO() as Instant,
         end: newEndTime < endTime ? (newEndTime.toUTC().toISO() as Instant) : (endTime.toUTC().toISO() as Instant)
@@ -612,9 +612,9 @@ export const validateCronExpression = (cron: string): ValidatedCronExpression =>
       throw new Error('Too many fields. Only seconds, minutes, hours, day of month, month and day of week are supported.');
     }
     // backend does not support these characters
-    const badCharecters = nonStandardCharacters.filter(c => cron.includes(c));
-    if (badCharecters.length > 0) {
-      throw new Error(`Expression contains non-standard characters: ${badCharecters.join(', ')}`);
+    const badCharacters = nonStandardCharacters.filter(c => cron.includes(c));
+    if (badCharacters.length > 0) {
+      throw new Error(`Expression contains non-standard characters: ${badCharacters.join(', ')}`);
     }
 
     // cronstrue throws an error if the cron is invalid
@@ -624,7 +624,7 @@ export const validateCronExpression = (cron: string): ValidatedCronExpression =>
       use24HourTimeFormat: true
     });
 
-    // but cronstrue is not enough to validate the cron
+    // but cronstrue is not enough to validate the cron,
     // so we need to parse it with cronparser
     response.nextExecutions = cronparser
       .parseExpression(cron, { utc: true })

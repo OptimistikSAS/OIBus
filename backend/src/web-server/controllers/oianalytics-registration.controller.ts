@@ -2,9 +2,9 @@ import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../.
 import { KoaContext } from '../koa';
 import AbstractController from './abstract.controller';
 
-export default class RegistrationController extends AbstractController {
-  async getRegistrationSettings(ctx: KoaContext<void, RegistrationSettingsDTO>): Promise<RegistrationSettingsDTO> {
-    const registrationSettings = ctx.app.repositoryService.registrationRepository.getRegistrationSettings();
+export default class OIAnalyticsRegistrationController extends AbstractController {
+  async get(ctx: KoaContext<void, RegistrationSettingsDTO>): Promise<RegistrationSettingsDTO> {
+    const registrationSettings = ctx.app.repositoryService.oianalyticsRegistrationRepository.get();
     if (!registrationSettings) {
       return ctx.notFound();
     }
@@ -13,7 +13,7 @@ export default class RegistrationController extends AbstractController {
     return ctx.ok(registrationSettings);
   }
 
-  async updateRegistrationSettings(ctx: KoaContext<RegistrationSettingsCommandDTO, void>): Promise<void> {
+  async update(ctx: KoaContext<RegistrationSettingsCommandDTO, void>): Promise<void> {
     try {
       await this.validate(ctx.request.body);
       const command = ctx.request.body as RegistrationSettingsCommandDTO;
@@ -24,7 +24,7 @@ export default class RegistrationController extends AbstractController {
     }
   }
 
-  async editRegistrationSettings(ctx: KoaContext<RegistrationSettingsCommandDTO, void>): Promise<void> {
+  async edit(ctx: KoaContext<RegistrationSettingsCommandDTO, void>): Promise<void> {
     try {
       await this.validate(ctx.request.body);
       const command = ctx.request.body as RegistrationSettingsCommandDTO;

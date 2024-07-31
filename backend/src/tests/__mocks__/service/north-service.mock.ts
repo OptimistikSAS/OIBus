@@ -1,4 +1,4 @@
-import { NorthConnectorManifest } from '../../../../shared/model/north-connector.model';
+import { NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
 
 export const northTestManifest: NorthConnectorManifest = {
   id: 'north-test',

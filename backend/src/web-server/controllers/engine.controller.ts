@@ -5,7 +5,7 @@ import { getOIBusInfo } from '../../service/utils';
 
 export default class EngineController extends AbstractController {
   async getEngineSettings(ctx: KoaContext<void, EngineSettingsDTO>): Promise<void> {
-    const settings = ctx.app.repositoryService.engineRepository.getEngineSettings();
+    const settings = ctx.app.repositoryService.engineRepository.get();
     if (settings) {
       settings.logParameters.loki.password = '';
       ctx.ok(settings);
@@ -18,15 +18,15 @@ export default class EngineController extends AbstractController {
     try {
       await this.validate(ctx.request.body);
       const command = ctx.request.body as EngineSettingsCommandDTO;
-      const oldEngineSettings = ctx.app.repositoryService.engineRepository.getEngineSettings()!;
+      const oldEngineSettings = ctx.app.repositoryService.engineRepository.get()!;
       if (!command.logParameters.loki.password) {
         command.logParameters.loki.password = oldEngineSettings.logParameters.loki.password;
       } else {
         command.logParameters.loki.password = await ctx.app.encryptionService.encryptText(command.logParameters.loki.password);
       }
-      ctx.app.repositoryService.engineRepository.updateEngineSettings(command);
-      const newEngineSettings = ctx.app.repositoryService.engineRepository.getEngineSettings();
-      await ctx.app.reloadService.onUpdateOibusSettings(oldEngineSettings, newEngineSettings!);
+      ctx.app.repositoryService.engineRepository.update(command);
+      const newEngineSettings = ctx.app.repositoryService.engineRepository.get();
+      await ctx.app.reloadService.onUpdateOIBusSettings(oldEngineSettings, newEngineSettings!);
       ctx.noContent();
     } catch (error: any) {
       ctx.badRequest(error.message);
@@ -51,7 +51,7 @@ export default class EngineController extends AbstractController {
   }
 
   async getOIBusInfo(ctx: KoaContext<void, OIBusInfo>): Promise<void> {
-    const engineSettings = ctx.app.repositoryService.engineRepository.getEngineSettings()!;
+    const engineSettings = ctx.app.repositoryService.engineRepository.get()!;
     const oibusInfo = getOIBusInfo(engineSettings);
     ctx.ok(oibusInfo);
   }

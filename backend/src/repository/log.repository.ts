@@ -17,10 +17,7 @@ export default class LogRepository {
    */
   constructor(private readonly database: Database) {}
 
-  /**
-   * Search logs
-   */
-  searchLogs(searchParams: LogSearchParam): Page<LogDTO> {
+  search(searchParams: LogSearchParam): Page<LogDTO> {
     const queryParams = [];
     let whereClause = `WHERE timestamp BETWEEN ? AND ?`;
     queryParams.push(DateTime.fromISO(searchParams.start!).toUTC().toISO(), DateTime.fromISO(searchParams.end!).toUTC().toISO());
@@ -70,7 +67,7 @@ export default class LogRepository {
     return this.database.prepare(query).get(id) as Scope | undefined;
   }
 
-  addLogs = (logsToStore: Array<PinoLog> = []): void => {
+  createAll = (logsToStore: Array<PinoLog> = []): void => {
     if (logsToStore.length === 0) return;
     // Create a single query to store many logs at once
     let valueClause = 'VALUES';
@@ -86,15 +83,12 @@ export default class LogRepository {
     this.database.prepare(query).run(...params);
   };
 
-  /**
-   * Count the number of logs stored in the repository
-   */
-  countLogs = (): number => {
+  count = (): number => {
     const query = `SELECT COUNT(*) AS count FROM ${LOG_TABLE}`;
     return (this.database.prepare(query).get() as { count: number }).count;
   };
 
-  deleteLogs = (numberOfLogsToDelete: number): void => {
+  delete = (numberOfLogsToDelete: number): void => {
     const query = `DELETE FROM ${LOG_TABLE} WHERE timestamp IN (` + `SELECT timestamp FROM ${LOG_TABLE} ORDER BY timestamp LIMIT ?);`;
     this.database.prepare(query).run(numberOfLogsToDelete);
   };

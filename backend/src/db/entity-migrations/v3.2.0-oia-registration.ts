@@ -1,8 +1,8 @@
 import { Knex } from 'knex';
-import { REGISTRATIONS_TABLE } from '../../repository/registration.repository';
+import { REGISTRATIONS_TABLE } from '../../repository/oianalytics-registration.repository';
 import { LOG_LEVELS, REGISTRATION_STATUS } from '../../../../shared/model/engine.model';
 import { NORTH_CONNECTORS_TABLE } from '../../repository/north-connector.repository';
-import { COMMANDS_TABLE } from '../../repository/command.repository';
+import { COMMANDS_TABLE } from '../../repository/oianalytics-command.repository';
 import { OIBUS_COMMAND_STATUS, OIBUS_COMMAND_TYPES } from '../../../../shared/model/command.model';
 import CreateTableBuilder = Knex.CreateTableBuilder;
 import { SOUTH_CONNECTORS_TABLE } from '../../repository/south-connector.repository';

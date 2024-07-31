@@ -2,7 +2,7 @@
  * Create a mock object for Reload Service
  */
 export default jest.fn().mockImplementation(() => ({
-  onUpdateOibusSettings: jest.fn(),
+  onUpdateOIBusSettings: jest.fn(),
   onCreateNorth: jest.fn(),
   onUpdateNorthSettings: jest.fn(),
   onDeleteNorth: jest.fn(),

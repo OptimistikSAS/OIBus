@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { CommandSearchParam, OIBusCommandDTO } from '../../../../shared/model/command.model';
+import { CommandSearchParam, OIBusCommand } from '../../../../shared/model/command.model';
 import { Page } from '../../../../shared/model/types';
 
 @Injectable({
@@ -10,7 +10,7 @@ import { Page } from '../../../../shared/model/types';
 export class OibusCommandService {
   private http = inject(HttpClient);
 
-  searchCommands(searchParams: CommandSearchParam): Observable<Page<OIBusCommandDTO>> {
+  searchCommands(searchParams: CommandSearchParam): Observable<Page<OIBusCommand>> {
     const params: Record<string, string | Array<string>> = {
       page: `${searchParams.page || 0}`
     };
@@ -20,7 +20,7 @@ export class OibusCommandService {
     if (searchParams.status) {
       params['status'] = searchParams.status;
     }
-    return this.http.get<Page<OIBusCommandDTO>>('/api/commands', {
+    return this.http.get<Page<OIBusCommand>>('/api/commands', {
       params: params
     });
   }

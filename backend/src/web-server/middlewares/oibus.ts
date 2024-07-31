@@ -7,7 +7,10 @@ import OIBusService from '../../service/oibus.service';
 import NorthService from '../../service/north.service';
 import SouthService from '../../service/south.service';
 import EngineMetricsService from '../../service/engine-metrics.service';
-import RegistrationService from '../../service/oia/registration.service';
+import OianalyticsRegistrationService from '../../service/oia/oianalytics-registration.service';
+import SouthConnectorConfigService from '../../service/south-connector-config.service';
+import ScanModeConfigService from '../../service/scan-mode-config.service';
+import NorthConnectorConfigService from '../../service/north-connector-config.service';
 
 /**
  * OIBus middleware for Koa
@@ -16,12 +19,15 @@ const oibus = (
   id: string,
   repositoryService: RepositoryService,
   reloadService: ReloadService,
-  registrationService: RegistrationService,
+  registrationService: OianalyticsRegistrationService,
   encryptionService: EncryptionService,
   southService: SouthService,
   northService: NorthService,
   oibusService: OIBusService,
   engineMetricsService: EngineMetricsService,
+  scanModeConfigService: ScanModeConfigService,
+  southConnectorConfigService: SouthConnectorConfigService,
+  northConnectorConfigService: NorthConnectorConfigService,
   logger: pino.Logger
 ) => {
   return async (ctx: KoaContext<any, any>, next: () => Promise<any>) => {
@@ -34,6 +40,9 @@ const oibus = (
     ctx.app.northService = northService;
     ctx.app.oibusService = oibusService;
     ctx.app.engineMetricsService = engineMetricsService;
+    ctx.app.scanModeConfigService = scanModeConfigService;
+    ctx.app.southConnectorConfigService = southConnectorConfigService;
+    ctx.app.northConnectorConfigService = northConnectorConfigService;
     ctx.app.logger = logger;
     return next();
   };
