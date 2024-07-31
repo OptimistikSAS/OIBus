@@ -1,6 +1,6 @@
 import SouthConnectorMetricsService from './south-connector-metrics.service';
 import { SouthConnectorMetrics } from '../../../shared/model/engine.model';
-import SouthMetricsRepositoryMock, { getMetrics } from '../tests/__mocks__/south-metrics-repository.mock';
+import SouthMetricsRepositoryMock, { getMetrics } from '../tests/__mocks__/repository/south-metrics-repository.mock';
 import SouthConnectorMetricsRepository from '../repository/south-connector-metrics.repository';
 
 const southRepositoryMock: SouthConnectorMetricsRepository = new SouthMetricsRepositoryMock();

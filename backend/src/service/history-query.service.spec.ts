@@ -1,4 +1,4 @@
-import RepositoryServiceMock from '../tests/__mocks__/repository-service.mock';
+import RepositoryServiceMock from '../tests/__mocks__/service/repository-service.mock';
 import RepositoryService from './repository.service';
 import HistoryQueryService from './history-query.service';
 
@@ -15,18 +15,18 @@ describe('history query service', () => {
 
   it('should get a History query settings', () => {
     service.getHistoryQuery('historyId');
-    expect(repositoryRepository.historyQueryRepository.getHistoryQuery).toHaveBeenCalledTimes(1);
-    expect(repositoryRepository.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
+    expect(repositoryRepository.historyQueryRepository.findById).toHaveBeenCalledTimes(1);
+    expect(repositoryRepository.historyQueryRepository.findById).toHaveBeenCalledWith('historyId');
   });
 
   it('should get a History query items', () => {
     service.listItems('historyId', {});
-    expect(repositoryRepository.historyQueryItemRepository.listHistoryItems).toHaveBeenCalledTimes(1);
-    expect(repositoryRepository.historyQueryItemRepository.listHistoryItems).toHaveBeenCalledWith('historyId', {});
+    expect(repositoryRepository.historyQueryItemRepository.list).toHaveBeenCalledTimes(1);
+    expect(repositoryRepository.historyQueryItemRepository.list).toHaveBeenCalledWith('historyId', {});
   });
 
   it('should get all History queries settings', () => {
     service.getHistoryQueryList();
-    expect(repositoryRepository.historyQueryRepository.getHistoryQueries).toHaveBeenCalledTimes(1);
+    expect(repositoryRepository.historyQueryRepository.findAll).toHaveBeenCalledTimes(1);
   });
 });

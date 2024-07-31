@@ -28,35 +28,35 @@ describe('Scan mode controller', () => {
     jest.resetAllMocks();
   });
 
-  it('getScanModes() should return scan modes', async () => {
-    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValue([scanMode]);
+  it('findAll() should return scan modes', async () => {
+    ctx.app.repositoryService.scanModeRepository.findAll.mockReturnValue([scanMode]);
 
-    await scanModeController.getScanModes(ctx);
+    await scanModeController.findAll(ctx);
 
-    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).toHaveBeenCalled();
+    expect(ctx.app.repositoryService.scanModeRepository.findAll).toHaveBeenCalled();
     expect(ctx.ok).toHaveBeenCalledWith([scanMode]);
   });
 
-  it('getScanMode() should return scan mode', async () => {
+  it('findById() should return scan mode', async () => {
     const id = 'id';
 
     ctx.params.id = id;
-    ctx.app.repositoryService.scanModeRepository.getScanMode.mockReturnValue(scanMode);
+    ctx.app.repositoryService.scanModeRepository.findById.mockReturnValue(scanMode);
 
-    await scanModeController.getScanMode(ctx);
+    await scanModeController.findById(ctx);
 
-    expect(ctx.app.repositoryService.scanModeRepository.getScanMode).toHaveBeenCalledWith(id);
+    expect(ctx.app.repositoryService.scanModeRepository.findById).toHaveBeenCalledWith(id);
     expect(ctx.ok).toHaveBeenCalledWith(scanMode);
   });
 
-  it('getScanMode() should return not found', async () => {
+  it('findById() should return not found', async () => {
     const id = 'id';
     ctx.params.id = id;
-    ctx.app.repositoryService.scanModeRepository.getScanMode.mockReturnValue(null);
+    ctx.app.repositoryService.scanModeRepository.findById.mockReturnValue(null);
 
-    await scanModeController.getScanMode(ctx);
+    await scanModeController.findById(ctx);
 
-    expect(ctx.app.repositoryService.scanModeRepository.getScanMode).toHaveBeenCalledWith(id);
+    expect(ctx.app.repositoryService.scanModeRepository.findById).toHaveBeenCalledWith(id);
     expect(ctx.notFound).toHaveBeenCalledWith();
   });
 
@@ -96,80 +96,33 @@ describe('Scan mode controller', () => {
     expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
   });
 
-  it('createScanMode() should create scan mode', async () => {
+  it('create() should create scan mode', async () => {
     ctx.request.body = scanModeCommand;
-    ctx.app.repositoryService.scanModeRepository.createScanMode.mockReturnValue(scanMode);
+    ctx.app.scanModeConfigService.create.mockReturnValue(scanMode);
 
-    await scanModeController.createScanMode(ctx);
+    await scanModeController.create(ctx);
 
-    expect(validator.validate).toHaveBeenCalledWith(schema, scanModeCommand);
-    expect(ctx.app.repositoryService.scanModeRepository.createScanMode).toHaveBeenCalledWith(scanModeCommand);
+    expect(ctx.app.scanModeConfigService.create).toHaveBeenCalledWith(scanModeCommand);
     expect(ctx.created).toHaveBeenCalledWith(scanMode);
   });
 
-  it('createScanMode() should return bad request', async () => {
-    ctx.request.body = scanModeCommand;
-    const validationError = new Error('invalid body');
-    validator.validate = jest.fn().mockImplementationOnce(() => {
-      throw validationError;
-    });
-
-    await scanModeController.createScanMode(ctx);
-
-    expect(validator.validate).toHaveBeenCalledWith(schema, scanModeCommand);
-    expect(ctx.app.repositoryService.scanModeRepository.createScanMode).not.toHaveBeenCalledWith();
-    expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
-  });
-
-  it('updateScanMode() should update scan mode', async () => {
-    const id = 'id';
-    ctx.params.id = id;
+  it('update() should update scan mode', async () => {
+    ctx.params.id = 'id';
     ctx.request.body = scanModeCommand;
 
-    await scanModeController.updateScanMode(ctx);
+    await scanModeController.update(ctx);
 
-    expect(validator.validate).toHaveBeenCalledWith(schema, scanModeCommand);
-    expect(ctx.app.reloadService.onUpdateScanMode).toHaveBeenCalledWith('id', scanModeCommand);
+    expect(ctx.app.scanModeConfigService.update).toHaveBeenCalledWith('id', scanModeCommand);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
-  it('updateScanMode() should return bad request', async () => {
-    ctx.params.id = 'scanModeId';
-    ctx.request.body = scanModeCommand;
-    const validationError = new Error('invalid body');
-    validator.validate = jest.fn().mockImplementationOnce(() => {
-      throw validationError;
-    });
-
-    await scanModeController.updateScanMode(ctx);
-
-    expect(validator.validate).toHaveBeenCalledWith(schema, scanModeCommand);
-    expect(ctx.app.reloadService.onUpdateScanMode).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
-  });
-
-  it('deleteScanMode() should delete scan mode', async () => {
+  it('delete() should delete scan mode', async () => {
     const id = 'id';
     ctx.params.id = id;
-    ctx.app.repositoryService.scanModeRepository.getScanMode.mockReturnValue(scanMode);
 
-    await scanModeController.deleteScanMode(ctx);
+    await scanModeController.delete(ctx);
 
-    expect(ctx.app.repositoryService.scanModeRepository.getScanMode).toHaveBeenCalledWith(id);
-    expect(ctx.app.repositoryService.scanModeRepository.deleteScanMode).toHaveBeenCalledWith(id);
-    expect(ctx.app.repositoryService.southCacheRepository.deleteCacheScanModesByScanMode).toHaveBeenCalledWith(id);
+    expect(ctx.app.scanModeConfigService.delete).toHaveBeenCalledWith(id);
     expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('deleteScanMode() should return not found', async () => {
-    const id = 'id';
-    ctx.params.id = id;
-    ctx.app.repositoryService.scanModeRepository.getScanMode.mockReturnValue(null);
-
-    await scanModeController.deleteScanMode(ctx);
-
-    expect(ctx.app.repositoryService.scanModeRepository.getScanMode).toHaveBeenCalledWith(id);
-    expect(ctx.app.repositoryService.scanModeRepository.deleteScanMode).not.toHaveBeenCalled();
-    expect(ctx.notFound).toHaveBeenCalled();
   });
 });

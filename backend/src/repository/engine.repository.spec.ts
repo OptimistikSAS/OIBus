@@ -57,7 +57,7 @@ describe('Empty engine repository', () => {
       }
     };
 
-    repository.createEngineSettings(command);
+    repository.createDefault(command);
     expect(generateRandomId).toHaveBeenCalledWith();
     expect(database.prepare).toHaveBeenCalledWith(
       'INSERT INTO engines (id, name, port, proxy_enabled, proxy_port, log_console_level, log_file_level, log_file_max_file_size, ' +
@@ -121,7 +121,7 @@ describe('Empty engine repository', () => {
         }
       }
     };
-    repository.updateEngineSettings(command);
+    repository.update(command);
     expect(database.prepare).toHaveBeenCalledWith(
       'UPDATE engines SET name = ?, port = ?, proxy_enabled = ?, proxy_port = ?, log_console_level = ?, log_file_level = ?, log_file_max_file_size = ?, ' +
         'log_file_number_of_files = ?, log_database_level = ?, log_database_max_number_of_logs = ?, log_loki_level = ?, ' +
@@ -218,7 +218,7 @@ describe('Non-empty Engine repository', () => {
         }
       }
     };
-    const engineSettings = repository.getEngineSettings();
+    const engineSettings = repository.get();
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, name, port, oibus_version AS version, proxy_enabled AS proxyEnabled, proxy_port AS proxyPort, log_console_level AS consoleLogLevel, log_file_level AS fileLogLevel, ' +
         'log_file_max_file_size AS fileLogMaxFileSize, log_file_number_of_files AS fileLogNumberOfFiles, ' +
@@ -263,7 +263,7 @@ describe('Non-empty Engine repository', () => {
         }
       }
     };
-    repository.createEngineSettings(command);
+    repository.createDefault(command);
     expect(generateRandomId).not.toHaveBeenCalled();
   });
 

@@ -5,15 +5,15 @@ import { S3Client } from '@aws-sdk/client-s3';
 
 import NorthAmazonS3 from './north-amazon-s3';
 import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/logger.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import RepositoryService from '../../service/repository.service';
-import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
-import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.mock';
-import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
+import RepositoryServiceMock from '../../tests/__mocks__/service/repository-service.mock';
+import ValueCacheServiceMock from '../../tests/__mocks__/service/cache/value-cache-service.mock';
+import FileCacheServiceMock from '../../tests/__mocks__/service/cache/file-cache-service.mock';
 import { NorthCacheSettingsDTO, NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
-import ArchiveServiceMock from '../../tests/__mocks__/archive-service.mock';
+import ArchiveServiceMock from '../../tests/__mocks__/service/cache/archive-service.mock';
 import { NorthAmazonS3Settings } from '../../../../shared/model/north-settings.model';
 import csv from 'papaparse';
 
@@ -107,7 +107,7 @@ describe('NorthAmazonS3', () => {
       jest.useFakeTimers().setSystemTime(new Date(nowDateString));
       (csv.unparse as jest.Mock).mockReturnValue('csv content');
 
-      repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
+      repositoryService.northConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
 
       (S3Client as jest.Mock).mockImplementation(() => ({
         send: sendMock
@@ -188,7 +188,7 @@ describe('NorthAmazonS3', () => {
     beforeEach(async () => {
       jest.clearAllMocks();
       jest.useFakeTimers();
-      repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
+      repositoryService.northConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
 
       (S3Client as jest.Mock).mockImplementation(() => ({
         send: sendMock
@@ -259,7 +259,7 @@ describe('NorthAmazonS3', () => {
     beforeEach(async () => {
       jest.clearAllMocks();
       jest.useFakeTimers();
-      repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
+      repositoryService.northConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
 
       (S3Client as jest.Mock).mockImplementation(() => ({
         send: sendMock

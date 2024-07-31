@@ -10,10 +10,7 @@ export const NORTH_CONNECTORS_TABLE = 'north_connectors';
 export default class NorthConnectorRepository {
   constructor(private readonly database: Database) {}
 
-  /**
-   * Retrieve all North connectors
-   */
-  getNorthConnectors(): Array<NorthConnectorDTO> {
+  findAll(): Array<NorthConnectorDTO> {
     const query =
       `SELECT id, name, type, description, enabled, settings, caching_scan_mode_id AS cachingScanModeId, ` +
       `caching_group_count AS cachingGroupCount, caching_retry_interval AS cachingRetryInterval, ` +
@@ -53,10 +50,7 @@ export default class NorthConnectorRepository {
       );
   }
 
-  /**
-   * Retrieve a North connector by its ID
-   */
-  getNorthConnector(id: string): NorthConnectorDTO | null {
+  findById(id: string): NorthConnectorDTO | null {
     const query =
       `SELECT id, name, type, description, enabled, settings, caching_scan_mode_id AS cachingScanModeId, ` +
       `caching_group_count AS cachingGroupCount, caching_retry_interval AS cachingRetryInterval, ` +
@@ -96,10 +90,7 @@ export default class NorthConnectorRepository {
     };
   }
 
-  /**
-   * Create a North connector with a random generated ID
-   */
-  createNorthConnector(command: NorthConnectorCommandDTO): NorthConnectorDTO {
+  create(command: NorthConnectorCommandDTO): NorthConnectorDTO {
     const id = generateRandomId(6);
     const insertQuery =
       `INSERT INTO ${NORTH_CONNECTORS_TABLE} (id, name, type, description, enabled, settings, ` +
@@ -160,20 +151,17 @@ export default class NorthConnectorRepository {
     };
   }
 
-  startNorthConnector(id: string) {
+  start(id: string) {
     const query = `UPDATE ${NORTH_CONNECTORS_TABLE} SET enabled = ? WHERE id = ?;`;
     this.database.prepare(query).run(1, id);
   }
 
-  stopNorthConnector(id: string) {
+  stop(id: string) {
     const query = `UPDATE ${NORTH_CONNECTORS_TABLE} SET enabled = ? WHERE id = ?;`;
     this.database.prepare(query).run(0, id);
   }
 
-  /**
-   * Update a North connector by its ID
-   */
-  updateNorthConnector(id: string, command: NorthConnectorCommandDTO): void {
+  update(id: string, command: NorthConnectorCommandDTO): void {
     const query =
       `UPDATE ${NORTH_CONNECTORS_TABLE} SET name = ?, description = ?, settings = ?, ` +
       `caching_scan_mode_id = ?, caching_group_count = ?, caching_retry_interval = ?, caching_retry_count = ?, ` +
@@ -198,10 +186,7 @@ export default class NorthConnectorRepository {
       );
   }
 
-  /**
-   * Delete a North Connector by its ID
-   */
-  deleteNorthConnector(id: string): void {
+  delete(id: string): void {
     const query = `DELETE FROM ${NORTH_CONNECTORS_TABLE} WHERE id = ?;`;
     this.database.prepare(query).run(id);
   }

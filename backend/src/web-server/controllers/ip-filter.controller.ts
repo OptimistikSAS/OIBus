@@ -3,13 +3,13 @@ import { IpFilterCommandDTO, IpFilterDTO } from '../../../../shared/model/ip-fil
 import AbstractController from './abstract.controller';
 
 export default class IpFilterController extends AbstractController {
-  async getIpFilters(ctx: KoaContext<void, Array<IpFilterDTO>>): Promise<void> {
-    const ipFilters = ctx.app.repositoryService.ipFilterRepository.getIpFilters();
+  async findAll(ctx: KoaContext<void, Array<IpFilterDTO>>): Promise<void> {
+    const ipFilters = ctx.app.repositoryService.ipFilterRepository.findAll();
     ctx.ok(ipFilters);
   }
 
-  async getIpFilter(ctx: KoaContext<void, IpFilterDTO>): Promise<void> {
-    const ipFilter = ctx.app.repositoryService.ipFilterRepository.getIpFilter(ctx.params.id);
+  async findById(ctx: KoaContext<void, IpFilterDTO>): Promise<void> {
+    const ipFilter = ctx.app.repositoryService.ipFilterRepository.findById(ctx.params.id);
     if (ipFilter) {
       ctx.ok(ipFilter);
     } else {
@@ -17,11 +17,11 @@ export default class IpFilterController extends AbstractController {
     }
   }
 
-  async createIpFilter(ctx: KoaContext<IpFilterCommandDTO, void>): Promise<void> {
+  async create(ctx: KoaContext<IpFilterCommandDTO, void>): Promise<void> {
     try {
       await this.validate(ctx.request.body);
-      const ipFilter = ctx.app.repositoryService.ipFilterRepository.createIpFilter(ctx.request.body as IpFilterCommandDTO);
-      const ipFilters = ctx.app.repositoryService.ipFilterRepository.getIpFilters();
+      const ipFilter = ctx.app.repositoryService.ipFilterRepository.create(ctx.request.body as IpFilterCommandDTO);
+      const ipFilters = ctx.app.repositoryService.ipFilterRepository.findAll();
 
       ctx.app.reloadService.proxyServer.refreshIpFilters(ipFilters.map(ip => ip.address));
       ctx.app.ipFilters = ['127.0.0.1', '::1', '::ffff:127.0.0.1', ...ipFilters.map(ip => ip.address)];
@@ -31,11 +31,11 @@ export default class IpFilterController extends AbstractController {
     }
   }
 
-  async updateIpFilter(ctx: KoaContext<IpFilterCommandDTO, void>) {
+  async update(ctx: KoaContext<IpFilterCommandDTO, void>) {
     try {
       await this.validate(ctx.request.body);
-      ctx.app.repositoryService.ipFilterRepository.updateIpFilter(ctx.params.id, ctx.request.body as IpFilterCommandDTO);
-      const ipFilters = ctx.app.repositoryService.ipFilterRepository.getIpFilters();
+      ctx.app.repositoryService.ipFilterRepository.update(ctx.params.id, ctx.request.body as IpFilterCommandDTO);
+      const ipFilters = ctx.app.repositoryService.ipFilterRepository.findAll();
 
       ctx.app.reloadService.proxyServer.refreshIpFilters(ipFilters.map(ip => ip.address));
       ctx.app.ipFilters = ['127.0.0.1', '::1', '::ffff:127.0.0.1', ...ipFilters.map(ip => ip.address)];
@@ -45,11 +45,11 @@ export default class IpFilterController extends AbstractController {
     }
   }
 
-  async deleteIpFilter(ctx: KoaContext<void, void>): Promise<void> {
-    const ipFilter = ctx.app.repositoryService.ipFilterRepository.getIpFilter(ctx.params.id);
+  async delete(ctx: KoaContext<void, void>): Promise<void> {
+    const ipFilter = ctx.app.repositoryService.ipFilterRepository.findById(ctx.params.id);
     if (ipFilter) {
-      ctx.app.repositoryService.ipFilterRepository.deleteIpFilter(ctx.params.id);
-      const ipFilters = ctx.app.repositoryService.ipFilterRepository.getIpFilters();
+      ctx.app.repositoryService.ipFilterRepository.delete(ctx.params.id);
+      const ipFilters = ctx.app.repositoryService.ipFilterRepository.findAll();
 
       ctx.app.reloadService.proxyServer.refreshIpFilters(ipFilters.map(ip => ip.address));
       ctx.app.ipFilters = ['127.0.0.1', '::1', '::ffff:127.0.0.1', ...ipFilters.map(ip => ip.address)];

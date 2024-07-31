@@ -82,7 +82,7 @@ describe('South connector repository', () => {
         settings: JSON.stringify({})
       }
     ]);
-    const southConnectors = repository.getSouthConnectors();
+    const southConnectors = repository.findAll();
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, name, type, description, enabled, history_max_instant_per_item AS maxInstantPerItem, shared_connection as sharedConnection, ' +
         'history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, history_read_overlap AS overlap, settings FROM south_connectors;'
@@ -118,7 +118,7 @@ describe('South connector repository', () => {
       overlap: 0,
       settings: JSON.stringify({})
     });
-    const southConnector = repository.getSouthConnector('id1');
+    const southConnector = repository.findById('id1');
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, name, type, description, enabled, history_max_instant_per_item AS maxInstantPerItem, shared_connection as sharedConnection, ' +
         'history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, history_read_overlap AS overlap, settings FROM south_connectors WHERE id = ?;'
@@ -129,7 +129,7 @@ describe('South connector repository', () => {
 
   it('should return null when south connector not found', () => {
     get.mockReturnValueOnce(null);
-    const southConnector = repository.getSouthConnector('id1');
+    const southConnector = repository.findById('id1');
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, name, type, description, enabled, history_max_instant_per_item AS maxInstantPerItem, shared_connection as sharedConnection, ' +
         'history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, history_read_overlap AS overlap, settings FROM south_connectors WHERE id = ?;'
@@ -155,7 +155,7 @@ describe('South connector repository', () => {
       },
       settings: {}
     };
-    repository.createSouthConnector(command);
+    repository.create(command);
     expect(generateRandomId).toHaveBeenCalledWith(6);
     expect(database.prepare).toHaveBeenCalledWith(
       'INSERT INTO south_connectors (id, name, type, description, enabled, history_max_instant_per_item, history_max_read_interval, history_read_delay, history_read_overlap, settings, shared_connection) ' +
@@ -200,7 +200,7 @@ describe('South connector repository', () => {
       },
       settings: {}
     };
-    repository.createSouthConnector(command);
+    repository.create(command);
     expect(generateRandomId).toHaveBeenCalledWith(6);
     expect(database.prepare).toHaveBeenCalledWith(
       'INSERT INTO south_connectors (id, name, type, description, enabled, history_max_instant_per_item, history_max_read_interval, history_read_delay, history_read_overlap, settings, shared_connection) ' +
@@ -241,7 +241,7 @@ describe('South connector repository', () => {
       },
       settings: {}
     };
-    repository.updateSouthConnector('id1', command);
+    repository.update('id1', command);
     expect(database.prepare).toHaveBeenCalledWith(
       'UPDATE south_connectors SET name = ?, description = ?, ' +
         'history_max_instant_per_item = ?, history_max_read_interval = ?, history_read_delay = ?, history_read_overlap = ?, settings = ?, shared_connection = ? WHERE id = ?;'
@@ -274,7 +274,7 @@ describe('South connector repository', () => {
       },
       settings: {}
     };
-    repository.updateSouthConnector('id1', command);
+    repository.update('id1', command);
     expect(database.prepare).toHaveBeenCalledWith(
       'UPDATE south_connectors SET name = ?, description = ?, ' +
         'history_max_instant_per_item = ?, history_max_read_interval = ?, history_read_delay = ?, history_read_overlap = ?, settings = ?, shared_connection = ? WHERE id = ?;'
@@ -293,19 +293,19 @@ describe('South connector repository', () => {
   });
 
   it('should delete a south connector', () => {
-    repository.deleteSouthConnector('id1');
+    repository.delete('id1');
     expect(database.prepare).toHaveBeenCalledWith('DELETE FROM south_connectors WHERE id = ?;');
     expect(run).toHaveBeenCalledWith('id1');
   });
 
   it('should start south connector', () => {
-    repository.startSouthConnector('id1');
+    repository.start('id1');
     expect(database.prepare).toHaveBeenCalledWith('UPDATE south_connectors SET enabled = ? WHERE id = ?;');
     expect(run).toHaveBeenCalledWith(1, 'id1');
   });
 
   it('should stop south connector', () => {
-    repository.stopSouthConnector('id1');
+    repository.stop('id1');
     expect(database.prepare).toHaveBeenCalledWith('UPDATE south_connectors SET enabled = ? WHERE id = ?;');
     expect(run).toHaveBeenCalledWith(0, 'id1');
   });

@@ -1,18 +1,33 @@
 import RepositoryService from '../repository.service';
-import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
-import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
+import RepositoryServiceMock from '../../tests/__mocks__/service/repository-service.mock';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
+import OIAnalyticsMessageServiceMock from '../../tests/__mocks__/service/oia/oianalytics-message-service.mock';
+import ScanModeConfigServiceMock from '../../tests/__mocks__/service/scan-mode-config-service.mock';
+import SouthConnectorConfigServiceMock from '../../tests/__mocks__/service/south-connector-config-service.mock';
+import NorthConnectorConfigServiceMock from '../../tests/__mocks__/service/north-connector-config-service.mock';
+import OianalyticsCommandClientMock from '../../tests/__mocks__/service/oia/oianalytics-command-client.mock';
+import ReloadServiceMock from '../../tests/__mocks__/service/reload-service.mock';
+
 import EncryptionService from '../encryption.service';
 import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/logger.mock';
-import { OIBusCommandDTO } from '../../../../shared/model/command.model';
-import CommandService from './command.service';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
+import OIAnalyticsCommandService from './oianalytics-command.service';
 import { downloadFile, getNetworkSettingsFromRegistration, getOIBusInfo, unzip } from '../utils';
 import { RegistrationSettingsDTO } from '../../../../shared/model/engine.model';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { version } from '../../../package.json';
-import MessageServiceMock from '../../tests/__mocks__/message-service.mock';
-import OIAnalyticsMessageService from './message.service';
+import OIAnalyticsMessageService from './oianalytics-message.service';
+import {
+  OIBusRestartEngineCommand,
+  OIBusUpdateEngineSettingsCommand,
+  OIBusUpdateVersionCommand
+} from '../../../../shared/model/command.model';
+import ReloadService from '../reload.service';
+import ScanModeConfigService from '../scan-mode-config.service';
+import SouthConnectorConfigService from '../south-connector-config.service';
+import NorthConnectorConfigService from '../north-connector-config.service';
+import OIAnalyticsCommandClient from './oianalytics-command.client';
 
 jest.mock('node:fs/promises');
 jest.mock('node-fetch');
@@ -22,27 +37,31 @@ jest.mock('../utils');
 jest.spyOn(process, 'exit').mockImplementation(() => {});
 
 const repositoryService: RepositoryService = new RepositoryServiceMock('', '');
-const oianalyticsMessageService: OIAnalyticsMessageService = new MessageServiceMock('', '');
+const reloadService: ReloadService = new ReloadServiceMock('', '');
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
+const oianalyticsMessageService: OIAnalyticsMessageService = new OIAnalyticsMessageServiceMock('', '');
+const scanModeConfigService: ScanModeConfigService = new ScanModeConfigServiceMock('', '');
+const southConnectorConfigService: SouthConnectorConfigService = new SouthConnectorConfigServiceMock('', '');
+const northConnectorConfigService: NorthConnectorConfigService = new NorthConnectorConfigServiceMock('', '');
+const oianalyticsCommandClient: OIAnalyticsCommandClient = new OianalyticsCommandClientMock('', '');
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
 const logger: pino.Logger = new PinoLogger();
 const anotherLogger: pino.Logger = new PinoLogger();
 
-const command: OIBusCommandDTO = {
+const command: OIBusUpdateVersionCommand = {
   id: 'id1',
-  type: 'UPGRADE',
+  type: 'update-version',
+  ack: false,
+  completedDate: '2020-02-02T02:02:02.222Z',
+  retrievedDate: '2020-02-02T02:02:02.222Z',
   status: 'RUNNING',
-  ack: true,
-  creationDate: '2023-01-01T10:00:00Z',
-  completedDate: '2023-01-01T12:00:00Z',
-  retrievedDate: '2023-01-01T10:00:00Z',
-  result: 'ok',
+  result: null,
   version: '3.2.0',
   assetId: 'assetId'
 };
 
-let service: CommandService;
+let service: OIAnalyticsCommandService;
 describe('Command service with running command', () => {
   const registration: RegistrationSettingsDTO = {
     id: 'id',
@@ -59,15 +78,26 @@ describe('Command service with running command', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    (repositoryService.engineRepository.getEngineSettings as jest.Mock).mockReturnValue({ version: '3.2.0' });
-    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(registration);
-    (repositoryService.commandRepository.searchCommandsList as jest.Mock).mockReturnValue([command]);
-    service = new CommandService(repositoryService, encryptionService, oianalyticsMessageService, logger, 'binaryFolder', false);
+    (repositoryService.engineRepository.get as jest.Mock).mockReturnValue({ version: '3.2.0' });
+    (repositoryService.oianalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(registration);
+    (repositoryService.oianalyticsCommandRepository.list as jest.Mock).mockReturnValue([command]);
+    service = new OIAnalyticsCommandService(
+      repositoryService,
+      reloadService,
+      encryptionService,
+      oianalyticsMessageService,
+      scanModeConfigService,
+      southConnectorConfigService,
+      northConnectorConfigService,
+      oianalyticsCommandClient,
+      logger,
+      'binaryFolder'
+    , false);
   });
 
   it('should properly start and stop after an update', async () => {
-    expect(repositoryService.engineRepository.getEngineSettings).toHaveBeenCalledTimes(1);
-    expect(repositoryService.commandRepository.markAsCompleted).toHaveBeenCalledWith(
+    expect(repositoryService.engineRepository.get).toHaveBeenCalledTimes(1);
+    expect(repositoryService.oianalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       command.id,
       nowDateString,
       `OIBus updated to version ${version}`
@@ -76,7 +106,7 @@ describe('Command service with running command', () => {
     service.run = jest.fn();
     service.start();
     expect(service.run).toHaveBeenCalledTimes(1);
-    expect(repositoryService.commandRepository.searchCommandsList).toHaveBeenCalledWith({ status: ['RETRIEVED', 'RUNNING'], types: [] });
+    expect(repositoryService.oianalyticsCommandRepository.list).toHaveBeenCalledWith({ status: ['RETRIEVED', 'RUNNING'], types: [] });
 
     await service.stop();
     expect(logger.debug).toHaveBeenCalledWith(`Stopping command service...`);
@@ -148,10 +178,22 @@ describe('Command service with running command', () => {
 describe('Command service without command', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
-    (repositoryService.commandRepository.searchCommandsList as jest.Mock).mockReturnValue([]);
-    (repositoryService.engineRepository.getEngineSettings as jest.Mock).mockReturnValue({ version: '3.2.0' });
-    service = new CommandService(repositoryService, encryptionService, oianalyticsMessageService, logger, 'binaryFolder', false);
+    (repositoryService.oianalyticsCommandRepository.list as jest.Mock).mockReturnValue([]);
+    (repositoryService.engineRepository.get as jest.Mock).mockReturnValue({ version: '3.2.0' });
+    service = new OIAnalyticsCommandService(
+      repositoryService,
+      reloadService,
+      encryptionService,
+      oianalyticsMessageService,
+      scanModeConfigService,
+      southConnectorConfigService,
+      northConnectorConfigService,
+      oianalyticsCommandClient,
+      logger,
+      'binaryFolder'
+    , false);
   });
 
   it('should properly start when not registered', () => {
@@ -166,10 +208,10 @@ describe('Command service without command', () => {
       activationDate: '2020-20-20T00:00:00.000Z',
       activationExpirationDate: ''
     };
-    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(registration);
+    (repositoryService.oianalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(registration);
 
     expect(getOIBusInfo).not.toHaveBeenCalled();
-    expect(repositoryService.commandRepository.markAsCompleted).not.toHaveBeenCalled();
+    expect(repositoryService.oianalyticsCommandRepository.markAsCompleted).not.toHaveBeenCalled();
     expect(repositoryService.engineRepository.updateVersion).toHaveBeenCalledTimes(1);
 
     service.run = jest.fn();
@@ -190,7 +232,7 @@ describe('Command service without command', () => {
       activationDate: '2020-20-20T00:00:00.000Z',
       activationExpirationDate: ''
     };
-    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(registration);
+    (repositoryService.oianalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(registration);
 
     service.run = jest.fn();
     service.start();
@@ -215,7 +257,7 @@ describe('Command service without command', () => {
       headers: { authorization: `Bearer token` }
     };
     const oibusInfo = { version: 'v3.2.0', platform: 'linux', architecture: 'x64' };
-    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(registration);
+    (repositoryService.oianalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(registration);
     (getNetworkSettingsFromRegistration as jest.Mock).mockReturnValue(connectionSettings);
     (getOIBusInfo as jest.Mock).mockReturnValue(oibusInfo);
 
@@ -225,6 +267,29 @@ describe('Command service without command', () => {
     expect(downloadFile).toHaveBeenCalledWith(connectionSettings, expectedEndpoint, expectedFilename, 600_000);
     expect(unzip).toHaveBeenCalledWith(expectedFilename, path.resolve('binaryFolder', '..', 'update'));
     expect(fs.unlink).toHaveBeenCalledWith(expectedFilename);
+  });
+
+  it('should execute restart-engine command', async () => {
+    const restartCommand: OIBusRestartEngineCommand = {
+      type: 'restart-engine'
+    } as OIBusRestartEngineCommand;
+    await service.executeCommand(restartCommand);
+
+    expect(logger.info).toHaveBeenCalledWith(`Restart OIBus...`);
+  });
+
+  it('should execute update-engine-settings command', async () => {
+    const fullConfigCommand: OIBusUpdateEngineSettingsCommand = {
+      id: 'id',
+      type: 'update-engine-settings',
+      commandContent: {}
+    } as OIBusUpdateEngineSettingsCommand;
+    await service.executeCommand(fullConfigCommand);
+    expect(repositoryService.oianalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      fullConfigCommand.id,
+      nowDateString,
+      'Engine settings updated successfully'
+    );
   });
 
   it('should change logger', () => {
@@ -248,16 +313,27 @@ describe('Command service with running command', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    (repositoryService.engineRepository.getEngineSettings as jest.Mock).mockReturnValue({ version });
-    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(registration);
-    (repositoryService.commandRepository.searchCommandsList as jest.Mock).mockReturnValue([command]);
-    service = new CommandService(repositoryService, encryptionService, oianalyticsMessageService, logger, 'binaryFolder', true);
+    (repositoryService.engineRepository.get as jest.Mock).mockReturnValue({ version });
+    (repositoryService.oianalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(registration);
+    (repositoryService.oianalyticsCommandRepository.list as jest.Mock).mockReturnValue([command]);
+    service = new OIAnalyticsCommandService(
+      repositoryService,
+      reloadService,
+      encryptionService,
+      oianalyticsMessageService,
+      scanModeConfigService,
+      southConnectorConfigService,
+      northConnectorConfigService,
+      oianalyticsCommandClient,
+      logger,
+      'binaryFolder'
+    , true);
   });
 
   it('should properly start and stop after a failed update', async () => {
-    expect(repositoryService.engineRepository.getEngineSettings).toHaveBeenCalledTimes(1);
+    expect(repositoryService.engineRepository.get).toHaveBeenCalledTimes(1);
     expect(repositoryService.engineRepository.updateVersion).not.toHaveBeenCalled();
-    expect(repositoryService.commandRepository.markAsErrored).toHaveBeenCalledWith(
+    expect(repositoryService.oianalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(
       command.id,
       `OIBus has not been updated. Rollback to version ${version}`
     );
