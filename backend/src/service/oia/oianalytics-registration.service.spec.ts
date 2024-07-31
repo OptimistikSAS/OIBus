@@ -1,21 +1,21 @@
 import fetch from 'node-fetch';
 import RepositoryService from '../repository.service';
-import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
+import RepositoryServiceMock from '../../tests/__mocks__/service/repository-service.mock';
 import { EngineSettingsDTO, RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../../shared/model/engine.model';
-import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import EncryptionService from '../encryption.service';
 import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/logger.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { createProxyAgent } from '../proxy-agent';
 import { OIBusCommandDTO } from '../../../../shared/model/command.model';
 import { generateRandomId, getNetworkSettingsFromRegistration, getOIBusInfo } from '../utils';
-import CommandService from './command.service';
-import CommandServiceMock from '../../tests/__mocks__/command-service.mock';
-import OIAnalyticsMessageService from './message.service';
-import OIAnalyticsMessageServiceMock from '../../tests/__mocks__/message-service.mock';
-import RegistrationService from './registration.service';
-import ReloadServiceMock from '../../tests/__mocks__/reload-service.mock';
+import OianalyticsCommandService from './oianalytics-command.service';
+import CommandServiceMock from '../../tests/__mocks__/service/oia/oianalytics-command-service.mock';
+import OIAnalyticsMessageService from './oianalytics-message.service';
+import OIAnalyticsMessageServiceMock from '../../tests/__mocks__/service/oia/oianalytics-message-service.mock';
+import ReloadServiceMock from '../../tests/__mocks__/service/reload-service.mock';
 import ReloadService from '../reload.service';
+import OIAnalyticsRegistrationService from './oianalytics-registration.service';
 
 jest.mock('node:fs/promises');
 jest.mock('node-fetch');
@@ -25,7 +25,7 @@ jest.mock('../proxy-agent');
 
 const repositoryService: RepositoryService = new RepositoryServiceMock('', '');
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
-const commandService: CommandService = new CommandServiceMock();
+const commandService: OianalyticsCommandService = new CommandServiceMock();
 const oianalyticsMessageService: OIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
 const reloadService: ReloadService = new ReloadServiceMock();
 
@@ -35,12 +35,7 @@ const flushPromises = () => new Promise(jest.requireActual('timers').setImmediat
 
 const command: OIBusCommandDTO = {
   id: 'id1',
-  type: 'UPGRADE',
-  status: 'COMPLETED',
-  ack: true,
-  creationDate: '2023-01-01T12:00:00Z',
-  completedDate: '2023-01-01T12:00:00Z',
-  result: 'ok',
+  type: 'update-version',
   version: '3.2.0',
   assetId: 'assetId'
 };
@@ -55,14 +50,14 @@ const fakeEngineSettings: EngineSettingsDTO = {
   }
 } as EngineSettingsDTO;
 
-let service: RegistrationService;
+let service: OIAnalyticsRegistrationService;
 describe('Registration service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     (createProxyAgent as jest.Mock).mockReturnValue(undefined);
 
-    service = new RegistrationService(
+    service = new OIAnalyticsRegistrationService(
       repositoryService,
       encryptionService,
       commandService,
@@ -84,11 +79,11 @@ describe('Registration service', () => {
       activationDate: '2020-20-20T00:00:00.000Z',
       activationExpirationDate: ''
     };
-    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(mockResult);
+    (repositoryService.oianalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(mockResult);
     service.start();
     const result = service.getRegistrationSettings();
     expect(result).toEqual(mockResult);
-    expect(repositoryService.registrationRepository.getRegistrationSettings).toHaveBeenCalledTimes(2);
+    expect(repositoryService.oianalyticsRegistrationRepository.get).toHaveBeenCalledTimes(2);
   });
 
   it('should update registration', async () => {
@@ -100,7 +95,7 @@ describe('Registration service', () => {
       useProxy: false
     };
     (getOIBusInfo as jest.Mock).mockReturnValueOnce({ version: 'v3.2.0' });
-    (repositoryService.engineRepository.getEngineSettings as jest.Mock).mockReturnValueOnce(fakeEngineSettings);
+    (repositoryService.engineRepository.get as jest.Mock).mockReturnValueOnce(fakeEngineSettings);
     const fetchResponse = {
       redirectUrl: 'http://localhost:4200/api/oianalytics/oibus/check-registration?id=id',
       expirationDate: '2020-02-02T02:12:02.222Z'
@@ -109,9 +104,9 @@ describe('Registration service', () => {
     (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response(JSON.stringify(fetchResponse))));
 
     await service.updateRegistrationSettings(command);
-    expect(repositoryService.registrationRepository.updateRegistration).toHaveBeenCalledTimes(1);
+    expect(repositoryService.oianalyticsRegistrationRepository.register).toHaveBeenCalledTimes(1);
     expect(generateRandomId).toHaveBeenCalledWith(6);
-    expect(repositoryService.registrationRepository.updateRegistration).toHaveBeenCalledWith(
+    expect(repositoryService.oianalyticsRegistrationRepository.register).toHaveBeenCalledWith(
       command,
       '1234',
       'http://localhost:4200/api/oianalytics/oibus/check-registration?id=id',
@@ -132,7 +127,7 @@ describe('Registration service', () => {
       proxyPassword: 'pass'
     };
     (getOIBusInfo as jest.Mock).mockReturnValueOnce({ version: 'v3.2.0' });
-    (repositoryService.engineRepository.getEngineSettings as jest.Mock).mockReturnValueOnce(fakeEngineSettings);
+    (repositoryService.engineRepository.get as jest.Mock).mockReturnValueOnce(fakeEngineSettings);
     const fetchResponse = {
       redirectUrl: 'http://localhost:4200/api/oianalytics/oibus/check-registration?id=id',
       expirationDate: '2020-02-02T02:12:02.222Z'
@@ -141,9 +136,9 @@ describe('Registration service', () => {
     (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response(JSON.stringify(fetchResponse))));
 
     await service.updateRegistrationSettings(command);
-    expect(repositoryService.registrationRepository.updateRegistration).toHaveBeenCalledTimes(1);
+    expect(repositoryService.oianalyticsRegistrationRepository.register).toHaveBeenCalledTimes(1);
     expect(generateRandomId).toHaveBeenCalledWith(6);
-    expect(repositoryService.registrationRepository.updateRegistration).toHaveBeenCalledWith(
+    expect(repositoryService.oianalyticsRegistrationRepository.register).toHaveBeenCalledWith(
       command,
       '1234',
       'http://localhost:4200/api/oianalytics/oibus/check-registration?id=id',
@@ -163,7 +158,7 @@ describe('Registration service', () => {
       proxyPassword: ''
     };
     (getOIBusInfo as jest.Mock).mockReturnValueOnce({ version: 'v3.2.0' });
-    (repositoryService.engineRepository.getEngineSettings as jest.Mock).mockReturnValueOnce(fakeEngineSettings);
+    (repositoryService.engineRepository.get as jest.Mock).mockReturnValueOnce(fakeEngineSettings);
     const fetchResponse = {
       redirectUrl: 'http://localhost:4200/api/oianalytics/oibus/check-registration?id=id',
       expirationDate: '2020-02-02T02:12:02.222Z'
@@ -172,9 +167,9 @@ describe('Registration service', () => {
     (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response(JSON.stringify(fetchResponse))));
 
     await service.updateRegistrationSettings(command);
-    expect(repositoryService.registrationRepository.updateRegistration).toHaveBeenCalledTimes(1);
+    expect(repositoryService.oianalyticsRegistrationRepository.register).toHaveBeenCalledTimes(1);
     expect(generateRandomId).toHaveBeenCalledWith(6);
-    expect(repositoryService.registrationRepository.updateRegistration).toHaveBeenCalledWith(
+    expect(repositoryService.oianalyticsRegistrationRepository.register).toHaveBeenCalledWith(
       command,
       '1234',
       'http://localhost:4200/api/oianalytics/oibus/check-registration?id=id',
@@ -191,7 +186,7 @@ describe('Registration service', () => {
       useProxy: false
     };
     (getOIBusInfo as jest.Mock).mockReturnValueOnce({ version: 'v3.2.0' });
-    (repositoryService.engineRepository.getEngineSettings as jest.Mock).mockReturnValueOnce(fakeEngineSettings);
+    (repositoryService.engineRepository.get as jest.Mock).mockReturnValueOnce(fakeEngineSettings);
     (fetch as unknown as jest.Mock).mockImplementation(() => {
       throw new Error('error');
     });
@@ -211,11 +206,11 @@ describe('Registration service', () => {
       acceptUnauthorized: false,
       useProxy: false
     };
-    (repositoryService.engineRepository.getEngineSettings as jest.Mock).mockReturnValueOnce(fakeEngineSettings);
+    (repositoryService.engineRepository.get as jest.Mock).mockReturnValueOnce(fakeEngineSettings);
 
     await service.editRegistrationSettings(command);
-    expect(repositoryService.registrationRepository.editRegistration).toHaveBeenCalledTimes(1);
-    expect(repositoryService.registrationRepository.editRegistration).toHaveBeenCalledWith(command);
+    expect(repositoryService.oianalyticsRegistrationRepository.update).toHaveBeenCalledTimes(1);
+    expect(repositoryService.oianalyticsRegistrationRepository.update).toHaveBeenCalledWith(command);
     expect(reloadService.restartLogger).not.toHaveBeenCalled();
   });
 
@@ -228,11 +223,11 @@ describe('Registration service', () => {
       proxyUsername: 'user',
       proxyPassword: 'pass'
     };
-    (repositoryService.engineRepository.getEngineSettings as jest.Mock).mockReturnValueOnce(fakeEngineSettings);
+    (repositoryService.engineRepository.get as jest.Mock).mockReturnValueOnce(fakeEngineSettings);
 
     await service.editRegistrationSettings(command);
-    expect(repositoryService.registrationRepository.editRegistration).toHaveBeenCalledTimes(1);
-    expect(repositoryService.registrationRepository.editRegistration).toHaveBeenCalledWith(command);
+    expect(repositoryService.oianalyticsRegistrationRepository.update).toHaveBeenCalledTimes(1);
+    expect(repositoryService.oianalyticsRegistrationRepository.update).toHaveBeenCalledWith(command);
   });
 
   it('should edit registration with proxy and without password', async () => {
@@ -244,15 +239,15 @@ describe('Registration service', () => {
       proxyUsername: '',
       proxyPassword: ''
     };
-    (repositoryService.engineRepository.getEngineSettings as jest.Mock).mockReturnValueOnce(fakeEngineSettings);
+    (repositoryService.engineRepository.get as jest.Mock).mockReturnValueOnce(fakeEngineSettings);
 
     await service.editRegistrationSettings(command);
-    expect(repositoryService.registrationRepository.editRegistration).toHaveBeenCalledTimes(1);
-    expect(repositoryService.registrationRepository.editRegistration).toHaveBeenCalledWith(command);
+    expect(repositoryService.oianalyticsRegistrationRepository.update).toHaveBeenCalledTimes(1);
+    expect(repositoryService.oianalyticsRegistrationRepository.update).toHaveBeenCalledWith(command);
   });
 
   it('should handle error if registration not found', async () => {
-    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValueOnce(null);
+    (repositoryService.oianalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(null);
 
     const command: RegistrationSettingsCommandDTO = {
       host: 'http://localhost:4200',
@@ -278,7 +273,7 @@ describe('Registration service', () => {
       useProxy: false
     };
     (getOIBusInfo as jest.Mock).mockReturnValueOnce({ version: 'v3.2.0' });
-    (repositoryService.engineRepository.getEngineSettings as jest.Mock).mockReturnValueOnce(fakeEngineSettings);
+    (repositoryService.engineRepository.get as jest.Mock).mockReturnValueOnce(fakeEngineSettings);
     (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('invalid', { status: 404 })));
 
     let error;
@@ -291,7 +286,7 @@ describe('Registration service', () => {
   });
 
   it('should handle error if registration not found', async () => {
-    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValueOnce(null);
+    (repositoryService.oianalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(null);
     (generateRandomId as jest.Mock).mockReturnValue('1234');
 
     const command: RegistrationSettingsCommandDTO = {
@@ -311,14 +306,14 @@ describe('Registration service', () => {
 
   it('should activate registration', async () => {
     await service.activateRegistration('2020-20-20T00:00:00.000Z', 'token');
-    expect(repositoryService.registrationRepository.activateRegistration).toHaveBeenCalledWith('2020-20-20T00:00:00.000Z', 'token');
+    expect(repositoryService.oianalyticsRegistrationRepository.activate).toHaveBeenCalledWith('2020-20-20T00:00:00.000Z', 'token');
   });
 
   it('should unregister', async () => {
-    (repositoryService.engineRepository.getEngineSettings as jest.Mock).mockReturnValueOnce(fakeEngineSettings);
+    (repositoryService.engineRepository.get as jest.Mock).mockReturnValueOnce(fakeEngineSettings);
 
     await service.onUnregister();
-    expect(repositoryService.registrationRepository.unregister).toHaveBeenCalledTimes(1);
+    expect(repositoryService.oianalyticsRegistrationRepository.unregister).toHaveBeenCalledTimes(1);
   });
 
   it('should check registration', async () => {
@@ -334,7 +329,7 @@ describe('Registration service', () => {
       activationDate: '2020-20-20T00:00:00.000Z',
       activationExpirationDate: ''
     };
-    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(mockResult);
+    (repositoryService.oianalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(mockResult);
     const fetchResponse = { status: 'COMPLETED', expired: true, accessToken: 'access_token' };
     (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response(JSON.stringify(fetchResponse))));
     service.activateRegistration = jest.fn();
@@ -358,8 +353,8 @@ describe('Registration service', () => {
       activationDate: '2020-20-20T00:00:00.000Z',
       activationExpirationDate: ''
     };
-    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(mockResult);
-    (repositoryService.engineRepository.getEngineSettings as jest.Mock).mockReturnValue(fakeEngineSettings);
+    (repositoryService.oianalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(mockResult);
+    (repositoryService.engineRepository.get as jest.Mock).mockReturnValue(fakeEngineSettings);
     const fetchResponse = { status: 'COMPLETED', expired: true, accessToken: 'access_token' };
     (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response(JSON.stringify(fetchResponse))));
     service.activateRegistration = jest.fn();
@@ -383,7 +378,7 @@ describe('Registration service', () => {
       activationDate: '2020-20-20T00:00:00.000Z',
       activationExpirationDate: ''
     };
-    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(mockResult);
+    (repositoryService.oianalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(mockResult);
     const fetchResponse = { status: 'DECLINED', expired: true, accessToken: 'access_token' };
     (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response(JSON.stringify(fetchResponse))));
     service.activateRegistration = jest.fn();
@@ -408,7 +403,7 @@ describe('Registration service', () => {
       activationDate: '2020-20-20T00:00:00.000Z',
       activationExpirationDate: ''
     };
-    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(mockResult);
+    (repositoryService.oianalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(mockResult);
     (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('invalid', { status: 404 })));
     await service.checkRegistration();
     expect(fetch).toHaveBeenCalledWith(`${mockResult.host}${mockResult.checkUrl}`, { method: 'GET', timeout: 10000 });
@@ -429,7 +424,7 @@ describe('Registration service', () => {
       activationDate: '2020-20-20T00:00:00.000Z',
       activationExpirationDate: ''
     };
-    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(mockResult);
+    (repositoryService.oianalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(mockResult);
     await service.checkRegistration();
     expect(logger.error).toHaveBeenCalledWith('Error while checking registration status: Could not retrieve check URL');
   });
@@ -447,7 +442,7 @@ describe('Registration service', () => {
       activationDate: '2020-20-20T00:00:00.000Z',
       activationExpirationDate: ''
     };
-    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(mockResult);
+    (repositoryService.oianalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(mockResult);
     (fetch as unknown as jest.Mock).mockImplementation(() => {
       throw new Error('error');
     });
@@ -473,7 +468,7 @@ describe('Registration service', () => {
       activationDate: '2020-20-20T00:00:00.000Z',
       activationExpirationDate: ''
     };
-    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(mockResult);
+    (repositoryService.oianalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(mockResult);
     const fetchResponse = { status: 'COMPLETED', expired: true, accessToken: 'access_token' };
     (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response(JSON.stringify(fetchResponse))));
     service.activateRegistration = jest.fn();
@@ -499,7 +494,7 @@ describe('Registration service', () => {
       activationDate: '2020-20-20T00:00:00.000Z',
       activationExpirationDate: ''
     };
-    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(mockResult);
+    (repositoryService.oianalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(mockResult);
     const fetchResponse = { status: 'COMPLETED', expired: true, accessToken: 'access_token' };
     (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response(JSON.stringify(fetchResponse))));
     service.activateRegistration = jest.fn();
@@ -559,8 +554,8 @@ describe('Registration service with PENDING registration', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     (createProxyAgent as jest.Mock).mockReturnValue(undefined);
-    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(mockResult);
-    service = new RegistrationService(
+    (repositoryService.oianalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(mockResult);
+    service = new OIAnalyticsRegistrationService(
       repositoryService,
       encryptionService,
       commandService,
@@ -578,7 +573,7 @@ describe('Registration service with PENDING registration', () => {
 
     const result = service.getRegistrationSettings();
     expect(result).toEqual(mockResult);
-    expect(repositoryService.registrationRepository.getRegistrationSettings).toHaveBeenCalledTimes(2);
+    expect(repositoryService.oianalyticsRegistrationRepository.get).toHaveBeenCalledTimes(2);
   });
 
   it('should stop and clear interval', async () => {
@@ -630,8 +625,8 @@ describe('Registration service with REGISTERED registration', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     (createProxyAgent as jest.Mock).mockReturnValue(undefined);
-    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(mockResult);
-    service = new RegistrationService(
+    (repositoryService.oianalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(mockResult);
+    service = new OIAnalyticsRegistrationService(
       repositoryService,
       encryptionService,
       commandService,
@@ -650,7 +645,7 @@ describe('Registration service with REGISTERED registration', () => {
 
     const result = service.getRegistrationSettings();
     expect(result).toEqual(mockResult);
-    expect(repositoryService.registrationRepository.getRegistrationSettings).toHaveBeenCalledTimes(2);
+    expect(repositoryService.oianalyticsRegistrationRepository.get).toHaveBeenCalledTimes(2);
   });
 
   it('should stop and clear interval', async () => {
@@ -714,10 +709,10 @@ describe('OIBus service should interact with OIA and', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     (createProxyAgent as jest.Mock).mockReturnValue(undefined);
-    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(mockResult);
-    (repositoryService.engineRepository.getEngineSettings as jest.Mock).mockReturnValue(mockEngineSettings);
+    (repositoryService.oianalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(mockResult);
+    (repositoryService.engineRepository.get as jest.Mock).mockReturnValue(mockEngineSettings);
     (getNetworkSettingsFromRegistration as jest.Mock).mockReturnValue({ host: 'http://localhost:4200', headers: {}, agent: undefined });
-    service = new RegistrationService(
+    service = new OIAnalyticsRegistrationService(
       repositoryService,
       encryptionService,
       commandService,
@@ -728,14 +723,14 @@ describe('OIBus service should interact with OIA and', () => {
   });
 
   it('should ack commands and return if no commands in OIBus', async () => {
-    (repositoryService.commandRepository.searchCommandsList as jest.Mock).mockReturnValue([]);
+    (repositoryService.oianalyticsCommandRepository.list as jest.Mock).mockReturnValue([]);
 
     await service.sendAckCommands();
     expect(fetch).not.toHaveBeenCalled();
   });
 
   it('should ack commands', async () => {
-    (repositoryService.commandRepository.searchCommandsList as jest.Mock).mockReturnValue([command]);
+    (repositoryService.oianalyticsCommandRepository.list as jest.Mock).mockReturnValue([command]);
 
     const fetchResponse: Array<OIBusCommandDTO> = [{ id: 'id1' }] as Array<OIBusCommandDTO>;
     (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response(JSON.stringify(fetchResponse))));
@@ -751,11 +746,11 @@ describe('OIBus service should interact with OIA and', () => {
       timeout: 10000,
       agent: undefined
     });
-    expect(repositoryService.commandRepository.markAsAcknowledged).toHaveBeenCalledWith('id1');
+    expect(repositoryService.oianalyticsCommandRepository.markAsAcknowledged).toHaveBeenCalledWith('id1');
   });
 
   it('should ack commands and manage 404 error', async () => {
-    (repositoryService.commandRepository.searchCommandsList as jest.Mock).mockReturnValue([command]);
+    (repositoryService.oianalyticsCommandRepository.list as jest.Mock).mockReturnValue([command]);
 
     (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('invalid', { status: 404 })));
 
@@ -766,7 +761,7 @@ describe('OIBus service should interact with OIA and', () => {
   });
 
   it('should ack commands and log error on fetch error', async () => {
-    (repositoryService.commandRepository.searchCommandsList as jest.Mock).mockReturnValue([command]);
+    (repositoryService.oianalyticsCommandRepository.list as jest.Mock).mockReturnValue([command]);
 
     (fetch as unknown as jest.Mock).mockImplementation(() => {
       throw new Error('error');
@@ -779,14 +774,14 @@ describe('OIBus service should interact with OIA and', () => {
   });
 
   it('should check cancelled commands and return if no commands in OIBus', async () => {
-    (repositoryService.commandRepository.searchCommandsList as jest.Mock).mockReturnValue([]);
+    (repositoryService.oianalyticsCommandRepository.list as jest.Mock).mockReturnValue([]);
 
     await service.checkRetrievedCommands();
     expect(fetch).not.toHaveBeenCalled();
   });
 
   it('should check cancelled commands and no command retrieved from oia', async () => {
-    (repositoryService.commandRepository.searchCommandsList as jest.Mock).mockReturnValue([command]);
+    (repositoryService.oianalyticsCommandRepository.list as jest.Mock).mockReturnValue([command]);
 
     const fetchResponse: Array<OIBusCommandDTO> = [];
     (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response(JSON.stringify(fetchResponse))));
@@ -802,7 +797,7 @@ describe('OIBus service should interact with OIA and', () => {
   });
 
   it('should check cancelled commands and cancel retrieved commands', async () => {
-    (repositoryService.commandRepository.searchCommandsList as jest.Mock).mockReturnValue([command]);
+    (repositoryService.oianalyticsCommandRepository.list as jest.Mock).mockReturnValue([command]);
 
     const fetchResponse: Array<OIBusCommandDTO> = [{ id: 'id1' }] as Array<OIBusCommandDTO>;
     (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response(JSON.stringify(fetchResponse))));
@@ -815,11 +810,11 @@ describe('OIBus service should interact with OIA and', () => {
       timeout: 10000,
       agent: undefined
     });
-    expect(repositoryService.commandRepository.cancel).toHaveBeenCalledWith('id1');
+    expect(repositoryService.oianalyticsCommandRepository.cancel).toHaveBeenCalledWith('id1');
   });
 
   it('should check cancelled commands log error if fetch response not ok', async () => {
-    (repositoryService.commandRepository.searchCommandsList as jest.Mock).mockReturnValue([command]);
+    (repositoryService.oianalyticsCommandRepository.list as jest.Mock).mockReturnValue([command]);
 
     (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('invalid', { status: 404 })));
 
@@ -830,7 +825,7 @@ describe('OIBus service should interact with OIA and', () => {
   });
 
   it('should check cancelled commands log error on fetch error', async () => {
-    (repositoryService.commandRepository.searchCommandsList as jest.Mock).mockReturnValue([command]);
+    (repositoryService.oianalyticsCommandRepository.list as jest.Mock).mockReturnValue([command]);
 
     (fetch as unknown as jest.Mock).mockImplementation(() => {
       throw new Error('error');
@@ -869,11 +864,7 @@ describe('OIBus service should interact with OIA and', () => {
       timeout: 10000,
       agent: undefined
     });
-    expect(repositoryService.commandRepository.create).toHaveBeenCalledWith('id1', {
-      type: command.type,
-      version: command.version,
-      assetId: command.assetId
-    });
+    expect(repositoryService.oianalyticsCommandRepository.create).toHaveBeenCalledWith('id1', command);
   });
 
   it('should retrieve log error on bad fetch response', async () => {
@@ -912,7 +903,7 @@ describe('OIBus service should interact with OIA and', () => {
       useProxy: false
     };
     (getOIBusInfo as jest.Mock).mockReturnValueOnce({ version: 'v3.2.0' });
-    (repositoryService.engineRepository.getEngineSettings as jest.Mock).mockReturnValueOnce(mockEngineSettings);
+    (repositoryService.engineRepository.get as jest.Mock).mockReturnValueOnce(mockEngineSettings);
     const fetchResponse = {
       redirectUrl: 'http://localhost:4200/api/oianalytics/oibus/check-registration?id=id',
       expirationDate: '2020-02-02T02:12:02.222Z'
@@ -922,9 +913,9 @@ describe('OIBus service should interact with OIA and', () => {
 
     await service.updateRegistrationSettings(command);
     expect(reloadService.restartLogger).toHaveBeenCalledTimes(1);
-    expect(repositoryService.registrationRepository.updateRegistration).toHaveBeenCalledTimes(1);
+    expect(repositoryService.oianalyticsRegistrationRepository.register).toHaveBeenCalledTimes(1);
     expect(generateRandomId).toHaveBeenCalledWith(6);
-    expect(repositoryService.registrationRepository.updateRegistration).toHaveBeenCalledWith(
+    expect(repositoryService.oianalyticsRegistrationRepository.register).toHaveBeenCalledWith(
       command,
       '1234',
       'http://localhost:4200/api/oianalytics/oibus/check-registration?id=id',
@@ -938,12 +929,12 @@ describe('OIBus service should interact with OIA and', () => {
       acceptUnauthorized: false,
       useProxy: false
     };
-    (repositoryService.engineRepository.getEngineSettings as jest.Mock).mockReturnValueOnce(mockEngineSettings);
+    (repositoryService.engineRepository.get as jest.Mock).mockReturnValueOnce(mockEngineSettings);
 
     await service.editRegistrationSettings(command);
     expect(reloadService.restartLogger).toHaveBeenCalledTimes(1);
-    expect(repositoryService.registrationRepository.editRegistration).toHaveBeenCalledTimes(1);
-    expect(repositoryService.registrationRepository.editRegistration).toHaveBeenCalledWith(command);
+    expect(repositoryService.oianalyticsRegistrationRepository.update).toHaveBeenCalledTimes(1);
+    expect(repositoryService.oianalyticsRegistrationRepository.update).toHaveBeenCalledWith(command);
   });
 
   it('should check registration', async () => {
@@ -959,8 +950,8 @@ describe('OIBus service should interact with OIA and', () => {
       activationDate: '2020-20-20T00:00:00.000Z',
       activationExpirationDate: ''
     };
-    (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(mockResult);
-    (repositoryService.engineRepository.getEngineSettings as jest.Mock).mockReturnValue(mockEngineSettings);
+    (repositoryService.oianalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(mockResult);
+    (repositoryService.engineRepository.get as jest.Mock).mockReturnValue(mockEngineSettings);
     const fetchResponse = { status: 'COMPLETED', expired: true, accessToken: 'access_token' };
     (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response(JSON.stringify(fetchResponse))));
     service.activateRegistration = jest.fn();

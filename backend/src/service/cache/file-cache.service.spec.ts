@@ -5,7 +5,7 @@ import { createReadStream } from 'node:fs';
 import FileCache from './file-cache.service';
 import { createFolder, getFilesFiltered } from '../utils';
 import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/logger.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { NorthCacheSettingsDTO } from '../../../../shared/model/north-connector.model';
 
 jest.mock('node:fs/promises');

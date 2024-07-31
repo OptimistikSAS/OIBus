@@ -5,12 +5,12 @@ import SouthSftp from './south-sftp';
 
 import { compress } from '../../service/utils';
 import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/logger.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import DatabaseMock from '../../tests/__mocks__/database.mock';
 import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import RepositoryService from '../../service/repository.service';
-import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
+import RepositoryServiceMock from '../../tests/__mocks__/service/repository-service.mock';
 
 import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import { SouthSFTPItemSettings, SouthSFTPSettings } from '../../../../shared/model/south-settings.model';
@@ -142,7 +142,7 @@ describe('SouthSFTP', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
     (sftpClient as jest.Mock).mockImplementation(() => mockSftpClient);
 
     south = new SouthSftp(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
@@ -284,7 +284,7 @@ describe('SouthFTP with preserve file and compression', () => {
       run: jest.fn()
     }));
     configuration.settings.compression = true;
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
     (sftpClient as jest.Mock).mockImplementation(() => mockSftpClient);
     south = new SouthSftp(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
     await south.start();
@@ -369,7 +369,7 @@ describe('SouthSFTP with preserve file ignore modified date', () => {
     configuration.settings.compression = false;
     (sftpClient as jest.Mock).mockImplementation(() => mockSftpClient);
 
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
 
     south = new SouthSftp(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
@@ -401,7 +401,7 @@ describe('SouthSFTP test connection with private key', () => {
     configuration.settings.authentication = 'private-key';
     configuration.settings.privateKey = 'myPrivateKey';
     configuration.settings.passphrase = 'myPassphrase';
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
     south = new SouthSftp(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 

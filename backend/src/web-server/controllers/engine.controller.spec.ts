@@ -20,7 +20,7 @@ describe('Engine controller', () => {
   let engine: EngineSettingsDTO;
 
   beforeEach(async () => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
     jest.useFakeTimers();
 
     engineCommand = {
@@ -41,35 +41,35 @@ describe('Engine controller', () => {
   });
 
   it('getEngineSettings() should return engine settings', async () => {
-    ctx.app.repositoryService.engineRepository.getEngineSettings.mockReturnValue(engine);
+    ctx.app.repositoryService.engineRepository.get.mockReturnValue(engine);
 
     await engineController.getEngineSettings(ctx);
 
-    expect(ctx.app.repositoryService.engineRepository.getEngineSettings).toHaveBeenCalled();
+    expect(ctx.app.repositoryService.engineRepository.get).toHaveBeenCalled();
     expect(ctx.ok).toHaveBeenCalledWith(engine);
   });
 
   it('getEngineSettings() should return not found', async () => {
-    ctx.app.repositoryService.engineRepository.getEngineSettings.mockReturnValue(null);
+    ctx.app.repositoryService.engineRepository.get.mockReturnValue(null);
 
     await engineController.getEngineSettings(ctx);
 
-    expect(ctx.app.repositoryService.engineRepository.getEngineSettings).toHaveBeenCalled();
+    expect(ctx.app.repositoryService.engineRepository.get).toHaveBeenCalled();
     expect(ctx.notFound).toHaveBeenCalledWith();
   });
 
   it('updateEngineSettings() should update engine settings with loki password change', async () => {
     ctx.request.body = engineCommand;
     const newEngine = { ...engine, name: 'new name' };
-    ctx.app.repositoryService.engineRepository.getEngineSettings.mockReturnValueOnce(engine).mockReturnValueOnce(newEngine);
+    ctx.app.repositoryService.engineRepository.get.mockReturnValueOnce(engine).mockReturnValueOnce(newEngine);
 
     await engineController.updateEngineSettings(ctx);
 
     expect(validator.validate).toHaveBeenCalledWith(schema, engineCommand);
     expect(ctx.app.encryptionService.encryptText).toHaveBeenCalledWith('pass');
-    expect(ctx.app.repositoryService.engineRepository.getEngineSettings).toHaveBeenCalledTimes(2);
-    expect(ctx.app.repositoryService.engineRepository.updateEngineSettings).toHaveBeenCalledWith(engineCommand);
-    await expect(ctx.app.reloadService.onUpdateOibusSettings).toHaveBeenCalledWith(engine, newEngine);
+    expect(ctx.app.repositoryService.engineRepository.get).toHaveBeenCalledTimes(2);
+    expect(ctx.app.repositoryService.engineRepository.update).toHaveBeenCalledWith(engineCommand);
+    await expect(ctx.app.reloadService.onUpdateOIBusSettings).toHaveBeenCalledWith(engine, newEngine);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
@@ -77,15 +77,15 @@ describe('Engine controller', () => {
     ctx.request.body = JSON.parse(JSON.stringify(engineCommand));
     ctx.request.body.logParameters.loki.password = '';
     const newEngine = { ...engine, name: 'new name' };
-    ctx.app.repositoryService.engineRepository.getEngineSettings.mockReturnValueOnce(engine).mockReturnValueOnce(newEngine);
+    ctx.app.repositoryService.engineRepository.get.mockReturnValueOnce(engine).mockReturnValueOnce(newEngine);
 
     await engineController.updateEngineSettings(ctx);
 
     expect(validator.validate).toHaveBeenCalledWith(schema, engineCommand);
     expect(ctx.app.encryptionService.encryptText).not.toHaveBeenCalled();
-    expect(ctx.app.repositoryService.engineRepository.getEngineSettings).toHaveBeenCalledTimes(2);
-    expect(ctx.app.repositoryService.engineRepository.updateEngineSettings).toHaveBeenCalledWith(engineCommand);
-    await expect(ctx.app.reloadService.onUpdateOibusSettings).toHaveBeenCalledWith(engine, newEngine);
+    expect(ctx.app.repositoryService.engineRepository.get).toHaveBeenCalledTimes(2);
+    expect(ctx.app.repositoryService.engineRepository.update).toHaveBeenCalledWith(engineCommand);
+    await expect(ctx.app.reloadService.onUpdateOIBusSettings).toHaveBeenCalledWith(engine, newEngine);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
@@ -99,8 +99,8 @@ describe('Engine controller', () => {
     await engineController.updateEngineSettings(ctx);
 
     expect(validator.validate).toHaveBeenCalledWith(schema, engineCommand);
-    expect(ctx.app.repositoryService.engineRepository.getEngineSettings).not.toHaveBeenCalledWith();
-    expect(ctx.app.repositoryService.engineRepository.updateEngineSettings).not.toHaveBeenCalledWith();
+    expect(ctx.app.repositoryService.engineRepository.get).not.toHaveBeenCalledWith();
+    expect(ctx.app.repositoryService.engineRepository.update).not.toHaveBeenCalledWith();
     expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
   });
 
@@ -120,7 +120,7 @@ describe('Engine controller', () => {
 
   it('should get OIBus info', async () => {
     (getOIBusInfo as jest.Mock).mockReturnValue({ version: '3.0' } as OIBusInfo);
-    ctx.app.repositoryService.engineRepository.getEngineSettings.mockReturnValueOnce(engine);
+    ctx.app.repositoryService.engineRepository.get.mockReturnValueOnce(engine);
     await engineController.getOIBusInfo(ctx);
     expect(getOIBusInfo).toHaveBeenCalledTimes(1);
     expect(ctx.ok).toHaveBeenCalledWith({ version: '3.0' });

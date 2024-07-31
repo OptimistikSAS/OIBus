@@ -1,14 +1,14 @@
 import EngineMetricsService from './engine-metrics.service';
 
-import EngineMetricsRepositoryMock from '../tests/__mocks__/engine-metrics-repository.mock';
+import EngineMetricsRepositoryMock from '../tests/__mocks__/repository/engine-metrics-repository.mock';
 import EngineMetricsRepository from '../repository/engine-metrics.repository';
 import HomeMetricsService from './home-metrics.service';
-import EngineMetricsServiceMock from '../tests/__mocks__/engine-metrics-service.mock';
+import EngineMetricsServiceMock from '../tests/__mocks__/service/engine-metrics-service.mock';
 import { EventEmitter } from 'node:events';
 import NorthConnector from '../north/north-connector';
 import SouthConnector from '../south/south-connector';
-import SouthMetricsRepositoryMock from '../tests/__mocks__/south-metrics-repository.mock';
-import NorthMetricsRepositoryMock from '../tests/__mocks__/north-metrics-repository.mock';
+import SouthMetricsRepositoryMock from '../tests/__mocks__/repository/south-metrics-repository.mock';
+import NorthMetricsRepositoryMock from '../tests/__mocks__/repository/north-metrics-repository.mock';
 import NorthConnectorMetricsRepository from '../repository/north-connector-metrics.repository';
 import SouthConnectorMetricsRepository from '../repository/south-connector-metrics.repository';
 

@@ -1,6 +1,6 @@
-import EncryptionServiceMock from '../tests/__mocks__/encryption-service.mock';
-import RepositoryServiceMock from '../tests/__mocks__/repository-service.mock';
-import PinoLogger from '../tests/__mocks__/logger.mock';
+import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
+import RepositoryServiceMock from '../tests/__mocks__/service/repository-service.mock';
+import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from './encryption.service';
 import RepositoryService from './repository.service';
 import pino from 'pino';
@@ -10,6 +10,7 @@ import ConnectionService from './connection.service';
 jest.mock('./encryption.service');
 jest.mock('./south-cache.service');
 jest.mock('./south-connector-metrics.service');
+jest.mock('../south/south-opcua/south-opcua');
 jest.mock('./connection.service');
 
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
@@ -26,19 +27,19 @@ describe('south service', () => {
 
   it('should get a South connector settings', () => {
     service.getSouth('southId');
-    expect(repositoryRepository.southConnectorRepository.getSouthConnector).toHaveBeenCalledTimes(1);
-    expect(repositoryRepository.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
+    expect(repositoryRepository.southConnectorRepository.findById).toHaveBeenCalledTimes(1);
+    expect(repositoryRepository.southConnectorRepository.findById).toHaveBeenCalledWith('southId');
   });
 
   it('should get a South connector items', () => {
     service.getSouthItems('southId');
-    expect(repositoryRepository.southItemRepository.getSouthItems).toHaveBeenCalledTimes(1);
-    expect(repositoryRepository.southItemRepository.getSouthItems).toHaveBeenCalledWith('southId');
+    expect(repositoryRepository.southItemRepository.findAllForSouthConnector).toHaveBeenCalledTimes(1);
+    expect(repositoryRepository.southItemRepository.findAllForSouthConnector).toHaveBeenCalledWith('southId');
   });
 
   it('should get all South connector settings', () => {
     service.getSouthList();
-    expect(repositoryRepository.southConnectorRepository.getSouthConnectors).toHaveBeenCalledTimes(1);
+    expect(repositoryRepository.southConnectorRepository.findAll).toHaveBeenCalledTimes(1);
   });
 
   it('should create South connector', () => {

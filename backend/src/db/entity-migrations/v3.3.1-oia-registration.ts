@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-import { REGISTRATIONS_TABLE } from '../../repository/registration.repository';
+import { REGISTRATIONS_TABLE } from '../../repository/oianalytics-registration.repository';
 
 export async function up(knex: Knex): Promise<void> {
   await updateRegistrationSettings(knex);
