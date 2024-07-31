@@ -12,8 +12,8 @@ import {
 import { SouthConnectorCommandDTO, SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import csv from 'papaparse';
 import fs from 'node:fs/promises';
-import { southTestManifest } from '../../tests/__mocks__/south-service.mock';
-import { northTestManifest } from '../../tests/__mocks__/north-service.mock';
+import { southTestManifest } from '../../tests/__mocks__/service/south-service.mock';
+import { northTestManifest } from '../../tests/__mocks__/service/north-service.mock';
 import { historyQuerySchema } from './validators/oibus-validation-schema';
 import { TransformerDTO, TransformerFilterDTO } from '../../../../shared/model/transformer.model';
 
@@ -155,11 +155,11 @@ describe('History query controller', () => {
     ctx = new KoaContextMock();
   });
 
-  it('getHistoryQueries() should return history queries', async () => {
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQueries.mockReturnValue([historyQuery]);
+  it('findAll() should return history queries', async () => {
+    ctx.app.repositoryService.historyQueryRepository.findAll.mockReturnValue([historyQuery]);
     ctx.app.encryptionService.filterSecrets.mockReturnValueOnce(historyQuery.southSettings).mockReturnValueOnce(historyQuery.northSettings);
 
-    await historyQueryController.getHistoryQueries(ctx);
+    await historyQueryController.findAll(ctx);
 
     expect(ctx.app.encryptionService.filterSecrets).toHaveBeenNthCalledWith(1, historyQuery.southSettings, southTestManifest.settings);
     expect(ctx.app.encryptionService.filterSecrets).toHaveBeenNthCalledWith(2, historyQuery.northSettings, northTestManifest.settings);
@@ -181,50 +181,50 @@ describe('History query controller', () => {
       northType: 'invalid'
     }
   ];
-  it.each(invalidHistoryQueries)(`getHistoryQueries() should return null when manifest not found`, async invalidHistoryQuery => {
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQueries.mockReturnValue([historyQuery, invalidHistoryQuery]);
+  it.each(invalidHistoryQueries)(`findAll() should return null when manifest not found`, async invalidHistoryQuery => {
+    ctx.app.repositoryService.historyQueryRepository.findAll.mockReturnValue([historyQuery, invalidHistoryQuery]);
     ctx.app.encryptionService.filterSecrets.mockReturnValueOnce(historyQuery.southSettings).mockReturnValueOnce(historyQuery.northSettings);
 
-    await historyQueryController.getHistoryQueries(ctx);
+    await historyQueryController.findAll(ctx);
     expect(ctx.ok).toHaveBeenCalledWith([historyQuery, null]);
   });
 
-  it('getHistoryQuery() should return history query', async () => {
+  it('findById() should return history query', async () => {
     ctx.params.id = 'id';
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQuery);
     ctx.app.encryptionService.filterSecrets.mockReturnValueOnce(historyQuery.southSettings).mockReturnValueOnce(historyQuery.northSettings);
 
-    await historyQueryController.getHistoryQuery(ctx);
+    await historyQueryController.findById(ctx);
 
-    expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('id');
+    expect(ctx.app.repositoryService.historyQueryRepository.findById).toHaveBeenCalledWith('id');
     expect(ctx.app.encryptionService.filterSecrets).toHaveBeenNthCalledWith(1, historyQuery.southSettings, southTestManifest.settings);
     expect(ctx.app.encryptionService.filterSecrets).toHaveBeenNthCalledWith(2, historyQuery.northSettings, northTestManifest.settings);
     expect(ctx.ok).toHaveBeenCalledWith(historyQuery);
   });
 
-  it('getHistoryQuery() should return not found when history query is not found', async () => {
+  it('findById() should return not found when history query is not found', async () => {
     ctx.params.id = 'id';
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(null);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(null);
 
-    await historyQueryController.getHistoryQuery(ctx);
+    await historyQueryController.findById(ctx);
 
-    expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('id');
+    expect(ctx.app.repositoryService.historyQueryRepository.findById).toHaveBeenCalledWith('id');
     expect(ctx.app.encryptionService.filterSecrets).not.toHaveBeenCalled();
     expect(ctx.app.encryptionService.filterSecrets).not.toHaveBeenCalled();
     expect(ctx.notFound).toHaveBeenCalled();
   });
 
-  it.each(invalidHistoryQueries)('getHistoryQuery() should return not found when history manifest not found', async invalidHistoryQuery => {
+  it.each(invalidHistoryQueries)('findById() should return not found when history manifest not found', async invalidHistoryQuery => {
     ctx.params.id = 'id';
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(invalidHistoryQuery);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(invalidHistoryQuery);
 
-    await historyQueryController.getHistoryQuery(ctx);
+    await historyQueryController.findById(ctx);
 
-    expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('id');
+    expect(ctx.app.repositoryService.historyQueryRepository.findById).toHaveBeenCalledWith('id');
     expect(ctx.notFound).toHaveBeenCalled();
   });
 
-  it('createHistoryQuery() should create History query with new connectors', async () => {
+  it('create() should create History query with new connectors', async () => {
     ctx.request.body = {
       ...JSON.parse(JSON.stringify(historyQueryCreateCommand))
     };
@@ -239,11 +239,11 @@ describe('History query controller', () => {
     ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValueOnce({}).mockReturnValueOnce({});
     ctx.app.reloadService.onCreateHistoryQuery.mockReturnValue(historyQuery);
 
-    await historyQueryController.createHistoryQuery(ctx);
+    await historyQueryController.create(ctx);
 
     const southManifest = southTestManifest;
     const northManifest = northTestManifest;
-    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).not.toHaveBeenCalled();
+    expect(ctx.app.repositoryService.scanModeRepository.findAll).not.toHaveBeenCalled();
     expect(validator.validateSettings).toHaveBeenCalledWith(southManifest.settings, historyQueryCommand.southSettings);
     expect(validator.validateSettings).toHaveBeenCalledWith(northManifest.settings, historyQueryCommand.northSettings);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
@@ -275,7 +275,7 @@ describe('History query controller', () => {
     expect(ctx.created).toHaveBeenCalledWith(historyQuery);
   });
 
-  it('createHistoryQuery() should create History query with new connectors with scanModeName', async () => {
+  it('create() should create History query with new connectors with scanModeName', async () => {
     ctx.request.body = {
       ...JSON.parse(JSON.stringify(historyQueryCreateCommand))
     };
@@ -289,7 +289,7 @@ describe('History query controller', () => {
     ];
     ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValueOnce({}).mockReturnValueOnce({});
     ctx.app.reloadService.onCreateHistoryQuery.mockReturnValue(historyQuery);
-    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValue([
+    ctx.app.repositoryService.scanModeRepository.findAll.mockReturnValue([
       {
         id: 'scanModeId',
         name: 'scanModeName',
@@ -300,11 +300,11 @@ describe('History query controller', () => {
     ctx.request.body.historyQuery.caching.scanModeId = '';
     ctx.request.body.historyQuery.caching.scanModeName = 'scanModeName';
 
-    await historyQueryController.createHistoryQuery(ctx);
+    await historyQueryController.create(ctx);
 
     const southManifest = southTestManifest;
     const northManifest = northTestManifest;
-    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).toHaveBeenCalled();
+    expect(ctx.app.repositoryService.scanModeRepository.findAll).toHaveBeenCalled();
     expect(validator.validateSettings).toHaveBeenCalledWith(southManifest.settings, historyQueryCommand.southSettings);
     expect(validator.validateSettings).toHaveBeenCalledWith(northManifest.settings, historyQueryCommand.northSettings);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
@@ -336,7 +336,7 @@ describe('History query controller', () => {
     expect(ctx.created).toHaveBeenCalledWith(historyQuery);
   });
 
-  it('createHistoryQuery() should fail to create History query without scanModeName', async () => {
+  it('create() should fail to create History query without scanModeName', async () => {
     ctx.request.body = {
       ...JSON.parse(JSON.stringify(historyQueryCreateCommand))
     };
@@ -352,7 +352,7 @@ describe('History query controller', () => {
     ctx.request.body.historyQuery.caching.scanModeName = 'bad scan mode';
     ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValueOnce({}).mockReturnValueOnce({});
     ctx.app.reloadService.onCreateHistoryQuery.mockReturnValue(historyQuery);
-    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValue([
+    ctx.app.repositoryService.scanModeRepository.findAll.mockReturnValue([
       {
         name: 'scanModeName',
         description: '',
@@ -360,87 +360,15 @@ describe('History query controller', () => {
       }
     ]);
 
-    await historyQueryController.createHistoryQuery(ctx);
+    await historyQueryController.create(ctx);
     expect(ctx.badRequest).toHaveBeenCalledWith(`Scan mode bad scan mode not found`);
 
     ctx.request.body.historyQuery.caching.scanModeName = '';
-    await historyQueryController.createHistoryQuery(ctx);
+    await historyQueryController.create(ctx);
     expect(ctx.badRequest).toHaveBeenCalledWith(`Scan mode not specified`);
   });
 
-  it('createHistoryQuery() should create History query with duplicate', async () => {
-    ctx.request.body = {
-      ...JSON.parse(JSON.stringify(historyQueryCreateCommand))
-    };
-    ctx.request.body.items = [
-      {
-        name: 'name',
-        enabled: true,
-        connectorId: 'connectorId',
-        settings: {},
-        scanModeId: 'scanModeId'
-      }
-    ];
-    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValueOnce({}).mockReturnValueOnce({});
-    ctx.app.reloadService.onCreateHistoryQuery.mockReturnValue(historyQuery);
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
-    ctx.query.duplicateId = 'duplicateId';
-
-    await historyQueryController.createHistoryQuery(ctx);
-
-    const southManifest = southTestManifest;
-    const northManifest = northTestManifest;
-    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).not.toHaveBeenCalled();
-    expect(validator.validateSettings).toHaveBeenCalledWith(southManifest.settings, historyQueryCommand.southSettings);
-    expect(validator.validateSettings).toHaveBeenCalledWith(northManifest.settings, historyQueryCommand.northSettings);
-    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
-      historyQueryCommand.southSettings,
-      historyQuery.southSettings,
-      southManifest.settings
-    );
-    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
-      historyQueryCommand.northSettings,
-      historyQuery.northSettings,
-      northManifest.settings
-    );
-    expect(ctx.app.reloadService.onCreateHistoryQuery).toHaveBeenCalledWith(
-      {
-        name: 'name',
-        description: 'description',
-        history: southConnector.history,
-        startTime: '2020-02-01T02:02:59.999Z',
-        endTime: '2020-02-02T02:02:59.999Z',
-        southType: 'south-test',
-        northType: 'north-test',
-        southSettings: {},
-        southSharedConnection: false,
-        northSettings: {},
-        caching: northCacheSettings
-      },
-      ctx.request.body.items
-    );
-    expect(ctx.created).toHaveBeenCalledWith(historyQuery);
-    ctx.query.duplicateId = null;
-  });
-
-  it('createHistoryQuery() should not create History query and return not found because of duplicate', async () => {
-    ctx.request.body = {
-      ...JSON.parse(JSON.stringify(historyQueryCreateCommand))
-    };
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValueOnce(null);
-    ctx.query.duplicateId = 'bad';
-
-    await historyQueryController.createHistoryQuery(ctx);
-
-    expect(validator.validateSettings).not.toHaveBeenCalled();
-    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onCreateHistoryQuery).not.toHaveBeenCalled();
-    expect(ctx.created).not.toHaveBeenCalled();
-    expect(ctx.notFound).toHaveBeenCalled();
-    ctx.query.duplicateId = null;
-  });
-
-  it('createHistoryQuery() should create History query with existing connectors', async () => {
+  it('create() should create History query with existing connectors', async () => {
     ctx.request.body = { ...JSON.parse(JSON.stringify(historyQueryCreateCommand)), fromNorthId: 'id1', fromSouthId: 'id2' };
     ctx.request.body.items = [
       {
@@ -450,20 +378,19 @@ describe('History query controller', () => {
         settings: {}
       }
     ];
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    ctx.app.repositoryService.southItemRepository.getSouthItems.mockReturnValue([]);
-    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(northConnector);
+    ctx.app.repositoryService.southConnectorRepository.findById.mockReturnValue(southConnector);
+    ctx.app.repositoryService.northConnectorRepository.findById.mockReturnValue(northConnector);
 
     ctx.app.encryptionService.encryptConnectorSecrets
       .mockReturnValueOnce(southConnector.settings)
       .mockReturnValueOnce(northConnector.settings);
     ctx.app.reloadService.onCreateHistoryQuery.mockReturnValue(historyQuery);
 
-    await historyQueryController.createHistoryQuery(ctx);
+    await historyQueryController.create(ctx);
 
     const southManifest = southTestManifest;
     const northManifest = northTestManifest;
-    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).not.toHaveBeenCalled();
+    expect(ctx.app.repositoryService.scanModeRepository.findAll).not.toHaveBeenCalled();
     expect(validator.validateSettings).toHaveBeenCalledWith(southManifest.settings, historyQuery.southSettings);
     expect(validator.validateSettings).toHaveBeenCalledWith(northManifest.settings, historyQuery.northSettings);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
@@ -500,52 +427,43 @@ describe('History query controller', () => {
     expect(ctx.created).toHaveBeenCalledWith(historyQuery);
   });
 
-  it('createHistoryQuery() should not create History query without body', async () => {
+  it('create() should not create History query without body', async () => {
     ctx.request.body = null;
-    await historyQueryController.createHistoryQuery(ctx);
+    await historyQueryController.create(ctx);
 
     expect(ctx.badRequest).toHaveBeenCalled();
   });
 
-  it('createHistoryQuery() should not create History query without name or description', async () => {
-    ctx.request.body = null;
-    await historyQueryController.createHistoryQuery(ctx);
-
-    expect(ctx.badRequest).toHaveBeenCalled();
-  });
-
-  it('createHistoryQuery() should return 404 when North connector not found', async () => {
+  it('create() should return 404 when North connector not found', async () => {
     ctx.request.body = { ...JSON.parse(JSON.stringify(historyQueryCreateCommand)), fromNorthId: 'id1' };
 
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    ctx.app.repositoryService.southItemRepository.getSouthItems.mockReturnValue([]);
-    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(null);
+    ctx.app.repositoryService.southConnectorRepository.findById.mockReturnValue(southConnector);
+    ctx.app.repositoryService.northConnectorRepository.findById.mockReturnValue(null);
 
-    await historyQueryController.createHistoryQuery(ctx);
+    await historyQueryController.create(ctx);
 
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onCreateHistoryQuery).not.toHaveBeenCalled();
     expect(ctx.notFound).toHaveBeenCalled();
   });
 
-  it('createHistoryQuery() should return 404 when South connector not found', async () => {
+  it('create() should return 404 when South connector not found', async () => {
     ctx.request.body = { ...JSON.parse(JSON.stringify(historyQueryCreateCommand)), fromSouthId: 'id1' };
 
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(null);
-    ctx.app.repositoryService.southItemRepository.getSouthItems.mockReturnValue([]);
+    ctx.app.repositoryService.southConnectorRepository.findById.mockReturnValue(null);
 
-    await historyQueryController.createHistoryQuery(ctx);
+    await historyQueryController.create(ctx);
 
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onCreateHistoryQuery).not.toHaveBeenCalled();
     expect(ctx.notFound).toHaveBeenCalled();
   });
 
-  it('createHistoryQuery() should return 404 when North manifest not found', async () => {
+  it('create() should return 404 when North manifest not found', async () => {
     ctx.request.body = { ...JSON.parse(JSON.stringify(historyQueryCreateCommand)) };
     ctx.request.body.historyQuery.northType = 'bad type';
 
-    await historyQueryController.createHistoryQuery(ctx);
+    await historyQueryController.create(ctx);
 
     expect(validator.validateSettings).not.toHaveBeenCalled();
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
@@ -553,11 +471,11 @@ describe('History query controller', () => {
     expect(ctx.throw).toHaveBeenCalledWith(404, 'North manifest not found');
   });
 
-  it('createHistoryQuery() should return 404 when South manifest not found', async () => {
+  it('create() should return 404 when South manifest not found', async () => {
     ctx.request.body = { ...JSON.parse(JSON.stringify(historyQueryCreateCommand)) };
     ctx.request.body.historyQuery.southType = 'bad type';
 
-    await historyQueryController.createHistoryQuery(ctx);
+    await historyQueryController.create(ctx);
 
     expect(validator.validateSettings).not.toHaveBeenCalled();
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
@@ -565,7 +483,7 @@ describe('History query controller', () => {
     expect(ctx.throw).toHaveBeenCalledWith(404, 'South manifest not found');
   });
 
-  it('createHistoryQuery() should return bad request when validation fails', async () => {
+  it('create() should return bad request when validation fails', async () => {
     ctx.request.body = { ...JSON.parse(JSON.stringify(historyQueryCreateCommand)) };
 
     const validationError = new Error('invalid body');
@@ -573,101 +491,34 @@ describe('History query controller', () => {
       throw validationError;
     });
 
-    await historyQueryController.createHistoryQuery(ctx);
+    await historyQueryController.create(ctx);
     expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.settings, historyQuery.southSettings);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onCreateSouth).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
   });
 
-  it('startHistoryQuery() should enable History query', async () => {
-    ctx.params.enable = true;
+  it('start() should enable History query', async () => {
     ctx.params.id = 'id';
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQuery);
 
-    await historyQueryController.startHistoryQuery(ctx);
+    await historyQueryController.start(ctx);
 
     expect(ctx.app.reloadService.onStartHistoryQuery).toHaveBeenCalledTimes(1);
     expect(ctx.badRequest).not.toHaveBeenCalled();
   });
 
-  it('startHistoryQuery() should throw badRequest if fail to enable', async () => {
-    ctx.params.enable = true;
-    ctx.params.id = 'id';
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
-
-    ctx.app.reloadService.onStartHistoryQuery.mockImplementation(() => {
-      throw new Error('bad');
-    });
-
-    await historyQueryController.startHistoryQuery(ctx);
-
-    expect(ctx.badRequest).toHaveBeenCalled();
-  });
-
-  it('startHistoryQuery() should return not found if history not found', async () => {
-    ctx.params.id = 'id';
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(null);
-
-    await historyQueryController.startHistoryQuery(ctx);
-
-    expect(ctx.app.reloadService.onStartHistoryQuery).not.toHaveBeenCalled();
-    expect(ctx.badRequest).not.toHaveBeenCalled();
-    expect(ctx.notFound).toHaveBeenCalled();
-  });
-
-  it('startHistoryQuery() should restart when the history is in finished or errored state', async () => {
-    ctx.params.enable = true;
-    ctx.params.id = 'id';
-
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue({ ...historyQuery, status: 'FINISHED' });
-    await historyQueryController.startHistoryQuery(ctx);
-
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue({ ...historyQuery, status: 'ERRORED' });
-    await historyQueryController.startHistoryQuery(ctx);
-
-    expect(ctx.app.reloadService.historyEngine.stopHistoryQuery).toHaveBeenCalledTimes(2);
-    expect(ctx.app.reloadService.historyEngine.resetCache).toHaveBeenCalledTimes(2);
-    expect(ctx.badRequest).not.toHaveBeenCalled();
-  });
-
   it('pauseHistoryQuery() should pause History query', async () => {
-    ctx.params.enable = true;
     ctx.params.id = 'id';
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQuery);
 
-    await historyQueryController.pauseHistoryQuery(ctx);
+    await historyQueryController.pause(ctx);
 
     expect(ctx.app.reloadService.onPauseHistoryQuery).toHaveBeenCalledTimes(1);
     expect(ctx.badRequest).not.toHaveBeenCalled();
   });
 
-  it('pauseHistoryQuery() should throw badRequest if fail to enable', async () => {
-    ctx.params.enable = true;
-    ctx.params.id = 'id';
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
-
-    ctx.app.reloadService.onPauseHistoryQuery.mockImplementation(() => {
-      throw new Error('bad');
-    });
-
-    await historyQueryController.pauseHistoryQuery(ctx);
-
-    expect(ctx.badRequest).toHaveBeenCalled();
-  });
-
-  it('stopHistoryQuery() should return not found if history not found', async () => {
-    ctx.params.id = 'id';
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(null);
-
-    await historyQueryController.pauseHistoryQuery(ctx);
-
-    expect(ctx.app.reloadService.onPauseHistoryQuery).not.toHaveBeenCalled();
-    expect(ctx.badRequest).not.toHaveBeenCalled();
-    expect(ctx.notFound).toHaveBeenCalled();
-  });
-
-  it('updateHistoryQuery() should update History Query', async () => {
+  it('update() should update History Query', async () => {
     ctx.request.body = {
       historyQuery: { ...historyQueryCommand },
       resetCache: true,
@@ -675,19 +526,19 @@ describe('History query controller', () => {
       itemIdsToDelete: ['id1']
     };
     ctx.params.id = 'id';
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQuery);
     ctx.app.encryptionService.encryptConnectorSecrets
       .mockReturnValueOnce(historyQuery.southSettings)
       .mockReturnValueOnce(historyQuery.southSettings);
 
-    await historyQueryController.updateHistoryQuery(ctx);
+    await historyQueryController.update(ctx);
 
     const southManifest = southTestManifest;
     const northManifest = northTestManifest;
-    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).toHaveBeenCalled();
+    expect(ctx.app.repositoryService.scanModeRepository.findAll).toHaveBeenCalled();
     expect(validator.validateSettings).toHaveBeenCalledWith(southManifest.settings, historyQueryCommand.southSettings);
     expect(validator.validateSettings).toHaveBeenCalledWith(northManifest.settings, historyQueryCommand.northSettings);
-    expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('id');
+    expect(ctx.app.repositoryService.historyQueryRepository.findById).toHaveBeenCalledWith('id');
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
       historyQueryCommand.southSettings,
       historyQuery.southSettings,
@@ -719,11 +570,11 @@ describe('History query controller', () => {
       resetCache: true
     };
     ctx.params.id = 'id';
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQuery);
     ctx.app.encryptionService.encryptConnectorSecrets
       .mockReturnValueOnce(historyQuery.southSettings)
       .mockReturnValueOnce(historyQuery.southSettings);
-    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValue([
+    ctx.app.repositoryService.scanModeRepository.findAll.mockReturnValue([
       {
         name: 'scanModeName',
         description: '',
@@ -733,14 +584,14 @@ describe('History query controller', () => {
     ctx.request.body.historyQuery.caching.scanModeId = '';
     ctx.request.body.historyQuery.caching.scanModeName = 'scanModeName';
 
-    await historyQueryController.updateHistoryQuery(ctx);
+    await historyQueryController.update(ctx);
 
     const southManifest = southTestManifest;
     const northManifest = northTestManifest;
-    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).toHaveBeenCalled();
+    expect(ctx.app.repositoryService.scanModeRepository.findAll).toHaveBeenCalled();
     expect(validator.validateSettings).toHaveBeenCalledWith(southManifest.settings, historyQueryCommand.southSettings);
     expect(validator.validateSettings).toHaveBeenCalledWith(northManifest.settings, historyQueryCommand.northSettings);
-    expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('id');
+    expect(ctx.app.repositoryService.historyQueryRepository.findById).toHaveBeenCalledWith('id');
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
       historyQueryCommand.southSettings,
       historyQuery.southSettings,
@@ -759,11 +610,11 @@ describe('History query controller', () => {
 
     ctx.request.body.historyQuery.caching.scanModeId = '';
     ctx.request.body.historyQuery.caching.scanModeName = 'bad scan mode';
-    await historyQueryController.updateHistoryQuery(ctx);
+    await historyQueryController.update(ctx);
     expect(ctx.badRequest).toHaveBeenCalledWith(`Scan mode bad scan mode not found`);
 
     ctx.request.body.historyQuery.caching.scanModeName = '';
-    await historyQueryController.updateHistoryQuery(ctx);
+    await historyQueryController.update(ctx);
     expect(ctx.badRequest).toHaveBeenCalledWith(`Scan mode not specified`);
   });
 
@@ -773,9 +624,9 @@ describe('History query controller', () => {
       items: []
     };
     ctx.params.id = 'id';
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue({ ...historyQuery, southType: 'invalid' });
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue({ ...historyQuery, southType: 'invalid' });
 
-    await historyQueryController.updateHistoryQuery(ctx);
+    await historyQueryController.update(ctx);
 
     expect(validator.validateSettings).not.toHaveBeenCalled();
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
@@ -789,9 +640,9 @@ describe('History query controller', () => {
       items: []
     };
     ctx.params.id = 'id';
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue({ ...historyQuery, northType: 'invalid' });
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue({ ...historyQuery, northType: 'invalid' });
 
-    await historyQueryController.updateHistoryQuery(ctx);
+    await historyQueryController.update(ctx);
 
     expect(validator.validateSettings).not.toHaveBeenCalled();
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
@@ -800,7 +651,7 @@ describe('History query controller', () => {
   });
 
   it('updateHistoryQuery() should return bad request when validation fails', async () => {
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQuery);
     ctx.request.body = {
       historyQuery: { ...historyQueryCommand },
       items: []
@@ -811,7 +662,7 @@ describe('History query controller', () => {
       throw validationError;
     });
 
-    await historyQueryController.updateHistoryQuery(ctx);
+    await historyQueryController.update(ctx);
     expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.settings, historyQueryCommand.southSettings);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onUpdateSouth).not.toHaveBeenCalled();
@@ -819,14 +670,14 @@ describe('History query controller', () => {
   });
 
   it('updateHistoryQuery() should return not found when history query is not found', async () => {
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(null);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(null);
     ctx.request.body = {
       historyQuery: { ...historyQueryCommand },
       items: []
     };
     ctx.params.id = 'id';
 
-    await historyQueryController.updateHistoryQuery(ctx);
+    await historyQueryController.update(ctx);
 
     expect(validator.validateSettings).not.toHaveBeenCalled();
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
@@ -841,7 +692,7 @@ describe('History query controller', () => {
     };
     ctx.params.id = 'id';
 
-    await historyQueryController.updateHistoryQuery(ctx);
+    await historyQueryController.update(ctx);
 
     expect(validator.validateSettings).not.toHaveBeenCalled();
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
@@ -877,11 +728,11 @@ describe('History query controller', () => {
       page: 1,
       name: 'name'
     };
-    ctx.app.repositoryService.historyQueryItemRepository.searchHistoryItems.mockReturnValue(page);
+    ctx.app.repositoryService.historyQueryItemRepository.search.mockReturnValue(page);
 
     await historyQueryController.searchHistoryQueryItems(ctx);
 
-    expect(ctx.app.repositoryService.historyQueryItemRepository.searchHistoryItems).toHaveBeenCalledWith('id', searchParams);
+    expect(ctx.app.repositoryService.historyQueryItemRepository.search).toHaveBeenCalledWith('id', searchParams);
     expect(ctx.ok).toHaveBeenCalledWith(page);
   });
 
@@ -892,40 +743,40 @@ describe('History query controller', () => {
     const searchParams = {
       page: 0
     };
-    ctx.app.repositoryService.historyQueryItemRepository.searchHistoryItems.mockReturnValue(page);
+    ctx.app.repositoryService.historyQueryItemRepository.search.mockReturnValue(page);
 
     await historyQueryController.searchHistoryQueryItems(ctx);
 
-    expect(ctx.app.repositoryService.historyQueryItemRepository.searchHistoryItems).toHaveBeenCalledWith('id', searchParams);
+    expect(ctx.app.repositoryService.historyQueryItemRepository.search).toHaveBeenCalledWith('id', searchParams);
     expect(ctx.ok).toHaveBeenCalledWith(page);
   });
 
   it('listItems() should return all items', async () => {
     ctx.params.historyQueryId = 'id';
-    ctx.app.repositoryService.historyQueryItemRepository.listHistoryItems.mockReturnValue([oibusItem]);
+    ctx.app.repositoryService.historyQueryItemRepository.list.mockReturnValue([oibusItem]);
 
     await historyQueryController.listItems(ctx);
-    expect(ctx.app.repositoryService.historyQueryItemRepository.listHistoryItems).toHaveBeenCalledWith('id', {});
+    expect(ctx.app.repositoryService.historyQueryItemRepository.list).toHaveBeenCalledWith('id', {});
     expect(ctx.ok).toHaveBeenCalledWith([oibusItem]);
   });
 
   it('getHistoryItem() should return item', async () => {
     ctx.params.id = 'id';
-    ctx.app.repositoryService.historyQueryItemRepository.getHistoryItem.mockReturnValue(oibusItem);
+    ctx.app.repositoryService.historyQueryItemRepository.findById.mockReturnValue(oibusItem);
 
     await historyQueryController.getHistoryQueryItem(ctx);
 
-    expect(ctx.app.repositoryService.historyQueryItemRepository.getHistoryItem).toHaveBeenCalledWith('id');
+    expect(ctx.app.repositoryService.historyQueryItemRepository.findById).toHaveBeenCalledWith('id');
     expect(ctx.ok).toHaveBeenCalledWith(oibusItem);
   });
 
   it('getHistoryItem() should return not found when South item not found', async () => {
     ctx.params.id = 'id';
-    ctx.app.repositoryService.historyQueryItemRepository.getHistoryItem.mockReturnValue(null);
+    ctx.app.repositoryService.historyQueryItemRepository.findById.mockReturnValue(null);
 
     await historyQueryController.getHistoryQueryItem(ctx);
 
-    expect(ctx.app.repositoryService.historyQueryItemRepository.getHistoryItem).toHaveBeenCalledWith('id');
+    expect(ctx.app.repositoryService.historyQueryItemRepository.findById).toHaveBeenCalledWith('id');
     expect(ctx.notFound).toHaveBeenCalled();
   });
 
@@ -934,7 +785,7 @@ describe('History query controller', () => {
     ctx.request.body = {
       ...oibusItemCommand
     };
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQuery);
     ctx.app.reloadService.onCreateHistoryItem.mockReturnValue(oibusItem);
 
     await historyQueryController.createHistoryQueryItem(ctx);
@@ -947,7 +798,7 @@ describe('History query controller', () => {
   it('createHistoryQueryItem() should not create item when no body provided', async () => {
     ctx.params.historyQueryId = 'historyId';
     ctx.request.body = null;
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQuery);
 
     (validator.validateSettings as jest.Mock).mockImplementationOnce(() => {
       throw new Error('bad body');
@@ -960,7 +811,7 @@ describe('History query controller', () => {
   });
 
   it('createHistoryQueryItem() should throw 404 when History connector not found', async () => {
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(null);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(null);
 
     await historyQueryController.createHistoryQueryItem(ctx);
 
@@ -977,7 +828,7 @@ describe('History query controller', () => {
       ...historyQuery,
       southType: 'invalid'
     };
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(invalidHistory);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(invalidHistory);
 
     await historyQueryController.createHistoryQueryItem(ctx);
 
@@ -994,7 +845,7 @@ describe('History query controller', () => {
     validator.validateSettings = jest.fn().mockImplementationOnce(() => {
       throw validationError;
     });
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQuery);
 
     await historyQueryController.createHistoryQueryItem(ctx);
 
@@ -1009,13 +860,13 @@ describe('History query controller', () => {
     ctx.request.body = {
       ...oibusItemCommand
     };
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
-    ctx.app.repositoryService.historyQueryItemRepository.getHistoryItem.mockReturnValue(oibusItem);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQuery);
+    ctx.app.repositoryService.historyQueryItemRepository.findById.mockReturnValue(oibusItem);
 
     await historyQueryController.updateHistoryQueryItem(ctx);
 
-    expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
-    expect(ctx.app.repositoryService.historyQueryItemRepository.getHistoryItem).toHaveBeenCalledWith('id');
+    expect(ctx.app.repositoryService.historyQueryRepository.findById).toHaveBeenCalledWith('historyId');
+    expect(ctx.app.repositoryService.historyQueryItemRepository.findById).toHaveBeenCalledWith('id');
 
     expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.items.settings, oibusItemCommand.settings);
     expect(ctx.app.reloadService.onUpdateHistoryItemsSettings).toHaveBeenCalledWith('historyId', oibusItem, oibusItemCommand);
@@ -1025,8 +876,8 @@ describe('History query controller', () => {
   it('updateHistoryQueryItem() should not create item when no body provided', async () => {
     ctx.params.historyQueryId = 'historyId';
     ctx.request.body = null;
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
-    ctx.app.repositoryService.historyQueryItemRepository.getHistoryItem.mockReturnValue(oibusItem);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQuery);
+    ctx.app.repositoryService.historyQueryItemRepository.findById.mockReturnValue(oibusItem);
 
     (validator.validateSettings as jest.Mock).mockImplementationOnce(() => {
       throw new Error('bad body');
@@ -1040,12 +891,12 @@ describe('History query controller', () => {
 
   it('updateHistoryQueryItem() should throw 404 when History query not found', async () => {
     ctx.params.historyQueryId = 'historyId';
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(null);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(null);
 
     await historyQueryController.updateHistoryQueryItem(ctx);
 
-    expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
-    expect(ctx.app.repositoryService.historyQueryItemRepository.getHistoryItem).not.toHaveBeenCalled();
+    expect(ctx.app.repositoryService.historyQueryRepository.findById).toHaveBeenCalledWith('historyId');
+    expect(ctx.app.repositoryService.historyQueryItemRepository.findById).not.toHaveBeenCalled();
     expect(validator.validateSettings).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onUpdateHistoryItemsSettings).not.toHaveBeenCalled();
     expect(ctx.throw).toHaveBeenCalledWith(404, 'History query not found');
@@ -1060,12 +911,12 @@ describe('History query controller', () => {
       ...historyQuery,
       southType: 'invalid'
     };
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(invalidHistoryQuery);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(invalidHistoryQuery);
 
     await historyQueryController.updateHistoryQueryItem(ctx);
 
-    expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
-    expect(ctx.app.repositoryService.historyQueryItemRepository.getHistoryItem).not.toHaveBeenCalled();
+    expect(ctx.app.repositoryService.historyQueryRepository.findById).toHaveBeenCalledWith('historyId');
+    expect(ctx.app.repositoryService.historyQueryItemRepository.findById).not.toHaveBeenCalled();
     expect(validator.validateSettings).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onUpdateHistoryItemsSettings).not.toHaveBeenCalled();
     expect(ctx.throw).toHaveBeenCalledWith(404, 'History query South manifest not found');
@@ -1075,13 +926,13 @@ describe('History query controller', () => {
     ctx.params.id = 'id';
     ctx.params.historyQueryId = 'historyId';
     ctx.request.body = null;
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
-    ctx.app.repositoryService.historyQueryItemRepository.getHistoryItem.mockReturnValue(null);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQuery);
+    ctx.app.repositoryService.historyQueryItemRepository.findById.mockReturnValue(null);
 
     await historyQueryController.updateHistoryQueryItem(ctx);
 
-    expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
-    expect(ctx.app.repositoryService.historyQueryItemRepository.getHistoryItem).toHaveBeenCalledWith('id');
+    expect(ctx.app.repositoryService.historyQueryRepository.findById).toHaveBeenCalledWith('historyId');
+    expect(ctx.app.repositoryService.historyQueryItemRepository.findById).toHaveBeenCalledWith('id');
     expect(validator.validateSettings).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onUpdateHistoryItemsSettings).not.toHaveBeenCalled();
     expect(ctx.notFound).toHaveBeenCalled();
@@ -1097,13 +948,13 @@ describe('History query controller', () => {
     validator.validateSettings = jest.fn().mockImplementationOnce(() => {
       throw validationError;
     });
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
-    ctx.app.repositoryService.historyQueryItemRepository.getHistoryItem.mockReturnValue(oibusItem);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQuery);
+    ctx.app.repositoryService.historyQueryItemRepository.findById.mockReturnValue(oibusItem);
 
     await historyQueryController.updateHistoryQueryItem(ctx);
 
-    expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
-    expect(ctx.app.repositoryService.historyQueryItemRepository.getHistoryItem).toHaveBeenCalledWith('id');
+    expect(ctx.app.repositoryService.historyQueryRepository.findById).toHaveBeenCalledWith('historyId');
+    expect(ctx.app.repositoryService.historyQueryItemRepository.findById).toHaveBeenCalledWith('id');
     expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.items.settings, oibusItemCommand.settings);
     expect(ctx.app.reloadService.onUpdateHistoryItemsSettings).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
@@ -1184,7 +1035,7 @@ describe('History query controller', () => {
 
   it('exportSouthItems() should download a csv file', async () => {
     ctx.params.historyQueryId = 'id';
-    ctx.app.repositoryService.historyQueryItemRepository.listHistoryItems.mockReturnValueOnce([
+    ctx.app.repositoryService.historyQueryItemRepository.list.mockReturnValueOnce([
       oibusItem,
       {
         id: 'id2',
@@ -1340,7 +1191,7 @@ describe('History query controller', () => {
   it('checkImportSouthItems() should check import of items in a csv file with existing history', async () => {
     ctx.params.southType = 'south-test';
     ctx.params.historyQueryId = 'historyId';
-    ctx.app.repositoryService.historyQueryItemRepository.listHistoryItems.mockReturnValueOnce([{ id: 'id1', name: 'existingItem' }]);
+    ctx.app.repositoryService.historyQueryItemRepository.list.mockReturnValueOnce([{ id: 'id1', name: 'existingItem' }]);
 
     ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
     ctx.request.body = { delimiter: ',' };
@@ -1451,7 +1302,7 @@ describe('History query controller', () => {
   it('checkImportSouthItems() should throw badRequest when delimiter not the same in file and entered', async () => {
     ctx.params.southType = 'south-test';
     ctx.params.southId = 'create';
-    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValueOnce([{ id: 'scanModeId', name: 'scanMode' }]);
+    ctx.app.repositoryService.scanModeRepository.findAll.mockReturnValueOnce([{ id: 'scanModeId', name: 'scanMode' }]);
 
     ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
     ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
@@ -1475,14 +1326,14 @@ describe('History query controller', () => {
 
   it('importSouthItems() should throw not found if connector not found', async () => {
     ctx.params.historyId = 'id';
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(null);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(null);
     await historyQueryController.importSouthItems(ctx);
     expect(ctx.throw).toHaveBeenCalledWith(404, 'History query not found');
   });
 
   it('importSouthItems() should throw not found if connector not found', async () => {
     ctx.params.historyId = 'id';
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQuery);
     ctx.app.southService.getInstalledSouthManifests.mockReturnValue([]);
     await historyQueryController.importSouthItems(ctx);
     expect(ctx.throw).toHaveBeenCalledWith(404, 'South manifest not found');
@@ -1502,7 +1353,7 @@ describe('History query controller', () => {
         }
       ]
     };
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQuery);
     ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
     (validator.validateSettings as jest.Mock).mockImplementation(() => {
       throw new Error('validation fail');
@@ -1524,7 +1375,7 @@ describe('History query controller', () => {
         }
       ]
     };
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQuery);
     ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
     (validator.validateSettings as jest.Mock).mockImplementation(() => {
       return true;
@@ -1550,7 +1401,7 @@ describe('History query controller', () => {
         }
       ]
     };
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQuery);
     ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
     (validator.validateSettings as jest.Mock).mockImplementation(() => {
       return true;
@@ -1572,7 +1423,7 @@ describe('History query controller', () => {
 
     ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
     ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQueryCommand);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQueryCommand);
     (ctx.app.southService.createSouth as jest.Mock).mockReturnValue(createdSouth);
 
     await historyQueryController.testSouthConnection(ctx);
@@ -1595,12 +1446,12 @@ describe('History query controller', () => {
 
     ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
     ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQueryCommand);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQueryCommand);
     (ctx.app.southService.createSouth as jest.Mock).mockReturnValue(createdSouth);
 
     await historyQueryController.testSouthConnection(ctx);
 
-    expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('duplicateId');
+    expect(ctx.app.repositoryService.historyQueryRepository.findById).toHaveBeenCalledWith('duplicateId');
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
       southConnectorCommand.settings,
       historyQueryCommand.southSettings,
@@ -1620,12 +1471,12 @@ describe('History query controller', () => {
 
     ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
     ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValueOnce(null);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValueOnce(null);
     (ctx.app.southService.createSouth as jest.Mock).mockReturnValue(createdSouth);
 
     await historyQueryController.testSouthConnection(ctx);
 
-    expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('bad');
+    expect(ctx.app.repositoryService.historyQueryRepository.findById).toHaveBeenCalledWith('bad');
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.noContent).not.toHaveBeenCalled();
     expect(ctx.notFound).toHaveBeenCalled();
@@ -1670,7 +1521,7 @@ describe('History query controller', () => {
       query: { fromConnectorId: 'fromSouthId' }
     };
     ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValueOnce(null).mockReturnValueOnce({ southSettings: null });
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValueOnce(null).mockReturnValueOnce({ southSettings: null });
 
     await historyQueryController.testSouthConnection(ctx);
     expect(ctx.notFound).toHaveBeenCalledTimes(1);
@@ -1691,7 +1542,7 @@ describe('History query controller', () => {
   it('testSouthConnection() should return bad request when validation fails', async () => {
     ctx.request.body = southConnectorCommand;
     ctx.params.id = 'historyId';
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQueryCommand);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQueryCommand);
     const validationError = new Error('invalid body');
     validator.validateSettings = jest.fn().mockImplementationOnce(() => {
       throw validationError;
@@ -1713,7 +1564,7 @@ describe('History query controller', () => {
 
     ctx.app.northService.getInstalledNorthManifests.mockReturnValue([northTestManifest]);
     ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(northConnectorCommand.settings);
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQueryCommand);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQueryCommand);
     (ctx.app.northService.createNorth as jest.Mock).mockReturnValue(createdNorth);
 
     await historyQueryController.testNorthConnection(ctx);
@@ -1736,11 +1587,11 @@ describe('History query controller', () => {
 
     ctx.app.northService.getInstalledNorthManifests.mockReturnValue([northTestManifest]);
     ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(northConnectorCommand.settings);
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQueryCommand);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQueryCommand);
     (ctx.app.northService.createNorth as jest.Mock).mockReturnValue(createdNorth);
 
     await historyQueryController.testNorthConnection(ctx);
-    expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('duplicateId');
+    expect(ctx.app.repositoryService.historyQueryRepository.findById).toHaveBeenCalledWith('duplicateId');
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
       northConnectorCommand.settings,
       historyQueryCommand.northSettings,
@@ -1760,11 +1611,11 @@ describe('History query controller', () => {
 
     ctx.app.northService.getInstalledNorthManifests.mockReturnValue([northTestManifest]);
     ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(northConnectorCommand.settings);
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValueOnce(null);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValueOnce(null);
     (ctx.app.northService.createNorth as jest.Mock).mockReturnValue(createdNorth);
 
     await historyQueryController.testNorthConnection(ctx);
-    expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('bad');
+    expect(ctx.app.repositoryService.historyQueryRepository.findById).toHaveBeenCalledWith('bad');
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.noContent).not.toHaveBeenCalled();
     expect(ctx.notFound).toHaveBeenCalled();
@@ -1809,7 +1660,7 @@ describe('History query controller', () => {
       query: { fromConnectorId: 'fromNorthId' }
     };
     ctx.app.northService.getInstalledNorthManifests.mockReturnValue([northTestManifest]);
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValueOnce(null).mockReturnValueOnce({ northSettings: null });
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValueOnce(null).mockReturnValueOnce({ northSettings: null });
 
     await historyQueryController.testNorthConnection(ctx);
     expect(ctx.notFound).toHaveBeenCalledTimes(1);
@@ -1830,7 +1681,7 @@ describe('History query controller', () => {
   it('testNorthConnection() should return bad request when validation fails', async () => {
     ctx.request.body = northConnectorCommand;
     ctx.params.id = 'historyId';
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQueryCommand);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQueryCommand);
     const validationError = new Error('invalid body');
     validator.validateSettings = jest.fn().mockImplementationOnce(() => {
       throw validationError;
@@ -1844,14 +1695,14 @@ describe('History query controller', () => {
   });
 
   it.each(['south', 'north'] as const)('addTransformer() should add a transformer to the %s connector', async connectorType => {
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQuery);
     ctx.app.repositoryService.transformerRepository.getTransformer.mockReturnValue(transformer);
     ctx.params.historyQueryId = 'historyId';
     ctx.params.transformerId = 'transformerId';
 
     await historyQueryController.addTransformer(ctx, connectorType);
 
-    expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
+    expect(ctx.app.repositoryService.historyQueryRepository.findById).toHaveBeenCalledWith('historyId');
     expect(ctx.app.repositoryService.transformerRepository.getTransformer).toHaveBeenCalledWith('transformerId');
     expect(ctx.app.repositoryService.historyTransformerRepository.addTransformer).toHaveBeenCalledWith(
       'historyId',
@@ -1864,12 +1715,12 @@ describe('History query controller', () => {
   it.each(['south', 'north'] as const)(
     'addTransformer() should not add a transformer to the %s connector when history query is not found',
     async connectorType => {
-      ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(null);
+      ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(null);
       ctx.params.historyQueryId = 'historyId';
 
       await historyQueryController.addTransformer(ctx, connectorType);
 
-      expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
+      expect(ctx.app.repositoryService.historyQueryRepository.findById).toHaveBeenCalledWith('historyId');
       expect(ctx.app.repositoryService.transformerRepository.getTransformer).not.toHaveBeenCalled();
       expect(ctx.app.repositoryService.historyTransformerRepository.addTransformer).not.toHaveBeenCalled();
       expect(ctx.noContent).not.toHaveBeenCalled();
@@ -1880,14 +1731,14 @@ describe('History query controller', () => {
   it.each(['south', 'north'] as const)(
     'addTransformer() should not add a transformer to the %s connector when transformer is not found',
     async connectorType => {
-      ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+      ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQuery);
       ctx.app.repositoryService.transformerRepository.getTransformer.mockReturnValue(null);
       ctx.params.historyQueryId = 'historyId';
       ctx.params.transformerId = 'transformerId';
 
       await historyQueryController.addTransformer(ctx, connectorType);
 
-      expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
+      expect(ctx.app.repositoryService.historyQueryRepository.findById).toHaveBeenCalledWith('historyId');
       expect(ctx.app.repositoryService.transformerRepository.getTransformer).toHaveBeenCalledWith('transformerId');
       expect(ctx.app.repositoryService.historyTransformerRepository.addTransformer).not.toHaveBeenCalled();
       expect(ctx.noContent).not.toHaveBeenCalled();
@@ -1898,7 +1749,7 @@ describe('History query controller', () => {
   it.each(['south', 'north'] as const)(
     'addTransformer() should not add transformer to the %s connector when error is thrown',
     async connectorType => {
-      ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+      ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQuery);
       ctx.app.repositoryService.transformerRepository.getTransformer.mockReturnValue(transformer);
       ctx.app.repositoryService.historyTransformerRepository.addTransformer.mockImplementationOnce(() => {
         throw new Error('SQL Duplicate key constraint failed');
@@ -1908,7 +1759,7 @@ describe('History query controller', () => {
 
       await historyQueryController.addTransformer(ctx, connectorType);
 
-      expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
+      expect(ctx.app.repositoryService.historyQueryRepository.findById).toHaveBeenCalledWith('historyId');
       expect(ctx.app.repositoryService.transformerRepository.getTransformer).toHaveBeenCalledWith('transformerId');
       expect(ctx.app.repositoryService.historyTransformerRepository.addTransformer).toHaveBeenCalledWith(
         'historyId',
@@ -1921,13 +1772,13 @@ describe('History query controller', () => {
   );
 
   it.each(['south', 'north'] as const)('getTransformers() should return transformers added to the %s connector', async connectorType => {
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQuery);
     ctx.app.repositoryService.historyTransformerRepository.getTransformers.mockReturnValue([transformer]);
     ctx.params.historyQueryId = 'historyId';
     const filter = {};
 
     await historyQueryController.getTransformers(ctx, connectorType);
-    expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
+    expect(ctx.app.repositoryService.historyQueryRepository.findById).toHaveBeenCalledWith('historyId');
     expect(ctx.app.repositoryService.historyTransformerRepository.getTransformers).toHaveBeenCalledWith('historyId', connectorType, filter);
     expect(ctx.ok).toHaveBeenCalledWith([transformer]);
   });
@@ -1935,7 +1786,7 @@ describe('History query controller', () => {
   it.each(['south', 'north'] as const)(
     'getTransformers() should return transformers added to the %s connector with filters',
     async connectorType => {
-      ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+      ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQuery);
       ctx.app.repositoryService.historyTransformerRepository.getTransformers.mockReturnValue([transformer]);
       ctx.params.historyQueryId = 'historyId';
       ctx.query.inputType = 'time-values';
@@ -1948,7 +1799,7 @@ describe('History query controller', () => {
       };
 
       await historyQueryController.getTransformers(ctx, connectorType);
-      expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
+      expect(ctx.app.repositoryService.historyQueryRepository.findById).toHaveBeenCalledWith('historyId');
       expect(ctx.app.repositoryService.historyTransformerRepository.getTransformers).toHaveBeenCalledWith(
         'historyId',
         connectorType,
@@ -1961,12 +1812,12 @@ describe('History query controller', () => {
   it.each(['south', 'north'] as const)(
     'getTransformers() should not return transformers added to the %s connector when history query is not found',
     async connectorType => {
-      ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(null);
+      ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(null);
       ctx.params.historyQueryId = 'historyId';
 
       await historyQueryController.getTransformers(ctx, connectorType);
 
-      expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
+      expect(ctx.app.repositoryService.historyQueryRepository.findById).toHaveBeenCalledWith('historyId');
       expect(ctx.app.repositoryService.historyTransformerRepository.getTransformers).not.toHaveBeenCalled();
       expect(ctx.ok).not.toHaveBeenCalled();
       expect(ctx.throw).toHaveBeenCalledWith(404, 'History query not found');
@@ -1976,7 +1827,7 @@ describe('History query controller', () => {
   it.each(['south', 'north'] as const)(
     'getTransformers() should not return transformers added to the %s connector when error is thrown',
     async connectorType => {
-      ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+      ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQuery);
       ctx.app.repositoryService.historyTransformerRepository.getTransformers.mockImplementationOnce(() => {
         throw new Error('Unexpected filter value');
       });
@@ -1985,7 +1836,7 @@ describe('History query controller', () => {
 
       await historyQueryController.getTransformers(ctx, connectorType);
 
-      expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
+      expect(ctx.app.repositoryService.historyQueryRepository.findById).toHaveBeenCalledWith('historyId');
       expect(ctx.app.repositoryService.historyTransformerRepository.getTransformers).toHaveBeenCalledWith(
         'historyId',
         connectorType,
@@ -1997,14 +1848,14 @@ describe('History query controller', () => {
   );
 
   it.each(['south', 'north'] as const)('removeTransformer() should remove a transformer from the %s connector', async connectorType => {
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQuery);
     ctx.app.repositoryService.transformerRepository.getTransformer.mockReturnValue(transformer);
     ctx.params.historyQueryId = 'historyId';
     ctx.params.transformerId = 'transformerId';
 
     await historyQueryController.removeTransformer(ctx, connectorType);
 
-    expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
+    expect(ctx.app.repositoryService.historyQueryRepository.findById).toHaveBeenCalledWith('historyId');
     expect(ctx.app.repositoryService.transformerRepository.getTransformer).toHaveBeenCalledWith('transformerId');
     expect(ctx.app.repositoryService.historyTransformerRepository.removeTransformer).toHaveBeenCalledWith(
       'historyId',
@@ -2017,12 +1868,12 @@ describe('History query controller', () => {
   it.each(['south', 'north'] as const)(
     'removeTransformer() should not remove a transformer from the %s connector when history query is not found',
     async connectorType => {
-      ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(null);
+      ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(null);
       ctx.params.historyQueryId = 'historyId';
 
       await historyQueryController.removeTransformer(ctx, connectorType);
 
-      expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
+      expect(ctx.app.repositoryService.historyQueryRepository.findById).toHaveBeenCalledWith('historyId');
       expect(ctx.app.repositoryService.transformerRepository.getTransformer).not.toHaveBeenCalled();
       expect(ctx.app.repositoryService.historyTransformerRepository.removeTransformer).not.toHaveBeenCalled();
       expect(ctx.noContent).not.toHaveBeenCalled();
@@ -2033,14 +1884,14 @@ describe('History query controller', () => {
   it.each(['south', 'north'] as const)(
     'removeTransformer() should not remove a transformer from the %s connector when transformer is not found',
     async connectorType => {
-      ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+      ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQuery);
       ctx.app.repositoryService.transformerRepository.getTransformer.mockReturnValue(null);
       ctx.params.historyQueryId = 'historyId';
       ctx.params.transformerId = 'transformerId';
 
       await historyQueryController.removeTransformer(ctx, connectorType);
 
-      expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
+      expect(ctx.app.repositoryService.historyQueryRepository.findById).toHaveBeenCalledWith('historyId');
       expect(ctx.app.repositoryService.transformerRepository.getTransformer).toHaveBeenCalledWith('transformerId');
       expect(ctx.app.repositoryService.historyTransformerRepository.removeTransformer).not.toHaveBeenCalled();
       expect(ctx.noContent).not.toHaveBeenCalled();
@@ -2051,7 +1902,7 @@ describe('History query controller', () => {
   it.each(['south', 'north'] as const)(
     'removeTransformer() should not remove a transformer from the %s connector when error is thrown',
     async connectorType => {
-      ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+      ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQuery);
       ctx.app.repositoryService.transformerRepository.getTransformer.mockReturnValue(transformer);
       ctx.app.repositoryService.historyTransformerRepository.removeTransformer.mockImplementationOnce(() => {
         throw new Error('Unexpected error occurred');
@@ -2061,7 +1912,7 @@ describe('History query controller', () => {
 
       await historyQueryController.removeTransformer(ctx, connectorType);
 
-      expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
+      expect(ctx.app.repositoryService.historyQueryRepository.findById).toHaveBeenCalledWith('historyId');
       expect(ctx.app.repositoryService.transformerRepository.getTransformer).toHaveBeenCalledWith('transformerId');
       expect(ctx.app.repositoryService.historyTransformerRepository.removeTransformer).toHaveBeenCalledWith(
         'historyId',
@@ -2085,7 +1936,7 @@ describe('South connection tests', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
     ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQueryCommand);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQueryCommand);
     ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
     ctx.app.southService.getSouth.mockReturnValue(southConnectorCommand);
     (ctx.app.southService.createSouth as jest.Mock).mockReturnValue(createdSouth);
@@ -2203,7 +2054,7 @@ describe('South connection tests', () => {
       query: { fromConnectorId: 'fromSouthId' }
     };
     ctx.params.id = 'unknown';
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValueOnce(null);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValueOnce(null);
 
     await historyQueryController.testSouthConnection(ctx);
 
@@ -2250,7 +2101,7 @@ describe('North connection tests', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
     ctx.app.northService.getInstalledNorthManifests.mockReturnValue([northTestManifest]);
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQueryCommand);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQueryCommand);
     ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(northConnectorCommand.settings);
     ctx.app.northService.getNorth.mockReturnValue(northConnectorCommand);
     (ctx.app.northService.createNorth as jest.Mock).mockReturnValue(createdNorth);
@@ -2368,7 +2219,7 @@ describe('North connection tests', () => {
       query: { fromConnectorId: 'fromNorthId' }
     };
     ctx.params.id = 'unknown';
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValueOnce(null);
+    ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValueOnce(null);
 
     await historyQueryController.testNorthConnection(ctx);
 

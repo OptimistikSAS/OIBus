@@ -3,19 +3,8 @@ import { BaseEntity, Instant } from './types';
 export const OIANALYTICS_MESSAGE_STATUS = ['PENDING', 'COMPLETED', 'ERRORED'] as const;
 export type OIAnalyticsMessageStatus = (typeof OIANALYTICS_MESSAGE_STATUS)[number];
 
-export const OIANALYTICS_MESSAGE_TYPES = ['INFO'] as const;
+export const OIANALYTICS_MESSAGE_TYPES = ['info', 'full-config'] as const;
 export type OIAnalyticsMessageType = (typeof OIANALYTICS_MESSAGE_TYPES)[number];
-
-interface BaseOIAnalyticsMessageDTO extends BaseEntity {
-  type: OIAnalyticsMessageType;
-  status: OIAnalyticsMessageStatus;
-  error?: string;
-  completedDate?: Instant;
-}
-
-interface BaseOIAnalyticsMessageCommandDTO {
-  type: string;
-}
 
 export interface OIAnalyticsMessageSearchParam {
   types: Array<OIAnalyticsMessageType>;
@@ -24,40 +13,35 @@ export interface OIAnalyticsMessageSearchParam {
   end?: Instant;
 }
 
-export interface InfoMessageContent {
-  version: string;
-  oibusName: string;
-  oibusId: string;
-  dataDirectory: string;
-  binaryDirectory: string;
-  processId: string;
-  hostname: string;
-  operatingSystem: string;
-  architecture: string;
-  platform: string;
+// DTO used to display messages in OIBus
+interface BaseOIAnalyticsMessage extends BaseEntity {
+  type: OIAnalyticsMessageType;
+  status: OIAnalyticsMessageStatus;
+  error: string | null;
+  completedDate: Instant | null;
 }
 
+export interface OIAnalyticsMessageInfo extends BaseOIAnalyticsMessage {
+  type: 'info';
+}
 
+// No need to store the config, it will be sent at run time
+export interface OIAnalyticsMessageFullConfig extends BaseOIAnalyticsMessage {
+  type: 'full-config';
+}
 
-export interface OIAnalyticsMessageInfoDTO extends BaseOIAnalyticsMessageDTO {
-  type: 'INFO',
-  content: InfoMessageContent
+export type OIAnalyticsMessage = OIAnalyticsMessageInfo | OIAnalyticsMessageFullConfig;
+
+// DTO used to update or create messages in OIBus and send messages to OIAnalytics
+interface BaseOIAnalyticsMessageCommandDTO {
+  type: OIAnalyticsMessageType;
 }
 
 export interface OIAnalyticsMessageInfoCommandDTO extends BaseOIAnalyticsMessageCommandDTO {
-  type: 'INFO';
-  version: string;
-  oibusName: string;
-  oibusId: string;
-  dataDirectory: string;
-  binaryDirectory: string;
-  processId: string;
-  hostname: string;
-  operatingSystem: string;
-  architecture: string;
-  platform: string;
+  type: 'info';
 }
 
-export type OIAnalyticsMessageCommand = OIAnalyticsMessageInfoCommandDTO
-export type OIAnalyticsMessageDTO = OIAnalyticsMessageInfoDTO
-export type InfoMessage = InfoMessageContent
+export interface OIAnalyticsMessageFullConfigCommandDTO extends BaseOIAnalyticsMessageCommandDTO {
+  type: 'full-config';
+}
+export type OIAnalyticsMessageCommandDTO = OIAnalyticsMessageInfoCommandDTO | OIAnalyticsMessageFullConfigCommandDTO;

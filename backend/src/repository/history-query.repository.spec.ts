@@ -148,7 +148,7 @@ describe('History Query repository', () => {
         archiveRetentionDuration: 1000
       }
     ]);
-    const southConnectors = repository.getHistoryQueries();
+    const southConnectors = repository.findAll();
     expect(database.prepare).toHaveBeenCalledWith(
       `SELECT id, name, description, status, history_max_instant_per_item AS maxInstantPerItem, ` +
         `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, start_time AS startTime, end_time AS endTime, ` +
@@ -222,7 +222,7 @@ describe('History Query repository', () => {
       archiveEnabled: true,
       archiveRetentionDuration: 1000
     });
-    const historyQuery = repository.getHistoryQuery('id1');
+    const historyQuery = repository.findById('id1');
     expect(database.prepare).toHaveBeenCalledWith(
       `SELECT id, name, description, status, history_max_instant_per_item AS maxInstantPerItem, ` +
         `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, start_time AS startTime, end_time AS endTime, ` +
@@ -238,7 +238,7 @@ describe('History Query repository', () => {
 
   it('should return null if not found', () => {
     get.mockReturnValueOnce(null);
-    const historyQuery = repository.getHistoryQuery('id1');
+    const historyQuery = repository.findById('id1');
     expect(database.prepare).toHaveBeenCalledWith(
       `SELECT id, name, description, status, history_max_instant_per_item AS maxInstantPerItem, ` +
         `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, start_time AS startTime, end_time AS endTime, ` +
@@ -315,7 +315,7 @@ describe('History Query repository', () => {
     const runFn = jest.fn(() => ({ lastInsertRowId: 1 }));
     const getFn = jest.fn(() => result);
     database.prepare = jest.fn().mockReturnValueOnce({ run: runFn }).mockReturnValueOnce({ get: getFn });
-    repository.createHistoryQuery(command);
+    repository.create(command);
     expect(generateRandomId).toHaveBeenCalledWith(6);
     expect(database.prepare).toHaveBeenCalledWith(
       `INSERT INTO history_queries (id, name, description, status, history_max_instant_per_item, history_max_read_interval, ` +
@@ -395,7 +395,7 @@ describe('History Query repository', () => {
         }
       }
     };
-    repository.updateHistoryQuery('id1', command);
+    repository.update('id1', command);
     expect(database.prepare).toHaveBeenCalledWith(
       `UPDATE history_queries SET name = ?, description = ?, history_max_instant_per_item = ?, ` +
         `history_max_read_interval = ?, history_read_delay = ?, start_time = ?, ` +
@@ -431,13 +431,13 @@ describe('History Query repository', () => {
   });
 
   it('should stop a history query', () => {
-    repository.setHistoryQueryStatus('id1', 'PENDING');
+    repository.updateStatus('id1', 'PENDING');
     expect(database.prepare).toHaveBeenCalledWith(`UPDATE history_queries SET status = ? WHERE id = ?;`);
     expect(run).toHaveBeenCalledWith('PENDING', 'id1');
   });
 
   it('should delete a history query', () => {
-    repository.deleteHistoryQuery('id1');
+    repository.delete('id1');
     expect(database.prepare).toHaveBeenCalledWith('DELETE FROM history_queries WHERE id = ?;');
     expect(run).toHaveBeenCalledWith('id1');
   });

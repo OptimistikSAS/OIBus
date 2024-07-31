@@ -1,16 +1,16 @@
 import NorthConnector from './north-connector';
-import PinoLogger from '../tests/__mocks__/logger.mock';
-import EncryptionServiceMock from '../tests/__mocks__/encryption-service.mock';
-import RepositoryServiceMock from '../tests/__mocks__/repository-service.mock';
+import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
+import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
+import RepositoryServiceMock from '../tests/__mocks__/service/repository-service.mock';
 
 import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
 import RepositoryService from '../service/repository.service';
-import ValueCacheServiceMock from '../tests/__mocks__/value-cache-service.mock';
-import FileCacheServiceMock from '../tests/__mocks__/file-cache-service.mock';
-import ArchiveServiceMock from '../tests/__mocks__/archive-service.mock';
+import ValueCacheServiceMock from '../tests/__mocks__/service/cache/value-cache-service.mock';
+import FileCacheServiceMock from '../tests/__mocks__/service/cache/file-cache-service.mock';
+import ArchiveServiceMock from '../tests/__mocks__/service/cache/archive-service.mock';
 import { EventEmitter } from 'node:events';
 import fs from 'node:fs/promises';
 import { dirSize, validateCronExpression } from '../service/utils';
@@ -167,7 +167,7 @@ describe('NorthConnector enabled', () => {
         }
       }
     };
-    repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.northConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
 
     north = new TestNorth(configuration, encryptionService, repositoryService, logger, 'baseFolder');
     northWithItems = new TestNorthWithItems(configuration, encryptionService, repositoryService, logger, 'baseFolder');
@@ -191,7 +191,7 @@ describe('NorthConnector enabled', () => {
       description: 'my description',
       cron: '* * * * * *'
     };
-    (repositoryService.scanModeRepository.getScanMode as jest.Mock).mockReturnValue(scanMode);
+    (repositoryService.scanModeRepository.findById as jest.Mock).mockReturnValue(scanMode);
 
     north.addToQueue = jest.fn();
     await north.connect();
@@ -367,19 +367,19 @@ describe('NorthConnector enabled', () => {
   });
 
   it('should check if North is subscribed to all South', async () => {
-    (repositoryService.subscriptionRepository.getNorthSubscriptions as jest.Mock).mockReturnValue([]);
+    (repositoryService.subscriptionRepository.list as jest.Mock).mockReturnValue([]);
     await north.start();
     expect(north.isSubscribed('southId')).toBeTruthy();
   });
 
   it('should check if North is subscribed to South', async () => {
-    (repositoryService.subscriptionRepository.getNorthSubscriptions as jest.Mock).mockReturnValue(['southId']);
+    (repositoryService.subscriptionRepository.list as jest.Mock).mockReturnValue(['southId']);
     await north.start();
     expect(north.isSubscribed('southId')).toBeTruthy();
   });
 
   it('should check if North is not subscribed to South', async () => {
-    (repositoryService.subscriptionRepository.getNorthSubscriptions as jest.Mock).mockReturnValue(['southId1']);
+    (repositoryService.subscriptionRepository.list as jest.Mock).mockReturnValue(['southId1']);
     await north.start();
     expect(north.isSubscribed('southId2')).toBeFalsy();
   });
@@ -608,7 +608,7 @@ describe('NorthConnector enabled', () => {
 
   it('should properly handle item change', async () => {
     await north.onItemChange();
-    expect(repositoryService.northItemRepository.listNorthItems).toHaveBeenCalledWith(configuration.id, { enabled: true });
+    expect(repositoryService.northItemRepository.list).toHaveBeenCalledWith(configuration.id, { enabled: true });
   });
 });
 
@@ -651,7 +651,7 @@ describe('NorthConnector disabled', () => {
         }
       }
     };
-    repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.northConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
 
     north = new TestNorth(configuration, encryptionService, repositoryService, logger, 'baseFolder');
   });
@@ -785,7 +785,7 @@ describe('NorthConnector test', () => {
         }
       }
     };
-    repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.northConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
 
     north = new TestNorth(configuration, encryptionService, repositoryService, logger, 'baseFolder');
   });

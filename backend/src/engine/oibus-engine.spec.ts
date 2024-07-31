@@ -1,6 +1,6 @@
-import PinoLogger from '../tests/__mocks__/logger.mock';
-import SouthServiceMock from '../tests/__mocks__/south-service.mock';
-import NorthServiceMock from '../tests/__mocks__/north-service.mock';
+import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
+import SouthServiceMock from '../tests/__mocks__/service/south-service.mock';
+import NorthServiceMock from '../tests/__mocks__/service/north-service.mock';
 
 import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
 import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
@@ -10,14 +10,14 @@ import NorthService from '../service/north.service';
 
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
-import EncryptionServiceMock from '../tests/__mocks__/encryption-service.mock';
+import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 import OIBusEngine from './oibus-engine';
 import { EventEmitter } from 'node:events';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 import { filesExists } from '../service/utils';
-import HomeMetricsServiceMock from '../tests/__mocks__/home-metrics-service.mock';
+import HomeMetricsServiceMock from '../tests/__mocks__/service/home-metrics-service.mock';
 import HomeMetricsService from '../service/home-metrics.service';
 import { OIBusTimeValue } from '../../../shared/model/engine.model';
 

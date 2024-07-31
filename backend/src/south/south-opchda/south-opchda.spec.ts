@@ -1,11 +1,11 @@
 import SouthOPCHDA from './south-opchda';
 import DatabaseMock from '../../tests/__mocks__/database.mock';
 import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/logger.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import RepositoryService from '../../service/repository.service';
-import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
+import RepositoryServiceMock from '../../tests/__mocks__/service/repository-service.mock';
 import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import { SouthOPCHDAItemSettings, SouthOPCHDASettings } from '../../../../shared/model/south-settings.model';
 import fetch from 'node-fetch';
@@ -114,7 +114,7 @@ describe('South OPCHDA', () => {
   beforeEach(async () => {
     jest.resetAllMocks();
     jest.useFakeTimers();
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
 
     south = new SouthOPCHDA(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
@@ -344,7 +344,7 @@ describe('South OPCHDA', () => {
     });
 
     await expect(south.historyQuery(items, startTime, endTime, startTime)).rejects.toThrow(new Error('bad request'));
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue({ ...configuration, enabled: false });
+    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue({ ...configuration, enabled: false });
 
     await south.start();
     await expect(south.historyQuery(items, startTime, endTime, startTime)).rejects.toThrow(new Error('bad request'));

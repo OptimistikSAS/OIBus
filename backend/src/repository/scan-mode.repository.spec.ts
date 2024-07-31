@@ -82,7 +82,7 @@ describe('Scan mode repository', () => {
         }
       ];
       all.mockReturnValueOnce(expectedValue);
-      const scanModes = repository.getScanModes();
+      const scanModes = repository.findAll();
       expect(database.prepare).toHaveBeenCalledWith('SELECT id, name, description, cron FROM scan_modes;');
       expect(scanModes).toEqual(expectedValue);
     });
@@ -95,7 +95,7 @@ describe('Scan mode repository', () => {
         cron: '* * * * * *'
       };
       get.mockReturnValueOnce(expectedValue);
-      const scanMode = repository.getScanMode('id1');
+      const scanMode = repository.findById('id1');
       expect(database.prepare).toHaveBeenCalledWith('SELECT id, name, description, cron FROM scan_modes WHERE id = ?;');
       expect(get).toHaveBeenCalledWith('id1');
       expect(scanMode).toEqual(expectedValue);
@@ -109,7 +109,7 @@ describe('Scan mode repository', () => {
         description: 'my first scanMode',
         cron: '* * * * * *'
       };
-      repository.createScanMode(command);
+      repository.create(command);
       expect(generateRandomId).toHaveBeenCalledWith(6);
       expect(database.prepare).toHaveBeenCalledWith('INSERT INTO scan_modes (id, name, description, cron) VALUES (?, ?, ?, ?);');
       expect(run).toHaveBeenCalledWith('123456', command.name, command.description, command.cron);
@@ -123,13 +123,13 @@ describe('Scan mode repository', () => {
         description: 'my first scanMode',
         cron: '* * * * * *'
       };
-      repository.updateScanMode('id1', command);
+      repository.update('id1', command);
       expect(database.prepare).toHaveBeenCalledWith('UPDATE scan_modes SET name = ?, description = ?, cron = ? WHERE id = ?;');
       expect(run).toHaveBeenCalledWith(command.name, command.description, command.cron, 'id1');
     });
 
     it('should delete a scan mode', () => {
-      repository.deleteScanMode('id1');
+      repository.delete('id1');
       expect(database.prepare).toHaveBeenCalledWith('DELETE FROM scan_modes WHERE id = ?;');
       expect(run).toHaveBeenCalledWith('id1');
     });

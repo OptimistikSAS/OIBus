@@ -3,27 +3,27 @@ import { SubscriptionDTO } from '../../../../shared/model/subscription.model';
 
 export default class SubscriptionController {
   async getNorthSubscriptions(ctx: KoaContext<void, Array<SubscriptionDTO>>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
+    const northConnector = ctx.app.repositoryService.northConnectorRepository.findById(ctx.params.northId);
     if (!northConnector) {
       return ctx.notFound();
     }
 
-    const subscriptions = ctx.app.repositoryService.subscriptionRepository.getNorthSubscriptions(ctx.params.northId);
+    const subscriptions = ctx.app.repositoryService.subscriptionRepository.list(ctx.params.northId);
     ctx.ok(subscriptions);
   }
 
   async createNorthSubscription(ctx: KoaContext<void, SubscriptionDTO>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
+    const northConnector = ctx.app.repositoryService.northConnectorRepository.findById(ctx.params.northId);
     if (!northConnector) {
       return ctx.notFound();
     }
 
-    const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.southId);
+    const southConnector = ctx.app.repositoryService.southConnectorRepository.findById(ctx.params.southId);
     if (!southConnector) {
       return ctx.notFound();
     }
 
-    if (ctx.app.repositoryService.subscriptionRepository.checkNorthSubscription(ctx.params.northId, ctx.params.southId)) {
+    if (ctx.app.repositoryService.subscriptionRepository.checkSubscription(ctx.params.northId, ctx.params.southId)) {
       return ctx.throw(409, 'Subscription already exists');
     }
 
@@ -32,12 +32,12 @@ export default class SubscriptionController {
   }
 
   async deleteNorthSubscription(ctx: KoaContext<void, void>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
+    const northConnector = ctx.app.repositoryService.northConnectorRepository.findById(ctx.params.northId);
     if (!northConnector) {
       return ctx.notFound();
     }
 
-    const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.southId);
+    const southConnector = ctx.app.repositoryService.southConnectorRepository.findById(ctx.params.southId);
     if (!southConnector) {
       return ctx.notFound();
     }

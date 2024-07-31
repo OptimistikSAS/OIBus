@@ -6,20 +6,20 @@ const subscriptionController = new SubscriptionController();
 const ctx = new KoaContextMock();
 describe('Subscription controller', () => {
   beforeEach(async () => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
   });
 
   it('getNorthSubscriptions() should return subscriptions', async () => {
     const northId = 'northId';
 
     ctx.params.northId = northId;
-    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue({ id: northId });
-    ctx.app.repositoryService.subscriptionRepository.getNorthSubscriptions.mockReturnValue(['south1', 'south2']);
+    ctx.app.repositoryService.northConnectorRepository.findById.mockReturnValue({ id: northId });
+    ctx.app.repositoryService.subscriptionRepository.list.mockReturnValue(['south1', 'south2']);
 
     await subscriptionController.getNorthSubscriptions(ctx);
 
-    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith(northId);
-    expect(ctx.app.repositoryService.subscriptionRepository.getNorthSubscriptions).toHaveBeenCalledWith(northId);
+    expect(ctx.app.repositoryService.northConnectorRepository.findById).toHaveBeenCalledWith(northId);
+    expect(ctx.app.repositoryService.subscriptionRepository.list).toHaveBeenCalledWith(northId);
     expect(ctx.ok).toHaveBeenCalledWith(['south1', 'south2']);
   });
 
@@ -27,12 +27,12 @@ describe('Subscription controller', () => {
     const northId = 'northId';
 
     ctx.params.northId = northId;
-    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(null);
+    ctx.app.repositoryService.northConnectorRepository.findById.mockReturnValue(null);
 
     await subscriptionController.getNorthSubscriptions(ctx);
 
-    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith(northId);
-    expect(ctx.app.repositoryService.subscriptionRepository.getNorthSubscriptions).not.toHaveBeenCalled();
+    expect(ctx.app.repositoryService.northConnectorRepository.findById).toHaveBeenCalledWith(northId);
+    expect(ctx.app.repositoryService.subscriptionRepository.list).not.toHaveBeenCalled();
     expect(ctx.notFound).toHaveBeenCalled();
   });
 
@@ -42,15 +42,15 @@ describe('Subscription controller', () => {
 
     ctx.params.northId = northId;
     ctx.params.southId = southId;
-    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue({ id: northId });
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue({ id: southId });
-    ctx.app.repositoryService.subscriptionRepository.checkNorthSubscription.mockReturnValue(false);
+    ctx.app.repositoryService.northConnectorRepository.findById.mockReturnValue({ id: northId });
+    ctx.app.repositoryService.southConnectorRepository.findById.mockReturnValue({ id: southId });
+    ctx.app.repositoryService.subscriptionRepository.checkSubscription.mockReturnValue(false);
 
     await subscriptionController.createNorthSubscription(ctx);
 
-    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith(northId);
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith(southId);
-    expect(ctx.app.repositoryService.subscriptionRepository.checkNorthSubscription).toHaveBeenCalledWith(northId, southId);
+    expect(ctx.app.repositoryService.northConnectorRepository.findById).toHaveBeenCalledWith(northId);
+    expect(ctx.app.repositoryService.southConnectorRepository.findById).toHaveBeenCalledWith(southId);
+    expect(ctx.app.repositoryService.subscriptionRepository.checkSubscription).toHaveBeenCalledWith(northId, southId);
     expect(ctx.app.reloadService.onCreateNorthSubscription).toHaveBeenCalledWith(northId, southId);
     expect(ctx.noContent).toHaveBeenCalled();
   });
@@ -61,13 +61,13 @@ describe('Subscription controller', () => {
 
     ctx.params.northId = northId;
     ctx.params.southId = southId;
-    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(null);
+    ctx.app.repositoryService.northConnectorRepository.findById.mockReturnValue(null);
 
     await subscriptionController.createNorthSubscription(ctx);
 
-    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith(northId);
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).not.toHaveBeenCalled();
-    expect(ctx.app.repositoryService.subscriptionRepository.checkNorthSubscription).not.toHaveBeenCalled();
+    expect(ctx.app.repositoryService.northConnectorRepository.findById).toHaveBeenCalledWith(northId);
+    expect(ctx.app.repositoryService.southConnectorRepository.findById).not.toHaveBeenCalled();
+    expect(ctx.app.repositoryService.subscriptionRepository.checkSubscription).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onCreateNorthSubscription).not.toHaveBeenCalled();
     expect(ctx.notFound).toHaveBeenCalled();
   });
@@ -78,14 +78,14 @@ describe('Subscription controller', () => {
 
     ctx.params.northId = northId;
     ctx.params.southId = southId;
-    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue({ id: northId });
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(null);
+    ctx.app.repositoryService.northConnectorRepository.findById.mockReturnValue({ id: northId });
+    ctx.app.repositoryService.southConnectorRepository.findById.mockReturnValue(null);
 
     await subscriptionController.createNorthSubscription(ctx);
 
-    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith(northId);
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith(southId);
-    expect(ctx.app.repositoryService.subscriptionRepository.checkNorthSubscription).not.toHaveBeenCalled();
+    expect(ctx.app.repositoryService.northConnectorRepository.findById).toHaveBeenCalledWith(northId);
+    expect(ctx.app.repositoryService.southConnectorRepository.findById).toHaveBeenCalledWith(southId);
+    expect(ctx.app.repositoryService.subscriptionRepository.checkSubscription).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onCreateNorthSubscription).not.toHaveBeenCalled();
     expect(ctx.notFound).toHaveBeenCalled();
   });
@@ -96,15 +96,15 @@ describe('Subscription controller', () => {
 
     ctx.params.northId = northId;
     ctx.params.southId = southId;
-    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue({ id: northId });
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue({ id: southId });
-    ctx.app.repositoryService.subscriptionRepository.checkNorthSubscription.mockReturnValue(true);
+    ctx.app.repositoryService.northConnectorRepository.findById.mockReturnValue({ id: northId });
+    ctx.app.repositoryService.southConnectorRepository.findById.mockReturnValue({ id: southId });
+    ctx.app.repositoryService.subscriptionRepository.checkSubscription.mockReturnValue(true);
 
     await subscriptionController.createNorthSubscription(ctx);
 
-    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith(northId);
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith(southId);
-    expect(ctx.app.repositoryService.subscriptionRepository.checkNorthSubscription).toHaveBeenCalledWith(northId, southId);
+    expect(ctx.app.repositoryService.northConnectorRepository.findById).toHaveBeenCalledWith(northId);
+    expect(ctx.app.repositoryService.southConnectorRepository.findById).toHaveBeenCalledWith(southId);
+    expect(ctx.app.repositoryService.subscriptionRepository.checkSubscription).toHaveBeenCalledWith(northId, southId);
     expect(ctx.app.reloadService.onCreateNorthSubscription).not.toHaveBeenCalled();
     expect(ctx.throw).toHaveBeenCalledWith(409, 'Subscription already exists');
   });
@@ -115,13 +115,13 @@ describe('Subscription controller', () => {
 
     ctx.params.northId = northId;
     ctx.params.southId = southId;
-    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue({ id: northId });
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue({ id: southId });
+    ctx.app.repositoryService.northConnectorRepository.findById.mockReturnValue({ id: northId });
+    ctx.app.repositoryService.southConnectorRepository.findById.mockReturnValue({ id: southId });
 
     await subscriptionController.deleteNorthSubscription(ctx);
 
-    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith(northId);
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith(southId);
+    expect(ctx.app.repositoryService.northConnectorRepository.findById).toHaveBeenCalledWith(northId);
+    expect(ctx.app.repositoryService.southConnectorRepository.findById).toHaveBeenCalledWith(southId);
     expect(ctx.app.reloadService.onDeleteNorthSubscription).toHaveBeenCalledWith(northId, southId);
     expect(ctx.noContent).toHaveBeenCalled();
   });
@@ -132,12 +132,12 @@ describe('Subscription controller', () => {
 
     ctx.params.northId = northId;
     ctx.params.southId = southId;
-    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(null);
+    ctx.app.repositoryService.northConnectorRepository.findById.mockReturnValue(null);
 
     await subscriptionController.deleteNorthSubscription(ctx);
 
-    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith(northId);
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).not.toHaveBeenCalled();
+    expect(ctx.app.repositoryService.northConnectorRepository.findById).toHaveBeenCalledWith(northId);
+    expect(ctx.app.repositoryService.southConnectorRepository.findById).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onDeleteNorthSubscription).not.toHaveBeenCalled();
     expect(ctx.notFound).toHaveBeenCalled();
   });
@@ -148,13 +148,13 @@ describe('Subscription controller', () => {
 
     ctx.params.northId = northId;
     ctx.params.southId = southId;
-    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue({ id: northId });
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(null);
+    ctx.app.repositoryService.northConnectorRepository.findById.mockReturnValue({ id: northId });
+    ctx.app.repositoryService.southConnectorRepository.findById.mockReturnValue(null);
 
     await subscriptionController.deleteNorthSubscription(ctx);
 
-    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith(northId);
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith(southId);
+    expect(ctx.app.repositoryService.northConnectorRepository.findById).toHaveBeenCalledWith(northId);
+    expect(ctx.app.repositoryService.southConnectorRepository.findById).toHaveBeenCalledWith(southId);
     expect(ctx.app.reloadService.onDeleteNorthSubscription).not.toHaveBeenCalled();
     expect(ctx.notFound).toHaveBeenCalled();
   });

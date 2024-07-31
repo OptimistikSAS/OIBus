@@ -38,8 +38,8 @@ export default class HistoryQueryController extends AbstractController {
     super(validator, schema);
   }
 
-  getHistoryQueries = (ctx: KoaContext<void, Array<HistoryQueryDTO>>) => {
-    const historyQueries = ctx.app.repositoryService.historyQueryRepository.getHistoryQueries();
+  findAll = (ctx: KoaContext<void, Array<HistoryQueryDTO>>) => {
+    const historyQueries = ctx.app.repositoryService.historyQueryRepository.findAll();
     ctx.ok(
       historyQueries.map(historyQuery => {
         const southManifest = ctx.app.southService.getInstalledSouthManifests().find(manifest => manifest.id === historyQuery.southType);
@@ -54,8 +54,8 @@ export default class HistoryQueryController extends AbstractController {
     );
   };
 
-  getHistoryQuery = (ctx: KoaContext<void, HistoryQueryDTO>) => {
-    const historyQuery = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.id);
+  findById = (ctx: KoaContext<void, HistoryQueryDTO>) => {
+    const historyQuery = ctx.app.repositoryService.historyQueryRepository.findById(ctx.params.id);
     if (!historyQuery) {
       return ctx.notFound();
     }
@@ -70,7 +70,7 @@ export default class HistoryQueryController extends AbstractController {
     }
   };
 
-  createHistoryQuery = async (ctx: KoaContext<HistoryQueryCreateCommandDTO, void>) => {
+  create = async (ctx: KoaContext<HistoryQueryCreateCommandDTO, void>) => {
     if (!ctx.request.body || !ctx.request.body.items || !ctx.request.body.historyQuery) {
       return ctx.badRequest();
     }
@@ -83,7 +83,7 @@ export default class HistoryQueryController extends AbstractController {
     }
     let southSource;
     if (ctx.request.body.fromSouthId) {
-      southSource = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.request.body.fromSouthId)?.settings;
+      southSource = ctx.app.repositoryService.southConnectorRepository.findById(ctx.request.body.fromSouthId)?.settings;
       if (!southSource) {
         return ctx.notFound();
       }
@@ -95,30 +95,17 @@ export default class HistoryQueryController extends AbstractController {
     }
     let northSource;
     if (ctx.request.body.fromNorthId) {
-      northSource = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.request.body.fromNorthId)?.settings;
+      northSource = ctx.app.repositoryService.northConnectorRepository.findById(ctx.request.body.fromNorthId)?.settings;
       if (!northSource) {
         return ctx.notFound();
       }
     }
 
-    let duplicatedHistory: HistoryQueryDTO | null = null;
-    if (ctx.query.duplicateId) {
-      duplicatedHistory = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.query.duplicateId);
-      if (!duplicatedHistory) {
-        return ctx.notFound();
-      }
-      if (!southSource) {
-        southSource = duplicatedHistory.southSettings;
-      }
-      if (!northSource) {
-        northSource = duplicatedHistory.northSettings;
-      }
-    }
     try {
       if (!command.caching.scanModeId && !command.caching.scanModeName) {
         throw new Error(`Scan mode not specified`);
       } else if (!command.caching.scanModeId && command.caching.scanModeName) {
-        const scanModes = ctx.app.repositoryService.scanModeRepository.getScanModes();
+        const scanModes = ctx.app.repositoryService.scanModeRepository.findAll();
         const scanMode = scanModes.find(element => element.name === command.caching.scanModeName);
         if (!scanMode) {
           throw new Error(`Scan mode ${command.caching.scanModeName} not found`);
@@ -151,12 +138,12 @@ export default class HistoryQueryController extends AbstractController {
     }
   };
 
-  updateHistoryQuery = async (ctx: KoaContext<HistoryQueryWithItemsCommandDTO, void>) => {
+  update = async (ctx: KoaContext<HistoryQueryWithItemsCommandDTO, void>) => {
     if (!ctx.request.body || !ctx.request.body.items || !ctx.request.body.historyQuery) {
       return ctx.badRequest();
     }
 
-    const historyQuery = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.id);
+    const historyQuery = ctx.app.repositoryService.historyQueryRepository.findById(ctx.params.id);
     if (!historyQuery) {
       return ctx.notFound();
     }
@@ -172,7 +159,7 @@ export default class HistoryQueryController extends AbstractController {
 
     const command = ctx.request.body.historyQuery as HistoryQueryCommandDTO;
     try {
-      const scanModes = ctx.app.repositoryService.scanModeRepository.getScanModes();
+      const scanModes = ctx.app.repositoryService.scanModeRepository.findAll();
       if (!command.caching.scanModeId && !command.caching.scanModeName) {
         throw new Error(`Scan mode not specified`);
       } else if (!command.caching.scanModeId && command.caching.scanModeName) {
@@ -221,8 +208,8 @@ export default class HistoryQueryController extends AbstractController {
     }
   };
 
-  startHistoryQuery = async (ctx: KoaContext<void, void>) => {
-    const historyQuery = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.id);
+  start = async (ctx: KoaContext<void, void>) => {
+    const historyQuery = ctx.app.repositoryService.historyQueryRepository.findById(ctx.params.id);
     if (!historyQuery) {
       return ctx.notFound();
     }
@@ -240,8 +227,8 @@ export default class HistoryQueryController extends AbstractController {
     }
   };
 
-  pauseHistoryQuery = async (ctx: KoaContext<void, void>) => {
-    const historyQuery = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.id);
+  pause = async (ctx: KoaContext<void, void>) => {
+    const historyQuery = ctx.app.repositoryService.historyQueryRepository.findById(ctx.params.id);
     if (!historyQuery) {
       return ctx.notFound();
     }
@@ -264,17 +251,17 @@ export default class HistoryQueryController extends AbstractController {
       page: ctx.query.page ? parseInt(ctx.query.page as string, 10) : 0,
       name: ctx.query.name as string | undefined
     };
-    const southItems = ctx.app.repositoryService.historyQueryItemRepository.searchHistoryItems(ctx.params.historyQueryId, searchParams);
+    const southItems = ctx.app.repositoryService.historyQueryItemRepository.search(ctx.params.historyQueryId, searchParams);
     ctx.ok(southItems);
   }
 
   async listItems(ctx: KoaContext<void, Array<SouthConnectorItemDTO>>): Promise<void> {
-    const items = ctx.app.repositoryService.historyQueryItemRepository.listHistoryItems(ctx.params.historyQueryId, {});
+    const items = ctx.app.repositoryService.historyQueryItemRepository.list(ctx.params.historyQueryId, {});
     ctx.ok(items);
   }
 
   async getHistoryQueryItem(ctx: KoaContext<void, SouthConnectorItemDTO>): Promise<void> {
-    const southItem = ctx.app.repositoryService.historyQueryItemRepository.getHistoryItem(ctx.params.id);
+    const southItem = ctx.app.repositoryService.historyQueryItemRepository.findById(ctx.params.id);
     if (southItem) {
       ctx.ok(southItem);
     } else {
@@ -284,7 +271,7 @@ export default class HistoryQueryController extends AbstractController {
 
   async createHistoryQueryItem(ctx: KoaContext<SouthConnectorItemCommandDTO, SouthConnectorItemDTO>): Promise<void> {
     try {
-      const historyQuery = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.historyQueryId);
+      const historyQuery = ctx.app.repositoryService.historyQueryRepository.findById(ctx.params.historyQueryId);
       if (!historyQuery) {
         return ctx.throw(404, 'History query not found');
       }
@@ -306,7 +293,7 @@ export default class HistoryQueryController extends AbstractController {
 
   async updateHistoryQueryItem(ctx: KoaContext<SouthConnectorItemCommandDTO, void>): Promise<void> {
     try {
-      const historyQuery = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.historyQueryId);
+      const historyQuery = ctx.app.repositoryService.historyQueryRepository.findById(ctx.params.historyQueryId);
       if (!historyQuery) {
         return ctx.throw(404, 'History query not found');
       }
@@ -316,7 +303,7 @@ export default class HistoryQueryController extends AbstractController {
         return ctx.throw(404, 'History query South manifest not found');
       }
 
-      const historyQueryItem = ctx.app.repositoryService.historyQueryItemRepository.getHistoryItem(ctx.params.id);
+      const historyQueryItem = ctx.app.repositoryService.historyQueryItemRepository.findById(ctx.params.id);
       if (historyQueryItem) {
         const command: SouthConnectorItemCommandDTO = ctx.request.body!;
         await this.validator.validateSettings(southManifest.items.settings, command?.settings);
@@ -381,7 +368,7 @@ export default class HistoryQueryController extends AbstractController {
   async exportSouthItems(ctx: KoaContext<{ delimiter: string }, any>): Promise<void> {
     const columns: Set<string> = new Set<string>(['name', 'enabled']);
 
-    const southItems = ctx.app.repositoryService.historyQueryItemRepository.listHistoryItems(ctx.params.historyQueryId, {}).map(item => {
+    const southItems = ctx.app.repositoryService.historyQueryItemRepository.list(ctx.params.historyQueryId, {}).map(item => {
       const flattenedItem: Record<string, any> = {
         ...item
       };
@@ -417,7 +404,7 @@ export default class HistoryQueryController extends AbstractController {
     const existingItems: Array<SouthConnectorItemDTO> =
       ctx.params.historyQueryId === 'create'
         ? []
-        : ctx.app.repositoryService.historyQueryItemRepository.listHistoryItems(ctx.params.historyQueryId, {});
+        : ctx.app.repositoryService.historyQueryItemRepository.list(ctx.params.historyQueryId, {});
     const validItems: Array<any> = [];
     const errors: Array<any> = [];
     try {
@@ -478,7 +465,7 @@ export default class HistoryQueryController extends AbstractController {
   }
 
   async importSouthItems(ctx: KoaContext<{ items: Array<SouthHistoryQueryItemDTO> }, any>): Promise<void> {
-    const historyQuery = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.historyQueryId);
+    const historyQuery = ctx.app.repositoryService.historyQueryRepository.findById(ctx.params.historyQueryId);
     if (!historyQuery) {
       return ctx.throw(404, 'History query not found');
     }
@@ -521,7 +508,7 @@ export default class HistoryQueryController extends AbstractController {
       let southSettings: SouthConnectorDTO['settings'] | null = null;
       // When we have a history query id, we can retrieve the old connector settings from repository
       if (ctx.params.id !== 'create') {
-        southSettings = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.id)?.southSettings;
+        southSettings = ctx.app.repositoryService.historyQueryRepository.findById(ctx.params.id)?.southSettings;
         if (!southSettings) {
           return ctx.notFound();
         }
@@ -535,7 +522,7 @@ export default class HistoryQueryController extends AbstractController {
       }
 
       if (ctx.query.duplicateId && !southSettings) {
-        southSettings = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.query.duplicateId)?.southSettings;
+        southSettings = ctx.app.repositoryService.historyQueryRepository.findById(ctx.query.duplicateId)?.southSettings;
         if (!southSettings) {
           return ctx.notFound();
         }
@@ -579,7 +566,7 @@ export default class HistoryQueryController extends AbstractController {
       let northSettings: NorthConnectorDTO['settings'] | null = null;
       // When we have a history query id, we can retrieve the old connector settings from repository
       if (ctx.params.id !== 'create') {
-        northSettings = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.id)?.northSettings;
+        northSettings = ctx.app.repositoryService.historyQueryRepository.findById(ctx.params.id)?.northSettings;
         if (!northSettings) {
           return ctx.notFound();
         }
@@ -593,7 +580,7 @@ export default class HistoryQueryController extends AbstractController {
       }
 
       if (ctx.query.duplicateId && !northSettings) {
-        northSettings = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.query.duplicateId)?.northSettings;
+        northSettings = ctx.app.repositoryService.historyQueryRepository.findById(ctx.query.duplicateId)?.northSettings;
         if (!northSettings) {
           return ctx.notFound();
         }
@@ -626,7 +613,7 @@ export default class HistoryQueryController extends AbstractController {
 
   async addTransformer(ctx: KoaContext<void, void>, connectorType: 'south' | 'north'): Promise<void> {
     try {
-      const historyQuery = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.historyQueryId);
+      const historyQuery = ctx.app.repositoryService.historyQueryRepository.findById(ctx.params.historyQueryId);
       if (!historyQuery) {
         return ctx.throw(404, 'History query not found');
       }
@@ -649,7 +636,7 @@ export default class HistoryQueryController extends AbstractController {
 
   async getTransformers(ctx: KoaContext<void, Array<TransformerDTO>>, connectorType: 'south' | 'north'): Promise<void> {
     try {
-      const historyQuery = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.historyQueryId);
+      const historyQuery = ctx.app.repositoryService.historyQueryRepository.findById(ctx.params.historyQueryId);
       if (!historyQuery) {
         return ctx.throw(404, 'History query not found');
       }
@@ -673,7 +660,7 @@ export default class HistoryQueryController extends AbstractController {
 
   async removeTransformer(ctx: KoaContext<void, void>, connectorType: 'south' | 'north'): Promise<void> {
     try {
-      const historyQuery = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.historyQueryId);
+      const historyQuery = ctx.app.repositoryService.historyQueryRepository.findById(ctx.params.historyQueryId);
       if (!historyQuery) {
         return ctx.throw(404, 'History query not found');
       }

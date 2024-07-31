@@ -11,12 +11,12 @@ import nodeOPCUAClient, {
 import fs from 'node:fs/promises';
 import SouthOPCUA, { MAX_NUMBER_OF_NODE_TO_LOG } from './south-opcua';
 import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/logger.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import DatabaseMock from '../../tests/__mocks__/database.mock';
 import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import RepositoryService from '../../service/repository.service';
-import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
+import RepositoryServiceMock from '../../tests/__mocks__/service/repository-service.mock';
 import { randomUUID } from 'crypto';
 import path from 'node:path';
 
@@ -221,7 +221,7 @@ describe('SouthOPCUA', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
 
     const connectionService = new ConnectionService(logger);
     south = new SouthOPCUA(
@@ -600,7 +600,7 @@ describe('SouthOPCUA', () => {
     ).rejects.toThrow('opcua read error');
     expect(south.addContent).not.toHaveBeenCalled();
     jest.advanceTimersByTime(1000);
-    (repositoryService.southConnectorRepository.getSouthConnector as jest.Mock).mockReturnValue({
+    (repositoryService.southConnectorRepository.findById as jest.Mock).mockReturnValue({
       ...configuration,
       enabled: false
     });
@@ -701,7 +701,7 @@ describe('SouthOPCUA', () => {
 
     expect(read).toHaveBeenCalledWith(expectedItemsToRead.map(item => ({ nodeId: item.settings.nodeId })));
     expect(south.addContent).not.toHaveBeenCalled();
-    (repositoryService.southConnectorRepository.getSouthConnector as jest.Mock).mockReturnValue({
+    (repositoryService.southConnectorRepository.findById as jest.Mock).mockReturnValue({
       ...configuration,
       enabled: false
     });
@@ -967,7 +967,7 @@ describe('SouthOPCUA with basic auth', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
 
     const connectionService = new ConnectionService(logger);
     south = new SouthOPCUA(
@@ -1047,7 +1047,7 @@ describe('SouthOPCUA with certificate', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
 
     const connectionService = new ConnectionService(logger);
     south = new SouthOPCUA(
@@ -1245,7 +1245,7 @@ describe('SouthOPCUA test connection', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime();
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
 
     const connectionService = new ConnectionService(logger);
     south = new SouthOPCUA(

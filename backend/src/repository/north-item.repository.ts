@@ -16,10 +16,7 @@ const PAGE_SIZE = 50;
 export default class NorthItemRepository {
   constructor(private readonly database: Database) {}
 
-  /**
-   * Retrieve all items associated to a North connector
-   */
-  listNorthItems(northId: string, searchParams: NorthConnectorItemSearchParam): Array<NorthConnectorItemDTO> {
+  list(northId: string, searchParams: NorthConnectorItemSearchParam): Array<NorthConnectorItemDTO> {
     let whereClause = `WHERE connector_id = ?`;
     const queryParams = [northId];
 
@@ -42,10 +39,7 @@ export default class NorthItemRepository {
       }));
   }
 
-  /**
-   * Search North items (point, query, folder...) associated to a North connector
-   */
-  searchNorthItems(northId: string, searchParams: NorthConnectorItemSearchParam): Page<NorthConnectorItemDTO> {
+  search(northId: string, searchParams: NorthConnectorItemSearchParam): Page<NorthConnectorItemDTO> {
     let whereClause = `WHERE connector_id = ?`;
     const queryParams = [northId];
 
@@ -82,10 +76,7 @@ export default class NorthItemRepository {
     };
   }
 
-  /**
-   * Retrieve all North items (point, query, folder...) associated to a North connector
-   */
-  getNorthItems(northId: string): Array<NorthConnectorItemDTO> {
+  findAllForNorthConnector(northId: string): Array<NorthConnectorItemDTO> {
     const query = `SELECT id, name, enabled, connector_id AS connectorId, settings FROM ${NORTH_ITEMS_TABLE} WHERE connector_id = ?;`;
     return this.database
       .prepare(query)
@@ -99,10 +90,7 @@ export default class NorthItemRepository {
       }));
   }
 
-  /**
-   * Retrieve a North item by its ID
-   */
-  getNorthItem(id: string): NorthConnectorItemDTO | null {
+  findById(id: string): NorthConnectorItemDTO | null {
     const query = `SELECT id, name, enabled, connector_id AS connectorId, settings FROM ${NORTH_ITEMS_TABLE} WHERE id = ?;`;
     const result: any = this.database.prepare(query).get(id);
     if (!result) return null;
@@ -115,10 +103,7 @@ export default class NorthItemRepository {
     };
   }
 
-  /**
-   * Create a North item with a random generated ID
-   */
-  createNorthItem(northId: string, command: NorthConnectorItemCommandDTO): NorthConnectorItemDTO {
+  create(northId: string, command: NorthConnectorItemCommandDTO): NorthConnectorItemDTO {
     const id = generateRandomId(6);
     const insertQuery = `INSERT INTO ${NORTH_ITEMS_TABLE} (id, name, enabled, connector_id, settings) ` + `VALUES (?, ?, ?, ?, ?);`;
     const insertResult = this.database
@@ -136,36 +121,27 @@ export default class NorthItemRepository {
     };
   }
 
-  /**
-   * Update a North item by its ID
-   */
-  updateNorthItem(id: string, command: NorthConnectorItemCommandDTO): void {
+  update(id: string, command: NorthConnectorItemCommandDTO): void {
     const query = `UPDATE ${NORTH_ITEMS_TABLE} SET name = ?, enabled = ?, settings = ? WHERE id = ?;`;
     this.database.prepare(query).run(command.name, +command.enabled, JSON.stringify(command.settings), id);
   }
 
-  /**
-   * Delete a North item by its ID
-   */
-  deleteNorthItem(id: string): void {
+  delete(id: string): void {
     const query = `DELETE FROM ${NORTH_ITEMS_TABLE} WHERE id = ?;`;
     this.database.prepare(query).run(id);
   }
 
-  enableNorthItem(id: string): void {
+  enable(id: string): void {
     const query = `UPDATE ${NORTH_ITEMS_TABLE} SET enabled = 1 WHERE id = ?;`;
     this.database.prepare(query).run(id);
   }
 
-  disableNorthItem(id: string): void {
+  disable(id: string): void {
     const query = `UPDATE ${NORTH_ITEMS_TABLE} SET enabled = 0 WHERE id = ?;`;
     this.database.prepare(query).run(id);
   }
 
-  /**
-   * Delete all North items of a North connector
-   */
-  deleteAllNorthItems(northId: string): void {
+  deleteAllByNorthConnector(northId: string): void {
     const query = `DELETE FROM ${NORTH_ITEMS_TABLE} WHERE connector_id = ?;`;
     this.database.prepare(query).run(northId);
   }

@@ -1,6 +1,6 @@
-import EncryptionServiceMock from '../tests/__mocks__/encryption-service.mock';
-import RepositoryServiceMock from '../tests/__mocks__/repository-service.mock';
-import PinoLogger from '../tests/__mocks__/logger.mock';
+import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
+import RepositoryServiceMock from '../tests/__mocks__/service/repository-service.mock';
+import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from './encryption.service';
 import NorthService from './north.service';
 import RepositoryService from './repository.service';
@@ -24,13 +24,13 @@ describe('north service', () => {
 
   it('should get a North connector settings', () => {
     service.getNorth('northId');
-    expect(repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledTimes(1);
-    expect(repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('northId');
+    expect(repositoryService.northConnectorRepository.findById).toHaveBeenCalledTimes(1);
+    expect(repositoryService.northConnectorRepository.findById).toHaveBeenCalledWith('northId');
   });
 
   it('should get all North connector settings', () => {
     service.getNorthList();
-    expect(repositoryService.northConnectorRepository.getNorthConnectors).toHaveBeenCalledTimes(1);
+    expect(repositoryService.northConnectorRepository.findAll).toHaveBeenCalledTimes(1);
   });
 
   it('should create North connector', () => {

@@ -57,7 +57,7 @@ describe('North item repository', () => {
         settings: JSON.stringify({})
       }
     ]);
-    const northItems = repository.listNorthItems('northId', { enabled: true });
+    const northItems = repository.list('northId', { enabled: true });
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, name, enabled, connector_id AS connectorId, settings FROM north_items WHERE connector_id = ? AND enabled = ?;'
     );
@@ -66,7 +66,7 @@ describe('North item repository', () => {
 
   it('should properly list north items with empty search params', () => {
     all.mockReturnValueOnce([]);
-    repository.listNorthItems('northId', {});
+    repository.list('northId', {});
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, name, enabled, connector_id AS connectorId, settings FROM north_items WHERE connector_id = ?;'
     );
@@ -112,7 +112,7 @@ describe('North item repository', () => {
       }
     ]);
     get.mockReturnValueOnce({ count: 2 });
-    const northItems = repository.searchNorthItems('northId', {
+    const northItems = repository.search('northId', {
       page: 1,
       name: 'my item'
     });
@@ -133,7 +133,7 @@ describe('North item repository', () => {
     };
     all.mockReturnValueOnce([]);
     get.mockReturnValueOnce({ count: 0 });
-    const northItems = repository.searchNorthItems('northId', {
+    const northItems = repository.search('northId', {
       name: 'my item'
     });
     expect(database.prepare).toHaveBeenCalledWith(
@@ -176,7 +176,7 @@ describe('North item repository', () => {
         settings: JSON.stringify({})
       }
     ]);
-    const northItems = repository.getNorthItems('northId');
+    const northItems = repository.findAllForNorthConnector('northId');
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, name, enabled, connector_id AS connectorId, settings FROM north_items WHERE connector_id = ?;'
     );
@@ -198,7 +198,7 @@ describe('North item repository', () => {
       connectorId: 'northId',
       settings: JSON.stringify({})
     });
-    const northScan = repository.getNorthItem('id1');
+    const northScan = repository.findById('id1');
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, name, enabled, connector_id AS connectorId, settings FROM north_items WHERE id = ?;'
     );
@@ -208,7 +208,7 @@ describe('North item repository', () => {
 
   it('should properly get null when north item not found', () => {
     get.mockReturnValueOnce(null);
-    const northScan = repository.getNorthItem('id1');
+    const northScan = repository.findById('id1');
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, name, enabled, connector_id AS connectorId, settings FROM north_items WHERE id = ?;'
     );
@@ -225,7 +225,7 @@ describe('North item repository', () => {
       enabled: true,
       settings: {}
     };
-    repository.createNorthItem('northId', command);
+    repository.create('northId', command);
     expect(generateRandomId).toHaveBeenCalledWith(6);
     expect(database.prepare).toHaveBeenCalledWith(
       'INSERT INTO north_items (id, name, enabled, connector_id, settings) VALUES (?, ?, ?, ?, ?);'
@@ -243,24 +243,24 @@ describe('North item repository', () => {
       enabled: true,
       settings: {}
     };
-    repository.updateNorthItem('id1', command);
+    repository.update('id1', command);
     expect(database.prepare).toHaveBeenCalledWith('UPDATE north_items SET name = ?, enabled = ?, settings = ? WHERE id = ?;');
   });
 
   it('should delete a north item', () => {
-    repository.deleteNorthItem('id1');
+    repository.delete('id1');
     expect(database.prepare).toHaveBeenCalledWith('DELETE FROM north_items WHERE id = ?;');
     expect(run).toHaveBeenCalledWith('id1');
   });
 
   it('should delete all north items', () => {
-    repository.deleteAllNorthItems('id1');
+    repository.deleteAllByNorthConnector('id1');
     expect(database.prepare).toHaveBeenCalledWith('DELETE FROM north_items WHERE connector_id = ?;');
     expect(run).toHaveBeenCalledWith('id1');
   });
 
   it('should delete all north items associated to a connector id', () => {
-    repository.deleteAllNorthItems('connectorId');
+    repository.deleteAllByNorthConnector('connectorId');
     expect(database.prepare).toHaveBeenCalledWith('DELETE FROM north_items WHERE connector_id = ?;');
     expect(run).toHaveBeenCalledWith('connectorId');
   });
@@ -293,13 +293,13 @@ describe('North item repository', () => {
   });
 
   it('should enable north item', () => {
-    repository.enableNorthItem('id1');
+    repository.enable('id1');
     expect(database.prepare).toHaveBeenCalledWith('UPDATE north_items SET enabled = 1 WHERE id = ?;');
     expect(run).toHaveBeenCalledWith('id1');
   });
 
   it('should disable north item', () => {
-    repository.disableNorthItem('id1');
+    repository.disable('id1');
     expect(database.prepare).toHaveBeenCalledWith('UPDATE north_items SET enabled = 0 WHERE id = ?;');
     expect(run).toHaveBeenCalledWith('id1');
   });

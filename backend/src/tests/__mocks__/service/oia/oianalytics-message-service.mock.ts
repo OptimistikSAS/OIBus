@@ -4,8 +4,12 @@
 export default jest.fn().mockImplementation(() => {
   return {
     start: jest.fn(),
-    stop: jest.fn(),
+    run: jest.fn(),
+    removeMessageFromQueue: jest.fn(),
     addMessageToQueue: jest.fn(),
-    removeMessageFromQueue: jest.fn(pass => pass)
+    sendMessage: jest.fn(),
+    stop: jest.fn(),
+    setLogger: jest.fn(),
+    createFullConfigMessage: jest.fn()
   };
 });

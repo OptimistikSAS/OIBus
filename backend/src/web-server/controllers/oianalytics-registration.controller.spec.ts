@@ -2,18 +2,18 @@ import Joi from 'joi';
 import JoiValidator from './validators/joi.validator';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
 import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../../shared/model/engine.model';
-import RegistrationController from './registration.controller';
+import OIAnalyticsRegistrationController from './oianalytics-registration.controller';
 
 jest.mock('./validators/joi.validator');
 jest.mock('../../service/utils');
 
 const validator = new JoiValidator();
 const schema = Joi.object({});
-const registrationController = new RegistrationController(validator, schema);
+const registrationController = new OIAnalyticsRegistrationController(validator, schema);
 
 const ctx = new KoaContextMock();
 
-describe('Registration controller', () => {
+describe('OIAnalytics Registration Controller', () => {
   let registrationCommand: RegistrationSettingsCommandDTO;
   let registrationSettings: RegistrationSettingsDTO;
 
@@ -39,27 +39,27 @@ describe('Registration controller', () => {
   });
 
   it('getRegistrationSettings() should return registration settings', async () => {
-    ctx.app.repositoryService.registrationRepository.getRegistrationSettings.mockReturnValue(registrationSettings);
+    ctx.app.repositoryService.oianalyticsRegistrationRepository.get.mockReturnValue(registrationSettings);
 
-    await registrationController.getRegistrationSettings(ctx);
+    await registrationController.get(ctx);
 
-    expect(ctx.app.repositoryService.registrationRepository.getRegistrationSettings).toHaveBeenCalled();
+    expect(ctx.app.repositoryService.oianalyticsRegistrationRepository.get).toHaveBeenCalled();
     expect(ctx.ok).toHaveBeenCalledWith(registrationSettings);
   });
 
   it('getRegistrationSettings() should return not found', async () => {
-    ctx.app.repositoryService.registrationRepository.getRegistrationSettings.mockReturnValue(null);
+    ctx.app.repositoryService.oianalyticsRegistrationRepository.get.mockReturnValue(null);
 
-    await registrationController.getRegistrationSettings(ctx);
+    await registrationController.get(ctx);
 
-    expect(ctx.app.repositoryService.registrationRepository.getRegistrationSettings).toHaveBeenCalled();
+    expect(ctx.app.repositoryService.oianalyticsRegistrationRepository.get).toHaveBeenCalled();
     expect(ctx.notFound).toHaveBeenCalledWith();
   });
 
   it('updateRegistrationSettings() should update registration settings', async () => {
     ctx.request.body = registrationCommand;
 
-    await registrationController.updateRegistrationSettings(ctx);
+    await registrationController.update(ctx);
 
     expect(validator.validate).toHaveBeenCalledWith(schema, registrationCommand);
     expect(ctx.app.registrationService.updateRegistrationSettings).toHaveBeenCalledWith(registrationCommand);
@@ -73,7 +73,7 @@ describe('Registration controller', () => {
       throw validationError;
     });
 
-    await registrationController.updateRegistrationSettings(ctx);
+    await registrationController.update(ctx);
 
     expect(validator.validate).toHaveBeenCalledWith(schema, registrationCommand);
     expect(ctx.app.registrationService.updateRegistrationSettings).not.toHaveBeenCalledWith();
@@ -83,7 +83,7 @@ describe('Registration controller', () => {
   it('editRegistrationSettings() should edit registration settings', async () => {
     ctx.request.body = registrationCommand;
 
-    await registrationController.editRegistrationSettings(ctx);
+    await registrationController.edit(ctx);
 
     expect(validator.validate).toHaveBeenCalledWith(schema, registrationCommand);
     expect(ctx.app.registrationService.editRegistrationSettings).toHaveBeenCalledWith(registrationCommand);
@@ -98,7 +98,7 @@ describe('Registration controller', () => {
       throw validationError;
     });
 
-    await registrationController.editRegistrationSettings(ctx);
+    await registrationController.edit(ctx);
 
     expect(validator.validate).toHaveBeenCalledWith(schema, registrationCommand);
     expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);

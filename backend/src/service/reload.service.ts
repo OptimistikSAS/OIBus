@@ -28,8 +28,7 @@ import { ScanModeCommandDTO } from '../../../shared/model/scan-mode.model';
 import HomeMetricsService from './home-metrics.service';
 import ProxyServer from '../web-server/proxy-server';
 import OIBusService from './oibus.service';
-import { getOIBusInfo } from './utils';
-import OIAnalyticsMessageService from './oia/message.service';
+import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 
 export default class ReloadService {
   private webServerChangeLoggerCallback: (logger: pino.Logger) => void = () => {};
@@ -89,6 +88,10 @@ export default class ReloadService {
     return this._proxyServer;
   }
 
+  get oianalyticsMessageService(): OIAnalyticsMessageService {
+    return this._oianalyticsMessageService;
+  }
+
   setWebServerChangeLogger(callback: (logger: pino.Logger) => void): void {
     this.webServerChangeLoggerCallback = callback;
   }
@@ -97,18 +100,16 @@ export default class ReloadService {
     this.webServerChangePortCallback = callback;
   }
 
-  async onUpdateOibusSettings(oldSettings: EngineSettingsDTO | null, newSettings: EngineSettingsDTO): Promise<void> {
+  async onUpdateOIBusSettings(oldSettings: EngineSettingsDTO | null, newSettings: EngineSettingsDTO): Promise<void> {
     if (
       !oldSettings ||
       JSON.stringify(oldSettings.logParameters) !== JSON.stringify(newSettings.logParameters) ||
       oldSettings.name !== newSettings.name
     ) {
       await this.restartLogger(newSettings);
-      const registration = this.repositoryService.registrationRepository.getRegistrationSettings()!;
-      if (oldSettings?.name !== newSettings.name && registration.status !== 'NOT_REGISTERED') {
-        const info = getOIBusInfo(newSettings);
-        const createdMessage = this.repositoryService.oianalyticsMessageRepository.createOIAnalyticsMessages('INFO', info);
-        this._oianalyticsMessageService.addMessageToQueue(createdMessage);
+      const registration = this.repositoryService.oianalyticsRegistrationRepository.get()!;
+      if (registration.status !== 'NOT_REGISTERED') {
+        this._oianalyticsMessageService.createFullConfigMessage();
       }
     }
     if (newSettings.port === newSettings.proxyPort) {
@@ -117,7 +118,7 @@ export default class ReloadService {
       await this.proxyServer.stop();
       await this.webServerChangePortCallback(newSettings.port);
       if (newSettings.proxyEnabled) {
-        await this.proxyServer.start(newSettings.proxyPort);
+        await this.proxyServer.start(newSettings.proxyPort!);
       }
     } else {
       if (!oldSettings || oldSettings.port !== newSettings.port) {
@@ -126,7 +127,7 @@ export default class ReloadService {
       if (!oldSettings || oldSettings.proxyEnabled !== newSettings.proxyEnabled || oldSettings.proxyPort !== newSettings.proxyPort) {
         await this.proxyServer.stop();
         if (newSettings.proxyEnabled) {
-          await this.proxyServer.start(newSettings.proxyPort);
+          await this.proxyServer.start(newSettings.proxyPort!);
         }
       }
     }
@@ -134,16 +135,17 @@ export default class ReloadService {
 
   public async restartLogger(newSettings: EngineSettingsDTO) {
     this.loggerService.stop();
-    const registration = this.repositoryService.registrationRepository.getRegistrationSettings()!;
+    const registration = this.repositoryService.oianalyticsRegistrationRepository.get()!;
     await this.loggerService.start(newSettings.id, newSettings.name, newSettings.logParameters, registration);
     this.webServerChangeLoggerCallback(this.loggerService.createChildLogger('web-server'));
     this.oibusService.setLogger(this.loggerService.createChildLogger('internal'));
     this.engineMetricsService.setLogger(this.loggerService.createChildLogger('internal'));
     this.proxyServer.setLogger(this.loggerService.createChildLogger('internal'));
+    this.oianalyticsMessageService.setLogger(this.loggerService.createChildLogger('internal'));
   }
 
   async onCreateSouth(command: SouthConnectorCommandDTO): Promise<SouthConnectorDTO> {
-    const southConnector = this.repositoryService.southConnectorRepository.createSouthConnector(command);
+    const southConnector = this.repositoryService.southConnectorRepository.create(command);
     await this.oibusEngine.createSouth(southConnector);
     return southConnector;
   }
@@ -154,7 +156,7 @@ export default class ReloadService {
     itemsToAdd: Array<SouthConnectorItemCommandDTO>,
     itemsToUpdate: Array<SouthConnectorItemCommandDTO>
   ): Promise<void> {
-    this.repositoryService.southConnectorRepository.updateSouthConnector(previousSettings.id, command);
+    this.repositoryService.southConnectorRepository.update(previousSettings.id, command);
 
     // Handle all cases regarding cache changes when max instant per item changes
     this.onSouthMaxInstantPerItemChange(previousSettings.id, previousSettings, command);
@@ -163,52 +165,52 @@ export default class ReloadService {
       this.oibusEngine.setLogger(this.oibusEngine.logger);
     }
 
-    const southConnector = this.repositoryService.southConnectorRepository.getSouthConnector(previousSettings.id)!;
+    const southConnector = this.repositoryService.southConnectorRepository.findById(previousSettings.id)!;
     this.onCreateOrUpdateSouthItems(southConnector, itemsToAdd, itemsToUpdate);
 
     if (southConnector.enabled) {
-      this.repositoryService.southConnectorRepository.startSouthConnector(southConnector.id);
+      this.repositoryService.southConnectorRepository.start(southConnector.id);
       await this.oibusEngine.reloadSouth(southConnector.id);
     } else {
-      this.repositoryService.southConnectorRepository.stopSouthConnector(southConnector.id);
+      this.repositoryService.southConnectorRepository.stop(southConnector.id);
       await this.oibusEngine.stopSouth(southConnector.id);
     }
   }
 
   async onDeleteSouth(southId: string): Promise<void> {
-    const subscribedNorthIds = this.repositoryService.subscriptionRepository.getSubscribedNorthConnectors(southId);
+    const subscribedNorthIds = this.repositoryService.subscriptionRepository.listSubscribedNorth(southId);
     await Promise.allSettled(subscribedNorthIds.map(northId => this.onDeleteNorthSubscription(northId, southId)));
 
-    const { name, id } = this.repositoryService.southConnectorRepository.getSouthConnector(southId)!;
+    const { name, id } = this.repositoryService.southConnectorRepository.findById(southId)!;
     await this.oibusEngine.deleteSouth(id, name);
 
-    this.repositoryService.southItemRepository.deleteAllSouthItems(id);
-    this.repositoryService.southConnectorRepository.deleteSouthConnector(id);
+    this.repositoryService.southItemRepository.deleteAllBySouthConnector(id);
+    this.repositoryService.southConnectorRepository.delete(id);
 
     this.repositoryService.logRepository.deleteLogsByScopeId('south', id);
     this.repositoryService.southMetricsRepository.removeMetrics(id);
-    this.repositoryService.southCacheRepository.deleteAllCacheScanModes(id);
+    this.repositoryService.southCacheRepository.deleteAllBySouthConnector(id);
   }
 
   async onStartSouth(southId: string): Promise<void> {
-    this.repositoryService.southConnectorRepository.startSouthConnector(southId);
+    this.repositoryService.southConnectorRepository.start(southId);
     await this.oibusEngine.startSouth(southId);
   }
 
   async onStopSouth(southId: string): Promise<void> {
-    this.repositoryService.southConnectorRepository.stopSouthConnector(southId);
+    this.repositoryService.southConnectorRepository.stop(southId);
     await this.oibusEngine.stopSouth(southId);
   }
 
   async onCreateSouthItem(southId: string, command: SouthConnectorItemCommandDTO): Promise<SouthConnectorItemDTO> {
-    const southItem = this.repositoryService.southItemRepository.createSouthItem(southId, command);
+    const southItem = this.repositoryService.southItemRepository.create(southId, command);
     await this.oibusEngine.onSouthItemsChange(southId);
     return southItem;
   }
 
   async onUpdateSouthItemSettings(southId: string, southItem: SouthConnectorItemDTO, command: SouthConnectorItemCommandDTO): Promise<void> {
-    this.repositoryService.southItemRepository.updateSouthItem(southItem.id, command);
-    const newItem = this.repositoryService.southItemRepository.getSouthItem(southItem.id)!;
+    this.repositoryService.southItemRepository.update(southItem.id, command);
+    const newItem = this.repositoryService.southItemRepository.findById(southItem.id)!;
 
     // Handle all cases regarding cache changes when the scan mode changes
     this.onSouthItemScanModeChange(southId, southItem, newItem);
@@ -220,7 +222,7 @@ export default class ReloadService {
     itemsToAdd: Array<SouthConnectorItemCommandDTO>,
     itemsToUpdate: Array<SouthConnectorItemCommandDTO>
   ) {
-    const allPreviousSouthItems = this.repositoryService.southItemRepository.getSouthItems(southConnector.id);
+    const allPreviousSouthItems = this.repositoryService.southItemRepository.findAllForSouthConnector(southConnector.id);
     this.repositoryService.southItemRepository.createAndUpdateSouthItems(southConnector.id, itemsToAdd, itemsToUpdate);
 
     for (const newItem of itemsToUpdate) {
@@ -232,90 +234,90 @@ export default class ReloadService {
   }
 
   async onDeleteSouthItem(itemId: string): Promise<void> {
-    const southItem = this.repositoryService.southItemRepository.getSouthItem(itemId);
+    const southItem = this.repositoryService.southItemRepository.findById(itemId);
     if (!southItem) throw new Error('South item not found');
-    this.repositoryService.southItemRepository.deleteSouthItem(itemId);
+    this.repositoryService.southItemRepository.delete(itemId);
     this.safeDeleteSouthCacheEntry(southItem);
   }
 
   async onEnableSouthItem(itemId: string): Promise<void> {
-    const southItem = this.repositoryService.southItemRepository.getSouthItem(itemId);
+    const southItem = this.repositoryService.southItemRepository.findById(itemId);
     if (!southItem) throw new Error('South item not found');
-    this.repositoryService.southItemRepository.enableSouthItem(itemId);
+    this.repositoryService.southItemRepository.enable(itemId);
     await this.oibusEngine.onSouthItemsChange(southItem.connectorId);
   }
 
   async onDisableSouthItem(itemId: string): Promise<void> {
-    const southItem = this.repositoryService.southItemRepository.getSouthItem(itemId);
+    const southItem = this.repositoryService.southItemRepository.findById(itemId);
     if (!southItem) throw new Error('South item not found');
-    this.repositoryService.southItemRepository.disableSouthItem(itemId);
+    this.repositoryService.southItemRepository.disable(itemId);
     await this.oibusEngine.onSouthItemsChange(southItem.connectorId);
   }
 
   async onDeleteAllSouthItems(southId: string): Promise<void> {
-    this.repositoryService.southItemRepository.deleteAllSouthItems(southId);
-    this.repositoryService.southCacheRepository.deleteAllCacheScanModes(southId);
+    this.repositoryService.southItemRepository.deleteAllBySouthConnector(southId);
+    this.repositoryService.southCacheRepository.deleteAllBySouthConnector(southId);
     await this.oibusEngine.onSouthItemsChange(southId);
   }
 
   async onCreateNorth(command: NorthConnectorCommandDTO): Promise<NorthConnectorDTO> {
-    const northConnector = this.repositoryService.northConnectorRepository.createNorthConnector(command);
+    const northConnector = this.repositoryService.northConnectorRepository.create(command);
     await this.oibusEngine.createNorth(northConnector);
     return northConnector;
   }
 
   async onUpdateNorthSettings(northId: string, command: NorthConnectorCommandDTO): Promise<void> {
-    const previousSettings = this.repositoryService.northConnectorRepository.getNorthConnector(northId)!;
-    this.repositoryService.northConnectorRepository.updateNorthConnector(northId, command);
+    const previousSettings = this.repositoryService.northConnectorRepository.findById(northId)!;
+    this.repositoryService.northConnectorRepository.update(northId, command);
 
     if (previousSettings.name !== command.name) {
       this.oibusEngine.setLogger(this.oibusEngine.logger);
     }
     if (command.enabled) {
-      this.repositoryService.northConnectorRepository.startNorthConnector(northId);
+      this.repositoryService.northConnectorRepository.start(northId);
       await this.oibusEngine.reloadNorth(northId);
     } else {
-      this.repositoryService.northConnectorRepository.stopNorthConnector(northId);
+      this.repositoryService.northConnectorRepository.stop(northId);
       await this.oibusEngine.stopNorth(northId);
     }
   }
 
   async onDeleteNorth(northId: string): Promise<void> {
-    const { id, name } = this.repositoryService.northConnectorRepository.getNorthConnector(northId)!;
+    const { id, name } = this.repositoryService.northConnectorRepository.findById(northId)!;
     await this.oibusEngine.deleteNorth(id, name);
-    this.repositoryService.northConnectorRepository.deleteNorthConnector(id);
+    this.repositoryService.northConnectorRepository.delete(id);
     this.repositoryService.logRepository.deleteLogsByScopeId('north', id);
     this.repositoryService.northMetricsRepository.removeMetrics(id);
   }
 
   async onStartNorth(northId: string): Promise<void> {
-    this.repositoryService.northConnectorRepository.startNorthConnector(northId);
+    this.repositoryService.northConnectorRepository.start(northId);
     await this.oibusEngine.startNorth(northId);
   }
 
   async onStopNorth(northId: string): Promise<void> {
     await this.oibusEngine.stopNorth(northId);
-    this.repositoryService.northConnectorRepository.stopNorthConnector(northId);
+    this.repositoryService.northConnectorRepository.stop(northId);
   }
 
   async onCreateNorthSubscription(northId: string, southId: string): Promise<void> {
-    this.repositoryService.subscriptionRepository.createNorthSubscription(northId, southId);
+    this.repositoryService.subscriptionRepository.create(northId, southId);
     this.oibusEngine.updateNorthConnectorSubscriptions(northId);
   }
 
   async onDeleteNorthSubscription(northId: string, southId: string): Promise<void> {
-    this.repositoryService.subscriptionRepository.deleteNorthSubscription(northId, southId);
+    this.repositoryService.subscriptionRepository.delete(northId, southId);
     this.oibusEngine.updateNorthConnectorSubscriptions(northId);
   }
 
   async onCreateNorthItem(northId: string, command: NorthConnectorItemCommandDTO): Promise<NorthConnectorItemDTO> {
-    const northItem = this.repositoryService.northItemRepository.createNorthItem(northId, command);
+    const northItem = this.repositoryService.northItemRepository.create(northId, command);
     await this.oibusEngine.onNorthItemsChange(northId);
     return northItem;
   }
 
   async onUpdateNorthItemSettings(northId: string, northItem: NorthConnectorItemDTO, command: NorthConnectorItemCommandDTO): Promise<void> {
-    this.repositoryService.northItemRepository.updateNorthItem(northItem.id, command);
+    this.repositoryService.northItemRepository.update(northItem.id, command);
     // Handle all cases regarding cache changes when the scan mode changes
     await this.oibusEngine.onNorthItemsChange(northId);
   }
@@ -329,27 +331,27 @@ export default class ReloadService {
   }
 
   async onDeleteNorthItem(itemId: string): Promise<void> {
-    const northItem = this.repositoryService.northItemRepository.getNorthItem(itemId);
+    const northItem = this.repositoryService.northItemRepository.findById(itemId);
     if (!northItem) throw new Error('North item not found');
-    this.repositoryService.northItemRepository.deleteNorthItem(itemId);
+    this.repositoryService.northItemRepository.delete(itemId);
   }
 
   async onEnableNorthItem(itemId: string): Promise<void> {
-    const northItem = this.repositoryService.northItemRepository.getNorthItem(itemId);
+    const northItem = this.repositoryService.northItemRepository.findById(itemId);
     if (!northItem) throw new Error('North item not found');
-    this.repositoryService.northItemRepository.enableNorthItem(itemId);
+    this.repositoryService.northItemRepository.enable(itemId);
     await this.oibusEngine.onNorthItemsChange(northItem.connectorId);
   }
 
   async onDisableNorthItem(itemId: string): Promise<void> {
-    const northItem = this.repositoryService.northItemRepository.getNorthItem(itemId);
+    const northItem = this.repositoryService.northItemRepository.findById(itemId);
     if (!northItem) throw new Error('North item not found');
-    this.repositoryService.northItemRepository.disableNorthItem(itemId);
+    this.repositoryService.northItemRepository.disable(itemId);
     await this.oibusEngine.onNorthItemsChange(northItem.connectorId);
   }
 
   async onDeleteAllNorthItems(northId: string): Promise<void> {
-    this.repositoryService.northItemRepository.deleteAllNorthItems(northId);
+    this.repositoryService.northItemRepository.deleteAllByNorthConnector(northId);
     await this.oibusEngine.onNorthItemsChange(northId);
   }
 
@@ -357,9 +359,9 @@ export default class ReloadService {
     command: HistoryQueryCommandDTO,
     southItems: Array<SouthConnectorItemDTO> | Array<SouthConnectorItemScanModeNameDTO>
   ): Promise<HistoryQueryDTO> {
-    const historyQuery = this.repositoryService.historyQueryRepository.createHistoryQuery(command);
+    const historyQuery = this.repositoryService.historyQueryRepository.create(command);
     for (const item of southItems) {
-      this.repositoryService.historyQueryItemRepository.createHistoryItem(historyQuery.id, {
+      this.repositoryService.historyQueryItemRepository.create(historyQuery.id, {
         name: item.name,
         enabled: item.enabled,
         settings: item.settings,
@@ -372,70 +374,70 @@ export default class ReloadService {
   }
 
   async onUpdateHistoryQuerySettings(historyId: string, command: HistoryQueryCommandDTO): Promise<void> {
-    const previousSettings = this.repositoryService.historyQueryRepository.getHistoryQuery(historyId)!;
-    this.repositoryService.historyQueryRepository.setHistoryQueryStatus(historyId, 'PENDING');
-    this.repositoryService.historyQueryRepository.updateHistoryQuery(historyId, command);
+    const previousSettings = this.repositoryService.historyQueryRepository.findById(historyId)!;
+    this.repositoryService.historyQueryRepository.updateStatus(historyId, 'PENDING');
+    this.repositoryService.historyQueryRepository.update(historyId, command);
     if (previousSettings.name !== command.name) {
       this.historyEngine.setLogger(this.historyEngine.logger);
     }
   }
 
   async onStartHistoryQuery(historyId: string): Promise<void> {
-    this.repositoryService.historyQueryRepository.setHistoryQueryStatus(historyId, 'RUNNING');
+    this.repositoryService.historyQueryRepository.updateStatus(historyId, 'RUNNING');
     await this.historyEngine.startHistoryQuery(historyId);
   }
 
   async onPauseHistoryQuery(historyId: string): Promise<void> {
     await this.historyEngine.stopHistoryQuery(historyId);
-    this.repositoryService.historyQueryRepository.setHistoryQueryStatus(historyId, 'PAUSED');
+    this.repositoryService.historyQueryRepository.updateStatus(historyId, 'PAUSED');
   }
 
   async onDeleteHistoryQuery(historyId: string): Promise<void> {
-    const { name, id } = this.repositoryService.historyQueryRepository.getHistoryQuery(historyId)!;
+    const { name, id } = this.repositoryService.historyQueryRepository.findById(historyId)!;
     await this.historyEngine.deleteHistoryQuery(id, name);
 
-    this.repositoryService.historyQueryItemRepository.deleteAllItems(id);
-    this.repositoryService.historyQueryRepository.deleteHistoryQuery(id);
+    this.repositoryService.historyQueryItemRepository.deleteAllByHistoryId(id);
+    this.repositoryService.historyQueryRepository.delete(id);
     this.repositoryService.logRepository.deleteLogsByScopeId('history-query', id);
   }
 
   async onCreateHistoryItem(historyId: string, command: SouthConnectorItemCommandDTO): Promise<SouthConnectorItemDTO> {
     await this.historyEngine.stopHistoryQuery(historyId);
-    const historyItem = this.repositoryService.historyQueryItemRepository.createHistoryItem(historyId, command);
+    const historyItem = this.repositoryService.historyQueryItemRepository.create(historyId, command);
     await this.historyEngine.startHistoryQuery(historyId);
     return historyItem;
   }
 
   async onUpdateHistoryItemsSettings(historyId: string, item: SouthConnectorItemDTO, command: SouthConnectorItemCommandDTO): Promise<void> {
     await this.historyEngine.stopHistoryQuery(historyId);
-    this.repositoryService.historyQueryItemRepository.updateHistoryItem(item.id, command);
+    this.repositoryService.historyQueryItemRepository.update(item.id, command);
     await this.historyEngine.startHistoryQuery(historyId);
   }
 
   async onDeleteHistoryItem(historyId: string, itemId: string): Promise<void> {
-    this.repositoryService.historyQueryItemRepository.deleteHistoryItem(itemId);
+    this.repositoryService.historyQueryItemRepository.delete(itemId);
   }
 
   async onEnableHistoryItem(historyId: string, itemId: string): Promise<void> {
-    const item = this.repositoryService.historyQueryItemRepository.getHistoryItem(itemId);
+    const item = this.repositoryService.historyQueryItemRepository.findById(itemId);
     if (!item) {
       throw new Error('History item not found');
     }
     await this.historyEngine.stopHistoryQuery(historyId);
-    this.repositoryService.historyQueryItemRepository.enableHistoryItem(itemId);
+    this.repositoryService.historyQueryItemRepository.enable(itemId);
     await this.historyEngine.startHistoryQuery(historyId);
   }
 
   async onDisableHistoryItem(historyId: string, itemId: string): Promise<void> {
-    const item = this.repositoryService.historyQueryItemRepository.getHistoryItem(itemId);
+    const item = this.repositoryService.historyQueryItemRepository.findById(itemId);
     if (!item) throw new Error('History item not found');
     await this.historyEngine.stopHistoryQuery(historyId);
-    this.repositoryService.historyQueryItemRepository.disableHistoryItem(itemId);
+    this.repositoryService.historyQueryItemRepository.disable(itemId);
     await this.historyEngine.startHistoryQuery(historyId);
   }
 
   async onDeleteAllHistoryItems(historyId: string): Promise<void> {
-    this.repositoryService.historyQueryItemRepository.deleteAllItems(historyId);
+    this.repositoryService.historyQueryItemRepository.deleteAllByHistoryId(historyId);
   }
 
   async onCreateOrUpdateHistoryQueryItems(
@@ -443,7 +445,7 @@ export default class ReloadService {
     itemsToAdd: Array<SouthHistoryQueryItemDTO>,
     itemsToUpdate: Array<SouthHistoryQueryItemDTO>
   ): Promise<void> {
-    this.repositoryService.historyQueryItemRepository.createAndUpdateItems(historyQuery.id, itemsToAdd, itemsToUpdate);
+    this.repositoryService.historyQueryItemRepository.createAndUpdateAll(historyQuery.id, itemsToAdd, itemsToUpdate);
   }
 
   async getErrorFiles(northId: string, start: Instant, end: Instant, fileNameContains: string): Promise<Array<NorthCacheFiles>> {
@@ -451,12 +453,12 @@ export default class ReloadService {
   }
 
   async onUpdateScanMode(scanModeId: string, scanModeCommand: ScanModeCommandDTO) {
-    const oldScanMode = this.repositoryService.scanModeRepository.getScanMode(scanModeId);
+    const oldScanMode = this.repositoryService.scanModeRepository.findById(scanModeId);
     if (!oldScanMode) {
       throw new Error(`Scan mode ${scanModeId} not found`);
     }
-    this.repositoryService.scanModeRepository.updateScanMode(scanModeId, scanModeCommand);
-    const newScanMode = this.repositoryService.scanModeRepository.getScanMode(scanModeId)!;
+    this.repositoryService.scanModeRepository.update(scanModeId, scanModeCommand);
+    const newScanMode = this.repositoryService.scanModeRepository.findById(scanModeId)!;
     if (oldScanMode.cron !== scanModeCommand.cron) {
       await this.oibusEngine.updateScanMode(newScanMode);
     }
@@ -466,7 +468,7 @@ export default class ReloadService {
    * Handle the change of a south item's scan mode
    */
   private onSouthItemScanModeChange(southId: string, previousItem: SouthConnectorItemDTO, newItem: SouthConnectorItemCommandDTO) {
-    const settings = this.repositoryService.southConnectorRepository.getSouthConnector(southId)!;
+    const settings = this.repositoryService.southConnectorRepository.findById(southId)!;
     const oldScanModeId = previousItem.scanModeId;
     const newScanModeId = newItem.scanModeId!;
 
@@ -475,8 +477,8 @@ export default class ReloadService {
     }
 
     const southItemId = settings.history.maxInstantPerItem ? previousItem.id : 'all';
-    const previousCacheEntry = this.repositoryService.southCacheRepository.getSouthCacheScanMode(southId, oldScanModeId, southItemId);
-    const newCacheEntry = this.repositoryService.southCacheRepository.getSouthCacheScanMode(southId, newScanModeId, southItemId);
+    const previousCacheEntry = this.repositoryService.southCacheRepository.getScanMode(southId, oldScanModeId, southItemId);
+    const newCacheEntry = this.repositoryService.southCacheRepository.getScanMode(southId, newScanModeId, southItemId);
 
     // If the south hasn't been started yet, the previous cache entry won't exist
     if (!previousCacheEntry) {
@@ -489,7 +491,7 @@ export default class ReloadService {
       this.safeDeleteSouthCacheEntry(previousItem);
 
       // 2. Create the new cache entry, with the previous max instant
-      this.repositoryService.southCacheRepository.createOrUpdateCacheScanMode({
+      this.repositoryService.southCacheRepository.createOrUpdate({
         southId,
         itemId: previousItem.id,
         scanModeId: newScanModeId,
@@ -504,7 +506,7 @@ export default class ReloadService {
 
       // 2. Create the new cache entry, with the previous max instant, if it's not already created
       if (!newCacheEntry) {
-        this.repositoryService.southCacheRepository.createOrUpdateCacheScanMode({
+        this.repositoryService.southCacheRepository.createOrUpdate({
           southId,
           itemId: 'all',
           scanModeId: newScanModeId,
@@ -533,18 +535,18 @@ export default class ReloadService {
     }
 
     // 1. Remove all previous cache entries
-    this.repositoryService.southCacheRepository.deleteAllCacheScanModes(southId);
+    this.repositoryService.southCacheRepository.deleteAllBySouthConnector(southId);
 
     // Max instant per item is being enabled
     if (newSettings.history.maxInstantPerItem) {
-      const southItems = this.repositoryService.southItemRepository.getSouthItems(southId);
+      const southItems = this.repositoryService.southItemRepository.findAllForSouthConnector(southId);
 
       // 2. Create new cache entries for each item
       // The max instant of these new entries, will be the max instant of the previously removed ones, based on scan mode
       for (const item of southItems) {
         const maxInstant = maxInstantsByScanMode.get(item.scanModeId);
         if (maxInstant) {
-          this.repositoryService.southCacheRepository.createOrUpdateCacheScanMode({
+          this.repositoryService.southCacheRepository.createOrUpdate({
             southId,
             itemId: item.id,
             scanModeId: item.scanModeId,
@@ -559,7 +561,7 @@ export default class ReloadService {
       // 2. Create a single cache entry for all scan modes
       // The max instant of these new entries, will be the *latest* max instant of the previously removed ones
       for (const [scanModeId, maxInstant] of maxInstantsByScanMode) {
-        this.repositoryService.southCacheRepository.createOrUpdateCacheScanMode({ southId, itemId: 'all', scanModeId, maxInstant });
+        this.repositoryService.southCacheRepository.createOrUpdate({ southId, itemId: 'all', scanModeId, maxInstant });
       }
     }
   }
@@ -568,20 +570,20 @@ export default class ReloadService {
    * Safely delete the cache entries of a south item, when the south item is deleted
    */
   private safeDeleteSouthCacheEntry(southItem: SouthConnectorItemDTO) {
-    const southConnector = this.repositoryService.southConnectorRepository.getSouthConnector(southItem.connectorId);
+    const southConnector = this.repositoryService.southConnectorRepository.findById(southItem.connectorId);
     if (!southConnector) {
       return;
     }
 
     if (southConnector.history.maxInstantPerItem) {
-      this.repositoryService.southCacheRepository.deleteCacheScanModesByItem(southItem.id);
+      this.repositoryService.southCacheRepository.deleteAllBySouthItem(southItem.id);
     }
 
     if (!southConnector.history.maxInstantPerItem) {
-      const southItems = this.repositoryService.southItemRepository.getSouthItems(southItem.connectorId);
+      const southItems = this.repositoryService.southItemRepository.findAllForSouthConnector(southItem.connectorId);
       const isOldScanModeUnused = !southItems.some(item => item.scanModeId === southItem.scanModeId);
       if (isOldScanModeUnused) {
-        this.repositoryService.southCacheRepository.deleteCacheScanMode(southItem.id, southItem.scanModeId, 'all');
+        this.repositoryService.southCacheRepository.delete(southItem.id, southItem.scanModeId, 'all');
       }
     }
   }

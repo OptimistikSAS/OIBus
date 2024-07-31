@@ -65,7 +65,7 @@ const auth = () => {
     }
 
     if (ctx.request.url === '/api/users/current-user') {
-      const currentUser = await ctx.app.repositoryService.userRepository.getUserByLogin(headerUser.name);
+      const currentUser = await ctx.app.repositoryService.userRepository.findByLogin(headerUser.name);
       return ctx.ok(currentUser);
     }
     if (ctx.request.url === '/api/users/authentication') {

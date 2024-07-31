@@ -5,11 +5,11 @@ import * as utils from '../../service/utils';
 import DatabaseMock from '../../tests/__mocks__/database.mock';
 import pino from 'pino';
 
-import PinoLogger from '../../tests/__mocks__/logger.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import RepositoryService from '../../service/repository.service';
-import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
+import RepositoryServiceMock from '../../tests/__mocks__/service/repository-service.mock';
 import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import mssql, { ConnectionPool } from 'mssql';
 import {
@@ -192,7 +192,7 @@ describe('SouthMSSQL with authentication', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
 
     jest.spyOn(mssql, 'ConnectionPool').mockImplementation(() => ({ connect }) as unknown as ConnectionPool);
 
@@ -347,7 +347,7 @@ describe('SouthMSSQL without authentication', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
 
     south = new SouthMSSQL(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
@@ -439,7 +439,7 @@ describe('SouthMSSQL test connection', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
 
     jest.spyOn(mssql, 'ConnectionPool').mockImplementation(() => ({ connect }) as unknown as ConnectionPool);
     south = new SouthMSSQL(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');

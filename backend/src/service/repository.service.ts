@@ -17,9 +17,9 @@ import NorthConnectorMetricsRepository from '../repository/north-connector-metri
 import SouthCacheRepository from '../repository/south-cache.repository';
 import EngineMetricsRepository from '../repository/engine-metrics.repository';
 import CertificateRepository from '../repository/certificate.repository';
-import RegistrationRepository from '../repository/registration.repository';
-import CommandRepository from '../repository/command.repository';
-import OianalyticsMessageRepository from '../repository/oianalytics-message.repository';
+import OIAnalyticsRegistrationRepository from '../repository/oianalytics-registration.repository';
+import OIAnalyticsCommandRepository from '../repository/oianalytics-command.repository';
+import OIAnalyticsMessageRepository from '../repository/oianalytics-message.repository';
 import NorthItemRepository from '../repository/north-item.repository';
 import TransformerRepository from '../repository/transformer.repository';
 import NorthTransformerRepository from '../repository/north-transformer.repository';
@@ -44,14 +44,14 @@ export default class RepositoryService {
   private readonly _historyQueryItemRepository: HistoryQueryItemRepository;
   private readonly _userRepository: UserRepository;
   private readonly _subscriptionRepository: SubscriptionRepository;
-  private readonly _registrationRepository: RegistrationRepository;
-  private readonly _commandRepository: CommandRepository;
+  private readonly _oianalyticsRegistrationRepository: OIAnalyticsRegistrationRepository;
+  private readonly _oianalyticsCommandRepository: OIAnalyticsCommandRepository;
+  private readonly _oianalyticsMessageRepository: OIAnalyticsMessageRepository;
   private readonly _northItemRepository: NorthItemRepository;
   private readonly _transformerRepository: TransformerRepository;
   private readonly _northTransformerRepository: NorthTransformerRepository;
   private readonly _southTransformerRepository: SouthTransformerRepository;
   private readonly _historyTransformerRepository: HistoryTransformerRepository;
-  private readonly _oianalyticsMessageRepository: OianalyticsMessageRepository;
 
   constructor(oibusDatabasePath: string, logsDatabasePath: string, cryptoDatabasePath: string, cacheDatabasePath: string) {
     const oibusDatabase = Database(oibusDatabasePath);
@@ -71,9 +71,9 @@ export default class RepositoryService {
     this._historyQueryItemRepository = new HistoryQueryItemRepository(oibusDatabase);
     this._userRepository = new UserRepository(oibusDatabase);
     this._subscriptionRepository = new SubscriptionRepository(oibusDatabase);
-    this._registrationRepository = new RegistrationRepository(oibusDatabase);
-    this._commandRepository = new CommandRepository(oibusDatabase);
-    this._oianalyticsMessageRepository = new OianalyticsMessageRepository(oibusDatabase);
+    this._oianalyticsRegistrationRepository = new OIAnalyticsRegistrationRepository(oibusDatabase);
+    this._oianalyticsCommandRepository = new OIAnalyticsCommandRepository(oibusDatabase);
+    this._oianalyticsMessageRepository = new OIAnalyticsMessageRepository(oibusDatabase);
 
     this._cryptoRepository = new CryptoRepository(cryptoDatabase);
 
@@ -111,8 +111,16 @@ export default class RepositoryService {
     return this._engineMetricsRepository;
   }
 
-  get registrationRepository(): RegistrationRepository {
-    return this._registrationRepository;
+  get oianalyticsRegistrationRepository(): OIAnalyticsRegistrationRepository {
+    return this._oianalyticsRegistrationRepository;
+  }
+
+  get oianalyticsCommandRepository(): OIAnalyticsCommandRepository {
+    return this._oianalyticsCommandRepository;
+  }
+
+  get oianalyticsMessageRepository(): OIAnalyticsMessageRepository {
+    return this._oianalyticsMessageRepository;
   }
 
   get southCacheRepository(): SouthCacheRepository {
@@ -165,14 +173,6 @@ export default class RepositoryService {
 
   get subscriptionRepository(): SubscriptionRepository {
     return this._subscriptionRepository;
-  }
-
-  get commandRepository(): CommandRepository {
-    return this._commandRepository;
-  }
-
-  get oianalyticsMessageRepository(): OianalyticsMessageRepository {
-    return this._oianalyticsMessageRepository;
   }
 
   get transformerRepository(): TransformerRepository {

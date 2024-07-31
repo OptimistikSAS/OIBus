@@ -146,7 +146,7 @@ export default class NorthConnector<T extends NorthSettings = any, I = any> {
   async start(dataStream = true): Promise<void> {
     if (dataStream) {
       // Reload the settings only on data stream case, otherwise let the history query manage the settings
-      this.connector = this.repositoryService.northConnectorRepository.getNorthConnector(this.connector.id)!;
+      this.connector = this.repositoryService.northConnectorRepository.findById(this.connector.id)!;
     }
     this.logger.debug(`North connector "${this.connector.name}" enabled. Starting services...`);
     if (this.connector.id !== 'test') {
@@ -164,7 +164,7 @@ export default class NorthConnector<T extends NorthSettings = any, I = any> {
   }
 
   updateConnectorSubscription() {
-    this.subscribedTo = this.repositoryService.subscriptionRepository.getNorthSubscriptions(this.connector.id);
+    this.subscribedTo = this.repositoryService.subscriptionRepository.list(this.connector.id);
   }
 
   /**
@@ -178,7 +178,7 @@ export default class NorthConnector<T extends NorthSettings = any, I = any> {
         lastConnection: DateTime.now().toUTC().toISO()
       });
 
-      const scanMode = this.repositoryService.scanModeRepository.getScanMode(this.connector.caching.scanModeId);
+      const scanMode = this.repositoryService.scanModeRepository.findById(this.connector.caching.scanModeId);
       if (scanMode) {
         this.createCronJob(scanMode);
       } else {
@@ -451,7 +451,7 @@ export default class NorthConnector<T extends NorthSettings = any, I = any> {
 
     if (dataStream) {
       // Reload the settings only on data stream case, otherwise let the history query manage the settings
-      this.connector = this.repositoryService.northConnectorRepository.getNorthConnector(this.connector.id)!;
+      this.connector = this.repositoryService.northConnectorRepository.findById(this.connector.id)!;
     }
 
     if (this.runProgress$) {
@@ -662,7 +662,7 @@ export default class NorthConnector<T extends NorthSettings = any, I = any> {
    * Reset the items of the North connector
    */
   async onItemChange(): Promise<void> {
-    this.items = this.repositoryService.northItemRepository.listNorthItems(this.connector.id, {
+    this.items = this.repositoryService.northItemRepository.list(this.connector.id, {
       enabled: true
     });
   }

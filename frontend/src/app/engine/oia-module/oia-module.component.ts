@@ -19,7 +19,7 @@ import { emptyPage } from '../../shared/test-utils';
 import {
   OIBUS_COMMAND_STATUS,
   OIBUS_COMMAND_TYPES,
-  OIBusCommandDTO,
+  OIBusCommand,
   OIBusCommandStatus,
   OIBusCommandType
 } from '../../../../../shared/model/command.model';
@@ -54,7 +54,7 @@ const REGISTRATION_CHECK_DURATION = 3000;
 })
 export class OiaModuleComponent implements OnInit, OnDestroy {
   registration: RegistrationSettingsDTO | null = null;
-  oibusCommands: Page<OIBusCommandDTO> = emptyPage();
+  commands: Page<OIBusCommand> = emptyPage();
   readonly statusList = OIBUS_COMMAND_STATUS;
   readonly typeList = OIBUS_COMMAND_TYPES;
   // subscription to reload the page periodically
@@ -95,8 +95,8 @@ export class OiaModuleComponent implements OnInit, OnDestroy {
             return this.oibusCommandService.searchCommands({ page, types, status }).pipe(catchError(() => EMPTY));
           })
         )
-        .subscribe(oibusCommands => {
-          this.oibusCommands = oibusCommands;
+        .subscribe(commands => {
+          this.commands = commands;
         })
     );
   }

@@ -47,11 +47,11 @@ export default class NorthService {
    * Retrieve a north connector from the config
    */
   getNorth(northId: string): NorthConnectorDTO | null {
-    return this.repositoryService.northConnectorRepository.getNorthConnector(northId);
+    return this.repositoryService.northConnectorRepository.findById(northId);
   }
 
   getNorthList(): Array<NorthConnectorDTO> {
-    return this.repositoryService.northConnectorRepository.getNorthConnectors();
+    return this.repositoryService.northConnectorRepository.findAll();
   }
 
   getInstalledNorthManifests(): Array<NorthConnectorManifest> {
