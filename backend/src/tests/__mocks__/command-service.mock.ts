@@ -6,6 +6,7 @@ export default jest.fn().mockImplementation(() => {
     start: jest.fn(),
     stop: jest.fn(),
     addCommandToQueue: jest.fn(),
-    removeCommandFromQueue: jest.fn(pass => pass)
+    removeCommandFromQueue: jest.fn(),
+    setLogger: jest.fn()
   };
 });

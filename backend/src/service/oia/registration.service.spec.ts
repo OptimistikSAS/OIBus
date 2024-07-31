@@ -805,11 +805,7 @@ describe('OIBus service should interact with OIA and', () => {
       timeout: 10000,
       agent: undefined
     });
-    expect(repositoryService.commandRepository.create).toHaveBeenCalledWith('id1', {
-      type: command.type,
-      version: command.version,
-      assetId: command.assetId
-    });
+    expect(repositoryService.commandRepository.create).toHaveBeenCalledWith('id1', command);
   });
 
   it('should retrieve log error on bad fetch response', async () => {

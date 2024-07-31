@@ -1,10 +1,10 @@
-import { getNetworkSettingsFromRegistration, getOIBusInfo, generateRandomId } from '../utils';
+import { generateRandomId, getNetworkSettingsFromRegistration, getOIBusInfo } from '../utils';
 import RepositoryService from '../repository.service';
 import EncryptionService from '../encryption.service';
 import pino from 'pino';
-import { OIBusCommandDTO, OIBusCommand } from '../../../../shared/model/command.model';
+import { OIBusCommandDTO } from '../../../../shared/model/command.model';
 import { DateTime } from 'luxon';
-import { RegistrationSettingsDTO, RegistrationSettingsCommandDTO } from '../../../../shared/model/engine.model';
+import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../../shared/model/engine.model';
 import { createProxyAgent } from '../proxy-agent';
 import fetch from 'node-fetch';
 import { Instant } from '../../../../shared/model/types';
@@ -193,6 +193,7 @@ export default class RegistrationService {
         const engineSettings = this.repositoryService.engineRepository.getEngineSettings()!;
         if (engineSettings.logParameters.oia.level !== 'silent') {
           await this.reloadService.restartLogger(engineSettings);
+          this.logger = this.reloadService.loggerService.createChildLogger('internal');
         }
       }
     } catch (fetchError) {
@@ -319,12 +320,7 @@ export default class RegistrationService {
       }
       this.logger.trace(`${newCommands.length} commands to add`);
       for (const command of newCommands) {
-        const creationCommand: OIBusCommand = {
-          type: command.type,
-          version: command.version,
-          assetId: command.assetId
-        };
-        const newCommand = this.repositoryService.commandRepository.create(command.id, creationCommand);
+        const newCommand = this.repositoryService.commandRepository.create(command.id, command);
         this.commandService.addCommandToQueue(newCommand);
       }
       await this.sendAckCommands();

@@ -1,7 +1,7 @@
 import SqliteDatabaseMock, { all, get, run } from '../tests/__mocks__/database.mock';
 import { Database } from 'better-sqlite3';
-import CommandRepository, { COMMANDS_TABLE } from './command.repository';
-import { CommandSearchParam, OIBusCommand, OIBusCommandDTO } from '../../../shared/model/command.model';
+import CommandRepository, { COMMANDS_TABLE, OIBusCommandResult } from './command.repository';
+import { CommandSearchParam, OIBusCommand, OIBusCommandDTO, OIBusFullConfigDTO } from '../../../shared/model/command.model';
 import { createPageFromArray } from '../../../shared/model/types';
 
 jest.mock('../tests/__mocks__/database.mock');
@@ -14,13 +14,52 @@ let repository: CommandRepository;
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
 
-const expectedCommands: Array<OIBusCommandDTO> = [
+const mockResults: Array<OIBusCommandResult> = [
+  {
+    id: 'id1',
+    type: 'UPGRADE',
+    status: 'COMPLETED',
+    ack: 1,
+    create_at: '2023-01-01T12:00:00Z',
+    updated_at: '2023-01-01T12:00:00Z',
+    retrieved_date: '2023-01-01T12:00:00Z',
+    completed_date: '2023-01-01T12:00:00Z',
+    result: 'ok',
+    upgrade_version: '3.2.0',
+    upgrade_asset_id: 'assetId'
+  },
+  {
+    id: 'id2',
+    type: 'FULL_CONFIG',
+    status: 'RETRIEVED',
+    ack: 0,
+    create_at: '2023-01-01T12:00:00Z',
+    updated_at: '2023-01-01T12:00:00Z',
+    retrieved_date: '2023-01-01T12:00:00Z',
+    completed_date: '2023-01-01T12:00:00Z',
+    result: 'ok',
+    full_config: '{}'
+  },
+  {
+    id: 'id3',
+    type: 'RESTART',
+    status: 'RETRIEVED',
+    ack: 0,
+    create_at: '2023-01-01T12:00:00Z',
+    updated_at: '2023-01-01T12:00:00Z',
+    retrieved_date: '2023-01-01T12:00:00Z',
+    completed_date: '2023-01-01T12:00:00Z',
+    result: 'ok'
+  }
+];
+const expectedResults: Array<OIBusCommandDTO> = [
   {
     id: 'id1',
     type: 'UPGRADE',
     status: 'COMPLETED',
     ack: true,
     creationDate: '2023-01-01T12:00:00Z',
+    retrievedDate: '2023-01-01T12:00:00Z',
     completedDate: '2023-01-01T12:00:00Z',
     result: 'ok',
     version: '3.2.0',
@@ -28,14 +67,24 @@ const expectedCommands: Array<OIBusCommandDTO> = [
   },
   {
     id: 'id2',
-    type: 'UPGRADE',
+    type: 'FULL_CONFIG',
     status: 'RETRIEVED',
     ack: false,
     creationDate: '2023-01-01T12:00:00Z',
+    retrievedDate: '2023-01-01T12:00:00Z',
     completedDate: '2023-01-01T12:00:00Z',
     result: 'ok',
-    version: '3.2.0',
-    assetId: 'assetId'
+    fullConfig: {} as OIBusFullConfigDTO
+  },
+  {
+    id: 'id3',
+    type: 'RESTART',
+    status: 'RETRIEVED',
+    ack: false,
+    creationDate: '2023-01-01T12:00:00Z',
+    retrievedDate: '2023-01-01T12:00:00Z',
+    completedDate: '2023-01-01T12:00:00Z',
+    result: 'ok'
   }
 ];
 
@@ -53,85 +102,102 @@ describe('Command repository', () => {
   });
 
   it('should properly list commands', () => {
-    all.mockReturnValueOnce(expectedCommands);
+    all.mockReturnValueOnce(mockResults);
     const results = repository.findAll();
-    const query =
-      `SELECT id, type, status, ack, retrieved_date as retrievedDate, completed_date as completedDate, result, ` +
-      `upgrade_version as version, upgrade_asset_id as assetId FROM commands;`;
+    const query = `SELECT * FROM commands;`;
     expect(database.prepare).toHaveBeenCalledWith(query);
-    expect(results).toEqual(expectedCommands);
+    expect(results).toEqual(expectedResults);
   });
 
   it('should properly search commands and page them', () => {
-    all.mockReturnValueOnce(expectedCommands);
+    all.mockReturnValueOnce(mockResults);
     const searchCriteria: CommandSearchParam = {
-      types: ['UPGRADE'],
+      types: ['UPGRADE', 'FULL_CONFIG'],
       status: ['ERRORED']
     };
-    get.mockReturnValueOnce({ count: 2 });
+    get.mockReturnValueOnce({ count: 3 });
     const results = repository.searchCommandsPage(searchCriteria, 0);
-    const query =
-      `SELECT id, type, status, ack, retrieved_date as retrievedDate, completed_date as completedDate, ` +
-      `result, upgrade_version as version, upgrade_asset_id as assetId FROM commands WHERE id IS NOT NULL AND ` +
-      `type IN (?) AND status IN (?) ORDER BY created_at DESC LIMIT 50 OFFSET ?;`;
+    const query = `SELECT * FROM commands WHERE id IS NOT NULL AND type IN (?,?) AND status IN (?) ORDER BY created_at DESC LIMIT 50 OFFSET ?;`;
     expect(database.prepare).toHaveBeenCalledWith(query);
     expect(database.prepare).toHaveBeenCalledWith(
-      'SELECT COUNT(*) as count FROM commands WHERE id IS NOT NULL AND type IN (?) AND status IN (?)'
+      'SELECT COUNT(*) as count FROM commands WHERE id IS NOT NULL AND type IN (?,?) AND status IN (?)'
     );
-    expect(results).toEqual(createPageFromArray(expectedCommands, 50, 0));
+    expect(results).toEqual(createPageFromArray(expectedResults, 50, 0));
   });
 
   it('should properly search commands and list them', () => {
-    all.mockReturnValueOnce(expectedCommands);
+    all.mockReturnValueOnce(mockResults);
     const searchCriteria: CommandSearchParam = {
-      types: ['UPGRADE'],
+      types: ['UPGRADE', 'FULL_CONFIG'],
       status: ['ERRORED'],
       ack: true
     };
     const results = repository.searchCommandsList(searchCriteria);
-    const query =
-      `SELECT id, type, status, ack, retrieved_date as retrievedDate, completed_date as completedDate, ` +
-      `result, upgrade_version as version, upgrade_asset_id as assetId FROM commands WHERE id IS NOT NULL AND ` +
-      `type IN (?) AND status IN (?) AND ack = ? ORDER BY created_at DESC;`;
+    const query = `SELECT * FROM commands WHERE id IS NOT NULL AND type IN (?,?) AND status IN (?) AND ack = ? ORDER BY created_at DESC;`;
     expect(database.prepare).toHaveBeenCalledWith(query);
-    expect(results).toEqual(expectedCommands);
+    expect(results).toEqual(expectedResults);
   });
 
   it('should properly find by id', () => {
-    const expectedValue: OIBusCommandDTO = {
-      id: 'id1',
-      type: 'UPGRADE',
-      status: 'COMPLETED',
-      ack: true,
-      creationDate: '2023-01-01T12:00:00Z',
-      completedDate: '2023-01-01T12:00:00Z',
-      result: 'ok',
-      version: '3.2.0',
-      assetId: 'assetId'
-    };
-    get.mockReturnValueOnce(expectedValue);
-    const result = repository.findById('id2');
-    const query =
-      `SELECT id, type, status, ack, retrieved_date as retrievedDate, completed_date as completedDate, result, ` +
-      `upgrade_version as version, upgrade_asset_id as assetId FROM commands WHERE id = ?;`;
+    get.mockReturnValueOnce(mockResults[2]);
+    const result = repository.findById('id3');
+    const query = `SELECT * FROM commands WHERE id = ?;`;
     expect(database.prepare).toHaveBeenCalledWith(query);
-    expect(get).toHaveBeenCalledWith('id2');
-    expect(result).toEqual(expectedValue);
+    expect(get).toHaveBeenCalledWith('id3');
+    expect(result).toEqual(expectedResults[2]);
   });
 
-  it('should create a command', () => {
+  it('should properly return null if command not found', () => {
+    get.mockReturnValueOnce(undefined);
+    const result = repository.findById('id');
+    const query = `SELECT * FROM commands WHERE id = ?;`;
+    expect(database.prepare).toHaveBeenCalledWith(query);
+    expect(get).toHaveBeenCalledWith('id');
+    expect(result).toBeNull();
+  });
+
+  it('should create an UPGRADE command', () => {
     run.mockReturnValueOnce({ lastInsertRowid: 1 });
+    get.mockReturnValueOnce(mockResults[0]);
     const command: OIBusCommand = {
       type: 'UPGRADE',
       version: '3.2.0',
       assetId: 'assetId'
     };
-    repository.create('id1', command);
+    const result = repository.create('id1', command);
     const insertQuery =
       `INSERT INTO ${COMMANDS_TABLE} (id, retrieved_date, type, status, ack, upgrade_version, ` +
       `upgrade_asset_id) VALUES (?, ?, ?, ?, ?, ?, ?);`;
     expect(database.prepare).toHaveBeenCalledWith(insertQuery);
     expect(run).toHaveBeenCalledWith('id1', nowDateString, command.type, 'RETRIEVED', 0, command.version, command.assetId);
+    expect(result).toEqual(expectedResults[0]);
+  });
+
+  it('should create a FULL_CONFIG command', () => {
+    run.mockReturnValueOnce({ lastInsertRowid: 1 });
+    get.mockReturnValueOnce(mockResults[1]);
+    const command: OIBusCommand = {
+      type: 'FULL_CONFIG',
+      fullConfig: {} as OIBusFullConfigDTO
+    };
+    const result = repository.create('id1', command);
+    const insertQuery = `INSERT INTO ${COMMANDS_TABLE} (id, retrieved_date, type, status, ack, full_config) VALUES (?, ?, ?, ?, ?, ?);`;
+    expect(database.prepare).toHaveBeenCalledWith(insertQuery);
+    expect(run).toHaveBeenCalledWith('id1', nowDateString, command.type, 'RETRIEVED', 0, JSON.stringify(command.fullConfig));
+    expect(result).toEqual(expectedResults[1]);
+  });
+
+  it('should create a RESTART command', () => {
+    run.mockReturnValueOnce({ lastInsertRowid: 1 });
+    get.mockReturnValueOnce(mockResults[2]);
+    const command: OIBusCommand = {
+      type: 'RESTART'
+    };
+    const result = repository.create('id1', command);
+    const insertQuery = `INSERT INTO ${COMMANDS_TABLE} (id, retrieved_date, type, status, ack) VALUES (?, ?, ?, ?, ?);`;
+    expect(database.prepare).toHaveBeenCalledWith(insertQuery);
+    expect(run).toHaveBeenCalledWith('id1', nowDateString, command.type, 'RETRIEVED', 0);
+    expect(result).toEqual(expectedResults[2]);
   });
 
   it('should mark a command as COMPLETED', () => {
