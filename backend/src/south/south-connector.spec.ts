@@ -867,4 +867,10 @@ describe('SouthConnector disabled', () => {
 
     expect(basicSouth.queriesSubscription).toHaveBeenCalledTimes(1);
   });
+
+  it('should test item', async () => {
+    let callback = jest.fn();
+    await basicSouth.testItem(items[0], callback);
+    expect(logger.warn).toHaveBeenCalledWith('testItem must be override to test item item1');
+  });
 });

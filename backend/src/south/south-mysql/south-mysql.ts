@@ -115,16 +115,8 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
   }
 
   override async testItem(item: SouthConnectorItemDTO<SouthMySQLItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
-    await this.testConnection();
-
     const config = await this.createConnectionOptions();
-    let connection;
-    try {
-      connection = await mysql.createConnection(config);
-      await connection.ping();
-    } catch {
-      await connection?.end();
-    }
+    const connection = await mysql.createConnection(config);
 
     const startTime = DateTime.now()
       .minus(3600 * 1000)
@@ -132,7 +124,7 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
       .toISO() as Instant;
     const endTime = DateTime.now().toUTC().toISO() as Instant;
     const result: Array<any> = await this.queryData(item, startTime, endTime);
-    await connection?.end();
+    await connection.end();
 
     const formattedResults = result.map(entry => {
       const formattedEntry: Record<string, any> = {};
@@ -165,9 +157,6 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
         const content = generateCsvContent(formattedResults, item.settings.serialization.delimiter);
         oibusContent = { type: 'raw', filePath, content };
         break;
-      }
-      default: {
-        oibusContent = { type: 'time-values', content: formattedResults as Array<any> };
       }
     }
     callback(oibusContent);

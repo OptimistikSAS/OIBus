@@ -25,6 +25,7 @@ export class OibCodeBlockComponent implements AfterViewInit, ControlValueAccesso
   @ViewChild('editorContainer') _editorContainer: ElementRef | null = null;
   @Input() key = '';
   @Input() contentType = '';
+  @Input() height = '12rem';
   disabled = false;
 
   onChange: (value: string) => void = () => {};
@@ -58,6 +59,7 @@ export class OibCodeBlockComponent implements AfterViewInit, ControlValueAccesso
         language: this.contentType,
         theme: 'vs-light',
         selectOnLineNumbers: true,
+        wordWrap: 'on',
         minimap: { enabled: false }
       });
 
