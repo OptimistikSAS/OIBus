@@ -517,6 +517,9 @@
         "error": "Error",
         "valid-title": "These items will be created"
       },
+      "test": {
+        "title": "Result for item {{name}}"
+      },
       "search-placeholder": "Enter text to filter items",
       "save-before-adding-items": "Save connector before you can add new items",
       "name": "Name",
