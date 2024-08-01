@@ -1024,6 +1024,392 @@ describe('South connector controller', () => {
     expect(ctx.notFound).toHaveBeenCalled();
   });
 
+  it('testSouthItem() should test item', async () => {
+    ctx.request.body = {
+      south: southConnectorCommand,
+      item: {
+        name: 'name',
+        enabled: true,
+        settings: {
+          regex: '.*'
+        },
+        scanModeName: 'scan mode'
+      }
+    };
+
+    ctx.app.southService.getInstalledSouthManifests = jest.fn().mockReturnValue([{
+      id: 'south-test',
+      category: 'debug',
+      name: 'Test',
+      description: '',
+      modes: {
+        subscription: true,
+        lastPoint: true,
+        lastFile: true,
+        history: true,
+        forceMaxInstantPerItem: true
+      },
+      settings: [{ type: 'OibTimezone' }],
+      items: {
+        scanMode: {
+          acceptSubscription: true,
+          subscriptionOnly: true
+        },
+        settings: [{ type: 'OibTimezone' }]
+      }  
+    }]);
+
+    (validator.validateSettings as jest.Mock)
+      .mockReturnValue(() => {
+        return true;
+      });
+
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(southConnector);
+
+    ctx.app.repositoryService.scanModeRepository.getScanModes = jest.fn().mockReturnValue([{
+      id: '1',
+      name: 'scan mode',
+      description: 'description',
+      cron: '* * * * *'
+    }]);
+
+    ctx.app.encryptionService.encryptConnectorSecrets = jest.fn().mockReturnValue({databasePath: 'folder/file'});
+
+    const createdSouth = {
+      testItem: jest.fn()
+    };
+    (ctx.app.southService.createSouth as jest.Mock).mockReturnValue(createdSouth);
+
+    await southConnectorController.testSouthItem(ctx);
+
+    expect(ctx.app.southService.getInstalledSouthManifests).toHaveBeenCalled();
+    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalled();
+    expect(validator.validateSettings).toHaveBeenCalledTimes(2);
+    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).toHaveBeenCalled();
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalled();
+    expect(ctx.app.logger.child).toHaveBeenCalled();
+    expect(ctx.badRequest).not.toHaveBeenCalled();
+  });
+
+  it('testSouthItem() should test item in case of null southConnector', async () => {
+    ctx.request.body = {
+      south: southConnectorCommand,
+      item: {
+        name: 'name',
+        enabled: true,
+        settings: {
+          regex: '.*'
+        },
+        scanModeName: 'scan mode'
+      }
+    };
+
+    ctx.app.southService.getInstalledSouthManifests = jest.fn().mockReturnValue([{
+      id: 'south-test',
+      category: 'debug',
+      name: 'Test',
+      description: '',
+      modes: {
+        subscription: true,
+        lastPoint: true,
+        lastFile: true,
+        history: true,
+        forceMaxInstantPerItem: true
+      },
+      settings: [{ type: 'OibTimezone' }],
+      items: {
+        scanMode: {
+          acceptSubscription: true,
+          subscriptionOnly: true
+        },
+        settings: [{ type: 'OibTimezone' }]
+      }  
+    }]);
+
+    ctx.params.id = 'create';
+    ctx.query.duplicateId = null;
+
+    (validator.validateSettings as jest.Mock)
+      .mockReturnValue(() => {
+        return true;
+      });
+
+    ctx.app.repositoryService.scanModeRepository.getScanModes = jest.fn().mockReturnValue([{
+      id: '1',
+      name: 'scan mode',
+      description: 'description',
+      cron: '* * * * *'
+    }]);
+
+    ctx.app.encryptionService.encryptConnectorSecrets = jest.fn().mockReturnValue({databasePath: 'folder/file'});
+
+    const createdSouth = {
+      testItem: jest.fn()
+    };
+    (ctx.app.southService.createSouth as jest.Mock).mockReturnValue(createdSouth);
+
+    await southConnectorController.testSouthItem(ctx);
+
+    expect(ctx.app.southService.getInstalledSouthManifests).toHaveBeenCalled();
+    expect(validator.validateSettings).toHaveBeenCalledTimes(2);
+    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).toHaveBeenCalled();
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalled();
+    expect(ctx.app.logger.child).toHaveBeenCalled();
+    expect(ctx.badRequest).not.toHaveBeenCalled();
+  });
+
+  it('testSouthItem() should throw error of manifest not found', async () => {
+    await southConnectorController.testSouthItem(ctx);
+    expect(ctx.notFound).toHaveBeenCalledWith('South manifest not found');
+  });
+
+  it('testSouthItem() should throw error of south not found', async () => {
+    ctx.request.body = {
+      south: southConnectorCommand,
+      item: {
+        name: 'name',
+        enabled: true,
+        settings: {
+          regex: '.*'
+        },
+        scanModeName: 'scan mode'
+      }
+    };
+
+    ctx.params.id = 'id';
+
+    ctx.app.southService.getInstalledSouthManifests = jest.fn().mockReturnValue([{
+      id: 'south-test',
+      category: 'debug',
+      name: 'Test',
+      description: '',
+      modes: {
+        subscription: true,
+        lastPoint: true,
+        lastFile: true,
+        history: true,
+        forceMaxInstantPerItem: true
+      },
+      settings: [{ type: 'OibTimezone' }],
+      items: {
+        scanMode: {
+          acceptSubscription: true,
+          subscriptionOnly: true
+        },
+        settings: [{ type: 'OibTimezone' }]
+      }  
+    }]);
+
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(null);
+
+    await southConnectorController.testSouthItem(ctx);
+
+    expect(ctx.app.southService.getInstalledSouthManifests).toHaveBeenCalled();
+    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalled();
+    expect(ctx.notFound).toHaveBeenCalledWith('South not found: id');
+  });
+
+  it('testSouthItem() should throw error of south not found duplicated id', async () => {
+    ctx.request.body = {
+      south: southConnectorCommand,
+      item: {
+        name: 'name',
+        enabled: true,
+        settings: {
+          regex: '.*'
+        },
+        scanModeName: 'scan mode'
+      }
+    };
+
+    ctx.query.duplicateId = 'id';
+    ctx.params.id = 'create';
+
+    ctx.app.southService.getInstalledSouthManifests = jest.fn().mockReturnValue([{
+      id: 'south-test',
+      category: 'debug',
+      name: 'Test',
+      description: '',
+      modes: {
+        subscription: true,
+        lastPoint: true,
+        lastFile: true,
+        history: true,
+        forceMaxInstantPerItem: true
+      },
+      settings: [{ type: 'OibTimezone' }],
+      items: {
+        scanMode: {
+          acceptSubscription: true,
+          subscriptionOnly: true
+        },
+        settings: [{ type: 'OibTimezone' }]
+      }  
+    }]);
+
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(null);
+
+    await southConnectorController.testSouthItem(ctx);
+
+    expect(ctx.app.southService.getInstalledSouthManifests).toHaveBeenCalled();
+    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalled();
+    expect(ctx.notFound).toHaveBeenCalledWith('South not found: id');
+  });
+
+  it('testSouthItem() should throw a bad request if scan mode not specifed', async () => {
+    ctx.request.body = {
+      south: southConnectorCommand,
+      item: {
+        name: 'name',
+        enabled: true,
+        settings: {
+          regex: '.*'
+        }
+      }
+    };
+
+    ctx.app.southService.getInstalledSouthManifests = jest.fn().mockReturnValue([{
+      id: 'south-test',
+      category: 'debug',
+      name: 'Test',
+      description: '',
+      modes: {
+        subscription: true,
+        lastPoint: true,
+        lastFile: true,
+        history: true,
+        forceMaxInstantPerItem: true
+      },
+      settings: [{ type: 'OibTimezone' }],
+      items: {
+        scanMode: {
+          acceptSubscription: true,
+          subscriptionOnly: true
+        },
+        settings: [{ type: 'OibTimezone' }]
+      }  
+    }]);
+
+    (validator.validateSettings as jest.Mock)
+      .mockReturnValue(() => {
+        return true;
+      });
+
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(southConnector);
+
+    await southConnectorController.testSouthItem(ctx);
+
+    expect(ctx.app.southService.getInstalledSouthManifests).toHaveBeenCalled();
+    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalled();
+    expect(validator.validateSettings).toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('Scan mode not specified for item name');
+  });
+
+  it('testSouthItem() should throw a bad request if scan mode not found', async () => {
+    ctx.request.body = {
+      south: southConnectorCommand,
+      item: {
+        name: 'name',
+        enabled: true,
+        settings: {
+          regex: '.*'
+        },
+        scanModeName: 'scan mode'
+      }
+    };
+
+    ctx.app.southService.getInstalledSouthManifests = jest.fn().mockReturnValue([{
+      id: 'south-test',
+      category: 'debug',
+      name: 'Test',
+      description: '',
+      modes: {
+        subscription: true,
+        lastPoint: true,
+        lastFile: true,
+        history: true,
+        forceMaxInstantPerItem: true
+      },
+      settings: [{ type: 'OibTimezone' }],
+      items: {
+        scanMode: {
+          acceptSubscription: true,
+          subscriptionOnly: true
+        },
+        settings: [{ type: 'OibTimezone' }]
+      }  
+    }]);
+
+    (validator.validateSettings as jest.Mock)
+      .mockReturnValue(() => {
+        return true;
+      });
+
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(southConnector);
+
+    ctx.app.repositoryService.scanModeRepository.getScanModes = jest.fn().mockReturnValue([{
+      id: '1',
+      name: 'bad scan mode',
+      description: 'description',
+      cron: '* * * * *'
+    }]);
+
+    await southConnectorController.testSouthItem(ctx);
+
+    expect(ctx.app.southService.getInstalledSouthManifests).toHaveBeenCalled();
+    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalled();
+    expect(validator.validateSettings).toHaveBeenCalled();
+    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('Scan mode scan mode not found for item name');
+  });
+
+  it('testSouthItem() should throw a bad request', async () => {
+    ctx.request.body = {
+      south: southConnectorCommand,
+      item: {
+        name: 'name',
+        enabled: true,
+        settings: {
+          regex: '.*'
+        },
+        scanModeName: 'scan mode'
+      }
+    };
+
+    ctx.app.southService.getInstalledSouthManifests = jest.fn().mockReturnValue([{
+      id: 'south-test',
+      category: 'debug',
+      name: 'Test',
+      description: '',
+      modes: {
+        subscription: true,
+        lastPoint: true,
+        lastFile: true,
+        history: true,
+        forceMaxInstantPerItem: true
+      },
+      settings: [{ type: 'OibTimezone' }],
+      items: {
+        scanMode: {
+          acceptSubscription: true,
+          subscriptionOnly: true
+        },
+        settings: [{ type: 'OibTimezone' }]
+      }  
+    }]);
+
+    (validator.validateSettings as jest.Mock).mockRejectedValueOnce('Bad request');
+
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(southConnector);
+
+    await southConnectorController.testSouthItem(ctx);
+
+    expect(ctx.app.southService.getInstalledSouthManifests).toHaveBeenCalled();
+    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalled();
+    expect(validator.validateSettings).toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalled();
+  });
+
   it('southItemsToCsv() should download a csv file', async () => {
     ctx.params.southId = 'id';
     ctx.request.body = {

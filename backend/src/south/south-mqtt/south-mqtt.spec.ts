@@ -622,6 +622,49 @@ describe('SouthMQTT with Basic Auth', () => {
       `Could not handle message "not a json object" for topic "${items[5].settings.topic}". SyntaxError: Unexpected token o in JSON at position 1`
     );
   });
+
+  it('should test item', async () => {
+    south.subscribe = jest.fn();
+    south.unsubscribe = jest.fn();
+    south.disconnect = jest.fn();
+    const callback = jest.fn();
+
+    south.formatValues = jest.fn().mockReturnValue([
+      {
+        pointId: 'pointId',
+        timestamp: '2024-06-10T14:00:00.000Z',
+        data: {
+          value: 1234
+        }
+      }
+    ]);
+
+    south.testItem(items[0], callback);
+    await flushPromises();
+    expect(mqtt.connect).toHaveBeenCalled();
+    expect(south.subscribe).not.toHaveBeenCalled();
+    mqttStream.emit('connect');
+    expect(south.subscribe).toHaveBeenCalled();
+
+    mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false });
+    await flushPromises();
+    expect(south.unsubscribe).toHaveBeenCalled();
+    expect(south.disconnect).toHaveBeenCalledTimes(1);
+    expect(callback).toHaveBeenCalledWith({
+      type: 'time-values',
+      content: [{ data: { value: 'myMessage' }, pointId: items[0].name, timestamp: nowDateString }]
+    });
+  });
+
+  it('should test item and reject on error', async () => {
+    south.subscribe = jest.fn();
+    south.unsubscribe = jest.fn();
+    south.disconnect = jest.fn();
+    const callback = jest.fn();
+
+    south.testItem(items[0], callback);
+    mqttStream.emit('error', 'connect error');
+  });
 });
 
 describe('SouthMQTT with Cert', () => {

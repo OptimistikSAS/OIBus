@@ -515,4 +515,59 @@ describe('SouthModbus test connection', () => {
     mockedEmitter.emit('error', 'connect error');
     await flushPromises();
   });
+
+  it('Connecting to socket successfully when testing items', async () => {
+    testingSouth = new SouthModbus(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
+    let callback = jest.fn();
+
+    // Mock node:net Socket constructor and the used function
+    (net.Socket as unknown as jest.Mock).mockReturnValue({
+      connect(_connectionObject: any, callback: any) {
+        callback();
+      },
+      on: jest.fn(),
+      end: jest.fn()
+    });
+
+    await expect(testingSouth.testItem(items[0], callback)).resolves.not.toThrow();
+  });
+
+  it('Unable to create connection to socket when testing items', async () => {
+    let code: ErrorCodes;
+    const errorMessage = 'Error creating connection to socket';
+    let callback = jest.fn();
+
+    for (code in ERROR_CODES) {
+      (logger.error as jest.Mock).mockClear();
+      (logger.info as jest.Mock).mockClear();
+
+      // Mock node:net Socket constructor and the used function
+      (net.Socket as unknown as jest.Mock).mockReturnValueOnce({
+        connect(_connectionObject: any, _callback: any) {
+          throw new ModbusError(errorMessage, code);
+        },
+        on: jest.fn(),
+        end: jest.fn()
+      });
+
+      await expect(testingSouth.testItem(items[0], callback)).rejects.toThrow(new Error(`${ERROR_CODES[code]} ${errorMessage}`));
+    }
+  });
+
+  it('should fail to connect when testing items', async () => {
+    testingSouth = new SouthModbus(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
+    let callback = jest.fn();
+
+    const mockedEmitter = new CustomStream();
+    mockedEmitter.connect = (_connectionObject: any, _callback: any) => {};
+
+    // Mock node:net Socket constructor and the used function
+    (net.Socket as unknown as jest.Mock).mockImplementation(() => mockedEmitter);
+
+    testingSouth.testItem(items[0], callback).catch(() => {});
+
+    expect(net.Socket).toHaveBeenCalledTimes(1);
+    mockedEmitter.emit('error', 'connect error');
+    await flushPromises();
+  });
 });
