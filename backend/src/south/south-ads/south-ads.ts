@@ -202,6 +202,20 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
     });
   }
 
+  override async testItem(item: SouthConnectorItemDTO<SouthADSItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
+    try {
+      await this.connect();
+      const dataValues: OIBusTimeValue[] = await this.readAdsSymbol(item, DateTime.now().toUTC().toISO()!);
+      await this.disconnect();
+      callback({
+        type: 'time-values',
+        content: dataValues
+      });
+    } catch (error: any) {
+      throw new Error(`Unable to connect. ${error.message}`);
+    }
+  }
+
   createConnectionOptions(): ADSOptions {
     const options: ADSOptions = {
       targetAmsNetId: this.connector.settings.netId, // example: 192.168.1.120.1.1
