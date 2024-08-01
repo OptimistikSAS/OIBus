@@ -399,6 +399,81 @@ describe('SouthOLEDB with authentication', () => {
     );
     expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 500`);
   });
+
+  it('should test item', async () => {
+    const startTime = '2020-01-01T00:00:00.000Z';
+    south.queryRemoteAgentData = jest.fn().mockReturnValueOnce([
+      { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
+      { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
+    ]);
+    (utils.formatInstant as jest.Mock).mockReturnValue(startTime);
+    (utils.convertDateTimeToInstant as jest.Mock).mockImplementation(instant => instant);
+
+    const callback = jest.fn();
+    await south.testItem(items[0], callback);
+    expect(south.queryRemoteAgentData).toHaveBeenCalledTimes(1);
+  });
+
+  it('should test item without datetimeFields', async () => {
+    const startTime = '2020-01-01T00:00:00.000Z';
+    south.queryRemoteAgentData = jest.fn().mockReturnValueOnce([
+      { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
+      { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
+    ]);
+    (utils.formatInstant as jest.Mock).mockReturnValue(startTime);
+    (utils.convertDateTimeToInstant as jest.Mock).mockImplementation(instant => instant);
+
+    const callback = jest.fn();
+    await south.testItem(items[1], callback);
+    expect(south.queryRemoteAgentData).toHaveBeenCalledTimes(1);
+  });
+
+  it('QueryRemoteAgentData in case of item test', async () => {
+    const startTime = '2020-01-01T00:00:00.000Z';
+    const endTime = '2022-01-01T00:00:00.000Z';
+
+    (fetch as unknown as jest.Mock)
+      .mockReturnValueOnce(
+        Promise.resolve({
+          status: 200,
+          json: () => ({
+            recordCount: 2,
+            content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
+            maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
+          })
+        })
+      )
+      .mockReturnValueOnce(
+        Promise.resolve({
+          status: 200,
+          json: () => ({
+            recordCount: 0,
+            content: [],
+            maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
+          })
+        })
+      );
+
+    await south.queryRemoteAgentData(items[0], startTime, endTime, true);
+
+    expect(utils.logQuery).toHaveBeenCalledWith(items[0].settings.query, startTime, endTime, logger);
+
+    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/ole/${configuration.id}/read`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
+        sql: 'SELECT * FROM table',
+        readTimeout: 1000,
+        timeColumn: 'timestamp',
+        datasourceTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+        datasourceTimezone: 'Europe/Paris',
+        delimiter: 'COMMA'
+      }),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+  });
 });
 
 describe('SouthOLEDB test connection', () => {

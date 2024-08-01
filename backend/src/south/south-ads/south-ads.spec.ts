@@ -513,4 +513,36 @@ describe('South ADS', () => {
     await south.disconnect();
     expect(logger.info).toHaveBeenCalledTimes(8);
   });
+
+  it('should test item and sucess', async () => {
+    south.connect = jest.fn();
+    south.disconnect = jest.fn();
+    const readAdsSymbol = south.readAdsSymbol = jest.fn();
+    readAdsSymbol.mockReturnValue([{
+      pointId: 'pointId',
+      timestamp: '2024-06-10T14:00:00.000Z',
+      data: {
+        value: 1234
+      }
+    }]);
+    await south.start();
+    let callback = jest.fn();
+    await south.testItem(items[0], callback);
+    expect(south.disconnect).toHaveBeenCalledTimes(1);
+  });
+
+  it('should test item and throw an error', async () => {
+    const connect = south.connect = jest.fn();
+    connect.mockRejectedValue('undefined');
+    const readAdsSymbol = south.readAdsSymbol = jest.fn();
+    readAdsSymbol.mockReturnValue([{
+      pointId: 'pointId',
+      timestamp: '2024-06-10T14:00:00.000Z',
+      data: {
+        value: 1234
+      }
+    }]);
+    let callback = jest.fn();
+    await expect(south.testItem(items[0], callback)).rejects.toThrow(new Error(`Unable to connect. undefined`));
+  });
 });

@@ -65,11 +65,17 @@ export default class SouthFolderScanner
     item: SouthConnectorItemDTO<SouthFolderScannerItemSettings>,
     callback: (data: OIBusContent) => void
   ): Promise<void> {
-    await this.testConnection();
-
     const inputFolder = path.resolve(this.connector.settings.inputFolder);
-    const files = await fs.readdir(inputFolder);
-    const values: OIBusTimeValue[] = files.map(file => ({
+    const filesInFolder = await fs.readdir(inputFolder);
+    const filteredFiles = filesInFolder.filter(file => file.match(item.settings.regex));
+    const matchedFiles: Array<string> = [];
+    for (const file of filteredFiles) {
+      if (await this.checkAge(item, file)) {
+        matchedFiles.push(file);
+      }
+    }
+
+    const values: OIBusTimeValue[] = matchedFiles.map(file => ({
       pointId: item.name,
       timestamp: DateTime.now().toUTC().toISO()!,
       data: { value: file }

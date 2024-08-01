@@ -30,6 +30,7 @@ import { PaginationComponent } from '../../shared/pagination/pagination.componen
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
 import { ImportItemModalComponent } from '../../shared/import-item-modal/import-item-modal.component';
+import { SouthItemTestModalComponent } from '../south-item-test-modal/south-item-test-modal.component';
 
 const PAGE_SIZE = 20;
 
@@ -239,6 +240,13 @@ export class SouthItemsComponent implements OnInit {
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
     component.prepareForCopy(this.southManifest.items, this.scanModes, item);
     this.refreshAfterCreationModalClosed(modalRef);
+  }
+
+  testItem(item: SouthConnectorItemDTO) {
+    this.southConnectorService.testItems(this.southConnector!.id, this.southConnector, item).subscribe(result => {
+      const modalRef = this.modalService.open(SouthItemTestModalComponent, { size: 'xl' });
+      modalRef.componentInstance.prepare(result, item);
+    });
   }
 
   /**
