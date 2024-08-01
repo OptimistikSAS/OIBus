@@ -2,7 +2,16 @@ import path from 'node:path';
 
 import SouthConnector from '../south-connector';
 import manifest from './manifest';
-import { convertDateTimeToInstant, convertDelimiter, createFolder, formatInstant, logQuery, persistResults } from '../../service/utils';
+import {
+  convertDateTimeToInstant,
+  convertDelimiter,
+  createFolder,
+  formatInstant,
+  logQuery,
+  persistResults,
+  generateCsvContent,
+  generateFilenameForSerialization
+} from '../../service/utils';
 import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
@@ -109,6 +118,55 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     }
   }
 
+  override async testItem(item: SouthConnectorItemDTO<SouthODBCItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
+    const startTime = DateTime.now()
+      .minus(3600 * 1000)
+      .toUTC()
+      .toISO() as Instant;
+    const endTime = DateTime.now().toUTC().toISO() as Instant;
+    let result: Array<any>;
+    if (this.connector.settings.remoteAgent) {
+      result = (await this.queryRemoteAgentData(item, startTime, endTime, true)) as any[];
+    } else {
+      result = (await this.queryOdbcData(item, endTime, startTime, true)) as any[];
+    }
+
+    const formattedResults = result.map(entry => {
+      const formattedEntry: Record<string, any> = {};
+      Object.entries(entry).forEach(([key, value]) => {
+        const datetimeField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.fieldName === key) || null;
+        if (!datetimeField) {
+          formattedEntry[key] = value;
+        } else {
+          const entryDate = convertDateTimeToInstant(value, datetimeField);
+          formattedEntry[key] = formatInstant(entryDate, {
+            type: 'string',
+            format: item.settings.serialization.outputTimestampFormat,
+            timezone: item.settings.serialization.outputTimezone,
+            locale: 'en-En'
+          });
+        }
+      });
+      return formattedEntry;
+    });
+
+    let oibusContent: OIBusContent;
+    switch (item.settings.serialization.type) {
+      case 'csv': {
+        const filePath = generateFilenameForSerialization(
+          this.tmpFolder,
+          item.settings.serialization.filename,
+          this.connector.name,
+          item.name
+        );
+        const content = generateCsvContent(formattedResults, item.settings.serialization.delimiter);
+        oibusContent = { type: 'raw', filePath, content };
+        break;
+      }
+    }
+    callback(oibusContent);
+  }
+
   async testOdbcConnection(): Promise<void> {
     if (!odbc) {
       throw new Error('odbc library not loaded');
@@ -195,19 +253,25 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
    * and write them into a CSV file and send it to the engine.
    */
   async historyQuery(items: Array<SouthConnectorItemDTO<SouthODBCItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
-    let updatedStartTime = startTime;
+    let updatedStartTime: string = startTime;
 
     for (const item of items) {
       if (this.connector.settings.remoteAgent) {
-        updatedStartTime = await this.queryRemoteAgentData(item, updatedStartTime, endTime);
+        updatedStartTime = (await this.queryRemoteAgentData(item, updatedStartTime, endTime)) as string;
       } else {
-        updatedStartTime = await this.queryOdbcData(item, updatedStartTime, endTime);
+        updatedStartTime = (await this.queryOdbcData(item, updatedStartTime, endTime)) as string;
       }
     }
     return updatedStartTime;
   }
 
-  async queryRemoteAgentData(item: SouthConnectorItemDTO<SouthODBCItemSettings>, startTime: Instant, endTime: Instant): Promise<Instant> {
+  async queryRemoteAgentData(
+    item: SouthConnectorItemDTO<SouthODBCItemSettings>,
+    startTime: Instant,
+    endTime: Instant,
+    test?: boolean
+  ): Promise<string | Record<string, any>[]> {
+    // test is here in case we are testing items
     let updatedStartTime = startTime;
     const startRequest = DateTime.now().toMillis();
 
@@ -245,21 +309,25 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
       const requestDuration = DateTime.now().toMillis() - startRequest;
       this.logger.info(`Found ${result.recordCount} results for item ${item.name} in ${requestDuration} ms`);
 
-      if (result.content.length > 0) {
-        await persistResults(
-          result.content,
-          { type: 'file', filename: item.settings.serialization.filename, compression: item.settings.serialization.compression },
-          this.connector.name,
-          item.name,
-          this.tmpFolder,
-          this.addContent.bind(this),
-          this.logger
-        );
-        if (result.maxInstantRetrieved > updatedStartTime) {
-          updatedStartTime = result.maxInstantRetrieved;
-        }
+      if (test) {
+        return result.content;
       } else {
-        this.logger.debug(`No result found for item ${item.name}. Request done in ${requestDuration} ms`);
+        if (result.content.length > 0) {
+          await persistResults(
+            result.content,
+            { type: 'file', filename: item.settings.serialization.filename, compression: item.settings.serialization.compression },
+            this.connector.name,
+            item.name,
+            this.tmpFolder,
+            this.addContent.bind(this),
+            this.logger
+          );
+          if (result.maxInstantRetrieved > updatedStartTime) {
+            updatedStartTime = result.maxInstantRetrieved;
+          }
+        } else {
+          this.logger.debug(`No result found for item ${item.name}. Request done in ${requestDuration} ms`);
+        }
       }
     } else if (response.status === 400) {
       const errorMessage = await response.text();
@@ -271,7 +339,13 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     return updatedStartTime;
   }
 
-  async queryOdbcData(item: SouthConnectorItemDTO<SouthODBCItemSettings>, startTime: Instant, endTime: Instant): Promise<Instant> {
+  async queryOdbcData(
+    item: SouthConnectorItemDTO<SouthODBCItemSettings>,
+    startTime: Instant,
+    endTime: Instant,
+    test?: boolean
+  ): Promise<string | Record<string, any>[]> {
+    // test is here in case we are testing items
     if (!odbc) {
       throw new Error('odbc library not loaded');
     }
@@ -328,15 +402,19 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
         });
         return formattedEntry;
       });
-      await persistResults(
-        formattedResult,
-        item.settings.serialization,
-        this.connector.name,
-        item.name,
-        this.tmpFolder,
-        this.addContent.bind(this),
-        this.logger
-      );
+      if (test) {
+        return formattedResult;
+      } else {
+        await persistResults(
+          formattedResult,
+          item.settings.serialization,
+          this.connector.name,
+          item.name,
+          this.tmpFolder,
+          this.addContent.bind(this),
+          this.logger
+        );
+      }
     } else {
       this.logger.debug(`No result found for item ${item.name}. Request done in ${requestDuration} ms`);
     }

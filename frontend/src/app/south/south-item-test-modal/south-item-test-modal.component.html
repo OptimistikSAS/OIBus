@@ -1,0 +1,15 @@
+<div class="modal-header">
+  <h4 class="modal-title" translate="south.items.test.title" [translateParams]="{ name: this.item?.name }"></h4>
+</div>
+<div class="modal-body">
+  @if (this.result) {
+    <oib-code-block height="80vh" #monacoEditor [contentType]="contentType"></oib-code-block>
+  } @else {
+    <oib-loading-spinner></oib-loading-spinner>
+  }
+</div>
+<div class="modal-footer">
+  <div class="btn-group">
+    <button type="button" class="btn btn-cancel" (click)="close()" id="close-button">Close</button>
+  </div>
+</div>

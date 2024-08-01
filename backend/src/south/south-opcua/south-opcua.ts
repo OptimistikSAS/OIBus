@@ -30,7 +30,7 @@ import { OPCUAClientOptions } from 'node-opcua-client/source/opcua_client';
 import { DateTime } from 'luxon';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { QueriesHistory, QueriesLastPoint, QueriesSubscription, DelegatesConnection } from '../south-interface';
+import { DelegatesConnection, QueriesHistory, QueriesLastPoint, QueriesSubscription } from '../south-interface';
 import { SouthOPCUAItemSettings, SouthOPCUASettings } from '../../../../shared/model/south-settings.model';
 import { randomUUID } from 'crypto';
 import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
@@ -154,6 +154,31 @@ export default class SouthOPCUA
     }
   }
 
+  override async testItem(item: SouthConnectorItemDTO<SouthOPCUAItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
+    await this.connect();
+    let session;
+    try {
+      session = await this.connection.getSession();
+      let content: OIBusContent;
+      if (item.settings.mode === 'DA') {
+        content = await this.getDAValues([item], session);
+      } else {
+        const startTime = DateTime.now()
+          .minus(3600 * 1000)
+          .toUTC()
+          .toISO() as Instant;
+        const endTime = DateTime.now().toUTC().toISO() as Instant;
+        content = (await this.getHAValues([item], startTime, endTime, session, true)) as OIBusContent;
+      }
+      callback(content);
+    } catch (error: any) {
+      this.logger.error('OPCUA session not set. The connector cannot read values');
+      throw new Error(error.message);
+    } finally {
+      await this.disconnect();
+    }
+  }
+
   override filterHistoryItems(
     items: Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>>
   ): Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>> {
@@ -192,7 +217,16 @@ export default class SouthOPCUA
       this.logger.error('OPCUA session not set. The connector cannot read values');
       return startTime;
     }
+    return (await this.getHAValues(items, startTime, endTime, session)) as Instant;
+  }
 
+  async getHAValues(
+    items: Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>>,
+    startTime: Instant,
+    endTime: Instant,
+    session: ClientSession,
+    testingItem: boolean = false
+  ): Promise<Instant | OIBusContent> {
     try {
       let maxTimestamp = DateTime.fromISO(startTime).toMillis();
       const itemsByAggregates = new Map<Aggregate, Map<Resampling | undefined, Array<{ nodeId: string; itemName: string }>>>();
@@ -221,6 +255,7 @@ export default class SouthOPCUA
         }
       });
 
+      let dataByItems: Array<OIBusTimeValue> = [];
       for (const [aggregate, aggregatedItems] of itemsByAggregates.entries()) {
         for (const [resampling, resampledItems] of aggregatedItems.entries()) {
           const logs: Map<string, { description: string; affectedNodes: Array<string> }> = new Map();
@@ -232,7 +267,6 @@ export default class SouthOPCUA
             nodeId: item.nodeId
           }));
           this.logger.trace(`Reading ${resampledItems.length} items with aggregate ${aggregate} and resampling ${resampling}`);
-
           do {
             const request: HistoryReadRequest = this.getHistoryReadRequest(startTime, endTime, aggregate, resampling, nodesToRead);
             request.requestHeader.timeoutHint = this.connector.settings.readTimeout;
@@ -245,8 +279,6 @@ export default class SouthOPCUA
 
             if (response.results) {
               this.logger.debug(`Received a response of ${response.results.length} nodes`);
-              let dataByItems: Array<OIBusTimeValue> = [];
-
               nodesToRead = nodesToRead
                 .map((node, i) => {
                   const result = response.results[i];
@@ -295,9 +327,11 @@ export default class SouthOPCUA
                 .filter(node => !!node.continuationPoint);
 
               this.logger.debug(`Adding ${dataByItems.length} values between ${startTime} and ${endTime}`);
-              await this.addContent({ type: 'time-values', content: dataByItems.filter(parsedData => parsedData.data.value) });
-
-              this.logger.trace(`Continue read for ${nodesToRead.length} points`);
+              if (!testingItem) {
+                await this.addContent({ type: 'time-values', content: dataByItems.filter(parsedData => parsedData.data.value) });
+                dataByItems = [];
+                this.logger.trace(`Continue read for ${nodesToRead.length} points`);
+              }
             } else {
               this.logger.error('No result found in response');
               nodesToRead = [];
@@ -332,6 +366,9 @@ export default class SouthOPCUA
             }
           }
         }
+      }
+      if (testingItem) {
+        return { type: 'time-values', content: dataByItems.filter(parsedData => parsedData.data.value) };
       }
       return DateTime.fromMillis(maxTimestamp).toUTC().toISO() as Instant;
     } catch (error) {
@@ -504,27 +541,39 @@ export default class SouthOPCUA
       } else {
         this.logger.debug(`Read node ${itemsToRead[0].settings.nodeId}`);
       }
+      const content = await this.getDAValues(itemsToRead, session);
+      await this.addContent(content);
+    } catch (error) {
+      await this.disconnect();
+      if (!this.disconnecting && this.connector.enabled) {
+        await this.connect();
+      }
+      throw error;
+    }
+  }
 
+  async getDAValues(items: Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>>, session: ClientSession): Promise<OIBusContent> {
+    try {
       const startRequest = DateTime.now().toMillis();
-      const dataValues = await session.read(itemsToRead.map(item => ({ nodeId: item.settings.nodeId })));
+      const dataValues = await session.read(items.map(item => ({ nodeId: item.settings.nodeId })));
       const requestDuration = DateTime.now().toMillis() - startRequest;
-      this.logger.debug(`Found ${dataValues.length} results for ${itemsToRead.length} items (DA mode) in ${requestDuration} ms`);
-      if (dataValues.length !== itemsToRead.length) {
+      this.logger.debug(`Found ${dataValues.length} results for ${items.length} items (DA mode) in ${requestDuration} ms`);
+      if (dataValues.length !== items.length) {
         this.logger.error(
-          `Received ${dataValues.length} node results, requested ${itemsToRead.length} nodes. Request done in ${requestDuration} ms`
+          `Received ${dataValues.length} node results, requested ${items.length} nodes. Request done in ${requestDuration} ms`
         );
       }
 
       const timestamp = DateTime.now().toUTC().toISO()!;
       const values = dataValues.map((dataValue: DataValue, i) => ({
-        pointId: itemsToRead[i].name,
+        pointId: items[i].name,
         timestamp,
         data: {
-          value: this.parseOPCUAValue(itemsToRead[i].name, dataValue.value),
+          value: this.parseOPCUAValue(items[i].name, dataValue.value),
           quality: JSON.stringify(dataValue.statusCode)
         }
       }));
-      await this.addContent({ type: 'time-values', content: values.filter(parsedValue => parsedValue.data.value) });
+      return { type: 'time-values', content: values.filter(parsedValue => parsedValue.data.value) };
     } catch (error) {
       await this.disconnect();
       if (!this.disconnecting && this.connector.enabled) {
