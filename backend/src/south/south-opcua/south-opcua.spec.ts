@@ -30,6 +30,7 @@ import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_op
 import Stream from 'node:stream';
 import { createFolder } from '../../service/utils';
 import ConnectionService from '../../service/connection.service';
+import { ClientSession } from 'node-opcua-client/source/client_session';
 
 class CustomStream extends Stream {
   constructor() {
@@ -831,6 +832,102 @@ describe('SouthOPCUA', () => {
 
     await south.initOpcuaCertificateFolders('certFolder');
     expect(createFolder).toHaveBeenCalledTimes(10);
+  });
+
+  it('should test DA item', async () => {
+    const read = jest.fn();
+    const close = jest.fn();
+    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ read, close });
+
+    south.getDAValues = jest.fn().mockReturnValue({
+      type: 'time-values',
+      content: {
+        pointId: 'id',
+        timestamp: 'time',
+        data: {
+          value: 'value',
+          quality: 'quality'
+        }
+      }
+    });
+
+    const callback = jest.fn();
+    await south.testItem(items[3], callback);
+    expect(south.getDAValues).toHaveBeenCalled();
+  });
+
+  it('should test HA item', async () => {
+    const read = jest.fn();
+    const close = jest.fn();
+    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ read, close });
+
+    south.disconnect = jest.fn();
+    south.getHAValues = jest.fn().mockReturnValue([
+      {
+        pointId: 'id',
+        timestamp: 'time',
+        data: {
+          value: 'value'
+        }
+      }
+    ]);
+
+    const callback = jest.fn();
+    await south.testItem(items[1], callback);
+
+    expect(south.getHAValues).toHaveBeenCalled();
+    expect(south.disconnect).toHaveBeenCalled();
+  });
+
+  it('should test HA item and manage error', async () => {
+    const read = jest.fn();
+    const close = jest.fn();
+    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ read, close });
+
+    south.disconnect = jest.fn();
+    south.getHAValues = jest.fn().mockImplementationOnce(() => {
+      throw new Error('ha error');
+    });
+
+    const callback = jest.fn();
+    await expect(south.testItem(items[1], callback)).rejects.toThrow('ha error');
+
+    expect(south.getHAValues).toHaveBeenCalled();
+    expect(south.disconnect).toHaveBeenCalled();
+  });
+
+  it('getValueHA() in case of a test', async () => {
+    const performMessageTransaction = jest.fn().mockReturnValue({
+      responseHeader: {
+        serviceResult: StatusCodes.Good
+      },
+      results: [
+        {
+          historyData: {
+            dataValues: [
+              {
+                sourceTimestamp: new Date(nowDateString),
+                value: {
+                  value: '123',
+                  dataType: DataType.String
+                },
+                statusCode: {
+                  value: StatusCodes.Good,
+                  description: 'ok'
+                }
+              }
+            ]
+          },
+          statusCode: { value: StatusCodes.Good, description: 'ok' },
+          continuationPoint: false
+        }
+      ]
+    });
+    const session = { performMessageTransaction } as unknown as ClientSession;
+
+    await south.start();
+    await south.getHAValues([items[0]], nowDateString, nowDateString, session, true);
+    expect(performMessageTransaction).toHaveBeenCalled();
   });
 });
 

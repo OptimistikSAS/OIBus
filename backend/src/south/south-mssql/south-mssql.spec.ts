@@ -287,6 +287,34 @@ describe('SouthMSSQL with authentication', () => {
 
     expect(result).toEqual([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
   });
+
+  it('should test item', async () => {
+    const startTime = '2020-01-01T00:00:00.000Z';
+    south.queryData = jest.fn().mockReturnValueOnce([
+      { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
+      { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
+    ]);
+    (utils.formatInstant as jest.Mock).mockReturnValue(startTime);
+    (utils.convertDateTimeToInstant as jest.Mock).mockImplementation(instant => instant);
+
+    const callback = jest.fn();
+    await south.testItem(items[0], callback);
+    expect(south.queryData).toHaveBeenCalled();
+  });
+
+  it('should test item without datetimeFields', async () => {
+    const startTime = '2020-01-01T00:00:00.000Z';
+    south.queryData = jest.fn().mockReturnValueOnce([
+      { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
+      { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
+    ]);
+    (utils.formatInstant as jest.Mock).mockReturnValue(startTime);
+    (utils.convertDateTimeToInstant as jest.Mock).mockImplementation(instant => instant);
+
+    const callback = jest.fn();
+    await south.testItem(items[1], callback);
+    expect(south.queryData).toHaveBeenCalled();
+  });
 });
 
 describe('SouthMSSQL without authentication', () => {

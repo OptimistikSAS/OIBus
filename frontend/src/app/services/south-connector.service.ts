@@ -12,6 +12,7 @@ import {
 } from '../../../../shared/model/south-connector.model';
 import { Page } from '../../../../shared/model/types';
 import { DownloadService } from './download.service';
+import { OIBusContent } from '../../../../shared/model/engine.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on South connectors
@@ -196,6 +197,10 @@ export class SouthConnectorService {
    */
   deleteAllItems(southId: string) {
     return this.http.delete<void>(`/api/south/${southId}/items/all`);
+  }
+
+  testItems(southId: string, south: SouthConnectorCommandDTO | null, item: SouthConnectorItemDTO): Observable<OIBusContent> {
+    return this.http.put<OIBusContent>(`/api/south/${southId}/items/test-item`, { south: south, item: item });
   }
 
   /**
