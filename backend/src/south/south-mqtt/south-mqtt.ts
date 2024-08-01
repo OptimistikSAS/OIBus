@@ -73,6 +73,32 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     await this.testConnectionToBroker(options);
   }
 
+  override async testItem(item: SouthConnectorItemDTO<SouthMQTTItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
+    const options = await this.createConnectionOptions();
+    return new Promise((resolve, reject) => {
+      this.client = mqtt.connect(this.connector.settings.url, options);
+      this.client.on('connect', async () => {
+        this.logger.info(`Connected to ${this.connector.settings.url}`);
+        await this.subscribe([item]);
+      });
+      this.client.on('error', async error => {
+        await this.disconnect();
+        reject(`MQTT connection error ${error}`);
+      });
+      this.client.on('message', async (topic, message, packet) => {
+        this.logger.trace(`MQTT message for topic ${topic}: ${message}, dup:${packet.dup}`);
+        const messageTimestamp: Instant = DateTime.now().toUTC().toISO()!;
+        await this.unsubscribe([item]);
+        await this.disconnect();
+        callback({
+          type: 'time-values',
+          content: this.createContent(item, message, messageTimestamp)
+        });
+        resolve();
+      });
+    });
+  }
+
   async testConnectionToBroker(options: mqtt.IClientOptions): Promise<void> {
     return new Promise((resolve, reject) => {
       const client = mqtt.connect(this.connector.settings.url, options);
@@ -146,44 +172,46 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     try {
       const associatedItem = this.getItem(topic);
 
-      switch (associatedItem.settings.valueType) {
-        case 'number':
-          await this.addContent({
-            type: 'time-values',
-            content: [
-              {
-                pointId: associatedItem.name,
-                timestamp: messageTimestamp,
-                data: {
-                  value: message.toString()
-                }
-              }
-            ]
-          });
-          break;
-        case 'string':
-          await this.addContent({
-            type: 'time-values',
-            content: [
-              {
-                pointId: associatedItem.name,
-                timestamp: messageTimestamp,
-                data: {
-                  value: message.toString()
-                }
-              }
-            ]
-          });
-          break;
-        case 'json':
-          await this.addContent({
-            type: 'time-values',
-            content: this.formatValues(associatedItem, JSON.parse(message.toString()), messageTimestamp)
-          });
-          break;
-      }
+      const content = this.createContent(associatedItem, message, messageTimestamp);
+      await this.addContent({
+        type: 'time-values',
+        content
+      });
     } catch (error) {
       this.logger.error(`Could not handle message "${message.toString()}" for topic "${topic}". ${error}`);
+    }
+  }
+
+  private createContent(
+    associatedItem: SouthConnectorItemDTO<SouthMQTTItemSettings>,
+    message: Buffer,
+    messageTimestamp: Instant
+  ): OIBusTimeValue[] {
+    switch (associatedItem.settings.valueType) {
+      case 'number':
+        return [
+          {
+            pointId: associatedItem.name,
+            timestamp: messageTimestamp,
+            data: {
+              value: message.toString()
+            }
+          }
+        ];
+
+      case 'string':
+        return [
+          {
+            pointId: associatedItem.name,
+            timestamp: messageTimestamp,
+            data: {
+              value: message.toString()
+            }
+          }
+        ];
+
+      case 'json':
+        return this.formatValues(associatedItem, JSON.parse(message.toString()), messageTimestamp);
     }
   }
 

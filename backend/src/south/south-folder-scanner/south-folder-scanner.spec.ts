@@ -362,4 +362,26 @@ describe('SouthFolderScanner test connection', () => {
     await south.testConnection();
     expect(logger.error).not.toHaveBeenCalled();
   });
+
+  it('should test item', async () => {
+    const callback = jest.fn();
+    south.testConnection = jest.fn();
+    south.checkAge = jest.fn().mockReturnValueOnce(true).mockReturnValueOnce(false);
+    fs.stat = jest.fn();
+    fs.readdir = jest.fn().mockReturnValue(['file1.txt', 'file2.csv', 'file3.csv']);
+
+    await south.testItem(items[0], callback);
+    expect(fs.readdir).toHaveBeenCalledTimes(1);
+    expect(south.checkAge).toHaveBeenCalledTimes(2);
+    expect(callback).toHaveBeenCalledWith({
+      type: 'time-values',
+      content: [
+        {
+          pointId: items[0].name,
+          timestamp: nowDateString,
+          data: { value: 'file2.csv' }
+        }
+      ]
+    });
+  });
 });

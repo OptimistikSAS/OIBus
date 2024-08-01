@@ -1,4 +1,4 @@
-<div class="editor-container" (blur)="onTouched()" [id]="'oib-code-block-input-' + key" #editorContainer>
+<div [style]="{ height, width: '100%' }" (blur)="onTouched()" [id]="'oib-code-block-input-' + key" #editorContainer>
   @if (!codeEditorInstance) {
     <span class="fa fa-spinner fa-spin"></span>
   }
