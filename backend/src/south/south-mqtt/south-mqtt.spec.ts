@@ -616,6 +616,39 @@ describe('SouthMQTT with Basic Auth', () => {
       `Could not handle message "not a json object" for topic "${items[5].settings.topic}". SyntaxError: Unexpected token o in JSON at position 1`
     );
   });
+
+  it('should test item', async () => {
+    south.testConnection = jest.fn();
+    south.subscribe = jest.fn();
+    south.unsubscribe = jest.fn();
+    let callback = jest.fn();
+
+    south.formatValues = jest
+      .fn()
+      .mockReturnValue([{
+        pointId: 'pointId',
+        timestamp: '2024-06-10T14:00:00.000Z',
+        data: {
+          value: 1234
+        }
+      }])
+
+    // number 
+    await south.testItem(items[0], callback);
+    expect(south.subscribe).toHaveBeenCalled();
+    expect(south.testConnection).toHaveBeenCalled();
+    expect(south.unsubscribe).toHaveBeenCalled();
+    // string
+    await south.testItem(items[1], callback);
+    expect(south.subscribe).toHaveBeenCalled();
+    expect(south.testConnection).toHaveBeenCalled();
+    expect(south.unsubscribe).toHaveBeenCalled();
+    // json 
+    await south.testItem(items[3], callback);
+    expect(south.subscribe).toHaveBeenCalled();
+    expect(south.testConnection).toHaveBeenCalled();
+    expect(south.unsubscribe).toHaveBeenCalled();
+  });
 });
 
 describe('SouthMQTT with Cert', () => {

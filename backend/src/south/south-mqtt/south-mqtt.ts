@@ -73,6 +73,51 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     await this.testConnectionToBroker(options);
   }
 
+  override async testItem(item: SouthConnectorItemDTO<SouthMQTTItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
+    await this.testConnection();
+    await this.subscribe([item]);
+    const messageTimestamp: Instant = DateTime.now().toUTC().toISO()!;
+    const message = 'No content';
+
+    switch (item.settings.valueType) {
+      case 'number':
+        callback({
+          type: 'time-values',
+          content: [
+            {
+              pointId: item.name,
+              timestamp: messageTimestamp,
+              data: {
+                value: message
+              }
+            }
+          ]
+        });
+        break;
+      case 'string':
+        callback({
+          type: 'time-values',
+          content: [
+            {
+              pointId: item.name,
+              timestamp: messageTimestamp,
+              data: {
+                value: message
+              }
+            }
+          ]
+        });
+        break;
+      case 'json':
+        callback({
+          type: 'time-values',
+          content: this.formatValues(item, message, messageTimestamp)
+        });
+        break;
+    }
+    await this.unsubscribe([item]);
+  }
+
   async testConnectionToBroker(options: mqtt.IClientOptions): Promise<void> {
     return new Promise((resolve, reject) => {
       const client = mqtt.connect(this.connector.settings.url, options);

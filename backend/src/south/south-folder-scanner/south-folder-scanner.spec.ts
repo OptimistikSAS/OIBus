@@ -362,4 +362,22 @@ describe('SouthFolderScanner test connection', () => {
     await south.testConnection();
     expect(logger.error).not.toHaveBeenCalled();
   });
+
+  it('should test item', async () => {
+    let callback = jest.fn();
+    south.testConnection = jest.fn();
+    fs.stat = jest.fn();
+    fs.readdir = jest.fn().mockReturnValue([{
+      pointId: 'pointId',
+      timestamp: '2024-06-10T14:00:00.000Z',
+      data: {
+        value: 1234
+      }
+    }]);
+
+    await south.testItem(items[0], callback);
+    expect(south.testConnection()).toHaveBeenCalled;
+    expect(path.resolve).toHaveBeenCalled;
+    expect(fs.readdir).toHaveBeenCalled;
+  });
 });

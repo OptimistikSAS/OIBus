@@ -154,6 +154,37 @@ export default class SouthOPCUA
     }
   }
 
+  override async testItem(item: SouthConnectorItemDTO<SouthOPCUAItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
+    await this.connect();
+    await this.subscribe([item]);
+
+    let session;
+    try {
+      session = await this.connection.getSession();
+      const startTime = DateTime.now()
+        .minus(3600 * 1000)
+        .toUTC()
+        .toISO() as Instant;
+      const endTime = DateTime.now().toUTC().toISO() as Instant;
+
+      let values;
+      if (item.settings.mode === 'DA') {
+        values = await this.getValuesDA([item], session);
+      } else {
+        values = await this.getvalueHA([item], startTime, endTime, session, true) as OIBusTimeValue[];
+      }
+      callback({ type: 'time-values', content: values });
+    } catch (error: any) {
+      this.logger.error('OPCUA session not set. The connector cannot read values');
+      throw new Error(error.message);
+    } finally {
+      if (item.settings.mode === 'HA') {
+        await this.unsubscribe([item]);
+        await this.disconnect();
+      }
+    }
+  }
+
   override filterHistoryItems(
     items: Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>>
   ): Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>> {
@@ -192,7 +223,11 @@ export default class SouthOPCUA
       this.logger.error('OPCUA session not set. The connector cannot read values');
       return startTime;
     }
+    const values = await this.getvalueHA(items, startTime, endTime, session) as string;
+    return values;
+  }
 
+  async getvalueHA(items: Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>>, startTime: Instant, endTime: Instant, session: any, test? : boolean): Promise<Instant | OIBusTimeValue[]> { // test is here in case we are testing items 
     try {
       let maxTimestamp = DateTime.fromISO(startTime).toMillis();
       const itemsByAggregates = new Map<Aggregate, Map<Resampling | undefined, Array<{ nodeId: string; itemName: string }>>>();
@@ -295,9 +330,13 @@ export default class SouthOPCUA
                 .filter(node => !!node.continuationPoint);
 
               this.logger.debug(`Adding ${dataByItems.length} values between ${startTime} and ${endTime}`);
-              await this.addContent({ type: 'time-values', content: dataByItems.filter(parsedData => parsedData.data.value) });
-
-              this.logger.trace(`Continue read for ${nodesToRead.length} points`);
+              if (test) {
+                return dataByItems.filter(parsedData => parsedData.data.value);
+              } else {
+                await this.addContent({ type: 'time-values', content: dataByItems.filter(parsedData => parsedData.data.value) });
+                this.logger.trace(`Continue read for ${nodesToRead.length} points`);
+              }
+              
             } else {
               this.logger.error('No result found in response');
               nodesToRead = [];
@@ -482,15 +521,6 @@ export default class SouthOPCUA
   }
 
   async lastPointQuery(items: Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>>): Promise<void> {
-    // Try to get a session
-    let session;
-    try {
-      session = await this.connection.getSession();
-    } catch (error) {
-      this.logger.error('OPCUA session not set. The connector cannot read values');
-      return;
-    }
-
     const itemsToRead = items.filter(item => item.settings.mode === 'DA');
     if (itemsToRead.length === 0) {
       return;
@@ -505,26 +535,49 @@ export default class SouthOPCUA
         this.logger.debug(`Read node ${itemsToRead[0].settings.nodeId}`);
       }
 
+      // Try to get a session
+      let session;
+      try {
+        session = await this.connection.getSession();
+      } catch (error: any) {
+        this.logger.error('OPCUA session not set. The connector cannot read values');
+        throw new Error(error.message);
+      }
+
+      const result = await this.getValuesDA(itemsToRead, session);
+      
+      await this.addContent({ type: 'time-values', content: result! });
+    } catch (error) {
+      await this.disconnect();
+      if (!this.disconnecting && this.connector.enabled) {
+        await this.connect();
+      }
+      throw error;
+    }
+  }
+
+  async getValuesDA(items: Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>>, session: ClientSession | undefined) {
+    try {
       const startRequest = DateTime.now().toMillis();
-      const dataValues = await session.read(itemsToRead.map(item => ({ nodeId: item.settings.nodeId })));
+      const dataValues = await session!.read(items.map(item => ({ nodeId: item.settings.nodeId })));
       const requestDuration = DateTime.now().toMillis() - startRequest;
-      this.logger.debug(`Found ${dataValues.length} results for ${itemsToRead.length} items (DA mode) in ${requestDuration} ms`);
-      if (dataValues.length !== itemsToRead.length) {
+      this.logger.debug(`Found ${dataValues.length} results for ${items.length} items (DA mode) in ${requestDuration} ms`);
+      if (dataValues.length !== items.length) {
         this.logger.error(
-          `Received ${dataValues.length} node results, requested ${itemsToRead.length} nodes. Request done in ${requestDuration} ms`
+          `Received ${dataValues.length} node results, requested ${items.length} nodes. Request done in ${requestDuration} ms`
         );
       }
 
       const timestamp = DateTime.now().toUTC().toISO()!;
       const values = dataValues.map((dataValue: DataValue, i) => ({
-        pointId: itemsToRead[i].name,
+        pointId: items[i].name,
         timestamp,
         data: {
-          value: this.parseOPCUAValue(itemsToRead[i].name, dataValue.value),
+          value: this.parseOPCUAValue(items[i].name, dataValue.value),
           quality: JSON.stringify(dataValue.statusCode)
         }
       }));
-      await this.addContent({ type: 'time-values', content: values.filter(parsedValue => parsedValue.data.value) });
+      return values.filter(parsedValue => parsedValue.data.value);
     } catch (error) {
       await this.disconnect();
       if (!this.disconnecting && this.connector.enabled) {

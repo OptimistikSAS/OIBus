@@ -3,7 +3,7 @@ import mssql, { config } from 'mssql';
 
 import SouthConnector from '../south-connector';
 import manifest from './manifest';
-import { convertDateTimeToInstant, createFolder, formatInstant, logQuery, persistResults } from '../../service/utils';
+import { convertDateTimeToInstant, createFolder, formatInstant, logQuery, persistResults, generateCsvContent, generateFilenameForSerialization } from '../../service/utils';
 import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
@@ -104,6 +104,56 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
     if (table_count === 0) {
       throw new Error(`Database "${this.connector.settings.database}" has no tables`);
     }
+  }
+
+  // it has never been tested
+  override async testItem(item: SouthConnectorItemDTO<SouthMSSQLItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
+    await this.testConnection();
+
+    const startTime = DateTime.now()
+      .minus(3600 * 1000)
+      .toUTC()
+      .toISO() as Instant;
+    const endTime = DateTime.now().toUTC().toISO() as Instant;
+    const result: Array<any> = await this.queryData(item, startTime, endTime);
+
+    const formattedResults = result.map(entry => {
+      const formattedEntry: Record<string, any> = {};
+      Object.entries(entry).forEach(([key, value]) => {
+        const datetimeField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.fieldName === key) || null;
+        if (!datetimeField) {
+          formattedEntry[key] = value;
+        } else {
+          const entryDate = convertDateTimeToInstant(value, datetimeField);
+          formattedEntry[key] = formatInstant(entryDate, {
+            type: 'string',
+            format: item.settings.serialization.outputTimestampFormat,
+            timezone: item.settings.serialization.outputTimezone,
+            locale: 'en-En'
+          });
+        }
+      });
+      return formattedEntry;
+    });
+    
+    let oibusContent: OIBusContent;
+    switch (item.settings.serialization.type) {
+      case 'csv': {
+        const filePath = generateFilenameForSerialization(
+          this.tmpFolder,
+          item.settings.serialization.filename,
+          this.connector.name,
+          item.name
+        );
+        const content = generateCsvContent(formattedResults, item.settings.serialization.delimiter);
+        oibusContent = { type: 'raw', filePath, content };
+        break;
+      }
+      default: {
+        oibusContent = { type: 'time-values', content: formattedResults as Array<any> };
+      }
+    }
+    callback(oibusContent);
   }
 
   /**

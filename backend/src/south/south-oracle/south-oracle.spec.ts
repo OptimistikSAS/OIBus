@@ -349,6 +349,33 @@ describe('SouthOracle with authentication', () => {
     expect(error).toEqual(new Error('query error'));
     expect(oracleConnection.close).toHaveBeenCalledTimes(1);
   });
+
+  it('Should test item', async () => {
+    const startTime = '2020-01-01T00:00:00.000Z';
+    south.queryData = jest
+      .fn()
+      .mockReturnValueOnce([
+        { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
+        { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
+      ])
+      .mockReturnValueOnce([
+        { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
+        { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
+      ])
+      .mockReturnValue([]);
+    (utils.formatInstant as jest.Mock)
+      .mockReturnValueOnce('2020-02-01 00:00:00.000')
+      .mockReturnValueOnce('2020-03-01 00:00:00.000')
+      .mockReturnValue(startTime);
+    (utils.convertDateTimeToInstant as jest.Mock).mockImplementation(instant => instant);
+
+    south.testConnection = jest.fn();
+
+    let callback = jest.fn();
+    await south.testItem(items[0], callback);
+    expect(south.testConnection).toHaveBeenCalled();
+    expect(south.queryData).toHaveBeenCalled();
+  });
 });
 
 describe('SouthOracle without authentication but with thick mode', () => {

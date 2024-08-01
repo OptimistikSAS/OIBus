@@ -28,6 +28,7 @@ import { PipeProviderService } from '../../shared/form/pipe-provider.service';
 import { ImportSouthItemsModalComponent } from '../import-south-items-modal/import-south-items-modal.component';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
+import { TestSouthModalComponent } from '../test-south-modal/test-south-modal.component';
 
 const PAGE_SIZE = 20;
 
@@ -237,6 +238,13 @@ export class SouthItemsComponent implements OnInit {
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
     component.prepareForCopy(this.southManifest.items, this.scanModes, item);
     this.refreshAfterCreationModalClosed(modalRef);
+  }
+
+  testItem(item: SouthConnectorItemDTO) {
+    this.southConnectorService.testItems(this.southConnector!.id, this.southConnector, item).subscribe(result => {
+      const modalRef = this.modalService.open(TestSouthModalComponent, { size: 'xl' });
+      modalRef.componentInstance.prepare(result);
+    });
   }
 
   /**

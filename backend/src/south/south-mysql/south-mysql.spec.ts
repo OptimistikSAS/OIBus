@@ -314,6 +314,59 @@ describe('SouthMySQL with authentication', () => {
     expect(error).toEqual(new Error('query error'));
     expect(mysqlConnection.end).toHaveBeenCalledTimes(1);
   });
+
+  it('Should test item and sucess', async () => {
+    const mysqlConnection = {
+      end: jest.fn(),
+      execute: jest.fn().mockReturnValue([[{ timestamp: '2020-02-01T00:00:00.000Z', table_count: 2 }, { timestamp: '2020-03-01T00:00:00.000Z' }]]),
+      ping: jest.fn()
+    };
+    (mysql.createConnection as jest.Mock).mockReturnValue(mysqlConnection);
+
+    const startTime = '2020-01-01T00:00:00.000Z';
+    south.queryData = jest
+      .fn()
+      .mockReturnValueOnce([
+        { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
+        { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
+      ])
+      .mockReturnValueOnce([
+        { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
+        { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
+      ])
+      .mockReturnValue([]);
+    (utils.formatInstant as jest.Mock)
+      .mockReturnValueOnce('2020-02-01 00:00:00.000')
+      .mockReturnValueOnce('2020-03-01 00:00:00.000')
+      .mockReturnValue(startTime);
+    (utils.convertDateTimeToInstant as jest.Mock).mockImplementation(instant => instant);
+
+    south.testConnection = jest.fn();
+    south.createConnectionOptions = jest.fn();
+
+    let callback = jest.fn();
+    await south.testItem(items[0], callback);
+    expect(south.testConnection).toHaveBeenCalled();
+    expect(south.createConnectionOptions).toHaveBeenCalled();
+    expect(mysql.createConnection).toHaveBeenCalled();
+    expect(south.queryData).toHaveBeenCalled();
+  });
+
+  it('Should test item and throw connection error', async () => {
+    const mysqlConnection = {
+      end: jest.fn(),
+      execute: jest.fn().mockReturnValue([[{ timestamp: '2020-02-01T00:00:00.000Z', table_count: 2 }, { timestamp: '2020-03-01T00:00:00.000Z' }]]),
+      ping: jest.fn().mockRejectedValue(`Unable to ping`)
+    };
+    (mysql.createConnection as jest.Mock).mockReturnValue(mysqlConnection);
+
+    south.testConnection = jest.fn();
+    south.createConnectionOptions = jest.fn();
+
+    let callback = jest.fn();
+    await south.testItem(items[0], callback);
+    expect(mysqlConnection.end).toHaveBeenCalled();
+  });
 });
 
 describe('SouthMySQL without authentication', () => {

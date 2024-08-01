@@ -198,6 +198,10 @@ export class SouthConnectorService {
     return this.http.delete<void>(`/api/south/${southId}/items/all`);
   }
 
+  testItems(southId: string, south: SouthConnectorCommandDTO | null, item: SouthConnectorItemDTO) {
+    return this.http.put<void>(`/api/south/${southId}/items/test-item`, { south: south, item: item });
+  }
+
   /**
    * Export south items in CSV file
    */

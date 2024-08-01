@@ -344,6 +344,47 @@ describe('SouthODBC odbc driver with authentication', () => {
     expect(logger.error).toHaveBeenCalledWith(`Error from ODBC driver: error1`);
     expect(logger.error).toHaveBeenCalledWith(`Error from ODBC driver: error2`);
   });
+
+  it('Should test item with queryOdbcData', async () => {
+    south.queryOdbcData = jest.fn().mockReturnValue([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }] as any[]);
+    south.testConnection = jest.fn();
+
+    let callback = jest.fn();
+    await south.testItem(items[0], callback);
+    expect(south.testConnection).toHaveBeenCalled();
+    expect(south.queryOdbcData).toHaveBeenCalled();
+  });
+
+  it('QueryOdbcData in case of item test', async () => {
+    const startTime = '2020-01-01T00:00:00.000Z';
+    const endTime = '2022-01-01T00:00:00.000Z';
+
+    const odbcConnection = {
+      close: jest.fn(),
+      query: jest
+        .fn()
+        .mockReturnValueOnce([
+          { value: 1, timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2020-02-01T00:00:00.000Z' },
+          { value: 2, timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2020-03-01T00:00:00.000Z' }
+        ])
+        .mockReturnValueOnce([])
+    };
+    (formatInstant as jest.Mock).mockImplementation(value => value);
+
+    (odbc.connect as jest.Mock).mockReturnValue(odbcConnection);
+
+    await south.queryOdbcData(items[0], startTime, endTime, true);
+
+    expect(utils.logQuery).toHaveBeenCalledWith(items[0].settings.query, startTime, endTime, logger);
+
+    expect(odbc.connect).toHaveBeenCalledWith({
+      connectionString: `${configuration.settings.connectionString};` + 'PWD=password;',
+      connectionTimeout: configuration.settings.connectionTimeout
+    });
+    expect(logger.debug).toHaveBeenCalledWith(`Connecting with connection string ${configuration.settings.connectionString}PWD=<secret>;`);
+    expect(odbcConnection.query).toHaveBeenCalledWith(items[0].settings.query);
+    expect(odbcConnection.close).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('SouthODBC odbc driver without authentication', () => {
@@ -865,6 +906,36 @@ describe('SouthODBC odbc remote with authentication', () => {
 
     await south.queryRemoteAgentData(items[0], startTime, endTime);
     expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 500`);
+  });
+
+  it('Should test item with queryRemoteAgentData', async () => {
+    south.queryRemoteAgentData = jest.fn().mockReturnValue([[{ timestamp: '2020-02-01T00:00:00.000Z', table_count: 2 }, { timestamp: '2020-03-01T00:00:00.000Z' }]] as any[]);
+    south.testConnection = jest.fn();
+
+    let callback = jest.fn();
+    await south.testItem(items[0], callback);
+    expect(south.testConnection).toHaveBeenCalled();
+    expect(south.queryRemoteAgentData).toHaveBeenCalled();
+  });
+
+  it('QueryRemoteAgentData in case of item test', async () => {
+    const startTime = '2020-01-01T00:00:00.000Z';
+    const endTime = '2022-01-01T00:00:00.000Z';
+
+    (fetch as unknown as jest.Mock)
+      .mockReturnValue(
+        Promise.resolve({
+          status: 200,
+          json: () => ({
+            recordCount: 0,
+            content: [],
+            maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
+          })
+        })
+      );
+    
+    await south.queryRemoteAgentData(items[0], startTime, endTime, true);
+    expect(fetch).toHaveBeenCalled();
   });
 });
 

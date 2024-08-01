@@ -769,7 +769,7 @@ describe('SouthOPCUA', () => {
     });
   });
 
-  it('should not query items if session is not set', async () => {
+  it('should not query items if session is not set', async () => {    
     south.addContent = jest.fn();
     await south.lastPointQuery(items);
     expect(south.addContent).not.toHaveBeenCalled();
@@ -831,6 +831,82 @@ describe('SouthOPCUA', () => {
 
     await south.initOpcuaCertificateFolders('certFolder');
     expect(createFolder).toHaveBeenCalledTimes(10);
+  });
+
+  it('Test DA item', async () => {
+    south.connect = jest.fn().mockReturnValue(true);
+    south.subscribe = jest.fn().mockReturnValue(true);
+    south.getValuesDA = jest.fn().mockReturnValue({
+      pointId: 'id',
+      timestamp: 'time',
+      data: {
+          value: 'value',
+          quality: 'quality'
+      }
+    });
+
+    let callback = jest.fn();
+    await south.testItem(items[3], callback);
+
+    expect(south.connect).toHaveBeenCalled();
+    expect(south.subscribe).toHaveBeenCalled();
+    expect(south.getValuesDA).toHaveBeenCalled();
+  });
+
+  it('Test HA item', async () => {
+    south.connect = jest.fn().mockReturnValue(true);
+    south.subscribe = jest.fn().mockReturnValue(true);
+    south.unsubscribe = jest.fn().mockReturnValue(true);
+    south.disconnect = jest.fn().mockReturnValue(true);
+    south.getvalueHA = jest.fn().mockReturnValue([{
+      pointId: 'id',
+      timestamp: 'time',
+      data: {
+          value: 'value'
+      }
+    }]);
+
+    let callback = jest.fn();
+    await south.testItem(items[3], callback);
+
+    expect(south.connect).toHaveBeenCalled();
+    expect(south.subscribe).toHaveBeenCalled();
+    expect(south.getvalueHA).toHaveBeenCalled();
+    expect(south.unsubscribe).toHaveBeenCalled();
+    expect(south.disconnect).toHaveBeenCalled();
+  });
+
+  it('getValueHA() in case of a test', async () => {
+    const session = {
+      performMessageTransaction: jest.fn().mockReturnValue({
+        responseHeader: {
+          serviceResult: StatusCodes.Good
+        },
+        results: [{
+          historyData: {
+            dataValues: [
+              {
+                sourceTimestamp: new Date(nowDateString),
+                value: {
+                  value: '123',
+                  dataType: DataType.String
+                },
+                statusCode: {
+                  value: StatusCodes.Good,
+                  description: 'ok'
+                }
+              }
+            ]
+          },
+          statusCode: { value: StatusCodes.Good, description: 'ok' },
+          continuationPoint: false
+        }]
+      })
+    };
+
+    await south.start();
+    await south.getvalueHA([items[0]], nowDateString, nowDateString, session, true);
+    expect(session.performMessageTransaction).toHaveBeenCalled();
   });
 });
 

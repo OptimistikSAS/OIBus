@@ -1,0 +1,16 @@
+<div class="modal-header">
+  <h4 class="modal-title">Test result</h4>
+</div>
+<div class="modal-body">
+  <p style="white-space: pre-line">{{ this.result }}</p>
+  @if (this.resultContent === 'No content') {
+    <p style="white-space: pre-line">{{ this.resultContent }}</p>
+  } @else {
+    <oib-code-block #monacoEditor></oib-code-block>
+  }
+</div>
+<div class="modal-footer">
+  <div class="btn-group">
+    <button type="button" class="btn btn-cancel" (click)="close()" id="close-button">Close</button>
+  </div>
+</div>
