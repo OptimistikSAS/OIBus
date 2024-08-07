@@ -6,9 +6,15 @@ import pino from 'pino';
 import fetch from 'node-fetch';
 import PinoLogger from '../../tests/__mocks__/logger.mock';
 import { getNetworkSettingsFromRegistration, getOIBusInfo } from '../utils';
-import { RegistrationSettingsDTO } from '../../../../shared/model/engine.model';
+import { EngineSettingsDTO, RegistrationSettingsDTO } from '../../../../shared/model/engine.model';
 import OIAnalyticsMessageService from './message.service';
-import { InfoMessageContent, OIAnalyticsMessageDTO } from '../../../../shared/model/oianalytics-message.model';
+import {
+  OIAnalyticsMessageDTO,
+  OIAnalyticsMessageEngineConfigDTO,
+  OIAnalyticsMessageFullConfigDTO
+} from '../../../../shared/model/oianalytics-message.model';
+import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
+import { SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 
 jest.mock('node:fs/promises');
 jest.mock('node-fetch');
@@ -30,7 +36,6 @@ const existingMessage: OIAnalyticsMessageDTO = {
   type: 'INFO',
   content: {
     version: 'version',
-    oibusName: 'oibusName',
     oibusId: 'oibusId',
     dataDirectory: 'dataDirectory',
     binaryDirectory: 'binaryDirectory',
@@ -39,7 +44,7 @@ const existingMessage: OIAnalyticsMessageDTO = {
     operatingSystem: 'operatingSystem',
     architecture: 'architecture',
     platform: 'platform'
-  } as InfoMessageContent
+  }
 };
 
 let service: OIAnalyticsMessageService;
@@ -217,17 +222,6 @@ describe('OIAnalytics message service without message', () => {
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 
-  it('should not send message if message type is not recognized', async () => {
-    service.removeMessageFromQueue = jest.fn();
-    await service.sendMessage({ id: 'badId', type: 'BAD TYPE' } as any);
-    expect(logger.debug).toHaveBeenCalledWith(
-      `Error while sending message badId (created ${existingMessage.creationDate}) of type ` +
-        `BAD TYPE on http://localhost:4200/api/oianalytics/oibus/message. Error: ` +
-        `Unrecognized type BAD TYPE. Message badId removed from queue`
-    );
-    expect(service.removeMessageFromQueue).toHaveBeenCalledWith('badId');
-  });
-
   it('should send message and manage 404 error', async () => {
     (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('invalid', { status: 404, statusText: 'Not Found' })));
 
@@ -278,5 +272,132 @@ describe('OIAnalytics message service without message', () => {
 
   it('should change logger', () => {
     service.setLogger(anotherLogger);
+  });
+
+  it('should transform message DTO into message', () => {
+    const oibusInfo = { version: 'v3.2.0', platform: 'linux', architecture: 'x64', operatingSystem: 'linux' };
+
+    (getOIBusInfo as jest.Mock).mockReturnValueOnce(oibusInfo);
+    const engineSettings: EngineSettingsDTO = {
+      id: 'engineId',
+      name: 'OIBus name',
+      port: 2223,
+      proxyPort: 9000,
+      proxyEnabled: true
+    } as EngineSettingsDTO;
+    const messageEngineConfig: OIAnalyticsMessageEngineConfigDTO = {
+      id: 'id',
+      status: 'PENDING',
+      type: 'ENGINE_CONFIG',
+      content: engineSettings
+    };
+    const messageEngineConfigDTO = service.messageToCommandDTO(messageEngineConfig);
+    expect(messageEngineConfigDTO).toEqual({
+      type: 'ENGINE_CONFIG',
+      name: engineSettings.name,
+      port: engineSettings.port,
+      proxyEnabled: engineSettings.proxyEnabled,
+      proxyPort: engineSettings.proxyPort,
+      logParameters: engineSettings.logParameters
+    });
+
+    const messageFullConfig: OIAnalyticsMessageFullConfigDTO = {
+      id: 'id',
+      status: 'PENDING',
+      type: 'FULL_CONFIG'
+    };
+    (repositoryService.engineRepository.getEngineSettings as jest.Mock).mockReturnValue(engineSettings);
+    (repositoryService.scanModeRepository.getScanModes as jest.Mock).mockReturnValue([
+      {
+        id: 'scanModeId',
+        name: 'scanMode',
+        description: '',
+        cron: '* * * * *'
+      }
+    ]);
+    (repositoryService.ipFilterRepository.getIpFilters as jest.Mock).mockReturnValue([
+      {
+        id: 'ipFilterId',
+        address: '192.168.0.1',
+        description: ''
+      }
+    ]);
+    (repositoryService.northConnectorRepository.getNorthConnectors as jest.Mock).mockReturnValue([
+      {
+        id: 'northId',
+        settings: {},
+        caching: { scanModeId: 'scanModeId', retryInterval: 5000, retryCount: 3, maxSize: 0 }
+      } as NorthConnectorDTO
+    ]);
+    (repositoryService.subscriptionRepository.getNorthSubscriptions as jest.Mock).mockReturnValue([]);
+    (repositoryService.southConnectorRepository.getSouthConnectors as jest.Mock).mockReturnValue([
+      { id: 'southId', settings: {} } as SouthConnectorDTO
+    ]);
+    (repositoryService.southItemRepository.getSouthItems as jest.Mock).mockReturnValue([
+      {
+        id: 'itemId',
+        name: 'item',
+        enabled: true,
+        settings: {},
+        scanModeId: 'scanModeId'
+      }
+    ]);
+    const messageFullConfigDTO = service.messageToCommandDTO(messageFullConfig);
+    expect(messageFullConfigDTO).toEqual({
+      type: 'FULL_CONFIG',
+      config: {
+        engine: {
+          oIBusInternalId: engineSettings.id,
+          name: engineSettings.name,
+          port: engineSettings.port,
+          softwareVersion: oibusInfo.version,
+          architecture: oibusInfo.architecture,
+          operatingSystem: oibusInfo.operatingSystem,
+          proxyEnabled: engineSettings.proxyEnabled,
+          proxyPort: engineSettings.proxyPort
+        },
+        scanModes: [
+          {
+            oIBusInternalId: 'scanModeId',
+            name: 'scanMode',
+            description: '',
+            cron: '* * * * *'
+          }
+        ],
+        ipFilters: [
+          {
+            oIBusInternalId: 'ipFilterId',
+            address: '192.168.0.1',
+            description: ''
+          }
+        ],
+        northConnectors: [
+          {
+            oIBusInternalId: 'northId',
+            settings: '{}',
+            scanModeId: 'scanModeId',
+            retryInterval: 5000,
+            retryCount: 3,
+            maxSize: 0,
+            southSubscriptionIds: []
+          }
+        ],
+        southConnectors: [
+          {
+            oIBusInternalId: 'southId',
+            settings: '{}',
+            southItems: [
+              {
+                oIBusInternalId: 'itemId',
+                name: 'item',
+                enabled: true,
+                settings: '{}',
+                scanModeId: 'scanModeId'
+              }
+            ]
+          }
+        ]
+      }
+    });
   });
 });

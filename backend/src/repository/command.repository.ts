@@ -1,11 +1,33 @@
 import { Database } from 'better-sqlite3';
-import { CommandSearchParam, OIBusCommand, OIBusCommandDTO } from '../../../shared/model/command.model';
+import {
+  CommandSearchParam,
+  OIBusCommand,
+  OIBusCommandDTO,
+  OIBusCommandStatus,
+  OIBusCommandType,
+  OIBusFullConfigDTO
+} from '../../../shared/model/command.model';
 import { Instant, Page } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 
 export const COMMANDS_TABLE = 'commands';
 
 const PAGE_SIZE = 50;
+
+export interface OIBusCommandResult {
+  id: string;
+  create_at: Instant;
+  updated_at: Instant;
+  type: OIBusCommandType;
+  status: OIBusCommandStatus;
+  ack: number;
+  retrieved_date: Instant;
+  completed_date: Instant;
+  result: string;
+  upgrade_version?: string;
+  upgrade_asset_id?: string;
+  full_config?: string;
+}
 
 /**
  * Repository used for managing commands within OIBus
@@ -14,10 +36,11 @@ export default class CommandRepository {
   constructor(private readonly database: Database) {}
 
   findAll(): Array<OIBusCommandDTO> {
-    const query =
-      `SELECT id, type, status, ack, retrieved_date as retrievedDate, completed_date as completedDate, ` +
-      `result, upgrade_version as version, upgrade_asset_id as assetId FROM ${COMMANDS_TABLE};`;
-    return this.database.prepare(query).all() as Array<OIBusCommandDTO>;
+    const query = `SELECT * FROM ${COMMANDS_TABLE};`;
+    return this.database
+      .prepare(query)
+      .all()
+      .map(command => this.toOIBusCommandDTO(command as OIBusCommandResult));
   }
 
   /**
@@ -35,10 +58,11 @@ export default class CommandRepository {
       queryParams.push(...searchParams.status);
     }
 
-    const query =
-      `SELECT id, type, status, ack, retrieved_date as retrievedDate, completed_date as completedDate, result, upgrade_version as version, ` +
-      `upgrade_asset_id as assetId FROM ${COMMANDS_TABLE} ${whereClause} ORDER BY created_at DESC LIMIT ${PAGE_SIZE} OFFSET ?;`;
-    const results: Array<OIBusCommandDTO> = this.database.prepare(query).all(...queryParams, PAGE_SIZE * page) as Array<OIBusCommandDTO>;
+    const query = `SELECT * FROM ${COMMANDS_TABLE} ${whereClause} ORDER BY created_at DESC LIMIT ${PAGE_SIZE} OFFSET ?;`;
+    const results: Array<OIBusCommandDTO> = this.database
+      .prepare(query)
+      .all(...queryParams, PAGE_SIZE * page)
+      .map(command => this.toOIBusCommandDTO(command as OIBusCommandResult));
     const totalElements = (
       this.database.prepare(`SELECT COUNT(*) as count FROM ${COMMANDS_TABLE} ${whereClause}`).get(...queryParams) as { count: number }
     ).count;
@@ -72,31 +96,41 @@ export default class CommandRepository {
       queryParams.push(+searchParams.ack);
     }
 
-    const query =
-      `SELECT id, type, status, ack, retrieved_date as retrievedDate, completed_date as completedDate, result, ` +
-      `upgrade_version as version, upgrade_asset_id as assetId FROM ${COMMANDS_TABLE} ${whereClause} ORDER BY created_at DESC;`;
-    return this.database.prepare(query).all(...queryParams) as Array<OIBusCommandDTO>;
+    const query = `SELECT * FROM ${COMMANDS_TABLE} ${whereClause} ORDER BY created_at DESC;`;
+    return this.database
+      .prepare(query)
+      .all(...queryParams)
+      .map(command => this.toOIBusCommandDTO(command as OIBusCommandResult));
   }
 
   findById(id: string): OIBusCommandDTO | null {
-    const query =
-      `SELECT id, type, status, ack, retrieved_date as retrievedDate, completed_date as completedDate, result, ` +
-      `upgrade_version as version, upgrade_asset_id as assetId FROM ${COMMANDS_TABLE} WHERE id = ?;`;
-    return this.database.prepare(query).get(id) as OIBusCommandDTO | null;
+    const query = `SELECT * FROM ${COMMANDS_TABLE} WHERE id = ?;`;
+    const result = this.database.prepare(query).get(id);
+    return result ? this.toOIBusCommandDTO(result as OIBusCommandResult) : null;
   }
 
   create(id: string, command: OIBusCommand): OIBusCommandDTO {
-    const insertQuery =
-      `INSERT INTO ${COMMANDS_TABLE} (id, retrieved_date, type, status, ack, upgrade_version, ` +
-      `upgrade_asset_id) VALUES (?, ?, ?, ?, ?, ?, ?);`;
-    const result = this.database
-      .prepare(insertQuery)
-      .run(id, DateTime.now().toUTC().toISO(), command.type, 'RETRIEVED', 0, command.version, command.assetId);
-
-    const query =
-      `SELECT id, type, status, ack, retrieved_date as retrievedDate, completed_date as completedDate, result, ` +
-      `upgrade_version as version, upgrade_asset_id as assetId FROM ${COMMANDS_TABLE} WHERE ROWID = ?;`;
-    return this.database.prepare(query).get(result.lastInsertRowid) as OIBusCommandDTO;
+    // id, retrieved_date, type, status, ack
+    const queryParams = [id, DateTime.now().toUTC().toISO(), command.type, 'RETRIEVED', 0];
+    let insertQuery = `INSERT INTO ${COMMANDS_TABLE} `;
+    switch (command.type) {
+      case 'FULL_CONFIG':
+        queryParams.push(JSON.stringify(command.fullConfig));
+        insertQuery += `(id, retrieved_date, type, status, ack, full_config) VALUES (?, ?, ?, ?, ?, ?);`;
+        break;
+      case 'RESTART':
+        insertQuery += `(id, retrieved_date, type, status, ack) VALUES (?, ?, ?, ?, ?);`;
+        break;
+      case 'UPGRADE':
+        queryParams.push(command.version);
+        queryParams.push(command.assetId);
+        insertQuery += `(id, retrieved_date, type, status, ack, upgrade_version, upgrade_asset_id) VALUES (?, ?, ?, ?, ?, ?, ?);`;
+        break;
+    }
+    const result = this.database.prepare(insertQuery).run(...queryParams);
+    const query = `SELECT * FROM ${COMMANDS_TABLE} WHERE ROWID = ?;`;
+    const createdCommand: OIBusCommandResult = this.database.prepare(query).get(result.lastInsertRowid) as OIBusCommandResult;
+    return this.toOIBusCommandDTO(createdCommand);
   }
 
   cancel(id: string): void {
@@ -127,5 +161,46 @@ export default class CommandRepository {
   delete(id: string): void {
     const query = `DELETE FROM ${COMMANDS_TABLE} WHERE id = ?;`;
     this.database.prepare(query).run(id);
+  }
+
+  private toOIBusCommandDTO(command: OIBusCommandResult): OIBusCommandDTO {
+    switch (command.type) {
+      case 'UPGRADE':
+        return {
+          id: command.id,
+          type: 'UPGRADE',
+          creationDate: command.create_at,
+          status: command.status,
+          ack: Boolean(command.ack),
+          retrievedDate: command.retrieved_date,
+          completedDate: command.completed_date,
+          result: command.result,
+          version: command.upgrade_version!,
+          assetId: command.upgrade_asset_id!
+        };
+      case 'RESTART':
+        return {
+          id: command.id,
+          type: 'RESTART',
+          creationDate: command.create_at,
+          status: command.status,
+          ack: Boolean(command.ack),
+          retrievedDate: command.retrieved_date,
+          completedDate: command.completed_date,
+          result: command.result
+        };
+      case 'FULL_CONFIG':
+        return {
+          id: command.id,
+          type: 'FULL_CONFIG',
+          creationDate: command.create_at,
+          status: command.status,
+          ack: Boolean(command.ack),
+          retrievedDate: command.retrieved_date,
+          completedDate: command.completed_date,
+          result: command.result,
+          fullConfig: JSON.parse(command.full_config!) as OIBusFullConfigDTO
+        };
+    }
   }
 }

@@ -4,7 +4,7 @@ import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock
 import EncryptionService from '../encryption.service';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/logger.mock';
-import { OIBusCommandDTO } from '../../../../shared/model/command.model';
+import { OIBusCommandDTO, OIBusEngineConfigCommandDTO, OIBusRestartCommandDTO } from '../../../../shared/model/command.model';
 import CommandService from './command.service';
 import { downloadFile, getNetworkSettingsFromRegistration, getOIBusInfo, unzip } from '../utils';
 import { RegistrationSettingsDTO } from '../../../../shared/model/engine.model';
@@ -148,6 +148,7 @@ describe('Command service with running command', () => {
 describe('Command service without command', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
     (repositoryService.commandRepository.searchCommandsList as jest.Mock).mockReturnValue([]);
     (repositoryService.engineRepository.getEngineSettings as jest.Mock).mockReturnValue({ version: '3.2.0' });
@@ -225,6 +226,28 @@ describe('Command service without command', () => {
     expect(downloadFile).toHaveBeenCalledWith(connectionSettings, expectedEndpoint, expectedFilename, 600_000);
     expect(unzip).toHaveBeenCalledWith(expectedFilename, path.resolve('binaryFolder', '..', 'update'));
     expect(fs.unlink).toHaveBeenCalledWith(expectedFilename);
+  });
+
+  it('should execute RESTART command', async () => {
+    const restartCommand: OIBusRestartCommandDTO = {
+      type: 'RESTART'
+    } as OIBusRestartCommandDTO;
+    await service.executeCommand(restartCommand);
+
+    expect(logger.info).toHaveBeenCalledWith(`Restart OIBus...`);
+  });
+
+  it('should execute FULL_CONFIG command', async () => {
+    const fullConfigCommand: OIBusEngineConfigCommandDTO = {
+      id: 'id',
+      type: 'FULL_CONFIG'
+    } as OIBusEngineConfigCommandDTO;
+    await service.executeCommand(fullConfigCommand);
+    expect(repositoryService.commandRepository.markAsCompleted).toHaveBeenCalledWith(
+      fullConfigCommand.id,
+      nowDateString,
+      'OIBus config updated'
+    );
   });
 
   it('should change logger', () => {

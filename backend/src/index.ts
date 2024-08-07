@@ -148,6 +148,7 @@ const LOG_DB_NAME = 'logs.db';
     historyQueryEngine,
     oibusService,
     oianalyticsMessageService,
+    commandService,
     proxyServer
   );
 

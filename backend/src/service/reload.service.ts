@@ -23,6 +23,8 @@ import ProxyServer from '../web-server/proxy-server';
 import OIBusService from './oibus.service';
 import { getOIBusInfo } from './utils';
 import OIAnalyticsMessageService from './oia/message.service';
+import { OIAnalyticsMessageInfoCommandDTO } from '../../../shared/model/oianalytics-message.model';
+import CommandService from './oia/command.service';
 
 export default class ReloadService {
   private webServerChangeLoggerCallback: (logger: pino.Logger) => void = () => {};
@@ -39,6 +41,7 @@ export default class ReloadService {
     private readonly _historyEngine: HistoryQueryEngine,
     private readonly _oibusService: OIBusService,
     private readonly _oianalyticsMessageService: OIAnalyticsMessageService,
+    private readonly _oianalyticsCommandService: CommandService,
     private readonly _proxyServer: ProxyServer
   ) {}
 
@@ -82,6 +85,14 @@ export default class ReloadService {
     return this._proxyServer;
   }
 
+  get oianalyticsMessageService(): OIAnalyticsMessageService {
+    return this._oianalyticsMessageService;
+  }
+
+  get oianalyticsCommandService(): CommandService {
+    return this._oianalyticsCommandService;
+  }
+
   setWebServerChangeLogger(callback: (logger: pino.Logger) => void): void {
     this.webServerChangeLoggerCallback = callback;
   }
@@ -99,8 +110,11 @@ export default class ReloadService {
       await this.restartLogger(newSettings);
       const registration = this.repositoryService.registrationRepository.getRegistrationSettings()!;
       if (oldSettings?.name !== newSettings.name && registration.status !== 'NOT_REGISTERED') {
-        const info = getOIBusInfo(newSettings);
-        const createdMessage = this.repositoryService.oianalyticsMessageRepository.createOIAnalyticsMessages('INFO', info);
+        const message: OIAnalyticsMessageInfoCommandDTO = {
+          type: 'INFO',
+          ...getOIBusInfo(newSettings)
+        };
+        const createdMessage = this.repositoryService.oianalyticsMessageRepository.createOIAnalyticsMessages(message);
         this._oianalyticsMessageService.addMessageToQueue(createdMessage);
       }
     }
@@ -123,6 +137,8 @@ export default class ReloadService {
     this.oibusService.setLogger(this.loggerService.createChildLogger('internal'));
     this.engineMetricsService.setLogger(this.loggerService.createChildLogger('internal'));
     this.proxyServer.setLogger(this.loggerService.createChildLogger('internal'));
+    this.oianalyticsMessageService.setLogger(this.loggerService.createChildLogger('internal'));
+    this.oianalyticsCommandService.setLogger(this.loggerService.createChildLogger('internal'));
   }
 
   async onCreateSouth(command: SouthConnectorCommandDTO): Promise<SouthConnectorDTO> {

@@ -3,7 +3,12 @@ import { delay, downloadFile, getNetworkSettingsFromRegistration, getOIBusInfo, 
 import RepositoryService from '../repository.service';
 import EncryptionService from '../encryption.service';
 import pino from 'pino';
-import { OIBusCommandDTO } from '../../../../shared/model/command.model';
+import {
+  OIBusCommandDTO,
+  OIBusEngineConfigCommandDTO,
+  OIBusRestartCommandDTO,
+  OIBusUpgradeCommandDTO
+} from '../../../../shared/model/command.model';
 import { EventEmitter } from 'node:events';
 import DeferredPromise from '../deferred-promise';
 import { DateTime } from 'luxon';
@@ -11,6 +16,7 @@ import { RegistrationSettingsDTO } from '../../../../shared/model/engine.model';
 import path from 'node:path';
 import { version } from '../../../package.json';
 import OIAnalyticsMessageService from './message.service';
+import { OIAnalyticsMessageInfoCommandDTO } from '../../../../shared/model/oianalytics-message.model';
 
 const DOWNLOAD_TIMEOUT = 600_000;
 const STOP_TIMEOUT = 30_000;
@@ -40,8 +46,12 @@ export default class CommandService {
           `OIBus updated to version ${version}`
         );
         engineSettings.version = version;
-        const info = getOIBusInfo(engineSettings);
-        const createdMessage = this.repositoryService.oianalyticsMessageRepository.createOIAnalyticsMessages('INFO', info);
+
+        const message: OIAnalyticsMessageInfoCommandDTO = {
+          type: 'INFO',
+          ...getOIBusInfo(engineSettings)
+        };
+        const createdMessage = this.repositoryService.oianalyticsMessageRepository.createOIAnalyticsMessages(message);
         this.oianalyticsMessageService.addMessageToQueue(createdMessage);
       } else {
         this.repositoryService.commandRepository.markAsErrored(
@@ -115,6 +125,41 @@ export default class CommandService {
   }
 
   async executeCommand(command: OIBusCommandDTO): Promise<void> {
+    switch (command.type) {
+      case 'UPGRADE':
+        return await this.executeUpgradeCommand(command);
+      case 'RESTART':
+        return await this.executeRestartCommand(command);
+      case 'FULL_CONFIG':
+        return await this.executeFullConfigCommand(command);
+    }
+  }
+
+  /**
+   * Stop services and timer
+   */
+  async stop(): Promise<void> {
+    this.logger.debug(`Stopping command service...`);
+
+    this.triggerRun.removeAllListeners();
+    if (this.runProgress$) {
+      if (!this.stopTimeout) {
+        this.stopTimeout = setTimeout(() => {
+          this.runProgress$!.resolve();
+        }, STOP_TIMEOUT);
+      }
+      this.logger.debug('Waiting for command to finish');
+      await this.runProgress$.promise;
+      clearTimeout(this.stopTimeout);
+    }
+    this.logger.debug(`Command service stopped`);
+  }
+
+  setLogger(logger: pino.Logger) {
+    this.logger = logger;
+  }
+
+  private async executeUpgradeCommand(command: OIBusUpgradeCommandDTO) {
     const runStart = DateTime.now();
     const engineSettings = this.repositoryService.engineRepository.getEngineSettings()!;
     const oibusInfo = getOIBusInfo(engineSettings);
@@ -143,27 +188,16 @@ export default class CommandService {
     process.exit();
   }
 
-  /**
-   * Stop services and timer
-   */
-  async stop(): Promise<void> {
-    this.logger.debug(`Stopping command service...`);
-
-    this.triggerRun.removeAllListeners();
-    if (this.runProgress$) {
-      if (!this.stopTimeout) {
-        this.stopTimeout = setTimeout(() => {
-          this.runProgress$!.resolve();
-        }, STOP_TIMEOUT);
-      }
-      this.logger.debug('Waiting for command to finish');
-      await this.runProgress$.promise;
-      clearTimeout(this.stopTimeout);
-    }
-    this.logger.debug(`Command service stopped`);
+  private async executeRestartCommand(command: OIBusRestartCommandDTO) {
+    this.logger.info(`Restart OIBus...`);
+    await delay(1500);
+    this.repositoryService.commandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), `OIBus restarted`);
+    process.exit();
   }
 
-  setLogger(logger: pino.Logger) {
-    this.logger = logger;
+  private async executeFullConfigCommand(command: OIBusEngineConfigCommandDTO) {
+    // TODO: implement the update of OIBus config from OIAnalytics
+    this.repositoryService.commandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), `OIBus config updated`);
+    this.removeCommandFromQueue(command.id);
   }
 }

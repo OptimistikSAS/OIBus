@@ -35,6 +35,8 @@ import OibusServiceMock from '../tests/__mocks__/oibus-service.mock';
 import { getOIBusInfo } from './utils';
 import OIAnalyticsMessageService from './oia/message.service';
 import MessageServiceMock from '../tests/__mocks__/message-service.mock';
+import CommandService from './oia/command.service';
+import CommandServiceMock from '../tests/__mocks__/command-service.mock';
 
 jest.mock('./encryption.service');
 jest.mock('./logger/logger.service');
@@ -46,6 +48,7 @@ const historyQueryEngine: HistoryQueryEngine = new HistoryQueryEngineMock();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const proxyServer: ProxyServer = new ProxyServerMock();
 const oianalyticsMessageService: OIAnalyticsMessageService = new MessageServiceMock();
+const oianalyticsCommandService: CommandService = new CommandServiceMock();
 const repositoryService: RepositoryService = new RepositoryServiceMock('', '');
 const engineMetricsService: EngineMetricsService = new EngineMetricsServiceMock();
 const homeMetrics: HomeMetricsService = new HomeMetricsServiceMock();
@@ -72,6 +75,7 @@ describe('reload service', () => {
       historyQueryEngine,
       oibusService,
       oianalyticsMessageService,
+      oianalyticsCommandService,
       proxyServer
     );
   });
@@ -85,6 +89,8 @@ describe('reload service', () => {
     expect(service.southService).toBeDefined();
     expect(service.oibusEngine).toBeDefined();
     expect(service.oibusService).toBeDefined();
+    expect(service.oianalyticsMessageService).toBeDefined();
+    expect(service.oianalyticsCommandService).toBeDefined();
     expect(service.proxyServer).toBeDefined();
   });
 
