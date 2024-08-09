@@ -116,14 +116,6 @@ class HistoryQueryItemsComponentTester extends ComponentTester<TestComponent> {
     return this.elements('tbody tr.south-item');
   }
 
-  get importButton() {
-    return this.button('#import-button')!;
-  }
-
-  get fileInput() {
-    return this.input('#file')!;
-  }
-
   get spinner() {
     return this.element('#import-button .spinner-border')!;
   }
@@ -211,26 +203,5 @@ describe('HistoryQueryItemsComponent', () => {
     expect(confirmationService.confirm).toHaveBeenCalledTimes(1);
     expect(historyQueryService.deleteAllItems).toHaveBeenCalledTimes(1);
     expect(notificationService.success).toHaveBeenCalledWith('history-query.items.all-deleted');
-  });
-
-  it('should export items', () => {
-    confirmationService.confirm.and.returnValue(of(undefined));
-
-    tester.exportButton.click();
-    expect(historyQueryService.exportItems).toHaveBeenCalledWith('historyId', 'History query');
-  });
-
-  it('should select a file', () => {
-    spyOn(tester.fileInput.nativeElement, 'click');
-    tester.importButton.click();
-    expect(tester.fileInput.nativeElement.click).toHaveBeenCalled();
-  });
-
-  it('should trigger the upload', () => {
-    historyQueryService.checkImportItems.and.returnValue(of({ items: [], errors: [] }));
-
-    const event = new Event('change');
-    tester.fileInput.dispatchEvent(event);
-    expect(historyQueryService.checkImportItems).toHaveBeenCalled();
   });
 });

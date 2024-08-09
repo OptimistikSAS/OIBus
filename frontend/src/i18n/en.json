@@ -16,6 +16,7 @@
     "not-found": "It looks like this entity does not exist.\n{{ url }}",
     "confirmation-modal-title": "Confirmation",
     "date-hour-format": "yyyy-MM-dd HH:mm",
+    "delimiter": "Delimiter",
     "validation-errors": {
       "this-field": "This field",
       "required": "{{ label }} is required",

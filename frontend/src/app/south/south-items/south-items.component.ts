@@ -28,6 +28,8 @@ import { PipeProviderService } from '../../shared/form/pipe-provider.service';
 import { ImportSouthItemsModalComponent } from '../import-south-items-modal/import-south-items-modal.component';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
+import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
+import { ImportItemModalComponent } from '../../shared/import-item-modal/import-item-modal.component';
 
 const PAGE_SIZE = 20;
 
@@ -243,11 +245,15 @@ export class SouthItemsComponent implements OnInit {
    * Export items into a csv file
    */
   exportItems() {
-    if (!this.inMemory) {
-      this.southConnectorService.exportItems(this.southConnector!.id, this.southConnector!.name).subscribe();
-    } else {
-      this.southConnectorService.itemsToCsv(this.allItems, this.southConnector?.name ?? 'south-items').subscribe();
-    }
+    const modalRef = this.modalService.open(ExportItemModalComponent);
+    modalRef.componentInstance.prepare(this.southConnector?.name);
+    modalRef.result.subscribe(response => {
+      if (response && !this.inMemory) {
+        this.southConnectorService.exportItems(this.southConnector!.id, response.fileName, response.delimiter).subscribe();
+      } else if (response && this.inMemory) {
+        this.southConnectorService.itemsToCsv(this.allItems, response.fileName, response.delimiter).subscribe();
+      }
+    });
   }
 
   /**
@@ -277,26 +283,16 @@ export class SouthItemsComponent implements OnInit {
       });
   }
 
-  onImportDragOver(e: Event) {
-    e.preventDefault();
+  importItems() {
+    const modalRef = this.modalService.open(ImportItemModalComponent);
+    modalRef.result.subscribe(response => {
+      this.checkImportItems(response.file, response.delimiter);
+    });
   }
 
-  onImportDrop(e: DragEvent) {
-    e.preventDefault();
-    const file = e.dataTransfer!.files![0];
-    this.checkImportItems(file!);
-  }
-
-  onImportClick(e: Event) {
-    const fileInput = e.target as HTMLInputElement;
-    const file = fileInput!.files![0];
-    fileInput.value = '';
-    this.checkImportItems(file!);
-  }
-
-  checkImportItems(file: File) {
+  checkImportItems(file: File, delimiter: string) {
     this.southConnectorService
-      .checkImportItems(this.southManifest.id, this.southConnector?.id || 'create', file, this.itemIdsToDelete)
+      .checkImportItems(this.southManifest.id, this.southConnector?.id || 'create', file, this.itemIdsToDelete, delimiter)
       .subscribe((result: { items: Array<SouthConnectorItemDTO>; errors: Array<{ item: SouthConnectorItemDTO; message: string }> }) => {
         const modalRef = this.modalService.open(ImportSouthItemsModalComponent, { size: 'xl' });
         const component: ImportSouthItemsModalComponent = modalRef.componentInstance;

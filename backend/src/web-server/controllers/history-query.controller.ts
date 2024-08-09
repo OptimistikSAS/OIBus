@@ -378,7 +378,7 @@ export default class HistoryQueryController extends AbstractController {
     ctx.ok();
   }
 
-  async exportSouthItems(ctx: KoaContext<void, any>): Promise<void> {
+  async exportSouthItems(ctx: KoaContext<{ delimiter: string }, any>): Promise<void> {
     const columns: Set<string> = new Set<string>(['name', 'enabled']);
 
     const southItems = ctx.app.repositoryService.historyQueryItemRepository.listHistoryItems(ctx.params.historyQueryId, {}).map(item => {
@@ -399,19 +399,20 @@ export default class HistoryQueryController extends AbstractController {
       delete flattenedItem.connectorId;
       return flattenedItem;
     });
-    ctx.body = csv.unparse(southItems, { columns: Array.from(columns) });
+    ctx.body = csv.unparse(southItems, { columns: Array.from(columns), delimiter: ctx.request.body!.delimiter });
     ctx.set('Content-disposition', 'attachment; filename=items.csv');
     ctx.set('Content-Type', 'application/force-download');
     ctx.ok();
   }
 
-  async checkImportSouthItems(ctx: KoaContext<void, any>): Promise<void> {
+  async checkImportSouthItems(ctx: KoaContext<{ delimiter: string }, any>): Promise<void> {
     const manifest = ctx.app.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === ctx.params.southType);
     if (!manifest) {
       return ctx.throw(404, 'South manifest not found');
     }
 
     const file = ctx.request.file;
+    const delimiter = ctx.request.body!.delimiter;
 
     const existingItems: Array<SouthConnectorItemDTO> =
       ctx.params.historyQueryId === 'create'
@@ -422,6 +423,10 @@ export default class HistoryQueryController extends AbstractController {
     try {
       const fileContent = await fs.readFile(file.path);
       const csvContent = csv.parse(fileContent.toString('utf8'), { header: true });
+
+      if (csvContent.meta.delimiter !== delimiter) {
+        throw new Error(`The entered delimiter does not correspond to the file delimiter`);
+      }
 
       for (const data of csvContent.data) {
         const item: SouthConnectorItemDTO = {

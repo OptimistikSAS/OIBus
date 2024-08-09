@@ -1,0 +1,27 @@
+<div class="modal-header">
+  <h4 class="modal-title">Export option</h4>
+</div>
+<div class="modal-body">
+  <div>
+    <div [formGroup]="exportForm" class="form-group">
+      <div>
+        <label class="col form-label" for="delimiter" translate="common.delimiter"></label>
+        <select formControlName="delimiter" class="form-select w-50 mb-3" id="delimiter">
+          @for (delimiter of csvDelimiters; track delimiter) {
+            <option [ngValue]="delimiter">{{ 'enums.csv-character.' + delimiter | translate }}</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label class="form-label" for="fileName" translate="north.cache-settings.filename"></label>
+        <input formControlName="fileName" id="fileName" class="form-control" [value]="this.fileName" />
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-footer">
+  <div class="btn-group">
+    <button type="button" class="btn btn-primary" (click)="save()" translate="common.save" id="save-button"></button>
+    <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
+  </div>
+</div>
