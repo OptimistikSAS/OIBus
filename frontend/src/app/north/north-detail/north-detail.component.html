@@ -101,6 +101,10 @@
         </oib-box>
         <!-- subscription -->
         <oib-north-subscriptions [northConnector]="northConnector" />
+        <!-- Transformers -->
+        @if (manifest.transformers) {
+          <oib-north-transformers [transformersManifest]="manifest.transformers" [northId]="northId" />
+        }
         <!-- Logs -->
         <oib-box>
           <ng-template oibBoxTitle>

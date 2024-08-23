@@ -1,0 +1,103 @@
+<div class="my-2">
+  <span class="fa fa-info-circle mx-1" style="color: grey"></span>
+  <span translate="transformers.display-mode-info"></span>
+</div>
+<oib-box>
+  <ng-template oibBoxTitle>
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <span id="logs-title">{{ 'transformations' | translate }}</span>
+      </div>
+    </div>
+  </ng-template>
+  <div class="mb-3">
+    <table class="table table-sm table-hover oib-table">
+      <thead class="light">
+        <tr>
+          <th class="w-auto">{{ 'input' | translate }}</th>
+          <th class="w-auto">{{ 'output' | translate }}</th>
+          <th class="w-auto">{{ 'type' | translate }}</th>
+          <th class="w-auto">{{ 'implementation' | translate }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of this.tableState; track $index; let rowIndex = $index) {
+          <tr>
+            <td>{{ row.input }}</td>
+
+            <td>
+              <oib-single-select
+                formControlName="options"
+                id="transformer-options"
+                placeholder="Select one"
+                [isSmall]="true"
+                [defaultSelected]="getSelectedValue(row.outputs)"
+                (selectionChange)="onOutputChange($event, rowIndex)"
+              >
+                @for (output of row.outputs; track output) {
+                  <oib-simple-single-select-option [value]="output.value" [label]="output.value" />
+                }
+              </oib-single-select>
+            </td>
+
+            <td>
+              <oib-single-select
+                formControlName="types"
+                id="transformer-types"
+                placeholder="Select one"
+                [isSmall]="true"
+                [defaultSelected]="getSelectedValue(row.transformerTypes)"
+                (selectionChange)="onTransformerTypeChange($event, rowIndex)"
+              >
+                @for (transformerType of row.transformerTypes; track transformerType) {
+                  <oib-simple-single-select-option [value]="transformerType.value" [label]="transformerType.value" />
+                }
+              </oib-single-select>
+            </td>
+
+            @if (getSelectedValue(row.transformerTypes) === 'standard') {
+              <td>Using standard implementation</td>
+            } @else {
+              <td>
+                <oib-single-select
+                  formControlName="implementation"
+                  id="transformer-impl"
+                  placeholder="Select one"
+                  [isSmall]="true"
+                  [defaultSelected]="getSelectedValue(row.transformers)?.id"
+                  (selectionChange)="onSelectTransformer($event, rowIndex)"
+                >
+                  <!-- List available transformers -->
+                  @for (transformer of row.transformers; track transformer) {
+                    <oib-rich-single-select-option [value]="transformer.value.id" [label]="transformer.value.name">
+                      <div class="align-items-center d-inline-flex gap-3 justify-content-between w-100">
+                        <span> {{ transformer.value.name }} </span>
+                        <div class="align-items-center d-flex gap-1">
+                          <button class="btn btn-primary" (click)="onEditTransformer($event, transformer.value, rowIndex)">
+                            <span class="fa fa fa-pencil"></span>
+                          </button>
+
+                          <button class="btn btn-primary" (click)="onDeleteTransformer($event, transformer.value, rowIndex)">
+                            <span class="fa fa fa-trash"></span>
+                          </button>
+                        </div>
+                      </div>
+                    </oib-rich-single-select-option>
+                  }
+
+                  <!-- Add new item -->
+                  <oib-rich-single-select-option value="create-new" [selectable]="false">
+                    <button class="btn btn-primary w-100" (click)="onCreateTransformer($event, rowIndex)">
+                      <span class="fa fa-plus"></span>
+                      Create new
+                    </button>
+                  </oib-rich-single-select-option>
+                </oib-single-select>
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</oib-box>

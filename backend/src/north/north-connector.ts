@@ -5,6 +5,9 @@ import {
   NorthCacheFiles,
   NorthConnectorDTO,
   NorthConnectorItemDTO,
+  NorthInputData,
+  NorthInputDataDefinition,
+  NorthTransformerDefinition,
   NorthValueFiles
 } from '../../../shared/model/north-connector.model';
 import pino from 'pino';
@@ -26,6 +29,8 @@ import NorthConnectorMetricsService from '../service/north-connector-metrics.ser
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { dirSize, validateCronExpression } from '../service/utils';
 
+import SandboxService from '../service/sandbox.service';
+
 /**
  * Class NorthConnector : provides general attributes and methods for north connectors.
  * Building a new North connector means to extend this class, and to surcharge
@@ -43,7 +48,7 @@ import { dirSize, validateCronExpression } from '../service/utils';
  * - **getProxy**: get the proxy handler
  * - **logger**: to log an event with different levels (error,warning,info,debug,trace)
  */
-export default class NorthConnector<T extends NorthSettings = any, I = any> {
+export default class NorthConnector<T extends NorthSettings = any, TNorthInput extends NorthInputDataDefinition = any, I = any> {
   public static type: string;
 
   private archiveService: ArchiveService;
@@ -66,6 +71,10 @@ export default class NorthConnector<T extends NorthSettings = any, I = any> {
   private runProgress$: DeferredPromise | null = null;
   private stopping = false;
 
+  protected standardTransformers = new Map<OIBusContent['type'], (content: OIBusContent) => Promise<any>>();
+
+  private sandboxService;
+
   constructor(
     protected connector: NorthConnectorDTO<T>,
     protected readonly encryptionService: EncryptionService,
@@ -73,6 +82,8 @@ export default class NorthConnector<T extends NorthSettings = any, I = any> {
     protected logger: pino.Logger,
     protected readonly baseFolder: string
   ) {
+    this.sandboxService = new SandboxService(logger.child({ type: 'sandbox' }));
+
     this.archiveService = new ArchiveService(this.logger, this.baseFolder, this.connector.caching.rawFiles.archive);
     this.valueCacheService = new ValueCacheService(this.logger, this.baseFolder, this.connector.caching);
     this.fileCacheService = new FileCacheService(this.logger, this.baseFolder, this.connector.caching);
@@ -694,5 +705,58 @@ export default class NorthConnector<T extends NorthSettings = any, I = any> {
 
   get settings(): NorthConnectorDTO<T> {
     return this.connector;
+  }
+
+  /**
+   * Add a standard transformer to this connector.
+   *
+   * Note: The method has to be called inside the constructor
+   */
+  assignStandardTransformer<T extends OIBusContent['type']>(
+    type: T,
+    transformer: (content: Extract<OIBusContent, { type: T }>) => Promise<any>
+  ): void {
+    // It's alright to use 'any' here, because the function will throw a TS error
+    // when the transformer is not supported, or it's not a function
+    this.standardTransformers.set(type, transformer as any);
+  }
+
+  async transform(data: OIBusContent, supportedTransformers: Array<NorthTransformerDefinition>): Promise<NorthInputData | null> {
+    this.logger.trace(`Transforming ${data.type} data`);
+    const transformers = this.repositoryService.northTransformerRepository.getTransformers(this.connector.id);
+
+    // In case there are no custom transformers, use standard ones
+    if (transformers.length === 0) {
+      this.logger.trace('Transforming data using standard transformers');
+      const transformer = this.standardTransformers.get(data.type);
+
+      if (!transformer) {
+        this.logger.warn(`No standard transformer assigned for ${data.type} data. This must be an oversight.`);
+        return null;
+      }
+
+      return await transformer(data);
+    }
+
+    const allowedCombinations = supportedTransformers.filter(t => t.type === 'custom');
+    // Find a transformer
+    const transformer = transformers.find(({ inputType, outputType }) =>
+      allowedCombinations.find(p => {
+        return (
+          // whose input -> output configuration is allowed
+          inputType === p.inputType &&
+          outputType === p.outputType &&
+          // and which takes as input our data
+          inputType === data.type
+        );
+      })
+    );
+
+    if (!transformer) {
+      this.logger.error(`No custom transformer found for ${data.type} data.`);
+      return null;
+    }
+    const result = await this.sandboxService.execute<TNorthInput>(transformer, data);
+    return result as TNorthInput;
   }
 }

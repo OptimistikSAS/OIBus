@@ -2,6 +2,8 @@ import { OibFormControl } from './form.model';
 import { BaseEntity, Instant } from './types';
 import { NorthSettings } from './north-settings.model';
 import { OIBusSubscription } from './subscription.model';
+import { OIBusContent } from './engine.model';
+import type Joi from 'joi';
 
 export interface NorthCacheSettingsDTO {
   scanModeId: string;
@@ -87,7 +89,7 @@ export interface NorthConnectorItemManifest {
   settings: Array<OibFormControl>;
 }
 
-interface NorthConnectorManifestBase<THandlesItems = boolean> {
+interface NorthConnectorManifestBase<THandlesItems = boolean, TInputTypes extends string = string> {
   id: string;
   category: string;
   name: string;
@@ -97,13 +99,30 @@ interface NorthConnectorManifestBase<THandlesItems = boolean> {
     points: boolean;
     items: THandlesItems;
   };
+  /** Data types handled by the north */
+  inputData?: Array<NorthInputDataDefinition<TInputTypes>>;
+  /** Transformers supported by the north */
+  transformers?: Array<NorthTransformerDefinition<TInputTypes>>;
   settings: Array<OibFormControl>;
 }
+export type NorthTransformerDefinition<TInputTypes extends string = string> = {
+  type: 'standard' | 'custom';
+  inputType: OIBusContent['type'];
+  outputType: TInputTypes;
+};
+export type NorthInputDataDefinition<TInputTypes extends string = string> = {
+  type: TInputTypes;
+  data: Joi.Schema;
+};
+export type NorthInputData<TInputTypes extends string = string> = {
+  type: TInputTypes;
+  data: any;
+};
 
 // When modes.items is set to true, require an items definition
-export type NorthConnectorManifest<THandlesItems = boolean> = THandlesItems extends true
-  ? NorthConnectorManifestBase<THandlesItems> & { items: NorthConnectorItemManifest }
-  : NorthConnectorManifestBase<THandlesItems>;
+export type NorthConnectorManifest<THandlesItems = boolean, TInputTypes extends string = string> = THandlesItems extends true
+  ? NorthConnectorManifestBase<THandlesItems, TInputTypes> & { items: NorthConnectorItemManifest }
+  : NorthConnectorManifestBase<THandlesItems, TInputTypes>;
 
 export interface NorthCacheFiles {
   filename: string;

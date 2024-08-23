@@ -9,7 +9,7 @@ import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { DateTime } from 'luxon';
 import { NorthFileWriterSettings } from '../../../../shared/model/north-settings.model';
-import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { OIBusContent, OIBusRawContent, OIBusTimeValueContent } from '../../../../shared/model/engine.model';
 import csv from 'papaparse';
 
 /**
@@ -26,57 +26,41 @@ export default class NorthFileWriter extends NorthConnector<NorthFileWriterSetti
     baseFolder: string
   ) {
     super(configuration, encryptionService, repositoryService, logger, baseFolder);
+
+    this.assignStandardTransformer('time-values', this.transformTimeValues);
+    this.assignStandardTransformer('raw', this.transformRaw);
   }
 
-  async handleContent(data: OIBusContent): Promise<void> {
-    switch (data.type) {
-      case 'raw':
-        return this.handleFile(data.filePath);
+  async handleContent(southData: OIBusContent): Promise<void> {
+    const northData = await this.transform(southData, manifest.transformers!);
 
-      case 'time-values':
-        return this.handleValues(data.content);
-    }
-  }
-
-  async handleValues(values: Array<OIBusTimeValue>): Promise<void> {
-    const nowDate = DateTime.now().toUTC();
-    const prefix = (this.connector.settings.prefix || '')
-      .replace('@CurrentDate', nowDate.toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))
-      .replace('@ConnectorName', this.connector.name);
-    const suffix = (this.connector.settings.suffix || '')
-      .replace('@CurrentDate', nowDate.toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))
-      .replace('@ConnectorName', this.connector.name);
-
-    const filename = `${prefix}${nowDate.toMillis()}${suffix}.csv`;
-
-    const csvContent = csv.unparse(
-      values.map(value => ({
-        pointId: value.pointId,
-        timestamp: value.timestamp,
-        value: value.data.value
-      })),
-      {
-        header: true,
-        delimiter: ';'
-      }
-    );
-    await fs.writeFile(path.join(path.resolve(this.connector.settings.outputFolder), filename), csvContent);
-    this.logger.debug(`File "${filename}" created in "${path.resolve(this.connector.settings.outputFolder)}" output folder`);
-  }
-
-  async handleFile(filePath: string): Promise<void> {
     const nowDate = DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS');
-
-    // Remove timestamp from the file path
-    const { name, ext } = path.parse(filePath);
-    const filename = name.slice(0, name.lastIndexOf('-'));
-
     const prefix = (this.connector.settings.prefix || '').replace('@CurrentDate', nowDate).replace('@ConnectorName', this.connector.name);
     const suffix = (this.connector.settings.suffix || '').replace('@CurrentDate', nowDate).replace('@ConnectorName', this.connector.name);
 
-    const resultingFilename = `${prefix}${filename}${suffix}${ext}`;
-    await fs.copyFile(filePath, path.join(path.resolve(this.connector.settings.outputFolder), resultingFilename));
-    this.logger.debug(`File "${filePath}" copied into "${resultingFilename}"`);
+    switch (northData?.type) {
+      case 'file-path': {
+        const filePath = northData.data;
+
+        // Remove timestamp from the file path
+        const { name, ext } = path.parse(filePath);
+        const filename = name.slice(0, name.lastIndexOf('-'));
+
+        const resultingFilename = `${prefix}${filename}${suffix}${ext}`;
+        await fs.copyFile(filePath, path.join(path.resolve(this.connector.settings.outputFolder), resultingFilename));
+        this.logger.debug(`File "${filePath}" copied into "${resultingFilename}"`);
+        break;
+      }
+
+      case 'file-content': {
+        const content = northData.data;
+        const filename = `${prefix}${DateTime.now().toUTC().toMillis()}${suffix}.csv`;
+
+        await fs.writeFile(path.join(path.resolve(this.connector.settings.outputFolder), filename), content);
+        this.logger.debug(`File "${filename}" created in "${path.resolve(this.connector.settings.outputFolder)}" output folder`);
+        break;
+      }
+    }
   }
 
   override async testConnection(): Promise<void> {
@@ -93,5 +77,41 @@ export default class NorthFileWriter extends NorthConnector<NorthFileWriterSetti
     } catch (error: any) {
       throw new Error(`Access error on "${outputFolder}": ${error.message}`);
     }
+  }
+
+  /**
+   * Standard transformer
+   * @input time-values
+   * @output file-content
+   */
+  async transformTimeValues(data: OIBusTimeValueContent) {
+    const csvContent = csv.unparse(
+      data.content.map(value => ({
+        pointId: value.pointId,
+        timestamp: value.timestamp,
+        value: value.data.value
+      })),
+      {
+        header: true,
+        delimiter: ';'
+      }
+    );
+
+    return {
+      type: 'file-content',
+      data: csvContent
+    };
+  }
+
+  /**
+   * Standard transformer
+   * @input raw
+   * @output file-path
+   */
+  async transformRaw(data: OIBusRawContent) {
+    return {
+      type: 'file-path',
+      data: data.filePath
+    };
   }
 }

@@ -1,0 +1,48 @@
+<div
+  ngbDropdown
+  container="body"
+  [placement]="['bottom-left', 'top-left']"
+  (openChange)="openChanged($event, button)"
+  #dropdown="ngbDropdown"
+>
+  <button
+    #button
+    type="button"
+    [disabled]="disabled"
+    (blur)="touched()"
+    class="form-select"
+    [class.form-select-sm]="isSmall"
+    ngbDropdownToggle
+  >
+    @if (selectedLabel) {
+      <span>{{ selectedLabel }}</span>
+    } @else {
+      <span class="placeholder">{{ placeholder }}</span>
+    }
+  </button>
+  <div ngbDropdownMenu (keyup.esc)="dropdown.close(); $event.stopPropagation()">
+    @for (option of options; track option) {
+      @if (isRichSelectOption(option)) {
+        <button
+          type="button"
+          ngbDropdownItem
+          (click)="select(option, $event)"
+          [class.selected]="isSelected(option)"
+          (keydown.esc)="$event.stopPropagation()"
+        >
+          <ng-container *ngTemplateOutlet="option.contentTemplateRef"></ng-container>
+        </button>
+      } @else if (isSimpleSelectOption(option)) {
+        <button
+          type="button"
+          ngbDropdownItem
+          (click)="select(option, $event)"
+          [class.selected]="isSelected(option)"
+          (keydown.esc)="$event.stopPropagation()"
+        >
+          {{ option.label }}
+        </button>
+      }
+    }
+  </div>
+</div>

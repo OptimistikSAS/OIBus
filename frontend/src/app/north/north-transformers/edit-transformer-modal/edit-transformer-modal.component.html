@@ -1,0 +1,50 @@
+<div class="modal-header">
+  <h4 class="modal-title" [translate]="'north.edit-transformer-modal.' + mode + '-title'"></h4>
+</div>
+@if (form) {
+  <div class="modal-body">
+    <form [formGroup]="form" (ngSubmit)="save()" id="form">
+      <div class="row">
+        <div class="col-3">
+          <!-- Name -->
+          <div class="form-group">
+            <label class="form-label" for="name" translate="transformers.name"></label>
+            <input formControlName="name" id="name" class="form-control" />
+            <val-errors controlName="name"></val-errors>
+          </div>
+        </div>
+
+        @if (inputType === 'raw') {
+          <div class="col">
+            <!-- File regex -->
+            <div class="form-group">
+              <label class="form-label" for="fileRegex" translate="transformers.fileRegex"></label>
+              <input formControlName="fileRegex" id="fileRegex" class="form-control" />
+              <val-errors controlName="fileRegex"></val-errors>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="row">
+        <!-- Description -->
+        <div class="form-group">
+          <label class="form-label" for="description" translate="transformers.description"></label>
+          <input formControlName="description" id="description" class="form-control" />
+          <val-errors controlName="description"></val-errors>
+        </div>
+      </div>
+
+      <div class="row">
+        <oib-code-block key="tranformer-code-block" formControlName="code" contentType="javascript" />
+        <val-errors controlName="code"></val-errors>
+      </div>
+    </form>
+  </div>
+}
+<div class="modal-footer">
+  <div class="btn-group">
+    <oib-save-button form="form" [state]="state"></oib-save-button>
+    <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
+  </div>
+</div>
