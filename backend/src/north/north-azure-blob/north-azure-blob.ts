@@ -168,7 +168,7 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
       result = await blockBlobClient.exists();
       try {
         await blockBlobClient.deleteIfExists();
-      } catch (deleteError) {
+      } catch {
         this.logger.error(`Could not delete file "${blobPath}"`);
       }
     } catch (error: unknown) {
