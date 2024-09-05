@@ -187,7 +187,7 @@ export default class ArchiveService {
         const fileStat = await fs.stat(filePath);
         await fs.unlink(filePath);
         this.triggerRun.emit('cache-size', -fileStat.size);
-      } catch (error) {
+      } catch {
         this._logger.error(`Unable to remove archived file "${filePath}"`);
       }
     }

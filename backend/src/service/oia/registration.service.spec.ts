@@ -229,7 +229,7 @@ describe('Registration service', () => {
       proxyPassword: 'pass'
     };
     (repositoryService.engineRepository.getEngineSettings as jest.Mock).mockReturnValueOnce(fakeEngineSettings);
-    
+
     await service.editRegistrationSettings(command);
     expect(repositoryService.registrationRepository.editRegistration).toHaveBeenCalledTimes(1);
     expect(repositoryService.registrationRepository.editRegistration).toHaveBeenCalledWith(command);
@@ -245,7 +245,7 @@ describe('Registration service', () => {
       proxyPassword: ''
     };
     (repositoryService.engineRepository.getEngineSettings as jest.Mock).mockReturnValueOnce(fakeEngineSettings);
-    
+
     await service.editRegistrationSettings(command);
     expect(repositoryService.registrationRepository.editRegistration).toHaveBeenCalledTimes(1);
     expect(repositoryService.registrationRepository.editRegistration).toHaveBeenCalledWith(command);
@@ -939,7 +939,7 @@ describe('OIBus service should interact with OIA and', () => {
       useProxy: false
     };
     (repositoryService.engineRepository.getEngineSettings as jest.Mock).mockReturnValueOnce(mockEngineSettings);
-    
+
     await service.editRegistrationSettings(command);
     expect(reloadService.restartLogger).toHaveBeenCalledTimes(1);
     expect(repositoryService.registrationRepository.editRegistration).toHaveBeenCalledTimes(1);

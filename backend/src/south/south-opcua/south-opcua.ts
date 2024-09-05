@@ -192,7 +192,7 @@ export default class SouthOPCUA
     let session;
     try {
       session = await this.connection.getSession();
-    } catch (error) {
+    } catch {
       this.logger.error('OPCUA session not set. The connector cannot read values');
       return null;
     }
@@ -490,7 +490,7 @@ export default class SouthOPCUA
     let session;
     try {
       session = await this.connection.getSession();
-    } catch (error) {
+    } catch {
       this.logger.error('OPCUA session not set. The connector cannot read values');
       return;
     }
@@ -547,7 +547,7 @@ export default class SouthOPCUA
     let session;
     try {
       session = await this.connection.getSession();
-    } catch (error) {
+    } catch {
       this.logger.error('OPCUA client could not subscribe to items: session not set');
       return;
     }

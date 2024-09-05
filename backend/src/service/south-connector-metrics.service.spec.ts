@@ -68,6 +68,6 @@ describe('SouthConnectorMetricsService', () => {
       })}\n\n`
     );
 
-    service.stream;
+    expect(service.stream).toBeDefined();
   });
 });

@@ -7,10 +7,10 @@ import CreateTableBuilder = Knex.CreateTableBuilder;
 import { SOUTH_CONNECTORS_TABLE } from '../../repository/south-connector.repository';
 import { SOUTH_ITEMS_TABLE } from '../../repository/south-item.repository';
 
-const SOUTH_MODBUS_ITEM_SETTINGS_MODBUS_TYPES = ['coil', 'discreteInput', 'inputRegister', 'holdingRegister'] as const;
+export const SOUTH_MODBUS_ITEM_SETTINGS_MODBUS_TYPES = ['coil', 'discreteInput', 'inputRegister', 'holdingRegister'] as const;
 export type SouthModbusItemSettingsModbusType = (typeof SOUTH_MODBUS_ITEM_SETTINGS_MODBUS_TYPES)[number];
 
-const SOUTH_MODBUS_ITEM_SETTINGS_DATA_DATA_TYPES = [
+export const SOUTH_MODBUS_ITEM_SETTINGS_DATA_DATA_TYPES = [
   'Bit',
   'UInt16',
   'Int16',

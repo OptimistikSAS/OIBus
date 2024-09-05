@@ -1037,7 +1037,7 @@ describe('South connector controller', () => {
           settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
         }
       ],
-      delimiter: ";"
+      delimiter: ';'
     };
     (csv.unparse as jest.Mock).mockReturnValue('csv content');
     ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValueOnce([{ id: 'scanModeId', name: 'scanMode' }]);
@@ -1046,25 +1046,27 @@ describe('South connector controller', () => {
 
     expect(ctx.ok).toHaveBeenCalled();
     expect(ctx.body).toEqual('csv content');
-    expect(csv.unparse).toHaveBeenCalledWith([
+    expect(csv.unparse).toHaveBeenCalledWith(
+      [
+        {
+          name: 'name',
+          enabled: true,
+          scanMode: 'scanMode',
+          settings_regex: '.*'
+        },
+        {
+          name: 'item2',
+          enabled: true,
+          scanMode: '',
+          settings_objectArray: '[]',
+          settings_objectSettings: '{}',
+          settings_objectValue: 1
+        }
+      ],
       {
-        name: 'name',
-        enabled: true,
-        scanMode: 'scanMode',
-        settings_regex: '.*'
-      },
-      {
-        name: 'item2',
-        enabled: true,
-        scanMode: '',
-        settings_objectArray: '[]',
-        settings_objectSettings: '{}',
-        settings_objectValue: 1
+        delimiter: ';'
       }
-    ],
-    {
-      "delimiter": ";"
-    });
+    );
   });
 
   it('exportSouthItems() should download a csv file', async () => {
@@ -1080,7 +1082,7 @@ describe('South connector controller', () => {
         settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
       }
     ]);
-    ctx.request.body = { delimiter: ";" };
+    ctx.request.body = { delimiter: ';' };
     (csv.unparse as jest.Mock).mockReturnValue('csv content');
 
     await southConnectorController.exportSouthItems(ctx);
@@ -1114,7 +1116,7 @@ describe('South connector controller', () => {
           'settings_objectArray',
           'settings_objectValue'
         ],
-        delimiter: ";"
+        delimiter: ';'
       }
     );
   });
@@ -1507,7 +1509,7 @@ describe('South connector controller', () => {
         delimiter: ','
       },
       data: [],
-      errors: [{ message: 'Trailing quote on quoted field is malformed'}]
+      errors: [{ message: 'Trailing quote on quoted field is malformed' }]
     });
 
     await southConnectorController.checkImportSouthItems(ctx);
@@ -1533,7 +1535,7 @@ describe('South connector controller', () => {
         delimiter: ','
       },
       data: [{ data: 'yes' }],
-      errors: [{ code: 'UndetectableDelimiter'}]
+      errors: [{ code: 'UndetectableDelimiter' }]
     });
     (csv.parse as jest.Mock).mockReturnValue({
       meta: {
