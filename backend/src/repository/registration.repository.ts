@@ -78,13 +78,7 @@ export default class RegistrationRepository {
       `accept_unauthorized = ? WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
     this.database
       .prepare(query)
-      .run(
-        +command.useProxy,
-        command.proxyUrl,
-        command.proxyUsername,
-        command.proxyPassword,
-        +command.acceptUnauthorized
-      );
+      .run(+command.useProxy, command.proxyUrl, command.proxyUsername, command.proxyPassword, +command.acceptUnauthorized);
   }
 
   /**

@@ -290,7 +290,7 @@ describe('SouthOPCUA', () => {
 
     try {
       await south.connection.getSession();
-    } catch (error) {
+    } catch {
       expect(logger.error).toHaveBeenCalledWith(`Error while connecting to the OPCUA server. ${new Error('connection error')}`);
       await south.disconnect();
     }

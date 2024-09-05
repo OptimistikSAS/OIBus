@@ -68,6 +68,6 @@ describe('NorthConnectorMetricsService', () => {
       })}\n\n`
     );
 
-    service.stream;
+    expect(service.stream).toBeDefined();
   });
 });

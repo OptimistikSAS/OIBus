@@ -75,8 +75,8 @@ describe('HistoryMetricsService', () => {
       })}\n\n`
     );
 
-    service.metrics;
-    service.stream;
+    expect(service.metrics).toBeDefined();
+    expect(service.stream).toBeDefined();
   });
 
   it('should reset metrics', () => {
