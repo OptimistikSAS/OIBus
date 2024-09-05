@@ -175,7 +175,7 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
         } catch (unlinkError) {
           this.logger.error(`Error while removing compressed file "${gzipPath}": ${unlinkError}`);
         }
-      } catch (compressionError) {
+      } catch {
         this.logger.error(`Error compressing file "${resultingFile}". Sending it raw instead`);
         await this.addContent({ type: 'raw', filePath: resultingFile });
       }

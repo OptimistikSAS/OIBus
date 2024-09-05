@@ -1179,7 +1179,7 @@ describe('History query controller', () => {
         settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
       }
     ]);
-    ctx.request.body = { delimiter: ";" };
+    ctx.request.body = { delimiter: ';' };
     (csv.unparse as jest.Mock).mockReturnValue('csv content');
 
     await historyQueryController.exportSouthItems(ctx);
@@ -1201,9 +1201,10 @@ describe('History query controller', () => {
           settings_objectValue: 1
         }
       ],
-      { columns: ['name', 'enabled', 'settings_field', 'settings_objectSettings', 'settings_objectArray', 'settings_objectValue'],
-        delimiter: ";"
-       }
+      {
+        columns: ['name', 'enabled', 'settings_field', 'settings_objectSettings', 'settings_objectArray', 'settings_objectValue'],
+        delimiter: ';'
+      }
     );
   });
 

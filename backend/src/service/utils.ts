@@ -82,7 +82,7 @@ export const createFolder = async (folder: string): Promise<void> => {
   const folderPath = path.resolve(folder);
   try {
     await fs.stat(folderPath);
-  } catch (error) {
+  } catch {
     await fs.mkdir(folderPath, { recursive: true });
   }
 };

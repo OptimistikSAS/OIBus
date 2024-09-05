@@ -124,7 +124,9 @@ export class FileTableComponent implements OnInit {
 
     // Reset state for every other column
     Object.keys(this.columnSortStates).forEach(key => {
-      this.currentColumnSort !== key && (this.columnSortStates[key as keyof typeof this.columnSortStates] = 0);
+      if (this.currentColumnSort !== key) {
+        this.columnSortStates[key as keyof typeof this.columnSortStates] = 0;
+      }
     });
 
     this.sortTable();
