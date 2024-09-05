@@ -1900,7 +1900,7 @@ describe('North connector controller with items', () => {
 
     try {
       northConnectorController['getManifestWithItemsMode'](ctx);
-    } catch (error) {
+    } catch {
       expect(ctx.throw).toHaveBeenCalledWith(404, 'North not found');
     }
   });
@@ -1911,7 +1911,7 @@ describe('North connector controller with items', () => {
 
     try {
       northConnectorController['getManifestWithItemsMode'](ctx);
-    } catch (error) {
+    } catch {
       expect(ctx.throw).toHaveBeenCalledWith(404, 'North does not support items');
     }
   });
