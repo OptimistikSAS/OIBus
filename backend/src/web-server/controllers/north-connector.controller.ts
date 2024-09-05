@@ -650,7 +650,7 @@ export default class NorthConnectorController {
     let itemIdsToDelete: Array<string>;
     try {
       itemIdsToDelete = JSON.parse(ctx.request.body!.itemIdsToDelete);
-    } catch (error) {
+    } catch {
       return ctx.throw(400, 'Could not parse item ids to delete array');
     }
 

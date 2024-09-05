@@ -25,7 +25,7 @@ export default class ContentController extends AbstractController {
       for (const id of ids) {
         await ctx.app.oibusService.addExternalContent(id, content);
       }
-    } catch (error) {
+    } catch {
       return ctx.internalServerError();
     }
     return ctx.noContent();
