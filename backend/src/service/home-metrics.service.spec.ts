@@ -60,7 +60,7 @@ describe('HomeMetrics service', () => {
 
     engineMetricsService.stream.emit('data', `data: ${JSON.stringify({ engineMetrics: 1 })}`);
     expect(stream.write).toHaveBeenCalledWith(`data: ${JSON.stringify({ norths: {}, engine: { engineMetrics: 1 }, souths: {} })}\n\n`);
-    service.stream;
+    expect(service.stream).toBeDefined();
   });
 
   it('should add North metrics', () => {
