@@ -28,10 +28,15 @@ jest.mock(
   },
   { virtual: true }
 );
-// disable next line for tests purposes because the node module can not be download if odbc native library is not
-// loaded into the OS. Using require instead of import allow the tests to not fail in this case.
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const odbc = require('odbc');
+let odbc: any | null = null;
+import('odbc')
+  .then(obj => {
+    odbc = obj.default;
+    console.info('odbc library loaded');
+  })
+  .catch(() => {
+    console.error('Could not load odbc');
+  });
 
 jest.mock('node-fetch');
 jest.mock('../../service/utils');

@@ -156,7 +156,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
           columns
         });
       }
-    } catch (error: any) {
+    } catch {
       await connection.close();
       throw new Error(`Unable to read tables in database`);
     }

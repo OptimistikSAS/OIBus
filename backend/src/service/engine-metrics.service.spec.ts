@@ -242,7 +242,7 @@ describe('EngineMetrics service', () => {
       })}\n\n`
     );
 
-    service.stream;
+    expect(service.stream).toBeDefined();
   });
 
   it('should reset engine metrics', () => {

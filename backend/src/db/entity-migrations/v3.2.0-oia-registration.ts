@@ -9,7 +9,7 @@ import { SOUTH_CONNECTORS_TABLE } from '../../repository/south-connector.reposit
 import { HISTORY_QUERIES_TABLE } from '../../repository/history-query.repository';
 import { ENGINES_TABLE } from '../../repository/engine.repository';
 
-const NORTH_OIANALYTICS_SETTINGS_AUTHENTICATIONS = ['basic', 'aad-client-secret', 'aad-certificate'] as const;
+export const NORTH_OIANALYTICS_SETTINGS_AUTHENTICATIONS = ['basic', 'aad-client-secret', 'aad-certificate'] as const;
 export type NorthOIAnalyticsSettingsAuthentication = (typeof NORTH_OIANALYTICS_SETTINGS_AUTHENTICATIONS)[number];
 
 interface OldNorthOIAnalyticsSettings {
