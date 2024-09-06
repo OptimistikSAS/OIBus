@@ -116,7 +116,7 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
 
   override async testItem(item: SouthConnectorItemDTO<SouthMSSQLItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
     const startTime = DateTime.now()
-      .minus(3600 * 1000)
+      .minus(600 * 1000)
       .toUTC()
       .toISO() as Instant;
     const endTime = DateTime.now().toUTC().toISO() as Instant;
