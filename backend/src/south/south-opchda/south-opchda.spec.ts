@@ -364,8 +364,10 @@ describe('South OPCHDA', () => {
 
     const callback = jest.fn();
     south.connect = jest.fn();
+    south.disconnect = jest.fn();
     await south.testItem(items[0], callback);
     expect(south.connect).toHaveBeenCalledTimes(1);
+    expect(south.disconnect).toHaveBeenCalledTimes(1);
     expect(callback).toHaveBeenCalledTimes(1);
   });
 
@@ -378,8 +380,10 @@ describe('South OPCHDA', () => {
 
     const callback = jest.fn();
     south.connect = jest.fn();
+    south.disconnect = jest.fn();
     await expect(south.testItem(items[0], callback)).rejects.toThrow(`Error occurred when sending connect command to remote agent. 400`);
     expect(south.connect).toHaveBeenCalledTimes(1);
+    expect(south.disconnect).toHaveBeenCalledTimes(1);
     expect(callback).not.toHaveBeenCalled();
   });
 });
