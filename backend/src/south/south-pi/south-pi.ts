@@ -79,6 +79,54 @@ export default class SouthPI extends SouthConnector implements QueriesHistory {
     }
   }
 
+  override async testItem(item: SouthConnectorItemDTO<SouthPIItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
+    await this.connect();
+    const content: OIBusContent = { type: 'time-values', content: [] };
+
+    const startTime = DateTime.now()
+      .minus(600 * 1000)
+      .toUTC()
+      .toISO() as Instant;
+    const endTime = DateTime.now().toUTC().toISO() as Instant;
+
+    const headers: Record<string, string> = {};
+    headers['Content-Type'] = 'application/json';
+    const fetchOptions = {
+      method: 'PUT',
+      body: JSON.stringify({
+        startTime,
+        endTime,
+        items: [
+          {
+            name: item.name,
+            type: item.settings.type,
+            piPoint: item.settings.piPoint,
+            piQuery: item.settings.piQuery
+          }
+        ]
+      }),
+      headers
+    };
+    const response = await fetch(`${this.connector.settings.agentUrl}/api/pi/${this.connector.id}/read`, fetchOptions);
+    if (response.status === 200) {
+      const result: {
+        recordCount: number;
+        content: Array<OIBusTimeValue>;
+        maxInstantRetrieved: Instant;
+      } = (await response.json()) as {
+        recordCount: number;
+        content: OIBusTimeValue[];
+        maxInstantRetrieved: string;
+      };
+      content.content = result.content;
+      await this.disconnect();
+    } else {
+      await this.disconnect();
+      throw new Error(`Error occurred when sending connect command to remote agent. ${response.status}`);
+    }
+    callback(content);
+  }
+
   /**
    * Get entries from the database between startTime and endTime (if used in the SQL query)
    * and write them into the cache and send it to the engine.

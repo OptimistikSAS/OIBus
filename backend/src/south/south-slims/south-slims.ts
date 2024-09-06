@@ -9,6 +9,8 @@ import {
   createFolder,
   formatInstant,
   formatQueryParams,
+  generateCsvContent,
+  generateFilenameForSerialization,
   httpGetWithBody,
   persistResults
 } from '../../service/utils';
@@ -117,6 +119,32 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
       default:
         throw new Error(`HTTP request failed with status code ${response.status} and message: ${response.statusText}`);
     }
+  }
+
+  override async testItem(item: SouthConnectorItemDTO<SouthSlimsItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
+    const startTime = DateTime.now()
+      .minus(600 * 1000)
+      .toUTC()
+      .toISO() as Instant;
+    const endTime = DateTime.now().toUTC().toISO() as Instant;
+    const result: SlimsResults = await this.queryData(item, startTime, endTime);
+    const { formattedResult } = this.parseData(item, result);
+
+    let oibusContent: OIBusContent;
+    switch (item.settings.serialization.type) {
+      case 'csv': {
+        const filePath = generateFilenameForSerialization(
+          this.tmpFolder,
+          item.settings.serialization.filename,
+          this.connector.name,
+          item.name
+        );
+        const content = generateCsvContent(formattedResult, item.settings.serialization.delimiter);
+        oibusContent = { type: 'raw', filePath, content };
+        break;
+      }
+    }
+    callback(oibusContent);
   }
 
   /**

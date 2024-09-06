@@ -85,6 +85,20 @@ export default class SouthOIAnalytics
     }
   }
 
+  override async testItem(
+    item: SouthConnectorItemDTO<SouthOIAnalyticsItemSettings>,
+    callback: (data: OIBusContent) => void
+  ): Promise<void> {
+    const startTime = DateTime.now()
+      .minus(600 * 1000)
+      .toUTC()
+      .toISO() as Instant;
+    const endTime = DateTime.now().toUTC().toISO() as Instant;
+    const result: Array<any> = await this.queryData(item, startTime, endTime);
+    const { formattedResult } = this.parseData(result);
+    callback({ type: 'time-values', content: formattedResult });
+  }
+
   /**
    * Retrieve result from a REST API write them into a CSV file and send it to the Engine.
    */

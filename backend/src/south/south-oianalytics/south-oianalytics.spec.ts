@@ -871,4 +871,12 @@ describe('SouthOIAnalytics with OIA module', () => {
 
     expect(createProxyAgent).not.toHaveBeenCalled();
   });
+
+  it('should test item', async () => {
+    const callback = jest.fn();
+    south.queryData = jest.fn().mockReturnValueOnce([]);
+    await south.testItem(items[0], callback);
+    expect(south.queryData).toHaveBeenCalledTimes(1);
+    expect(callback).toHaveBeenCalledTimes(1);
+  });
 });
