@@ -120,7 +120,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
 
   override async testItem(item: SouthConnectorItemDTO<SouthODBCItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
     const startTime = DateTime.now()
-      .minus(3600 * 1000)
+      .minus(600 * 1000)
       .toUTC()
       .toISO() as Instant;
     const endTime = DateTime.now().toUTC().toISO() as Instant;
