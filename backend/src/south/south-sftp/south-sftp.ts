@@ -11,7 +11,7 @@ import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
 import { QueriesFile } from '../south-interface';
 import { SouthSFTPItemSettings, SouthSFTPSettings } from '../../../../shared/model/south-settings.model';
-import { OIBusContent } from '../../../../shared/model/engine.model';
+import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
 import sftpClient, { ConnectOptions, FileInfo } from 'ssh2-sftp-client';
 
@@ -48,6 +48,17 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
     } catch (error: any) {
       throw new Error(`Access error on "${this.connector.settings.host}:${this.connector.settings.port}": ${error.message}`);
     }
+  }
+
+  override async testItem(item: SouthConnectorItemDTO<SouthSFTPItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
+    const filesInFolder = await this.listFiles(item);
+
+    const values: OIBusTimeValue[] = filesInFolder.map(file => ({
+      pointId: item.name,
+      timestamp: DateTime.now().toUTC().toISO()!,
+      data: { value: file.name }
+    }));
+    callback({ type: 'time-values', content: values });
   }
 
   async start(dataStream = true): Promise<void> {

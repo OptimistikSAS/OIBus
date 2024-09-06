@@ -431,4 +431,22 @@ describe('SouthSFTP test connection with private key', () => {
     expect(encryptionService.decryptText).toHaveBeenCalledTimes(1);
     expect(fs.readFile).toHaveBeenCalledTimes(2);
   });
+
+  it('should test item', async () => {
+    const callback = jest.fn();
+    south.listFiles = jest.fn().mockReturnValueOnce([{ name: 'file.csv' }]);
+
+    await south.testItem(items[0], callback);
+    expect(south.listFiles).toHaveBeenCalledTimes(1);
+    expect(callback).toHaveBeenCalledWith({
+      type: 'time-values',
+      content: [
+        {
+          pointId: items[0].name,
+          timestamp: nowDateString,
+          data: { value: 'file.csv' }
+        }
+      ]
+    });
+  });
 });
