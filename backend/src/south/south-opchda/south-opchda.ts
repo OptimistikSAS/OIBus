@@ -130,7 +130,9 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
         maxInstantRetrieved: string;
       };
       content.content = result.content;
+      await this.disconnect();
     } else {
+      await this.disconnect();
       throw new Error(`Error occurred when sending connect command to remote agent. ${response.status}`);
     }
     callback(content);

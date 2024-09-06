@@ -316,4 +316,41 @@ describe('South PI', () => {
     await south.start();
     await expect(south.historyQuery(items, startTime, endTime, startTime)).rejects.toThrow(new Error('bad request'));
   });
+
+  it('should test item', async () => {
+    (fetch as unknown as jest.Mock).mockReturnValueOnce(
+      Promise.resolve({
+        status: 200,
+        json: () => ({
+          recordCount: 2,
+          content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
+          maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
+        })
+      })
+    );
+
+    const callback = jest.fn();
+    south.connect = jest.fn();
+    south.disconnect = jest.fn();
+    await south.testItem(items[0], callback);
+    expect(south.connect).toHaveBeenCalledTimes(1);
+    expect(south.disconnect).toHaveBeenCalledTimes(1);
+    expect(callback).toHaveBeenCalledTimes(1);
+  });
+
+  it('should test item and throw error if bad status', async () => {
+    (fetch as unknown as jest.Mock).mockImplementationOnce(() =>
+      Promise.resolve({
+        status: 400
+      })
+    );
+
+    const callback = jest.fn();
+    south.connect = jest.fn();
+    south.disconnect = jest.fn();
+    await expect(south.testItem(items[0], callback)).rejects.toThrow(`Error occurred when sending connect command to remote agent. 400`);
+    expect(south.connect).toHaveBeenCalledTimes(1);
+    expect(south.disconnect).toHaveBeenCalledTimes(1);
+    expect(callback).not.toHaveBeenCalled();
+  });
 });
