@@ -164,7 +164,7 @@ export default class SouthOPCUA
         content = await this.getDAValues([item], session);
       } else {
         const startTime = DateTime.now()
-          .minus(3600 * 1000)
+          .minus(600 * 1000)
           .toUTC()
           .toISO() as Instant;
         const endTime = DateTime.now().toUTC().toISO() as Instant;
