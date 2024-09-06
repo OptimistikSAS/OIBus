@@ -118,7 +118,7 @@ export default class SouthPostgreSQL
 
   override async testItem(item: SouthConnectorItemDTO<SouthPostgreSQLItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
     const startTime = DateTime.now()
-      .minus(3600 * 1000)
+      .minus(600 * 1000)
       .toUTC()
       .toISO() as Instant;
     const endTime = DateTime.now().toUTC().toISO() as Instant;
