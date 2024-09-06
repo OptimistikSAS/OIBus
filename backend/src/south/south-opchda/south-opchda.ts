@@ -93,6 +93,49 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
     }
   }
 
+  override async testItem(item: SouthConnectorItemDTO<SouthOPCHDAItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
+    await this.connect();
+    const content: OIBusContent = { type: 'time-values', content: [] };
+
+    const startTime = DateTime.now()
+      .minus(600 * 1000)
+      .toUTC()
+      .toISO() as Instant;
+    const endTime = DateTime.now().toUTC().toISO() as Instant;
+
+    const headers: Record<string, string> = {};
+    headers['Content-Type'] = 'application/json';
+    const fetchOptions = {
+      method: 'PUT',
+      body: JSON.stringify({
+        host: this.connector.settings.host,
+        serverName: this.connector.settings.serverName,
+        aggregate: item.settings.aggregate,
+        resampling: item.settings.resampling,
+        startTime,
+        endTime,
+        items: [{ nodeId: item.settings.nodeId, name: item.name }]
+      }),
+      headers
+    };
+    const response = await fetch(`${this.connector.settings.agentUrl}/api/opc/${this.connector.id}/read`, fetchOptions);
+    if (response.status === 200) {
+      const result: {
+        recordCount: number;
+        content: Array<OIBusTimeValue>;
+        maxInstantRetrieved: Instant;
+      } = (await response.json()) as {
+        recordCount: number;
+        content: OIBusTimeValue[];
+        maxInstantRetrieved: string;
+      };
+      content.content = result.content;
+    } else {
+      throw new Error(`Error occurred when sending connect command to remote agent. ${response.status}`);
+    }
+    callback(content);
+  }
+
   /**
    * Get entries from the database between startTime and endTime (if used in the SQL query)
    * and write them into the cache and send it to the engine.
