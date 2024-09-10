@@ -26,6 +26,7 @@ import JoiValidator from './web-server/controllers/validators/joi.validator';
 import OIAnalyticsCommandClient from './service/oia/oianalytics-command.client';
 import ScanModeService from './service/scan-mode.service';
 import NorthConnectorConfigService from './service/north-connector-config.service';
+import SubscriptionService from './service/subscription.service';
 
 const CONFIG_DATABASE = 'oibus.db';
 const CRYPTO_DATABASE = 'crypto.db';
@@ -174,6 +175,14 @@ const LOG_DB_NAME = 'logs.db';
     oianalyticsMessageService,
     engine
   );
+  const subscriptionService = new SubscriptionService(
+    new JoiValidator(),
+    repositoryService.subscriptionRepository,
+    repositoryService.southConnectorRepository,
+    repositoryService.northConnectorRepository,
+    oianalyticsMessageService,
+    engine
+  );
 
   const southConnectorConfigService = new SouthConnectorConfigService(
     new JoiValidator(),
@@ -225,6 +234,7 @@ const LOG_DB_NAME = 'logs.db';
     oibusSettings.port,
     encryptionService,
     scanModeService,
+    subscriptionService,
     reloadService,
     registrationService,
     repositoryService,

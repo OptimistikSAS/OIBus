@@ -1,7 +1,7 @@
 import { OibFormControl } from './form.model';
 import { BaseEntity, Instant } from './types';
 import { NorthSettings } from './north-settings.model';
-import { OIBusSubscription } from './subscription.model';
+import { SubscriptionDTO } from './subscription.model';
 
 export interface NorthCacheSettingsDTO {
   scanModeId: string;
@@ -79,8 +79,8 @@ export interface NorthConnectorCommandDTO<T extends NorthSettings = any> {
  */
 export interface NorthConnectorWithItemsCommandDTO<> {
   north: NorthConnectorCommandDTO;
-  subscriptions: Array<OIBusSubscription>;
-  subscriptionsToDelete: Array<OIBusSubscription>;
+  subscriptions: Array<SubscriptionDTO>;
+  subscriptionsToDelete: Array<SubscriptionDTO>;
 }
 
 export interface NorthConnectorManifest {

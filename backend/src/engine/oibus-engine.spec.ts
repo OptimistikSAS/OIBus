@@ -464,8 +464,8 @@ describe('OIBusEngine', () => {
     await engine.retryAllValueErrors('northId');
     expect(createdNorth.retryAllValueErrors).toHaveBeenCalledTimes(1);
 
-    engine.updateNorthConnectorSubscriptions(northConnectors[0].id);
-    engine.updateNorthConnectorSubscriptions('northId');
+    engine.updateSubscriptions(northConnectors[0].id);
+    engine.updateSubscriptions('northId');
     expect(createdNorth.updateConnectorSubscription).toHaveBeenCalledTimes(1);
 
     await engine.stopSouth('southId');

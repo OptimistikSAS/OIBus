@@ -105,13 +105,9 @@ router.put('/api/north/:id', (ctx: KoaContext<any, any>) => northConnectorContro
 router.delete('/api/north/:id', (ctx: KoaContext<any, any>) => northConnectorController.delete(ctx));
 router.put('/api/north/:id/start', (ctx: KoaContext<any, any>) => northConnectorController.start(ctx));
 router.put('/api/north/:id/stop', (ctx: KoaContext<any, any>) => northConnectorController.stop(ctx));
-router.get('/api/north/:northId/subscriptions', (ctx: KoaContext<any, any>) => subscriptionController.getNorthSubscriptions(ctx));
-router.post('/api/north/:northId/subscriptions/:southId', (ctx: KoaContext<any, any>) =>
-  subscriptionController.createNorthSubscription(ctx)
-);
-router.delete('/api/north/:northId/subscriptions/:southId', (ctx: KoaContext<any, any>) =>
-  subscriptionController.deleteNorthSubscription(ctx)
-);
+router.get('/api/north/:northId/subscriptions', (ctx: KoaContext<any, any>) => subscriptionController.findByNorth(ctx));
+router.post('/api/north/:northId/subscriptions/:southId', (ctx: KoaContext<any, any>) => subscriptionController.create(ctx));
+router.delete('/api/north/:northId/subscriptions/:southId', (ctx: KoaContext<any, any>) => subscriptionController.delete(ctx));
 router.get('/api/north/:northId/cache/file-errors', (ctx: KoaContext<any, any>) => northConnectorController.getFileErrors(ctx));
 router.get('/api/north/:northId/cache/file-errors/:filename', (ctx: KoaContext<any, any>) =>
   northConnectorController.getFileErrorContent(ctx)

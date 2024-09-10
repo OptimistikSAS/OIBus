@@ -4,7 +4,7 @@
 <div class="modal-body">
   <form [formGroup]="form" (ngSubmit)="save()" id="form">
     <div class="form-group">
-      <label class="form-label" for="south" translate="north.subscriptions.south.title"></label>
+      <label class="form-label" for="south" translate="north.subscriptions.south"></label>
       <select formControlName="southConnector" id="south" class="form-select mb-2 mr-sm-2">
         @for (southConnector of southConnectors; track southConnector.id) {
           <option [ngValue]="southConnector">{{ southConnector.name }}</option>

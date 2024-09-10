@@ -85,10 +85,7 @@ describe('CreateNorthSubscriptionModalComponent', () => {
       name: 'South2'
     } as SouthConnectorDTO;
 
-    expect(fakeActiveModal.close).toHaveBeenCalledWith({
-      type: 'south',
-      subscription: expectedSouth
-    });
+    expect(fakeActiveModal.close).toHaveBeenCalledWith(expectedSouth);
   }));
 
   it('should cancel', () => {
