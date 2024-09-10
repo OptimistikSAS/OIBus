@@ -1,5 +1,6 @@
 import SouthMetricsRepositoryMock from '../repository/south-metrics-repository.mock';
 import NorthMetricsRepositoryMock from '../repository/north-metrics-repository.mock';
+import ScanModeRepositoryMock from '../repository/scan-mode-repository.mock';
 
 /**
  * Create a mock object for Repository Service
@@ -76,13 +77,7 @@ export default jest.fn().mockImplementation(() => ({
     update: jest.fn(),
     delete: jest.fn()
   },
-  scanModeRepository: {
-    findAll: jest.fn(),
-    findById: jest.fn(),
-    create: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn()
-  },
+  scanModeRepository: new ScanModeRepositoryMock(),
   certificateRepository: {
     findAll: jest.fn(),
     findById: jest.fn(),
