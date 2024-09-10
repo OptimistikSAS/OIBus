@@ -37,10 +37,9 @@
           </tr>
         </thead>
         <tbody>
-          @for (subscription of subscriptions; track subscription) {
+          @for (subscription of subscriptions; track subscription.southId) {
             <tr>
-              <td>{{ 'north.subscriptions.' + subscription.type + '.title' | translate }}</td>
-              <td>{{ subscription.subscription.name }}</td>
+              <td>{{ subscription.southName }} ({{ subscription.southType }})</td>
               <td class="text-nowrap action-buttons">
                 <div class="pull-right">
                   <!-- Delete button -->

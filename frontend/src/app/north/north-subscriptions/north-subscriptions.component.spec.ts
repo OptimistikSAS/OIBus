@@ -61,7 +61,18 @@ describe('NorthSubscriptionsComponent', () => {
     } as SouthConnectorDTO
   ];
 
-  const northSubscriptions: Array<SubscriptionDTO> = ['id1', 'id2'];
+  const northSubscriptions: Array<SubscriptionDTO> = [
+    {
+      southId: 'southId1',
+      southType: 'folder-scanner',
+      southName: 'my South'
+    },
+    {
+      southId: 'southId2',
+      southType: 'folder-scanner',
+      southName: 'another South'
+    }
+  ];
 
   beforeEach(() => {
     northService = createMock(NorthConnectorService);
@@ -86,11 +97,9 @@ describe('NorthSubscriptionsComponent', () => {
 
     expect(tester.title).toContainText('Subscriptions');
     expect(tester.subscriptions.length).toEqual(2);
-    expect(tester.subscriptions[0].elements('td').length).toEqual(3);
-    expect(tester.subscriptions[0].elements('td')[0]).toContainText('South connector');
-    expect(tester.subscriptions[0].elements('td')[1]).toContainText('south1');
-    expect(tester.subscriptions[1].elements('td')[0]).toContainText('South connector');
-    expect(tester.subscriptions[1].elements('td')[1]).toContainText('south2');
+    expect(tester.subscriptions[0].elements('td').length).toEqual(2);
+    expect(tester.subscriptions[0].elements('td')[0]).toContainText('my South');
+    expect(tester.subscriptions[1].elements('td')[0]).toContainText('another South');
   });
 
   it('should display an empty list', () => {

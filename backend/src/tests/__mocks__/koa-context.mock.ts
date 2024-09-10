@@ -9,12 +9,15 @@ import RegistrationServiceMock from './service/registration-service.mock';
 import NorthConnectorConfigServiceMock from './service/north-connector-config-service.mock';
 import SouthConnectorConfigServiceMock from './service/south-connector-config-service.mock';
 import ScanModeServiceMock from './service/scan-mode-service.mock';
+import SubscriptionServiceMock from './service/subscription-service.mock';
 
 /**
  * Create a mock object for Koa Context
  */
 export default jest.fn().mockImplementation(() => ({
   app: {
+    scanModeService: new ScanModeServiceMock(),
+    subscriptionService: new SubscriptionServiceMock(),
     repositoryService: new RepositoryServiceMock(),
     reloadService: new ReloadServiceMock(),
     encryptionService: new EncryptionServiceMock(),
@@ -22,7 +25,7 @@ export default jest.fn().mockImplementation(() => ({
     northConnectorConfigService: new NorthConnectorConfigServiceMock(),
     southService: new SouthServiceMock(),
     southConnectorConfigService: new SouthConnectorConfigServiceMock(),
-    scanModeService: new ScanModeServiceMock(),
+
     oibusService: new OIBusServiceMock(),
     registrationService: new RegistrationServiceMock(),
     engineMetricsService: new EngineMetricsServiceMock(),

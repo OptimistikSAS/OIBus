@@ -11,7 +11,6 @@ import { EventEmitter } from 'node:events';
 import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 import DeferredPromise from '../service/deferred-promise';
 import { OIBusContent, OIBusError, OIBusRawContent, OIBusTimeValue, OIBusTimeValueContent } from '../../../shared/model/engine.model';
-import { SubscriptionDTO } from '../../../shared/model/subscription.model';
 import { DateTime } from 'luxon';
 import { PassThrough } from 'node:stream';
 import { ReadStream } from 'node:fs';
@@ -19,6 +18,7 @@ import path from 'node:path';
 import NorthConnectorMetricsService from '../service/north-connector-metrics.service';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { dirSize, validateCronExpression } from '../service/utils';
+import { Subscription } from '../model/subscription.model';
 
 /**
  * Class NorthConnector : provides general attributes and methods for north connectors.
@@ -44,7 +44,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
   private valueCacheService: ValueCacheService;
   private fileCacheService: FileCacheService;
   protected metricsService: NorthConnectorMetricsService | null = null;
-  private subscribedTo: Array<SubscriptionDTO> = [];
+  private subscribedTo: Array<Subscription> = [];
   private cacheSize = 0;
 
   private fileBeingSent: string | null = null;
@@ -156,7 +156,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
   }
 
   updateConnectorSubscription() {
-    this.subscribedTo = this.repositoryService.subscriptionRepository.list(this.connector.id);
+    this.subscribedTo = this.repositoryService.subscriptionRepository.listSouthByNorth(this.connector.id);
   }
 
   /**
@@ -416,7 +416,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
    * If subscribedTo is not defined or an empty array, the subscription is true.
    */
   isSubscribed(southId: string): boolean {
-    return this.subscribedTo.length === 0 || this.subscribedTo.includes(southId);
+    return this.subscribedTo.length === 0 || this.subscribedTo.some(subscription => subscription.south.id === southId);
   }
 
   /**
