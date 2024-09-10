@@ -1,29 +1,16 @@
 import SouthMetricsRepositoryMock from '../repository/south-metrics-repository.mock';
 import NorthMetricsRepositoryMock from '../repository/north-metrics-repository.mock';
 import ScanModeRepositoryMock from '../repository/scan-mode-repository.mock';
+import SubscriptionRepositoryMock from '../repository/subscription-repository.mock';
+import SouthConnectorRepositoryMock from '../repository/south-connector-repository.mock';
+import NorthConnectorRepositoryMock from '../repository/north-connector-repository.mock';
 
 /**
  * Create a mock object for Repository Service
  */
 export default jest.fn().mockImplementation(() => ({
-  northConnectorRepository: {
-    findAll: jest.fn(),
-    findById: jest.fn(),
-    create: jest.fn(),
-    update: jest.fn(),
-    stop: jest.fn(),
-    start: jest.fn(),
-    delete: jest.fn()
-  },
-  southConnectorRepository: {
-    findAll: jest.fn(),
-    findById: jest.fn(),
-    create: jest.fn(),
-    update: jest.fn(),
-    stop: jest.fn(),
-    start: jest.fn(),
-    delete: jest.fn()
-  },
+  northConnectorRepository: new NorthConnectorRepositoryMock(),
+  southConnectorRepository: new SouthConnectorRepositoryMock(),
   southItemRepository: {
     search: jest.fn(),
     list: jest.fn(),
@@ -141,14 +128,7 @@ export default jest.fn().mockImplementation(() => ({
     updateVersion: jest.fn(),
     createDefault: jest.fn()
   },
-  subscriptionRepository: {
-    list: jest.fn(),
-    listSubscribedNorth: jest.fn(),
-    checkSubscription: jest.fn(),
-    create: jest.fn(),
-    delete: jest.fn(),
-    deleteAllByNorthConnector: jest.fn()
-  },
+  subscriptionRepository: new SubscriptionRepositoryMock(),
   southMetricsRepository: new SouthMetricsRepositoryMock(),
   northMetricsRepository: new NorthMetricsRepositoryMock(),
   southCacheRepository: {
