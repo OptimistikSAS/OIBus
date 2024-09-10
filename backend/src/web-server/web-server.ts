@@ -26,6 +26,7 @@ import OianalyticsRegistrationService from '../service/oia/oianalytics-registrat
 import SouthConnectorConfigService from '../service/south-connector-config.service';
 import ScanModeService from '../service/scan-mode.service';
 import NorthConnectorConfigService from '../service/north-connector-config.service';
+import SubscriptionService from '../service/subscription.service';
 
 /**
  * Class Server - Provides the web client and establish socket connections.
@@ -42,6 +43,7 @@ export default class WebServer {
     port: number,
     private readonly encryptionService: EncryptionService,
     private readonly scanModeService: ScanModeService,
+    private readonly subscriptionService: SubscriptionService,
     private readonly reloadService: ReloadService,
     private readonly registrationService: OianalyticsRegistrationService,
     private readonly repositoryService: RepositoryService,
@@ -95,6 +97,7 @@ export default class WebServer {
       oibus(
         this._id,
         this.scanModeService,
+        this.subscriptionService,
         this.repositoryService,
         this.reloadService,
         this.registrationService,
