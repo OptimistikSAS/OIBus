@@ -4,6 +4,37 @@ import { NorthConnectorDTO } from '../../../../shared/model/north-connector.mode
 import { SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import { SubscriptionDTO } from '../../../../shared/model/subscription.model';
 import { Subscription } from '../../model/subscription.model';
+import { IPFilterCommandDTO, IPFilterDTO } from '../../../../shared/model/ip-filter.model';
+import { IPFilter } from '../../model/ip-filter.model';
+
+const ipFilterCommandDTO: IPFilterCommandDTO = {
+  address: '1.1.1.1',
+  description: 'my first ip filter'
+};
+const ipFilters: Array<IPFilter> = [
+  {
+    id: 'ipFilterId1',
+    address: '192.168.1.1',
+    description: 'my first ip filter'
+  },
+  {
+    id: 'ipFilterId2',
+    address: '*',
+    description: 'All ips'
+  }
+];
+const ipFiltersDTO: Array<IPFilterDTO> = [
+  {
+    id: 'ipFilterId1',
+    address: '192.168.1.1',
+    description: 'my first ip filter'
+  },
+  {
+    id: 'ipFilterId2',
+    address: '*',
+    description: 'All ips'
+  }
+];
 
 const scanModeCommandDTO: ScanModeCommandDTO = {
   name: 'my new scan mode',
@@ -154,6 +185,11 @@ const southConnectors: Array<SouthConnectorDTO> = [
 ];
 
 export default Object.freeze({
+  ipFilters: {
+    list: ipFilters,
+    dto: ipFiltersDTO,
+    command: ipFilterCommandDTO
+  },
   scanMode: {
     list: scanModes,
     dto: scanModesDTO,
