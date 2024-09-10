@@ -35,7 +35,7 @@ async function recreateCommandTable(knex: Knex): Promise<void> {
     `
   );
   await knex.schema.raw(`INSERT INTO temporary_table
-                         SELECT *
+                         SELECT *, ''
                          FROM ${COMMANDS_TABLE}`);
   await knex.schema.raw(`DROP TABLE ${COMMANDS_TABLE}`);
   await knex.schema.raw(`ALTER TABLE temporary_table

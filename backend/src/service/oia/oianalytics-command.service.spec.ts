@@ -2,7 +2,7 @@ import RepositoryService from '../repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/service/repository-service.mock';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import OIAnalyticsMessageServiceMock from '../../tests/__mocks__/service/oia/oianalytics-message-service.mock';
-import ScanModeConfigServiceMock from '../../tests/__mocks__/service/scan-mode-config-service.mock';
+import ScanModeServiceMock from '../../tests/__mocks__/service/scan-mode-service.mock';
 import SouthConnectorConfigServiceMock from '../../tests/__mocks__/service/south-connector-config-service.mock';
 import NorthConnectorConfigServiceMock from '../../tests/__mocks__/service/north-connector-config-service.mock';
 import OianalyticsCommandClientMock from '../../tests/__mocks__/service/oia/oianalytics-command-client.mock';
@@ -24,7 +24,7 @@ import {
   OIBusUpdateVersionCommand
 } from '../../../../shared/model/command.model';
 import ReloadService from '../reload.service';
-import ScanModeConfigService from '../scan-mode-config.service';
+import ScanModeService from '../scan-mode.service';
 import SouthConnectorConfigService from '../south-connector-config.service';
 import NorthConnectorConfigService from '../north-connector-config.service';
 import OIAnalyticsCommandClient from './oianalytics-command.client';
@@ -40,7 +40,7 @@ const repositoryService: RepositoryService = new RepositoryServiceMock('', '');
 const reloadService: ReloadService = new ReloadServiceMock('', '');
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const oianalyticsMessageService: OIAnalyticsMessageService = new OIAnalyticsMessageServiceMock('', '');
-const scanModeConfigService: ScanModeConfigService = new ScanModeConfigServiceMock('', '');
+const scanModeService: ScanModeService = new ScanModeServiceMock('', '');
 const southConnectorConfigService: SouthConnectorConfigService = new SouthConnectorConfigServiceMock('', '');
 const northConnectorConfigService: NorthConnectorConfigService = new NorthConnectorConfigServiceMock('', '');
 const oianalyticsCommandClient: OIAnalyticsCommandClient = new OianalyticsCommandClientMock('', '');
@@ -86,7 +86,7 @@ describe('Command service with running command', () => {
       reloadService,
       encryptionService,
       oianalyticsMessageService,
-      scanModeConfigService,
+      scanModeService,
       southConnectorConfigService,
       northConnectorConfigService,
       oianalyticsCommandClient,
@@ -187,7 +187,7 @@ describe('Command service without command', () => {
       reloadService,
       encryptionService,
       oianalyticsMessageService,
-      scanModeConfigService,
+      scanModeService,
       southConnectorConfigService,
       northConnectorConfigService,
       oianalyticsCommandClient,
@@ -321,7 +321,7 @@ describe('Command service with running command', () => {
       reloadService,
       encryptionService,
       oianalyticsMessageService,
-      scanModeConfigService,
+      scanModeService,
       southConnectorConfigService,
       northConnectorConfigService,
       oianalyticsCommandClient,
