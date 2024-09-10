@@ -25,7 +25,7 @@ export default class ScanModeRepository {
     return this.database
       .prepare(query)
       .all()
-      .map(result => this.toScanMode(result as ScanMode));
+      .map(result => this.toScanMode(result));
   }
 
   findById(id: string): ScanMode | null {

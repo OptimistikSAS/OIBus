@@ -5,7 +5,7 @@ import { fakeAsync, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { IpFilterService } from '../../services/ip-filter.service';
-import { IpFilterCommandDTO, IpFilterDTO } from '../../../../../shared/model/ip-filter.model';
+import { IPFilterCommandDTO, IPFilterDTO } from '../../../../../shared/model/ip-filter.model';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
 class EditIpFilterModalComponentTester extends ComponentTester<EditIpFilterModalComponent> {
@@ -83,12 +83,12 @@ describe('EditIpFilterModalComponent', () => {
 
       const createdProxy = {
         id: 'id1'
-      } as IpFilterDTO;
+      } as IPFilterDTO;
       ipFilterService.create.and.returnValue(of(createdProxy));
 
       tester.save.click();
 
-      const expectedCommand: IpFilterCommandDTO = {
+      const expectedCommand: IPFilterCommandDTO = {
         address: '127.0.0.1',
         description: 'desc'
       };
@@ -104,7 +104,7 @@ describe('EditIpFilterModalComponent', () => {
   });
 
   describe('edit mode', () => {
-    const ipFilterToUpdate: IpFilterDTO = {
+    const ipFilterToUpdate: IPFilterDTO = {
       id: 'id1',
       address: '127.0.0.1',
       description: 'My IP Filter 1'
@@ -139,7 +139,7 @@ describe('EditIpFilterModalComponent', () => {
 
       tester.save.click();
 
-      const expectedCommand: IpFilterCommandDTO = {
+      const expectedCommand: IPFilterCommandDTO = {
         address: '192.168.0.1',
         description: 'A longer and updated description of my IP filter'
       };
