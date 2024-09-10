@@ -9,7 +9,7 @@ import NorthService from '../service/north.service';
 import EngineMetricsService from '../service/engine-metrics.service';
 import OianalyticsRegistrationService from '../service/oia/oianalytics-registration.service';
 import SouthConnectorConfigService from '../service/south-connector-config.service';
-import ScanModeConfigService from '../service/scan-mode-config.service';
+import ScanModeService from '../service/scan-mode.service';
 import NorthConnectorConfigService from '../service/north-connector-config.service';
 
 interface KoaRequest<RequestBody> extends Request {
@@ -18,6 +18,7 @@ interface KoaRequest<RequestBody> extends Request {
 
 export interface KoaApplication extends Koa {
   id: string;
+  scanModeService: ScanModeService;
   repositoryService: RepositoryService;
   ipFilters: Array<string>;
   southService: SouthService;
@@ -27,7 +28,7 @@ export interface KoaApplication extends Koa {
   engineMetricsService: EngineMetricsService;
   reloadService: ReloadService;
   encryptionService: EncryptionService;
-  scanModeConfigService: ScanModeConfigService;
+  scanModeConfigService: ScanModeService;
   southConnectorConfigService: SouthConnectorConfigService;
   northConnectorConfigService: NorthConnectorConfigService;
   logger: pino.Logger;
