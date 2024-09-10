@@ -7,5 +7,8 @@ module.exports = {
   moduleFileExtensions: ['ts', 'tsx', 'js', 'json', 'node'],
   "moduleNameMapper": {
     "oracledb": "<rootDir>/tests/__mocks__/oracledb.mock.ts"
-  }
+  },
+  coveragePathIgnorePatterns: [
+    'db/*'  // Ignore a specific file
+  ]
 }
