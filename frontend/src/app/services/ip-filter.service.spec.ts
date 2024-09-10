@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { IpFilterService } from './ip-filter.service';
-import { IpFilterCommandDTO, IpFilterDTO } from '../../../../shared/model/ip-filter.model';
+import { IPFilterCommandDTO, IPFilterDTO } from '../../../../shared/model/ip-filter.model';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('IpFilterService', () => {
@@ -20,7 +20,7 @@ describe('IpFilterService', () => {
   afterEach(() => http.verify());
 
   it('should get all IP filters', () => {
-    let expectedIpFilters: Array<IpFilterDTO> = [];
+    let expectedIpFilters: Array<IPFilterDTO> = [];
     service.list().subscribe(ipFilters => (expectedIpFilters = ipFilters));
 
     http.expectOne('/api/ip-filters').flush([{ name: 'IP filter 1' }, { name: 'IP filter 2' }]);
@@ -29,8 +29,8 @@ describe('IpFilterService', () => {
   });
 
   it('should get an IP filter', () => {
-    let expectedIpFilter: IpFilterDTO | null = null;
-    const ipFilter = { id: 'id1' } as IpFilterDTO;
+    let expectedIpFilter: IPFilterDTO | null = null;
+    const ipFilter = { id: 'id1' } as IPFilterDTO;
 
     service.get('id1').subscribe(c => (expectedIpFilter = c));
 
@@ -40,7 +40,7 @@ describe('IpFilterService', () => {
 
   it('should create an IP filter', () => {
     let done = false;
-    const command: IpFilterCommandDTO = {
+    const command: IPFilterCommandDTO = {
       address: '127.0.0.1',
       description: 'a test ip filter'
     };
@@ -54,7 +54,7 @@ describe('IpFilterService', () => {
 
   it('should update an IP filter', () => {
     let done = false;
-    const command: IpFilterCommandDTO = {
+    const command: IPFilterCommandDTO = {
       address: '127.0.0.1',
       description: 'a test ip filter'
     };
