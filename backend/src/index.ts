@@ -27,6 +27,7 @@ import OIAnalyticsCommandClient from './service/oia/oianalytics-command.client';
 import ScanModeService from './service/scan-mode.service';
 import NorthConnectorConfigService from './service/north-connector-config.service';
 import SubscriptionService from './service/subscription.service';
+import IPFilterService from './service/ip-filter.service';
 
 const CONFIG_DATABASE = 'oibus.db';
 const CRYPTO_DATABASE = 'crypto.db';
@@ -183,6 +184,12 @@ const LOG_DB_NAME = 'logs.db';
     oianalyticsMessageService,
     engine
   );
+  const ipFilterService = new IPFilterService(
+    new JoiValidator(),
+    repositoryService.ipFilterRepository,
+    oianalyticsMessageService,
+    proxyServer
+  );
 
   const southConnectorConfigService = new SouthConnectorConfigService(
     new JoiValidator(),
@@ -235,6 +242,7 @@ const LOG_DB_NAME = 'logs.db';
     encryptionService,
     scanModeService,
     subscriptionService,
+    ipFilterService,
     reloadService,
     registrationService,
     repositoryService,

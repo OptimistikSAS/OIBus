@@ -6,6 +6,7 @@ import testData from './test-data';
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import { SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import { ScanMode } from '../../model/scan-mode.model';
+import { IPFilter } from '../../model/ip-filter.model';
 
 export const TEST_DATABASE = path.resolve('src', 'tests', 'oibus-test.db');
 
@@ -50,6 +51,8 @@ const populateDatabase = async () => {
     },
     useNullAsDefault: true
   });
+  await createIpFilter(testDatabase, testData.ipFilters.list[0]);
+  await createIpFilter(testDatabase, testData.ipFilters.list[1]);
   await createScanMode(testDatabase, testData.scanMode.list[0]);
   await createScanMode(testDatabase, testData.scanMode.list[1]);
   await createNorth(testDatabase, testData.north.list[0]);
@@ -101,6 +104,16 @@ const createSouth = async (database: knex.Knex, south: SouthConnectorDTO) => {
       shared_connection: south.sharedConnection
     })
     .into('south_connectors');
+};
+
+const createIpFilter = async (database: knex.Knex, ipFilter: IPFilter) => {
+  await database
+    .insert({
+      id: ipFilter.id,
+      description: ipFilter.description,
+      address: ipFilter.address
+    })
+    .into('ip_filters');
 };
 
 const createScanMode = async (database: knex.Knex, scanMode: ScanMode) => {

@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Injectable, inject } from '@angular/core';
-import { IpFilterCommandDTO, IpFilterDTO } from '../../../../shared/model/ip-filter.model';
+import { IPFilterCommandDTO, IPFilterDTO } from '../../../../shared/model/ip-filter.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on IP filters
@@ -15,24 +15,24 @@ export class IpFilterService {
   /**
    * Get the IP filters
    */
-  list(): Observable<Array<IpFilterDTO>> {
-    return this.http.get<Array<IpFilterDTO>>(`/api/ip-filters`);
+  list(): Observable<Array<IPFilterDTO>> {
+    return this.http.get<Array<IPFilterDTO>>(`/api/ip-filters`);
   }
 
   /**
    * Get one IP filter
    * @param ipFilterId - the ID of the IP filter
    */
-  get(ipFilterId: string): Observable<IpFilterDTO> {
-    return this.http.get<IpFilterDTO>(`/api/ip-filters/${ipFilterId}`);
+  get(ipFilterId: string): Observable<IPFilterDTO> {
+    return this.http.get<IPFilterDTO>(`/api/ip-filters/${ipFilterId}`);
   }
 
   /**
    * Create a new IP filter
    * @param command - the new IP filter
    */
-  create(command: IpFilterCommandDTO): Observable<IpFilterDTO> {
-    return this.http.post<IpFilterDTO>(`/api/ip-filters`, command);
+  create(command: IPFilterCommandDTO): Observable<IPFilterDTO> {
+    return this.http.post<IPFilterDTO>(`/api/ip-filters`, command);
   }
 
   /**
@@ -40,7 +40,7 @@ export class IpFilterService {
    * @param ipFilterId - the ID of the IP filter
    * @param command - the new values of the selected proxy
    */
-  update(ipFilterId: string, command: IpFilterCommandDTO) {
+  update(ipFilterId: string, command: IPFilterCommandDTO) {
     return this.http.put<void>(`/api/ip-filters/${ipFilterId}`, command);
   }
 

@@ -10,6 +10,7 @@ import NorthConnectorConfigServiceMock from './service/north-connector-config-se
 import SouthConnectorConfigServiceMock from './service/south-connector-config-service.mock';
 import ScanModeServiceMock from './service/scan-mode-service.mock';
 import SubscriptionServiceMock from './service/subscription-service.mock';
+import IpFilterServiceMock from './service/ip-filter-service.mock';
 
 /**
  * Create a mock object for Koa Context
@@ -18,6 +19,7 @@ export default jest.fn().mockImplementation(() => ({
   app: {
     scanModeService: new ScanModeServiceMock(),
     subscriptionService: new SubscriptionServiceMock(),
+    ipFilterService: new IpFilterServiceMock(),
     repositoryService: new RepositoryServiceMock(),
     reloadService: new ReloadServiceMock(),
     encryptionService: new EncryptionServiceMock(),
@@ -36,6 +38,9 @@ export default jest.fn().mockImplementation(() => ({
       warn: jest.fn(),
       error: jest.fn(),
       child: jest.fn()
+    },
+    ipFilters: {
+      whiteList: []
     }
   },
   request: {},
