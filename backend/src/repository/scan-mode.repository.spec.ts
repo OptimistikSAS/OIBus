@@ -1,137 +1,78 @@
 import ScanModeRepository from './scan-mode.repository';
-import { ScanModeCommandDTO, ScanModeDTO } from '../../../shared/model/scan-mode.model';
-import SqliteDatabaseMock, { run, all, get } from '../tests/__mocks__/database.mock';
-import { generateRandomId } from '../service/utils';
 import { Database } from 'better-sqlite3';
+import { generateRandomId } from '../service/utils';
+import { emptyDatabase, initDatabase } from '../tests/utils/test-utils';
+import testData from '../tests/utils/test-data';
 
-jest.mock('../tests/__mocks__/database.mock');
-jest.mock('../service/utils', () => ({
-  generateRandomId: jest.fn(() => '123456')
-}));
+jest.mock('../service/utils');
 
-let database: Database;
+let oibusDatabase: Database;
 let repository: ScanModeRepository;
-describe('Scan mode repository', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    database = new SqliteDatabaseMock();
-    run.mockReturnValue({ lastInsertRowid: 1 });
+
+describe('Scan Mode Repository', () => {
+  beforeAll(async () => {
+    oibusDatabase = await initDatabase();
+  });
+
+  afterAll(() => {
+    emptyDatabase();
   });
 
   describe('with empty repository', () => {
-    beforeEach(() => {
-      all.mockReturnValue([]);
-      database.prepare = jest.fn().mockReturnValue({
-        run,
-        get,
-        all
-      });
-      repository = new ScanModeRepository(database);
-    });
-
     it('should properly init scan mode table', () => {
-      expect(database.prepare).toHaveBeenCalledWith('INSERT INTO scan_modes (id, name, description, cron) VALUES (?, ?, ?, ?);');
-      expect(run).toHaveBeenCalledWith('123456', 'Every second', 'Trigger every second', '* * * * * *');
-      expect(run).toHaveBeenCalledWith('123456', 'Every 10 seconds', 'Trigger every 10 seconds', '*/10 * * * * *');
-      expect(run).toHaveBeenCalledWith('123456', 'Every minute', 'Trigger every minute', '0 * * * * *');
-      expect(run).toHaveBeenCalledWith('123456', 'Every 10 minutes', 'Trigger every 10 minutes', '0 */10 * * * *');
-      expect(run).toHaveBeenCalledWith('123456', 'Every hour', 'Trigger every hour', '0 0 * * * *');
-      expect(run).toHaveBeenCalledWith('123456', 'Every 24 hours', 'Trigger every 24 hours', '0 0 0 * * *');
-      expect(run).toHaveBeenCalledWith('subscription', 'Subscription', 'Used for subscription', '');
-      expect(run).toHaveBeenCalledTimes(7);
+      (generateRandomId as jest.Mock)
+        .mockReturnValueOnce('id1')
+        .mockReturnValueOnce('id2')
+        .mockReturnValueOnce('id3')
+        .mockReturnValueOnce('id4')
+        .mockReturnValueOnce('id5')
+        .mockReturnValueOnce('id6');
+
+      repository = new ScanModeRepository(oibusDatabase);
+      expect(generateRandomId).toHaveBeenCalledTimes(6);
+      expect(repository.findAll().length).toEqual(7);
     });
   });
 
   describe('with non-empty repository', () => {
     beforeEach(() => {
-      all.mockReturnValue([
-        {
-          id: 'id1',
-          name: 'scanMode1',
-          description: 'my first scanMode',
-          cron: '* * * * * *'
-        },
-        {
-          id: 'id2',
-          name: 'scanMode2',
-          description: 'my second scanMode',
-          cron: '* * * * * *'
-        }
-      ]);
-      database.prepare = jest.fn().mockReturnValue({
-        run,
-        get,
-        all
-      });
-      repository = new ScanModeRepository(database);
+      jest.clearAllMocks();
+      repository = new ScanModeRepository(oibusDatabase);
     });
 
     it('should properly get all scan modes', () => {
-      const expectedValue: Array<ScanModeDTO> = [
-        {
-          id: 'id1',
-          name: 'scanMode1',
-          description: 'my first scanMode',
-          cron: '* * * * * *'
-        },
-        {
-          id: 'id2',
-          name: 'scanMode2',
-          description: 'my second scanMode',
-          cron: '* * * * * *'
-        }
-      ];
-      all.mockReturnValueOnce(expectedValue);
-      const scanModes = repository.findAll();
-      expect(database.prepare).toHaveBeenCalledWith('SELECT id, name, description, cron FROM scan_modes;');
-      expect(scanModes).toEqual(expectedValue);
+      expect(repository.findAll().length).toEqual(7);
     });
 
     it('should properly get a scan mode', () => {
-      const expectedValue: ScanModeDTO = {
-        id: 'id1',
-        name: 'scanMode1',
-        description: 'my first scanMode',
-        cron: '* * * * * *'
-      };
-      get.mockReturnValueOnce(expectedValue);
-      const scanMode = repository.findById('id1');
-      expect(database.prepare).toHaveBeenCalledWith('SELECT id, name, description, cron FROM scan_modes WHERE id = ?;');
-      expect(get).toHaveBeenCalledWith('id1');
-      expect(scanMode).toEqual(expectedValue);
+      expect(repository.findById('id1')).toEqual({
+        name: 'Every second',
+        description: 'Trigger every second',
+        cron: '* * * * * *',
+        id: 'id1'
+      });
+      expect(repository.findById('subscription')).toEqual({
+        name: 'Subscription',
+        description: 'Used for subscription',
+        cron: '',
+        id: 'subscription'
+      });
+      expect(repository.findById('badId')).toEqual(null);
     });
 
     it('should create a scan mode', () => {
-      run.mockReturnValueOnce({ lastInsertRowid: 1 });
-
-      const command: ScanModeCommandDTO = {
-        name: 'scanMode1',
-        description: 'my first scanMode',
-        cron: '* * * * * *'
-      };
-      repository.create(command);
-      expect(generateRandomId).toHaveBeenCalledWith(6);
-      expect(database.prepare).toHaveBeenCalledWith('INSERT INTO scan_modes (id, name, description, cron) VALUES (?, ?, ?, ?);');
-      expect(run).toHaveBeenCalledWith('123456', command.name, command.description, command.cron);
-
-      expect(database.prepare).toHaveBeenCalledWith('SELECT id, name, description, cron FROM scan_modes WHERE ROWID = ?;');
+      (generateRandomId as jest.Mock).mockReturnValueOnce('newId');
+      expect(repository.create(testData.scanMode.command)).toEqual({ ...testData.scanMode.command, id: 'newId' });
     });
 
     it('should update a scan mode', () => {
-      const command: ScanModeCommandDTO = {
-        name: 'scanMode1',
-        description: 'my first scanMode',
-        cron: '* * * * * *'
-      };
-      repository.update('id1', command);
-      expect(database.prepare).toHaveBeenCalledWith('UPDATE scan_modes SET name = ?, description = ?, cron = ? WHERE id = ?;');
-      expect(run).toHaveBeenCalledWith(command.name, command.description, command.cron, 'id1');
+      repository.update('newId', testData.scanMode.command);
+      expect(repository.findById('newId')).toEqual({ ...testData.scanMode.command, id: 'newId' });
     });
 
     it('should delete a scan mode', () => {
       repository.delete('id1');
-      expect(database.prepare).toHaveBeenCalledWith('DELETE FROM scan_modes WHERE id = ?;');
-      expect(run).toHaveBeenCalledWith('id1');
+      expect(repository.findById('id1')).toEqual(null);
     });
   });
 });

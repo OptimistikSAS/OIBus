@@ -30,7 +30,7 @@ import ReloadService from '../reload.service';
 import SouthConnectorConfigService from '../south-connector-config.service';
 import { SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import OIAnalyticsCommandClient from './oianalytics-command.client';
-import ScanModeConfigService from '../scan-mode-config.service';
+import ScanModeService from '../scan-mode.service';
 import NorthConnectorConfigService from '../north-connector-config.service';
 
 const DOWNLOAD_TIMEOUT = 600_000;
@@ -48,7 +48,7 @@ export default class OIAnalyticsCommandService {
     private reloadService: ReloadService,
     private encryptionService: EncryptionService,
     private oianalyticsMessageService: OIAnalyticsMessageService,
-    private scanModeConfigService: ScanModeConfigService,
+    private scanModeService: ScanModeService,
     private southConnectorConfigService: SouthConnectorConfigService,
     private northConnectorConfigService: NorthConnectorConfigService,
     private oianalyticsCommandClient: OIAnalyticsCommandClient,
@@ -248,17 +248,17 @@ export default class OIAnalyticsCommandService {
   }
 
   private async executeCreateScanModeCommand(command: OIBusCreateScanModeCommand) {
-    await this.scanModeConfigService.create(command.commandContent);
+    await this.scanModeService.create(command.commandContent);
     await this.completeCommand(command.id, 'Scan mode created successfully');
   }
 
   private async executeUpdateScanModeCommand(command: OIBusUpdateScanModeCommand) {
-    await this.scanModeConfigService.update(command.scanModeId, command.commandContent);
+    await this.scanModeService.update(command.scanModeId, command.commandContent);
     await this.completeCommand(command.id, 'Scan mode updated successfully');
   }
 
   private async executeDeleteScanModeCommand(command: OIBusDeleteScanModeCommand) {
-    await this.scanModeConfigService.delete(command.scanModeId);
+    await this.scanModeService.delete(command.scanModeId);
     await this.completeCommand(command.id, 'Scan mode deleted successfully');
   }
 
