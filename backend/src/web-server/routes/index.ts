@@ -65,7 +65,7 @@ router.put('/api/users/:id/change-password', (ctx: KoaContext<any, any>) => user
 router.delete('/api/users/:id', (ctx: KoaContext<any, any>) => userController.delete(ctx));
 
 router.get('/api/scan-modes', (ctx: KoaContext<any, any>) => scanModeController.findAll(ctx));
-router.post('/api/scan-modes/verify', (ctx: KoaContext<any, any>) => scanModeController.verifyScanMode(ctx));
+router.post('/api/scan-modes/verify', (ctx: KoaContext<any, any>) => scanModeController.verifyCron(ctx));
 router.get('/api/scan-modes/:id', (ctx: KoaContext<any, any>) => scanModeController.findById(ctx));
 router.post('/api/scan-modes', (ctx: KoaContext<any, any>) => scanModeController.create(ctx));
 router.put('/api/scan-modes/:id', (ctx: KoaContext<any, any>) => scanModeController.update(ctx));
