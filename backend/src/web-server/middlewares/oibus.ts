@@ -12,6 +12,7 @@ import SouthConnectorConfigService from '../../service/south-connector-config.se
 import ScanModeService from '../../service/scan-mode.service';
 import NorthConnectorConfigService from '../../service/north-connector-config.service';
 import SubscriptionService from '../../service/subscription.service';
+import IPFilterService from '../../service/ip-filter.service';
 
 /**
  * OIBus middleware for Koa
@@ -20,6 +21,7 @@ const oibus = (
   id: string,
   scanModeService: ScanModeService,
   subscriptionService: SubscriptionService,
+  ipFilterService: IPFilterService,
   repositoryService: RepositoryService,
   reloadService: ReloadService,
   registrationService: OianalyticsRegistrationService,
@@ -36,6 +38,7 @@ const oibus = (
     ctx.app.id = id;
     ctx.app.scanModeService = scanModeService;
     ctx.app.subscriptionService = subscriptionService;
+    ctx.app.ipFilterService = ipFilterService;
     ctx.app.repositoryService = repositoryService;
     ctx.app.reloadService = reloadService;
     ctx.app.registrationService = registrationService;

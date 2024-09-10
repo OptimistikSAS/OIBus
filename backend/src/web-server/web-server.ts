@@ -27,6 +27,7 @@ import SouthConnectorConfigService from '../service/south-connector-config.servi
 import ScanModeService from '../service/scan-mode.service';
 import NorthConnectorConfigService from '../service/north-connector-config.service';
 import SubscriptionService from '../service/subscription.service';
+import IPFilterService from '../service/ip-filter.service';
 
 /**
  * Class Server - Provides the web client and establish socket connections.
@@ -44,6 +45,7 @@ export default class WebServer {
     private readonly encryptionService: EncryptionService,
     private readonly scanModeService: ScanModeService,
     private readonly subscriptionService: SubscriptionService,
+    private readonly ipFilterService: IPFilterService,
     private readonly reloadService: ReloadService,
     private readonly registrationService: OianalyticsRegistrationService,
     private readonly repositoryService: RepositoryService,
@@ -86,18 +88,21 @@ export default class WebServer {
   async init(): Promise<void> {
     this.app = new Koa() as KoaApplication;
 
-    this.app.ipFilters = [
-      '127.0.0.1',
-      '::1',
-      '::ffff:127.0.0.1',
-      ...this.repositoryService.ipFilterRepository.findAll().map(filter => filter.address)
-    ];
+    this.app.ipFilters = {
+      whiteList: [
+        '127.0.0.1',
+        '::1',
+        '::ffff:127.0.0.1',
+        ...this.repositoryService.ipFilterRepository.findAll().map(filter => filter.address)
+      ]
+    };
 
     this.app.use(
       oibus(
         this._id,
         this.scanModeService,
         this.subscriptionService,
+        this.ipFilterService,
         this.repositoryService,
         this.reloadService,
         this.registrationService,

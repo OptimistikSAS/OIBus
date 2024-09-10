@@ -12,6 +12,7 @@ import SouthConnectorConfigService from '../service/south-connector-config.servi
 import ScanModeService from '../service/scan-mode.service';
 import NorthConnectorConfigService from '../service/north-connector-config.service';
 import SubscriptionService from '../service/subscription.service';
+import IPFilterService from '../service/ip-filter.service';
 
 interface KoaRequest<RequestBody> extends Request {
   body?: RequestBody;
@@ -21,8 +22,11 @@ export interface KoaApplication extends Koa {
   id: string;
   scanModeService: ScanModeService;
   subscriptionService: SubscriptionService;
+  ipFilterService: IPFilterService;
   repositoryService: RepositoryService;
-  ipFilters: Array<string>;
+  ipFilters: {
+    whiteList: Array<string>;
+  };
   southService: SouthService;
   northService: NorthService;
   oibusService: OIBusService;

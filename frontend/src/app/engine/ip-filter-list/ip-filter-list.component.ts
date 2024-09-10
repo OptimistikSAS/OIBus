@@ -6,7 +6,7 @@ import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 import { TranslateModule } from '@ngx-translate/core';
 import { IpFilterService } from '../../services/ip-filter.service';
-import { IpFilterDTO } from '../../../../../shared/model/ip-filter.model';
+import { IPFilterDTO } from '../../../../../shared/model/ip-filter.model';
 import { EditIpFilterModalComponent } from '../edit-ip-filter-modal/edit-ip-filter-modal.component';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
@@ -19,7 +19,7 @@ import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
   styleUrl: './ip-filter-list.component.scss'
 })
 export class IpFilterListComponent implements OnInit {
-  ipFilters: Array<IpFilterDTO> = [];
+  ipFilters: Array<IPFilterDTO> = [];
 
   constructor(
     private confirmationService: ConfirmationService,
@@ -37,7 +37,7 @@ export class IpFilterListComponent implements OnInit {
   /**
    * Open a modal to edit an IP filter
    */
-  editIpFilter(ipFilter: IpFilterDTO) {
+  editIpFilter(ipFilter: IPFilterDTO) {
     const modalRef = this.modalService.open(EditIpFilterModalComponent);
     const component: EditIpFilterModalComponent = modalRef.componentInstance;
     component.prepareForEdition(ipFilter);
@@ -58,7 +58,7 @@ export class IpFilterListComponent implements OnInit {
    * Refresh the IP filter list when the IP filter is edited
    */
   private refreshAfterEditIpFilterModalClosed(modalRef: Modal<any>, mode: 'created' | 'updated') {
-    modalRef.result.subscribe((ipFilter: IpFilterDTO) => {
+    modalRef.result.subscribe((ipFilter: IPFilterDTO) => {
       this.ipFilterService.list().subscribe(ipFilters => {
         this.ipFilters = ipFilters;
       });
@@ -71,7 +71,7 @@ export class IpFilterListComponent implements OnInit {
   /**
    * Delete an IP Filter by its ID
    */
-  deleteIpFilter(ipFilter: IpFilterDTO) {
+  deleteIpFilter(ipFilter: IPFilterDTO) {
     this.confirmationService
       .confirm({
         messageKey: 'engine.ip-filter.confirm-deletion',
