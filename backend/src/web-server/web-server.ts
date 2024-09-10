@@ -24,7 +24,7 @@ import NorthService from '../service/north.service';
 import EngineMetricsService from '../service/engine-metrics.service';
 import OianalyticsRegistrationService from '../service/oia/oianalytics-registration.service';
 import SouthConnectorConfigService from '../service/south-connector-config.service';
-import ScanModeConfigService from '../service/scan-mode-config.service';
+import ScanModeService from '../service/scan-mode.service';
 import NorthConnectorConfigService from '../service/north-connector-config.service';
 
 /**
@@ -41,6 +41,7 @@ export default class WebServer {
     id: string,
     port: number,
     private readonly encryptionService: EncryptionService,
+    private readonly scanModeService: ScanModeService,
     private readonly reloadService: ReloadService,
     private readonly registrationService: OianalyticsRegistrationService,
     private readonly repositoryService: RepositoryService,
@@ -48,7 +49,6 @@ export default class WebServer {
     private readonly northService: NorthService,
     private readonly oibusService: OIBusService,
     private readonly engineMetricsService: EngineMetricsService,
-    private readonly scanModeConfigService: ScanModeConfigService,
     private readonly southConnectorConfigService: SouthConnectorConfigService,
     private readonly northConnectorConfigService: NorthConnectorConfigService,
     private readonly ignoreIpFilters: boolean,
@@ -95,6 +95,7 @@ export default class WebServer {
     this.app.use(
       oibus(
         this._id,
+        this.scanModeService,
         this.repositoryService,
         this.reloadService,
         this.registrationService,
@@ -103,7 +104,6 @@ export default class WebServer {
         this.northService,
         this.oibusService,
         this.engineMetricsService,
-        this.scanModeConfigService,
         this.southConnectorConfigService,
         this.northConnectorConfigService,
         this.logger

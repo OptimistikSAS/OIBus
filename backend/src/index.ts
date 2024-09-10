@@ -24,7 +24,7 @@ import OIAnalyticsConfigurationClient from './service/oia/oianalytics-configurat
 import SouthConnectorConfigService from './service/south-connector-config.service';
 import JoiValidator from './web-server/controllers/validators/joi.validator';
 import OIAnalyticsCommandClient from './service/oia/oianalytics-command.client';
-import ScanModeConfigService from './service/scan-mode-config.service';
+import ScanModeService from './service/scan-mode.service';
 import NorthConnectorConfigService from './service/north-connector-config.service';
 
 const CONFIG_DATABASE = 'oibus.db';
@@ -167,12 +167,12 @@ const LOG_DB_NAME = 'logs.db';
     proxyServer
   );
 
-  const scanModeConfigService = new ScanModeConfigService(
+  const scanModeService = new ScanModeService(
     new JoiValidator(),
     repositoryService.scanModeRepository,
     repositoryService.southCacheRepository,
-    reloadService,
-    oianalyticsMessageService
+    oianalyticsMessageService,
+    engine
   );
 
   const southConnectorConfigService = new SouthConnectorConfigService(
@@ -202,7 +202,7 @@ const LOG_DB_NAME = 'logs.db';
     reloadService,
     encryptionService,
     oianalyticsMessageService,
-    scanModeConfigService,
+    scanModeService,
     southConnectorConfigService,
     northConnectorConfigService,
     commandClient,
@@ -224,6 +224,7 @@ const LOG_DB_NAME = 'logs.db';
     oibusSettings.id,
     oibusSettings.port,
     encryptionService,
+    scanModeService,
     reloadService,
     registrationService,
     repositoryService,
@@ -231,7 +232,6 @@ const LOG_DB_NAME = 'logs.db';
     northService,
     oibusService,
     engineMetricsService,
-    scanModeConfigService,
     southConnectorConfigService,
     northConnectorConfigService,
     ignoreIpFilters,
