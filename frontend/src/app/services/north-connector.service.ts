@@ -9,7 +9,7 @@ import {
   NorthType,
   NorthValueFiles
 } from '../../../../shared/model/north-connector.model';
-import { OIBusSubscription, SubscriptionDTO } from '../../../../shared/model/subscription.model';
+import { SubscriptionDTO } from '../../../../shared/model/subscription.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on North connectors
@@ -65,7 +65,7 @@ export class NorthConnectorService {
    */
   create(
     command: NorthConnectorCommandDTO<any>,
-    subscriptions: Array<OIBusSubscription>,
+    subscriptions: Array<SubscriptionDTO>,
     duplicateId: string
   ): Observable<NorthConnectorDTO<any>> {
     const params: { [key: string]: string | string[] } = {};
@@ -85,8 +85,8 @@ export class NorthConnectorService {
   update(
     northId: string,
     command: NorthConnectorCommandDTO<any>,
-    subscriptions: Array<OIBusSubscription>,
-    subscriptionsToDelete: Array<OIBusSubscription>
+    subscriptions: Array<SubscriptionDTO>,
+    subscriptionsToDelete: Array<SubscriptionDTO>
   ): Observable<void> {
     return this.http.put<void>(`/api/north/${northId}`, { north: command, subscriptions, subscriptionsToDelete });
   }
@@ -109,14 +109,14 @@ export class NorthConnectorService {
   /**
    * Create a new North connector subscription
    */
-  createSubscription(northId: string, southId: SubscriptionDTO): Observable<void> {
+  createSubscription(northId: string, southId: string): Observable<void> {
     return this.http.post<void>(`/api/north/${northId}/subscriptions/${southId}`, null);
   }
 
   /**
    * Delete the selected North connector subscription
    */
-  deleteSubscription(northId: string, southId: SubscriptionDTO): Observable<void> {
+  deleteSubscription(northId: string, southId: string): Observable<void> {
     return this.http.delete<void>(`/api/north/${northId}/subscriptions/${southId}`);
   }
 

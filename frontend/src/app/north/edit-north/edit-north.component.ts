@@ -22,8 +22,8 @@ import { ModalService } from '../../shared/modal.service';
 import { CertificateDTO } from '../../../../../shared/model/certificate.model';
 import { CertificateService } from '../../services/certificate.service';
 import { NorthSubscriptionsComponent } from '../north-subscriptions/north-subscriptions.component';
-import { OIBusSubscription } from '../../../../../shared/model/subscription.model';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
+import { SubscriptionDTO } from '../../../../../shared/model/subscription.model';
 
 @Component({
   selector: 'oib-edit-north',
@@ -77,8 +77,8 @@ export class EditNorthComponent implements OnInit {
     settings: FormGroup;
   }> | null = null;
 
-  inMemorySubscriptions: Array<OIBusSubscription> = [];
-  inMemorySubscriptionsToDelete: Array<OIBusSubscription> = [];
+  inMemorySubscriptions: Array<SubscriptionDTO> = [];
+  inMemorySubscriptionsToDelete: Array<SubscriptionDTO> = [];
 
   constructor(
     private northConnectorService: NorthConnectorService,
@@ -231,8 +231,8 @@ export class EditNorthComponent implements OnInit {
     subscriptions,
     subscriptionsToDelete
   }: {
-    subscriptions: Array<OIBusSubscription>;
-    subscriptionsToDelete: Array<OIBusSubscription>;
+    subscriptions: Array<SubscriptionDTO>;
+    subscriptionsToDelete: Array<SubscriptionDTO>;
   }) {
     this.inMemorySubscriptions = subscriptions;
     this.inMemorySubscriptionsToDelete = subscriptionsToDelete;

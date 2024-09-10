@@ -394,7 +394,7 @@ export default class OIBusEngine extends BaseEngine {
     await this.startNorth(northId);
   }
 
-  updateNorthConnectorSubscriptions(northId: string) {
+  updateSubscriptions(northId: string) {
     this.northConnectors.get(northId)?.updateConnectorSubscription();
   }
 }

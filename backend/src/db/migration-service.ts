@@ -1,7 +1,7 @@
-import knex, { Knex } from 'knex';
+import knex from 'knex';
 import path from 'node:path';
 
-export async function migrateEntities(dbPath: string): Promise<Knex> {
+export async function migrateEntities(dbPath: string): Promise<void> {
   const knexConfig = knex({
     client: 'better-sqlite3',
     connection: {
@@ -13,10 +13,10 @@ export async function migrateEntities(dbPath: string): Promise<Knex> {
     }
   });
   await knexConfig.migrate.latest({ directory: path.resolve(__dirname, 'entity-migrations') });
-  return knexConfig;
+  await knexConfig.destroy();
 }
 
-export async function migrateLogsAndMetrics(dbPath: string): Promise<Knex> {
+export async function migrateLogsAndMetrics(dbPath: string): Promise<void> {
   const knexConfig = knex({
     client: 'better-sqlite3',
     connection: {
@@ -28,10 +28,10 @@ export async function migrateLogsAndMetrics(dbPath: string): Promise<Knex> {
     }
   });
   await knexConfig.migrate.latest({ directory: path.resolve(__dirname, 'logs-and-metrics-migrations') });
-  return knexConfig;
+  await knexConfig.destroy();
 }
 
-export async function migrateCrypto(dbPath: string): Promise<Knex> {
+export async function migrateCrypto(dbPath: string): Promise<void> {
   const knexConfig = knex({
     client: 'better-sqlite3',
     connection: {
@@ -43,10 +43,10 @@ export async function migrateCrypto(dbPath: string): Promise<Knex> {
     }
   });
   await knexConfig.migrate.latest({ directory: path.resolve(__dirname, 'crypto-migrations') });
-  return knexConfig;
+  await knexConfig.destroy();
 }
 
-export async function migrateSouthCache(dbPath: string): Promise<Knex> {
+export async function migrateSouthCache(dbPath: string): Promise<void> {
   const knexConfig = knex({
     client: 'better-sqlite3',
     connection: {
@@ -58,5 +58,5 @@ export async function migrateSouthCache(dbPath: string): Promise<Knex> {
     }
   });
   await knexConfig.migrate.latest({ directory: path.resolve(__dirname, 'south-cache-migrations') });
-  return knexConfig;
+  await knexConfig.destroy();
 }

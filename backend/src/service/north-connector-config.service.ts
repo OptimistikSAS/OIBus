@@ -75,7 +75,7 @@ export default class NorthConnectorConfigService {
   async delete(northConnectorId: string) {
     const northConnector = this.northConnectorRepository.findById(northConnectorId);
     if (northConnector) {
-      this.subscriptionRepository.deleteAllByNorthConnector(northConnectorId);
+      this.subscriptionRepository.deleteAllByNorth(northConnectorId);
       await this.reloadService.onDeleteNorth(northConnectorId);
       this.messageService.createFullConfigMessage();
     } else {

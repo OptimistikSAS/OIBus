@@ -367,19 +367,19 @@ describe('NorthConnector enabled', () => {
   });
 
   it('should check if North is subscribed to all South', async () => {
-    (repositoryService.subscriptionRepository.list as jest.Mock).mockReturnValue([]);
+    (repositoryService.subscriptionRepository.listSouthByNorth as jest.Mock).mockReturnValue([]);
     await north.start();
     expect(north.isSubscribed('southId')).toBeTruthy();
   });
 
   it('should check if North is subscribed to South', async () => {
-    (repositoryService.subscriptionRepository.list as jest.Mock).mockReturnValue(['southId']);
+    (repositoryService.subscriptionRepository.listSouthByNorth as jest.Mock).mockReturnValue([{ south: { id: 'southId' } }]);
     await north.start();
     expect(north.isSubscribed('southId')).toBeTruthy();
   });
 
   it('should check if North is not subscribed to South', async () => {
-    (repositoryService.subscriptionRepository.list as jest.Mock).mockReturnValue(['southId1']);
+    (repositoryService.subscriptionRepository.listSouthByNorth as jest.Mock).mockReturnValue([{ south: { id: 'southId' } }]);
     await north.start();
     expect(north.isSubscribed('southId2')).toBeFalsy();
   });

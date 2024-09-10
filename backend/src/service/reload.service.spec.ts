@@ -232,7 +232,7 @@ describe('reload service', () => {
   });
 
   it('should delete south', async () => {
-    (repositoryService.subscriptionRepository.listSubscribedNorth as jest.Mock).mockReturnValueOnce(['northId1', 'northId2']);
+    (repositoryService.subscriptionRepository.listNorthBySouth as jest.Mock).mockReturnValueOnce(['northId1', 'northId2']);
 
     (repositoryService.southConnectorRepository.findById as jest.Mock).mockReturnValueOnce({ name: 'southName', id: 'southId' });
 
@@ -240,7 +240,7 @@ describe('reload service', () => {
 
     expect(repositoryService.subscriptionRepository.delete).toHaveBeenNthCalledWith(1, 'northId1', 'southId');
     expect(repositoryService.subscriptionRepository.delete).toHaveBeenNthCalledWith(2, 'northId2', 'southId');
-    expect(oibusEngine.updateNorthConnectorSubscriptions).toHaveBeenCalledTimes(2);
+    expect(oibusEngine.updateSubscriptions).toHaveBeenCalledTimes(2);
 
     expect(repositoryService.southConnectorRepository.findById).toHaveBeenCalledWith('southId');
     expect(oibusEngine.deleteSouth).toHaveBeenCalledWith('southId', 'southName');
@@ -581,13 +581,13 @@ describe('reload service', () => {
   it('should create North subscription', async () => {
     await service.onCreateNorthSubscription('northId', 'southId');
     expect(repositoryService.subscriptionRepository.create).toHaveBeenCalledWith('northId', 'southId');
-    expect(oibusEngine.updateNorthConnectorSubscriptions).toHaveBeenCalledWith('northId');
+    expect(oibusEngine.updateSubscriptions).toHaveBeenCalledWith('northId');
   });
 
   it('should delete North subscription', async () => {
     await service.onDeleteNorthSubscription('northId', 'southId');
     expect(repositoryService.subscriptionRepository.delete).toHaveBeenCalledWith('northId', 'southId');
-    expect(oibusEngine.updateNorthConnectorSubscriptions).toHaveBeenCalledWith('northId');
+    expect(oibusEngine.updateSubscriptions).toHaveBeenCalledWith('northId');
   });
 
   it('should retrieve error file from north', async () => {
