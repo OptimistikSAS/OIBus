@@ -1,6 +1,6 @@
-import { ScanModeCommandDTO, ScanModeDTO } from '../../../shared/model/scan-mode.model';
 import { generateRandomId } from '../service/utils';
 import { Database } from 'better-sqlite3';
+import { ScanMode } from '../model/scan-mode.model';
 
 export const SCAN_MODES_TABLE = 'scan_modes';
 
@@ -20,25 +20,28 @@ export default class ScanModeRepository {
     }
   }
 
-  findAll(): Array<ScanModeDTO> {
+  findAll(): Array<ScanMode> {
     const query = `SELECT id, name, description, cron FROM ${SCAN_MODES_TABLE};`;
-    return this.database.prepare(query).all() as Array<ScanModeDTO>;
+    return this.database
+      .prepare(query)
+      .all()
+      .map(result => this.toScanMode(result as ScanMode));
   }
 
-  findById(id: string): ScanModeDTO | null {
+  findById(id: string): ScanMode | null {
     const query = `SELECT id, name, description, cron FROM ${SCAN_MODES_TABLE} WHERE id = ?;`;
-    return this.database.prepare(query).get(id) as ScanModeDTO | null;
+    const result = this.database.prepare(query).get(id);
+    return result ? this.toScanMode(result) : null;
   }
 
-  create(command: ScanModeCommandDTO, id = generateRandomId(6)): ScanModeDTO {
+  create(command: Omit<ScanMode, 'id'>, id = generateRandomId(6)): ScanMode {
     const insertQuery = `INSERT INTO ${SCAN_MODES_TABLE} (id, name, description, cron) VALUES (?, ?, ?, ?);`;
     const result = this.database.prepare(insertQuery).run(id, command.name, command.description, command.cron);
-
     const query = `SELECT id, name, description, cron FROM ${SCAN_MODES_TABLE} WHERE ROWID = ?;`;
-    return this.database.prepare(query).get(result.lastInsertRowid) as ScanModeDTO;
+    return this.toScanMode(this.database.prepare(query).get(result.lastInsertRowid));
   }
 
-  update(id: string, command: ScanModeCommandDTO): void {
+  update(id: string, command: Omit<ScanMode, 'id'>): void {
     const query = `UPDATE ${SCAN_MODES_TABLE} SET name = ?, description = ?, cron = ? WHERE id = ?;`;
     this.database.prepare(query).run(command.name, command.description, command.cron, id);
   }
@@ -46,5 +49,14 @@ export default class ScanModeRepository {
   delete(id: string): void {
     const query = `DELETE FROM ${SCAN_MODES_TABLE} WHERE id = ?;`;
     this.database.prepare(query).run(id);
+  }
+
+  private toScanMode(result: any): ScanMode {
+    return {
+      id: result.id,
+      name: result.name,
+      description: result.description,
+      cron: result.cron
+    };
   }
 }
