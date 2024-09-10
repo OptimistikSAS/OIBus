@@ -4,6 +4,7 @@ import ScanModeRepository from './scan-mode.repository';
 import { emptyDatabase, initDatabase } from '../tests/utils/test-utils';
 import testData from '../tests/utils/test-data';
 import { generateRandomId } from '../service/utils';
+import IpFilterRepository from './ip-filter.repository';
 
 jest.mock('../service/utils');
 
@@ -79,6 +80,40 @@ describe('Repository with populated database', () => {
     });
 
     it('should delete a scan mode', () => {
+      expect(repository.findById('newId')).not.toEqual(null);
+      repository.delete('newId');
+      expect(repository.findById('newId')).toEqual(null);
+    });
+  });
+
+  describe('IP Filter', () => {
+    let repository: IpFilterRepository;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      repository = new IpFilterRepository(database);
+    });
+
+    it('findAll() should properly get all IP filters', () => {
+      expect(repository.findAll()).toEqual(testData.ipFilters.list);
+    });
+
+    it('findById() should properly get an IP filter', () => {
+      expect(repository.findById(testData.ipFilters.list[0].id)).toEqual(testData.ipFilters.list[0]);
+      expect(repository.findById('badId')).toEqual(null);
+    });
+
+    it('create() should create an IP filter', () => {
+      (generateRandomId as jest.Mock).mockReturnValueOnce('newId');
+      expect(repository.create(testData.ipFilters.command)).toEqual({ ...testData.ipFilters.command, id: 'newId' });
+    });
+
+    it('update() should update an IP filter', () => {
+      repository.update('newId', testData.ipFilters.command);
+      expect(repository.findById('newId')).toEqual({ ...testData.ipFilters.command, id: 'newId' });
+    });
+
+    it('delete() should delete an IP filter', () => {
       expect(repository.findById('newId')).not.toEqual(null);
       repository.delete('newId');
       expect(repository.findById('newId')).toEqual(null);
