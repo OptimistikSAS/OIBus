@@ -172,7 +172,7 @@ export default class ReloadService {
   }
 
   async onDeleteSouth(southId: string): Promise<void> {
-    const subscribedNorthIds = this.repositoryService.subscriptionRepository.listSubscribedNorth(southId);
+    const subscribedNorthIds = this.repositoryService.subscriptionRepository.listNorthBySouth(southId);
     await Promise.allSettled(subscribedNorthIds.map(northId => this.onDeleteNorthSubscription(northId, southId)));
 
     const { name, id } = this.repositoryService.southConnectorRepository.findById(southId)!;
@@ -296,12 +296,12 @@ export default class ReloadService {
 
   async onCreateNorthSubscription(northId: string, southId: string): Promise<void> {
     this.repositoryService.subscriptionRepository.create(northId, southId);
-    this.oibusEngine.updateNorthConnectorSubscriptions(northId);
+    this.oibusEngine.updateSubscriptions(northId);
   }
 
   async onDeleteNorthSubscription(northId: string, southId: string): Promise<void> {
     this.repositoryService.subscriptionRepository.delete(northId, southId);
-    this.oibusEngine.updateNorthConnectorSubscriptions(northId);
+    this.oibusEngine.updateSubscriptions(northId);
   }
 
   async onCreateHistoryQuery(

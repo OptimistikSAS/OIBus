@@ -11,6 +11,7 @@ import OianalyticsRegistrationService from '../service/oia/oianalytics-registrat
 import SouthConnectorConfigService from '../service/south-connector-config.service';
 import ScanModeService from '../service/scan-mode.service';
 import NorthConnectorConfigService from '../service/north-connector-config.service';
+import SubscriptionService from '../service/subscription.service';
 
 interface KoaRequest<RequestBody> extends Request {
   body?: RequestBody;
@@ -19,6 +20,7 @@ interface KoaRequest<RequestBody> extends Request {
 export interface KoaApplication extends Koa {
   id: string;
   scanModeService: ScanModeService;
+  subscriptionService: SubscriptionService;
   repositoryService: RepositoryService;
   ipFilters: Array<string>;
   southService: SouthService;
