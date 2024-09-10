@@ -4,6 +4,7 @@ import ScanModeRepositoryMock from '../repository/scan-mode-repository.mock';
 import SubscriptionRepositoryMock from '../repository/subscription-repository.mock';
 import SouthConnectorRepositoryMock from '../repository/south-connector-repository.mock';
 import NorthConnectorRepositoryMock from '../repository/north-connector-repository.mock';
+import IpFilterRepositoryMock from '../repository/ip-filter-repository.mock';
 
 /**
  * Create a mock object for Repository Service
@@ -57,13 +58,7 @@ export default jest.fn().mockImplementation(() => ({
     disable: jest.fn(),
     createAndUpdateAll: jest.fn()
   },
-  ipFilterRepository: {
-    findAll: jest.fn(),
-    findById: jest.fn(),
-    create: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn()
-  },
+  ipFilterRepository: new IpFilterRepositoryMock(),
   scanModeRepository: new ScanModeRepositoryMock(),
   certificateRepository: {
     findAll: jest.fn(),

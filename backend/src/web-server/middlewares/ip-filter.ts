@@ -7,7 +7,7 @@ import { KoaContext } from '../koa';
 const ipFilter = (ignoreIpFilters: boolean) => async (ctx: KoaContext<any, any>, next: () => Promise<any>) => {
   const allowed =
     ignoreIpFilters ||
-    ctx.app.ipFilters.some(ipToTest => {
+    ctx.app.ipFilters.whiteList.some(ipToTest => {
       const formattedRegext = `^${ipToTest.replace(/\\/g, '\\\\').replace(/\./g, '\\.').replace(/\*$/g, '.*')}$`;
       return new RegExp(formattedRegext).test(ctx.request.ip);
     });
