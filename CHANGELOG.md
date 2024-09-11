@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.1](https://github.com/OptimistikSAS/OIBus/compare/v3.4.0...v3.4.1) (2024-09-11)
+
+
+### Bug Fixes
+
+* **south-pi:** add startTime and endTime in history query debug log ([b8c5bc5](https://github.com/OptimistikSAS/OIBus/commit/b8c5bc5d76ff12148ff95cbf0ea10713977f4608))
+
 ## [3.4.0](https://github.com/OptimistikSAS/OIBus/compare/v3.3.14...v3.4.0) (2024-07-22)
 
 
