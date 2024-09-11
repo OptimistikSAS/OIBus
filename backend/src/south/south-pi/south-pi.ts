@@ -87,7 +87,7 @@ export default class SouthPI extends SouthConnector implements QueriesHistory {
   async historyQuery(items: Array<SouthConnectorItemDTO<SouthPIItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
     try {
       let updatedStartTime = startTime;
-      this.logger.debug(`Requesting ${items.length} items`);
+      this.logger.debug(`Requesting ${items.length} items between ${startTime} and ${endTime}`);
       const startRequest = DateTime.now().toMillis();
       const headers: Record<string, string> = {};
       headers['Content-Type'] = 'application/json';
