@@ -185,9 +185,14 @@ export default class SouthOPCUA
   /**
    * Get values from the OPCUA server between startTime and endTime and write them into the cache.
    */
-  async historyQuery(items: Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
+  async historyQuery(
+    items: Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>>,
+    startTime: Instant,
+    endTime: Instant,
+    startTimeFromCache: Instant
+  ): Promise<Instant> {
     try {
-      let maxTimestamp = DateTime.fromISO(startTime).toMillis();
+      let maxTimestamp = DateTime.fromISO(startTimeFromCache).toMillis();
       if (!this.session) {
         this.logger.error('OPCUA session not set. The connector cannot read values');
         return startTime;

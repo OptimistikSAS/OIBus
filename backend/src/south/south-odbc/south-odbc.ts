@@ -195,8 +195,13 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
    * Get entries from the database between startTime and endTime (if used in the SQL query)
    * and write them into a CSV file and send it to the engine.
    */
-  async historyQuery(items: Array<SouthConnectorItemDTO<SouthODBCItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
-    let updatedStartTime = startTime;
+  async historyQuery(
+    items: Array<SouthConnectorItemDTO<SouthODBCItemSettings>>,
+    startTime: Instant,
+    endTime: Instant,
+    startTimeFromCache: Instant
+  ): Promise<Instant> {
+    let updatedStartTime = startTimeFromCache;
 
     for (const item of items) {
       if (this.connector.settings.remoteAgent) {

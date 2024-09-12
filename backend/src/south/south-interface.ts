@@ -10,7 +10,15 @@ export interface QueriesLastPoint {
 }
 
 export interface QueriesHistory {
-  historyQuery(items: Array<SouthConnectorItemDTO>, startTime: Instant, endTime: Instant): Promise<Instant>;
+  /**
+   *
+   * @param items
+   * @param startTime - the start of the current interval being requested (when the original interval is split)
+   * @param endTime - the end of the current interval
+   * @param startTimeFromCache - the start of the history query (may differ of start time if split in intervals). The origin start
+   * time is used to not skip interval in case history query throw an error instead of retrieving values
+   */
+  historyQuery(items: Array<SouthConnectorItemDTO>, startTime: Instant, endTime: Instant, startTimeFromCache: Instant): Promise<Instant>;
 }
 
 export interface QueriesSubscription {

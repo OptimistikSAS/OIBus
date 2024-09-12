@@ -212,7 +212,7 @@ describe('SouthODBC odbc driver with authentication', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     south.queryOdbcData = jest.fn().mockReturnValueOnce('2023-02-01T00:00:00.000Z').mockReturnValue('2023-02-01T00:00:00.000Z');
 
-    await south.historyQuery(items, startTime, nowDateString);
+    await south.historyQuery(items, startTime, nowDateString, startTime);
     expect(south.queryOdbcData).toHaveBeenCalledTimes(3);
     expect(south.queryOdbcData).toHaveBeenCalledWith(items[0], startTime, nowDateString);
     expect(south.queryOdbcData).toHaveBeenCalledWith(items[1], '2023-02-01T00:00:00.000Z', nowDateString);
@@ -728,7 +728,7 @@ describe('SouthODBC odbc remote with authentication', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     south.queryRemoteAgentData = jest.fn().mockReturnValueOnce('2023-02-01T00:00:00.000Z').mockReturnValue('2023-02-01T00:00:00.000Z');
 
-    await south.historyQuery(items, startTime, nowDateString);
+    await south.historyQuery(items, startTime, nowDateString, startTime);
     expect(south.queryRemoteAgentData).toHaveBeenCalledTimes(3);
     expect(south.queryRemoteAgentData).toHaveBeenCalledWith(items[0], startTime, nowDateString);
     expect(south.queryRemoteAgentData).toHaveBeenCalledWith(items[1], '2023-02-01T00:00:00.000Z', nowDateString);
