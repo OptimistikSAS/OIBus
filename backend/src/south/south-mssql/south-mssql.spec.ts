@@ -224,7 +224,7 @@ describe('SouthMSSQL with authentication', () => {
       .mockReturnValue(startTime);
     (utils.convertDateTimeToInstant as jest.Mock).mockImplementation(instant => instant);
 
-    await south.historyQuery(items, startTime, nowDateString);
+    await south.historyQuery(items, startTime, nowDateString, startTime);
     expect(utils.persistResults).toHaveBeenCalledTimes(2);
     expect(south.queryData).toHaveBeenCalledTimes(3);
     expect(south.queryData).toHaveBeenCalledWith(items[0], '2020-01-01T00:00:00.000Z', '2020-02-02T02:02:02.222Z');

@@ -122,9 +122,10 @@ export default class SouthPostgreSQL
   async historyQuery(
     items: Array<SouthConnectorItemDTO<SouthPostgreSQLItemSettings>>,
     startTime: Instant,
-    endTime: Instant
+    endTime: Instant,
+    startTimeFromCache: Instant
   ): Promise<Instant> {
-    let updatedStartTime = startTime;
+    let updatedStartTime = startTimeFromCache;
 
     for (const item of items) {
       const startRequest = DateTime.now().toMillis();

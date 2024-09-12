@@ -117,8 +117,13 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
    * Get entries from the database between startTime and endTime (if used in the SQL query)
    * and write them into a CSV file and send it to the engine.
    */
-  async historyQuery(items: Array<SouthConnectorItemDTO<SouthMySQLItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
-    let updatedStartTime = startTime;
+  async historyQuery(
+    items: Array<SouthConnectorItemDTO<SouthMySQLItemSettings>>,
+    startTime: Instant,
+    endTime: Instant,
+    startTimeFromCache: Instant
+  ): Promise<Instant> {
+    let updatedStartTime = startTimeFromCache;
 
     for (const item of items) {
       const startRequest = DateTime.now().toMillis();

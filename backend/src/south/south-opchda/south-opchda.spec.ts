@@ -268,7 +268,7 @@ describe('South OPCHDA', () => {
         })
       );
 
-    const result = await south.historyQuery(items, startTime, endTime);
+    const result = await south.historyQuery(items, startTime, endTime, startTime);
 
     expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/opc/${configuration.id}/read`, {
       method: 'PUT',
@@ -328,7 +328,7 @@ describe('South OPCHDA', () => {
         })
       );
 
-    await south.historyQuery(items, startTime, endTime);
+    await south.historyQuery(items, startTime, endTime, startTime);
     expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 400: bad request`);
     expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 500`);
   });
@@ -341,10 +341,10 @@ describe('South OPCHDA', () => {
       throw new Error('bad request');
     });
 
-    await expect(south.historyQuery(items, startTime, endTime)).rejects.toThrow(new Error('bad request'));
+    await expect(south.historyQuery(items, startTime, endTime, startTime)).rejects.toThrow(new Error('bad request'));
     repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue({ ...configuration, enabled: false });
 
     await south.start();
-    await expect(south.historyQuery(items, startTime, endTime)).rejects.toThrow(new Error('bad request'));
+    await expect(south.historyQuery(items, startTime, endTime, startTime)).rejects.toThrow(new Error('bad request'));
   });
 });

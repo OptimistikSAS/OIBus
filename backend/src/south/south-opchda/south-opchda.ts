@@ -92,9 +92,14 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
    * Get entries from the database between startTime and endTime (if used in the SQL query)
    * and write them into the cache and send it to the engine.
    */
-  async historyQuery(items: Array<SouthConnectorItemDTO<SouthOPCHDAItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
+  async historyQuery(
+    items: Array<SouthConnectorItemDTO<SouthOPCHDAItemSettings>>,
+    startTime: Instant,
+    endTime: Instant,
+    startTimeFromCache: Instant
+  ): Promise<Instant> {
     try {
-      let updatedStartTime = startTime;
+      let updatedStartTime = startTimeFromCache;
       const itemsByAggregates = new Map<
         Aggregate,
         Map<

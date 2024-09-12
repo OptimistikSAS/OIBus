@@ -239,7 +239,7 @@ describe('SouthSlims with body', () => {
         maxInstant: '2020-03-01T00:00:00.000Z'
       }));
 
-    await south.historyQuery(items, startTime, nowDateString);
+    await south.historyQuery(items, startTime, nowDateString, startTime);
     expect(utils.persistResults).toHaveBeenCalledTimes(1);
     expect(south.queryData).toHaveBeenCalledTimes(4);
     expect(south.parseData).toHaveBeenCalledTimes(4);

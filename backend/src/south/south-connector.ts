@@ -341,29 +341,23 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
         const southCache = this.cacheService!.getSouthCacheScanMode(this.connector.id, scanModeId, item.id, startTime);
         // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
         // requests. For example only one hour if maxReadInterval is 3600 (in s)
-        const intervals = generateIntervals(
-          DateTime.fromISO(southCache.maxInstant).minus(this.connector.history.overlap).toUTC().toISO()!,
-          endTime,
-          this.connector.history.maxReadInterval
-        );
+        const startTimeFromCache = DateTime.fromISO(southCache.maxInstant).minus(this.connector.history.overlap).toUTC().toISO()!;
+        const intervals = generateIntervals(startTimeFromCache, endTime, this.connector.history.maxReadInterval);
         this.logIntervals(intervals);
-        await this.queryIntervals(intervals, [item], southCache, startTime);
+        await this.queryIntervals(intervals, [item], southCache, startTimeFromCache);
         if (index !== itemsToRead.length - 1) {
           await delay(this.connector.history.readDelay);
         }
       }
     } else {
       const southCache = this.cacheService!.getSouthCacheScanMode(this.connector.id, scanModeId, 'all', startTime);
+      const startTimeFromCache = DateTime.fromISO(southCache.maxInstant).minus(this.connector.history.overlap).toUTC().toISO()!;
       // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
       // requests. For example only one hour if maxReadInterval is 3600 (in s)
-      const intervals = generateIntervals(
-        DateTime.fromISO(southCache.maxInstant).minus(this.connector.history.overlap).toUTC().toISO()!,
-        endTime,
-        this.connector.history.maxReadInterval
-      );
+      const intervals = generateIntervals(startTimeFromCache, endTime, this.connector.history.maxReadInterval);
       this.logIntervals(intervals);
 
-      await this.queryIntervals(intervals, itemsToRead, southCache, startTime);
+      await this.queryIntervals(intervals, itemsToRead, southCache, startTimeFromCache);
     }
     const stoppedMetrics = structuredClone(this.metricsService!.metrics);
     stoppedMetrics.historyMetrics.running = false;
@@ -375,22 +369,22 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
     intervals: Array<Interval>,
     items: Array<SouthConnectorItemDTO<I>>,
     southCache: SouthCache,
-    startTime: Instant
+    startTimeFromCache: Instant
   ) {
     this.metricsService!.updateMetrics(this.connector.id, {
       ...this.metricsService!.metrics,
       historyMetrics: {
         running: true,
-        intervalProgress: this.calculateIntervalProgress(intervals, 0, startTime)
+        intervalProgress: this.calculateIntervalProgress(intervals, 0, startTimeFromCache)
       }
     });
 
     for (const [index, interval] of intervals.entries()) {
       // @ts-ignore
-      const lastInstantRetrieved = await this.historyQuery(items, interval.start, interval.end);
+      const lastInstantRetrieved = await this.historyQuery(items, interval.start, interval.end, startTimeFromCache);
 
       if (lastInstantRetrieved > southCache.maxInstant) {
-        // With overlap, it may return a lastInstantRetrieved inferio
+        // With overlap, it may return a lastInstantRetrieved inferior
         this.cacheService!.createOrUpdateCacheScanMode({
           southId: this.connector.id,
           scanModeId: southCache.scanModeId,
@@ -403,7 +397,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
         ...this.metricsService!.metrics,
         historyMetrics: {
           running: true,
-          intervalProgress: this.calculateIntervalProgress(intervals, index, startTime),
+          intervalProgress: this.calculateIntervalProgress(intervals, index, startTimeFromCache),
           currentIntervalStart: interval.start,
           currentIntervalEnd: interval.end,
           currentIntervalNumber: index + 1,

@@ -434,7 +434,7 @@ describe('SouthOPCUA', () => {
     south.addValues = jest.fn();
     await south.start();
 
-    await south.historyQuery([items[0], items[1], items[2]], nowDateString, nowDateString);
+    await south.historyQuery([items[0], items[1], items[2]], nowDateString, nowDateString, nowDateString);
 
     expect(south.addValues).toHaveBeenCalledWith([
       {
@@ -492,7 +492,7 @@ describe('SouthOPCUA', () => {
     south.addValues = jest.fn();
     await south.start();
 
-    await south.historyQuery([items[0], items[1]], nowDateString, nowDateString);
+    await south.historyQuery([items[0], items[1]], nowDateString, nowDateString, nowDateString);
 
     expect(logger.error).toHaveBeenCalledWith('Error while reading history: not ok');
     expect(logger.error).toHaveBeenCalledWith('No result found in response');
@@ -529,6 +529,7 @@ describe('SouthOPCUA', () => {
     await south.historyQuery(
       [items[0], items[0], items[0], items[0], items[0], items[0], items[0], items[0], items[0], items[0], items[0]],
       nowDateString,
+      nowDateString,
       nowDateString
     );
 
@@ -552,7 +553,7 @@ describe('SouthOPCUA', () => {
     south.addValues = jest.fn();
     await south.start();
 
-    await south.historyQuery([items[0], items[1]], nowDateString, nowDateString);
+    await south.historyQuery([items[0], items[1]], nowDateString, nowDateString, nowDateString);
 
     expect(logger.error).toHaveBeenCalledWith('Error while reading history: not ok');
     expect(logger.error).toHaveBeenCalledWith('No result found in response');
@@ -576,6 +577,7 @@ describe('SouthOPCUA', () => {
       south.historyQuery(
         items.filter(item => item.settings.mode === 'HA'),
         nowDateString,
+        nowDateString,
         nowDateString
       )
     ).rejects.toThrow('opcua read error');
@@ -586,6 +588,7 @@ describe('SouthOPCUA', () => {
     await expect(
       south.historyQuery(
         items.filter(item => item.settings.mode === 'HA'),
+        nowDateString,
         nowDateString,
         nowDateString
       )
@@ -601,7 +604,7 @@ describe('SouthOPCUA', () => {
 
   it('should not query items if session is not set', async () => {
     south.addValues = jest.fn();
-    await south.historyQuery(items, nowDateString, nowDateString);
+    await south.historyQuery(items, nowDateString, nowDateString, nowDateString);
     expect(south.addValues).not.toHaveBeenCalled();
     expect(logger.error).toHaveBeenCalledWith('OPCUA session not set. The connector cannot read values');
   });
