@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.2](https://github.com/OptimistikSAS/OIBus/compare/v3.4.1...v3.4.2) (2024-09-12)
+
+
+### Bug Fixes
+
+* **south:** keep start time from cache as reference on history query error ([17e2b43](https://github.com/OptimistikSAS/OIBus/commit/17e2b4356192078e18916ccdc46ec4a70a66a4d9))
+
 ## [3.4.1](https://github.com/OptimistikSAS/OIBus/compare/v3.4.0...v3.4.1) (2024-09-11)
 
 
