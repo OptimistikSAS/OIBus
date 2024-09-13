@@ -168,7 +168,7 @@ export default class SouthOPCUA
           .toUTC()
           .toISO() as Instant;
         const endTime = DateTime.now().toUTC().toISO() as Instant;
-        content = (await this.getHAValues([item], startTime, endTime, session, true)) as OIBusContent;
+        content = (await this.getHAValues([item], startTime, endTime, startTime, session, true)) as OIBusContent;
       }
       callback(content);
     } catch (error: any) {
@@ -222,13 +222,14 @@ export default class SouthOPCUA
       this.logger.error('OPCUA session not set. The connector cannot read values');
       return startTime;
     }
-    return (await this.getHAValues(items, startTime, endTime, session)) as Instant;
+    return (await this.getHAValues(items, startTime, endTime, startTimeFromCache, session)) as Instant;
   }
 
   async getHAValues(
     items: Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>>,
     startTime: Instant,
     endTime: Instant,
+    startTimeFromCache: Instant,
     session: ClientSession,
     testingItem: boolean = false
   ): Promise<Instant | OIBusContent> {
