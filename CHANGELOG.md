@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.3](https://github.com/OptimistikSAS/OIBus/compare/v3.4.2...v3.4.3) (2024-09-13)
+
+
+### Bug Fixes
+
+* **south-pi:** throw error on history query error to not continue with history query intervals in case of failure ([e6d53b2](https://github.com/OptimistikSAS/OIBus/commit/e6d53b237d9321f6d101bb683fb11e8750399215))
+
 ## [3.4.2](https://github.com/OptimistikSAS/OIBus/compare/v3.4.1...v3.4.2) (2024-09-12)
 
 
