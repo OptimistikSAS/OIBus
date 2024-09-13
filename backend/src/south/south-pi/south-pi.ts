@@ -90,69 +90,61 @@ export default class SouthPI extends SouthConnector implements QueriesHistory {
     endTime: Instant,
     startTimeFromCache: Instant
   ): Promise<Instant> {
-    try {
-      let updatedStartTime = startTimeFromCache;
-      this.logger.debug(`Requesting ${items.length} items between ${startTime} and ${endTime}`);
-      const startRequest = DateTime.now().toMillis();
-      const headers: Record<string, string> = {};
-      headers['Content-Type'] = 'application/json';
-      const fetchOptions = {
-        method: 'PUT',
-        body: JSON.stringify({
-          startTime,
-          endTime,
-          items: items.map(item => ({
-            name: item.name,
-            type: item.settings.type,
-            piPoint: item.settings.piPoint,
-            piQuery: item.settings.piQuery
-          }))
-        }),
-        headers
+    let updatedStartTime = startTimeFromCache;
+    this.logger.debug(`Requesting ${items.length} items between ${startTime} and ${endTime}`);
+    const startRequest = DateTime.now().toMillis();
+    const headers: Record<string, string> = {};
+    headers['Content-Type'] = 'application/json';
+    const fetchOptions = {
+      method: 'PUT',
+      body: JSON.stringify({
+        startTime,
+        endTime,
+        items: items.map(item => ({
+          name: item.name,
+          type: item.settings.type,
+          piPoint: item.settings.piPoint,
+          piQuery: item.settings.piQuery
+        }))
+      }),
+      headers
+    };
+    const response = await fetch(`${this.connector.settings.agentUrl}/api/pi/${this.connector.id}/read`, fetchOptions);
+    if (response.status === 200) {
+      const result: {
+        recordCount: number;
+        content: Array<OIBusDataValue>;
+        logs: Array<string>;
+        maxInstantRetrieved: Instant;
+      } = (await response.json()) as {
+        recordCount: number;
+        content: OIBusDataValue[];
+        logs: string[];
+        maxInstantRetrieved: string;
       };
-      const response = await fetch(`${this.connector.settings.agentUrl}/api/pi/${this.connector.id}/read`, fetchOptions);
-      if (response.status === 200) {
-        const result: {
-          recordCount: number;
-          content: Array<OIBusDataValue>;
-          logs: Array<string>;
-          maxInstantRetrieved: Instant;
-        } = (await response.json()) as {
-          recordCount: number;
-          content: OIBusDataValue[];
-          logs: string[];
-          maxInstantRetrieved: string;
-        };
-        const requestDuration = DateTime.now().toMillis() - startRequest;
+      const requestDuration = DateTime.now().toMillis() - startRequest;
 
-        if (result.logs.length > 0) {
-          for (const log of result.logs) {
-            this.logger.warn(log);
-          }
+      if (result.logs.length > 0) {
+        for (const log of result.logs) {
+          this.logger.warn(log);
         }
-        if (result.content.length > 0) {
-          this.logger.debug(`Found ${result.recordCount} results for ${items.length} items in ${requestDuration} ms`);
-          await this.addValues(result.content);
-          if (result.maxInstantRetrieved > updatedStartTime) {
-            updatedStartTime = result.maxInstantRetrieved;
-          }
-        } else {
-          this.logger.debug(`No result found. Request done in ${requestDuration} ms`);
+      }
+      if (result.content.length > 0) {
+        this.logger.debug(`Found ${result.recordCount} results for ${items.length} items in ${requestDuration} ms`);
+        await this.addValues(result.content);
+        if (result.maxInstantRetrieved > updatedStartTime) {
+          updatedStartTime = result.maxInstantRetrieved;
         }
-      } else if (response.status === 400) {
-        const errorMessage = await response.text();
-        this.logger.error(`Error occurred when querying remote agent with status ${response.status}: ${errorMessage}`);
       } else {
-        this.logger.error(`Error occurred when querying remote agent with status ${response.status}`);
+        this.logger.debug(`No result found. Request done in ${requestDuration} ms`);
       }
-      return updatedStartTime;
-    } catch (error) {
-      await this.disconnect();
-      if (!this.disconnecting && this.connector.enabled) {
-        await this.connect();
-      }
-      throw error;
+    } else if (response.status === 400) {
+      const errorMessage = await response.text();
+      throw new Error(`Error occurred when querying remote agent with status ${response.status}: ${errorMessage}`);
+    } else {
+      throw new Error(`Error occurred when querying remote agent with status ${response.status}`);
     }
+    return updatedStartTime;
   }
 
   async disconnect(): Promise<void> {

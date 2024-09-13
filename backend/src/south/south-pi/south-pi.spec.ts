@@ -49,7 +49,6 @@ const addValues = jest.fn();
 const addFile = jest.fn();
 
 const logger: pino.Logger = new PinoLogger();
-const flushPromises = () => new Promise(jest.requireActual('timers').setImmediate);
 
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
@@ -293,17 +292,15 @@ describe('South PI', () => {
         })
       );
 
-    await south.historyQuery(items, startTime, endTime, startTime);
-    await south.historyQuery(items, startTime, endTime, startTime);
-    expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 400: bad request`);
-    expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 500`);
-
-    south.disconnect();
-    await south.historyQuery(items, startTime, endTime, startTime);
-    await flushPromises();
+    await expect(south.historyQuery(items, startTime, endTime, startTime)).rejects.toThrow(
+      `Error occurred when querying remote agent with status 400: bad request`
+    );
+    await expect(south.historyQuery(items, startTime, endTime, startTime)).rejects.toThrow(
+      `Error occurred when querying remote agent with status 500`
+    );
   });
 
-  it('should manage fetch error', async () => {
+  it('should manage fetch error on connect', async () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
 
