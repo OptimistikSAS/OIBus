@@ -926,7 +926,7 @@ describe('SouthOPCUA', () => {
     const session = { performMessageTransaction } as unknown as ClientSession;
 
     await south.start();
-    await south.getHAValues([items[0]], nowDateString, nowDateString, session, true);
+    await south.getHAValues([items[0]], nowDateString, nowDateString, nowDateString, session, true);
     expect(performMessageTransaction).toHaveBeenCalled();
   });
 });
