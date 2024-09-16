@@ -1,6 +1,6 @@
 import { KoaContext } from '../koa';
 import { SubscriptionDTO } from '../../../../shared/model/subscription.model';
-import { toSubscriptionDTO } from '../../model/subscription.model';
+import { toSubscriptionDTO } from '../../service/subscription.service';
 
 export default class SubscriptionController {
   async findByNorth(ctx: KoaContext<void, Array<SubscriptionDTO>>): Promise<void> {

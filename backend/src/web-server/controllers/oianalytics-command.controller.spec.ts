@@ -1,8 +1,10 @@
 import Joi from 'joi';
 import JoiValidator from './validators/joi.validator';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
-import { CommandSearchParam, OIBusCommandDTO } from '../../../../shared/model/command.model';
+import { CommandSearchParam } from '../../../../shared/model/command.model';
 import OianalyticsCommandController from './oianalytics-command.controller';
+import { createPageFromArray } from '../../../../shared/model/types';
+import testData from '../../tests/utils/test-data';
 
 jest.mock('./validators/joi.validator');
 
@@ -11,21 +13,8 @@ const schema = Joi.object({});
 const commandController = new OianalyticsCommandController(validator, schema);
 
 const ctx = new KoaContextMock();
-const oibusCommand: OIBusCommandDTO = {
-  id: 'id1',
-  type: 'update-version',
-  version: 'v3.2.0',
-  assetId: 'assetId'
-};
-const page = {
-  content: [oibusCommand],
-  size: 10,
-  number: 1,
-  totalElements: 1,
-  totalPages: 1
-};
 
-describe('Command controller', () => {
+describe('OIAnalytics Command controller', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
   });
@@ -38,12 +27,12 @@ describe('Command controller', () => {
       types: ['UPGRADE'],
       status: ['ERRORED']
     };
-    ctx.app.repositoryService.oianalyticsCommandRepository.search.mockReturnValue(page);
+    ctx.app.oIAnalyticsCommandService.search.mockReturnValue(createPageFromArray(testData.oIAnalytics.commands.oIBusList, 25, 1));
 
     await commandController.search(ctx);
 
-    expect(ctx.app.repositoryService.oianalyticsCommandRepository.search).toHaveBeenCalledWith(searchParams, 1);
-    expect(ctx.ok).toHaveBeenCalledWith(page);
+    expect(ctx.app.oIAnalyticsCommandService.search).toHaveBeenCalledWith(searchParams, 1);
+    expect(ctx.ok).toHaveBeenCalledWith(createPageFromArray(testData.oIAnalytics.commands.oIBusList, 25, 1));
   });
 
   it('search() should return commands with default search params', async () => {
@@ -55,11 +44,13 @@ describe('Command controller', () => {
       types: ['UPGRADE'],
       status: ['ERRORED']
     };
-    ctx.app.repositoryService.oianalyticsCommandRepository.search.mockReturnValue(page);
+
+    const page = createPageFromArray(testData.oIAnalytics.commands.oIBusList, 25, 0);
+    ctx.app.oIAnalyticsCommandService.search.mockReturnValueOnce(page);
 
     await commandController.search(ctx);
 
-    expect(ctx.app.repositoryService.oianalyticsCommandRepository.search).toHaveBeenCalledWith(searchParams, 0);
-    expect(ctx.ok).toHaveBeenCalledWith(page);
+    expect(ctx.app.oIAnalyticsCommandService.search).toHaveBeenCalledWith(searchParams, 0);
+    expect(ctx.ok).toHaveBeenCalledWith(createPageFromArray(testData.oIAnalytics.commands.oIBusList, 25, 0));
   });
 });

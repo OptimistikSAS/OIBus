@@ -5,6 +5,7 @@ import SubscriptionRepositoryMock from '../repository/subscription-repository.mo
 import SouthConnectorRepositoryMock from '../repository/south-connector-repository.mock';
 import NorthConnectorRepositoryMock from '../repository/north-connector-repository.mock';
 import IpFilterRepositoryMock from '../repository/ip-filter-repository.mock';
+import CryptoRepositoryMock from '../repository/crypto-repository.mock';
 
 /**
  * Create a mock object for Repository Service
@@ -123,6 +124,7 @@ export default jest.fn().mockImplementation(() => ({
     updateVersion: jest.fn(),
     createDefault: jest.fn()
   },
+  cryptoRepository: new CryptoRepositoryMock(),
   subscriptionRepository: new SubscriptionRepositoryMock(),
   southMetricsRepository: new SouthMetricsRepositoryMock(),
   northMetricsRepository: new NorthMetricsRepositoryMock(),

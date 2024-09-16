@@ -1,6 +1,5 @@
 import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 import RepositoryServiceMock from '../tests/__mocks__/service/repository-service.mock';
-import EngineMetricsServiceMock from '../tests/__mocks__/service/engine-metrics-service.mock';
 import NorthServiceMock from '../tests/__mocks__/service/north-service.mock';
 import SouthServiceMock from '../tests/__mocks__/service/south-service.mock';
 import OibusEngineMock from '../tests/__mocks__/oibus-engine.mock';
@@ -10,10 +9,9 @@ import RepositoryService from './repository.service';
 import SouthService from './south.service';
 import ReloadService from './reload.service';
 import LoggerService from './logger/logger.service';
-import EngineMetricsService from './engine-metrics.service';
 import NorthService from './north.service';
 import OIBusEngine from '../engine/oibus-engine';
-import { EngineSettingsDTO, LogSettings, RegistrationSettingsDTO } from '../../../shared/model/engine.model';
+import { RegistrationSettingsDTO } from '../../../shared/model/engine.model';
 import {
   SouthCache,
   SouthConnectorCommandDTO,
@@ -26,8 +24,6 @@ import { NorthConnectorCommandDTO, NorthConnectorDTO } from '../../../shared/mod
 import { HistoryQueryCommandDTO, HistoryQueryDTO } from '../../../shared/model/history-query.model';
 import HistoryQueryEngine from '../engine/history-query-engine';
 import { ScanModeCommandDTO } from '../../../shared/model/scan-mode.model';
-import HomeMetricsService from './home-metrics.service';
-import HomeMetricsServiceMock from '../tests/__mocks__/service/home-metrics-service.mock';
 import ProxyServer from '../web-server/proxy-server';
 import ProxyServerMock from '../tests/__mocks__/proxy-server.mock';
 import OIBusService from './oibus.service';
@@ -37,7 +33,6 @@ import OIAnalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianal
 
 jest.mock('./encryption.service');
 jest.mock('./logger/logger.service');
-jest.mock('./engine-metrics.service');
 jest.mock('./utils');
 
 const oibusEngine: OIBusEngine = new OibusEngineMock();
@@ -46,8 +41,6 @@ const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const proxyServer: ProxyServer = new ProxyServerMock();
 const oianalyticsMessageService: OIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
 const repositoryService: RepositoryService = new RepositoryServiceMock('', '');
-const engineMetricsService: EngineMetricsService = new EngineMetricsServiceMock();
-const homeMetrics: HomeMetricsService = new HomeMetricsServiceMock();
 const northService: NorthService = new NorthServiceMock();
 const southService: SouthService = new SouthServiceMock();
 const oibusService: OIBusService = new OibusServiceMock();
@@ -63,8 +56,6 @@ describe('reload service', () => {
     service = new ReloadService(
       loggerService,
       repositoryService,
-      engineMetricsService,
-      homeMetrics,
       northService,
       southService,
       oibusEngine,
@@ -78,93 +69,12 @@ describe('reload service', () => {
   it('should be properly initialized', () => {
     expect(service.repositoryService).toBeDefined();
     expect(service.loggerService).toBeDefined();
-    expect(service.engineMetricsService).toBeDefined();
-    expect(service.homeMetricsService).toBeDefined();
     expect(service.northService).toBeDefined();
     expect(service.southService).toBeDefined();
     expect(service.oibusEngine).toBeDefined();
     expect(service.oibusService).toBeDefined();
     expect(service.oianalyticsMessageService).toBeDefined();
     expect(service.proxyServer).toBeDefined();
-  });
-
-  it('should throw an error', async () => {
-    const changePortFn = jest.fn();
-    const newSettings = { port: 2224, proxyEnabled: true, proxyPort: 2224 };
-    service.setWebServerChangePort(changePortFn);
-
-    await expect(service.onUpdateOIBusSettings(newSettings as EngineSettingsDTO, newSettings as EngineSettingsDTO)).rejects.toThrow(
-      'same port on general and proxy'
-    );
-  });
-
-  it('should update web port and proxy port', async () => {
-    const changePortFn = jest.fn();
-    const oldSettings = { port: 2223, proxyEnabled: true, proxyPort: 2224 };
-    const newSettings = { port: 2224, proxyEnabled: true, proxyPort: 2223 };
-    service.setWebServerChangePort(changePortFn);
-
-    await service.onUpdateOIBusSettings(oldSettings as EngineSettingsDTO, newSettings as EngineSettingsDTO);
-    expect(changePortFn).toHaveBeenCalledTimes(1);
-    expect(proxyServer.stop).toHaveBeenCalledTimes(1);
-    expect(proxyServer.start).toHaveBeenCalledTimes(1);
-  });
-
-  it('should stop proxy port and not start it', async () => {
-    const changePortFn = jest.fn();
-    const oldSettings = { port: 2223, proxyEnabled: true, proxyPort: 2224 };
-    const newSettings = { port: 2224, proxyEnabled: false, proxyPort: 2223 };
-    service.setWebServerChangePort(changePortFn);
-
-    await service.onUpdateOIBusSettings(oldSettings as EngineSettingsDTO, newSettings as EngineSettingsDTO);
-    expect(changePortFn).toHaveBeenCalledTimes(1);
-    expect(proxyServer.stop).toHaveBeenCalledTimes(1);
-    expect(proxyServer.start).toHaveBeenCalledTimes(0);
-
-    await service.onUpdateOIBusSettings(null, newSettings as EngineSettingsDTO);
-    expect(changePortFn).toHaveBeenCalledTimes(2);
-    expect(proxyServer.stop).toHaveBeenCalledTimes(2);
-    expect(proxyServer.start).toHaveBeenCalledTimes(0);
-
-    await service.onUpdateOIBusSettings(newSettings as EngineSettingsDTO, newSettings as EngineSettingsDTO);
-    expect(changePortFn).toHaveBeenCalledTimes(2);
-    expect(proxyServer.stop).toHaveBeenCalledTimes(2);
-    expect(proxyServer.start).toHaveBeenCalledTimes(0);
-  });
-
-  it('should update port', async () => {
-    const changePortFn = jest.fn();
-    const oldSettings = { name: 'oibus name', port: 2223, proxyEnabled: false, proxyPort: 8888 };
-    const newSettings = { name: 'oibus name', port: 2224, proxyEnabled: true, proxyPort: 9000 };
-    service.setWebServerChangePort(changePortFn);
-
-    await service.onUpdateOIBusSettings(oldSettings as EngineSettingsDTO, newSettings as EngineSettingsDTO);
-    expect(changePortFn).toHaveBeenCalledTimes(1);
-    expect(repositoryService.oianalyticsMessageRepository.create).not.toHaveBeenCalled();
-    expect(proxyServer.stop).toHaveBeenCalledTimes(1);
-    expect(proxyServer.start).toHaveBeenCalledTimes(1);
-
-    await service.onUpdateOIBusSettings(null, newSettings as EngineSettingsDTO);
-    expect(changePortFn).toHaveBeenCalledTimes(2);
-
-    expect(proxyServer.stop).toHaveBeenCalledTimes(2);
-    expect(proxyServer.start).toHaveBeenCalledTimes(2);
-
-    await service.onUpdateOIBusSettings({ ...newSettings, name: 'another name' } as EngineSettingsDTO, newSettings as EngineSettingsDTO);
-    expect(changePortFn).toHaveBeenCalledTimes(2);
-    expect(proxyServer.stop).toHaveBeenCalledTimes(2);
-    expect(proxyServer.start).toHaveBeenCalledTimes(2);
-  });
-
-  it('should update log parameters', async () => {
-    const changeLoggerFn = jest.fn();
-    const newSettings = { id: 'oibusId', name: 'oibusName', logParameters: {} as LogSettings, port: 2223 };
-    service.setWebServerChangeLogger(changeLoggerFn);
-    await service.onUpdateOIBusSettings(null, newSettings as EngineSettingsDTO);
-    expect(loggerService.stop).toHaveBeenCalledTimes(1);
-    expect(loggerService.start).toHaveBeenCalledWith(newSettings.id, newSettings.name, newSettings.logParameters, { id: 'id1' });
-    expect(changeLoggerFn).toHaveBeenCalledTimes(1);
-    expect(engineMetricsService.setLogger).toHaveBeenCalledTimes(1);
   });
 
   it('should create south', async () => {

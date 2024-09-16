@@ -60,11 +60,7 @@ export class EditEngineComponent implements OnInit {
 
   state = new ObservableState();
 
-  constructor(
-    private notificationService: NotificationService,
-    private engineService: EngineService,
-    private router: Router
-  ) {
+  constructor() {
     this.engineForm.controls.proxyEnabled.valueChanges.subscribe(next => {
       if (next) {
         this.engineForm.controls.proxyPort.enable();

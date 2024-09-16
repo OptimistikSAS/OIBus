@@ -2,10 +2,12 @@ import path from 'node:path';
 
 import pino from 'pino';
 
-import { LogSettings, RegistrationSettingsDTO, ScopeType } from '../../../../shared/model/engine.model';
+import { ScopeType } from '../../../../shared/model/engine.model';
 
 import FileCleanupService from './file-cleanup.service';
 import EncryptionService from '../encryption.service';
+import { EngineSettings } from '../../model/engine.model';
+import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 
 const LOG_DB_NAME = 'logs.db';
 const LOG_FILE_NAME = 'journal.log';
@@ -31,45 +33,51 @@ class LoggerService {
   /**
    * Run the appropriate pino log transports according to the configuration
    */
-  async start(oibusId: string, oibusName: string, logParameters: LogSettings, registration: RegistrationSettingsDTO | null): Promise<void> {
+  async start(engineSettings: EngineSettings, registration: OIAnalyticsRegistration): Promise<void> {
     const targets = [];
-    targets.push({ target: 'pino-pretty', options: { colorize: true, singleLine: true }, level: logParameters.console.level });
+    targets.push({
+      target: 'pino-pretty',
+      options: { colorize: true, singleLine: true },
+      level: engineSettings.logParameters.console.level
+    });
 
     targets.push({
       target: 'pino-roll',
       options: {
         file: path.resolve(this.folder, LOG_FILE_NAME),
-        size: logParameters.file.maxFileSize
+        size: engineSettings.logParameters.file.maxFileSize
       },
-      level: logParameters.file.level
+      level: engineSettings.logParameters.file.level
     });
 
-    if (logParameters.database.maxNumberOfLogs > 0) {
+    if (engineSettings.logParameters.database.maxNumberOfLogs > 0) {
       targets.push({
         target: path.join(__dirname, 'sqlite-transport.js'),
         options: {
           filename: path.resolve(this.folder, LOG_DB_NAME),
-          maxNumberOfLogs: logParameters.database.maxNumberOfLogs
+          maxNumberOfLogs: engineSettings.logParameters.database.maxNumberOfLogs
         },
-        level: logParameters.database.level
+        level: engineSettings.logParameters.database.level
       });
     }
 
-    if (logParameters.loki.address && logParameters.loki.level !== 'silent') {
+    if (engineSettings.logParameters.loki.address && engineSettings.logParameters.loki.level !== 'silent') {
       try {
         targets.push({
           target: 'pino-loki',
           options: {
             batching: true,
-            interval: logParameters.loki.interval,
-            host: logParameters.loki.address,
+            interval: engineSettings.logParameters.loki.interval,
+            host: engineSettings.logParameters.loki.address,
             basicAuth: {
-              username: logParameters.loki.username,
-              password: logParameters.loki.password ? await this.encryptionService.decryptText(logParameters.loki.password) : ''
+              username: engineSettings.logParameters.loki.username,
+              password: engineSettings.logParameters.loki.password
+                ? await this.encryptionService.decryptText(engineSettings.logParameters.loki.password)
+                : ''
             },
-            labels: { name: oibusName }
+            labels: { name: engineSettings.name }
           },
-          level: logParameters.loki.level
+          level: engineSettings.logParameters.loki.level
         });
       } catch (error) {
         // In case of bad decryption, an error is triggered, so instead of leaving the process, the error will just be
@@ -78,12 +86,12 @@ class LoggerService {
       }
     }
 
-    if (registration && registration.status === 'REGISTERED' && logParameters.oia.level !== 'silent') {
+    if (registration.status === 'REGISTERED' && engineSettings.logParameters.oia.level !== 'silent') {
       try {
         targets.push({
           target: path.join(__dirname, './oianalytics-transport.js'),
           options: {
-            interval: logParameters.oia.interval,
+            interval: engineSettings.logParameters.oia.interval,
             host: registration.host,
             token: registration.token ? await this.encryptionService.decryptText(registration.token) : '',
             useProxy: registration.useProxy,
@@ -92,7 +100,7 @@ class LoggerService {
             proxyPassword: registration.proxyPassword ? await this.encryptionService.decryptText(registration.proxyPassword) : '',
             acceptUnauthorized: registration.acceptUnauthorized
           },
-          level: logParameters.oia.level
+          level: engineSettings.logParameters.oia.level
         });
       } catch (error) {
         // In case of bad decryption, an error is triggered, so instead of leaving the process, the error will just be
@@ -108,7 +116,12 @@ class LoggerService {
       transport: { targets }
     }).child({ scopeType: 'internal' });
 
-    this.fileCleanUpService = new FileCleanupService(this.folder, this.logger, LOG_FILE_NAME, logParameters.file.numberOfFiles);
+    this.fileCleanUpService = new FileCleanupService(
+      this.folder,
+      this.logger,
+      LOG_FILE_NAME,
+      engineSettings.logParameters.file.numberOfFiles
+    );
     await this.fileCleanUpService.start();
   }
 
