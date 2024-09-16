@@ -10,61 +10,6 @@ export const AUTHENTICATION_TYPES = ['none', 'basic', 'bearer', 'api-key', 'cert
 export type AuthenticationType = (typeof AUTHENTICATION_TYPES)[number];
 
 /**
- * Base settings for log parameters
- */
-interface BaseLogSettings {
-  level: LogLevel;
-}
-
-/**
- * Settings to write logs into console
- */
-interface ConsoleLogSettings extends BaseLogSettings {}
-
-/**
- * Settings to write logs into files
- */
-interface FileLogSettings extends BaseLogSettings {
-  maxFileSize: number;
-  numberOfFiles: number;
-}
-
-/**
- * Settings to write logs into a locale database
- */
-interface DatabaseLogSettings extends BaseLogSettings {
-  maxNumberOfLogs: number;
-}
-
-/**
- * Settings to write logs into a remote loki instance
- */
-interface LokiLogSettings extends BaseLogSettings {
-  interval: number;
-  address: string;
-  username: string;
-  password: string;
-}
-
-/**
- * Settings to write logs into a remote loki instance
- */
-interface OiaLogSettings extends BaseLogSettings {
-  interval: number;
-}
-
-/**
- * Logs settings used in the engine
- */
-export interface LogSettings {
-  console: ConsoleLogSettings;
-  file: FileLogSettings;
-  database: DatabaseLogSettings;
-  loki: LokiLogSettings;
-  oia: OiaLogSettings;
-}
-
-/**
  * Engine settings DTO
  */
 export interface EngineSettingsDTO extends BaseEntity {
@@ -73,7 +18,31 @@ export interface EngineSettingsDTO extends BaseEntity {
   version: string;
   proxyEnabled: boolean;
   proxyPort: number | null;
-  logParameters: LogSettings;
+  logParameters: {
+    console: {
+      level: LogLevel;
+    };
+    file: {
+      level: LogLevel;
+      maxFileSize: number;
+      numberOfFiles: number;
+    };
+    database: {
+      level: LogLevel;
+      maxNumberOfLogs: number;
+    };
+    loki: {
+      level: LogLevel;
+      interval: number;
+      address: string;
+      username: string;
+      password: string;
+    };
+    oia: {
+      level: LogLevel;
+      interval: number;
+    };
+  };
 }
 
 export const REGISTRATION_STATUS = ['NOT_REGISTERED', 'PENDING', 'REGISTERED'] as const;
@@ -85,7 +54,6 @@ export type RegistrationStatus = (typeof REGISTRATION_STATUS)[number];
 export interface RegistrationSettingsDTO extends BaseEntity {
   host: string;
   activationCode?: string;
-  token?: string;
   status: RegistrationStatus;
   activationDate: Instant;
   activationExpirationDate?: Instant;
@@ -93,7 +61,6 @@ export interface RegistrationSettingsDTO extends BaseEntity {
   useProxy: boolean;
   proxyUrl?: string;
   proxyUsername?: string | null;
-  proxyPassword?: string | null;
   acceptUnauthorized: boolean;
 }
 
@@ -120,7 +87,31 @@ export interface EngineSettingsCommandDTO {
   port: number;
   proxyEnabled: boolean;
   proxyPort: number | null;
-  logParameters: LogSettings;
+  logParameters: {
+    console: {
+      level: LogLevel;
+    };
+    file: {
+      level: LogLevel;
+      maxFileSize: number;
+      numberOfFiles: number;
+    };
+    database: {
+      level: LogLevel;
+      maxNumberOfLogs: number;
+    };
+    loki: {
+      level: LogLevel;
+      interval: number;
+      address: string;
+      username: string;
+      password: string;
+    };
+    oia: {
+      level: LogLevel;
+      interval: number;
+    };
+  };
 }
 
 export interface OIBusError {

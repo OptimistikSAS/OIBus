@@ -2,8 +2,8 @@ import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { ipFilterSchema } from '../web-server/controllers/validators/oibus-validation-schema';
 import IpFilterRepository from '../repository/ip-filter.repository';
-import { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
-import { IPFilter, IPFilterCommand } from '../model/ip-filter.model';
+import { IPFilterCommandDTO, IPFilterDTO } from '../../../shared/model/ip-filter.model';
+import { IPFilter } from '../model/ip-filter.model';
 import ProxyServer from '../web-server/proxy-server';
 
 export default class IPFilterService {
@@ -24,12 +24,12 @@ export default class IPFilterService {
 
   async create(command: IPFilterCommandDTO, webServerFilters: { whiteList: Array<string> }): Promise<IPFilter> {
     await this.validator.validate(ipFilterSchema, command);
-    const ipFilter = this.ipFilterRepository.create(command as IPFilterCommand);
+    const ipFilter = this.ipFilterRepository.create(command);
     const ipFilters = this.ipFilterRepository.findAll().map(ip => ip.address);
 
     this.proxyServer.refreshIpFilters(ipFilters);
     webServerFilters.whiteList = ['127.0.0.1', '::1', '::ffff:127.0.0.1', ...ipFilters];
-    this.oIAnalyticsMessageService.createFullConfigMessage();
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     return ipFilter;
   }
 
@@ -45,7 +45,7 @@ export default class IPFilterService {
     const ipFilters = this.ipFilterRepository.findAll().map(ip => ip.address);
     this.proxyServer.refreshIpFilters(ipFilters);
     webServerFilters.whiteList = ['127.0.0.1', '::1', '::ffff:127.0.0.1', ...ipFilters];
-    this.oIAnalyticsMessageService.createFullConfigMessage();
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 
   async delete(id: string, webServerFilters: { whiteList: Array<string> }): Promise<void> {
@@ -58,6 +58,14 @@ export default class IPFilterService {
     const ipFilters = this.ipFilterRepository.findAll().map(ip => ip.address);
     this.proxyServer.refreshIpFilters(ipFilters);
     webServerFilters.whiteList = ['127.0.0.1', '::1', '::ffff:127.0.0.1', ...ipFilters];
-    this.oIAnalyticsMessageService.createFullConfigMessage();
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 }
+
+export const toIPFilterDTO = (ipFilter: IPFilter): IPFilterDTO => {
+  return {
+    id: ipFilter.id,
+    address: ipFilter.address,
+    description: ipFilter.description
+  };
+};

@@ -75,7 +75,7 @@ describe('Subscription Service', () => {
     expect(southConnectorRepository.findById).toHaveBeenCalledWith(testData.south.list[0].id);
     expect(subscriptionRepository.checkSubscription).toHaveBeenCalledWith(testData.north.list[0].id, testData.south.list[0].id);
     expect(subscriptionRepository.create).toHaveBeenCalledWith(testData.north.list[0].id, testData.south.list[0].id);
-    expect(oIAnalyticsMessageService.createFullConfigMessage).toHaveBeenCalled();
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
   });
 
   it('create() should throw if subscription already exists', async () => {
@@ -86,7 +86,7 @@ describe('Subscription Service', () => {
     await expect(service.create(testData.north.list[0].id, testData.south.list[0].id)).rejects.toThrow('Subscription already exists');
 
     expect(subscriptionRepository.create).not.toHaveBeenCalled();
-    expect(oIAnalyticsMessageService.createFullConfigMessage).not.toHaveBeenCalled();
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).not.toHaveBeenCalled();
   });
 
   it('create() should throw if South not found', async () => {
@@ -97,7 +97,7 @@ describe('Subscription Service', () => {
 
     expect(subscriptionRepository.checkSubscription).not.toHaveBeenCalled();
     expect(subscriptionRepository.create).not.toHaveBeenCalled();
-    expect(oIAnalyticsMessageService.createFullConfigMessage).not.toHaveBeenCalled();
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).not.toHaveBeenCalled();
   });
 
   it('create() should throw if North not found', async () => {
@@ -108,7 +108,7 @@ describe('Subscription Service', () => {
     expect(southConnectorRepository.findById).not.toHaveBeenCalled();
     expect(subscriptionRepository.checkSubscription).not.toHaveBeenCalled();
     expect(subscriptionRepository.create).not.toHaveBeenCalled();
-    expect(oIAnalyticsMessageService.createFullConfigMessage).not.toHaveBeenCalled();
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).not.toHaveBeenCalled();
   });
 
   it('delete() should delete a subscription', async () => {
@@ -121,7 +121,7 @@ describe('Subscription Service', () => {
     expect(southConnectorRepository.findById).toHaveBeenCalledWith(testData.south.list[0].id);
     expect(subscriptionRepository.delete).toHaveBeenCalledWith(testData.north.list[0].id, testData.south.list[0].id);
     expect(oibusEngine.updateSubscriptions).toHaveBeenCalledWith(testData.north.list[0].id);
-    expect(oIAnalyticsMessageService.createFullConfigMessage).toHaveBeenCalled();
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
   });
 
   it('delete() should throw if South not found', async () => {
@@ -132,7 +132,7 @@ describe('Subscription Service', () => {
 
     expect(subscriptionRepository.delete).not.toHaveBeenCalled();
     expect(oibusEngine.updateSubscriptions).not.toHaveBeenCalled();
-    expect(oIAnalyticsMessageService.createFullConfigMessage).not.toHaveBeenCalled();
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).not.toHaveBeenCalled();
   });
 
   it('delete() should throw if North not found', async () => {
@@ -143,7 +143,7 @@ describe('Subscription Service', () => {
     expect(southConnectorRepository.findById).not.toHaveBeenCalled();
     expect(subscriptionRepository.delete).not.toHaveBeenCalled();
     expect(oibusEngine.updateSubscriptions).not.toHaveBeenCalled();
-    expect(oIAnalyticsMessageService.createFullConfigMessage).not.toHaveBeenCalled();
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).not.toHaveBeenCalled();
   });
 
   it('deleteAllByNorth() should delete all subscriptions by North', async () => {
@@ -153,7 +153,7 @@ describe('Subscription Service', () => {
 
     expect(northConnectorRepository.findById).toHaveBeenCalledWith(testData.north.list[0].id);
     expect(subscriptionRepository.deleteAllByNorth).toHaveBeenCalledWith(testData.north.list[0].id);
-    expect(oIAnalyticsMessageService.createFullConfigMessage).toHaveBeenCalled();
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
   });
 
   it('deleteAllByNorth() should throw if North not found', async () => {
@@ -162,6 +162,6 @@ describe('Subscription Service', () => {
     await expect(service.deleteAllByNorth(testData.north.list[0].id)).rejects.toThrow('North connector not found');
 
     expect(subscriptionRepository.deleteAllByNorth).not.toHaveBeenCalled();
-    expect(oIAnalyticsMessageService.createFullConfigMessage).not.toHaveBeenCalled();
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).not.toHaveBeenCalled();
   });
 });

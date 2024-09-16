@@ -1,37 +1,13 @@
 import { Database } from 'better-sqlite3';
-import {
-  CommandSearchParam,
-  OIBusCommand,
-  OIBusCommandDTO,
-  OIBusCommandStatus,
-  OIBusCommandType
-} from '../../../shared/model/command.model';
+import { CommandSearchParam, OIBusCommandType } from '../../../shared/model/command.model';
 import { Instant, Page } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
-import { EngineSettingsCommandDTO } from '../../../shared/model/engine.model';
+import { OIBusCommand } from '../model/oianalytics-command.model';
+import { OIAnalyticsFetchCommandDTO } from '../service/oia/oianalytics.model';
 
 export const COMMANDS_TABLE = 'commands';
 
 const PAGE_SIZE = 50;
-
-export interface OIBusCommandResult {
-  id: string;
-  created_at: Instant;
-  updated_at: Instant;
-  type: OIBusCommandType;
-  status: OIBusCommandStatus;
-  ack: number;
-  retrieved_date: Instant;
-  completed_date: Instant;
-  result: string | null;
-  upgrade_version: string | null;
-  upgrade_asset_id: string | null;
-  command_content: string | null;
-  target_version: string | null;
-  scan_mode_id: string | null;
-  south_connector_id: string | null;
-  north_connector_id: string | null;
-}
 
 /**
  * Repository used for managing commands within OIBus
@@ -45,7 +21,7 @@ export default class OIAnalyticsCommandRepository {
     return this.database
       .prepare(query)
       .all()
-      .map(command => this.toOIBusCommand(command as OIBusCommandResult));
+      .map(command => this.toOIBusCommand(command));
   }
 
   search(searchParams: CommandSearchParam, page: number): Page<OIBusCommand> {
@@ -67,7 +43,7 @@ export default class OIAnalyticsCommandRepository {
     const results: Array<OIBusCommand> = this.database
       .prepare(query)
       .all(...queryParams, PAGE_SIZE * page)
-      .map(command => this.toOIBusCommand(command as OIBusCommandResult));
+      .map(command => this.toOIBusCommand(command));
     const totalElements = (
       this.database
         .prepare(
@@ -109,7 +85,7 @@ export default class OIAnalyticsCommandRepository {
     return this.database
       .prepare(query)
       .all(...queryParams)
-      .map(command => this.toOIBusCommand(command as OIBusCommandResult));
+      .map(command => this.toOIBusCommand(command));
   }
 
   findById(id: string): OIBusCommand | null {
@@ -117,18 +93,18 @@ export default class OIAnalyticsCommandRepository {
                    FROM ${COMMANDS_TABLE}
                    WHERE id = ?;`;
     const result = this.database.prepare(query).get(id);
-    return result ? this.toOIBusCommand(result as OIBusCommandResult) : null;
+    return result ? this.toOIBusCommand(result) : null;
   }
 
-  create(id: string, command: OIBusCommandDTO): OIBusCommand {
-    // id, retrieved_date, type, status, ack
-    const queryParams = [id, DateTime.now().toUTC().toISO(), command.type, 'RETRIEVED', 0];
+  create(command: OIAnalyticsFetchCommandDTO): void {
+    // retrieved_date, type, status, ack
+    const queryParams = [command.id, DateTime.now().toUTC().toISO(), command.type, 'RETRIEVED', 0];
     let insertQuery = `INSERT INTO ${COMMANDS_TABLE} `;
     switch (command.type) {
+      case 'update-engine-settings':
       case 'create-south':
       case 'create-north':
       case 'create-scan-mode':
-      case 'update-engine-settings':
         queryParams.push(command.targetVersion);
         queryParams.push(JSON.stringify(command.commandContent));
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, command_content) VALUES (?, ?, ?, ?, ?, ?, ?);`;
@@ -175,12 +151,7 @@ export default class OIAnalyticsCommandRepository {
         insertQuery += `(id, retrieved_date, type, status, ack, upgrade_version, upgrade_asset_id) VALUES (?, ?, ?, ?, ?, ?, ?);`;
         break;
     }
-    const result = this.database.prepare(insertQuery).run(...queryParams);
-    const query = `SELECT *
-                   FROM ${COMMANDS_TABLE}
-                   WHERE ROWID = ?;`;
-    const createdCommand: OIBusCommandResult = this.database.prepare(query).get(result.lastInsertRowid) as OIBusCommandResult;
-    return this.toOIBusCommand(createdCommand);
+    this.database.prepare(insertQuery).run(...queryParams);
   }
 
   cancel(id: string): void {
@@ -232,27 +203,25 @@ export default class OIAnalyticsCommandRepository {
     this.database.prepare(query).run(id);
   }
 
-  private toOIBusCommand(command: OIBusCommandResult): OIBusCommand {
-    switch (command.type) {
-      case 'UPGRADE':
+  private toOIBusCommand(command: any): OIBusCommand {
+    switch (command.type as OIBusCommandType) {
       case 'update-version':
+      case 'UPGRADE':
         return {
           id: command.id,
           type: 'update-version',
-          creationDate: command.created_at,
           status: command.status,
           ack: Boolean(command.ack),
           retrievedDate: command.retrieved_date,
           completedDate: command.completed_date,
           result: command.result,
-          version: command.upgrade_version!,
-          assetId: command.upgrade_asset_id!
+          version: command.upgrade_version,
+          assetId: command.upgrade_asset_id
         };
       case 'restart-engine':
         return {
           id: command.id,
           type: command.type,
-          creationDate: command.created_at,
           status: command.status,
           ack: Boolean(command.ack),
           retrievedDate: command.retrieved_date,
@@ -263,14 +232,13 @@ export default class OIAnalyticsCommandRepository {
         return {
           id: command.id,
           type: command.type,
-          creationDate: command.created_at,
           status: command.status,
           ack: Boolean(command.ack),
           retrievedDate: command.retrieved_date,
           completedDate: command.completed_date,
           result: command.result,
-          targetVersion: command.target_version!,
-          commandContent: JSON.parse(command.command_content!) as EngineSettingsCommandDTO
+          targetVersion: command.target_version,
+          commandContent: JSON.parse(command.command_content)
         };
       case 'create-north':
       case 'create-south':
@@ -278,95 +246,88 @@ export default class OIAnalyticsCommandRepository {
         return {
           id: command.id,
           type: command.type,
-          creationDate: command.created_at,
           status: command.status,
           ack: Boolean(command.ack),
           retrievedDate: command.retrieved_date,
           completedDate: command.completed_date,
           result: command.result,
-          targetVersion: command.target_version!,
-          commandContent: JSON.parse(command.command_content!)
+          targetVersion: command.target_version,
+          commandContent: JSON.parse(command.command_content)
         };
       case 'update-scan-mode':
         return {
           id: command.id,
           type: command.type,
-          creationDate: command.created_at,
           status: command.status,
           ack: Boolean(command.ack),
           retrievedDate: command.retrieved_date,
           completedDate: command.completed_date,
           result: command.result,
-          targetVersion: command.target_version!,
-          scanModeId: command.scan_mode_id!,
-          commandContent: JSON.parse(command.command_content!)
+          targetVersion: command.target_version,
+          scanModeId: command.scan_mode_id,
+          commandContent: JSON.parse(command.command_content)
         };
       case 'update-north':
         return {
           id: command.id,
           type: command.type,
-          creationDate: command.created_at,
           status: command.status,
           ack: Boolean(command.ack),
           retrievedDate: command.retrieved_date,
           completedDate: command.completed_date,
           result: command.result,
-          targetVersion: command.target_version!,
-          northConnectorId: command.north_connector_id!,
-          commandContent: JSON.parse(command.command_content!)
+          targetVersion: command.target_version,
+          northConnectorId: command.north_connector_id,
+          commandContent: JSON.parse(command.command_content)
         };
       case 'update-south':
         return {
           id: command.id,
           type: command.type,
-          creationDate: command.created_at,
           status: command.status,
           ack: Boolean(command.ack),
           retrievedDate: command.retrieved_date,
           completedDate: command.completed_date,
           result: command.result,
-          targetVersion: command.target_version!,
-          southConnectorId: command.south_connector_id!,
-          commandContent: JSON.parse(command.command_content!)
+          targetVersion: command.target_version,
+          southConnectorId: command.south_connector_id,
+          commandContent: JSON.parse(command.command_content)
         };
       case 'delete-scan-mode':
         return {
           id: command.id,
           type: command.type,
-          creationDate: command.created_at,
           status: command.status,
           ack: Boolean(command.ack),
           retrievedDate: command.retrieved_date,
           completedDate: command.completed_date,
           result: command.result,
-          targetVersion: command.target_version!,
-          scanModeId: command.scan_mode_id!
+          targetVersion: command.target_version,
+          scanModeId: command.scan_mode_id
         };
       case 'delete-south':
         return {
           id: command.id,
           type: command.type,
-          creationDate: command.created_at,
           status: command.status,
           ack: Boolean(command.ack),
           retrievedDate: command.retrieved_date,
           completedDate: command.completed_date,
           result: command.result,
-          targetVersion: command.target_version!,
-          southConnectorId: command.south_connector_id!
+          targetVersion: command.target_version,
+          southConnectorId: command.south_connector_id
         };
       case 'delete-north':
         return {
           id: command.id,
           type: command.type,
-          creationDate: command.created_at,
           status: command.status,
           ack: Boolean(command.ack),
           retrievedDate: command.retrieved_date,
           completedDate: command.completed_date,
           result: command.result,
-          targetVersion: command.target_version!,
-          northConnectorId: command.north_connector_id!
+          targetVersion: command.target_version,
+          northConnectorId: command.north_connector_id
         };
     }
   }

@@ -24,11 +24,11 @@ const sse = () => {
       return ctx.ok();
     }
     if (ctx.path.startsWith('/sse/engine')) {
-      ctx.body = ctx.app.reloadService.engineMetricsService.stream;
+      ctx.body = ctx.app.oIBusService.stream;
       return ctx.ok();
     }
     if (ctx.path.startsWith('/sse/home')) {
-      ctx.body = ctx.app.reloadService.homeMetricsService.stream;
+      // ctx.body = ctx.app.reloadService.homeMetricsService.stream;
       return ctx.ok();
     }
     if (ctx.path.startsWith('/sse/history-queries/')) {

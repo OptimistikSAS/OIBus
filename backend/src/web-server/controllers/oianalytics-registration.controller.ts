@@ -1,34 +1,29 @@
 import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../../shared/model/engine.model';
 import { KoaContext } from '../koa';
 import AbstractController from './abstract.controller';
+import { toOIAnalyticsRegistrationDTO } from '../../service/oia/oianalytics-registration.service';
 
 export default class OIAnalyticsRegistrationController extends AbstractController {
   async get(ctx: KoaContext<void, RegistrationSettingsDTO>): Promise<RegistrationSettingsDTO> {
-    const registrationSettings = ctx.app.repositoryService.oianalyticsRegistrationRepository.get();
+    const registrationSettings = ctx.app.oIAnalyticsRegistrationService.getRegistrationSettings();
     if (!registrationSettings) {
       return ctx.notFound();
     }
-    registrationSettings.token = '';
-    registrationSettings.proxyPassword = '';
-    return ctx.ok(registrationSettings);
+    return ctx.ok(toOIAnalyticsRegistrationDTO(registrationSettings));
   }
 
-  async update(ctx: KoaContext<RegistrationSettingsCommandDTO, void>): Promise<void> {
+  async register(ctx: KoaContext<RegistrationSettingsCommandDTO, void>): Promise<void> {
     try {
-      await this.validate(ctx.request.body);
-      const command = ctx.request.body as RegistrationSettingsCommandDTO;
-      await ctx.app.registrationService.updateRegistrationSettings(command);
+      await ctx.app.oIAnalyticsRegistrationService.register(ctx.request.body!);
       return ctx.noContent();
     } catch (error: any) {
       ctx.badRequest(error.message);
     }
   }
 
-  async edit(ctx: KoaContext<RegistrationSettingsCommandDTO, void>): Promise<void> {
+  async editConnectionSettings(ctx: KoaContext<RegistrationSettingsCommandDTO, void>): Promise<void> {
     try {
-      await this.validate(ctx.request.body);
-      const command = ctx.request.body as RegistrationSettingsCommandDTO;
-      await ctx.app.registrationService.editRegistrationSettings(command);
+      await ctx.app.oIAnalyticsRegistrationService.editConnectionSettings(ctx.request.body!);
       return ctx.noContent();
     } catch (error: any) {
       ctx.badRequest(error.message);
@@ -36,7 +31,7 @@ export default class OIAnalyticsRegistrationController extends AbstractControlle
   }
 
   async unregister(ctx: KoaContext<any, any>) {
-    await ctx.app.registrationService.onUnregister();
+    ctx.app.oIAnalyticsRegistrationService.unregister();
     return ctx.noContent();
   }
 }

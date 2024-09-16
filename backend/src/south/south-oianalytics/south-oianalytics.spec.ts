@@ -13,7 +13,7 @@ import RepositoryServiceMock from '../../tests/__mocks__/service/repository-serv
 import path from 'node:path';
 import { SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../../../shared/model/south-settings.model';
 import { createProxyAgent } from '../../service/proxy-agent';
-import { RegistrationSettingsDTO } from '../../../../shared/model/engine.model';
+import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 
 jest.mock('../../service/proxy-agent');
 jest.mock('../../service/utils', () => ({
@@ -792,7 +792,7 @@ describe('SouthOIAnalytics with OIA module', () => {
     }
   };
 
-  let registrationSettings: RegistrationSettingsDTO;
+  let registrationSettings: OIAnalyticsRegistration;
 
   beforeEach(async () => {
     jest.clearAllMocks();
