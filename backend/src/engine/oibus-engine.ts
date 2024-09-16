@@ -14,7 +14,6 @@ import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 import { Instant } from '../../../shared/model/types';
 import { PassThrough } from 'node:stream';
 import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
-import HomeMetricsService from '../service/home-metrics.service';
 import { OIBusContent } from '../../../shared/model/engine.model';
 
 const CACHE_FOLDER = './cache/data-stream';
@@ -26,13 +25,7 @@ export default class OIBusEngine extends BaseEngine {
   private northConnectors: Map<string, NorthConnector> = new Map<string, NorthConnector>();
   private southConnectors: Map<string, SouthConnector> = new Map<string, SouthConnector>();
 
-  constructor(
-    encryptionService: EncryptionService,
-    northService: NorthService,
-    southService: SouthService,
-    private readonly homeMetricsService: HomeMetricsService,
-    logger: pino.Logger
-  ) {
+  constructor(encryptionService: EncryptionService, northService: NorthService, southService: SouthService, logger: pino.Logger) {
     super(encryptionService, northService, southService, logger, CACHE_FOLDER);
   }
 
@@ -131,7 +124,7 @@ export default class OIBusEngine extends BaseEngine {
       this.logger.child({ scopeType: 'south', scopeId: settings.id, scopeName: settings.name })
     );
     this.southConnectors.set(settings.id, south);
-    this.homeMetricsService.addSouth(south, south.settings.id);
+    // this.homeMetricsService.addSouth(south, south.settings.id);
   }
 
   async startSouth(southId: string): Promise<void> {
@@ -164,7 +157,7 @@ export default class OIBusEngine extends BaseEngine {
       this.logger.child({ scopeType: 'north', scopeId: settings.id, scopeName: settings.name })
     );
     this.northConnectors.set(settings.id, north);
-    this.homeMetricsService.addNorth(north, north.settings.id);
+    // this.homeMetricsService.addNorth(north, north.settings.id);
   }
 
   async startNorth(northId: string): Promise<void> {
@@ -196,7 +189,7 @@ export default class OIBusEngine extends BaseEngine {
    */
   async deleteSouth(southId: string, name: string): Promise<void> {
     await this.stopSouth(southId);
-    this.homeMetricsService.removeSouth(southId);
+    // this.homeMetricsService.removeSouth(southId);
     this.southConnectors.delete(southId);
     const baseFolder = path.resolve(this.cacheFolder, `south-${southId}`);
 
@@ -218,7 +211,7 @@ export default class OIBusEngine extends BaseEngine {
    */
   async deleteNorth(northId: string, name: string): Promise<void> {
     await this.stopNorth(northId);
-    this.homeMetricsService.removeNorth(northId);
+    // this.homeMetricsService.removeNorth(northId);
     this.northConnectors.delete(northId);
 
     const baseFolder = path.resolve(this.cacheFolder, `north-${northId}`);

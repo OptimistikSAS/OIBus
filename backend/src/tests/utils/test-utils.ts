@@ -7,8 +7,21 @@ import { NorthConnectorDTO } from '../../../../shared/model/north-connector.mode
 import { SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import { ScanMode } from '../../model/scan-mode.model';
 import { IPFilter } from '../../model/ip-filter.model';
+import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
+import { EngineSettings } from '../../model/engine.model';
+import {
+  OIBusCommand,
+  OIBusUpdateEngineSettingsCommand,
+  OIBusUpdateNorthConnectorCommand,
+  OIBusUpdateScanModeCommand,
+  OIBusUpdateSouthConnectorCommand,
+  OIBusUpdateVersionCommand
+} from '../../model/oianalytics-command.model';
+import { OIAnalyticsMessage } from '../../model/oianalytics-message.model';
 
 export const TEST_DATABASE = path.resolve('src', 'tests', 'oibus-test.db');
+
+export const flushPromises = () => new Promise(jest.requireActual('timers').setImmediate);
 
 export const initDatabase = async (populate = true) => {
   await emptyDatabase();
@@ -51,19 +64,139 @@ const populateDatabase = async () => {
     },
     useNullAsDefault: true
   });
-  await createIpFilter(testDatabase, testData.ipFilters.list[0]);
-  await createIpFilter(testDatabase, testData.ipFilters.list[1]);
-  await createScanMode(testDatabase, testData.scanMode.list[0]);
-  await createScanMode(testDatabase, testData.scanMode.list[1]);
-  await createNorth(testDatabase, testData.north.list[0]);
-  await createNorth(testDatabase, testData.north.list[1]);
-  await createSouth(testDatabase, testData.south.list[0]);
-  await createSouth(testDatabase, testData.south.list[1]);
+  await createEngineSettings(testDatabase, testData.engine.settings);
+  await createOIAnalyticsRegistration(testDatabase, testData.oIAnalytics.registration.completed);
+  for (const command of testData.oIAnalytics.commands.oIBusList) {
+    await createOIAnalyticsCommand(testDatabase, command);
+  }
+  for (const message of testData.oIAnalytics.messages.oIBusList) {
+    await createOIAnalyticsMessage(testDatabase, message);
+  }
+  for (const element of testData.ipFilters.list) {
+    await createIpFilter(testDatabase, element);
+  }
+  for (const element of testData.scanMode.list) {
+    await createScanMode(testDatabase, element);
+  }
+  for (const element of testData.north.list) {
+    await createNorth(testDatabase, element);
+  }
+  for (const element of testData.south.list) {
+    await createSouth(testDatabase, element);
+  }
   await createSubscription(testDatabase, testData.north.list[0], testData.south.list[0]);
   await createSubscription(testDatabase, testData.north.list[0], testData.south.list[1]);
 
   // Destroy the connection
   await testDatabase.destroy();
+};
+
+const createEngineSettings = async (database: knex.Knex, engineSettings: EngineSettings) => {
+  await database
+    .insert({
+      id: engineSettings.id,
+      name: engineSettings.name,
+      port: engineSettings.port,
+      log_console_level: engineSettings.logParameters.console.level,
+      log_file_level: engineSettings.logParameters.file.level,
+      log_file_max_file_size: engineSettings.logParameters.file.maxFileSize,
+      log_file_number_of_files: engineSettings.logParameters.file.numberOfFiles,
+      log_database_level: engineSettings.logParameters.database.level,
+      log_database_max_number_of_logs: engineSettings.logParameters.database.maxNumberOfLogs,
+      log_loki_level: engineSettings.logParameters.loki.level,
+      log_loki_interval: engineSettings.logParameters.loki.interval,
+      log_loki_address: engineSettings.logParameters.loki.address,
+      log_loki_username: engineSettings.logParameters.loki.username,
+      log_loki_password: engineSettings.logParameters.loki.password,
+      log_oia_level: engineSettings.logParameters.oia.level,
+      log_oia_interval: engineSettings.logParameters.oia.interval,
+      proxy_enabled: engineSettings.proxyEnabled,
+      proxy_port: engineSettings.proxyPort,
+      oibus_version: '3.5.0'
+    })
+    .into('engines');
+};
+
+const createOIAnalyticsRegistration = async (database: knex.Knex, registration: OIAnalyticsRegistration) => {
+  await database
+    .insert({
+      id: registration.id,
+      host: registration.host,
+      activation_code: registration.activationCode,
+      token: registration.token,
+      status: registration.status,
+      activation_date: registration.activationDate,
+      activation_expiration_date: registration.activationExpirationDate,
+      check_url: registration.checkUrl,
+      use_proxy: registration.useProxy,
+      proxy_url: registration.proxyUrl,
+      proxy_username: registration.proxyUsername,
+      proxy_password: registration.proxyPassword,
+      accept_unauthorized: registration.acceptUnauthorized
+    })
+    .into('registrations');
+};
+
+const createOIAnalyticsCommand = async (database: knex.Knex, command: OIBusCommand) => {
+  await database
+    .insert({
+      id: command.id,
+      type: command.type,
+      status: command.status,
+      ack: command.ack,
+      retrieved_date: command.retrievedDate,
+      completed_date: command.completedDate,
+      result: command.result,
+      upgrade_version: ['update-version'].includes(command.type) ? (command as OIBusUpdateVersionCommand).version : null,
+      upgrade_asset_id: ['update-version'].includes(command.type) ? (command as OIBusUpdateVersionCommand).assetId : null,
+      command_content: [
+        'update-engine-settings',
+        'create-scan-mode',
+        'update-scan-mode',
+        'create-south',
+        'update-south',
+        'create-north',
+        'update-north'
+      ].includes(command.type)
+        ? (command as OIBusUpdateEngineSettingsCommand).commandContent
+        : null,
+      target_version: [
+        'update-engine-settings',
+        'create-scan-mode',
+        'update-scan-mode',
+        'delete-scan-mode',
+        'create-south',
+        'update-south',
+        'delete-south',
+        'create-north',
+        'update-north',
+        'delete-north'
+      ].includes(command.type)
+        ? (command as OIBusUpdateEngineSettingsCommand).targetVersion
+        : null,
+      scan_mode_id: ['update-scan-mode', 'delete-scan-mode'].includes(command.type)
+        ? (command as OIBusUpdateScanModeCommand).scanModeId
+        : null,
+      south_connector_id: ['update-south', 'delete-south'].includes(command.type)
+        ? (command as OIBusUpdateSouthConnectorCommand).southConnectorId
+        : null,
+      north_connector_id: ['update-north', 'delete-north'].includes(command.type)
+        ? (command as OIBusUpdateNorthConnectorCommand).northConnectorId
+        : null
+    })
+    .into('commands');
+};
+
+const createOIAnalyticsMessage = async (database: knex.Knex, command: OIAnalyticsMessage) => {
+  await database
+    .insert({
+      id: command.id,
+      type: command.type,
+      status: command.status,
+      completed_date: command.completedDate,
+      error: command.error
+    })
+    .into('oianalytics_messages');
 };
 
 const createNorth = async (database: knex.Knex, north: NorthConnectorDTO) => {

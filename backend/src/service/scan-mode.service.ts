@@ -28,7 +28,7 @@ export default class ScanModeService {
   async create(command: ScanModeCommandDTO): Promise<ScanMode> {
     await this.validator.validate(scanModeSchema, command);
     const scanMode = this.scanModeRepository.create(command);
-    this.oIAnalyticsMessageService.createFullConfigMessage();
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     return scanMode;
   }
 
@@ -43,7 +43,7 @@ export default class ScanModeService {
     if (oldScanMode.cron !== newScanMode.cron) {
       await this.oibusEngine.updateScanMode(newScanMode);
     }
-    this.oIAnalyticsMessageService.createFullConfigMessage();
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 
   async delete(scanModeId: string): Promise<void> {
@@ -54,7 +54,7 @@ export default class ScanModeService {
 
     this.southCacheRepository.deleteAllByScanMode(scanModeId);
     this.scanModeRepository.delete(scanModeId);
-    this.oIAnalyticsMessageService.createFullConfigMessage();
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 
   async verifyCron(command: ScanModeCommandDTO): Promise<ValidatedCronExpression> {

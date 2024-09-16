@@ -1,9 +1,6 @@
-import EngineMetricsService from './engine-metrics.service';
-
 import EngineMetricsRepositoryMock from '../tests/__mocks__/repository/engine-metrics-repository.mock';
 import EngineMetricsRepository from '../repository/engine-metrics.repository';
 import HomeMetricsService from './home-metrics.service';
-import EngineMetricsServiceMock from '../tests/__mocks__/service/engine-metrics-service.mock';
 import { EventEmitter } from 'node:events';
 import NorthConnector from '../north/north-connector';
 import SouthConnector from '../south/south-connector';
@@ -16,7 +13,6 @@ jest.mock('./utils');
 jest.mock('./oibus.service');
 
 let service: HomeMetricsService;
-const engineMetricsService: EngineMetricsService = new EngineMetricsServiceMock();
 const engineMetricsRepository: EngineMetricsRepository = new EngineMetricsRepositoryMock();
 const southConnectorMetricsRepository: SouthConnectorMetricsRepository = new SouthMetricsRepositoryMock();
 const northConnectorMetricsRepository: NorthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
@@ -35,32 +31,12 @@ describe('HomeMetrics service', () => {
     jest.useFakeTimers();
 
     (engineMetricsRepository.getMetrics as jest.Mock).mockReturnValue({});
-    service = new HomeMetricsService(
-      'id',
-      engineMetricsService,
-      engineMetricsRepository,
-      northConnectorMetricsRepository,
-      southConnectorMetricsRepository
-    );
+    service = new HomeMetricsService('id', engineMetricsRepository, northConnectorMetricsRepository, southConnectorMetricsRepository);
   });
 
   afterEach(() => {
     northStream.removeAllListeners();
-    engineMetricsService.stream.removeAllListeners();
     southStream.removeAllListeners();
-  });
-
-  it('should update engine metrics', () => {
-    engineMetricsService.stream.emit('data', 'data: {}');
-
-    const stream = service.stream;
-    stream.write = jest.fn();
-    jest.advanceTimersByTime(100);
-    expect(stream.write).toHaveBeenCalledTimes(1);
-
-    engineMetricsService.stream.emit('data', `data: ${JSON.stringify({ engineMetrics: 1 })}`);
-    expect(stream.write).toHaveBeenCalledWith(`data: ${JSON.stringify({ norths: {}, engine: { engineMetrics: 1 }, souths: {} })}\n\n`);
-    expect(service.stream).toBeDefined();
   });
 
   it('should add North metrics', () => {

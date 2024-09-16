@@ -1171,7 +1171,7 @@ describe('South connector controller', () => {
     expect(validator.validateSettings).toHaveBeenCalledTimes(1);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
       southConnectorCommand.settings,
-      southConnector.settings,
+      undefined,
       southTestManifest.settings
     );
     expect(ctx.notFound).not.toHaveBeenCalled();

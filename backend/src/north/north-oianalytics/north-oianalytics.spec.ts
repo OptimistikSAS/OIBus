@@ -17,10 +17,11 @@ import FileCacheServiceMock from '../../tests/__mocks__/service/cache/file-cache
 import { NorthOIAnalyticsSettings } from '../../../../shared/model/north-settings.model';
 import ArchiveServiceMock from '../../tests/__mocks__/service/cache/archive-service.mock';
 import { createProxyAgent } from '../../service/proxy-agent';
-import { OIBusTimeValue, RegistrationSettingsDTO } from '../../../../shared/model/engine.model';
+import { OIBusTimeValue } from '../../../../shared/model/engine.model';
 import zlib from 'node:zlib';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 
 jest.mock('node:fs/promises');
 jest.mock('node:fs');
@@ -824,7 +825,7 @@ describe('NorthOIAnalytics with OIA module', () => {
     } as NorthCacheSettingsDTO
   };
 
-  let registrationSettings: RegistrationSettingsDTO;
+  let registrationSettings: OIAnalyticsRegistration;
 
   beforeEach(async () => {
     jest.clearAllMocks();

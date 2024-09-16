@@ -1,7 +1,7 @@
 import { generateRandomId } from '../service/utils';
 import { IPFilterDTO } from '../../../shared/model/ip-filter.model';
 import { Database } from 'better-sqlite3';
-import { IPFilter, IPFilterCommand } from '../model/ip-filter.model';
+import { IPFilter } from '../model/ip-filter.model';
 
 export const IP_FILTERS_TABLE = 'ip_filters';
 
@@ -25,14 +25,14 @@ export default class IpFilterRepository {
     return result ? this.toIPFilter(result) : null;
   }
 
-  create(command: IPFilterCommand, id = generateRandomId(6)): IPFilter {
+  create(command: Omit<IPFilter, 'id'>, id = generateRandomId(6)): IPFilter {
     const insertQuery = `INSERT INTO ${IP_FILTERS_TABLE} (id, address, description) ` + `VALUES (?, ?, ?);`;
     const result = this.database.prepare(insertQuery).run(id, command.address, command.description);
     const query = `SELECT id, address, description FROM ${IP_FILTERS_TABLE} WHERE ROWID = ?;`;
     return this.toIPFilter(this.database.prepare(query).get(result.lastInsertRowid));
   }
 
-  update(id: string, command: IPFilterCommand): void {
+  update(id: string, command: Omit<IPFilter, 'id'>): void {
     const query = `UPDATE ${IP_FILTERS_TABLE} SET address = ?, description = ? WHERE id = ?;`;
     this.database.prepare(query).run(command.address, command.description, id);
   }
