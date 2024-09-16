@@ -59,7 +59,7 @@ export default class SouthConnectorConfigService {
     if (command.south.enabled) {
       await this.reloadService.oibusEngine.startSouth(southConnector.id);
     }
-    this.messageService.createFullConfigMessage();
+    this.messageService.createFullConfigMessageIfNotPending();
     return southConnector;
   }
 
@@ -94,7 +94,7 @@ export default class SouthConnectorConfigService {
       await this.reloadService.onDeleteSouthItem(itemId);
     }
     await this.reloadService.onUpdateSouth(southConnector, command.south, itemsToAdd, itemsToUpdate);
-    this.messageService.createFullConfigMessage();
+    this.messageService.createFullConfigMessageIfNotPending();
   }
 
   async delete(southConnectorId: string) {
@@ -104,7 +104,7 @@ export default class SouthConnectorConfigService {
       throw new Error(`South connector ${southConnectorId} does not exist`);
     }
     await this.reloadService.onDeleteSouth(southConnectorId);
-    this.messageService.createFullConfigMessage();
+    this.messageService.createFullConfigMessageIfNotPending();
   }
 
   async start(southConnectorId: string) {
@@ -114,7 +114,7 @@ export default class SouthConnectorConfigService {
     }
 
     await this.reloadService.onStartSouth(southConnectorId);
-    this.messageService.createFullConfigMessage();
+    this.messageService.createFullConfigMessageIfNotPending();
   }
 
   async stop(southConnectorId: string) {
@@ -124,7 +124,7 @@ export default class SouthConnectorConfigService {
     }
 
     await this.reloadService.onStopSouth(southConnectorId);
-    this.messageService.createFullConfigMessage();
+    this.messageService.createFullConfigMessageIfNotPending();
   }
 
   async createItem(southConnectorId: string, command: SouthConnectorItemCommandDTO): Promise<SouthConnectorItemDTO> {
@@ -141,7 +141,7 @@ export default class SouthConnectorConfigService {
     await this.validator.validateSettings(manifest.items.settings, command.settings);
 
     const southItem = await this.reloadService.onCreateSouthItem(southConnectorId, command);
-    this.messageService.createFullConfigMessage();
+    this.messageService.createFullConfigMessageIfNotPending();
     return southItem;
   }
 
@@ -166,28 +166,28 @@ export default class SouthConnectorConfigService {
 
     await this.validator.validateSettings(manifest.items.settings, command.settings);
     await this.reloadService.onUpdateSouthItemSettings(southConnectorId, southItem, command);
-    this.messageService.createFullConfigMessage();
+    this.messageService.createFullConfigMessageIfNotPending();
   }
 
   async deleteItem(southConnectorId: string, itemId: string) {
     await this.reloadService.onDeleteSouthItem(itemId);
     await this.reloadService.oibusEngine.onSouthItemsChange(southConnectorId);
-    this.messageService.createFullConfigMessage();
+    this.messageService.createFullConfigMessageIfNotPending();
   }
 
   async deleteAllItems(southConnectorId: string) {
     await this.reloadService.onDeleteAllSouthItems(southConnectorId);
     await this.reloadService.oibusEngine.onSouthItemsChange(southConnectorId);
-    this.messageService.createFullConfigMessage();
+    this.messageService.createFullConfigMessageIfNotPending();
   }
 
   async enableItem(itemId: string) {
     await this.reloadService.onEnableSouthItem(itemId);
-    this.messageService.createFullConfigMessage();
+    this.messageService.createFullConfigMessageIfNotPending();
   }
 
   async disableItem(itemId: string) {
     await this.reloadService.onDisableSouthItem(itemId);
-    this.messageService.createFullConfigMessage();
+    this.messageService.createFullConfigMessageIfNotPending();
   }
 }

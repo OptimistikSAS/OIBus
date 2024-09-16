@@ -5,6 +5,7 @@ import SubscriptionRepository from '../repository/subscription.repository';
 import { Subscription } from '../model/subscription.model';
 import SouthConnectorRepository from '../repository/south-connector.repository';
 import NorthConnectorRepository from '../repository/north-connector.repository';
+import { SubscriptionDTO } from '../../../shared/model/subscription.model';
 
 export default class SubscriptionService {
   constructor(
@@ -45,7 +46,7 @@ export default class SubscriptionService {
     }
 
     this.subscriptionRepository.create(northId, southId);
-    this.oIAnalyticsMessageService.createFullConfigMessage();
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 
   async delete(northId: string, southId: string): Promise<void> {
@@ -61,7 +62,7 @@ export default class SubscriptionService {
 
     this.subscriptionRepository.delete(northId, southId);
     this.oibusEngine.updateSubscriptions(northId);
-    this.oIAnalyticsMessageService.createFullConfigMessage();
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 
   async deleteAllByNorth(northId: string): Promise<void> {
@@ -71,6 +72,14 @@ export default class SubscriptionService {
     }
 
     this.subscriptionRepository.deleteAllByNorth(northId);
-    this.oIAnalyticsMessageService.createFullConfigMessage();
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 }
+
+export const toSubscriptionDTO = (subscription: Subscription): SubscriptionDTO => {
+  return {
+    southId: subscription.south.id,
+    southType: subscription.south.type,
+    southName: subscription.south.name
+  };
+};

@@ -63,7 +63,7 @@ describe('Scan Mode Service', () => {
     const result = await service.create(testData.scanMode.command);
 
     expect(validator.validate).toHaveBeenCalledWith(scanModeSchema, testData.scanMode.command);
-    expect(oIAnalyticsMessageService.createFullConfigMessage).toHaveBeenCalled();
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
     expect(result).toEqual(testData.scanMode.dto[0]);
   });
 
@@ -80,7 +80,7 @@ describe('Scan Mode Service', () => {
     expect(scanModeRepository.findById).toHaveBeenCalledTimes(2);
     expect(scanModeRepository.update).toHaveBeenCalledWith(testData.scanMode.list[0].id, testData.scanMode.command);
     expect(oibusEngine.updateScanMode).toHaveBeenCalledWith(testData.scanMode.list[1]);
-    expect(oIAnalyticsMessageService.createFullConfigMessage).toHaveBeenCalled();
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
   });
 
   it('update() should update a scan mode and not update engine', async () => {
@@ -92,7 +92,7 @@ describe('Scan Mode Service', () => {
 
     expect(scanModeRepository.update).toHaveBeenCalledWith(testData.scanMode.list[0].id, testData.scanMode.command);
     expect(oibusEngine.updateScanMode).not.toHaveBeenCalled();
-    expect(oIAnalyticsMessageService.createFullConfigMessage).toHaveBeenCalled();
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
   });
 
   it('update() should not update if the scan mode is not found', async () => {
@@ -105,7 +105,7 @@ describe('Scan Mode Service', () => {
     expect(scanModeRepository.findById).toHaveBeenCalledWith(testData.scanMode.list[0].id);
     expect(scanModeRepository.update).not.toHaveBeenCalled();
     expect(oibusEngine.updateScanMode).not.toHaveBeenCalled();
-    expect(oIAnalyticsMessageService.createFullConfigMessage).not.toHaveBeenCalled();
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).not.toHaveBeenCalled();
   });
 
   it('delete() should delete a scan mode', async () => {
@@ -116,7 +116,7 @@ describe('Scan Mode Service', () => {
     expect(scanModeRepository.findById).toHaveBeenCalledWith(testData.scanMode.list[0].id);
     expect(scanModeRepository.delete).toHaveBeenCalledWith(testData.scanMode.list[0].id);
     expect(southCacheRepository.deleteAllByScanMode).toHaveBeenCalledWith(testData.scanMode.list[0].id);
-    expect(oIAnalyticsMessageService.createFullConfigMessage).toHaveBeenCalled();
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
   });
 
   it('delete() should not delete if the scan mode is not found', async () => {
@@ -129,7 +129,7 @@ describe('Scan Mode Service', () => {
     expect(scanModeRepository.findById).toHaveBeenCalledWith(testData.scanMode.list[0].id);
     expect(scanModeRepository.delete).not.toHaveBeenCalled();
     expect(southCacheRepository.deleteAllByScanMode).not.toHaveBeenCalled();
-    expect(oIAnalyticsMessageService.createFullConfigMessage).not.toHaveBeenCalled();
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).not.toHaveBeenCalled();
   });
 
   it('verifyCron() should verify cron expression of a scan mode', async () => {
