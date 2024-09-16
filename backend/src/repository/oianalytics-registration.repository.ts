@@ -1,7 +1,7 @@
-import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../shared/model/engine.model';
 import { generateRandomId } from '../service/utils';
 import { Database } from 'better-sqlite3';
 import { Instant } from '../../../shared/model/types';
+import { OIAnalyticsRegistration, OIAnalyticsRegistrationEditCommand } from '../model/oianalytics-registration.model';
 
 export const REGISTRATIONS_TABLE = 'registrations';
 
@@ -13,7 +13,7 @@ export default class OIAnalyticsRegistrationRepository {
     this.createDefault({ host: '', useProxy: false, acceptUnauthorized: false });
   }
 
-  get(): RegistrationSettingsDTO | null {
+  get(): OIAnalyticsRegistration | null {
     const query =
       `SELECT id, host, token, activation_code AS activationCode, status, activation_date AS activationDate, ` +
       `check_url AS checkUrl, activation_expiration_date AS activationExpirationDate, use_proxy AS useProxy, ` +
@@ -22,27 +22,20 @@ export default class OIAnalyticsRegistrationRepository {
     const results: Array<any> = this.database.prepare(query).all();
 
     if (results.length > 0) {
-      return {
-        id: results[0].id,
-        host: results[0].host,
-        token: results[0].token,
-        activationCode: results[0].activationCode,
-        status: results[0].status,
-        activationDate: results[0].activationDate,
-        activationExpirationDate: results[0].activationExpirationDate,
-        checkUrl: results[0].checkUrl,
-        useProxy: Boolean(results[0].useProxy),
-        proxyUrl: results[0].proxyUrl,
-        proxyUsername: results[0].proxyUsername,
-        proxyPassword: results[0].proxyPassword,
-        acceptUnauthorized: Boolean(results[0].acceptUnauthorized)
-      };
+      return this.toOIAnalyticsRegistration(results[0]);
     } else {
       return null;
     }
   }
 
-  register(command: RegistrationSettingsCommandDTO, activationCode: string, checkUrl: string, expirationDate: Instant): void {
+  /**
+   * After OIAnalytics confirm the creation of a registration, answering with the activation code, the
+   * check URL and the expiration date, we store these information in OIBus
+   * Next step is for the user to enter the activation code in OIAnalytics
+   * OIBus regularly checks if the activation code has been entered
+   * Once the activation code entered in OIAnalytics, it goes into the activate method
+   */
+  register(command: OIAnalyticsRegistrationEditCommand, activationCode: string, checkUrl: string, expirationDate: Instant): void {
     const query =
       `UPDATE ${REGISTRATIONS_TABLE} SET host = ?, status = 'PENDING', token = '', activation_code = ?, ` +
       `check_url = ?, activation_expiration_date = ?, use_proxy = ?, proxy_url = ?, proxy_username = ?, proxy_password = ?, ` +
@@ -62,7 +55,21 @@ export default class OIAnalyticsRegistrationRepository {
       );
   }
 
-  update(command: RegistrationSettingsCommandDTO): void {
+  /**
+   * When OIBus has an answer from OIAnalytics saying that the user correctly entered the activation code,
+   * OIAnalytics also answer with the token that can be used to authenticate to OIAnalytics to send data, logs, settings etc.
+   */
+  activate(activationDate: Instant, token: string) {
+    const query = `UPDATE ${REGISTRATIONS_TABLE} SET status = 'REGISTERED', activation_expiration_date = '', activation_code = '', check_url = '', activation_date = ?, token = ? WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
+    this.database.prepare(query).run(activationDate, token);
+  }
+
+  unregister() {
+    const query = `UPDATE ${REGISTRATIONS_TABLE} SET status = 'NOT_REGISTERED', activation_expiration_date = '', check_url = '', activation_date = '', activation_code = '', token = '' WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
+    this.database.prepare(query).run();
+  }
+
+  update(command: Omit<OIAnalyticsRegistrationEditCommand, 'host'>): void {
     const query =
       `UPDATE ${REGISTRATIONS_TABLE} SET ` +
       `use_proxy = ?, proxy_url = ?, proxy_username = ?, proxy_password = ?, ` +
@@ -72,7 +79,7 @@ export default class OIAnalyticsRegistrationRepository {
       .run(+command.useProxy, command.proxyUrl, command.proxyUsername, command.proxyPassword, +command.acceptUnauthorized);
   }
 
-  createDefault(command: RegistrationSettingsCommandDTO): void {
+  private createDefault(command: OIAnalyticsRegistrationEditCommand): void {
     if (this.get()) {
       return;
     }
@@ -81,13 +88,21 @@ export default class OIAnalyticsRegistrationRepository {
     this.database.prepare(query).run(generateRandomId(), command.host, 'NOT_REGISTERED');
   }
 
-  activate(activationDate: Instant, token: string) {
-    const query = `UPDATE ${REGISTRATIONS_TABLE} SET status = 'REGISTERED', activation_expiration_date = '', activation_code = '', check_url = '', activation_date = ?, token = ? WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
-    this.database.prepare(query).run(activationDate, token);
-  }
-
-  unregister() {
-    const query = `UPDATE ${REGISTRATIONS_TABLE} SET status = 'NOT_REGISTERED', activation_expiration_date = '', check_url = '', activation_date = '', activation_code = '', token = '' WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
-    this.database.prepare(query).run();
+  private toOIAnalyticsRegistration(result: any): OIAnalyticsRegistration {
+    return {
+      id: result.id,
+      host: result.host,
+      activationCode: result.activationCode,
+      token: result.token,
+      status: result.status,
+      activationDate: result.activationDate,
+      activationExpirationDate: result.activationExpirationDate,
+      checkUrl: result.checkUrl,
+      useProxy: Boolean(result.useProxy),
+      proxyUrl: result.proxyUrl,
+      proxyUsername: result.proxyUsername,
+      proxyPassword: result.proxyPassword,
+      acceptUnauthorized: Boolean(result.acceptUnauthorized)
+    };
   }
 }

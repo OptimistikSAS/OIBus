@@ -1,10 +1,10 @@
-import { EngineSettingsCommandDTO, EngineSettingsDTO } from '../../../shared/model/engine.model';
 import { generateRandomId } from '../service/utils';
 import { Database } from 'better-sqlite3';
+import { EngineSettings } from '../model/engine.model';
 
 export const ENGINES_TABLE = 'engines';
 
-const defaultEngineSettings: EngineSettingsCommandDTO = {
+const defaultEngineSettings: Omit<EngineSettings, 'id' | 'version'> = {
   name: 'OIBus',
   port: 2223,
   proxyEnabled: false,
@@ -37,79 +37,40 @@ const defaultEngineSettings: EngineSettingsCommandDTO = {
 };
 
 /**
- * Repository used for engine settings
+ * Repository used for Engine settings
  */
 export default class EngineRepository {
   constructor(private readonly database: Database) {
     this.createDefault(defaultEngineSettings);
   }
 
-  /**
-   * Retrieve engine settings
-   * One line per OIBus. Each OIBus is identified by a unique ID
-   * The local OIBus can retrieve its own ID from its config file
-   * Other OIBus settings can be used to test several config or for other OIBus to retrieve their own settings when
-   * behind a firewall
-   */
-  get(): EngineSettingsDTO | null {
+  get(): EngineSettings | null {
     const query =
       'SELECT id, name, port, oibus_version AS version, proxy_enabled AS proxyEnabled, proxy_port AS proxyPort, ' +
-      'log_console_level AS consoleLogLevel, ' +
-      'log_file_level AS fileLogLevel, ' +
-      'log_file_max_file_size AS fileLogMaxFileSize, ' +
-      'log_file_number_of_files AS fileLogNumberOfFiles, ' +
-      'log_database_level AS databaseLogLevel, ' +
-      'log_database_max_number_of_logs AS databaseLogMaxNumberOfLogs, ' +
-      'log_loki_level AS lokiLogLevel, ' +
-      'log_loki_interval AS lokiLogInterval, ' +
-      'log_loki_address AS lokiLogAddress, ' +
-      'log_loki_username AS lokiLogUsername, ' +
-      'log_loki_password AS lokiLogPassword, ' +
-      'log_oia_level AS oiaLogLevel, ' +
-      'log_oia_interval AS oiaLogInterval ' +
+      'log_console_level AS logParametersConsoleLevel, ' +
+      'log_file_level AS logParametersFileLevel, ' +
+      'log_file_max_file_size AS logParametersFileMaxFileSize, ' +
+      'log_file_number_of_files AS logParametersFileNumberOfFiles, ' +
+      'log_database_level AS logParametersDatabaseLevel, ' +
+      'log_database_max_number_of_logs AS logParametersDatabaseMaxNumberOfLogs, ' +
+      'log_loki_level AS logParametersLokiLevel, ' +
+      'log_loki_interval AS logParametersLokiInterval, ' +
+      'log_loki_address AS logParametersLokiAddress, ' +
+      'log_loki_username AS logParametersLokiUsername, ' +
+      'log_loki_password AS logParametersLokiPassword, ' +
+      'log_oia_level AS logParametersOIALevel, ' +
+      'log_oia_interval AS logParametersOIAInterval ' +
       `FROM ${ENGINES_TABLE};`;
     const results: Array<any> = this.database.prepare(query).all();
 
     if (results.length > 0) {
-      return {
-        id: results[0].id,
-        name: results[0].name,
-        port: results[0].port,
-        version: results[0].version,
-        proxyEnabled: Boolean(results[0].proxyEnabled),
-        proxyPort: results[0].proxyPort,
-        logParameters: {
-          console: {
-            level: results[0].consoleLogLevel
-          },
-          file: {
-            level: results[0].fileLogLevel,
-            maxFileSize: results[0].fileLogMaxFileSize,
-            numberOfFiles: results[0].fileLogNumberOfFiles
-          },
-          database: {
-            level: results[0].databaseLogLevel,
-            maxNumberOfLogs: results[0].databaseLogMaxNumberOfLogs
-          },
-          loki: {
-            level: results[0].lokiLogLevel,
-            interval: results[0].lokiLogInterval,
-            address: results[0].lokiLogAddress,
-            username: results[0].lokiLogUsername,
-            password: results[0].lokiLogPassword
-          },
-          oia: {
-            level: results[0].oiaLogLevel,
-            interval: results[0].oiaLogInterval
-          }
-        }
-      };
+      return this.toEngineSettings(results[0]);
     } else {
       return null;
     }
   }
 
-  update(command: EngineSettingsCommandDTO): void {
+  update(command: Omit<EngineSettings, 'id' | 'version'>): void {
     const query =
       `UPDATE ${ENGINES_TABLE} SET name = ?, port = ?, proxy_enabled = ?, proxy_port = ?, ` +
       'log_console_level = ?, ' +
@@ -152,11 +113,10 @@ export default class EngineRepository {
 
   updateVersion(version: string): void {
     const query = `UPDATE ${ENGINES_TABLE} SET oibus_version = ? WHERE rowid=(SELECT MIN(rowid) FROM ${ENGINES_TABLE});`;
-
     this.database.prepare(query).run(version);
   }
 
-  createDefault(command: EngineSettingsCommandDTO): void {
+  private createDefault(command: Omit<EngineSettings, 'id' | 'version'>): void {
     if (this.get()) {
       return;
     }
@@ -189,5 +149,42 @@ export default class EngineRepository {
         command.logParameters.oia.level,
         command.logParameters.oia.interval
       );
+  }
+
+  private toEngineSettings(result: any): EngineSettings {
+    return {
+      id: result.id,
+      name: result.name,
+      port: result.port,
+      version: result.version,
+      proxyEnabled: Boolean(result.proxyEnabled),
+      proxyPort: result.proxyPort,
+      logParameters: {
+        console: {
+          level: result.logParametersConsoleLevel
+        },
+        file: {
+          level: result.logParametersFileLevel,
+          maxFileSize: result.logParametersFileMaxFileSize,
+          numberOfFiles: result.logParametersFileNumberOfFiles
+        },
+        database: {
+          level: result.logParametersDatabaseLevel,
+          maxNumberOfLogs: result.logParametersDatabaseMaxNumberOfLogs
+        },
+
+        loki: {
+          level: result.logParametersLokiLevel,
+          interval: result.logParametersLokiInterval,
+          address: result.logParametersLokiAddress,
+          username: result.logParametersLokiUsername,
+          password: result.logParametersLokiPassword
+        },
+        oia: {
+          level: result.logParametersOIALevel,
+          interval: result.logParametersOIAInterval
+        }
+      }
+    };
   }
 }

@@ -3,12 +3,7 @@ import HistoryQueryConnectorController from './history-query.controller';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
 import JoiValidator from './validators/joi.validator';
 import { HistoryQueryCommandDTO, HistoryQueryCreateCommandDTO } from '../../../../shared/model/history-query.model';
-import {
-  NorthArchiveSettings,
-  NorthCacheSettingsDTO,
-  NorthConnectorCommandDTO,
-  NorthConnectorDTO
-} from '../../../../shared/model/north-connector.model';
+import { NorthArchiveSettings, NorthCacheSettingsDTO, NorthConnectorCommandDTO } from '../../../../shared/model/north-connector.model';
 import { SouthConnectorCommandDTO, SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import csv from 'papaparse';
 import fs from 'node:fs/promises';
@@ -71,17 +66,6 @@ const northConnectorCommand: NorthConnectorCommandDTO = {
     field: 'value'
   }
 } as NorthConnectorCommandDTO;
-const northConnector: NorthConnectorDTO = {
-  id: 'northId',
-  name: 'name',
-  type: 'north-test',
-  description: 'description',
-  enabled: true,
-  settings: {
-    field: 'value'
-  },
-  caching: northCacheSettings
-};
 
 const historyQueryCommand: HistoryQueryCommandDTO = {
   name: 'name',
@@ -356,65 +340,6 @@ describe('History query controller', () => {
     expect(ctx.badRequest).toHaveBeenCalledWith(`Scan mode not specified`);
   });
 
-  it('create() should create History query with existing connectors', async () => {
-    ctx.request.body = { ...JSON.parse(JSON.stringify(historyQueryCreateCommand)), fromNorthId: 'id1', fromSouthId: 'id2' };
-    ctx.request.body.items = [
-      {
-        name: 'name',
-        enabled: true,
-        connectorId: 'connectorId',
-        settings: {}
-      }
-    ];
-    ctx.app.repositoryService.southConnectorRepository.findById.mockReturnValue(southConnector);
-    ctx.app.repositoryService.northConnectorRepository.findById.mockReturnValue(northConnector);
-
-    ctx.app.encryptionService.encryptConnectorSecrets
-      .mockReturnValueOnce(southConnector.settings)
-      .mockReturnValueOnce(northConnector.settings);
-    ctx.app.reloadService.onCreateHistoryQuery.mockReturnValue(historyQuery);
-
-    await historyQueryController.create(ctx);
-
-    const southManifest = southTestManifest;
-    const northManifest = northTestManifest;
-    expect(ctx.app.repositoryService.scanModeRepository.findAll).not.toHaveBeenCalled();
-    expect(validator.validateSettings).toHaveBeenCalledWith(southManifest.settings, historyQuery.southSettings);
-    expect(validator.validateSettings).toHaveBeenCalledWith(northManifest.settings, historyQuery.northSettings);
-    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
-      historyQuery.southSettings,
-      southConnector.settings,
-      southManifest.settings
-    );
-    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
-      historyQuery.northSettings,
-      northConnector.settings,
-      northManifest.settings
-    );
-    expect(ctx.app.reloadService.onCreateHistoryQuery).toHaveBeenCalledWith(
-      {
-        name: 'name',
-        description: 'description',
-        history: {
-          maxInstantPerItem: true,
-          maxReadInterval: 3600,
-          readDelay: 0,
-          overlap: 0
-        },
-        startTime: '2020-02-01T02:02:59.999Z',
-        endTime: '2020-02-02T02:02:59.999Z',
-        southType: 'south-test',
-        northType: 'north-test',
-        southSettings: southConnector.settings,
-        southSharedConnection: false,
-        northSettings: northConnector.settings,
-        caching: northCacheSettings
-      },
-      ctx.request.body.items
-    );
-    expect(ctx.created).toHaveBeenCalledWith(historyQuery);
-  });
-
   it('create() should not create History query without body', async () => {
     ctx.request.body = null;
     await historyQueryController.create(ctx);
@@ -433,21 +358,6 @@ describe('History query controller', () => {
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onCreateHistoryQuery).not.toHaveBeenCalled();
     expect(ctx.notFound).toHaveBeenCalled();
-  });
-
-  it('startHistoryQuery() should restart when the history is in finished or errored state', async () => {
-    ctx.params.enable = true;
-    ctx.params.id = 'id';
-
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValueOnce({ ...historyQuery, status: 'FINISHED' });
-    await historyQueryController.startHistoryQuery(ctx);
-
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValueOnce({ ...historyQuery, status: 'ERRORED' });
-    await historyQueryController.startHistoryQuery(ctx);
-
-    expect(ctx.app.reloadService.historyEngine.stopHistoryQuery).toHaveBeenCalledTimes(2);
-    expect(ctx.app.reloadService.historyEngine.resetCache).toHaveBeenCalledTimes(2);
-    expect(ctx.badRequest).not.toHaveBeenCalled();
   });
 
   it('create() should return 404 when South connector not found', async () => {

@@ -3,57 +3,44 @@ import RepositoryServiceMock from '../../tests/__mocks__/service/repository-serv
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { getNetworkSettingsFromRegistration, getOIBusInfo } from '../utils';
-import { RegistrationSettingsDTO } from '../../../../shared/model/engine.model';
 import OIAnalyticsMessageService from './oianalytics-message.service';
-import { OIAnalyticsMessageInfo } from '../../../../shared/model/oianalytics-message.model';
-import OianalyticsConfigurationClientMock from '../../tests/__mocks__/service/oia/oianalytics-configuration-client.mock';
-import OIAnalyticsConfigurationClient from './oianalytics-configuration.client';
+import testData from '../../tests/utils/test-data';
+import EncryptionService from '../encryption.service';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
+import { flushPromises } from '../../tests/utils/test-utils';
+import fetch from 'node-fetch';
+import { DateTime } from 'luxon';
 
 jest.mock('node:fs/promises');
 jest.mock('node-fetch');
 jest.mock('../utils');
 
-// @ts-ignore
-jest.spyOn(process, 'exit').mockImplementation(() => {});
+const repositoryService: RepositoryService = new RepositoryServiceMock();
+const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 
-const repositoryService: RepositoryService = new RepositoryServiceMock('', '');
-const configurationClient: OIAnalyticsConfigurationClient = new OianalyticsConfigurationClientMock('', '');
-
-const nowDateString = '2020-02-02T02:02:02.222Z';
 const logger: pino.Logger = new PinoLogger();
-const anotherLogger: pino.Logger = new PinoLogger();
-
-const infoMessage: OIAnalyticsMessageInfo = {
-  id: '1234',
-  status: 'ERRORED',
-  type: 'info',
-  error: '',
-  completedDate: '2019-02-02T02:02:02.22Z',
-  creationDate: '2019-02-02T02:02:02.22Z'
-};
 
 let service: OIAnalyticsMessageService;
-describe('OIAnalytics message service with messages', () => {
-  const registration: RegistrationSettingsDTO = {
-    id: 'id',
-    host: 'http://localhost:4200',
-    acceptUnauthorized: false,
-    useProxy: false,
-    token: 'token',
-    activationCode: '1234',
-    status: 'REGISTERED',
-    activationDate: '2020-20-20T00:00:00.000Z',
-    activationExpirationDate: ''
-  };
-
+describe('OIAnalytics Message Service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    (getOIBusInfo as jest.Mock).mockReturnValue({ version: 'v3.2.0' });
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
-    (repositoryService.oianalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(registration);
-    (repositoryService.oianalyticsMessageRepository.list as jest.Mock).mockReturnValue([infoMessage]);
-    service = new OIAnalyticsMessageService(repositoryService, configurationClient, logger);
+    (getOIBusInfo as jest.Mock).mockReturnValue(testData.engine.oIBusInfo);
+    (repositoryService.oianalyticsMessageRepository.list as jest.Mock).mockReturnValue(testData.oIAnalytics.messages.oIBusList);
+    (repositoryService.oianalyticsMessageRepository.create as jest.Mock).mockReturnValue(testData.oIAnalytics.messages.oIBusList[0]);
+    (repositoryService.oianalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(testData.oIAnalytics.registration.completed);
+    (repositoryService.engineRepository.get as jest.Mock).mockReturnValue(testData.engine.settings);
+    (repositoryService.cryptoRepository.getCryptoSettings as jest.Mock).mockReturnValue(testData.engine.crypto);
+    (repositoryService.scanModeRepository.findAll as jest.Mock).mockReturnValue(testData.scanMode.list);
+    (repositoryService.southConnectorRepository.findAll as jest.Mock).mockReturnValue(testData.south.list);
+    (repositoryService.northConnectorRepository.findAll as jest.Mock).mockReturnValue(testData.north.list);
+
+    service = new OIAnalyticsMessageService(repositoryService, encryptionService, logger);
+  });
+
+  afterEach(async () => {
+    await flushPromises();
   });
 
   it('should properly start and stop', async () => {
@@ -70,29 +57,71 @@ describe('OIAnalytics message service with messages', () => {
     expect(logger.debug).toHaveBeenCalledWith(`OIAnalytics message service stopped`);
   });
 
-  it('should properly send message and wait for it to finish before stopping', async () => {
-    service.sendMessage = jest.fn().mockImplementation(() => {
-      return new Promise<void>(resolve => {
-        setTimeout(resolve, 1000);
-      });
+  it('should properly catch command exception', async () => {
+    (getNetworkSettingsFromRegistration as jest.Mock).mockReturnValueOnce({
+      host: 'http://localhost:4200',
+      agent: undefined,
+      headers: { authorization: `Bearer token` }
     });
+    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve({ ok: false, status: 400, statusText: 'statusText' }));
 
     service.start();
-    service.start();
-
     service.stop();
 
-    jest.advanceTimersByTime(1000);
-    await service.stop();
-    service.removeMessageFromQueue(infoMessage.id);
+    jest.advanceTimersByTime(1_000);
 
-    expect(service.sendMessage).toHaveBeenCalledTimes(1);
+    await service.stop();
+
+    expect(logger.error).toHaveBeenCalledWith(
+      `Error while sending message ${testData.oIAnalytics.messages.oIBusList[0].id} of type ${testData.oIAnalytics.messages.oIBusList[0].type}. Error: statusText`
+    );
+    expect(repositoryService.oianalyticsMessageRepository.markAsErrored).toHaveBeenCalledWith(
+      testData.oIAnalytics.messages.oIBusList[0].id,
+      DateTime.fromISO(testData.constants.dates.FAKE_NOW).plus({ second: 1 }).toUTC().toISO()!,
+      'statusText'
+    );
     expect(logger.debug).toHaveBeenCalledWith('Waiting for OIAnalytics message to finish');
-    service.addMessageToQueue(infoMessage);
+  });
+
+  it('should properly send message and wait for it to finish before stopping', async () => {
+    (getNetworkSettingsFromRegistration as jest.Mock).mockImplementationOnce(() => {
+      return new Promise(resolve => {
+        setTimeout(
+          () =>
+            resolve({
+              host: 'http://localhost:4200',
+              agent: undefined,
+              headers: { authorization: `Bearer token` }
+            }),
+          1_000
+        );
+      });
+    });
+    (fetch as unknown as jest.Mock).mockImplementationOnce(() => Promise.resolve(new Response(JSON.stringify({}))));
+
+    service.start(); // trigger a runProgress
+
+    expect(getNetworkSettingsFromRegistration).toHaveBeenCalledTimes(1);
+    service.start(); // should enter only once in run
+
+    expect(getNetworkSettingsFromRegistration).toHaveBeenCalledTimes(1);
+
+    service.stop();
+    jest.advanceTimersByTime(1_000);
+
+    await flushPromises();
+    expect(getNetworkSettingsFromRegistration).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(repositoryService.oianalyticsMessageRepository.markAsCompleted).toHaveBeenCalledWith(
+      testData.oIAnalytics.messages.oIBusList[0].id,
+      DateTime.fromISO(testData.constants.dates.FAKE_NOW).plus({ second: 1 }).toUTC().toISO()!
+    );
+    expect(logger.debug).toHaveBeenCalledWith('Waiting for OIAnalytics message to finish');
+    expect(logger.debug).toHaveBeenCalledWith('Full OIBus configuration sent to OIAnalytics');
   });
 
   it('should properly send message and trigger timeout', async () => {
-    service.sendMessage = jest.fn().mockImplementation(() => {
+    (getNetworkSettingsFromRegistration as jest.Mock).mockImplementationOnce(() => {
       return new Promise<void>(resolve => {
         setTimeout(resolve, 100_000);
       });
@@ -102,7 +131,7 @@ describe('OIAnalytics message service with messages', () => {
     service.stop();
     jest.advanceTimersByTime(10_000);
 
-    service.stop();
+    // service.stop();
 
     expect(logger.debug).toHaveBeenCalledWith('Waiting for OIAnalytics message to finish');
     jest.advanceTimersByTime(20_000);
@@ -110,75 +139,21 @@ describe('OIAnalytics message service with messages', () => {
     await service.stop();
     expect(logger.debug).toHaveBeenCalledWith(`OIAnalytics message service stopped`);
   });
-
-  it('should properly catch command exception', async () => {
-    service.sendMessage = jest.fn().mockImplementation(() => {
-      return new Promise<void>((resolve, reject) => {
-        setTimeout(() => reject(new Error('exception')), 1000);
-      });
-    });
-
-    service.start();
-    service.stop();
-
-    jest.advanceTimersByTime(1000);
-
-    await service.stop();
-    expect(logger.error).toHaveBeenCalledWith(
-      `Error while sending message ${infoMessage.id} (created ${infoMessage.creationDate}) of type ${infoMessage.type}. Error: exception`
-    );
-    expect(service.sendMessage).toHaveBeenCalledTimes(1);
-    expect(logger.debug).toHaveBeenCalledWith('Waiting for OIAnalytics message to finish');
-  });
 });
 
 describe('OIAnalytics message service without message', () => {
+  const anotherLogger: pino.Logger = new PinoLogger();
+
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
     (repositoryService.oianalyticsMessageRepository.list as jest.Mock).mockReturnValue([]);
-    (getNetworkSettingsFromRegistration as jest.Mock).mockReturnValue({ host: 'http://localhost:4200', headers: {}, agent: undefined });
 
-    service = new OIAnalyticsMessageService(repositoryService, configurationClient, logger);
+    service = new OIAnalyticsMessageService(repositoryService, encryptionService, logger);
   });
 
-  it('should properly start when not registered', () => {
-    const registration: RegistrationSettingsDTO = {
-      id: 'id',
-      host: 'http://localhost:4200',
-      acceptUnauthorized: false,
-      useProxy: false,
-      token: 'token',
-      activationCode: '1234',
-      status: 'NOT_REGISTERED',
-      activationDate: '2020-20-20T00:00:00.000Z',
-      activationExpirationDate: ''
-    };
-    (repositoryService.oianalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(registration);
-
-    expect(getOIBusInfo).not.toHaveBeenCalled();
+  it('should properly start when no message retrieved', () => {
     expect(repositoryService.oianalyticsMessageRepository.markAsCompleted).not.toHaveBeenCalled();
-
-    service.run = jest.fn();
-    service.start();
-    expect(logger.debug).toHaveBeenCalledWith(`Message service not started: OIAnalytics not registered`);
-    expect(service.run).not.toHaveBeenCalled();
-  });
-
-  it('should properly start when registered', () => {
-    const registration: RegistrationSettingsDTO = {
-      id: 'id',
-      host: 'http://localhost:4200',
-      acceptUnauthorized: false,
-      useProxy: false,
-      token: 'token',
-      activationCode: '1234',
-      status: 'REGISTERED',
-      activationDate: '2020-20-20T00:00:00.000Z',
-      activationExpirationDate: ''
-    };
-    (repositoryService.oianalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(registration);
 
     service.run = jest.fn();
     service.start();
@@ -187,5 +162,22 @@ describe('OIAnalytics message service without message', () => {
 
   it('should change logger', () => {
     service.setLogger(anotherLogger);
+  });
+});
+
+describe('OIAnalytics message service without completed registration', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (repositoryService.oianalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(testData.oIAnalytics.registration.pending);
+    (repositoryService.oianalyticsMessageRepository.list as jest.Mock).mockReturnValue(testData.oIAnalytics.messages.oIBusList);
+
+    service = new OIAnalyticsMessageService(repositoryService, encryptionService, logger);
+  });
+
+  it('should properly start and do nothing', () => {
+    service.start();
+    expect(repositoryService.oianalyticsMessageRepository.list).toHaveBeenCalledTimes(1);
+    expect(logger.debug).toHaveBeenCalledWith("OIBus is not registered to OIAnalytics. Messages won't be created");
+    expect(logger.trace).toHaveBeenCalledWith("OIBus is not registered to OIAnalytics. Messages won't be sent");
   });
 });

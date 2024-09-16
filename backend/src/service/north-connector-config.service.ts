@@ -47,7 +47,7 @@ export default class NorthConnectorConfigService {
     if (command.enabled) {
       await this.reloadService.oibusEngine.startNorth(created.id);
     }
-    this.messageService.createFullConfigMessage();
+    this.messageService.createFullConfigMessageIfNotPending();
     return created;
   }
 
@@ -69,7 +69,7 @@ export default class NorthConnectorConfigService {
     command.settings = await this.encryptionService.encryptConnectorSecrets(command.settings, northConnector.settings, manifest.settings);
 
     await this.reloadService.onUpdateNorthSettings(northConnectorId, command);
-    this.messageService.createFullConfigMessage();
+    this.messageService.createFullConfigMessageIfNotPending();
   }
 
   async delete(northConnectorId: string) {
@@ -77,7 +77,7 @@ export default class NorthConnectorConfigService {
     if (northConnector) {
       this.subscriptionRepository.deleteAllByNorth(northConnectorId);
       await this.reloadService.onDeleteNorth(northConnectorId);
-      this.messageService.createFullConfigMessage();
+      this.messageService.createFullConfigMessageIfNotPending();
     } else {
       throw new Error(`North connector ${northConnectorId} does not exist`);
     }
@@ -90,7 +90,7 @@ export default class NorthConnectorConfigService {
     }
 
     await this.reloadService.onStartNorth(northConnectorId);
-    this.messageService.createFullConfigMessage();
+    this.messageService.createFullConfigMessageIfNotPending();
   }
 
   async stop(northConnectorId: string) {
@@ -100,6 +100,6 @@ export default class NorthConnectorConfigService {
     }
 
     await this.reloadService.onStopNorth(northConnectorId);
-    this.messageService.createFullConfigMessage();
+    this.messageService.createFullConfigMessageIfNotPending();
   }
 }

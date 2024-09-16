@@ -5,12 +5,13 @@ import NorthServiceMock from './service/north-service.mock';
 import SouthServiceMock from './service/south-service.mock';
 import OIBusServiceMock from './service/oibus-service.mock';
 import EngineMetricsServiceMock from './service/engine-metrics-service.mock';
-import RegistrationServiceMock from './service/registration-service.mock';
 import NorthConnectorConfigServiceMock from './service/north-connector-config-service.mock';
 import SouthConnectorConfigServiceMock from './service/south-connector-config-service.mock';
 import ScanModeServiceMock from './service/scan-mode-service.mock';
 import SubscriptionServiceMock from './service/subscription-service.mock';
 import IpFilterServiceMock from './service/ip-filter-service.mock';
+import OIAnalyticsRegistrationServiceMock from './service/oia/oianalytics-registration-service.mock';
+import OIAnalyticsCommandServiceMock from './service/oia/oianalytics-command-service.mock';
 
 /**
  * Create a mock object for Koa Context
@@ -27,9 +28,9 @@ export default jest.fn().mockImplementation(() => ({
     northConnectorConfigService: new NorthConnectorConfigServiceMock(),
     southService: new SouthServiceMock(),
     southConnectorConfigService: new SouthConnectorConfigServiceMock(),
-
-    oibusService: new OIBusServiceMock(),
-    registrationService: new RegistrationServiceMock(),
+    oIBusService: new OIBusServiceMock(),
+    oIAnalyticsRegistrationService: new OIAnalyticsRegistrationServiceMock(),
+    oIAnalyticsCommandService: new OIAnalyticsCommandServiceMock(),
     engineMetricsService: new EngineMetricsServiceMock(),
     logger: {
       trace: jest.fn(),

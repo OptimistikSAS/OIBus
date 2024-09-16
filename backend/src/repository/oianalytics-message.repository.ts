@@ -1,26 +1,11 @@
 import { generateRandomId } from '../service/utils';
 import { Database } from 'better-sqlite3';
 import { Instant, Page } from '../../../shared/model/types';
-import {
-  OIAnalyticsMessage,
-  OIAnalyticsMessageCommandDTO,
-  OIAnalyticsMessageSearchParam,
-  OIAnalyticsMessageStatus,
-  OIAnalyticsMessageType
-} from '../../../shared/model/oianalytics-message.model';
+import { OIAnalyticsMessageSearchParam, OIAnalyticsMessageType } from '../../../shared/model/oianalytics-message.model';
+import { OIAnalyticsMessage } from '../model/oianalytics-message.model';
 
 export const OIANALYTICS_MESSAGE_TABLE = 'oianalytics_messages';
 const PAGE_SIZE = 50;
-
-export interface OIAnalyticsMessageResult {
-  id: string;
-  created_at: Instant;
-  completed_date: Instant;
-  type: OIAnalyticsMessageType;
-  status: OIAnalyticsMessageStatus;
-  error: string;
-  content: string;
-}
 
 /**
  * Repository used for managing actions that need to be managed for OIAnalytics communication
@@ -52,7 +37,7 @@ export default class OIAnalyticsMessageRepository {
     const results: Array<OIAnalyticsMessage> = this.database
       .prepare(query)
       .all(...queryParams, PAGE_SIZE * page)
-      .map(result => this.toMessage(result as OIAnalyticsMessageResult));
+      .map(result => this.toMessage(result));
     const totalElements = (
       this.database.prepare(`SELECT COUNT(*) as count FROM ${OIANALYTICS_MESSAGE_TABLE} ${whereClause};`).get(...queryParams) as {
         count: number;
@@ -93,24 +78,30 @@ export default class OIAnalyticsMessageRepository {
     return this.database
       .prepare(query)
       .all(...queryParams)
-      .map(result => this.toMessage(result as OIAnalyticsMessageResult));
+      .map(result => this.toMessage(result));
   }
 
-  create(message: OIAnalyticsMessageCommandDTO): OIAnalyticsMessage {
+  findById(id: string): OIAnalyticsMessage | null {
+    const query = `SELECT *
+                   FROM ${OIANALYTICS_MESSAGE_TABLE}
+                   WHERE id = ?;`;
+    const result = this.database.prepare(query).get(id);
+    return result ? this.toMessage(result) : null;
+  }
+
+  create(message: Omit<OIAnalyticsMessage, 'id' | 'status' | 'completedDate' | 'error'>): OIAnalyticsMessage {
     // id, type, status
     const queryParams = [generateRandomId(), message.type, 'PENDING'];
     let insertQuery = `INSERT INTO ${OIANALYTICS_MESSAGE_TABLE} `;
 
     switch (message.type) {
-      case 'info':
       case 'full-config':
         insertQuery += `(id, type, status) VALUES (?, ?, ?);`;
         break;
     }
     const result = this.database.prepare(insertQuery).run(...queryParams);
     const query = `SELECT * FROM ${OIANALYTICS_MESSAGE_TABLE} WHERE ROWID = ?;`;
-    const createdMessage: OIAnalyticsMessageResult = this.database.prepare(query).get(result.lastInsertRowid) as OIAnalyticsMessageResult;
-    return this.toMessage(createdMessage);
+    return this.toMessage(this.database.prepare(query).get(result.lastInsertRowid));
   }
 
   markAsCompleted(id: string, completedDate: Instant): void {
@@ -123,17 +114,15 @@ export default class OIAnalyticsMessageRepository {
     this.database.prepare(query).run(completedDate, result, id);
   }
 
-  private toMessage(result: OIAnalyticsMessageResult): OIAnalyticsMessage {
-    switch (result.type) {
-      case 'info':
+  private toMessage(message: any): OIAnalyticsMessage {
+    switch (message.type as OIAnalyticsMessageType) {
       case 'full-config':
         return {
-          id: result.id,
-          creationDate: result.created_at,
-          type: result.type,
-          status: result.status,
-          error: result.error,
-          completedDate: result.completed_date
+          id: message.id,
+          type: message.type,
+          status: message.status,
+          error: message.error,
+          completedDate: message.completed_date
         };
     }
   }

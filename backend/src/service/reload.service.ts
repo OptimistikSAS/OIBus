@@ -1,7 +1,5 @@
 import RepositoryService from './repository.service';
 import LoggerService from './logger/logger.service';
-
-import { EngineSettingsDTO } from '../../../shared/model/engine.model';
 import {
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
@@ -11,28 +9,20 @@ import {
 } from '../../../shared/model/south-connector.model';
 import { NorthCacheFiles, NorthConnectorCommandDTO, NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 import { HistoryQueryCommandDTO, HistoryQueryDTO, SouthHistoryQueryItemDTO } from '../../../shared/model/history-query.model';
-import pino from 'pino';
-import EngineMetricsService from './engine-metrics.service';
 import NorthService from './north.service';
 import SouthService from './south.service';
 import OIBusEngine from '../engine/oibus-engine';
 import HistoryQueryEngine from '../engine/history-query-engine';
 import { Instant } from '../../../shared/model/types';
 import { ScanModeCommandDTO } from '../../../shared/model/scan-mode.model';
-import HomeMetricsService from './home-metrics.service';
 import ProxyServer from '../web-server/proxy-server';
 import OIBusService from './oibus.service';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 
 export default class ReloadService {
-  private webServerChangeLoggerCallback: (logger: pino.Logger) => void = () => {};
-  private webServerChangePortCallback: (port: number) => Promise<void> = () => Promise.resolve();
-
   constructor(
     private readonly _loggerService: LoggerService,
     private readonly _repositoryService: RepositoryService,
-    private readonly _engineMetricsService: EngineMetricsService,
-    private readonly _homeMetricsService: HomeMetricsService,
     private readonly _northService: NorthService,
     private readonly _southService: SouthService,
     private readonly _oibusEngine: OIBusEngine,
@@ -48,14 +38,6 @@ export default class ReloadService {
 
   get loggerService(): LoggerService {
     return this._loggerService;
-  }
-
-  get engineMetricsService(): EngineMetricsService {
-    return this._engineMetricsService;
-  }
-
-  get homeMetricsService(): HomeMetricsService {
-    return this._homeMetricsService;
   }
 
   get northService(): NorthService {
@@ -84,58 +66,6 @@ export default class ReloadService {
 
   get oianalyticsMessageService(): OIAnalyticsMessageService {
     return this._oianalyticsMessageService;
-  }
-
-  setWebServerChangeLogger(callback: (logger: pino.Logger) => void): void {
-    this.webServerChangeLoggerCallback = callback;
-  }
-
-  setWebServerChangePort(callback: (port: number) => Promise<void>): void {
-    this.webServerChangePortCallback = callback;
-  }
-
-  async onUpdateOIBusSettings(oldSettings: EngineSettingsDTO | null, newSettings: EngineSettingsDTO): Promise<void> {
-    if (
-      !oldSettings ||
-      JSON.stringify(oldSettings.logParameters) !== JSON.stringify(newSettings.logParameters) ||
-      oldSettings.name !== newSettings.name
-    ) {
-      await this.restartLogger(newSettings);
-      const registration = this.repositoryService.oianalyticsRegistrationRepository.get()!;
-      if (registration.status !== 'NOT_REGISTERED') {
-        this._oianalyticsMessageService.createFullConfigMessage();
-      }
-    }
-    if (newSettings.port === newSettings.proxyPort) {
-      throw new Error('same port on general and proxy');
-    } else if (oldSettings && oldSettings.port !== newSettings.port && oldSettings.proxyPort !== newSettings.proxyPort) {
-      await this.proxyServer.stop();
-      await this.webServerChangePortCallback(newSettings.port);
-      if (newSettings.proxyEnabled) {
-        await this.proxyServer.start(newSettings.proxyPort!);
-      }
-    } else {
-      if (!oldSettings || oldSettings.port !== newSettings.port) {
-        await this.webServerChangePortCallback(newSettings.port);
-      }
-      if (!oldSettings || oldSettings.proxyEnabled !== newSettings.proxyEnabled || oldSettings.proxyPort !== newSettings.proxyPort) {
-        await this.proxyServer.stop();
-        if (newSettings.proxyEnabled) {
-          await this.proxyServer.start(newSettings.proxyPort!);
-        }
-      }
-    }
-  }
-
-  public async restartLogger(newSettings: EngineSettingsDTO) {
-    this.loggerService.stop();
-    const registration = this.repositoryService.oianalyticsRegistrationRepository.get()!;
-    await this.loggerService.start(newSettings.id, newSettings.name, newSettings.logParameters, registration);
-    this.webServerChangeLoggerCallback(this.loggerService.createChildLogger('web-server'));
-    this.oibusService.setLogger(this.loggerService.createChildLogger('internal'));
-    this.engineMetricsService.setLogger(this.loggerService.createChildLogger('internal'));
-    this.proxyServer.setLogger(this.loggerService.createChildLogger('internal'));
-    this.oianalyticsMessageService.setLogger(this.loggerService.createChildLogger('internal'));
   }
 
   async onCreateSouth(command: SouthConnectorCommandDTO): Promise<SouthConnectorDTO> {

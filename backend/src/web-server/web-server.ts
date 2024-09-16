@@ -21,13 +21,13 @@ import { KoaApplication } from './koa';
 import SouthService from '../service/south.service';
 import OIBusService from '../service/oibus.service';
 import NorthService from '../service/north.service';
-import EngineMetricsService from '../service/engine-metrics.service';
-import OianalyticsRegistrationService from '../service/oia/oianalytics-registration.service';
 import SouthConnectorConfigService from '../service/south-connector-config.service';
 import ScanModeService from '../service/scan-mode.service';
 import NorthConnectorConfigService from '../service/north-connector-config.service';
 import SubscriptionService from '../service/subscription.service';
 import IPFilterService from '../service/ip-filter.service';
+import OIAnalyticsCommandService from '../service/oia/oianalytics-command.service';
+import OIAnalyticsRegistrationService from '../service/oia/oianalytics-registration.service';
 
 /**
  * Class Server - Provides the web client and establish socket connections.
@@ -46,13 +46,13 @@ export default class WebServer {
     private readonly scanModeService: ScanModeService,
     private readonly subscriptionService: SubscriptionService,
     private readonly ipFilterService: IPFilterService,
+    private readonly oIAnalyticsRegistrationService: OIAnalyticsRegistrationService,
+    private readonly oIAnalyticsCommandService: OIAnalyticsCommandService,
+    private readonly oIBusService: OIBusService,
     private readonly reloadService: ReloadService,
-    private readonly registrationService: OianalyticsRegistrationService,
     private readonly repositoryService: RepositoryService,
     private readonly southService: SouthService,
     private readonly northService: NorthService,
-    private readonly oibusService: OIBusService,
-    private readonly engineMetricsService: EngineMetricsService,
     private readonly southConnectorConfigService: SouthConnectorConfigService,
     private readonly northConnectorConfigService: NorthConnectorConfigService,
     private readonly ignoreIpFilters: boolean,
@@ -104,14 +104,14 @@ export default class WebServer {
         this.scanModeService,
         this.subscriptionService,
         this.ipFilterService,
+        this.oIAnalyticsRegistrationService,
+        this.oIAnalyticsCommandService,
+        this.oIBusService,
         this.repositoryService,
         this.reloadService,
-        this.registrationService,
         this.encryptionService,
         this.southService,
         this.northService,
-        this.oibusService,
-        this.engineMetricsService,
         this.southConnectorConfigService,
         this.northConnectorConfigService,
         this.logger
@@ -154,8 +154,8 @@ export default class WebServer {
     this.app.use(router.allowedMethods());
 
     await this.start();
-    this.reloadService.setWebServerChangeLogger(this.setLogger.bind(this));
-    this.reloadService.setWebServerChangePort(this.setPort.bind(this));
+    this.oIBusService.setWebServerChangeLogger(this.setLogger.bind(this));
+    this.oIBusService.setWebServerChangePort(this.setPort.bind(this));
   }
 
   async start(): Promise<void> {
