@@ -17,8 +17,6 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 import { filesExists } from '../service/utils';
-import HomeMetricsServiceMock from '../tests/__mocks__/service/home-metrics-service.mock';
-import HomeMetricsService from '../service/home-metrics.service';
 import { OIBusTimeValue } from '../../../shared/model/engine.model';
 
 jest.mock('../south/south-mqtt/south-mqtt');
@@ -34,7 +32,6 @@ const anotherLogger: pino.Logger = new PinoLogger();
 
 const southService: SouthService = new SouthServiceMock();
 const northService: NorthService = new NorthServiceMock();
-const homeMetrics: HomeMetricsService = new HomeMetricsServiceMock();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
@@ -178,7 +175,7 @@ describe('OIBusEngine', () => {
     (southService.createSouth as jest.Mock).mockReturnValue(createdSouth);
     (northService.createNorth as jest.Mock).mockReturnValue(createdNorth);
 
-    engine = new OIBusEngine(encryptionService, northService, southService, homeMetrics, logger);
+    engine = new OIBusEngine(encryptionService, northService, southService, logger);
   });
 
   it('it should start', async () => {

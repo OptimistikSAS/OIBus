@@ -1,11 +1,7 @@
 import NorthConnectorController from './north-connector.controller';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
 import JoiValidator from './validators/joi.validator';
-import csv from 'papaparse';
-import fs from 'node:fs/promises';
-import { TransformerDTO, TransformerFilterDTO } from '../../../../shared/model/transformer.model';
-import { northTestManifest } from '../../tests/__mocks__/north-service.mock';
-import { ScanModeDTO } from '../../../../shared/model/scan-mode.model';
+import { northTestManifest } from '../../tests/__mocks__/service/north-service.mock';
 
 jest.mock('./validators/joi.validator');
 

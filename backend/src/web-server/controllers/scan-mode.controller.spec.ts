@@ -7,7 +7,6 @@ import { ValidatedCronExpression } from '../../../../shared/model/scan-mode.mode
 import testData from '../../tests/utils/test-data';
 
 jest.mock('./validators/joi.validator');
-jest.mock('../../service/utils');
 
 const validator = new JoiValidator();
 const schema = Joi.object({});
