@@ -6,13 +6,13 @@ import pino from 'pino';
 import SouthService from '../service/south.service';
 import OIBusService from '../service/oibus.service';
 import NorthService from '../service/north.service';
-import EngineMetricsService from '../service/engine-metrics.service';
 import OianalyticsRegistrationService from '../service/oia/oianalytics-registration.service';
 import SouthConnectorConfigService from '../service/south-connector-config.service';
 import ScanModeService from '../service/scan-mode.service';
 import NorthConnectorConfigService from '../service/north-connector-config.service';
 import SubscriptionService from '../service/subscription.service';
 import IPFilterService from '../service/ip-filter.service';
+import OIAnalyticsCommandService from '../service/oia/oianalytics-command.service';
 
 interface KoaRequest<RequestBody> extends Request {
   body?: RequestBody;
@@ -23,15 +23,15 @@ export interface KoaApplication extends Koa {
   scanModeService: ScanModeService;
   subscriptionService: SubscriptionService;
   ipFilterService: IPFilterService;
+  oIBusService: OIBusService;
+  oIAnalyticsRegistrationService: OianalyticsRegistrationService;
+  oIAnalyticsCommandService: OIAnalyticsCommandService;
   repositoryService: RepositoryService;
   ipFilters: {
     whiteList: Array<string>;
   };
   southService: SouthService;
   northService: NorthService;
-  oibusService: OIBusService;
-  registrationService: OianalyticsRegistrationService;
-  engineMetricsService: EngineMetricsService;
   reloadService: ReloadService;
   encryptionService: EncryptionService;
   scanModeConfigService: ScanModeService;

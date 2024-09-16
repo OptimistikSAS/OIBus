@@ -1,7 +1,7 @@
 import { KoaContext } from '../koa';
 import { IPFilterCommandDTO, IPFilterDTO } from '../../../../shared/model/ip-filter.model';
 import AbstractController from './abstract.controller';
-import { toIPFilterDTO } from '../../model/ip-filter.model';
+import { toIPFilterDTO } from '../../service/ip-filter.service';
 
 export default class IpFilterController extends AbstractController {
   async findAll(ctx: KoaContext<void, Array<IPFilterDTO>>): Promise<void> {
