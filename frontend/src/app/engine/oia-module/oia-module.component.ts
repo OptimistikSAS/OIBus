@@ -19,7 +19,7 @@ import { emptyPage } from '../../shared/test-utils';
 import {
   OIBUS_COMMAND_STATUS,
   OIBUS_COMMAND_TYPES,
-  OIBusCommand,
+  OIBusCommandDTO,
   OIBusCommandStatus,
   OIBusCommandType
 } from '../../../../../shared/model/command.model';
@@ -62,7 +62,7 @@ export class OiaModuleComponent implements OnInit, OnDestroy {
   private pageLoader = inject(PageLoader);
 
   registration: RegistrationSettingsDTO | null = null;
-  commands: Page<OIBusCommand> = emptyPage();
+  commands: Page<OIBusCommandDTO> = emptyPage();
   readonly statusList = OIBUS_COMMAND_STATUS;
   readonly typeList = OIBUS_COMMAND_TYPES;
   // subscription to reload the page periodically

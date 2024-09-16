@@ -13,7 +13,7 @@ import pino from 'pino';
 import csv from 'papaparse';
 import https from 'node:https';
 import http from 'node:http';
-import { EngineSettingsDTO, OIBusContent, OIBusInfo, RegistrationSettingsDTO } from '../../../shared/model/engine.model';
+import { EngineSettingsDTO, OIBusContent, OIBusInfo } from '../../../shared/model/engine.model';
 import os from 'node:os';
 import { NorthCacheFiles } from '../../../shared/model/north-connector.model';
 import EncryptionService from './encryption.service';
@@ -21,6 +21,7 @@ import { createProxyAgent } from './proxy-agent';
 import cronstrue from 'cronstrue';
 import cronparser from 'cron-parser';
 import { ValidatedCronExpression } from '../../../shared/model/scan-mode.model';
+import { OIAnalyticsRegistration } from '../model/oianalytics-registration.model';
 
 const COMPRESSION_LEVEL = 9;
 
@@ -553,14 +554,10 @@ export const getFilesFiltered = async (
 };
 
 export const getNetworkSettingsFromRegistration = async (
-  registrationSettings: RegistrationSettingsDTO | null,
+  registrationSettings: Omit<OIAnalyticsRegistration, 'id' | 'status' | 'activationDate'>,
   endpoint: string,
   encryptionService: EncryptionService
 ): Promise<{ host: string; headers: HeadersInit; agent: any }> => {
-  if (!registrationSettings || registrationSettings.status !== 'REGISTERED') {
-    throw new Error('OIBus not registered in OIAnalytics');
-  }
-
   if (registrationSettings.host.endsWith('/')) {
     registrationSettings.host = registrationSettings.host.slice(0, registrationSettings.host.length - 1);
   }

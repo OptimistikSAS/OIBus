@@ -35,11 +35,11 @@ describe('Content controller', () => {
     ctx.request.query = { northId: 'northId' };
     await oibusController.addContent(ctx);
     expect(ctx.noContent).toHaveBeenCalled();
-    expect(ctx.app.oibusService.addExternalContent).toHaveBeenCalledWith('northId', content);
+    expect(ctx.app.oIBusService.addExternalContent).toHaveBeenCalledWith('northId', content);
   });
 
   it('should properly manage internal error when adding values', async () => {
-    (ctx.app.oibusService.addExternalContent as jest.Mock).mockImplementationOnce(() => {
+    (ctx.app.oIBusService.addExternalContent as jest.Mock).mockImplementationOnce(() => {
       throw new Error('internal error');
     });
     ctx.request.body = content;
@@ -56,6 +56,6 @@ describe('Content controller', () => {
     ctx.request.file = { path: 'filePath' };
     await oibusController.addContent(ctx);
     expect(ctx.noContent).toHaveBeenCalled();
-    expect(ctx.app.oibusService.addExternalContent).toHaveBeenCalledWith('northId', { type: 'raw', filePath: 'filePath' });
+    expect(ctx.app.oIBusService.addExternalContent).toHaveBeenCalledWith('northId', { type: 'raw', filePath: 'filePath' });
   });
 });

@@ -51,7 +51,7 @@ describe('IP Filter Service', () => {
 
     expect(validator.validate).toHaveBeenCalledWith(ipFilterSchema, testData.ipFilters.command);
     expect(proxyServer.refreshIpFilters).toHaveBeenCalledWith(testData.ipFilters.list.map(ip => ip.address));
-    expect(oIAnalyticsMessageService.createFullConfigMessage).toHaveBeenCalled();
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
     expect(result).toEqual(testData.ipFilters.list[0]);
   });
 
@@ -66,7 +66,7 @@ describe('IP Filter Service', () => {
     expect(ipFilterRepository.findAll).toHaveBeenCalled();
     expect(ipFilterRepository.update).toHaveBeenCalledWith(testData.ipFilters.list[0].id, testData.ipFilters.command);
     expect(proxyServer.refreshIpFilters).toHaveBeenCalledWith(testData.ipFilters.list.map(ip => ip.address));
-    expect(oIAnalyticsMessageService.createFullConfigMessage).toHaveBeenCalled();
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
   });
 
   it('update() should not update if the ip filter is not found', async () => {
@@ -79,7 +79,7 @@ describe('IP Filter Service', () => {
     expect(ipFilterRepository.findById).toHaveBeenCalledWith(testData.ipFilters.list[0].id);
     expect(ipFilterRepository.update).not.toHaveBeenCalled();
     expect(proxyServer.refreshIpFilters).not.toHaveBeenCalled();
-    expect(oIAnalyticsMessageService.createFullConfigMessage).not.toHaveBeenCalled();
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).not.toHaveBeenCalled();
   });
 
   it('delete() should delete an ip filter', async () => {
@@ -91,7 +91,7 @@ describe('IP Filter Service', () => {
     expect(ipFilterRepository.findById).toHaveBeenCalledWith(testData.ipFilters.list[0].id);
     expect(ipFilterRepository.delete).toHaveBeenCalledWith(testData.ipFilters.list[0].id);
     expect(proxyServer.refreshIpFilters).toHaveBeenCalledWith(testData.ipFilters.list.map(ip => ip.address));
-    expect(oIAnalyticsMessageService.createFullConfigMessage).toHaveBeenCalled();
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
   });
 
   it('delete() should not delete if the IP Filter is not found', async () => {
@@ -104,6 +104,6 @@ describe('IP Filter Service', () => {
     expect(ipFilterRepository.findById).toHaveBeenCalledWith(testData.ipFilters.list[0].id);
     expect(ipFilterRepository.delete).not.toHaveBeenCalled();
     expect(proxyServer.refreshIpFilters).not.toHaveBeenCalled();
-    expect(oIAnalyticsMessageService.createFullConfigMessage).not.toHaveBeenCalled();
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).not.toHaveBeenCalled();
   });
 });
