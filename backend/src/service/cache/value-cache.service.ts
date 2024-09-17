@@ -371,7 +371,7 @@ export default class ValueCacheService {
   async removeErrorValues(filenames: Array<string>): Promise<void> {
     for (const filename of filenames) {
       const filePath = path.join(this.errorFolder, filename);
-      this.deleteKeyFromCache(filePath);
+      await this.deleteKeyFromCache(filePath);
     }
   }
 
