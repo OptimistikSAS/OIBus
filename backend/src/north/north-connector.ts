@@ -382,7 +382,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
     const chunkSize = this.connector.caching.maxSendCount;
     for (let i = 0; i < values.length; i += chunkSize) {
       const chunk = values.slice(i, i + chunkSize);
-      this.logger.debug(`Caching ${values.length} values (cache size: ${Math.floor((this.cacheSize / 1024 / 1024) * 100) / 100} MB)`);
+      this.logger.debug(`Caching ${chunk.length} values (cache size: ${Math.floor((this.cacheSize / 1024 / 1024) * 100) / 100} MB)`);
       await this.valueCacheService.cacheValues(chunk);
     }
   }
