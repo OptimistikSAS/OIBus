@@ -1,17 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { SingleSelectComponent } from './single-select.component';
+import { RichSelectComponent } from './rich-select.component';
 
-describe('SingleSelectComponent', () => {
-  let component: SingleSelectComponent;
-  let fixture: ComponentFixture<SingleSelectComponent>;
+describe('RichSelectComponent', () => {
+  let component: RichSelectComponent;
+  let fixture: ComponentFixture<RichSelectComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SingleSelectComponent]
+      imports: [RichSelectComponent]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(SingleSelectComponent);
+    fixture = TestBed.createComponent(RichSelectComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

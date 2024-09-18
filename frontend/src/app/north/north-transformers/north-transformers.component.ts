@@ -4,9 +4,8 @@ import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component'
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
-import { SingleSelectComponent } from '../../shared/single-select/single-select.component';
-import { SimpleSingleSelectOptionComponent } from '../../shared/single-select/single-select-simple-option';
-import { RichSingleSelectOptionComponent } from '../../shared/single-select/single-select-rich-option';
+import { RichSelectComponent } from '../../shared/rich-select/rich-select.component';
+import { RichSelectOptionComponent } from '../../shared/rich-select/rich-select-option.component';
 import { TransformerCommandDTO, TransformerDTO } from '../../../../../shared/model/transformer.model';
 import { TransformerService } from '../../services/transformer.service';
 import { Modal, ModalService } from '../../shared/modal.service';
@@ -31,9 +30,8 @@ export type TableState = Array<{
     BoxTitleDirective,
     OibHelpComponent,
     NgbDropdownModule,
-    SingleSelectComponent,
-    SimpleSingleSelectOptionComponent,
-    RichSingleSelectOptionComponent
+    RichSelectComponent,
+    RichSelectOptionComponent
   ],
   templateUrl: './north-transformers.component.html',
   styleUrl: './north-transformers.component.scss'

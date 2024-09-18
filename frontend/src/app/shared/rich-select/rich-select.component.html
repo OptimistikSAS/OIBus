@@ -22,27 +22,23 @@
   </button>
   <div ngbDropdownMenu (keyup.esc)="dropdown.close(); $event.stopPropagation()">
     @for (option of options; track option) {
-      @if (isRichSelectOption(option)) {
-        <button
-          type="button"
-          ngbDropdownItem
-          (click)="select(option, $event)"
-          [class.selected]="isSelected(option)"
-          (keydown.esc)="$event.stopPropagation()"
-        >
+      <button
+        type="button"
+        ngbDropdownItem
+        (click)="select(option, $event)"
+        [class.selected]="isSelected(option)"
+        (keydown.esc)="$event.stopPropagation()"
+      >
+        <!-- Option has custom content -->
+        <div class="rich-content-wrapper" #richContentWrapper>
           <ng-container *ngTemplateOutlet="option.contentTemplateRef"></ng-container>
-        </button>
-      } @else if (isSimpleSelectOption(option)) {
-        <button
-          type="button"
-          ngbDropdownItem
-          (click)="select(option, $event)"
-          [class.selected]="isSelected(option)"
-          (keydown.esc)="$event.stopPropagation()"
-        >
+        </div>
+
+        <!-- Option does not have custom content, just showing label -->
+        @if (!richContentWrapper.children.length) {
           {{ option.label }}
-        </button>
-      }
+        }
+      </button>
     }
   </div>
 </div>

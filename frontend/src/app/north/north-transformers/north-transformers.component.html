@@ -26,7 +26,7 @@
             <td>{{ row.input }}</td>
 
             <td>
-              <oib-single-select
+              <oib-rich-select
                 formControlName="options"
                 id="transformer-options"
                 placeholder="Select one"
@@ -35,13 +35,13 @@
                 (selectionChange)="onOutputChange($event, rowIndex)"
               >
                 @for (output of row.outputs; track output) {
-                  <oib-simple-single-select-option [value]="output.value" [label]="output.value" />
+                  <oib-rich-select-option [value]="output.value" [label]="output.value" />
                 }
-              </oib-single-select>
+              </oib-rich-select>
             </td>
 
             <td>
-              <oib-single-select
+              <oib-rich-select
                 formControlName="types"
                 id="transformer-types"
                 placeholder="Select one"
@@ -50,16 +50,16 @@
                 (selectionChange)="onTransformerTypeChange($event, rowIndex)"
               >
                 @for (transformerType of row.transformerTypes; track transformerType) {
-                  <oib-simple-single-select-option [value]="transformerType.value" [label]="transformerType.value" />
+                  <oib-rich-select-option [value]="transformerType.value" [label]="transformerType.value" />
                 }
-              </oib-single-select>
+              </oib-rich-select>
             </td>
 
             @if (getSelectedValue(row.transformerTypes) === 'standard') {
               <td>Using standard implementation</td>
             } @else {
               <td>
-                <oib-single-select
+                <oib-rich-select
                   formControlName="implementation"
                   id="transformer-impl"
                   placeholder="Select one"
@@ -69,7 +69,7 @@
                 >
                   <!-- List available transformers -->
                   @for (transformer of row.transformers; track transformer) {
-                    <oib-rich-single-select-option [value]="transformer.value.id" [label]="transformer.value.name">
+                    <oib-rich-select-option [value]="transformer.value.id" [label]="transformer.value.name">
                       <div class="align-items-center d-inline-flex gap-3 justify-content-between w-100">
                         <span> {{ transformer.value.name }} </span>
                         <div class="align-items-center d-flex gap-1">
@@ -82,17 +82,17 @@
                           </button>
                         </div>
                       </div>
-                    </oib-rich-single-select-option>
+                    </oib-rich-select-option>
                   }
 
                   <!-- Add new item -->
-                  <oib-rich-single-select-option value="create-new" [selectable]="false">
+                  <oib-rich-select-option value="create-new" [selectable]="false">
                     <button class="btn btn-primary w-100" (click)="onCreateTransformer($event, rowIndex)">
                       <span class="fa fa-plus"></span>
                       Create new
                     </button>
-                  </oib-rich-single-select-option>
-                </oib-single-select>
+                  </oib-rich-select-option>
+                </oib-rich-select>
               </td>
             }
           </tr>

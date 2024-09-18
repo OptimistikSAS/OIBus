@@ -1,38 +1,52 @@
 import { AfterContentInit, Component, ContentChildren, EventEmitter, forwardRef, Input, Output, QueryList } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
-import { SimpleSingleSelectOptionComponent } from './single-select-simple-option';
 import { FormControlValidationDirective } from '../form-control-validation.directive';
-import { BaseSingleSelectOptionComponent } from './single-select-base-option';
-import { RichSingleSelectOptionComponent } from './single-select-rich-option';
 import { NgTemplateOutlet } from '@angular/common';
 import { BoxTitleDirective } from '../box/box.component';
+import { RichSelectOptionComponent } from './rich-select-option.component';
 
 /**
- * A form control component allowing to do multiple selections.
+ * A form control component allowing to do rich single selections.
  *
- * Usage:
+ * Simple usage:
  *
  * ```
- * <oib-multi-select formControlName="users" placeholder="Choose a user">
+ * <oib-rich-select formControlName="users" placeholder="Choose a user">
  *   @for (user of users; track user.id) {
- *    <oib-multi-select-option [value]="user.id" [label]="user.name">
+ *    <oib-rich-select-option [value]="user.id" [label]="user.name">
  *   }
- *   </oib-multi-select-option>
- * </oib-multi-select>
+ *   </oib-rich-select-option>
+ * </oib-rich-select>
+ * ```
+ *
+ * Advanced usage:
+ *
+ * ```
+ * <oib-rich-select formControlName="users" placeholder="Choose a user">
+ *   @for (user of users; track user.id) {
+ *    <oib-rich-select-option [value]="user.id" [label]="user.name">
+ *      <div>
+ *        <span>User is {{ user.name }}</span>
+ *        <button>delete</button>
+ *      </div>
+ *    </<oib-rich-select-option>
+ *   }
+ *   </oib-rich-select-option>
+ * </oib-rich-select>
  * ```
  *
  * An `isSmall` input allows to create the small Bootstrap version (`custom-select-sm`).
  * This input is optional and `false` by default.
  */
 @Component({
-  selector: 'oib-single-select',
-  templateUrl: './single-select.component.html',
-  styleUrl: './single-select.component.scss',
+  selector: 'oib-rich-select',
+  templateUrl: './rich-select.component.html',
+  styleUrl: './rich-select.component.scss',
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => SingleSelectComponent),
+      useExisting: forwardRef(() => RichSelectComponent),
       multi: true
     }
   ],
@@ -48,9 +62,9 @@ import { BoxTitleDirective } from '../box/box.component';
   ],
   standalone: true
 })
-export class SingleSelectComponent implements ControlValueAccessor, AfterContentInit {
+export class RichSelectComponent implements ControlValueAccessor, AfterContentInit {
   disabled = false;
-  @ContentChildren(BaseSingleSelectOptionComponent) options: QueryList<BaseSingleSelectOptionComponent> | null = null;
+  @ContentChildren(RichSelectOptionComponent) options: QueryList<RichSelectOptionComponent> | null = null;
 
   @Input() placeholder = '';
 
@@ -119,16 +133,21 @@ export class SingleSelectComponent implements ControlValueAccessor, AfterContent
     this.onTouched();
   }
 
-  select(option: BaseSingleSelectOptionComponent, event: MouseEvent) {
-    if (this.isRichSelectOption(option) && !option.selectable) {
-      if (!option.selectable) {
-        return;
-      }
+  select(option: RichSelectOptionComponent, event: MouseEvent) {
+    const hasCustomContent = !!(event.currentTarget as HTMLElement).querySelector('.rich-content-wrapper')?.children.length;
 
-      // If the clicked element is a button don't count as selection
-      if ((event.target as HTMLElement).tagName === 'BUTTON') {
-        return;
-      }
+    if (!option.selectable) {
+      return;
+    }
+
+    // When an option has custom content
+    // do not select it if it's a button from the content or the wrapper button itself
+    if (
+      hasCustomContent &&
+      (event.target as HTMLElement).tagName === 'BUTTON' &&
+      !(event.target as HTMLElement).classList.contains('dropdown-item')
+    ) {
+      return;
     }
 
     this.selectedValue = option.value;
@@ -136,7 +155,7 @@ export class SingleSelectComponent implements ControlValueAccessor, AfterContent
     this.selectionChange.emit(this.selectedValue);
   }
 
-  isSelected(option: BaseSingleSelectOptionComponent) {
+  isSelected(option: RichSelectOptionComponent) {
     return this.actualCompareWith(option.value, this.selectedValue);
   }
 
@@ -148,13 +167,5 @@ export class SingleSelectComponent implements ControlValueAccessor, AfterContent
 
   private get actualCompareWith(): (o1: any, o2: any) => boolean {
     return this.compareWith || ((o1: any, o2: any) => o1 === o2);
-  }
-
-  isRichSelectOption(option: BaseSingleSelectOptionComponent): option is RichSingleSelectOptionComponent {
-    return option instanceof RichSingleSelectOptionComponent;
-  }
-
-  isSimpleSelectOption(option: BaseSingleSelectOptionComponent): option is SimpleSingleSelectOptionComponent {
-    return option instanceof SimpleSingleSelectOptionComponent;
   }
 }
