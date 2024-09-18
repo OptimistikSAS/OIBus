@@ -53,8 +53,9 @@ export default class NorthFileWriter extends NorthConnector<NorthFileWriterSetti
       }
 
       case 'file-content': {
-        const content = northData.data;
-        const filename = `${prefix}${DateTime.now().toUTC().toMillis()}${suffix}.csv`;
+        const content = northData.data.content;
+        const ext = northData.data.ext;
+        const filename = `${prefix}${DateTime.now().toUTC().toMillis()}${suffix}${ext}`;
 
         await fs.writeFile(path.join(path.resolve(this.connector.settings.outputFolder), filename), content);
         this.logger.debug(`File "${filename}" created in "${path.resolve(this.connector.settings.outputFolder)}" output folder`);
@@ -99,7 +100,10 @@ export default class NorthFileWriter extends NorthConnector<NorthFileWriterSetti
 
     return {
       type: 'file-content',
-      data: csvContent
+      data: {
+        content: csvContent,
+        ext: '.csv'
+      }
     };
   }
 

@@ -14,7 +14,10 @@ const manifest: NorthConnectorManifest = {
   inputData: [
     {
       type: 'file-content',
-      data: Joi.string().description('Contents of the file to be created')
+      data: Joi.object({
+        content: Joi.string().description('Contents of the file to be created'),
+        ext: Joi.string().description(`The file's extension (it must start with a dot, e.g. ".txt")`)
+      })
     },
     {
       type: 'file-path',
