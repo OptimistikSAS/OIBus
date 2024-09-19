@@ -3,7 +3,7 @@ import PinoLogger from '../tests/__mocks__/logger.mock';
 import EncryptionServiceMock from '../tests/__mocks__/encryption-service.mock';
 import RepositoryServiceMock from '../tests/__mocks__/repository-service.mock';
 
-import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
+import { NorthConnectorDTO, NorthTransformerDefinition } from '../../../shared/model/north-connector.model';
 
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
@@ -17,6 +17,7 @@ import { dirSize, validateCronExpression } from '../service/utils';
 import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import path from 'node:path';
+import { TransformerDTO } from '../../../shared/model/transformer.model';
 
 // Mock fs
 jest.mock('node:fs/promises');
@@ -42,6 +43,7 @@ const archiveTrigger = new EventEmitter();
 const getErrorFileContent = jest.fn();
 const getCacheFileContent = jest.fn();
 const getArchiveFileContent = jest.fn();
+const sandboxExecute = jest.fn();
 
 // Mock services
 jest.mock('../service/repository.service');
@@ -110,6 +112,14 @@ jest.mock(
           numberOfFilesSent: 1
         }
       };
+    }
+);
+
+jest.mock(
+  '../service/sandbox.service',
+  () =>
+    function () {
+      return { execute: sandboxExecute };
     }
 );
 
@@ -752,6 +762,256 @@ describe('NorthConnector disabled', () => {
         `(${Math.floor((cacheSize / 1024 / 1024) * 100) / 100} MB >= ${configuration.caching.maxSize} MB). ` +
         'Values will be discarded until the cache is emptied (by sending files/values or manual removal)'
     );
+  });
+});
+
+describe('NorthConnector transform', () => {
+  const timeValueData: OIBusContent = {
+    type: 'time-values',
+    content: [
+      {
+        pointId: 'pointId',
+        timestamp: 'timestamp',
+        data: { value: 'foo' }
+      }
+    ]
+  };
+  const rawData: OIBusContent = {
+    type: 'raw',
+    filePath: 'example.txt'
+  };
+  const supportedTransformers: Array<NorthTransformerDefinition> = [
+    {
+      inputType: 'time-values',
+      outputType: 'output-values',
+      type: 'standard'
+    },
+    {
+      inputType: 'raw',
+      outputType: 'output-values',
+      type: 'standard'
+    },
+    {
+      inputType: 'time-values',
+      outputType: 'output-values',
+      type: 'custom'
+    },
+    {
+      inputType: 'raw',
+      outputType: 'output-values',
+      type: 'custom'
+    },
+    {
+      inputType: 'raw',
+      outputType: 'test-values',
+      type: 'custom'
+    }
+  ];
+
+  beforeEach(async () => {
+    jest.resetAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+
+    configuration = {
+      id: 'test',
+      name: 'north',
+      type: 'test',
+      description: 'my test connector',
+      enabled: false,
+      settings: {},
+      caching: {
+        scanModeId: 'id1',
+        retryInterval: 5000,
+        retryCount: 2,
+        maxSize: 10,
+        oibusTimeValues: {
+          groupCount: 10000,
+          maxSendCount: 10000
+        },
+        rawFiles: {
+          sendFileImmediately: true,
+          archive: {
+            enabled: true,
+            retentionDuration: 720
+          }
+        }
+      }
+    };
+    repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
+
+    north = new TestNorth(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+
+    // no custom transformers by default
+    repositoryService.northTransformerRepository.getTransformers = jest.fn().mockReturnValue([]);
+  });
+
+  it('should transform time-values using standard implementation', async () => {
+    const timeValueTransformer = jest.fn(data => data);
+    north.assignStandardTransformer('time-values', timeValueTransformer);
+
+    await north.start();
+
+    const result = await north.transform(timeValueData, supportedTransformers);
+    expect(result).toEqual(timeValueData);
+  });
+
+  it('should transform raw using standard implementation', async () => {
+    const rawTransformer = jest.fn(data => data);
+    north.assignStandardTransformer('raw', rawTransformer);
+
+    await north.start();
+    const result = await north.transform(rawData, supportedTransformers);
+    expect(result).toEqual(rawData);
+  });
+
+  it('should return null when no standard transformers are found', async () => {
+    await north.start();
+    const result = await north.transform(timeValueData, supportedTransformers);
+    expect(result).toEqual(null);
+  });
+
+  it('should transform time-values using custom implementation', async () => {
+    const customTimeValueTransformer: TransformerDTO = {
+      id: '123456',
+      name: 'name',
+      description: 'description',
+      inputType: 'time-values',
+      outputType: 'output-values',
+      code: '',
+      fileRegex: 'fileRegex'
+    };
+    repositoryService.northTransformerRepository.getTransformers = jest.fn().mockReturnValue([customTimeValueTransformer]);
+    sandboxExecute.mockReturnValueOnce(timeValueData);
+
+    await north.start();
+    const result = await north.transform(timeValueData, supportedTransformers);
+    expect(result).toEqual(timeValueData);
+    expect(sandboxExecute).toHaveBeenCalledWith(customTimeValueTransformer, timeValueData);
+  });
+
+  it('should transform raw using custom implementation', async () => {
+    const customRawTransformer: TransformerDTO = {
+      id: '123456',
+      name: 'name',
+      description: 'description',
+      inputType: 'raw',
+      outputType: 'output-values',
+      code: '',
+      fileRegex: 'fileRegex'
+    };
+    repositoryService.northTransformerRepository.getTransformers = jest.fn().mockReturnValue([customRawTransformer]);
+    sandboxExecute.mockReturnValueOnce(rawData);
+
+    await north.start();
+    const result = await north.transform(rawData, supportedTransformers);
+    expect(result).toEqual(rawData);
+    expect(sandboxExecute).toHaveBeenCalledWith(customRawTransformer, rawData);
+  });
+
+  it('should return null when no custom transformers are found', async () => {
+    const customRawTransformer: TransformerDTO = {
+      id: '123456',
+      name: 'name',
+      description: 'description',
+      inputType: 'raw',
+      outputType: 'not-supported-values',
+      code: '',
+      fileRegex: 'fileRegex'
+    };
+    repositoryService.northTransformerRepository.getTransformers = jest.fn().mockReturnValue([customRawTransformer]);
+    sandboxExecute.mockReturnValueOnce(rawData);
+
+    await north.start();
+
+    const result = await north.transform(timeValueData, supportedTransformers);
+    expect(result).toEqual(null);
+  });
+
+  it('should only find a custom transformer if the configuration allows it', async () => {
+    const transformers = [
+      {
+        id: '1',
+        name: 'name1',
+        description: 'description',
+        inputType: 'raw',
+        outputType: 'some-values',
+        code: '',
+        fileRegex: 'fileRegex'
+      },
+      {
+        id: '2',
+        name: 'name2',
+        description: 'description',
+        inputType: 'raw',
+        outputType: 'test-values',
+        code: '',
+        fileRegex: 'fileRegex'
+      }
+    ];
+    repositoryService.northTransformerRepository.getTransformers = jest.fn().mockReturnValue(transformers);
+
+    await north.start();
+    await north.transform(rawData, supportedTransformers);
+    expect(sandboxExecute).toHaveBeenCalledWith(transformers[1], rawData);
+  });
+
+  it('should not find a custom transformer if data type does not match', async () => {
+    const transformers = [
+      {
+        id: '1',
+        name: 'name1',
+        description: 'description',
+        inputType: 'random-values',
+        outputType: 'some-values',
+        code: '',
+        fileRegex: 'fileRegex'
+      },
+      {
+        id: '2',
+        name: 'name2',
+        description: 'description',
+        inputType: 'random-values',
+        outputType: 'test-values',
+        code: '',
+        fileRegex: 'fileRegex'
+      }
+    ];
+    repositoryService.northTransformerRepository.getTransformers = jest.fn().mockReturnValue(transformers);
+
+    await north.start();
+    await north.transform(rawData, supportedTransformers);
+    expect(sandboxExecute).not.toHaveBeenCalled();
+  });
+
+  it('should not find a custom transformer if there are not custom transformers allowed', async () => {
+    const transformers = [
+      {
+        id: '1',
+        name: 'name1',
+        description: 'description',
+        inputType: 'raw',
+        outputType: 'some-values',
+        code: '',
+        fileRegex: 'fileRegex'
+      },
+      {
+        id: '2',
+        name: 'name2',
+        description: 'description',
+        inputType: 'raw',
+        outputType: 'test-values',
+        code: '',
+        fileRegex: 'fileRegex'
+      }
+    ];
+    repositoryService.northTransformerRepository.getTransformers = jest.fn().mockReturnValue(transformers);
+
+    await north.start();
+    await north.transform(
+      rawData,
+      supportedTransformers.filter(t => t.type !== 'custom')
+    );
+    expect(sandboxExecute).not.toHaveBeenCalled();
   });
 });
 
