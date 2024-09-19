@@ -84,7 +84,7 @@ const items: Array<SouthConnectorItemDTO<SouthOPCHDAItemSettings>> = [
     settings: {
       nodeId: 'ns=3;s=Triangle',
       aggregate: 'average',
-      resampling: '10Seconds'
+      resampling: '10s'
     },
     scanModeId: 'scanModeId2'
   }
@@ -210,11 +210,23 @@ describe('South OPCHDA', () => {
   });
 
   it('should test connection successfully', async () => {
-    (fetch as unknown as jest.Mock).mockReturnValueOnce(
-      Promise.resolve({
-        status: 204
-      })
-    );
+    (fetch as unknown as jest.Mock)
+      .mockReturnValueOnce(
+        Promise.resolve({
+          status: 200
+        })
+      )
+      .mockReturnValueOnce(
+        Promise.resolve({
+          status: 200,
+          json: () => JSON.stringify({})
+        })
+      )
+      .mockReturnValueOnce(
+        Promise.resolve({
+          status: 200
+        })
+      );
     await expect(south.testConnection()).resolves.not.toThrow();
   });
 
@@ -275,6 +287,9 @@ describe('South OPCHDA', () => {
       body: JSON.stringify({
         host: configuration.settings.host,
         serverName: configuration.settings.serverName,
+        mode: 'hda',
+        maxReadValues: 3600,
+        intervalReadDelay: 200,
         aggregate: 'raw',
         resampling: 'none',
         startTime,
@@ -294,8 +309,11 @@ describe('South OPCHDA', () => {
       body: JSON.stringify({
         host: configuration.settings.host,
         serverName: configuration.settings.serverName,
+        mode: 'hda',
+        maxReadValues: 3600,
+        intervalReadDelay: 200,
         aggregate: 'average',
-        resampling: '10Seconds',
+        resampling: '10s',
         startTime,
         endTime,
         items: [{ name: 'item3', nodeId: 'ns=3;s=Triangle' }]
@@ -305,7 +323,7 @@ describe('South OPCHDA', () => {
       }
     });
 
-    expect(result).toEqual('2020-03-01T00:00:00.000Z');
+    expect(result).toEqual('2020-03-01T00:00:00.001Z');
     expect(south.addValues).toHaveBeenCalledWith([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
 
     expect(logger.debug).toHaveBeenCalledWith(`No result found. Request done in 0 ms`);

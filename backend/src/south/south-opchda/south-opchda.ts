@@ -73,18 +73,24 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
       method: 'PUT',
       body: JSON.stringify({
         host: this.connector.settings.host,
-        serverName: this.connector.settings.serverName
+        serverName: this.connector.settings.serverName,
+        mode: 'hda'
       }),
       headers
     };
-    const response = await fetch(`${this.connector.settings.agentUrl!}/api/opc/${this.connector.id}/connect`, fetchOptions);
-    if (response.status === 204) {
+    const connectResponse = await fetch(`${this.connector.settings.agentUrl!}/api/opc/${this.connector.id}/connect`, fetchOptions);
+    if (connectResponse.status === 200) {
+      const response = await fetch(`${this.connector.settings.agentUrl!}/api/opc/${this.connector.id}/status`, {
+        method: 'GET',
+        headers
+      });
+      this.logger.info(`OPC server info: ${await response.json()}`);
       await fetch(`${this.connector.settings.agentUrl}/api/opc/${this.connector.id}/disconnect`, { method: 'DELETE' });
-    } else if (response.status === 400) {
-      const errorMessage = await response.text();
-      throw new Error(`Error occurred when sending connect command to remote agent with status ${response.status}. ${errorMessage}`);
+    } else if (connectResponse.status === 400) {
+      const errorMessage = await connectResponse.text();
+      throw new Error(`Error occurred when sending connect command to remote agent with status ${connectResponse.status}. ${errorMessage}`);
     } else {
-      throw new Error(`Error occurred when sending connect command to remote agent with status ${response.status}`);
+      throw new Error(`Error occurred when sending connect command to remote agent with status ${connectResponse.status}`);
     }
   }
 
@@ -140,15 +146,21 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
 
       for (const [aggregate, aggregatedItems] of itemsByAggregates.entries()) {
         for (const [resampling, resampledItems] of aggregatedItems.entries()) {
-          this.logger.debug(`Requesting ${resampledItems.length} items with aggregate ${aggregate} and resampling ${resampling}`);
+          this.logger.debug(
+            `Requesting ${resampledItems.length} items with aggregate ${aggregate} and resampling ${resampling} between ${startTime} and ${endTime}`
+          );
           const startRequest = DateTime.now().toMillis();
           const headers: Record<string, string> = {};
           headers['Content-Type'] = 'application/json';
+
           const fetchOptions = {
             method: 'PUT',
             body: JSON.stringify({
               host: this.connector.settings.host,
               serverName: this.connector.settings.serverName,
+              mode: 'hda',
+              maxReadValues: 3600,
+              intervalReadDelay: 200,
               aggregate,
               resampling,
               startTime,
@@ -174,7 +186,8 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
               this.logger.debug(`Found ${result.recordCount} results for ${resampledItems.length} items in ${requestDuration} ms`);
               await this.addValues(result.content);
               if (result.maxInstantRetrieved > updatedStartTime) {
-                updatedStartTime = result.maxInstantRetrieved;
+                // 1ms is added to the maxInstantRetrieved, so it does not take the last retrieve value on the last run
+                updatedStartTime = DateTime.fromISO(result.maxInstantRetrieved).plus({ millisecond: 1 }).toUTC().toISO()!;
               }
             } else {
               this.logger.debug(`No result found. Request done in ${requestDuration} ms`);

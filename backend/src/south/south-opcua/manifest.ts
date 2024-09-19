@@ -188,7 +188,7 @@ const manifest: SouthConnectorManifest = {
             type: 'OibSelect',
             label: 'Resampling',
             pipe: 'resampling',
-            options: ['none', 'second', '10Seconds', '30Seconds', 'minute', 'hour', 'day'],
+            options: ['none', '1s', '10s', '30s', '1min', '1h', '1d'],
             defaultValue: 'none',
             validators: [{ key: 'required' }],
             conditionalDisplay: { field: 'aggregate', values: ['average', 'minimum', 'maximum', 'count'] },

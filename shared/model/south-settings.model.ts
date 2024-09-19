@@ -85,10 +85,10 @@ export type SouthOLEDBItemSettingsSerializationType = (typeof SOUTH_O_L_E_D_B_IT
 const SOUTH_O_L_E_D_B_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const
 export type SouthOLEDBItemSettingsSerializationDelimiter = (typeof SOUTH_O_L_E_D_B_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
 
-const SOUTH_O_P_C_H_D_A_ITEM_SETTINGS_AGGREGATES = ['raw', 'average', 'minimum', 'maximum'] as const
+const SOUTH_O_P_C_H_D_A_ITEM_SETTINGS_AGGREGATES = ['raw', 'interpolative', 'total', 'average', 'time-average', 'count', 'stdev', 'minimum-actual-time', 'minimum', 'maximum-actual-time', 'maximum', 'start', 'end', 'delta', 'reg-slope', 'reg-const', 'reg-dev', 'variance', 'range', 'duration-good', 'duration-bad', 'percent-good', 'percent-bad', 'worst-quality', 'annotations'] as const
 export type SouthOPCHDAItemSettingsAggregate = (typeof SOUTH_O_P_C_H_D_A_ITEM_SETTINGS_AGGREGATES)[number];
 
-const SOUTH_O_P_C_H_D_A_ITEM_SETTINGS_RESAMPLINGS = ['none', 'second', '10Seconds', '30Seconds', 'minute', 'hour', 'day'] as const
+const SOUTH_O_P_C_H_D_A_ITEM_SETTINGS_RESAMPLINGS = ['none', '1s', '10s', '30s', '1min', '1h', '1d'] as const
 export type SouthOPCHDAItemSettingsResampling = (typeof SOUTH_O_P_C_H_D_A_ITEM_SETTINGS_RESAMPLINGS)[number];
 
 const SOUTH_O_P_C_U_A_SETTINGS_AUTHENTICATION_TYPES = ['none', 'basic', 'cert'] as const
@@ -103,7 +103,7 @@ export type SouthOPCUASettingsSecurityPolicy = (typeof SOUTH_O_P_C_U_A_SETTINGS_
 const SOUTH_O_P_C_U_A_ITEM_SETTINGS_HA_MODE_AGGREGATES = ['raw', 'average', 'minimum', 'maximum', 'count'] as const
 export type SouthOPCUAItemSettingsHaModeAggregate = (typeof SOUTH_O_P_C_U_A_ITEM_SETTINGS_HA_MODE_AGGREGATES)[number];
 
-const SOUTH_O_P_C_U_A_ITEM_SETTINGS_HA_MODE_RESAMPLINGS = ['none', 'second', '10Seconds', '30Seconds', 'minute', 'hour', 'day'] as const
+const SOUTH_O_P_C_U_A_ITEM_SETTINGS_HA_MODE_RESAMPLINGS = ['none', '1s', '10s', '30s', '1min', '1h', '1d'] as const
 export type SouthOPCUAItemSettingsHaModeResampling = (typeof SOUTH_O_P_C_U_A_ITEM_SETTINGS_HA_MODE_RESAMPLINGS)[number];
 
 const SOUTH_O_P_C_U_A_ITEM_SETTINGS_MODES = ['HA', 'DA'] as const

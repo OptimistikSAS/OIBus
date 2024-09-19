@@ -79,9 +79,10 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
         }
         const scanMode = this.taskJobQueue[0];
 
-        if (this.items.filter(item => item.scanModeId === scanMode.id).length > 0) {
+        const itemsToSend = this.items.filter(item => item.scanModeId === scanMode.id);
+        if (itemsToSend.length > 0) {
           this.logger.trace(`Running South with scan mode ${scanMode.name} for ${this.items.length} items`);
-          await this.run(scanMode.id, this.items);
+          await this.run(scanMode.id, itemsToSend);
         }
       } else {
         this.logger.trace('No more task to run');
