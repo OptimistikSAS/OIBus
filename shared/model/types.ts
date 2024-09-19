@@ -9,7 +9,7 @@ export type Timezone = string;
 export const DEFAULT_TZ: Timezone = 'Europe/Paris';
 
 export const LANGUAGES = ['fr', 'en'];
-export type Language = (typeof LANGUAGES)[number];
+export type Language = typeof LANGUAGES[number];
 
 export interface BaseEntity {
   id: string;
@@ -71,19 +71,45 @@ export const DATE_TIME_TYPES = [
   'timestamp',
   'timestamptz'
 ] as const;
-export type DateTimeType = (typeof DATE_TIME_TYPES)[number];
+export type DateTimeType = typeof DATE_TIME_TYPES[number];
 
-export const AGGREGATES = ['raw', 'maximum', 'minimum', 'count', 'average'] as const;
-export type Aggregate = (typeof AGGREGATES)[number];
+export const AGGREGATES = [
+  'raw',
+  'interpolative',
+  'total',
+  'average',
+  'time-average',
+  'count',
+  'stdev',
+  'minimum-actual-time',
+  'minimum',
+  'maximum-actual-time',
+  'maximum',
+  'start',
+  'end',
+  'delta',
+  'reg-slope',
+  'reg-const',
+  'reg-dev',
+  'variance',
+  'range',
+  'duration-good',
+  'duration-bad',
+  'percent-good',
+  'percent-bad',
+  'worst-quality',
+  'annotations'
+] as const;
+export type Aggregate = typeof AGGREGATES[number];
 
-export const RESAMPLING = ['none', 'second', '10Seconds', '30Seconds', 'minute', 'hour', 'day'] as const;
-export type Resampling = (typeof RESAMPLING)[number];
+export const RESAMPLING = ['none', '1s', '10s', '30s', '1min', '1h', '1d'] as const;
+export type Resampling = typeof RESAMPLING[number];
 
 export const ALL_CSV_CHARACTERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const;
-export type CsvCharacter = (typeof ALL_CSV_CHARACTERS)[number];
+export type CsvCharacter = typeof ALL_CSV_CHARACTERS[number];
 
 export const SERIALIZATION_TYPES = ['csv', 'file', 'json'];
-export type SerializationType = (typeof SERIALIZATION_TYPES)[number];
+export type SerializationType = typeof SERIALIZATION_TYPES[number];
 
 export interface BaseSerializationSettings {
   type: SerializationType;

@@ -5,12 +5,12 @@ describe('ResamplingEnumPipe', () => {
   it('should translate resampling', () => {
     testEnumPipe(ts => new ResamplingEnumPipe(ts), {
       none: 'None',
-      second: '1 second',
-      '10Seconds': '10 seconds',
-      '30Seconds': '30 seconds',
-      minute: '1 minute',
-      hour: '1 hour',
-      day: '1 day'
+      '1s': '1 second',
+      '10s': '10 seconds',
+      '30s': '30 seconds',
+      '1min': '1 minute',
+      '1h': '1 hour',
+      '1d': '1 day'
     });
   });
 });
