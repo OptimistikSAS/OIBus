@@ -1,13 +1,22 @@
 {
-  "ignorePatterns": ["dist", "results", "coverage", "*.d.ts"],
+  "ignorePatterns": [
+    "dist",
+    "results",
+    "coverage",
+    "*.d.ts"
+  ],
   "parserOptions": {
     "ecmaVersion": 2020
   },
   "overrides": [
     {
-      "files": ["*.ts"],
+      "files": [
+        "*.ts"
+      ],
       "parserOptions": {
-        "project": ["tsconfig.json"],
+        "project": [
+          "tsconfig.json"
+        ],
         "sourceType": "module"
       },
       "extends": [
@@ -18,9 +27,12 @@
         "plugin:@typescript-eslint/recommended",
         "plugin:prettier/recommended"
       ],
-      "plugins": ["ban", "deprecation"],
+      "plugins": [
+        "ban"
+      ],
       "rules": {
         "@typescript-eslint/ban-ts-comment": "off",
+        "@typescript-eslint/no-deprecated": "error",
         "@typescript-eslint/no-empty-function": "off",
         "@typescript-eslint/no-empty-interface": "off",
         "@typescript-eslint/no-explicit-any": "off",
@@ -28,10 +40,15 @@
         "no-case-declarations": "off",
         "ban/ban": [
           "error",
-          {"name": "fit", "message": "Do not use focused tests (fit)"},
-          {"name": "fdescribe", "message": "Do not use focused test suites (fdescribe)"}
+          {
+            "name": "fit",
+            "message": "Do not use focused tests (fit)"
+          },
+          {
+            "name": "fdescribe",
+            "message": "Do not use focused test suites (fdescribe)"
+          }
         ],
-        "deprecation/deprecation": "error",
         "no-console": "error",
         "no-restricted-imports": [
           "error"

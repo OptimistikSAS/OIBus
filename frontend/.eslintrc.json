@@ -26,8 +26,7 @@
         "plugin:prettier/recommended"
       ],
       "plugins": [
-        "ban",
-        "deprecation"
+        "ban"
       ],
       "rules": {
         "@angular-eslint/component-selector": [
@@ -47,6 +46,7 @@
           }
         ],
         "@typescript-eslint/ban-ts-comment": "off",
+        "@typescript-eslint/no-deprecated": "error",
         "@typescript-eslint/no-empty-function": "off",
         "@typescript-eslint/no-empty-interface": "off",
         "@typescript-eslint/no-explicit-any": "off",
@@ -64,7 +64,6 @@
             "message": "Do not use focused test suites (fdescribe)"
           }
         ],
-        "deprecation/deprecation": "error",
         "no-console": "error",
         "no-restricted-imports": [
           "error",
