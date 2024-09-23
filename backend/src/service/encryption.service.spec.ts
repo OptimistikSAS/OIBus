@@ -16,6 +16,7 @@ import * as utils from './utils';
 import { OibFormControl } from '../../../shared/model/form.model';
 
 import { SouthConnectorCommandDTO, SouthConnectorDTO } from '../../../shared/model/south-connector.model';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 
 jest.mock('./utils');
 jest.mock('node:fs/promises');
@@ -228,17 +229,11 @@ describe('Encryption service with crypto settings', () => {
   });
 
   it('should properly encrypt connector secrets', async () => {
-    const command: SouthConnectorCommandDTO = {
+    const command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
       name: 'connector',
       type: 'any',
       description: 'my connector',
       enabled: true,
-      history: {
-        maxInstantPerItem: true,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0
-      },
       settings: {
         field1: 'not a secret',
         field2: 'secret',
@@ -251,26 +246,20 @@ describe('Encryption service with crypto settings', () => {
           fieldGroup1: 'not a group secret',
           fieldGroup2: 'a group secret'
         }
-      }
-    };
-    const connector: SouthConnectorDTO = {
+      } as unknown as SouthSettings
+    } as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+    const connector: SouthConnectorDTO<SouthSettings, SouthItemSettings> = {
       id: 'id1',
       name: 'connector',
       type: 'any',
       description: 'my connector',
       enabled: true,
-      history: {
-        maxInstantPerItem: true,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0
-      },
       settings: {
         field1: 'not a secret',
         field2: 'secret',
         field3: 'not a secret'
-      }
-    };
+      } as unknown as SouthSettings
+    } as SouthConnectorDTO<SouthSettings, SouthItemSettings>;
 
     const update = jest.fn(() => 'encrypted secret');
     const final = jest.fn(() => '');
@@ -297,7 +286,7 @@ describe('Encryption service with crypto settings', () => {
   });
 
   it('should properly encrypt connector secrets when not secret provided', async () => {
-    const command: SouthConnectorCommandDTO = {
+    const command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
       name: 'connector',
       type: 'any',
       description: 'my connector',
@@ -308,6 +297,8 @@ describe('Encryption service with crypto settings', () => {
         readDelay: 0,
         overlap: 0
       },
+      sharedConnection: false,
+      items: [],
       settings: {
         field1: 'not a secret',
         field2: 'secret',
@@ -320,7 +311,7 @@ describe('Encryption service with crypto settings', () => {
           fieldGroup1: 'not a group secret',
           fieldGroup2: 'a group secret'
         }
-      }
+      } as unknown as SouthSettings
     };
 
     const update = jest.fn(() => 'encrypted secret');
@@ -348,7 +339,7 @@ describe('Encryption service with crypto settings', () => {
   });
 
   it('should properly keep existing and encrypted connector secrets', async () => {
-    const command: SouthConnectorCommandDTO = {
+    const command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
       name: 'connector',
       type: 'any',
       description: 'my connector',
@@ -359,6 +350,8 @@ describe('Encryption service with crypto settings', () => {
         readDelay: 0,
         overlap: 0
       },
+      sharedConnection: false,
+      items: [],
       settings: {
         field1: 'not a secret',
         field2: '',
@@ -371,20 +364,14 @@ describe('Encryption service with crypto settings', () => {
           fieldGroup1: 'not a group secret',
           fieldGroup2: ''
         }
-      }
+      } as unknown as SouthSettings
     };
-    const connector: SouthConnectorDTO = {
+    const connector: SouthConnectorDTO<SouthSettings, SouthItemSettings> = {
       id: 'id1',
       name: 'connector',
       type: 'any',
       description: 'my connector',
       enabled: true,
-      history: {
-        maxInstantPerItem: true,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0
-      },
       settings: {
         field1: 'not a secret',
         field2: 'encrypted secret',
@@ -397,8 +384,8 @@ describe('Encryption service with crypto settings', () => {
           fieldGroup1: 'not a group secret',
           fieldGroup2: 'a group secret'
         }
-      }
-    };
+      } as unknown as SouthSettings
+    } as SouthConnectorDTO<SouthSettings, SouthItemSettings>;
     const expectedCommand = {
       field1: 'not a secret',
       field2: 'encrypted secret',
@@ -424,18 +411,12 @@ describe('Encryption service with crypto settings', () => {
   });
 
   it('should properly filter out secret', () => {
-    const connector: SouthConnectorDTO = {
+    const connector: SouthConnectorDTO<SouthSettings, SouthItemSettings> = {
       id: 'id1',
       name: 'connector',
       type: 'any',
       description: 'my connector',
       enabled: true,
-      history: {
-        maxInstantPerItem: true,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0
-      },
       settings: {
         field1: 'not a secret',
         field2: 'encrypted secret',
@@ -448,8 +429,8 @@ describe('Encryption service with crypto settings', () => {
           fieldGroup1: 'not a group secret',
           fieldGroup2: 'a group secret'
         }
-      }
-    };
+      } as unknown as SouthSettings
+    } as SouthConnectorDTO<SouthSettings, SouthItemSettings>;
 
     expect(encryptionService.filterSecrets(connector.settings, settings)).toEqual({
       field1: 'not a secret',

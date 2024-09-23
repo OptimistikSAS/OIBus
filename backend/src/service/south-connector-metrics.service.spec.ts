@@ -1,7 +1,7 @@
 import SouthConnectorMetricsService from './south-connector-metrics.service';
 import { SouthConnectorMetrics } from '../../../shared/model/engine.model';
-import SouthMetricsRepositoryMock, { getMetrics } from '../tests/__mocks__/repository/south-metrics-repository.mock';
-import SouthConnectorMetricsRepository from '../repository/south-connector-metrics.repository';
+import SouthMetricsRepositoryMock, { getMetrics } from '../tests/__mocks__/repository/log/south-metrics-repository.mock';
+import SouthConnectorMetricsRepository from '../repository/logs/south-connector-metrics.repository';
 
 const southRepositoryMock: SouthConnectorMetricsRepository = new SouthMetricsRepositoryMock();
 
@@ -21,10 +21,6 @@ describe('SouthConnectorMetricsService', () => {
     service = new SouthConnectorMetricsService('connectorId', southRepositoryMock);
   });
 
-  it('should be properly initialized', () => {
-    expect(service.metricsRepository).toBeDefined();
-  });
-
   it('should update metrics', () => {
     const newConnectorMetrics: SouthConnectorMetrics = {
       metricsStart: '2020-02-02T02:02:02.222Z',
@@ -34,17 +30,16 @@ describe('SouthConnectorMetricsService', () => {
       lastFileRetrieved: 'myFile',
       lastConnection: '2020-02-02T02:02:02.222Z',
       lastRunStart: '2020-02-02T02:02:02.222Z',
-      lastRunDuration: 120,
-      historyMetrics: {}
+      lastRunDuration: 120
     };
     service.updateMetrics('southId', newConnectorMetrics);
-    expect(service.metricsRepository.updateMetrics).toHaveBeenCalledWith('southId', newConnectorMetrics);
+    expect(southRepositoryMock.updateMetrics).toHaveBeenCalledWith('southId', newConnectorMetrics);
   });
 
   it('should reset metrics', () => {
     service.resetMetrics();
-    expect(service.metricsRepository.removeMetrics).toHaveBeenCalled();
-    expect(service.metricsRepository.initMetrics).toHaveBeenCalledWith('connectorId');
+    expect(southRepositoryMock.removeMetrics).toHaveBeenCalled();
+    expect(southRepositoryMock.initMetrics).toHaveBeenCalledWith('connectorId');
     expect(service.metrics).toEqual(metrics);
   });
 

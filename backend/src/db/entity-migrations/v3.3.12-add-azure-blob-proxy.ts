@@ -1,6 +1,7 @@
 import { Knex } from 'knex';
 import { NorthAzureBlobSettingsAuthentication } from '../../../../shared/model/north-settings.model';
-import { NORTH_CONNECTORS_TABLE } from '../../repository/north-connector.repository';
+
+const NORTH_CONNECTORS_TABLE = 'north_connectors';
 
 interface OldNorthAzureBlobSettings {
   account: string;
@@ -55,4 +56,6 @@ async function updateNorthAzureBlob(knex: Knex) {
   }
 }
 
-export async function down(): Promise<void> {}
+export async function down(_knex: Knex): Promise<void> {
+  return;
+}

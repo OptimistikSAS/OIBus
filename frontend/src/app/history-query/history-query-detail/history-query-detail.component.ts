@@ -11,7 +11,6 @@ import { ScanModeService } from '../../services/scan-mode.service';
 import { HistoryQueryDTO, HistoryQueryStatus } from '../../../../../shared/model/history-query.model';
 import {
   SouthConnectorCommandDTO,
-  SouthConnectorItemDTO,
   SouthConnectorItemSearchParam,
   SouthConnectorManifest
 } from '../../../../../shared/model/south-connector.model';
@@ -35,6 +34,8 @@ import { ClipboardModule } from '@angular/cdk/clipboard';
 import { ModalService } from '../../shared/modal.service';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { LogsComponent } from '../../logs/logs.component';
+import { SouthItemSettings, SouthSettings } from '../../../../../shared/model/south-settings.model';
+import { NorthSettings } from '../../../../../shared/model/north-settings.model';
 
 @Component({
   selector: 'oib-history-query-detail',
@@ -74,7 +75,7 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
   private windowService = inject(WindowService);
   private cd = inject(ChangeDetectorRef);
 
-  historyQuery: HistoryQueryDTO | null = null;
+  historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> | null = null;
   northDisplayedSettings: Array<{ key: string; value: string }> = [];
   southDisplayedSettings: Array<{ key: string; value: string }> = [];
 
@@ -82,7 +83,6 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
   searchParams: SouthConnectorItemSearchParam | null = null;
   northManifest: NorthConnectorManifest | null = null;
   southManifest: SouthConnectorManifest | null = null;
-  historyQueryItems: Array<SouthConnectorItemDTO> = [];
   importing = false;
   exporting = false;
 
@@ -113,39 +113,39 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
           }
           this.historyQuery = historyQuery;
           return combineLatest([
-            this.historyQueryService.listItems(historyQuery.id),
             this.northConnectorService.getNorthConnectorTypeManifest(historyQuery.northType),
             this.southConnectorService.getSouthConnectorTypeManifest(historyQuery.southType)
           ]);
         })
       )
-      .subscribe(([historyItems, northManifest, southManifest]) => {
-        if (!northManifest || !southManifest || !historyItems) {
+      .subscribe(([northManifest, southManifest]) => {
+        if (!northManifest || !southManifest) {
           return;
         }
 
         this.connectToEventSource();
 
         this.northManifest = northManifest;
+        const northSettings: Record<string, string> = JSON.parse(JSON.stringify(this.historyQuery!.northSettings));
         this.northDisplayedSettings = northManifest.settings
           .filter(setting => setting.displayInViewMode)
           .map(setting => {
             return {
               key: setting.label,
-              value: this.historyQuery!.northSettings[setting.key]
+              value: northSettings[setting.key]
             };
           });
 
         this.southManifest = southManifest;
+        const southSettings: Record<string, string> = JSON.parse(JSON.stringify(this.historyQuery!.southSettings));
         this.southDisplayedSettings = southManifest.settings
           .filter(setting => setting.displayInViewMode)
           .map(setting => {
             return {
               key: setting.label,
-              value: this.historyQuery!.southSettings[setting.key]
+              value: southSettings[setting.key]
             };
           });
-        this.historyQueryItems = historyItems;
       });
   }
 
@@ -217,17 +217,17 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
   }
 
   test(type: 'south' | 'north') {
-    let command: SouthConnectorCommandDTO | NorthConnectorCommandDTO;
+    let command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> | NorthConnectorCommandDTO<NorthSettings>;
     if (type === 'south') {
       command = {
         type: this.southManifest!.id,
         settings: this.historyQuery!.southSettings
-      } as SouthConnectorCommandDTO;
+      } as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
     } else {
       command = {
         type: this.northManifest!.id,
         settings: this.historyQuery!.northSettings
-      } as NorthConnectorCommandDTO;
+      } as NorthConnectorCommandDTO<NorthSettings>;
     }
 
     const modalRef = this.modalService.open(TestConnectionResultModalComponent);

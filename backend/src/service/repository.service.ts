@@ -1,25 +1,22 @@
 import Database from 'better-sqlite3';
 
-import EngineRepository from '../repository/engine.repository';
-import IpFilterRepository from '../repository/ip-filter.repository';
-import ScanModeRepository from '../repository/scan-mode.repository';
-import SouthConnectorRepository from '../repository/south-connector.repository';
-import SouthItemRepository from '../repository/south-item.repository';
-import NorthConnectorRepository from '../repository/north-connector.repository';
-import LogRepository from '../repository/log.repository';
-import HistoryQueryRepository from '../repository/history-query.repository';
-import UserRepository from '../repository/user.repository';
-import HistoryQueryItemRepository from '../repository/history-query-item.repository';
-import SubscriptionRepository from '../repository/subscription.repository';
-import CryptoRepository from '../repository/crypto.repository';
-import SouthConnectorMetricsRepository from '../repository/south-connector-metrics.repository';
-import NorthConnectorMetricsRepository from '../repository/north-connector-metrics.repository';
-import SouthCacheRepository from '../repository/south-cache.repository';
-import EngineMetricsRepository from '../repository/engine-metrics.repository';
-import CertificateRepository from '../repository/certificate.repository';
-import OIAnalyticsRegistrationRepository from '../repository/oianalytics-registration.repository';
-import OIAnalyticsCommandRepository from '../repository/oianalytics-command.repository';
-import OIAnalyticsMessageRepository from '../repository/oianalytics-message.repository';
+import EngineRepository from '../repository/config/engine.repository';
+import IpFilterRepository from '../repository/config/ip-filter.repository';
+import ScanModeRepository from '../repository/config/scan-mode.repository';
+import SouthConnectorRepository from '../repository/config/south-connector.repository';
+import NorthConnectorRepository from '../repository/config/north-connector.repository';
+import LogRepository from '../repository/logs/log.repository';
+import HistoryQueryRepository from '../repository/config/history-query.repository';
+import UserRepository from '../repository/config/user.repository';
+import CryptoRepository from '../repository/crypto/crypto.repository';
+import SouthConnectorMetricsRepository from '../repository/logs/south-connector-metrics.repository';
+import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
+import SouthCacheRepository from '../repository/cache/south-cache.repository';
+import EngineMetricsRepository from '../repository/logs/engine-metrics.repository';
+import CertificateRepository from '../repository/config/certificate.repository';
+import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
+import OIAnalyticsCommandRepository from '../repository/config/oianalytics-command.repository';
+import OIAnalyticsMessageRepository from '../repository/config/oianalytics-message.repository';
 
 export default class RepositoryService {
   private readonly _engineRepository: EngineRepository;
@@ -29,16 +26,13 @@ export default class RepositoryService {
   private readonly _certificateRepository: CertificateRepository;
   private readonly _northConnectorRepository: NorthConnectorRepository;
   private readonly _southConnectorRepository: SouthConnectorRepository;
-  private readonly _southItemRepository: SouthItemRepository;
   private readonly _logRepository: LogRepository;
   private readonly _southMetricsRepository: SouthConnectorMetricsRepository;
   private readonly _engineMetricsRepository: EngineMetricsRepository;
   private readonly _southCacheRepository: SouthCacheRepository;
   private readonly _northMetricsRepository: NorthConnectorMetricsRepository;
   private readonly _historyQueryRepository: HistoryQueryRepository;
-  private readonly _historyQueryItemRepository: HistoryQueryItemRepository;
   private readonly _userRepository: UserRepository;
-  private readonly _subscriptionRepository: SubscriptionRepository;
   private readonly _oianalyticsRegistrationRepository: OIAnalyticsRegistrationRepository;
   private readonly _oianalyticsCommandRepository: OIAnalyticsCommandRepository;
   private readonly _oianalyticsMessageRepository: OIAnalyticsMessageRepository;
@@ -55,12 +49,8 @@ export default class RepositoryService {
     this._engineRepository = new EngineRepository(oibusDatabase);
     this._northConnectorRepository = new NorthConnectorRepository(oibusDatabase);
     this._southConnectorRepository = new SouthConnectorRepository(oibusDatabase);
-    this._southItemRepository = new SouthItemRepository(oibusDatabase);
-    this._southItemRepository = new SouthItemRepository(oibusDatabase);
     this._historyQueryRepository = new HistoryQueryRepository(oibusDatabase);
-    this._historyQueryItemRepository = new HistoryQueryItemRepository(oibusDatabase);
     this._userRepository = new UserRepository(oibusDatabase);
-    this._subscriptionRepository = new SubscriptionRepository(oibusDatabase);
     this._oianalyticsRegistrationRepository = new OIAnalyticsRegistrationRepository(oibusDatabase);
     this._oianalyticsCommandRepository = new OIAnalyticsCommandRepository(oibusDatabase);
     this._oianalyticsMessageRepository = new OIAnalyticsMessageRepository(oibusDatabase);
@@ -140,19 +130,7 @@ export default class RepositoryService {
     return this._southConnectorRepository;
   }
 
-  get southItemRepository(): SouthItemRepository {
-    return this._southItemRepository;
-  }
-
   get historyQueryRepository(): HistoryQueryRepository {
     return this._historyQueryRepository;
-  }
-
-  get historyQueryItemRepository(): HistoryQueryItemRepository {
-    return this._historyQueryItemRepository;
-  }
-
-  get subscriptionRepository(): SubscriptionRepository {
-    return this._subscriptionRepository;
   }
 }

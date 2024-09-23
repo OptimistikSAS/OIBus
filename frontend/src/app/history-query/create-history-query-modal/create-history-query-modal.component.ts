@@ -3,9 +3,9 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
 
-import { NorthConnectorDTO, NorthType } from '../../../../../shared/model/north-connector.model';
+import { NorthConnectorLightDTO, NorthType } from '../../../../../shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
-import { SouthConnectorDTO, SouthType } from '../../../../../shared/model/south-connector.model';
+import { SouthConnectorLightDTO, SouthType } from '../../../../../shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { combineLatest } from 'rxjs';
 import { NonNullableFormBuilder, Validators } from '@angular/forms';
@@ -24,9 +24,9 @@ export class CreateHistoryQueryModalComponent implements OnInit {
   private southConnectorService = inject(SouthConnectorService);
 
   northTypes: Array<NorthType> = [];
-  northList: Array<NorthConnectorDTO> = [];
+  northList: Array<NorthConnectorLightDTO> = [];
   southTypes: Array<SouthType> = [];
-  southList: Array<SouthConnectorDTO> = [];
+  southList: Array<SouthConnectorLightDTO> = [];
   state = new ObservableState();
 
   createForm = inject(NonNullableFormBuilder).group({

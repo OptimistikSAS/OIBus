@@ -114,11 +114,6 @@ export interface EngineSettingsCommandDTO {
   };
 }
 
-export interface OIBusError {
-  retry: boolean;
-  message: string;
-}
-
 export interface OIBusInfo {
   version: string;
   oibusName: string;
@@ -148,17 +143,17 @@ export interface NorthConnectorMetrics extends BaseConnectorMetrics {
 }
 
 export interface SouthHistoryMetrics {
-  running?: boolean;
+  running: boolean;
   // Percentage of the current interval that has been processed [0,1]
-  intervalProgress?: number;
+  intervalProgress: number;
   // Start of the current interval
-  currentIntervalStart?: Instant;
+  currentIntervalStart: Instant | null;
   // End of the current interval
-  currentIntervalEnd?: Instant;
+  currentIntervalEnd: Instant | null;
   // Number of the current interval
-  currentIntervalNumber?: number;
+  currentIntervalNumber: number;
   // Maximum number of intervals
-  numberOfIntervals?: number;
+  numberOfIntervals: number;
 }
 
 export interface SouthConnectorMetrics extends BaseConnectorMetrics {
@@ -166,12 +161,12 @@ export interface SouthConnectorMetrics extends BaseConnectorMetrics {
   numberOfFilesRetrieved: number;
   lastValueRetrieved: OIBusTimeValue | null;
   lastFileRetrieved: string | null;
-  historyMetrics: SouthHistoryMetrics;
 }
 
 export interface HistoryMetrics {
   north: NorthConnectorMetrics;
   south: SouthConnectorMetrics;
+  historyMetrics: SouthHistoryMetrics;
 }
 
 export interface EngineMetrics {

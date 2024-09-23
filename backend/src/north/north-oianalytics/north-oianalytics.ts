@@ -1,11 +1,9 @@
 import NorthConnector from '../north-connector';
 
 import manifest from './manifest';
-import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 
 import EncryptionService from '../../service/encryption.service';
 import { createProxyAgent } from '../../service/proxy-agent';
-import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { createReadStream } from 'node:fs';
 import zlib from 'node:zlib';
@@ -17,6 +15,16 @@ import { NorthOIAnalyticsSettings } from '../../../../shared/model/north-setting
 import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
 import { ClientCertificateCredential, ClientSecretCredential } from '@azure/identity';
 import fs from 'node:fs/promises';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
+import NorthConnectorRepository from '../../repository/config/north-connector.repository';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import NorthConnectorMetricsRepository from '../../repository/logs/north-connector-metrics.repository';
+import CertificateRepository from '../../repository/config/certificate.repository';
+import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
+import { OIBusError } from '../../model/engine.model';
+import https from 'node:https';
+import { HttpsProxyAgent } from 'https-proxy-agent';
+import { HttpProxyAgent } from 'http-proxy-agent';
 
 /**
  * Class NorthOIAnalytics - Send files to a POST Multipart HTTP request and values as JSON payload
@@ -26,13 +34,17 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
   static type = manifest.id;
 
   constructor(
-    connector: NorthConnectorDTO<NorthOIAnalyticsSettings>,
+    connector: NorthConnectorEntity<NorthOIAnalyticsSettings>,
     encryptionService: EncryptionService,
-    repositoryService: RepositoryService,
+    northConnectorRepository: NorthConnectorRepository,
+    scanModeRepository: ScanModeRepository,
+    northMetricsRepository: NorthConnectorMetricsRepository,
+    private readonly certificateRepository: CertificateRepository,
+    private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, encryptionService, repositoryService, logger, baseFolder);
+    super(connector, encryptionService, northConnectorRepository, scanModeRepository, northMetricsRepository, logger, baseFolder);
   }
 
   override async testConnection(): Promise<void> {
@@ -135,7 +147,8 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     });
     const formHeaders = body.getHeaders();
     Object.keys(formHeaders).forEach(key => {
-      // @ts-ignore
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-expect-error
       connectionSettings.headers[key] = formHeaders[key];
     });
 
@@ -163,18 +176,20 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     }
 
     if (!response.ok) {
-      throw {
-        message: `Error ${response.status}: ${response.statusText}`,
-        retry: [400, 401, 403, 404, 500, 502, 503, 504].includes(response.status)
-      };
+      throw new OIBusError(
+        `Error ${response.status}: ${response.statusText}`,
+        [400, 401, 403, 404, 500, 502, 503, 504].includes(response.status)
+      );
     }
   }
 
-  async getNetworkSettings(endpoint: string): Promise<{ host: string; headers: HeadersInit; agent: any }> {
+  async getNetworkSettings(
+    endpoint: string
+  ): Promise<{ host: string; headers: HeadersInit; agent: https.Agent | HttpsProxyAgent<string> | HttpProxyAgent<string> | undefined }> {
     const headers: HeadersInit = {};
 
     if (this.connector.settings.useOiaModule) {
-      const registrationSettings = this.repositoryService.oianalyticsRegistrationRepository.get();
+      const registrationSettings = this.oIAnalyticsRegistrationRepository.get();
       if (!registrationSettings || registrationSettings.status !== 'REGISTERED') {
         throw new Error('OIBus not registered in OIAnalytics');
       }
@@ -231,7 +246,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
         headers.authorization = `Bearer ${Buffer.from(result.token)}`;
         break;
       case 'aad-certificate':
-        const certificate = this.repositoryService.certificateRepository.findById(specificSettings.certificateId!);
+        const certificate = this.certificateRepository.findById(specificSettings.certificateId!);
         if (certificate != null) {
           const decryptedPrivateKey = await this.encryptionService.decryptText(certificate.privateKey);
           const clientCertificateCredential = new ClientCertificateCredential(specificSettings.tenantId!, specificSettings.clientId!, {

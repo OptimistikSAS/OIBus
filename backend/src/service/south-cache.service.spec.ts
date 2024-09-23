@@ -1,7 +1,7 @@
 import SouthCacheService from './south-cache.service';
 
-import SouthCacheRepositoryMock from '../tests/__mocks__/repository/south-cache-repository.mock';
-import SouthCacheRepository from '../repository/south-cache.repository';
+import SouthCacheRepositoryMock from '../tests/__mocks__/repository/cache/south-cache-repository.mock';
+import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import { SouthCache } from '../../../shared/model/south-connector.model';
 
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
@@ -14,11 +14,7 @@ describe('South cache service', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
-    service = new SouthCacheService('connectorId', southCacheRepository);
-  });
-
-  it('should be properly initialized', () => {
-    expect(service.cacheRepository).toBeDefined();
+    service = new SouthCacheService(southCacheRepository);
   });
 
   it('should create or update cache scan mode', () => {
@@ -28,8 +24,8 @@ describe('South cache service', () => {
       southId: 'southId',
       maxInstant: ''
     };
-    service.createOrUpdateCacheScanMode(command);
-    expect(service.cacheRepository.createOrUpdate).toHaveBeenCalledTimes(1);
+    service.saveSouthCache(command);
+    expect(southCacheRepository.save).toHaveBeenCalledTimes(1);
   });
 
   it('should get scan mode', () => {
@@ -39,11 +35,11 @@ describe('South cache service', () => {
       southId: 'southId',
       maxInstant: ''
     };
-    (service.cacheRepository.getScanMode as jest.Mock).mockReturnValueOnce(scanMode).mockReturnValue(null);
-    const result = service.getSouthCacheScanMode('southId', 'id1', 'itemId', nowDateString);
+    (southCacheRepository.getSouthCache as jest.Mock).mockReturnValueOnce(scanMode).mockReturnValue(null);
+    const result = service.getSouthCache('southId', 'id1', 'itemId', nowDateString);
     expect(result).toEqual(scanMode);
 
-    const defaultResult = service.getSouthCacheScanMode('southId', 'id1', 'itemId', nowDateString);
+    const defaultResult = service.getSouthCache('southId', 'id1', 'itemId', nowDateString);
     expect(defaultResult).toEqual({
       scanModeId: 'id1',
       itemId: 'itemId',
@@ -53,12 +49,12 @@ describe('South cache service', () => {
   });
 
   it('should reset cache', () => {
-    service.resetCacheScanMode('id');
-    expect(service.cacheRepository.reset).toHaveBeenCalledTimes(1);
+    service.resetSouthCache('id');
+    expect(southCacheRepository.deleteAllBySouthConnector).toHaveBeenCalledTimes(1);
   });
 
   it('should reset cache', () => {
-    service.resetCacheScanMode('id');
-    expect(service.cacheRepository.reset).toHaveBeenCalledTimes(1);
+    service.resetSouthCache('id');
+    expect(southCacheRepository.deleteAllBySouthConnector).toHaveBeenCalledTimes(1);
   });
 });

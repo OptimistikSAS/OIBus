@@ -16,6 +16,8 @@ import { ScanModeService } from '../../services/scan-mode.service';
 import { OIBusInfo } from '../../../../../shared/model/engine.model';
 import { EngineService } from '../../services/engine.service';
 import { Modal, ModalService } from '../../shared/modal.service';
+import { SouthItemSettings, SouthSettings } from '../../../../../shared/model/south-settings.model';
+import { NorthSettings } from '../../../../../shared/model/north-settings.model';
 
 class HistoryQueryDisplayComponentTester extends ComponentTester<HistoryQueryDetailComponent> {
   constructor() {
@@ -85,7 +87,8 @@ describe('HistoryQueryDisplayComponent', () => {
       history: true,
       lastFile: true,
       lastPoint: false,
-      forceMaxInstantPerItem: false
+      forceMaxInstantPerItem: false,
+      sharedConnection: false
     }
   };
   const northManifest: NorthConnectorManifest = {
@@ -113,7 +116,7 @@ describe('HistoryQueryDisplayComponent', () => {
       }
     ]
   };
-  const historyQuery: HistoryQueryDTO = {
+  const historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
     id: 'id1',
     name: 'History query',
     description: 'My History query description',
@@ -121,8 +124,7 @@ describe('HistoryQueryDisplayComponent', () => {
     history: {
       maxInstantPerItem: false,
       maxReadInterval: 0,
-      readDelay: 200,
-      overlap: 0
+      readDelay: 200
     },
     southType: 'OPCUA_HA',
     northType: 'OIConnect',
@@ -130,11 +132,11 @@ describe('HistoryQueryDisplayComponent', () => {
     endTime: '2023-01-01T00:00:00.000Z',
     southSettings: {
       database: 'my database'
-    },
+    } as SouthSettings,
     southSharedConnection: false,
     northSettings: {
       host: 'localhost'
-    },
+    } as NorthSettings,
     caching: {
       scanModeId: 'scanModeId1',
       retryInterval: 1000,
@@ -151,7 +153,17 @@ describe('HistoryQueryDisplayComponent', () => {
           retentionDuration: 0
         }
       }
-    }
+    },
+    items: [
+      {
+        id: 'id1',
+        name: 'item1',
+        enabled: true,
+        settings: {
+          query: 'sql'
+        } as SouthItemSettings
+      }
+    ]
   };
   const engineInfo: OIBusInfo = {
     version: '3.0',
@@ -201,20 +213,6 @@ describe('HistoryQueryDisplayComponent', () => {
     historyQueryService.pauseHistoryQuery.and.returnValue(of(undefined));
     southConnectorService.getSouthConnectorTypeManifest.and.returnValue(of(southManifest));
     northConnectorService.getNorthConnectorTypeManifest.and.returnValue(of(northManifest));
-    historyQueryService.listItems.and.returnValue(
-      of([
-        {
-          id: 'id1',
-          name: 'item1',
-          enabled: true,
-          connectorId: 'southId',
-          scanModeId: 'scanModeId',
-          settings: {
-            query: 'sql'
-          }
-        }
-      ])
-    );
     scanModeService.list.and.returnValue(of([]));
     engineService.getInfo.and.returnValue(of(engineInfo));
 
@@ -255,7 +253,7 @@ describe('HistoryQueryDisplayComponent', () => {
     const command = {
       type: northManifest.id,
       settings: historyQuery.northSettings
-    } as NorthConnectorCommandDTO;
+    } as NorthConnectorCommandDTO<NorthSettings>;
 
     const spy = jasmine.createSpy();
     modalService.open.and.returnValue({
@@ -276,7 +274,7 @@ describe('HistoryQueryDisplayComponent', () => {
     const command = {
       type: southManifest.id,
       settings: historyQuery.southSettings
-    } as SouthConnectorCommandDTO;
+    } as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
 
     const spy = jasmine.createSpy();
     modalService.open.and.returnValue({

@@ -1,5 +1,3 @@
-import RepositoryService from '../repository.service';
-import RepositoryServiceMock from '../../tests/__mocks__/service/repository-service.mock';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { getNetworkSettingsFromRegistration, getOIBusInfo } from '../utils';
@@ -10,12 +8,32 @@ import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-serv
 import { flushPromises } from '../../tests/utils/test-utils';
 import fetch from 'node-fetch';
 import { DateTime } from 'luxon';
+import OIAnalyticsMessageRepository from '../../repository/config/oianalytics-message.repository';
+import OIAnalyticsMessageRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-message-repository.mock';
+import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
+import OIAnalyticsRegistrationRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
+import EngineRepository from '../../repository/config/engine.repository';
+import EngineRepositoryMock from '../../tests/__mocks__/repository/config/engine-repository.mock';
+import CryptoRepository from '../../repository/crypto/crypto.repository';
+import CryptoRepositoryMock from '../../tests/__mocks__/repository/crypto/crypto-repository.mock';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
+import SouthConnectorRepository from '../../repository/config/south-connector.repository';
+import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
+import NorthConnectorRepository from '../../repository/config/north-connector.repository';
+import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
 
 jest.mock('node:fs/promises');
 jest.mock('node-fetch');
 jest.mock('../utils');
 
-const repositoryService: RepositoryService = new RepositoryServiceMock();
+const oIAnalyticsMessageRepository: OIAnalyticsMessageRepository = new OIAnalyticsMessageRepositoryMock();
+const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OIAnalyticsRegistrationRepositoryMock();
+const engineRepository: EngineRepository = new EngineRepositoryMock();
+const cryptoRepository: CryptoRepository = new CryptoRepositoryMock();
+const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
+const southRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
+const northRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 
 const logger: pino.Logger = new PinoLogger();
@@ -27,16 +45,28 @@ describe('OIAnalytics Message Service', () => {
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
     (getOIBusInfo as jest.Mock).mockReturnValue(testData.engine.oIBusInfo);
-    (repositoryService.oianalyticsMessageRepository.list as jest.Mock).mockReturnValue(testData.oIAnalytics.messages.oIBusList);
-    (repositoryService.oianalyticsMessageRepository.create as jest.Mock).mockReturnValue(testData.oIAnalytics.messages.oIBusList[0]);
-    (repositoryService.oianalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(testData.oIAnalytics.registration.completed);
-    (repositoryService.engineRepository.get as jest.Mock).mockReturnValue(testData.engine.settings);
-    (repositoryService.cryptoRepository.getCryptoSettings as jest.Mock).mockReturnValue(testData.engine.crypto);
-    (repositoryService.scanModeRepository.findAll as jest.Mock).mockReturnValue(testData.scanMode.list);
-    (repositoryService.southConnectorRepository.findAll as jest.Mock).mockReturnValue(testData.south.list);
-    (repositoryService.northConnectorRepository.findAll as jest.Mock).mockReturnValue(testData.north.list);
+    (oIAnalyticsMessageRepository.list as jest.Mock).mockReturnValue(testData.oIAnalytics.messages.oIBusList);
+    (oIAnalyticsMessageRepository.create as jest.Mock).mockReturnValue(testData.oIAnalytics.messages.oIBusList[0]);
+    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(testData.oIAnalytics.registration.completed);
+    (engineRepository.get as jest.Mock).mockReturnValue(testData.engine.settings);
+    (cryptoRepository.getCryptoSettings as jest.Mock).mockReturnValue(testData.engine.crypto);
+    (scanModeRepository.findAll as jest.Mock).mockReturnValue(testData.scanMode.list);
+    (southRepository.findAllSouth as jest.Mock).mockReturnValue(testData.south.list);
+    (southRepository.findSouthById as jest.Mock).mockImplementation(id => testData.south.list.find(element => element.id === id));
+    (northRepository.findAllNorth as jest.Mock).mockReturnValue(testData.north.list);
+    (northRepository.findNorthById as jest.Mock).mockImplementation(id => testData.north.list.find(element => element.id === id));
 
-    service = new OIAnalyticsMessageService(repositoryService, encryptionService, logger);
+    service = new OIAnalyticsMessageService(
+      oIAnalyticsMessageRepository,
+      oIAnalyticsRegistrationRepository,
+      engineRepository,
+      cryptoRepository,
+      scanModeRepository,
+      southRepository,
+      northRepository,
+      encryptionService,
+      logger
+    );
   });
 
   afterEach(async () => {
@@ -47,7 +77,7 @@ describe('OIAnalytics Message Service', () => {
     service.run = jest.fn();
     service.start();
     expect(service.run).toHaveBeenCalledTimes(1);
-    expect(repositoryService.oianalyticsMessageRepository.list).toHaveBeenCalledWith({
+    expect(oIAnalyticsMessageRepository.list).toHaveBeenCalledWith({
       status: ['PENDING'],
       types: []
     });
@@ -75,7 +105,7 @@ describe('OIAnalytics Message Service', () => {
     expect(logger.error).toHaveBeenCalledWith(
       `Error while sending message ${testData.oIAnalytics.messages.oIBusList[0].id} of type ${testData.oIAnalytics.messages.oIBusList[0].type}. Error: statusText`
     );
-    expect(repositoryService.oianalyticsMessageRepository.markAsErrored).toHaveBeenCalledWith(
+    expect(oIAnalyticsMessageRepository.markAsErrored).toHaveBeenCalledWith(
       testData.oIAnalytics.messages.oIBusList[0].id,
       DateTime.fromISO(testData.constants.dates.FAKE_NOW).plus({ second: 1 }).toUTC().toISO()!,
       'statusText'
@@ -112,7 +142,7 @@ describe('OIAnalytics Message Service', () => {
     await flushPromises();
     expect(getNetworkSettingsFromRegistration).toHaveBeenCalledTimes(1);
     expect(fetch).toHaveBeenCalledTimes(1);
-    expect(repositoryService.oianalyticsMessageRepository.markAsCompleted).toHaveBeenCalledWith(
+    expect(oIAnalyticsMessageRepository.markAsCompleted).toHaveBeenCalledWith(
       testData.oIAnalytics.messages.oIBusList[0].id,
       DateTime.fromISO(testData.constants.dates.FAKE_NOW).plus({ second: 1 }).toUTC().toISO()!
     );
@@ -147,13 +177,23 @@ describe('OIAnalytics message service without message', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    (repositoryService.oianalyticsMessageRepository.list as jest.Mock).mockReturnValue([]);
+    (oIAnalyticsMessageRepository.list as jest.Mock).mockReturnValue([]);
 
-    service = new OIAnalyticsMessageService(repositoryService, encryptionService, logger);
+    service = new OIAnalyticsMessageService(
+      oIAnalyticsMessageRepository,
+      oIAnalyticsRegistrationRepository,
+      engineRepository,
+      cryptoRepository,
+      scanModeRepository,
+      southRepository,
+      northRepository,
+      encryptionService,
+      logger
+    );
   });
 
   it('should properly start when no message retrieved', () => {
-    expect(repositoryService.oianalyticsMessageRepository.markAsCompleted).not.toHaveBeenCalled();
+    expect(oIAnalyticsMessageRepository.markAsCompleted).not.toHaveBeenCalled();
 
     service.run = jest.fn();
     service.start();
@@ -168,15 +208,25 @@ describe('OIAnalytics message service without message', () => {
 describe('OIAnalytics message service without completed registration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (repositoryService.oianalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(testData.oIAnalytics.registration.pending);
-    (repositoryService.oianalyticsMessageRepository.list as jest.Mock).mockReturnValue(testData.oIAnalytics.messages.oIBusList);
+    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(testData.oIAnalytics.registration.pending);
+    (oIAnalyticsMessageRepository.list as jest.Mock).mockReturnValue(testData.oIAnalytics.messages.oIBusList);
 
-    service = new OIAnalyticsMessageService(repositoryService, encryptionService, logger);
+    service = new OIAnalyticsMessageService(
+      oIAnalyticsMessageRepository,
+      oIAnalyticsRegistrationRepository,
+      engineRepository,
+      cryptoRepository,
+      scanModeRepository,
+      southRepository,
+      northRepository,
+      encryptionService,
+      logger
+    );
   });
 
   it('should properly start and do nothing', () => {
     service.start();
-    expect(repositoryService.oianalyticsMessageRepository.list).toHaveBeenCalledTimes(1);
+    expect(oIAnalyticsMessageRepository.list).toHaveBeenCalledTimes(1);
     expect(logger.debug).toHaveBeenCalledWith("OIBus is not registered to OIAnalytics. Messages won't be created");
     expect(logger.trace).toHaveBeenCalledWith("OIBus is not registered to OIAnalytics. Messages won't be sent");
   });

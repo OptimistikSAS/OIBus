@@ -3,27 +3,27 @@ import HistoryQueryEngine from '../engine/history-query-engine';
 import pino from 'pino';
 import { EngineMetrics, EngineSettingsDTO, OIBusContent, OIBusInfo } from '../../../shared/model/engine.model';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
-import EngineRepository from '../repository/engine.repository';
+import EngineRepository from '../repository/config/engine.repository';
 import { EngineSettings } from '../model/engine.model';
 import { engineSchema } from '../web-server/controllers/validators/oibus-validation-schema';
 import EncryptionService from './encryption.service';
 import LoggerService from './logger/logger.service';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import ProxyServer from '../web-server/proxy-server';
-import OIAnalyticsRegistrationRepository from '../repository/oianalytics-registration.repository';
+import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import { DateTime } from 'luxon';
 import process from 'node:process';
 import os from 'node:os';
 import { PassThrough } from 'node:stream';
-import EngineMetricsRepository from '../repository/engine-metrics.repository';
-import IpFilterRepository from '../repository/ip-filter.repository';
+import EngineMetricsRepository from '../repository/logs/engine-metrics.repository';
+import IpFilterRepository from '../repository/config/ip-filter.repository';
 import { getOIBusInfo } from './utils';
 
 const HEALTH_SIGNAL_INTERVAL = 60_000_000; // 10 minutes
 const UPDATE_ENGINE_METRICS_INTERVAL = 1000; // every second
 
 export default class OIBusService {
-  private webServerChangeLoggerCallback: (logger: pino.Logger) => void = () => {};
+  private webServerChangeLoggerCallback: (logger: pino.Logger) => void = () => null;
   private webServerChangePortCallback: (port: number) => Promise<void> = () => Promise.resolve();
 
   private _stream: PassThrough | null = null;

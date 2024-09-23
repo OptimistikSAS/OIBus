@@ -1,17 +1,22 @@
-// @ts-ignore
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
 import ads from 'ads-client';
 
 import manifest from './manifest';
 import SouthConnector from '../south-connector';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import { DateTime } from 'luxon';
 import { Instant } from '../../../../shared/model/types';
 import EncryptionService from '../../service/encryption.service';
-import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { QueriesLastPoint } from '../south-interface';
 import { SouthADSItemSettings, SouthADSSettings } from '../../../../shared/model/south-settings.model';
 import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { SouthConnectorEntity } from '../../model/south-connector.model';
+import SouthConnectorRepository from '../../repository/config/south-connector.repository';
+import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
+import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
 
 interface ADSOptions {
   targetAmsNetId: string;
@@ -34,14 +39,27 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
   private disconnecting = false;
 
   constructor(
-    connector: SouthConnectorDTO<SouthADSSettings>,
+    connector: SouthConnectorEntity<SouthADSSettings, SouthADSItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
-    repositoryService: RepositoryService,
+    southConnectorRepository: SouthConnectorRepository,
+    southMetricsRepository: SouthConnectorMetricsRepository,
+    southCacheRepository: SouthCacheRepository,
+    scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, engineAddContentCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(
+      connector,
+      engineAddContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southMetricsRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      baseFolder
+    );
   }
 
   /**
@@ -50,12 +68,12 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
   parseValues(
     itemName: string,
     dataType: string,
-    valueToParse: any,
+    valueToParse: unknown,
     timestamp: Instant,
     subItems: Array<any> = [],
     enumInfo: Array<{ name: string; value: number }> = []
-  ): Array<any> {
-    let valueToAdd = null;
+  ): Array<OIBusTimeValue> {
+    let valueToAdd: string | null = null;
     /**
      * Source of the following data types:
      * https://infosys.beckhoff.com/english.php?content=../content/1033/tcplccontrol/html/tcplcctrl_plc_data_types_overview.htm&id
@@ -82,23 +100,25 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
       case 'ULINT':
       case 'TIME': // TIME and TIME_OF_DAY are parsed as numbers
       case 'TIME_OF_DAY':
-        valueToAdd = JSON.stringify(parseInt(valueToParse, 10));
+        valueToAdd = JSON.stringify(parseInt(valueToParse as string, 10));
         break;
       case 'REAL':
       case 'LREAL':
-        valueToAdd = JSON.stringify(parseFloat(valueToParse));
+        valueToAdd = JSON.stringify(parseFloat(valueToParse as string));
         break;
       case 'STRING':
       case dataType.match(/^STRING\([0-9]*\)$/)?.input: // Example: STRING(35)
-        valueToAdd = valueToParse;
+        valueToAdd = valueToParse as string;
         break;
       case 'DATE':
       case 'DATE_AND_TIME':
-        valueToAdd = new Date(valueToParse).toISOString();
+        valueToAdd = DateTime.fromISO(valueToParse as string)
+          .toUTC()
+          .toISO()!;
         break;
       case dataType.match(/^ARRAY\s\[[0-9][0-9]*\.\.[0-9][0-9]*]\sOF\s.*$/)?.input: {
         // Example: ARRAY [0..4] OF INT
-        const parsedValues = valueToParse.map((element: any, index: number) =>
+        const parsedValues = (valueToParse as Array<unknown>).map((element: unknown, index: number) =>
           this.parseValues(
             `${itemName}.${index}`,
             dataType.split(/^ARRAY\s\[[0-9][0-9]*\.\.[0-9][0-9]*]\sOF\s/)[1],
@@ -108,7 +128,10 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
             enumInfo
           )
         );
-        return parsedValues.reduce((concatenatedResults: Array<any>, result: Array<any>) => [...concatenatedResults, ...result], []);
+        return parsedValues.reduce(
+          (concatenatedResults: Array<OIBusTimeValue>, result: Array<OIBusTimeValue>) => [...concatenatedResults, ...result],
+          []
+        );
       }
       default:
         if (subItems.length > 0) {
@@ -123,7 +146,7 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
                 this.parseValues(
                   `${itemName}.${subItem.name}`,
                   subItem.type,
-                  valueToParse[subItem.name],
+                  (valueToParse as Record<string, unknown>)[subItem.name],
                   timestamp,
                   subItem.subItems,
                   subItem.enumInfo
@@ -137,16 +160,16 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
         } else if (enumInfo.length > 0) {
           // It is an ADS Enum object
           if (this.connector.settings.enumAsText === 'Text') {
-            valueToAdd = valueToParse.name;
+            valueToAdd = (valueToParse as { name: string }).name;
           } else {
-            valueToAdd = JSON.stringify(valueToParse.value);
+            valueToAdd = JSON.stringify((valueToParse as { value: number }).value);
           }
         } else {
           this.logger.warn(`dataType ${dataType} not supported yet for point ${itemName}. Value was ${JSON.stringify(valueToParse)}`);
         }
         break;
     }
-    if (valueToAdd !== null) {
+    if (valueToAdd) {
       return [
         {
           pointId: itemName,
@@ -170,8 +193,8 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
         type: 'time-values',
         content: results.reduce((concatenatedResults, result) => [...concatenatedResults, ...result], [])
       });
-    } catch (error: any) {
-      if (error.message.startsWith('Client is not connected')) {
+    } catch (error: unknown) {
+      if ((error as Error).message.startsWith('Client is not connected')) {
         this.logger.error('ADS client disconnected. Reconnecting');
         await this.disconnect();
         this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
@@ -205,14 +228,14 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
   override async testItem(item: SouthConnectorItemDTO<SouthADSItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
     try {
       await this.connect();
-      const dataValues: OIBusTimeValue[] = await this.readAdsSymbol(item, DateTime.now().toUTC().toISO()!);
+      const dataValues: Array<OIBusTimeValue> = await this.readAdsSymbol(item, DateTime.now().toUTC().toISO()!);
       await this.disconnect();
       callback({
         type: 'time-values',
         content: dataValues
       });
-    } catch (error: any) {
-      throw new Error(`Unable to connect. ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`Unable to connect. ${(error as Error).message}`);
     }
   }
 

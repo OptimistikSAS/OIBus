@@ -24,6 +24,8 @@ import { BooleanEnumPipe } from '../../shared/boolean-enum.pipe';
 import { PipeProviderService } from '../../shared/form/pipe-provider.service';
 import { EngineService } from '../../services/engine.service';
 import { LogsComponent } from '../../logs/logs.component';
+import { SouthConnectorLightDTO } from '../../../../../shared/model/south-connector.model';
+import { NorthSettings } from '../../../../../shared/model/north-settings.model';
 
 @Component({
   selector: 'oib-north-detail',
@@ -58,7 +60,7 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
   private pipeProviderService = inject(PipeProviderService);
   private booleanPipe = inject(BooleanEnumPipe);
 
-  northConnector: NorthConnectorDTO | null = null;
+  northConnector: NorthConnectorDTO<NorthSettings> | null = null;
   displayedSettings: Array<{ key: string; value: string }> = [];
   scanModes: Array<ScanModeDTO> = [];
   manifest: NorthConnectorManifest | null = null;
@@ -95,6 +97,7 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
           return;
         }
         this.connectToEventSource();
+        const northSettings: Record<string, string | boolean> = JSON.parse(JSON.stringify(this.northConnector!.settings));
         this.displayedSettings = manifest.settings
           .filter(setting => setting.displayInViewMode)
           .map(setting => {
@@ -107,17 +110,17 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
               case 'OibScanMode':
                 return {
                   key: setting.label,
-                  value: this.northConnector!.settings[setting.key]
+                  value: northSettings[setting.key]
                 };
               case 'OibSelect':
                 return {
                   key: setting.label,
-                  value: this.transform(this.northConnector!.settings[setting.key], setting.pipe)
+                  value: this.transform(northSettings[setting.key] as string, setting.pipe)
                 };
               case 'OibCheckbox':
                 return {
                   key: setting.label,
-                  value: this.booleanPipe.transform(this.northConnector!.settings[setting.key])
+                  value: this.booleanPipe.transform(northSettings[setting.key] as boolean)
                 };
               case 'OibCertificate':
               case 'OibSecret':
@@ -133,6 +136,12 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
       });
   }
 
+  updateInMemorySubscriptions(_subscriptions: Array<SouthConnectorLightDTO> | null) {
+    this.northConnectorService.get(this.northConnector!.id).subscribe(northConnector => {
+      this.northConnector = northConnector;
+    });
+  }
+
   getScanMode(scanModeId: string) {
     return this.scanModes.find(scanMode => scanMode.id === scanModeId)?.name || scanModeId;
   }
@@ -145,13 +154,31 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
   }
 
   testConnection() {
-    const command: NorthConnectorCommandDTO = {
+    const command: NorthConnectorCommandDTO<NorthSettings> = {
       name: this.northConnector!.name,
       type: this.northConnector!.type,
       description: this.northConnector!.description,
       enabled: this.northConnector!.enabled,
       settings: this.northConnector!.settings,
-      caching: this.northConnector!.caching
+      caching: {
+        scanModeId: this.northConnector!.caching.scanModeId,
+        scanModeName: null,
+        retryInterval: this.northConnector!.caching.retryInterval,
+        retryCount: this.northConnector!.caching.retryCount,
+        maxSize: this.northConnector!.caching.maxSize,
+        oibusTimeValues: {
+          groupCount: this.northConnector!.caching.oibusTimeValues!.groupCount,
+          maxSendCount: this.northConnector!.caching.oibusTimeValues!.maxSendCount
+        },
+        rawFiles: {
+          sendFileImmediately: this.northConnector!.caching.rawFiles.sendFileImmediately,
+          archive: {
+            enabled: this.northConnector!.caching.rawFiles.archive.enabled,
+            retentionDuration: this.northConnector!.caching.rawFiles.archive.retentionDuration
+          }
+        }
+      },
+      subscriptions: []
     };
 
     const modalRef = this.modalService.open(TestConnectionResultModalComponent);
