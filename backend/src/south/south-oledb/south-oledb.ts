@@ -89,11 +89,6 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
   }
 
   override async testConnection(): Promise<void> {
-    // Has to connect through agent
-    await this.testAgentConnection();
-  }
-
-  async testAgentConnection(): Promise<void> {
     this.logger.info(
       `Testing OLE OIBus Agent connection on ${this.connector.settings.agentUrl} with "${this.connector.settings.connectionString}"`
     );
