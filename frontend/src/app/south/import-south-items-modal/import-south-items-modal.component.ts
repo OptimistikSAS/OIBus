@@ -3,7 +3,11 @@ import { NgbActiveModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
-import { SouthConnectorItemDTO, SouthConnectorItemManifest } from '../../../../../shared/model/south-connector.model';
+import {
+  SouthConnectorItemCommandDTO,
+  SouthConnectorItemDTO,
+  SouthConnectorItemManifest
+} from '../../../../../shared/model/south-connector.model';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 
 import { OibCodeBlockComponent } from '../../shared/form/oib-code-block/oib-code-block.component';
@@ -15,6 +19,7 @@ import { PipeProviderService } from '../../shared/form/pipe-provider.service';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { createPageFromArray, Page } from '../../../../../shared/model/types';
 import { emptyPage } from '../../shared/test-utils';
+import { SouthItemSettings } from '../../../../../shared/model/south-settings.model';
 
 const PAGE_SIZE = 20;
 
@@ -41,19 +46,23 @@ export class ImportSouthItemsModalComponent {
   state = new ObservableState();
   southItemSchema: SouthConnectorItemManifest | null = null;
   southItemRows: Array<Array<OibFormControl>> = [];
-  existingItemList: Array<SouthConnectorItemDTO> = [];
-  newItemList: Array<SouthConnectorItemDTO> = [];
-  errorList: Array<{ item: SouthConnectorItemDTO; message: string }> = [];
+  existingItemList: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>> = [];
+  newItemList: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>> = [];
+  errorList: Array<{ item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>; error: string }> =
+    [];
   scanModes: Array<ScanModeDTO> = [];
   displaySettings: Array<OibFormControl> = [];
-  displayedItemsNew: Page<SouthConnectorItemDTO> = emptyPage();
-  displayedItemsError: Page<{ item: SouthConnectorItemDTO; message: string }> = emptyPage();
+  displayedItemsNew: Page<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>> = emptyPage();
+  displayedItemsError: Page<{
+    item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>;
+    error: string;
+  }> = emptyPage();
 
   prepare(
     southItemSchema: SouthConnectorItemManifest,
-    existingItemList: Array<SouthConnectorItemDTO>,
-    newItemList: Array<SouthConnectorItemDTO>,
-    errorList: Array<{ item: SouthConnectorItemDTO; message: string }>,
+    existingItemList: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>>,
+    newItemList: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>>,
+    errorList: Array<{ item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>; error: string }>,
     scanModes: Array<ScanModeDTO>
   ) {
     this.existingItemList = existingItemList;
@@ -96,11 +105,15 @@ export class ImportSouthItemsModalComponent {
     this.displayedItemsError = this.createPageError(pageNumber);
   }
 
-  private createPageNew(pageNumber: number): Page<SouthConnectorItemDTO> {
+  private createPageNew(
+    pageNumber: number
+  ): Page<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>> {
     return createPageFromArray(this.newItemList, PAGE_SIZE, pageNumber);
   }
 
-  private createPageError(pageNumber: number): Page<{ item: SouthConnectorItemDTO; message: string }> {
+  private createPageError(
+    pageNumber: number
+  ): Page<{ item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>; error: string }> {
     return createPageFromArray(this.errorList, PAGE_SIZE, pageNumber);
   }
 

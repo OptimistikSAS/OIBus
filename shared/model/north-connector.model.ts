@@ -1,7 +1,7 @@
 import { OibFormControl } from './form.model';
 import { BaseEntity, Instant } from './types';
 import { NorthSettings } from './north-settings.model';
-import { SubscriptionDTO } from './subscription.model';
+import { SouthConnectorLightDTO } from './south-connector.model';
 
 export interface NorthCacheSettingsDTO {
   scanModeId: string;
@@ -14,23 +14,10 @@ export interface NorthCacheSettingsDTO {
   };
   rawFiles: {
     sendFileImmediately: boolean;
-    archive: NorthArchiveSettings;
-  };
-}
-
-export interface NorthCacheSettingsCommandDTO {
-  scanModeId?: string;
-  scanModeName?: string;
-  retryInterval: number;
-  retryCount: number;
-  maxSize: number;
-  oibusTimeValues: {
-    groupCount: number;
-    maxSendCount: number;
-  };
-  rawFiles: {
-    sendFileImmediately: boolean;
-    archive: NorthArchiveSettings;
+    archive: {
+      enabled: boolean;
+      retentionDuration: number;
+    };
   };
 }
 
@@ -50,37 +37,90 @@ export interface NorthType {
   };
 }
 
-/**
- * DTO for North connectors
- */
-export interface NorthConnectorDTO<T extends NorthSettings = any> extends BaseEntity {
+export interface NorthConnectorLightDTO extends BaseEntity {
+  name: string;
+  type: string;
+  description: string;
+  enabled: boolean;
+}
+
+export interface NorthConnectorDTO<T extends NorthSettings> extends BaseEntity {
   name: string;
   type: string;
   description: string;
   enabled: boolean;
   settings: T;
-  caching: NorthCacheSettingsDTO;
+  caching: {
+    scanModeId: string;
+    retryInterval: number;
+    retryCount: number;
+    maxSize: number;
+    oibusTimeValues: {
+      groupCount: number;
+      maxSendCount: number;
+    };
+    rawFiles: {
+      sendFileImmediately: boolean;
+      archive: {
+        enabled: boolean;
+        retentionDuration: number;
+      };
+    };
+  };
+  subscriptions: Array<SouthConnectorLightDTO>;
 }
 
-/**
- * Command DTO for North connector
- */
-export interface NorthConnectorCommandDTO<T extends NorthSettings = any> {
+export interface NorthConnectorCommandDTO<T extends NorthSettings> {
   name: string;
   type: string;
   description: string;
   enabled: boolean;
   settings: T;
-  caching: NorthCacheSettingsCommandDTO;
+  caching: {
+    scanModeId: string | null;
+    scanModeName: string | null;
+    retryInterval: number;
+    retryCount: number;
+    maxSize: number;
+    oibusTimeValues: {
+      groupCount: number;
+      maxSendCount: number;
+    };
+    rawFiles: {
+      sendFileImmediately: boolean;
+      archive: {
+        enabled: boolean;
+        retentionDuration: number;
+      };
+    };
+  };
+  subscriptions: Array<string>;
 }
 
-/**
- * Command DTO for South connector
- */
-export interface NorthConnectorWithItemsCommandDTO<> {
-  north: NorthConnectorCommandDTO;
-  subscriptions: Array<SubscriptionDTO>;
-  subscriptionsToDelete: Array<SubscriptionDTO>;
+export interface NorthConnectorWithoutSubscriptionsCommandDTO<T extends NorthSettings = any> {
+  name: string;
+  type: string;
+  description: string;
+  enabled: boolean;
+  settings: T;
+  caching: {
+    scanModeId: string | null;
+    scanModeName: string | null;
+    retryInterval: number;
+    retryCount: number;
+    maxSize: number;
+    oibusTimeValues: {
+      groupCount: number;
+      maxSendCount: number;
+    };
+    rawFiles: {
+      sendFileImmediately: boolean;
+      archive: {
+        enabled: boolean;
+        retentionDuration: number;
+      };
+    };
+  };
 }
 
 export interface NorthConnectorManifest {

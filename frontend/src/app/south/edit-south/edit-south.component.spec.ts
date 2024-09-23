@@ -10,6 +10,7 @@ import { FormComponent } from '../../shared/form/form.component';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { provideHttpClient } from '@angular/common/http';
 import { SouthConnectorDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
+import { SouthItemSettings, SouthSettings } from '../../../../../shared/model/south-settings.model';
 
 class EditSouthComponentTester extends ComponentTester<EditSouthComponent> {
   constructor() {
@@ -75,7 +76,8 @@ describe('EditSouthComponent', () => {
           lastPoint: false,
           lastFile: false,
           history: true,
-          forceMaxInstantPerItem: false
+          forceMaxInstantPerItem: false,
+          sharedConnection: false
         },
         items: {
           scanMode: { subscriptionOnly: false, acceptSubscription: true },
@@ -86,7 +88,6 @@ describe('EditSouthComponent', () => {
         schema: {} as unknown
       } as SouthConnectorManifest)
     );
-    southConnectorService.listItems.and.returnValue(of([]));
   });
 
   describe('create mode', () => {
@@ -109,19 +110,21 @@ describe('EditSouthComponent', () => {
   });
 
   describe('edit mode', () => {
-    const southConnector: SouthConnectorDTO = {
+    const southConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> = {
       id: 'id1',
       type: 'SQL',
       name: 'My South Connector 1',
       description: 'My South connector description',
       enabled: true,
+      sharedConnection: false,
       history: {
         maxInstantPerItem: false,
         maxReadInterval: 0,
         readDelay: 200,
         overlap: 0
       },
-      settings: {}
+      settings: {} as SouthSettings,
+      items: []
     };
 
     beforeEach(() => {

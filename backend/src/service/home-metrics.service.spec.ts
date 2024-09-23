@@ -1,13 +1,15 @@
-import EngineMetricsRepositoryMock from '../tests/__mocks__/repository/engine-metrics-repository.mock';
-import EngineMetricsRepository from '../repository/engine-metrics.repository';
+import EngineMetricsRepositoryMock from '../tests/__mocks__/repository/log/engine-metrics-repository.mock';
+import EngineMetricsRepository from '../repository/logs/engine-metrics.repository';
 import HomeMetricsService from './home-metrics.service';
 import { EventEmitter } from 'node:events';
 import NorthConnector from '../north/north-connector';
 import SouthConnector from '../south/south-connector';
-import SouthMetricsRepositoryMock from '../tests/__mocks__/repository/south-metrics-repository.mock';
-import NorthMetricsRepositoryMock from '../tests/__mocks__/repository/north-metrics-repository.mock';
-import NorthConnectorMetricsRepository from '../repository/north-connector-metrics.repository';
-import SouthConnectorMetricsRepository from '../repository/south-connector-metrics.repository';
+import SouthMetricsRepositoryMock from '../tests/__mocks__/repository/log/south-metrics-repository.mock';
+import NorthMetricsRepositoryMock from '../tests/__mocks__/repository/log/north-metrics-repository.mock';
+import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
+import SouthConnectorMetricsRepository from '../repository/logs/south-connector-metrics.repository';
+import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 
 jest.mock('./utils');
 jest.mock('./oibus.service');
@@ -41,11 +43,11 @@ describe('HomeMetrics service', () => {
 
   it('should add North metrics', () => {
     (northConnectorMetricsRepository.getMetrics as jest.Mock).mockReturnValueOnce(null).mockReturnValueOnce({});
-    service.addNorth(createdNorth as unknown as NorthConnector, 'id');
+    service.addNorth(createdNorth as unknown as NorthConnector<NorthSettings>, 'id');
 
     const stream = service.stream;
     stream.write = jest.fn();
-    service.addNorth(createdNorth as unknown as NorthConnector, 'id');
+    service.addNorth(createdNorth as unknown as NorthConnector<NorthSettings>, 'id');
     northStream.emit('data', `data: ${JSON.stringify({ northMetrics: 1 })}`);
 
     expect(stream.write).toHaveBeenCalledWith(
@@ -56,11 +58,11 @@ describe('HomeMetrics service', () => {
 
   it('should add South metrics', () => {
     (southConnectorMetricsRepository.getMetrics as jest.Mock).mockReturnValueOnce(null).mockReturnValueOnce({});
-    service.addSouth(createdSouth as unknown as SouthConnector, 'id');
+    service.addSouth(createdSouth as unknown as SouthConnector<SouthSettings, SouthItemSettings>, 'id');
 
     const stream = service.stream;
     stream.write = jest.fn();
-    service.addSouth(createdSouth as unknown as SouthConnector, 'id');
+    service.addSouth(createdSouth as unknown as SouthConnector<SouthSettings, SouthItemSettings>, 'id');
     southStream.emit('data', `data: ${JSON.stringify({ southMetrics: 1 })}`);
 
     expect(stream.write).toHaveBeenCalledWith(

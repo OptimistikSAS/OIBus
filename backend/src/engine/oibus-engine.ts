@@ -8,13 +8,15 @@ import SouthService from '../service/south.service';
 import { createFolder, filesExists } from '../service/utils';
 import path from 'node:path';
 import fs from 'node:fs/promises';
-
-import { SouthConnectorDTO } from '../../../shared/model/south-connector.model';
-import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 import { Instant } from '../../../shared/model/types';
 import { PassThrough } from 'node:stream';
-import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 import { OIBusContent } from '../../../shared/model/engine.model';
+import { SouthConnectorEntity } from '../model/south-connector.model';
+import { NorthConnectorEntity } from '../model/north-connector.model';
+import { ScanMode } from '../model/scan-mode.model';
+import RepositoryService from '../service/repository.service';
+import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 
 const CACHE_FOLDER = './cache/data-stream';
 
@@ -22,11 +24,17 @@ const CACHE_FOLDER = './cache/data-stream';
  * At startup, handles of North and South connectors.
  */
 export default class OIBusEngine extends BaseEngine {
-  private northConnectors: Map<string, NorthConnector> = new Map<string, NorthConnector>();
-  private southConnectors: Map<string, SouthConnector> = new Map<string, SouthConnector>();
+  private northConnectors = new Map<string, NorthConnector<NorthSettings>>();
+  private southConnectors = new Map<string, SouthConnector<SouthSettings, SouthItemSettings>>();
 
-  constructor(encryptionService: EncryptionService, northService: NorthService, southService: SouthService, logger: pino.Logger) {
-    super(encryptionService, northService, southService, logger, CACHE_FOLDER);
+  constructor(
+    encryptionService: EncryptionService,
+    northService: NorthService,
+    southService: SouthService,
+    repositoryService: RepositoryService,
+    logger: pino.Logger
+  ) {
+    super(encryptionService, northService, southService, repositoryService, logger, CACHE_FOLDER);
   }
 
   /**
@@ -38,10 +46,10 @@ export default class OIBusEngine extends BaseEngine {
         switch (data.type) {
           case 'time-values':
             await north.cacheValues(data.content);
-            return;
+            break;
           case 'raw':
             await north.cacheFile(data.filePath);
-            return;
+            break;
         }
       }
     }
@@ -72,10 +80,10 @@ export default class OIBusEngine extends BaseEngine {
    */
   override async start(): Promise<void> {
     // North connectors
-    const northListSettings = this.northService.getNorthList();
+    const northListSettings = this.northService.findAll();
     for (const settings of northListSettings) {
       try {
-        await this.createNorth(settings);
+        await this.createNorth(this.northService.findById(settings.id)!);
         if (settings.enabled) {
           await this.startNorth(settings.id);
         }
@@ -85,10 +93,10 @@ export default class OIBusEngine extends BaseEngine {
     }
 
     // South connectors
-    const southListSettings = this.southService.getSouthList();
+    const southListSettings = this.southService.findAll();
     for (const settings of southListSettings) {
       try {
-        await this.createSouth(settings);
+        await this.createSouth(this.southService.findById(settings.id)!);
         if (settings.enabled) {
           await this.startSouth(settings.id);
         }
@@ -113,11 +121,11 @@ export default class OIBusEngine extends BaseEngine {
     }
   }
 
-  async createSouth(settings: SouthConnectorDTO): Promise<void> {
+  async createSouth<S extends SouthSettings, I extends SouthItemSettings>(settings: SouthConnectorEntity<S, I>): Promise<void> {
     const baseFolder = path.resolve(this.cacheFolder, `south-${settings.id}`);
     await createFolder(baseFolder);
 
-    const south = this.southService.createSouth(
+    const south = this.southService.runSouth(
       settings,
       this.addContent.bind(this),
       baseFolder,
@@ -142,16 +150,16 @@ export default class OIBusEngine extends BaseEngine {
     // Do not await here, so it can start all connectors without blocking the thread
     south.start().catch(error => {
       this.logger.error(
-        `Error while starting South connector "${south.settings.name}" of type "${south.settings.type}" (${south.settings.id}): ${error}`
+        `Error while starting South connector "${south.settings.name}" of type "${south.settings.type}" (${south.settings.id}): ${error.message}`
       );
     });
   }
 
-  async createNorth(settings: NorthConnectorDTO): Promise<void> {
+  async createNorth<N extends NorthSettings>(settings: NorthConnectorEntity<N>): Promise<void> {
     const baseFolder = path.resolve(this.cacheFolder, `north-${settings.id}`);
     await createFolder(baseFolder);
 
-    const north = this.northService.createNorth(
+    const north = this.northService.runNorth(
       settings,
       baseFolder,
       this.logger.child({ scopeType: 'north', scopeId: settings.id, scopeName: settings.name })
@@ -170,7 +178,7 @@ export default class OIBusEngine extends BaseEngine {
     // Do not await here, so it can start all connectors without blocking the thread
     north.start().catch(error => {
       this.logger.error(
-        `Error while starting North connector "${north.settings.name}" of type "${north.settings.type}" (${north.settings.id}): ${error}`
+        `Error while starting North connector "${north.settings.name}" of type "${north.settings.type}" (${north.settings.id}): ${error.message}`
       );
     });
   }
@@ -233,14 +241,14 @@ export default class OIBusEngine extends BaseEngine {
     super.setLogger(value);
 
     for (const [id, south] of this.southConnectors.entries()) {
-      const southSettings = this.southService.getSouth(id);
+      const southSettings = this.southService.findById(id);
       if (southSettings) {
         south.setLogger(this.logger.child({ scopeType: 'south', scopeId: southSettings.id, scopeName: southSettings.name }));
       }
     }
 
     for (const [id, north] of this.northConnectors.entries()) {
-      const northSettings = this.northService.getNorth(id);
+      const northSettings = this.northService.findById(id);
       if (northSettings) {
         north.setLogger(this.logger.child({ scopeType: 'north', scopeId: northSettings.id, scopeName: northSettings.name }));
       }
@@ -359,7 +367,7 @@ export default class OIBusEngine extends BaseEngine {
     return this.northConnectors.get(northId)?.resetMetrics() || null;
   }
 
-  async updateScanMode(scanMode: ScanModeDTO): Promise<void> {
+  async updateScanMode(scanMode: ScanMode): Promise<void> {
     for (const south of this.southConnectors.values()) {
       await south.updateScanMode(scanMode);
     }

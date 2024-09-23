@@ -4,7 +4,7 @@ import { KoaContext } from '../koa';
  * Filter connection based on IP addresses. IPv4 and IPv6 are both accepted
  * Return ipFilter middleware
  */
-const ipFilter = (ignoreIpFilters: boolean) => async (ctx: KoaContext<any, any>, next: () => Promise<any>) => {
+const ipFilter = (ignoreIpFilters: boolean) => async (ctx: KoaContext<unknown, unknown>, next: () => void) => {
   const allowed =
     ignoreIpFilters ||
     ctx.app.ipFilters.whiteList.some(ipToTest => {

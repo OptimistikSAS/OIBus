@@ -3,8 +3,8 @@ import OianalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianal
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { ipFilterSchema } from '../web-server/controllers/validators/oibus-validation-schema';
 import IPFilterService from './ip-filter.service';
-import IpFilterRepository from '../repository/ip-filter.repository';
-import IpFilterRepositoryMock from '../tests/__mocks__/repository/ip-filter-repository.mock';
+import IpFilterRepository from '../repository/config/ip-filter.repository';
+import IpFilterRepositoryMock from '../tests/__mocks__/repository/config/ip-filter-repository.mock';
 import ProxyServer from '../web-server/proxy-server';
 import ProxyServerMock from '../tests/__mocks__/proxy-server.mock';
 import testData from '../tests/utils/test-data';

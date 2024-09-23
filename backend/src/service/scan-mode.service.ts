@@ -1,9 +1,9 @@
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
-import ScanModeRepository from '../repository/scan-mode.repository';
+import ScanModeRepository from '../repository/config/scan-mode.repository';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '../../../shared/model/scan-mode.model';
 import { scanModeSchema } from '../web-server/controllers/validators/oibus-validation-schema';
-import SouthCacheRepository from '../repository/south-cache.repository';
+import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import { ScanMode } from '../model/scan-mode.model';
 import { validateCronExpression } from './utils';
 import OIBusEngine from '../engine/oibus-engine';

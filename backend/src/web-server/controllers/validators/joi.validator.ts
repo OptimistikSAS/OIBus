@@ -16,18 +16,18 @@ import {
 } from '../../../../../shared/model/form.model';
 
 export default class JoiValidator {
-  async validate(schema: Joi.ObjectSchema, dto: any): Promise<void> {
+  async validate(schema: Joi.ObjectSchema, dto: object): Promise<void> {
     await schema.validateAsync(dto, {
       abortEarly: false
     });
   }
 
-  async validateSettings(settings: Array<OibFormControl>, dto: any): Promise<void> {
+  async validateSettings(settings: Array<OibFormControl>, dto: object): Promise<void> {
     const schema = this.generateJoiSchema(settings);
     await this.validate(schema, dto);
   }
 
-  protected generateJoiSchema(settings: Array<OibFormControl>): Joi.ObjectSchema {
+  public generateJoiSchema(settings: Array<OibFormControl>): Joi.ObjectSchema {
     let schema = Joi.object({});
     settings.forEach(setting => {
       schema = schema.append(this.generateJoiSchemaFromOibFormControl(setting));

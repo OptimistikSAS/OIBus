@@ -3,6 +3,7 @@ import EncryptionService from '../service/encryption.service';
 import pino from 'pino';
 import NorthService from '../service/north.service';
 import SouthService from '../service/south.service';
+import RepositoryService from '../service/repository.service';
 
 /**
  * Abstract class used to manage North and South connectors
@@ -15,6 +16,7 @@ export default class BaseEngine {
     protected readonly encryptionService: EncryptionService,
     protected readonly northService: NorthService,
     protected readonly southService: SouthService,
+    protected readonly repositoryService: RepositoryService,
     protected _logger: pino.Logger,
     protected readonly cacheFolder: string
   ) {

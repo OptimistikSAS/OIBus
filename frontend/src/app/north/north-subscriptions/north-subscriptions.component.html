@@ -1,4 +1,4 @@
-@if (inMemory) {
+@if (northConnector) {
   <div class="my-2">
     <span class="fa fa-warning mx-1" style="color: orange"></span>
     <span translate="north.subscriptions.edit-mode-info"></span>
@@ -14,12 +14,14 @@
     <div class="d-flex justify-content-between align-items-center">
       <div>
         <span translate="north.subscriptions.title" id="title"></span>
-        @if (this.subscriptions.length) {
-          <span class="mx-1">({{ this.subscriptions.length }})</span>
+        @if (northConnector ? northConnector.subscriptions.length : subscriptions.length) {
+          <span class="mx-1">({{ northConnector ? northConnector.subscriptions.length : subscriptions.length }})</span>
         }
       </div>
       <div>
-        @if (southConnectors.length !== subscriptions.length) {
+        @if (
+          northConnector ? southConnectors.length !== northConnector.subscriptions.length : southConnectors.length !== subscriptions.length
+        ) {
           <button class="btn btn-primary btn-sm oib-box-btn" (click)="addSubscription($event)" translate="north.subscriptions.add"></button>
         }
         <oib-help url="https://oibus.optimistik.com/docs/guide/north-connectors/common-settings#subscriptions" />
@@ -27,7 +29,7 @@
     </div>
   </ng-template>
 
-  @if (subscriptions.length !== 0) {
+  @if (northConnector ? northConnector.subscriptions.length : subscriptions.length) {
     <div class="mb-3">
       <table class="table table-sm table-hover oib-table">
         <thead class="light">
@@ -37,18 +39,34 @@
           </tr>
         </thead>
         <tbody>
-          @for (subscription of subscriptions; track subscription.southId) {
-            <tr>
-              <td>{{ subscription.southName }} ({{ subscription.southType }})</td>
-              <td class="text-nowrap action-buttons">
-                <div class="pull-right">
-                  <!-- Delete button -->
-                  <button type="button" class="btn btn-link delete-scan-mode px-1 py-0" (click)="deleteSubscription(subscription)">
-                    <span class="fa fa-trash"></span>
-                  </button>
-                </div>
-              </td>
-            </tr>
+          @if (northConnector) {
+            @for (subscription of northConnector.subscriptions; track subscription.id) {
+              <tr>
+                <td>{{ subscription.name }} ({{ subscription.type }})</td>
+                <td class="text-nowrap action-buttons">
+                  <div class="pull-right">
+                    <!-- Delete button -->
+                    <button type="button" class="btn btn-link delete-scan-mode px-1 py-0" (click)="deleteSubscription(subscription)">
+                      <span class="fa fa-trash"></span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          } @else {
+            @for (subscription of subscriptions; track subscription.id) {
+              <tr>
+                <td>{{ subscription.name }} ({{ subscription.type }})</td>
+                <td class="text-nowrap action-buttons">
+                  <div class="pull-right">
+                    <!-- Delete button -->
+                    <button type="button" class="btn btn-link delete-scan-mode px-1 py-0" (click)="deleteSubscription(subscription)">
+                      <span class="fa fa-trash"></span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
           }
         </tbody>
       </table>

@@ -1,5 +1,6 @@
 import { Knex } from 'knex';
-import { SOUTH_CACHE_TABLE } from '../../repository/south-cache.repository';
+
+const SOUTH_CACHE_TABLE = 'cache_history';
 
 export async function up(knex: Knex): Promise<void> {
   await createSouthCacheHistoryTable(knex);

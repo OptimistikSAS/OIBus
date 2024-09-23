@@ -1,9 +1,6 @@
 import { LogLevel, ScopeType } from './engine.model';
 import { Instant } from './types';
 
-/**
- * DTO used for Log entries
- */
 export interface LogDTO {
   timestamp: string;
   level: LogLevel;

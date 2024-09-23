@@ -22,8 +22,8 @@ export default class ScanModeController extends AbstractController {
     try {
       const scanMode = await ctx.app.scanModeService.create(ctx.request.body!);
       ctx.created(toScanModeDTO(scanMode));
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 
@@ -31,8 +31,8 @@ export default class ScanModeController extends AbstractController {
     try {
       await ctx.app.scanModeService.update(ctx.params.id!, ctx.request.body!);
       ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 
@@ -40,8 +40,8 @@ export default class ScanModeController extends AbstractController {
     try {
       await ctx.app.scanModeService.delete(ctx.params.id!);
       ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 
@@ -49,8 +49,8 @@ export default class ScanModeController extends AbstractController {
     try {
       const expression = await ctx.app.scanModeService.verifyCron(ctx.request.body!);
       ctx.ok(expression);
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 }

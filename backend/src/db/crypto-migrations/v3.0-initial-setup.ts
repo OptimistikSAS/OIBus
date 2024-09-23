@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-import { CRYPTO_TABLE } from '../../repository/crypto.repository';
+import { CRYPTO_TABLE } from '../../repository/crypto/crypto.repository';
 
 export async function up(knex: Knex): Promise<void> {
   await createCryptoTable(knex);

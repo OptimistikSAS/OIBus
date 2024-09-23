@@ -1,11 +1,12 @@
 import { Knex } from 'knex';
-import { OIANALYTICS_MESSAGE_TABLE } from '../../repository/oianalytics-message.repository';
-import { ENGINES_TABLE } from '../../repository/engine.repository';
 import { version } from '../../../package.json';
 import { OIANALYTICS_MESSAGE_STATUS } from '../../../../shared/model/oianalytics-message.model';
 import CreateTableBuilder = Knex.CreateTableBuilder;
-import { SOUTH_CONNECTORS_TABLE } from '../../repository/south-connector.repository';
-import { SOUTH_ITEMS_TABLE } from '../../repository/south-item.repository';
+
+const SOUTH_CONNECTORS_TABLE = 'south_connectors';
+const SOUTH_ITEMS_TABLE = 'south_items';
+const ENGINES_TABLE = 'engines';
+const OIANALYTICS_MESSAGE_TABLE = 'oianalytics_messages';
 
 export const SOUTH_MODBUS_ITEM_SETTINGS_MODBUS_TYPES = ['coil', 'discreteInput', 'inputRegister', 'holdingRegister'] as const;
 export type SouthModbusItemSettingsModbusType = (typeof SOUTH_MODBUS_ITEM_SETTINGS_MODBUS_TYPES)[number];
@@ -93,6 +94,6 @@ async function addVersionInEngineSettings(knex: Knex) {
   await knex.schema.raw(`ALTER TABLE ${ENGINES_TABLE} ADD oibus_version NOT NULL DEFAULT "${version}"`);
 }
 
-export async function down(knex: Knex): Promise<void> {
-  await knex.schema.dropTable(OIANALYTICS_MESSAGE_TABLE);
+export async function down(_knex: Knex): Promise<void> {
+  return;
 }
