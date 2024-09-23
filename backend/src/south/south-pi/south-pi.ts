@@ -70,7 +70,7 @@ export default class SouthPI extends SouthConnector implements QueriesHistory {
       headers
     };
     const response = await fetch(`${this.connector.settings.agentUrl!}/api/pi/${this.connector.id}/connect`, fetchOptions);
-    if (response.status === 204) {
+    if (response.status === 200) {
       await fetch(`${this.connector.settings.agentUrl}/api/pi/${this.connector.id}/disconnect`, { method: 'DELETE' });
     } else if (response.status === 400) {
       const errorMessage = await response.text();
