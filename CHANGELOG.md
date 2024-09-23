@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.4.4](https://github.com/OptimistikSAS/OIBus/compare/v3.4.3...v3.4.4) (2024-09-23)
+
+
+### Bug Fixes
+
+* **mqtt:** allow persistent in QoS 1 ([a754a9d](https://github.com/OptimistikSAS/OIBus/commit/a754a9dbf1688c9ebae170ae05a1d190761dbed8))
+* **north:** await when removing error values ([aab1901](https://github.com/OptimistikSAS/OIBus/commit/aab1901d7922314ab62d216bc28f8d0b60663e10))
+* **north:** fix chunk count in logs when caching values ([9c54fe8](https://github.com/OptimistikSAS/OIBus/commit/9c54fe8bc7bbf90a01ff78a11f4f76b494b653c7))
+* **oledb:** simplify connection test ([91f6045](https://github.com/OptimistikSAS/OIBus/commit/91f6045b748269238a4cbfdd0b94d3c85b89e76e))
+* **opcua:** convert ByteString to hex string ([d9a9561](https://github.com/OptimistikSAS/OIBus/commit/d9a9561772ae2cb2a959d92a1f67feb27b7603b1))
+* **south-pi:** fix south pi connection test ([cca4db0](https://github.com/OptimistikSAS/OIBus/commit/cca4db00fd8a27d2bf3c6ae7f3c335c2ede0f94f))
+* **south:** adapt South OPC to new OIBus Agent ([d2eb483](https://github.com/OptimistikSAS/OIBus/commit/d2eb4839d32ed2016b34da2a12e9b01cb0e6301f))
+
 ## [3.4.3](https://github.com/OptimistikSAS/OIBus/compare/v3.4.2...v3.4.3) (2024-09-13)
 
 
