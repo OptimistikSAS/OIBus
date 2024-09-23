@@ -1,7 +1,7 @@
 import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { PassThrough } from 'node:stream';
-import SouthConnectorMetricsRepository from '../repository/south-connector-metrics.repository';
+import SouthConnectorMetricsRepository from '../repository/logs/south-connector-metrics.repository';
 import { SouthConnectorMetrics } from '../../../shared/model/engine.model';
 
 export default class SouthConnectorMetricsService {
@@ -15,34 +15,29 @@ export default class SouthConnectorMetricsService {
     lastFileRetrieved: null,
     lastConnection: null,
     lastRunStart: null,
-    lastRunDuration: null,
-    historyMetrics: {}
+    lastRunDuration: null
   };
 
   constructor(
     private readonly connectorId: string,
-    private readonly _metricsRepository: SouthConnectorMetricsRepository
+    private readonly metricsRepository: SouthConnectorMetricsRepository
   ) {}
 
-  get metricsRepository(): SouthConnectorMetricsRepository {
-    return this._metricsRepository;
-  }
-
   initMetrics(): void {
-    this._metricsRepository.initMetrics(this.connectorId);
-    const results = this._metricsRepository.getMetrics(this.connectorId);
+    this.metricsRepository.initMetrics(this.connectorId);
+    const results = this.metricsRepository.getMetrics(this.connectorId);
     this._metrics = results!;
     this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
   }
 
   updateMetrics(southId: string, newMetrics: SouthConnectorMetrics): void {
-    this._metricsRepository.updateMetrics(southId, newMetrics);
+    this.metricsRepository.updateMetrics(southId, newMetrics);
     this._metrics = newMetrics;
     this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
   }
 
   resetMetrics(): void {
-    this._metricsRepository.removeMetrics(this.connectorId);
+    this.metricsRepository.removeMetrics(this.connectorId);
     this.initMetrics();
   }
 

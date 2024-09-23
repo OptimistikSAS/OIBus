@@ -1,7 +1,12 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 
 import { TranslateModule } from '@ngx-translate/core';
-import { SouthConnectorCommandDTO, SouthConnectorDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
+import {
+  SouthConnectorCommandDTO,
+  SouthConnectorDTO,
+  SouthConnectorItemCommandDTO,
+  SouthConnectorManifest
+} from '../../../../../shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { combineLatest, of, switchMap, tap } from 'rxjs';
@@ -23,6 +28,7 @@ import { TestConnectionResultModalComponent } from '../../shared/test-connection
 import { EngineService } from '../../services/engine.service';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { LogsComponent } from '../../logs/logs.component';
+import { SouthItemSettings, SouthSettings } from '../../../../../shared/model/south-settings.model';
 
 @Component({
   selector: 'oib-south-detail',
@@ -56,7 +62,7 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private cd = inject(ChangeDetectorRef);
 
-  southConnector: SouthConnectorDTO | null = null;
+  southConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> | null = null;
   displayedSettings: Array<{ key: string; value: string }> = [];
   scanModes: Array<ScanModeDTO> = [];
   manifest: SouthConnectorManifest | null = null;
@@ -96,15 +102,22 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
         this.manifest = manifest;
         this.connectToEventSource();
 
+        const southSettings: Record<string, string> = JSON.parse(JSON.stringify(this.southConnector!.settings));
         this.displayedSettings = manifest.settings
           .filter(setting => setting.displayInViewMode)
           .map(setting => {
             return {
               key: setting.label,
-              value: this.southConnector!.settings[setting.key]
+              value: southSettings[setting.key]
             };
           });
       });
+  }
+
+  updateInMemoryItems(_items: Array<SouthConnectorItemCommandDTO<SouthItemSettings>> | null) {
+    this.southConnectorService.get(this.southConnector!.id).subscribe(southConnector => {
+      this.southConnector = southConnector;
+    });
   }
 
   getScanMode(scanModeId: string | undefined) {
@@ -112,7 +125,7 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
   }
 
   testConnection() {
-    const command: SouthConnectorCommandDTO = {
+    const command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
       name: this.southConnector!.name,
       type: this.southConnector!.type,
       description: this.southConnector!.description,
@@ -124,7 +137,8 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
         readDelay: this.southConnector!.history!.readDelay,
         overlap: this.southConnector!.history!.overlap
       },
-      settings: this.southConnector!.settings
+      settings: this.southConnector!.settings,
+      items: []
     };
 
     const modalRef = this.modalService.open(TestConnectionResultModalComponent);

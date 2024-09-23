@@ -4,15 +4,23 @@ import { client } from 'jsmodbus';
 
 import SouthConnector from '../south-connector';
 import manifest from './manifest';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
-import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
 import { QueriesLastPoint } from '../south-interface';
 import { DateTime } from 'luxon';
-import { SouthModbusItemSettings, SouthModbusSettings } from '../../../../shared/model/south-settings.model';
+import {
+  SouthModbusItemSettings,
+  SouthModbusItemSettingsDataDataType,
+  SouthModbusSettings
+} from '../../../../shared/model/south-settings.model';
 import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { SouthConnectorEntity } from '../../model/south-connector.model';
+import SouthConnectorRepository from '../../repository/config/south-connector.repository';
+import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
+import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
 
 /**
  * Class SouthModbus - Provides instruction for Modbus client connection
@@ -26,14 +34,27 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
   private disconnecting = false;
 
   constructor(
-    connector: SouthConnectorDTO<SouthModbusSettings>,
+    connector: SouthConnectorEntity<SouthModbusSettings, SouthModbusItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
-    repositoryService: RepositoryService,
+    southConnectorRepository: SouthConnectorRepository,
+    southMetricsRepository: SouthConnectorMetricsRepository,
+    southCacheRepository: SouthCacheRepository,
+    scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, engineAddContentCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(
+      connector,
+      engineAddContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southMetricsRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      baseFolder
+    );
   }
 
   async lastPointQuery(items: Array<SouthConnectorItemDTO<SouthModbusItemSettings>>): Promise<void> {
@@ -49,7 +70,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
         type: 'time-values',
         content: dataValues
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       await this.addContent({
         type: 'time-values',
         content: dataValues
@@ -59,8 +80,8 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
         this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
       }
 
-      if (error.err) {
-        throw new Error(`${error.err} - ${error.message}`);
+      if ((error as { err: string; message: string }).err) {
+        throw new Error(`${(error as { err: string; message: string }).err} - ${(error as { err: string; message: string }).message}`);
       }
       throw error;
     }
@@ -135,7 +156,12 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
   /**
    * Read a Modbus input register
    */
-  async readInputRegister(address: number, multiplier: number, dataType: string, bitIndex: number | undefined): Promise<number> {
+  async readInputRegister(
+    address: number,
+    multiplier: number,
+    dataType: SouthModbusItemSettingsDataDataType,
+    bitIndex: number | undefined
+  ): Promise<number> {
     if (!this.client) {
       throw new Error('Read input error: Modbus client not set');
     }
@@ -147,7 +173,12 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
   /**
    * Read a Modbus holding register
    */
-  async readHoldingRegister(address: number, multiplier: number, dataType: string, bitIndex: number | undefined): Promise<number> {
+  async readHoldingRegister(
+    address: number,
+    multiplier: number,
+    dataType: SouthModbusItemSettingsDataDataType,
+    bitIndex: number | undefined
+  ): Promise<number> {
     if (!this.client) {
       throw new Error('Read holding error: Modbus client not set');
     }
@@ -159,7 +190,12 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
   /**
    * Retrieve a value from buffer with appropriate conversion according to the modbus settings
    */
-  getValueFromBuffer(buffer: any, multiplier: number, dataType: string, bitIndex: number | undefined): number {
+  getValueFromBuffer(
+    buffer: Buffer,
+    multiplier: number,
+    dataType: SouthModbusItemSettingsDataDataType,
+    bitIndex: number | undefined
+  ): number {
     const bufferFunctionName = this.getBufferFunctionName(dataType);
     if (!['Bit', 'Int16', 'UInt16'].includes(dataType)) {
       buffer.swap32().swap16();
@@ -169,6 +205,8 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
       if (this.connector.settings.swapBytesInWords) {
         buffer.swap16();
       }
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-expect-error
       const bufferValue = buffer[bufferFunctionName]();
       return parseFloat((bufferValue * multiplier).toFixed(5));
     }
@@ -177,6 +215,8 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
       buffer.swap16();
     }
 
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
     const bufferValue = buffer[bufferFunctionName]();
 
     if (dataType === 'Bit') {
@@ -232,14 +272,14 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
           reject(error);
         });
       });
-    } catch (error: any) {
-      switch (error.code) {
+    } catch (error: unknown) {
+      switch ((error as { code: string; message: string }).code) {
         case 'ENOTFOUND':
         case 'ECONNREFUSED':
-          throw new Error(`Please check host and port. ${error.message}`);
+          throw new Error(`Please check host and port. ${(error as { code: string; message: string }).message}`);
 
         default:
-          throw new Error(`Unable to connect to socket. ${error.message}`);
+          throw new Error(`Unable to connect to socket. ${(error as { code: string; message: string }).message}`);
       }
     }
   }
@@ -255,7 +295,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
             port: this.connector.settings.port
           },
           async () => {
-            const dataValues: OIBusTimeValue[] = await this.modbusFunction(item);
+            const dataValues: Array<OIBusTimeValue> = await this.modbusFunction(item);
             callback({
               type: 'time-values',
               content: dataValues
@@ -268,13 +308,13 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
           reject(error);
         });
       });
-    } catch (error: any) {
-      switch (error.code) {
+    } catch (error: unknown) {
+      switch ((error as { code: string; message: string }).code) {
         case 'ENOTFOUND':
         case 'ECONNREFUSED':
-          throw new Error(`Please check host and port. ${error.message}`);
+          throw new Error(`Please check host and port. ${(error as { code: string; message: string }).message}`);
         default:
-          throw new Error(`Unable to connect to socket. ${error.message}`);
+          throw new Error(`Unable to connect to socket. ${(error as { code: string; message: string }).message}`);
       }
     }
   }

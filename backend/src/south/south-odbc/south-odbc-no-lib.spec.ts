@@ -1,13 +1,24 @@
 import SouthODBC from './south-odbc';
-import DatabaseMock from '../../tests/__mocks__/database.mock';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-import RepositoryService from '../../service/repository.service';
-import RepositoryServiceMock from '../../tests/__mocks__/service/repository-service.mock';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
-import { SouthODBCSettings } from '../../../../shared/model/south-settings.model';
+import { SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import {
+  SouthODBCItemSettings,
+  SouthODBCItemSettingsDateTimeFields,
+  SouthODBCSettings
+} from '../../../../shared/model/south-settings.model';
+import SouthConnectorRepository from '../../repository/config/south-connector.repository';
+import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
+import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
+import NorthMetricsRepositoryMock from '../../tests/__mocks__/repository/log/north-metrics-repository.mock';
+import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
+import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
+import SouthConnectorMetricsServiceMock from '../../tests/__mocks__/service/south-connector-metrics-service.mock';
 
 jest.mock('../../service/utils');
 jest.mock(
@@ -17,19 +28,23 @@ jest.mock(
   },
   { virtual: true }
 );
+jest.mock('node-fetch');
 jest.mock('node:fs/promises');
+jest.mock('../../service/utils');
 
-const database = new DatabaseMock();
+const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
+const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
+const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
+const southMetricsRepository: SouthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
+const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
+const southCacheService = new SouthCacheServiceMock();
+const southConnectorMetricsService = new SouthConnectorMetricsServiceMock();
+
 jest.mock(
   '../../service/south-cache.service',
   () =>
     function () {
-      return {
-        createSouthCacheScanModeTable: jest.fn(),
-        southCacheRepository: {
-          database
-        }
-      };
+      return southCacheService;
     }
 );
 
@@ -37,33 +52,20 @@ jest.mock(
   '../../service/south-connector-metrics.service',
   () =>
     function () {
-      return {
-        initMetrics: jest.fn(),
-        updateMetrics: jest.fn(),
-        get stream() {
-          return { stream: 'myStream' };
-        },
-        metrics: {
-          numberOfValuesRetrieved: 1,
-          numberOfFilesRetrieved: 1
-        }
-      };
+      return southConnectorMetricsService;
     }
 );
-const addContentCallback = jest.fn();
 
 const logger: pino.Logger = new PinoLogger();
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
-const repositoryService: RepositoryService = new RepositoryServiceMock();
-
-let south: SouthODBC;
+const addContentCallback = jest.fn();
 
 // Spy on console info and error
-jest.spyOn(global.console, 'info').mockImplementation(() => {});
-jest.spyOn(global.console, 'error').mockImplementation(() => {});
+jest.spyOn(global.console, 'info').mockImplementation(() => null);
+jest.spyOn(global.console, 'error').mockImplementation(() => null);
 
 describe('SouthODBC without ODBC Library', () => {
-  const configuration: SouthConnectorDTO<SouthODBCSettings> = {
+  let south: SouthODBC;
+  const configuration: SouthConnectorDTO<SouthODBCSettings, SouthODBCItemSettings> = {
     id: 'southId',
     name: 'south',
     type: 'odbc',
@@ -75,6 +77,7 @@ describe('SouthODBC without ODBC Library', () => {
       readDelay: 0,
       overlap: 0
     },
+    sharedConnection: false,
     settings: {
       remoteAgent: false,
       connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
@@ -82,14 +85,114 @@ describe('SouthODBC without ODBC Library', () => {
       connectionTimeout: 1000,
       retryInterval: 1000,
       requestTimeout: 1000
-    }
+    },
+    items: [
+      {
+        id: 'id1',
+        name: 'item1',
+        enabled: true,
+        settings: {
+          query: 'SELECT * FROM table',
+          dateTimeFields: [
+            {
+              fieldName: 'anotherTimestamp',
+              useAsReference: false,
+              type: 'unix-epoch-ms',
+              timezone: null,
+              format: null,
+              locale: null
+            } as unknown as SouthODBCItemSettingsDateTimeFields,
+            {
+              fieldName: 'timestamp',
+              useAsReference: true,
+              type: 'string',
+              timezone: 'Europe/Paris',
+              format: 'yyyy-MM-dd HH:mm:ss.SSS',
+              locale: 'en-US'
+            }
+          ],
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id2',
+        name: 'item2',
+        enabled: true,
+        settings: {
+          query: 'SELECT * FROM table',
+          dateTimeFields: null,
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id3',
+        name: 'item3',
+        enabled: true,
+        settings: {
+          query: 'SELECT * FROM table',
+          dateTimeFields: [
+            {
+              fieldName: 'anotherTimestamp',
+              useAsReference: false,
+              type: 'unix-epoch-ms',
+              timezone: null,
+              format: null,
+              locale: null
+            } as unknown as SouthODBCItemSettingsDateTimeFields,
+            {
+              fieldName: 'timestamp',
+              useAsReference: true,
+              type: 'string',
+              timezone: 'Europe/Paris',
+              format: 'yyyy-MM-dd HH:mm:ss.SSS',
+              locale: 'en-US'
+            }
+          ],
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId2'
+      }
+    ]
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
-    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
-    south = new SouthODBC(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthODBC(
+      configuration,
+      addContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southMetricsRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      'baseFolder'
+    );
   });
 
   it('should throw error if library not loaded', async () => {
@@ -97,8 +200,6 @@ describe('SouthODBC without ODBC Library', () => {
 
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
-    await expect(south.queryOdbcData({} as SouthConnectorItemDTO, startTime, endTime)).rejects.toThrow(
-      new Error('odbc library not loaded')
-    );
+    await expect(south.queryOdbcData(configuration.items[0], startTime, endTime)).rejects.toThrow(new Error('odbc library not loaded'));
   });
 });

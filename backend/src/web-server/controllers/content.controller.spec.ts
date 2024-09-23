@@ -45,8 +45,7 @@ describe('Content controller', () => {
     ctx.request.body = content;
     ctx.request.query = { northId: ['northId1', 'northId2'] };
     await oibusController.addContent(ctx);
-    expect(ctx.internalServerError).toHaveBeenCalled();
-    expect(ctx.badRequest).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalled();
     expect(ctx.noContent).not.toHaveBeenCalled();
   });
 

@@ -9,6 +9,8 @@ import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
 import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 import BaseEngine from './base-engine';
+import RepositoryService from '../service/repository.service';
+import RepositoryServiceMock from '../tests/__mocks__/service/repository-service.mock';
 
 jest.mock('../service/south.service');
 jest.mock('../service/north.service');
@@ -22,6 +24,7 @@ const anotherLogger: pino.Logger = new PinoLogger();
 
 const southService: SouthService = new SouthServiceMock();
 const northService: NorthService = new NorthServiceMock();
+const repositoryService: RepositoryService = new RepositoryServiceMock();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
@@ -32,7 +35,7 @@ describe('BaseEngine', () => {
     jest.resetAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
-    engine = new BaseEngine(encryptionService, northService, southService, logger, 'cacheFolder');
+    engine = new BaseEngine(encryptionService, northService, southService, repositoryService, logger, 'cacheFolder');
   });
 
   it('it should log a warning on start', async () => {

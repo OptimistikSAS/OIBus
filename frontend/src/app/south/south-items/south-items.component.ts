@@ -1,4 +1,4 @@
-import { Component, EventEmitter, inject, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, inject, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
@@ -31,6 +31,7 @@ import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
 import { ImportItemModalComponent } from '../../shared/import-item-modal/import-item-modal.component';
 import { SouthItemTestModalComponent } from '../south-item-test-modal/south-item-test-modal.component';
+import { SouthItemSettings, SouthSettings } from '../../../../../shared/model/south-settings.model';
 
 const PAGE_SIZE = 20;
 const enum ColumnSortState {
@@ -64,28 +65,22 @@ export interface TableData {
   templateUrl: './south-items.component.html',
   styleUrl: './south-items.component.scss'
 })
-export class SouthItemsComponent implements OnInit {
+export class SouthItemsComponent implements OnInit, OnChanges {
   private confirmationService = inject(ConfirmationService);
   private notificationService = inject(NotificationService);
   private modalService = inject(ModalService);
   private southConnectorService = inject(SouthConnectorService);
   private pipeProviderService = inject(PipeProviderService);
-
-  @Input() southConnector: SouthConnectorDTO | null = null;
+  @Input() southConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> | null = null;
   @Input({ required: true }) southManifest!: SouthConnectorManifest;
   @Input({ required: true }) scanModes!: Array<ScanModeDTO>;
-  @Input() inMemory = false;
-  @Input() maxInstantPerItem: boolean | null = null;
 
-  @Output() readonly inMemoryItems = new EventEmitter<{
-    items: Array<SouthConnectorItemDTO>;
-    itemIdsToDelete: Array<string>;
-  }>();
+  @Output() readonly inMemoryItems = new EventEmitter<Array<SouthConnectorItemCommandDTO<SouthItemSettings>> | null>();
 
-  allItems: Array<SouthConnectorItemDTO> = [];
-  itemIdsToDelete: Array<string> = [];
-  filteredItems: Array<SouthConnectorItemDTO> = [];
-  displayedItems: Page<SouthConnectorItemDTO> = emptyPage();
+  allItems: Array<SouthConnectorItemCommandDTO<SouthItemSettings>> = []; // Array used to store item commands on south connector creation
+  filteredItems: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>> = [];
+
+  displayedItems: Page<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>> = emptyPage();
   displaySettings: Array<OibFormControl> = [];
 
   searchControl = inject(NonNullableFormBuilder).control(null as string | null);
@@ -97,65 +92,57 @@ export class SouthItemsComponent implements OnInit {
   currentColumnSort: keyof TableData | null = 'name';
 
   ngOnInit() {
-    this.fetchItemsAndResetPage(false);
+    this.resetPage();
     this.displaySettings = this.southManifest.items.settings.filter(setting => setting.displayInViewMode);
 
     // subscribe to changes to search control
     this.searchControl.valueChanges.pipe(debounceTime(200), distinctUntilChanged()).subscribe(() => {
-      this.filteredItems = this.filter(this.allItems);
-      this.changePage(0);
+      this.resetPage();
     });
   }
 
-  fetchItemsAndResetPage(fromMemory: boolean) {
+  ngOnChanges(changes: SimpleChanges) {
     // reset column sorting
     this.columnSortStates = { name: ColumnSortState.INDETERMINATE, scanMode: ColumnSortState.INDETERMINATE };
     this.currentColumnSort = 'name';
 
-    if (this.southConnector && !fromMemory) {
-      this.southConnectorService.listItems(this.southConnector.id).subscribe(items => {
-        this.allItems = items;
-        this.filteredItems = this.filter(items);
-        this.changePage(0);
-        this.inMemoryItems.emit({ items: this.allItems, itemIdsToDelete: this.itemIdsToDelete });
-      });
-    } else {
-      this.filteredItems = this.filter(this.allItems);
-      this.changePage(0);
-      this.inMemoryItems.emit({ items: this.allItems, itemIdsToDelete: this.itemIdsToDelete });
+    if (changes['southConnector']) {
+      this.resetPage();
     }
+  }
+
+  resetPage() {
+    this.filteredItems = this.filter();
+    this.changePage(0);
   }
 
   changePage(pageNumber: number) {
     this.sortTable();
-    this.displayedItems = this.createPage(pageNumber);
+    this.displayedItems = createPageFromArray(this.filteredItems, PAGE_SIZE, pageNumber);
   }
 
-  private createPage(pageNumber: number): Page<SouthConnectorItemDTO> {
-    return createPageFromArray(this.filteredItems, PAGE_SIZE, pageNumber);
-  }
-
-  filter(items: Array<SouthConnectorItemDTO>): Array<SouthConnectorItemDTO> {
-    const searchText = this.searchControl.value;
-    if (!searchText) {
-      return items;
+  filter(): Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>> {
+    const searchText = this.searchControl.value || '';
+    if (this.southConnector) {
+      return this.southConnector.items.filter(item => item.name.toLowerCase().includes(searchText.toLowerCase()));
+    } else {
+      return this.allItems.filter(item => item.name.toLowerCase().includes(searchText.toLowerCase()));
     }
-    return items.filter(item => item.name.toLowerCase().includes(searchText.toLowerCase()));
   }
 
-  /**
-   * Open a modal to edit a South item
-   */
-  editItem(southItem: SouthConnectorItemDTO) {
+  editItem(southItem: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>) {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl' });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
-    component.prepareForEdition(this.southManifest.items, this.allItems, this.scanModes, southItem, this.maxInstantPerItem);
+    component.prepareForEdition(
+      this.southManifest.items,
+      this.allItems,
+      this.scanModes,
+      southItem,
+      this.southConnector?.history.maxInstantPerItem
+    );
     this.refreshAfterEditionModalClosed(modalRef, southItem);
   }
 
-  /**
-   * Open a modal to create a South item
-   */
   addItem() {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl' });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
@@ -169,16 +156,16 @@ export class SouthItemsComponent implements OnInit {
   private refreshAfterCreationModalClosed(modalRef: Modal<any>) {
     modalRef.result
       .pipe(
-        switchMap((command: SouthConnectorItemCommandDTO) => {
-          if (!this.inMemory) {
+        switchMap((command: SouthConnectorItemCommandDTO<SouthItemSettings>) => {
+          if (this.southConnector) {
             return this.southConnectorService.createItem(this.southConnector!.id, command);
           } else {
             this.allItems.push({
-              id: command.id ?? '',
+              id: command.id ?? null,
               name: command.name,
               enabled: command.enabled,
-              connectorId: this.southConnector?.id ?? '',
               scanModeId: command.scanModeId!,
+              scanModeName: null,
               settings: { ...command.settings }
             });
             return of(null);
@@ -186,106 +173,98 @@ export class SouthItemsComponent implements OnInit {
         })
       )
       .subscribe(() => {
-        this.fetchItemsAndResetPage(this.inMemory);
-        if (!this.inMemory) {
+        if (this.southConnector) {
           this.notificationService.success(`south.items.created`);
+          this.inMemoryItems.emit(null);
+        } else {
+          this.inMemoryItems.emit(this.allItems);
+          this.resetPage();
         }
       });
   }
 
   /**
-   * Refresh the South item list when a South item is created
+   * Refresh the South item list when a South item is edited
    */
-  private refreshAfterEditionModalClosed(modalRef: Modal<any>, oldItem: SouthConnectorItemDTO) {
+  private refreshAfterEditionModalClosed(
+    modalRef: Modal<any>,
+    oldItem: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>
+  ) {
     modalRef.result
       .pipe(
-        switchMap((command: SouthConnectorItemCommandDTO) => {
-          if (!this.inMemory) {
-            return this.southConnectorService.updateItem(this.southConnector!.id, command.id || '', command);
+        switchMap((command: SouthConnectorItemCommandDTO<SouthItemSettings>) => {
+          if (this.southConnector) {
+            return this.southConnectorService.updateItem(this.southConnector!.id, command.id!, command);
           } else {
-            this.allItems = this.allItems.filter(item => {
-              if (oldItem.id) {
-                return item.id !== oldItem.id;
-              } else {
-                return item.name !== oldItem.name;
-              }
-            });
+            this.allItems = this.allItems.filter(item => item.name !== oldItem.name);
             this.allItems.push({ ...oldItem, ...command });
             return of(null);
           }
         })
       )
       .subscribe(() => {
-        this.fetchItemsAndResetPage(this.inMemory);
-        if (!this.inMemory) {
+        if (this.southConnector) {
           this.notificationService.success(`south.items.updated`);
+          this.inMemoryItems.emit(null);
+        } else {
+          this.inMemoryItems.emit(this.allItems);
+          this.resetPage();
         }
       });
   }
 
-  /**
-   * Deletes a parser by its ID and refreshes the list
-   */
-  deleteItem(item: SouthConnectorItemDTO) {
+  deleteItem(item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>) {
     this.confirmationService
       .confirm({
         messageKey: 'south.items.confirm-deletion'
       })
       .pipe(
         switchMap(() => {
-          if (!this.inMemory) {
-            return this.southConnectorService.deleteItem(this.southConnector!.id, item.id);
+          if (this.southConnector) {
+            return this.southConnectorService.deleteItem(this.southConnector!.id, item.id!);
           } else {
-            if (item.id) {
-              this.itemIdsToDelete.push(item.id);
-              this.allItems = this.allItems.filter(element => element.id !== item.id);
-            } else {
-              this.allItems = this.allItems.filter(element => element.name !== item.name);
-            }
+            this.allItems = this.allItems.filter(element => element.name !== item.name);
             return of(null);
           }
         })
       )
       .subscribe(() => {
-        this.fetchItemsAndResetPage(this.inMemory);
-        if (!this.inMemory) {
+        if (this.southConnector) {
           this.notificationService.success('south.items.deleted');
+          this.inMemoryItems.emit(null);
+        } else {
+          this.inMemoryItems.emit(this.allItems);
+          this.resetPage();
         }
       });
   }
 
-  duplicateItem(item: SouthConnectorItemDTO) {
+  duplicateItem(item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>) {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl' });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
     component.prepareForCopy(this.southManifest.items, this.scanModes, item);
     this.refreshAfterCreationModalClosed(modalRef);
   }
 
-  testItem(item: SouthConnectorItemDTO) {
-    this.southConnectorService.testItems(this.southConnector!.id, this.southConnector, item).subscribe(result => {
+  testItem(item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>) {
+    this.southConnectorService.testItem(this.southConnector!.id, this.southConnector, item).subscribe(result => {
       const modalRef = this.modalService.open(SouthItemTestModalComponent, { size: 'xl' });
       modalRef.componentInstance.prepare(result, item);
     });
   }
 
-  /**
-   * Export items into a csv file
-   */
   exportItems() {
     const modalRef = this.modalService.open(ExportItemModalComponent);
     modalRef.componentInstance.prepare(this.southConnector?.name);
     modalRef.result.subscribe(response => {
-      if (response && !this.inMemory) {
+      if (response && this.southConnector) {
         this.southConnectorService.exportItems(this.southConnector!.id, response.fileName, response.delimiter).subscribe();
-      } else if (response && this.inMemory) {
+      } else if (response && !this.southConnector) {
         this.southConnectorService.itemsToCsv(this.allItems, response.fileName, response.delimiter).subscribe();
       }
     });
   }
 
-  /**
-   * Delete all items
-   */
   deleteAllItems() {
     this.confirmationService
       .confirm({
@@ -293,19 +272,21 @@ export class SouthItemsComponent implements OnInit {
       })
       .pipe(
         switchMap(() => {
-          if (!this.inMemory) {
+          if (this.southConnector) {
             return this.southConnectorService.deleteAllItems(this.southConnector!.id);
           } else {
-            this.itemIdsToDelete = [...this.itemIdsToDelete, ...this.allItems.filter(item => item.id).map(item => item.id)];
             this.allItems = [];
             return of(null);
           }
         })
       )
       .subscribe(() => {
-        this.fetchItemsAndResetPage(this.inMemory);
-        if (!this.inMemory) {
+        if (this.southConnector) {
           this.notificationService.success('south.items.all-deleted');
+          this.inMemoryItems.emit(null);
+        } else {
+          this.inMemoryItems.emit(this.allItems);
+          this.resetPage();
         }
       });
   }
@@ -319,33 +300,46 @@ export class SouthItemsComponent implements OnInit {
 
   checkImportItems(file: File, delimiter: string) {
     this.southConnectorService
-      .checkImportItems(this.southManifest.id, this.southConnector?.id || 'create', file, this.itemIdsToDelete, delimiter)
-      .subscribe((result: { items: Array<SouthConnectorItemDTO>; errors: Array<{ item: SouthConnectorItemDTO; message: string }> }) => {
-        const modalRef = this.modalService.open(ImportSouthItemsModalComponent, { size: 'xl' });
-        const component: ImportSouthItemsModalComponent = modalRef.componentInstance;
-        component.prepare(this.southManifest.items, this.allItems, result.items, result.errors, this.scanModes);
-        this.refreshAfterImportModalClosed(modalRef);
-      });
+      .checkImportItems(
+        this.southManifest.id,
+        this.southConnector?.id || 'create',
+        this.southConnector ? this.southConnector.items : this.allItems,
+        file,
+        delimiter
+      )
+      .subscribe(
+        (result: {
+          items: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>>;
+          errors: Array<{
+            item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>;
+            error: string;
+          }>;
+        }) => {
+          const modalRef = this.modalService.open(ImportSouthItemsModalComponent, { size: 'xl' });
+          const component: ImportSouthItemsModalComponent = modalRef.componentInstance;
+          component.prepare(
+            this.southManifest.items,
+            this.southConnector ? this.southConnector.items : this.allItems,
+            result.items,
+            result.errors,
+            this.scanModes
+          );
+          this.refreshAfterImportModalClosed(modalRef);
+        }
+      );
   }
 
   /**
-   * Refresh the South item list when South items are created
+   * Refresh the South item list when South items are imported
    */
   private refreshAfterImportModalClosed(modalRef: Modal<any>) {
     modalRef.result
       .pipe(
-        switchMap((newItems: Array<SouthConnectorItemDTO>) => {
-          if (!this.inMemory) {
+        switchMap((newItems: Array<SouthConnectorItemCommandDTO<SouthItemSettings>>) => {
+          if (this.southConnector) {
             return this.southConnectorService.importItems(this.southConnector!.id, newItems);
           } else {
             for (const item of newItems) {
-              this.allItems = this.allItems.filter(existingItem => {
-                if (item.id) {
-                  return existingItem.id !== item.id;
-                } else {
-                  return existingItem.name !== item.name;
-                }
-              });
               this.allItems.push(item);
             }
             return of(null);
@@ -353,9 +347,12 @@ export class SouthItemsComponent implements OnInit {
         })
       )
       .subscribe(() => {
-        this.fetchItemsAndResetPage(this.inMemory);
-        if (!this.inMemory) {
+        if (this.southConnector) {
           this.notificationService.success(`south.items.import.imported`);
+          this.inMemoryItems.emit(null);
+        } else {
+          this.inMemoryItems.emit(this.allItems);
+          this.resetPage();
         }
       });
   }
@@ -364,38 +361,32 @@ export class SouthItemsComponent implements OnInit {
     return this.scanModes.find(scanMode => scanMode.id === scanModeId);
   }
 
-  toggleItem(item: SouthConnectorItemDTO, value: boolean) {
+  toggleItem(item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>, value: boolean) {
     if (value) {
       this.southConnectorService
-        .enableItem(this.southConnector!.id, item.id)
+        .enableItem(this.southConnector!.id, item.id!)
         .pipe(
           tap(() => {
             this.notificationService.success('south.items.enabled', { name: item.name });
-          }),
-          switchMap(() => {
-            return this.southConnectorService.listItems(this.southConnector!.id);
           })
         )
-        .subscribe(items => {
-          this.allItems = items;
-          this.filteredItems = this.filter(items);
-          this.changePage(this.displayedItems.number);
+        .subscribe(() => {
+          if (this.southConnector) {
+            this.inMemoryItems.emit(null);
+          }
         });
     } else {
       this.southConnectorService
-        .disableItem(this.southConnector!.id, item.id)
+        .disableItem(this.southConnector!.id, item.id!)
         .pipe(
           tap(() => {
             this.notificationService.success('south.items.disabled', { name: item.name });
-          }),
-          switchMap(() => {
-            return this.southConnectorService.listItems(this.southConnector!.id);
           })
         )
-        .subscribe(items => {
-          this.allItems = items;
-          this.filteredItems = this.filter(items);
-          this.changePage(this.displayedItems.number);
+        .subscribe(() => {
+          if (this.southConnector) {
+            this.inMemoryItems.emit(null);
+          }
         });
     }
   }

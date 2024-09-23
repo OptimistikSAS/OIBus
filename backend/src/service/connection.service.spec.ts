@@ -25,7 +25,7 @@ const connectionLogger: pino.Logger = new PinoLogger();
 
 const closeFn = jest.fn(() => Promise.resolve());
 const mockSession = { close: closeFn };
-const connectionDTO: ManagedConnectionDTO<any> = {
+const connectionDTO: ManagedConnectionDTO<{ close: jest.Mock }> = {
   type: 'opcua',
   connectorSettings: {
     foo: 'bar',
@@ -38,7 +38,7 @@ const connectionDTO: ManagedConnectionDTO<any> = {
   }
 };
 
-const sharedConnectionDTO: ManagedConnectionDTO<any> = {
+const sharedConnectionDTO: ManagedConnectionDTO<{ close: jest.Mock }> = {
   type: 'opcua',
   connectorSettings: {
     foo: 'bar',
@@ -76,10 +76,13 @@ describe('ConnectionService', () => {
 
   it('should return an existing connection if it matches the settings', () => {
     const connection = connectionService.create('connectorId', connectionDTO);
-    const newConnection: ManagedConnection<any> = connectionService.create('connectorId2', connectionDTO);
+    const newConnection: ManagedConnection<{ close: jest.Mock }> = connectionService.create('connectorId2', connectionDTO);
 
     const sharedConnection = connectionService.create('sharedConnectorId', sharedConnectionDTO);
-    const newSharedConnection: ManagedConnection<any> = connectionService.create('sharedConnectorId2', sharedConnectionDTO);
+    const newSharedConnection: ManagedConnection<{ close: jest.Mock }> = connectionService.create(
+      'sharedConnectorId2',
+      sharedConnectionDTO
+    );
 
     expect(connection).not.toEqual(newConnection); // Not to be equal, since these are not shared connections
     expect(sharedConnection).toStrictEqual(newSharedConnection); // To be equal, since these are shared connections

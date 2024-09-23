@@ -1,19 +1,20 @@
 import { KoaContext } from '../koa';
 import AbstractController from './abstract.controller';
-import { Certificate, CertificateCommandDTO, CertificateDTO } from '../../../../shared/model/certificate.model';
+import { CertificateCommandDTO, CertificateDTO } from '../../../../shared/model/certificate.model';
 import { generateRandomId } from '../../service/utils';
 import { DateTime, Duration } from 'luxon';
+import { Certificate } from '../../model/certificate.model';
 
 export default class CertificateController extends AbstractController {
   async findAll(ctx: KoaContext<void, Array<CertificateDTO>>): Promise<void> {
-    const certificates = ctx.app.repositoryService.certificateRepository.findAll().map(c => this.toDTO(c));
+    const certificates = ctx.app.repositoryService.certificateRepository.findAll().map(c => this.toCertificateDTO(c));
     ctx.ok(certificates);
   }
 
   async findById(ctx: KoaContext<void, CertificateDTO>): Promise<void> {
     const certificate = ctx.app.repositoryService.certificateRepository.findById(ctx.params.id);
     if (certificate) {
-      ctx.ok(this.toDTO(certificate));
+      ctx.ok(this.toCertificateDTO(certificate));
     } else {
       ctx.notFound();
     }
@@ -25,7 +26,7 @@ export default class CertificateController extends AbstractController {
       // generate self-signed certificate with the command
       const command = ctx.request.body!;
       if (command.options == null) {
-        ctx.badRequest();
+        ctx.badRequest('Options must be provided');
         return;
       }
       const cert = ctx.app.encryptionService.generateSelfSignedCertificate({
@@ -50,8 +51,8 @@ export default class CertificateController extends AbstractController {
           .toISO()!
       });
       ctx.created(certificate);
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 
@@ -69,7 +70,7 @@ export default class CertificateController extends AbstractController {
 
       if (command.regenerateCertificate) {
         if (command.options == null) {
-          ctx.badRequest();
+          ctx.badRequest('Options must be provided');
           return;
         }
         const cert = ctx.app.encryptionService.generateSelfSignedCertificate({
@@ -97,8 +98,8 @@ export default class CertificateController extends AbstractController {
         ctx.app.repositoryService.certificateRepository.updateNameAndDescription(certificateToUpdate.id, command.name, command.description);
       }
       ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 
@@ -112,7 +113,7 @@ export default class CertificateController extends AbstractController {
     }
   }
 
-  toDTO(certificate: Certificate): CertificateDTO {
+  toCertificateDTO(certificate: Certificate): CertificateDTO {
     return {
       id: certificate.id,
       name: certificate.name,

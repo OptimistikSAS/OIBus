@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-import { CERTIFICATES_TABLE } from '../../repository/certificate.repository';
+const CERTIFICATES_TABLE = 'certificates';
 
 export async function up(knex: Knex): Promise<void> {
   await createCertificatesTable(knex);
@@ -18,6 +18,6 @@ async function createCertificatesTable(knex: Knex): Promise<void> {
                                    certificate varchar not null);`);
 }
 
-export async function down(knex: Knex): Promise<void> {
-  await knex.schema.dropTable(CERTIFICATES_TABLE);
+export async function down(_knex: Knex): Promise<void> {
+  return;
 }

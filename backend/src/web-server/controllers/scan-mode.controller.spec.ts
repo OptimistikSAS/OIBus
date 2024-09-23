@@ -5,6 +5,7 @@ import JoiValidator from './validators/joi.validator';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
 import { ValidatedCronExpression } from '../../../../shared/model/scan-mode.model';
 import testData from '../../tests/utils/test-data';
+import { toScanModeDTO } from '../../service/scan-mode.service';
 
 jest.mock('./validators/joi.validator');
 
@@ -25,7 +26,7 @@ describe('Scan Mode Controller', () => {
     await scanModeController.findAll(ctx);
 
     expect(ctx.app.scanModeService.findAll).toHaveBeenCalled();
-    expect(ctx.ok).toHaveBeenCalledWith(testData.scanMode.dto);
+    expect(ctx.ok).toHaveBeenCalledWith(testData.scanMode.list.map(element => toScanModeDTO(element)));
   });
 
   it('findById() should return a scan mode', async () => {
@@ -37,7 +38,7 @@ describe('Scan Mode Controller', () => {
     await scanModeController.findById(ctx);
 
     expect(ctx.app.scanModeService.findById).toHaveBeenCalledWith(id);
-    expect(ctx.ok).toHaveBeenCalledWith(testData.scanMode.dto[0]);
+    expect(ctx.ok).toHaveBeenCalledWith(toScanModeDTO(testData.scanMode.list[0]));
   });
 
   it('findById() should return not found', async () => {
@@ -58,7 +59,7 @@ describe('Scan Mode Controller', () => {
     await scanModeController.create(ctx);
 
     expect(ctx.app.scanModeService.create).toHaveBeenCalledWith(testData.scanMode.command);
-    expect(ctx.created).toHaveBeenCalledWith(testData.scanMode.dto[0]);
+    expect(ctx.created).toHaveBeenCalledWith(toScanModeDTO(testData.scanMode.list[0]));
   });
 
   it('create() should throw bad request', async () => {

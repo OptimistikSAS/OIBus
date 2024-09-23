@@ -120,7 +120,7 @@ export type OIBusCommandDTO =
 
 export interface CommandSearchParam {
   page?: number;
-  types: Array<OIBusCommandType>;
-  status: Array<OIBusCommandStatus>;
+  types: Array<string>;
+  status: Array<string>;
   ack?: boolean;
 }

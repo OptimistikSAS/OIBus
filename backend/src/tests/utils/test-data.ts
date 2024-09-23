@@ -1,21 +1,35 @@
 import { ScanMode } from '../../model/scan-mode.model';
 import { ScanModeCommandDTO } from '../../../../shared/model/scan-mode.model';
-import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
-import { SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
-import { Subscription } from '../../model/subscription.model';
+import { NorthConnectorCommandDTO, NorthConnectorManifest } from '../../../../shared/model/north-connector.model';
+import {
+  SouthConnectorCommandDTO,
+  SouthConnectorItemCommandDTO,
+  SouthConnectorManifest
+} from '../../../../shared/model/south-connector.model';
 import { IPFilterCommandDTO } from '../../../../shared/model/ip-filter.model';
 import { IPFilter } from '../../model/ip-filter.model';
 import { EngineSettings } from '../../model/engine.model';
-import { EngineMetrics, EngineSettingsCommandDTO, OIBusInfo } from '../../../../shared/model/engine.model';
+import {
+  EngineMetrics,
+  EngineSettingsCommandDTO,
+  NorthConnectorMetrics,
+  OIBusContent,
+  OIBusInfo,
+  SouthConnectorMetrics
+} from '../../../../shared/model/engine.model';
 import { OIAnalyticsRegistration, OIAnalyticsRegistrationEditCommand } from '../../model/oianalytics-registration.model';
 import { OIBusCommand } from '../../model/oianalytics-command.model';
 import { OIAnalyticsFetchCommandDTO } from '../../service/oia/oianalytics.model';
 import { OIAnalyticsMessage } from '../../model/oianalytics-message.model';
-import { toEngineSettingsDTO } from '../../service/oibus.service';
-import { toIPFilterDTO } from '../../service/ip-filter.service';
-import { toScanModeDTO } from '../../service/scan-mode.service';
-import { toSubscriptionDTO } from '../../service/subscription.service';
-import { toOIAnalyticsRegistrationDTO } from '../../service/oia/oianalytics-registration.service';
+import { SouthConnectorEntity } from '../../model/south-connector.model';
+import { SouthItemSettings, SouthSettings } from '../../../../shared/model/south-settings.model';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
+import { NorthSettings } from '../../../../shared/model/north-settings.model';
+import { HistoryQueryEntity } from '../../model/histor-query.model';
+import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO } from '../../../../shared/model/history-query.model';
+import { User } from '../../model/user.model';
+import { Certificate } from '../../model/certificate.model';
+import { OIBusLog } from '../../model/logs.model';
 
 const constants = {
   dates: {
@@ -67,46 +81,319 @@ const scanModeCommandDTO: ScanModeCommandDTO = {
 };
 const scanModes: Array<ScanMode> = [
   {
-    id: 'id1',
+    id: 'scanModeId1',
     name: 'scanMode1',
     description: 'my first scanMode',
     cron: '* * * * * *'
   },
   {
-    id: 'id2',
+    id: 'scanModeId2',
     name: 'scanMode2',
     description: 'my second scanMode',
     cron: '0 * * * * *'
-  }
-];
-
-const subscriptions: Array<Subscription> = [
-  {
-    south: {
-      id: 'southId1',
-      type: 'folder-scanner',
-      name: 'South 1'
-    }
   },
   {
-    south: {
-      id: 'southId2',
-      type: 'mssql',
-      name: 'South 2'
-    }
+    id: 'subscription',
+    name: 'Subscription',
+    description: 'Subscription',
+    cron: 'subscription'
   }
 ];
 
-const northConnectors: Array<NorthConnectorDTO> = [
+const users: Array<User> = [
+  {
+    id: 'user1',
+    login: 'admin',
+    firstName: null,
+    lastName: null,
+    email: null,
+    language: 'en',
+    timezone: 'Europe/Paris'
+  },
+  {
+    id: 'user2',
+    login: 'secondUser',
+    firstName: 'first name',
+    lastName: 'last name',
+    email: 'email',
+    language: 'fr',
+    timezone: 'Europe/Paris'
+  }
+];
+const userCommand: Omit<User, 'id'> = {
+  login: 'anotherUser',
+  firstName: 'first name',
+  lastName: 'last name',
+  email: 'another-user@mail.com',
+  language: 'en',
+  timezone: 'Europe/Paris'
+};
+
+const certificates: Array<Certificate> = [
+  {
+    id: 'certificate1',
+    name: 'Certificate 1',
+    description: '',
+    publicKey: 'public key',
+    privateKey: 'private key',
+    certificate: 'certificate',
+    expiry: constants.dates.DATE_1
+  },
+  {
+    id: 'certificate2',
+    name: 'Certificate 2',
+    description: '',
+    publicKey: 'public key',
+    privateKey: 'private key',
+    certificate: 'certificate',
+    expiry: constants.dates.DATE_2
+  }
+];
+const certificateCommand: Certificate = {
+  id: 'new id',
+  name: 'new certificate',
+  description: 'description',
+  publicKey: 'public key',
+  privateKey: 'private key',
+  certificate: 'certificate',
+  expiry: constants.dates.DATE_3
+};
+
+const southTestManifest: SouthConnectorManifest = {
+  id: 'south-test',
+  category: 'debug',
+  name: 'Test',
+  description: '',
+  modes: {
+    subscription: true,
+    lastPoint: true,
+    lastFile: true,
+    history: true,
+    forceMaxInstantPerItem: true,
+    sharedConnection: false
+  },
+  settings: [],
+  items: {
+    scanMode: {
+      acceptSubscription: false,
+      subscriptionOnly: false
+    },
+    settings: [
+      {
+        key: 'objectArray',
+        type: 'OibArray',
+        label: 'Array',
+        content: []
+      },
+      {
+        key: 'objectSettings',
+        type: 'OibFormGroup',
+        label: 'Group',
+        content: []
+      },
+      {
+        key: 'objectValue',
+        type: 'OibNumber',
+        label: 'Number'
+      }
+    ]
+  }
+};
+const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettings>> = [
+  {
+    id: 'southId1',
+    name: 'South 1',
+    type: 'folder-scanner',
+    description: 'my folder scanner',
+    enabled: true,
+    sharedConnection: false,
+    settings: {
+      inputFolder: 'input',
+      compression: true
+    },
+    history: {
+      maxInstantPerItem: false,
+      maxReadInterval: 3600,
+      readDelay: 200,
+      overlap: 0
+    },
+    items: [
+      {
+        id: 'southItemId1',
+        name: 'item1',
+        enabled: true,
+        settings: {} as SouthItemSettings,
+        scanModeId: scanModes[0].id
+      },
+      {
+        id: 'southItemId2',
+        name: 'item2',
+        enabled: true,
+        settings: {} as SouthItemSettings,
+        scanModeId: scanModes[1].id
+      }
+    ]
+  },
+  {
+    id: 'southId2',
+    name: 'South 2',
+    type: 'mssql',
+    description: 'my MSSQL south connector',
+    enabled: false,
+    sharedConnection: false,
+    settings: {
+      host: 'host',
+      port: 1433,
+      connectionTimeout: 1_000,
+      database: 'database',
+      username: 'oibus',
+      password: 'pass',
+      domain: 'domain',
+      encryption: true,
+      trustServerCertificate: true,
+      requestTimeout: 5_000
+    },
+    history: {
+      maxInstantPerItem: false,
+      maxReadInterval: 3600,
+      readDelay: 200,
+      overlap: 0
+    },
+    items: [
+      {
+        id: 'southItemId3',
+        name: 'item3',
+        enabled: true,
+        settings: {} as SouthItemSettings,
+        scanModeId: scanModes[0].id
+      }
+    ]
+  },
+  {
+    id: 'southId3',
+    name: 'South 3',
+    type: 'opcua',
+    description: 'my OPCUA south connector',
+    enabled: true,
+    sharedConnection: false,
+    settings: {
+      url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
+      retryInterval: 10000,
+      readTimeout: 15000,
+      authentication: {
+        type: 'none'
+      },
+      securityMode: 'None',
+      securityPolicy: 'None',
+      keepSessionAlive: false
+    },
+    history: {
+      maxInstantPerItem: false,
+      maxReadInterval: 3600,
+      readDelay: 200,
+      overlap: 10
+    },
+    items: [
+      {
+        id: 'southItemId4',
+        name: 'opcua ha',
+        enabled: true,
+        settings: {
+          mode: 'HA'
+        } as SouthItemSettings,
+        scanModeId: scanModes[0].id
+      },
+      {
+        id: 'southItemId5',
+        name: 'opcua sub',
+        enabled: true,
+        settings: {
+          mode: 'DA'
+        } as SouthItemSettings,
+        scanModeId: 'subscription'
+      },
+      {
+        id: 'southItemId6',
+        name: 'opcua da',
+        enabled: true,
+        settings: {
+          mode: 'DA'
+        } as SouthItemSettings,
+        scanModeId: scanModes[1].id
+      },
+      {
+        id: 'southItemId7',
+        name: 'opcua ha 2',
+        enabled: true,
+        settings: {
+          mode: 'HA'
+        } as SouthItemSettings,
+        scanModeId: scanModes[0].id
+      }
+    ]
+  }
+];
+const southConnectorCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
+  name: 'South 1',
+  type: 'folder-scanner',
+  description: 'my folder scanner',
+  enabled: true,
+  sharedConnection: false,
+  settings: {
+    inputFolder: 'input',
+    compression: true
+  },
+  history: {
+    maxInstantPerItem: false,
+    maxReadInterval: 3600,
+    readDelay: 200,
+    overlap: 0
+  },
+  items: [
+    {
+      id: 'newSouthItemFromConnectorId',
+      name: 'my new item from south connector',
+      enabled: true,
+      settings: {} as SouthItemSettings,
+      scanModeId: scanModes[1].id,
+      scanModeName: null
+    }
+  ]
+};
+const southConnectorItemCommand: SouthConnectorItemCommandDTO<SouthItemSettings> = {
+  id: 'newSouthItemId',
+  name: 'New South Item',
+  scanModeId: 'scanModeId1',
+  scanModeName: null,
+  enabled: true,
+  settings: {} as SouthItemSettings
+};
+
+const northTestManifest: NorthConnectorManifest = {
+  id: 'north-test',
+  category: 'debug',
+  name: 'Test',
+  description: '',
+  modes: {
+    files: true,
+    points: true
+  },
+  settings: []
+};
+const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
   {
     id: 'northId1',
     name: 'North 1',
     type: 'file-writer',
     description: 'my file writer',
     enabled: true,
-    settings: {},
+    settings: {
+      outputFolder: 'output-folder',
+      prefix: 'prefix-',
+      suffix: '-suffix'
+    },
     caching: {
-      scanModeId: 'id1',
+      scanModeId: scanModes[0].id,
       retryInterval: 1_000,
       retryCount: 3,
       maxSize: 0,
@@ -121,20 +408,40 @@ const northConnectors: Array<NorthConnectorDTO> = [
           retentionDuration: 72
         }
       }
-    }
+    },
+    subscriptions: [
+      {
+        id: southConnectors[0].id,
+        name: southConnectors[0].name,
+        type: southConnectors[0].type,
+        description: southConnectors[0].description,
+        enabled: southConnectors[0].enabled
+      },
+      {
+        id: southConnectors[1].id,
+        name: southConnectors[1].name,
+        type: southConnectors[1].type,
+        description: southConnectors[1].description,
+        enabled: southConnectors[1].enabled
+      }
+    ]
   },
   {
     id: 'northId2',
     name: 'North 2',
     type: 'oianalytics',
     description: 'my oianalytics',
-    enabled: true,
-    settings: {},
+    enabled: false,
+    settings: {
+      useOiaModule: true,
+      timeout: 5_000,
+      compress: true
+    },
     caching: {
-      scanModeId: 'id2',
+      scanModeId: scanModes[1].id,
       retryInterval: 1_000,
-      retryCount: 3,
-      maxSize: 0,
+      retryCount: 1,
+      maxSize: 10,
       oibusTimeValues: {
         groupCount: 1_000,
         maxSendCount: 10_000
@@ -146,41 +453,213 @@ const northConnectors: Array<NorthConnectorDTO> = [
           retentionDuration: 72
         }
       }
-    }
+    },
+    subscriptions: [
+      {
+        id: southConnectors[0].id,
+        name: southConnectors[0].name,
+        type: southConnectors[0].type,
+        description: southConnectors[0].description,
+        enabled: southConnectors[0].enabled
+      }
+    ]
   }
 ];
-const southConnectors: Array<SouthConnectorDTO> = [
-  {
-    id: 'southId1',
-    name: 'South 1',
-    type: 'folder-scanner',
-    description: 'my folder scanner',
-    enabled: true,
-    sharedConnection: false,
-    settings: {},
-    history: {
-      maxInstantPerItem: false,
-      maxReadInterval: 3600,
-      readDelay: 200,
-      overlap: 0
+const northConnectorCommand: NorthConnectorCommandDTO<NorthSettings> = {
+  name: 'North 1',
+  type: 'file-writer',
+  description: 'my file writer',
+  enabled: true,
+  settings: {
+    outputFolder: 'output-folder',
+    prefix: 'prefix-',
+    suffix: '-suffix'
+  },
+  caching: {
+    scanModeId: scanModes[0].id,
+    scanModeName: null,
+    retryInterval: 1_000,
+    retryCount: 3,
+    maxSize: 0,
+    oibusTimeValues: {
+      groupCount: 1_000,
+      maxSendCount: 10_000
+    },
+    rawFiles: {
+      sendFileImmediately: true,
+      archive: {
+        enabled: true,
+        retentionDuration: 72
+      }
     }
   },
+  subscriptions: [southConnectors[0].id]
+};
+
+const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>> = [
   {
-    id: 'southId2',
-    name: 'South 2',
-    type: 'mssql',
-    description: 'my MSSQL south connector',
-    enabled: true,
-    sharedConnection: false,
-    settings: {},
+    id: 'historyId1',
+    name: 'my first History Query',
+    description: 'description',
+    status: 'RUNNING',
     history: {
-      maxInstantPerItem: false,
+      maxInstantPerItem: true,
       maxReadInterval: 3600,
-      readDelay: 200,
-      overlap: 0
-    }
+      readDelay: 0
+    },
+    startTime: '2020-02-01T02:02:59.999Z',
+    endTime: '2020-02-02T02:02:59.999Z',
+    southType: 'folder-scanner',
+    northType: 'oianalytics',
+    southSettings: {
+      inputFolder: 'input',
+      compression: true
+    },
+    southSharedConnection: false,
+    northSettings: {
+      useOiaModule: true,
+      timeout: 5_000,
+      compress: true
+    },
+    caching: {
+      scanModeId: scanModes[0].id,
+      retryInterval: 1000,
+      retryCount: 3,
+      maxSize: 10000,
+      oibusTimeValues: {
+        groupCount: 100,
+        maxSendCount: 1000
+      },
+      rawFiles: {
+        archive: {
+          enabled: true,
+          retentionDuration: 1000
+        },
+        sendFileImmediately: false
+      }
+    },
+    items: [
+      {
+        id: 'historyQueryItem1',
+        name: 'item1',
+        enabled: true,
+        settings: {} as SouthItemSettings
+      },
+      {
+        id: 'historyQueryItem2',
+        name: 'item2',
+        enabled: true,
+        settings: {} as SouthItemSettings
+      }
+    ]
+  },
+  {
+    id: 'historyId2',
+    name: 'My second History Query',
+    description: 'description',
+    status: 'PENDING',
+    history: {
+      maxInstantPerItem: true,
+      maxReadInterval: 3600,
+      readDelay: 0
+    },
+    startTime: '2020-02-01T02:02:59.999Z',
+    endTime: '2020-02-02T02:02:59.999Z',
+    southType: 'mssql',
+    northType: 'file-writer',
+    southSettings: {
+      host: 'host',
+      port: 1433,
+      connectionTimeout: 1_000,
+      database: 'database',
+      username: 'oibus',
+      password: 'pass',
+      domain: 'domain',
+      encryption: true,
+      trustServerCertificate: true,
+      requestTimeout: 5_000
+    },
+    southSharedConnection: false,
+    northSettings: {
+      outputFolder: 'output-folder',
+      prefix: 'prefix-',
+      suffix: '-suffix'
+    },
+    caching: {
+      scanModeId: scanModes[0].id,
+      retryInterval: 1000,
+      retryCount: 3,
+      maxSize: 10000,
+      oibusTimeValues: {
+        groupCount: 100,
+        maxSendCount: 1000
+      },
+      rawFiles: {
+        archive: {
+          enabled: true,
+          retentionDuration: 1000
+        },
+        sendFileImmediately: false
+      }
+    },
+    items: [
+      {
+        id: 'historyQueryItem3',
+        name: 'item3',
+        enabled: true,
+        settings: {} as SouthItemSettings
+      }
+    ]
   }
 ];
+const historyQueryCommand: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
+  name: 'name',
+  description: 'description',
+  history: {
+    maxInstantPerItem: true,
+    maxReadInterval: 3600,
+    readDelay: 0
+  },
+  startTime: '2020-02-01T02:02:59.999Z',
+  endTime: '2020-02-02T02:02:59.999Z',
+  southType: 'south-test',
+  northType: 'north-test',
+  southSettings: {} as SouthSettings,
+  southSharedConnection: false,
+  northSettings: {} as NorthSettings,
+  caching: {
+    scanModeId: scanModes[0].id,
+    scanModeName: null,
+    retryInterval: 1000,
+    retryCount: 3,
+    maxSize: 10000,
+    oibusTimeValues: {
+      groupCount: 100,
+      maxSendCount: 1000
+    },
+    rawFiles: {
+      archive: {
+        enabled: true,
+        retentionDuration: 1000
+      },
+      sendFileImmediately: false
+    }
+  },
+  items: [
+    {
+      id: 'historyQueryItem4',
+      name: 'item4',
+      enabled: true,
+      settings: {} as SouthItemSettings
+    }
+  ]
+};
+const historyQueryItemCommand: HistoryQueryItemCommandDTO<SouthItemSettings> = {
+  id: 'newHistoryQueryItemId',
+  name: 'New History query Item',
+  enabled: true,
+  settings: {} as SouthItemSettings
+};
 
 const engineSettings: EngineSettings = {
   id: 'oibusId1',
@@ -246,7 +725,7 @@ const engineSettingsCommand: EngineSettingsCommandDTO = {
     }
   }
 };
-const metrics: EngineMetrics = {
+const engineMetrics: EngineMetrics = {
   metricsStart: '2020-01-01T00:00:00.000',
   processCpuUsageInstant: 0,
   processCpuUsageAverage: 0.0000002,
@@ -281,6 +760,63 @@ const oIBusInfo: OIBusInfo = {
   architecture: 'x64',
   platform: 'Windows Server'
 };
+
+const southMetrics: SouthConnectorMetrics = {
+  metricsStart: constants.dates.DATE_1,
+  lastConnection: null,
+  lastRunStart: null,
+  lastRunDuration: null,
+  numberOfValuesRetrieved: 11,
+  numberOfFilesRetrieved: 11,
+  lastValueRetrieved: null,
+  lastFileRetrieved: null
+};
+const northMetrics: NorthConnectorMetrics = {
+  metricsStart: constants.dates.DATE_1,
+  lastConnection: null,
+  lastRunStart: null,
+  lastRunDuration: null,
+  numberOfValuesSent: 11,
+  numberOfFilesSent: 11,
+  lastValueSent: null,
+  lastFileSent: null,
+  cacheSize: 10
+};
+
+const logs: Array<OIBusLog> = [
+  {
+    timestamp: constants.dates.DATE_1,
+    level: 'debug',
+    scopeType: 'south',
+    scopeId: southConnectors[0].id,
+    scopeName: southConnectors[0].name,
+    message: 'debug message log'
+  },
+  {
+    timestamp: constants.dates.DATE_2,
+    level: 'error',
+    scopeType: 'south',
+    scopeId: southConnectors[0].id,
+    scopeName: southConnectors[0].name,
+    message: 'error message log'
+  },
+  {
+    timestamp: constants.dates.DATE_1,
+    level: 'info',
+    scopeType: 'north',
+    scopeId: northConnectors[1].id,
+    scopeName: northConnectors[1].name,
+    message: 'info message log'
+  },
+  {
+    timestamp: constants.dates.DATE_1,
+    level: 'warn',
+    scopeType: 'internal',
+    scopeId: null,
+    scopeName: null,
+    message: 'warn message log'
+  }
+];
 
 const oIAnalyticsRegistrationRegistered: OIAnalyticsRegistration = {
   id: 'registrationId1',
@@ -522,7 +1058,48 @@ const oIBusMessages: Array<OIAnalyticsMessage> = [
     type: 'full-config'
   }
 ];
+
+const oibusContent: Array<OIBusContent> = [
+  {
+    type: 'time-values',
+    content: [
+      {
+        pointId: 'reference1',
+        timestamp: constants.dates.DATE_1,
+        data: {
+          value: 'value1'
+        }
+      },
+      {
+        pointId: 'reference1',
+        timestamp: constants.dates.DATE_2,
+        data: {
+          value: 'value2',
+          quality: 'good'
+        }
+      },
+      {
+        pointId: 'reference2',
+        timestamp: constants.dates.DATE_3,
+        data: {
+          value: 'value1'
+        }
+      }
+    ]
+  },
+  {
+    type: 'raw',
+    filePath: 'path/file.csv'
+  },
+  {
+    type: 'raw',
+    filePath: 'path/another-file.csv',
+    content: 'my raw content'
+  }
+];
+
 export default Object.freeze({
+  oibusContent,
   engine: {
     settings: engineSettings,
     crypto: {
@@ -530,15 +1107,13 @@ export default Object.freeze({
       initVector: 'init-vector',
       securityKey: 'security-key'
     },
-    dto: toEngineSettingsDTO(engineSettings),
     command: engineSettingsCommand,
-    metrics,
+    metrics: engineMetrics,
     oIBusInfo
   },
   oIAnalytics: {
     registration: {
       completed: oIAnalyticsRegistrationRegistered,
-      completedDto: toOIAnalyticsRegistrationDTO(oIAnalyticsRegistrationRegistered),
       pending: oIAnalyticsRegistrationPending,
       command: oIAnalyticsRegistrationCommand
     },
@@ -552,23 +1127,40 @@ export default Object.freeze({
   },
   ipFilters: {
     list: ipFilters,
-    dto: ipFilters.map(ipFilter => toIPFilterDTO(ipFilter)),
     command: ipFilterCommandDTO
   },
   scanMode: {
     list: scanModes,
-    dto: scanModes.map(scanMode => toScanModeDTO(scanMode)),
     command: scanModeCommandDTO
   },
-  subscriptions: {
-    list: subscriptions,
-    dto: subscriptions.map(subscription => toSubscriptionDTO(subscription))
-  },
   north: {
-    list: northConnectors
+    list: northConnectors,
+    command: northConnectorCommand,
+    manifest: northTestManifest,
+    metrics: northMetrics
   },
   south: {
-    list: southConnectors
+    list: southConnectors,
+    command: southConnectorCommand,
+    itemCommand: southConnectorItemCommand,
+    manifest: southTestManifest,
+    metrics: southMetrics
+  },
+  historyQueries: {
+    list: historyQueries,
+    command: historyQueryCommand,
+    itemCommand: historyQueryItemCommand
+  },
+  users: {
+    list: users,
+    command: userCommand
+  },
+  certificates: {
+    list: certificates,
+    command: certificateCommand
+  },
+  logs: {
+    list: logs
   },
   constants
 });

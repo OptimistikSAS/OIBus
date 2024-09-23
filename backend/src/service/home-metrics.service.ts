@@ -1,10 +1,12 @@
 import { HomeMetrics } from '../../../shared/model/engine.model';
 import { PassThrough } from 'node:stream';
-import EngineMetricsRepository from '../repository/engine-metrics.repository';
+import EngineMetricsRepository from '../repository/logs/engine-metrics.repository';
 import SouthConnector from '../south/south-connector';
 import NorthConnector from '../north/north-connector';
-import NorthConnectorMetricsRepository from '../repository/north-connector-metrics.repository';
-import SouthConnectorMetricsRepository from '../repository/south-connector-metrics.repository';
+import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
+import SouthConnectorMetricsRepository from '../repository/logs/south-connector-metrics.repository';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
+import { NorthSettings } from '../../../shared/model/north-settings.model';
 
 /**
  * Class HomeMetricsService - sends metrics
@@ -13,8 +15,8 @@ export default class HomeMetricsService {
   private _stream: PassThrough | null = null;
 
   private _metrics: HomeMetrics;
-  private souths = new Map<string, SouthConnector>();
-  private norths = new Map<string, NorthConnector>();
+  private souths = new Map<string, SouthConnector<SouthSettings, SouthItemSettings>>();
+  private norths = new Map<string, NorthConnector<NorthSettings>>();
 
   constructor(
     private readonly engineId: string,
@@ -29,7 +31,7 @@ export default class HomeMetricsService {
     };
   }
 
-  addNorth(north: NorthConnector, id: string) {
+  addNorth(north: NorthConnector<NorthSettings>, id: string) {
     const metrics = this.northConnectorMetricsRepository.getMetrics(id);
     if (metrics) {
       this._metrics.norths[id] = metrics;
@@ -43,7 +45,7 @@ export default class HomeMetricsService {
     this.norths.delete(id);
   }
 
-  addSouth(south: SouthConnector, id: string) {
+  addSouth(south: SouthConnector<SouthSettings, SouthItemSettings>, id: string) {
     const metrics = this.southConnectorMetricsRepository.getMetrics(id);
     if (metrics) {
       this._metrics.souths[id] = metrics;

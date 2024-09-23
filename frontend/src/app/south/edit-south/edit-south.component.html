@@ -152,19 +152,19 @@
               }
             </oib-box>
           </div>
+          <!-- items -->
+
           @if (mode === 'edit' && southConnector) {
             <div id="actions" class="d-flex justify-content-end">
               <div class="btn-group">
                 <oib-save-button [insideOfGroup]="false" form="south-form" [state]="state" />
               </div>
             </div>
-            <!-- items -->
             <oib-south-items
               [southConnector]="southConnector"
               [southManifest]="manifest"
               [scanModes]="scanModes"
-              [inMemory]="false"
-              [maxInstantPerItem]="maxInstantPerItem"
+              (inMemoryItems)="updateInMemoryItems($event)"
             />
           }
           @if (mode === 'create') {
@@ -173,7 +173,6 @@
               [southManifest]="manifest"
               [scanModes]="scanModes"
               (inMemoryItems)="updateInMemoryItems($event)"
-              [inMemory]="true"
             />
             <div id="actions" class="mt-2 d-flex justify-content-end">
               <div class="btn-group">

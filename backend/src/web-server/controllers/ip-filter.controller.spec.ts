@@ -4,6 +4,7 @@ import IpFilterController from './ip-filter.controller';
 import JoiValidator from './validators/joi.validator';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
 import testData from '../../tests/utils/test-data';
+import { toIPFilterDTO } from '../../service/ip-filter.service';
 
 jest.mock('./validators/joi.validator');
 
@@ -19,12 +20,12 @@ describe('IP filter controller', () => {
   });
 
   it('findAll() should return ip filters', async () => {
-    ctx.app.ipFilterService.findAll.mockReturnValueOnce(testData.ipFilters.dto);
+    ctx.app.ipFilterService.findAll.mockReturnValueOnce(testData.ipFilters.list.map(element => toIPFilterDTO(element)));
 
     await ipFilterController.findAll(ctx);
 
     expect(ctx.app.ipFilterService.findAll).toHaveBeenCalled();
-    expect(ctx.ok).toHaveBeenCalledWith(testData.ipFilters.dto);
+    expect(ctx.ok).toHaveBeenCalledWith(testData.ipFilters.list.map(element => toIPFilterDTO(element)));
   });
 
   it('findById() should return ip filter', async () => {
@@ -33,8 +34,8 @@ describe('IP filter controller', () => {
 
     await ipFilterController.findById(ctx);
 
-    expect(ctx.app.ipFilterService.findById).toHaveBeenCalledWith(testData.ipFilters.dto[0].id);
-    expect(ctx.ok).toHaveBeenCalledWith(testData.ipFilters.dto[0]);
+    expect(ctx.app.ipFilterService.findById).toHaveBeenCalledWith(testData.ipFilters.list[0].id);
+    expect(ctx.ok).toHaveBeenCalledWith(toIPFilterDTO(testData.ipFilters.list[0]));
   });
 
   it('findById() should return not found', async () => {
@@ -49,12 +50,12 @@ describe('IP filter controller', () => {
 
   it('create() should create ip filter', async () => {
     ctx.request.body = testData.ipFilters.command;
-    ctx.app.ipFilterService.create.mockReturnValueOnce(testData.ipFilters.dto[0]);
+    ctx.app.ipFilterService.create.mockReturnValueOnce(testData.ipFilters.list[0]);
 
     await ipFilterController.create(ctx);
 
     expect(ctx.app.ipFilterService.create).toHaveBeenCalledWith(testData.ipFilters.command, ctx.app.ipFilters);
-    expect(ctx.created).toHaveBeenCalledWith(testData.ipFilters.dto[0]);
+    expect(ctx.created).toHaveBeenCalledWith(toIPFilterDTO(testData.ipFilters.list[0]));
   });
 
   it('create() should return bad request', async () => {

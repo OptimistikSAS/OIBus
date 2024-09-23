@@ -1,8 +1,8 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 
-import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
-import { SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { NorthConnectorLightDTO } from '../../../../shared/model/north-connector.model';
+import { SouthConnectorLightDTO } from '../../../../shared/model/south-connector.model';
 import { SouthConnectorService } from '../services/south-connector.service';
 import { NorthConnectorService } from '../services/north-connector.service';
 import { combineLatest } from 'rxjs';
@@ -29,8 +29,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   private cd = inject(ChangeDetectorRef);
 
   readonly copyrightYear = new Date().getFullYear();
-  southRows: Array<Array<SouthConnectorDTO>> = [];
-  northRows: Array<Array<NorthConnectorDTO>> = [];
+  southRows: Array<Array<SouthConnectorLightDTO>> = [];
+  northRows: Array<Array<NorthConnectorLightDTO>> = [];
   stream: EventSource | null = null;
   homeMetrics: HomeMetrics | null = null;
 

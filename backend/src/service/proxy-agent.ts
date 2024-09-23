@@ -8,7 +8,12 @@ export interface ProxyConfig {
   password: string | null;
 }
 
-export function createProxyAgent(useProxy: boolean, targetUrl: string, proxyConfig: ProxyConfig | null, acceptUnauthorized = false) {
+export function createProxyAgent(
+  useProxy: boolean,
+  targetUrl: string,
+  proxyConfig: ProxyConfig | null,
+  acceptUnauthorized = false
+): https.Agent | HttpsProxyAgent<string> | HttpProxyAgent<string> | undefined {
   // HTTPS agent without proxy
   if (!useProxy && acceptUnauthorized && targetUrl.startsWith('https://')) {
     return new https.Agent({ rejectUnauthorized: false });

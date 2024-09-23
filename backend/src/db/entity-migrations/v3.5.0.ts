@@ -9,8 +9,8 @@ const HISTORY_QUERIES_TABLE = 'history_queries';
 const HISTORY_ITEMS_TABLE = 'history_items';
 const EXTERNAL_SOURCES_TABLE = 'external_sources';
 const EXTERNAL_SUBSCRIPTION_TABLE = 'external_subscription';
-const COMMANDS_TABLE = 'commands';
 const OIANALYTICS_MESSAGE_TABLE = 'oianalytics_messages';
+const COMMANDS_TABLE = 'commands';
 
 export async function up(knex: Knex): Promise<void> {
   await removeNorthOIBusConnectors(knex);

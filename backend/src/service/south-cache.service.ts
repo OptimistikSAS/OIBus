@@ -1,23 +1,16 @@
-import SouthCacheRepository from '../repository/south-cache.repository';
+import SouthCacheRepository from '../repository/cache/south-cache.repository';
 
 import { SouthCache } from '../../../shared/model/south-connector.model';
 import { Instant } from '../../../shared/model/types';
 
 export default class SouthCacheService {
-  constructor(
-    private readonly connectorId: string,
-    private readonly _cacheRepository: SouthCacheRepository
-  ) {}
-
-  get cacheRepository(): SouthCacheRepository {
-    return this._cacheRepository;
-  }
+  constructor(private readonly cacheRepository: SouthCacheRepository) {}
 
   /**
    * Retrieve south cache or return a new one with startTime
    */
-  getSouthCacheScanMode(southId: string, scanModeId: string, itemId: string, startTime: Instant): SouthCache {
-    const southCache = this._cacheRepository.getScanMode(southId, scanModeId, itemId);
+  getSouthCache(southId: string, scanModeId: string, itemId: string, startTime: Instant): SouthCache {
+    const southCache = this.cacheRepository.getSouthCache(southId, scanModeId, itemId);
     if (!southCache) {
       return {
         southId,
@@ -29,11 +22,23 @@ export default class SouthCacheService {
     return southCache;
   }
 
-  createOrUpdateCacheScanMode(command: SouthCache): void {
-    this._cacheRepository.createOrUpdate(command);
+  saveSouthCache(command: SouthCache): void {
+    this.cacheRepository.save(command);
   }
 
-  resetCacheScanMode(id: string): void {
-    this._cacheRepository.reset(id);
+  resetSouthCache(id: string): void {
+    this.cacheRepository.deleteAllBySouthConnector(id);
+  }
+
+  createCustomTable(tableName: string, fields: string): void {
+    this.cacheRepository.createCustomTable(tableName, fields);
+  }
+
+  getQueryOnCustomTable(query: string, params: Array<string | number>): unknown {
+    return this.cacheRepository.getQueryOnCustomTable(query, params);
+  }
+
+  runQueryOnCustomTable(query: string, params: Array<string | number>): void {
+    this.cacheRepository.runQueryOnCustomTable(query, params);
   }
 }

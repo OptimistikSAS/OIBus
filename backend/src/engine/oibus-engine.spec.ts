@@ -2,9 +2,6 @@ import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import SouthServiceMock from '../tests/__mocks__/service/south-service.mock';
 import NorthServiceMock from '../tests/__mocks__/service/north-service.mock';
 
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
-import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
-
 import SouthService from '../service/south.service';
 import NorthService from '../service/north.service';
 
@@ -15,9 +12,11 @@ import OIBusEngine from './oibus-engine';
 import { EventEmitter } from 'node:events';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 import { filesExists } from '../service/utils';
-import { OIBusTimeValue } from '../../../shared/model/engine.model';
+import testData from '../tests/utils/test-data';
+import RepositoryService from '../service/repository.service';
+import RepositoryServiceMock from '../tests/__mocks__/service/repository-service.mock';
+import { OIBusRawContent, OIBusTimeValueContent } from '../../../shared/model/engine.model';
 
 jest.mock('../south/south-mqtt/south-mqtt');
 jest.mock('../service/south.service');
@@ -33,88 +32,14 @@ const anotherLogger: pino.Logger = new PinoLogger();
 const southService: SouthService = new SouthServiceMock();
 const northService: NorthService = new NorthServiceMock();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
-
-const nowDateString = '2020-02-02T02:02:02.222Z';
+const repositoryService: RepositoryService = new RepositoryServiceMock();
 
 let engine: OIBusEngine;
 
-const items: Array<SouthConnectorItemDTO> = [
-  {
-    id: 'id1',
-    name: 'item1',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {},
-    scanModeId: 'scanModeId1'
-  },
-  {
-    id: 'id2',
-    name: 'item2',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {},
-    scanModeId: 'scanModeId2'
-  },
-  {
-    id: 'id3',
-    name: 'item3',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {},
-    scanModeId: 'subscription'
-  }
-];
-
 const connectedEvent = new EventEmitter();
 
-const northConnectors: Array<NorthConnectorDTO> = [
-  {
-    id: 'id1',
-    name: 'myNorthConnector1',
-    description: 'a test north connector',
-    enabled: true,
-    type: 'oianalytics'
-  } as NorthConnectorDTO,
-  {
-    id: 'id2',
-    name: 'myNorthConnector2',
-    description: 'a test north connector',
-    enabled: false,
-    type: 'oiconnect'
-  } as NorthConnectorDTO
-];
-const southConnectors: Array<SouthConnectorDTO> = [
-  {
-    id: 'id1',
-    type: 'sqlite',
-    name: 'South Connector1',
-    description: 'My first South connector description',
-    enabled: true,
-    history: {
-      maxInstantPerItem: true,
-      maxReadInterval: 3600,
-      readDelay: 0,
-      overlap: 0
-    },
-    settings: {}
-  },
-  {
-    id: 'id2',
-    type: 'opcua-ha',
-    name: 'South Connector 2',
-    description: 'My second South connector description',
-    enabled: false,
-    history: {
-      maxInstantPerItem: true,
-      maxReadInterval: 3600,
-      readDelay: 0,
-      overlap: 0
-    },
-    settings: {}
-  }
-];
 const createdSouth = {
-  start: jest.fn(),
+  start: jest.fn().mockImplementation(() => Promise.resolve()),
   stop: jest.fn(),
   connect: jest.fn(),
   historyQueryHandler: jest.fn(),
@@ -128,7 +53,7 @@ const createdSouth = {
   connectedEvent: connectedEvent
 };
 const createdNorth = {
-  start: jest.fn(),
+  start: jest.fn().mockImplementation(() => Promise.resolve()),
   stop: jest.fn(),
   connect: jest.fn(),
   isEnabled: jest.fn(),
@@ -170,350 +95,146 @@ const createdNorth = {
 describe('OIBusEngine', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
-    (southService.createSouth as jest.Mock).mockReturnValue(createdSouth);
-    (northService.createNorth as jest.Mock).mockReturnValue(createdNorth);
+    (northService.findAll as jest.Mock).mockReturnValue(testData.north.list);
+    (southService.findAll as jest.Mock).mockReturnValue(testData.south.list);
+    (northService.findById as jest.Mock).mockImplementation(id => testData.north.list.find(element => element.id === id));
+    (southService.findById as jest.Mock).mockImplementation(id => testData.south.list.find(element => element.id === id));
+    (southService.runSouth as jest.Mock).mockImplementation(() => createdSouth);
+    (northService.runNorth as jest.Mock).mockImplementation(() => createdNorth);
 
-    engine = new OIBusEngine(encryptionService, northService, southService, logger);
+    engine = new OIBusEngine(encryptionService, northService, southService, repositoryService, logger);
   });
 
-  it('it should start', async () => {
-    (northService.getNorthList as jest.Mock).mockReturnValue(northConnectors);
-    (southService.getSouthList as jest.Mock).mockReturnValue(southConnectors);
+  it('it should start and stop', async () => {
+    (southService.runSouth as jest.Mock)
+      .mockImplementationOnce(() => createdSouth)
+      .mockImplementationOnce(() => {
+        throw new Error('error');
+      });
+    (northService.runNorth as jest.Mock)
+      .mockImplementationOnce(() => createdNorth)
+      .mockImplementationOnce(() => {
+        throw new Error('error');
+      });
 
-    engine.createNorth = jest
-      .fn()
-      .mockImplementationOnce(() => null)
-      .mockImplementationOnce(() => {
-        throw new Error('error');
-      });
-    engine.createSouth = jest
-      .fn()
-      .mockImplementationOnce(() => null)
-      .mockImplementationOnce(() => {
-        throw new Error('error');
-      });
     await engine.start();
+
     expect(logger.info).toHaveBeenCalledWith(`OIBus engine started`);
     expect(logger.error).toHaveBeenCalledTimes(2);
     expect(logger.error).toHaveBeenCalledWith(
-      `Error while creating North connector "${northConnectors[1].name}" of type "${northConnectors[1].type}" (${
-        northConnectors[1].id
+      `Error while creating North connector "${testData.north.list[1].name}" of type "${testData.north.list[1].type}" (${
+        testData.north.list[1].id
       }): ${new Error('error')}`
     );
     expect(logger.error).toHaveBeenCalledWith(
-      `Error while creating South connector "${southConnectors[1].name}" of type "${southConnectors[1].type}" (${
-        southConnectors[1].id
+      `Error while creating South connector "${testData.south.list[1].name}" of type "${testData.south.list[1].type}" (${
+        testData.south.list[1].id
       }): ${new Error('error')}`
-    );
-  });
-
-  it('it should start connectors and stop all', async () => {
-    createdSouth.start.mockImplementation(() => {
-      return new Promise((_resolve, reject) => {
-        reject('error');
-      });
-    });
-
-    createdNorth.start.mockImplementation(() => {
-      return new Promise((_resolve, reject) => {
-        reject('error');
-      });
-    });
-    (southService.getSouthItems as jest.Mock).mockReturnValue(items);
-    createdNorth.isSubscribed.mockReturnValue(true);
-
-    await engine.createSouth(southConnectors[0]);
-    expect(southService.createSouth).toHaveBeenCalledTimes(1);
-
-    await engine.startSouth(southConnectors[0].id);
-    expect(logger.error).toHaveBeenCalledWith(
-      `Error while starting South connector "${southConnectors[0].name}" of type "${southConnectors[0].type}" (${southConnectors[0].id}): error`
     );
 
     createdSouth.connectedEvent.emit('connected');
-    expect(createdSouth.onItemChange).toHaveBeenCalledTimes(1);
-
-    await engine.createNorth(northConnectors[0]);
-    expect(northService.createNorth).toHaveBeenCalledTimes(1);
-    await engine.startNorth(northConnectors[0].id);
-    expect(logger.error).toHaveBeenCalledWith(
-      `Error while starting North connector "${northConnectors[0].name}" of type "${northConnectors[0].type}" (${northConnectors[0].id}): error`
-    );
-
-    await engine.startSouth(southConnectors[1].id);
-    expect(logger.trace).toHaveBeenCalledWith(`South connector ${southConnectors[1].id} not set`);
-    await engine.startNorth(northConnectors[1].id);
-    expect(logger.trace).toHaveBeenCalledWith(`North connector ${northConnectors[1].id} not set`);
-
-    createdNorth.isEnabled.mockReturnValueOnce(true).mockReturnValueOnce(false);
-    await engine.addContent('southId', { type: 'time-values', content: [{}, {}] as Array<OIBusTimeValue> });
-    await engine.addContent('southId', { type: 'time-values', content: [{}, {}] as Array<OIBusTimeValue> });
-    expect(createdNorth.cacheValues).toHaveBeenCalledTimes(1);
-    expect(createdNorth.cacheValues).toHaveBeenCalledWith([{}, {}]);
-
-    createdNorth.isEnabled.mockReturnValueOnce(true).mockReturnValueOnce(false);
-    await engine.addExternalContent('id1', { type: 'time-values', content: [{}, {}] as Array<OIBusTimeValue> });
-    await engine.addExternalContent('id1', { type: 'time-values', content: [{}, {}] as Array<OIBusTimeValue> });
-    expect(createdNorth.cacheValues).toHaveBeenCalledTimes(2);
-    expect(createdNorth.cacheValues).toHaveBeenCalledWith([{}, {}]);
-
-    createdNorth.isEnabled.mockReturnValueOnce(true).mockReturnValueOnce(false);
-    await engine.addContent('southId', { type: 'raw', filePath: 'filePath' });
-    await engine.addContent('southId', { type: 'raw', filePath: 'filePath' });
-    expect(createdNorth.cacheFile).toHaveBeenCalledTimes(1);
-    expect(createdNorth.cacheFile).toHaveBeenCalledWith('filePath');
-
-    createdNorth.isEnabled.mockReturnValueOnce(true).mockReturnValueOnce(false);
-    await engine.addExternalContent('id1', { type: 'raw', filePath: 'filePath' });
-    await engine.addExternalContent('id1', { type: 'raw', filePath: 'filePath' });
-    expect(createdNorth.cacheFile).toHaveBeenCalledTimes(2);
-    expect(createdNorth.cacheFile).toHaveBeenCalledWith('filePath');
-
-    await engine.getErrorFiles('northId', '2020-02-02T02:02:02.222Z', '2022-02-02T02:02:02.222Z', '');
-    expect(createdNorth.getErrorFiles).not.toHaveBeenCalled();
-    await engine.getErrorFiles(northConnectors[0].id, '2020-02-02T02:02:02.222Z', '2022-02-02T02:02:02.222Z', '');
-    expect(createdNorth.getErrorFiles).toHaveBeenCalledWith('2020-02-02T02:02:02.222Z', '2022-02-02T02:02:02.222Z', '');
-
-    await engine.getErrorFileContent('northId', 'file1');
-    expect(createdNorth.getErrorFileContent).not.toHaveBeenCalled();
-    await engine.getErrorFileContent(northConnectors[0].id, 'file1');
-    expect(createdNorth.getErrorFileContent).toHaveBeenCalledWith('file1');
-
-    await engine.retryErrorFiles('northId', ['file1']);
-    expect(createdNorth.retryErrorFiles).not.toHaveBeenCalled();
-    await engine.retryErrorFiles(northConnectors[0].id, ['file1']);
-    expect(createdNorth.retryErrorFiles).toHaveBeenCalledWith(['file1']);
-
-    await engine.removeErrorFiles('northId', ['file1']);
-    expect(createdNorth.removeErrorFiles).not.toHaveBeenCalled();
-    await engine.removeErrorFiles(northConnectors[0].id, ['file1']);
-    expect(createdNorth.removeErrorFiles).toHaveBeenCalledWith(['file1']);
-
-    await engine.removeAllErrorFiles('northId');
-    expect(createdNorth.removeAllErrorFiles).not.toHaveBeenCalled();
-    await engine.removeAllErrorFiles(northConnectors[0].id);
-    expect(createdNorth.removeAllErrorFiles).toHaveBeenCalled();
-
-    await engine.retryAllErrorFiles('northId');
-    expect(createdNorth.retryAllErrorFiles).not.toHaveBeenCalled();
-    await engine.retryAllErrorFiles(northConnectors[0].id);
-    expect(createdNorth.retryAllErrorFiles).toHaveBeenCalled();
-
-    await engine.getCacheFiles('northId', '2020-02-02T02:02:02.222Z', '2022-02-02T02:02:02.222Z', '');
-    expect(createdNorth.getCacheFiles).not.toHaveBeenCalled();
-    await engine.getCacheFiles(northConnectors[0].id, '2020-02-02T02:02:02.222Z', '2022-02-02T02:02:02.222Z', '');
-    expect(createdNorth.getCacheFiles).toHaveBeenCalledWith('2020-02-02T02:02:02.222Z', '2022-02-02T02:02:02.222Z', '');
-
-    await engine.getCacheFileContent('northId', 'file1');
-    expect(createdNorth.getCacheFileContent).not.toHaveBeenCalled();
-    await engine.getCacheFileContent(northConnectors[0].id, 'file1');
-    expect(createdNorth.getCacheFileContent).toHaveBeenCalledWith('file1');
-
-    await engine.removeCacheFiles('northId', ['file1']);
-    expect(createdNorth.removeCacheFiles).not.toHaveBeenCalled();
-    await engine.removeCacheFiles(northConnectors[0].id, ['file1']);
-    expect(createdNorth.removeCacheFiles).toHaveBeenCalledWith(['file1']);
-
-    await engine.archiveCacheFiles('northId', ['file1']);
-    expect(createdNorth.archiveCacheFiles).not.toHaveBeenCalled();
-    await engine.archiveCacheFiles(northConnectors[0].id, ['file1']);
-    expect(createdNorth.archiveCacheFiles).toHaveBeenCalledWith(['file1']);
-
-    await engine.getArchiveFiles('northId', '2020-02-02T02:02:02.222Z', '2022-02-02T02:02:02.222Z', '');
-    expect(createdNorth.getArchiveFiles).not.toHaveBeenCalled();
-    await engine.getArchiveFiles(northConnectors[0].id, '2020-02-02T02:02:02.222Z', '2022-02-02T02:02:02.222Z', '');
-    expect(createdNorth.getArchiveFiles).toHaveBeenCalledWith('2020-02-02T02:02:02.222Z', '2022-02-02T02:02:02.222Z', '');
-
-    await engine.getArchiveFileContent('northId', 'file1');
-    expect(createdNorth.getArchiveFileContent).not.toHaveBeenCalled();
-    await engine.getArchiveFileContent(northConnectors[0].id, 'file1');
-    expect(createdNorth.getArchiveFileContent).toHaveBeenCalledWith('file1');
-
-    await engine.retryArchiveFiles('northId', ['file1']);
-    expect(createdNorth.retryArchiveFiles).not.toHaveBeenCalled();
-    await engine.retryArchiveFiles(northConnectors[0].id, ['file1']);
-    expect(createdNorth.retryArchiveFiles).toHaveBeenCalledWith(['file1']);
-
-    await engine.removeArchiveFiles('northId', ['file1']);
-    expect(createdNorth.removeArchiveFiles).not.toHaveBeenCalled();
-    await engine.removeArchiveFiles(northConnectors[0].id, ['file1']);
-    expect(createdNorth.removeArchiveFiles).toHaveBeenCalledWith(['file1']);
-
-    await engine.removeAllArchiveFiles('northId');
-    expect(createdNorth.removeAllArchiveFiles).not.toHaveBeenCalled();
-    await engine.removeAllArchiveFiles(northConnectors[0].id);
-    expect(createdNorth.removeAllArchiveFiles).toHaveBeenCalled();
-
-    await engine.retryAllArchiveFiles('northId');
-    expect(createdNorth.retryAllArchiveFiles).not.toHaveBeenCalled();
-    await engine.retryAllArchiveFiles(northConnectors[0].id);
-    expect(createdNorth.retryAllArchiveFiles).toHaveBeenCalled();
-
-    createdNorth.getMetricsDataStream.mockReturnValue({ status: 'myStatus' });
-    expect(engine.getNorthDataStream('northId')).toEqual(null);
-    expect(engine.getNorthDataStream(northConnectors[0].id)).toEqual({ status: 'myStatus' });
-
-    createdNorth.resetMetrics.mockReturnValue({ status: 'myStatus' });
-    expect(engine.resetNorthMetrics('northId')).toEqual(null);
-    expect(engine.resetNorthMetrics(northConnectors[0].id)).toEqual({ status: 'myStatus' });
-
-    createdSouth.getMetricsDataStream.mockReturnValue({ status: 'myStatus' });
-    expect(engine.getSouthDataStream('southId')).toEqual(null);
-    expect(engine.getSouthDataStream(southConnectors[0].id)).toEqual({ status: 'myStatus' });
-
-    createdSouth.resetMetrics.mockReturnValue({ status: 'myStatus' });
-    expect(engine.resetSouthMetrics('southId')).toEqual(null);
-    expect(engine.resetSouthMetrics(southConnectors[0].id)).toEqual({ status: 'myStatus' });
-
-    (southService.getSouth as jest.Mock).mockReturnValueOnce(southConnectors[0]).mockReturnValueOnce(southConnectors[1]);
-    (northService.getNorth as jest.Mock).mockReturnValueOnce(northConnectors[0]).mockReturnValueOnce(northConnectors[1]);
-
-    engine.setLogger(anotherLogger);
-    expect(createdNorth.setLogger).toHaveBeenCalledTimes(1);
-    expect(createdSouth.setLogger).toHaveBeenCalledTimes(1);
-    expect(anotherLogger.child).toHaveBeenCalledWith({
-      scopeType: 'south',
-      scopeId: southConnectors[0].id,
-      scopeName: southConnectors[0].name
-    });
-
-    expect(anotherLogger.child).toHaveBeenCalledWith({
-      scopeType: 'north',
-      scopeId: northConnectors[0].id,
-      scopeName: northConnectors[0].name
-    });
-
-    (southService.getSouth as jest.Mock).mockReturnValueOnce(southConnectors[0]).mockReturnValueOnce(southConnectors[1]);
-    (northService.getNorth as jest.Mock).mockReturnValueOnce(northConnectors[0]).mockReturnValueOnce(northConnectors[1]);
-    await engine.updateScanMode({ id: 'scanModeId' } as ScanModeDTO);
-    expect(createdNorth.updateScanMode).toHaveBeenCalledTimes(1);
-    expect(createdSouth.updateScanMode).toHaveBeenCalledTimes(1);
-
-    (southService.getSouth as jest.Mock).mockReturnValueOnce(null).mockReturnValueOnce(null);
-    (northService.getNorth as jest.Mock).mockReturnValueOnce(null).mockReturnValueOnce(null);
-    await engine.updateScanMode({ id: 'scanModeId' } as ScanModeDTO);
-    expect(createdNorth.updateScanMode).toHaveBeenCalledTimes(2);
-    expect(createdSouth.updateScanMode).toHaveBeenCalledTimes(2);
-
-    await engine.onSouthItemsChange(southConnectors[0].id);
-    await engine.onSouthItemsChange('southId');
-    expect(createdSouth.onItemChange).toHaveBeenCalledTimes(2);
-
-    // Cache value operations
-    // Get cache values
-    await engine.getCacheValues('id1', '');
-    expect(createdNorth.getCacheValues).toHaveBeenCalledWith('');
-
-    await engine.getCacheValues('id1', 'file');
-    expect(createdNorth.getCacheValues).toHaveBeenCalledWith('file');
-
-    await engine.getCacheValues('northId', '');
-    expect(createdNorth.getCacheValues).toHaveBeenCalledTimes(2);
-
-    // Remove cache values
-    await engine.removeCacheValues('id1', ['1.queue.tmp', '2.queue.tmp']);
-    expect(createdNorth.removeCacheValues).toHaveBeenCalledWith(['1.queue.tmp', '2.queue.tmp']);
-
-    await engine.removeCacheValues('northId', []);
-    expect(createdNorth.removeCacheValues).toHaveBeenCalledTimes(1);
-
-    // Remove all cache values
-    await engine.removeAllCacheValues('id1');
-    expect(createdNorth.removeAllCacheValues).toHaveBeenCalled();
-
-    await engine.removeAllCacheValues('northId');
-    expect(createdNorth.removeAllCacheValues).toHaveBeenCalledTimes(1);
-
-    // Get cache value errors
-    await engine.getValueErrors('id1', '', '', '');
-    expect(createdNorth.getValueErrors).toHaveBeenCalledWith('', '', '');
-
-    await engine.getValueErrors('northId', '', '', '');
-    expect(createdNorth.getValueErrors).toHaveBeenCalledTimes(1);
-
-    // Remove cache value errors
-    await engine.removeValueErrors('id1', ['1.queue.tmp', '2.queue.tmp']);
-    expect(createdNorth.removeValueErrors).toHaveBeenCalledWith(['1.queue.tmp', '2.queue.tmp']);
-
-    await engine.removeValueErrors('northId', []);
-    expect(createdNorth.removeValueErrors).toHaveBeenCalledTimes(1);
-
-    // Remove all cache value errors
-    await engine.removeAllValueErrors('id1');
-    expect(createdNorth.removeAllValueErrors).toHaveBeenCalled();
-
-    await engine.removeAllValueErrors('northId');
-    expect(createdNorth.removeAllValueErrors).toHaveBeenCalledTimes(1);
-
-    // Retry cache value errors
-    await engine.retryValueErrors('id1', ['1.queue.tmp', '2.queue.tmp']);
-    expect(createdNorth.retryValueErrors).toHaveBeenCalledWith(['1.queue.tmp', '2.queue.tmp']);
-
-    await engine.retryValueErrors('northId', []);
-    expect(createdNorth.retryValueErrors).toHaveBeenCalledTimes(1);
-
-    // Retry all cache value errors
-    await engine.retryAllValueErrors('id1');
-    expect(createdNorth.retryAllValueErrors).toHaveBeenCalled();
-
-    await engine.retryAllValueErrors('northId');
-    expect(createdNorth.retryAllValueErrors).toHaveBeenCalledTimes(1);
-
-    engine.updateSubscriptions(northConnectors[0].id);
-    engine.updateSubscriptions('northId');
-    expect(createdNorth.updateConnectorSubscription).toHaveBeenCalledTimes(1);
-
-    await engine.stopSouth('southId');
-    expect(createdSouth.stop).not.toHaveBeenCalled();
-    await engine.stopNorth('northId');
-    expect(createdNorth.stop).not.toHaveBeenCalled();
+    expect(createdSouth.onItemChange).toHaveBeenCalled();
 
     await engine.stop();
-    expect(createdSouth.stop).toHaveBeenCalledTimes(1);
-    expect(createdNorth.stop).toHaveBeenCalledTimes(1);
 
-    createdNorth.stop = jest.fn().mockImplementation(() => {
-      return new Promise(resolve => {
-        resolve('');
-      });
-    });
-    createdNorth.start = jest.fn().mockImplementation(() => {
-      return new Promise(resolve => {
-        resolve('');
-      });
-    });
-    await engine.reloadNorth(northConnectors[0].id);
     expect(createdNorth.stop).toHaveBeenCalledTimes(1);
-    expect(createdNorth.start).toHaveBeenCalledTimes(1);
+    expect(createdSouth.stop).toHaveBeenCalledTimes(2);
+  });
 
-    createdSouth.start = jest.fn().mockImplementation(() => {
-      return new Promise(resolve => {
-        resolve('');
-      });
+  it('should add content', async () => {
+    await engine.start();
+
+    createdNorth.isSubscribed.mockReturnValue(true);
+    createdNorth.isEnabled.mockReturnValueOnce(false).mockReturnValueOnce(false).mockReturnValueOnce(true).mockReturnValueOnce(true);
+    // Add time values
+    await engine.addContent('southId', testData.oibusContent[0]);
+    expect(createdNorth.cacheValues).not.toHaveBeenCalled();
+    await engine.addContent('southId', testData.oibusContent[0]);
+    expect(createdNorth.cacheValues).toHaveBeenCalledWith((testData.oibusContent[0] as OIBusTimeValueContent).content);
+
+    createdNorth.isEnabled.mockReturnValueOnce(false).mockReturnValueOnce(false).mockReturnValueOnce(true).mockReturnValueOnce(true);
+    // Add raw content
+    await engine.addContent('southId', testData.oibusContent[1]);
+    expect(createdNorth.cacheFile).not.toHaveBeenCalled();
+    await engine.addContent('southId', testData.oibusContent[1]);
+    expect(createdNorth.cacheFile).toHaveBeenCalledWith((testData.oibusContent[1] as OIBusRawContent).filePath);
+  });
+
+  it('should add external content', async () => {
+    await engine.start();
+
+    createdNorth.isEnabled.mockReturnValueOnce(false).mockReturnValueOnce(true);
+    // Add time values
+    await engine.addExternalContent(testData.north.list[0].id, testData.oibusContent[0]);
+    expect(createdNorth.cacheValues).not.toHaveBeenCalled();
+    await engine.addExternalContent(testData.north.list[0].id, testData.oibusContent[0]);
+    expect(createdNorth.cacheValues).toHaveBeenCalledWith((testData.oibusContent[0] as OIBusTimeValueContent).content);
+
+    createdNorth.isEnabled.mockReturnValueOnce(false).mockReturnValueOnce(true);
+    // Add raw content
+    await engine.addExternalContent(testData.north.list[0].id, testData.oibusContent[1]);
+    expect(createdNorth.cacheFile).not.toHaveBeenCalled();
+    await engine.addExternalContent(testData.north.list[0].id, testData.oibusContent[1]);
+    expect(createdNorth.cacheFile).toHaveBeenCalledWith((testData.oibusContent[1] as OIBusRawContent).filePath);
+  });
+
+  it('should do nothing if connector not set', async () => {
+    await engine.startSouth('bad id');
+    expect(logger.trace).toHaveBeenCalledWith('South connector bad id not set');
+
+    await engine.startNorth('bad id');
+    expect(logger.trace).toHaveBeenCalledWith('North connector bad id not set');
+  });
+
+  it('should log error on start failure', async () => {
+    await engine.start();
+
+    createdSouth.start.mockImplementationOnce(() => Promise.reject(new Error('start fail')));
+    createdNorth.start.mockImplementationOnce(() => Promise.reject(new Error('start fail')));
+
+    await engine.startSouth(testData.south.list[0].id);
+    expect(logger.error).toHaveBeenCalledWith(
+      `Error while starting South connector "${createdSouth.settings.name}" of type "${createdSouth.settings.type}" (${createdSouth.settings.id}): start fail`
+    );
+    await engine.startNorth(testData.north.list[0].id);
+
+    expect(logger.error).toHaveBeenCalledWith(
+      `Error while starting North connector "${createdNorth.settings.name}" of type "${createdNorth.settings.type}" (${createdNorth.settings.id}): start fail`
+    );
+  });
+
+  it('should set new logger', async () => {
+    await engine.start();
+
+    engine.setLogger(anotherLogger);
+
+    expect(createdSouth.setLogger).toHaveBeenCalled();
+    expect(anotherLogger.child).toHaveBeenCalledWith({
+      scopeType: 'south',
+      scopeId: testData.south.list[0].id,
+      scopeName: testData.south.list[0].name
     });
-    createdSouth.stop = jest.fn().mockImplementation(() => {
-      return new Promise(resolve => {
-        resolve('');
-      });
+    expect(createdNorth.setLogger).toHaveBeenCalled();
+    expect(anotherLogger.child).toHaveBeenCalledWith({
+      scopeType: 'north',
+      scopeId: testData.north.list[0].id,
+      scopeName: testData.north.list[0].name
     });
-    await engine.reloadSouth(southConnectors[0].id);
-    expect(createdSouth.stop).toHaveBeenCalledTimes(1);
-    expect(createdSouth.start).toHaveBeenCalledTimes(1);
   });
 
   it('should delete south connector', async () => {
     (filesExists as jest.Mock).mockImplementationOnce(() => Promise.resolve(true)).mockImplementationOnce(() => Promise.resolve(false));
     const stopSouthSpy = jest.spyOn(engine, 'stopSouth');
 
-    (northService.getNorthList as jest.Mock).mockReturnValue([]);
-    (southService.getSouthList as jest.Mock).mockReturnValue(southConnectors);
-    (southService.createSouth as jest.Mock).mockReturnValue(createdSouth);
+    (northService.findAll as jest.Mock).mockReturnValue([]);
+    (southService.findAll as jest.Mock).mockReturnValue(testData.south.list);
+    (southService.runSouth as jest.Mock).mockReturnValue(createdSouth);
     await engine.start();
 
-    const southId = southConnectors[0].id;
-    const name = southConnectors[0].name;
+    const southId = testData.south.list[0].id;
+    const name = testData.south.list[0].name;
     const baseFolder = path.resolve('./cache/data-stream', `south-${southId}`);
     await engine.deleteSouth(southId, name);
 
@@ -532,13 +253,13 @@ describe('OIBusEngine', () => {
     (filesExists as jest.Mock).mockImplementationOnce(() => Promise.resolve(true)).mockImplementationOnce(() => Promise.resolve(false));
     const stopNorthSpy = jest.spyOn(engine, 'stopNorth');
 
-    (southService.getSouthList as jest.Mock).mockReturnValue([]);
-    (northService.getNorthList as jest.Mock).mockReturnValue(northConnectors);
-    (northService.createNorth as jest.Mock).mockReturnValue(createdNorth);
+    (southService.findAll as jest.Mock).mockReturnValue([]);
+    (northService.findAll as jest.Mock).mockReturnValue(testData.north.list);
+    (northService.runNorth as jest.Mock).mockReturnValue(createdNorth);
     await engine.start();
 
-    const northId = northConnectors[0].id;
-    const name = northConnectors[0].name;
+    const northId = testData.north.list[0].id;
+    const name = testData.north.list[0].name;
     const baseFolder = path.resolve('./cache/data-stream', `north-${northId}`);
     await engine.deleteNorth(northId, name);
 
@@ -558,10 +279,10 @@ describe('OIBusEngine', () => {
     const stopSouthSpy = jest.spyOn(engine, 'stopSouth');
     const stopNorthSpy = jest.spyOn(engine, 'stopNorth');
 
-    (southService.getSouthList as jest.Mock).mockReturnValue(southConnectors);
-    (southService.createSouth as jest.Mock).mockReturnValue(createdSouth);
-    (northService.getNorthList as jest.Mock).mockReturnValue(northConnectors);
-    (northService.createNorth as jest.Mock).mockReturnValue(createdNorth);
+    (southService.findAll as jest.Mock).mockReturnValue(testData.south.list);
+    (southService.runSouth as jest.Mock).mockReturnValue(createdSouth);
+    (northService.findAll as jest.Mock).mockReturnValue(testData.north.list);
+    (northService.runNorth as jest.Mock).mockReturnValue(createdNorth);
     await engine.start();
 
     const error = new Error(`Can't remove folder`);
@@ -570,8 +291,8 @@ describe('OIBusEngine', () => {
     });
 
     // South Connector error
-    const southId = southConnectors[0].id;
-    const southName = southConnectors[0].name;
+    const southId = testData.south.list[0].id;
+    const southName = testData.south.list[0].name;
     const southBaseFolder = path.resolve('./cache/data-stream', `south-${southId}`);
     await engine.deleteSouth(southId, southName);
 
@@ -581,8 +302,8 @@ describe('OIBusEngine', () => {
     expect(logger.error).toHaveBeenCalledWith(`Unable to delete South connector "${southName}" (${southId} base folder: ${error}`);
 
     // North Connector error
-    const northId = northConnectors[0].id;
-    const northName = northConnectors[0].name;
+    const northId = testData.north.list[0].id;
+    const northName = testData.north.list[0].name;
     const northBaseFolder = path.resolve('./cache/data-stream', `north-${northId}`);
     await engine.deleteNorth(northId, northName);
 
@@ -590,5 +311,210 @@ describe('OIBusEngine', () => {
     expect(filesExists).toHaveBeenCalled();
     expect(logger.trace).toHaveBeenCalledWith(`Deleting base folder "${northBaseFolder}" of North connector "${northName}" (${northId})`);
     expect(logger.error).toHaveBeenCalledWith(`Unable to delete North connector "${northName}" (${northId}) base folder: ${error}`);
+  });
+
+  it('should manage error files', async () => {
+    await engine.start();
+
+    await engine.getErrorFiles('bad id', testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'file');
+    expect(createdNorth.getErrorFiles).not.toHaveBeenCalled();
+    await engine.getErrorFiles(testData.north.list[0].id, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'file');
+    expect(createdNorth.getErrorFiles).toHaveBeenCalledWith(testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'file');
+
+    await engine.getErrorFileContent('bad id', 'file');
+    expect(createdNorth.getErrorFileContent).not.toHaveBeenCalled();
+    await engine.getErrorFileContent(testData.north.list[0].id, 'file');
+    expect(createdNorth.getErrorFileContent).toHaveBeenCalledWith('file');
+
+    await engine.removeErrorFiles('bad id', ['file']);
+    expect(createdNorth.removeErrorFiles).not.toHaveBeenCalled();
+    await engine.removeErrorFiles(testData.north.list[0].id, ['file']);
+    expect(createdNorth.removeErrorFiles).toHaveBeenCalledWith(['file']);
+
+    await engine.retryErrorFiles('bad id', ['file']);
+    expect(createdNorth.retryErrorFiles).not.toHaveBeenCalled();
+    await engine.retryErrorFiles(testData.north.list[0].id, ['file']);
+    expect(createdNorth.retryErrorFiles).toHaveBeenCalledWith(['file']);
+
+    await engine.removeAllErrorFiles('bad id');
+    expect(createdNorth.removeAllErrorFiles).not.toHaveBeenCalled();
+    await engine.removeAllErrorFiles(testData.north.list[0].id);
+    expect(createdNorth.removeAllErrorFiles).toHaveBeenCalled();
+
+    await engine.retryAllErrorFiles('bad id');
+    expect(createdNorth.retryAllErrorFiles).not.toHaveBeenCalled();
+    await engine.retryAllErrorFiles(testData.north.list[0].id);
+    expect(createdNorth.retryAllErrorFiles).toHaveBeenCalled();
+  });
+
+  it('should manage cache files', async () => {
+    await engine.start();
+
+    await engine.getCacheFiles('bad id', testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'file');
+    expect(createdNorth.getCacheFiles).not.toHaveBeenCalled();
+    await engine.getCacheFiles(testData.north.list[0].id, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'file');
+    expect(createdNorth.getCacheFiles).toHaveBeenCalledWith(testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'file');
+
+    await engine.getCacheFileContent('bad id', 'file');
+    expect(createdNorth.getCacheFileContent).not.toHaveBeenCalled();
+    await engine.getCacheFileContent(testData.north.list[0].id, 'file');
+    expect(createdNorth.getCacheFileContent).toHaveBeenCalledWith('file');
+
+    await engine.removeCacheFiles('bad id', ['file']);
+    expect(createdNorth.removeCacheFiles).not.toHaveBeenCalled();
+    await engine.removeCacheFiles(testData.north.list[0].id, ['file']);
+    expect(createdNorth.removeCacheFiles).toHaveBeenCalledWith(['file']);
+
+    await engine.archiveCacheFiles('bad id', ['file']);
+    expect(createdNorth.archiveCacheFiles).not.toHaveBeenCalled();
+    await engine.archiveCacheFiles(testData.north.list[0].id, ['file']);
+    expect(createdNorth.archiveCacheFiles).toHaveBeenCalledWith(['file']);
+  });
+
+  it('should manage archive files', async () => {
+    await engine.start();
+
+    await engine.getArchiveFiles('bad id', testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'file');
+    expect(createdNorth.getArchiveFiles).not.toHaveBeenCalled();
+    await engine.getArchiveFiles(testData.north.list[0].id, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'file');
+    expect(createdNorth.getArchiveFiles).toHaveBeenCalledWith(testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'file');
+
+    await engine.getArchiveFileContent('bad id', 'file');
+    expect(createdNorth.getArchiveFileContent).not.toHaveBeenCalled();
+    await engine.getArchiveFileContent(testData.north.list[0].id, 'file');
+    expect(createdNorth.getArchiveFileContent).toHaveBeenCalledWith('file');
+
+    await engine.removeArchiveFiles('bad id', ['file']);
+    expect(createdNorth.removeArchiveFiles).not.toHaveBeenCalled();
+    await engine.removeArchiveFiles(testData.north.list[0].id, ['file']);
+    expect(createdNorth.removeArchiveFiles).toHaveBeenCalledWith(['file']);
+
+    await engine.retryArchiveFiles('bad id', ['file']);
+    expect(createdNorth.retryArchiveFiles).not.toHaveBeenCalled();
+    await engine.retryArchiveFiles(testData.north.list[0].id, ['file']);
+    expect(createdNorth.retryArchiveFiles).toHaveBeenCalledWith(['file']);
+
+    await engine.removeAllArchiveFiles('bad id');
+    expect(createdNorth.removeAllArchiveFiles).not.toHaveBeenCalled();
+    await engine.removeAllArchiveFiles(testData.north.list[0].id);
+    expect(createdNorth.removeAllArchiveFiles).toHaveBeenCalledWith();
+
+    await engine.retryAllArchiveFiles('bad id');
+    expect(createdNorth.retryAllArchiveFiles).not.toHaveBeenCalled();
+    await engine.retryAllArchiveFiles(testData.north.list[0].id);
+    expect(createdNorth.retryAllArchiveFiles).toHaveBeenCalledWith();
+  });
+
+  it('should manage cache time-values', async () => {
+    await engine.start();
+
+    await engine.getCacheValues('bad id', 'file');
+    expect(createdNorth.getCacheValues).not.toHaveBeenCalled();
+    await engine.getCacheValues(testData.north.list[0].id, 'file');
+    expect(createdNorth.getCacheValues).toHaveBeenCalledWith('file');
+
+    await engine.removeCacheValues('bad id', ['file']);
+    expect(createdNorth.removeCacheValues).not.toHaveBeenCalled();
+    await engine.removeCacheValues(testData.north.list[0].id, ['file']);
+    expect(createdNorth.removeCacheValues).toHaveBeenCalledWith(['file']);
+
+    await engine.removeAllCacheValues('bad id');
+    expect(createdNorth.removeAllCacheValues).not.toHaveBeenCalled();
+    await engine.removeAllCacheValues(testData.north.list[0].id);
+    expect(createdNorth.removeAllCacheValues).toHaveBeenCalledWith();
+  });
+
+  it('should manage error cache time-values', async () => {
+    await engine.start();
+
+    await engine.getValueErrors('bad id', testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'file');
+    expect(createdNorth.getValueErrors).not.toHaveBeenCalled();
+    await engine.getValueErrors(testData.north.list[0].id, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'file');
+    expect(createdNorth.getValueErrors).toHaveBeenCalledWith(testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'file');
+
+    await engine.removeValueErrors('bad id', ['file']);
+    expect(createdNorth.removeValueErrors).not.toHaveBeenCalled();
+    await engine.removeValueErrors(testData.north.list[0].id, ['file']);
+    expect(createdNorth.removeValueErrors).toHaveBeenCalledWith(['file']);
+
+    await engine.removeAllValueErrors('bad id');
+    expect(createdNorth.removeAllValueErrors).not.toHaveBeenCalled();
+    await engine.removeAllValueErrors(testData.north.list[0].id);
+    expect(createdNorth.removeAllValueErrors).toHaveBeenCalledWith();
+
+    await engine.retryValueErrors('bad id', ['file']);
+    expect(createdNorth.retryValueErrors).not.toHaveBeenCalled();
+    await engine.retryValueErrors(testData.north.list[0].id, ['file']);
+    expect(createdNorth.retryValueErrors).toHaveBeenCalledWith(['file']);
+
+    await engine.retryAllValueErrors('bad id');
+    expect(createdNorth.retryAllValueErrors).not.toHaveBeenCalled();
+    await engine.retryAllValueErrors(testData.north.list[0].id);
+    expect(createdNorth.retryAllValueErrors).toHaveBeenCalledWith();
+  });
+
+  it('should manage data stream and metrics', async () => {
+    await engine.start();
+
+    engine.getNorthDataStream('bad id');
+    expect(createdNorth.getMetricsDataStream).not.toHaveBeenCalled();
+    engine.getNorthDataStream(testData.north.list[0].id);
+    expect(createdNorth.getMetricsDataStream).toHaveBeenCalled();
+
+    engine.getSouthDataStream('bad id');
+    expect(createdSouth.getMetricsDataStream).not.toHaveBeenCalled();
+    engine.getSouthDataStream(testData.south.list[0].id);
+    expect(createdSouth.getMetricsDataStream).toHaveBeenCalled();
+
+    engine.resetSouthMetrics('bad id');
+    expect(createdSouth.resetMetrics).not.toHaveBeenCalled();
+    engine.resetSouthMetrics(testData.south.list[0].id);
+    expect(createdSouth.resetMetrics).toHaveBeenCalled();
+
+    engine.resetNorthMetrics('bad id');
+    expect(createdNorth.resetMetrics).not.toHaveBeenCalled();
+    engine.resetNorthMetrics(testData.north.list[0].id);
+    expect(createdNorth.resetMetrics).toHaveBeenCalled();
+  });
+
+  it('should manage item change', async () => {
+    await engine.start();
+
+    await engine.onSouthItemsChange('bad id');
+    expect(createdSouth.onItemChange).not.toHaveBeenCalled();
+    await engine.onSouthItemsChange(testData.south.list[0].id);
+    expect(createdSouth.onItemChange).toHaveBeenCalled();
+  });
+
+  it('should update north subscription', async () => {
+    await engine.start();
+
+    engine.updateSubscriptions('bad id');
+    expect(createdNorth.updateConnectorSubscription).not.toHaveBeenCalled();
+    engine.updateSubscriptions(testData.north.list[0].id);
+    expect(createdNorth.updateConnectorSubscription).toHaveBeenCalled();
+  });
+
+  it('should update scan mode', async () => {
+    await engine.start();
+
+    await engine.updateScanMode(testData.scanMode.list[0]);
+    expect(createdSouth.updateScanMode).toHaveBeenCalled();
+    expect(createdNorth.updateScanMode).toHaveBeenCalled();
+  });
+
+  it('should properly reload', async () => {
+    const startSouthSpy = jest.spyOn(engine, 'startSouth');
+    const stopSouthSpy = jest.spyOn(engine, 'stopSouth');
+    const startNorthSpy = jest.spyOn(engine, 'startNorth');
+    const stopNorthSpy = jest.spyOn(engine, 'stopNorth');
+
+    await engine.reloadNorth('northId');
+    expect(stopNorthSpy).toHaveBeenCalled();
+    expect(startNorthSpy).toHaveBeenCalled();
+
+    await engine.reloadSouth('southId');
+    expect(stopSouthSpy).toHaveBeenCalled();
+    expect(startSouthSpy).toHaveBeenCalled();
   });
 });
