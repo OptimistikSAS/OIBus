@@ -41,7 +41,7 @@ const manifest: SouthConnectorManifest = {
       label: 'Persistent',
       defaultValue: false,
       newRow: false,
-      conditionalDisplay: { field: 'qos', values: ['2'] },
+      conditionalDisplay: { field: 'qos', values: ['1', '2'] },
       validators: [{ key: 'required' }],
       displayInViewMode: true
     },
