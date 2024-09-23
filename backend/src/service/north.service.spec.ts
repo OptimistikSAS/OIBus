@@ -1,57 +1,75 @@
 import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
-import RepositoryServiceMock from '../tests/__mocks__/service/repository-service.mock';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from './encryption.service';
 import NorthService from './north.service';
-import RepositoryService from './repository.service';
 import pino from 'pino';
-
-import { NorthCacheSettingsDTO } from '../../../shared/model/north-connector.model';
+import JoiValidator from '../web-server/controllers/validators/joi.validator';
+import SouthConnectorRepository from '../repository/config/south-connector.repository';
+import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/south-connector-repository.mock';
+import LogRepository from '../repository/logs/log.repository';
+import LogRepositoryMock from '../tests/__mocks__/repository/log/log-repository.mock';
+import ScanModeRepository from '../repository/config/scan-mode.repository';
+import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
+import OIAnalyticsMessageService from './oia/oianalytics-message.service';
+import OIAnalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
+import NorthConnectorRepository from '../repository/config/north-connector.repository';
+import NorthConnectorRepositoryMock from '../tests/__mocks__/repository/config/north-connector-repository.mock';
+import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
+import NorthMetricsRepositoryMock from '../tests/__mocks__/repository/log/north-metrics-repository.mock';
+import testData from '../tests/utils/test-data';
+import { NorthConnectorEntity } from '../model/north-connector.model';
+import { NorthSettings } from '../../../shared/model/north-settings.model';
+import CertificateRepository from '../repository/config/certificate.repository';
+import CertificateRepositoryMock from '../tests/__mocks__/repository/config/certificate-repository.mock';
+import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
+import OianalyticsRegistrationRepositoryMock from '../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
 
 jest.mock('./encryption.service');
 jest.mock('./north-connector-metrics.service');
 
+const validator = new JoiValidator();
+const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
+const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
+const northMetricsRepository: NorthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
+const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
+const logRepository: LogRepository = new LogRepositoryMock();
+const certificateRepository: CertificateRepository = new CertificateRepositoryMock();
+const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OianalyticsRegistrationRepositoryMock();
+const oIAnalyticsMessageService: OIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
-const repositoryRepository: RepositoryService = new RepositoryServiceMock('', '');
 
 const logger: pino.Logger = new PinoLogger();
 let service: NorthService;
 describe('north service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new NorthService(encryptionService, repositoryRepository);
+    service = new NorthService(
+      validator,
+      northConnectorRepository,
+      southConnectorRepository,
+      northMetricsRepository,
+      scanModeRepository,
+      logRepository,
+      certificateRepository,
+      oIAnalyticsRegistrationRepository,
+      oIAnalyticsMessageService,
+      encryptionService
+    );
   });
 
   it('should get a North connector settings', () => {
-    service.getNorth('northId');
-    expect(repositoryRepository.northConnectorRepository.findById).toHaveBeenCalledTimes(1);
-    expect(repositoryRepository.northConnectorRepository.findById).toHaveBeenCalledWith('northId');
+    service.findById('northId');
+    expect(northConnectorRepository.findNorthById).toHaveBeenCalledTimes(1);
+    expect(northConnectorRepository.findNorthById).toHaveBeenCalledWith('northId');
   });
 
   it('should get all North connector settings', () => {
-    service.getNorthList();
-    expect(repositoryRepository.northConnectorRepository.findAll).toHaveBeenCalledTimes(1);
+    service.findAll();
+    expect(northConnectorRepository.findAllNorth).toHaveBeenCalledTimes(1);
   });
 
   it('should create North connector', () => {
-    const connector = service.createNorth(
-      {
-        id: 'northId',
-        name: 'myNorth',
-        description: 'my test connector',
-        type: 'console',
-        enabled: false,
-        caching: {
-          oibusTimeValues: {},
-          rawFiles: {
-            archive: {}
-          }
-        } as NorthCacheSettingsDTO,
-        settings: { verbose: true }
-      },
-      'myBaseFolder',
-      logger
-    );
+    const connector = service.runNorth(testData.north.list[0], 'myBaseFolder', logger);
     expect(connector).toBeDefined();
   });
 
@@ -59,21 +77,13 @@ describe('north service', () => {
     let connector;
     let error;
     try {
-      connector = service.createNorth(
+      connector = service.runNorth(
         {
           id: 'northId',
           name: 'myNorth',
           description: 'my test connector',
-          type: 'another',
-          enabled: false,
-          caching: {
-            oibusTimeValues: {},
-            rawFiles: {
-              archive: {}
-            }
-          } as NorthCacheSettingsDTO,
-          settings: { verbose: true }
-        },
+          type: 'another'
+        } as NorthConnectorEntity<NorthSettings>,
         'myBaseFolder',
         logger
       );

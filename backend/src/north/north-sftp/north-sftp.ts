@@ -2,9 +2,7 @@ import path from 'node:path';
 
 import NorthConnector from '../north-connector';
 import manifest from './manifest';
-import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import EncryptionService from '../../service/encryption.service';
-import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { DateTime } from 'luxon';
 import { NorthSFTPSettings } from '../../../../shared/model/north-settings.model';
@@ -13,6 +11,10 @@ import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.mo
 
 import sftpClient, { ConnectOptions } from 'ssh2-sftp-client';
 import fs from 'node:fs/promises';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
+import NorthConnectorRepository from '../../repository/config/north-connector.repository';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import NorthConnectorMetricsRepository from '../../repository/logs/north-connector-metrics.repository';
 
 /**
  * Class NorthSFTP - Write files in an output folder
@@ -21,13 +23,15 @@ export default class NorthSFTP extends NorthConnector<NorthSFTPSettings> {
   static type = manifest.id;
 
   constructor(
-    configuration: NorthConnectorDTO<NorthSFTPSettings>,
+    configuration: NorthConnectorEntity<NorthSFTPSettings>,
     encryptionService: EncryptionService,
-    repositoryService: RepositoryService,
+    northConnectorRepository: NorthConnectorRepository,
+    scanModeRepository: ScanModeRepository,
+    northMetricsRepository: NorthConnectorMetricsRepository,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(configuration, encryptionService, repositoryService, logger, baseFolder);
+    super(configuration, encryptionService, northConnectorRepository, scanModeRepository, northMetricsRepository, logger, baseFolder);
   }
 
   async handleContent(data: OIBusContent): Promise<void> {
@@ -101,9 +105,9 @@ export default class NorthSFTP extends NorthConnector<NorthSFTPSettings> {
       await client.connect(connectionOptions);
       folderExists = await client.exists(this.connector.settings.remoteFolder);
       await client.end();
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw new Error(
-        `Access error on "${this.connector.settings.remoteFolder}" on "${this.connector.settings.host}:${this.connector.settings.port}": ${error.message}`
+        `Access error on "${this.connector.settings.remoteFolder}" on "${this.connector.settings.host}:${this.connector.settings.port}": ${(error as Error).message}`
       );
     }
 

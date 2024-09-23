@@ -1,43 +1,48 @@
 import nodeOPCUAClient, {
   AggregateFunction,
+  DataType,
   HistoryReadRequest,
   ReadProcessedDetails,
   ReadRawModifiedDetails,
   StatusCodes,
-  TimestampsToReturn,
-  DataType
+  TimestampsToReturn
 } from 'node-opcua-client';
 
 import fs from 'node:fs/promises';
 import SouthOPCUA, { MAX_NUMBER_OF_NODE_TO_LOG } from './south-opcua';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import DatabaseMock from '../../tests/__mocks__/database.mock';
 import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-import RepositoryService from '../../service/repository.service';
-import RepositoryServiceMock from '../../tests/__mocks__/service/repository-service.mock';
 import { randomUUID } from 'crypto';
 import path from 'node:path';
-
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
-import {
-  SouthOPCUAItemSettings,
-  SouthOPCUASettings,
-  SouthOPCUASettingsAuthentication
-} from '../../../../shared/model/south-settings.model';
+import { SouthOPCUAItemSettings, SouthOPCUASettings } from '../../../../shared/model/south-settings.model';
 import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
 import Stream from 'node:stream';
 import { createFolder } from '../../service/utils';
 import ConnectionService from '../../service/connection.service';
 import { ClientSession } from 'node-opcua-client/source/client_session';
+import SouthConnectorRepository from '../../repository/config/south-connector.repository';
+import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
+import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
+import NorthMetricsRepositoryMock from '../../tests/__mocks__/repository/log/north-metrics-repository.mock';
+import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
+import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
+import SouthConnectorMetricsServiceMock from '../../tests/__mocks__/service/south-connector-metrics-service.mock';
+import testData from '../../tests/utils/test-data';
+import { SouthConnectorEntity } from '../../model/south-connector.model';
 
 class CustomStream extends Stream {
   constructor() {
     super();
   }
 
-  terminate() {}
+  terminate() {
+    return;
+  }
 }
 
 // Mock node-opcua-client
@@ -58,19 +63,27 @@ jest.mock('node-opcua-client', () => ({
   ReadProcessedDetails: jest.fn(() => ({}))
 }));
 jest.mock('node-opcua-certificate-manager', () => ({ OPCUACertificateManager: jest.fn(() => ({})) }));
+// Mock only the randomUUID function because other functions are used by OPCUA
+jest.mock('crypto', () => ({
+  ...jest.requireActual('crypto'),
+  randomUUID: jest.fn()
+}));
 jest.mock('node:fs/promises');
 jest.mock('../../service/utils');
-const database = new DatabaseMock();
+
+const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
+const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
+const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
+const southMetricsRepository: SouthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
+const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
+const southCacheService = new SouthCacheServiceMock();
+const southConnectorMetricsService = new SouthConnectorMetricsServiceMock();
+
 jest.mock(
   '../../service/south-cache.service',
   () =>
     function () {
-      return {
-        createSouthCacheScanModeTable: jest.fn(),
-        southCacheRepository: {
-          database
-        }
-      };
+      return southCacheService;
     }
 );
 
@@ -78,118 +91,16 @@ jest.mock(
   '../../service/south-connector-metrics.service',
   () =>
     function () {
-      return {
-        initMetrics: jest.fn(),
-        updateMetrics: jest.fn(),
-        get stream() {
-          return { stream: 'myStream' };
-        },
-        metrics: {
-          numberOfValuesRetrieved: 1,
-          numberOfFilesRetrieved: 1
-        }
-      };
+      return southConnectorMetricsService;
     }
 );
 
-// Mock only the randomUUID function because other functions are used by OPCUA
-jest.mock('crypto', () => ({
-  ...jest.requireActual('crypto'),
-  randomUUID: jest.fn()
-}));
-
+const logger: pino.Logger = new PinoLogger();
 const addContentCallback = jest.fn();
 
-const logger: pino.Logger = new PinoLogger();
-
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
-const repositoryService: RepositoryService = new RepositoryServiceMock();
-const items: Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>> = [
-  {
-    id: 'id1',
-    name: 'item1',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {
-      nodeId: 'ns=3;s=Random',
-      mode: 'HA',
-      haMode: {
-        aggregate: 'raw',
-        resampling: 'none'
-      }
-    },
-    scanModeId: 'scanModeId1'
-  },
-  {
-    id: 'id2',
-    name: 'item2',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {
-      nodeId: 'ns=3;s=Counter',
-      mode: 'HA',
-      haMode: {
-        aggregate: 'raw',
-        resampling: 'none'
-      }
-    },
-    scanModeId: 'scanModeId1'
-  },
-  {
-    id: 'id3',
-    name: 'item3',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {
-      nodeId: 'ns=3;s=Triangle',
-      mode: 'HA',
-      haMode: {
-        aggregate: 'raw',
-        resampling: 'none'
-      }
-    },
-    scanModeId: 'scanModeId2'
-  },
-  {
-    id: 'id1',
-    name: 'item1',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {
-      nodeId: 'ns=3;s=Random',
-      mode: 'DA'
-    },
-    scanModeId: 'scanModeId1'
-  },
-  {
-    id: 'id2',
-    name: 'item2',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {
-      nodeId: 'ns=3;s=Counter',
-      mode: 'DA'
-    },
-    scanModeId: 'scanModeId1'
-  },
-  {
-    id: 'id3',
-    name: 'item3',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {
-      nodeId: 'ns=3;s=Triangle',
-      mode: 'DA'
-    },
-    scanModeId: 'scanModeId2'
-  }
-];
-const nowDateString = '2020-02-02T02:02:02.222Z';
-
-let south: SouthOPCUA;
-
 describe('SouthOPCUA', () => {
-  const configuration: SouthConnectorDTO<SouthOPCUASettings> = {
+  let south: SouthOPCUA;
+  const configuration: SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings> = {
     id: 'southId',
     name: 'south',
     type: 'test',
@@ -201,34 +112,110 @@ describe('SouthOPCUA', () => {
       readDelay: 0,
       overlap: 0
     },
+    sharedConnection: false,
     settings: {
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
       retryInterval: 10000,
       readTimeout: 15000,
       authentication: {
         type: 'none',
-        username: null,
         password: null,
-        certFilePath: null,
         keyFilePath: null
-      } as unknown as SouthOPCUASettingsAuthentication,
+      },
       securityMode: 'None',
       securityPolicy: 'None',
       keepSessionAlive: false
-    }
+    },
+    items: [
+      {
+        id: 'id1',
+        name: 'item1',
+        enabled: true,
+        settings: {
+          nodeId: 'ns=3;s=Random',
+          mode: 'HA',
+          haMode: {
+            aggregate: 'raw',
+            resampling: 'none'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id2',
+        name: 'item2',
+        enabled: true,
+        settings: {
+          nodeId: 'ns=3;s=Counter',
+          mode: 'HA',
+          haMode: {
+            aggregate: 'raw',
+            resampling: 'none'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id3',
+        name: 'item3',
+        enabled: true,
+        settings: {
+          nodeId: 'ns=3;s=Triangle',
+          mode: 'HA',
+          haMode: {
+            aggregate: 'raw',
+            resampling: 'none'
+          }
+        },
+        scanModeId: 'scanModeId2'
+      },
+      {
+        id: 'id1',
+        name: 'item1',
+        enabled: true,
+        settings: {
+          nodeId: 'ns=3;s=Random',
+          mode: 'DA'
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id2',
+        name: 'item2',
+        enabled: true,
+        settings: {
+          nodeId: 'ns=3;s=Counter',
+          mode: 'DA'
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id3',
+        name: 'item3',
+        enabled: true,
+        settings: {
+          nodeId: 'ns=3;s=Triangle',
+          mode: 'DA'
+        },
+        scanModeId: 'scanModeId2'
+      }
+    ]
   };
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
     const connectionService = new ConnectionService(logger);
     south = new SouthOPCUA(
       configuration,
       addContentCallback,
       encryptionService,
-      repositoryService,
+      southConnectorRepository,
+      southMetricsRepository,
+      southCacheRepository,
+      scanModeRepository,
       logger,
       'baseFolder',
       connectionService
@@ -311,7 +298,7 @@ describe('SouthOPCUA', () => {
             historyData: {
               dataValues: [
                 {
-                  sourceTimestamp: new Date(nowDateString),
+                  sourceTimestamp: new Date(testData.constants.dates.FAKE_NOW),
                   value: {
                     value: '123',
                     dataType: DataType.String
@@ -322,7 +309,7 @@ describe('SouthOPCUA', () => {
                   }
                 },
                 {
-                  serverTimestamp: new Date(nowDateString),
+                  serverTimestamp: new Date(testData.constants.dates.FAKE_NOW),
                   value: {
                     value: [0, 456],
                     dataType: DataType.UInt64
@@ -385,7 +372,7 @@ describe('SouthOPCUA', () => {
             historyData: {
               dataValues: [
                 {
-                  sourceTimestamp: new Date(nowDateString),
+                  sourceTimestamp: new Date(testData.constants.dates.FAKE_NOW),
                   value: {
                     value: true,
                     dataType: DataType.Boolean
@@ -396,7 +383,7 @@ describe('SouthOPCUA', () => {
                   }
                 },
                 {
-                  sourceTimestamp: new Date(nowDateString),
+                  sourceTimestamp: new Date(testData.constants.dates.FAKE_NOW),
                   value: {
                     value: false,
                     dataType: DataType.Boolean
@@ -441,29 +428,33 @@ describe('SouthOPCUA', () => {
     south.addContent = jest.fn();
     await south.start();
 
-    await south.historyQuery([items[0], items[1], items[2]], nowDateString, nowDateString);
+    await south.historyQuery(
+      [configuration.items[0], configuration.items[1], configuration.items[2]],
+      testData.constants.dates.FAKE_NOW,
+      testData.constants.dates.FAKE_NOW
+    );
 
     expect(south.addContent).toHaveBeenCalledWith({
       type: 'time-values',
       content: [
         {
           data: { value: '123', quality: JSON.stringify({ value: StatusCodes.Good, description: 'ok' }) },
-          pointId: items[0].name,
-          timestamp: nowDateString
+          pointId: configuration.items[0].name,
+          timestamp: testData.constants.dates.FAKE_NOW
         },
         {
           data: { value: '456', quality: JSON.stringify({ value: StatusCodes.Good, description: 'ok' }) },
-          pointId: items[0].name,
-          timestamp: nowDateString
+          pointId: configuration.items[0].name,
+          timestamp: testData.constants.dates.FAKE_NOW
         },
         {
           data: { value: '789', quality: JSON.stringify({ value: StatusCodes.Good, description: 'ok' }) },
-          pointId: items[0].name,
+          pointId: configuration.items[0].name,
           timestamp: '2023-12-12T00:00:00.000Z'
         },
         {
           data: { value: '10', quality: JSON.stringify({ value: StatusCodes.Good, description: 'ok' }) },
-          pointId: items[0].name,
+          pointId: configuration.items[0].name,
           timestamp: '2023-12-12T00:00:00.000Z'
         },
         {
@@ -471,18 +462,18 @@ describe('SouthOPCUA', () => {
             value: '2023-12-12T00:00:00.000Z',
             quality: JSON.stringify({ value: StatusCodes.Good, description: 'ok' })
           },
-          pointId: items[0].name,
+          pointId: configuration.items[0].name,
           timestamp: '2023-12-12T00:00:00.000Z'
         },
         {
           data: { value: '1', quality: JSON.stringify({ value: StatusCodes.Good, description: 'ok' }) },
-          pointId: items[1].name,
-          timestamp: nowDateString
+          pointId: configuration.items[1].name,
+          timestamp: testData.constants.dates.FAKE_NOW
         },
         {
           data: { value: '0', quality: JSON.stringify({ value: StatusCodes.Bad, description: 'not ok' }) },
-          pointId: items[1].name,
-          timestamp: nowDateString
+          pointId: configuration.items[1].name,
+          timestamp: testData.constants.dates.FAKE_NOW
         }
       ]
     });
@@ -505,7 +496,11 @@ describe('SouthOPCUA', () => {
     south.addContent = jest.fn();
     await south.start();
 
-    await south.historyQuery([items[0], items[1]], nowDateString, nowDateString);
+    await south.historyQuery(
+      [configuration.items[0], configuration.items[1]],
+      testData.constants.dates.FAKE_NOW,
+      testData.constants.dates.FAKE_NOW
+    );
 
     expect(logger.error).toHaveBeenCalledWith('Error while reading history: not ok');
     expect(logger.error).toHaveBeenCalledWith('No result found in response');
@@ -540,12 +535,26 @@ describe('SouthOPCUA', () => {
     await south.start();
 
     await south.historyQuery(
-      [items[0], items[0], items[0], items[0], items[0], items[0], items[0], items[0], items[0], items[0], items[0]],
-      nowDateString,
-      nowDateString
+      [
+        configuration.items[0],
+        configuration.items[0],
+        configuration.items[0],
+        configuration.items[0],
+        configuration.items[0],
+        configuration.items[0],
+        configuration.items[0],
+        configuration.items[0],
+        configuration.items[0],
+        configuration.items[0],
+        configuration.items[0]
+      ],
+      testData.constants.dates.FAKE_NOW,
+      testData.constants.dates.FAKE_NOW
     );
 
-    expect(logger.debug).toHaveBeenCalledWith(`not ok with status code ${StatusCodes.Bad}: [${items[0].name}..${items[0].name}]`);
+    expect(logger.debug).toHaveBeenCalledWith(
+      `not ok with status code ${StatusCodes.Bad}: [${configuration.items[0].name}..${configuration.items[0].name}]`
+    );
   });
 
   it('should properly manage history query with associated node not found', async () => {
@@ -565,7 +574,11 @@ describe('SouthOPCUA', () => {
     south.addContent = jest.fn();
     await south.start();
 
-    await south.historyQuery([items[0], items[1]], nowDateString, nowDateString);
+    await south.historyQuery(
+      [configuration.items[0], configuration.items[1]],
+      testData.constants.dates.FAKE_NOW,
+      testData.constants.dates.FAKE_NOW
+    );
 
     expect(logger.error).toHaveBeenCalledWith('Error while reading history: not ok');
     expect(logger.error).toHaveBeenCalledWith('No result found in response');
@@ -591,23 +604,23 @@ describe('SouthOPCUA', () => {
     south.disconnect();
     await expect(
       south.historyQuery(
-        items.filter(item => item.settings.mode === 'HA'),
-        nowDateString,
-        nowDateString
+        configuration.items.filter(item => item.settings.mode === 'HA'),
+        testData.constants.dates.FAKE_NOW,
+        testData.constants.dates.FAKE_NOW
       )
     ).rejects.toThrow('opcua read error');
     expect(south.addContent).not.toHaveBeenCalled();
     jest.advanceTimersByTime(1000);
-    (repositoryService.southConnectorRepository.findById as jest.Mock).mockReturnValue({
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue({
       ...configuration,
       enabled: false
     });
     await south.start();
     await expect(
       south.historyQuery(
-        items.filter(item => item.settings.mode === 'HA'),
-        nowDateString,
-        nowDateString
+        configuration.items.filter(item => item.settings.mode === 'HA'),
+        testData.constants.dates.FAKE_NOW,
+        testData.constants.dates.FAKE_NOW
       )
     ).rejects.toThrow('opcua read error');
 
@@ -615,13 +628,13 @@ describe('SouthOPCUA', () => {
   });
 
   it('should filter HA items', () => {
-    const result = south.filterHistoryItems(items);
-    expect(result).toEqual(items.filter(item => item.settings.mode === 'HA'));
+    const result = south.filterHistoryItems(configuration.items);
+    expect(result).toEqual(configuration.items.filter(item => item.settings.mode === 'HA'));
   });
 
   it('should not query items if session is not set', async () => {
     south.addContent = jest.fn();
-    await south.historyQuery(items, nowDateString, nowDateString);
+    await south.historyQuery(configuration.items, testData.constants.dates.FAKE_NOW, testData.constants.dates.FAKE_NOW);
     expect(south.addContent).not.toHaveBeenCalled();
     expect(logger.error).toHaveBeenCalledWith('OPCUA session not set. The connector cannot read values');
   });
@@ -636,8 +649,8 @@ describe('SouthOPCUA', () => {
     south.addContent = jest.fn();
 
     await south.start();
-    await south.lastPointQuery(items);
-    const expectedItemsToRead = items.filter(item => item.settings.mode === 'DA');
+    await south.lastPointQuery(configuration.items);
+    const expectedItemsToRead = configuration.items.filter(item => item.settings.mode === 'DA');
 
     expect(logger.debug).toHaveBeenCalledWith(
       `Read ${expectedItemsToRead.length} nodes ` +
@@ -649,7 +662,7 @@ describe('SouthOPCUA', () => {
       content: [
         {
           pointId: expectedItemsToRead[0].name,
-          timestamp: nowDateString,
+          timestamp: testData.constants.dates.FAKE_NOW,
           data: {
             value: '1',
             quality: JSON.stringify({ value: 0 })
@@ -657,7 +670,7 @@ describe('SouthOPCUA', () => {
         },
         {
           pointId: expectedItemsToRead[1].name,
-          timestamp: nowDateString,
+          timestamp: testData.constants.dates.FAKE_NOW,
           data: {
             value: '2',
             quality: JSON.stringify({ value: 0 })
@@ -665,7 +678,7 @@ describe('SouthOPCUA', () => {
         },
         {
           pointId: expectedItemsToRead[2].name,
-          timestamp: nowDateString,
+          timestamp: testData.constants.dates.FAKE_NOW,
           data: {
             value: '3',
             quality: JSON.stringify({ value: 0 })
@@ -693,18 +706,18 @@ describe('SouthOPCUA', () => {
     // If this is not called, the 'disconnect' function will resolve right away, without calling the 'close' function
     await south.connection.getSession();
     south.disconnect();
-    await expect(south.lastPointQuery(items)).rejects.toThrow('opcua read error');
-    const expectedItemsToRead = items.filter(item => item.settings.mode === 'DA');
+    await expect(south.lastPointQuery(configuration.items)).rejects.toThrow('opcua read error');
+    const expectedItemsToRead = configuration.items.filter(item => item.settings.mode === 'DA');
 
     expect(read).toHaveBeenCalledWith(expectedItemsToRead.map(item => ({ nodeId: item.settings.nodeId })));
     expect(south.addContent).not.toHaveBeenCalled();
-    (repositoryService.southConnectorRepository.findById as jest.Mock).mockReturnValue({
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue({
       ...configuration,
       enabled: false
     });
     jest.advanceTimersByTime(1000);
     await south.start();
-    await expect(south.lastPointQuery(items)).rejects.toThrow('opcua read error');
+    await expect(south.lastPointQuery(configuration.items)).rejects.toThrow('opcua read error');
 
     await south.connect();
     await south.connect();
@@ -716,7 +729,7 @@ describe('SouthOPCUA', () => {
     south.addContent = jest.fn();
 
     await south.start();
-    await south.lastPointQuery([items[0], items[1], items[2]]);
+    await south.lastPointQuery([configuration.items[0], configuration.items[1], configuration.items[2]]);
     expect(south.addContent).not.toHaveBeenCalled();
     expect(read).not.toHaveBeenCalled();
   });
@@ -727,9 +740,9 @@ describe('SouthOPCUA', () => {
     south.addContent = jest.fn();
 
     await south.start();
-    await south.lastPointQuery([items[3]]);
-    expect(logger.debug).toHaveBeenCalledWith(`Read node ${items[3].settings.nodeId}`);
-    expect(read).toHaveBeenCalledWith([{ nodeId: items[3].settings.nodeId }]);
+    await south.lastPointQuery([configuration.items[3]]);
+    expect(logger.debug).toHaveBeenCalledWith(`Read node ${configuration.items[3].settings.nodeId}`);
+    expect(read).toHaveBeenCalledWith([{ nodeId: configuration.items[3].settings.nodeId }]);
   });
 
   it('should properly query items and log error when not same number of items and values', async () => {
@@ -741,8 +754,8 @@ describe('SouthOPCUA', () => {
     south.addContent = jest.fn();
 
     await south.start();
-    await south.lastPointQuery(items);
-    const expectedItemsToRead = items.filter(item => item.settings.mode === 'DA');
+    await south.lastPointQuery(configuration.items);
+    const expectedItemsToRead = configuration.items.filter(item => item.settings.mode === 'DA');
     expect(logger.error).toHaveBeenCalledWith(
       `Received 2 node results, requested ${expectedItemsToRead.length} nodes. Request done in 0 ms`
     );
@@ -752,7 +765,7 @@ describe('SouthOPCUA', () => {
       content: [
         {
           pointId: expectedItemsToRead[0].name,
-          timestamp: nowDateString,
+          timestamp: testData.constants.dates.FAKE_NOW,
           data: {
             value: '1',
             quality: JSON.stringify({ value: 0 })
@@ -760,7 +773,7 @@ describe('SouthOPCUA', () => {
         },
         {
           pointId: expectedItemsToRead[1].name,
-          timestamp: nowDateString,
+          timestamp: testData.constants.dates.FAKE_NOW,
           data: {
             value: '2',
             quality: JSON.stringify({ value: 0 })
@@ -772,7 +785,7 @@ describe('SouthOPCUA', () => {
 
   it('should not query items if session is not set', async () => {
     south.addContent = jest.fn();
-    await south.lastPointQuery(items);
+    await south.lastPointQuery(configuration.items);
     expect(south.addContent).not.toHaveBeenCalled();
     expect(logger.error).toHaveBeenCalledWith('OPCUA session not set. The connector cannot read values');
   });
@@ -783,7 +796,7 @@ describe('SouthOPCUA', () => {
   });
 
   it('should not subscribe if session is not set', async () => {
-    await south.subscribe(items);
+    await south.subscribe(configuration.items);
     expect(logger.error).toHaveBeenCalledWith('OPCUA client could not subscribe to items: session not set');
   });
 
@@ -796,7 +809,7 @@ describe('SouthOPCUA', () => {
     south.addContent = jest.fn();
 
     await south.start();
-    await south.subscribe([items[0]]);
+    await south.subscribe([configuration.items[0]]);
     expect(nodeOPCUAClient.ClientSubscription.create).toHaveBeenCalledTimes(1);
     expect(nodeOPCUAClient.ClientMonitoredItem.create).toHaveBeenCalledTimes(1);
     stream.emit('changed', { value: { value: 1, dataType: DataType.Null }, statusCode: { value: 0 } });
@@ -806,8 +819,8 @@ describe('SouthOPCUA', () => {
       type: 'time-values',
       content: [
         {
-          pointId: items[0].name,
-          timestamp: nowDateString,
+          pointId: configuration.items[0].name,
+          timestamp: testData.constants.dates.FAKE_NOW,
           data: {
             value: '1',
             quality: JSON.stringify({ value: 0 })
@@ -816,10 +829,10 @@ describe('SouthOPCUA', () => {
       ]
     });
 
-    await south.unsubscribe([items[0]]);
+    await south.unsubscribe([configuration.items[0]]);
     expect(stream.terminate).toHaveBeenCalledTimes(1);
 
-    await south.unsubscribe([items[1]]);
+    await south.unsubscribe([configuration.items[1]]);
     await south.disconnect();
   });
 
@@ -852,7 +865,7 @@ describe('SouthOPCUA', () => {
     });
 
     const callback = jest.fn();
-    await south.testItem(items[3], callback);
+    await south.testItem(configuration.items[3], callback);
     expect(south.getDAValues).toHaveBeenCalled();
   });
 
@@ -873,7 +886,7 @@ describe('SouthOPCUA', () => {
     ]);
 
     const callback = jest.fn();
-    await south.testItem(items[1], callback);
+    await south.testItem(configuration.items[1], callback);
 
     expect(south.getHAValues).toHaveBeenCalled();
     expect(south.disconnect).toHaveBeenCalled();
@@ -890,7 +903,7 @@ describe('SouthOPCUA', () => {
     });
 
     const callback = jest.fn();
-    await expect(south.testItem(items[1], callback)).rejects.toThrow('ha error');
+    await expect(south.testItem(configuration.items[1], callback)).rejects.toThrow('ha error');
 
     expect(south.getHAValues).toHaveBeenCalled();
     expect(south.disconnect).toHaveBeenCalled();
@@ -906,7 +919,7 @@ describe('SouthOPCUA', () => {
           historyData: {
             dataValues: [
               {
-                sourceTimestamp: new Date(nowDateString),
+                sourceTimestamp: new Date(testData.constants.dates.FAKE_NOW),
                 value: {
                   value: '123',
                   dataType: DataType.String
@@ -926,13 +939,14 @@ describe('SouthOPCUA', () => {
     const session = { performMessageTransaction } as unknown as ClientSession;
 
     await south.start();
-    await south.getHAValues([items[0]], nowDateString, nowDateString, session, true);
+    await south.getHAValues([configuration.items[0]], testData.constants.dates.FAKE_NOW, testData.constants.dates.FAKE_NOW, session, true);
     expect(performMessageTransaction).toHaveBeenCalled();
   });
 });
 
 describe('SouthOPCUA with basic auth', () => {
-  const configuration: SouthConnectorDTO<SouthOPCUASettings> = {
+  let south: SouthOPCUA;
+  const configuration: SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings> = {
     id: 'southId',
     name: 'south',
     type: 'test',
@@ -944,6 +958,7 @@ describe('SouthOPCUA with basic auth', () => {
       readDelay: 0,
       overlap: 0
     },
+    sharedConnection: false,
     settings: {
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
       retryInterval: 10000,
@@ -954,24 +969,101 @@ describe('SouthOPCUA with basic auth', () => {
         password: 'pass',
         keyFilePath: '',
         certFilePath: ''
-      } as unknown as SouthOPCUASettingsAuthentication,
+      },
       securityMode: 'None',
       securityPolicy: null,
       keepSessionAlive: false
-    }
+    },
+    items: [
+      {
+        id: 'id1',
+        name: 'item1',
+        enabled: true,
+        settings: {
+          nodeId: 'ns=3;s=Random',
+          mode: 'HA',
+          haMode: {
+            aggregate: 'raw',
+            resampling: 'none'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id2',
+        name: 'item2',
+        enabled: true,
+        settings: {
+          nodeId: 'ns=3;s=Counter',
+          mode: 'HA',
+          haMode: {
+            aggregate: 'raw',
+            resampling: 'none'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id3',
+        name: 'item3',
+        enabled: true,
+        settings: {
+          nodeId: 'ns=3;s=Triangle',
+          mode: 'HA',
+          haMode: {
+            aggregate: 'raw',
+            resampling: 'none'
+          }
+        },
+        scanModeId: 'scanModeId2'
+      },
+      {
+        id: 'id1',
+        name: 'item1',
+        enabled: true,
+        settings: {
+          nodeId: 'ns=3;s=Random',
+          mode: 'DA'
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id2',
+        name: 'item2',
+        enabled: true,
+        settings: {
+          nodeId: 'ns=3;s=Counter',
+          mode: 'DA'
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id3',
+        name: 'item3',
+        enabled: true,
+        settings: {
+          nodeId: 'ns=3;s=Triangle',
+          mode: 'DA'
+        },
+        scanModeId: 'scanModeId2'
+      }
+    ]
   };
 
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
-    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
     const connectionService = new ConnectionService(logger);
     south = new SouthOPCUA(
       configuration,
       addContentCallback,
       encryptionService,
-      repositoryService,
+      southConnectorRepository,
+      southMetricsRepository,
+      southCacheRepository,
+      scanModeRepository,
       logger,
       'baseFolder',
       connectionService
@@ -1012,7 +1104,8 @@ describe('SouthOPCUA with basic auth', () => {
 });
 
 describe('SouthOPCUA with certificate', () => {
-  const configuration: SouthConnectorDTO<SouthOPCUASettings> = {
+  let south: SouthOPCUA;
+  const configuration: SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings> = {
     id: 'southId',
     name: 'south',
     type: 'test',
@@ -1024,6 +1117,7 @@ describe('SouthOPCUA with certificate', () => {
       readDelay: 0,
       overlap: 0
     },
+    sharedConnection: false,
     settings: {
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
       retryInterval: 10000,
@@ -1034,24 +1128,101 @@ describe('SouthOPCUA with certificate', () => {
         keyFilePath: 'myKeyPath',
         username: '',
         password: ''
-      } as unknown as SouthOPCUASettingsAuthentication,
+      },
       securityMode: 'None',
       securityPolicy: 'None',
       keepSessionAlive: false
-    }
+    },
+    items: [
+      {
+        id: 'id1',
+        name: 'item1',
+        enabled: true,
+        settings: {
+          nodeId: 'ns=3;s=Random',
+          mode: 'HA',
+          haMode: {
+            aggregate: 'raw',
+            resampling: 'none'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id2',
+        name: 'item2',
+        enabled: true,
+        settings: {
+          nodeId: 'ns=3;s=Counter',
+          mode: 'HA',
+          haMode: {
+            aggregate: 'raw',
+            resampling: 'none'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id3',
+        name: 'item3',
+        enabled: true,
+        settings: {
+          nodeId: 'ns=3;s=Triangle',
+          mode: 'HA',
+          haMode: {
+            aggregate: 'raw',
+            resampling: 'none'
+          }
+        },
+        scanModeId: 'scanModeId2'
+      },
+      {
+        id: 'id1',
+        name: 'item1',
+        enabled: true,
+        settings: {
+          nodeId: 'ns=3;s=Random',
+          mode: 'DA'
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id2',
+        name: 'item2',
+        enabled: true,
+        settings: {
+          nodeId: 'ns=3;s=Counter',
+          mode: 'DA'
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id3',
+        name: 'item3',
+        enabled: true,
+        settings: {
+          nodeId: 'ns=3;s=Triangle',
+          mode: 'DA'
+        },
+        scanModeId: 'scanModeId2'
+      }
+    ]
   };
 
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
-    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
     const connectionService = new ConnectionService(logger);
     south = new SouthOPCUA(
       configuration,
       addContentCallback,
       encryptionService,
-      repositoryService,
+      southConnectorRepository,
+      southMetricsRepository,
+      southCacheRepository,
+      scanModeRepository,
       logger,
       'baseFolder',
       connectionService
@@ -1110,11 +1281,11 @@ describe('SouthOPCUA with certificate', () => {
     const nodes: Array<HistoryReadValueIdOptions> = [
       { continuationPoint: undefined, dataEncoding: undefined, indexRange: undefined, nodeId: 'ns=3;i=1001' }
     ];
-    expect(south.getHistoryReadRequest(nowDateString, nowDateString, 'raw', 'none', nodes)).toEqual(
+    expect(south.getHistoryReadRequest(testData.constants.dates.FAKE_NOW, testData.constants.dates.FAKE_NOW, 'raw', 'none', nodes)).toEqual(
       new HistoryReadRequest({
         historyReadDetails: new ReadRawModifiedDetails({
-          startTime: new Date(nowDateString),
-          endTime: new Date(nowDateString),
+          startTime: new Date(testData.constants.dates.FAKE_NOW),
+          endTime: new Date(testData.constants.dates.FAKE_NOW),
           isReadModified: false,
           returnBounds: false
         }),
@@ -1124,11 +1295,13 @@ describe('SouthOPCUA with certificate', () => {
       })
     );
 
-    expect(south.getHistoryReadRequest(nowDateString, nowDateString, 'average', 'none', nodes)).toEqual(
+    expect(
+      south.getHistoryReadRequest(testData.constants.dates.FAKE_NOW, testData.constants.dates.FAKE_NOW, 'average', 'none', nodes)
+    ).toEqual(
       new HistoryReadRequest({
         historyReadDetails: new ReadProcessedDetails({
-          startTime: new Date(nowDateString),
-          endTime: new Date(nowDateString),
+          startTime: new Date(testData.constants.dates.FAKE_NOW),
+          endTime: new Date(testData.constants.dates.FAKE_NOW),
           aggregateType: Array(nodes.length).fill(AggregateFunction.Average)
         }),
         nodesToRead: nodes,
@@ -1137,11 +1310,13 @@ describe('SouthOPCUA with certificate', () => {
       })
     );
 
-    expect(south.getHistoryReadRequest(nowDateString, nowDateString, 'minimum', 'none', nodes)).toEqual(
+    expect(
+      south.getHistoryReadRequest(testData.constants.dates.FAKE_NOW, testData.constants.dates.FAKE_NOW, 'minimum', 'none', nodes)
+    ).toEqual(
       new HistoryReadRequest({
         historyReadDetails: new ReadProcessedDetails({
-          startTime: new Date(nowDateString),
-          endTime: new Date(nowDateString),
+          startTime: new Date(testData.constants.dates.FAKE_NOW),
+          endTime: new Date(testData.constants.dates.FAKE_NOW),
           aggregateType: Array(nodes.length).fill(AggregateFunction.Minimum)
         }),
         nodesToRead: nodes,
@@ -1150,11 +1325,13 @@ describe('SouthOPCUA with certificate', () => {
       })
     );
 
-    expect(south.getHistoryReadRequest(nowDateString, nowDateString, 'maximum', 'none', nodes)).toEqual(
+    expect(
+      south.getHistoryReadRequest(testData.constants.dates.FAKE_NOW, testData.constants.dates.FAKE_NOW, 'maximum', 'none', nodes)
+    ).toEqual(
       new HistoryReadRequest({
         historyReadDetails: new ReadProcessedDetails({
-          startTime: new Date(nowDateString),
-          endTime: new Date(nowDateString),
+          startTime: new Date(testData.constants.dates.FAKE_NOW),
+          endTime: new Date(testData.constants.dates.FAKE_NOW),
           aggregateType: Array(nodes.length).fill(AggregateFunction.Maximum)
         }),
         nodesToRead: nodes,
@@ -1163,11 +1340,13 @@ describe('SouthOPCUA with certificate', () => {
       })
     );
 
-    expect(south.getHistoryReadRequest(nowDateString, nowDateString, 'count', 'none', nodes)).toEqual(
+    expect(
+      south.getHistoryReadRequest(testData.constants.dates.FAKE_NOW, testData.constants.dates.FAKE_NOW, 'count', 'none', nodes)
+    ).toEqual(
       new HistoryReadRequest({
         historyReadDetails: new ReadProcessedDetails({
-          startTime: new Date(nowDateString),
-          endTime: new Date(nowDateString),
+          startTime: new Date(testData.constants.dates.FAKE_NOW),
+          endTime: new Date(testData.constants.dates.FAKE_NOW),
           aggregateType: Array(nodes.length).fill(AggregateFunction.Count)
         }),
         nodesToRead: nodes,
@@ -1179,7 +1358,8 @@ describe('SouthOPCUA with certificate', () => {
 });
 
 describe('SouthOPCUA test connection', () => {
-  const configuration: SouthConnectorDTO<SouthOPCUASettings> = {
+  let south: SouthOPCUA;
+  const configuration: SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings> = {
     id: 'southId',
     name: 'south',
     type: 'test',
@@ -1191,21 +1371,94 @@ describe('SouthOPCUA test connection', () => {
       readDelay: 0,
       overlap: 0
     },
+    sharedConnection: false,
     settings: {
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
       retryInterval: 10000,
       readTimeout: 15000,
       authentication: {
         type: 'none',
-        username: null,
         password: null,
-        certFilePath: null,
         keyFilePath: null
-      } as unknown as SouthOPCUASettingsAuthentication,
+      },
       securityMode: 'None',
       securityPolicy: 'None',
       keepSessionAlive: false
-    }
+    },
+    items: [
+      {
+        id: 'id1',
+        name: 'item1',
+        enabled: true,
+        settings: {
+          nodeId: 'ns=3;s=Random',
+          mode: 'HA',
+          haMode: {
+            aggregate: 'raw',
+            resampling: 'none'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id2',
+        name: 'item2',
+        enabled: true,
+        settings: {
+          nodeId: 'ns=3;s=Counter',
+          mode: 'HA',
+          haMode: {
+            aggregate: 'raw',
+            resampling: 'none'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id3',
+        name: 'item3',
+        enabled: true,
+        settings: {
+          nodeId: 'ns=3;s=Triangle',
+          mode: 'HA',
+          haMode: {
+            aggregate: 'raw',
+            resampling: 'none'
+          }
+        },
+        scanModeId: 'scanModeId2'
+      },
+      {
+        id: 'id1',
+        name: 'item1',
+        enabled: true,
+        settings: {
+          nodeId: 'ns=3;s=Random',
+          mode: 'DA'
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id2',
+        name: 'item2',
+        enabled: true,
+        settings: {
+          nodeId: 'ns=3;s=Counter',
+          mode: 'DA'
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id3',
+        name: 'item3',
+        enabled: true,
+        settings: {
+          nodeId: 'ns=3;s=Triangle',
+          mode: 'DA'
+        },
+        scanModeId: 'scanModeId2'
+      }
+    ]
   };
 
   // Mock UUID
@@ -1242,14 +1495,17 @@ describe('SouthOPCUA test connection', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime();
-    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
     const connectionService = new ConnectionService(logger);
     south = new SouthOPCUA(
       configuration,
       addContentCallback,
       encryptionService,
-      repositoryService,
+      southConnectorRepository,
+      southMetricsRepository,
+      southCacheRepository,
+      scanModeRepository,
       logger,
       'baseFolder',
       connectionService
@@ -1343,7 +1599,7 @@ describe('SouthOPCUA test connection', () => {
       throw error;
     });
 
-    await expect(south.testConnection()).rejects.toThrow(new Error(`File "${error.path}" does not exist`));
+    await expect(south.testConnection()).rejects.toThrow(new Error(`Wrong file`));
   });
 
   it('Failed to read private key', async () => {
@@ -1385,34 +1641,107 @@ describe('SouthOPCUA test connection', () => {
 });
 
 describe('SouthOPCUA with shared connection', () => {
-  const connector: SouthConnectorDTO<SouthOPCUASettings> = {
+  let south: SouthOPCUA;
+  const configuration: SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings> = {
     id: 'southId',
     name: 'south',
     type: 'test',
     description: 'my test connector',
     enabled: true,
-    sharedConnection: true,
     history: {
       maxInstantPerItem: true,
       maxReadInterval: 3600,
       readDelay: 0,
       overlap: 0
     },
+    sharedConnection: true,
     settings: {
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
       retryInterval: 10000,
       readTimeout: 15000,
       authentication: {
         type: 'none',
-        username: null,
         password: null,
-        certFilePath: null,
         keyFilePath: null
-      } as unknown as SouthOPCUASettingsAuthentication,
+      },
       securityMode: 'None',
       securityPolicy: 'None',
       keepSessionAlive: false
-    }
+    },
+    items: [
+      {
+        id: 'id1',
+        name: 'item1',
+        enabled: true,
+        settings: {
+          nodeId: 'ns=3;s=Random',
+          mode: 'HA',
+          haMode: {
+            aggregate: 'raw',
+            resampling: 'none'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id2',
+        name: 'item2',
+        enabled: true,
+        settings: {
+          nodeId: 'ns=3;s=Counter',
+          mode: 'HA',
+          haMode: {
+            aggregate: 'raw',
+            resampling: 'none'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id3',
+        name: 'item3',
+        enabled: true,
+        settings: {
+          nodeId: 'ns=3;s=Triangle',
+          mode: 'HA',
+          haMode: {
+            aggregate: 'raw',
+            resampling: 'none'
+          }
+        },
+        scanModeId: 'scanModeId2'
+      },
+      {
+        id: 'id1',
+        name: 'item1',
+        enabled: true,
+        settings: {
+          nodeId: 'ns=3;s=Random',
+          mode: 'DA'
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id2',
+        name: 'item2',
+        enabled: true,
+        settings: {
+          nodeId: 'ns=3;s=Counter',
+          mode: 'DA'
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id3',
+        name: 'item3',
+        enabled: true,
+        settings: {
+          nodeId: 'ns=3;s=Triangle',
+          mode: 'DA'
+        },
+        scanModeId: 'scanModeId2'
+      }
+    ]
   };
 
   beforeEach(async () => {
@@ -1420,7 +1749,18 @@ describe('SouthOPCUA with shared connection', () => {
     jest.useFakeTimers().setSystemTime();
 
     const connectionService = new ConnectionService(logger);
-    south = new SouthOPCUA(connector, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder', connectionService);
+    south = new SouthOPCUA(
+      configuration,
+      addContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southMetricsRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      'baseFolder',
+      connectionService
+    );
   });
 
   it('should initialize connectionSettings', () => {
@@ -1437,7 +1777,7 @@ describe('SouthOPCUA with shared connection', () => {
     await south.createSession();
 
     expect(createSessionConfigsSpy).toHaveBeenCalledWith(
-      connector.settings,
+      configuration.settings,
       south['clientCertificateManager'],
       encryptionService,
       'Shared session'

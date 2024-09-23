@@ -7,7 +7,7 @@ import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { SouthConnectorService } from '../services/south-connector.service';
 import { of } from 'rxjs';
-import { SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorLightDTO } from '../../../../shared/model/south-connector.model';
 import { NotificationService } from '../shared/notification.service';
 
 class SouthListComponentTester extends ComponentTester<SouthListComponent> {
@@ -28,34 +28,20 @@ describe('SouthListComponent', () => {
   let southConnectorService: jasmine.SpyObj<SouthConnectorService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
 
-  const southConnectors: Array<SouthConnectorDTO> = [
+  const southConnectors: Array<SouthConnectorLightDTO> = [
     {
       id: 'id1',
       type: 'Generic',
       name: 'South Connector1',
       description: 'My first South connector description',
-      enabled: true,
-      history: {
-        maxInstantPerItem: false,
-        maxReadInterval: 0,
-        readDelay: 200,
-        overlap: 0
-      },
-      settings: {}
+      enabled: true
     },
     {
       id: 'id2',
       type: 'Generic',
       name: 'South Connector 2',
       description: 'My second South connector description',
-      enabled: false,
-      history: {
-        maxInstantPerItem: false,
-        maxReadInterval: 0,
-        readDelay: 200,
-        overlap: 0
-      },
-      settings: {}
+      enabled: false
     }
   ];
 

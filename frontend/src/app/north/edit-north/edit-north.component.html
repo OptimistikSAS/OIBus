@@ -206,20 +206,7 @@
             </div>
           }
           <!-- subscription -->
-          @if (mode === 'create') {
-            <oib-north-subscriptions
-              [northConnector]="northConnector"
-              [inMemory]="true"
-              (inMemorySubscriptions)="updateInMemorySubscriptions($event)"
-            />
-          }
-          @if (mode === 'edit' && northConnector) {
-            <oib-north-subscriptions
-              [northConnector]="northConnector"
-              [inMemory]="false"
-              (inMemorySubscriptions)="updateInMemorySubscriptions($event)"
-            />
-          }
+          <oib-north-subscriptions [northConnector]="northConnector" (inMemorySubscriptions)="updateInMemorySubscriptions($event)" />
         </form>
         @if (mode === 'create') {
           <div id="actions" class="mt-2 d-flex justify-content-end">

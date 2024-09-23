@@ -1,5 +1,4 @@
 import { getNetworkSettingsFromRegistration, getOIBusInfo } from '../utils';
-import RepositoryService from '../repository.service';
 import pino from 'pino';
 import { EventEmitter } from 'node:events';
 import DeferredPromise from '../deferred-promise';
@@ -15,6 +14,16 @@ import {
   OIBusScanModeCommandDTO,
   OIBusSouthCommandDTO
 } from './oianalytics.model';
+import EngineRepository from '../../repository/config/engine.repository';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import SouthConnectorRepository from '../../repository/config/south-connector.repository';
+import NorthConnectorRepository from '../../repository/config/north-connector.repository';
+import OIAnalyticsMessageRepository from '../../repository/config/oianalytics-message.repository';
+import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
+import CryptoRepository from '../../repository/crypto/crypto.repository';
+import { HistoryQueryEntity } from '../../model/histor-query.model';
+import { SouthItemSettings, SouthSettings } from '../../../../shared/model/south-settings.model';
+import { NorthSettings } from '../../../../shared/model/north-settings.model';
 
 const STOP_TIMEOUT = 30_000;
 const MESSAGE_TIMEOUT = 15_000;
@@ -26,14 +35,20 @@ export default class OIAnalyticsMessageService {
   private stopTimeout: NodeJS.Timeout | null = null;
 
   constructor(
-    private repositoryService: RepositoryService,
+    private oIAnalyticsMessageRepository: OIAnalyticsMessageRepository,
+    private oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
+    private engineRepository: EngineRepository,
+    private cryptoRepository: CryptoRepository,
+    private scanModeRepository: ScanModeRepository,
+    private southRepository: SouthConnectorRepository,
+    private northRepository: NorthConnectorRepository,
     private encryptionService: EncryptionService,
     private logger: pino.Logger
   ) {}
 
   start(): void {
     this.createFullConfigMessageIfNotPending();
-    this.messagesQueue = this.repositoryService.oianalyticsMessageRepository.list({ status: ['PENDING'], types: [] });
+    this.messagesQueue = this.oIAnalyticsMessageRepository.list({ status: ['PENDING'], types: [] });
 
     this.triggerRun.on('next', async () => {
       if (!this.runProgress$) {
@@ -46,7 +61,7 @@ export default class OIAnalyticsMessageService {
   }
 
   async run(): Promise<void> {
-    const registration = this.repositoryService.oianalyticsRegistrationRepository.get()!;
+    const registration = this.oIAnalyticsRegistrationRepository.get()!;
     if (registration.status !== 'REGISTERED') {
       this.logger.trace(`OIBus is not registered to OIAnalytics. Messages won't be sent`);
       return;
@@ -59,13 +74,13 @@ export default class OIAnalyticsMessageService {
       switch (message.type) {
         case 'full-config':
           await this.sendFullConfiguration(this.createFullConfigurationCommand());
-          this.repositoryService.oianalyticsMessageRepository.markAsCompleted(message.id, DateTime.now().toUTC().toISO());
+          this.oIAnalyticsMessageRepository.markAsCompleted(message.id, DateTime.now().toUTC().toISO());
           break;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // TODO: check error type
-      this.logger.error(`Error while sending message ${message.id} of type ${message.type}. ${error.toString()}`);
-      this.repositoryService.oianalyticsMessageRepository.markAsErrored(message.id, DateTime.now().toUTC().toISO(), error.message);
+      this.logger.error(`Error while sending message ${message.id} of type ${message.type}. Error: ${(error as Error).message}`);
+      this.oIAnalyticsMessageRepository.markAsErrored(message.id, DateTime.now().toUTC().toISO(), (error as Error).message);
     }
     this.removeMessageFromQueue(message.id);
 
@@ -94,25 +109,29 @@ export default class OIAnalyticsMessageService {
     this.logger = logger;
   }
 
+  createHistoryQueryMessage(_historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>) {
+    // TODO
+  }
+
   /**
    * Create a FULL_CONFIG message if there is no pending message of this type. It will trigger at startup
    */
   createFullConfigMessageIfNotPending() {
-    const registration = this.repositoryService.oianalyticsRegistrationRepository.get()!;
+    const registration = this.oIAnalyticsRegistrationRepository.get()!;
     if (registration.status !== 'REGISTERED') {
       this.logger.debug(`OIBus is not registered to OIAnalytics. Messages won't be created`);
       return;
     }
 
     if (
-      this.repositoryService.oianalyticsMessageRepository.list({
+      this.oIAnalyticsMessageRepository.list({
         status: ['PENDING'],
         types: ['full-config']
       }).length > 0
     ) {
       return;
     }
-    const message = this.repositoryService.oianalyticsMessageRepository.create({ type: 'full-config' });
+    const message = this.oIAnalyticsMessageRepository.create({ type: 'full-config' });
     this.addMessageToQueue(message);
     this.triggerRun.emit('next');
   }
@@ -132,7 +151,7 @@ export default class OIAnalyticsMessageService {
 
   private async sendFullConfiguration(configuration: OIBusFullConfigurationCommandDTO): Promise<void> {
     const endpoint = '/api/oianalytics/oibus/configuration';
-    const registrationSettings = this.repositoryService.oianalyticsRegistrationRepository.get()!;
+    const registrationSettings = this.oIAnalyticsRegistrationRepository.get()!;
     const connectionSettings = await getNetworkSettingsFromRegistration(registrationSettings, endpoint, this.encryptionService);
     const url = `${connectionSettings.host}${endpoint}`;
 
@@ -157,7 +176,7 @@ export default class OIAnalyticsMessageService {
   //
   private createFullConfigurationCommand(): OIBusFullConfigurationCommandDTO {
     const engineCommand = this.createEngineCommand();
-    const cryptoSettings = this.repositoryService.cryptoRepository.getCryptoSettings(engineCommand.oIBusInternalId!)!;
+    const cryptoSettings = this.cryptoRepository.getCryptoSettings(engineCommand.oIBusInternalId!)!;
     return {
       engine: engineCommand,
       cryptoSettings: {
@@ -172,7 +191,7 @@ export default class OIAnalyticsMessageService {
   }
 
   private createEngineCommand(): OIBusEngineCommandDTO {
-    const engine = this.repositoryService.engineRepository.get()!;
+    const engine = this.engineRepository.get()!;
     const info = getOIBusInfo(engine);
     return {
       oIBusInternalId: engine.id,
@@ -185,7 +204,7 @@ export default class OIAnalyticsMessageService {
   }
 
   private createScanModesCommand(): Array<OIBusScanModeCommandDTO> {
-    const scanModes = this.repositoryService.scanModeRepository.findAll();
+    const scanModes = this.scanModeRepository.findAll();
     return scanModes.map(scanMode => ({
       oIBusInternalId: scanMode.id,
       name: scanMode.name,
@@ -194,25 +213,29 @@ export default class OIAnalyticsMessageService {
   }
 
   private createSouthConnectorsCommand(): Array<OIBusSouthCommandDTO> {
-    const souths = this.repositoryService.southConnectorRepository.findAll();
-    return souths.map(south => {
-      const items = this.repositoryService.southItemRepository.findAllForSouthConnector(south.id);
+    const souths = this.southRepository.findAllSouth();
+    return souths.map(southLight => {
+      const south = this.southRepository.findSouthById(southLight.id)!;
       return {
         oIBusInternalId: south.id,
         name: south.name,
         type: south.type,
-        settings: { ...south, items }
+        settings: south.settings // TODO: filter secrets
       };
     });
   }
 
   private createNorthConnectorsCommand(): Array<OIBusNorthCommandDTO> {
-    const norths = this.repositoryService.northConnectorRepository.findAll();
-    return norths.map(north => ({
-      oIBusInternalId: north.id,
-      name: north.name,
-      type: north.type,
-      settings: north
-    }));
+    const norths = this.northRepository.findAllNorth();
+    return norths.map(northLight => {
+      const north = this.northRepository.findNorthById(northLight.id)!;
+
+      return {
+        oIBusInternalId: north.id,
+        name: north.name,
+        type: north.type,
+        settings: north.settings // TODO: filter secrets
+      };
+    });
   }
 }

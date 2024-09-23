@@ -5,14 +5,18 @@ import SouthConnector from '../south-connector';
 import { compress } from '../../service/utils';
 import manifest from './manifest';
 
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import pino from 'pino';
 import EncryptionService from '../../service/encryption.service';
-import RepositoryService from '../../service/repository.service';
 import { QueriesFile } from '../south-interface';
 import { SouthFolderScannerItemSettings, SouthFolderScannerSettings } from '../../../../shared/model/south-settings.model';
 import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
+import { SouthConnectorEntity } from '../../model/south-connector.model';
+import SouthConnectorRepository from '../../repository/config/south-connector.repository';
+import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
+import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
 
 /**
  * Class SouthFolderScanner - Retrieve file from a local or remote folder
@@ -29,14 +33,27 @@ export default class SouthFolderScanner
    * Constructor for SouthFolderScanner
    */
   constructor(
-    connector: SouthConnectorDTO<SouthFolderScannerSettings>,
+    connector: SouthConnectorEntity<SouthFolderScannerSettings, SouthFolderScannerItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
-    repositoryService: RepositoryService,
+    southConnectorRepository: SouthConnectorRepository,
+    southMetricsRepository: SouthConnectorMetricsRepository,
+    southCacheRepository: SouthCacheRepository,
+    scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, engineAddContentCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(
+      connector,
+      engineAddContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southMetricsRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      baseFolder
+    );
     this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
   }
 
@@ -45,14 +62,14 @@ export default class SouthFolderScanner
 
     try {
       await fs.access(inputFolder, fs.constants.F_OK);
-    } catch (error: any) {
-      throw new Error(`Folder "${inputFolder}" does not exist: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`Folder "${inputFolder}" does not exist: ${(error as Error).message}`);
     }
 
     try {
       await fs.access(inputFolder, fs.constants.R_OK);
-    } catch (error: any) {
-      throw new Error(`Read access error on "${inputFolder}": ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`Read access error on "${inputFolder}": ${(error as Error).message}`);
     }
 
     const stat = await fs.stat(inputFolder);
@@ -75,7 +92,7 @@ export default class SouthFolderScanner
       }
     }
 
-    const values: OIBusTimeValue[] = matchedFiles.map(file => ({
+    const values: Array<OIBusTimeValue> = matchedFiles.map(file => ({
       pointId: item.name,
       timestamp: DateTime.now().toUTC().toISO()!,
       data: { value: file }
@@ -86,10 +103,7 @@ export default class SouthFolderScanner
   async start(dataStream = true): Promise<void> {
     await super.start(dataStream);
     // Create a custom table in the south cache database to manage file already sent when preserve file is set to true
-    this.cacheService!.cacheRepository.createCustomTable(
-      `folder_scanner_${this.connector.id}`,
-      'filename TEXT PRIMARY KEY, mtime_ms INTEGER'
-    );
+    this.cacheService!.createCustomTable(`folder_scanner_${this.connector.id}`, 'filename TEXT PRIMARY KEY, mtime_ms INTEGER');
   }
 
   /**
@@ -172,7 +186,7 @@ export default class SouthFolderScanner
 
   getModifiedTime(filename: string): number {
     const query = `SELECT mtime_ms AS mtimeMs FROM "folder_scanner_${this.connector.id}" WHERE filename = ?`;
-    const result: { mtimeMs: string } | null = this.cacheService!.cacheRepository.getQueryOnCustomTable(query, [filename]) as {
+    const result: { mtimeMs: string } | null = this.cacheService!.getQueryOnCustomTable(query, [filename]) as {
       mtimeMs: string;
     } | null;
     return result ? parseFloat(result.mtimeMs) : 0;
@@ -180,7 +194,7 @@ export default class SouthFolderScanner
 
   updateModifiedTime(filename: string, mtimeMs: number): void {
     const query = `INSERT INTO "folder_scanner_${this.connector.id}" (filename, mtime_ms) VALUES (?, ?) ON CONFLICT(filename) DO UPDATE SET mtime_ms = ?`;
-    this.cacheService!.cacheRepository.runQueryOnCustomTable(query, [filename, mtimeMs, mtimeMs]);
+    this.cacheService!.runQueryOnCustomTable(query, [filename, mtimeMs, mtimeMs]);
   }
 
   /**

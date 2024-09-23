@@ -12,6 +12,7 @@ import { ScanModeService } from '../../services/scan-mode.service';
 import { NotificationService } from '../../shared/notification.service';
 import { EngineService } from '../../services/engine.service';
 import { OIBusInfo } from '../../../../../shared/model/engine.model';
+import { NorthSettings } from '../../../../../shared/model/north-settings.model';
 
 class NorthDetailComponentTester extends ComponentTester<NorthDetailComponent> {
   constructor() {
@@ -42,7 +43,7 @@ describe('NorthDetailComponent', () => {
   let engineService: jasmine.SpyObj<EngineService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
 
-  const northConnector: NorthConnectorDTO = {
+  const northConnector: NorthConnectorDTO<NorthSettings> = {
     id: 'id1',
     type: 'Generic',
     name: 'North Connector',
@@ -50,7 +51,7 @@ describe('NorthDetailComponent', () => {
     enabled: true,
     settings: {
       host: 'url'
-    },
+    } as NorthSettings,
     caching: {
       scanModeId: 'scanModeId1',
       retryInterval: 1000,
@@ -67,7 +68,8 @@ describe('NorthDetailComponent', () => {
           retentionDuration: 0
         }
       }
-    }
+    },
+    subscriptions: []
   };
   const manifest: NorthConnectorManifest = {
     id: 'oianalytics',

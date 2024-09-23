@@ -5,15 +5,19 @@ import SouthConnector from '../south-connector';
 import { compress, createFolder } from '../../service/utils';
 import manifest from './manifest';
 
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import pino from 'pino';
 import EncryptionService from '../../service/encryption.service';
-import RepositoryService from '../../service/repository.service';
 import { QueriesFile } from '../south-interface';
 import { SouthSFTPItemSettings, SouthSFTPSettings } from '../../../../shared/model/south-settings.model';
 import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
 import sftpClient, { ConnectOptions, FileInfo } from 'ssh2-sftp-client';
+import { SouthConnectorEntity } from '../../model/south-connector.model';
+import SouthConnectorRepository from '../../repository/config/south-connector.repository';
+import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
+import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
 
 /**
  * Class SouthSFTP - Retrieve files from remote SFTP instance
@@ -27,14 +31,27 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
    * Constructor for SouthFolderScanner
    */
   constructor(
-    connector: SouthConnectorDTO<SouthSFTPSettings>,
+    connector: SouthConnectorEntity<SouthSFTPSettings, SouthSFTPItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
-    repositoryService: RepositoryService,
+    southConnectorRepository: SouthConnectorRepository,
+    southMetricsRepository: SouthConnectorMetricsRepository,
+    southCacheRepository: SouthCacheRepository,
+    scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, engineAddContentCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(
+      connector,
+      engineAddContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southMetricsRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      baseFolder
+    );
     this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
   }
 
@@ -45,15 +62,15 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
       const client = new sftpClient();
       await client.connect(connectionOptions);
       await client.end();
-    } catch (error: any) {
-      throw new Error(`Access error on "${this.connector.settings.host}:${this.connector.settings.port}": ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`Access error on "${this.connector.settings.host}:${this.connector.settings.port}": ${(error as Error).message}`);
     }
   }
 
   override async testItem(item: SouthConnectorItemDTO<SouthSFTPItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
     const filesInFolder = await this.listFiles(item);
 
-    const values: OIBusTimeValue[] = filesInFolder.map(file => ({
+    const values: Array<OIBusTimeValue> = filesInFolder.map(file => ({
       pointId: item.name,
       timestamp: DateTime.now().toUTC().toISO()!,
       data: { value: file.name }
@@ -65,10 +82,7 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
     await createFolder(this.tmpFolder);
     await super.start(dataStream);
     // Create a custom table in the south cache database to manage file already sent when preserve file is set to true
-    this.cacheService!.cacheRepository.createCustomTable(
-      `folder_scanner_${this.connector.id}`,
-      'filename TEXT PRIMARY KEY, mtime_ms INTEGER'
-    );
+    this.cacheService!.createCustomTable(`folder_scanner_${this.connector.id}`, 'filename TEXT PRIMARY KEY, mtime_ms INTEGER');
   }
 
   /**
@@ -125,7 +139,7 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
 
   getModifiedTime(filename: string): number {
     const query = `SELECT mtime_ms AS mtimeMs FROM "sftp_${this.connector.id}" WHERE filename = ?`;
-    const result: { mtimeMs: string } | null = this.cacheService!.cacheRepository.getQueryOnCustomTable(query, [filename]) as {
+    const result: { mtimeMs: string } | null = this.cacheService!.getQueryOnCustomTable(query, [filename]) as {
       mtimeMs: string;
     } | null;
     return result ? parseFloat(result.mtimeMs) : 0;
@@ -133,7 +147,7 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
 
   updateModifiedTime(filename: string, mtimeMs: number): void {
     const query = `INSERT INTO "sftp_${this.connector.id}" (filename, mtime_ms) VALUES (?, ?) ON CONFLICT(filename) DO UPDATE SET mtime_ms = ?`;
-    this.cacheService!.cacheRepository.runQueryOnCustomTable(query, [filename, mtimeMs, mtimeMs]);
+    this.cacheService!.runQueryOnCustomTable(query, [filename, mtimeMs, mtimeMs]);
   }
 
   /**

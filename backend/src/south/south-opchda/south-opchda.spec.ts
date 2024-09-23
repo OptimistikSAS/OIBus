@@ -1,29 +1,39 @@
 import SouthOPCHDA from './south-opchda';
-import DatabaseMock from '../../tests/__mocks__/database.mock';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-import RepositoryService from '../../service/repository.service';
-import RepositoryServiceMock from '../../tests/__mocks__/service/repository-service.mock';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import { SouthOPCHDAItemSettings, SouthOPCHDASettings } from '../../../../shared/model/south-settings.model';
 import fetch from 'node-fetch';
+import SouthConnectorRepository from '../../repository/config/south-connector.repository';
+import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
+import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
+import NorthMetricsRepositoryMock from '../../tests/__mocks__/repository/log/north-metrics-repository.mock';
+import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
+import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
+import SouthConnectorMetricsServiceMock from '../../tests/__mocks__/service/south-connector-metrics-service.mock';
+import { SouthConnectorEntity } from '../../model/south-connector.model';
 
 jest.mock('node-fetch');
 jest.mock('node:fs/promises');
 jest.mock('../../service/utils');
-const database = new DatabaseMock();
+
+const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
+const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
+const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
+const southMetricsRepository: SouthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
+const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
+const southCacheService = new SouthCacheServiceMock();
+const southConnectorMetricsService = new SouthConnectorMetricsServiceMock();
+
 jest.mock(
   '../../service/south-cache.service',
   () =>
     function () {
-      return {
-        createSouthCacheScanModeTable: jest.fn(),
-        southCacheRepository: {
-          database
-        }
-      };
+      return southCacheService;
     }
 );
 
@@ -31,92 +41,86 @@ jest.mock(
   '../../service/south-connector-metrics.service',
   () =>
     function () {
-      return {
-        initMetrics: jest.fn(),
-        updateMetrics: jest.fn(),
-        get stream() {
-          return { stream: 'myStream' };
-        },
-        metrics: {
-          numberOfValuesRetrieved: 1,
-          numberOfFilesRetrieved: 1
-        }
-      };
+      return southConnectorMetricsService;
     }
 );
 
+const logger: pino.Logger = new PinoLogger();
 const addContentCallback = jest.fn();
 
-const logger: pino.Logger = new PinoLogger();
-
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
-const repositoryService: RepositoryService = new RepositoryServiceMock();
-const items: Array<SouthConnectorItemDTO<SouthOPCHDAItemSettings>> = [
-  {
-    id: 'id1',
-    name: 'item1',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {
-      nodeId: 'ns=3;s=Random',
-      aggregate: 'raw',
-      resampling: 'none'
-    },
-    scanModeId: 'scanModeId1'
-  },
-  {
-    id: 'id2',
-    name: 'item2',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {
-      nodeId: 'ns=3;s=Counter',
-      aggregate: 'raw'
-    },
-    scanModeId: 'scanModeId1'
-  },
-  {
-    id: 'id3',
-    name: 'item3',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {
-      nodeId: 'ns=3;s=Triangle',
-      aggregate: 'average',
-      resampling: '10s'
-    },
-    scanModeId: 'scanModeId2'
-  }
-];
-
-const configuration: SouthConnectorDTO<SouthOPCHDASettings> = {
-  id: 'southId',
-  name: 'south',
-  type: 'test',
-  description: 'my test connector',
-  enabled: true,
-  history: {
-    maxInstantPerItem: true,
-    maxReadInterval: 3600,
-    readDelay: 0,
-    overlap: 0
-  },
-  settings: {
-    agentUrl: 'http://localhost:2224',
-    retryInterval: 1000,
-    host: 'localhost',
-    serverName: 'Matrikon.OPC.Simulation'
-  }
-};
-let south: SouthOPCHDA;
-
 describe('South OPCHDA', () => {
-  beforeEach(async () => {
-    jest.resetAllMocks();
-    jest.useFakeTimers();
-    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
+  let south: SouthOPCHDA;
+  const configuration: SouthConnectorEntity<SouthOPCHDASettings, SouthOPCHDAItemSettings> = {
+    id: 'southId',
+    name: 'south',
+    type: 'test',
+    description: 'my test connector',
+    enabled: true,
+    history: {
+      maxInstantPerItem: true,
+      maxReadInterval: 3600,
+      readDelay: 0,
+      overlap: 0
+    },
+    sharedConnection: false,
+    settings: {
+      agentUrl: 'http://localhost:2224',
+      retryInterval: 1000,
+      host: 'localhost',
+      serverName: 'Matrikon.OPC.Simulation'
+    },
+    items: [
+      {
+        id: 'id1',
+        name: 'item1',
+        enabled: true,
+        settings: {
+          nodeId: 'ns=3;s=Random',
+          aggregate: 'raw',
+          resampling: 'none'
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id2',
+        name: 'item2',
+        enabled: true,
+        settings: {
+          nodeId: 'ns=3;s=Counter',
+          aggregate: 'raw'
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id3',
+        name: 'item3',
+        enabled: true,
+        settings: {
+          nodeId: 'ns=3;s=Triangle',
+          aggregate: 'average',
+          resampling: '10s'
+        },
+        scanModeId: 'scanModeId2'
+      }
+    ]
+  };
 
-    south = new SouthOPCHDA(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers();
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
+
+    south = new SouthOPCHDA(
+      configuration,
+      addContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southMetricsRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      'baseFolder'
+    );
   });
 
   it('should properly connect to remote agent and disconnect ', async () => {
@@ -161,13 +165,9 @@ describe('South OPCHDA', () => {
   });
 
   it('should properly clear reconnect timeout on disconnect when not connected', async () => {
-    (fetch as unknown as jest.Mock)
-      .mockImplementationOnce(() => {
-        throw new Error('connection failed');
-      })
-      .mockImplementationOnce(() => {
-        throw new Error('disconnection failed');
-      });
+    (fetch as unknown as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('connection failed');
+    });
 
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
 
@@ -279,7 +279,7 @@ describe('South OPCHDA', () => {
         })
       );
 
-    const result = await south.historyQuery(items, startTime, endTime);
+    const result = await south.historyQuery(configuration.items, startTime, endTime);
 
     expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/opc/${configuration.id}/read`, {
       method: 'PUT',
@@ -350,12 +350,12 @@ describe('South OPCHDA', () => {
     south.disconnect = jest.fn();
     south.connect = jest.fn();
 
-    await expect(south.historyQuery(items, startTime, endTime)).rejects.toThrow(
+    await expect(south.historyQuery(configuration.items, startTime, endTime)).rejects.toThrow(
       `Error occurred when querying remote agent with status 400: bad request`
     );
     expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 400: bad request`);
 
-    await expect(south.historyQuery(items, startTime, endTime)).rejects.toThrow(
+    await expect(south.historyQuery(configuration.items, startTime, endTime)).rejects.toThrow(
       `Error occurred when querying remote agent with status 500`
     );
     expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 500`);
@@ -369,11 +369,7 @@ describe('South OPCHDA', () => {
       throw new Error('bad request');
     });
 
-    await expect(south.historyQuery(items, startTime, endTime)).rejects.toThrow(new Error('bad request'));
-    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue({ ...configuration, enabled: false });
-
-    await south.start();
-    await expect(south.historyQuery(items, startTime, endTime)).rejects.toThrow(new Error('bad request'));
+    await expect(south.historyQuery(configuration.items, startTime, endTime)).rejects.toThrow(new Error('bad request'));
   });
 
   it('should test item', async () => {
@@ -391,7 +387,7 @@ describe('South OPCHDA', () => {
     const callback = jest.fn();
     south.connect = jest.fn();
     south.disconnect = jest.fn();
-    await south.testItem(items[0], callback);
+    await south.testItem(configuration.items[0], callback);
     expect(south.connect).toHaveBeenCalledTimes(1);
     expect(south.disconnect).toHaveBeenCalledTimes(1);
     expect(callback).toHaveBeenCalledTimes(1);
@@ -407,7 +403,9 @@ describe('South OPCHDA', () => {
     const callback = jest.fn();
     south.connect = jest.fn();
     south.disconnect = jest.fn();
-    await expect(south.testItem(items[0], callback)).rejects.toThrow(`Error occurred when sending connect command to remote agent. 400`);
+    await expect(south.testItem(configuration.items[0], callback)).rejects.toThrow(
+      `Error occurred when sending connect command to remote agent. 400`
+    );
     expect(south.connect).toHaveBeenCalledTimes(1);
     expect(south.disconnect).toHaveBeenCalledTimes(1);
     expect(callback).not.toHaveBeenCalled();

@@ -1,9 +1,10 @@
 import { Knex } from 'knex';
-import { LOG_TABLE } from '../../repository/log.repository';
 import { LOG_LEVELS } from '../../../../shared/model/engine.model';
-import { NORTH_METRICS_TABLE } from '../../repository/north-connector-metrics.repository';
-import { SOUTH_METRICS_TABLE } from '../../repository/south-connector-metrics.repository';
-import { ENGINE_METRICS_TABLE } from '../../repository/engine-metrics.repository';
+
+const LOG_TABLE = 'logs';
+const NORTH_METRICS_TABLE = 'north_metrics';
+const SOUTH_METRICS_TABLE = 'south_metrics';
+const ENGINE_METRICS_TABLE = 'engine_metrics';
 
 const SCOPE_TYPES = ['south', 'north', 'engine', 'data-stream', 'history-engine', 'history-query', 'web-server', 'logger-service'];
 

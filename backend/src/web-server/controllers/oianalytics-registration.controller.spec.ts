@@ -3,6 +3,7 @@ import JoiValidator from './validators/joi.validator';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
 import OIAnalyticsRegistrationController from './oianalytics-registration.controller';
 import testData from '../../tests/utils/test-data';
+import { toOIAnalyticsRegistrationDTO } from '../../service/oia/oianalytics-registration.service';
 
 jest.mock('./validators/joi.validator');
 
@@ -23,7 +24,7 @@ describe('OIAnalytics Registration Controller', () => {
     await registrationController.get(ctx);
 
     expect(ctx.app.oIAnalyticsRegistrationService.getRegistrationSettings).toHaveBeenCalled();
-    expect(ctx.ok).toHaveBeenCalledWith(testData.oIAnalytics.registration.completedDto);
+    expect(ctx.ok).toHaveBeenCalledWith(toOIAnalyticsRegistrationDTO(testData.oIAnalytics.registration.completed));
   });
 
   it('get() should return not found', async () => {

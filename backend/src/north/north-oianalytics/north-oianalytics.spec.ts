@@ -5,9 +5,6 @@ import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-import RepositoryService from '../../service/repository.service';
-import RepositoryServiceMock from '../../tests/__mocks__/service/repository-service.mock';
-import { NorthCacheSettingsDTO, NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 
 import fetch from 'node-fetch';
 import { compress, filesExists } from '../../service/utils';
@@ -22,6 +19,19 @@ import zlib from 'node:zlib';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
+import testData from '../../tests/utils/test-data';
+import NorthConnectorRepository from '../../repository/config/north-connector.repository';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import NorthConnectorMetricsRepository from '../../repository/logs/north-connector-metrics.repository';
+import NorthConnectorMetricsServiceMock from '../../tests/__mocks__/service/north-connector-metrics-service.mock';
+import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
+import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
+import NorthMetricsRepositoryMock from '../../tests/__mocks__/repository/log/north-metrics-repository.mock';
+import CertificateRepository from '../../repository/config/certificate.repository';
+import CertificateRepositoryMock from '../../tests/__mocks__/repository/config/certificate-repository.mock';
+import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
+import OianalyticsRegistrationRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
 
 jest.mock('node:fs/promises');
 jest.mock('node:fs');
@@ -36,48 +46,46 @@ jest.mock('@azure/identity', () => ({
     getToken: () => ({ token: 'token' })
   }))
 }));
-
 jest.mock('node-fetch');
 const { Response } = jest.requireActual('node-fetch');
 
-jest.mock(
-  '../../service/cache/archive.service',
-  () =>
-    function () {
-      return new ArchiveServiceMock();
-    }
-);
+const logger: pino.Logger = new PinoLogger();
+const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
+const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
+const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
+const northMetricsRepository: NorthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
+const certificateRepository: CertificateRepository = new CertificateRepositoryMock();
+const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OianalyticsRegistrationRepositoryMock();
+const valueCacheService = new ValueCacheServiceMock();
+const fileCacheService = new FileCacheServiceMock();
+const archiveService = new ArchiveServiceMock();
+const northConnectorMetricsService = new NorthConnectorMetricsServiceMock();
 jest.mock(
   '../../service/cache/value-cache.service',
   () =>
     function () {
-      return new ValueCacheServiceMock();
+      return valueCacheService;
     }
 );
 jest.mock(
   '../../service/cache/file-cache.service',
   () =>
     function () {
-      return new FileCacheServiceMock();
+      return fileCacheService;
     }
 );
-const resetMetrics = jest.fn();
+jest.mock(
+  '../../service/cache/archive.service',
+  () =>
+    function () {
+      return archiveService;
+    }
+);
 jest.mock(
   '../../service/north-connector-metrics.service',
   () =>
     function () {
-      return {
-        initMetrics: jest.fn(),
-        updateMetrics: jest.fn(),
-        get stream() {
-          return { stream: 'myStream' };
-        },
-        resetMetrics,
-        metrics: {
-          numberOfValuesSent: 1,
-          numberOfFilesSent: 1
-        }
-      };
+      return northConnectorMetricsService;
     }
 );
 
@@ -92,21 +100,14 @@ const myReadStream = {
 };
 (fsSync.createReadStream as jest.Mock).mockReturnValue(myReadStream);
 
-const logger: pino.Logger = new PinoLogger();
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
-const repositoryService: RepositoryService = new RepositoryServiceMock();
-
-const nowDateString = '2020-02-02T02:02:02.222Z';
 let north: NorthOIAnalytics;
-
+let configuration: NorthConnectorEntity<NorthOIAnalyticsSettings>;
 describe('NorthOIAnalytics without proxy', () => {
-  const configuration: NorthConnectorDTO<NorthOIAnalyticsSettings> = {
-    id: 'id',
-    name: 'north',
-    type: 'test',
-    description: 'my test connector',
-    enabled: true,
-    settings: {
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
+    configuration.settings = {
       useOiaModule: false,
       timeout: 30,
       compress: false,
@@ -118,23 +119,22 @@ describe('NorthOIAnalytics without proxy', () => {
         secretKey: 'anypass',
         useProxy: false
       }
-    },
-    caching: {
-      scanModeId: 'id1',
-      oibusTimeValues: {},
-      rawFiles: {
-        archive: {}
-      }
-    } as NorthCacheSettingsDTO
-  };
-
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.northConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
+    };
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
+    (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
 
     (filesExists as jest.Mock).mockReturnValue(true);
-    north = new NorthOIAnalytics(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+    north = new NorthOIAnalytics(
+      configuration,
+      encryptionService,
+      northConnectorRepository,
+      scanModeRepository,
+      northMetricsRepository,
+      certificateRepository,
+      oIAnalyticsRegistrationRepository,
+      logger,
+      'baseFolder'
+    );
     await north.start();
   });
 
@@ -162,12 +162,12 @@ describe('NorthOIAnalytics without proxy', () => {
     const values: Array<OIBusTimeValue> = [
       {
         pointId: 'pointId1',
-        timestamp: nowDateString,
+        timestamp: testData.constants.dates.FAKE_NOW,
         data: { value: '666', quality: 'good' }
       },
       {
         pointId: 'pointId2',
-        timestamp: nowDateString,
+        timestamp: testData.constants.dates.FAKE_NOW,
         data: { value: '777', quality: 'good' }
       }
     ];
@@ -185,12 +185,12 @@ describe('NorthOIAnalytics without proxy', () => {
       body: JSON.stringify([
         {
           pointId: 'pointId1',
-          timestamp: nowDateString,
+          timestamp: testData.constants.dates.FAKE_NOW,
           data: { value: '666', quality: 'good' }
         },
         {
           pointId: 'pointId2',
-          timestamp: nowDateString,
+          timestamp: testData.constants.dates.FAKE_NOW,
           data: { value: '777', quality: 'good' }
         }
       ]),
@@ -200,7 +200,7 @@ describe('NorthOIAnalytics without proxy', () => {
     await north.handleContent({ type: 'time-values', content: values });
 
     expect(fetch).toHaveBeenCalledWith(
-      `${configuration.settings.specificSettings!.host}/api/oianalytics/oibus/time-values?dataSourceId=${configuration.name}`,
+      `${configuration.settings.specificSettings!.host}/api/oianalytics/oibus/time-values?dataSourceId=${encodeURI(configuration.name)}`,
       expectedFetchOptions
     );
   });
@@ -210,7 +210,7 @@ describe('NorthOIAnalytics without proxy', () => {
     const values: Array<OIBusTimeValue> = [
       {
         pointId: 'pointId1',
-        timestamp: nowDateString,
+        timestamp: testData.constants.dates.FAKE_NOW,
         data: { value: '666', quality: 'good' }
       }
     ];
@@ -227,7 +227,7 @@ describe('NorthOIAnalytics without proxy', () => {
     expect(err).toEqual({
       message: `Fail to reach values endpoint ${
         configuration.settings.specificSettings!.host
-      }/api/oianalytics/oibus/time-values?dataSourceId=${configuration.name}. ${new Error('error')}`,
+      }/api/oianalytics/oibus/time-values?dataSourceId=${encodeURI(configuration.name)}. ${new Error('error')}`,
       retry: true
     });
   });
@@ -237,7 +237,7 @@ describe('NorthOIAnalytics without proxy', () => {
     const values: Array<OIBusTimeValue> = [
       {
         pointId: 'pointId1',
-        timestamp: nowDateString,
+        timestamp: testData.constants.dates.FAKE_NOW,
         data: { value: '666', quality: 'good' }
       }
     ];
@@ -269,7 +269,7 @@ describe('NorthOIAnalytics without proxy', () => {
     });
 
     expect(fetch).toHaveBeenCalledWith(
-      `${configuration.settings.specificSettings!.host}/api/oianalytics/oibus/time-values?dataSourceId=${configuration.name}`,
+      `${configuration.settings.specificSettings!.host}/api/oianalytics/oibus/time-values?dataSourceId=${encodeURI(configuration.name)}`,
       expectedFetchOptions
     );
   });
@@ -294,7 +294,7 @@ describe('NorthOIAnalytics without proxy', () => {
     await north.handleContent({ type: 'raw', filePath });
 
     expect(fetch).toHaveBeenCalledWith(
-      `${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
+      `${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${encodeURI(configuration.name)}`,
       expectedFetchOptions
     );
   });
@@ -325,9 +325,9 @@ describe('NorthOIAnalytics without proxy', () => {
       err = error;
     }
     expect(err).toEqual({
-      message: `Fail to reach file endpoint ${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${
+      message: `Fail to reach file endpoint ${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${encodeURI(
         configuration.name
-      }. ${new Error('error')}`,
+      )}. ${new Error('error')}`,
       retry: true
     });
   });
@@ -351,33 +351,25 @@ describe('NorthOIAnalytics without proxy', () => {
       agent: undefined
     };
 
-    let err;
-    try {
-      await north.handleFile(filePath);
-    } catch (error) {
-      err = error;
-    }
-
-    expect(err).toEqual({
+    await expect(north.handleFile(filePath)).rejects.toThrow({
       message: `Error 501: statusText`,
       retry: false
-    });
+    } as unknown as Error);
 
     expect(fetch).toHaveBeenCalledWith(
-      `${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
+      `${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${encodeURI(configuration.name)}`,
       expectedFetchOptions
     );
   });
 });
 
 describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
-  const configuration: NorthConnectorDTO<NorthOIAnalyticsSettings> = {
-    id: 'id',
-    name: 'north',
-    type: 'test',
-    description: 'my test connector',
-    enabled: true,
-    settings: {
+  const fakeAgent = { rejectUnauthorized: false };
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
+    configuration.settings = {
       useOiaModule: false,
       timeout: 30,
       compress: false,
@@ -393,25 +385,23 @@ describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
         secretKey: null,
         useProxy: false
       }
-    },
-    caching: {
-      scanModeId: 'id1',
-      oibusTimeValues: {},
-      rawFiles: {
-        archive: {}
-      }
-    } as NorthCacheSettingsDTO
-  };
-  const fakeAgent = { rejectUnauthorized: false };
-
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.northConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
+    };
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
+    (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
 
     (filesExists as jest.Mock).mockReturnValue(true);
     (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
-    north = new NorthOIAnalytics(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+    north = new NorthOIAnalytics(
+      configuration,
+      encryptionService,
+      northConnectorRepository,
+      scanModeRepository,
+      northMetricsRepository,
+      certificateRepository,
+      oIAnalyticsRegistrationRepository,
+      logger,
+      'baseFolder'
+    );
     await north.start();
   });
 
@@ -420,7 +410,7 @@ describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
     const values: Array<OIBusTimeValue> = [
       {
         pointId: 'pointId1',
-        timestamp: nowDateString,
+        timestamp: testData.constants.dates.FAKE_NOW,
         data: { value: '666', quality: 'good' }
       }
     ];
@@ -440,12 +430,12 @@ describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
     await north.handleValues(values);
 
     expect(fetch).toHaveBeenCalledWith(
-      `${configuration.settings.specificSettings!.host}/api/oianalytics/oibus/time-values?dataSourceId=${configuration.name}`,
+      `${configuration.settings.specificSettings!.host}/api/oianalytics/oibus/time-values?dataSourceId=${encodeURI(configuration.name)}`,
       expectedFetchOptions
     );
     expect(createProxyAgent).toHaveBeenCalledWith(
       false,
-      `${configuration.settings.specificSettings!.host}/api/oianalytics/oibus/time-values?dataSourceId=${configuration.name}`,
+      `${configuration.settings.specificSettings!.host}/api/oianalytics/oibus/time-values?dataSourceId=${encodeURI(configuration.name)}`,
       null,
       true
     );
@@ -469,12 +459,12 @@ describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
     await north.handleFile(filePath);
 
     expect(fetch).toHaveBeenCalledWith(
-      `${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
+      `${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${encodeURI(configuration.name)}`,
       expectedFetchOptions
     );
     expect(createProxyAgent).toHaveBeenCalledWith(
       false,
-      `${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
+      `${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${encodeURI(configuration.name)}`,
       null,
       true
     );
@@ -482,13 +472,16 @@ describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
 });
 
 describe('NorthOIAnalytics with proxy', () => {
-  const configuration: NorthConnectorDTO<NorthOIAnalyticsSettings> = {
-    id: 'id',
-    name: 'north',
-    type: 'test',
-    description: 'my test connector',
-    enabled: true,
-    settings: {
+  const fakeAgent = { rejectUnauthorized: false };
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+
+    (filesExists as jest.Mock).mockReturnValue(true);
+    (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
+    configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
+    configuration.settings = {
       useOiaModule: false,
       timeout: 30,
       compress: false,
@@ -505,26 +498,21 @@ describe('NorthOIAnalytics with proxy', () => {
         proxyUsername: 'my username',
         proxyPassword: 'my password'
       }
-    },
-    caching: {
-      scanModeId: 'id1',
-      oibusTimeValues: {},
-      rawFiles: {
-        archive: {}
-      }
-    } as NorthCacheSettingsDTO
-  };
-  const fakeAgent = { rejectUnauthorized: false };
+    };
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
+    (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
 
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-
-    (filesExists as jest.Mock).mockReturnValue(true);
-    (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
-    repositoryService.northConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
-
-    north = new NorthOIAnalytics(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+    north = new NorthOIAnalytics(
+      configuration,
+      encryptionService,
+      northConnectorRepository,
+      scanModeRepository,
+      northMetricsRepository,
+      certificateRepository,
+      oIAnalyticsRegistrationRepository,
+      logger,
+      'baseFolder'
+    );
     await north.start();
   });
 
@@ -577,7 +565,7 @@ describe('NorthOIAnalytics with proxy', () => {
     await north.handleValues([]);
     expect(createProxyAgent).toHaveBeenCalledWith(
       true,
-      `${configuration.settings.specificSettings!.host}/api/oianalytics/oibus/time-values?dataSourceId=${configuration.name}`,
+      `${configuration.settings.specificSettings!.host}/api/oianalytics/oibus/time-values?dataSourceId=${encodeURI(configuration.name)}`,
       {
         url: configuration.settings.specificSettings!.proxyUrl!,
         username: configuration.settings.specificSettings!.proxyUsername!,
@@ -593,7 +581,7 @@ describe('NorthOIAnalytics with proxy', () => {
     await north.handleFile(filePath);
     expect(createProxyAgent).toHaveBeenCalledWith(
       true,
-      `${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
+      `${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${encodeURI(configuration.name)}`,
       {
         url: configuration.settings.specificSettings!.proxyUrl!,
         username: configuration.settings.specificSettings!.proxyUsername!,
@@ -605,13 +593,14 @@ describe('NorthOIAnalytics with proxy', () => {
 });
 
 describe('NorthOIAnalytics with proxy but without proxy password', () => {
-  const configuration: NorthConnectorDTO<NorthOIAnalyticsSettings> = {
-    id: 'id',
-    name: 'north',
-    type: 'test',
-    description: 'my test connector',
-    enabled: true,
-    settings: {
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+
+    (filesExists as jest.Mock).mockReturnValue(true);
+    (createProxyAgent as jest.Mock).mockReturnValue({});
+    configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
+    configuration.settings = {
       useOiaModule: false,
       timeout: 30,
       compress: true,
@@ -626,25 +615,21 @@ describe('NorthOIAnalytics with proxy but without proxy password', () => {
         proxyUsername: 'my username',
         proxyPassword: null
       }
-    },
-    caching: {
-      scanModeId: 'id1',
-      oibusTimeValues: {},
-      rawFiles: {
-        archive: {}
-      }
-    } as NorthCacheSettingsDTO
-  };
+    };
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
+    (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
 
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-
-    (filesExists as jest.Mock).mockReturnValue(true);
-    (createProxyAgent as jest.Mock).mockReturnValue({});
-    repositoryService.northConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
-
-    north = new NorthOIAnalytics(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+    north = new NorthOIAnalytics(
+      configuration,
+      encryptionService,
+      northConnectorRepository,
+      scanModeRepository,
+      northMetricsRepository,
+      certificateRepository,
+      oIAnalyticsRegistrationRepository,
+      logger,
+      'baseFolder'
+    );
     await north.start();
   });
 
@@ -671,7 +656,7 @@ describe('NorthOIAnalytics with proxy but without proxy password', () => {
     await north.handleValues([]);
     expect(createProxyAgent).toHaveBeenCalledWith(
       true,
-      `${configuration.settings.specificSettings!.host}/api/oianalytics/oibus/time-values/compressed?dataSourceId=${configuration.name}`,
+      `${configuration.settings.specificSettings!.host}/api/oianalytics/oibus/time-values/compressed?dataSourceId=${encodeURI(configuration.name)}`,
       {
         url: configuration.settings.specificSettings!.proxyUrl!,
         username: configuration.settings.specificSettings!.proxyUsername!,
@@ -689,7 +674,7 @@ describe('NorthOIAnalytics with proxy but without proxy password', () => {
     await north.handleFile(filePath);
     expect(createProxyAgent).toHaveBeenCalledWith(
       true,
-      `${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
+      `${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${encodeURI(configuration.name)}`,
       {
         url: configuration.settings.specificSettings!.proxyUrl!,
         username: configuration.settings.specificSettings!.proxyUsername!,
@@ -708,7 +693,7 @@ describe('NorthOIAnalytics with proxy but without proxy password', () => {
     await north.handleFile(filePath);
     expect(createProxyAgent).toHaveBeenCalledWith(
       true,
-      `${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
+      `${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${encodeURI(configuration.name)}`,
       {
         url: configuration.settings.specificSettings!.proxyUrl!,
         username: configuration.settings.specificSettings!.proxyUsername!,
@@ -738,20 +723,18 @@ describe('NorthOIAnalytics with proxy but without proxy password', () => {
     await north.handleFile(filePath);
 
     expect(fetch).toHaveBeenCalledWith(
-      `${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
+      `${configuration.settings.specificSettings!.host}/api/oianalytics/file-uploads?dataSourceId=${encodeURI(configuration.name)}`,
       expectedFetchOptions
     );
   });
 });
 
 describe('NorthOIAnalytics with aad-certificate', () => {
-  const configuration: NorthConnectorDTO<NorthOIAnalyticsSettings> = {
-    id: 'id',
-    name: 'north',
-    type: 'test',
-    description: 'my test connector',
-    enabled: true,
-    settings: {
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
+    configuration.settings = {
       useOiaModule: false,
       timeout: 30,
       compress: false,
@@ -762,28 +745,27 @@ describe('NorthOIAnalytics with aad-certificate', () => {
         certificateId: 'certificateId',
         useProxy: false
       }
-    },
-    caching: {
-      scanModeId: 'id1',
-      oibusTimeValues: {},
-      rawFiles: {
-        archive: {}
-      }
-    } as NorthCacheSettingsDTO
-  };
-
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.northConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
+    };
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
+    (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
 
     (filesExists as jest.Mock).mockReturnValue(true);
-    north = new NorthOIAnalytics(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+    north = new NorthOIAnalytics(
+      configuration,
+      encryptionService,
+      northConnectorRepository,
+      scanModeRepository,
+      northMetricsRepository,
+      certificateRepository,
+      oIAnalyticsRegistrationRepository,
+      logger,
+      'baseFolder'
+    );
     await north.start();
   });
 
   it('should add header with aad-certificate', async () => {
-    (repositoryService.certificateRepository.findById as jest.Mock).mockReturnValueOnce({
+    (certificateRepository.findById as jest.Mock).mockReturnValueOnce({
       name: 'name',
       description: 'description',
       publicKey: 'public key',
@@ -794,43 +776,29 @@ describe('NorthOIAnalytics with aad-certificate', () => {
     const result = await north.getNetworkSettings('/endpoint');
     expect(result.headers).toEqual({ authorization: 'Bearer token' });
     expect(result.host).toEqual(configuration.settings.specificSettings!.host);
-    expect(result.agent).toEqual({});
   });
 
   it('should not add header with aad-certificate when cert not found', async () => {
-    (repositoryService.certificateRepository.findById as jest.Mock).mockReturnValueOnce(null);
+    (certificateRepository.findById as jest.Mock).mockReturnValueOnce(null);
     const result = await north.getNetworkSettings('/endpoint');
     expect(result.headers).toEqual({});
   });
 });
 
 describe('NorthOIAnalytics with OIA module', () => {
-  const configuration: NorthConnectorDTO<NorthOIAnalyticsSettings> = {
-    id: 'id',
-    name: 'north',
-    type: 'test',
-    description: 'my test connector',
-    enabled: true,
-    settings: {
-      useOiaModule: true,
-      timeout: 30,
-      compress: false
-    },
-    caching: {
-      scanModeId: 'id1',
-      oibusTimeValues: {},
-      rawFiles: {
-        archive: {}
-      }
-    } as NorthCacheSettingsDTO
-  };
-
   let registrationSettings: OIAnalyticsRegistration;
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.northConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
+    configuration.settings = {
+      useOiaModule: true,
+      timeout: 30,
+      compress: false
+    };
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
+    (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
 
     (filesExists as jest.Mock).mockReturnValue(true);
 
@@ -843,12 +811,22 @@ describe('NorthOIAnalytics with OIA module', () => {
       useProxy: false,
       acceptUnauthorized: false
     };
-    north = new NorthOIAnalytics(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+    north = new NorthOIAnalytics(
+      configuration,
+      encryptionService,
+      northConnectorRepository,
+      scanModeRepository,
+      northMetricsRepository,
+      certificateRepository,
+      oIAnalyticsRegistrationRepository,
+      logger,
+      'baseFolder'
+    );
     await north.start();
   });
 
   it('should use oia module', async () => {
-    (repositoryService.oianalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(registrationSettings);
+    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(registrationSettings);
     const result = await north.getNetworkSettings('/endpoint');
     expect(result.headers).toEqual({ authorization: 'Bearer my oia token' });
     expect(result.host).toEqual(registrationSettings.host);
@@ -858,7 +836,6 @@ describe('NorthOIAnalytics with OIA module', () => {
       null,
       registrationSettings.acceptUnauthorized
     );
-    expect(result.agent).toEqual({});
   });
 
   it('should use oia module with proxy', async () => {
@@ -867,7 +844,7 @@ describe('NorthOIAnalytics with OIA module', () => {
     registrationSettings.proxyUrl = 'http://localhost:8080';
     registrationSettings.proxyUsername = 'user';
     registrationSettings.proxyPassword = 'pass';
-    (repositoryService.oianalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(registrationSettings);
+    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(registrationSettings);
     const result = await north.getNetworkSettings('/endpoint');
     expect(result.headers).toEqual({ authorization: 'Bearer my oia token' });
     expect(result.host).toEqual('http://localhost:4200');
@@ -877,14 +854,13 @@ describe('NorthOIAnalytics with OIA module', () => {
       { url: registrationSettings.proxyUrl, username: registrationSettings.proxyUsername, password: registrationSettings.proxyPassword },
       registrationSettings.acceptUnauthorized
     );
-    expect(result.agent).toEqual({});
   });
 
   it('should use oia module with proxy without user', async () => {
     registrationSettings.host = 'http://localhost:4200/';
     registrationSettings.useProxy = true;
     registrationSettings.proxyUrl = 'http://localhost:8080';
-    (repositoryService.oianalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(registrationSettings);
+    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(registrationSettings);
     const result = await north.getNetworkSettings('/endpoint');
     expect(result.headers).toEqual({ authorization: 'Bearer my oia token' });
     expect(result.host).toEqual('http://localhost:4200');
@@ -894,12 +870,11 @@ describe('NorthOIAnalytics with OIA module', () => {
       { url: registrationSettings.proxyUrl, username: undefined, password: null },
       registrationSettings.acceptUnauthorized
     );
-    expect(result.agent).toEqual({});
   });
 
   it('should not use oia module if not registered', async () => {
     registrationSettings.status = 'PENDING';
-    (repositoryService.oianalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(registrationSettings);
+    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(registrationSettings);
 
     await expect(north.getNetworkSettings('/endpoint')).rejects.toThrow(new Error('OIBus not registered in OIAnalytics'));
 

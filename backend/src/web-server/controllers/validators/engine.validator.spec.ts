@@ -2,12 +2,12 @@ import JoiValidator from './joi.validator';
 import { engineSchema } from './oibus-validation-schema';
 
 interface DataProvider {
-  dto: any;
+  dto: object;
   isValid: boolean;
   errorMessage: string | null;
 }
 
-const dataProviders: DataProvider[] = [
+const dataProviders: Array<DataProvider> = [
   {
     dto: {
       name: null,
@@ -18,7 +18,7 @@ const dataProviders: DataProvider[] = [
     },
     isValid: false,
     errorMessage:
-      '"name" must be a string. "port" must be a number. "proxyEnabled" must be a boolean. "proxyPort" must be a number. "logParameters" must be of type object'
+      '"name" must be a string. "port" must be a number. "proxyEnabled" must be a boolean. "logParameters" must be of type object'
   },
   {
     dto: {
@@ -72,7 +72,7 @@ const dataProviders: DataProvider[] = [
     },
     isValid: false,
     errorMessage:
-      '"name" must be a string. "port" must be a number. "proxyEnabled" must be a boolean. "proxyPort" must be a number. "logParameters.console.level" must be a string. "logParameters.file.level" must be a string. "logParameters.file.maxFileSize" must be a number. "logParameters.file.numberOfFiles" must be a number. "logParameters.database.level" must be a string. "logParameters.database.maxNumberOfLogs" must be a number. "logParameters.loki.level" must be a string. "logParameters.loki.interval" must be a number. "logParameters.oia.level" must be a string. "logParameters.oia.interval" must be a number'
+      '"name" must be a string. "port" must be a number. "proxyEnabled" must be a boolean. "logParameters.console.level" must be a string. "logParameters.file.level" must be a string. "logParameters.file.maxFileSize" must be a number. "logParameters.file.numberOfFiles" must be a number. "logParameters.database.level" must be a string. "logParameters.database.maxNumberOfLogs" must be a number. "logParameters.loki.level" must be a string. "logParameters.loki.interval" must be a number. "logParameters.oia.level" must be a string. "logParameters.oia.interval" must be a number'
   },
   {
     dto: {

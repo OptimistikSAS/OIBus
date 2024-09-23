@@ -11,6 +11,9 @@ import { createFolder, filesExists } from '../service/utils';
 
 import { HistoryQueryDTO } from '../../../shared/model/history-query.model';
 import { PassThrough } from 'node:stream';
+import RepositoryService from '../service/repository.service';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
+import { NorthSettings } from '../../../shared/model/north-settings.model';
 
 const CACHE_FOLDER = './cache/history-query';
 
@@ -25,17 +28,18 @@ export default class HistoryQueryEngine extends BaseEngine {
     encryptionService: EncryptionService,
     northService: NorthService,
     southService: SouthService,
+    repositoryService: RepositoryService,
     private readonly historyQueryService: HistoryQueryService,
     logger: pino.Logger
   ) {
-    super(encryptionService, northService, southService, logger, CACHE_FOLDER);
+    super(encryptionService, northService, southService, repositoryService, logger, CACHE_FOLDER);
   }
 
   override async start(): Promise<void> {
-    const historyQueriesSettings = this.historyQueryService.getHistoryQueryList();
-    for (const settings of historyQueriesSettings) {
-      await this.createHistoryQuery(settings);
-      await this.startHistoryQuery(settings.id);
+    const historyQueriesSettings = this.historyQueryService.findAll();
+    for (const { id } of historyQueriesSettings) {
+      await this.createHistoryQuery(this.historyQueryService.findById(id)!);
+      await this.startHistoryQuery(id);
     }
   }
 
@@ -49,7 +53,9 @@ export default class HistoryQueryEngine extends BaseEngine {
     this.historyQueries.clear();
   }
 
-  async createHistoryQuery(settings: HistoryQueryDTO): Promise<void> {
+  async createHistoryQuery<S extends SouthSettings, N extends NorthSettings, I extends SouthItemSettings>(
+    settings: HistoryQueryDTO<S, N, I>
+  ): Promise<void> {
     const baseFolder = path.resolve(this.cacheFolder, `history-${settings.id}`);
     await createFolder(baseFolder);
     const historyQuery = new HistoryQuery(
@@ -57,6 +63,7 @@ export default class HistoryQueryEngine extends BaseEngine {
       this.southService,
       this.northService,
       this.historyQueryService,
+      this.repositoryService,
       this.logger.child({ scopeType: 'history-query', scopeId: settings.id, scopeName: settings.name }),
       baseFolder
     );
@@ -97,7 +104,7 @@ export default class HistoryQueryEngine extends BaseEngine {
     super.setLogger(value);
 
     for (const [id, historyQuery] of this.historyQueries.entries()) {
-      const settings = this.historyQueryService.getHistoryQuery(id);
+      const settings = this.historyQueryService.findById(id);
       if (settings) {
         historyQuery.setLogger(this.logger.child({ scopeType: 'history-query', scopeId: settings.id, scopeName: settings.name }));
       }

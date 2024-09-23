@@ -9,6 +9,8 @@ import { SouthConnectorManifest } from '../../../../../../shared/model/south-con
 import { HistoryQueryDTO } from '../../../../../../shared/model/history-query.model';
 import { HistoryMetrics } from '../../../../../../shared/model/engine.model';
 import { provideHttpClient } from '@angular/common/http';
+import { SouthItemSettings, SouthSettings } from '../../../../../../shared/model/south-settings.model';
+import { NorthSettings } from '../../../../../../shared/model/north-settings.model';
 
 @Component({
   template: `<oib-history-metrics
@@ -54,7 +56,8 @@ class TestComponent {
       history: true,
       lastFile: true,
       lastPoint: false,
-      forceMaxInstantPerItem: false
+      forceMaxInstantPerItem: false,
+      sharedConnection: false
     }
   };
   northManifest: NorthConnectorManifest = {
@@ -83,7 +86,7 @@ class TestComponent {
     ]
   };
 
-  historyQuery: HistoryQueryDTO = {
+  historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
     id: 'id1',
     name: 'History query',
     description: 'My History query description',
@@ -91,8 +94,7 @@ class TestComponent {
     history: {
       maxInstantPerItem: false,
       maxReadInterval: 0,
-      readDelay: 200,
-      overlap: 0
+      readDelay: 200
     },
     southType: 'OPCUA_HA',
     northType: 'OIConnect',
@@ -100,11 +102,11 @@ class TestComponent {
     endTime: '2023-01-01T00:00:00.000Z',
     southSettings: {
       database: 'my database'
-    },
+    } as SouthSettings,
     southSharedConnection: false,
     northSettings: {
       host: 'localhost'
-    },
+    } as NorthSettings,
     caching: {
       scanModeId: 'scanModeId1',
       retryInterval: 1000,
@@ -121,7 +123,8 @@ class TestComponent {
           retentionDuration: 0
         }
       }
-    }
+    },
+    items: []
   };
   historyMetrics: HistoryMetrics = {
     north: {
@@ -139,10 +142,7 @@ class TestComponent {
       numberOfValuesRetrieved: 20,
       numberOfFilesRetrieved: 0,
       lastValueRetrieved: null,
-      lastFileRetrieved: null,
-      historyMetrics: {
-        intervalProgress: 1
-      }
+      lastFileRetrieved: null
     }
   } as HistoryMetrics;
 }

@@ -6,96 +6,90 @@ import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-import RepositoryService from '../../service/repository.service';
-import RepositoryServiceMock from '../../tests/__mocks__/service/repository-service.mock';
-import { NorthCacheSettingsDTO, NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import ValueCacheServiceMock from '../../tests/__mocks__/service/cache/value-cache-service.mock';
 import FileCacheServiceMock from '../../tests/__mocks__/service/cache/file-cache-service.mock';
 import ArchiveServiceMock from '../../tests/__mocks__/service/cache/archive-service.mock';
 import { OIBusTimeValue } from '../../../../shared/model/engine.model';
 import csv from 'papaparse';
+import NorthConnectorRepository from '../../repository/config/north-connector.repository';
+import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
+import NorthConnectorMetricsRepository from '../../repository/logs/north-connector-metrics.repository';
+import NorthMetricsRepositoryMock from '../../tests/__mocks__/repository/log/north-metrics-repository.mock';
+import NorthConnectorMetricsServiceMock from '../../tests/__mocks__/service/north-connector-metrics-service.mock';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
+import { NorthFileWriterSettings } from '../../../../shared/model/north-settings.model';
+import testData from '../../tests/utils/test-data';
 
 jest.mock('node:fs/promises');
 
 const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
-const repositoryService: RepositoryService = new RepositoryServiceMock();
-
-jest.mock(
-  '../../service/cache/archive.service',
-  () =>
-    function () {
-      return new ArchiveServiceMock();
-    }
-);
+const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
+const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
+const northMetricsRepository: NorthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
+const valueCacheService = new ValueCacheServiceMock();
+const fileCacheService = new FileCacheServiceMock();
+const archiveService = new ArchiveServiceMock();
+const northConnectorMetricsService = new NorthConnectorMetricsServiceMock();
 jest.mock(
   '../../service/cache/value-cache.service',
   () =>
     function () {
-      return new ValueCacheServiceMock();
+      return valueCacheService;
     }
 );
 jest.mock(
   '../../service/cache/file-cache.service',
   () =>
     function () {
-      return new FileCacheServiceMock();
+      return fileCacheService;
     }
 );
-const resetMetrics = jest.fn();
+jest.mock(
+  '../../service/cache/archive.service',
+  () =>
+    function () {
+      return archiveService;
+    }
+);
 jest.mock(
   '../../service/north-connector-metrics.service',
   () =>
     function () {
-      return {
-        initMetrics: jest.fn(),
-        updateMetrics: jest.fn(),
-        get stream() {
-          return { stream: 'myStream' };
-        },
-        resetMetrics,
-        metrics: {
-          numberOfValuesSent: 1,
-          numberOfFilesSent: 1
-        }
-      };
+      return northConnectorMetricsService;
     }
 );
 jest.mock('../../service/utils');
 jest.mock('papaparse');
 
-const nowDateString = '2020-02-02T02:02:02.222Z';
-
+let configuration: NorthConnectorEntity<NorthFileWriterSettings>;
 let north: NorthFileWriter;
 
 describe('NorthFileWriter', () => {
-  const configuration: NorthConnectorDTO = {
-    id: 'id',
-    name: 'north',
-    type: 'test',
-    description: 'my test connector',
-    enabled: true,
-    settings: {
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
+    configuration.settings = {
       outputFolder: 'outputFolder',
       prefix: 'prefix',
       suffix: 'suffix'
-    },
-    caching: {
-      scanModeId: 'id1',
-      oibusTimeValues: {},
-      rawFiles: {
-        archive: {}
-      }
-    } as NorthCacheSettingsDTO
-  };
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.northConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
-
+    };
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
+    (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
     (csv.unparse as jest.Mock).mockReturnValue('csv content');
 
-    north = new NorthFileWriter(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+    north = new NorthFileWriter(
+      configuration,
+      encryptionService,
+      northConnectorRepository,
+      scanModeRepository,
+      northMetricsRepository,
+      logger,
+      'baseFolder'
+    );
     await north.start();
   });
 
@@ -149,33 +143,27 @@ describe('NorthFileWriter', () => {
 });
 
 describe('NorthFileWriter without suffix or prefix', () => {
-  const configuration: NorthConnectorDTO = {
-    id: 'id',
-    name: 'north',
-    type: 'test',
-    description: 'my test connector',
-    enabled: true,
-    settings: {
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
+    configuration.settings = {
       outputFolder: 'outputFolder',
       prefix: '',
       suffix: ''
-    },
-    caching: {
-      scanModeId: 'id1',
-      oibusTimeValues: {},
-      rawFiles: {
-        archive: {}
-      }
-    } as NorthCacheSettingsDTO
-  };
-  const outputFolder = path.resolve(configuration.settings.outputFolder);
+    };
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
+    (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
 
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.northConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
-
-    north = new NorthFileWriter(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+    north = new NorthFileWriter(
+      configuration,
+      encryptionService,
+      northConnectorRepository,
+      scanModeRepository,
+      northMetricsRepository,
+      logger,
+      'baseFolder'
+    );
   });
 
   it('should properly handle values', async () => {
@@ -208,6 +196,8 @@ describe('NorthFileWriter without suffix or prefix', () => {
   });
 
   it('should handle folder not existing', async () => {
+    const outputFolder = path.resolve(configuration.settings.outputFolder);
+
     const errorMessage = 'Folder does not exist';
     (fs.access as jest.Mock).mockImplementationOnce(() => {
       throw new Error(errorMessage);
@@ -217,6 +207,8 @@ describe('NorthFileWriter without suffix or prefix', () => {
   });
 
   it('should handle not having write access on folder', async () => {
+    const outputFolder = path.resolve(configuration.settings.outputFolder);
+
     const errorMessage = 'No write access';
     (fs.access as jest.Mock)
       .mockImplementationOnce(() => Promise.resolve())

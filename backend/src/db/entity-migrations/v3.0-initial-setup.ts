@@ -1,19 +1,19 @@
 import { Knex } from 'knex';
 import { LOG_LEVELS } from '../../../../shared/model/engine.model';
-import { ENGINES_TABLE } from '../../repository/engine.repository';
-import { USERS_TABLE } from '../../repository/user.repository';
-import { IP_FILTERS_TABLE } from '../../repository/ip-filter.repository';
-import { SCAN_MODES_TABLE } from '../../repository/scan-mode.repository';
-import { HISTORY_QUERIES_TABLE } from '../../repository/history-query.repository';
-import { HISTORY_ITEMS_TABLE } from '../../repository/history-query-item.repository';
-import { SOUTH_CONNECTORS_TABLE } from '../../repository/south-connector.repository';
-import { SOUTH_ITEMS_TABLE } from '../../repository/south-item.repository';
-import { NORTH_CONNECTORS_TABLE } from '../../repository/north-connector.repository';
 import CreateTableBuilder = Knex.CreateTableBuilder;
-import { SUBSCRIPTION_TABLE } from '../../repository/subscription.repository';
 
+const SOUTH_CONNECTORS_TABLE = 'south_connectors';
+const SOUTH_ITEMS_TABLE = 'south_items';
+const SUBSCRIPTION_TABLE = 'subscription';
+const NORTH_CONNECTORS_TABLE = 'north_connectors';
+const ENGINES_TABLE = 'engines';
+const USERS_TABLE = 'users';
+const IP_FILTERS_TABLE = 'ip_filters';
+const SCAN_MODES_TABLE = 'scan_modes';
 const EXTERNAL_SOURCES_TABLE = 'external_sources';
 const EXTERNAL_SUBSCRIPTION_TABLE = 'external_subscription';
+const HISTORY_QUERIES_TABLE = 'history_queries';
+const HISTORY_ITEMS_TABLE = 'history_items';
 
 export async function up(knex: Knex): Promise<void> {
   await createEnginesTable(knex);
@@ -204,14 +204,6 @@ async function createExternalSubscriptionsTable(knex: Knex): Promise<void> {
   });
 }
 
-export async function down(knex: Knex): Promise<void> {
-  await knex.schema.dropTable(NORTH_CONNECTORS_TABLE);
-  await knex.schema.dropTable(SOUTH_ITEMS_TABLE);
-  await knex.schema.dropTable(SOUTH_CONNECTORS_TABLE);
-  await knex.schema.dropTable(HISTORY_ITEMS_TABLE);
-  await knex.schema.dropTable(HISTORY_QUERIES_TABLE);
-  await knex.schema.dropTable(SCAN_MODES_TABLE);
-  await knex.schema.dropTable(EXTERNAL_SOURCES_TABLE);
-  await knex.schema.dropTable(IP_FILTERS_TABLE);
-  await knex.schema.dropTable(ENGINES_TABLE);
+export async function down(_knex: Knex): Promise<void> {
+  return;
 }
