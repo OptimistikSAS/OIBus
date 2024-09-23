@@ -5,10 +5,9 @@ import objectPath from 'object-path';
 import SouthConnector from '../south-connector';
 import manifest from './manifest';
 import EncryptionService from '../../service/encryption.service';
-import RepositoryService from '../../service/repository.service';
 
 import pino from 'pino';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { DateTime } from 'luxon';
@@ -21,6 +20,11 @@ import {
 } from '../../../../shared/model/south-settings.model';
 import { convertDateTimeToInstant } from '../../service/utils';
 import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { SouthConnectorEntity } from '../../model/south-connector.model';
+import SouthConnectorRepository from '../../repository/config/south-connector.repository';
+import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
+import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
 
 /**
  * Class SouthMQTT - Subscribe to data topic from a MQTT broker
@@ -31,14 +35,27 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
   private client: mqtt.MqttClient | null = null;
 
   constructor(
-    connector: SouthConnectorDTO<SouthMQTTSettings>,
+    connector: SouthConnectorEntity<SouthMQTTSettings, SouthMQTTItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
-    repositoryService: RepositoryService,
+    southConnectorRepository: SouthConnectorRepository,
+    southMetricsRepository: SouthConnectorMetricsRepository,
+    southCacheRepository: SouthCacheRepository,
+    scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, engineAddContentCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(
+      connector,
+      engineAddContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southMetricsRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      baseFolder
+    );
   }
 
   override async connect(): Promise<void> {
@@ -186,7 +203,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     associatedItem: SouthConnectorItemDTO<SouthMQTTItemSettings>,
     message: Buffer,
     messageTimestamp: Instant
-  ): OIBusTimeValue[] {
+  ): Array<OIBusTimeValue> {
     switch (associatedItem.settings.valueType) {
       case 'number':
         return [
@@ -215,18 +232,18 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     }
   }
 
-  formatValues(item: SouthConnectorItemDTO<SouthMQTTItemSettings>, data: any, messageTimestamp: Instant): Array<OIBusTimeValue> {
+  formatValues(item: SouthConnectorItemDTO<SouthMQTTItemSettings>, data: object, messageTimestamp: Instant): Array<OIBusTimeValue> {
     if (item.settings.jsonPayload!.useArray) {
       const array = objectPath.get(data, item.settings.jsonPayload!.dataArrayPath!);
       if (!array || !Array.isArray(array)) {
         throw new Error(`Array not found for path ${item.settings.jsonPayload!.dataArrayPath!} in ${JSON.stringify(data)}`);
       }
-      return array.map((element: any) => this.formatValue(item, element, messageTimestamp));
+      return array.map((element: Array<object>) => this.formatValue(item, element, messageTimestamp));
     }
     return [this.formatValue(item, data, messageTimestamp)];
   }
 
-  formatValue(item: SouthConnectorItemDTO<SouthMQTTItemSettings>, data: any, messageTimestamp: Instant): OIBusTimeValue {
+  formatValue(item: SouthConnectorItemDTO<SouthMQTTItemSettings>, data: object, messageTimestamp: Instant): OIBusTimeValue {
     const dataTimestamp =
       item.settings.jsonPayload!.timestampOrigin === 'oibus'
         ? messageTimestamp
@@ -237,7 +254,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
         ? item.name
         : this.getPointId(data, item.settings.jsonPayload!.pointIdPath!, item.name);
 
-    const dataValue: { value: string; [key: string]: any } = {
+    const dataValue: { value: string; [key: string]: string | number } = {
       value: objectPath.get(data, item.settings.jsonPayload!.valuePath)
     };
 
@@ -254,7 +271,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     };
   }
 
-  getPointId(data: any, pointIdPath: string, itemName: string): string {
+  getPointId(data: object, pointIdPath: string, itemName: string): string {
     const pointId = objectPath.get(data, pointIdPath!);
     if (!pointId) {
       this.logger.warn(`Point ID not found for path ${pointIdPath} in ${JSON.stringify(data)}. Using item name "${itemName}" instead`);
@@ -266,7 +283,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
   getItem(topic: string): SouthConnectorItemDTO<SouthMQTTItemSettings> {
     const matchedPoints: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>> = [];
 
-    const subscriptionItems = this.items.filter(item => item.scanModeId === 'subscription' && item.enabled);
+    const subscriptionItems = this.connector.items.filter(item => item.scanModeId === 'subscription' && item.enabled);
     // FIXME: simplify this code to find associated item from the most specific topic to the most generic
     for (const item of subscriptionItems) {
       const matchList = this.wildcardTopic(topic, item.settings.topic);
@@ -291,7 +308,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     return matchedPoints[0];
   }
 
-  getTimestamp(data: any, formatOptions: SouthMQTTItemSettingsJsonPayloadTimestampPayload, messageTimestamp: Instant): string {
+  getTimestamp(data: object, formatOptions: SouthMQTTItemSettingsJsonPayloadTimestampPayload, messageTimestamp: Instant): string {
     const timestamp = objectPath.get(data, formatOptions.timestampPath!);
     if (!timestamp) {
       this.logger.warn(

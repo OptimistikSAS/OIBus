@@ -33,3 +33,12 @@ export interface EngineSettings extends BaseEntity {
     };
   };
 }
+
+export class OIBusError extends Error {
+  constructor(
+    message: string,
+    readonly retry: boolean
+  ) {
+    super(message);
+  }
+}

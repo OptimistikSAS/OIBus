@@ -13,15 +13,18 @@ import {
   logQuery,
   persistResults
 } from '../../service/utils';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
-import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
 import { QueriesHistory } from '../south-interface';
 import { DateTime } from 'luxon';
 import { SouthMySQLItemSettings, SouthMySQLSettings } from '../../../../shared/model/south-settings.model';
 import { OIBusContent } from '../../../../shared/model/engine.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import SouthConnectorRepository from '../../repository/config/south-connector.repository';
+import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
+import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
 
 /**
  * Class SouthMySQL - Retrieve data from MySQL / MariaDB databases and send them to the cache as CSV files.
@@ -32,14 +35,27 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
   private readonly tmpFolder: string;
 
   constructor(
-    connector: SouthConnectorDTO<SouthMySQLSettings>,
+    connector: SouthConnectorEntity<SouthMySQLSettings, SouthMySQLItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
-    repositoryService: RepositoryService,
+    southConnectorRepository: SouthConnectorRepository,
+    southMetricsRepository: SouthConnectorMetricsRepository,
+    southCacheRepository: SouthCacheRepository,
+    scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, engineAddContentCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(
+      connector,
+      engineAddContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southMetricsRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      baseFolder
+    );
     this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
   }
 
@@ -69,44 +85,46 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
     try {
       connection = await mysql.createConnection(config);
       await connection.ping();
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (connection) {
         await connection.end();
       }
 
-      switch (error.code) {
+      switch ((error as { code: string; message: string }).code) {
         case 'ETIMEDOUT':
         case 'ECONNREFUSED':
-          throw new Error(`Please check host and port. ${error.message}`);
+          throw new Error(`Please check host and port. ${(error as { code: string; message: string }).message}`);
 
         case 'ER_ACCESS_DENIED_ERROR':
-          throw new Error(`Please check username and password. ${error.message}`);
+          throw new Error(`Please check username and password. ${(error as { code: string; message: string }).message}`);
 
         case 'ER_DBACCESS_DENIED_ERROR':
           throw new Error(
-            `User "${this.connector.settings.username}" does not have access to database "${this.connector.settings.database}". ${error.message}`
+            `User "${this.connector.settings.username}" does not have access to database "${this.connector.settings.database}". ${(error as { code: string; message: string }).message}`
           );
 
         case 'ER_BAD_DB_ERROR':
-          throw new Error(`Database "${this.connector.settings.database}" does not exist. ${error.message}`);
+          throw new Error(
+            `Database "${this.connector.settings.database}" does not exist. ${(error as { code: string; message: string }).message}`
+          );
 
         default:
-          throw new Error(`Unexpected error. ${error.message}`);
+          throw new Error(`Unexpected error. ${(error as { code: string; message: string }).message}`);
       }
     }
 
     let table_count;
     try {
-      const [rows] = await connection.execute<mysql.RowDataPacket[]>(`
+      const [rows] = await connection.execute<Array<mysql.RowDataPacket>>(`
         SELECT COUNT(*) AS table_count
         FROM information_schema.TABLES AS TABLES
         WHERE table_schema = DATABASE()
           AND table_type = 'BASE TABLE'
       `);
       table_count = rows[0]?.table_count ?? 0;
-    } catch (error: any) {
+    } catch (error: unknown) {
       await connection.end();
-      throw new Error(`Unable to read tables in database "${this.connector.settings.database}". ${error.message}`);
+      throw new Error(`Unable to read tables in database "${this.connector.settings.database}". ${(error as Error).message}`);
     }
     await connection.end();
     if (table_count === 0) {
@@ -114,7 +132,7 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
     }
   }
 
-  override async testItem(item: SouthConnectorItemDTO<SouthMySQLItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
+  override async testItem(item: SouthConnectorItemEntity<SouthMySQLItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
     const config = await this.createConnectionOptions();
     const connection = await mysql.createConnection(config);
 
@@ -123,11 +141,11 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
       .toUTC()
       .toISO() as Instant;
     const endTime = DateTime.now().toUTC().toISO() as Instant;
-    const result: Array<any> = await this.queryData(item, startTime, endTime);
+    const result: Array<Record<string, string | number>> = await this.queryData(item, startTime, endTime);
     await connection.end();
 
     const formattedResults = result.map(entry => {
-      const formattedEntry: Record<string, any> = {};
+      const formattedEntry: Record<string, string | number> = {};
       Object.entries(entry).forEach(([key, value]) => {
         const datetimeField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.fieldName === key) || null;
         if (!datetimeField) {
@@ -166,19 +184,23 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
    * Get entries from the database between startTime and endTime (if used in the SQL query)
    * and write them into a CSV file and send it to the engine.
    */
-  async historyQuery(items: Array<SouthConnectorItemDTO<SouthMySQLItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
+  async historyQuery(
+    items: Array<SouthConnectorItemEntity<SouthMySQLItemSettings>>,
+    startTime: Instant,
+    endTime: Instant
+  ): Promise<Instant> {
     let updatedStartTime = startTime;
 
     for (const item of items) {
       const startRequest = DateTime.now().toMillis();
-      const result: Array<any> = await this.queryData(item, updatedStartTime, endTime);
+      const result: Array<Record<string, string | number>> = await this.queryData(item, updatedStartTime, endTime);
       const requestDuration = DateTime.now().toMillis() - startRequest;
 
       if (result.length > 0) {
         this.logger.info(`Found ${result.length} results for item ${item.name} in ${requestDuration} ms`);
 
         const formattedResult = result.map(entry => {
-          const formattedEntry: Record<string, any> = {};
+          const formattedEntry: Record<string, string | number> = {};
           Object.entries(entry).forEach(([key, value]) => {
             const datetimeField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.fieldName === key) || null;
             if (!datetimeField) {
@@ -222,7 +244,11 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
   /**
    * Apply the SQL query to the target MySQL / MariaDB database
    */
-  async queryData(item: SouthConnectorItemDTO<SouthMySQLItemSettings>, startTime: Instant, endTime: Instant): Promise<Array<any>> {
+  async queryData(
+    item: SouthConnectorItemEntity<SouthMySQLItemSettings>,
+    startTime: Instant,
+    endTime: Instant
+  ): Promise<Array<Record<string, string | number>>> {
     const config = await this.createConnectionOptions();
 
     const referenceTimestampField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.useAsReference) || null;
@@ -242,7 +268,7 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
         params
       );
       await connection.end();
-      return data as Array<any>;
+      return data as Array<Record<string, string | number>>;
     } catch (error) {
       if (connection) {
         await connection.end();

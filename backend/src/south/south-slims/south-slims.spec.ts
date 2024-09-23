@@ -1,165 +1,65 @@
 import fetch from 'node-fetch';
-import SouthSlims from './south-slims';
+import SouthSlims, { SlimsResults } from './south-slims';
 import * as utils from '../../service/utils';
-import DatabaseMock from '../../tests/__mocks__/database.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 
 import pino from 'pino';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
-import RepositoryService from '../../service/repository.service';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-import RepositoryServiceMock from '../../tests/__mocks__/service/repository-service.mock';
 import path from 'node:path';
 import { SouthSlimsItemSettings, SouthSlimsSettings } from '../../../../shared/model/south-settings.model';
 import { DateTime } from 'luxon';
 import { createProxyAgent } from '../../service/proxy-agent';
+import SouthConnectorRepository from '../../repository/config/south-connector.repository';
+import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
+import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
+import NorthMetricsRepositoryMock from '../../tests/__mocks__/repository/log/north-metrics-repository.mock';
+import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
+import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
+import SouthConnectorMetricsServiceMock from '../../tests/__mocks__/service/south-connector-metrics-service.mock';
+import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import testData from '../../tests/utils/test-data';
 
-jest.mock('../../service/utils');
 jest.mock('../../service/proxy-agent');
-
 // Mock node-fetch
 jest.mock('node-fetch');
 jest.mock('https', () => ({ Agent: jest.fn() }));
 jest.mock('node:fs/promises');
-const database = new DatabaseMock();
+jest.mock('../../service/utils');
+
+const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
+const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
+const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
+const southMetricsRepository: SouthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
+const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
+const southCacheService = new SouthCacheServiceMock();
+const southConnectorMetricsService = new SouthConnectorMetricsServiceMock();
+
 jest.mock(
   '../../service/south-cache.service',
   () =>
     function () {
-      return {
-        createSouthCacheScanModeTable: jest.fn(),
-        southCacheRepository: {
-          database
-        }
-      };
+      return southCacheService;
     }
 );
+
 jest.mock(
   '../../service/south-connector-metrics.service',
   () =>
     function () {
-      return {
-        initMetrics: jest.fn(),
-        updateMetrics: jest.fn(),
-        get stream() {
-          return { stream: 'myStream' };
-        },
-        metrics: {
-          numberOfValuesRetrieved: 1,
-          numberOfFilesRetrieved: 1
-        }
-      };
+      return southConnectorMetricsService;
     }
 );
-const addContentCallback = jest.fn();
 
 const logger: pino.Logger = new PinoLogger();
-
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
-const repositoryService: RepositoryService = new RepositoryServiceMock();
-const items: Array<SouthConnectorItemDTO<SouthSlimsItemSettings>> = [
-  {
-    id: 'id1',
-    name: 'item1',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {
-      endpoint: '/api/my/endpoint',
-      body: 'my body',
-      queryParams: [],
-      dateTimeFields: null,
-      serialization: {
-        type: 'csv',
-        filename: 'sql-@CurrentDate.csv',
-        delimiter: 'COMMA',
-        compression: true,
-        outputTimestampFormat: 'yyyy-MM-dd',
-        outputTimezone: 'Europe/Paris'
-      }
-    },
-    scanModeId: 'scanModeId1'
-  },
-  {
-    id: 'id2',
-    name: 'item2',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {
-      endpoint: '/api/my/endpoint',
-      body: '',
-      queryParams: [{ key: 'my key', value: 'my value' }],
-      dateTimeFields: [{ useAsReference: false, type: 'iso-string', fieldName: 'rslt_cf_samplingDateAndTime' }],
-      serialization: {
-        type: 'csv',
-        filename: 'sql-@CurrentDate.csv',
-        delimiter: 'COMMA',
-        compression: true,
-        outputTimestampFormat: 'yyyy-MM-dd',
-        outputTimezone: 'Europe/Paris'
-      }
-    },
-    scanModeId: 'scanModeId1'
-  },
-  {
-    id: 'id3',
-    name: 'item3',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {
-      endpoint: '/api/my/endpoint',
-      body: null,
-      queryParams: null,
-      dateTimeFields: [
-        { useAsReference: true, type: 'unix-epoch-ms', fieldName: 'rslt_modifiedOn' },
-        {
-          useAsReference: false,
-          type: 'string',
-          fieldName: 'rslt_cf_samplingDateAndTime',
-          format: 'yyyy-MM-dd HH:mm:ss.S',
-          locale: 'en/US',
-          timezone: 'Europe/Paris'
-        }
-      ],
-      serialization: {
-        type: 'csv',
-        filename: 'sql-@CurrentDate.csv',
-        delimiter: 'COMMA',
-        compression: true,
-        outputTimestampFormat: 'yyyy-MM-dd',
-        outputTimezone: 'Europe/Paris'
-      }
-    },
-    scanModeId: 'scanModeId2'
-  },
-  {
-    id: 'id4',
-    name: 'item4',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {
-      endpoint: '/api/my/endpoint',
-      body: 'my body',
-      queryParams: [],
-      dateTimeFields: [{ useAsReference: true, type: 'iso-string', fieldName: 'timestamp' }],
-      serialization: {
-        type: 'csv',
-        filename: 'sql-@CurrentDate.csv',
-        delimiter: 'COMMA',
-        compression: true,
-        outputTimestampFormat: 'yyyy-MM-dd',
-        outputTimezone: 'Europe/Paris'
-      }
-    },
-    scanModeId: 'scanModeId2'
-  }
-];
-
-const nowDateString = '2020-02-02T02:02:02.222Z';
-let south: SouthSlims;
+const addContentCallback = jest.fn();
 
 describe('SouthSlims with body', () => {
-  const configuration: SouthConnectorDTO<SouthSlimsSettings> = {
+  let south: SouthSlims;
+  const configuration: SouthConnectorEntity<SouthSlimsSettings, SouthSlimsItemSettings> = {
     id: 'southId',
     name: 'south',
     type: 'test',
@@ -171,6 +71,7 @@ describe('SouthSlims with body', () => {
       readDelay: 0,
       overlap: 0
     },
+    sharedConnection: false,
     settings: {
       url: 'http://localhost',
       port: 4200,
@@ -179,18 +80,121 @@ describe('SouthSlims with body', () => {
       password: 'password',
       useProxy: false,
       acceptUnauthorized: false
-    }
+    },
+    items: [
+      {
+        id: 'id1',
+        name: 'item1',
+        enabled: true,
+        settings: {
+          endpoint: '/api/my/endpoint',
+          body: 'my body',
+          queryParams: [],
+          dateTimeFields: null,
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id2',
+        name: 'item2',
+        enabled: true,
+        settings: {
+          endpoint: '/api/my/endpoint',
+          body: '',
+          queryParams: [{ key: 'my key', value: 'my value' }],
+          dateTimeFields: [{ useAsReference: false, type: 'iso-string', fieldName: 'rslt_cf_samplingDateAndTime' }],
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id3',
+        name: 'item3',
+        enabled: true,
+        settings: {
+          endpoint: '/api/my/endpoint',
+          body: null,
+          queryParams: null,
+          dateTimeFields: [
+            { useAsReference: true, type: 'unix-epoch-ms', fieldName: 'rslt_modifiedOn' },
+            {
+              useAsReference: false,
+              type: 'string',
+              fieldName: 'rslt_cf_samplingDateAndTime',
+              format: 'yyyy-MM-dd HH:mm:ss.S',
+              locale: 'en/US',
+              timezone: 'Europe/Paris'
+            }
+          ],
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId2'
+      },
+      {
+        id: 'id4',
+        name: 'item4',
+        enabled: true,
+        settings: {
+          endpoint: '/api/my/endpoint',
+          body: 'my body',
+          queryParams: [],
+          dateTimeFields: [{ useAsReference: true, type: 'iso-string', fieldName: 'timestamp' }],
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId2'
+      }
+    ]
   };
+
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
     (utils.formatQueryParams as jest.Mock).mockReturnValue(
       '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
     );
 
-    south = new SouthSlims(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthSlims(
+      configuration,
+      addContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southMetricsRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      'baseFolder'
+    );
   });
 
   it('should test connection', async () => {
@@ -229,7 +233,7 @@ describe('SouthSlims with body', () => {
       .mockReturnValue([]);
     south.parseData = jest
       .fn()
-      .mockImplementationOnce((item: SouthConnectorItemDTO, httpResults: Array<any>) => ({
+      .mockImplementationOnce((_item: SouthConnectorItemEntity<SouthSlimsItemSettings>, httpResults: Array<unknown>) => ({
         formattedResult: httpResults,
         maxInstant: '2020-03-01T00:00:00.000Z'
       }))
@@ -238,23 +242,23 @@ describe('SouthSlims with body', () => {
         maxInstant: '2020-03-01T00:00:00.000Z'
       }));
 
-    await south.historyQuery(items, startTime, nowDateString);
+    await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
     expect(utils.persistResults).toHaveBeenCalledTimes(1);
     expect(south.queryData).toHaveBeenCalledTimes(4);
     expect(south.parseData).toHaveBeenCalledTimes(4);
-    expect(south.queryData).toHaveBeenCalledWith(items[0], startTime, nowDateString);
-    expect(south.queryData).toHaveBeenCalledWith(items[1], '2020-03-01T00:00:00.000Z', nowDateString);
-    expect(south.queryData).toHaveBeenCalledWith(items[2], '2020-03-01T00:00:00.000Z', nowDateString);
-    expect(south.queryData).toHaveBeenCalledWith(items[3], '2020-03-01T00:00:00.000Z', nowDateString);
-    expect(logger.info).toHaveBeenCalledWith(`Found 2 results for item ${items[0].name} in 0 ms`);
-    expect(logger.info).toHaveBeenCalledWith(`No result found for item ${items[1].name}. Request done in 0 ms`);
-    expect(logger.info).toHaveBeenCalledWith(`No result found for item ${items[2].name}. Request done in 0 ms`);
+    expect(south.queryData).toHaveBeenCalledWith(configuration.items[0], startTime, testData.constants.dates.FAKE_NOW);
+    expect(south.queryData).toHaveBeenCalledWith(configuration.items[1], '2020-03-01T00:00:00.000Z', testData.constants.dates.FAKE_NOW);
+    expect(south.queryData).toHaveBeenCalledWith(configuration.items[2], '2020-03-01T00:00:00.000Z', testData.constants.dates.FAKE_NOW);
+    expect(south.queryData).toHaveBeenCalledWith(configuration.items[3], '2020-03-01T00:00:00.000Z', testData.constants.dates.FAKE_NOW);
+    expect(logger.info).toHaveBeenCalledWith(`Found 2 results for item ${configuration.items[0].name} in 0 ms`);
+    expect(logger.info).toHaveBeenCalledWith(`No result found for item ${configuration.items[1].name}. Request done in 0 ms`);
+    expect(logger.info).toHaveBeenCalledWith(`No result found for item ${configuration.items[2].name}. Request done in 0 ms`);
   });
 
   it('should properly fetch with Body', async () => {
     (utils.httpGetWithBody as jest.Mock).mockReturnValue(Promise.resolve({ result: [] }));
 
-    const result = await south.queryData(items[0], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
+    const result = await south.queryData(configuration.items[0], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
     expect(result).toEqual({ result: [] });
     const expectedOptions = {
       method: 'GET',
@@ -262,7 +266,7 @@ describe('SouthSlims with body', () => {
       protocol: 'http:',
       timeout: 30000,
       port: configuration.settings.port,
-      path: items[0].settings.endpoint,
+      path: configuration.items[0].settings.endpoint,
       headers: {
         authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=',
         'content-length': '7',
@@ -283,7 +287,7 @@ describe('SouthSlims with body', () => {
       })
     );
     await south.start();
-    const result = await south.queryData(items[1], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
+    const result = await south.queryData(configuration.items[1], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
     expect(result).toEqual({ result: [] });
     expect(fetch).toHaveBeenCalledWith(
       'http://localhost:4200/api/my/endpoint' +
@@ -303,7 +307,8 @@ describe('SouthSlims with body', () => {
 });
 
 describe('SouthSlims with body and accept self signed', () => {
-  const configuration: SouthConnectorDTO<SouthSlimsSettings> = {
+  let south: SouthSlims;
+  const configuration: SouthConnectorEntity<SouthSlimsSettings, SouthSlimsItemSettings> = {
     id: 'southId',
     name: 'south',
     type: 'test',
@@ -315,6 +320,7 @@ describe('SouthSlims with body and accept self signed', () => {
       readDelay: 0,
       overlap: 0
     },
+    sharedConnection: false,
     settings: {
       url: 'https://localhost/',
       port: 4200,
@@ -323,18 +329,121 @@ describe('SouthSlims with body and accept self signed', () => {
       password: 'password',
       useProxy: false,
       acceptUnauthorized: true
-    }
+    },
+    items: [
+      {
+        id: 'id1',
+        name: 'item1',
+        enabled: true,
+        settings: {
+          endpoint: '/api/my/endpoint',
+          body: 'my body',
+          queryParams: [],
+          dateTimeFields: null,
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id2',
+        name: 'item2',
+        enabled: true,
+        settings: {
+          endpoint: '/api/my/endpoint',
+          body: '',
+          queryParams: [{ key: 'my key', value: 'my value' }],
+          dateTimeFields: [{ useAsReference: false, type: 'iso-string', fieldName: 'rslt_cf_samplingDateAndTime' }],
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id3',
+        name: 'item3',
+        enabled: true,
+        settings: {
+          endpoint: '/api/my/endpoint',
+          body: null,
+          queryParams: null,
+          dateTimeFields: [
+            { useAsReference: true, type: 'unix-epoch-ms', fieldName: 'rslt_modifiedOn' },
+            {
+              useAsReference: false,
+              type: 'string',
+              fieldName: 'rslt_cf_samplingDateAndTime',
+              format: 'yyyy-MM-dd HH:mm:ss.S',
+              locale: 'en/US',
+              timezone: 'Europe/Paris'
+            }
+          ],
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId2'
+      },
+      {
+        id: 'id4',
+        name: 'item4',
+        enabled: true,
+        settings: {
+          endpoint: '/api/my/endpoint',
+          body: 'my body',
+          queryParams: [],
+          dateTimeFields: [{ useAsReference: true, type: 'iso-string', fieldName: 'timestamp' }],
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId2'
+      }
+    ]
   };
+
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
     (utils.formatQueryParams as jest.Mock).mockReturnValue(
       '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
     );
 
-    south = new SouthSlims(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthSlims(
+      configuration,
+      addContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southMetricsRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      'baseFolder'
+    );
   });
 
   it('should test connection', async () => {
@@ -354,7 +463,7 @@ describe('SouthSlims with body and accept self signed', () => {
     (utils.httpGetWithBody as jest.Mock).mockReturnValue(Promise.resolve({ result: [] }));
 
     await south.start();
-    const result = await south.queryData(items[3], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
+    const result = await south.queryData(configuration.items[3], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
     expect(result).toEqual({ result: [] });
     const expectedOptions = {
       method: 'GET',
@@ -362,7 +471,7 @@ describe('SouthSlims with body and accept self signed', () => {
       protocol: 'https:',
       timeout: 30000,
       port: configuration.settings.port,
-      path: items[3].settings.endpoint,
+      path: configuration.items[3].settings.endpoint,
       headers: {
         authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=',
         'content-length': '7',
@@ -377,7 +486,8 @@ describe('SouthSlims with body and accept self signed', () => {
 });
 
 describe('SouthSlims with query params', () => {
-  const configuration: SouthConnectorDTO<SouthSlimsSettings> = {
+  let south: SouthSlims;
+  const configuration: SouthConnectorEntity<SouthSlimsSettings, SouthSlimsItemSettings> = {
     id: 'southId',
     name: 'south',
     type: 'test',
@@ -389,6 +499,7 @@ describe('SouthSlims with query params', () => {
       readDelay: 0,
       overlap: 0
     },
+    sharedConnection: false,
     settings: {
       url: 'http://localhost',
       port: 4200,
@@ -399,24 +510,126 @@ describe('SouthSlims with query params', () => {
       proxyUsername: 'proxy username',
       proxyPassword: null,
       acceptUnauthorized: false
-    }
+    },
+    items: [
+      {
+        id: 'id1',
+        name: 'item1',
+        enabled: true,
+        settings: {
+          endpoint: '/api/my/endpoint',
+          body: 'my body',
+          queryParams: [],
+          dateTimeFields: null,
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id2',
+        name: 'item2',
+        enabled: true,
+        settings: {
+          endpoint: '/api/my/endpoint',
+          body: '',
+          queryParams: [{ key: 'my key', value: 'my value' }],
+          dateTimeFields: [{ useAsReference: false, type: 'iso-string', fieldName: 'rslt_cf_samplingDateAndTime' }],
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id3',
+        name: 'item3',
+        enabled: true,
+        settings: {
+          endpoint: '/api/my/endpoint',
+          body: null,
+          queryParams: null,
+          dateTimeFields: [
+            { useAsReference: true, type: 'unix-epoch-ms', fieldName: 'rslt_modifiedOn' },
+            {
+              useAsReference: false,
+              type: 'string',
+              fieldName: 'rslt_cf_samplingDateAndTime',
+              format: 'yyyy-MM-dd HH:mm:ss.S',
+              locale: 'en/US',
+              timezone: 'Europe/Paris'
+            }
+          ],
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId2'
+      },
+      {
+        id: 'id4',
+        name: 'item4',
+        enabled: true,
+        settings: {
+          endpoint: '/api/my/endpoint',
+          body: 'my body',
+          queryParams: [],
+          dateTimeFields: [{ useAsReference: true, type: 'iso-string', fieldName: 'timestamp' }],
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId2'
+      }
+    ]
   };
   const fakeAgent = { rejectUnauthorized: false };
 
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     (utils.formatInstant as jest.Mock).mockImplementation((instant: string) => instant);
     (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
-    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
-    south = new SouthSlims(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthSlims(
+      configuration,
+      addContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southMetricsRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      'baseFolder'
+    );
   });
 
   it('should properly fetch with Body', async () => {
     (utils.httpGetWithBody as jest.Mock).mockReturnValue(Promise.resolve({ result: [] }));
 
-    const result = await south.queryData(items[0], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
+    const result = await south.queryData(configuration.items[0], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
     expect(result).toEqual({ result: [] });
     const expectedOptions = {
       method: 'GET',
@@ -425,7 +638,7 @@ describe('SouthSlims with query params', () => {
       agent: fakeAgent,
       timeout: 30000,
       port: configuration.settings.port,
-      path: items[0].settings.endpoint,
+      path: configuration.items[0].settings.endpoint,
       headers: {
         authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=',
         'content-length': '7',
@@ -456,7 +669,7 @@ describe('SouthSlims with query params', () => {
       })
     );
     await south.start();
-    const result = await south.queryData(items[1], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
+    const result = await south.queryData(configuration.items[1], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
     expect(result).toEqual({ result: [] });
     expect(fetch).toHaveBeenCalledWith(
       'http://localhost:4200/api/my/endpoint' +
@@ -494,7 +707,7 @@ describe('SouthSlims with query params', () => {
     );
 
     await south.start();
-    await expect(south.queryData(items[1], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z')).rejects.toThrow(
+    await expect(south.queryData(configuration.items[1], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z')).rejects.toThrow(
       'HTTP request failed with status code 400 and message: statusText'
     );
 
@@ -537,17 +750,17 @@ describe('SouthSlims with query params', () => {
 
   it('should reject if no entries', () => {
     try {
-      south.parseData(items[0], null as any);
+      south.parseData(configuration.items[0], null as unknown as SlimsResults);
     } catch (error) {
       expect(error).toEqual(new Error('Bad data: expect SLIMS values to be an array.'));
     }
     try {
-      south.parseData(items[0], {} as any);
+      south.parseData(configuration.items[0], {} as unknown as SlimsResults);
     } catch (error) {
       expect(error).toEqual(new Error('Bad data: expect SLIMS values to be an array.'));
     }
     try {
-      south.parseData(items[0], { entities: 1 } as any);
+      south.parseData(configuration.items[0], { entities: 1 } as unknown as SlimsResults);
     } catch (error) {
       expect(error).toEqual(new Error('Bad data: expect SLIMS values to be an array.'));
     }
@@ -660,7 +873,7 @@ describe('SouthSlims with query params', () => {
       }
     ];
 
-    const result = south.parseData(items[2], slimsResults);
+    const result = south.parseData(configuration.items[2], slimsResults);
     expect(result).toEqual({ formattedResult: expectedResult, maxInstant: '2023-01-02T00:00:00.000Z' });
   });
 
@@ -704,7 +917,7 @@ describe('SouthSlims with query params', () => {
 
     let error;
     try {
-      south.parseData(items[0], slimsResults);
+      south.parseData(configuration.items[0], slimsResults);
     } catch (err) {
       error = err;
     }
@@ -751,7 +964,7 @@ describe('SouthSlims with query params', () => {
 
     let error;
     try {
-      south.parseData(items[1], slimsResults);
+      south.parseData(configuration.items[1], slimsResults);
     } catch (err) {
       error = err;
     }
@@ -763,7 +976,7 @@ describe('SouthSlims with query params', () => {
       entities: [{ columns: [] }]
     };
     try {
-      south.parseData(items[0], slimsResultsWithoutPid);
+      south.parseData(configuration.items[0], slimsResultsWithoutPid);
     } catch (error) {
       expect(error).toEqual(new Error('Bad data: expect rslt_cf_pid to have a value'));
     }
@@ -781,7 +994,7 @@ describe('SouthSlims with query params', () => {
       ]
     };
     try {
-      south.parseData(items[0], slimsResultsWithoutPidValue);
+      south.parseData(configuration.items[0], slimsResultsWithoutPidValue);
     } catch (error) {
       expect(error).toEqual(new Error('Bad data: expect rslt_cf_pid to have a value'));
     }
@@ -799,7 +1012,7 @@ describe('SouthSlims with query params', () => {
       ]
     };
     try {
-      south.parseData(items[0], slimsResultsWithoutTestName);
+      south.parseData(configuration.items[0], slimsResultsWithoutTestName);
     } catch (error) {
       expect(error).toEqual(new Error('Bad data: expect test_name to have a value'));
     }
@@ -821,7 +1034,7 @@ describe('SouthSlims with query params', () => {
       ]
     };
     try {
-      south.parseData(items[0], slimsResultsWithoutTestNameValue);
+      south.parseData(configuration.items[0], slimsResultsWithoutTestNameValue);
     } catch (error) {
       expect(error).toEqual(new Error('Bad data: expect test_name to have a value'));
     }
@@ -843,7 +1056,7 @@ describe('SouthSlims with query params', () => {
       ]
     };
     try {
-      south.parseData(items[0], slimsResultsWithoutTestValue);
+      south.parseData(configuration.items[0], slimsResultsWithoutTestValue);
     } catch (error) {
       expect(error).toEqual(new Error('Bad data: expect rslt_value to have a unit and a value'));
     }
@@ -870,7 +1083,7 @@ describe('SouthSlims with query params', () => {
       ]
     };
     try {
-      south.parseData(items[0], slimsResultsWithEmptyTestValue);
+      south.parseData(configuration.items[0], slimsResultsWithEmptyTestValue);
     } catch (error) {
       expect(error).toEqual(new Error('Bad data: expect rslt_value to have a unit and a value'));
     }
@@ -897,7 +1110,7 @@ describe('SouthSlims with query params', () => {
       ]
     };
     try {
-      south.parseData(items[0], slimsResultsWithoutModifiedOn);
+      south.parseData(configuration.items[0], slimsResultsWithoutModifiedOn);
     } catch (error) {
       expect(error).toEqual(new Error('Bad data: expect rslt_modifiedOn to have a value'));
     }
@@ -928,7 +1141,7 @@ describe('SouthSlims with query params', () => {
       ]
     };
     try {
-      south.parseData(items[0], slimsResultsWithoutModifiedOnValue);
+      south.parseData(configuration.items[0], slimsResultsWithoutModifiedOnValue);
     } catch (error) {
       expect(error).toEqual(new Error('Bad data: expect rslt_modifiedOn to have a value'));
     }
@@ -959,7 +1172,7 @@ describe('SouthSlims with query params', () => {
       ]
     };
     try {
-      south.parseData(items[0], slimsResultsWithoutSamplingDateAndTime);
+      south.parseData(configuration.items[0], slimsResultsWithoutSamplingDateAndTime);
     } catch (error) {
       expect(error).toEqual(new Error('Bad data: expect rslt_cf_samplingDateAndTime to have a value'));
     }
@@ -994,7 +1207,7 @@ describe('SouthSlims with query params', () => {
       ]
     };
     try {
-      south.parseData(items[0], slimsResultsWithoutSamplingDateAndTimeValue);
+      south.parseData(configuration.items[0], slimsResultsWithoutSamplingDateAndTimeValue);
     } catch (error) {
       expect(error).toEqual(new Error('Bad data: expect rslt_cf_samplingDateAndTime to have a value'));
     }
@@ -1002,7 +1215,8 @@ describe('SouthSlims with query params', () => {
 });
 
 describe('SouthSlims with query params and accept self signed', () => {
-  const configuration: SouthConnectorDTO<SouthSlimsSettings> = {
+  let south: SouthSlims;
+  const configuration: SouthConnectorEntity<SouthSlimsSettings, SouthSlimsItemSettings> = {
     id: 'southId',
     name: 'south',
     type: 'test',
@@ -1014,6 +1228,7 @@ describe('SouthSlims with query params and accept self signed', () => {
       readDelay: 0,
       overlap: 0
     },
+    sharedConnection: false,
     settings: {
       url: 'http://localhost',
       port: 4200,
@@ -1024,7 +1239,99 @@ describe('SouthSlims with query params and accept self signed', () => {
       proxyPassword: 'proxy password',
       proxyUsername: 'proxy username',
       acceptUnauthorized: false
-    }
+    },
+    items: [
+      {
+        id: 'id1',
+        name: 'item1',
+        enabled: true,
+        settings: {
+          endpoint: '/api/my/endpoint',
+          body: 'my body',
+          queryParams: [],
+          dateTimeFields: null,
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id2',
+        name: 'item2',
+        enabled: true,
+        settings: {
+          endpoint: '/api/my/endpoint',
+          body: '',
+          queryParams: [{ key: 'my key', value: 'my value' }],
+          dateTimeFields: [{ useAsReference: false, type: 'iso-string', fieldName: 'rslt_cf_samplingDateAndTime' }],
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id3',
+        name: 'item3',
+        enabled: true,
+        settings: {
+          endpoint: '/api/my/endpoint',
+          body: null,
+          queryParams: null,
+          dateTimeFields: [
+            { useAsReference: true, type: 'unix-epoch-ms', fieldName: 'rslt_modifiedOn' },
+            {
+              useAsReference: false,
+              type: 'string',
+              fieldName: 'rslt_cf_samplingDateAndTime',
+              format: 'yyyy-MM-dd HH:mm:ss.S',
+              locale: 'en/US',
+              timezone: 'Europe/Paris'
+            }
+          ],
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId2'
+      },
+      {
+        id: 'id4',
+        name: 'item4',
+        enabled: true,
+        settings: {
+          endpoint: '/api/my/endpoint',
+          body: 'my body',
+          queryParams: [],
+          dateTimeFields: [{ useAsReference: true, type: 'iso-string', fieldName: 'timestamp' }],
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId2'
+      }
+    ]
   };
   const fakeAgent = { rejectUnauthorized: false };
 
@@ -1032,15 +1339,25 @@ describe('SouthSlims with query params and accept self signed', () => {
     jest.clearAllMocks();
     (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
     (utils.formatInstant as jest.Mock).mockImplementation((instant: string) => instant);
-    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
-    south = new SouthSlims(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthSlims(
+      configuration,
+      addContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southMetricsRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      'baseFolder'
+    );
   });
 
   it('should properly fetch with Body', async () => {
     (utils.httpGetWithBody as jest.Mock).mockReturnValue(Promise.resolve({ result: [] }));
 
-    const result = await south.queryData(items[0], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
+    const result = await south.queryData(configuration.items[0], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
     expect(result).toEqual({ result: [] });
     const expectedOptions = {
       method: 'GET',
@@ -1049,7 +1366,7 @@ describe('SouthSlims with query params and accept self signed', () => {
       agent: fakeAgent,
       timeout: 30000,
       port: configuration.settings.port,
-      path: items[0].settings.endpoint,
+      path: configuration.items[0].settings.endpoint,
       headers: {
         authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=',
         'content-length': '7',
@@ -1081,7 +1398,7 @@ describe('SouthSlims with query params and accept self signed', () => {
     );
 
     await south.start();
-    const result = await south.queryData(items[2], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
+    const result = await south.queryData(configuration.items[2], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
     expect(result).toEqual({ result: [] });
     expect(fetch).toHaveBeenCalledWith(
       'http://localhost:4200/api/my/endpoint' +
@@ -1124,7 +1441,7 @@ describe('SouthSlims with query params and accept self signed', () => {
     const callback = jest.fn();
     south.queryData = jest.fn().mockReturnValueOnce([]);
     south.parseData = jest.fn().mockImplementationOnce(results => ({ formattedResult: results }));
-    await south.testItem(items[0], callback);
+    await south.testItem(configuration.items[0], callback);
     expect(south.queryData).toHaveBeenCalledTimes(1);
     expect(callback).toHaveBeenCalledTimes(1);
   });

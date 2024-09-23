@@ -6,15 +6,14 @@ import {
   convertDateTimeToInstant,
   createFolder,
   formatInstant,
+  generateCsvContent,
+  generateFilenameForSerialization,
   generateReplacementParameters,
   logQuery,
-  persistResults,
-  generateCsvContent,
-  generateFilenameForSerialization
+  persistResults
 } from '../../service/utils';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
-import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
 import { QueriesHistory } from '../south-interface';
@@ -23,6 +22,11 @@ import { SouthOracleItemSettings, SouthOracleSettings } from '../../../../shared
 import { OIBusContent } from '../../../../shared/model/engine.model';
 
 import oracledb, { ConnectionAttributes } from 'oracledb';
+import { SouthConnectorEntity } from '../../model/south-connector.model';
+import SouthConnectorRepository from '../../repository/config/south-connector.repository';
+import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
+import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
 
 /**
  * Class SouthOracle - Retrieve data from Oracle databases and send them to the cache as CSV files.
@@ -33,14 +37,27 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
   private readonly tmpFolder: string;
 
   constructor(
-    connector: SouthConnectorDTO<SouthOracleSettings>,
+    connector: SouthConnectorEntity<SouthOracleSettings, SouthOracleItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
-    repositoryService: RepositoryService,
+    southConnectorRepository: SouthConnectorRepository,
+    southMetricsRepository: SouthConnectorMetricsRepository,
+    southCacheRepository: SouthCacheRepository,
+    scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, engineAddContentCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(
+      connector,
+      engineAddContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southMetricsRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      baseFolder
+    );
     this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
     if (this.connector.settings.thickMode && this.connector.settings.oracleClient) {
       oracledb.initOracleClient({ libDir: path.resolve(this.connector.settings.oracleClient) });
@@ -66,24 +83,26 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
     try {
       connection = await oracledb.getConnection(config);
       await connection.ping();
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (connection) {
         await connection.close();
       }
 
-      switch (error.code) {
+      switch ((error as { code: string }).code) {
         case 'NJS-515':
         case 'NJS-503':
-          throw new Error(`Please check host and port. ${error.message}`);
+          throw new Error(`Please check host and port. ${(error as Error).message}`);
 
         case 'ORA-01017':
-          throw new Error(`Please check username and password. ${error.message}`);
+          throw new Error(`Please check username and password. ${(error as Error).message}`);
 
         case 'NJS-518':
-          throw new Error(`Cannot connect to database "${this.connector.settings.database}". Service is not registered. ${error.message}`);
+          throw new Error(
+            `Cannot connect to database "${this.connector.settings.database}". Service is not registered. ${(error as Error).message}`
+          );
 
         default:
-          throw new Error(`Unexpected error. ${error.message}`);
+          throw new Error(`Unexpected error. ${(error as Error).message}`);
       }
     }
 
@@ -96,12 +115,12 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
         WHERE OWNER = SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA')
       `);
       if (rows) {
-        const result: any = rows[0];
+        const result = rows[0] as { TABLE_COUNT: number };
         table_count = result?.TABLE_COUNT || 0;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       await connection.close();
-      throw new Error(`Unable to read tables in database "${this.connector.settings.database}". ${error.message}`);
+      throw new Error(`Unable to read tables in database "${this.connector.settings.database}". ${(error as Error).message}`);
     }
 
     await connection.close();
@@ -117,10 +136,10 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
       .toUTC()
       .toISO() as Instant;
     const endTime = DateTime.now().toUTC().toISO() as Instant;
-    const result: Array<any> = await this.queryData(item, startTime, endTime);
+    const result: Array<Record<string, string | number>> = await this.queryData(item, startTime, endTime);
 
     const formattedResults = result.map(entry => {
-      const formattedEntry: Record<string, any> = {};
+      const formattedEntry: Record<string, string | number> = {};
       Object.entries(entry).forEach(([key, value]) => {
         const datetimeField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.fieldName === key) || null;
         if (!datetimeField) {
@@ -164,14 +183,14 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
 
     for (const item of items) {
       const startRequest = DateTime.now().toMillis();
-      const result: Array<any> = await this.queryData(item, updatedStartTime, endTime);
+      const result: Array<Record<string, string | number>> = await this.queryData(item, updatedStartTime, endTime);
       const requestDuration = DateTime.now().toMillis() - startRequest;
 
       if (result.length > 0) {
         this.logger.info(`Found ${result.length} results for item ${item.name} in ${requestDuration} ms`);
 
         const formattedResult = result.map(entry => {
-          const formattedEntry: Record<string, any> = {};
+          const formattedEntry: Record<string, string | number> = {};
           Object.entries(entry).forEach(([key, value]) => {
             const datetimeField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.fieldName === key);
             if (!datetimeField) {
@@ -215,7 +234,11 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
   /**
    * Apply the SQL query to the target Oracle database
    */
-  async queryData(item: SouthConnectorItemDTO<SouthOracleItemSettings>, startTime: Instant, endTime: Instant): Promise<Array<any>> {
+  async queryData(
+    item: SouthConnectorItemDTO<SouthOracleItemSettings>,
+    startTime: Instant,
+    endTime: Instant
+  ): Promise<Array<Record<string, string | number>>> {
     const config: ConnectionAttributes = {
       user: this.connector.settings.username || undefined,
       password: this.connector.settings.password ? await this.encryptionService.decryptText(this.connector.settings.password) : undefined,
@@ -240,7 +263,10 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
         params
       );
       await connection.close();
-      return rows || [];
+      if (!rows) {
+        return [];
+      }
+      return rows as Array<Record<string, string | number>>;
     } catch (error) {
       if (connection) {
         await connection.close();

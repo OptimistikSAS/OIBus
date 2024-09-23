@@ -1,7 +1,7 @@
 import koaSend from 'koa-send';
 import { KoaContext } from '../koa';
 
-const serveClient = async (ctx: KoaContext<any, any>, next: () => Promise<any>) => {
+const serveClient = async (ctx: KoaContext<unknown, unknown>, next: () => void) => {
   const root = `${__dirname}/../../../../frontend/browser`;
   if (ctx.path?.match(/\.(js|js\.map|ico|ttf|css|css\.map|png|svg|woff|woff2)$/)) {
     return await koaSend(ctx, ctx.path, { root });

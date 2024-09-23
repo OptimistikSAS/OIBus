@@ -14,6 +14,7 @@ import { FileTableComponent, FileTableData, ItemActionEvent } from '../file-tabl
 import { emptyPage } from '../../../shared/test-utils';
 import { ModalService } from '../../../shared/modal.service';
 import { FileContentModalComponent } from '../file-content-modal/file-content-modal.component';
+import { NorthSettings } from '../../../../../../shared/model/north-settings.model';
 
 @Component({
   selector: 'oib-error-files',
@@ -37,7 +38,7 @@ export class ErrorFilesComponent implements OnInit {
   private northConnectorService = inject(NorthConnectorService);
   private modalService = inject(ModalService);
 
-  @Input() northConnector: NorthConnectorDTO | null = null;
+  @Input() northConnector: NorthConnectorDTO<NorthSettings> | null = null;
   errorFiles: Array<NorthCacheFiles> = [];
   @ViewChild('fileTable') fileTable!: FileTableComponent;
   fileTablePages = emptyPage<FileTableData>();

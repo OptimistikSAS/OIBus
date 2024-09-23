@@ -1,6 +1,7 @@
 import SubscriptionController from './subscription.controller';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
 import testData from '../../tests/utils/test-data';
+import { toSouthConnectorLightDTO } from '../../service/south.service';
 
 const subscriptionController = new SubscriptionController();
 
@@ -15,12 +16,12 @@ describe('Subscription Controller', () => {
 
   it('findByNorth() should return subscriptions', async () => {
     ctx.params.northId = northId;
-    ctx.app.subscriptionService.findByNorth.mockReturnValueOnce(testData.subscriptions.list);
+    ctx.app.subscriptionService.findByNorth.mockReturnValueOnce(testData.south.list.map(element => toSouthConnectorLightDTO(element)));
 
     await subscriptionController.findByNorth(ctx);
 
     expect(ctx.app.subscriptionService.findByNorth).toHaveBeenCalledWith(northId);
-    expect(ctx.ok).toHaveBeenCalledWith(testData.subscriptions.dto);
+    expect(ctx.ok).toHaveBeenCalledWith(testData.south.list.map(element => toSouthConnectorLightDTO(element)));
   });
 
   it('findByNorth() should return bad request', async () => {

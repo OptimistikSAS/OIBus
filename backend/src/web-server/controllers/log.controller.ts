@@ -26,8 +26,8 @@ export default class LogsConnectorController extends AbstractController {
 
     const searchParams: LogSearchParam = {
       page: ctx.query.page ? parseInt(ctx.query.page as string, 10) : 0,
-      start: ctx.query.start || new Date(dayAgo).toISOString(),
-      end: ctx.query.end || new Date(now).toISOString(),
+      start: (ctx.query.start as string) || new Date(dayAgo).toISOString(),
+      end: (ctx.query.end as string) || new Date(now).toISOString(),
       levels,
       scopeIds,
       scopeTypes,
@@ -39,13 +39,17 @@ export default class LogsConnectorController extends AbstractController {
   }
 
   async suggestScopes(ctx: KoaContext<void, Array<Scope>>): Promise<void> {
-    const scopes = ctx.app.repositoryService.logRepository.searchScopesByName(ctx.query.name);
+    const scopes = ctx.app.repositoryService.logRepository.searchScopesByName(ctx.query.name as string);
     ctx.ok(scopes);
   }
 
   async getScopeById(ctx: KoaContext<void, Scope>): Promise<void> {
     const scope = ctx.app.repositoryService.logRepository.getScopeById(ctx.params.id);
-    ctx.ok(scope);
+    if (scope) {
+      ctx.ok(scope);
+    } else {
+      ctx.noContent();
+    }
   }
 
   async addLogs(ctx: KoaContext<LogStreamCommandDTO, void>): Promise<void> {
@@ -87,8 +91,8 @@ export default class LogsConnectorController extends AbstractController {
         });
       });
       ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 }

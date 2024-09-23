@@ -1,9 +1,9 @@
 import { HistoryMetrics } from '../../../shared/model/engine.model';
 import HistoryMetricsService from './history-metrics.service';
-import SouthConnectorMetricsRepository from '../repository/south-connector-metrics.repository';
-import SouthMetricsRepositoryMock from '../tests/__mocks__/repository/south-metrics-repository.mock';
-import NorthConnectorMetricsRepository from '../repository/north-connector-metrics.repository';
-import NorthMetricsRepositoryMock from '../tests/__mocks__/repository/north-metrics-repository.mock';
+import SouthConnectorMetricsRepository from '../repository/logs/south-connector-metrics.repository';
+import SouthMetricsRepositoryMock from '../tests/__mocks__/repository/log/south-metrics-repository.mock';
+import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
+import NorthMetricsRepositoryMock from '../tests/__mocks__/repository/log/north-metrics-repository.mock';
 
 const southRepositoryMock: SouthConnectorMetricsRepository = new SouthMetricsRepositoryMock();
 const northRepositoryMock: NorthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
@@ -40,8 +40,15 @@ describe('HistoryMetricsService', () => {
         lastFileRetrieved: null,
         lastConnection: null,
         lastRunStart: null,
-        lastRunDuration: null,
-        historyMetrics: {}
+        lastRunDuration: null
+      },
+      historyMetrics: {
+        running: false,
+        intervalProgress: 0,
+        currentIntervalStart: null,
+        currentIntervalEnd: null,
+        currentIntervalNumber: 0,
+        numberOfIntervals: 0
       }
     };
     service.updateMetrics(metrics as HistoryMetrics);

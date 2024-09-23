@@ -2,7 +2,6 @@ import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import SouthServiceMock from '../tests/__mocks__/service/south-service.mock';
 import NorthServiceMock from '../tests/__mocks__/service/north-service.mock';
 import HistoryQueryServiceMock from '../tests/__mocks__/service/history-query-service.mock';
-import { HistoryQueryDTO } from '../../../shared/model/history-query.model';
 
 import SouthService from '../service/south.service';
 import NorthService from '../service/north.service';
@@ -16,6 +15,9 @@ import { PassThrough } from 'node:stream';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { filesExists } from '../service/utils';
+import RepositoryService from '../service/repository.service';
+import RepositoryServiceMock from '../tests/__mocks__/service/repository-service.mock';
+import testData from '../tests/utils/test-data';
 
 jest.mock('../service/south.service');
 jest.mock('../service/north.service');
@@ -32,72 +34,39 @@ const anotherLogger: pino.Logger = new PinoLogger();
 const southService: SouthService = new SouthServiceMock();
 const northService: NorthService = new NorthServiceMock();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
+const repositoryService: RepositoryService = new RepositoryServiceMock();
 const historyQueryService: HistoryQueryService = new HistoryQueryServiceMock();
 
-const nowDateString = '2020-02-02T02:02:02.222Z';
-
-let configuration: HistoryQueryDTO;
 let engine: HistoryQueryEngine;
 
 describe('HistoryQueryEngine', () => {
   beforeEach(async () => {
     jest.resetAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
     (logger.child as jest.Mock).mockReturnValue(logger);
-    configuration = {
-      id: 'historyId',
-      name: 'history',
-      southType: 'FolderScanner',
-      northType: 'Console',
-      description: 'my test history query',
-      status: 'RUNNING',
-      history: {
-        maxInstantPerItem: true,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0
-      },
-      northSettings: {},
-      southSettings: {},
-      southSharedConnection: false,
-      startTime: '2021-02-02T02:02:02.222Z',
-      endTime: '2022-02-02T02:02:02.222Z',
-      caching: {
-        scanModeId: 'scanModeId',
-        retryInterval: 5000,
-        retryCount: 3,
-        maxSize: 1,
-        oibusTimeValues: {
-          groupCount: 1000,
-          maxSendCount: 10000
-        },
-        rawFiles: {
-          sendFileImmediately: false,
-          archive: {
-            enabled: false,
-            retentionDuration: 0
-          }
-        }
-      }
-    };
-    (historyQueryService.getHistoryQueryList as jest.Mock).mockReturnValue([configuration]);
-    (historyQueryService.listItems as jest.Mock).mockReturnValue([]);
-    (historyQueryService.getHistoryQuery as jest.Mock).mockReturnValue(configuration);
+    (historyQueryService.findAll as jest.Mock).mockReturnValue(testData.historyQueries.list);
+    (historyQueryService.findById as jest.Mock).mockImplementation((id: string) =>
+      testData.historyQueries.list.find(element => element.id === id)
+    );
 
-    engine = new HistoryQueryEngine(encryptionService, northService, southService, historyQueryService, logger);
+    engine = new HistoryQueryEngine(encryptionService, northService, southService, repositoryService, historyQueryService, logger);
   });
 
   it('it should start connectors and stop all', async () => {
     await engine.start();
-    expect(historyQueryService.getHistoryQueryList as jest.Mock).toHaveBeenCalledTimes(1);
-    expect(logger.child).toHaveBeenCalledWith({ scopeType: 'history-query', scopeId: configuration.id, scopeName: configuration.name });
+    expect(historyQueryService.findAll as jest.Mock).toHaveBeenCalledTimes(1);
+    expect(logger.child).toHaveBeenCalledWith({
+      scopeType: 'history-query',
+      scopeId: testData.historyQueries.list[0].id,
+      scopeName: testData.historyQueries.list[0].name
+    });
 
     expect(engine.getHistoryDataStream('bad id')).toEqual(null);
-    expect(engine.getHistoryDataStream(configuration.id)).toEqual(expect.any(PassThrough));
+    expect(engine.getHistoryDataStream(testData.historyQueries.list[0].id)).toEqual(expect.any(PassThrough));
 
-    await engine.startHistoryQuery(configuration.id);
-    await engine.createHistoryQuery(configuration);
+    await engine.startHistoryQuery(testData.historyQueries.list[0].id);
+    await engine.createHistoryQuery(testData.historyQueries.list[0]);
     await engine.stop();
     await engine.stopHistoryQuery('anotherId');
     await engine.resetCache('anotherId');
@@ -106,16 +75,14 @@ describe('HistoryQueryEngine', () => {
   it('should properly set logger', async () => {
     await engine.start();
 
-    (historyQueryService.getHistoryQuery as jest.Mock).mockReturnValueOnce(undefined);
-    engine.setLogger(anotherLogger);
-    expect(anotherLogger.child).not.toHaveBeenCalled();
+    (historyQueryService.findById as jest.Mock).mockReturnValueOnce(undefined);
 
     engine.setLogger(anotherLogger);
-    expect(historyQueryService.getHistoryQuery).toHaveBeenCalledWith('historyId');
+    expect(historyQueryService.findById).toHaveBeenCalledWith(testData.historyQueries.list[1].id);
     expect(anotherLogger.child).toHaveBeenCalledWith({
       scopeType: 'history-query',
-      scopeId: configuration.id,
-      scopeName: configuration.name
+      scopeId: testData.historyQueries.list[1].id,
+      scopeName: testData.historyQueries.list[1].name
     });
   });
 
@@ -125,8 +92,8 @@ describe('HistoryQueryEngine', () => {
 
     await engine.start();
 
-    const historyId = configuration.id;
-    const name = configuration.name;
+    const historyId = testData.historyQueries.list[0].id;
+    const name = testData.historyQueries.list[0].name;
     const baseFolder = path.resolve('./cache/history-query', `history-${historyId}`);
     await engine.deleteHistoryQuery(historyId, name);
 
@@ -152,8 +119,8 @@ describe('HistoryQueryEngine', () => {
       throw error;
     });
 
-    const historyId = configuration.id;
-    const name = configuration.name;
+    const historyId = testData.historyQueries.list[0].id;
+    const name = testData.historyQueries.list[0].name;
     const baseFolder = path.resolve('./cache/history-query', `history-${historyId}`);
     await engine.deleteHistoryQuery(historyId, name);
 

@@ -7,20 +7,24 @@ import {
   convertDateTimeToInstant,
   createFolder,
   formatInstant,
-  logQuery,
-  persistResults,
   generateCsvContent,
-  generateFilenameForSerialization
+  generateFilenameForSerialization,
+  logQuery,
+  persistResults
 } from '../../service/utils';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
-import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
 import { QueriesHistory } from '../south-interface';
 import { DateTime } from 'luxon';
 import { SouthMSSQLItemSettings, SouthMSSQLSettings } from '../../../../shared/model/south-settings.model';
 import { OIBusContent } from '../../../../shared/model/engine.model';
+import { SouthConnectorEntity } from '../../model/south-connector.model';
+import SouthConnectorRepository from '../../repository/config/south-connector.repository';
+import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
+import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
 
 /**
  * Class SouthMSSQL - Retrieve data from MSSQL databases and send them to the cache as CSV files.
@@ -31,14 +35,27 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
   private readonly tmpFolder: string;
 
   constructor(
-    connector: SouthConnectorDTO<SouthMSSQLSettings>,
+    connector: SouthConnectorEntity<SouthMSSQLSettings, SouthMSSQLItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
-    repositoryService: RepositoryService,
+    southConnectorRepository: SouthConnectorRepository,
+    southMetricsRepository: SouthConnectorMetricsRepository,
+    southCacheRepository: SouthCacheRepository,
+    scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, engineAddContentCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(
+      connector,
+      engineAddContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southMetricsRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      baseFolder
+    );
     this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
   }
 
@@ -79,17 +96,17 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
     try {
       pool = await new mssql.ConnectionPool(config).connect();
       request = pool.request();
-    } catch (error: any) {
-      switch (error.code) {
+    } catch (error: unknown) {
+      switch ((error as { code: string; message: string }).code) {
         case 'ETIMEOUT':
         case 'ESOCKET':
-          throw new Error(`Please check host and port. ${error.message}`);
+          throw new Error(`Please check host and port. ${(error as { code: string; message: string }).message}`);
 
         case 'ELOGIN':
-          throw new Error(`Please check username, password and database name. ${error.message}`);
+          throw new Error(`Please check username, password and database name. ${(error as { code: string; message: string }).message}`);
 
         default:
-          throw new Error(`Unable to connect to database. ${error.message}`);
+          throw new Error(`Unable to connect to database. ${(error as { code: string; message: string }).message}`);
       }
     }
 
@@ -97,15 +114,15 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
     try {
       const {
         recordsets: [recordset]
-      } = await request.query<Array<any>>(`
+      } = await request.query<Array<Record<string, string | number>>>(`
         SELECT COUNT_BIG(*) AS table_count
         FROM INFORMATION_SCHEMA.TABLES
         WHERE TABLE_TYPE = 'BASE TABLE'
       `);
       table_count = (recordset[0]?.table_count as number) ?? 0;
-    } catch (error: any) {
+    } catch (error: unknown) {
       await pool.close();
-      throw new Error(`Unable to read tables in database "${this.connector.settings.database}". ${error.message}`);
+      throw new Error(`Unable to read tables in database "${this.connector.settings.database}". ${(error as Error).message}`);
     }
     await pool.close();
 
@@ -120,10 +137,10 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
       .toUTC()
       .toISO() as Instant;
     const endTime = DateTime.now().toUTC().toISO() as Instant;
-    const result: Array<any> = await this.queryData(item, startTime, endTime);
+    const result: Array<Record<string, string | number>> = await this.queryData(item, startTime, endTime);
 
     const formattedResults = result.map(entry => {
-      const formattedEntry: Record<string, any> = {};
+      const formattedEntry: Record<string, string | number> = {};
       Object.entries(entry).forEach(([key, value]) => {
         const datetimeField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.fieldName === key) || null;
         if (!datetimeField) {
@@ -167,14 +184,14 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
 
     for (const item of items) {
       const startRequest = DateTime.now().toMillis();
-      const result: Array<any> = await this.queryData(item, updatedStartTime, endTime);
+      const result: Array<Record<string, string | number>> = await this.queryData(item, updatedStartTime, endTime);
       const requestDuration = DateTime.now().toMillis() - startRequest;
 
       if (result.length > 0) {
         this.logger.info(`Found ${result.length} results for item ${item.name} in ${requestDuration} ms`);
 
         const formattedResult = result.map(entry => {
-          const formattedEntry: Record<string, any> = {};
+          const formattedEntry: Record<string, string | number> = {};
           Object.entries(entry).forEach(([key, value]) => {
             const datetimeField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.fieldName === key);
             if (!datetimeField) {
@@ -215,7 +232,11 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
   /**
    * Apply the SQL query to the target MSSQL database
    */
-  async queryData(item: SouthConnectorItemDTO<SouthMSSQLItemSettings>, startTime: Instant, endTime: Instant): Promise<Array<any>> {
+  async queryData(
+    item: SouthConnectorItemDTO<SouthMSSQLItemSettings>,
+    startTime: Instant,
+    endTime: Instant
+  ): Promise<Array<Record<string, string | number>>> {
     const config = await this.createConnectionOptions();
 
     const referenceTimestampField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.useAsReference) || null;
@@ -233,9 +254,9 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
     }
     try {
       const result = await request.query(item.settings.query);
-      const [first] = result.recordsets as Array<any>;
+      const [first] = result.recordsets as Array<unknown>;
       await pool.close();
-      return first;
+      return first as Array<Record<string, string | number>>;
     } catch (error) {
       await pool.close();
       throw error;

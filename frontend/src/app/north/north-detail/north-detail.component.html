@@ -54,7 +54,7 @@
               </tr>
               @for (setting of displayedSettings; track setting) {
                 <tr>
-                  <td style="width: 33%">{{ setting.key }}</td>
+                  <td>{{ setting.key }}</td>
                   <td>{{ setting.value }}</td>
                 </tr>
               }
@@ -100,7 +100,7 @@
           </table>
         </oib-box>
         <!-- subscription -->
-        <oib-north-subscriptions [northConnector]="northConnector" />
+        <oib-north-subscriptions [northConnector]="northConnector" (inMemorySubscriptions)="updateInMemorySubscriptions($event)" />
         <!-- Logs -->
         <oib-box>
           <ng-template oibBoxTitle>

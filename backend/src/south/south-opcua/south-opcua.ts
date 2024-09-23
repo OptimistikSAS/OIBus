@@ -16,13 +16,11 @@ import {
   Variant
 } from 'node-opcua-client';
 
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import { Aggregate, Instant, Resampling } from '../../../../shared/model/types';
 
 import manifest from './manifest';
 import SouthConnector from '../south-connector';
 import EncryptionService, { CERT_FILE_NAME, CERT_FOLDER, CERT_PRIVATE_KEY_FILE_NAME } from '../../service/encryption.service';
-import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { ClientSession } from 'node-opcua-client/source/client_session';
 import { UserIdentityInfo } from 'node-opcua-client/source/user_identity_info';
@@ -38,6 +36,11 @@ import { createFolder } from '../../service/utils';
 import { OPCUACertificateManager } from 'node-opcua-certificate-manager';
 import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
 import ConnectionService, { ManagedConnection, ManagedConnectionSettings } from '../../service/connection.service';
+import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import SouthConnectorRepository from '../../repository/config/south-connector.repository';
+import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
+import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
 
 export const MAX_NUMBER_OF_NODE_TO_LOG = 10;
 export const NUM_VALUES_PER_NODE = 1000;
@@ -59,19 +62,33 @@ export default class SouthOPCUA
   connection!: ManagedConnection<ClientSession>;
 
   constructor(
-    connector: SouthConnectorDTO<SouthOPCUASettings>,
+    connector: SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
-    repositoryService: RepositoryService,
+    southConnectorRepository: SouthConnectorRepository,
+    southMetricsRepository: SouthConnectorMetricsRepository,
+    southCacheRepository: SouthCacheRepository,
+    scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolder: string,
     connectionService: ConnectionService
   ) {
-    super(connector, engineAddContentCallback, encryptionService, repositoryService, logger, baseFolder, connectionService);
+    super(
+      connector,
+      engineAddContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southMetricsRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      baseFolder,
+      connectionService
+    );
 
     this.connectionSettings = {
       closeFnName: 'close',
-      sharedConnection: connector.sharedConnection ?? false
+      sharedConnection: connector.sharedConnection
     };
   }
 
@@ -109,8 +126,8 @@ export default class SouthOPCUA
         'OIBus Connector test'
       );
       session = await OPCUAClient.createSession(this.connector.settings.url, userIdentity, options);
-    } catch (error: any) {
-      const message = error.message;
+    } catch (error: unknown) {
+      const message = (error as Error).message;
 
       if (/BadTcpEndpointUrlInvalid/i.test(message)) {
         throw new Error('Please check the URL');
@@ -134,16 +151,14 @@ export default class SouthOPCUA
           throw new Error('Please check the certificate and key');
         }
       }
-      if (error.code === 'ENOENT' && this.connector.settings.authentication.type === 'cert') {
-        throw new Error(`File "${error.path}" does not exist`);
-      }
+
       if (/Failed to read private key/i.test(message)) {
         const keyPath = path.resolve(this.connector.settings.authentication.keyFilePath!);
         throw new Error(`Could not read private key "${keyPath}"`);
       }
 
       // Unhandled errors
-      throw new Error(error.message);
+      throw new Error((error as Error).message);
     } finally {
       await fs.rm(tempCertFolder, { recursive: true, force: true });
 
@@ -154,7 +169,7 @@ export default class SouthOPCUA
     }
   }
 
-  override async testItem(item: SouthConnectorItemDTO<SouthOPCUAItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
+  override async testItem(item: SouthConnectorItemEntity<SouthOPCUAItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
     await this.connect();
     let session;
     try {
@@ -171,17 +186,17 @@ export default class SouthOPCUA
         content = (await this.getHAValues([item], startTime, endTime, session, true)) as OIBusContent;
       }
       callback(content);
-    } catch (error: any) {
-      this.logger.error('OPCUA session not set. The connector cannot read values');
-      throw new Error(error.message);
+    } catch (error: unknown) {
+      this.logger.error(`Error when testing item: ${(error as Error).message}`);
+      throw error;
     } finally {
       await this.disconnect();
     }
   }
 
   override filterHistoryItems(
-    items: Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>>
-  ): Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>> {
+    items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>
+  ): Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>> {
     return items.filter(item => item.settings.mode === 'HA');
   }
 
@@ -208,7 +223,11 @@ export default class SouthOPCUA
   /**
    * Get values from the OPCUA server between startTime and endTime and write them into the cache.
    */
-  async historyQuery(items: Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
+  async historyQuery(
+    items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>,
+    startTime: Instant,
+    endTime: Instant
+  ): Promise<Instant> {
     // Try to get a session
     let session;
     try {
@@ -221,7 +240,7 @@ export default class SouthOPCUA
   }
 
   async getHAValues(
-    items: Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>>,
+    items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>,
     startTime: Instant,
     endTime: Instant,
     session: ClientSession,
@@ -271,7 +290,8 @@ export default class SouthOPCUA
             const request: HistoryReadRequest = this.getHistoryReadRequest(startTime, endTime, aggregate, resampling, nodesToRead);
             request.requestHeader.timeoutHint = this.connector.settings.readTimeout;
 
-            // @ts-ignore
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-expect-error
             const response = await session.performMessageTransaction(request);
             if (response.responseHeader.serviceResult.isNot(StatusCodes.Good)) {
               this.logger.error(`Error while reading history: ${response.responseHeader.serviceResult.description}`);
@@ -346,7 +366,8 @@ export default class SouthOPCUA
             nodeId: item.nodeId
           }));
 
-          // @ts-ignore
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-expect-error
           const response = await session.performMessageTransaction(
             this.getHistoryReadRequest(startTime, endTime, aggregate, resampling, nodesToRead)
           );
@@ -409,7 +430,6 @@ export default class SouthOPCUA
       requestedSessionTimeout: settings.readTimeout,
       keepPendingSessionsOnDisconnect: false,
       clientName,
-      // @ts-ignore
       clientCertificateManager
     };
 
@@ -518,7 +538,7 @@ export default class SouthOPCUA
     }
   }
 
-  async lastPointQuery(items: Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>>): Promise<void> {
+  async lastPointQuery(items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>): Promise<void> {
     // Try to get a session
     let session;
     try {
@@ -552,7 +572,7 @@ export default class SouthOPCUA
     }
   }
 
-  async getDAValues(items: Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>>, session: ClientSession): Promise<OIBusContent> {
+  async getDAValues(items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>, session: ClientSession): Promise<OIBusContent> {
     try {
       const startRequest = DateTime.now().toMillis();
       const dataValues = await session.read(items.map(item => ({ nodeId: item.settings.nodeId })));
@@ -583,7 +603,7 @@ export default class SouthOPCUA
     }
   }
 
-  async subscribe(items: Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>>): Promise<void> {
+  async subscribe(items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>): Promise<void> {
     if (!items.length) {
       return;
     }
@@ -644,7 +664,7 @@ export default class SouthOPCUA
     });
   }
 
-  async unsubscribe(items: Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>>): Promise<void> {
+  async unsubscribe(items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>): Promise<void> {
     for (const item of items) {
       if (this.monitoredItems.has(item.id)) {
         await this.monitoredItems.get(item.id)!.terminate();

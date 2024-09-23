@@ -14,15 +14,15 @@
         </tr>
       </thead>
       <tbody>
-        <!-- north interval progressbar -->
-        @if (historyMetrics.south.historyMetrics.intervalProgress === 1) {
-          <tr>
-            <td translate="history-query.monitoring.north.data-sent"></td>
-            <td>
-              <oib-progressbar [value]="northProgress" [max]="1" [animated]="northProgressbarAnimated" />
-            </td>
-          </tr>
-        }
+        <!-- north interval progressbar TODO -->
+        <!--        @if (historyMetrics.south.historyMetrics.intervalProgress === 1) {-->
+        <!--          <tr>-->
+        <!--            <td translate="history-query.monitoring.north.data-sent"></td>-->
+        <!--            <td>-->
+        <!--              <oib-progressbar [value]="northProgress" [max]="1" [animated]="northProgressbarAnimated" />-->
+        <!--            </td>-->
+        <!--          </tr>-->
+        <!--        }-->
         <!-- number of values for point connectors -->
         @if (northManifest.modes.points) {
           <tr>
@@ -92,25 +92,25 @@
       </thead>
       <tbody>
         <!-- south interval progressbar -->
-        @if (historyMetrics.south.historyMetrics.intervalProgress) {
-          <tr>
-            <td translate="history-query.monitoring.south.data-retrieved"></td>
-            <td>
-              <oib-progressbar [value]="historyMetrics.south.historyMetrics.intervalProgress" [animated]="southProgressbarAnimated" />
-            </td>
-          </tr>
-        }
+        <!-- TODO       @if (historyMetrics.south.historyMetrics.intervalProgress) {-->
+        <!--          <tr>-->
+        <!--            <td translate="history-query.monitoring.south.data-retrieved"></td>-->
+        <!--            <td>-->
+        <!--              <oib-progressbar [value]="historyMetrics.south.historyMetrics.intervalProgress" [animated]="southProgressbarAnimated" />-->
+        <!--            </td>-->
+        <!--          </tr>-->
+        <!--        }-->
         <!-- south interval progress -->
-        @if (historyMetrics.south.historyMetrics.currentIntervalNumber && historyMetrics.south.historyMetrics.numberOfIntervals) {
-          <tr>
-            <td translate="history-query.monitoring.south.interval-progress"></td>
-            <td>
-              {{ historyMetrics.south.historyMetrics.currentIntervalNumber }} /
-              {{ historyMetrics.south.historyMetrics.numberOfIntervals }} : [{{ historyMetrics.south.historyMetrics.currentIntervalStart }},
-              {{ historyMetrics.south.historyMetrics.currentIntervalEnd }}]
-            </td>
-          </tr>
-        }
+        <!--   TODO      @if (historyMetrics.south.historyMetrics.currentIntervalNumber && historyMetrics.south.historyMetrics.numberOfIntervals) {-->
+        <!--          <tr>-->
+        <!--            <td translate="history-query.monitoring.south.interval-progress"></td>-->
+        <!--            <td>-->
+        <!--              {{ historyMetrics.south.historyMetrics.currentIntervalNumber }} /-->
+        <!--              {{ historyMetrics.south.historyMetrics.numberOfIntervals }} : [{{ historyMetrics.south.historyMetrics.currentIntervalStart }},-->
+        <!--              {{ historyMetrics.south.historyMetrics.currentIntervalEnd }}]-->
+        <!--            </td>-->
+        <!--          </tr>-->
+        <!--        }-->
         <!-- number of values for point connectors -->
         <tr>
           <td style="width: 33%" translate="history-query.monitoring.south.number-of-values"></td>

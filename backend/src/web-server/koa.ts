@@ -1,18 +1,16 @@
 import Koa, { Context, Request } from 'koa';
 import RepositoryService from '../service/repository.service';
 import EncryptionService from '../service/encryption.service';
-import ReloadService from '../service/reload.service';
 import pino from 'pino';
 import SouthService from '../service/south.service';
 import OIBusService from '../service/oibus.service';
 import NorthService from '../service/north.service';
 import OianalyticsRegistrationService from '../service/oia/oianalytics-registration.service';
-import SouthConnectorConfigService from '../service/south-connector-config.service';
 import ScanModeService from '../service/scan-mode.service';
-import NorthConnectorConfigService from '../service/north-connector-config.service';
 import SubscriptionService from '../service/subscription.service';
 import IPFilterService from '../service/ip-filter.service';
 import OIAnalyticsCommandService from '../service/oia/oianalytics-command.service';
+import HistoryQueryService from '../service/history-query.service';
 
 interface KoaRequest<RequestBody> extends Request {
   body?: RequestBody;
@@ -26,31 +24,30 @@ export interface KoaApplication extends Koa {
   oIBusService: OIBusService;
   oIAnalyticsRegistrationService: OianalyticsRegistrationService;
   oIAnalyticsCommandService: OIAnalyticsCommandService;
+  southService: SouthService;
+  northService: NorthService;
+  historyQueryService: HistoryQueryService;
   repositoryService: RepositoryService;
   ipFilters: {
     whiteList: Array<string>;
   };
-  southService: SouthService;
-  northService: NorthService;
-  reloadService: ReloadService;
   encryptionService: EncryptionService;
-  scanModeConfigService: ScanModeService;
-  southConnectorConfigService: SouthConnectorConfigService;
-  northConnectorConfigService: NorthConnectorConfigService;
   logger: pino.Logger;
 }
 
 export interface KoaContext<RequestBody, ResponseBody> extends Context {
   request: KoaRequest<RequestBody>;
   body: ResponseBody;
-  params: any;
-  query: any;
-  ok: any;
-  noContent: any;
-  created: any;
-  badRequest: any;
-  internalServerError: any;
-  notFound: any;
-  throw: any;
+  params: Record<string, string>;
+  query: Record<string, string | Array<string>>;
+  ok(result: object | string | void): void;
+  noContent(): void;
+  created(result: object): void;
+  badRequest(error: string): void;
+  internalServerError(): void;
+  notFound(): void;
+  throw(message: string, code?: number, properties?: object): never;
+  throw(status: number): never;
+  throw(...properties: Array<number | string | object>): never;
   app: KoaApplication;
 }

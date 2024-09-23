@@ -14,7 +14,8 @@ jest.mock(
   'pino',
   jest.fn(() => jest.fn(() => ({ child: jest.fn() })))
 );
-// @ts-ignore
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
 pino.stdTimeFunctions = {
   epochTime(): string {
     return '';
@@ -112,7 +113,7 @@ describe('Logger', () => {
   it('should be properly initialized with loki error and standard file names', async () => {
     service.createChildLogger = jest.fn();
 
-    jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => Promise.resolve());
 
     (encryptionService.decryptText as jest.Mock)
       .mockImplementationOnce(() => {
@@ -129,7 +130,7 @@ describe('Logger', () => {
   });
 
   it('should be properly initialized without loki password, without oia token and without sqliteLog', async () => {
-    jest.spyOn(console, 'error').mockImplementationOnce(() => {});
+    jest.spyOn(console, 'error').mockImplementationOnce(() => Promise.resolve());
     service.createChildLogger = jest.fn();
 
     const specificRegistration: OIAnalyticsRegistration = JSON.parse(JSON.stringify(testData.oIAnalytics.registration.completed));
@@ -196,7 +197,7 @@ describe('Logger', () => {
     const specificSettings: EngineSettings = JSON.parse(JSON.stringify(testData.engine.settings));
     specificSettings.logParameters.database.maxNumberOfLogs = 0;
     specificSettings.logParameters.loki.address = '';
-    jest.spyOn(console, 'error').mockImplementationOnce(() => {});
+    jest.spyOn(console, 'error').mockImplementationOnce(() => Promise.resolve());
     service.createChildLogger = jest.fn();
 
     const expectedTargets = [

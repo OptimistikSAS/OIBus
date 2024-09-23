@@ -7,7 +7,7 @@ import { NorthConnectorService } from '../services/north-connector.service';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
-import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
+import { NorthConnectorLightDTO } from '../../../../shared/model/north-connector.model';
 import { NotificationService } from '../shared/notification.service';
 
 class NorthListComponentTester extends ComponentTester<NorthListComponent> {
@@ -28,21 +28,21 @@ describe('NorthListComponent', () => {
   let northConnectorService: jasmine.SpyObj<NorthConnectorService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
 
-  const northConnectors: Array<NorthConnectorDTO> = [
+  const northConnectors: Array<NorthConnectorLightDTO> = [
     {
       id: 'id1',
       name: 'myNorthConnector1',
       description: 'a test north connector',
       enabled: true,
       type: 'Test'
-    } as NorthConnectorDTO,
+    },
     {
       id: 'id2',
       name: 'myNorthConnector2',
       description: 'a test north connector',
       enabled: false,
       type: 'Test'
-    } as NorthConnectorDTO
+    }
   ];
 
   beforeEach(() => {
