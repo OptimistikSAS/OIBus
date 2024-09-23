@@ -4,7 +4,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import {
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
-  SouthConnectorItemDTO,
+  SouthConnectorItemCommandDTO,
   SouthConnectorManifest
 } from '../../../../../shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
@@ -26,6 +26,7 @@ import { EditElementComponent } from '../../shared/form/oib-form-array/edit-elem
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { ModalService } from '../../shared/modal.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
+import { SouthItemSettings, SouthSettings } from '../../../../../shared/model/south-settings.model';
 
 @Component({
   selector: 'oib-edit-south',
@@ -56,7 +57,7 @@ export class EditSouthComponent implements OnInit {
   private route = inject(ActivatedRoute);
 
   mode: 'create' | 'edit' = 'create';
-  southConnector: SouthConnectorDTO | null = null;
+  southConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> | null = null;
   southType = '';
   duplicateId = '';
   state = new ObservableState();
@@ -78,8 +79,7 @@ export class EditSouthComponent implements OnInit {
     settings: FormGroup;
   }> | null = null;
 
-  inMemoryItems: Array<SouthConnectorItemDTO> = [];
-  inMemoryItemIdsToDelete: Array<string> = [];
+  inMemoryItems: Array<SouthConnectorItemCommandDTO<SouthItemSettings>> = [];
 
   initialMaxInstantPerItem: boolean | null = null;
   showMaxInstantPerItemWarning = false;
@@ -148,19 +148,16 @@ export class EditSouthComponent implements OnInit {
       });
   }
 
-  createOrUpdateSouthConnector(command: SouthConnectorCommandDTO): void {
-    let createOrUpdate: Observable<SouthConnectorDTO>;
-    // if we are editing
+  createOrUpdateSouthConnector(command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>): void {
+    let createOrUpdate: Observable<SouthConnectorDTO<SouthSettings, SouthItemSettings>>;
     if (this.mode === 'edit') {
-      createOrUpdate = this.southConnectorService
-        .update(this.southConnector!.id, command, this.inMemoryItems, this.inMemoryItemIdsToDelete)
-        .pipe(
-          tap(() => this.notificationService.success('south.updated', { name: command.name })),
-          switchMap(() => this.southConnectorService.get(this.southConnector!.id))
-        );
+      createOrUpdate = this.southConnectorService.update(this.southConnector!.id, command).pipe(
+        tap(() => this.notificationService.success('south.updated', { name: command.name })),
+        switchMap(() => this.southConnectorService.get(this.southConnector!.id))
+      );
     } else {
       createOrUpdate = this.southConnectorService
-        .create(command, this.inMemoryItems, this.duplicateId)
+        .create(command, this.duplicateId)
         .pipe(tap(() => this.notificationService.success('south.created', { name: command.name })));
     }
     createOrUpdate.pipe(this.state.pendingUntilFinalization()).subscribe(southConnector => {
@@ -174,7 +171,7 @@ export class EditSouthComponent implements OnInit {
     }
 
     const formValue = this.southForm!.value;
-    const command: SouthConnectorCommandDTO = {
+    const command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
       name: formValue.name!,
       type: this.southType,
       description: formValue.description!,
@@ -186,7 +183,17 @@ export class EditSouthComponent implements OnInit {
         readDelay: formValue.history!.readDelay!,
         overlap: formValue.history!.overlap!
       },
-      settings: formValue.settings!
+      settings: formValue.settings!,
+      items: this.southConnector
+        ? this.southConnector.items.map(item => ({
+            id: item.id,
+            name: item.name,
+            enabled: item.enabled,
+            scanModeId: item.scanModeId,
+            scanModeName: null,
+            settings: item.settings
+          }))
+        : this.inMemoryItems
     };
     if (value === 'save') {
       this.createOrUpdateSouthConnector(command);
@@ -197,9 +204,15 @@ export class EditSouthComponent implements OnInit {
     }
   }
 
-  updateInMemoryItems({ items, itemIdsToDelete }: { items: Array<SouthConnectorItemDTO>; itemIdsToDelete: Array<string> }) {
-    this.inMemoryItems = items;
-    this.inMemoryItemIdsToDelete = itemIdsToDelete;
+  updateInMemoryItems(items: Array<SouthConnectorItemCommandDTO<SouthItemSettings>> | null) {
+    if (items) {
+      this.inMemoryItems = items;
+    } else {
+      this.southConnectorService.get(this.southConnector!.id).subscribe(southConnector => {
+        this.southConnector!.items = southConnector.items;
+        this.southConnector = JSON.parse(JSON.stringify(this.southConnector)); // Used to force a refresh in south item list
+      });
+    }
   }
 
   onMaxInstantPerItemChange() {

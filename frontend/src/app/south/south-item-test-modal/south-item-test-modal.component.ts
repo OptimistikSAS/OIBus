@@ -2,9 +2,10 @@ import { AfterViewInit, Component, inject, ViewChild } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { OibCodeBlockComponent } from '../../shared/form/oib-code-block/oib-code-block.component';
 import { OIBusContent } from '../../../../../shared/model/engine.model';
-import { SouthConnectorItemDTO } from '../../../../../shared/model/south-connector.model';
+import { SouthConnectorItemCommandDTO, SouthConnectorItemDTO } from '../../../../../shared/model/south-connector.model';
 import { TranslateModule } from '@ngx-translate/core';
 import { LoadingSpinnerComponent } from '../../shared/loading-spinner/loading-spinner.component';
+import { SouthItemSettings } from '../../../../../shared/model/south-settings.model';
 
 @Component({
   selector: 'oib-south-item-test-modal',
@@ -18,10 +19,10 @@ export class SouthItemTestModalComponent implements AfterViewInit {
 
   @ViewChild('monacoEditor') codeBlock!: OibCodeBlockComponent;
   result: OIBusContent | null = null;
-  item: SouthConnectorItemDTO | null = null;
+  item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings> | null = null;
   contentType = 'plaintext';
 
-  prepare(result: OIBusContent, item: SouthConnectorItemDTO) {
+  prepare(result: OIBusContent, item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>) {
     this.item = item;
     this.result = result;
     switch (this.result.type) {

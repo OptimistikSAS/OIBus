@@ -10,17 +10,40 @@ import { NotificationService } from '../../shared/notification.service';
 import { SouthItemsComponent } from './south-items.component';
 import { Component } from '@angular/core';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
+import { SouthItemSettings, SouthSettings } from '../../../../../shared/model/south-settings.model';
+
+const items: Array<SouthConnectorItemDTO<SouthItemSettings>> = [
+  {
+    id: 'id1',
+    name: 'item1',
+    enabled: true,
+    settings: {
+      query: 'sql'
+    } as SouthItemSettings,
+    scanModeId: 'scanModeId1'
+  },
+  {
+    id: 'id2',
+    name: 'item2',
+    enabled: false,
+    settings: {
+      query: 'sql'
+    } as SouthItemSettings,
+    scanModeId: 'scanModeId1'
+  }
+];
 
 @Component({
-  template: `<oib-south-items [southConnector]="southConnector" [scanModes]="scanModes" [southManifest]="manifest" [inMemory]="false" />`,
+  template: `<oib-south-items [southConnector]="southConnector" [scanModes]="scanModes" [southManifest]="manifest" />`,
   standalone: true,
   imports: [SouthItemsComponent]
 })
 class TestComponent {
-  southConnector: SouthConnectorDTO = {
+  southConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> = {
     id: 'southId',
-    name: 'South Connector'
-  } as SouthConnectorDTO;
+    name: 'South Connector',
+    items: items
+  } as SouthConnectorDTO<SouthSettings, SouthItemSettings>;
   scanModes: Array<ScanModeDTO> = [
     {
       id: 'scanModeId1',
@@ -54,7 +77,8 @@ class TestComponent {
       history: true,
       lastFile: true,
       lastPoint: false,
-      forceMaxInstantPerItem: false
+      forceMaxInstantPerItem: false,
+      sharedConnection: false
     }
   };
 }
@@ -95,29 +119,6 @@ describe('SouthItemsComponent', () => {
   let confirmationService: jasmine.SpyObj<ConfirmationService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
 
-  const items: Array<SouthConnectorItemDTO> = [
-    {
-      id: 'id1',
-      name: 'item1',
-      enabled: true,
-      connectorId: 'southId',
-      settings: {
-        query: 'sql'
-      },
-      scanModeId: 'scanModeId1'
-    },
-    {
-      id: 'id2',
-      name: 'item2',
-      enabled: false,
-      connectorId: 'southId',
-      settings: {
-        query: 'sql'
-      },
-      scanModeId: 'scanModeId1'
-    }
-  ];
-
   beforeEach(() => {
     southConnectorService = createMock(SouthConnectorService);
     confirmationService = createMock(ConfirmationService);
@@ -133,7 +134,6 @@ describe('SouthItemsComponent', () => {
       ]
     });
 
-    southConnectorService.listItems.and.returnValue(of(items));
     southConnectorService.enableItem.and.returnValue(of(undefined));
     southConnectorService.disableItem.and.returnValue(of(undefined));
     southConnectorService.deleteAllItems.and.returnValue(of(undefined));
@@ -155,14 +155,12 @@ describe('SouthItemsComponent', () => {
     tester.toggleButtons[0].click();
     expect(southConnectorService.disableItem).toHaveBeenCalledWith('southId', items[0].id);
     expect(notificationService.success).toHaveBeenCalledWith('south.items.disabled', { name: items[0].name });
-    expect(southConnectorService.listItems).toHaveBeenCalledTimes(2);
   });
 
   it('should disable south item', () => {
     tester.toggleButtons[1].click();
     expect(southConnectorService.enableItem).toHaveBeenCalledWith('southId', items[1].id);
     expect(notificationService.success).toHaveBeenCalledWith('south.items.enabled', { name: items[1].name });
-    expect(southConnectorService.listItems).toHaveBeenCalledTimes(2);
   });
 
   it('should delete all', () => {

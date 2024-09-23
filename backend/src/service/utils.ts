@@ -13,7 +13,7 @@ import pino from 'pino';
 import csv from 'papaparse';
 import https from 'node:https';
 import http from 'node:http';
-import { EngineSettingsDTO, OIBusContent, OIBusInfo } from '../../../shared/model/engine.model';
+import { EngineSettingsDTO, OIBusContent, OIBusInfo, OIBusTimeValue } from '../../../shared/model/engine.model';
 import os from 'node:os';
 import { NorthCacheFiles } from '../../../shared/model/north-connector.model';
 import EncryptionService from './encryption.service';
@@ -22,6 +22,10 @@ import cronstrue from 'cronstrue';
 import cronparser from 'cron-parser';
 import { ValidatedCronExpression } from '../../../shared/model/scan-mode.model';
 import { OIAnalyticsRegistration } from '../model/oianalytics-registration.model';
+import { SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
+import { ScanMode } from '../model/scan-mode.model';
+import { HistoryQueryItemDTO } from '../../../shared/model/history-query.model';
+import { SouthItemSettings } from '../../../shared/model/south-settings.model';
 
 const COMPRESSION_LEVEL = 9;
 
@@ -163,7 +167,11 @@ export const dirSize = async (dir: string): Promise<number> => {
 /**
  * Get all occurrences of a substring with a value
  */
-const getOccurrences = (str: string, keyword: string, value: any): Array<{ index: number; value: any }> => {
+const getOccurrences = (
+  str: string,
+  keyword: string,
+  value: string | number | DateTime
+): Array<{ index: number; value: string | number | DateTime }> => {
   const occurrences = [];
   let occurrenceIndex = str.indexOf(keyword, 0);
   while (occurrenceIndex > -1) {
@@ -374,19 +382,23 @@ export const convertDateTimeToInstant = (
   options: { type: DateTimeType; timezone?: Timezone; format?: string; locale?: string }
 ): Instant => {
   if (!options.type) {
-    return dateTime;
+    return dateTime as Instant;
   }
   switch (options.type) {
     case 'unix-epoch':
-      return DateTime.fromMillis(parseInt(dateTime, 10) * 1000)
+      return DateTime.fromMillis(parseInt(dateTime as string, 10) * 1000)
         .toUTC()
         .toISO()!;
     case 'unix-epoch-ms':
-      return DateTime.fromMillis(parseInt(dateTime, 10)).toUTC().toISO()!;
+      return DateTime.fromMillis(parseInt(dateTime as string, 10))
+        .toUTC()
+        .toISO()!;
     case 'iso-string':
-      return DateTime.fromISO(dateTime).toUTC().toISO()!;
+      return DateTime.fromISO(dateTime as string)
+        .toUTC()
+        .toISO()!;
     case 'string':
-      return DateTime.fromFormat(dateTime, options.format!, {
+      return DateTime.fromFormat(dateTime as string, options.format!, {
         zone: options.timezone,
         locale: options.locale
       })
@@ -397,10 +409,16 @@ export const convertDateTimeToInstant = (
     case 'DateTime':
     case 'DateTime2':
     case 'SmallDateTime':
-      return DateTime.fromJSDate(dateTime).toUTC().setZone(options.timezone, { keepLocalTime: true }).toUTC().toISO()!;
+      return DateTime.fromJSDate(dateTime as Date)
+        .toUTC()
+        .setZone(options.timezone, { keepLocalTime: true })
+        .toUTC()
+        .toISO()!;
     case 'DateTimeOffset':
     case 'timestamptz':
-      return DateTime.fromJSDate(dateTime).toUTC().toISO()!;
+      return DateTime.fromJSDate(dateTime as Date)
+        .toUTC()
+        .toISO()!;
   }
 };
 
@@ -602,18 +620,18 @@ export const validateCronExpression = (cron: string): ValidatedCronExpression =>
   // source for non-standard characters: https://en.wikipedia.org/wiki/Cron#Non-standard_characters
   const nonStandardCharacters = ['L', 'W', '#', '?', 'H'];
 
-  try {
-    // we limit the number of fields to 6 because the
-    // backend does not support quartz cron (7th part would be years), so we show an error
-    if (cron.split(' ').filter(Boolean).length >= 7) {
-      throw new Error('Too many fields. Only seconds, minutes, hours, day of month, month and day of week are supported.');
-    }
-    // backend does not support these characters
-    const badCharacters = nonStandardCharacters.filter(c => cron.includes(c));
-    if (badCharacters.length > 0) {
-      throw new Error(`Expression contains non-standard characters: ${badCharacters.join(', ')}`);
-    }
+  // we limit the number of fields to 6 because the
+  // backend does not support quartz cron (7th part would be years), so we show an error
+  if (cron.split(' ').filter(Boolean).length >= 7) {
+    throw new Error('Too many fields. Only seconds, minutes, hours, day of month, month and day of week are supported.');
+  }
+  // backend does not support these characters
+  const badCharacters = nonStandardCharacters.filter(c => cron.includes(c));
+  if (badCharacters.length > 0) {
+    throw new Error(`Expression contains non-standard characters: ${badCharacters.join(', ')}`);
+  }
 
+  try {
     // cronstrue throws an error if the cron is invalid
     // this error is more user-friendly
     response.humanReadableForm = cronstrue.toString(cron, {
@@ -627,7 +645,7 @@ export const validateCronExpression = (cron: string): ValidatedCronExpression =>
       .parseExpression(cron, { utc: true })
       .iterate(3)
       .map(exp => exp.toISOString() as Instant);
-  } catch (error: any) {
+  } catch (error: unknown) {
     // cronparser throws an error
     if (error instanceof Error) {
       throw error;
@@ -645,4 +663,49 @@ export const validateCronExpression = (cron: string): ValidatedCronExpression =>
   }
 
   return response;
+};
+
+export const checkScanMode = (scanModes: Array<ScanMode>, scanModeId: string | null, scanModeName: string | null) => {
+  if (scanModeId) return scanModeId;
+  if (!scanModeName) {
+    throw new Error(`Scan mode not specified`);
+  }
+  const scanMode = scanModes.find(element => element.name === scanModeName);
+  if (!scanMode) {
+    throw new Error(`Scan mode ${scanModeName} not found`);
+  }
+  return scanMode.id;
+};
+
+export const itemToFlattenedCSV = <I extends SouthItemSettings>(
+  items: Array<SouthConnectorItemDTO<I> | HistoryQueryItemDTO<I>>,
+  delimiter: string,
+  scanModes?: Array<ScanMode>
+): string => {
+  const columns: Set<string> = new Set<string>(['name', 'enabled', 'scanMode']);
+
+  return csv.unparse(
+    items.map(item => {
+      const flattenedItem: Record<string, string | object | boolean> = {
+        ...item
+      };
+      if (scanModes) {
+        flattenedItem.scanMode = scanModes.find(scanMode => scanMode.id === flattenedItem.scanModeId)?.name ?? '';
+      }
+      for (const [itemSettingsKey, itemSettingsValue] of Object.entries(item.settings)) {
+        columns.add(`settings_${itemSettingsKey}`);
+        if (typeof itemSettingsValue === 'object') {
+          flattenedItem[`settings_${itemSettingsKey}`] = JSON.stringify(itemSettingsValue);
+        } else {
+          flattenedItem[`settings_${itemSettingsKey}`] = itemSettingsValue as string;
+        }
+      }
+      delete flattenedItem.id;
+      delete flattenedItem.scanModeId;
+      delete flattenedItem.settings;
+      delete flattenedItem.connectorId;
+      return flattenedItem;
+    }),
+    { columns: Array.from(columns), delimiter }
+  );
 };

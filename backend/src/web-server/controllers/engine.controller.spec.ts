@@ -4,6 +4,7 @@ import EngineController from './engine.controller';
 import JoiValidator from './validators/joi.validator';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
 import testData from '../../tests/utils/test-data';
+import { toEngineSettingsDTO } from '../../service/oibus.service';
 
 jest.mock('./validators/joi.validator');
 
@@ -24,7 +25,7 @@ describe('Engine controller', () => {
     await engineController.getEngineSettings(ctx);
 
     expect(ctx.app.oIBusService.getEngineSettings).toHaveBeenCalled();
-    expect(ctx.ok).toHaveBeenCalledWith(testData.engine.dto);
+    expect(ctx.ok).toHaveBeenCalledWith(toEngineSettingsDTO(testData.engine.settings));
   });
 
   it('updateEngineSettings() should update engine settings with loki password change', async () => {
@@ -61,7 +62,7 @@ describe('Engine controller', () => {
 
   it('should get OIBus status', async () => {
     await engineController.getStatus(ctx);
-    expect(ctx.ok).toHaveBeenCalledWith();
+    expect(ctx.ok).toHaveBeenCalledWith({});
   });
 
   it('should reset metrics', async () => {

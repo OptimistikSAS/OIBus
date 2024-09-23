@@ -1,5 +1,5 @@
 /**
- * Create a mock object for Scan Mode Service
+ * Create a mock object for Subscription Service
  */
 export default jest.fn().mockImplementation(() => ({
   findByNorth: jest.fn(),

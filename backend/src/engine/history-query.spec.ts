@@ -3,9 +3,6 @@ import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import SouthServiceMock from '../tests/__mocks__/service/south-service.mock';
 import NorthServiceMock from '../tests/__mocks__/service/north-service.mock';
 
-import { SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
-import { HistoryQueryDTO } from '../../../shared/model/history-query.model';
-
 import SouthService from '../service/south.service';
 import NorthService from '../service/north.service';
 
@@ -18,6 +15,9 @@ import HistoryQueryService from '../service/history-query.service';
 import Stream from 'node:stream';
 import { EventEmitter } from 'node:events';
 import { OIBusTimeValue } from '../../../shared/model/engine.model';
+import RepositoryService from '../service/repository.service';
+import RepositoryServiceMock from '../tests/__mocks__/service/repository-service.mock';
+import testData from '../tests/utils/test-data';
 
 jest.mock('../service/south.service');
 jest.mock('../service/north.service');
@@ -45,39 +45,12 @@ const anotherLogger: pino.Logger = new PinoLogger();
 const southService: SouthService = new SouthServiceMock();
 const northService: NorthService = new NorthServiceMock();
 const historyService: HistoryQueryService = new HistoryServiceMock();
+const repositoryService: RepositoryService = new RepositoryServiceMock();
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
 const flushPromises = () => new Promise(jest.requireActual('timers').setImmediate);
 
 let historyQuery: HistoryQuery;
-let configuration: HistoryQueryDTO;
-
-const items: Array<SouthConnectorItemDTO> = [
-  {
-    id: 'id1',
-    name: 'item1',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {},
-    scanModeId: 'scanModeId1'
-  },
-  {
-    id: 'id2',
-    name: 'item2',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {},
-    scanModeId: 'scanModeId2'
-  },
-  {
-    id: 'id3',
-    name: 'item3',
-    enabled: false,
-    connectorId: 'southId',
-    settings: {},
-    scanModeId: 'scanModeId2'
-  }
-];
 
 const southStream = new Stream();
 const connectedEvent = new EventEmitter();
@@ -116,61 +89,25 @@ describe('HistoryQuery enabled', () => {
 
     connectedEvent.removeAllListeners();
 
-    (southService.createSouth as jest.Mock).mockReturnValue(createdSouth);
-    (northService.createNorth as jest.Mock).mockReturnValue(createdNorth);
-    configuration = {
-      id: 'historyId',
-      name: 'history',
-      southType: 'FolderScanner',
-      northType: 'Console',
-      description: 'my test history query',
-      status: 'RUNNING',
-      history: {
-        maxInstantPerItem: true,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0
-      },
-      northSettings: {},
-      southSettings: {},
-      southSharedConnection: false,
-      startTime: '2021-02-02T02:02:02.222Z',
-      endTime: '2022-02-02T02:02:02.222Z',
-      caching: {
-        scanModeId: 'scanModeId',
-        retryInterval: 5000,
-        retryCount: 3,
-        maxSize: 1,
-        oibusTimeValues: {
-          groupCount: 1000,
-          maxSendCount: 10000
-        },
-        rawFiles: {
-          sendFileImmediately: false,
-          archive: {
-            enabled: false,
-            retentionDuration: 0
-          }
-        }
-      }
-    };
-    (historyService.repositoryService.historyQueryRepository.findById as jest.Mock).mockReturnValue(configuration);
-    (historyService.listItems as jest.Mock).mockReturnValue(items);
+    (southService.runSouth as jest.Mock).mockReturnValue(createdSouth);
+    (northService.runNorth as jest.Mock).mockReturnValue(createdNorth);
+    (repositoryService.historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValue(testData.historyQueries.list[0]);
 
     historyQuery = new HistoryQuery(
-      configuration,
+      testData.historyQueries.list[0],
       southService,
       northService,
       historyService,
+      repositoryService,
       logger,
-      path.resolve('baseFolder', configuration.id)
+      path.resolve('baseFolder', testData.historyQueries.list[0].id)
     );
   });
 
   it('should be properly initialized', async () => {
     await historyQuery.start();
-    expect(createFolder).toHaveBeenCalledWith(path.resolve('baseFolder', configuration.id, 'south'));
-    expect(createFolder).toHaveBeenCalledWith(path.resolve('baseFolder', configuration.id, 'north'));
+    expect(createFolder).toHaveBeenCalledWith(path.resolve('baseFolder', testData.historyQueries.list[0].id, 'south'));
+    expect(createFolder).toHaveBeenCalledWith(path.resolve('baseFolder', testData.historyQueries.list[0].id, 'north'));
     expect(createdNorth.start).toHaveBeenCalledTimes(1);
 
     northStream.emit('data', `data: ${JSON.stringify({})}`);
@@ -187,12 +124,16 @@ describe('HistoryQuery enabled', () => {
         resolve('');
       });
     });
-    (historyService.listItems as jest.Mock).mockReturnValue(items);
     await historyQuery.start();
     connectedEvent.emit('connected');
     expect(createdSouth.start).toHaveBeenCalledTimes(1);
     expect(createdSouth.historyQueryHandler).toHaveBeenCalledTimes(1);
-    expect(createdSouth.historyQueryHandler).toHaveBeenCalledWith(items, configuration.startTime, configuration.endTime, 'history');
+    expect(createdSouth.historyQueryHandler).toHaveBeenCalledWith(
+      testData.historyQueries.list[0].items.map(item => ({ ...item, scanModeId: 'history' })),
+      testData.historyQueries.list[0].startTime,
+      testData.historyQueries.list[0].endTime,
+      'history'
+    );
     expect(clearIntervalSpy).not.toHaveBeenCalled();
     connectedEvent.emit('connected');
     expect(clearIntervalSpy).toHaveBeenCalledTimes(1);
@@ -223,13 +164,18 @@ describe('HistoryQuery enabled', () => {
 
     await flushPromises();
     expect(createdSouth.historyQueryHandler).toHaveBeenCalledTimes(1);
-    expect(createdSouth.historyQueryHandler).toHaveBeenCalledWith(items, configuration.startTime, configuration.endTime, 'history');
+    expect(createdSouth.historyQueryHandler).toHaveBeenCalledWith(
+      testData.historyQueries.list[0].items.map(item => ({ ...item, scanModeId: 'history' })),
+      testData.historyQueries.list[0].startTime,
+      testData.historyQueries.list[0].endTime,
+      'history'
+    );
 
     expect(createdSouth.start).toHaveBeenCalledTimes(2);
     expect(createdSouth.stop).toHaveBeenCalledTimes(1);
 
-    (historyService.repositoryService.historyQueryRepository.findById as jest.Mock).mockReturnValueOnce({
-      ...configuration,
+    (repositoryService.historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce({
+      ...testData.historyQueries.list[0],
       status: 'PENDING'
     });
 
@@ -244,7 +190,9 @@ describe('HistoryQuery enabled', () => {
     await historyQuery.start();
 
     await historyQuery.addContent('southId', { type: 'time-values', content: [{}, {}] as Array<OIBusTimeValue> });
-    expect(logger.info).toHaveBeenCalledWith(`Add 2 values from History Query "${configuration.name}" to north connector`);
+    expect(logger.info).toHaveBeenCalledWith(
+      `Add 2 values from History Query "${testData.historyQueries.list[0].name}" to north connector`
+    );
     expect(createdNorth.cacheValues).toHaveBeenCalledWith([{}, {}]);
   });
 
@@ -252,7 +200,9 @@ describe('HistoryQuery enabled', () => {
     await historyQuery.start();
 
     await historyQuery.addContent('southId', { type: 'raw', filePath: 'myFile' });
-    expect(logger.info).toHaveBeenCalledWith(`Add file "myFile" from History Query "${configuration.name}" to north connector`);
+    expect(logger.info).toHaveBeenCalledWith(
+      `Add file "myFile" from History Query "${testData.historyQueries.list[0].name}" to north connector`
+    );
     expect(createdNorth.cacheFile).toHaveBeenCalledWith('myFile');
   });
 
@@ -287,13 +237,13 @@ describe('HistoryQuery enabled', () => {
     await historyQuery.start();
     await historyQuery.finish();
 
-    expect(logger.debug).toHaveBeenCalledWith(`History query "${configuration.name}" is still running`);
+    expect(logger.debug).toHaveBeenCalledWith(`History query "${testData.historyQueries.list[0].name}" is still running`);
     await historyQuery.finish();
     expect(logger.debug).toHaveBeenCalledTimes(2);
 
     createdSouth.historyIsRunning = false;
     await historyQuery.finish();
-    expect(logger.info).toHaveBeenCalledWith(`Finish "${configuration.name}" (${configuration.id})`);
+    expect(logger.info).toHaveBeenCalledWith(`Finish "${testData.historyQueries.list[0].name}" (${testData.historyQueries.list[0].id})`);
   });
 
   it('should properly set another logger', async () => {
@@ -310,53 +260,25 @@ describe('HistoryQuery disabled', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     connectedEvent.removeAllListeners();
 
-    (southService.createSouth as jest.Mock).mockReturnValue(createdSouth);
-    (northService.createNorth as jest.Mock).mockReturnValue(createdNorth);
+    (southService.runSouth as jest.Mock).mockReturnValue(createdSouth);
+    (northService.runNorth as jest.Mock).mockReturnValue(createdNorth);
 
-    configuration = {
-      id: 'historyId',
-      name: 'history',
-      southType: 'FolderScanner',
-      northType: 'Console',
-      description: 'my test history query',
-      status: 'PENDING',
-      history: {
-        maxInstantPerItem: true,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0
-      },
-      northSettings: {},
-      southSettings: {},
-      southSharedConnection: false,
-      startTime: '2021-02-02T02:02:02.222Z',
-      endTime: '2022-02-02T02:02:02.222Z',
-      caching: {
-        scanModeId: 'scanModeId',
-        retryInterval: 5000,
-        retryCount: 3,
-        maxSize: 1,
-        oibusTimeValues: {
-          groupCount: 1000,
-          maxSendCount: 10000
-        },
-        rawFiles: {
-          sendFileImmediately: false,
-          archive: {
-            enabled: false,
-            retentionDuration: 0
-          }
-        }
-      }
-    };
-    (historyService.repositoryService.historyQueryRepository.findById as jest.Mock).mockReturnValue(configuration);
+    (repositoryService.historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValue(testData.historyQueries.list[1]);
 
-    historyQuery = new HistoryQuery(configuration, southService, northService, historyService, logger, 'baseFolder');
+    historyQuery = new HistoryQuery(
+      testData.historyQueries.list[1],
+      southService,
+      northService,
+      historyService,
+      repositoryService,
+      logger,
+      'baseFolder'
+    );
   });
 
   it('should be properly initialized', async () => {
     await historyQuery.start();
-    expect(logger.trace).toHaveBeenCalledWith(`History Query "${configuration.name}" not enabled`);
+    expect(logger.trace).toHaveBeenCalledWith(`History Query "${testData.historyQueries.list[1].name}" not enabled`);
     expect(createdNorth.start).not.toHaveBeenCalled();
     expect(createdNorth.connect).not.toHaveBeenCalled();
   });

@@ -11,15 +11,6 @@ export interface UserLight {
   friendlyName: string;
 }
 
-export interface UserCommandDTO {
-  login: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  language: Language;
-  timezone: Timezone;
-}
-
 export interface User extends BaseEntity {
   login: string;
   firstName: string;
@@ -28,6 +19,15 @@ export interface User extends BaseEntity {
   language: Language;
   timezone: Timezone;
   friendlyName: string;
+}
+
+export interface UserCommandDTO {
+  login: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  language: Language;
+  timezone: Timezone;
 }
 
 export interface ChangePasswordCommand {

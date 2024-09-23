@@ -2,12 +2,12 @@ import JoiValidator from './joi.validator';
 import { scanModeSchema } from './oibus-validation-schema';
 
 interface DataProvider {
-  dto: any;
+  dto: object;
   isValid: boolean;
   errorMessage: string | null;
 }
 
-const dataProviders: DataProvider[] = [
+const dataProviders: Array<DataProvider> = [
   {
     dto: {
       name1: 'missing',

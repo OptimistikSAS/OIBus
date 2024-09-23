@@ -4,7 +4,7 @@ import AbstractController from './abstract.controller';
 import { toOIAnalyticsRegistrationDTO } from '../../service/oia/oianalytics-registration.service';
 
 export default class OIAnalyticsRegistrationController extends AbstractController {
-  async get(ctx: KoaContext<void, RegistrationSettingsDTO>): Promise<RegistrationSettingsDTO> {
+  async get(ctx: KoaContext<void, RegistrationSettingsDTO>): Promise<void> {
     const registrationSettings = ctx.app.oIAnalyticsRegistrationService.getRegistrationSettings();
     if (!registrationSettings) {
       return ctx.notFound();
@@ -16,8 +16,8 @@ export default class OIAnalyticsRegistrationController extends AbstractControlle
     try {
       await ctx.app.oIAnalyticsRegistrationService.register(ctx.request.body!);
       return ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 
@@ -25,12 +25,12 @@ export default class OIAnalyticsRegistrationController extends AbstractControlle
     try {
       await ctx.app.oIAnalyticsRegistrationService.editConnectionSettings(ctx.request.body!);
       return ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 
-  async unregister(ctx: KoaContext<any, any>) {
+  async unregister(ctx: KoaContext<void, void>) {
     ctx.app.oIAnalyticsRegistrationService.unregister();
     return ctx.noContent();
   }

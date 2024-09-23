@@ -7,23 +7,29 @@ import {
   convertDelimiter,
   createFolder,
   formatInstant,
-  logQuery,
-  persistResults,
   generateCsvContent,
-  generateFilenameForSerialization
+  generateFilenameForSerialization,
+  logQuery,
+  persistResults
 } from '../../service/utils';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
-import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
 import { SouthODBCItemSettings, SouthODBCSettings } from '../../../../shared/model/south-settings.model';
 import fetch, { HeadersInit, RequestInit } from 'node-fetch';
-import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { OIBusContent } from '../../../../shared/model/engine.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import SouthConnectorRepository from '../../repository/config/south-connector.repository';
+import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
+import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let odbc: any | null = null;
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import('odbc')
   .then(obj => {
@@ -45,14 +51,27 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
   private reconnectTimeout: NodeJS.Timeout | null = null;
 
   constructor(
-    connector: SouthConnectorDTO<SouthODBCSettings>,
+    connector: SouthConnectorEntity<SouthODBCSettings, SouthODBCItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
-    repositoryService: RepositoryService,
+    southConnectorRepository: SouthConnectorRepository,
+    southMetricsRepository: SouthConnectorMetricsRepository,
+    southCacheRepository: SouthCacheRepository,
+    scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, engineAddContentCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(
+      connector,
+      engineAddContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southMetricsRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      baseFolder
+    );
     this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
   }
 
@@ -118,21 +137,21 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     }
   }
 
-  override async testItem(item: SouthConnectorItemDTO<SouthODBCItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
+  override async testItem(item: SouthConnectorItemEntity<SouthODBCItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
     const startTime = DateTime.now()
       .minus(600 * 1000)
       .toUTC()
       .toISO() as Instant;
     const endTime = DateTime.now().toUTC().toISO() as Instant;
-    let result: Array<any>;
+    let result: Array<Record<string, string>>;
     if (this.connector.settings.remoteAgent) {
-      result = (await this.queryRemoteAgentData(item, startTime, endTime, true)) as any[];
+      result = (await this.queryRemoteAgentData(item, startTime, endTime, true)) as Array<Record<string, string>>;
     } else {
-      result = (await this.queryOdbcData(item, endTime, startTime, true)) as any[];
+      result = (await this.queryOdbcData(item, endTime, startTime, true)) as Array<Record<string, string>>;
     }
 
     const formattedResults = result.map(entry => {
-      const formattedEntry: Record<string, any> = {};
+      const formattedEntry: Record<string, string | number> = {};
       Object.entries(entry).forEach(([key, value]) => {
         const datetimeField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.fieldName === key) || null;
         if (!datetimeField) {
@@ -175,8 +194,14 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     try {
       const connectionConfig = await this.createConnectionConfig(this.connector.settings);
       connection = await odbc.connect(connectionConfig);
-    } catch (error: any) {
-      const { odbcErrors } = error;
+    } catch (error: unknown) {
+      const { odbcErrors } = error as {
+        odbcErrors: Array<{
+          message: string;
+          code: number;
+          state: string;
+        }>;
+      };
 
       if (odbcErrors[0].state === 'IM002') {
         throw new Error(`Driver not found. Check connection string and driver`);
@@ -199,31 +224,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
           throw new Error(`Unable to connect to database`);
       }
     }
-    const tables: { table_name: string; columns: string }[] = [];
-
-    try {
-      // @ts-ignore
-      const tableMetadata = await connection.tables<any>(this.connector.settings.database, null, null, 'TABLE');
-      for (const table of tableMetadata) {
-        // @ts-ignore
-        const columnMetadata = await connection.columns<any>(this.connector.settings.database, null, table.TABLE_NAME, null);
-        // @ts-ignore
-        const columns = columnMetadata.map(column => `${column.COLUMN_NAME}(${column.TYPE_NAME})`).join(', ');
-        tables.push({
-          table_name: table.TABLE_NAME,
-          columns
-        });
-      }
-    } catch {
-      await connection.close();
-      throw new Error(`Unable to read tables in database`);
-    }
-
     await connection.close();
-
-    if (tables.length === 0) {
-      throw new Error('Database has no table');
-    }
   }
 
   async testAgentConnection(): Promise<void> {
@@ -252,7 +253,11 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
    * Get entries from the database between startTime and endTime (if used in the SQL query)
    * and write them into a CSV file and send it to the engine.
    */
-  async historyQuery(items: Array<SouthConnectorItemDTO<SouthODBCItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
+  async historyQuery(
+    items: Array<SouthConnectorItemEntity<SouthODBCItemSettings>>,
+    startTime: Instant,
+    endTime: Instant
+  ): Promise<Instant> {
     let updatedStartTime: string = startTime;
 
     for (const item of items) {
@@ -266,11 +271,11 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
   }
 
   async queryRemoteAgentData(
-    item: SouthConnectorItemDTO<SouthODBCItemSettings>,
+    item: SouthConnectorItemEntity<SouthODBCItemSettings>,
     startTime: Instant,
     endTime: Instant,
     test?: boolean
-  ): Promise<string | Record<string, any>[]> {
+  ): Promise<string | Array<Record<string, string>>> {
     // test is here in case we are testing items
     let updatedStartTime = startTime;
     const startRequest = DateTime.now().toMillis();
@@ -301,11 +306,12 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     };
     const response = await fetch(`${this.connector.settings.agentUrl}/api/odbc/${this.connector.id}/read`, fetchOptions);
     if (response.status === 200) {
-      const result: { recordCount: number; content: Array<any>; maxInstantRetrieved: Instant } = (await response.json()) as {
-        recordCount: number;
-        content: OIBusTimeValue[];
-        maxInstantRetrieved: string;
-      };
+      const result: { recordCount: number; content: Array<Record<string, string>>; maxInstantRetrieved: Instant } =
+        (await response.json()) as {
+          recordCount: number;
+          content: Array<Record<string, string>>;
+          maxInstantRetrieved: string;
+        };
       const requestDuration = DateTime.now().toMillis() - startRequest;
       this.logger.info(`Found ${result.recordCount} results for item ${item.name} in ${requestDuration} ms`);
 
@@ -346,7 +352,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     startTime: Instant,
     endTime: Instant,
     test?: boolean
-  ): Promise<string | Record<string, any>[]> {
+  ): Promise<string | Array<Record<string, string | number>>> {
     // test is here in case we are testing items
     if (!odbc) {
       throw new Error('odbc library not loaded');
@@ -354,7 +360,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
 
     let updatedStartTime = startTime;
     const startRequest = DateTime.now().toMillis();
-    let result: Array<any> = [];
+    let result: Array<Record<string, string>> = [];
     let connection;
     try {
       const connectionConfig = await this.createConnectionConfig(this.connector.settings);
@@ -367,9 +373,29 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
       logQuery(adaptedQuery, odbcStartTime, odbcEndTime, this.logger);
       result = await connection.query(adaptedQuery);
       await connection.close();
-    } catch (error: any) {
-      if (error.odbcErrors?.length > 0) {
-        this.logOdbcErrors(error.odbcErrors);
+    } catch (error: unknown) {
+      if (
+        (
+          error as {
+            odbcErrors: Array<{
+              message: string;
+              code: number;
+              state: string;
+            }>;
+          }
+        ).odbcErrors?.length > 0
+      ) {
+        this.logOdbcErrors(
+          (
+            error as {
+              odbcErrors: Array<{
+                message: string;
+                code: number;
+                state: string;
+              }>;
+            }
+          ).odbcErrors
+        );
       }
       if (connection) {
         await connection.close();
@@ -382,7 +408,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
       this.logger.info(`Found ${result.length} results for item ${item.name} in ${requestDuration} ms`);
 
       const formattedResult = result.map(entry => {
-        const formattedEntry: Record<string, any> = {};
+        const formattedEntry: Record<string, string | number> = {};
         Object.entries(entry).forEach(([key, value]) => {
           const datetimeField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.fieldName === key);
           if (!datetimeField) {

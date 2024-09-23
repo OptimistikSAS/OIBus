@@ -5,12 +5,10 @@ import pino from 'pino';
 import { DateTime } from 'luxon';
 import path from 'node:path';
 import { version } from '../../../package.json';
-import SouthConnectorConfigService from '../south-connector-config.service';
 import ScanModeService from '../scan-mode.service';
-import NorthConnectorConfigService from '../north-connector-config.service';
-import OIAnalyticsRegistrationRepository from '../../repository/oianalytics-registration.repository';
+import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import fetch from 'node-fetch';
-import OIAnalyticsCommandRepository from '../../repository/oianalytics-command.repository';
+import OIAnalyticsCommandRepository from '../../repository/config/oianalytics-command.repository';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 import OIBusService from '../oibus.service';
 import {
@@ -31,6 +29,8 @@ import {
 import { OIAnalyticsFetchCommandDTO } from './oianalytics.model';
 import { CommandSearchParam, OIBusCommandDTO } from '../../../../shared/model/command.model';
 import { Page } from '../../../../shared/model/types';
+import SouthService from '../south.service';
+import NorthService from '../north.service';
 
 const DOWNLOAD_TIMEOUT = 600_000;
 const OIANALYTICS_TIMEOUT = 10_000;
@@ -49,8 +49,8 @@ export default class OIAnalyticsCommandService {
     private encryptionService: EncryptionService,
     private oIBusService: OIBusService,
     private scanModeService: ScanModeService,
-    private southConnectorConfigService: SouthConnectorConfigService,
-    private northConnectorConfigService: NorthConnectorConfigService,
+    private southService: SouthService,
+    private northService: NorthService,
     private logger: pino.Logger,
     private binaryFolder: string,
     private ignoreRemoteUpdate: boolean
@@ -282,11 +282,11 @@ export default class OIAnalyticsCommandService {
           await this.executeDeleteNorthCommand(command);
           break;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.logger.error(
-        `Error while executing command ${command.id} (retrieved ${command.retrievedDate}) of type ${command.type}. ${error.toString()}`
+        `Error while executing command ${command.id} (retrieved ${command.retrievedDate}) of type ${command.type}. Error: ${(error as Error).message}`
       );
-      this.oIAnalyticsCommandRepository.markAsErrored(command.id, error.toString());
+      this.oIAnalyticsCommandRepository.markAsErrored(command.id, (error as Error).message);
       this.ongoingExecuteCommand = false;
       return;
     }
@@ -368,32 +368,32 @@ export default class OIAnalyticsCommandService {
   }
 
   private async executeCreateSouthCommand(command: OIBusCreateSouthConnectorCommand) {
-    await this.southConnectorConfigService.create(command.commandContent);
+    await this.southService.createSouth(command.commandContent); // TODO check
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'South connector created successfully');
   }
 
   private async executeUpdateSouthCommand(command: OIBusUpdateSouthConnectorCommand) {
-    await this.southConnectorConfigService.update(command.southConnectorId, command.commandContent);
+    await this.southService.updateSouth(command.southConnectorId, command.commandContent); // TODO check
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'South connector updated successfully');
   }
 
   private async executeDeleteSouthCommand(command: OIBusDeleteSouthConnectorCommand) {
-    await this.southConnectorConfigService.delete(command.southConnectorId); // TODO: remove
+    await this.southService.deleteSouth(command.southConnectorId);
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'South connector deleted successfully');
   }
 
   private async executeCreateNorthCommand(command: OIBusCreateNorthConnectorCommand) {
-    await this.northConnectorConfigService.create(command.commandContent); // TODO: remove
+    await this.northService.createNorth(command.commandContent); // TODO: check
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'North connector created successfully');
   }
 
   private async executeUpdateNorthCommand(command: OIBusUpdateNorthConnectorCommand) {
-    await this.northConnectorConfigService.update(command.northConnectorId, command.commandContent); // TODO: remove
+    await this.northService.updateNorth(command.northConnectorId, command.commandContent); // TODO: check
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'North connector updated successfully');
   }
 
   private async executeDeleteNorthCommand(command: OIBusDeleteNorthConnectorCommand) {
-    await this.northConnectorConfigService.delete(command.northConnectorId);
+    await this.northService.deleteNorth(command.northConnectorId);
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'North connector deleted successfully');
   }
 }

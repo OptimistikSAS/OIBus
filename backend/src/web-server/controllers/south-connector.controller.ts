@@ -1,20 +1,20 @@
 import { KoaContext } from '../koa';
-import csv from 'papaparse';
 import {
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
   SouthConnectorItemSearchParam,
-  SouthConnectorWithItemsCommandDTO,
-  SouthType,
-  SouthConnectorItemScanModeNameDTO,
-  SouthConnectorItemTestCommandDTO
+  SouthConnectorLightDTO,
+  SouthConnectorManifest,
+  SouthConnectorWithoutItemsCommandDTO,
+  SouthType
 } from '../../../../shared/model/south-connector.model';
 import { Page } from '../../../../shared/model/types';
 import JoiValidator from './validators/joi.validator';
-import fs from 'node:fs/promises';
-import { OIBusContent } from '../../../../shared/model/engine.model';
+import { toSouthConnectorDTO, toSouthConnectorItemDTO, toSouthConnectorLightDTO } from '../../service/south.service';
+import { itemToFlattenedCSV } from '../../service/utils';
+import { SouthItemSettings, SouthSettings } from '../../../../shared/model/south-settings.model';
 
 export default class SouthConnectorController {
   constructor(protected readonly validator: JoiValidator) {}
@@ -22,8 +22,8 @@ export default class SouthConnectorController {
   async getSouthConnectorTypes(ctx: KoaContext<void, Array<SouthType>>): Promise<void> {
     ctx.ok(
       ctx.app.southService.getInstalledSouthManifests().map(manifest => ({
-        category: manifest.category,
         id: manifest.id,
+        category: manifest.category,
         name: manifest.name,
         description: manifest.description,
         modes: manifest.modes
@@ -31,7 +31,7 @@ export default class SouthConnectorController {
     );
   }
 
-  async getSouthConnectorManifest(ctx: KoaContext<void, object>): Promise<void> {
+  async getSouthConnectorManifest(ctx: KoaContext<void, SouthConnectorManifest>): Promise<void> {
     const manifest = ctx.app.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === ctx.params.id);
     if (!manifest) {
       ctx.throw(404, 'South not found');
@@ -39,502 +39,295 @@ export default class SouthConnectorController {
     ctx.ok(manifest);
   }
 
-  async findAll(ctx: KoaContext<void, Array<SouthConnectorDTO>>): Promise<void> {
-    const southConnectors = ctx.app.repositoryService.southConnectorRepository.findAll();
-    ctx.ok(
-      southConnectors.map(connector => {
-        const manifest = ctx.app.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === connector.type);
-        if (manifest) {
-          connector.settings = ctx.app.encryptionService.filterSecrets(connector.settings, manifest.settings);
-          return connector;
-        }
-        return null;
-      })
-    );
+  async findAll(ctx: KoaContext<void, Array<SouthConnectorLightDTO>>): Promise<void> {
+    const southConnectors = ctx.app.southService.findAll().map(connector => toSouthConnectorLightDTO(connector));
+    ctx.ok(southConnectors);
   }
 
-  async findById(ctx: KoaContext<void, SouthConnectorDTO>): Promise<void> {
-    const southConnector = ctx.app.repositoryService.southConnectorRepository.findById(ctx.params.id);
-    if (southConnector) {
-      const manifest = ctx.app.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === southConnector.type);
-      if (manifest) {
-        southConnector.settings = ctx.app.encryptionService.filterSecrets(southConnector.settings, manifest.settings);
-        ctx.ok(southConnector);
-      } else {
-        ctx.throw(404, 'South type not found');
-      }
-    } else {
-      ctx.notFound();
+  async findById(ctx: KoaContext<void, SouthConnectorDTO<SouthSettings, SouthItemSettings>>): Promise<void> {
+    const southConnector = ctx.app.southService.findById(ctx.params.id);
+    if (!southConnector) {
+      return ctx.notFound();
+    }
+    ctx.ok(toSouthConnectorDTO(southConnector, ctx.app.encryptionService));
+  }
+
+  async createSouth(
+    ctx: KoaContext<SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>, SouthConnectorDTO<SouthSettings, SouthItemSettings>>
+  ): Promise<void> {
+    try {
+      const southConnector = toSouthConnectorDTO(await ctx.app.southService.createSouth(ctx.request.body!), ctx.app.encryptionService);
+      ctx.created(southConnector);
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 
-  async testSouthConnection(ctx: KoaContext<SouthConnectorCommandDTO, void>): Promise<void> {
+  async updateSouthWithoutItems(ctx: KoaContext<SouthConnectorWithoutItemsCommandDTO<SouthSettings>, void>): Promise<void> {
     try {
-      const manifest = ctx.request.body
-        ? ctx.app.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === ctx.request.body!.type)
-        : null;
-      if (!manifest) {
-        return ctx.throw(404, 'South manifest not found');
-      }
-      let southConnector: SouthConnectorDTO | null = null;
-      if (ctx.params.id !== 'create') {
-        southConnector = ctx.app.repositoryService.southConnectorRepository.findById(ctx.params.id);
-        if (!southConnector) {
-          return ctx.notFound();
-        }
-      }
-      if (!southConnector && ctx.query.duplicateId) {
-        southConnector = ctx.app.repositoryService.southConnectorRepository.findById(ctx.query.duplicateId);
-        if (!southConnector) {
-          return ctx.notFound();
-        }
-      }
-      await this.validator.validateSettings(manifest.settings, ctx.request.body!.settings);
-
-      const command: SouthConnectorDTO = { id: southConnector?.id || 'test', ...ctx.request.body! };
-      command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(
-        command.settings,
-        southConnector?.settings,
-        manifest.settings
-      );
-      ctx.request.body!.name = southConnector ? southConnector.name : `${ctx.request.body!.type}:test-connection`;
-      const logger = ctx.app.logger.child(
-        {
-          scopeType: 'south',
-          scopeId: command.id,
-          scopeName: command.name
-        },
-        { level: 'silent' }
-      );
-      const southToTest = ctx.app.southService.createSouth(command, this.addContent, 'baseFolder', logger);
-      await southToTest.testConnection();
-
+      await ctx.app.southService.updateSouthWithoutItems(ctx.params.id!, ctx.request.body!);
       ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 
-  async create(ctx: KoaContext<SouthConnectorWithItemsCommandDTO, void>): Promise<void> {
-    if (!ctx.request.body || !ctx.request.body.items || !ctx.request.body.south) {
-      return ctx.badRequest();
-    }
-
+  async updateSouth(ctx: KoaContext<SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>, void>): Promise<void> {
     try {
-      const command = ctx.request.body!;
-      const created: SouthConnectorDTO = await ctx.app.southConnectorConfigService.create(command);
-      ctx.created(created);
-    } catch (error: any) {
-      ctx.badRequest(error.message);
-    }
-  }
-
-  async update(ctx: KoaContext<SouthConnectorWithItemsCommandDTO, void>): Promise<void> {
-    if (!ctx.request.body || !ctx.request.body.items || !ctx.request.body.south) {
-      return ctx.badRequest();
-    }
-
-    try {
-      await ctx.app.southConnectorConfigService.update(ctx.params.id!, ctx.request.body!);
+      await ctx.app.southService.updateSouth(ctx.params.id!, ctx.request.body!);
       ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 
   async delete(ctx: KoaContext<void, void>): Promise<void> {
     try {
-      await ctx.app.southConnectorConfigService.delete(ctx.params.id);
+      await ctx.app.southService.deleteSouth(ctx.params.id);
       ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 
   async start(ctx: KoaContext<void, void>): Promise<void> {
     try {
-      await ctx.app.southConnectorConfigService.start(ctx.params.id!);
+      await ctx.app.southService.startSouth(ctx.params.id);
       ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 
   async stop(ctx: KoaContext<void, void>): Promise<void> {
     try {
-      await ctx.app.southConnectorConfigService.stop(ctx.params.id!);
+      await ctx.app.southService.stopSouth(ctx.params.id);
       ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 
   async resetSouthMetrics(ctx: KoaContext<void, void>): Promise<void> {
-    const southConnector = ctx.app.repositoryService.southConnectorRepository.findById(ctx.params.southId);
-    if (southConnector) {
-      ctx.app.reloadService.oibusEngine.resetSouthMetrics(ctx.params.southId);
-      ctx.noContent();
-    } else {
-      ctx.notFound();
-    }
+    // TODO ctx.app.southService.resetSouthMetrics(ctx.params.southId);
+    ctx.noContent();
   }
 
-  async testSouthItem(ctx: KoaContext<SouthConnectorItemTestCommandDTO, void>): Promise<void> {
+  async testSouthConnection(ctx: KoaContext<SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>, void>): Promise<void> {
     try {
-      // South validation
-      const manifest = ctx.request.body
-        ? ctx.app.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === ctx.request.body!.south.type)
-        : null;
-      if (!manifest) {
-        return ctx.notFound('South manifest not found');
-      }
-
-      let southConnector: SouthConnectorDTO | null = null;
-      if (ctx.params.id !== 'create') {
-        southConnector = ctx.app.repositoryService.southConnectorRepository.findById(ctx.params.id);
-        if (!southConnector) {
-          return ctx.notFound(`South not found: ${ctx.params.id}`);
-        }
-      }
-      if (!southConnector && ctx.query.duplicateId) {
-        southConnector = ctx.app.repositoryService.southConnectorRepository.findById(ctx.query.duplicateId);
-        if (!southConnector) {
-          return ctx.notFound(`South not found: ${ctx.query.duplicateId}`);
-        }
-      }
-      await this.validator.validateSettings(manifest.settings, ctx.request.body!.south.settings);
-
-      // South item validation
-      const itemCommand = ctx.request.body!.item;
-      if (!itemCommand.scanModeId && !itemCommand.scanModeName) {
-        return ctx.badRequest(`Scan mode not specified for item ${itemCommand.name}`);
-      }
-
-      let scanModeId = itemCommand.scanModeId;
-      if (!itemCommand.scanModeId && itemCommand.scanModeName) {
-        const scanModes = ctx.app.repositoryService.scanModeRepository.findAll();
-        const scanMode = scanModes.find(element => element.name === itemCommand.scanModeName);
-        if (!scanMode) {
-          return ctx.badRequest(`Scan mode ${itemCommand.scanModeName} not found for item ${itemCommand.name}`);
-        }
-        scanModeId = scanMode.id;
-      }
-      await this.validator.validateSettings(manifest.items.settings, ctx.request.body!.item.settings);
-
-      // Prepare South and South item to test
-      const southCommand: SouthConnectorDTO = { id: southConnector?.id || 'test', ...ctx.request.body!.south };
-      southCommand.settings = await ctx.app.encryptionService.encryptConnectorSecrets(
-        southCommand.settings,
-        southConnector?.settings,
-        manifest.settings
-      );
-      ctx.request.body!.south.name = southConnector ? southConnector.name : `${ctx.request.body!.south.type}:test-connection`;
       const logger = ctx.app.logger.child(
         {
           scopeType: 'south',
-          scopeId: southCommand.id,
-          scopeName: southCommand.name
+          scopeId: 'test',
+          scopeName: 'test'
         },
         { level: 'silent' }
       );
-      const southToTest = ctx.app.southService.createSouth(southCommand, this.addContent, 'baseFolder', logger);
-
-      const southItemToTest: SouthConnectorItemDTO = {
-        id: 'test',
-        connectorId: southCommand.id,
-        scanModeId: scanModeId!,
-        ...ctx.request.body!.item
-      };
-
-      await southToTest.testItem(southItemToTest, ctx.ok);
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+      await ctx.app.southService.testSouth(ctx.params.id, ctx.request.body!, logger);
+      ctx.noContent();
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 
-  async listSouthItems(ctx: KoaContext<void, Array<SouthConnectorItemDTO>>): Promise<void> {
-    const southItems = ctx.app.repositoryService.southItemRepository.list(ctx.params.southId, {});
+  async testSouthItem(
+    ctx: KoaContext<
+      { south: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>; item: SouthConnectorItemCommandDTO<SouthItemSettings> },
+      void
+    >
+  ): Promise<void> {
+    try {
+      const logger = ctx.app.logger.child(
+        {
+          scopeType: 'south',
+          scopeId: 'test',
+          scopeName: 'test'
+        },
+        { level: 'silent' }
+      );
+      await ctx.app.southService.testSouthItem(ctx.params.id, ctx.request.body!.south, ctx.request.body!.item, ctx.ok, logger);
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
+    }
+  }
+
+  async listSouthItems(ctx: KoaContext<void, Array<SouthConnectorItemDTO<SouthItemSettings>>>): Promise<void> {
+    const southConnector = ctx.app.southService.findById(ctx.params.southId);
+    if (!southConnector) {
+      return ctx.notFound();
+    }
+    const southItems = ctx.app.southService
+      .getSouthItems(ctx.params.southId)
+      .map(item => toSouthConnectorItemDTO(item, southConnector.type, ctx.app.encryptionService));
     ctx.ok(southItems);
   }
 
-  async searchSouthItems(ctx: KoaContext<void, Page<SouthConnectorItemDTO>>): Promise<void> {
+  async searchSouthItems(ctx: KoaContext<void, Page<SouthConnectorItemDTO<SouthItemSettings>>>): Promise<void> {
+    const southConnector = ctx.app.southService.findById(ctx.params.southId);
+    if (!southConnector) {
+      return ctx.notFound();
+    }
     const searchParams: SouthConnectorItemSearchParam = {
       page: ctx.query.page ? parseInt(ctx.query.page as string, 10) : 0,
       name: ctx.query.name as string | undefined
     };
-    const southItems = ctx.app.repositoryService.southItemRepository.search(ctx.params.southId, searchParams);
-    ctx.ok(southItems);
-  }
-
-  /**
-   * Endpoint used to download a CSV from a list of items when creating a connector (before the items are saved on
-   * the database). When the items are already saved, it is downloaded with the export method
-   */
-  async southItemsToCsv(ctx: KoaContext<{ items: Array<SouthConnectorItemDTO>; delimiter: string }, any>): Promise<void> {
-    const scanModes = ctx.app.repositoryService.scanModeRepository.findAll();
-    const southItems = ctx.request.body!.items.map(item => {
-      const flattenedItem: Record<string, any> = {
-        ...item
-      };
-
-      flattenedItem.scanMode = scanModes.find(scanMode => scanMode.id === flattenedItem.scanModeId)?.name ?? '';
-      for (const [itemSettingsKey, itemSettingsValue] of Object.entries(item.settings)) {
-        if (typeof itemSettingsValue === 'object') {
-          flattenedItem[`settings_${itemSettingsKey}`] = JSON.stringify(itemSettingsValue);
-        } else {
-          flattenedItem[`settings_${itemSettingsKey}`] = itemSettingsValue;
-        }
-      }
-      delete flattenedItem.id;
-      delete flattenedItem.scanModeId;
-      delete flattenedItem.settings;
-      delete flattenedItem.connectorId;
-      return flattenedItem;
+    const page = ctx.app.southService.searchSouthItems(ctx.params.southId, searchParams);
+    ctx.ok({
+      content: page.content.map(item => toSouthConnectorItemDTO(item, southConnector.type, ctx.app.encryptionService)),
+      totalElements: page.totalElements,
+      size: page.size,
+      number: page.number,
+      totalPages: page.totalPages
     });
-    ctx.body = csv.unparse(southItems, { delimiter: ctx.request.body!.delimiter });
-    ctx.set('Content-disposition', 'attachment; filename=items.csv');
-    ctx.set('Content-Type', 'application/force-download');
-    ctx.ok();
   }
 
-  async exportSouthItems(ctx: KoaContext<{ delimiter: string }, any>): Promise<void> {
-    const scanModes = ctx.app.repositoryService.scanModeRepository.findAll();
-    const columns: Set<string> = new Set<string>(['name', 'enabled', 'scanMode']);
-    const southItems = ctx.app.repositoryService.southItemRepository.findAllForSouthConnector(ctx.params.southId).map(item => {
-      const flattenedItem: Record<string, any> = {
-        ...item
-      };
-      flattenedItem.scanMode = scanModes.find(scanMode => scanMode.id === flattenedItem.scanModeId)?.name ?? '';
-      for (const [itemSettingsKey, itemSettingsValue] of Object.entries(item.settings)) {
-        columns.add(`settings_${itemSettingsKey}`);
-        if (typeof itemSettingsValue === 'object') {
-          flattenedItem[`settings_${itemSettingsKey}`] = JSON.stringify(itemSettingsValue);
-        } else {
-          flattenedItem[`settings_${itemSettingsKey}`] = itemSettingsValue;
-        }
-      }
-      delete flattenedItem.id;
-      delete flattenedItem.scanModeId;
-      delete flattenedItem.settings;
-      delete flattenedItem.connectorId;
-      return flattenedItem;
-    });
-    ctx.body = csv.unparse(southItems, { columns: Array.from(columns), delimiter: ctx.request.body!.delimiter });
-    ctx.set('Content-disposition', 'attachment; filename=items.csv');
-    ctx.set('Content-Type', 'application/force-download');
-    ctx.ok();
-  }
-
-  async checkImportSouthItems(ctx: KoaContext<{ itemIdsToDelete: string; delimiter: string }, any>): Promise<void> {
-    const manifest = ctx.app.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === ctx.params.southType);
-    if (!manifest) {
-      return ctx.throw(404, 'South manifest not found');
-    }
-
-    const file = ctx.request.file;
-    const delimiter = ctx.request.body!.delimiter;
-
-    let itemIdsToDelete: Array<string>;
-    try {
-      itemIdsToDelete = JSON.parse(ctx.request.body!.itemIdsToDelete);
-    } catch {
-      return ctx.throw(400, 'Could not parse item ids to delete array');
-    }
-
-    const scanModes = ctx.app.repositoryService.scanModeRepository.findAll();
-
-    const existingItems: Array<SouthConnectorItemDTO> =
-      ctx.params.southId === 'create'
-        ? []
-        : ctx.app.repositoryService.southItemRepository
-            .findAllForSouthConnector(ctx.params.southId)
-            .filter(item => !itemIdsToDelete.includes(item.id));
-    const validItems: Array<any> = [];
-    const errors: Array<any> = [];
-    try {
-      let isError = false;
-      const fileContent = await fs.readFile(file.path);
-      let csvContent = csv.parse(fileContent.toString('utf8'), { header: true });
-
-      if (csvContent.errors[0]?.code === 'UndetectableDelimiter') {
-        const csvContent2 = csv.parse(fileContent.toString('utf8'), { header: true, delimiter: delimiter });
-        isError = JSON.stringify(csvContent2.data) === JSON.stringify(csvContent.data); // if it's true it means that csvContent2 don't succeed to have the good data with the good delimiter, so it's an error
-        csvContent = csvContent2;
-      }
-
-      for (const error of csvContent.errors) {
-        throw new Error(error.message);
-      }
-
-      if (csvContent.meta.delimiter !== delimiter || isError) {
-        throw new Error(`The entered delimiter does not correspond to the file delimiter`);
-      }
-
-      for (const data of csvContent.data) {
-        const item: SouthConnectorItemDTO = {
-          id: '',
-          name: (data as any).name,
-          enabled: (data as any).enabled.toLowerCase() === 'true',
-          connectorId: ctx.params.southId !== 'create' ? ctx.params.southId : '',
-          scanModeId: '',
-          settings: {}
-        };
-
-        try {
-          for (const [key, value] of Object.entries(data as any)) {
-            if (key.startsWith('settings_')) {
-              const settingsKey = key.replace('settings_', '');
-              const manifestSettings = manifest.items.settings.find(settings => settings.key === settingsKey);
-              if (!manifestSettings) {
-                throw new Error(`Settings "${settingsKey}" not accepted in manifest`);
-              }
-
-              if ((manifestSettings.type === 'OibArray' || manifestSettings.type === 'OibFormGroup') && value) {
-                item.settings[settingsKey] = JSON.parse(value as string);
-              } else {
-                item.settings[settingsKey] = value;
-              }
-            }
-          }
-        } catch (err: any) {
-          errors.push({ item, message: err.message });
-          continue;
-        }
-
-        if (existingItems.find(existingItem => existingItem.name === item.name)) {
-          errors.push({ item, message: `Item name "${(data as any).name}" already used` });
-          continue;
-        }
-        const foundScanMode = scanModes.find(scanMode => scanMode.name === (data as any).scanMode);
-        if (!foundScanMode) {
-          errors.push({ item, message: `Scan mode "${(data as any).scanMode}" not found for item ${item.name}` });
-          continue;
-        }
-        item.scanModeId = foundScanMode.id;
-        try {
-          await this.validator.validateSettings(manifest.items.settings, item.settings);
-          validItems.push(item);
-        } catch (itemError: any) {
-          errors.push({ item, message: itemError.message });
-        }
-      }
-    } catch (error: any) {
-      return ctx.badRequest(error.message);
-    }
-
-    ctx.ok({ items: validItems, errors });
-  }
-
-  async importSouthItems(ctx: KoaContext<{ items: Array<SouthConnectorItemScanModeNameDTO> }, any>): Promise<void> {
-    const southConnector = ctx.app.repositoryService.southConnectorRepository.findById(ctx.params.southId);
+  async getSouthItem(ctx: KoaContext<void, SouthConnectorItemDTO<SouthItemSettings>>): Promise<void> {
+    const southConnector = ctx.app.southService.findById(ctx.params.southId);
     if (!southConnector) {
-      return ctx.throw(404, 'South not found');
+      return ctx.notFound();
     }
-
-    const manifest = ctx.app.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === southConnector.type);
-    if (!manifest) {
-      return ctx.throw(404, 'South manifest not found');
-    }
-
-    const items = ctx.request.body!.items;
-    try {
-      const scanModes = ctx.app.repositoryService.scanModeRepository.findAll();
-
-      // Check if item settings match the item schema, throw an error otherwise
-      for (const item of items) {
-        await this.validator.validateSettings(manifest.items.settings, item.settings);
-        if (!item.scanModeId && !item.scanModeName) {
-          throw new Error(`Scan mode not specified for item ${item.name}`);
-        } else if (!item.scanModeId && item.scanModeName) {
-          const scanMode = scanModes.find(element => element.name === item.scanModeName);
-          if (!scanMode) {
-            throw new Error(`Scan mode ${item.scanModeName} not found for item ${item.name}`);
-          }
-          item.scanModeId = scanMode.id;
-          delete item.scanModeName;
-        }
-      }
-    } catch (error: any) {
-      return ctx.badRequest(error.message);
-    }
-
-    try {
-      ctx.app.reloadService.onCreateOrUpdateSouthItems(southConnector, items, []);
-      await ctx.app.reloadService.oibusEngine.onSouthItemsChange(southConnector.id);
-    } catch (error: any) {
-      return ctx.badRequest(error.message);
-    }
-    ctx.noContent();
-  }
-
-  async getSouthItem(ctx: KoaContext<void, SouthConnectorItemDTO>): Promise<void> {
-    const southItem = ctx.app.repositoryService.southItemRepository.findById(ctx.params.id);
-    if (southItem) {
-      ctx.ok(southItem);
+    const item = ctx.app.southService.findSouthConnectorItemById(ctx.params.southId, ctx.params.id);
+    if (item) {
+      ctx.ok(toSouthConnectorItemDTO(item, southConnector.type, ctx.app.encryptionService));
     } else {
       ctx.notFound();
     }
   }
 
-  async createSouthItem(ctx: KoaContext<SouthConnectorItemCommandDTO, SouthConnectorItemDTO>): Promise<void> {
-    if (!ctx.request.body || !ctx.params.southId) {
-      return ctx.badRequest();
+  async createSouthItem(
+    ctx: KoaContext<SouthConnectorItemCommandDTO<SouthItemSettings>, SouthConnectorItemDTO<SouthItemSettings>>
+  ): Promise<void> {
+    const southConnector = ctx.app.southService.findById(ctx.params.southId);
+    if (!southConnector) {
+      return ctx.notFound();
     }
     try {
-      const item = await ctx.app.southConnectorConfigService.createItem(ctx.params.southId!, ctx.request.body!);
-      ctx.created(item);
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+      const item = await ctx.app.southService.createItem(ctx.params.southId!, ctx.request.body!);
+      ctx.created(toSouthConnectorItemDTO(item, southConnector.type, ctx.app.encryptionService));
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 
-  async updateSouthItem(ctx: KoaContext<SouthConnectorItemCommandDTO, void>): Promise<void> {
-    if (!ctx.request.body || !ctx.params.southId || !ctx.params.id) {
-      return ctx.badRequest();
-    }
+  async updateSouthItem(ctx: KoaContext<SouthConnectorItemCommandDTO<SouthItemSettings>, void>): Promise<void> {
     try {
-      await ctx.app.southConnectorConfigService.updateItem(ctx.params.southId!, ctx.params.id!, ctx.request.body!);
+      await ctx.app.southService.updateItem(ctx.params.southId!, ctx.params.id!, ctx.request.body!);
       ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 
   async deleteSouthItem(ctx: KoaContext<void, void>): Promise<void> {
     try {
-      await ctx.app.southConnectorConfigService.deleteItem(ctx.params.southId, ctx.params.id);
+      await ctx.app.southService.deleteItem(ctx.params.southId, ctx.params.id);
       ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 
   async enableSouthItem(ctx: KoaContext<void, void>): Promise<void> {
     try {
-      await ctx.app.southConnectorConfigService.enableItem(ctx.params.id);
+      await ctx.app.southService.enableItem(ctx.params.southId, ctx.params.id);
       ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 
   async disableSouthItem(ctx: KoaContext<void, void>): Promise<void> {
     try {
-      await ctx.app.southConnectorConfigService.disableItem(ctx.params.id);
+      await ctx.app.southService.disableItem(ctx.params.southId, ctx.params.id);
       ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 
   async deleteAllSouthItem(ctx: KoaContext<void, void>): Promise<void> {
     try {
-      await ctx.app.southConnectorConfigService.deleteAllItems(ctx.params.southId);
+      await ctx.app.southService.deleteAllItemsForSouthConnector(ctx.params.southId);
       ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 
-  async addContent(_southId: string, _content: OIBusContent): Promise<void> {}
+  /**
+   * Endpoint used to download a CSV from a list of items when creating a South Connector (before the items are saved on
+   * the database). When the items are already saved, it is downloaded with the export method
+   */
+  async southConnectorItemsToCsv(
+    ctx: KoaContext<{ items: Array<SouthConnectorItemDTO<SouthItemSettings>>; delimiter: string }, string>
+  ): Promise<void> {
+    const manifest = ctx.app.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === ctx.params.southType);
+    if (!manifest) {
+      return ctx.throw(404, 'South manifest not found');
+    }
+
+    ctx.body = itemToFlattenedCSV(
+      ctx.request.body!.items.map(item => {
+        return {
+          id: item.id,
+          name: item.name,
+          enabled: item.enabled,
+          scanMode: item.scanModeId,
+          settings: ctx.app.encryptionService.filterSecrets(item.settings, manifest.items.settings)
+        };
+      }),
+      ctx.request.body!.delimiter,
+      ctx.app.scanModeService.findAll()
+    );
+    ctx.set('Content-disposition', 'attachment; filename=items.csv');
+    ctx.set('Content-Type', 'application/force-download');
+    ctx.noContent();
+  }
+
+  async exportSouthItems(ctx: KoaContext<{ delimiter: string }, string>): Promise<void> {
+    const southConnector = ctx.app.southService.findById(ctx.params.southId);
+    if (!southConnector) {
+      return ctx.notFound();
+    }
+
+    ctx.body = itemToFlattenedCSV(
+      southConnector.items.map(item => toSouthConnectorItemDTO(item, southConnector.type, ctx.app.encryptionService)),
+      ctx.request.body!.delimiter
+    );
+    ctx.set('Content-disposition', 'attachment; filename=items.csv');
+    ctx.set('Content-Type', 'application/force-download');
+    ctx.noContent();
+  }
+
+  async checkImportSouthItems(
+    ctx: KoaContext<
+      { delimiter: string; currentItems: string },
+      {
+        items: Array<SouthConnectorItemCommandDTO<SouthItemSettings>>;
+        errors: Array<{ item: SouthConnectorItemCommandDTO<SouthItemSettings>; error: string }>;
+      }
+    >
+  ): Promise<void> {
+    try {
+      return ctx.ok(
+        await ctx.app.southService.checkCsvImport(
+          ctx.params.type,
+          ctx.request.file,
+          ctx.request.body!.delimiter,
+          JSON.parse(ctx.request.body!.currentItems)
+        )
+      );
+    } catch (error: unknown) {
+      return ctx.badRequest((error as Error).message);
+    }
+  }
+
+  async importSouthItems(ctx: KoaContext<{ items: Array<SouthConnectorItemCommandDTO<SouthItemSettings>> }, void>): Promise<void> {
+    try {
+      await ctx.app.southService.importItems(ctx.params.southId, ctx.request.body!.items);
+    } catch (error: unknown) {
+      return ctx.badRequest((error as Error).message);
+    }
+    ctx.noContent();
+  }
 }

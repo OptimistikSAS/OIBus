@@ -30,18 +30,18 @@ export default class UserController extends AbstractController {
       }
       const user = await ctx.app.repositoryService.userRepository.create(ctx.request.body!.user, ctx.request.body!.password);
       ctx.created(user);
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 
   async update(ctx: KoaContext<UserCommandDTO, void>) {
     try {
       await this.validate(ctx.request.body);
-      await ctx.app.repositoryService.userRepository.update(ctx.params.id, ctx.request.body as UserCommandDTO);
+      ctx.app.repositoryService.userRepository.update(ctx.params.id, ctx.request.body!);
       ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 
@@ -52,8 +52,8 @@ export default class UserController extends AbstractController {
       }
       await ctx.app.repositoryService.userRepository.updatePassword(ctx.params.id, ctx.request.body.newPassword);
       ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 

@@ -123,8 +123,8 @@ function cronValidator(value: string, helper: Joi.CustomHelpers) {
   try {
     validateCronExpression(value);
     return true;
-  } catch (error: any) {
-    return helper.message({ custom: error.message });
+  } catch (error: unknown) {
+    return helper.message({ custom: (error as Error).message });
   }
 }
 

@@ -1,16 +1,14 @@
 import ArchiveService from '../service/cache/archive.service';
 
-import { NorthArchiveFiles, NorthCacheFiles, NorthConnectorDTO, NorthValueFiles } from '../../../shared/model/north-connector.model';
+import { NorthArchiveFiles, NorthCacheFiles, NorthValueFiles } from '../../../shared/model/north-connector.model';
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
 import ValueCacheService from '../service/cache/value-cache.service';
 import FileCacheService from '../service/cache/file-cache.service';
-import RepositoryService from '../service/repository.service';
 import { CronJob } from 'cron';
 import { EventEmitter } from 'node:events';
-import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 import DeferredPromise from '../service/deferred-promise';
-import { OIBusContent, OIBusError, OIBusRawContent, OIBusTimeValue, OIBusTimeValueContent } from '../../../shared/model/engine.model';
+import { OIBusContent, OIBusRawContent, OIBusTimeValue, OIBusTimeValueContent } from '../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
 import { PassThrough } from 'node:stream';
 import { ReadStream } from 'node:fs';
@@ -18,7 +16,13 @@ import path from 'node:path';
 import NorthConnectorMetricsService from '../service/north-connector-metrics.service';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { dirSize, validateCronExpression } from '../service/utils';
-import { Subscription } from '../model/subscription.model';
+import { NorthConnectorEntity } from '../model/north-connector.model';
+import { SouthConnectorEntityLight } from '../model/south-connector.model';
+import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
+import NorthConnectorRepository from '../repository/config/north-connector.repository';
+import ScanModeRepository from '../repository/config/scan-mode.repository';
+import { ScanMode } from '../model/scan-mode.model';
+import { OIBusError } from '../model/engine.model';
 
 /**
  * Class NorthConnector : provides general attributes and methods for north connectors.
@@ -37,43 +41,46 @@ import { Subscription } from '../model/subscription.model';
  * - **getProxy**: get the proxy handler
  * - **logger**: to log an event with different levels (error,warning,info,debug,trace)
  */
-export default class NorthConnector<T extends NorthSettings = any> {
+export default abstract class NorthConnector<T extends NorthSettings> {
   public static type: string;
 
   private archiveService: ArchiveService;
-  private valueCacheService: ValueCacheService;
+  private valueCacheService: ValueCacheService<T>;
   private fileCacheService: FileCacheService;
   protected metricsService: NorthConnectorMetricsService | null = null;
-  private subscribedTo: Array<Subscription> = [];
+  private subscribedTo: Array<SouthConnectorEntityLight> = [];
+
   private cacheSize = 0;
 
   private fileBeingSent: string | null = null;
   private fileErrorCount = 0;
-  private valuesBeingSent: Map<string, Array<OIBusTimeValue>> = new Map();
+  private valuesBeingSent = new Map<string, Array<OIBusTimeValue>>();
   private valueErrorCount = 0;
 
-  private taskJobQueue: Array<ScanModeDTO> = [];
+  private taskJobQueue: Array<ScanMode> = [];
   private cronByScanModeIds: Map<string, CronJob> = new Map<string, CronJob>();
   private taskRunner: EventEmitter = new EventEmitter();
   private runProgress$: DeferredPromise | null = null;
   private stopping = false;
 
-  constructor(
-    protected connector: NorthConnectorDTO<T>,
+  protected constructor(
+    protected connector: NorthConnectorEntity<T>,
     protected readonly encryptionService: EncryptionService,
-    protected readonly repositoryService: RepositoryService,
+    protected readonly northConnectorRepository: NorthConnectorRepository,
+    protected readonly scanModeRepository: ScanModeRepository,
+    protected readonly northMetricsRepository: NorthConnectorMetricsRepository,
     protected logger: pino.Logger,
     protected readonly baseFolder: string
   ) {
     this.archiveService = new ArchiveService(this.logger, this.baseFolder, this.connector.caching.rawFiles.archive);
-    this.valueCacheService = new ValueCacheService(this.logger, this.baseFolder, this.connector.caching);
+    this.valueCacheService = new ValueCacheService<T>(this.logger, this.baseFolder, this.connector);
     this.fileCacheService = new FileCacheService(this.logger, this.baseFolder, this.connector.caching);
 
     if (this.connector.id === 'test') {
       return;
     }
 
-    this.metricsService = new NorthConnectorMetricsService(this.connector.id, this.repositoryService.northMetricsRepository);
+    this.metricsService = new NorthConnectorMetricsService(this.connector.id, this.northMetricsRepository);
     this.metricsService.initMetrics();
 
     this.taskRunner.on('next', async () => {
@@ -138,7 +145,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
   async start(dataStream = true): Promise<void> {
     if (dataStream) {
       // Reload the settings only on data stream case, otherwise let the history query manage the settings
-      this.connector = this.repositoryService.northConnectorRepository.findById(this.connector.id)!;
+      this.connector = this.northConnectorRepository.findNorthById(this.connector.id)!;
     }
     this.logger.debug(`North connector "${this.connector.name}" enabled. Starting services...`);
     if (this.connector.id !== 'test') {
@@ -156,7 +163,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
   }
 
   updateConnectorSubscription() {
-    this.subscribedTo = this.repositoryService.subscriptionRepository.listSouthByNorth(this.connector.id);
+    this.subscribedTo = this.northConnectorRepository.listNorthSubscriptions(this.connector.id);
   }
 
   /**
@@ -170,12 +177,8 @@ export default class NorthConnector<T extends NorthSettings = any> {
         lastConnection: DateTime.now().toUTC().toISO()
       });
 
-      const scanMode = this.repositoryService.scanModeRepository.findById(this.connector.caching.scanModeId);
-      if (scanMode) {
-        this.createCronJob(scanMode);
-      } else {
-        this.logger.error(`Scan mode ${this.connector.caching.scanModeId} not found`);
-      }
+      const scanMode = this.scanModeRepository.findById(this.connector.caching.scanModeId)!;
+      this.createCronJob(scanMode);
     }
     this.logger.info(`North connector "${this.connector.name}" of type ${this.connector.type} started`);
   }
@@ -183,7 +186,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
   /**
    * Create a job used to populate the queue where each element of the queue is a job to call, associated to its scan mode
    */
-  createCronJob(scanMode: ScanModeDTO): void {
+  createCronJob(scanMode: ScanMode): void {
     const existingCronJob = this.cronByScanModeIds.get(scanMode.id);
     if (existingCronJob) {
       this.logger.debug(`Removing existing North cron job associated to scan mode "${scanMode.name}" (${scanMode.cron})`);
@@ -202,12 +205,14 @@ export default class NorthConnector<T extends NorthSettings = any> {
         true
       );
       this.cronByScanModeIds.set(scanMode.id, job);
-    } catch (error: any) {
-      this.logger.error(`Error when creating North cron job for scan mode "${scanMode.name}" (${scanMode.cron}): ${error.message}`);
+    } catch (error: unknown) {
+      this.logger.error(
+        `Error when creating North cron job for scan mode "${scanMode.name}" (${scanMode.cron}): ${(error as Error).message}`
+      );
     }
   }
 
-  addToQueue(scanMode: ScanModeDTO): void {
+  addToQueue(scanMode: ScanMode): void {
     const foundJob = this.taskJobQueue.find(element => element.id === scanMode.id);
     if (foundJob) {
       // If a job is already scheduled in queue, it will not be added
@@ -355,22 +360,15 @@ export default class NorthConnector<T extends NorthSettings = any> {
    * The error thrown can be overridden with an OIBusError to force a retry on specific cases
    */
   createOIBusError(error: unknown): OIBusError {
-    // The error is unknown by default, but it can be overridden with an OIBusError. In this case, we can retrieve the message
-    let message;
-    if (typeof error === 'object') {
-      message = (error as any)?.message ?? JSON.stringify(error);
+    if (error instanceof OIBusError) {
+      return error as OIBusError;
+    } else if (error instanceof Error) {
+      return new OIBusError(error.message, false);
     } else if (typeof error === 'string') {
-      message = error;
+      return new OIBusError(error, false);
     } else {
-      message = JSON.stringify(error);
+      return new OIBusError(JSON.stringify(error), false);
     }
-
-    // Do not retry by default, other retrieve the retry flag from the OIBusError object
-    const retry = typeof error === 'object' ? ((error as any)?.retry ?? false) : false;
-    return {
-      message: message,
-      retry
-    };
   }
 
   /**
@@ -416,7 +414,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
    * If subscribedTo is not defined or an empty array, the subscription is true.
    */
   isSubscribed(southId: string): boolean {
-    return this.subscribedTo.length === 0 || this.subscribedTo.some(subscription => subscription.south.id === southId);
+    return this.subscribedTo.length === 0 || this.subscribedTo.some(south => south.id === southId);
   }
 
   /**
@@ -443,7 +441,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
 
     if (dataStream) {
       // Reload the settings only on data stream case, otherwise let the history query manage the settings
-      this.connector = this.repositoryService.northConnectorRepository.findById(this.connector.id)!;
+      this.connector = this.northConnectorRepository.findNorthById(this.connector.id)!;
     }
 
     if (this.runProgress$) {
@@ -616,7 +614,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
   }
 
   async removeCacheValues(filenames: Array<string>): Promise<void> {
-    const sentValues = new Map<string, OIBusTimeValue[]>(
+    const sentValues = new Map<string, Array<OIBusTimeValue>>(
       filenames.map(filename => [path.join(this.valueCacheService.valueFolder, filename), []])
     );
     await this.valueCacheService.removeSentValues(sentValues);
@@ -658,24 +656,17 @@ export default class NorthConnector<T extends NorthSettings = any> {
     this.metricsService!.resetMetrics();
   }
 
-  /**
-   * @throws {Error} Error with a message specifying wrong settings
-   */
-  async testConnection(): Promise<void> {
-    this.logger.warn('testConnection must be override');
-  }
-
-  async handleContent(_data: OIBusContent): Promise<void> {
-    this.logger.warn('handleContent must be override');
-  }
-
-  async updateScanMode(scanMode: ScanModeDTO): Promise<void> {
+  async updateScanMode(scanMode: ScanMode): Promise<void> {
     if (this.cronByScanModeIds.get(scanMode.id)) {
       this.createCronJob(scanMode);
     }
   }
 
-  get settings(): NorthConnectorDTO<T> {
+  get settings(): NorthConnectorEntity<T> {
     return this.connector;
   }
+
+  abstract testConnection(): Promise<void>;
+
+  abstract handleContent(_data: OIBusContent): Promise<void>;
 }
