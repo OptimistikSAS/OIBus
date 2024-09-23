@@ -647,7 +647,7 @@ export default class SouthOPCUA
           .toString();
 
       case DataType.ByteString:
-        return Buffer.from(opcuaVariant.value).readUInt8().toString();
+        return opcuaVariant.value.toString('hex');
 
       case DataType.Boolean:
         return opcuaVariant.value ? '1' : '0';
