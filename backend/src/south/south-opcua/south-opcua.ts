@@ -16,7 +16,7 @@ import {
   Variant
 } from 'node-opcua-client';
 
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import { Aggregate, Instant, Resampling } from '../../../../shared/model/types';
 
 import manifest from './manifest';
@@ -38,6 +38,7 @@ import { createFolder } from '../../service/utils';
 import { OPCUACertificateManager } from 'node-opcua-certificate-manager';
 import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
 import ConnectionService, { ManagedConnection, ManagedConnectionSettings } from '../../service/connection.service';
+import { SouthConnectorEntity } from '../../model/south-connector.model';
 
 export const MAX_NUMBER_OF_NODE_TO_LOG = 10;
 export const NUM_VALUES_PER_NODE = 1000;
@@ -59,7 +60,7 @@ export default class SouthOPCUA
   connection!: ManagedConnection<ClientSession>;
 
   constructor(
-    connector: SouthConnectorDTO<SouthOPCUASettings>,
+    connector: SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,

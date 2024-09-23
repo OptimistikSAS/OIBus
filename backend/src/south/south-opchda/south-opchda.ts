@@ -1,6 +1,6 @@
 import manifest from './manifest';
 import SouthConnector from '../south-connector';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
@@ -10,12 +10,13 @@ import { QueriesHistory } from '../south-interface';
 import { SouthOPCHDAItemSettings, SouthOPCHDASettings } from '../../../../shared/model/south-settings.model';
 import fetch from 'node-fetch';
 import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { SouthConnectorEntity } from '../../model/south-connector.model';
 
 /**
  * Class SouthOPCHDA - Run a HDA agent to connect to an OPCHDA server.
  * This connector communicates with the Agent through a HTTP connection
  */
-export default class SouthOPCHDA extends SouthConnector implements QueriesHistory {
+export default class SouthOPCHDA extends SouthConnector<SouthOPCHDASettings, SouthOPCHDAItemSettings> implements QueriesHistory {
   static type = manifest.id;
 
   private connected = false;
@@ -23,7 +24,7 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
   private disconnecting = false;
 
   constructor(
-    connector: SouthConnectorDTO<SouthOPCHDASettings>,
+    connector: SouthConnectorEntity<SouthOPCHDASettings, SouthOPCHDAItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
@@ -126,7 +127,7 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
         maxInstantRetrieved: Instant;
       } = (await response.json()) as {
         recordCount: number;
-        content: OIBusTimeValue[];
+        content: Array<OIBusTimeValue>;
         maxInstantRetrieved: string;
       };
       content.content = result.content;
@@ -216,7 +217,7 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
               maxInstantRetrieved: Instant;
             } = (await response.json()) as {
               recordCount: number;
-              content: OIBusTimeValue[];
+              content: Array<OIBusTimeValue>;
               maxInstantRetrieved: string;
             };
             const requestDuration = DateTime.now().toMillis() - startRequest;

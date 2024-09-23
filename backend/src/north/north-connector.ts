@@ -18,7 +18,8 @@ import path from 'node:path';
 import NorthConnectorMetricsService from '../service/north-connector-metrics.service';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { dirSize, validateCronExpression } from '../service/utils';
-import { Subscription } from '../model/subscription.model';
+import { NorthConnectorEntity } from '../model/north-connector.model';
+import { SouthConnectorEntityLight } from '../model/south-connector.model';
 
 /**
  * Class NorthConnector : provides general attributes and methods for north connectors.
@@ -37,19 +38,20 @@ import { Subscription } from '../model/subscription.model';
  * - **getProxy**: get the proxy handler
  * - **logger**: to log an event with different levels (error,warning,info,debug,trace)
  */
-export default class NorthConnector<T extends NorthSettings = any> {
+export default class NorthConnector<T extends NorthSettings> {
   public static type: string;
 
   private archiveService: ArchiveService;
   private valueCacheService: ValueCacheService;
   private fileCacheService: FileCacheService;
   protected metricsService: NorthConnectorMetricsService | null = null;
-  private subscribedTo: Array<Subscription> = [];
+  private subscribedTo: Array<SouthConnectorEntityLight> = [];
+
   private cacheSize = 0;
 
   private fileBeingSent: string | null = null;
   private fileErrorCount = 0;
-  private valuesBeingSent: Map<string, Array<OIBusTimeValue>> = new Map();
+  private valuesBeingSent = new Map<string, Array<OIBusTimeValue>>();
   private valueErrorCount = 0;
 
   private taskJobQueue: Array<ScanModeDTO> = [];
@@ -59,7 +61,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
   private stopping = false;
 
   constructor(
-    protected connector: NorthConnectorDTO<T>,
+    protected connector: NorthConnectorEntity<T>,
     protected readonly encryptionService: EncryptionService,
     protected readonly repositoryService: RepositoryService,
     protected logger: pino.Logger,
@@ -138,7 +140,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
   async start(dataStream = true): Promise<void> {
     if (dataStream) {
       // Reload the settings only on data stream case, otherwise let the history query manage the settings
-      this.connector = this.repositoryService.northConnectorRepository.findById(this.connector.id)!;
+      this.connector = this.repositoryService.northConnectorRepository.findNorthById(this.connector.id)!;
     }
     this.logger.debug(`North connector "${this.connector.name}" enabled. Starting services...`);
     if (this.connector.id !== 'test') {
@@ -156,7 +158,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
   }
 
   updateConnectorSubscription() {
-    this.subscribedTo = this.repositoryService.subscriptionRepository.listSouthByNorth(this.connector.id);
+    this.subscribedTo = this.repositoryService.northConnectorRepository.listNorthSubscriptions(this.connector.id);
   }
 
   /**
@@ -202,8 +204,10 @@ export default class NorthConnector<T extends NorthSettings = any> {
         true
       );
       this.cronByScanModeIds.set(scanMode.id, job);
-    } catch (error: any) {
-      this.logger.error(`Error when creating North cron job for scan mode "${scanMode.name}" (${scanMode.cron}): ${error.message}`);
+    } catch (error: unknown) {
+      this.logger.error(
+        `Error when creating North cron job for scan mode "${scanMode.name}" (${scanMode.cron}): ${(error as Error).message}`
+      );
     }
   }
 
@@ -358,7 +362,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
     // The error is unknown by default, but it can be overridden with an OIBusError. In this case, we can retrieve the message
     let message;
     if (typeof error === 'object') {
-      message = (error as any)?.message ?? JSON.stringify(error);
+      message = (error as Error)?.message ?? JSON.stringify(error);
     } else if (typeof error === 'string') {
       message = error;
     } else {
@@ -416,7 +420,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
    * If subscribedTo is not defined or an empty array, the subscription is true.
    */
   isSubscribed(southId: string): boolean {
-    return this.subscribedTo.length === 0 || this.subscribedTo.some(subscription => subscription.south.id === southId);
+    return this.subscribedTo.length === 0 || this.subscribedTo.some(south => south.id === southId);
   }
 
   /**
@@ -443,7 +447,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
 
     if (dataStream) {
       // Reload the settings only on data stream case, otherwise let the history query manage the settings
-      this.connector = this.repositoryService.northConnectorRepository.findById(this.connector.id)!;
+      this.connector = this.repositoryService.northConnectorRepository.findNorthById(this.connector.id)!;
     }
 
     if (this.runProgress$) {
@@ -616,7 +620,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
   }
 
   async removeCacheValues(filenames: Array<string>): Promise<void> {
-    const sentValues = new Map<string, OIBusTimeValue[]>(
+    const sentValues = new Map<string, Array<OIBusTimeValue>>(
       filenames.map(filename => [path.join(this.valueCacheService.valueFolder, filename), []])
     );
     await this.valueCacheService.removeSentValues(sentValues);

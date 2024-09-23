@@ -15,83 +15,77 @@ export interface SouthType {
   };
 }
 
-export interface SouthConnectorHistorySettings {
-  maxInstantPerItem: boolean;
-  maxReadInterval: number;
-  readDelay: number;
-  overlap: number;
-}
-
-/**
- * DTO for South connectors
- */
-export interface SouthConnectorDTO<T extends SouthSettings = any> extends BaseEntity {
+export interface SouthConnectorLightDTO extends BaseEntity {
   name: string;
   type: string;
   description: string;
   enabled: boolean;
-  sharedConnection?: boolean;
-  settings: T;
-  history: SouthConnectorHistorySettings;
 }
 
-/**
- * Command DTO for South connector
- */
-export interface SouthConnectorCommandDTO<T = any> {
+export interface SouthConnectorDTO<T extends SouthSettings, I extends SouthItemSettings> extends BaseEntity {
   name: string;
   type: string;
   description: string;
   enabled: boolean;
-  sharedConnection?: boolean;
-  history: SouthConnectorHistorySettings;
+  sharedConnection: boolean;
   settings: T;
+  history: {
+    maxInstantPerItem: boolean;
+    maxReadInterval: number;
+    readDelay: number;
+    overlap: number;
+  };
+  items: Array<SouthConnectorItemDTO<I>>;
 }
 
-/**
- * Command DTO for South connector
- */
-export interface SouthConnectorWithItemsCommandDTO<> {
-  south: SouthConnectorDTO;
-  items: Array<SouthConnectorItemCommandDTO>;
-  itemIdsToDelete: Array<string>;
+export interface SouthConnectorCommandDTO<T extends SouthSettings, I extends SouthItemSettings> {
+  name: string;
+  type: string;
+  description: string;
+  enabled: boolean;
+  sharedConnection: boolean;
+  history: {
+    maxInstantPerItem: boolean;
+    maxReadInterval: number;
+    readDelay: number;
+    overlap: number;
+  };
+  settings: T;
+  items: Array<SouthConnectorItemCommandDTO<I>>;
+}
+
+export interface SouthConnectorWithoutItemsCommandDTO<T extends SouthSettings> {
+  name: string;
+  type: string;
+  description: string;
+  enabled: boolean;
+  sharedConnection: boolean;
+  history: {
+    maxInstantPerItem: boolean;
+    maxReadInterval: number;
+    readDelay: number;
+    overlap: number;
+  };
+  settings: T;
 }
 
 /**
  * DTO used for an item to query within a south
  */
-export interface SouthConnectorItemDTO<T extends SouthItemSettings = any> extends BaseEntity {
+export interface SouthConnectorItemDTO<T extends SouthItemSettings> extends BaseEntity {
   name: string;
   enabled: boolean;
-  connectorId: string;
   settings: T;
   scanModeId: string;
 }
 
-export interface SouthConnectorItemScanModeNameDTO<T extends SouthItemSettings = any> extends BaseEntity {
-  name: string;
-  enabled: boolean;
-  connectorId: string;
-  settings: T;
-  scanModeId?: string;
-  scanModeName?: string;
-}
-
-/**
- * Command DTO used to create an SouthConnectorItem
- */
-export interface SouthConnectorItemCommandDTO<T extends SouthItemSettings = any> {
-  id?: string;
+export interface SouthConnectorItemCommandDTO<T extends SouthItemSettings> {
+  id: string | null;
   enabled: boolean;
   name: string;
   settings: T;
-  scanModeId?: string;
-  scanModeName?: string;
-}
-
-export interface SouthConnectorItemTestCommandDTO {
-  south: SouthConnectorCommandDTO;
-  item: SouthConnectorItemCommandDTO;
+  scanModeId: string | null;
+  scanModeName: string | null;
 }
 
 export interface SouthConnectorItemSearchParam {
@@ -120,7 +114,7 @@ export interface SouthConnectorManifest {
     lastFile: boolean;
     history: boolean;
     forceMaxInstantPerItem: boolean;
-    sharedConnection?: boolean;
+    sharedConnection: boolean;
   };
   settings: Array<OibFormControl>;
   items: SouthConnectorItemManifest;

@@ -1,13 +1,14 @@
 import { ManagedConnection, ManagedConnectionSettings } from '../service/connection.service';
-import { SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
 import { Instant } from '../../../shared/model/types';
+import { SouthItemSettings } from '../../../shared/model/south-settings.model';
+import { SouthConnectorItemEntity } from '../model/south-connector.model';
 
 export interface QueriesFile {
-  fileQuery(items: Array<SouthConnectorItemDTO>): Promise<void>;
+  fileQuery(items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void>;
 }
 
 export interface QueriesLastPoint {
-  lastPointQuery(items: Array<SouthConnectorItemDTO>): Promise<void>;
+  lastPointQuery(items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void>;
 }
 
 export interface QueriesHistory {
@@ -19,12 +20,17 @@ export interface QueriesHistory {
    * @param startTimeFromCache - the start of the history query (may differ of start time if split in intervals). The origin start
    * time is used to not skip interval in case history query throw an error instead of retrieving values
    */
-  historyQuery(items: Array<SouthConnectorItemDTO>, startTime: Instant, endTime: Instant, startTimeFromCache: Instant): Promise<Instant>;
+  historyQuery(
+    items: Array<SouthConnectorItemEntity<SouthItemSettings>>,
+    startTime: Instant,
+    endTime: Instant,
+    startTimeFromCache: Instant
+  ): Promise<Instant>;
 }
 
 export interface QueriesSubscription {
-  subscribe(items: Array<SouthConnectorItemDTO>): Promise<void>;
-  unsubscribe(items: Array<SouthConnectorItemDTO>): Promise<void>;
+  subscribe(items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void>;
+  unsubscribe(items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void>;
 }
 
 export interface DelegatesConnection<TConnection = any> {

@@ -1,12 +1,12 @@
-@if (inMemory) {
+@if (historyQuery) {
   <div class="my-2">
     <span class="fa fa-warning mx-1" style="color: orange"></span>
-    <span translate="south.items.edit-mode-info"></span>
+    <span translate="south.items.display-mode-info"></span>
   </div>
 } @else {
   <div class="my-2">
     <span class="fa fa-info-circle mx-1" style="color: grey"></span>
-    <span translate="south.items.display-mode-info"></span>
+    <span translate="south.items.edit-mode-info"></span>
   </div>
 }
 <oib-box>
@@ -45,7 +45,7 @@
           id="delete-all"
           class="btn btn-danger btn-sm"
           (click)="deleteAllItems()"
-          [disabled]="this.allItems.length === 0"
+          [disabled]="this.historyQuery ? this.historyQuery.items.length === 0 : this.allItems.length === 0"
           translate="south.items.delete-all"
         ></button>
         <oib-help url="https://oibus.optimistik.com/docs/guide/south-connectors/common-settings#item-section" />
@@ -58,9 +58,7 @@
       <table class="table table-sm table-hover oib-table">
         <thead class="light">
           <tr>
-            @if (!inMemory) {
-              <th></th>
-            }
+            <th></th>
             <th translate="history-query.items.name"></th>
             @for (setting of displaySettings; track setting) {
               <th>{{ setting.label }}</th>
@@ -71,16 +69,18 @@
         <tbody>
           @for (item of displayedItems.content; track item) {
             <tr class="south-item">
-              @if (!inMemory) {
+              @if (historyQuery) {
                 <td>
                   <div class="form-check form-switch">
                     <input (click)="toggleItem(item, !item.enabled)" [checked]="item.enabled" type="checkbox" class="form-check-input" />
                   </div>
                 </td>
+              } @else {
+                <td></td>
               }
               <td>{{ item.name }}</td>
               @for (setting of displaySettings; track setting) {
-                <td>{{ item.settings[setting.key] }}</td>
+                <td>{{ getFieldValue(item.settings, setting.key, setting.pipe) }}</td>
               }
               <td class="text-nowrap action-buttons">
                 <div class="pull-right">
@@ -91,6 +91,10 @@
                   <!-- Duplicate button -->
                   <button type="button" class="btn btn-link duplicate-south-item px-1 py-0" (click)="duplicateItem(item)">
                     <span class="fa fa-copy"></span>
+                  </button>
+                  <!-- Test button -->
+                  <button type="button" class="btn btn-link test-south-item px-1 py-0" (click)="testItem(item)">
+                    <span class="fa fa-check"></span>
                   </button>
                   <!-- Delete button -->
                   <button type="button" class="btn btn-link delete-south-item px-1 py-0" (click)="deleteItem(item)">

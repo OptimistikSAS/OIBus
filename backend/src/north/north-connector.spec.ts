@@ -3,8 +3,6 @@ import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 import RepositoryServiceMock from '../tests/__mocks__/service/repository-service.mock';
 
-import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
-
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
 import RepositoryService from '../service/repository.service';
@@ -17,6 +15,12 @@ import { dirSize, validateCronExpression } from '../service/utils';
 import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import path from 'node:path';
+import testData from '../tests/utils/test-data';
+import { NorthFileWriterSettings, NorthOIAnalyticsSettings, NorthSettings } from '../../../shared/model/north-settings.model';
+import NorthFileWriter from './north-file-writer/north-file-writer';
+import { NorthConnectorEntity } from '../model/north-connector.model';
+import { flushPromises } from '../tests/utils/test-utils';
+import NorthOIAnalytics from './north-oianalytics/north-oianalytics';
 
 // Mock fs
 jest.mock('node:fs/promises');
@@ -119,63 +123,32 @@ const anotherLogger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
 
-const nowDateString = '2020-02-02T02:02:02.222Z';
-const flushPromises = () => new Promise(jest.requireActual('timers').setImmediate);
-
-let configuration: NorthConnectorDTO;
-
-class TestNorth extends NorthConnector {}
-let north: TestNorth;
-
-describe('NorthConnector enabled', () => {
+let north: NorthConnector<NorthSettings>;
+describe('NorthConnector', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
-    const valuesInQueue = new Map();
-    valuesInQueue.set('value-file1.queue', [{}, {}]);
-    getValuesToSendMock.mockImplementation(() => valuesInQueue);
-    getFileToSend.mockImplementation(() => 'file.csv');
-    valueCacheIsEmpty.mockImplementation(() => true);
-    fileCacheIsEmpty.mockImplementation(() => true);
-    configuration = {
-      id: 'id',
-      name: 'north',
-      type: 'test',
-      description: 'my test connector',
-      enabled: true,
-      settings: {},
-      caching: {
-        scanModeId: 'id1',
-        retryInterval: 5000,
-        retryCount: 2,
-        maxSize: 1000,
-        oibusTimeValues: {
-          groupCount: 10000,
-          maxSendCount: 10000
-        },
-        rawFiles: {
-          sendFileImmediately: true,
-          archive: {
-            enabled: true,
-            retentionDuration: 720
-          }
-        }
-      }
-    };
-    repositoryService.northConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
-
-    north = new TestNorth(configuration, encryptionService, repositoryService, logger, 'baseFolder');
     (dirSize as jest.Mock).mockReturnValue(123);
+
+    north = new NorthFileWriter(
+      testData.north.list[0] as NorthConnectorEntity<NorthFileWriterSettings>,
+      encryptionService,
+      repositoryService,
+      logger,
+      'baseFolder'
+    );
     await north.start();
   });
 
   it('should be properly initialized', async () => {
-    expect(north.isEnabled()).toBeTruthy();
-    expect(logger.debug).toHaveBeenCalledWith(`North connector "${configuration.name}" enabled. Starting services...`);
-    expect(logger.error).toHaveBeenCalledWith(`Scan mode ${configuration.caching.scanModeId} not found`);
-    expect(logger.info).toHaveBeenCalledWith(`North connector "${configuration.name}" of type ${configuration.type} started`);
-    expect(north.settings).toEqual(configuration);
+    expect(north.isEnabled()).toEqual(true);
+    expect(logger.debug).toHaveBeenCalledWith(`North connector "${testData.north.list[0].name}" enabled. Starting services...`);
+    expect(logger.error).toHaveBeenCalledWith(`Scan mode ${testData.north.list[0].caching.scanModeId} not found`);
+    expect(logger.info).toHaveBeenCalledWith(
+      `North connector "${testData.north.list[0].name}" of type ${testData.north.list[0].type} started`
+    );
+    expect(north.settings).toEqual(testData.north.list[0]);
   });
 
   it('should properly create cron job and add to queue', async () => {
@@ -272,15 +245,17 @@ describe('NorthConnector enabled', () => {
 
   it('should properly disconnect', async () => {
     await north.disconnect();
-    expect(logger.info).toHaveBeenCalledWith(`North connector "${configuration.name}" (${configuration.id}) disconnected`);
+    expect(logger.info).toHaveBeenCalledWith(
+      `North connector "${testData.north.list[0].name}" (${testData.north.list[0].id}) disconnected`
+    );
   });
 
   it('should properly stop', async () => {
     north.disconnect = jest.fn();
     await north.stop();
-    expect(logger.debug).toHaveBeenCalledWith(`Stopping North "${configuration.name}" (${configuration.id})...`);
+    expect(logger.debug).toHaveBeenCalledWith(`Stopping North "${testData.north.list[0].name}" (${testData.north.list[0].id})...`);
     expect(north.disconnect).toHaveBeenCalledTimes(1);
-    expect(logger.info(`North connector "${configuration.name}" stopped`));
+    expect(logger.info(`North connector "${testData.north.list[0].name}" stopped`));
   });
 
   it('should properly stop with running task ', async () => {
@@ -295,13 +270,13 @@ describe('NorthConnector enabled', () => {
     north.run('scan');
 
     north.stop();
-    expect(logger.debug).toHaveBeenCalledWith(`Stopping North "${configuration.name}" (${configuration.id})...`);
+    expect(logger.debug).toHaveBeenCalledWith(`Stopping North "${testData.north.list[0].name}" (${testData.north.list[0].id})...`);
     expect(logger.debug).toHaveBeenCalledWith('Waiting for North task to finish');
     expect(north.disconnect).not.toHaveBeenCalled();
     jest.advanceTimersByTime(1000);
     await flushPromises();
     expect(north.disconnect).toHaveBeenCalledTimes(1);
-    expect(logger.info).toHaveBeenCalledWith(`North connector "${configuration.name}" stopped`);
+    expect(logger.info).toHaveBeenCalledWith(`North connector "${testData.north.list[0].name}" stopped`);
   });
 
   it('should trigger values first', async () => {
@@ -353,7 +328,7 @@ describe('NorthConnector enabled', () => {
 
   it('should properly cache file', async () => {
     await north.cacheFile('myFilePath');
-    expect(logger.debug).toHaveBeenCalledWith(`Caching file "myFilePath" in North connector "${configuration.name}"...`);
+    expect(logger.debug).toHaveBeenCalledWith(`Caching file "myFilePath" in North connector "${testData.north.list[0].name}"...`);
   });
 
   it('should check if North caches are empty', async () => {
@@ -361,19 +336,19 @@ describe('NorthConnector enabled', () => {
   });
 
   it('should check if North is subscribed to all South', async () => {
-    (repositoryService.subscriptionRepository.listSouthByNorth as jest.Mock).mockReturnValue([]);
+    (repositoryService.northConnectorRepository.listNorthSubscriptions as jest.Mock).mockReturnValue([]);
     await north.start();
     expect(north.isSubscribed('southId')).toBeTruthy();
   });
 
   it('should check if North is subscribed to South', async () => {
-    (repositoryService.subscriptionRepository.listSouthByNorth as jest.Mock).mockReturnValue([{ south: { id: 'southId' } }]);
+    (repositoryService.northConnectorRepository.listNorthSubscriptions as jest.Mock).mockReturnValue([{ south: { id: 'southId' } }]);
     await north.start();
     expect(north.isSubscribed('southId')).toBeTruthy();
   });
 
   it('should check if North is not subscribed to South', async () => {
-    (repositoryService.subscriptionRepository.listSouthByNorth as jest.Mock).mockReturnValue([{ south: { id: 'southId' } }]);
+    (repositoryService.northConnectorRepository.listNorthSubscriptions as jest.Mock).mockReturnValue([{ south: { id: 'southId' } }]);
     await north.start();
     expect(north.isSubscribed('southId2')).toBeFalsy();
   });
@@ -390,23 +365,23 @@ describe('NorthConnector enabled', () => {
   it('should remove error files', async () => {
     const files = ['file1.name', 'file2.name', 'file3.name'];
     await north.removeErrorFiles(files);
-    expect(logger.trace).toHaveBeenCalledWith(`Removing 3 error files from North connector "${configuration.name}"...`);
+    expect(logger.trace).toHaveBeenCalledWith(`Removing 3 error files from North connector "${testData.north.list[0].name}"...`);
   });
 
   it('should retry error files', async () => {
     const files = ['file1.name', 'file2.name', 'file3.name'];
     await north.retryErrorFiles(files);
-    expect(logger.trace).toHaveBeenCalledWith(`Retrying 3 error files in North connector "${configuration.name}"...`);
+    expect(logger.trace).toHaveBeenCalledWith(`Retrying 3 error files in North connector "${testData.north.list[0].name}"...`);
   });
 
   it('should remove all error files', async () => {
     await north.removeAllErrorFiles();
-    expect(logger.trace).toHaveBeenCalledWith(`Removing all error files from North connector "${configuration.name}"...`);
+    expect(logger.trace).toHaveBeenCalledWith(`Removing all error files from North connector "${testData.north.list[0].name}"...`);
   });
 
   it('should retry all error files', async () => {
     await north.retryAllErrorFiles();
-    expect(logger.trace).toHaveBeenCalledWith(`Retrying all error files in North connector "${configuration.name}"...`);
+    expect(logger.trace).toHaveBeenCalledWith(`Retrying all error files in North connector "${testData.north.list[0].name}"...`);
   });
 
   it('should get cache files', async () => {
@@ -421,13 +396,13 @@ describe('NorthConnector enabled', () => {
   it('should remove cache files', async () => {
     const files = ['file4.name', 'file5.name', 'file6.name'];
     await north.removeCacheFiles(files);
-    expect(logger.trace).toHaveBeenCalledWith(`Removing 3 cache files from North connector "${configuration.name}"...`);
+    expect(logger.trace).toHaveBeenCalledWith(`Removing 3 cache files from North connector "${testData.north.list[0].name}"...`);
   });
 
   it('should archive cache files', async () => {
     const files = ['file4.name', 'file5.name', 'file6.name'];
     await north.archiveCacheFiles(files);
-    expect(logger.trace).toHaveBeenCalledWith(`Moving 3 cache files into archive from North connector "${configuration.name}"...`);
+    expect(logger.trace).toHaveBeenCalledWith(`Moving 3 cache files into archive from North connector "${testData.north.list[0].name}"...`);
   });
 
   it('should get archive files', async () => {
@@ -442,23 +417,23 @@ describe('NorthConnector enabled', () => {
   it('should remove archive files', async () => {
     const files = ['file1.name', 'file2.name', 'file3.name'];
     await north.removeArchiveFiles(files);
-    expect(logger.trace).toHaveBeenCalledWith(`Removing 3 archive files from North connector "${configuration.name}"...`);
+    expect(logger.trace).toHaveBeenCalledWith(`Removing 3 archive files from North connector "${testData.north.list[0].name}"...`);
   });
 
   it('should retry archive files', async () => {
     const files = ['file1.name', 'file2.name', 'file3.name'];
     await north.retryArchiveFiles(files);
-    expect(logger.trace).toHaveBeenCalledWith(`Retrying 3 archive files in North connector "${configuration.name}"...`);
+    expect(logger.trace).toHaveBeenCalledWith(`Retrying 3 archive files in North connector "${testData.north.list[0].name}"...`);
   });
 
   it('should remove all archive files', async () => {
     await north.removeAllArchiveFiles();
-    expect(logger.trace).toHaveBeenCalledWith(`Removing all archive files from North connector "${configuration.name}"...`);
+    expect(logger.trace).toHaveBeenCalledWith(`Removing all archive files from North connector "${testData.north.list[0].name}"...`);
   });
 
   it('should retry all archive files', async () => {
     await north.retryAllArchiveFiles();
-    expect(logger.trace).toHaveBeenCalledWith(`Retrying all archive files in North connector "${configuration.name}"...`);
+    expect(logger.trace).toHaveBeenCalledWith(`Retrying all archive files in North connector "${testData.north.list[0].name}"...`);
   });
 
   it('should handle values properly', async () => {
@@ -564,25 +539,25 @@ describe('NorthConnector enabled', () => {
   it('should remove cache value errors', async () => {
     await north.removeValueErrors(['file1.queue.tmp', 'file2.queue.tmp']);
     expect(removeErrorValues).toHaveBeenCalledWith(['file1.queue.tmp', 'file2.queue.tmp']);
-    expect(logger.trace).toHaveBeenCalledWith(`Removing 2 value error files from North connector "${configuration.name}"...`);
+    expect(logger.trace).toHaveBeenCalledWith(`Removing 2 value error files from North connector "${testData.north.list[0].name}"...`);
   });
 
   it('should remove all cache value errors', async () => {
     await north.removeAllValueErrors();
     expect(removeAllErrorValues).toHaveBeenCalled();
-    expect(logger.trace).toHaveBeenCalledWith(`Removing all value error files from North connector "${configuration.name}"...`);
+    expect(logger.trace).toHaveBeenCalledWith(`Removing all value error files from North connector "${testData.north.list[0].name}"...`);
   });
 
   it('should retry cache value errors', async () => {
     await north.retryValueErrors(['file1.queue.tmp', 'file2.queue.tmp']);
     expect(retryErrorValues).toHaveBeenCalledWith(['file1.queue.tmp', 'file2.queue.tmp']);
-    expect(logger.trace).toHaveBeenCalledWith(`Retrying 2 value error files in North connector "${configuration.name}"...`);
+    expect(logger.trace).toHaveBeenCalledWith(`Retrying 2 value error files in North connector "${testData.north.list[0].name}"...`);
   });
 
   it('should retry all cache value errors', async () => {
     await north.retryAllValueErrors();
     expect(retryAllErrorValues).toHaveBeenCalled();
-    expect(logger.trace).toHaveBeenCalledWith(`Retrying all value error files in North connector "${configuration.name}"...`);
+    expect(logger.trace).toHaveBeenCalledWith(`Retrying all value error files in North connector "${testData.north.list[0].name}"...`);
   });
 
   it('should get error file content', async () => {
@@ -606,7 +581,7 @@ describe('NorthConnector disabled', () => {
 
   beforeEach(async () => {
     jest.resetAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
     (dirSize as jest.Mock).mockReturnValue(cacheSize);
     const valuesInQueue = new Map();
@@ -615,34 +590,15 @@ describe('NorthConnector disabled', () => {
     valueCacheIsEmpty.mockImplementation(() => false);
     fileCacheIsEmpty.mockImplementation(() => false);
 
-    configuration = {
-      id: 'id',
-      name: 'north',
-      type: 'test',
-      description: 'my test connector',
-      enabled: false,
-      settings: {},
-      caching: {
-        scanModeId: 'id1',
-        retryInterval: 5000,
-        retryCount: 2,
-        maxSize: 10,
-        oibusTimeValues: {
-          groupCount: 10000,
-          maxSendCount: 10000
-        },
-        rawFiles: {
-          sendFileImmediately: true,
-          archive: {
-            enabled: true,
-            retentionDuration: 720
-          }
-        }
-      }
-    };
-    repositoryService.northConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
+    repositoryService.northConnectorRepository.findNorthById = jest.fn().mockReturnValue(testData.north.list[1]);
 
-    north = new TestNorth(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+    north = new NorthOIAnalytics(
+      testData.north.list[1] as NorthConnectorEntity<NorthOIAnalyticsSettings>,
+      encryptionService,
+      repositoryService,
+      logger,
+      'baseFolder'
+    );
   });
 
   afterEach(() => {
@@ -728,7 +684,7 @@ describe('NorthConnector disabled', () => {
     await north.cacheFile('filePath');
     expect(logger.debug).toHaveBeenCalledWith(
       `North cache is exceeding the maximum allowed size ` +
-        `(${Math.floor((cacheSize / 1024 / 1024) * 100) / 100} MB >= ${configuration.caching.maxSize} MB). ` +
+        `(${Math.floor((cacheSize / 1024 / 1024) * 100) / 100} MB >= ${testData.north.list[1].caching.maxSize} MB). ` +
         'Files will be discarded until the cache is emptied (by sending files/values or manual removal)'
     );
   });
@@ -738,7 +694,7 @@ describe('NorthConnector disabled', () => {
     await north.cacheValues([]);
     expect(logger.debug).toHaveBeenCalledWith(
       `North cache is exceeding the maximum allowed size ` +
-        `(${Math.floor((cacheSize / 1024 / 1024) * 100) / 100} MB >= ${configuration.caching.maxSize} MB). ` +
+        `(${Math.floor((cacheSize / 1024 / 1024) * 100) / 100} MB >= ${testData.north.list[1].caching.maxSize} MB). ` +
         'Values will be discarded until the cache is emptied (by sending files/values or manual removal)'
     );
   });
@@ -747,36 +703,17 @@ describe('NorthConnector disabled', () => {
 describe('NorthConnector test', () => {
   beforeEach(async () => {
     jest.resetAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
-    configuration = {
-      id: 'test',
-      name: 'north',
-      type: 'test',
-      description: 'my test connector',
-      enabled: false,
-      settings: {},
-      caching: {
-        scanModeId: 'id1',
-        retryInterval: 5000,
-        retryCount: 2,
-        maxSize: 10,
-        oibusTimeValues: {
-          groupCount: 10000,
-          maxSendCount: 10000
-        },
-        rawFiles: {
-          sendFileImmediately: true,
-          archive: {
-            enabled: true,
-            retentionDuration: 720
-          }
-        }
-      }
-    };
-    repositoryService.northConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
+    repositoryService.northConnectorRepository.findNorthById = jest.fn().mockReturnValue(testData.north.list[1]);
 
-    north = new TestNorth(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+    north = new NorthOIAnalytics(
+      testData.north.list[1] as NorthConnectorEntity<NorthOIAnalyticsSettings>,
+      encryptionService,
+      repositoryService,
+      logger,
+      'baseFolder'
+    );
   });
 
   afterEach(() => {

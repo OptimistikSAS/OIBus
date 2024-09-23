@@ -73,8 +73,7 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
   history: {
     maxInstantPerItem: true,
     maxReadInterval: 3600,
-    readDelay: 0,
-    overlap: 0
+    readDelay: 0
   },
   startTime: '2020-02-01T02:02:59.999Z',
   endTime: '2020-02-02T02:02:59.999Z',
@@ -211,7 +210,7 @@ describe('History query controller', () => {
     ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValueOnce({}).mockReturnValueOnce({});
     ctx.app.reloadService.onCreateHistoryQuery.mockReturnValue(historyQuery);
 
-    await historyQueryController.create(ctx);
+    await historyQueryController.createHistoryQuery(ctx);
 
     const southManifest = southTestManifest;
     const northManifest = northTestManifest;
@@ -272,7 +271,7 @@ describe('History query controller', () => {
     ctx.request.body.historyQuery.caching.scanModeId = '';
     ctx.request.body.historyQuery.caching.scanModeName = 'scanModeName';
 
-    await historyQueryController.create(ctx);
+    await historyQueryController.createHistoryQuery(ctx);
 
     const southManifest = southTestManifest;
     const northManifest = northTestManifest;
@@ -332,17 +331,17 @@ describe('History query controller', () => {
       }
     ]);
 
-    await historyQueryController.create(ctx);
+    await historyQueryController.createHistoryQuery(ctx);
     expect(ctx.badRequest).toHaveBeenCalledWith(`Scan mode bad scan mode not found`);
 
     ctx.request.body.historyQuery.caching.scanModeName = '';
-    await historyQueryController.create(ctx);
+    await historyQueryController.createHistoryQuery(ctx);
     expect(ctx.badRequest).toHaveBeenCalledWith(`Scan mode not specified`);
   });
 
   it('create() should not create History query without body', async () => {
     ctx.request.body = null;
-    await historyQueryController.create(ctx);
+    await historyQueryController.createHistoryQuery(ctx);
 
     expect(ctx.badRequest).toHaveBeenCalled();
   });
@@ -353,7 +352,7 @@ describe('History query controller', () => {
     ctx.app.repositoryService.southConnectorRepository.findById.mockReturnValue(southConnector);
     ctx.app.repositoryService.northConnectorRepository.findById.mockReturnValue(null);
 
-    await historyQueryController.create(ctx);
+    await historyQueryController.createHistoryQuery(ctx);
 
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onCreateHistoryQuery).not.toHaveBeenCalled();
@@ -365,7 +364,7 @@ describe('History query controller', () => {
 
     ctx.app.repositoryService.southConnectorRepository.findById.mockReturnValue(null);
 
-    await historyQueryController.create(ctx);
+    await historyQueryController.createHistoryQuery(ctx);
 
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onCreateHistoryQuery).not.toHaveBeenCalled();
@@ -376,7 +375,7 @@ describe('History query controller', () => {
     ctx.request.body = { ...JSON.parse(JSON.stringify(historyQueryCreateCommand)) };
     ctx.request.body.historyQuery.northType = 'bad type';
 
-    await historyQueryController.create(ctx);
+    await historyQueryController.createHistoryQuery(ctx);
 
     expect(validator.validateSettings).not.toHaveBeenCalled();
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
@@ -388,7 +387,7 @@ describe('History query controller', () => {
     ctx.request.body = { ...JSON.parse(JSON.stringify(historyQueryCreateCommand)) };
     ctx.request.body.historyQuery.southType = 'bad type';
 
-    await historyQueryController.create(ctx);
+    await historyQueryController.createHistoryQuery(ctx);
 
     expect(validator.validateSettings).not.toHaveBeenCalled();
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
@@ -404,7 +403,7 @@ describe('History query controller', () => {
       throw validationError;
     });
 
-    await historyQueryController.create(ctx);
+    await historyQueryController.createHistoryQuery(ctx);
     expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.settings, historyQuery.southSettings);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onCreateSouth).not.toHaveBeenCalled();
@@ -415,7 +414,7 @@ describe('History query controller', () => {
     ctx.params.id = 'id';
     ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQuery);
 
-    await historyQueryController.start(ctx);
+    await historyQueryController.startHistoryQuery(ctx);
 
     expect(ctx.app.reloadService.onStartHistoryQuery).toHaveBeenCalledTimes(1);
     expect(ctx.badRequest).not.toHaveBeenCalled();
@@ -425,7 +424,7 @@ describe('History query controller', () => {
     ctx.params.id = 'id';
     ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue(historyQuery);
 
-    await historyQueryController.pause(ctx);
+    await historyQueryController.pauseHistoryQuery(ctx);
 
     expect(ctx.app.reloadService.onPauseHistoryQuery).toHaveBeenCalledTimes(1);
     expect(ctx.badRequest).not.toHaveBeenCalled();
@@ -444,7 +443,7 @@ describe('History query controller', () => {
       .mockReturnValueOnce(historyQuery.southSettings)
       .mockReturnValueOnce(historyQuery.southSettings);
 
-    await historyQueryController.update(ctx);
+    await historyQueryController.updateHistoryQuery(ctx);
 
     const southManifest = southTestManifest;
     const northManifest = northTestManifest;
@@ -496,7 +495,7 @@ describe('History query controller', () => {
     ctx.request.body.historyQuery.caching.scanModeId = '';
     ctx.request.body.historyQuery.caching.scanModeName = 'scanModeName';
 
-    await historyQueryController.update(ctx);
+    await historyQueryController.updateHistoryQuery(ctx);
 
     const southManifest = southTestManifest;
     const northManifest = northTestManifest;
@@ -522,11 +521,11 @@ describe('History query controller', () => {
 
     ctx.request.body.historyQuery.caching.scanModeId = '';
     ctx.request.body.historyQuery.caching.scanModeName = 'bad scan mode';
-    await historyQueryController.update(ctx);
+    await historyQueryController.updateHistoryQuery(ctx);
     expect(ctx.badRequest).toHaveBeenCalledWith(`Scan mode bad scan mode not found`);
 
     ctx.request.body.historyQuery.caching.scanModeName = '';
-    await historyQueryController.update(ctx);
+    await historyQueryController.updateHistoryQuery(ctx);
     expect(ctx.badRequest).toHaveBeenCalledWith(`Scan mode not specified`);
   });
 
@@ -538,7 +537,7 @@ describe('History query controller', () => {
     ctx.params.id = 'id';
     ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue({ ...historyQuery, southType: 'invalid' });
 
-    await historyQueryController.update(ctx);
+    await historyQueryController.updateHistoryQuery(ctx);
 
     expect(validator.validateSettings).not.toHaveBeenCalled();
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
@@ -554,7 +553,7 @@ describe('History query controller', () => {
     ctx.params.id = 'id';
     ctx.app.repositoryService.historyQueryRepository.findById.mockReturnValue({ ...historyQuery, northType: 'invalid' });
 
-    await historyQueryController.update(ctx);
+    await historyQueryController.updateHistoryQuery(ctx);
 
     expect(validator.validateSettings).not.toHaveBeenCalled();
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
@@ -574,7 +573,7 @@ describe('History query controller', () => {
       throw validationError;
     });
 
-    await historyQueryController.update(ctx);
+    await historyQueryController.updateHistoryQuery(ctx);
     expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.settings, historyQueryCommand.southSettings);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onUpdateSouth).not.toHaveBeenCalled();
@@ -589,7 +588,7 @@ describe('History query controller', () => {
     };
     ctx.params.id = 'id';
 
-    await historyQueryController.update(ctx);
+    await historyQueryController.updateHistoryQuery(ctx);
 
     expect(validator.validateSettings).not.toHaveBeenCalled();
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
@@ -604,7 +603,7 @@ describe('History query controller', () => {
     };
     ctx.params.id = 'id';
 
-    await historyQueryController.update(ctx);
+    await historyQueryController.updateHistoryQuery(ctx);
 
     expect(validator.validateSettings).not.toHaveBeenCalled();
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
@@ -922,7 +921,7 @@ describe('History query controller', () => {
     };
     (csv.unparse as jest.Mock).mockReturnValue('csv content');
 
-    await historyQueryController.historySouthItemsToCsv(ctx);
+    await historyQueryController.historyQueryItemsToCsv(ctx);
 
     expect(ctx.ok).toHaveBeenCalled();
     expect(ctx.body).toEqual('csv content');

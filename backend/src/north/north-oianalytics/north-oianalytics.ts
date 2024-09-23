@@ -1,7 +1,6 @@
 import NorthConnector from '../north-connector';
 
 import manifest from './manifest';
-import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 
 import EncryptionService from '../../service/encryption.service';
 import { createProxyAgent } from '../../service/proxy-agent';
@@ -17,6 +16,7 @@ import { NorthOIAnalyticsSettings } from '../../../../shared/model/north-setting
 import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
 import { ClientCertificateCredential, ClientSecretCredential } from '@azure/identity';
 import fs from 'node:fs/promises';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
 
 /**
  * Class NorthOIAnalytics - Send files to a POST Multipart HTTP request and values as JSON payload
@@ -26,7 +26,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
   static type = manifest.id;
 
   constructor(
-    connector: NorthConnectorDTO<NorthOIAnalyticsSettings>,
+    connector: NorthConnectorEntity<NorthOIAnalyticsSettings>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
     logger: pino.Logger,

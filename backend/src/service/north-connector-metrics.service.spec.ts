@@ -1,7 +1,7 @@
 import { NorthConnectorMetrics } from '../../../shared/model/engine.model';
 import NorthConnectorMetricsService from './north-connector-metrics.service';
-import NorthMetricsRepositoryMock, { getMetrics } from '../tests/__mocks__/repository/north-metrics-repository.mock';
-import NorthConnectorMetricsRepository from '../repository/north-connector-metrics.repository';
+import NorthMetricsRepositoryMock, { getMetrics } from '../tests/__mocks__/repository/log/north-metrics-repository.mock';
+import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
 
 const northRepositoryMock: NorthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
 

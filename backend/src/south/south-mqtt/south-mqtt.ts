@@ -8,7 +8,7 @@ import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
 
 import pino from 'pino';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { DateTime } from 'luxon';
@@ -21,6 +21,7 @@ import {
 } from '../../../../shared/model/south-settings.model';
 import { convertDateTimeToInstant } from '../../service/utils';
 import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { SouthConnectorEntity } from '../../model/south-connector.model';
 
 /**
  * Class SouthMQTT - Subscribe to data topic from a MQTT broker
@@ -31,7 +32,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
   private client: mqtt.MqttClient | null = null;
 
   constructor(
-    connector: SouthConnectorDTO<SouthMQTTSettings>,
+    connector: SouthConnectorEntity<SouthMQTTSettings, SouthMQTTItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
@@ -186,7 +187,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     associatedItem: SouthConnectorItemDTO<SouthMQTTItemSettings>,
     message: Buffer,
     messageTimestamp: Instant
-  ): OIBusTimeValue[] {
+  ): Array<OIBusTimeValue> {
     switch (associatedItem.settings.valueType) {
       case 'number':
         return [

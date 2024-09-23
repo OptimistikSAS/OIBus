@@ -1,7 +1,7 @@
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { ipFilterSchema } from '../web-server/controllers/validators/oibus-validation-schema';
-import IpFilterRepository from '../repository/ip-filter.repository';
+import IpFilterRepository from '../repository/config/ip-filter.repository';
 import { IPFilterCommandDTO, IPFilterDTO } from '../../../shared/model/ip-filter.model';
 import { IPFilter } from '../model/ip-filter.model';
 import ProxyServer from '../web-server/proxy-server';

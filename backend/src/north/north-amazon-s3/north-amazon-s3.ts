@@ -6,7 +6,6 @@ import { NodeHttpHandler } from '@aws-sdk/node-http-handler';
 
 import NorthConnector from '../north-connector';
 import manifest from './manifest';
-import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
@@ -15,6 +14,7 @@ import { createProxyAgent } from '../../service/proxy-agent';
 import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
 import csv from 'papaparse';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
 
 /**
  * Class NorthAmazonS3 - sends files to Amazon AWS S3
@@ -24,7 +24,7 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
   private s3: S3Client | undefined;
 
   constructor(
-    connector: NorthConnectorDTO<NorthAmazonS3Settings>,
+    connector: NorthConnectorEntity<NorthAmazonS3Settings>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
     logger: pino.Logger,

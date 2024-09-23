@@ -4,7 +4,7 @@ import { client } from 'jsmodbus';
 
 import SouthConnector from '../south-connector';
 import manifest from './manifest';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
@@ -13,6 +13,7 @@ import { QueriesLastPoint } from '../south-interface';
 import { DateTime } from 'luxon';
 import { SouthModbusItemSettings, SouthModbusSettings } from '../../../../shared/model/south-settings.model';
 import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { SouthConnectorEntity } from '../../model/south-connector.model';
 
 /**
  * Class SouthModbus - Provides instruction for Modbus client connection
@@ -26,7 +27,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
   private disconnecting = false;
 
   constructor(
-    connector: SouthConnectorDTO<SouthModbusSettings>,
+    connector: SouthConnectorEntity<SouthModbusSettings, SouthModbusItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
@@ -255,7 +256,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
             port: this.connector.settings.port
           },
           async () => {
-            const dataValues: OIBusTimeValue[] = await this.modbusFunction(item);
+            const dataValues: Array<OIBusTimeValue> = await this.modbusFunction(item);
             callback({
               type: 'time-values',
               content: dataValues

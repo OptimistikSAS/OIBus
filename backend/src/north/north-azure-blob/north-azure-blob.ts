@@ -5,7 +5,6 @@ import { BlobServiceClient, StorageSharedKeyCredential } from '@azure/storage-bl
 import { ClientSecretCredential, DefaultAzureCredential } from '@azure/identity';
 import NorthConnector from '../north-connector';
 import manifest from '../north-azure-blob/manifest';
-import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
 import { NorthAzureBlobSettings } from '../../../../shared/model/north-settings.model';
@@ -13,6 +12,7 @@ import { ProxyOptions } from '@azure/core-http';
 import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
 import csv from 'papaparse';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
 
 const TEST_FILE = 'oibus-azure-test.txt';
 
@@ -21,7 +21,7 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
   private blobClient: BlobServiceClient | null = null;
 
   constructor(
-    connector: NorthConnectorDTO<NorthAzureBlobSettings>,
+    connector: NorthConnectorEntity<NorthAzureBlobSettings>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
     logger: pino.Logger,

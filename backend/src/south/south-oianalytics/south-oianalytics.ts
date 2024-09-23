@@ -5,7 +5,7 @@ import fetch, { HeadersInit, RequestInit } from 'node-fetch';
 import manifest from './manifest';
 import SouthConnector from '../south-connector';
 import { createFolder, formatQueryParams, persistResults } from '../../service/utils';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
@@ -16,6 +16,7 @@ import { SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../..
 import { createProxyAgent } from '../../service/proxy-agent';
 import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
 import { ClientCertificateCredential, ClientSecretCredential } from '@azure/identity';
+import { SouthConnectorEntity } from '../../model/south-connector.model';
 
 interface OIATimeValues {
   type: string;
@@ -45,7 +46,7 @@ export default class SouthOIAnalytics
   private readonly tmpFolder: string;
 
   constructor(
-    connector: SouthConnectorDTO<SouthOIAnalyticsSettings>,
+    connector: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
@@ -94,7 +95,7 @@ export default class SouthOIAnalytics
       .toUTC()
       .toISO() as Instant;
     const endTime = DateTime.now().toUTC().toISO() as Instant;
-    const result: Array<any> = await this.queryData(item, startTime, endTime);
+    const result: Array<OIATimeValues> = await this.queryData(item, startTime, endTime);
     const { formattedResult } = this.parseData(result);
     callback({ type: 'time-values', content: formattedResult });
   }
@@ -111,7 +112,7 @@ export default class SouthOIAnalytics
 
     for (const item of items) {
       const startRequest = DateTime.now().toMillis();
-      const result: Array<any> = await this.queryData(item, updatedStartTime, endTime);
+      const result: Array<OIATimeValues> = await this.queryData(item, updatedStartTime, endTime);
       const requestDuration = DateTime.now().toMillis() - startRequest;
 
       const { formattedResult, maxInstant } = this.parseData(result);
@@ -138,7 +139,11 @@ export default class SouthOIAnalytics
     return updatedStartTime;
   }
 
-  async queryData(item: SouthConnectorItemDTO<SouthOIAnalyticsItemSettings>, startTime: Instant, endTime: Instant): Promise<any> {
+  async queryData(
+    item: SouthConnectorItemDTO<SouthOIAnalyticsItemSettings>,
+    startTime: Instant,
+    endTime: Instant
+  ): Promise<Array<OIATimeValues>> {
     const connectionSettings = await this.getNetworkSettings(
       `${item.settings.endpoint}${formatQueryParams(startTime, endTime, item.settings.queryParams || [])}`
     );
@@ -294,7 +299,7 @@ export default class SouthOIAnalytics
     if (!Array.isArray(httpResult)) {
       throw Error('Bad data: expect OIAnalytics time values to be an array');
     }
-    const formattedData: Array<any> = [];
+    const formattedData: Array<OIBusTimeValue> = [];
     let maxInstant = DateTime.fromMillis(0).toUTC().toISO()!;
     for (const element of httpResult) {
       if (!element.data?.reference) {

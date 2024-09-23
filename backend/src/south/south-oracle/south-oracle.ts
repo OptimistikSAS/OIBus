@@ -6,13 +6,13 @@ import {
   convertDateTimeToInstant,
   createFolder,
   formatInstant,
+  generateCsvContent,
+  generateFilenameForSerialization,
   generateReplacementParameters,
   logQuery,
-  persistResults,
-  generateCsvContent,
-  generateFilenameForSerialization
+  persistResults
 } from '../../service/utils';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
@@ -23,6 +23,7 @@ import { SouthOracleItemSettings, SouthOracleSettings } from '../../../../shared
 import { OIBusContent } from '../../../../shared/model/engine.model';
 
 import oracledb, { ConnectionAttributes } from 'oracledb';
+import { SouthConnectorEntity } from '../../model/south-connector.model';
 
 /**
  * Class SouthOracle - Retrieve data from Oracle databases and send them to the cache as CSV files.
@@ -33,7 +34,7 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
   private readonly tmpFolder: string;
 
   constructor(
-    connector: SouthConnectorDTO<SouthOracleSettings>,
+    connector: SouthConnectorEntity<SouthOracleSettings, SouthOracleItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,

@@ -18,6 +18,7 @@ import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-se
 import { OIBusContent, OIBusRawContent, OIBusTimeValueContent } from '../../../shared/model/engine.model';
 import path from 'node:path';
 import ConnectionService, { ManagedConnectionDTO } from '../service/connection.service';
+import { SouthConnectorEntity } from '../model/south-connector.model';
 
 /**
  * Class SouthConnector : provides general attributes and methods for south connectors.
@@ -40,7 +41,7 @@ import ConnectionService, { ManagedConnectionDTO } from '../service/connection.s
  * All other operations (cache, store&forward, communication to North connectors) will be handled by the OIBus engine
  * and should not be taken care at the South level.
  */
-export default class SouthConnector<T extends SouthSettings = any, I extends SouthItemSettings = any> {
+export default class SouthConnector<T extends SouthSettings, I extends SouthItemSettings> {
   public static type: string;
 
   private taskJobQueue: Array<ScanModeDTO> = [];
@@ -59,7 +60,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
    * Constructor for SouthConnector
    */
   constructor(
-    protected connector: SouthConnectorDTO<T>,
+    protected connector: SouthConnectorEntity<T, I>,
     private engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     protected readonly encryptionService: EncryptionService,
     protected readonly repositoryService: RepositoryService,
@@ -95,7 +96,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
   async start(dataStream = true): Promise<void> {
     if (dataStream) {
       // Reload the settings only on data stream case, otherwise let the history query manage the settings
-      this.connector = this.repositoryService.southConnectorRepository.findById(this.connector.id)!;
+      this.connector = this.repositoryService.southConnectorRepository.findSouthById(this.connector.id)!;
     }
     this.logger.debug(`South connector ${this.connector.name} enabled. Starting services...`);
     await this.connect();
@@ -110,7 +111,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
     }
 
     if (this.delegatesConnection()) {
-      const connectionDTO: ManagedConnectionDTO<any> = {
+      const connectionDTO: ManagedConnectionDTO<unknown> = {
         type: this.connector.type,
         connectorSettings: this.connector.settings,
         createSessionFn: this.createSession.bind(this),
@@ -134,7 +135,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
    * Reset the cron and subscriptions if necessary on item changes
    */
   async onItemChange(): Promise<void> {
-    this.items = this.repositoryService.southItemRepository.list(this.connector.id, {
+    this.items = this.repositoryService.southConnectorRepository.listItems(this.connector.id, {
       enabled: true
     });
     const scanModes = new Map<string, ScanModeDTO>();
@@ -225,8 +226,10 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
         true
       );
       this.cronByScanModeIds.set(scanMode.id, job);
-    } catch (error: any) {
-      this.logger.error(`Error when creating South cron job for scan mode "${scanMode.name}" (${scanMode.cron}): ${error.message}`);
+    } catch (error: unknown) {
+      this.logger.error(
+        `Error when creating South cron job for scan mode "${scanMode.name}" (${scanMode.cron}): ${(error as Error).message}`
+      );
     }
   }
 
@@ -250,7 +253,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
     }
   }
 
-  async run(scanModeId: string, items: Array<SouthConnectorItemDTO>): Promise<void> {
+  async run(scanModeId: string, items: Array<SouthConnectorItemDTO<I>>): Promise<void> {
     this.createDeferredPromise();
 
     const runStart = DateTime.now();
@@ -347,7 +350,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
         if (this.stopping) {
           this.logger.debug(`Connector is stopping. Exiting history query at item ${item.name}`);
           const stoppedMetrics = structuredClone(this.metricsService!.metrics);
-          stoppedMetrics.historyMetrics.running = false;
+          // stoppedMetrics.historyMetrics.running = false;
           this.metricsService!.updateMetrics(this.connector.id, stoppedMetrics);
           this.historyIsRunning = false;
           return;
@@ -375,7 +378,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
       await this.queryIntervals(intervals, itemsToRead, southCache, startTimeFromCache);
     }
     const stoppedMetrics = structuredClone(this.metricsService!.metrics);
-    stoppedMetrics.historyMetrics.running = false;
+    // stoppedMetrics.historyMetrics.running = false;
     this.metricsService!.updateMetrics(this.connector.id, stoppedMetrics);
     this.historyIsRunning = false;
   }
@@ -384,18 +387,19 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
     intervals: Array<Interval>,
     items: Array<SouthConnectorItemDTO<I>>,
     southCache: SouthCache,
-    startTimeFromCache: Instant
+    _startTimeFromCache: Instant
   ) {
     this.metricsService!.updateMetrics(this.connector.id, {
-      ...this.metricsService!.metrics,
-      historyMetrics: {
-        running: true,
-        intervalProgress: this.calculateIntervalProgress(intervals, 0, startTimeFromCache)
-      }
+      ...this.metricsService!.metrics
+      // historyMetrics: {
+      //   running: true,
+      //   intervalProgress: this.calculateIntervalProgress(intervals, 0, startTimeFromCache)
+      // }
     });
 
     for (const [index, interval] of intervals.entries()) {
-      // @ts-ignore
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-expect-error
       const lastInstantRetrieved = await this.historyQuery(items, interval.start, interval.end);
 
       if (lastInstantRetrieved > southCache.maxInstant) {
@@ -409,15 +413,15 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
       }
 
       this.metricsService!.updateMetrics(this.connector.id, {
-        ...this.metricsService!.metrics,
-        historyMetrics: {
-          running: true,
-          intervalProgress: this.calculateIntervalProgress(intervals, index, startTimeFromCache),
-          currentIntervalStart: interval.start,
-          currentIntervalEnd: interval.end,
-          currentIntervalNumber: index + 1,
-          numberOfIntervals: intervals.length
-        }
+        ...this.metricsService!.metrics
+        // historyMetrics: {
+        //   running: true,
+        //   intervalProgress: this.calculateIntervalProgress(intervals, index, startTimeFromCache),
+        //   currentIntervalStart: interval.start,
+        //   currentIntervalEnd: interval.end,
+        //   currentIntervalNumber: index + 1,
+        //   numberOfIntervals: intervals.length
+        // }
       });
 
       if (this.stopping) {
@@ -536,7 +540,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
 
     if (dataStream) {
       // Reload the settings only on data stream case, otherwise let the history query manage the settings
-      this.connector = this.repositoryService.southConnectorRepository.findById(this.connector.id)!;
+      this.connector = this.repositoryService.southConnectorRepository.findSouthById(this.connector.id)!;
     }
 
     if (this.runProgress$) {
@@ -569,7 +573,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
     return 'fileQuery' in this;
   }
 
-  filterHistoryItems(items: Array<SouthConnectorItemDTO>): Array<SouthConnectorItemDTO> {
+  filterHistoryItems(items: Array<SouthConnectorItemDTO<I>>): Array<SouthConnectorItemDTO<I>> {
     return items;
   }
 
@@ -593,11 +597,11 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
     this.logger.warn('testConnection must be override');
   }
 
-  async testItem(item: SouthConnectorItemDTO, _callback: (data: OIBusContent) => Promise<void>): Promise<void> {
+  async testItem(item: SouthConnectorItemDTO<I>, _callback: (data: OIBusContent) => void): Promise<void> {
     this.logger.warn(`testItem must be override to test item ${item.name}`);
   }
 
-  get settings(): SouthConnectorDTO<T> {
+  get settings(): SouthConnectorDTO<T, I> {
     return this.connector;
   }
 }

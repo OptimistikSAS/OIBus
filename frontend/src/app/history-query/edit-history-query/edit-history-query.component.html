@@ -278,24 +278,18 @@
                 <oib-save-button [insideOfGroup]="false" form="history-query-form" [state]="state" />
               </div>
             </div>
-          }
-          <!-- items -->
-          @if (mode === 'edit' && historyQuery) {
             <oib-history-query-items
+              (inMemoryItems)="updateInMemoryItems($event)"
               [historyQuery]="historyQuery"
               [southManifest]="southManifest"
-              [initItems]="inMemoryItems"
-              [inMemory]="false"
-            />
+            ></oib-history-query-items>
           }
           @if (mode === 'create') {
             <oib-history-query-items
               (inMemoryItems)="updateInMemoryItems($event)"
               [historyQuery]="historyQuery"
               [southManifest]="southManifest"
-              [initItems]="inMemoryItems"
-              [inMemory]="true"
-            />
+            ></oib-history-query-items>
           }
         </form>
         @if (mode === 'create') {

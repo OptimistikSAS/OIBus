@@ -1,6 +1,6 @@
 import manifest from './manifest';
 import SouthConnector from '../south-connector';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
@@ -10,12 +10,13 @@ import { QueriesHistory } from '../south-interface';
 import { SouthPIItemSettings, SouthPISettings } from '../../../../shared/model/south-settings.model';
 import fetch from 'node-fetch';
 import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { SouthConnectorEntity } from '../../model/south-connector.model';
 
 /**
  * Class SouthPI - Run a PI Agent to connect to a PI server.
  * This connector communicates with the Agent through a HTTP connection
  */
-export default class SouthPI extends SouthConnector implements QueriesHistory {
+export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItemSettings> implements QueriesHistory {
   static type = manifest.id;
 
   private connected = false;
@@ -23,7 +24,7 @@ export default class SouthPI extends SouthConnector implements QueriesHistory {
   private disconnecting = false;
 
   constructor(
-    connector: SouthConnectorDTO<SouthPISettings>,
+    connector: SouthConnectorEntity<SouthPISettings, SouthPIItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
@@ -115,7 +116,7 @@ export default class SouthPI extends SouthConnector implements QueriesHistory {
         maxInstantRetrieved: Instant;
       } = (await response.json()) as {
         recordCount: number;
-        content: OIBusTimeValue[];
+        content: Array<OIBusTimeValue>;
         maxInstantRetrieved: string;
       };
       content.content = result.content;
@@ -160,8 +161,8 @@ export default class SouthPI extends SouthConnector implements QueriesHistory {
         maxInstantRetrieved: Instant;
       } = (await response.json()) as {
         recordCount: number;
-        content: OIBusTimeValue[];
-        logs: string[];
+        content: Array<OIBusTimeValue>;
+        logs: Array<string>;
         maxInstantRetrieved: string;
       };
       const requestDuration = DateTime.now().toMillis() - startRequest;

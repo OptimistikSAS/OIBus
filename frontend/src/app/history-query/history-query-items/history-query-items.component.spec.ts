@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ComponentTester, createMock, TestInput } from 'ngx-speculoos';
-import { SouthConnectorItemDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
+import { SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
 import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
@@ -10,53 +10,74 @@ import { Component } from '@angular/core';
 import { HistoryQueryItemsComponent } from './history-query-items.component';
 import { HistoryQueryDTO } from '../../../../../shared/model/history-query.model';
 import { HistoryQueryService } from '../../services/history-query.service';
+import { SouthItemSettings, SouthSettings } from '../../../../../shared/model/south-settings.model';
+import { NorthSettings } from '../../../../../shared/model/north-settings.model';
+
+const historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
+  id: 'historyId',
+  name: 'History query',
+  description: 'My History query description',
+  status: 'PENDING',
+  history: {
+    maxInstantPerItem: false,
+    maxReadInterval: 0,
+    readDelay: 200
+  },
+  southType: 'OPCUA_HA',
+  northType: 'OIConnect',
+  startTime: '2023-01-01T00:00:00.000Z',
+  endTime: '2023-01-01T00:00:00.000Z',
+  southSettings: {
+    database: 'my database'
+  } as SouthSettings,
+  southSharedConnection: false,
+  northSettings: {
+    host: 'localhost'
+  } as NorthSettings,
+  caching: {
+    scanModeId: 'scanModeId1',
+    retryInterval: 1000,
+    retryCount: 3,
+    maxSize: 30,
+    oibusTimeValues: {
+      groupCount: 1000,
+      maxSendCount: 10000
+    },
+    rawFiles: {
+      sendFileImmediately: true,
+      archive: {
+        enabled: false,
+        retentionDuration: 0
+      }
+    }
+  },
+  items: [
+    {
+      id: 'id1',
+      name: 'item1',
+      enabled: true,
+      settings: {
+        query: 'sql'
+      } as SouthItemSettings
+    },
+    {
+      id: 'id2',
+      name: 'item2',
+      enabled: false,
+      settings: {
+        query: 'sql'
+      } as SouthItemSettings
+    }
+  ]
+};
 
 @Component({
-  template: `<oib-history-query-items [inMemory]="false" [historyQuery]="historyQuery" [southManifest]="manifest" />`,
+  template: `<oib-history-query-items [historyQuery]="historyQuery" [southManifest]="manifest" />`,
   standalone: true,
   imports: [HistoryQueryItemsComponent]
 })
 class TestComponent {
-  historyQuery: HistoryQueryDTO = {
-    id: 'historyId',
-    name: 'History query',
-    description: 'My History query description',
-    status: 'PENDING',
-    history: {
-      maxInstantPerItem: false,
-      maxReadInterval: 0,
-      readDelay: 200,
-      overlap: 0
-    },
-    southType: 'OPCUA_HA',
-    northType: 'OIConnect',
-    startTime: '2023-01-01T00:00:00.000Z',
-    endTime: '2023-01-01T00:00:00.000Z',
-    southSettings: {
-      database: 'my database'
-    },
-    southSharedConnection: false,
-    northSettings: {
-      host: 'localhost'
-    },
-    caching: {
-      scanModeId: 'scanModeId1',
-      retryInterval: 1000,
-      retryCount: 3,
-      maxSize: 30,
-      oibusTimeValues: {
-        groupCount: 1000,
-        maxSendCount: 10000
-      },
-      rawFiles: {
-        sendFileImmediately: true,
-        archive: {
-          enabled: false,
-          retentionDuration: 0
-        }
-      }
-    }
-  };
+  historyQuery = historyQuery;
   manifest: SouthConnectorManifest = {
     id: 'mssql',
     category: 'database',
@@ -82,7 +103,8 @@ class TestComponent {
       history: true,
       lastFile: true,
       lastPoint: false,
-      forceMaxInstantPerItem: false
+      forceMaxInstantPerItem: false,
+      sharedConnection: false
     }
   };
 }
@@ -123,29 +145,6 @@ describe('HistoryQueryItemsComponent', () => {
   let confirmationService: jasmine.SpyObj<ConfirmationService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
 
-  const items: Array<SouthConnectorItemDTO> = [
-    {
-      id: 'id1',
-      name: 'item1',
-      enabled: true,
-      connectorId: 'historyId',
-      settings: {
-        query: 'sql'
-      },
-      scanModeId: 'scanModeId1'
-    },
-    {
-      id: 'id2',
-      name: 'item2',
-      enabled: false,
-      connectorId: 'historyId',
-      settings: {
-        query: 'sql'
-      },
-      scanModeId: 'scanModeId1'
-    }
-  ];
-
   beforeEach(() => {
     historyQueryService = createMock(HistoryQueryService);
     confirmationService = createMock(ConfirmationService);
@@ -161,7 +160,6 @@ describe('HistoryQueryItemsComponent', () => {
       ]
     });
 
-    historyQueryService.listItems.and.returnValue(of(items));
     historyQueryService.enableItem.and.returnValue(of(undefined));
     historyQueryService.disableItem.and.returnValue(of(undefined));
     historyQueryService.deleteAllItems.and.returnValue(of(undefined));
@@ -180,16 +178,14 @@ describe('HistoryQueryItemsComponent', () => {
 
   it('should enable history item', () => {
     tester.toggleButtons[0].click();
-    expect(historyQueryService.disableItem).toHaveBeenCalledWith('historyId', items[0].id);
-    expect(notificationService.success).toHaveBeenCalledWith('history-query.items.disabled', { name: items[0].name });
-    expect(historyQueryService.listItems).toHaveBeenCalledTimes(2);
+    expect(historyQueryService.disableItem).toHaveBeenCalledWith('historyId', historyQuery.items[0].id);
+    expect(notificationService.success).toHaveBeenCalledWith('history-query.items.disabled', { name: historyQuery.items[0].name });
   });
 
   it('should disable history item', () => {
     tester.toggleButtons[1].click();
-    expect(historyQueryService.enableItem).toHaveBeenCalledWith('historyId', items[1].id);
-    expect(notificationService.success).toHaveBeenCalledWith('history-query.items.enabled', { name: items[1].name });
-    expect(historyQueryService.listItems).toHaveBeenCalledTimes(2);
+    expect(historyQueryService.enableItem).toHaveBeenCalledWith('historyId', historyQuery.items[1].id);
+    expect(notificationService.success).toHaveBeenCalledWith('history-query.items.enabled', { name: historyQuery.items[1].name });
   });
 
   it('should delete all', () => {

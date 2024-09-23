@@ -13,7 +13,7 @@ import {
   logQuery,
   persistResults
 } from '../../service/utils';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
@@ -22,6 +22,7 @@ import { QueriesHistory } from '../south-interface';
 import { DateTime } from 'luxon';
 import { SouthMySQLItemSettings, SouthMySQLSettings } from '../../../../shared/model/south-settings.model';
 import { OIBusContent } from '../../../../shared/model/engine.model';
+import { SouthConnectorEntity } from '../../model/south-connector.model';
 
 /**
  * Class SouthMySQL - Retrieve data from MySQL / MariaDB databases and send them to the cache as CSV files.
@@ -32,7 +33,7 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
   private readonly tmpFolder: string;
 
   constructor(
-    connector: SouthConnectorDTO<SouthMySQLSettings>,
+    connector: SouthConnectorEntity<SouthMySQLSettings, SouthMySQLItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
@@ -97,16 +98,16 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
 
     let table_count;
     try {
-      const [rows] = await connection.execute<mysql.RowDataPacket[]>(`
+      const [rows] = await connection.execute<Array<mysql.RowDataPacket>>(`
         SELECT COUNT(*) AS table_count
         FROM information_schema.TABLES AS TABLES
         WHERE table_schema = DATABASE()
           AND table_type = 'BASE TABLE'
       `);
       table_count = rows[0]?.table_count ?? 0;
-    } catch (error: any) {
+    } catch (error: unknown) {
       await connection.end();
-      throw new Error(`Unable to read tables in database "${this.connector.settings.database}". ${error.message}`);
+      throw new Error(`Unable to read tables in database "${this.connector.settings.database}". ${(error as Error).message}`);
     }
     await connection.end();
     if (table_count === 0) {

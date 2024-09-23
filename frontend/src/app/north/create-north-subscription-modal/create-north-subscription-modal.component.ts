@@ -4,7 +4,7 @@ import { NonNullableFormBuilder, Validators } from '@angular/forms';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
-import { SouthConnectorDTO } from '../../../../../shared/model/south-connector.model';
+import { SouthConnectorLightDTO } from '../../../../../shared/model/south-connector.model';
 
 @Component({
   selector: 'oib-create-north-subscription-modal',
@@ -17,15 +17,15 @@ export class CreateNorthSubscriptionModalComponent {
   private modal = inject(NgbActiveModal);
 
   state = new ObservableState();
-  southConnectors: Array<SouthConnectorDTO> = [];
+  southConnectors: Array<SouthConnectorLightDTO> = [];
   form = inject(NonNullableFormBuilder).group({
-    southConnector: [null as SouthConnectorDTO | null, Validators.required]
+    southConnector: [null as SouthConnectorLightDTO | null, Validators.required]
   });
 
   /**
    * Prepares the component for creation.
    */
-  prepareForCreation(connectors: Array<SouthConnectorDTO>) {
+  prepareForCreation(connectors: Array<SouthConnectorLightDTO>) {
     this.southConnectors = connectors;
   }
 

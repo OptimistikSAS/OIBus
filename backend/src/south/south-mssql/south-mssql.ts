@@ -7,12 +7,12 @@ import {
   convertDateTimeToInstant,
   createFolder,
   formatInstant,
-  logQuery,
-  persistResults,
   generateCsvContent,
-  generateFilenameForSerialization
+  generateFilenameForSerialization,
+  logQuery,
+  persistResults
 } from '../../service/utils';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
@@ -21,6 +21,7 @@ import { QueriesHistory } from '../south-interface';
 import { DateTime } from 'luxon';
 import { SouthMSSQLItemSettings, SouthMSSQLSettings } from '../../../../shared/model/south-settings.model';
 import { OIBusContent } from '../../../../shared/model/engine.model';
+import { SouthConnectorEntity } from '../../model/south-connector.model';
 
 /**
  * Class SouthMSSQL - Retrieve data from MSSQL databases and send them to the cache as CSV files.
@@ -31,7 +32,7 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
   private readonly tmpFolder: string;
 
   constructor(
-    connector: SouthConnectorDTO<SouthMSSQLSettings>,
+    connector: SouthConnectorEntity<SouthMSSQLSettings, SouthMSSQLItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
@@ -103,9 +104,9 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
         WHERE TABLE_TYPE = 'BASE TABLE'
       `);
       table_count = (recordset[0]?.table_count as number) ?? 0;
-    } catch (error: any) {
+    } catch (error: unknown) {
       await pool.close();
-      throw new Error(`Unable to read tables in database "${this.connector.settings.database}". ${error.message}`);
+      throw new Error(`Unable to read tables in database "${this.connector.settings.database}". ${(error as Error).message}`);
     }
     await pool.close();
 

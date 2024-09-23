@@ -9,12 +9,12 @@ import {
   convertDateTimeToInstant,
   createFolder,
   formatInstant,
-  logQuery,
-  persistResults,
   generateCsvContent,
-  generateFilenameForSerialization
+  generateFilenameForSerialization,
+  logQuery,
+  persistResults
 } from '../../service/utils';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
 import { Instant } from '../../../../shared/model/types';
@@ -22,6 +22,7 @@ import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
 import { SouthSQLiteItemSettings, SouthSQLiteSettings } from '../../../../shared/model/south-settings.model';
 import { OIBusContent } from '../../../../shared/model/engine.model';
+import { SouthConnectorEntity } from '../../model/south-connector.model';
 
 /**
  * Class SouthSQLite - Retrieve data from SQLite databases and send them to the cache as CSV files.
@@ -32,7 +33,7 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
   private readonly tmpFolder: string;
 
   constructor(
-    connector: SouthConnectorDTO<SouthSQLiteSettings>,
+    connector: SouthConnectorEntity<SouthSQLiteSettings, SouthSQLiteItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
@@ -70,10 +71,10 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
            FROM sqlite_master
            WHERE type = 'table'`
         )
-        .all() as { table_count: number }[];
+        .all() as Array<{ table_count: number }>;
       table_count = result[0]?.table_count ?? 0;
-    } catch (error: any) {
-      throw new Error(`Unable to query system table. ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`Unable to query system table. ${(error as Error).message}`);
     }
     database.close();
 

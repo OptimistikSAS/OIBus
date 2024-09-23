@@ -1,11 +1,12 @@
 import { Knex } from 'knex';
-import { SOUTH_CONNECTORS_TABLE } from '../../repository/south-connector.repository';
 import {
   SouthOPCUASettingsAuthentication,
   SouthOPCUASettingsSecurityMode,
   SouthOPCUASettingsSecurityPolicy
 } from '../../../../shared/model/south-settings.model';
-import { HISTORY_QUERIES_TABLE } from '../../repository/history-query.repository';
+
+const SOUTH_CONNECTORS_TABLE = 'south_connectors';
+const HISTORY_QUERIES_TABLE = 'history_queries';
 
 export interface OldSouthOPCUASettings {
   url: string;
@@ -63,4 +64,6 @@ async function updateOPCUAHistoryQueries(knex: Knex): Promise<void> {
   }
 }
 
-export async function down(_knex: Knex): Promise<void> {}
+export async function down(_knex: Knex): Promise<void> {
+  return;
+}

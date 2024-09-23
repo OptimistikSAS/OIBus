@@ -180,7 +180,7 @@ describe('South connector controller', () => {
     };
     ctx.app.southConnectorConfigService.create.mockReturnValueOnce(southConnector);
 
-    await southConnectorController.create(ctx);
+    await southConnectorController.createSouth(ctx);
 
     expect(ctx.app.southConnectorConfigService.create).toHaveBeenCalledWith(ctx.request.body);
     expect(ctx.created).toHaveBeenCalledWith(southConnector);
@@ -189,7 +189,7 @@ describe('South connector controller', () => {
   it('create() should return 404 when south is null', async () => {
     ctx.request.body = { south: null, items: null };
 
-    await southConnectorController.create(ctx);
+    await southConnectorController.createSouth(ctx);
 
     expect(ctx.app.southConnectorConfigService.create).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalled();
@@ -199,7 +199,7 @@ describe('South connector controller', () => {
     ctx.request.body = { south: { ...southConnectorCommand }, items: [] };
     ctx.params.id = 'id';
 
-    await southConnectorController.update(ctx);
+    await southConnectorController.updateSouthWithoutItems(ctx);
 
     expect(ctx.app.southConnectorConfigService.update).toHaveBeenCalledWith(ctx.params.id, ctx.request.body);
     expect(ctx.noContent).toHaveBeenCalled();
@@ -209,7 +209,7 @@ describe('South connector controller', () => {
     ctx.request.body = { south: null, items: null };
     ctx.params.id = 'id';
 
-    await southConnectorController.update(ctx);
+    await southConnectorController.updateSouthWithoutItems(ctx);
 
     expect(ctx.app.southConnectorConfigService.update).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalled();

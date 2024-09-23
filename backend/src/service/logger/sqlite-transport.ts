@@ -1,5 +1,5 @@
 import build from 'pino-abstract-transport';
-import LogRepository from '../../repository/log.repository';
+import LogRepository from '../../repository/logs/log.repository';
 import db from 'better-sqlite3';
 import { PinoLog } from '../../../../shared/model/logs.model';
 
@@ -36,7 +36,7 @@ class SqliteTransport {
       }
       const logsToStore = this.batchLogs;
       this.batchLogs = [];
-      this.repository.createAll(logsToStore);
+      this.repository.saveAll(logsToStore);
     } catch (error) {
       console.error(error);
     }

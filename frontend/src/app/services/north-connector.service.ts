@@ -5,11 +5,13 @@ import {
   NorthCacheFiles,
   NorthConnectorCommandDTO,
   NorthConnectorDTO,
+  NorthConnectorLightDTO,
   NorthConnectorManifest,
   NorthType,
   NorthValueFiles
 } from '../../../../shared/model/north-connector.model';
-import { SubscriptionDTO } from '../../../../shared/model/subscription.model';
+import { SouthConnectorLightDTO } from '../../../../shared/model/south-connector.model';
+import { NorthSettings } from '../../../../shared/model/north-settings.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on North connectors
@@ -37,16 +39,16 @@ export class NorthConnectorService {
   /**
    * Get the North connectors
    */
-  list(): Observable<Array<NorthConnectorDTO<any>>> {
-    return this.http.get<Array<NorthConnectorDTO<any>>>(`/api/north`);
+  list(): Observable<Array<NorthConnectorLightDTO>> {
+    return this.http.get<Array<NorthConnectorLightDTO>>(`/api/north`);
   }
 
   /**
    * Get one North connector
    * @param northId - the ID of the North connector
    */
-  get(northId: string): Observable<NorthConnectorDTO<any>> {
-    return this.http.get<NorthConnectorDTO<any>>(`/api/north/${northId}`);
+  get(northId: string): Observable<NorthConnectorDTO<NorthSettings>> {
+    return this.http.get<NorthConnectorDTO<NorthSettings>>(`/api/north/${northId}`);
   }
 
   /**
@@ -60,35 +62,23 @@ export class NorthConnectorService {
   /**
    * Create a new North connector
    * @param command - the new North connector
-   * @param subscriptions - The subscriptions to create
    * @param duplicateId - The ID of the duplicated North used to retrieved secrets in the backend
    */
-  create(
-    command: NorthConnectorCommandDTO<any>,
-    subscriptions: Array<SubscriptionDTO>,
-    duplicateId: string
-  ): Observable<NorthConnectorDTO<any>> {
+  create(command: NorthConnectorCommandDTO<NorthSettings>, duplicateId: string): Observable<NorthConnectorDTO<any>> {
     const params: Record<string, string | Array<string>> = {};
     if (duplicateId) {
       params['duplicateId'] = duplicateId;
     }
-    return this.http.post<NorthConnectorDTO<any>>(`/api/north`, { north: command, subscriptions }, { params });
+    return this.http.post<NorthConnectorDTO<NorthSettings>>(`/api/north`, command, { params });
   }
 
   /**
    * Update the selected North connector
    * @param northId - the ID of the North connector
    * @param command - the new values of the selected North connector
-   * @param subscriptions - The subscriptions to create or update
-   * @param subscriptionsToDelete - The subscription to delete
    */
-  update(
-    northId: string,
-    command: NorthConnectorCommandDTO<any>,
-    subscriptions: Array<SubscriptionDTO>,
-    subscriptionsToDelete: Array<SubscriptionDTO>
-  ): Observable<void> {
-    return this.http.put<void>(`/api/north/${northId}`, { north: command, subscriptions, subscriptionsToDelete });
+  update(northId: string, command: NorthConnectorCommandDTO<NorthSettings>): Observable<void> {
+    return this.http.put<void>(`/api/north/${northId}`, command);
   }
 
   /**
@@ -102,8 +92,8 @@ export class NorthConnectorService {
   /**
    * Retrieve the North connector subscriptions
    */
-  getSubscriptions(northId: string): Observable<Array<SubscriptionDTO>> {
-    return this.http.get<Array<SubscriptionDTO>>(`/api/north/${northId}/subscriptions`);
+  getSubscriptions(northId: string): Observable<Array<SouthConnectorLightDTO>> {
+    return this.http.get<Array<SouthConnectorLightDTO>>(`/api/north/${northId}/subscriptions`);
   }
 
   /**
@@ -228,7 +218,7 @@ export class NorthConnectorService {
     return this.http.put<void>(`/api/north/${northId}/stop`, null);
   }
 
-  testConnection(northId: string, settings: NorthConnectorCommandDTO<any>): Observable<void> {
+  testConnection(northId: string, settings: NorthConnectorCommandDTO<NorthSettings>): Observable<void> {
     return this.http.put<void>(`/api/north/${northId}/test-connection`, settings);
   }
 }

@@ -1,7 +1,8 @@
 import { Knex } from 'knex';
-import { HISTORY_QUERIES_TABLE } from '../../repository/history-query.repository';
 import { HISTORY_QUERY_STATUS } from '../../../../shared/model/history-query.model';
-import { HISTORY_ITEMS_TABLE } from '../../repository/history-query-item.repository';
+
+const HISTORY_QUERIES_TABLE = 'history_queries';
+const HISTORY_ITEMS_TABLE = 'history_items';
 
 export async function up(knex: Knex): Promise<void> {
   await updateHistoryQueriesTable(knex);
@@ -135,10 +136,6 @@ async function updateHistoryQueriesTable(knex: Knex): Promise<void> {
   });
 }
 
-export async function down(knex: Knex): Promise<void> {
-  await knex.schema.alterTable(HISTORY_QUERIES_TABLE, async table => {
-    table.boolean('enabled').notNullable().defaultTo(false);
-    await knex(HISTORY_QUERIES_TABLE).where('status', '!=', 'PENDING').update({ enabled: true });
-    table.dropColumn('status');
-  });
+export async function down(_knex: Knex): Promise<void> {
+  return;
 }
