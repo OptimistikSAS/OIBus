@@ -26,9 +26,6 @@
         "plugin:@typescript-eslint/recommended",
         "plugin:prettier/recommended"
       ],
-      "plugins": [
-        "ban"
-      ],
       "rules": {
         "@typescript-eslint/ban-ts-comment": "off",
         "@typescript-eslint/no-deprecated": "error",
@@ -43,15 +40,15 @@
           }
         ],
         "no-case-declarations": "off",
-        "ban/ban": [
+        "no-restricted-syntax": [
           "error",
           {
-            "name": "fit",
-            "message": "Do not use focused tests (fit)"
+            "selector": "CallExpression[callee.name='fdescribe']",
+            "message": "'Do not use focused test suites (fdescribe)"
           },
           {
-            "name": "fdescribe",
-            "message": "Do not use focused test suites (fdescribe)"
+            "selector": "CallExpression[callee.name='fit']",
+            "message": "'Do not use focused tests (fit)"
           }
         ],
         "no-console": [
