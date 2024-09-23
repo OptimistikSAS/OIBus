@@ -189,7 +189,7 @@ describe('South PI', () => {
   it('should test connection successfully', async () => {
     (fetch as unknown as jest.Mock).mockReturnValueOnce(
       Promise.resolve({
-        status: 204
+        status: 200
       })
     );
     await expect(south.testConnection()).resolves.not.toThrow();
