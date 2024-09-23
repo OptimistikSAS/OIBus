@@ -5,7 +5,6 @@ import EncryptionService from './service/encryption.service';
 
 import { createFolder, getCommandLineArguments, getOIBusInfo } from './service/utils';
 import RepositoryService from './service/repository.service';
-import ReloadService from './service/reload.service';
 import NorthService from './service/north.service';
 import SouthService from './service/south.service';
 import OIBusEngine from './engine/oibus-engine';
@@ -17,10 +16,8 @@ import OIAnalyticsCommandService from './service/oia/oianalytics-command.service
 import OianalyticsRegistrationService from './service/oia/oianalytics-registration.service';
 import ConnectionService from './service/connection.service';
 import OIAnalyticsMessageService from './service/oia/oianalytics-message.service';
-import SouthConnectorConfigService from './service/south-connector-config.service';
 import JoiValidator from './web-server/controllers/validators/joi.validator';
 import ScanModeService from './service/scan-mode.service';
-import NorthConnectorConfigService from './service/north-connector-config.service';
 import SubscriptionService from './service/subscription.service';
 import IPFilterService from './service/ip-filter.service';
 
@@ -86,22 +83,64 @@ const LOG_DB_NAME = 'logs.db';
   await createFolder(LOG_FOLDER_NAME);
   const loggerService = new LoggerService(encryptionService, path.resolve(LOG_FOLDER_NAME));
   await loggerService.start(oibusSettings, repositoryService.oianalyticsRegistrationRepository.get()!);
+  const oIAnalyticsMessageService = new OIAnalyticsMessageService(
+    repositoryService.oianalyticsMessageRepository,
+    repositoryService.oianalyticsRegistrationRepository,
+    repositoryService.engineRepository,
+    repositoryService.cryptoRepository,
+    repositoryService.scanModeRepository,
+    repositoryService.southConnectorRepository,
+    repositoryService.northConnectorRepository,
+    encryptionService,
+    loggerService.logger!
+  );
 
   const connectionService = new ConnectionService(loggerService.logger!);
-  const northService = new NorthService(encryptionService, repositoryService);
-  const southService = new SouthService(encryptionService, repositoryService, connectionService);
-  const historyQueryService = new HistoryQueryService(repositoryService);
+  const northService = new NorthService(
+    new JoiValidator(),
+    repositoryService.northConnectorRepository,
+    repositoryService.southConnectorRepository,
+    repositoryService.northMetricsRepository,
+    repositoryService.scanModeRepository,
+    repositoryService.logRepository,
+    repositoryService.certificateRepository,
+    repositoryService.oianalyticsRegistrationRepository,
+    oIAnalyticsMessageService,
+    encryptionService
+  );
+  const southService = new SouthService(
+    new JoiValidator(),
+    repositoryService.southConnectorRepository,
+    repositoryService.logRepository,
+    repositoryService.southMetricsRepository,
+    repositoryService.southCacheRepository,
+    repositoryService.scanModeRepository,
+    repositoryService.oianalyticsRegistrationRepository,
+    repositoryService.certificateRepository,
+    oIAnalyticsMessageService,
+    encryptionService,
+    connectionService
+  );
+  const historyQueryService = new HistoryQueryService(
+    new JoiValidator(),
+    repositoryService.historyQueryRepository,
+    repositoryService.scanModeRepository,
+    repositoryService.logRepository,
+    southService,
+    northService,
+    oIAnalyticsMessageService,
+    encryptionService
+  );
 
-  const engine = new OIBusEngine(encryptionService, northService, southService, loggerService.logger!);
+  const engine = new OIBusEngine(encryptionService, northService, southService, repositoryService, loggerService.logger!);
   const historyQueryEngine = new HistoryQueryEngine(
     encryptionService,
     northService,
     southService,
+    repositoryService,
     historyQueryService,
     loggerService.logger!
   );
-
-  const oIAnalyticsMessageService = new OIAnalyticsMessageService(repositoryService, encryptionService, loggerService.logger!);
 
   const oIBusService = new OIBusService(
     new JoiValidator(),
@@ -118,18 +157,6 @@ const LOG_DB_NAME = 'logs.db';
 
   await oIBusService.startOIBus();
 
-  const reloadService = new ReloadService(
-    loggerService,
-    repositoryService,
-    northService,
-    southService,
-    engine,
-    historyQueryEngine,
-    oIBusService,
-    oIAnalyticsMessageService,
-    oIBusService.getProxyServer()
-  );
-
   const scanModeService = new ScanModeService(
     new JoiValidator(),
     repositoryService.scanModeRepository,
@@ -139,11 +166,9 @@ const LOG_DB_NAME = 'logs.db';
   );
   const subscriptionService = new SubscriptionService(
     new JoiValidator(),
-    repositoryService.subscriptionRepository,
     repositoryService.southConnectorRepository,
     repositoryService.northConnectorRepository,
-    oIAnalyticsMessageService,
-    engine
+    oIAnalyticsMessageService
   );
   const ipFilterService = new IPFilterService(
     new JoiValidator(),
@@ -152,36 +177,14 @@ const LOG_DB_NAME = 'logs.db';
     oIBusService.getProxyServer()
   );
 
-  const southConnectorConfigService = new SouthConnectorConfigService(
-    new JoiValidator(),
-    repositoryService.southConnectorRepository,
-    repositoryService.southItemRepository,
-    repositoryService.scanModeRepository,
-    southService,
-    reloadService,
-    oIAnalyticsMessageService,
-    encryptionService
-  );
-
-  const northConnectorConfigService = new NorthConnectorConfigService(
-    new JoiValidator(),
-    repositoryService.northConnectorRepository,
-    repositoryService.subscriptionRepository,
-    repositoryService.scanModeRepository,
-    northService,
-    reloadService,
-    oIAnalyticsMessageService,
-    encryptionService
-  );
-
   const oIAnalyticsCommandService = new OIAnalyticsCommandService(
     repositoryService.oianalyticsCommandRepository,
     repositoryService.oianalyticsRegistrationRepository,
     encryptionService,
     oIBusService,
     scanModeService,
-    southConnectorConfigService,
-    northConnectorConfigService,
+    southService,
+    northService,
     loggerService.logger!,
     binaryFolder,
     ignoreRemoteUpdate
@@ -207,12 +210,10 @@ const LOG_DB_NAME = 'logs.db';
     oIAnalyticsRegistrationService,
     oIAnalyticsCommandService,
     oIBusService,
-    reloadService,
-    repositoryService,
     southService,
     northService,
-    southConnectorConfigService,
-    northConnectorConfigService,
+    historyQueryService,
+    repositoryService,
     ignoreIpFilters,
     loggerService.createChildLogger('web-server')
   );

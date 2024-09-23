@@ -6,7 +6,7 @@ import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
-import { HistoryQueryDTO } from '../../../../shared/model/history-query.model';
+import { HistoryQueryLightDTO } from '../../../../shared/model/history-query.model';
 import { HistoryQueryService } from '../services/history-query.service';
 import { NotificationService } from '../shared/notification.service';
 
@@ -28,7 +28,7 @@ describe('HistoryQueryListComponent', () => {
   let historyQueryService: jasmine.SpyObj<HistoryQueryService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
 
-  const historyQueries: Array<HistoryQueryDTO> = [
+  const historyQueries: Array<HistoryQueryLightDTO> = [
     {
       id: 'id1',
       name: 'myHistoryQuery1',
@@ -36,7 +36,7 @@ describe('HistoryQueryListComponent', () => {
       status: 'RUNNING',
       startTime: '2020-02-02T02:02:02.222Z',
       endTime: '2022-02-02T02:02:02.222Z'
-    } as HistoryQueryDTO,
+    } as HistoryQueryLightDTO,
     {
       id: 'id2',
       name: 'myHistoryQuery2',
@@ -44,7 +44,7 @@ describe('HistoryQueryListComponent', () => {
       status: 'PENDING',
       startTime: '2020-02-02T02:02:02.222Z',
       endTime: '2022-02-02T02:02:02.222Z'
-    } as HistoryQueryDTO
+    } as HistoryQueryLightDTO
   ];
 
   beforeEach(() => {

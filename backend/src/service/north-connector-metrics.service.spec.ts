@@ -1,11 +1,11 @@
 import { NorthConnectorMetrics } from '../../../shared/model/engine.model';
 import NorthConnectorMetricsService from './north-connector-metrics.service';
-import NorthMetricsRepositoryMock, { getMetrics } from '../tests/__mocks__/repository/north-metrics-repository.mock';
-import NorthConnectorMetricsRepository from '../repository/north-connector-metrics.repository';
+import NorthMetricsRepositoryMock from '../tests/__mocks__/repository/log/north-metrics-repository.mock';
+import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
+import testData from '../tests/utils/test-data';
 
 const northRepositoryMock: NorthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
 
-const nowDateString = '2020-02-02T02:02:02.222Z';
 let service: NorthConnectorMetricsService;
 
 const metrics = {
@@ -15,36 +15,32 @@ const metrics = {
 describe('NorthConnectorMetricsService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
-    getMetrics.mockReturnValue(metrics);
+    (northRepositoryMock.getMetrics as jest.Mock).mockReturnValue(metrics);
     service = new NorthConnectorMetricsService('connectorId', northRepositoryMock);
-  });
-
-  it('should be properly initialized', () => {
-    expect(service.metricsRepository).toBeDefined();
   });
 
   it('should update metrics', () => {
     const newConnectorMetrics: NorthConnectorMetrics = {
-      metricsStart: '2020-02-02T02:02:02.222Z',
+      metricsStart: testData.constants.dates.FAKE_NOW,
       numberOfValuesSent: 22,
       numberOfFilesSent: 33,
-      lastValueSent: { pointId: 'pointId', timestamp: '2020-02-02T02:02:02.222Z', data: { value: '13' } },
+      lastValueSent: { pointId: 'pointId', timestamp: testData.constants.dates.FAKE_NOW, data: { value: '13' } },
       lastFileSent: 'myFile',
-      lastConnection: '2020-02-02T02:02:02.222Z',
-      lastRunStart: '2020-02-02T02:02:02.222Z',
+      lastConnection: testData.constants.dates.FAKE_NOW,
+      lastRunStart: testData.constants.dates.FAKE_NOW,
       lastRunDuration: 120,
       cacheSize: 123
     };
     service.updateMetrics('northId', newConnectorMetrics);
-    expect(service.metricsRepository.updateMetrics).toHaveBeenCalledWith('northId', newConnectorMetrics);
+    expect(northRepositoryMock.updateMetrics).toHaveBeenCalledWith('northId', newConnectorMetrics);
   });
 
   it('should reset metrics', () => {
     service.resetMetrics();
-    expect(service.metricsRepository.removeMetrics).toHaveBeenCalled();
-    expect(service.metricsRepository.initMetrics).toHaveBeenCalledWith('connectorId');
+    expect(northRepositoryMock.removeMetrics).toHaveBeenCalled();
+    expect(northRepositoryMock.initMetrics).toHaveBeenCalledWith('connectorId');
     expect(service.metrics).toEqual(metrics);
   });
 

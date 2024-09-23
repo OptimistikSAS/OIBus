@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-import { REGISTRATIONS_TABLE } from '../../repository/oianalytics-registration.repository';
+const REGISTRATIONS_TABLE = 'registrations';
 
 export async function up(knex: Knex): Promise<void> {
   await updateRegistrationSettings(knex);
@@ -55,4 +55,6 @@ async function updateRegistrationSettings(knex: Knex) {
   });
 }
 
-export async function down(_knex: Knex): Promise<void> {}
+export async function down(_knex: Knex): Promise<void> {
+  return;
+}

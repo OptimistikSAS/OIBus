@@ -34,11 +34,11 @@ describe('Joi validator', () => {
   });
 
   it('validateSettings should properly call validate', async () => {
-    const settings: OibFormControl[] = [];
+    const settings: Array<OibFormControl> = [];
     const dto = {};
     const schema = Joi.object({});
     validator.validate = jest.fn();
-    jest.spyOn(validator as any, 'generateJoiSchema').mockReturnValueOnce(schema);
+    jest.spyOn(validator, 'generateJoiSchema').mockReturnValueOnce(schema);
 
     await validator.validateSettings(settings, dto);
 
@@ -46,7 +46,7 @@ describe('Joi validator', () => {
   });
 
   it('generateJoiSchema should generate proper Joi schema for different form controls', async () => {
-    const settings: OibFormControl[] = [
+    const settings: Array<OibFormControl> = [
       {
         key: 'text',
         type: 'OibText',
@@ -121,7 +121,7 @@ describe('Joi validator', () => {
   });
 
   it('generateJoiSchema should properly generate text Joi schema', async () => {
-    const settings: OibFormControl[] = [
+    const settings: Array<OibFormControl> = [
       {
         key: 'host',
         type: 'OibText',
@@ -145,7 +145,7 @@ describe('Joi validator', () => {
   });
 
   it('generateJoiSchema should properly generate number Joi schema', async () => {
-    const settings: OibFormControl[] = [
+    const settings: Array<OibFormControl> = [
       {
         key: 'port',
         type: 'OibNumber',
@@ -166,7 +166,7 @@ describe('Joi validator', () => {
   });
 
   it('generateJoiSchema should properly generate select Joi schema', async () => {
-    const settings: OibFormControl[] = [
+    const settings: Array<OibFormControl> = [
       {
         key: 'requestMethod',
         type: 'OibSelect',
@@ -187,7 +187,7 @@ describe('Joi validator', () => {
   });
 
   it('generateJoiSchema should properly generate boolean Joi schema', async () => {
-    const settings: OibFormControl[] = [
+    const settings: Array<OibFormControl> = [
       {
         key: 'verbose',
         type: 'OibCheckbox',
@@ -207,7 +207,7 @@ describe('Joi validator', () => {
   });
 
   it('generateJoiSchema should properly handle conditional display', async () => {
-    const settings: OibFormControl[] = [
+    const settings: Array<OibFormControl> = [
       {
         key: 'driver',
         type: 'OibSelect',
@@ -245,7 +245,7 @@ describe('Joi validator', () => {
   });
 
   it('generateJoiSchema should generate proper Joi schema for form Groups', async () => {
-    const settings: OibFormControl[] = [
+    const settings: Array<OibFormControl> = [
       {
         key: 'authentication',
         type: 'OibFormGroup',
@@ -323,7 +323,7 @@ describe('Joi validator', () => {
   });
 
   it('generateJoiSchema should generate proper Joi schema for form Groups without validators', async () => {
-    const settings: OibFormControl[] = [
+    const settings: Array<OibFormControl> = [
       {
         key: 'authentication',
         type: 'OibFormGroup',
@@ -399,7 +399,7 @@ describe('Joi validator', () => {
   });
 
   it('generateJoiSchema should generate proper Joi schema for form Array', async () => {
-    const settings: OibFormControl[] = [
+    const settings: Array<OibFormControl> = [
       {
         key: 'dateTimeFields',
         type: 'OibArray',

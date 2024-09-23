@@ -1,7 +1,7 @@
-// @ts-ignore
-import cors from '@koa/cors';
-// @ts-ignore
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
 import respond from 'koa-respond';
+import cors from '@koa/cors';
 import bodyParser from 'koa-bodyparser';
 import helmet from 'koa-helmet';
 
@@ -16,18 +16,16 @@ import pino from 'pino';
 import * as Http from 'http';
 import Koa from 'koa';
 import oibus from './middlewares/oibus';
-import ReloadService from '../service/reload.service';
 import { KoaApplication } from './koa';
 import SouthService from '../service/south.service';
 import OIBusService from '../service/oibus.service';
 import NorthService from '../service/north.service';
-import SouthConnectorConfigService from '../service/south-connector-config.service';
 import ScanModeService from '../service/scan-mode.service';
-import NorthConnectorConfigService from '../service/north-connector-config.service';
 import SubscriptionService from '../service/subscription.service';
 import IPFilterService from '../service/ip-filter.service';
 import OIAnalyticsCommandService from '../service/oia/oianalytics-command.service';
 import OIAnalyticsRegistrationService from '../service/oia/oianalytics-registration.service';
+import HistoryQueryService from '../service/history-query.service';
 
 /**
  * Class Server - Provides the web client and establish socket connections.
@@ -49,12 +47,10 @@ export default class WebServer {
     private readonly oIAnalyticsRegistrationService: OIAnalyticsRegistrationService,
     private readonly oIAnalyticsCommandService: OIAnalyticsCommandService,
     private readonly oIBusService: OIBusService,
-    private readonly reloadService: ReloadService,
-    private readonly repositoryService: RepositoryService,
     private readonly southService: SouthService,
     private readonly northService: NorthService,
-    private readonly southConnectorConfigService: SouthConnectorConfigService,
-    private readonly northConnectorConfigService: NorthConnectorConfigService,
+    private readonly historyQueryService: HistoryQueryService,
+    private readonly repositoryService: RepositoryService,
     private readonly ignoreIpFilters: boolean,
     logger: pino.Logger
   ) {
@@ -107,13 +103,11 @@ export default class WebServer {
         this.oIAnalyticsRegistrationService,
         this.oIAnalyticsCommandService,
         this.oIBusService,
-        this.repositoryService,
-        this.reloadService,
-        this.encryptionService,
         this.southService,
         this.northService,
-        this.southConnectorConfigService,
-        this.northConnectorConfigService,
+        this.historyQueryService,
+        this.repositoryService,
+        this.encryptionService,
         this.logger
       )
     );

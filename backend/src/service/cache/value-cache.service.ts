@@ -4,10 +4,12 @@ import path from 'node:path';
 import { createFolder, generateRandomId, getFilesFiltered } from '../utils';
 import pino from 'pino';
 
-import { NorthCacheFiles, NorthCacheSettingsDTO, NorthValueFiles } from '../../../../shared/model/north-connector.model';
+import { NorthCacheFiles, NorthValueFiles } from '../../../../shared/model/north-connector.model';
 import { EventEmitter } from 'node:events';
 import { OIBusTimeValue } from '../../../../shared/model/engine.model';
 import { Instant } from '../../../../shared/model/types';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
+import { NorthSettings } from '../../../../shared/model/north-settings.model';
 
 const BUFFER_MAX = 250;
 const BUFFER_TIMEOUT = 300;
@@ -18,7 +20,7 @@ const ERROR_FOLDER = 'values-errors';
 /**
  * Local cache implementation to group events and store them when the communication with the North is down.
  */
-export default class ValueCacheService {
+export default class ValueCacheService<N extends NorthSettings> {
   private _logger: pino.Logger;
   private readonly baseFolder: string;
   readonly valueFolder: string;
@@ -27,15 +29,15 @@ export default class ValueCacheService {
 
   private bufferTimeout: NodeJS.Timeout | undefined;
   private compactedQueue: Array<{ filename: string; createdAt: number }> = []; // List of compact filename (randomId.compact.tmp)
-  private bufferFiles: Map<string, Array<OIBusTimeValue>> = new Map(); // key: buffer filename (randomId.buffer.tmp, value: the values in the queue file)
-  private queue: Map<string, Array<OIBusTimeValue>> = new Map(); // key: queue filename (randomId.queue.tmp, value: the values in the queue file)
+  private bufferFiles = new Map<string, Array<OIBusTimeValue>>(); // key: buffer filename (randomId.buffer.tmp, value: the values in the queue file)
+  private queue = new Map<string, Array<OIBusTimeValue>>(); // key: queue filename (randomId.queue.tmp, value: the values in the queue file)
 
   private _triggerRun: EventEmitter = new EventEmitter();
 
   constructor(
     logger: pino.Logger,
     baseFolder: string,
-    private _settings: NorthCacheSettingsDTO
+    private configuration: NorthConnectorEntity<N>
   ) {
     this._logger = logger;
     this.baseFolder = path.resolve(baseFolder);
@@ -115,7 +117,7 @@ export default class ValueCacheService {
    * Method used to flush the buffer from a time trigger or a max trigger
    * Flushing the buffer create a queue file and keep the values in memory for sending them
    */
-  async flush(flag: 'time-flush' | 'max-flush' = 'time-flush'): Promise<void> {
+  private async flush(flag: 'time-flush' | 'max-flush' = 'time-flush'): Promise<void> {
     if (this.flushInProgress) {
       this._logger.trace(`Flush already in progress`);
       return;
@@ -172,11 +174,11 @@ export default class ValueCacheService {
       `Flush ${valuesToFlush.length} values (${flag}) into "${path.resolve(this.valueFolder, tmpFileName)}". ${groupCount} values in queue`
     );
 
-    if (groupCount >= this._settings.oibusTimeValues.maxSendCount) {
+    if (groupCount >= this.configuration.caching.oibusTimeValues.maxSendCount) {
       const copiedQueue = this.queue;
       await this.compactQueueCache(copiedQueue);
     }
-    if (groupCount >= this._settings.oibusTimeValues.groupCount) {
+    if (groupCount >= this.configuration.caching.oibusTimeValues.groupCount) {
       this.triggerRun.emit('next');
     }
     this.flushInProgress = false;
@@ -185,7 +187,7 @@ export default class ValueCacheService {
   /**
    * Take values from the queue and store them in a compact file
    */
-  async compactQueueCache(cacheQueue: Map<string, Array<OIBusTimeValue>>): Promise<void> {
+  private async compactQueueCache(cacheQueue: Map<string, Array<OIBusTimeValue>>): Promise<void> {
     const fileInBuffer: Array<string> = [];
     let valuesInQueue: Array<OIBusTimeValue> = [];
 
@@ -220,7 +222,7 @@ export default class ValueCacheService {
    * values to send associated to the key (reference in the queue Map and filename where the data are persisted on disk)
    */
   async getValuesToSend(): Promise<Map<string, Array<OIBusTimeValue>>> {
-    const valuesInQueue: Map<string, Array<OIBusTimeValue>> = new Map();
+    const valuesInQueue = new Map<string, Array<OIBusTimeValue>>();
     // If there is no file in the compacted queue, the values are retrieved from the regular queue
     if (this.compactedQueue.length === 0) {
       this._logger.trace('Retrieving values from queue');
@@ -264,7 +266,7 @@ export default class ValueCacheService {
   /**
    * Remove the key (filename) from the queues if it exists and remove the associated file
    */
-  async deleteKeyFromCache(key: string): Promise<void> {
+  private async deleteKeyFromCache(key: string): Promise<void> {
     // Remove values from queues
     const indexToRemove = this.compactedQueue.findIndex(queueFile => queueFile.filename === key);
     if (indexToRemove > -1) {
@@ -325,7 +327,7 @@ export default class ValueCacheService {
     for (const valuesInFile of this.bufferFiles.values()) {
       numberOfValuesInBufferFiles += valuesInFile.length;
     }
-    if (numberOfValuesInBufferFiles > BUFFER_MAX || numberOfValuesInBufferFiles > this._settings.oibusTimeValues.groupCount) {
+    if (numberOfValuesInBufferFiles > BUFFER_MAX || numberOfValuesInBufferFiles > this.configuration.caching.oibusTimeValues.groupCount) {
       await this.flush('max-flush');
     } else if (!this.bufferTimeout) {
       this.bufferTimeout = setTimeout(this.flush.bind(this), BUFFER_TIMEOUT);
@@ -433,9 +435,5 @@ export default class ValueCacheService {
 
   get triggerRun(): EventEmitter {
     return this._triggerRun;
-  }
-
-  set settings(value: NorthCacheSettingsDTO) {
-    this._settings = value;
   }
 }

@@ -9,6 +9,8 @@ import { HistoryQueryDTO } from '../../../../../../shared/model/history-query.mo
 import { NorthConnectorManifest } from '../../../../../../shared/model/north-connector.model';
 import { SouthConnectorManifest } from '../../../../../../shared/model/south-connector.model';
 import { ProgressbarComponent } from './progressbar/progressbar.component';
+import { SouthItemSettings, SouthSettings } from '../../../../../../shared/model/south-settings.model';
+import { NorthSettings } from '../../../../../../shared/model/north-settings.model';
 
 @Component({
   selector: 'oib-history-metrics',
@@ -18,7 +20,7 @@ import { ProgressbarComponent } from './progressbar/progressbar.component';
   standalone: true
 })
 export class HistoryMetricsComponent {
-  @Input({ required: true }) historyQuery!: HistoryQueryDTO;
+  @Input({ required: true }) historyQuery!: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>;
   @Input({ required: true }) northManifest!: NorthConnectorManifest;
   @Input({ required: true }) southManifest!: SouthConnectorManifest;
   @Input({ required: true }) historyMetrics!: HistoryMetrics;
@@ -26,7 +28,7 @@ export class HistoryMetricsComponent {
   constructor() {}
 
   get southProgressbarAnimated(): boolean {
-    if (this.historyQuery.status === 'RUNNING' && this.historyMetrics.south.historyMetrics.intervalProgress !== 1) {
+    if (this.historyQuery.status === 'RUNNING' /*&& this.historyMetrics.south.historyMetrics.intervalProgress !== 1*/) {
       return true;
     }
     return false;

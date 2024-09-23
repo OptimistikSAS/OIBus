@@ -5,14 +5,16 @@ import { BlobServiceClient, StorageSharedKeyCredential } from '@azure/storage-bl
 import { ClientSecretCredential, DefaultAzureCredential } from '@azure/identity';
 import NorthConnector from '../north-connector';
 import manifest from '../north-azure-blob/manifest';
-import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import EncryptionService from '../../service/encryption.service';
-import RepositoryService from '../../service/repository.service';
 import { NorthAzureBlobSettings } from '../../../../shared/model/north-settings.model';
 import { ProxyOptions } from '@azure/core-http';
 import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
 import csv from 'papaparse';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
+import NorthConnectorRepository from '../../repository/config/north-connector.repository';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import NorthConnectorMetricsRepository from '../../repository/logs/north-connector-metrics.repository';
 
 const TEST_FILE = 'oibus-azure-test.txt';
 
@@ -21,13 +23,15 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
   private blobClient: BlobServiceClient | null = null;
 
   constructor(
-    connector: NorthConnectorDTO<NorthAzureBlobSettings>,
+    connector: NorthConnectorEntity<NorthAzureBlobSettings>,
     encryptionService: EncryptionService,
-    repositoryService: RepositoryService,
+    northConnectorRepository: NorthConnectorRepository,
+    scanModeRepository: ScanModeRepository,
+    northMetricsRepository: NorthConnectorMetricsRepository,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, encryptionService, repositoryService, logger, baseFolder);
+    super(connector, encryptionService, northConnectorRepository, scanModeRepository, northMetricsRepository, logger, baseFolder);
   }
 
   async start(): Promise<void> {
@@ -161,7 +165,7 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
     await this.prepareConnection();
     const blobPath = this.connector.settings.path ? `${this.connector.settings.path}/${TEST_FILE}` : TEST_FILE;
 
-    let result: boolean = false;
+    let result = false;
     try {
       const blockBlobClient = this.blobClient!.getContainerClient(this.connector.settings.container).getBlockBlobClient(blobPath);
       await blockBlobClient.upload('', 0);

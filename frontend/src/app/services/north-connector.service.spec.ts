@@ -10,10 +10,12 @@ import {
   NorthConnectorDTO,
   NorthConnectorManifest,
   NorthType,
-  NorthValueFiles
+  NorthValueFiles,
+  NorthConnectorLightDTO
 } from '../../../../shared/model/north-connector.model';
-import { SubscriptionDTO } from '../../../../shared/model/subscription.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { SouthConnectorLightDTO } from '../../../../shared/model/south-connector.model';
+import { NorthSettings } from '../../../../shared/model/north-settings.model';
 
 describe('NorthConnectorService', () => {
   let http: HttpTestingController;
@@ -51,7 +53,7 @@ describe('NorthConnectorService', () => {
   });
 
   it('should get all North connectors', () => {
-    let expectedNorthConnectors: Array<NorthConnectorDTO> = [];
+    let expectedNorthConnectors: Array<NorthConnectorLightDTO> = [];
     service.list().subscribe(northConnectors => (expectedNorthConnectors = northConnectors));
 
     http.expectOne('/api/north').flush([{ name: 'North connector 1' }, { name: 'North connector 2' }]);
@@ -60,8 +62,8 @@ describe('NorthConnectorService', () => {
   });
 
   it('should get a North connector', () => {
-    let expectedNorthConnector: NorthConnectorDTO | null = null;
-    const northConnector = { id: 'id1' } as NorthConnectorDTO;
+    let expectedNorthConnector: NorthConnectorDTO<NorthSettings> | null = null;
+    const northConnector = { id: 'id1' } as NorthConnectorDTO<NorthSettings>;
 
     service.get('id1').subscribe(c => (expectedNorthConnector = c));
 
@@ -81,14 +83,15 @@ describe('NorthConnectorService', () => {
 
   it('should create a North connector', () => {
     let done = false;
-    const command: NorthConnectorCommandDTO = {
+    const command: NorthConnectorCommandDTO<NorthSettings> = {
       name: 'myNorthConnector',
       description: 'a test north connector',
       enabled: true,
       type: 'Test',
-      settings: {},
+      settings: {} as NorthSettings,
       caching: {
         scanModeId: 'scanModeId1',
+        scanModeName: null,
         retryInterval: 1000,
         retryCount: 3,
         maxSize: 30,
@@ -103,26 +106,28 @@ describe('NorthConnectorService', () => {
             retentionDuration: 0
           }
         }
-      }
+      },
+      subscriptions: []
     };
 
-    service.create(command, [], '').subscribe(() => (done = true));
+    service.create(command, '').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/north' });
-    expect(testRequest.request.body).toEqual({ north: command, subscriptions: [] });
+    expect(testRequest.request.body).toEqual(command);
     testRequest.flush(null);
     expect(done).toBe(true);
   });
 
   it('should update a North connector', () => {
     let done = false;
-    const command: NorthConnectorCommandDTO = {
+    const command: NorthConnectorCommandDTO<NorthSettings> = {
       name: 'myNorthConnector',
       description: 'a test north connector',
       enabled: true,
       type: 'Test',
-      settings: {},
+      settings: {} as NorthSettings,
       caching: {
         scanModeId: 'scanModeId1',
+        scanModeName: null,
         retryInterval: 1000,
         retryCount: 3,
         maxSize: 30,
@@ -137,12 +142,13 @@ describe('NorthConnectorService', () => {
             retentionDuration: 0
           }
         }
-      }
+      },
+      subscriptions: []
     };
 
-    service.update('id1', command, [], []).subscribe(() => (done = true));
+    service.update('id1', command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/north/id1' });
-    expect(testRequest.request.body).toEqual({ north: command, subscriptions: [], subscriptionsToDelete: [] });
+    expect(testRequest.request.body).toEqual(command);
     testRequest.flush(null);
     expect(done).toBe(true);
   });
@@ -156,8 +162,8 @@ describe('NorthConnectorService', () => {
   });
 
   it('should get North connector subscriptions', () => {
-    let expectedNorthConnectorSubscriptions: Array<SubscriptionDTO> | null = null;
-    const northConnectorSubscriptions: Array<SubscriptionDTO> = [];
+    let expectedNorthConnectorSubscriptions: Array<SouthConnectorLightDTO> | null = null;
+    const northConnectorSubscriptions: Array<SouthConnectorLightDTO> = [];
 
     service.getSubscriptions('id1').subscribe(c => (expectedNorthConnectorSubscriptions = c));
 
@@ -374,14 +380,15 @@ describe('NorthConnectorService', () => {
 
   it('should test a North connector connection', () => {
     let done = false;
-    const command: NorthConnectorCommandDTO = {
+    const command: NorthConnectorCommandDTO<NorthSettings> = {
       name: 'myNorthConnector',
       description: 'a test north connector',
       enabled: true,
       type: 'Test',
-      settings: {},
+      settings: {} as NorthSettings,
       caching: {
         scanModeId: 'scanModeId1',
+        scanModeName: null,
         retryInterval: 1000,
         retryCount: 3,
         maxSize: 30,
@@ -396,7 +403,8 @@ describe('NorthConnectorService', () => {
             retentionDuration: 0
           }
         }
-      }
+      },
+      subscriptions: []
     };
 
     service.testConnection('id1', command).subscribe(() => (done = true));

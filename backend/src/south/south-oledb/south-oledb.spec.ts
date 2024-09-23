@@ -1,4 +1,3 @@
-import DatabaseMock from '../../tests/__mocks__/database.mock';
 import path from 'node:path';
 import pino from 'pino';
 import * as utils from '../../service/utils';
@@ -6,9 +5,6 @@ import { convertDateTimeToInstant, convertDelimiter, formatInstant, persistResul
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-import RepositoryService from '../../service/repository.service';
-import RepositoryServiceMock from '../../tests/__mocks__/service/repository-service.mock';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import {
   SouthOLEDBItemSettings,
   SouthOLEDBItemSettingsDateTimeFields,
@@ -16,24 +12,36 @@ import {
 } from '../../../../shared/model/south-settings.model';
 import SouthOLEDB from './south-oledb';
 import fetch from 'node-fetch';
+import SouthConnectorRepository from '../../repository/config/south-connector.repository';
+import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
+import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
+import NorthMetricsRepositoryMock from '../../tests/__mocks__/repository/log/north-metrics-repository.mock';
+import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
+import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
+import SouthConnectorMetricsServiceMock from '../../tests/__mocks__/service/south-connector-metrics-service.mock';
+import testData from '../../tests/utils/test-data';
+import { SouthConnectorEntity } from '../../model/south-connector.model';
 
-const nowDateString = '2020-02-02T02:02:02.222Z';
-let south: SouthOLEDB;
-const database = new DatabaseMock();
-jest.mock('../../service/utils');
 jest.mock('node:fs/promises');
 jest.mock('node-fetch');
+jest.mock('../../service/utils');
+
+const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
+const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
+const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
+const southMetricsRepository: SouthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
+const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
+const southCacheService = new SouthCacheServiceMock();
+const southConnectorMetricsService = new SouthConnectorMetricsServiceMock();
 
 jest.mock(
   '../../service/south-cache.service',
   () =>
     function () {
-      return {
-        createSouthCacheScanModeTable: jest.fn(),
-        southCacheRepository: {
-          database
-        }
-      };
+      return southCacheService;
     }
 );
 
@@ -41,120 +49,16 @@ jest.mock(
   '../../service/south-connector-metrics.service',
   () =>
     function () {
-      return {
-        initMetrics: jest.fn(),
-        updateMetrics: jest.fn(),
-        get stream() {
-          return { stream: 'myStream' };
-        },
-        metrics: {
-          numberOfValuesRetrieved: 1,
-          numberOfFilesRetrieved: 1
-        }
-      };
+      return southConnectorMetricsService;
     }
 );
-const addContentCallback = jest.fn();
 
 const logger: pino.Logger = new PinoLogger();
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
-const repositoryService: RepositoryService = new RepositoryServiceMock();
-const items: Array<SouthConnectorItemDTO<SouthOLEDBItemSettings>> = [
-  {
-    id: 'id1',
-    name: 'item1',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {
-      query: 'SELECT * FROM table',
-      dateTimeFields: [
-        {
-          fieldName: 'anotherTimestamp',
-          useAsReference: false,
-          type: 'unix-epoch-ms',
-          timezone: null,
-          format: null,
-          locale: null
-        } as unknown as SouthOLEDBItemSettingsDateTimeFields,
-        {
-          fieldName: 'timestamp',
-          useAsReference: true,
-          type: 'string',
-          timezone: 'Europe/Paris',
-          format: 'yyyy-MM-dd HH:mm:ss.SSS',
-          locale: 'en-US'
-        }
-      ],
-      serialization: {
-        type: 'csv',
-        filename: 'sql-@CurrentDate.csv',
-        delimiter: 'COMMA',
-        compression: true,
-        outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-        outputTimezone: 'Europe/Paris'
-      }
-    },
-    scanModeId: 'scanModeId1'
-  },
-  {
-    id: 'id2',
-    name: 'item2',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {
-      query: 'SELECT * FROM table',
-      dateTimeFields: null,
-      serialization: {
-        type: 'csv',
-        filename: 'sql-@CurrentDate.csv',
-        delimiter: 'COMMA',
-        compression: true,
-        outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-        outputTimezone: 'Europe/Paris'
-      }
-    },
-    scanModeId: 'scanModeId1'
-  },
-  {
-    id: 'id3',
-    name: 'item3',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {
-      query: 'SELECT * FROM table',
-      dateTimeFields: [
-        {
-          fieldName: 'anotherTimestamp',
-          useAsReference: false,
-          type: 'unix-epoch-ms',
-          timezone: null,
-          format: null,
-          locale: null
-        } as unknown as SouthOLEDBItemSettingsDateTimeFields,
-        {
-          fieldName: 'timestamp',
-          useAsReference: true,
-          type: 'string',
-          timezone: 'Europe/Paris',
-          format: 'yyyy-MM-dd HH:mm:ss.SSS',
-          locale: 'en-US'
-        }
-      ],
-      serialization: {
-        type: 'csv',
-        filename: 'sql-@CurrentDate.csv',
-        delimiter: 'COMMA',
-        compression: true,
-        outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-        outputTimezone: 'Europe/Paris'
-      }
-    },
-    scanModeId: 'scanModeId2'
-  }
-];
+const addContentCallback = jest.fn();
 
-describe('SouthOLEDB with authentication', () => {
-  const configuration: SouthConnectorDTO<SouthOLEDBSettings> = {
+describe('SouthOLEDB', () => {
+  let south: SouthOLEDB;
+  const configuration: SouthConnectorEntity<SouthOLEDBSettings, SouthOLEDBItemSettings> = {
     id: 'southId',
     name: 'south',
     type: 'oledb',
@@ -166,24 +70,126 @@ describe('SouthOLEDB with authentication', () => {
       readDelay: 0,
       overlap: 0
     },
+    sharedConnection: false,
     settings: {
       agentUrl: 'http://localhost:2224',
       connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
       connectionTimeout: 1000,
       retryInterval: 1000,
       requestTimeout: 1000
-    }
+    },
+    items: [
+      {
+        id: 'id1',
+        name: 'item1',
+        enabled: true,
+        settings: {
+          query: 'SELECT * FROM table',
+          dateTimeFields: [
+            {
+              fieldName: 'anotherTimestamp',
+              useAsReference: false,
+              type: 'unix-epoch-ms',
+              timezone: null,
+              format: null,
+              locale: null
+            } as unknown as SouthOLEDBItemSettingsDateTimeFields,
+            {
+              fieldName: 'timestamp',
+              useAsReference: true,
+              type: 'string',
+              timezone: 'Europe/Paris',
+              format: 'yyyy-MM-dd HH:mm:ss.SSS',
+              locale: 'en-US'
+            }
+          ],
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id2',
+        name: 'item2',
+        enabled: true,
+        settings: {
+          query: 'SELECT * FROM table',
+          dateTimeFields: null,
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id3',
+        name: 'item3',
+        enabled: true,
+        settings: {
+          query: 'SELECT * FROM table',
+          dateTimeFields: [
+            {
+              fieldName: 'anotherTimestamp',
+              useAsReference: false,
+              type: 'unix-epoch-ms',
+              timezone: null,
+              format: null,
+              locale: null
+            } as unknown as SouthOLEDBItemSettingsDateTimeFields,
+            {
+              fieldName: 'timestamp',
+              useAsReference: true,
+              type: 'string',
+              timezone: 'Europe/Paris',
+              format: 'yyyy-MM-dd HH:mm:ss.SSS',
+              locale: 'en-US'
+            }
+          ],
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId2'
+      }
+    ]
   };
+
   beforeEach(async () => {
     jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
     (convertDateTimeToInstant as jest.Mock).mockImplementation(value => value);
     (convertDelimiter as jest.Mock).mockImplementation(value => value);
     (formatInstant as jest.Mock).mockImplementation(value => value);
-    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
-    south = new SouthOLEDB(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthOLEDB(
+      configuration,
+      addContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southMetricsRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      'baseFolder'
+    );
   });
 
   it('should create temp folder', async () => {
@@ -269,11 +275,19 @@ describe('SouthOLEDB with authentication', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     south.queryRemoteAgentData = jest.fn().mockReturnValueOnce('2023-02-01T00:00:00.000Z').mockReturnValue('2023-02-01T00:00:00.000Z');
 
-    await south.historyQuery(items, startTime, nowDateString);
+    await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
     expect(south.queryRemoteAgentData).toHaveBeenCalledTimes(3);
-    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(items[0], startTime, nowDateString);
-    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(items[1], '2023-02-01T00:00:00.000Z', nowDateString);
-    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(items[2], '2023-02-01T00:00:00.000Z', nowDateString);
+    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(configuration.items[0], startTime, testData.constants.dates.FAKE_NOW);
+    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(
+      configuration.items[1],
+      '2023-02-01T00:00:00.000Z',
+      testData.constants.dates.FAKE_NOW
+    );
+    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(
+      configuration.items[2],
+      '2023-02-01T00:00:00.000Z',
+      testData.constants.dates.FAKE_NOW
+    );
   });
 
   it('should get data from Remote agent', async () => {
@@ -302,9 +316,9 @@ describe('SouthOLEDB with authentication', () => {
         })
       );
 
-    const result = await south.queryRemoteAgentData(items[0], startTime, endTime);
+    const result = await south.queryRemoteAgentData(configuration.items[0], startTime, endTime);
 
-    expect(utils.logQuery).toHaveBeenCalledWith(items[0].settings.query, startTime, endTime, logger);
+    expect(utils.logQuery).toHaveBeenCalledWith(configuration.items[0].settings.query, startTime, endTime, logger);
 
     expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/ole/${configuration.id}/read`, {
       method: 'PUT',
@@ -327,18 +341,18 @@ describe('SouthOLEDB with authentication', () => {
       [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
       {
         type: 'file',
-        filename: items[0].settings.serialization.filename,
-        compression: items[0].settings.serialization.compression
+        filename: configuration.items[0].settings.serialization.filename,
+        compression: configuration.items[0].settings.serialization.compression
       },
       configuration.name,
-      items[0].name,
+      configuration.items[0].name,
       path.resolve('baseFolder', 'tmp'),
       expect.any(Function),
       logger
     );
 
-    await south.queryRemoteAgentData(items[0], startTime, endTime);
-    expect(logger.debug).toHaveBeenCalledWith(`No result found for item ${items[0].name}. Request done in 0 ms`);
+    await south.queryRemoteAgentData(configuration.items[0], startTime, endTime);
+    expect(logger.debug).toHaveBeenCalledWith(`No result found for item ${configuration.items[0].name}. Request done in 0 ms`);
   });
 
   it('should get data from Remote agent without datetime reference', async () => {
@@ -356,9 +370,9 @@ describe('SouthOLEDB with authentication', () => {
       })
     );
 
-    const result = await south.queryRemoteAgentData(items[1], startTime, endTime);
+    const result = await south.queryRemoteAgentData(configuration.items[1], startTime, endTime);
 
-    expect(utils.logQuery).toHaveBeenCalledWith(items[1].settings.query, startTime, endTime, logger);
+    expect(utils.logQuery).toHaveBeenCalledWith(configuration.items[1].settings.query, startTime, endTime, logger);
 
     expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/ole/${configuration.id}/read`, {
       method: 'PUT',
@@ -392,12 +406,12 @@ describe('SouthOLEDB with authentication', () => {
           status: 500
         })
       );
-    await expect(south.queryRemoteAgentData(items[0], startTime, endTime)).rejects.toThrow(
+    await expect(south.queryRemoteAgentData(configuration.items[0], startTime, endTime)).rejects.toThrow(
       `Error occurred when querying remote agent with status 400: bad request`
     );
     expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 400: bad request`);
 
-    await expect(south.queryRemoteAgentData(items[0], startTime, endTime)).rejects.toThrow(
+    await expect(south.queryRemoteAgentData(configuration.items[0], startTime, endTime)).rejects.toThrow(
       `Error occurred when querying remote agent with status 500`
     );
     expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 500`);
@@ -413,7 +427,7 @@ describe('SouthOLEDB with authentication', () => {
     (utils.convertDateTimeToInstant as jest.Mock).mockImplementation(instant => instant);
 
     const callback = jest.fn();
-    await south.testItem(items[0], callback);
+    await south.testItem(configuration.items[0], callback);
     expect(south.queryRemoteAgentData).toHaveBeenCalledTimes(1);
   });
 
@@ -427,7 +441,7 @@ describe('SouthOLEDB with authentication', () => {
     (utils.convertDateTimeToInstant as jest.Mock).mockImplementation(instant => instant);
 
     const callback = jest.fn();
-    await south.testItem(items[1], callback);
+    await south.testItem(configuration.items[1], callback);
     expect(south.queryRemoteAgentData).toHaveBeenCalledTimes(1);
   });
 
@@ -457,9 +471,9 @@ describe('SouthOLEDB with authentication', () => {
         })
       );
 
-    await south.queryRemoteAgentData(items[0], startTime, endTime, true);
+    await south.queryRemoteAgentData(configuration.items[0], startTime, endTime, true);
 
-    expect(utils.logQuery).toHaveBeenCalledWith(items[0].settings.query, startTime, endTime, logger);
+    expect(utils.logQuery).toHaveBeenCalledWith(configuration.items[0].settings.query, startTime, endTime, logger);
 
     expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/ole/${configuration.id}/read`, {
       method: 'PUT',
@@ -476,37 +490,6 @@ describe('SouthOLEDB with authentication', () => {
         'Content-Type': 'application/json'
       }
     });
-  });
-});
-
-describe('SouthOLEDB test connection', () => {
-  const configuration: SouthConnectorDTO<SouthOLEDBSettings> = {
-    id: 'southId',
-    name: 'south',
-    type: 'oledb',
-    description: 'my test connector',
-    enabled: true,
-    history: {
-      maxInstantPerItem: true,
-      maxReadInterval: 3600,
-      readDelay: 0,
-      overlap: 0
-    },
-    settings: {
-      agentUrl: 'http://localhost:2224',
-      connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
-      connectionTimeout: 1000,
-      retryInterval: 1000,
-      requestTimeout: 1000
-    }
-  };
-
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
-
-    south = new SouthOLEDB(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should test connection successfully', async () => {

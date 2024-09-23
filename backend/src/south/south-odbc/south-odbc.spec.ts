@@ -3,21 +3,30 @@ import path from 'node:path';
 import SouthODBC from './south-odbc';
 import * as utils from '../../service/utils';
 import { convertDateTimeToInstant, convertDelimiter, formatInstant, persistResults } from '../../service/utils';
-import DatabaseMock from '../../tests/__mocks__/database.mock';
 
 import pino from 'pino';
 import fetch from 'node-fetch';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-import RepositoryService from '../../service/repository.service';
-import RepositoryServiceMock from '../../tests/__mocks__/service/repository-service.mock';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import {
   SouthODBCItemSettings,
   SouthODBCItemSettingsDateTimeFields,
   SouthODBCSettings
 } from '../../../../shared/model/south-settings.model';
+import SouthConnectorRepository from '../../repository/config/south-connector.repository';
+import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
+import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
+import NorthMetricsRepositoryMock from '../../tests/__mocks__/repository/log/north-metrics-repository.mock';
+import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
+import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
+import SouthConnectorMetricsServiceMock from '../../tests/__mocks__/service/south-connector-metrics-service.mock';
+import testData from '../../tests/utils/test-data';
+import { OIBusTimeValue } from '../../../../shared/model/engine.model';
 
 jest.mock(
   'odbc',
@@ -28,6 +37,7 @@ jest.mock(
   },
   { virtual: true }
 );
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let odbc: any | null = null;
 import('odbc')
   .then(obj => {
@@ -39,20 +49,22 @@ import('odbc')
   });
 
 jest.mock('node-fetch');
-jest.mock('../../service/utils');
 jest.mock('node:fs/promises');
+jest.mock('../../service/utils');
 
-const database = new DatabaseMock();
+const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
+const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
+const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
+const southMetricsRepository: SouthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
+const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
+const southCacheService = new SouthCacheServiceMock();
+const southConnectorMetricsService = new SouthConnectorMetricsServiceMock();
+
 jest.mock(
   '../../service/south-cache.service',
   () =>
     function () {
-      return {
-        createSouthCacheScanModeTable: jest.fn(),
-        southCacheRepository: {
-          database
-        }
-      };
+      return southCacheService;
     }
 );
 
@@ -60,127 +72,20 @@ jest.mock(
   '../../service/south-connector-metrics.service',
   () =>
     function () {
-      return {
-        initMetrics: jest.fn(),
-        updateMetrics: jest.fn(),
-        get stream() {
-          return { stream: 'myStream' };
-        },
-        metrics: {
-          numberOfValuesRetrieved: 1,
-          numberOfFilesRetrieved: 1
-        }
-      };
+      return southConnectorMetricsService;
     }
 );
-const addContentCallback = jest.fn();
 
 const logger: pino.Logger = new PinoLogger();
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
-const repositoryService: RepositoryService = new RepositoryServiceMock();
-const items: Array<SouthConnectorItemDTO<SouthODBCItemSettings>> = [
-  {
-    id: 'id1',
-    name: 'item1',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {
-      query: 'SELECT * FROM table',
-      dateTimeFields: [
-        {
-          fieldName: 'anotherTimestamp',
-          useAsReference: false,
-          type: 'unix-epoch-ms',
-          timezone: null,
-          format: null,
-          locale: null
-        } as unknown as SouthODBCItemSettingsDateTimeFields,
-        {
-          fieldName: 'timestamp',
-          useAsReference: true,
-          type: 'string',
-          timezone: 'Europe/Paris',
-          format: 'yyyy-MM-dd HH:mm:ss.SSS',
-          locale: 'en-US'
-        }
-      ],
-      serialization: {
-        type: 'csv',
-        filename: 'sql-@CurrentDate.csv',
-        delimiter: 'COMMA',
-        compression: true,
-        outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-        outputTimezone: 'Europe/Paris'
-      }
-    },
-    scanModeId: 'scanModeId1'
-  },
-  {
-    id: 'id2',
-    name: 'item2',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {
-      query: 'SELECT * FROM table',
-      dateTimeFields: null,
-      serialization: {
-        type: 'csv',
-        filename: 'sql-@CurrentDate.csv',
-        delimiter: 'COMMA',
-        compression: true,
-        outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-        outputTimezone: 'Europe/Paris'
-      }
-    },
-    scanModeId: 'scanModeId1'
-  },
-  {
-    id: 'id3',
-    name: 'item3',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {
-      query: 'SELECT * FROM table',
-      dateTimeFields: [
-        {
-          fieldName: 'anotherTimestamp',
-          useAsReference: false,
-          type: 'unix-epoch-ms',
-          timezone: null,
-          format: null,
-          locale: null
-        } as unknown as SouthODBCItemSettingsDateTimeFields,
-        {
-          fieldName: 'timestamp',
-          useAsReference: true,
-          type: 'string',
-          timezone: 'Europe/Paris',
-          format: 'yyyy-MM-dd HH:mm:ss.SSS',
-          locale: 'en-US'
-        }
-      ],
-      serialization: {
-        type: 'csv',
-        filename: 'sql-@CurrentDate.csv',
-        delimiter: 'COMMA',
-        compression: true,
-        outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-        outputTimezone: 'Europe/Paris'
-      }
-    },
-    scanModeId: 'scanModeId2'
-  }
-];
-
-const nowDateString = '2020-02-02T02:02:02.222Z';
-let south: SouthODBC;
+const addContentCallback = jest.fn();
 
 // Spy on console info and error
-jest.spyOn(global.console, 'info').mockImplementation(() => {});
-jest.spyOn(global.console, 'error').mockImplementation(() => {});
+jest.spyOn(global.console, 'info').mockImplementation(() => null);
+jest.spyOn(global.console, 'error').mockImplementation(() => null);
 
 describe('SouthODBC odbc driver with authentication', () => {
-  const configuration: SouthConnectorDTO<SouthODBCSettings> = {
+  let south: SouthODBC;
+  const configuration: SouthConnectorDTO<SouthODBCSettings, SouthODBCItemSettings> = {
     id: 'southId',
     name: 'south',
     type: 'odbc',
@@ -192,6 +97,7 @@ describe('SouthODBC odbc driver with authentication', () => {
       readDelay: 0,
       overlap: 0
     },
+    sharedConnection: false,
     settings: {
       remoteAgent: false,
       connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
@@ -199,17 +105,117 @@ describe('SouthODBC odbc driver with authentication', () => {
       connectionTimeout: 1000,
       retryInterval: 1000,
       requestTimeout: 1000
-    }
+    },
+    items: [
+      {
+        id: 'id1',
+        name: 'item1',
+        enabled: true,
+        settings: {
+          query: 'SELECT * FROM table',
+          dateTimeFields: [
+            {
+              fieldName: 'anotherTimestamp',
+              useAsReference: false,
+              type: 'unix-epoch-ms',
+              timezone: null,
+              format: null,
+              locale: null
+            } as unknown as SouthODBCItemSettingsDateTimeFields,
+            {
+              fieldName: 'timestamp',
+              useAsReference: true,
+              type: 'string',
+              timezone: 'Europe/Paris',
+              format: 'yyyy-MM-dd HH:mm:ss.SSS',
+              locale: 'en-US'
+            }
+          ],
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id2',
+        name: 'item2',
+        enabled: true,
+        settings: {
+          query: 'SELECT * FROM table',
+          dateTimeFields: null,
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id3',
+        name: 'item3',
+        enabled: true,
+        settings: {
+          query: 'SELECT * FROM table',
+          dateTimeFields: [
+            {
+              fieldName: 'anotherTimestamp',
+              useAsReference: false,
+              type: 'unix-epoch-ms',
+              timezone: null,
+              format: null,
+              locale: null
+            } as unknown as SouthODBCItemSettingsDateTimeFields,
+            {
+              fieldName: 'timestamp',
+              useAsReference: true,
+              type: 'string',
+              timezone: 'Europe/Paris',
+              format: 'yyyy-MM-dd HH:mm:ss.SSS',
+              locale: 'en-US'
+            }
+          ],
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId2'
+      }
+    ]
   };
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
     (convertDateTimeToInstant as jest.Mock).mockImplementation(value => value);
 
-    south = new SouthODBC(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthODBC(
+      configuration,
+      addContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southMetricsRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      'baseFolder'
+    );
   });
 
   it('should create temp folder', async () => {
@@ -227,11 +233,11 @@ describe('SouthODBC odbc driver with authentication', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     south.queryOdbcData = jest.fn().mockReturnValueOnce('2023-02-01T00:00:00.000Z').mockReturnValue('2023-02-01T00:00:00.000Z');
 
-    await south.historyQuery(items, startTime, nowDateString);
+    await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
     expect(south.queryOdbcData).toHaveBeenCalledTimes(3);
-    expect(south.queryOdbcData).toHaveBeenCalledWith(items[0], startTime, nowDateString);
-    expect(south.queryOdbcData).toHaveBeenCalledWith(items[1], '2023-02-01T00:00:00.000Z', nowDateString);
-    expect(south.queryOdbcData).toHaveBeenCalledWith(items[2], '2023-02-01T00:00:00.000Z', nowDateString);
+    expect(south.queryOdbcData).toHaveBeenCalledWith(configuration.items[0], startTime, testData.constants.dates.FAKE_NOW);
+    expect(south.queryOdbcData).toHaveBeenCalledWith(configuration.items[1], '2023-02-01T00:00:00.000Z', testData.constants.dates.FAKE_NOW);
+    expect(south.queryOdbcData).toHaveBeenCalledWith(configuration.items[2], '2023-02-01T00:00:00.000Z', testData.constants.dates.FAKE_NOW);
   });
 
   it('should get data from ODBC', async () => {
@@ -252,16 +258,16 @@ describe('SouthODBC odbc driver with authentication', () => {
 
     (odbc.connect as jest.Mock).mockReturnValue(odbcConnection);
 
-    const result = await south.queryOdbcData(items[0], startTime, endTime);
+    const result = await south.queryOdbcData(configuration.items[0], startTime, endTime);
 
-    expect(utils.logQuery).toHaveBeenCalledWith(items[0].settings.query, startTime, endTime, logger);
+    expect(utils.logQuery).toHaveBeenCalledWith(configuration.items[0].settings.query, startTime, endTime, logger);
 
     expect(odbc.connect).toHaveBeenCalledWith({
       connectionString: `${configuration.settings.connectionString};` + 'PWD=password;',
       connectionTimeout: configuration.settings.connectionTimeout
     });
     expect(logger.debug).toHaveBeenCalledWith(`Connecting with connection string ${configuration.settings.connectionString}PWD=<secret>;`);
-    expect(odbcConnection.query).toHaveBeenCalledWith(items[0].settings.query);
+    expect(odbcConnection.query).toHaveBeenCalledWith(configuration.items[0].settings.query);
     expect(odbcConnection.close).toHaveBeenCalledTimes(1);
 
     expect(result).toEqual('2020-03-01T00:00:00.000Z');
@@ -270,16 +276,16 @@ describe('SouthODBC odbc driver with authentication', () => {
         { value: 1, timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2020-02-01T00:00:00.000Z' },
         { value: 2, timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2020-03-01T00:00:00.000Z' }
       ],
-      items[0].settings.serialization,
+      configuration.items[0].settings.serialization,
       configuration.name,
-      items[0].name,
+      configuration.items[0].name,
       path.resolve('baseFolder', 'tmp'),
       expect.any(Function),
       logger
     );
 
-    await south.queryOdbcData(items[0], startTime, endTime);
-    expect(logger.debug).toHaveBeenCalledWith(`No result found for item ${items[0].name}. Request done in 0 ms`);
+    await south.queryOdbcData(configuration.items[0], startTime, endTime);
+    expect(logger.debug).toHaveBeenCalledWith(`No result found for item ${configuration.items[0].name}. Request done in 0 ms`);
   });
 
   it('should get data from ODBC without datetime reference', async () => {
@@ -300,9 +306,9 @@ describe('SouthODBC odbc driver with authentication', () => {
 
     (odbc.connect as jest.Mock).mockReturnValue(odbcConnection);
 
-    const result = await south.queryOdbcData(items[1], startTime, endTime);
+    const result = await south.queryOdbcData(configuration.items[1], startTime, endTime);
 
-    expect(utils.logQuery).toHaveBeenCalledWith(items[1].settings.query, startTime, endTime, logger);
+    expect(utils.logQuery).toHaveBeenCalledWith(configuration.items[1].settings.query, startTime, endTime, logger);
 
     expect(result).toEqual(startTime);
   });
@@ -326,13 +332,13 @@ describe('SouthODBC odbc driver with authentication', () => {
     };
     (odbc.connect as jest.Mock).mockReturnValue(odbcConnection);
 
-    await expect(south.queryOdbcData(items[0], startTime, endTime)).rejects.toThrow('query error');
-    expect(odbcConnection.query).toHaveBeenCalledWith(items[0].settings.query);
+    await expect(south.queryOdbcData(configuration.items[0], startTime, endTime)).rejects.toThrow('query error');
+    expect(odbcConnection.query).toHaveBeenCalledWith(configuration.items[0].settings.query);
     expect(odbcConnection.close).toHaveBeenCalledTimes(1);
 
     let error;
     try {
-      await south.queryOdbcData(items[0], startTime, endTime);
+      await south.queryOdbcData(configuration.items[0], startTime, endTime);
     } catch (err) {
       error = err;
     }
@@ -347,10 +353,10 @@ describe('SouthODBC odbc driver with authentication', () => {
   it('should test item with queryOdbcData', async () => {
     south.queryOdbcData = jest
       .fn()
-      .mockReturnValue([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }] as any[]);
+      .mockReturnValue([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }] as Array<OIBusTimeValue>);
 
     const callback = jest.fn();
-    await south.testItem(items[0], callback);
+    await south.testItem(configuration.items[0], callback);
     expect(south.queryOdbcData).toHaveBeenCalledTimes(1);
   });
 
@@ -372,22 +378,23 @@ describe('SouthODBC odbc driver with authentication', () => {
 
     (odbc.connect as jest.Mock).mockReturnValue(odbcConnection);
 
-    await south.queryOdbcData(items[0], startTime, endTime, true);
+    await south.queryOdbcData(configuration.items[0], startTime, endTime, true);
 
-    expect(utils.logQuery).toHaveBeenCalledWith(items[0].settings.query, startTime, endTime, logger);
+    expect(utils.logQuery).toHaveBeenCalledWith(configuration.items[0].settings.query, startTime, endTime, logger);
 
     expect(odbc.connect).toHaveBeenCalledWith({
       connectionString: `${configuration.settings.connectionString};` + 'PWD=password;',
       connectionTimeout: configuration.settings.connectionTimeout
     });
     expect(logger.debug).toHaveBeenCalledWith(`Connecting with connection string ${configuration.settings.connectionString}PWD=<secret>;`);
-    expect(odbcConnection.query).toHaveBeenCalledWith(items[0].settings.query);
+    expect(odbcConnection.query).toHaveBeenCalledWith(configuration.items[0].settings.query);
     expect(odbcConnection.close).toHaveBeenCalledTimes(1);
   });
 });
 
 describe('SouthODBC odbc driver without authentication', () => {
-  const configuration: SouthConnectorDTO<SouthODBCSettings> = {
+  let south: SouthODBC;
+  const configuration: SouthConnectorDTO<SouthODBCSettings, SouthODBCItemSettings> = {
     id: 'southId',
     name: 'south',
     type: 'odbc',
@@ -399,6 +406,7 @@ describe('SouthODBC odbc driver without authentication', () => {
       readDelay: 0,
       overlap: 0
     },
+    sharedConnection: false,
     settings: {
       remoteAgent: false,
       connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
@@ -406,15 +414,115 @@ describe('SouthODBC odbc driver without authentication', () => {
       connectionTimeout: 1000,
       retryInterval: 1000,
       requestTimeout: 1000
-    }
+    },
+    items: [
+      {
+        id: 'id1',
+        name: 'item1',
+        enabled: true,
+        settings: {
+          query: 'SELECT * FROM table',
+          dateTimeFields: [
+            {
+              fieldName: 'anotherTimestamp',
+              useAsReference: false,
+              type: 'unix-epoch-ms',
+              timezone: null,
+              format: null,
+              locale: null
+            } as unknown as SouthODBCItemSettingsDateTimeFields,
+            {
+              fieldName: 'timestamp',
+              useAsReference: true,
+              type: 'string',
+              timezone: 'Europe/Paris',
+              format: 'yyyy-MM-dd HH:mm:ss.SSS',
+              locale: 'en-US'
+            }
+          ],
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id2',
+        name: 'item2',
+        enabled: true,
+        settings: {
+          query: 'SELECT * FROM table',
+          dateTimeFields: null,
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id3',
+        name: 'item3',
+        enabled: true,
+        settings: {
+          query: 'SELECT * FROM table',
+          dateTimeFields: [
+            {
+              fieldName: 'anotherTimestamp',
+              useAsReference: false,
+              type: 'unix-epoch-ms',
+              timezone: null,
+              format: null,
+              locale: null
+            } as unknown as SouthODBCItemSettingsDateTimeFields,
+            {
+              fieldName: 'timestamp',
+              useAsReference: true,
+              type: 'string',
+              timezone: 'Europe/Paris',
+              format: 'yyyy-MM-dd HH:mm:ss.SSS',
+              locale: 'en-US'
+            }
+          ],
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId2'
+      }
+    ]
   };
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
-    south = new SouthODBC(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthODBC(
+      configuration,
+      addContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southMetricsRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      'baseFolder'
+    );
   });
 
   it('should get data from ODBC without auth', async () => {
@@ -429,7 +537,7 @@ describe('SouthODBC odbc driver without authentication', () => {
     };
     (odbc.connect as jest.Mock).mockReturnValue(odbcConnection);
 
-    const result = await south.queryOdbcData(items[0], startTime, endTime);
+    const result = await south.queryOdbcData(configuration.items[0], startTime, endTime);
 
     expect(odbc.connect).toHaveBeenCalledWith({
       connectionString: configuration.settings.connectionString,
@@ -440,9 +548,9 @@ describe('SouthODBC odbc driver without authentication', () => {
     expect(result).toEqual('2020-03-01T00:00:00.000Z');
     expect(persistResults).toHaveBeenCalledWith(
       [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
-      items[0].settings.serialization,
+      configuration.items[0].settings.serialization,
       configuration.name,
-      items[0].name,
+      configuration.items[0].name,
       path.resolve('baseFolder', 'tmp'),
       expect.any(Function),
       logger
@@ -459,7 +567,7 @@ describe('SouthODBC odbc driver without authentication', () => {
 
     let error;
     try {
-      await south.queryOdbcData(items[0], startTime, endTime);
+      await south.queryOdbcData(configuration.items[0], startTime, endTime);
     } catch (err) {
       error = err;
     }
@@ -472,7 +580,8 @@ describe('SouthODBC odbc driver without authentication', () => {
 });
 
 describe('SouthODBC odbc driver test connection', () => {
-  const configuration: SouthConnectorDTO<SouthODBCSettings> = {
+  let south: SouthODBC;
+  const configuration: SouthConnectorDTO<SouthODBCSettings, SouthODBCItemSettings> = {
     id: 'southId',
     name: 'south',
     type: 'odbc',
@@ -484,6 +593,7 @@ describe('SouthODBC odbc driver test connection', () => {
       readDelay: 0,
       overlap: 0
     },
+    sharedConnection: false,
     settings: {
       remoteAgent: false,
       connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
@@ -491,16 +601,107 @@ describe('SouthODBC odbc driver test connection', () => {
       connectionTimeout: 1000,
       retryInterval: 1000,
       requestTimeout: 1000
-    }
+    },
+    items: [
+      {
+        id: 'id1',
+        name: 'item1',
+        enabled: true,
+        settings: {
+          query: 'SELECT * FROM table',
+          dateTimeFields: [
+            {
+              fieldName: 'anotherTimestamp',
+              useAsReference: false,
+              type: 'unix-epoch-ms',
+              timezone: null,
+              format: null,
+              locale: null
+            } as unknown as SouthODBCItemSettingsDateTimeFields,
+            {
+              fieldName: 'timestamp',
+              useAsReference: true,
+              type: 'string',
+              timezone: 'Europe/Paris',
+              format: 'yyyy-MM-dd HH:mm:ss.SSS',
+              locale: 'en-US'
+            }
+          ],
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id2',
+        name: 'item2',
+        enabled: true,
+        settings: {
+          query: 'SELECT * FROM table',
+          dateTimeFields: null,
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id3',
+        name: 'item3',
+        enabled: true,
+        settings: {
+          query: 'SELECT * FROM table',
+          dateTimeFields: [
+            {
+              fieldName: 'anotherTimestamp',
+              useAsReference: false,
+              type: 'unix-epoch-ms',
+              timezone: null,
+              format: null,
+              locale: null
+            } as unknown as SouthODBCItemSettingsDateTimeFields,
+            {
+              fieldName: 'timestamp',
+              useAsReference: true,
+              type: 'string',
+              timezone: 'Europe/Paris',
+              format: 'yyyy-MM-dd HH:mm:ss.SSS',
+              locale: 'en-US'
+            }
+          ],
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId2'
+      }
+    ]
   };
 
   class NodeOdbcError extends Error {
-    public odbcErrors: Array<{ code: number; message: string; state: string }> = [];
-    constructor(message: string, odbcErrors: Array<{ code: number; message: string; state: string }> = []) {
+    constructor(
+      message: string,
+      private odbcErrors: Array<{ code: number; message: string; state: string }> = []
+    ) {
       super();
       this.name = 'ODBCError';
       this.message = message;
-      this.odbcErrors = odbcErrors;
     }
   }
 
@@ -567,10 +768,20 @@ describe('SouthODBC odbc driver test connection', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
-    south = new SouthODBC(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthODBC(
+      configuration,
+      addContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southMetricsRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      'baseFolder'
+    );
   });
 
   it('Database is reachable and has tables', async () => {
@@ -588,17 +799,6 @@ describe('SouthODBC odbc driver test connection', () => {
     await expect(south.testConnection()).resolves.not.toThrow();
 
     expect(odbcConnection.close).toHaveBeenCalled();
-  });
-
-  it('Database is reachable but reading table fails', async () => {
-    const odbcConnection = {
-      close: jest.fn(),
-      tables: jest.fn(() => {
-        throw { odbcErrors: [], message: 'table error' };
-      })
-    };
-    (odbc.connect as jest.Mock).mockReturnValue(odbcConnection);
-    await expect(south.testConnection()).rejects.toThrow('Unable to read tables in database');
   });
 
   it.each(flattenedErrors)(
@@ -624,33 +824,6 @@ describe('SouthODBC odbc driver test connection', () => {
     await expect(south.testConnection()).rejects.toThrow(new Error(`Driver not found. Check connection string and driver`));
   });
 
-  it('System table unreachable', async () => {
-    const errorMessage = 'Function unavailable';
-    const odbcConnection = {
-      close: jest.fn(),
-      tables: jest.fn(() => {
-        throw new NodeOdbcError(errorMessage, []);
-      })
-    };
-    (odbc.connect as jest.Mock).mockReturnValue(odbcConnection);
-
-    await expect(south.testConnection()).rejects.toThrow(new Error(`Unable to read tables in database`));
-
-    expect(odbcConnection.close).toHaveBeenCalled();
-  });
-
-  it('Database has no tables', async () => {
-    const odbcConnection = {
-      close: jest.fn(),
-      tables: jest.fn(() => [])
-    };
-    (odbc.connect as jest.Mock).mockReturnValue(odbcConnection);
-
-    await expect(south.testConnection()).rejects.toThrow(new Error('Database has no table'));
-
-    expect(odbcConnection.close).toHaveBeenCalled();
-  });
-
   it('Unable to connect to database without password', async () => {
     const errorMessage = 'Error connecting to database';
     configuration.settings.connectionString = 'myOdbcDriver';
@@ -664,7 +837,8 @@ describe('SouthODBC odbc driver test connection', () => {
 });
 
 describe('SouthODBC odbc remote with authentication', () => {
-  const configuration: SouthConnectorDTO<SouthODBCSettings> = {
+  let south: SouthODBC;
+  const configuration: SouthConnectorDTO<SouthODBCSettings, SouthODBCItemSettings> = {
     id: 'southId',
     name: 'south',
     type: 'odbc',
@@ -676,6 +850,7 @@ describe('SouthODBC odbc remote with authentication', () => {
       readDelay: 0,
       overlap: 0
     },
+    sharedConnection: false,
     settings: {
       remoteAgent: true,
       agentUrl: 'http://localhost:2224',
@@ -684,18 +859,118 @@ describe('SouthODBC odbc remote with authentication', () => {
       connectionTimeout: 1000,
       retryInterval: 1000,
       requestTimeout: 1000
-    }
+    },
+    items: [
+      {
+        id: 'id1',
+        name: 'item1',
+        enabled: true,
+        settings: {
+          query: 'SELECT * FROM table',
+          dateTimeFields: [
+            {
+              fieldName: 'anotherTimestamp',
+              useAsReference: false,
+              type: 'unix-epoch-ms',
+              timezone: null,
+              format: null,
+              locale: null
+            } as unknown as SouthODBCItemSettingsDateTimeFields,
+            {
+              fieldName: 'timestamp',
+              useAsReference: true,
+              type: 'string',
+              timezone: 'Europe/Paris',
+              format: 'yyyy-MM-dd HH:mm:ss.SSS',
+              locale: 'en-US'
+            }
+          ],
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id2',
+        name: 'item2',
+        enabled: true,
+        settings: {
+          query: 'SELECT * FROM table',
+          dateTimeFields: null,
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id3',
+        name: 'item3',
+        enabled: true,
+        settings: {
+          query: 'SELECT * FROM table',
+          dateTimeFields: [
+            {
+              fieldName: 'anotherTimestamp',
+              useAsReference: false,
+              type: 'unix-epoch-ms',
+              timezone: null,
+              format: null,
+              locale: null
+            } as unknown as SouthODBCItemSettingsDateTimeFields,
+            {
+              fieldName: 'timestamp',
+              useAsReference: true,
+              type: 'string',
+              timezone: 'Europe/Paris',
+              format: 'yyyy-MM-dd HH:mm:ss.SSS',
+              locale: 'en-US'
+            }
+          ],
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId2'
+      }
+    ]
   };
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
     (convertDateTimeToInstant as jest.Mock).mockImplementation(value => value);
     (convertDelimiter as jest.Mock).mockImplementation(value => value);
 
-    south = new SouthODBC(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthODBC(
+      configuration,
+      addContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southMetricsRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      'baseFolder'
+    );
   });
 
   it('should properly connect to remote agent and disconnect ', async () => {
@@ -776,11 +1051,19 @@ describe('SouthODBC odbc remote with authentication', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     south.queryRemoteAgentData = jest.fn().mockReturnValueOnce('2023-02-01T00:00:00.000Z').mockReturnValue('2023-02-01T00:00:00.000Z');
 
-    await south.historyQuery(items, startTime, nowDateString);
+    await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
     expect(south.queryRemoteAgentData).toHaveBeenCalledTimes(3);
-    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(items[0], startTime, nowDateString);
-    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(items[1], '2023-02-01T00:00:00.000Z', nowDateString);
-    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(items[2], '2023-02-01T00:00:00.000Z', nowDateString);
+    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(configuration.items[0], startTime, testData.constants.dates.FAKE_NOW);
+    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(
+      configuration.items[1],
+      '2023-02-01T00:00:00.000Z',
+      testData.constants.dates.FAKE_NOW
+    );
+    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(
+      configuration.items[2],
+      '2023-02-01T00:00:00.000Z',
+      testData.constants.dates.FAKE_NOW
+    );
   });
 
   it('should get data from Remote agent', async () => {
@@ -808,23 +1091,24 @@ describe('SouthODBC odbc remote with authentication', () => {
           })
         })
       );
+    (formatInstant as jest.Mock).mockImplementation(value => value);
 
-    const result = await south.queryRemoteAgentData(items[0], startTime, endTime);
+    const result = await south.queryRemoteAgentData(configuration.items[0], startTime, endTime);
 
-    expect(utils.logQuery).toHaveBeenCalledWith(items[0].settings.query, startTime, endTime, logger);
+    expect(utils.logQuery).toHaveBeenCalledWith(configuration.items[0].settings.query, startTime, endTime, logger);
 
     expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/odbc/${configuration.id}/read`, {
       method: 'PUT',
       body: JSON.stringify({
         connectionString: configuration.settings.connectionString,
-        sql: items[0].settings.query,
+        sql: configuration.items[0].settings.query,
         readTimeout: configuration.settings.requestTimeout,
-        timeColumn: items[0].settings.dateTimeFields![1].fieldName,
-        datasourceTimestampFormat: items[0].settings.dateTimeFields![1].format,
-        datasourceTimezone: items[0].settings.dateTimeFields![1].timezone,
-        delimiter: items[0].settings.serialization.delimiter,
-        outputTimestampFormat: items[0].settings.serialization.outputTimestampFormat,
-        outputTimezone: items[0].settings.serialization.outputTimezone
+        timeColumn: configuration.items[0].settings.dateTimeFields![1].fieldName,
+        datasourceTimestampFormat: configuration.items[0].settings.dateTimeFields![1].format,
+        datasourceTimezone: configuration.items[0].settings.dateTimeFields![1].timezone,
+        delimiter: configuration.items[0].settings.serialization.delimiter,
+        outputTimestampFormat: configuration.items[0].settings.serialization.outputTimestampFormat,
+        outputTimezone: configuration.items[0].settings.serialization.outputTimezone
       }),
       headers: {
         'Content-Type': 'application/json'
@@ -834,16 +1118,20 @@ describe('SouthODBC odbc remote with authentication', () => {
     expect(result).toEqual('2020-03-01T00:00:00.000Z');
     expect(persistResults).toHaveBeenCalledWith(
       [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
-      { type: 'file', filename: items[0].settings.serialization.filename, compression: items[0].settings.serialization.compression },
+      {
+        type: 'file',
+        filename: configuration.items[0].settings.serialization.filename,
+        compression: configuration.items[0].settings.serialization.compression
+      },
       configuration.name,
-      items[0].name,
+      configuration.items[0].name,
       path.resolve('baseFolder', 'tmp'),
       expect.any(Function),
       logger
     );
 
-    await south.queryRemoteAgentData(items[0], startTime, endTime);
-    expect(logger.debug).toHaveBeenCalledWith(`No result found for item ${items[0].name}. Request done in 0 ms`);
+    await south.queryRemoteAgentData(configuration.items[0], startTime, endTime);
+    expect(logger.debug).toHaveBeenCalledWith(`No result found for item ${configuration.items[0].name}. Request done in 0 ms`);
   });
 
   it('should get data from Remote agent without datetime reference', async () => {
@@ -861,19 +1149,19 @@ describe('SouthODBC odbc remote with authentication', () => {
       })
     );
 
-    const result = await south.queryRemoteAgentData(items[1], startTime, endTime);
+    const result = await south.queryRemoteAgentData(configuration.items[1], startTime, endTime);
 
-    expect(utils.logQuery).toHaveBeenCalledWith(items[1].settings.query, startTime, endTime, logger);
+    expect(utils.logQuery).toHaveBeenCalledWith(configuration.items[1].settings.query, startTime, endTime, logger);
 
     expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/odbc/${configuration.id}/read`, {
       method: 'PUT',
       body: JSON.stringify({
         connectionString: configuration.settings.connectionString,
-        sql: items[0].settings.query,
+        sql: configuration.items[0].settings.query,
         readTimeout: configuration.settings.requestTimeout,
-        delimiter: items[0].settings.serialization.delimiter,
-        outputTimestampFormat: items[0].settings.serialization.outputTimestampFormat,
-        outputTimezone: items[0].settings.serialization.outputTimezone
+        delimiter: configuration.items[0].settings.serialization.delimiter,
+        outputTimestampFormat: configuration.items[0].settings.serialization.outputTimestampFormat,
+        outputTimezone: configuration.items[0].settings.serialization.outputTimezone
       }),
       headers: {
         'Content-Type': 'application/json'
@@ -900,24 +1188,30 @@ describe('SouthODBC odbc remote with authentication', () => {
         })
       );
 
-    await expect(south.queryRemoteAgentData(items[0], startTime, endTime)).rejects.toThrow(
+    await expect(south.queryRemoteAgentData(configuration.items[0], startTime, endTime)).rejects.toThrow(
       `Error occurred when querying remote agent with status 400: bad request`
     );
     expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 400: bad request`);
 
-    await expect(south.queryRemoteAgentData(items[0], startTime, endTime)).rejects.toThrow(
+    await expect(south.queryRemoteAgentData(configuration.items[0], startTime, endTime)).rejects.toThrow(
       `Error occurred when querying remote agent with status 500`
     );
     expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 500`);
   });
 
   it('should test item with queryRemoteAgentData', async () => {
-    south.queryRemoteAgentData = jest
-      .fn()
-      .mockReturnValue([[{ timestamp: '2020-02-01T00:00:00.000Z', table_count: 2 }, { timestamp: '2020-03-01T00:00:00.000Z' }]] as any[]);
+    south.queryRemoteAgentData = jest.fn().mockReturnValue([
+      [
+        {
+          timestamp: '2020-02-01T00:00:00.000Z',
+          table_count: 2
+        },
+        { timestamp: '2020-03-01T00:00:00.000Z' }
+      ]
+    ]);
 
     const callback = jest.fn();
-    await south.testItem(items[1], callback);
+    await south.testItem(configuration.items[1], callback);
     expect(south.queryRemoteAgentData).toHaveBeenCalled();
   });
 
@@ -936,13 +1230,14 @@ describe('SouthODBC odbc remote with authentication', () => {
       })
     );
 
-    await south.queryRemoteAgentData(items[0], startTime, endTime, true);
+    await south.queryRemoteAgentData(configuration.items[0], startTime, endTime, true);
     expect(fetch).toHaveBeenCalled();
   });
 });
 
 describe('SouthODBC odbc remote test connection', () => {
-  const configuration: SouthConnectorDTO<SouthODBCSettings> = {
+  let south: SouthODBC;
+  const configuration: SouthConnectorDTO<SouthODBCSettings, SouthODBCItemSettings> = {
     id: 'southId',
     name: 'south',
     type: 'odbc',
@@ -954,6 +1249,7 @@ describe('SouthODBC odbc remote test connection', () => {
       readDelay: 0,
       overlap: 0
     },
+    sharedConnection: false,
     settings: {
       remoteAgent: true,
       agentUrl: 'http://localhost:2224',
@@ -962,15 +1258,115 @@ describe('SouthODBC odbc remote test connection', () => {
       connectionTimeout: 1000,
       retryInterval: 1000,
       requestTimeout: 1000
-    }
+    },
+    items: [
+      {
+        id: 'id1',
+        name: 'item1',
+        enabled: true,
+        settings: {
+          query: 'SELECT * FROM table',
+          dateTimeFields: [
+            {
+              fieldName: 'anotherTimestamp',
+              useAsReference: false,
+              type: 'unix-epoch-ms',
+              timezone: null,
+              format: null,
+              locale: null
+            } as unknown as SouthODBCItemSettingsDateTimeFields,
+            {
+              fieldName: 'timestamp',
+              useAsReference: true,
+              type: 'string',
+              timezone: 'Europe/Paris',
+              format: 'yyyy-MM-dd HH:mm:ss.SSS',
+              locale: 'en-US'
+            }
+          ],
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id2',
+        name: 'item2',
+        enabled: true,
+        settings: {
+          query: 'SELECT * FROM table',
+          dateTimeFields: null,
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id3',
+        name: 'item3',
+        enabled: true,
+        settings: {
+          query: 'SELECT * FROM table',
+          dateTimeFields: [
+            {
+              fieldName: 'anotherTimestamp',
+              useAsReference: false,
+              type: 'unix-epoch-ms',
+              timezone: null,
+              format: null,
+              locale: null
+            } as unknown as SouthODBCItemSettingsDateTimeFields,
+            {
+              fieldName: 'timestamp',
+              useAsReference: true,
+              type: 'string',
+              timezone: 'Europe/Paris',
+              format: 'yyyy-MM-dd HH:mm:ss.SSS',
+              locale: 'en-US'
+            }
+          ],
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId2'
+      }
+    ]
   };
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
-    south = new SouthODBC(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthODBC(
+      configuration,
+      addContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southMetricsRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      'baseFolder'
+    );
   });
 
   it('should test connection successfully', async () => {

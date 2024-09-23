@@ -4,35 +4,24 @@ import { EventEmitter } from 'node:events';
  * Create a mock object for File Cache Service
  */
 export default class FileCacheServiceMock {
+  triggerRun = new EventEmitter();
   start = jest.fn();
-  stop = jest.fn();
-  getErrorFiles = jest.fn(() => [
-    { filename: 'file1.name', modificationDate: '', size: 1 },
-    { filename: 'file2.name', modificationDate: '', size: 2 },
-    { filename: 'file3.name', modificationDate: '', size: 3 }
-  ]);
-  cacheFile = jest.fn();
-  removeFiles = jest.fn();
-  retryErrorFiles = jest.fn();
-  removeAllErrorFiles = jest.fn();
-  retryAllErrorFiles = jest.fn();
-  removeAllCacheFiles = jest.fn();
   getFileToSend = jest.fn();
-  retryFiles = jest.fn();
-  retryAllFiles = jest.fn();
   removeFileFromQueue = jest.fn();
+  cacheFile = jest.fn();
   manageErroredFiles = jest.fn();
   isEmpty = jest.fn();
-  setLogger = jest.fn();
-  triggerRun: EventEmitter = {
-    on: jest.fn(),
-    emit: jest.fn()
-  } as unknown as EventEmitter;
-  getCacheFiles = jest.fn(() => [
-    { filename: 'file4.name', modificationDate: '', size: 1 },
-    { filename: 'file5.name', modificationDate: '', size: 2 },
-    { filename: 'file6.name', modificationDate: '', size: 3 }
-  ]);
+  getErrorFiles = jest.fn();
   getErrorFileContent = jest.fn();
+  removeFiles = jest.fn();
+  retryErrorFiles = jest.fn();
+  removeAllCacheFiles = jest.fn();
+  removeAllErrorFiles = jest.fn();
+  retryAllErrorFiles = jest.fn();
+  getCacheFiles = jest.fn();
   getCacheFileContent = jest.fn();
+  retryFiles = jest.fn();
+  retryAllFiles = jest.fn();
+  stop = jest.fn();
+  setLogger = jest.fn();
 }

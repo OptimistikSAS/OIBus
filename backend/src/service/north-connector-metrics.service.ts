@@ -2,7 +2,7 @@ import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { PassThrough } from 'node:stream';
 import { NorthConnectorMetrics } from '../../../shared/model/engine.model';
-import NorthConnectorMetricsRepository from '../repository/north-connector-metrics.repository';
+import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
 
 export default class NorthConnectorMetricsService {
   private _stream: PassThrough | null = null;
@@ -21,28 +21,24 @@ export default class NorthConnectorMetricsService {
 
   constructor(
     private readonly connectorId: string,
-    private readonly _metricsRepository: NorthConnectorMetricsRepository
+    private readonly northConnectorMetricsRepository: NorthConnectorMetricsRepository
   ) {}
 
-  get metricsRepository(): NorthConnectorMetricsRepository {
-    return this._metricsRepository;
-  }
-
   initMetrics(): void {
-    this._metricsRepository.initMetrics(this.connectorId);
-    const results = this._metricsRepository.getMetrics(this.connectorId);
+    this.northConnectorMetricsRepository.initMetrics(this.connectorId);
+    const results = this.northConnectorMetricsRepository.getMetrics(this.connectorId);
     this._metrics = results!;
     this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
   }
 
   updateMetrics(northId: string, newMetrics: NorthConnectorMetrics): void {
-    this._metricsRepository.updateMetrics(northId, newMetrics);
+    this.northConnectorMetricsRepository.updateMetrics(northId, newMetrics);
     this._metrics = newMetrics;
     this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
   }
 
   resetMetrics(): void {
-    this._metricsRepository.removeMetrics(this.connectorId);
+    this.northConnectorMetricsRepository.removeMetrics(this.connectorId);
     this.initMetrics();
   }
 

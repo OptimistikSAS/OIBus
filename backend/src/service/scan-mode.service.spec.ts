@@ -1,11 +1,11 @@
 import OIBusEngine from '../engine/oibus-engine';
 import OibusEngineMock from '../tests/__mocks__/oibus-engine.mock';
-import ScanModeService from './scan-mode.service';
+import ScanModeService, { toScanModeDTO } from './scan-mode.service';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
-import ScanModeRepository from '../repository/scan-mode.repository';
-import ScanModeRepositoryMock from '../tests/__mocks__/repository/scan-mode-repository.mock';
-import SouthCacheRepository from '../repository/south-cache.repository';
-import SouthCacheRepositoryMock from '../tests/__mocks__/repository/south-cache-repository.mock';
+import ScanModeRepository from '../repository/config/scan-mode.repository';
+import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
+import SouthCacheRepository from '../repository/cache/south-cache.repository';
+import SouthCacheRepositoryMock from '../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import OianalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import testData from '../tests/utils/test-data';
@@ -36,7 +36,7 @@ describe('Scan Mode Service', () => {
     const result = service.findAll();
 
     expect(scanModeRepository.findAll).toHaveBeenCalled();
-    expect(result).toEqual(testData.scanMode.dto);
+    expect(result).toEqual(testData.scanMode.list.map(element => toScanModeDTO(element)));
   });
 
   it('findById() should find a scan mode by id', () => {
@@ -45,7 +45,7 @@ describe('Scan Mode Service', () => {
     const result = service.findById(testData.scanMode.list[0].id);
 
     expect(scanModeRepository.findById).toHaveBeenCalledWith(testData.scanMode.list[0].id);
-    expect(result).toEqual(testData.scanMode.dto[0]);
+    expect(result).toEqual(toScanModeDTO(testData.scanMode.list[0]));
   });
 
   it('findById() should return null if id not found', () => {
@@ -64,7 +64,7 @@ describe('Scan Mode Service', () => {
 
     expect(validator.validate).toHaveBeenCalledWith(scanModeSchema, testData.scanMode.command);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
-    expect(result).toEqual(testData.scanMode.dto[0]);
+    expect(result).toEqual(toScanModeDTO(testData.scanMode.list[0]));
   });
 
   it('update() should update a scan mode', async () => {

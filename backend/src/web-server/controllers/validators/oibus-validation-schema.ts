@@ -28,7 +28,7 @@ const engineSchema: Joi.ObjectSchema = Joi.object({
   name: Joi.string().required(),
   port: Joi.number().required().port(),
   proxyEnabled: Joi.boolean().required(),
-  proxyPort: Joi.number().port(),
+  proxyPort: Joi.number().port().optional().allow(null),
   logParameters: Joi.object({
     console: Joi.object({
       level: Joi.string().required().allow('silent', 'error', 'warning', 'info', 'debug', 'trace')
@@ -123,8 +123,8 @@ function cronValidator(value: string, helper: Joi.CustomHelpers) {
   try {
     validateCronExpression(value);
     return true;
-  } catch (error: any) {
-    return helper.message({ custom: error.message });
+  } catch (error: unknown) {
+    return helper.message({ custom: (error as Error).message });
   }
 }
 

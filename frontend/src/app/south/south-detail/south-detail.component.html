@@ -62,7 +62,12 @@
           </table>
         </oib-box>
         <!-- Items -->
-        <oib-south-items [southConnector]="southConnector" [southManifest]="manifest" [scanModes]="scanModes" [inMemory]="false" />
+        <oib-south-items
+          [southConnector]="southConnector"
+          [southManifest]="manifest"
+          [scanModes]="scanModes"
+          (inMemoryItems)="updateInMemoryItems($event)"
+        />
         <!-- Logs -->
         <oib-box>
           <ng-template oibBoxTitle>

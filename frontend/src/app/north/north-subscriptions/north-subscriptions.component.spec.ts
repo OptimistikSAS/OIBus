@@ -6,10 +6,10 @@ import { ComponentTester, createMock } from 'ngx-speculoos';
 import { of } from 'rxjs';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
-import { SouthConnectorDTO } from '../../../../../shared/model/south-connector.model';
-import { SubscriptionDTO } from '../../../../../shared/model/subscription.model';
+import { SouthConnectorLightDTO } from '../../../../../shared/model/south-connector.model';
 import { Component } from '@angular/core';
 import { NorthConnectorDTO } from '../../../../../shared/model/north-connector.model';
+import { NorthSettings } from '../../../../../shared/model/north-settings.model';
 
 @Component({
   template: `<oib-north-subscriptions [northConnector]="northConnector" />`,
@@ -17,10 +17,26 @@ import { NorthConnectorDTO } from '../../../../../shared/model/north-connector.m
   imports: [NorthSubscriptionsComponent]
 })
 class TestComponent {
-  northConnector: NorthConnectorDTO = {
+  northConnector: NorthConnectorDTO<NorthSettings> = {
     id: 'northId',
-    name: 'North Connector'
-  } as NorthConnectorDTO;
+    name: 'North Connector',
+    subscriptions: [
+      {
+        id: 'southId1',
+        type: 'folder-scanner',
+        name: 'my South',
+        enabled: true,
+        description: ''
+      },
+      {
+        id: 'southId2',
+        type: 'folder-scanner',
+        name: 'another South',
+        enabled: true,
+        description: ''
+      }
+    ]
+  } as NorthConnectorDTO<NorthSettings>;
 }
 
 class NorthSubscriptionsComponentTester extends ComponentTester<TestComponent> {
@@ -50,28 +66,15 @@ describe('NorthSubscriptionsComponent', () => {
   let northService: jasmine.SpyObj<NorthConnectorService>;
   let southService: jasmine.SpyObj<SouthConnectorService>;
 
-  const southConnectors: Array<SouthConnectorDTO> = [
+  const southConnectors: Array<SouthConnectorLightDTO> = [
     {
       id: 'id1',
       name: 'south1'
-    } as SouthConnectorDTO,
+    } as SouthConnectorLightDTO,
     {
       id: 'id2',
       name: 'south2'
-    } as SouthConnectorDTO
-  ];
-
-  const northSubscriptions: Array<SubscriptionDTO> = [
-    {
-      southId: 'southId1',
-      southType: 'folder-scanner',
-      southName: 'my South'
-    },
-    {
-      southId: 'southId2',
-      southType: 'folder-scanner',
-      southName: 'another South'
-    }
+    } as SouthConnectorLightDTO
   ];
 
   beforeEach(() => {
@@ -87,7 +90,6 @@ describe('NorthSubscriptionsComponent', () => {
     });
 
     southService.list.and.returnValue(of(southConnectors));
-    northService.getSubscriptions.and.returnValue(of(northSubscriptions));
 
     tester = new NorthSubscriptionsComponentTester();
   });
@@ -100,13 +102,5 @@ describe('NorthSubscriptionsComponent', () => {
     expect(tester.subscriptions[0].elements('td').length).toEqual(2);
     expect(tester.subscriptions[0].elements('td')[0]).toContainText('my South');
     expect(tester.subscriptions[1].elements('td')[0]).toContainText('another South');
-  });
-
-  it('should display an empty list', () => {
-    northService.getSubscriptions.and.returnValue(of([]));
-    tester.detectChanges();
-
-    expect(tester.title).toContainText('Subscriptions');
-    expect(tester.noSubscriptions).toContainText('No subscription set. The connector receives data from all data sources.');
   });
 });
