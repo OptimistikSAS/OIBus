@@ -101,7 +101,7 @@ export interface NorthCacheFiles {
   size: number;
 }
 
-export interface NorthArchiveFiles extends NorthCacheFiles {}
+export type NorthArchiveFiles = NorthCacheFiles;
 
 export interface NorthValueFiles {
   filename: string;
