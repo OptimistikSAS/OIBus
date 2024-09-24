@@ -20,16 +20,16 @@ const enum ColumnSortState {
   DESCENDING = 2
 }
 
-export type FileTableData = {
+export interface FileTableData {
   filename: string;
   modificationDate: Instant;
   size: number;
-};
+}
 
-export type ItemActionEvent = {
+export interface ItemActionEvent {
   type: 'remove' | 'retry' | 'view' | 'archive';
   file: FileTableData;
-};
+}
 
 @Component({
   selector: 'oib-file-table',
@@ -132,7 +132,7 @@ export class FileTableComponent implements OnInit {
     this.sortTable();
   }
 
-  refreshTable(newFiles: FileTableData[]) {
+  refreshTable(newFiles: Array<FileTableData>) {
     this.files = newFiles;
     this.sortTable();
     this.clearCheckBoxes();

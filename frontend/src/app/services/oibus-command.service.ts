@@ -11,7 +11,7 @@ export class OibusCommandService {
   constructor(private http: HttpClient) {}
 
   searchCommands(searchParams: CommandSearchParam): Observable<Page<OIBusCommandDTO>> {
-    const params: { [key: string]: string | string[] } = {
+    const params: Record<string, string | Array<string>> = {
       page: `${searchParams.page || 0}`
     };
     if (searchParams.types) {

@@ -18,10 +18,10 @@ const enum ColumnSortState {
   DESCENDING = 2
 }
 
-export type ValueTableData = {
+export interface ValueTableData {
   filename: string;
   valuesCount: number;
-};
+}
 
 @Component({
   selector: 'oib-value-table',
@@ -112,7 +112,7 @@ export class ValueTableComponent implements OnInit {
     this.sortTable();
   }
 
-  refreshTable(newFiles: ValueTableData[]) {
+  refreshTable(newFiles: Array<ValueTableData>) {
     this.files = newFiles;
     this.sortTable();
     this.clearCheckBoxes();

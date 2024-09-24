@@ -68,7 +68,7 @@ export class NorthConnectorService {
     subscriptions: Array<OIBusSubscription>,
     duplicateId: string
   ): Observable<NorthConnectorDTO<any>> {
-    const params: { [key: string]: string | string[] } = {};
+    const params: Record<string, string | Array<string>> = {};
     if (duplicateId) {
       params['duplicateId'] = duplicateId;
     }
