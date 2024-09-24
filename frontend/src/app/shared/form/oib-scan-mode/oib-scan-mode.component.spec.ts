@@ -18,7 +18,7 @@ import { provideI18nTesting } from '../../../../i18n/mock-i18n';
         [formControlName]="settings.key"
         [acceptSubscription]="true"
         [subscriptionOnly]="false"
-      ></oib-scan-mode>
+      />
     </div>
   </form>`,
   standalone: true,

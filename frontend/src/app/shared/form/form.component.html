@@ -16,7 +16,7 @@
                   <textarea [formControlName]="setting.key" [id]="setting.type + '-' + setting.key" class="form-control"></textarea>
                 }
                 @if (setting.type === 'OibCodeBlock') {
-                  <oib-code-block [key]="setting.key" [formControlName]="setting.key" [contentType]="setting.contentType"></oib-code-block>
+                  <oib-code-block [key]="setting.key" [formControlName]="setting.key" [contentType]="setting.contentType" />
                 }
                 <!-- Input of type number with unit -->
                 @if (setting.unitLabel && setting.type === 'OibNumber') {
@@ -78,9 +78,9 @@
                     [label]="setting.label"
                     [key]="setting.key"
                     [formControlName]="setting.key"
-                  ></oib-array>
+                  />
                 }
-                <val-errors [controlName]="setting.key"></val-errors>
+                <val-errors [controlName]="setting.key" />
               </div>
             }
             @if (setting.type === 'OibFormGroup' && setting.content.length > 0 && getFormGroup(setting).enabled) {
@@ -92,7 +92,7 @@
                   [settingsSchema]="settingsGroupedByRowByFormGroup.get(setting.key)!"
                   [scanModes]="scanModes"
                   [certificates]="certificates"
-                ></oib-form>
+                />
               </div>
             }
           </div>

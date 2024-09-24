@@ -16,7 +16,7 @@ import { provideHttpClient } from '@angular/common/http';
     [historyQuery]="historyQuery"
     [northManifest]="northManifest"
     [southManifest]="southManifest"
-  ></oib-history-metrics>`,
+  />`,
   standalone: true,
   imports: [HistoryMetricsComponent]
 })

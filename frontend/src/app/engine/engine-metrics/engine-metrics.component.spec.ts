@@ -10,7 +10,7 @@ import { EngineMetrics } from '../../../../../shared/model/engine.model';
 import { provideHttpClient } from '@angular/common/http';
 
 @Component({
-  template: `<oib-engine-metrics [metrics]="metrics"></oib-engine-metrics>`,
+  template: `<oib-engine-metrics [metrics]="metrics" />`,
   standalone: true,
   imports: [EngineMetricsComponent]
 })

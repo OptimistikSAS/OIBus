@@ -1,9 +1,9 @@
 <div class="d-flex">
   <div class="me-2 flex-grow-1">
-    <ng-template [ngTemplateOutlet]="dateTemplate || defaultDateTemplate" [ngTemplateOutletContext]="{ $implicit: dateCtrl }"></ng-template>
+    <ng-template [ngTemplateOutlet]="dateTemplate || defaultDateTemplate" [ngTemplateOutletContext]="{ $implicit: dateCtrl }" />
   </div>
   <div>
-    <ng-template [ngTemplateOutlet]="timeTemplate || defaultTimeTemplate" [ngTemplateOutletContext]="{ $implicit: timeCtrl }"></ng-template>
+    <ng-template [ngTemplateOutlet]="timeTemplate || defaultTimeTemplate" [ngTemplateOutletContext]="{ $implicit: timeCtrl }" />
   </div>
 </div>
 <ng-template #defaultDateTemplate let-formControl>
@@ -12,5 +12,5 @@
   </oib-datepicker-container>
 </ng-template>
 <ng-template #defaultTimeTemplate let-formControl>
-  <ngb-timepicker [formControl]="formControl" [spinners]="false"></ngb-timepicker>
+  <ngb-timepicker [formControl]="formControl" [spinners]="false" />
 </ng-template>

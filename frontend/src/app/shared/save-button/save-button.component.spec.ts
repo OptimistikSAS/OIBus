@@ -9,7 +9,7 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 @Component({
   template: `
     <form [formGroup]="form" id="test-form" (ngSubmit)="save()">
-      <oib-save-button form="test-form" [state]="state"></oib-save-button>
+      <oib-save-button form="test-form" [state]="state" />
     </form>
   `,
   imports: [SaveButtonComponent, ReactiveFormsModule],

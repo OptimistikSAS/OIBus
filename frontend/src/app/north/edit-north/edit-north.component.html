@@ -21,7 +21,7 @@
                   <div class="form-group">
                     <label class="form-label" for="north-name" translate="north.name"></label>
                     <input formControlName="name" id="north-name" class="form-control" />
-                    <val-errors controlName="name"></val-errors>
+                    <val-errors controlName="name" />
                   </div>
                 </div>
                 <!-- Description -->
@@ -61,7 +61,7 @@
                       (click)="northForm.markAllAsTouched(); submit('test')"
                       translate="north.test-connection.button"
                     ></button>
-                    <oib-help [url]="'https://oibus.optimistik.com/docs/guide/north-connectors/' + northType"></oib-help>
+                    <oib-help [url]="'https://oibus.optimistik.com/docs/guide/north-connectors/' + northType" />
                   </div>
                 </div>
               </ng-template>
@@ -72,7 +72,7 @@
                   [settingsSchema]="northSettingsControls"
                   [certificates]="certificates"
                   [scanModes]="scanModes"
-                ></oib-form>
+                />
               }
             </oib-box>
             <!-- Cache settings -->
@@ -91,8 +91,8 @@
                         formControlName="scanModeId"
                         [scanModes]="scanModes"
                         [label]="'north.cache-settings.send-scan-mode' | translate"
-                      ></oib-scan-mode>
-                      <val-errors controlName="scanModeId"></val-errors>
+                      />
+                      <val-errors controlName="scanModeId" />
                     </div>
                   </div>
                   <!-- Retry interval -->
@@ -103,7 +103,7 @@
                         <input type="number" formControlName="retryInterval" id="retry-interval" class="form-control" />
                         <span class="input-group-text" translate="common.unit.ms"></span>
                       </div>
-                      <val-errors controlName="retryInterval"></val-errors>
+                      <val-errors controlName="retryInterval" />
                     </div>
                   </div>
                   <!-- Retry count -->
@@ -111,7 +111,7 @@
                     <div class="form-group">
                       <label class="form-label" for="retry-count" translate="north.cache-settings.retry-count"></label>
                       <input type="number" formControlName="retryCount" id="retry-count" class="form-control" />
-                      <val-errors controlName="retryCount"></val-errors>
+                      <val-errors controlName="retryCount" />
                     </div>
                   </div>
                   <!-- Max size -->
@@ -122,7 +122,7 @@
                         <input type="number" formControlName="maxSize" id="maxSize" class="form-control" />
                         <span class="input-group-text" translate="common.unit.MB"></span>
                       </div>
-                      <val-errors controlName="maxSize"></val-errors>
+                      <val-errors controlName="maxSize" />
                     </div>
                   </div>
                 </div>
@@ -135,7 +135,7 @@
                       <div class="form-group">
                         <label class="form-label" for="group-count" translate="north.cache-settings.group-count"></label>
                         <input type="number" formControlName="groupCount" id="group-count" class="form-control" />
-                        <val-errors controlName="groupCount"></val-errors>
+                        <val-errors controlName="groupCount" />
                       </div>
                     </div>
                     <!-- Max send count -->
@@ -143,7 +143,7 @@
                       <div class="form-group">
                         <label class="form-label" for="max-send-count" translate="north.cache-settings.max-send-count"></label>
                         <input type="number" formControlName="maxSendCount" id="max-send-count" class="form-control" />
-                        <val-errors controlName="maxSendCount"></val-errors>
+                        <val-errors controlName="maxSendCount" />
                       </div>
                     </div>
                   </div>
@@ -201,7 +201,7 @@
           @if (mode === 'edit' && northConnector) {
             <div id="actions" class="d-flex justify-content-end">
               <div class="btn-group">
-                <oib-save-button [insideOfGroup]="false" form="north-form" [state]="state"></oib-save-button>
+                <oib-save-button [insideOfGroup]="false" form="north-form" [state]="state" />
               </div>
             </div>
           }
@@ -211,20 +211,20 @@
               [northConnector]="northConnector"
               [inMemory]="true"
               (inMemorySubscriptions)="updateInMemorySubscriptions($event)"
-            ></oib-north-subscriptions>
+            />
           }
           @if (mode === 'edit' && northConnector) {
             <oib-north-subscriptions
               [northConnector]="northConnector"
               [inMemory]="false"
               (inMemorySubscriptions)="updateInMemorySubscriptions($event)"
-            ></oib-north-subscriptions>
+            />
           }
         </form>
         @if (mode === 'create') {
           <div id="actions" class="mt-2 d-flex justify-content-end">
             <div class="btn-group">
-              <oib-save-button [insideOfGroup]="false" form="north-form" [state]="state"></oib-save-button>
+              <oib-save-button [insideOfGroup]="false" form="north-form" [state]="state" />
             </div>
           </div>
         }

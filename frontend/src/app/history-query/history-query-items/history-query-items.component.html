@@ -48,7 +48,7 @@
           [disabled]="this.allItems.length === 0"
           translate="south.items.delete-all"
         ></button>
-        <oib-help url="https://oibus.optimistik.com/docs/guide/south-connectors/common-settings#item-section"></oib-help>
+        <oib-help url="https://oibus.optimistik.com/docs/guide/south-connectors/common-settings#item-section" />
       </div>
     </div>
   </ng-template>
@@ -112,7 +112,7 @@
     @if (displayedItems.totalElements) {
       <div class="d-flex flex-row-reverse">
         <div [class]="displayedItems.totalPages > 1 ? 'ms-2' : ''">
-          <oib-pagination [page]="displayedItems" (pageChanged)="changePage($event)"></oib-pagination>
+          <oib-pagination [page]="displayedItems" (pageChanged)="changePage($event)" />
         </div>
       </div>
     }

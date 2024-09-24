@@ -26,11 +26,7 @@
         </div>
         <!-- North metrics -->
         @if (connectorMetrics) {
-          <oib-north-metrics
-            [connectorMetrics]="connectorMetrics"
-            [manifest]="manifest"
-            [northConnector]="northConnector"
-          ></oib-north-metrics>
+          <oib-north-metrics [connectorMetrics]="connectorMetrics" [manifest]="manifest" [northConnector]="northConnector" />
         }
         <!-- Specific settings -->
         <oib-box>
@@ -104,7 +100,7 @@
           </table>
         </oib-box>
         <!-- subscription -->
-        <oib-north-subscriptions [northConnector]="northConnector"></oib-north-subscriptions>
+        <oib-north-subscriptions [northConnector]="northConnector" />
         <!-- Logs -->
         <oib-box>
           <ng-template oibBoxTitle>
@@ -115,7 +111,7 @@
             </div>
           </ng-template>
         </oib-box>
-        <oib-logs [scopeId]="northId" scopeType="north"></oib-logs>
+        <oib-logs [scopeId]="northId" scopeType="north" />
       </div>
     </div>
   </div>

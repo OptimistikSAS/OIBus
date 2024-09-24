@@ -70,7 +70,7 @@
           <h2 class="oib-title" translate="oia-module.commands.title"></h2>
           @if (oibusCommands.totalElements !== 0) {
             <div>
-              <oib-pagination class="d-flex justify-content-end" [page]="oibusCommands" [navigate]="true"></oib-pagination>
+              <oib-pagination class="d-flex justify-content-end" [page]="oibusCommands" [navigate]="true" />
             </div>
           }
           <form class="px-3 mb-4 d-none d-lg-block oib-search-form" id="search-form" [formGroup]="searchForm" (ngSubmit)="searchCommands()">
@@ -80,7 +80,7 @@
               <div class="col-2">
                 <oib-multi-select formControlName="status" id="status">
                   @for (status of statusList; track status) {
-                    <oib-multi-select-option [value]="status" [label]="status | oibusCommandStatusEnum"></oib-multi-select-option>
+                    <oib-multi-select-option [value]="status" [label]="status | oibusCommandStatusEnum" />
                   }
                 </oib-multi-select>
               </div>
@@ -88,7 +88,7 @@
               <div class="col-2">
                 <oib-multi-select formControlName="types" id="types">
                   @for (type of typeList; track type) {
-                    <oib-multi-select-option [value]="type" [label]="type | oibusCommandTypeEnum"></oib-multi-select-option>
+                    <oib-multi-select-option [value]="type" [label]="type | oibusCommandTypeEnum" />
                   }
                 </oib-multi-select>
               </div>
