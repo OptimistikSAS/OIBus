@@ -1,6 +1,5 @@
 import { TestBed } from '@angular/core/testing';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
-import { TranslateService } from '@ngx-translate/core';
 import { FileSizePipe } from './file-size.pipe';
 
 describe('FileSizePipe', () => {
@@ -11,7 +10,7 @@ describe('FileSizePipe', () => {
       providers: [provideI18nTesting()]
     });
 
-    pipe = new FileSizePipe(TestBed.inject(TranslateService));
+    pipe = TestBed.runInInjectionContext(() => new FileSizePipe());
   });
 
   it('should display correct size', () => {

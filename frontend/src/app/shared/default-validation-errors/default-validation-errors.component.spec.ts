@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 
 import { DefaultValidationErrorsComponent } from './default-validation-errors.component';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormGroup, ReactiveFormsModule, UntypedFormBuilder, Validators } from '@angular/forms';
 import { ComponentTester } from 'ngx-speculoos';
 import { ValdemortModule } from 'ngx-valdemort';
@@ -27,7 +27,9 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 class TestComponent {
   form: FormGroup;
 
-  constructor(fb: UntypedFormBuilder) {
+  constructor() {
+    const fb = inject(UntypedFormBuilder);
+
     this.form = fb.group({
       name: ['', Validators.required],
       age: [null, Validators.min(18)]

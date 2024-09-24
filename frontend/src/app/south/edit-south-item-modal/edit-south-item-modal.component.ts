@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { NgbActiveModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { AbstractControl, FormControl, FormGroup, NonNullableFormBuilder, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
@@ -44,6 +44,9 @@ declare namespace Intl {
   standalone: true
 })
 export class EditSouthItemModalComponent {
+  private modal = inject(NgbActiveModal);
+  private fb = inject(NonNullableFormBuilder);
+
   mode: 'create' | 'edit' | 'copy' = 'create';
   state = new ObservableState();
   subscriptionOnly = false;
@@ -70,11 +73,6 @@ export class EditSouthItemModalComponent {
     () => ['UTC', ...this.timezones],
     timezone => timezone
   );
-
-  constructor(
-    private modal: NgbActiveModal,
-    private fb: NonNullableFormBuilder
-  ) {}
 
   private checkUniqueness(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {

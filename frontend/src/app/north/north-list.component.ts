@@ -38,6 +38,11 @@ const PAGE_SIZE = 15;
   styleUrl: './north-list.component.scss'
 })
 export class NorthListComponent implements OnInit {
+  private confirmationService = inject(ConfirmationService);
+  private notificationService = inject(NotificationService);
+  private modalService = inject(ModalService);
+  private northConnectorService = inject(NorthConnectorService);
+
   allNorths: Array<NorthConnectorDTO> | null = null;
   private filteredNorths: Array<NorthConnectorDTO> = [];
   displayedNorths: Page<NorthConnectorDTO> = emptyPage();
@@ -51,13 +56,6 @@ export class NorthListComponent implements OnInit {
     { label: 'north.disabled', class: 'grey-dot' },
     { label: 'north.enabled', class: 'green-dot' }
   ];
-
-  constructor(
-    private confirmationService: ConfirmationService,
-    private notificationService: NotificationService,
-    private modalService: ModalService,
-    private northConnectorService: NorthConnectorService
-  ) {}
 
   ngOnInit() {
     this.northConnectorService.list().subscribe(norths => {

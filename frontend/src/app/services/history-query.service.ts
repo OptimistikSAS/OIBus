@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HistoryQueryCommandDTO, HistoryQueryDTO } from '../../../../shared/model/history-query.model';
 import { Page } from '../../../../shared/model/types';
 import {
@@ -19,10 +19,8 @@ import { NorthConnectorCommandDTO } from '../../../../shared/model/north-connect
   providedIn: 'root'
 })
 export class HistoryQueryService {
-  constructor(
-    private http: HttpClient,
-    private downloadService: DownloadService
-  ) {}
+  private http = inject(HttpClient);
+  private downloadService = inject(DownloadService);
 
   /**
    * Get History queries

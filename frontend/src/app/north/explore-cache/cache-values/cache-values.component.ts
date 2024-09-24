@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, OnInit, ViewChild, inject } from '@angular/core';
 import { SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../../shared/form-directives';
@@ -32,12 +32,12 @@ import { ValueTableComponent, ValueTableData } from '../value-table/value-table.
   standalone: true
 })
 export class CacheValuesComponent implements OnInit {
+  private northConnectorService = inject(NorthConnectorService);
+
   @Input() northConnector: NorthConnectorDTO | null = null;
   cacheValues: Array<NorthValueFiles> = [];
   @ViewChild('valueTable') valueTable!: ValueTableComponent;
   valueTablePages = emptyPage<ValueTableData>();
-
-  constructor(private northConnectorService: NorthConnectorService) {}
 
   ngOnInit() {
     this.northConnectorService.getCacheValues(this.northConnector!.id).subscribe(cacheFiles => {

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, forwardRef, Input, OnInit, Output, inject } from '@angular/core';
 import { FormGroup, NonNullableFormBuilder } from '@angular/forms';
 import { formDirectives } from '../../../form-directives';
 
@@ -15,6 +15,8 @@ import { FormComponent } from '../../form.component';
   standalone: true
 })
 export class EditElementComponent implements OnInit {
+  private fb = inject(NonNullableFormBuilder);
+
   form: FormGroup | null = null;
   controlsByRow: Array<Array<OibFormControl>> | null = null;
 
@@ -24,8 +26,6 @@ export class EditElementComponent implements OnInit {
 
   @Output() readonly saved = new EventEmitter<any>();
   @Output() readonly cancelled = new EventEmitter<void>();
-
-  constructor(private fb: NonNullableFormBuilder) {}
 
   ngOnInit() {
     this.controlsByRow = groupFormControlsByRow(this.formDescription);
