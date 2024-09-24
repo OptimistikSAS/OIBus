@@ -10,13 +10,13 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
 @Component({
   template: `
-    <oib-default-validation-errors></oib-default-validation-errors>
+    <oib-default-validation-errors />
     <form [formGroup]="form">
       <input formControlName="name" />
-      <val-errors controlName="name"></val-errors>
+      <val-errors controlName="name" />
 
       <input formControlName="age" type="number" id="age" />
-      <val-errors controlName="age" [label]="'common.save' | translate"></val-errors>
+      <val-errors controlName="age" [label]="'common.save' | translate" />
 
       <button id="submit">Submit</button>
     </form>

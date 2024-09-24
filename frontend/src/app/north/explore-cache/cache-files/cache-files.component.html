@@ -1,7 +1,7 @@
 @if (fileTablePages.totalElements) {
   <div class="d-flex flex-row-reverse">
     <div [class]="fileTablePages.totalPages > 1 ? 'ms-2' : ''">
-      <oib-pagination [page]="fileTablePages" (pageChanged)="fileTable.changePage($event)"></oib-pagination>
+      <oib-pagination [page]="fileTablePages" (pageChanged)="fileTable.changePage($event)" />
     </div>
   </div>
 }
@@ -32,12 +32,7 @@
   </ng-template>
 
   @if (cacheFiles.length !== 0) {
-    <oib-file-table
-      #fileTable
-      [actions]="['view', 'archive', 'remove']"
-      (itemAction)="onItemAction($event)"
-      [files]="cacheFiles"
-    ></oib-file-table>
+    <oib-file-table #fileTable [actions]="['view', 'archive', 'remove']" (itemAction)="onItemAction($event)" [files]="cacheFiles" />
   } @else {
     <div class="mb-3 oib-grey-container" translate="north.cache-settings.cache-files-none"></div>
   }

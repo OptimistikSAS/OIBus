@@ -30,17 +30,17 @@
 
   <div class="justify-content-between d-flex">
     @if (allNorths && allNorths.length > 0) {
-      <oib-legend [legendList]="LEGEND"></oib-legend>
+      <oib-legend [legendList]="LEGEND" />
     }
     <!-- only display it if there is more than 1 page -->
     @if (displayedNorths.totalPages > 1) {
-      <oib-pagination class="d-flex justify-content-end" [page]="displayedNorths" (pageChanged)="changePage($event)"></oib-pagination>
+      <oib-pagination class="d-flex justify-content-end" [page]="displayedNorths" (pageChanged)="changePage($event)" />
     }
   </div>
 
   <!-- the loading spinner when north are not yet loaded -->
   @if (!allNorths) {
-    <oib-loading-spinner></oib-loading-spinner>
+    <oib-loading-spinner />
   } @else {
     <!-- the list of north or a caption if empty -->
     @if (displayedNorths.content.length !== 0) {

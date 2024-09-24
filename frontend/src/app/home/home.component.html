@@ -14,11 +14,7 @@
         @for (north of northRow; track north.id) {
           <div class="col-4">
             @if (homeMetrics && homeMetrics.norths[north.id]) {
-              <oib-north-metrics
-                [connectorMetrics]="homeMetrics.norths[north.id]"
-                [displayButton]="true"
-                [northConnector]="north"
-              ></oib-north-metrics>
+              <oib-north-metrics [connectorMetrics]="homeMetrics.norths[north.id]" [displayButton]="true" [northConnector]="north" />
             }
           </div>
         }
@@ -37,7 +33,7 @@
       <div class="row justify-content-center">
         <div class="col-lg-12 col-xl-8">
           @if (homeMetrics && homeMetrics.engine) {
-            <oib-engine-metrics [metrics]="homeMetrics.engine" [displayButton]="true"></oib-engine-metrics>
+            <oib-engine-metrics [metrics]="homeMetrics.engine" [displayButton]="true" />
           }
         </div>
       </div>
@@ -58,11 +54,7 @@
           @for (south of southRow; track south.id) {
             <div class="col-4">
               @if (homeMetrics && homeMetrics.souths[south.id]) {
-                <oib-south-metrics
-                  [connectorMetrics]="homeMetrics.souths[south.id]"
-                  [displayButton]="true"
-                  [southConnector]="south"
-                ></oib-south-metrics>
+                <oib-south-metrics [connectorMetrics]="homeMetrics.souths[south.id]" [displayButton]="true" [southConnector]="south" />
               }
             </div>
           }

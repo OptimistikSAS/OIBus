@@ -8,7 +8,7 @@ import { Component } from '@angular/core';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 
 @Component({
-  template: `<oib-cache-values [northConnector]="northConnector"></oib-cache-values>`,
+  template: `<oib-cache-values [northConnector]="northConnector" />`,
   standalone: true,
   imports: [CacheValuesComponent]
 })

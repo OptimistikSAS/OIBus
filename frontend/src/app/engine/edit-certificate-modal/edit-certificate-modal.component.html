@@ -7,7 +7,7 @@
     <div class="form-group">
       <label class="form-label" for="name" translate="engine.certificate.name"></label>
       <input formControlName="name" id="name" class="form-control" />
-      <val-errors controlName="name"></val-errors>
+      <val-errors controlName="name" />
     </div>
     <!-- Description -->
     <div class="form-group">
@@ -33,7 +33,7 @@
             <div class="form-group">
               <label class="form-label" for="common-name" translate="engine.certificate.common-name"></label>
               <input formControlName="commonName" id="common-name" class="form-control" />
-              <val-errors controlName="commonName"></val-errors>
+              <val-errors controlName="commonName" />
             </div>
           </div>
           <!-- Country name -->
@@ -41,7 +41,7 @@
             <div class="form-group">
               <label class="form-label" for="country-name" translate="engine.certificate.country-name"></label>
               <input formControlName="countryName" id="country-name" class="form-control" />
-              <val-errors controlName="countryName"></val-errors>
+              <val-errors controlName="countryName" />
             </div>
           </div>
           <!-- State or province name -->
@@ -49,7 +49,7 @@
             <div class="form-group">
               <label class="form-label" for="state-or-province-name" translate="engine.certificate.state-or-province-name"></label>
               <input formControlName="stateOrProvinceName" id="state-or-province-name" class="form-control" />
-              <val-errors controlName="stateOrProvinceName"></val-errors>
+              <val-errors controlName="stateOrProvinceName" />
             </div>
           </div>
         </div>
@@ -59,7 +59,7 @@
             <div class="form-group">
               <label class="form-label" for="locality-name" translate="engine.certificate.locality-name"></label>
               <input formControlName="localityName" id="locality-name" class="form-control" />
-              <val-errors controlName="localityName"></val-errors>
+              <val-errors controlName="localityName" />
             </div>
           </div>
           <!-- Organization name -->
@@ -67,7 +67,7 @@
             <div class="form-group">
               <label class="form-label" for="organization-name" translate="engine.certificate.organization-name"></label>
               <input formControlName="organizationName" id="organization-name" class="form-control" />
-              <val-errors controlName="organizationName"></val-errors>
+              <val-errors controlName="organizationName" />
             </div>
           </div>
         </div>
@@ -77,7 +77,7 @@
             <div class="form-group">
               <label class="form-label" for="key-size" translate="engine.certificate.key-size"></label>
               <input type="number" formControlName="keySize" id="key-size" class="form-control" />
-              <val-errors controlName="keySize"></val-errors>
+              <val-errors controlName="keySize" />
             </div>
           </div>
           <!-- Days before expiry -->
@@ -85,7 +85,7 @@
             <div class="form-group">
               <label class="form-label" for="days-before-expiry" translate="engine.certificate.days-before-expiry"></label>
               <input type="number" formControlName="daysBeforeExpiry" id="days-before-expiry" class="form-control" />
-              <val-errors controlName="daysBeforeExpiry"></val-errors>
+              <val-errors controlName="daysBeforeExpiry" />
             </div>
           </div>
         </div>
@@ -95,7 +95,7 @@
 </div>
 <div class="modal-footer">
   <div class="btn-group">
-    <oib-save-button [state]="state"></oib-save-button>
+    <oib-save-button [state]="state" />
     <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
   </div>
 </div>
