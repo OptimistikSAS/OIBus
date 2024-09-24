@@ -14,6 +14,16 @@ runs:
       working-directory: frontend
       run: npm run lint
 
+    - name: Run shared linting
+      shell: bash
+      working-directory: shared
+      run: npm run lint
+
+    - name: Run launcher linting
+      shell: bash
+      working-directory: launcher
+      run: npm run lint
+
     - name: Build backend
       shell: bash
       working-directory: backend

@@ -19,7 +19,7 @@ interface BaseLogSettings {
 /**
  * Settings to write logs into console
  */
-interface ConsoleLogSettings extends BaseLogSettings {}
+type ConsoleLogSettings = BaseLogSettings;
 
 /**
  * Settings to write logs into files
