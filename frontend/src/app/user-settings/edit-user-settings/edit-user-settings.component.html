@@ -24,21 +24,21 @@
             <div class="form-group">
               <label class="form-label" for="first-name" translate="user-settings.edit-user-settings.first-name"></label>
               <input formControlName="firstName" class="form-control" id="first-name" />
-              <val-errors controlName="firstName"></val-errors>
+              <val-errors controlName="firstName" />
             </div>
             <div class="form-group">
               <label class="form-label" for="last-name" translate="user-settings.edit-user-settings.last-name"></label>
               <input formControlName="lastName" class="form-control" id="last-name" />
-              <val-errors controlName="lastName"></val-errors>
+              <val-errors controlName="lastName" />
             </div>
             <div class="form-group">
               <label class="form-label" for="timezone" translate="user-settings.edit-user-settings.timezone"></label>
               <input id="timezone" class="form-control" formControlName="timezone" [ngbTypeahead]="timezoneTypeahead" [editable]="false" />
-              <val-errors controlName="timezone"></val-errors>
+              <val-errors controlName="timezone" />
             </div>
           </form>
           <div class="form-group text-end">
-            <oib-save-button [state]="state" [insideOfGroup]="false"></oib-save-button>
+            <oib-save-button [state]="state" [insideOfGroup]="false" />
           </div>
         </div>
       </div>

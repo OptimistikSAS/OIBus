@@ -12,11 +12,7 @@ import { HistoryQueryDTO } from '../../../../../shared/model/history-query.model
 import { HistoryQueryService } from '../../services/history-query.service';
 
 @Component({
-  template: `<oib-history-query-items
-    [inMemory]="false"
-    [historyQuery]="historyQuery"
-    [southManifest]="manifest"
-  ></oib-history-query-items>`,
+  template: `<oib-history-query-items [inMemory]="false" [historyQuery]="historyQuery" [southManifest]="manifest" />`,
   standalone: true,
   imports: [HistoryQueryItemsComponent]
 })

@@ -12,12 +12,7 @@ import { Component } from '@angular/core';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 
 @Component({
-  template: `<oib-south-items
-    [southConnector]="southConnector"
-    [scanModes]="scanModes"
-    [southManifest]="manifest"
-    [inMemory]="false"
-  ></oib-south-items>`,
+  template: `<oib-south-items [southConnector]="southConnector" [scanModes]="scanModes" [southManifest]="manifest" [inMemory]="false" />`,
   standalone: true,
   imports: [SouthItemsComponent]
 })

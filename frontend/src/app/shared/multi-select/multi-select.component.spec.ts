@@ -21,7 +21,7 @@ interface User {
     <form [formGroup]="form">
       <oib-multi-select [placeholder]="placeholder" formControlName="users" (selectionChange)="changeEvent = $event">
         @for (user of users; track user.id) {
-          <oib-multi-select-option [value]="user.id" [label]="user.name"></oib-multi-select-option>
+          <oib-multi-select-option [value]="user.id" [label]="user.name" />
         }
       </oib-multi-select>
     </form>

@@ -16,7 +16,7 @@
                 <div class="form-group">
                   <label class="form-label" for="name" translate="engine.general-settings.name"></label>
                   <input formControlName="name" id="name" class="form-control" />
-                  <val-errors controlName="name"></val-errors>
+                  <val-errors controlName="name" />
                 </div>
               </div>
               <!-- Port -->
@@ -24,7 +24,7 @@
                 <div class="form-group">
                   <label class="form-label" for="port" translate="engine.general-settings.port"></label>
                   <input formControlName="port" type="number" id="port" class="form-control" />
-                  <val-errors controlName="port"></val-errors>
+                  <val-errors controlName="port" />
                 </div>
               </div>
             </div>
@@ -47,7 +47,7 @@
                   <div class="form-group">
                     <label class="form-label" for="proxy-port" translate="engine.proxy-settings.proxy-port"></label>
                     <input formControlName="proxyPort" type="number" id="proxy-port" class="form-control" />
-                    <val-errors controlName="proxyPort"></val-errors>
+                    <val-errors controlName="proxyPort" />
                   </div>
                 </div>
               }
@@ -91,7 +91,7 @@
                       <input type="number" formControlName="maxFileSize" id="file-max-file-size" class="form-control" />
                       <span class="input-group-text" translate="common.unit.MB"></span>
                     </div>
-                    <val-errors controlName="maxFileSize"></val-errors>
+                    <val-errors controlName="maxFileSize" />
                   </div>
                 </div>
                 <!-- Number of files -->
@@ -99,7 +99,7 @@
                   <div class="form-group">
                     <label class="form-label" for="file-number-of-files" translate="engine.logger.file.number-of-files"></label>
                     <input type="number" formControlName="numberOfFiles" id="file-number-of-files" class="form-control" />
-                    <val-errors controlName="numberOfFiles"></val-errors>
+                    <val-errors controlName="numberOfFiles" />
                   </div>
                 </div>
               </div>
@@ -127,7 +127,7 @@
                       translate="engine.logger.database.max-number-of-logs"
                     ></label>
                     <input type="number" formControlName="maxNumberOfLogs" id="database-max-number-of-logs" class="form-control" />
-                    <val-errors controlName="maxNumberOfLogs"></val-errors>
+                    <val-errors controlName="maxNumberOfLogs" />
                   </div>
                 </div>
               </div>
@@ -155,7 +155,7 @@
                         <input type="number" formControlName="interval" id="loki-interval" class="form-control" />
                         <span class="input-group-text" translate="common.unit.s"></span>
                       </div>
-                      <val-errors controlName="interval"></val-errors>
+                      <val-errors controlName="interval" />
                     </div>
                   </div>
                 </div>
@@ -166,7 +166,7 @@
                     <div class="form-group">
                       <label class="form-label" for="loki-address" translate="engine.logger.loki.address"></label>
                       <input formControlName="address" id="loki-address" class="form-control" />
-                      <val-errors controlName="address"></val-errors>
+                      <val-errors controlName="address" />
                     </div>
                   </div>
                 </div>
@@ -176,14 +176,14 @@
                     <div class="form-group">
                       <label class="form-label" for="loki-username" translate="engine.logger.loki.username"></label>
                       <input formControlName="username" id="loki-username" class="form-control" />
-                      <val-errors controlName="username"></val-errors>
+                      <val-errors controlName="username" />
                     </div>
                   </div>
                   <div class="col-4">
                     <div class="form-group">
                       <label class="form-label" for="loki-password" translate="engine.logger.loki.password"></label>
                       <input type="password" formControlName="password" id="loki-password" class="form-control" />
-                      <val-errors controlName="password"></val-errors>
+                      <val-errors controlName="password" />
                     </div>
                   </div>
                 </div>
@@ -212,7 +212,7 @@
                         <input type="number" formControlName="interval" id="oia-interval" class="form-control" />
                         <span class="input-group-text" translate="common.unit.s"></span>
                       </div>
-                      <val-errors controlName="interval"></val-errors>
+                      <val-errors controlName="interval" />
                     </div>
                   </div>
                 </div>
@@ -222,7 +222,7 @@
         </div>
         <div id="actions" class="d-flex justify-content-end">
           <div class="btn-group">
-            <oib-save-button [insideOfGroup]="false" form="engine-form" [state]="state"></oib-save-button>
+            <oib-save-button [insideOfGroup]="false" form="engine-form" [state]="state" />
           </div>
         </div>
       </form>
