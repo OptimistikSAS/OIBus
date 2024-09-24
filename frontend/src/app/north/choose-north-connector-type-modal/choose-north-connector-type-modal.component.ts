@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
 import { Router } from '@angular/router';
@@ -15,14 +15,12 @@ import { NorthConnectorService } from '../../services/north-connector.service';
   standalone: true
 })
 export class ChooseNorthConnectorTypeModalComponent implements OnInit {
+  private modal = inject(NgbActiveModal);
+  private northConnectorService = inject(NorthConnectorService);
+  private router = inject(Router);
+
   northTypes: Array<NorthType> = [];
   groupedNorthTypes: Array<{ category: string; types: Array<NorthType> }> = [];
-
-  constructor(
-    private modal: NgbActiveModal,
-    private northConnectorService: NorthConnectorService,
-    private router: Router
-  ) {}
 
   ngOnInit() {
     this.northConnectorService.getNorthConnectorTypes().subscribe(types => {

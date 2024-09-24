@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { CertificateCommandDTO, CertificateDTO } from '../../../../shared/model/certificate.model';
 
 const ENDPOINT = '/api/certificates';
@@ -12,7 +12,7 @@ const ENDPOINT = '/api/certificates';
   providedIn: 'root'
 })
 export class CertificateService {
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
 
   /**
    * Get the scan modes

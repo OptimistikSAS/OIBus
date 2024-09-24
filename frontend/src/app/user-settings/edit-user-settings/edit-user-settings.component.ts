@@ -32,6 +32,13 @@ declare namespace Intl {
   standalone: true
 })
 export class EditUserSettingsComponent {
+  private modalService = inject(ModalService);
+  private userSettingsService = inject(UserSettingsService);
+  private notificationService = inject(NotificationService);
+  private translateService = inject(TranslateService);
+  private windowService = inject(WindowService);
+  private currentUserService = inject(CurrentUserService);
+
   form = inject(NonNullableFormBuilder).group({
     firstName: ['', [Validators.maxLength(50)]],
     lastName: ['', [Validators.maxLength(50)]],
@@ -48,14 +55,7 @@ export class EditUserSettingsComponent {
     timezone => timezone
   );
 
-  constructor(
-    private modalService: ModalService,
-    private userSettingsService: UserSettingsService,
-    private notificationService: NotificationService,
-    private translateService: TranslateService,
-    private windowService: WindowService,
-    private currentUserService: CurrentUserService
-  ) {
+  constructor() {
     this.loadSettingsAndPopulate().subscribe();
   }
 

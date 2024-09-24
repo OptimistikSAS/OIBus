@@ -53,6 +53,14 @@ const REGISTRATION_CHECK_DURATION = 3000;
   providers: [PageLoader]
 })
 export class OiaModuleComponent implements OnInit, OnDestroy {
+  private oibusService = inject(EngineService);
+  private oibusCommandService = inject(OibusCommandService);
+  private notificationService = inject(NotificationService);
+  private confirmationService = inject(ConfirmationService);
+  private modalService = inject(ModalService);
+  private router = inject(Router);
+  private pageLoader = inject(PageLoader);
+
   registration: RegistrationSettingsDTO | null = null;
   oibusCommands: Page<OIBusCommandDTO> = emptyPage();
   readonly statusList = OIBUS_COMMAND_STATUS;
@@ -65,16 +73,6 @@ export class OiaModuleComponent implements OnInit, OnDestroy {
     types: this.route.snapshot.queryParamMap.getAll('types'),
     status: this.route.snapshot.queryParamMap.getAll('status')
   });
-
-  constructor(
-    private oibusService: EngineService,
-    private oibusCommandService: OibusCommandService,
-    private notificationService: NotificationService,
-    private confirmationService: ConfirmationService,
-    private modalService: ModalService,
-    private router: Router,
-    private pageLoader: PageLoader
-  ) {}
 
   ngOnInit(): void {
     this.createRegistrationSubscription();

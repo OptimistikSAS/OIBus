@@ -1,7 +1,6 @@
-import { Component, ViewChild, AfterViewInit } from '@angular/core';
+import { AfterViewInit, Component, inject, ViewChild } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { OibCodeBlockComponent } from '../../shared/form/oib-code-block/oib-code-block.component';
-import { MonacoEditorLoaderService } from '../../shared/form/oib-code-block/monaco-editor-loader.service';
 import { OIBusContent } from '../../../../../shared/model/engine.model';
 import { SouthConnectorItemDTO } from '../../../../../shared/model/south-connector.model';
 import { TranslateModule } from '@ngx-translate/core';
@@ -15,12 +14,12 @@ import { LoadingSpinnerComponent } from '../../shared/loading-spinner/loading-sp
   standalone: true
 })
 export class SouthItemTestModalComponent implements AfterViewInit {
-  @ViewChild('monacoEditor') codeBlock: OibCodeBlockComponent = new OibCodeBlockComponent(new MonacoEditorLoaderService());
+  private modal = inject(NgbActiveModal);
+
+  @ViewChild('monacoEditor') codeBlock!: OibCodeBlockComponent;
   result: OIBusContent | null = null;
   item: SouthConnectorItemDTO | null = null;
   contentType = 'plaintext';
-
-  constructor(private modal: NgbActiveModal) {}
 
   prepare(result: OIBusContent, item: SouthConnectorItemDTO) {
     this.item = item;

@@ -7,7 +7,8 @@ import {
   ElementRef,
   Input,
   TemplateRef,
-  ViewChild
+  ViewChild,
+  inject
 } from '@angular/core';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { NgTemplateOutlet } from '@angular/common';
@@ -19,7 +20,7 @@ import { OibHelpComponent } from '../oib-help/oib-help.component';
   selector: 'ng-template[oibBoxTitle]'
 })
 export class BoxTitleDirective {
-  constructor(public templateRef: TemplateRef<void>) {}
+  templateRef = inject<TemplateRef<void>>(TemplateRef);
 }
 
 /**

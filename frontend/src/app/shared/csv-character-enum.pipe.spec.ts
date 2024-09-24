@@ -3,7 +3,7 @@ import { testEnumPipe } from './base-enum-pipe.spec';
 
 describe('CsvCharacterEnumPipe', () => {
   it('should translate csv character', () => {
-    testEnumPipe(ts => new CsvCharacterEnumPipe(ts), {
+    testEnumPipe(() => new CsvCharacterEnumPipe(), {
       TAB: 'Tab',
       NON_BREAKING_SPACE: 'Space',
       COMMA: 'Comma ,',

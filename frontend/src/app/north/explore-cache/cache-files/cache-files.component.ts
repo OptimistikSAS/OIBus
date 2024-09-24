@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, OnInit, ViewChild, inject } from '@angular/core';
 import { SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../../shared/form-directives';
@@ -34,15 +34,13 @@ import { ModalService } from '../../../shared/modal.service';
   standalone: true
 })
 export class CacheFilesComponent implements OnInit {
+  private northConnectorService = inject(NorthConnectorService);
+  private modalService = inject(ModalService);
+
   @Input() northConnector: NorthConnectorDTO | null = null;
   cacheFiles: Array<NorthCacheFiles> = [];
   @ViewChild('fileTable') fileTable!: FileTableComponent;
   fileTablePages = emptyPage<FileTableData>();
-
-  constructor(
-    private northConnectorService: NorthConnectorService,
-    private modalService: ModalService
-  ) {}
 
   ngOnInit() {
     this.northConnectorService.getCacheFiles(this.northConnector!.id).subscribe(cacheFiles => {

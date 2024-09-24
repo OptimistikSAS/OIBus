@@ -1,4 +1,4 @@
-import { Component, Input, NgZone, OnInit } from '@angular/core';
+import { Component, Input, NgZone, OnInit, inject } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { SouthConnectorDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
 import { SouthConnectorMetrics } from '../../../../../shared/model/engine.model';
@@ -18,17 +18,15 @@ import { Router } from '@angular/router';
   imports: [TranslateModule, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe]
 })
 export class SouthMetricsComponent implements OnInit {
+  private zone = inject(NgZone);
+  private router = inject(Router);
+  private southService = inject(SouthConnectorService);
+  private notificationService = inject(NotificationService);
+
   @Input({ required: true }) southConnector!: SouthConnectorDTO;
   @Input() manifest: SouthConnectorManifest | null = null;
   @Input() displayButton = false;
   @Input({ required: true }) connectorMetrics!: SouthConnectorMetrics;
-
-  constructor(
-    private zone: NgZone,
-    private router: Router,
-    private southService: SouthConnectorService,
-    private notificationService: NotificationService
-  ) {}
 
   ngOnInit(): void {
     if (!this.manifest) {

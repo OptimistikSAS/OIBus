@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 
 import { FormControlValidationDirective } from '../shared/form-control-validation.directive';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -16,9 +16,10 @@ import { OIBusInfo } from '../../../../shared/model/engine.model';
   styleUrl: './about.component.scss'
 })
 export class AboutComponent implements OnInit {
+  private engineService = inject(EngineService);
+
   oibusInfo: OIBusInfo | null = null;
   readonly copyrightYear = new Date().getFullYear();
-  constructor(private engineService: EngineService) {}
 
   ngOnInit() {
     this.engineService.getInfo().subscribe(info => {

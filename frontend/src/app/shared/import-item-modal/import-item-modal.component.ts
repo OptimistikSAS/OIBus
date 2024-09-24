@@ -15,6 +15,8 @@ import { formDirectives } from '../../shared/form-directives';
   standalone: true
 })
 export class ImportItemModalComponent implements OnInit {
+  private modal = inject(NgbActiveModal);
+
   readonly csvDelimiters = ALL_CSV_CHARACTERS;
   initializeFile = new File([''], 'Choose a file');
   selectedDelimiter = 'COMMA';
@@ -24,8 +26,6 @@ export class ImportItemModalComponent implements OnInit {
   importForm = this.fb.group({
     delimiter: ['COMMA' as CsvCharacter, Validators.required]
   });
-
-  constructor(private modal: NgbActiveModal) {}
 
   ngOnInit(): void {
     const settings = {

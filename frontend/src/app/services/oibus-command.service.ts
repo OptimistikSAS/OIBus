@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CommandSearchParam, OIBusCommandDTO } from '../../../../shared/model/command.model';
@@ -8,7 +8,7 @@ import { Page } from '../../../../shared/model/types';
   providedIn: 'root'
 })
 export class OibusCommandService {
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
 
   searchCommands(searchParams: CommandSearchParam): Observable<Page<OIBusCommandDTO>> {
     const params: Record<string, string | Array<string>> = {

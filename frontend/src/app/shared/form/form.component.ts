@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 
 import { ControlContainer, FormGroup, FormGroupName } from '@angular/forms';
 import { formDirectives } from '../form-directives';
@@ -37,6 +37,8 @@ declare namespace Intl {
   ]
 })
 export class FormComponent implements OnInit {
+  private pipeProviderService = inject(PipeProviderService);
+
   @Input() settingsSchema: Array<Array<OibFormControl>> = [];
   @Input() scanModes: Array<ScanModeDTO> = [];
   @Input() certificates: Array<CertificateDTO> = [];
@@ -50,8 +52,6 @@ export class FormComponent implements OnInit {
   protected readonly FormGroup = FormGroup;
 
   settingsGroupedByRowByFormGroup = new Map<string, Array<Array<OibFormControl>>>();
-
-  constructor(private pipeProviderService: PipeProviderService) {}
 
   ngOnInit(): void {
     this.settingsSchema.forEach(settings => {

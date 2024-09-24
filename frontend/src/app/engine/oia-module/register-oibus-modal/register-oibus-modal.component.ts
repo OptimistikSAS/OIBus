@@ -15,6 +15,9 @@ import { LOG_LEVELS, RegistrationSettingsCommandDTO, RegistrationSettingsDTO } f
   standalone: true
 })
 export class RegisterOibusModalComponent {
+  private modal = inject(NgbActiveModal);
+  private oibusService = inject(EngineService);
+
   state = new ObservableState();
   form = inject(NonNullableFormBuilder).group({
     host: ['', Validators.required],
@@ -26,11 +29,6 @@ export class RegisterOibusModalComponent {
   });
   mode: 'register' | 'edit' = 'register';
   host = '';
-
-  constructor(
-    private modal: NgbActiveModal,
-    private oibusService: EngineService
-  ) {}
 
   /**
    * Prepares the component for edition.

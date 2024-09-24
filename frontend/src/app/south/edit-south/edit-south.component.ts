@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 
 import { TranslateModule } from '@ngx-translate/core';
 import {
@@ -47,6 +47,14 @@ import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
   styleUrl: './edit-south.component.scss'
 })
 export class EditSouthComponent implements OnInit {
+  private southConnectorService = inject(SouthConnectorService);
+  private fb = inject(NonNullableFormBuilder);
+  private notificationService = inject(NotificationService);
+  private scanModeService = inject(ScanModeService);
+  private modalService = inject(ModalService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+
   mode: 'create' | 'edit' = 'create';
   southConnector: SouthConnectorDTO | null = null;
   southType = '';
@@ -75,16 +83,6 @@ export class EditSouthComponent implements OnInit {
 
   initialMaxInstantPerItem: boolean | null = null;
   showMaxInstantPerItemWarning = false;
-
-  constructor(
-    private southConnectorService: SouthConnectorService,
-    private fb: NonNullableFormBuilder,
-    private notificationService: NotificationService,
-    private scanModeService: ScanModeService,
-    private modalService: ModalService,
-    private router: Router,
-    private route: ActivatedRoute
-  ) {}
 
   ngOnInit() {
     combineLatest([this.scanModeService.list(), this.route.paramMap, this.route.queryParamMap])

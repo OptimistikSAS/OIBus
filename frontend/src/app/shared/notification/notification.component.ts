@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { map, merge, Observable, scan, Subject } from 'rxjs';
 
 import { Notification, NotificationService } from '../notification.service';
@@ -20,10 +20,12 @@ interface Action {
   standalone: true
 })
 export class NotificationComponent {
+  private notificationService = inject(NotificationService);
+
   notifications$: Observable<Array<Notification>>;
   private close$ = new Subject<Notification>();
 
-  constructor(private notificationService: NotificationService) {
+  constructor() {
     const additions$: Observable<Action> = this.notificationService.notificationChanges.pipe(
       map(notification => ({ type: 'addition', notification }))
     );

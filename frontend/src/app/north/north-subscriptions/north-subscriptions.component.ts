@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 
 import { combineLatest, of, switchMap, tap } from 'rxjs';
 import { ConfirmationService } from '../../shared/confirmation.service';
@@ -22,6 +22,12 @@ import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
   styleUrl: './north-subscriptions.component.scss'
 })
 export class NorthSubscriptionsComponent implements OnInit {
+  private confirmationService = inject(ConfirmationService);
+  private modalService = inject(ModalService);
+  private notificationService = inject(NotificationService);
+  private northConnectorService = inject(NorthConnectorService);
+  private southConnectorService = inject(SouthConnectorService);
+
   @Input() northConnector: NorthConnectorDTO | null = null;
   @Input() inMemory = false;
 
@@ -34,14 +40,6 @@ export class NorthSubscriptionsComponent implements OnInit {
   subscriptionsToDelete: Array<OIBusSubscription> = [];
 
   southConnectors: Array<SouthConnectorDTO> = [];
-
-  constructor(
-    private confirmationService: ConfirmationService,
-    private modalService: ModalService,
-    private notificationService: NotificationService,
-    private northConnectorService: NorthConnectorService,
-    private southConnectorService: SouthConnectorService
-  ) {}
 
   ngOnInit() {
     this.fetchSubscriptionsAndResetPage(false);

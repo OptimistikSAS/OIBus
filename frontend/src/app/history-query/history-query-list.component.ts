@@ -43,6 +43,12 @@ const PAGE_SIZE = 15;
   styleUrl: './history-query-list.component.scss'
 })
 export class HistoryQueryListComponent implements OnInit {
+  private confirmationService = inject(ConfirmationService);
+  private notificationService = inject(NotificationService);
+  private modalService = inject(ModalService);
+  private historyQueryService = inject(HistoryQueryService);
+  private router = inject(Router);
+
   allHistoryQueries: Array<HistoryQueryDTO> | null = null;
   filteredHistoryQueries: Array<HistoryQueryDTO> = [];
   displayedHistoryQueries: Page<HistoryQueryDTO> = emptyPage();
@@ -59,14 +65,6 @@ export class HistoryQueryListComponent implements OnInit {
     { label: 'enums.status.FINISHED', class: 'blue-dot' },
     { label: 'enums.status.ABORTED', class: 'red-dot' }
   ];
-
-  constructor(
-    private confirmationService: ConfirmationService,
-    private notificationService: NotificationService,
-    private modalService: ModalService,
-    private historyQueryService: HistoryQueryService,
-    private router: Router
-  ) {}
 
   ngOnInit() {
     this.historyQueryService.list().subscribe(queries => {
