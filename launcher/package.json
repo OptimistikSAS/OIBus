@@ -10,7 +10,7 @@
     "npm": ">=9.5.0"
   },
   "scripts": {
-    "lint": "eslint . --ext .ts --fix --ignore-path .gitignore",
+    "lint": "eslint src/",
     "lint:fix": "npm run lint -- --fix",
     "build": "tsc --project tsconfig.app.json",
     "start": "tsc --sourceMap --project tsconfig.app.json && npm run start:launcher",
