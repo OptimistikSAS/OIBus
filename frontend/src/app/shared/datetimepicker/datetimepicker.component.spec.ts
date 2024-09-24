@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { ComponentTester } from 'ngx-speculoos';
 import { TestDatetimepicker } from './datetimepicker.test-utils';
@@ -22,7 +22,9 @@ import { provideCurrentUser } from '../current-user-testing';
 })
 class TestComponent {
   form: FormGroup;
-  constructor(fb: FormBuilder) {
+  constructor() {
+    const fb = inject(FormBuilder);
+
     this.form = fb.group({
       from: null as string | null
     });

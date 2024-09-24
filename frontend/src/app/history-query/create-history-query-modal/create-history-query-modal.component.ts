@@ -19,6 +19,10 @@ import { ObservableState, SaveButtonComponent } from '../../shared/save-button/s
   standalone: true
 })
 export class CreateHistoryQueryModalComponent implements OnInit {
+  private modal = inject(NgbActiveModal);
+  private northConnectorService = inject(NorthConnectorService);
+  private southConnectorService = inject(SouthConnectorService);
+
   northTypes: Array<NorthType> = [];
   northList: Array<NorthConnectorDTO> = [];
   southTypes: Array<SouthType> = [];
@@ -34,11 +38,7 @@ export class CreateHistoryQueryModalComponent implements OnInit {
     northId: [null as string | null, Validators.required]
   });
 
-  constructor(
-    private modal: NgbActiveModal,
-    private northConnectorService: NorthConnectorService,
-    private southConnectorService: SouthConnectorService
-  ) {
+  constructor() {
     this.createForm.controls.southType.disable();
     this.createForm.controls.northType.disable();
 

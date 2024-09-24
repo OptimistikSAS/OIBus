@@ -62,6 +62,11 @@ import { NgClass } from '@angular/common';
   providers: [PageLoader]
 })
 export class LogsComponent implements OnInit, OnDestroy {
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private pageLoader = inject(PageLoader);
+  private logService = inject(LogService);
+
   @Input() scopeId: string | null = null;
   @Input() scopeType: ScopeType | null = null;
 
@@ -107,12 +112,7 @@ export class LogsComponent implements OnInit, OnDestroy {
     );
   scopeFormatter = (scope: Scope) => scope.scopeName;
 
-  constructor(
-    private route: ActivatedRoute,
-    private router: Router,
-    private pageLoader: PageLoader,
-    private logService: LogService
-  ) {
+  constructor() {
     this.searchParams = this.toSearchParams(this.route);
     this.searchForm.setValue({
       messageContent: this.searchParams.messageContent,

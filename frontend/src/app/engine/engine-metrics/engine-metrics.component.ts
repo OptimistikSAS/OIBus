@@ -1,4 +1,4 @@
-import { Component, Input, NgZone } from '@angular/core';
+import { Component, Input, NgZone, inject } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { EngineMetrics } from '../../../../../shared/model/engine.model';
 import { PercentPipe } from '@angular/common';
@@ -18,15 +18,13 @@ import { Router } from '@angular/router';
   styleUrl: './engine-metrics.component.scss'
 })
 export class EngineMetricsComponent {
+  private zone = inject(NgZone);
+  private engineService = inject(EngineService);
+  private notificationService = inject(NotificationService);
+  private router = inject(Router);
+
   @Input() displayButton = false;
   @Input({ required: true }) metrics!: EngineMetrics;
-
-  constructor(
-    private zone: NgZone,
-    private engineService: EngineService,
-    private notificationService: NotificationService,
-    private router: Router
-  ) {}
 
   resetMetrics() {
     this.zone.run(() => {

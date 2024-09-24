@@ -1,4 +1,4 @@
-import { Directive, HostListener } from '@angular/core';
+import { Directive, HostListener, inject } from '@angular/core';
 import { NavigationService } from './navigation.service';
 
 @Directive({
@@ -6,7 +6,7 @@ import { NavigationService } from './navigation.service';
   standalone: true
 })
 export class BackNavigationDirective {
-  constructor(private navigation: NavigationService) {}
+  private navigation = inject(NavigationService);
 
   @HostListener('click')
   onClick(): void {

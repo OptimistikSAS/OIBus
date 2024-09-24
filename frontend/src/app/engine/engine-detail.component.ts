@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { EngineService } from '../services/engine.service';
 import { EngineMetrics, EngineSettingsDTO } from '../../../../shared/model/engine.model';
@@ -32,20 +32,18 @@ import { CertificateListComponent } from './certificate-list/certificate-list.co
   styleUrl: './engine-detail.component.scss'
 })
 export class EngineDetailComponent implements OnInit, OnDestroy {
+  private engineService = inject(EngineService);
+  private windowService = inject(WindowService);
+  private notificationService = inject(NotificationService);
+  private confirmationService = inject(ConfirmationService);
+  private cd = inject(ChangeDetectorRef);
+
   engineSettings: EngineSettingsDTO | null = null;
   connectorStream: EventSource | null = null;
   metrics: EngineMetrics | null = null;
 
   restarting = new ObservableState();
   shuttingDown = new ObservableState();
-
-  constructor(
-    private engineService: EngineService,
-    private windowService: WindowService,
-    private notificationService: NotificationService,
-    private confirmationService: ConfirmationService,
-    private cd: ChangeDetectorRef
-  ) {}
 
   ngOnInit() {
     this.engineService.getEngineSettings().subscribe(settings => {

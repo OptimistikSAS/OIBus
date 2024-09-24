@@ -3,7 +3,7 @@ import { DatetimeTypesEnumPipe } from './datetime-types-enum.pipe';
 
 describe('DatetimeTypesEnumPipe', () => {
   it('should translate datetime type', () => {
-    testEnumPipe(ts => new DatetimeTypesEnumPipe(ts), {
+    testEnumPipe(() => new DatetimeTypesEnumPipe(), {
       'iso-string': 'ISO 8601',
       string: 'String',
       'unix-epoch': 'UNIX Epoch (s)',
