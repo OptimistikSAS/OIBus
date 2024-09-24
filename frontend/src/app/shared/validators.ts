@@ -27,7 +27,7 @@ export function validRegex(control: AbstractControl): { invalidRegex: true } | n
   try {
     new RegExp(control.value);
     return null;
-  } catch (e) {
+  } catch (_e) {
     return { invalidRegex: true };
   }
 }
@@ -45,7 +45,7 @@ export function validJson(control: AbstractControl): { invalidJson: true } | nul
     }
     JSON.parse(control.value);
     return null;
-  } catch (e) {
+  } catch (_e) {
     return { invalidJson: true };
   }
 }

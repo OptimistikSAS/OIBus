@@ -54,7 +54,7 @@ export class HistoryQueryService {
     fromNorthId: string | null,
     duplicateId: string
   ): Observable<HistoryQueryDTO> {
-    const params: { [key: string]: string | string[] } = {};
+    const params: Record<string, string | Array<string>> = {};
     if (duplicateId) {
       params['duplicateId'] = duplicateId;
     }
@@ -101,7 +101,7 @@ export class HistoryQueryService {
    * @param searchParams - The search params
    */
   searchItems(historyQueryId: string, searchParams: SouthConnectorItemSearchParam): Observable<Page<SouthConnectorItemDTO<any>>> {
-    const params: { [key: string]: string | string[] } = {
+    const params: Record<string, string | Array<string>> = {
       page: `${searchParams.page || 0}`
     };
     if (searchParams.name) {

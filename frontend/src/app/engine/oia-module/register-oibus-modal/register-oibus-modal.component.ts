@@ -25,7 +25,7 @@ export class RegisterOibusModalComponent {
     acceptUnauthorized: [false, Validators.required]
   });
   mode: 'register' | 'edit' = 'register';
-  host: string = '';
+  host = '';
 
   constructor(
     private modal: NgbActiveModal,

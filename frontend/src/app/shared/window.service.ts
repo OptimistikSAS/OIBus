@@ -21,7 +21,7 @@ export class WindowService {
     return window.localStorage.removeItem(key);
   }
 
-  getHistoryState(): { [key: string]: unknown } | null;
+  getHistoryState(): Record<string, unknown> | null;
   getHistoryState<T>(key: string): T | null;
   getHistoryState(key?: string) {
     if (key) {

@@ -50,7 +50,7 @@ export class OibCodeBlockComponent implements AfterViewInit, ControlValueAccesso
     this.onTouched = fn;
   }
 
-  setDisabledState(isDisabled: boolean): void {}
+  setDisabledState(_isDisabled: boolean): void {}
 
   ngAfterViewInit() {
     this.monacoEditorLoader.loadMonacoEditor().then(() => {
