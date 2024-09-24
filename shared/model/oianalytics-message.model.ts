@@ -37,11 +37,9 @@ export interface InfoMessageContent {
   platform: string;
 }
 
-
-
 export interface OIAnalyticsMessageInfoDTO extends BaseOIAnalyticsMessageDTO {
-  type: 'INFO',
-  content: InfoMessageContent
+  type: 'INFO';
+  content: InfoMessageContent;
 }
 
 export interface OIAnalyticsMessageInfoCommandDTO extends BaseOIAnalyticsMessageCommandDTO {
@@ -58,6 +56,6 @@ export interface OIAnalyticsMessageInfoCommandDTO extends BaseOIAnalyticsMessage
   platform: string;
 }
 
-export type OIAnalyticsMessageCommand = OIAnalyticsMessageInfoCommandDTO
-export type OIAnalyticsMessageDTO = OIAnalyticsMessageInfoDTO
-export type InfoMessage = InfoMessageContent
+export type OIAnalyticsMessageCommand = OIAnalyticsMessageInfoCommandDTO;
+export type OIAnalyticsMessageDTO = OIAnalyticsMessageInfoDTO;
+export type InfoMessage = InfoMessageContent;
