@@ -3,7 +3,7 @@ import { testEnumPipe } from './base-enum-pipe.spec';
 
 describe('LogLevelsEnumPipe', () => {
   it('should translate log levels', () => {
-    testEnumPipe(() => new LogLevelsEnumPipe(), {
+    testEnumPipe(LogLevelsEnumPipe, {
       silent: 'Silent',
       error: 'Error',
       warn: 'Warning',
