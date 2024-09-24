@@ -87,7 +87,7 @@
             [historyQuery]="historyQuery"
             [northManifest]="northManifest"
             [southManifest]="southManifest"
-          ></oib-history-metrics>
+          />
         }
         <!-- Cache-->
         <oib-box>
@@ -184,7 +184,7 @@
           </table>
         </oib-box>
         <!-- Items -->
-        <oib-history-query-items [inMemory]="false" [historyQuery]="historyQuery" [southManifest]="southManifest"></oib-history-query-items>
+        <oib-history-query-items [inMemory]="false" [historyQuery]="historyQuery" [southManifest]="southManifest" />
         <!-- Logs -->
         <oib-box>
           <ng-template oibBoxTitle>
@@ -195,7 +195,7 @@
             </div>
           </ng-template>
         </oib-box>
-        <oib-logs [scopeId]="historyQueryId" scopeType="history-query"></oib-logs>
+        <oib-logs [scopeId]="historyQueryId" scopeType="history-query" />
       </div>
     </div>
   </div>

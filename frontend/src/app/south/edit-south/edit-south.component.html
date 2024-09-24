@@ -21,7 +21,7 @@
                   <div class="form-group">
                     <label class="form-label" for="south-name" translate="south.name"></label>
                     <input formControlName="name" id="south-name" class="form-control" />
-                    <val-errors controlName="name"></val-errors>
+                    <val-errors controlName="name" />
                   </div>
                 </div>
                 <!-- Description -->
@@ -138,7 +138,7 @@
                       (click)="southForm.markAllAsTouched(); submit('test')"
                       translate="south.test-connection.button"
                     ></button>
-                    <oib-help [url]="'https://oibus.optimistik.com/docs/guide/south-connectors/' + southType"></oib-help>
+                    <oib-help [url]="'https://oibus.optimistik.com/docs/guide/south-connectors/' + southType" />
                   </div>
                 </div>
               </ng-template>
@@ -148,14 +148,14 @@
                   [form]="southForm.controls.settings"
                   [settingsSchema]="southSettingsControls"
                   [scanModes]="scanModes"
-                ></oib-form>
+                />
               }
             </oib-box>
           </div>
           @if (mode === 'edit' && southConnector) {
             <div id="actions" class="d-flex justify-content-end">
               <div class="btn-group">
-                <oib-save-button [insideOfGroup]="false" form="south-form" [state]="state"></oib-save-button>
+                <oib-save-button [insideOfGroup]="false" form="south-form" [state]="state" />
               </div>
             </div>
             <!-- items -->
@@ -165,7 +165,7 @@
               [scanModes]="scanModes"
               [inMemory]="false"
               [maxInstantPerItem]="maxInstantPerItem"
-            ></oib-south-items>
+            />
           }
           @if (mode === 'create') {
             <oib-south-items
@@ -174,10 +174,10 @@
               [scanModes]="scanModes"
               (inMemoryItems)="updateInMemoryItems($event)"
               [inMemory]="true"
-            ></oib-south-items>
+            />
             <div id="actions" class="mt-2 d-flex justify-content-end">
               <div class="btn-group">
-                <oib-save-button [insideOfGroup]="false" form="south-form" [state]="state"></oib-save-button>
+                <oib-save-button [insideOfGroup]="false" form="south-form" [state]="state" />
               </div>
             </div>
           }

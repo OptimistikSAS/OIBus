@@ -9,7 +9,7 @@
         <div class="form-group">
           <label class="form-label" for="host" translate="oia-module.registration.host"></label>
           <input formControlName="host" id="host" class="form-control" />
-          <val-errors controlName="host"></val-errors>
+          <val-errors controlName="host" />
         </div>
       </div>
 
@@ -43,7 +43,7 @@
           <div class="form-group">
             <label class="form-label" for="proxy-url" translate="oia-module.registration.proxy-url"></label>
             <input formControlName="proxyUrl" id="proxy-url" class="form-control" />
-            <val-errors controlName="proxyUrl"></val-errors>
+            <val-errors controlName="proxyUrl" />
           </div>
         </div>
       </div>
@@ -52,14 +52,14 @@
           <div class="form-group">
             <label class="form-label" for="proxy-username" translate="oia-module.registration.proxy-username"></label>
             <input formControlName="proxyUsername" id="proxy-username" class="form-control" />
-            <val-errors controlName="proxyUsername"></val-errors>
+            <val-errors controlName="proxyUsername" />
           </div>
         </div>
         <div class="col-6">
           <div class="form-group">
             <label class="form-label" for="proxy-password" translate="oia-module.registration.proxy-password"></label>
             <input type="password" formControlName="proxyPassword" id="proxy-password" class="form-control" />
-            <val-errors controlName="proxyPassword"></val-errors>
+            <val-errors controlName="proxyPassword" />
           </div>
         </div>
       </div>
@@ -68,7 +68,7 @@
 </div>
 <div class="modal-footer">
   <div class="btn-group">
-    <oib-save-button [state]="state" translationKey="oia-module.registration.register"></oib-save-button>
+    <oib-save-button [state]="state" translationKey="oia-module.registration.register" />
     <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
   </div>
 </div>

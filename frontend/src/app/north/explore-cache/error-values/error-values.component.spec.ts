@@ -8,7 +8,7 @@ import { Component } from '@angular/core';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 
 @Component({
-  template: `<oib-error-values [northConnector]="northConnector"></oib-error-values>`,
+  template: `<oib-error-values [northConnector]="northConnector" />`,
   standalone: true,
   imports: [ErrorValuesComponent]
 })

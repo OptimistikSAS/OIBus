@@ -11,7 +11,7 @@ import { SouthConnectorMetrics } from '../../../../../shared/model/engine.model'
 import { provideHttpClient } from '@angular/common/http';
 
 @Component({
-  template: `<oib-south-metrics [connectorMetrics]="metrics" [southConnector]="southConnector" [manifest]="manifest"></oib-south-metrics>`,
+  template: `<oib-south-metrics [connectorMetrics]="metrics" [southConnector]="southConnector" [manifest]="manifest" />`,
   standalone: true,
   imports: [SouthMetricsComponent]
 })

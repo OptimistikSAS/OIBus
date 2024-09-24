@@ -16,19 +16,19 @@
           <label class="col-auto col-form-label"><i class="fa fa-search fa-lg"></i></label>
           <label for="start" class="col-auto col-form-label" translate="logs.search.start"></label>
           <div class="col">
-            <oib-datetimepicker formControlName="start" id="start"></oib-datetimepicker>
+            <oib-datetimepicker formControlName="start" id="start" />
           </div>
           <label for="end" class="col-auto col-form-label" translate="logs.search.end"></label>
           <div class="col">
-            <oib-datetimepicker formControlName="end" id="end"></oib-datetimepicker>
-            <val-errors [control]="searchForm"></val-errors>
+            <oib-datetimepicker formControlName="end" id="end" />
+            <val-errors [control]="searchForm" />
           </div>
           @if (!this.scopeId && !this.scopeType) {
             <label for="levels" class="col-auto col-form-label" translate="logs.search.levels"></label>
             <div class="col-1">
               <oib-multi-select formControlName="levels" id="levels">
                 @for (level of levels; track level) {
-                  <oib-multi-select-option [value]="level" [label]="level | logLevelsEnum"></oib-multi-select-option>
+                  <oib-multi-select-option [value]="level" [label]="level | logLevelsEnum" />
                 }
               </oib-multi-select>
             </div>
@@ -36,7 +36,7 @@
             <div class="col-2">
               <oib-multi-select formControlName="scopeTypes" id="scope-types">
                 @for (scopeType of scopeTypes; track scopeType) {
-                  <oib-multi-select-option [value]="scopeType" [label]="scopeType | scopeTypesEnum"></oib-multi-select-option>
+                  <oib-multi-select-option [value]="scopeType" [label]="scopeType | scopeTypesEnum" />
                 }
               </oib-multi-select>
             </div>
@@ -67,7 +67,7 @@
             <div class="col-2">
               <oib-multi-select formControlName="levels" id="levels">
                 @for (level of levels; track level) {
-                  <oib-multi-select-option [value]="level" [label]="level | logLevelsEnum"></oib-multi-select-option>
+                  <oib-multi-select-option [value]="level" [label]="level | logLevelsEnum" />
                 }
               </oib-multi-select>
             </div>
@@ -92,10 +92,10 @@
       @if (logs.totalElements) {
         <div class="d-flex justify-content-between mb-2">
           @if (this.levels && this.levels.length > 0) {
-            <oib-legend [legendList]="LEGEND"></oib-legend>
+            <oib-legend [legendList]="LEGEND" />
           }
           <div [class]="logs.totalPages > 1 ? 'ms-2' : ''">
-            <oib-pagination [page]="logs" [navigate]="true"></oib-pagination>
+            <oib-pagination [page]="logs" [navigate]="true" />
           </div>
         </div>
       }
