@@ -11,6 +11,7 @@
   "keywords": [
     "Optimistik"
   ],
+  "type": "module",
   "scripts": {
     "lint": "eslint model/"
   },
