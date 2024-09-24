@@ -29,6 +29,10 @@ function samePasswordValidator(newPasswordForm: AbstractControl): ValidationErro
   standalone: true
 })
 export class ChangePasswordModalComponent {
+  private modal = inject(NgbActiveModal);
+  private notificationService = inject(NotificationService);
+  private userSettingsService = inject(UserSettingsService);
+
   form = inject(NonNullableFormBuilder).group({
     currentPassword: ['', Validators.required],
     newPasswordForm: inject(NonNullableFormBuilder).group(
@@ -40,12 +44,6 @@ export class ChangePasswordModalComponent {
     )
   });
   error = false;
-
-  constructor(
-    private modal: NgbActiveModal,
-    private notificationService: NotificationService,
-    private userSettingsService: UserSettingsService
-  ) {}
 
   save() {
     if (!this.form.valid) {

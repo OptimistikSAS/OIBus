@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, OnInit, ViewChild, inject } from '@angular/core';
 import { SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../../shared/form-directives';
@@ -32,12 +32,12 @@ import { emptyPage } from '../../../shared/test-utils';
   standalone: true
 })
 export class ErrorValuesComponent implements OnInit {
+  private northConnectorService = inject(NorthConnectorService);
+
   @Input() northConnector: NorthConnectorDTO | null = null;
   errorValues: Array<NorthCacheFiles> = [];
   @ViewChild('fileTable') fileTable!: FileTableComponent;
   fileTablePages = emptyPage<FileTableData>();
-
-  constructor(private northConnectorService: NorthConnectorService) {}
 
   ngOnInit() {
     this.northConnectorService.getCacheErrorValues(this.northConnector!.id).subscribe(errorValues => {

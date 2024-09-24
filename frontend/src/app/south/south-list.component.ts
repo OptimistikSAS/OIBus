@@ -40,6 +40,11 @@ const PAGE_SIZE = 15;
   styleUrl: './south-list.component.scss'
 })
 export class SouthListComponent implements OnInit {
+  private confirmationService = inject(ConfirmationService);
+  private notificationService = inject(NotificationService);
+  private modalService = inject(ModalService);
+  private southConnectorService = inject(SouthConnectorService);
+
   allSouths: Array<SouthConnectorDTO> | null = null;
   private filteredSouths: Array<SouthConnectorDTO> = [];
   displayedSouths: Page<SouthConnectorDTO> = emptyPage();
@@ -53,13 +58,6 @@ export class SouthListComponent implements OnInit {
     { label: 'south.disabled', class: 'grey-dot' },
     { label: 'south.enabled', class: 'green-dot' }
   ];
-
-  constructor(
-    private confirmationService: ConfirmationService,
-    private notificationService: NotificationService,
-    private modalService: ModalService,
-    private southConnectorService: SouthConnectorService
-  ) {}
 
   ngOnInit() {
     this.southConnectorService.list().subscribe(souths => {

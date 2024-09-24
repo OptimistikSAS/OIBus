@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 
 import { TranslateModule } from '@ngx-translate/core';
 import { SouthConnectorCommandDTO, SouthConnectorDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
@@ -46,6 +46,16 @@ import { LogsComponent } from '../../logs/logs.component';
   providers: [PageLoader]
 })
 export class SouthDetailComponent implements OnInit, OnDestroy {
+  private windowService = inject(WindowService);
+  private southConnectorService = inject(SouthConnectorService);
+  private scanModeService = inject(ScanModeService);
+  private notificationService = inject(NotificationService);
+  private modalService = inject(ModalService);
+  private engineService = inject(EngineService);
+  protected router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private cd = inject(ChangeDetectorRef);
+
   southConnector: SouthConnectorDTO | null = null;
   displayedSettings: Array<{ key: string; value: string }> = [];
   scanModes: Array<ScanModeDTO> = [];
@@ -54,18 +64,6 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
   connectorStream: EventSource | null = null;
   oibusInfo: OIBusInfo | null = null;
   southId: string | null = null;
-
-  constructor(
-    private windowService: WindowService,
-    private southConnectorService: SouthConnectorService,
-    private scanModeService: ScanModeService,
-    private notificationService: NotificationService,
-    private modalService: ModalService,
-    private engineService: EngineService,
-    protected router: Router,
-    private route: ActivatedRoute,
-    private cd: ChangeDetectorRef
-  ) {}
 
   ngOnInit() {
     combineLatest([this.scanModeService.list(), this.engineService.getInfo()]).subscribe(([scanModes, engineInfo]) => {

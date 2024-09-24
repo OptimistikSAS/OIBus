@@ -3,7 +3,7 @@ import { OibusCommandTypeEnumPipe } from './oibus-command-type-enum.pipe';
 
 describe('OibusCommandTypeEnumPipe', () => {
   it('should translate OIBus command type', () => {
-    testEnumPipe(ts => new OibusCommandTypeEnumPipe(ts), {
+    testEnumPipe(() => new OibusCommandTypeEnumPipe(), {
       UPGRADE: 'Upgrade'
     });
   });

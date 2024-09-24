@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { NgbActiveModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
@@ -35,6 +35,9 @@ const PAGE_SIZE = 20;
   standalone: true
 })
 export class ImportSouthItemsModalComponent {
+  private modal = inject(NgbActiveModal);
+  private pipeProviderService = inject(PipeProviderService);
+
   state = new ObservableState();
   southItemSchema: SouthConnectorItemManifest | null = null;
   southItemRows: Array<Array<OibFormControl>> = [];
@@ -45,11 +48,6 @@ export class ImportSouthItemsModalComponent {
   displaySettings: Array<OibFormControl> = [];
   displayedItemsNew: Page<SouthConnectorItemDTO> = emptyPage();
   displayedItemsError: Page<{ item: SouthConnectorItemDTO; message: string }> = emptyPage();
-
-  constructor(
-    private modal: NgbActiveModal,
-    private pipeProviderService: PipeProviderService
-  ) {}
 
   prepare(
     southItemSchema: SouthConnectorItemManifest,

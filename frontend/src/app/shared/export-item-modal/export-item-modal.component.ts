@@ -16,6 +16,8 @@ import { DateTime } from 'luxon';
   standalone: true
 })
 export class ExportItemModalComponent implements OnInit {
+  private modal = inject(NgbActiveModal);
+
   readonly csvDelimiters = ALL_CSV_CHARACTERS;
   selectedDelimiter = 'COMMA';
   dateTime: string = DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS');
@@ -26,8 +28,6 @@ export class ExportItemModalComponent implements OnInit {
     delimiter: ['COMMA' as CsvCharacter, Validators.required],
     fileName: [this.fileName as string, Validators.required]
   });
-
-  constructor(private modal: NgbActiveModal) {}
 
   ngOnInit(): void {
     const settings = {

@@ -1,7 +1,5 @@
 import { DurationPipe } from './duration.pipe';
 import { TestBed } from '@angular/core/testing';
-import { TranslateService } from '@ngx-translate/core';
-import { LOCALE_ID } from '@angular/core';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
 
 describe('DurationPipe', () => {
@@ -12,7 +10,7 @@ describe('DurationPipe', () => {
       providers: [provideI18nTesting()]
     });
 
-    pipe = new DurationPipe(TestBed.inject(TranslateService), TestBed.inject(LOCALE_ID));
+    pipe = TestBed.runInInjectionContext(() => new DurationPipe());
   });
 
   it('should format a duration in long style by default', () => {

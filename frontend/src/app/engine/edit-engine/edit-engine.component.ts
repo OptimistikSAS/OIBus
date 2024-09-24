@@ -19,6 +19,10 @@ import { BackNavigationDirective } from '../../shared/back-navigation.directives
   styleUrl: './edit-engine.component.scss'
 })
 export class EditEngineComponent implements OnInit {
+  private notificationService = inject(NotificationService);
+  private engineService = inject(EngineService);
+  private router = inject(Router);
+
   readonly logLevels = LOG_LEVELS;
 
   private fb = inject(NonNullableFormBuilder);
@@ -55,12 +59,6 @@ export class EditEngineComponent implements OnInit {
   });
 
   state = new ObservableState();
-
-  constructor(
-    private notificationService: NotificationService,
-    private engineService: EngineService,
-    private router: Router
-  ) {}
 
   ngOnInit(): void {
     this.engineService.getEngineSettings().subscribe(settings => {

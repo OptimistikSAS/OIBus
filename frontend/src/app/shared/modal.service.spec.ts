@@ -5,7 +5,8 @@ import { NgbModal, NgbModalOptions, NgbModalRef } from '@ng-bootstrap/ng-bootstr
 import { ModalService } from './modal.service';
 
 @Component({
-  template: 'Hello'
+  template: 'Hello',
+  standalone: true
 })
 export class TestModalComponent {}
 
@@ -15,10 +16,7 @@ describe('ModalService', () => {
   const fakeModalComponent = new TestModalComponent();
 
   beforeEach(() => {
-    TestBed.configureTestingModule({
-      declarations: [TestModalComponent],
-      providers: [ModalService]
-    });
+    TestBed.configureTestingModule({});
     ngbModal = TestBed.inject(NgbModal);
     modalService = TestBed.inject(ModalService);
   });

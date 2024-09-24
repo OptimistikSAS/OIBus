@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { NgbDateParserFormatter, NgbDateStruct } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { DateTime } from 'luxon';
@@ -8,7 +8,9 @@ export class I18nDateParserFormatterService extends NgbDateParserFormatter {
   private parsePattern = 'yyyy-M-d';
   private formatPattern = 'yyyy-MM-dd';
 
-  constructor(translateService: TranslateService) {
+  constructor() {
+    const translateService = inject(TranslateService);
+
     super();
     translateService.get('datepicker.parse-pattern').subscribe(pattern => (this.parsePattern = pattern));
     translateService.get('datepicker.format-pattern').subscribe(pattern => (this.formatPattern = pattern));

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 
 import { switchMap } from 'rxjs';
 import { Modal, ModalService } from '../../shared/modal.service';
@@ -19,14 +19,12 @@ import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
   styleUrl: './ip-filter-list.component.scss'
 })
 export class IpFilterListComponent implements OnInit {
-  ipFilters: Array<IpFilterDTO> = [];
+  private confirmationService = inject(ConfirmationService);
+  private modalService = inject(ModalService);
+  private notificationService = inject(NotificationService);
+  private ipFilterService = inject(IpFilterService);
 
-  constructor(
-    private confirmationService: ConfirmationService,
-    private modalService: ModalService,
-    private notificationService: NotificationService,
-    private ipFilterService: IpFilterService
-  ) {}
+  ipFilters: Array<IpFilterDTO> = [];
 
   ngOnInit() {
     this.ipFilterService.list().subscribe(ipFilterList => {

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { AsyncPipe, DecimalPipe } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -62,6 +62,18 @@ import { LogsComponent } from '../../logs/logs.component';
   providers: [PageLoader]
 })
 export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
+  private historyQueryService = inject(HistoryQueryService);
+  private northConnectorService = inject(NorthConnectorService);
+  private southConnectorService = inject(SouthConnectorService);
+  private notificationService = inject(NotificationService);
+  private scanModeService = inject(ScanModeService);
+  private modalService = inject(ModalService);
+  private engineService = inject(EngineService);
+  protected router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private windowService = inject(WindowService);
+  private cd = inject(ChangeDetectorRef);
+
   historyQuery: HistoryQueryDTO | null = null;
   northDisplayedSettings: Array<{ key: string; value: string }> = [];
   southDisplayedSettings: Array<{ key: string; value: string }> = [];
@@ -79,20 +91,6 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
   state = new ObservableState();
   oibusInfo: OIBusInfo | null = null;
   historyQueryId: string | null = null;
-
-  constructor(
-    private historyQueryService: HistoryQueryService,
-    private northConnectorService: NorthConnectorService,
-    private southConnectorService: SouthConnectorService,
-    private notificationService: NotificationService,
-    private scanModeService: ScanModeService,
-    private modalService: ModalService,
-    private engineService: EngineService,
-    protected router: Router,
-    private route: ActivatedRoute,
-    private windowService: WindowService,
-    private cd: ChangeDetectorRef
-  ) {}
 
   ngOnInit() {
     combineLatest([this.scanModeService.list(), this.engineService.getInfo()]).subscribe(([scanModes, engineInfo]) => {

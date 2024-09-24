@@ -1,5 +1,5 @@
 /* eslint-disable @angular-eslint/directive-selector */
-import { Directive, Input, OnChanges } from '@angular/core';
+import { Directive, Input, OnChanges, inject } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 
 /**
@@ -10,12 +10,12 @@ import { Title } from '@angular/platform-browser';
   standalone: true
 })
 export class PageTitleDirective implements OnChanges {
+  private titleService = inject(Title);
+
   /**
    * The mandatory i18n key to use for the title, for example `<oib-page-title />`
    */
   @Input() title: string | undefined;
-
-  constructor(private titleService: Title) {}
 
   ngOnChanges() {
     this.titleService.setTitle(`OIBus - ${this.title}`);

@@ -3,7 +3,7 @@ import { AggregatesEnumPipe } from './aggregates-enum.pipe';
 
 describe('AggregatesEnumPipe', () => {
   it('should translate aggregate', () => {
-    testEnumPipe(ts => new AggregatesEnumPipe(ts), {
+    testEnumPipe(() => new AggregatesEnumPipe(), {
       raw: 'Raw',
       interpolative: 'Interpolate',
       total: 'Total',

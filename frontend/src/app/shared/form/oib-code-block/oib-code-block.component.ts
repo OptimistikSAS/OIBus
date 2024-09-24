@@ -1,6 +1,6 @@
 /* eslint-disable-next-line */
 /// <reference path="../../../../../node_modules/monaco-editor/monaco.d.ts" />
-import { AfterViewInit, Component, ElementRef, forwardRef, Input, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, forwardRef, Input, ViewChild, inject } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MonacoEditorLoaderService } from './monaco-editor-loader.service';
 import { formDirectives } from '../../form-directives';
@@ -22,6 +22,8 @@ import { formDirectives } from '../../form-directives';
   standalone: true
 })
 export class OibCodeBlockComponent implements AfterViewInit, ControlValueAccessor {
+  private monacoEditorLoader = inject(MonacoEditorLoaderService);
+
   @ViewChild('editorContainer') _editorContainer: ElementRef | null = null;
   @Input() key = '';
   @Input() contentType = '';
@@ -39,8 +41,6 @@ export class OibCodeBlockComponent implements AfterViewInit, ControlValueAccesso
    * Value to write when the loading is complete
    */
   private pendingValueToWrite: string | null = null;
-
-  constructor(private monacoEditorLoader: MonacoEditorLoaderService) {}
 
   registerOnChange(fn: any): void {
     this.onChange = fn;

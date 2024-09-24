@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Location } from '@angular/common';
 import { Router, NavigationEnd } from '@angular/router';
 
@@ -6,12 +6,10 @@ import { Router, NavigationEnd } from '@angular/router';
   providedIn: 'root'
 })
 export class NavigationService {
-  private history: Array<string> = [];
+  private router = inject(Router);
+  private location = inject(Location);
 
-  constructor(
-    private router: Router,
-    private location: Location
-  ) {}
+  private history: Array<string> = [];
 
   init() {
     this.router.events.subscribe(event => {

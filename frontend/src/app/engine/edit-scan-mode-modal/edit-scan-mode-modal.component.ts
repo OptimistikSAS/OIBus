@@ -18,6 +18,9 @@ import { DatetimePipe } from '../../shared/datetime.pipe';
   standalone: true
 })
 export class EditScanModeModalComponent {
+  private modal = inject(NgbActiveModal);
+  private scanModeService = inject(ScanModeService);
+
   mode: 'create' | 'edit' = 'create';
   state = new ObservableState();
   scanMode: ScanModeDTO | null = null;
@@ -27,11 +30,6 @@ export class EditScanModeModalComponent {
     cron: ['', Validators.required, this.cronValidator()]
   });
   cronValidationResponse: ValidatedCronExpression | undefined;
-
-  constructor(
-    private modal: NgbActiveModal,
-    private scanModeService: ScanModeService
-  ) {}
 
   /**
    * Prepares the component for creation.

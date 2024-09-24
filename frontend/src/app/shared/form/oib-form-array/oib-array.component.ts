@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, forwardRef, Input, OnInit } from '@angular/core';
+import { AfterViewChecked, Component, forwardRef, Input, OnInit, inject } from '@angular/core';
 import { AbstractControl, ControlValueAccessor, NG_VALIDATORS, NG_VALUE_ACCESSOR, ValidationErrors, Validator } from '@angular/forms';
 import { formDirectives } from '../../form-directives';
 
@@ -27,6 +27,8 @@ import { PipeProviderService } from '../pipe-provider.service';
   standalone: true
 })
 export class OibArrayComponent implements OnInit, AfterViewChecked, ControlValueAccessor, Validator {
+  private pipeProviderService = inject(PipeProviderService);
+
   @Input() label = '';
   @Input() key = '';
   @Input({ required: true }) formDescription!: Array<OibFormControl>;
@@ -37,8 +39,6 @@ export class OibArrayComponent implements OnInit, AfterViewChecked, ControlValue
   displayedFields: Array<{ key: string; label: string; pipe?: string }> = [];
 
   disabled = false;
-
-  constructor(private pipeProviderService: PipeProviderService) {}
 
   ngOnInit(): void {
     this.formDescription.forEach(formControl => {
