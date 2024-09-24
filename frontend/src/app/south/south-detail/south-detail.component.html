@@ -26,11 +26,7 @@
         </div>
         <!-- South metrics -->
         @if (connectorMetrics) {
-          <oib-south-metrics
-            [connectorMetrics]="connectorMetrics"
-            [manifest]="manifest"
-            [southConnector]="southConnector"
-          ></oib-south-metrics>
+          <oib-south-metrics [connectorMetrics]="connectorMetrics" [manifest]="manifest" [southConnector]="southConnector" />
         }
         <!-- Specific settings -->
         <oib-box>
@@ -66,12 +62,7 @@
           </table>
         </oib-box>
         <!-- Items -->
-        <oib-south-items
-          [southConnector]="southConnector"
-          [southManifest]="manifest"
-          [scanModes]="scanModes"
-          [inMemory]="false"
-        ></oib-south-items>
+        <oib-south-items [southConnector]="southConnector" [southManifest]="manifest" [scanModes]="scanModes" [inMemory]="false" />
         <!-- Logs -->
         <oib-box>
           <ng-template oibBoxTitle>
@@ -82,7 +73,7 @@
             </div>
           </ng-template>
         </oib-box>
-        <oib-logs [scopeId]="southId" scopeType="south"></oib-logs>
+        <oib-logs [scopeId]="southId" scopeType="south" />
       </div>
     </div>
   </div>

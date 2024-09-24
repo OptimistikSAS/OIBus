@@ -5,7 +5,7 @@ import { ComponentTester } from 'ngx-speculoos';
 import { TruncatedStringComponent } from './truncated-string.component';
 
 @Component({
-  template: `<oib-truncated-string [string]="text" maxLength="10"></oib-truncated-string>`,
+  template: `<oib-truncated-string [string]="text" maxLength="10" />`,
   standalone: true,
   imports: [TruncatedStringComponent]
 })

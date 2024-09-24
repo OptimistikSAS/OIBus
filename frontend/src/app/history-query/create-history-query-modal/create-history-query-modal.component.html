@@ -24,7 +24,7 @@
                 <option [ngValue]="southType.id">{{ southType.name }}</option>
               }
             </select>
-            <val-errors [control]="createForm.controls.southType"></val-errors>
+            <val-errors [control]="createForm.controls.southType" />
           </div>
         } @else {
           <div class="form-group">
@@ -33,7 +33,7 @@
                 <option [ngValue]="connector.id">{{ connector.name + ' (' + connector.type + ')' }}</option>
               }
             </select>
-            <val-errors [control]="createForm.controls.southId"></val-errors>
+            <val-errors [control]="createForm.controls.southId" />
           </div>
         }
       </div>
@@ -56,7 +56,7 @@
                 <option [ngValue]="northType.id">{{ northType.name }}</option>
               }
             </select>
-            <val-errors [control]="createForm.controls.northType"></val-errors>
+            <val-errors [control]="createForm.controls.northType" />
           </div>
         }
         @if (createForm.controls.fromExistingNorth.value) {
@@ -66,7 +66,7 @@
                 <option [ngValue]="connector.id">{{ connector.name + ' (' + connector.type + ')' }}</option>
               }
             </select>
-            <val-errors [control]="createForm.controls.northId"></val-errors>
+            <val-errors [control]="createForm.controls.northId" />
           </div>
         }
       </div>
@@ -75,7 +75,7 @@
 </div>
 <div class="modal-footer">
   <div class="btn-group">
-    <oib-save-button form="form" [state]="state"></oib-save-button>
+    <oib-save-button form="form" [state]="state" />
     <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
   </div>
 </div>

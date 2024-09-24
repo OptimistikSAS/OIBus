@@ -30,17 +30,17 @@
 
   <div class="justify-content-between d-flex">
     @if (allSouths && allSouths.length > 0) {
-      <oib-legend [legendList]="LEGEND"></oib-legend>
+      <oib-legend [legendList]="LEGEND" />
     }
     <!-- only display it if there is more than 1 page -->
     @if (displayedSouths.totalPages > 1) {
-      <oib-pagination class="d-flex justify-content-end" [page]="displayedSouths" (pageChanged)="changePage($event)"></oib-pagination>
+      <oib-pagination class="d-flex justify-content-end" [page]="displayedSouths" (pageChanged)="changePage($event)" />
     }
   </div>
 
   <!-- the loading spinner when south are not yet loaded -->
   @if (!allSouths) {
-    <oib-loading-spinner></oib-loading-spinner>
+    <oib-loading-spinner />
   } @else {
     <!-- the list of south or a caption if empty -->
     @if (displayedSouths.content.length !== 0) {

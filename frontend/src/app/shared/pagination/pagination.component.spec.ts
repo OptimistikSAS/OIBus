@@ -9,7 +9,7 @@ import { emptyPage, toPage } from '../test-utils';
 import { Page } from '../../../../../shared/model/types';
 
 @Component({
-  template: `<oib-pagination [page]="page" (pageChanged)="pageChanged($event)" [navigate]="navigate"></oib-pagination>`,
+  template: `<oib-pagination [page]="page" (pageChanged)="pageChanged($event)" [navigate]="navigate" />`,
   standalone: true,
   imports: [PaginationComponent]
 })
