@@ -27,7 +27,7 @@
     "test": "jest --config=src/tests/jest-ts.config.js --coverage",
     "test:setup-env": "docker-compose --file src/tests/docker-compose.yml --env-file ./tests/.env.test up -d",
     "test:integration": "jest --config=jest-config.js --testPathPattern='.*\\.test\\.js$'",
-    "lint": "eslint . --ext .ts --fix",
+    "lint": "eslint src/*.ts",
     "lint:fix": "npm run lint -- --fix",
     "build": "tsc --project tsconfig.app.json",
     "internal:build:lib-win": "npm run --prefix node_modules/better-sqlite3 install -- --target=v18.15.0 --arch=x64 && npm run --prefix node_modules/argon2 install --update-binary -- --target_platform=win --target_arch=x64",

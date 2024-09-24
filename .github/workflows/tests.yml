@@ -27,6 +27,11 @@ jobs:
         with:
           node-version: 18.19
 
+      - name: Setup launcher environment
+        uses: ./.github/actions/setup_launcher_environment
+        with:
+          cache_version: ${{ secrets.GH_ACTIONS_CACHE_KEY }}
+
       - name: Setup shared environment
         uses: ./.github/actions/setup_shared_environment
         with:
