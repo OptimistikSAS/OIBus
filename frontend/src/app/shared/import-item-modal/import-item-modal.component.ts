@@ -17,7 +17,7 @@ import { formDirectives } from '../../shared/form-directives';
 export class ImportItemModalComponent implements OnInit {
   readonly csvDelimiters = ALL_CSV_CHARACTERS;
   initializeFile = new File([''], 'Choose a file');
-  selectedDelimiter: string = 'COMMA';
+  selectedDelimiter = 'COMMA';
   selectedFile: File = this.initializeFile;
 
   private fb = inject(NonNullableFormBuilder);

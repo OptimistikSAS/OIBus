@@ -16,7 +16,7 @@ import { NorthConnectorService } from '../../services/north-connector.service';
 })
 export class ChooseNorthConnectorTypeModalComponent implements OnInit {
   northTypes: Array<NorthType> = [];
-  groupedNorthTypes: { category: string; types: NorthType[] }[] = [];
+  groupedNorthTypes: Array<{ category: string; types: Array<NorthType> }> = [];
 
   constructor(
     private modal: NgbActiveModal,
@@ -32,7 +32,7 @@ export class ChooseNorthConnectorTypeModalComponent implements OnInit {
   }
 
   groupNorthTypes() {
-    const groupedTypes: { [key: string]: NorthType[] } = {};
+    const groupedTypes: Record<string, Array<NorthType>> = {};
 
     for (const northType of this.northTypes) {
       if (groupedTypes[northType.category]) {
