@@ -3,7 +3,7 @@ import { ResamplingEnumPipe } from './resampling-enum.pipe';
 
 describe('ResamplingEnumPipe', () => {
   it('should translate resampling', () => {
-    testEnumPipe(() => new ResamplingEnumPipe(), {
+    testEnumPipe(ResamplingEnumPipe, {
       none: 'None',
       '1s': '1 second',
       '10s': '10 seconds',

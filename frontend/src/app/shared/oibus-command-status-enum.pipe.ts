@@ -1,6 +1,5 @@
-import { Pipe, PipeTransform, inject } from '@angular/core';
+import { Pipe, PipeTransform } from '@angular/core';
 import { BaseEnumPipe } from './base-enum-pipe';
-import { TranslateService } from '@ngx-translate/core';
 import { OIBusCommandStatus } from '../../../../shared/model/command.model';
 
 @Pipe({
@@ -10,8 +9,6 @@ import { OIBusCommandStatus } from '../../../../shared/model/command.model';
 })
 export class OibusCommandStatusEnumPipe extends BaseEnumPipe<OIBusCommandStatus> implements PipeTransform {
   constructor() {
-    const translateService = inject(TranslateService);
-
-    super(translateService, 'oibus-command-status');
+    super('oibus-command-status');
   }
 }

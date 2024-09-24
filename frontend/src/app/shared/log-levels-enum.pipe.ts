@@ -1,6 +1,5 @@
-import { Pipe, PipeTransform, inject } from '@angular/core';
+import { Pipe, PipeTransform } from '@angular/core';
 import { BaseEnumPipe } from './base-enum-pipe';
-import { TranslateService } from '@ngx-translate/core';
 import { LogLevel } from '../../../../shared/model/engine.model';
 
 @Pipe({
@@ -10,8 +9,6 @@ import { LogLevel } from '../../../../shared/model/engine.model';
 })
 export class LogLevelsEnumPipe extends BaseEnumPipe<LogLevel> implements PipeTransform {
   constructor() {
-    const translateService = inject(TranslateService);
-
-    super(translateService, 'log-levels');
+    super('log-levels');
   }
 }
