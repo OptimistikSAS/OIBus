@@ -1,6 +1,5 @@
-import { Pipe, PipeTransform, inject } from '@angular/core';
+import { Pipe, PipeTransform } from '@angular/core';
 import { BaseEnumPipe } from './base-enum-pipe';
-import { TranslateService } from '@ngx-translate/core';
 
 @Pipe({
   name: 'booleanEnum',
@@ -9,8 +8,6 @@ import { TranslateService } from '@ngx-translate/core';
 })
 export class BooleanEnumPipe extends BaseEnumPipe<boolean> implements PipeTransform {
   constructor() {
-    const translateService = inject(TranslateService);
-
-    super(translateService, 'boolean');
+    super('boolean');
   }
 }

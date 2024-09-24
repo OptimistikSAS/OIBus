@@ -3,7 +3,7 @@ import { OibusCommandStatusEnumPipe } from './oibus-command-status-enum.pipe';
 
 describe('OibusCommandStatusEnumPipe', () => {
   it('should translate OIBus command status', () => {
-    testEnumPipe(() => new OibusCommandStatusEnumPipe(), {
+    testEnumPipe(OibusCommandStatusEnumPipe, {
       RETRIEVED: 'Pending',
       ERRORED: 'Errored',
       CANCELLED: 'Cancelled',
