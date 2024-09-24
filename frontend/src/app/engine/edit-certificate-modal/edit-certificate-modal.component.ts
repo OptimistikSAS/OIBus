@@ -16,6 +16,9 @@ import { CertificateService } from '../../services/certificate.service';
   standalone: true
 })
 export class EditCertificateModalComponent {
+  private modal = inject(NgbActiveModal);
+  private certificateService = inject(CertificateService);
+
   mode: 'create' | 'edit' = 'create';
   state = new ObservableState();
   certificate: CertificateDTO | null = null;
@@ -34,10 +37,7 @@ export class EditCertificateModalComponent {
     })
   });
 
-  constructor(
-    private modal: NgbActiveModal,
-    private certificateService: CertificateService
-  ) {
+  constructor() {
     this.form.controls.regenerateCertificate.valueChanges.subscribe(next => {
       if (next) {
         this.form.controls.certificateOptions.enable();

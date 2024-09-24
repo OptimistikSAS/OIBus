@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ViewChild, inject } from '@angular/core';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
@@ -12,7 +12,8 @@ import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-c
   styleUrl: './file-content-modal.component.scss'
 })
 export class FileContentModalComponent implements AfterViewInit {
-  constructor(private modal: NgbActiveModal) {}
+  private modal = inject(NgbActiveModal);
+
   @ViewChild('codeBlock') codeBlock!: OibCodeBlockComponent;
   content = '';
   filename = '';

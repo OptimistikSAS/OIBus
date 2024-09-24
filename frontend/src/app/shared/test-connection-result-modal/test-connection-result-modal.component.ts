@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { SaveButtonComponent } from '../save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
@@ -18,18 +18,16 @@ import { HistoryQueryService } from '../../services/history-query.service';
   standalone: true
 })
 export class TestConnectionResultModalComponent {
+  private modal = inject(NgbActiveModal);
+  private southConnectorService = inject(SouthConnectorService);
+  private northConnectorService = inject(NorthConnectorService);
+  protected historyQueryService = inject(HistoryQueryService);
+
   type: 'north' | 'south' | null = null;
   loading = false;
   success = false;
   error: string | null = null;
   connector: SouthConnectorDTO | NorthConnectorDTO | null = null;
-
-  constructor(
-    private modal: NgbActiveModal,
-    private southConnectorService: SouthConnectorService,
-    private northConnectorService: NorthConnectorService,
-    protected historyQueryService: HistoryQueryService
-  ) {}
 
   /**
    * Prepares the component for creation.

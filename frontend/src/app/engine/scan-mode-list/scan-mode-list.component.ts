@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 
 import { switchMap, tap } from 'rxjs';
 import { Modal, ModalService } from '../../shared/modal.service';
@@ -19,14 +19,12 @@ import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
   styleUrl: './scan-mode-list.component.scss'
 })
 export class ScanModeListComponent implements OnInit {
-  scanModes: Array<ScanModeDTO> = [];
+  private confirmationService = inject(ConfirmationService);
+  private modalService = inject(ModalService);
+  private notificationService = inject(NotificationService);
+  private scanModeService = inject(ScanModeService);
 
-  constructor(
-    private confirmationService: ConfirmationService,
-    private modalService: ModalService,
-    private notificationService: NotificationService,
-    private scanModeService: ScanModeService
-  ) {}
+  scanModes: Array<ScanModeDTO> = [];
 
   ngOnInit() {
     this.scanModeService.list().subscribe(scanModes => {

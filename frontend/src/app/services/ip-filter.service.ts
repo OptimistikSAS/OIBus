@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { IpFilterCommandDTO, IpFilterDTO } from '../../../../shared/model/ip-filter.model';
 
 /**
@@ -10,7 +10,7 @@ import { IpFilterCommandDTO, IpFilterDTO } from '../../../../shared/model/ip-fil
   providedIn: 'root'
 })
 export class IpFilterService {
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
 
   /**
    * Get the IP filters

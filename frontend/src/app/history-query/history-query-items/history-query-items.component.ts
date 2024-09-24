@@ -52,6 +52,11 @@ const PAGE_SIZE = 20;
   styleUrl: './history-query-items.component.scss'
 })
 export class HistoryQueryItemsComponent implements OnInit {
+  private confirmationService = inject(ConfirmationService);
+  private notificationService = inject(NotificationService);
+  private modalService = inject(ModalService);
+  private historyQueryService = inject(HistoryQueryService);
+
   @Input() historyQuery: HistoryQueryDTO | null = null;
   @Input({ required: true }) southManifest!: SouthConnectorManifest;
   @Input() initItems: Array<SouthConnectorItemDTO> = [];
@@ -68,13 +73,6 @@ export class HistoryQueryItemsComponent implements OnInit {
   displaySettings: Array<OibFormControl> = [];
 
   searchControl = inject(NonNullableFormBuilder).control(null as string | null);
-
-  constructor(
-    private confirmationService: ConfirmationService,
-    private notificationService: NotificationService,
-    private modalService: ModalService,
-    private historyQueryService: HistoryQueryService
-  ) {}
 
   ngOnInit() {
     this.southManifest.items.scanMode.subscriptionOnly = true;

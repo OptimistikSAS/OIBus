@@ -1,4 +1,4 @@
-import { Pipe, PipeTransform } from '@angular/core';
+import { Pipe, PipeTransform, inject } from '@angular/core';
 import { BaseEnumPipe } from './base-enum-pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { Resampling } from '../../../../shared/model/types';
@@ -9,7 +9,9 @@ import { Resampling } from '../../../../shared/model/types';
   standalone: true
 })
 export class ResamplingEnumPipe extends BaseEnumPipe<Resampling> implements PipeTransform {
-  constructor(translateService: TranslateService) {
+  constructor() {
+    const translateService = inject(TranslateService);
+
     super(translateService, 'resampling');
   }
 }

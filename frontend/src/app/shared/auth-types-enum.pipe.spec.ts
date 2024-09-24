@@ -3,7 +3,7 @@ import { AuthTypesEnumPipe } from './auth-types-enum.pipe';
 
 describe('AuthTypesEnumPipe', () => {
   it('should translate authentication type', () => {
-    testEnumPipe(ts => new AuthTypesEnumPipe(ts), {
+    testEnumPipe(() => new AuthTypesEnumPipe(), {
       none: 'None',
       basic: 'Basic auth',
       bearer: 'Bearer',

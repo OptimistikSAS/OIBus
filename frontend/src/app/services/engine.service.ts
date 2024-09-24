@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import {
   EngineSettingsCommandDTO,
   EngineSettingsDTO,
@@ -16,7 +16,7 @@ import {
   providedIn: 'root'
 })
 export class EngineService {
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
 
   /**
    * Get the engine settings

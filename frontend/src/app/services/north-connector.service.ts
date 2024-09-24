@@ -1,6 +1,6 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import {
   NorthCacheFiles,
   NorthConnectorCommandDTO,
@@ -18,7 +18,7 @@ import { OIBusSubscription, SubscriptionDTO } from '../../../../shared/model/sub
   providedIn: 'root'
 })
 export class NorthConnectorService {
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
 
   /**
    * Get North connectors types

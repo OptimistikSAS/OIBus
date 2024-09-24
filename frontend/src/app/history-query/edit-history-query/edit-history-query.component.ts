@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 
 import { TranslateModule } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
@@ -58,6 +58,16 @@ import { ResetCacheHistoryQueryModalComponent } from '../reset-cache-history-que
   styleUrl: './edit-history-query.component.scss'
 })
 export class EditHistoryQueryComponent implements OnInit {
+  private historyQueryService = inject(HistoryQueryService);
+  private northConnectorService = inject(NorthConnectorService);
+  private southConnectorService = inject(SouthConnectorService);
+  private fb = inject(NonNullableFormBuilder);
+  private notificationService = inject(NotificationService);
+  private scanModeService = inject(ScanModeService);
+  private modalService = inject(ModalService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+
   mode: 'create' | 'edit' = 'create';
   historyQuery: HistoryQueryDTO | null = null;
   state = new ObservableState();
@@ -103,18 +113,6 @@ export class EditHistoryQueryComponent implements OnInit {
 
   inMemoryItems: Array<SouthConnectorItemDTO> = [];
   inMemoryItemIdsToDelete: Array<string> = [];
-
-  constructor(
-    private historyQueryService: HistoryQueryService,
-    private northConnectorService: NorthConnectorService,
-    private southConnectorService: SouthConnectorService,
-    private fb: NonNullableFormBuilder,
-    private notificationService: NotificationService,
-    private scanModeService: ScanModeService,
-    private modalService: ModalService,
-    private router: Router,
-    private route: ActivatedRoute
-  ) {}
 
   ngOnInit() {
     combineLatest([this.scanModeService.list(), this.route.paramMap, this.route.queryParamMap])

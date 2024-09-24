@@ -1,6 +1,6 @@
 import { ActivatedRoute, Router } from '@angular/router';
 import { map, merge, Observable, Subject } from 'rxjs';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Page } from '../../../../shared/model/types';
 
 /**
@@ -11,6 +11,9 @@ import { Page } from '../../../../shared/model/types';
  */
 @Injectable()
 export class PageLoader {
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+
   private pageLoadsSubject = new Subject<number>();
 
   /**
@@ -19,10 +22,9 @@ export class PageLoader {
    */
   pageLoads$: Observable<number>;
 
-  constructor(
-    private route: ActivatedRoute,
-    private router: Router
-  ) {
+  constructor() {
+    const route = this.route;
+
     const pageQueryParam$ = route.queryParamMap.pipe(map(paramMap => +(paramMap.get('page') || 0)));
     this.pageLoads$ = merge(pageQueryParam$, this.pageLoadsSubject);
   }

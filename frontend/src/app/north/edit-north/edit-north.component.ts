@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 
 import { TranslateModule } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
@@ -45,6 +45,15 @@ import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
   styleUrl: './edit-north.component.scss'
 })
 export class EditNorthComponent implements OnInit {
+  private northConnectorService = inject(NorthConnectorService);
+  private fb = inject(NonNullableFormBuilder);
+  private notificationService = inject(NotificationService);
+  private scanModeService = inject(ScanModeService);
+  private certificateService = inject(CertificateService);
+  private modalService = inject(ModalService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+
   mode: 'create' | 'edit' = 'create';
   northConnector: NorthConnectorDTO | null = null;
   northType = '';
@@ -79,17 +88,6 @@ export class EditNorthComponent implements OnInit {
 
   inMemorySubscriptions: Array<OIBusSubscription> = [];
   inMemorySubscriptionsToDelete: Array<OIBusSubscription> = [];
-
-  constructor(
-    private northConnectorService: NorthConnectorService,
-    private fb: NonNullableFormBuilder,
-    private notificationService: NotificationService,
-    private scanModeService: ScanModeService,
-    private certificateService: CertificateService,
-    private modalService: ModalService,
-    private router: Router,
-    private route: ActivatedRoute
-  ) {}
 
   ngOnInit() {
     combineLatest([this.scanModeService.list(), this.certificateService.list(), this.route.paramMap, this.route.queryParamMap])

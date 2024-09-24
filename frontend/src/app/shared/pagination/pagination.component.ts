@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Optional, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Page } from '../../../../../shared/model/types';
 import { NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
@@ -11,15 +11,13 @@ import { NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
   standalone: true
 })
 export class PaginationComponent {
+  private router = inject(Router, { optional: true });
+  private route = inject(ActivatedRoute, { optional: true });
+
   @Input() page: Page<any> | null = null;
   @Output() readonly pageChanged = new EventEmitter<number>();
 
   @Input() navigate = false;
-
-  constructor(
-    @Optional() private router: Router,
-    @Optional() private route: ActivatedRoute
-  ) {}
 
   onPageChanged($event: number) {
     const newPage = $event - 1;

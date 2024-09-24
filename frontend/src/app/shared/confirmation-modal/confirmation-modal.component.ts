@@ -1,18 +1,17 @@
-import { Component, Input } from '@angular/core';
-import { NgbActiveModal, NgbModalModule } from '@ng-bootstrap/ng-bootstrap';
+import { Component, inject, Input } from '@angular/core';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   selector: 'oib-confirmation-modal',
   templateUrl: './confirmation-modal.component.html',
   styleUrl: './confirmation-modal.component.scss',
-  imports: [NgbModalModule],
   standalone: true
 })
 export class ConfirmationModalComponent {
+  activeModal = inject(NgbActiveModal);
+
   @Input() message = '';
   @Input() title = '';
   @Input() yes = '';
   @Input() no = '';
-
-  constructor(public activeModal: NgbActiveModal) {}
 }

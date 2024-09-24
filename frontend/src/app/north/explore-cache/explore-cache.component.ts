@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
@@ -39,6 +39,9 @@ import { ErrorValuesComponent } from './error-values/error-values.component';
   standalone: true
 })
 export class ExploreCacheComponent implements OnInit {
+  private route = inject(ActivatedRoute);
+  private northConnectorService = inject(NorthConnectorService);
+
   northConnector: NorthConnectorDTO | null = null;
   @ViewChild(ArchiveFilesComponent) archiveFilesComponent!: ArchiveFilesComponent;
   @ViewChild(ErrorFilesComponent) errorFilesComponent!: ErrorFilesComponent;
@@ -46,11 +49,6 @@ export class ExploreCacheComponent implements OnInit {
 
   @ViewChild(CacheValuesComponent) cacheValuesComponent!: CacheValuesComponent;
   @ViewChild(ErrorValuesComponent) errorValuesComponent!: ErrorValuesComponent;
-
-  constructor(
-    private route: ActivatedRoute,
-    private northConnectorService: NorthConnectorService
-  ) {}
 
   ngOnInit() {
     this.route.paramMap

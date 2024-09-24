@@ -16,6 +16,9 @@ import { formDirectives } from '../../shared/form-directives';
   standalone: true
 })
 export class EditIpFilterModalComponent {
+  private modal = inject(NgbActiveModal);
+  private ipFilterService = inject(IpFilterService);
+
   mode: 'create' | 'edit' = 'create';
   state = new ObservableState();
   ipFilter: IpFilterDTO | null = null;
@@ -23,11 +26,6 @@ export class EditIpFilterModalComponent {
     address: ['', Validators.required],
     description: ''
   });
-
-  constructor(
-    private modal: NgbActiveModal,
-    private ipFilterService: IpFilterService
-  ) {}
 
   /**
    * Prepares the component for creation.

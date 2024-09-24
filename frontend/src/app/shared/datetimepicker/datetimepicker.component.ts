@@ -59,6 +59,9 @@ import { CurrentUserService } from '../current-user.service';
   standalone: true
 })
 export class DatetimepickerComponent implements OnInit, AfterViewInit, ControlValueAccessor, Validator {
+  private element = inject<ElementRef<HTMLElement>>(ElementRef);
+  private currentUserService = inject(CurrentUserService);
+
   @ContentChild('date')
   dateTemplate: TemplateRef<any> | null = null;
 
@@ -74,10 +77,7 @@ export class DatetimepickerComponent implements OnInit, AfterViewInit, ControlVa
   private onChange: (value: any) => void = () => {};
   private onTouched: () => void = () => {};
 
-  constructor(
-    private element: ElementRef<HTMLElement>,
-    private currentUserService: CurrentUserService
-  ) {
+  constructor() {
     this.timezone = this.currentUserService.getTimezone();
   }
 

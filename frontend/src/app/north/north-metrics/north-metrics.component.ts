@@ -1,4 +1,4 @@
-import { Component, Input, NgZone, OnInit } from '@angular/core';
+import { Component, Input, NgZone, OnInit, inject } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { NorthConnectorMetrics } from '../../../../../shared/model/engine.model';
 import { JsonPipe } from '@angular/common';
@@ -19,17 +19,15 @@ import { Router } from '@angular/router';
   standalone: true
 })
 export class NorthMetricsComponent implements OnInit {
+  private zone = inject(NgZone);
+  private router = inject(Router);
+  private northConnectorService = inject(NorthConnectorService);
+  private notificationService = inject(NotificationService);
+
   @Input({ required: true }) northConnector!: NorthConnectorDTO;
   @Input() manifest: NorthConnectorManifest | null = null;
   @Input() displayButton = false;
   @Input({ required: true }) connectorMetrics!: NorthConnectorMetrics;
-
-  constructor(
-    private zone: NgZone,
-    private router: Router,
-    private northConnectorService: NorthConnectorService,
-    private notificationService: NotificationService
-  ) {}
 
   ngOnInit(): void {
     if (!this.manifest) {
