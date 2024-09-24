@@ -1,5 +1,4 @@
-import { Pipe, PipeTransform, inject } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
+import { Pipe, PipeTransform } from '@angular/core';
 import { CsvCharacter } from '../../../../shared/model/types';
 import { BaseEnumPipe } from './base-enum-pipe';
 
@@ -10,8 +9,6 @@ import { BaseEnumPipe } from './base-enum-pipe';
 })
 export class CsvCharacterEnumPipe extends BaseEnumPipe<CsvCharacter> implements PipeTransform {
   constructor() {
-    const translateService = inject(TranslateService);
-
-    super(translateService, 'csv-character');
+    super('csv-character');
   }
 }
