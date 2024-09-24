@@ -10,21 +10,21 @@ export class MonacoEditorLoaderService {
    */
   loadMonacoEditor(): Promise<void> {
     return new Promise((resolve: () => void) => {
-      if (typeof (<any>window).monaco === 'object') {
+      if (typeof (window as any).monaco === 'object') {
         resolve();
         return;
       }
       const onAmdLoader: any = () => {
         // Load monaco
-        (<any>window).require.config({ paths: { vs: 'vendor/monaco-editor/vs' } });
+        (window as any).require.config({ paths: { vs: 'vendor/monaco-editor/vs' } });
 
-        (<any>window).require(['vs/editor/editor.main'], () => {
+        (window as any).require(['vs/editor/editor.main'], () => {
           resolve();
         });
       };
 
       // Load AMD loader if necessary
-      if (!(<any>window).require) {
+      if (!(window as any).require) {
         const loaderScript: HTMLScriptElement = document.createElement('script');
         loaderScript.type = 'text/javascript';
         loaderScript.src = 'vendor/monaco-editor/vs/loader.js';

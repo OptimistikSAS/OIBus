@@ -74,7 +74,7 @@ export class SouthConnectorService {
     items: Array<SouthConnectorItemDTO<any>>,
     duplicateId: string
   ): Observable<SouthConnectorDTO<any>> {
-    const params: { [key: string]: string | string[] } = {};
+    const params: Record<string, string | Array<string>> = {};
     if (duplicateId) {
       params['duplicateId'] = duplicateId;
     }
@@ -127,7 +127,7 @@ export class SouthConnectorService {
    * @param searchParams - The search params
    */
   searchItems(southId: string, searchParams: SouthConnectorItemSearchParam): Observable<Page<SouthConnectorItemDTO<any>>> {
-    const params: { [key: string]: string | string[] } = {
+    const params: Record<string, string | Array<string>> = {
       page: `${searchParams.page || 0}`
     };
     if (searchParams.name) {

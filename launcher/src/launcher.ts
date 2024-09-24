@@ -8,10 +8,10 @@ import { createFolder, filesExists } from './utils';
 const STARTED_DELAY = 30000;
 
 export default class Launcher {
-  private updated: boolean = false;
+  private updated = false;
   private startedTimeout: NodeJS.Timeout | null = null;
   private child: ChildProcessWithoutNullStreams | null = null;
-  private stopping: boolean = false;
+  private stopping = false;
 
   constructor(
     private workDir: string,

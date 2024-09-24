@@ -21,7 +21,7 @@ import { ObservableState, SaveButtonComponent } from '../../shared/save-button/s
 declare namespace Intl {
   type Key = 'calendar' | 'collation' | 'currency' | 'numberingSystem' | 'timeZone' | 'unit';
 
-  function supportedValuesOf(input: Key): string[];
+  function supportedValuesOf(input: Key): Array<string>;
 }
 
 @Component({

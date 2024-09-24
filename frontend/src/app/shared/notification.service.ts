@@ -10,7 +10,7 @@ export interface Notification {
   type: 'success' | 'error';
   message?: string;
   i18nKey?: string;
-  i18nArgs?: { [key: string]: string };
+  i18nArgs?: Record<string, string>;
 }
 
 /**
@@ -26,11 +26,11 @@ export class NotificationService {
     return this.messages$.asObservable();
   }
 
-  success(i18nKey: string, i18nArgs?: { [key: string]: string }) {
+  success(i18nKey: string, i18nArgs?: Record<string, string>) {
     this.messages$.next({ type: 'success', i18nKey, i18nArgs });
   }
 
-  error(i18nKey: string, i18nArgs?: { [key: string]: string }) {
+  error(i18nKey: string, i18nArgs?: Record<string, string>) {
     this.messages$.next({ type: 'error', i18nKey, i18nArgs });
   }
 

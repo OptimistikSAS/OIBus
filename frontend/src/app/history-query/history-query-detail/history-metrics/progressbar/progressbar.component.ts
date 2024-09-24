@@ -11,6 +11,6 @@ import { NgbProgressbarModule } from '@ng-bootstrap/ng-bootstrap';
 })
 export class ProgressbarComponent {
   @Input({ required: true }) value!: number;
-  @Input() max: number = 1;
+  @Input() max = 1;
   @Input({ required: true }) animated!: boolean;
 }
