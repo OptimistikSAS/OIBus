@@ -27,7 +27,7 @@ export interface PinoLog {
   level: string;
 }
 
-export const LEVEL_FORMAT: { [key: string]: LogLevel } = {
+export const LEVEL_FORMAT: Record<string, LogLevel> = {
   '10': 'trace',
   '20': 'debug',
   '30': 'info',

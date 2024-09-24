@@ -15,7 +15,7 @@ import { formDirectives } from '../../shared/form-directives';
 })
 export class ChooseSouthConnectorTypeModalComponent implements OnInit {
   southTypes: Array<SouthType> = [];
-  groupedSouthTypes: { category: string; types: SouthType[] }[] = [];
+  groupedSouthTypes: Array<{ category: string; types: Array<SouthType> }> = [];
 
   constructor(
     private modal: NgbActiveModal,
@@ -31,7 +31,7 @@ export class ChooseSouthConnectorTypeModalComponent implements OnInit {
   }
 
   groupSouthTypes() {
-    const groupedTypes: { [key: string]: SouthType[] } = {};
+    const groupedTypes: Record<string, Array<SouthType>> = {};
 
     for (const southType of this.southTypes) {
       if (groupedTypes[southType.category]) {

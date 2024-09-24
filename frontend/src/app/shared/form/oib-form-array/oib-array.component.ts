@@ -1,4 +1,4 @@
-import { Component, forwardRef, Input, OnInit, AfterViewChecked } from '@angular/core';
+import { AfterViewChecked, Component, forwardRef, Input, OnInit } from '@angular/core';
 import { AbstractControl, ControlValueAccessor, NG_VALIDATORS, NG_VALUE_ACCESSOR, ValidationErrors, Validator } from '@angular/forms';
 import { formDirectives } from '../../form-directives';
 
@@ -59,9 +59,8 @@ export class OibArrayComponent implements OnInit, AfterViewChecked, ControlValue
    * before the "col-2 text-end text-nowrap" div to align it to the right of the table.
    */
   countDivsInFakeTableRows() {
-    const rows = document.getElementsByClassName('oib-fake-table');
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i];
+    const rows = Array.from(document.getElementsByClassName('oib-fake-table'));
+    for (const row of rows) {
       const divElements = row.getElementsByTagName('div');
       if (divElements.length !== 6) {
         const numMissingDivs = 6 - divElements.length;
@@ -227,7 +226,7 @@ export class OibArrayComponent implements OnInit, AfterViewChecked, ControlValue
     return value;
   }
 
-  validate(control: AbstractControl): ValidationErrors | null {
+  validate(_control: AbstractControl): ValidationErrors | null {
     // When there are elements being edited/created, throw a validation error
     // to let the user validate or discard the pending changes
     if (this.editedElement !== null) {

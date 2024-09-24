@@ -42,7 +42,7 @@
     "@types/jasmine": "5.1.4",
     "@types/luxon": "3.4.2",
     "angular-eslint": "18.3.0",
-    "eslint": "8.57.0",
+    "eslint": "9.11.1",
     "eslint-config-prettier": "9.1.0",
     "eslint-plugin-prettier": "5.2.1",
     "jasmine-core": "5.2.0",

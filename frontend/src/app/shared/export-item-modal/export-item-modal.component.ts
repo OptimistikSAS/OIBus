@@ -17,9 +17,9 @@ import { DateTime } from 'luxon';
 })
 export class ExportItemModalComponent implements OnInit {
   readonly csvDelimiters = ALL_CSV_CHARACTERS;
-  selectedDelimiter: string = 'COMMA';
+  selectedDelimiter = 'COMMA';
   dateTime: string = DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS');
-  fileName: string = '';
+  fileName = '';
 
   private fb = inject(NonNullableFormBuilder);
   exportForm = this.fb.group({
