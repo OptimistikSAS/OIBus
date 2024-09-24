@@ -11,6 +11,9 @@
   "keywords": [
     "Optimistik"
   ],
+  "scripts": {
+    "lint": "eslint model/"
+  },
   "browserslist": [
     "last 2 chrome versions",
     "last 2 safari versions",
