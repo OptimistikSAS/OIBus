@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { CurrentUserService } from '../shared/current-user.service';
@@ -18,13 +18,11 @@ import { PageTitleDirective } from '../services/page-title.directive';
   styleUrl: './navbar.component.scss'
 })
 export class NavbarComponent implements OnInit {
+  private currentUserService = inject(CurrentUserService);
+  private engineService = inject(EngineService);
+
   user: User | null = null;
   info: OIBusInfo | null = null;
-
-  constructor(
-    private currentUserService: CurrentUserService,
-    private engineService: EngineService
-  ) {}
 
   ngOnInit() {
     this.currentUserService.get().subscribe(u => (this.user = u));

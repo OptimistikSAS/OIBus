@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { NavbarComponent } from './navbar/navbar.component';
 import { NotificationComponent } from './shared/notification/notification.component';
@@ -16,13 +16,11 @@ import { NavigationService } from './shared/navigation.service';
   imports: [RouterOutlet, NavbarComponent, NotificationComponent, DefaultValidationErrorsComponent]
 })
 export class AppComponent implements OnInit {
-  title = 'OIBus';
+  private currentUserService = inject(CurrentUserService);
+  private windowService = inject(WindowService);
+  private navigationService = inject(NavigationService);
 
-  constructor(
-    private currentUserService: CurrentUserService,
-    private windowService: WindowService,
-    private navigationService: NavigationService
-  ) {}
+  title = 'OIBus';
 
   ngOnInit(): void {
     this.navigationService.init();

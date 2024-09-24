@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '../../../../shared/model/scan-mode.model';
 
 /**
@@ -10,7 +10,7 @@ import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '../../
   providedIn: 'root'
 })
 export class ScanModeService {
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
 
   /**
    * Get the scan modes

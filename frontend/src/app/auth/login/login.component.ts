@@ -19,18 +19,16 @@ import { WindowService } from '../../shared/window.service';
   standalone: true
 })
 export class LoginComponent {
+  private currentUserService = inject(CurrentUserService);
+  private router = inject(Router);
+  private requestedUrlService = inject(RequestedUrlService);
+  private windowService = inject(WindowService);
+
   loginError = false;
   form: FormGroup = inject(NonNullableFormBuilder).group({
     login: ['', Validators.required],
     password: ['', Validators.required]
   });
-
-  constructor(
-    private currentUserService: CurrentUserService,
-    private router: Router,
-    private requestedUrlService: RequestedUrlService,
-    private windowService: WindowService
-  ) {}
 
   login() {
     if (this.form.invalid) {

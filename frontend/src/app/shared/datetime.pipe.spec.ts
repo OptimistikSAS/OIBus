@@ -3,6 +3,8 @@ import { DateTime } from 'luxon';
 import { DEFAULT_TZ, Instant } from '../../../../shared/model/types';
 import { CurrentUserService } from './current-user.service';
 import { createMock } from 'ngx-speculoos';
+import { TestBed } from '@angular/core/testing';
+import { LOCALE_ID } from '@angular/core';
 
 describe('DatetimePipe', () => {
   let currentUserService: jasmine.SpyObj<CurrentUserService>;
@@ -15,7 +17,13 @@ describe('DatetimePipe', () => {
 
   describe('in English', () => {
     beforeEach(() => {
-      pipe = new DatetimePipe('en', currentUserService);
+      TestBed.configureTestingModule({
+        providers: [
+          { provide: CurrentUserService, useValue: currentUserService },
+          { provide: LOCALE_ID, useValue: 'en' }
+        ]
+      });
+      pipe = TestBed.runInInjectionContext(() => new DatetimePipe());
     });
 
     it('should format with default format', () => {
@@ -61,7 +69,13 @@ describe('DatetimePipe', () => {
 
   describe('in French', () => {
     beforeEach(() => {
-      pipe = new DatetimePipe('fr', currentUserService);
+      TestBed.configureTestingModule({
+        providers: [
+          { provide: CurrentUserService, useValue: currentUserService },
+          { provide: LOCALE_ID, useValue: 'fr' }
+        ]
+      });
+      pipe = TestBed.runInInjectionContext(() => new DatetimePipe());
     });
 
     it('should format with default format', () => {

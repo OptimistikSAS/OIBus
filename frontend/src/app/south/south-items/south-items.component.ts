@@ -55,6 +55,12 @@ const PAGE_SIZE = 20;
   styleUrl: './south-items.component.scss'
 })
 export class SouthItemsComponent implements OnInit {
+  private confirmationService = inject(ConfirmationService);
+  private notificationService = inject(NotificationService);
+  private modalService = inject(ModalService);
+  private southConnectorService = inject(SouthConnectorService);
+  private pipeProviderService = inject(PipeProviderService);
+
   @Input() southConnector: SouthConnectorDTO | null = null;
   @Input({ required: true }) southManifest!: SouthConnectorManifest;
   @Input({ required: true }) scanModes!: Array<ScanModeDTO>;
@@ -73,14 +79,6 @@ export class SouthItemsComponent implements OnInit {
   displaySettings: Array<OibFormControl> = [];
 
   searchControl = inject(NonNullableFormBuilder).control(null as string | null);
-
-  constructor(
-    private confirmationService: ConfirmationService,
-    private notificationService: NotificationService,
-    private modalService: ModalService,
-    private southConnectorService: SouthConnectorService,
-    private pipeProviderService: PipeProviderService
-  ) {}
 
   ngOnInit() {
     this.fetchItemsAndResetPage(false);

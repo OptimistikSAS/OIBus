@@ -3,7 +3,7 @@ import { ScopeTypesEnumPipe } from './scope-types-enum.pipe';
 
 describe('ScopeTypesEnumPipe', () => {
   it('should translate scope types', () => {
-    testEnumPipe(ts => new ScopeTypesEnumPipe(ts), {
+    testEnumPipe(() => new ScopeTypesEnumPipe(), {
       south: 'South',
       north: 'North',
       'history-query': 'History query',
