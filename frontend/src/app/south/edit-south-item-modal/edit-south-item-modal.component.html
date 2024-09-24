@@ -10,7 +10,7 @@
           <div class="form-group">
             <label class="form-label" for="name" translate="south.items.name"></label>
             <input formControlName="name" id="name" class="form-control" />
-            <val-errors controlName="name"></val-errors>
+            <val-errors controlName="name" />
           </div>
         </div>
         <!-- Enabled -->
@@ -24,8 +24,8 @@
                 formControlName="scanModeId"
                 [acceptSubscription]="acceptSubscription"
                 [subscriptionOnly]="subscriptionOnly"
-              ></oib-scan-mode>
-              <val-errors controlName="scanModeId"></val-errors>
+              />
+              <val-errors controlName="scanModeId" />
             </div>
           </div>
         }
@@ -40,12 +40,7 @@
         </div>
       </div>
       @if (southItemRows.length > 0) {
-        <oib-form
-          formGroupName="settings"
-          [form]="form.controls.settings"
-          [settingsSchema]="southItemRows"
-          [scanModes]="scanModes"
-        ></oib-form>
+        <oib-form formGroupName="settings" [form]="form.controls.settings" [settingsSchema]="southItemRows" [scanModes]="scanModes" />
       }
       @if (maxInstantPerItem !== null && !maxInstantPerItem) {
         <div>
@@ -58,7 +53,7 @@
 }
 <div class="modal-footer">
   <div class="btn-group">
-    <oib-save-button form="form" [state]="state"></oib-save-button>
+    <oib-save-button form="form" [state]="state" />
     <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
   </div>
 </div>

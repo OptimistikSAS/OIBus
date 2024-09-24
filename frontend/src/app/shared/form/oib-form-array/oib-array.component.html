@@ -31,8 +31,7 @@
             [existingElements]="elements"
             (saved)="save($event)"
             (cancelled)="cancelEdition()"
-          >
-          </oib-edit-element>
+          />
         } @else {
           <div class="row form-data px-1 field-display mx-1 oib-fake-table">
             @for (field of displayedFields; track field) {

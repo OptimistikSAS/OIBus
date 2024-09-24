@@ -12,7 +12,7 @@ import { Component } from '@angular/core';
 import { NorthConnectorDTO } from '../../../../../shared/model/north-connector.model';
 
 @Component({
-  template: `<oib-north-subscriptions [northConnector]="northConnector"></oib-north-subscriptions>`,
+  template: `<oib-north-subscriptions [northConnector]="northConnector" />`,
   standalone: true,
   imports: [NorthSubscriptionsComponent]
 })
