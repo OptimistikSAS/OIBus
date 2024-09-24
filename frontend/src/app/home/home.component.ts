@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
@@ -23,18 +23,16 @@ const NUMBER_OF_COLUMN = 3;
   styleUrl: './home.component.scss'
 })
 export class HomeComponent implements OnInit, OnDestroy {
+  private windowService = inject(WindowService);
+  private southService = inject(SouthConnectorService);
+  private northService = inject(NorthConnectorService);
+  private cd = inject(ChangeDetectorRef);
+
   readonly copyrightYear = new Date().getFullYear();
   southRows: Array<Array<SouthConnectorDTO>> = [];
   northRows: Array<Array<NorthConnectorDTO>> = [];
   stream: EventSource | null = null;
   homeMetrics: HomeMetrics | null = null;
-
-  constructor(
-    private windowService: WindowService,
-    private southService: SouthConnectorService,
-    private northService: NorthConnectorService,
-    private cd: ChangeDetectorRef
-  ) {}
 
   ngOnInit(): void {
     combineLatest([this.southService.list(), this.northService.list()]).subscribe(([souths, norths]) => {

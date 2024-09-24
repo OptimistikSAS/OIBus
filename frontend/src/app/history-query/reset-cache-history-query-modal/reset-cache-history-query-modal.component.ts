@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
@@ -9,7 +9,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
   standalone: true
 })
 export class ResetCacheHistoryQueryModalComponent {
-  constructor(private modal: NgbActiveModal) {}
+  private modal = inject(NgbActiveModal);
 
   submit(resetCache: boolean) {
     this.modal.close(resetCache);

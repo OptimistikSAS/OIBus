@@ -1,4 +1,4 @@
-import { Inject, LOCALE_ID, Pipe, PipeTransform } from '@angular/core';
+import { LOCALE_ID, Pipe, PipeTransform, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { formatNumber } from '@angular/common';
 
@@ -16,10 +16,8 @@ import { formatNumber } from '@angular/common';
   standalone: true
 })
 export class DurationPipe implements PipeTransform {
-  constructor(
-    private translateService: TranslateService,
-    @Inject(LOCALE_ID) private locale: string
-  ) {}
+  private translateService = inject(TranslateService);
+  private locale = inject(LOCALE_ID);
 
   transform(value: number, style: 'long' | 'short' = 'long', type?: undefined | 'hourMinute'): string {
     if (value == null) {

@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import {
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
@@ -21,10 +21,8 @@ import { OIBusContent } from '../../../../shared/model/engine.model';
   providedIn: 'root'
 })
 export class SouthConnectorService {
-  constructor(
-    private http: HttpClient,
-    private downloadService: DownloadService
-  ) {}
+  private http = inject(HttpClient);
+  private downloadService = inject(DownloadService);
 
   /**
    * Get South connectors types

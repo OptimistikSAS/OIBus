@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Page } from '../../../../shared/model/types';
 import { LogDTO, LogSearchParam, Scope } from '../../../../shared/model/logs.model';
 
@@ -11,7 +11,7 @@ import { LogDTO, LogSearchParam, Scope } from '../../../../shared/model/logs.mod
   providedIn: 'root'
 })
 export class LogService {
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
 
   /**
    * Retrieve the Logs from search params

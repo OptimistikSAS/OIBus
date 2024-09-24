@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
 import { Router } from '@angular/router';
@@ -14,14 +14,12 @@ import { formDirectives } from '../../shared/form-directives';
   standalone: true
 })
 export class ChooseSouthConnectorTypeModalComponent implements OnInit {
+  private modal = inject(NgbActiveModal);
+  private southConnectorService = inject(SouthConnectorService);
+  private router = inject(Router);
+
   southTypes: Array<SouthType> = [];
   groupedSouthTypes: Array<{ category: string; types: Array<SouthType> }> = [];
-
-  constructor(
-    private modal: NgbActiveModal,
-    private southConnectorService: SouthConnectorService,
-    private router: Router
-  ) {}
 
   ngOnInit() {
     this.southConnectorService.getAvailableTypes().subscribe(types => {

@@ -1,4 +1,4 @@
-import { Directive, ElementRef, NgZone, OnDestroy } from '@angular/core';
+import { Directive, ElementRef, NgZone, OnDestroy, inject } from '@angular/core';
 
 /**
  * Directive which targets the val-errors elements, and which uses a mutation observer to detect the new errors appearing inside the
@@ -15,7 +15,10 @@ import { Directive, ElementRef, NgZone, OnDestroy } from '@angular/core';
 export class ValErrorDelayDirective implements OnDestroy {
   observer: MutationObserver | null = null;
 
-  constructor(element: ElementRef<HTMLElement>, zone: NgZone) {
+  constructor() {
+    const element = inject<ElementRef<HTMLElement>>(ElementRef);
+    const zone = inject(NgZone);
+
     zone.runOutsideAngular(() => {
       const callback = (mutationsList: Array<MutationRecord>) => {
         for (const mutation of mutationsList) {

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -47,6 +47,17 @@ import { LogsComponent } from '../../logs/logs.component';
   providers: [PageLoader, BooleanEnumPipe]
 })
 export class NorthDetailComponent implements OnInit, OnDestroy {
+  private windowService = inject(WindowService);
+  private northConnectorService = inject(NorthConnectorService);
+  private scanModeService = inject(ScanModeService);
+  private engineService = inject(EngineService);
+  private notificationService = inject(NotificationService);
+  private modalService = inject(ModalService);
+  private route = inject(ActivatedRoute);
+  private cd = inject(ChangeDetectorRef);
+  private pipeProviderService = inject(PipeProviderService);
+  private booleanPipe = inject(BooleanEnumPipe);
+
   northConnector: NorthConnectorDTO | null = null;
   displayedSettings: Array<{ key: string; value: string }> = [];
   scanModes: Array<ScanModeDTO> = [];
@@ -55,19 +66,6 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
   connectorMetrics: NorthConnectorMetrics | null = null;
   oibusInfo: OIBusInfo | null = null;
   northId: string | null = null;
-
-  constructor(
-    private windowService: WindowService,
-    private northConnectorService: NorthConnectorService,
-    private scanModeService: ScanModeService,
-    private engineService: EngineService,
-    private notificationService: NotificationService,
-    private modalService: ModalService,
-    private route: ActivatedRoute,
-    private cd: ChangeDetectorRef,
-    private pipeProviderService: PipeProviderService,
-    private booleanPipe: BooleanEnumPipe
-  ) {}
 
   ngOnInit() {
     combineLatest([this.scanModeService.list(), this.engineService.getInfo()]).subscribe(([scanModes, engineInfo]) => {

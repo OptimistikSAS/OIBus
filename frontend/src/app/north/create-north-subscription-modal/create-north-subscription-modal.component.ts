@@ -16,13 +16,13 @@ import { OIBusSubscription } from '../../../../../shared/model/subscription.mode
   standalone: true
 })
 export class CreateNorthSubscriptionModalComponent {
+  private modal = inject(NgbActiveModal);
+
   state = new ObservableState();
   southConnectors: Array<SouthConnectorDTO> = [];
   form = inject(NonNullableFormBuilder).group({
     southConnector: [null as SouthConnectorDTO | null, Validators.required]
   });
-
-  constructor(private modal: NgbActiveModal) {}
 
   /**
    * Prepares the component for creation.
