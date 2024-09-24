@@ -10,13 +10,13 @@
           <option [ngValue]="southConnector">{{ southConnector.name }}</option>
         }
       </select>
-      <val-errors controlName="southConnector"></val-errors>
+      <val-errors controlName="southConnector" />
     </div>
   </form>
 </div>
 <div class="modal-footer">
   <div class="btn-group">
-    <oib-save-button [state]="state"></oib-save-button>
+    <oib-save-button [state]="state" />
     <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
   </div>
 </div>

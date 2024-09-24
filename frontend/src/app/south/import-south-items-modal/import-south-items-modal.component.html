@@ -24,7 +24,7 @@
     </div>
     <div class="d-flex flex-row-reverse">
       <div [class]="displayedItemsError.totalPages > 1 ? 'ms-2' : ''">
-        <oib-pagination [page]="displayedItemsError" (pageChanged)="changePageError($event)"></oib-pagination>
+        <oib-pagination [page]="displayedItemsError" (pageChanged)="changePageError($event)" />
       </div>
     </div>
   }
@@ -63,7 +63,7 @@
     </div>
     <div class="d-flex flex-row-reverse">
       <div [class]="displayedItemsNew.totalPages > 1 ? 'ms-2' : ''">
-        <oib-pagination [page]="displayedItemsNew" (pageChanged)="changePageNew($event)"></oib-pagination>
+        <oib-pagination [page]="displayedItemsNew" (pageChanged)="changePageNew($event)" />
       </div>
     </div>
   }

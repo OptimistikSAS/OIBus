@@ -16,8 +16,7 @@ import { buildDateTimeFieldsFormControl } from '../../../../../../../shared/mode
       [existingElements]="existingElements"
       (saved)="savedInput = $event"
       (cancelled)="cancelled = true"
-    >
-    </oib-edit-element>
+    />
   </form>`,
   standalone: true,
   imports: [EditElementComponent, ...formDirectives]

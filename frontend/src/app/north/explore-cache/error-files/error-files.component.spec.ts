@@ -8,7 +8,7 @@ import { Component, ViewChild } from '@angular/core';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 
 @Component({
-  template: `<oib-error-files #component [northConnector]="northConnector"></oib-error-files>`,
+  template: `<oib-error-files #component [northConnector]="northConnector" />`,
   standalone: true,
   imports: [ErrorFilesComponent]
 })

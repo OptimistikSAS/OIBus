@@ -1,7 +1,7 @@
 @if (valueTablePages.totalElements) {
   <div class="d-flex flex-row-reverse">
     <div [class]="valueTablePages.totalPages > 1 ? 'ms-2' : ''">
-      <oib-pagination [page]="valueTablePages" (pageChanged)="valueTable.changePage($event)"></oib-pagination>
+      <oib-pagination [page]="valueTablePages" (pageChanged)="valueTable.changePage($event)" />
     </div>
   </div>
 }
@@ -25,7 +25,7 @@
   </ng-template>
 
   @if (cacheValues.length !== 0) {
-    <oib-value-table #valueTable [files]="cacheValues"></oib-value-table>
+    <oib-value-table #valueTable [files]="cacheValues" />
   } @else {
     <div class="mb-3 oib-grey-container" translate="north.cache-settings.cache-values-none"></div>
   }

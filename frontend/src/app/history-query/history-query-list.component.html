@@ -27,21 +27,17 @@
 
   <div class="justify-content-between d-flex">
     @if (this.allHistoryQueries && this.allHistoryQueries.length > 0) {
-      <oib-legend [legendList]="LEGEND"></oib-legend>
+      <oib-legend [legendList]="LEGEND" />
     }
     <!-- only display it if there is more than 1 page -->
     @if (displayedHistoryQueries.totalPages > 1) {
-      <oib-pagination
-        class="d-flex justify-content-end"
-        [page]="displayedHistoryQueries"
-        (pageChanged)="changePage($event)"
-      ></oib-pagination>
+      <oib-pagination class="d-flex justify-content-end" [page]="displayedHistoryQueries" (pageChanged)="changePage($event)" />
     }
   </div>
 
   <!-- the loading spinner when queries are not yet loaded -->
   @if (!allHistoryQueries) {
-    <oib-loading-spinner></oib-loading-spinner>
+    <oib-loading-spinner />
   } @else {
     <!-- the list of queries or a caption if empty -->
     @if (displayedHistoryQueries.content.length !== 0) {

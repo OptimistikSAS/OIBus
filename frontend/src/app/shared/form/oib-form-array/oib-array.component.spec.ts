@@ -9,7 +9,7 @@ import { formDirectives } from '../../form-directives';
 import { buildDateTimeFieldsFormControl } from '../../../../../../shared/model/manifest-factory';
 
 @Component({
-  template: '<oib-array [formDescription]="formDescription" [formControl]="control"></oib-array>',
+  template: '<oib-array [formDescription]="formDescription" [formControl]="control" />',
   standalone: true,
   imports: [OibArrayComponent, ...formDirectives]
 })

@@ -21,7 +21,7 @@
                   <div class="form-group">
                     <label class="form-label" for="history-query-name" translate="history-query.name"></label>
                     <input formControlName="name" id="history-query-name" class="form-control" />
-                    <val-errors controlName="name"></val-errors>
+                    <val-errors controlName="name" />
                   </div>
                 </div>
                 <!-- Description -->
@@ -36,15 +36,15 @@
                 <div class="col">
                   <div class="form-group">
                     <label class="col-auto col-form-label" translate="history-query.start"></label>
-                    <oib-datetimepicker formControlName="startTime"></oib-datetimepicker>
-                    <val-errors controlName="startTime"></val-errors>
+                    <oib-datetimepicker formControlName="startTime" />
+                    <val-errors controlName="startTime" />
                   </div>
                 </div>
                 <div class="col">
                   <div class="form-group">
                     <label class="col-auto col-form-label" translate="history-query.end"></label>
-                    <oib-datetimepicker formControlName="endTime"></oib-datetimepicker>
-                    <val-errors controlName="endTime"></val-errors>
+                    <oib-datetimepicker formControlName="endTime" />
+                    <val-errors controlName="endTime" />
                   </div>
                 </div>
               </div>
@@ -95,8 +95,8 @@
                       formControlName="scanModeId"
                       [scanModes]="scanModes"
                       [label]="'north.cache-settings.send-scan-mode' | translate"
-                    ></oib-scan-mode>
-                    <val-errors controlName="scanModeId"></val-errors>
+                    />
+                    <val-errors controlName="scanModeId" />
                   </div>
                 </div>
                 <!-- Retry interval -->
@@ -107,7 +107,7 @@
                       <input type="number" formControlName="retryInterval" id="retry-interval" class="form-control" />
                       <span class="input-group-text" translate="common.unit.ms"></span>
                     </div>
-                    <val-errors controlName="retryInterval"></val-errors>
+                    <val-errors controlName="retryInterval" />
                   </div>
                 </div>
                 <!-- Retry count -->
@@ -115,7 +115,7 @@
                   <div class="form-group">
                     <label class="form-label" for="retry-count" translate="north.cache-settings.retry-count"></label>
                     <input type="number" formControlName="retryCount" id="retry-count" class="form-control" />
-                    <val-errors controlName="retryCount"></val-errors>
+                    <val-errors controlName="retryCount" />
                   </div>
                 </div>
                 <!-- Max size -->
@@ -126,7 +126,7 @@
                       <input type="number" formControlName="maxSize" id="maxSize" class="form-control" />
                       <span class="input-group-text" translate="common.unit.MB"></span>
                     </div>
-                    <val-errors controlName="maxSize"></val-errors>
+                    <val-errors controlName="maxSize" />
                   </div>
                 </div>
               </div>
@@ -139,7 +139,7 @@
                     <div class="form-group">
                       <label class="form-label" for="group-count" translate="north.cache-settings.group-count"></label>
                       <input type="number" formControlName="groupCount" id="group-count" class="form-control" />
-                      <val-errors controlName="groupCount"></val-errors>
+                      <val-errors controlName="groupCount" />
                     </div>
                   </div>
                   <!-- Max send count -->
@@ -147,7 +147,7 @@
                     <div class="form-group">
                       <label class="form-label" for="max-send-count" translate="north.cache-settings.max-send-count"></label>
                       <input type="number" formControlName="maxSendCount" id="max-send-count" class="form-control" />
-                      <val-errors controlName="maxSendCount"></val-errors>
+                      <val-errors controlName="maxSendCount" />
                     </div>
                   </div>
                 </div>
@@ -212,7 +212,7 @@
                       id="test-connection-north"
                       (click)="test('north')"
                     ></button>
-                    <oib-help [url]="'https://oibus.optimistik.com/docs/guide/north-connectors/' + northType"></oib-help>
+                    <oib-help [url]="'https://oibus.optimistik.com/docs/guide/north-connectors/' + northType" />
                   </div>
                 </div>
               </ng-template>
@@ -222,7 +222,7 @@
                   [form]="historyQueryForm.controls.northSettings"
                   [settingsSchema]="northSettingsControls"
                   [scanModes]="scanModes"
-                ></oib-form>
+                />
               }
             </oib-box>
             <!-- South settings -->
@@ -258,7 +258,7 @@
                       id="test-connection-south"
                       (click)="test('south')"
                     ></button>
-                    <oib-help [url]="'https://oibus.optimistik.com/docs/guide/south-connectors/' + southType"></oib-help>
+                    <oib-help [url]="'https://oibus.optimistik.com/docs/guide/south-connectors/' + southType" />
                   </div>
                 </div>
               </ng-template>
@@ -268,14 +268,14 @@
                   [form]="historyQueryForm.controls.southSettings"
                   [settingsSchema]="southSettingsControls"
                   [scanModes]="scanModes"
-                ></oib-form>
+                />
               }
             </oib-box>
           </div>
           @if (mode === 'edit' && historyQuery) {
             <div id="actions" class="d-flex justify-content-end">
               <div class="btn-group">
-                <oib-save-button [insideOfGroup]="false" form="history-query-form" [state]="state"></oib-save-button>
+                <oib-save-button [insideOfGroup]="false" form="history-query-form" [state]="state" />
               </div>
             </div>
           }
@@ -286,7 +286,7 @@
               [southManifest]="southManifest"
               [initItems]="inMemoryItems"
               [inMemory]="false"
-            ></oib-history-query-items>
+            />
           }
           @if (mode === 'create') {
             <oib-history-query-items
@@ -295,13 +295,13 @@
               [southManifest]="southManifest"
               [initItems]="inMemoryItems"
               [inMemory]="true"
-            ></oib-history-query-items>
+            />
           }
         </form>
         @if (mode === 'create') {
           <div id="actions" class="mt-2 d-flex justify-content-end">
             <div class="btn-group">
-              <oib-save-button [insideOfGroup]="false" form="history-query-form" [state]="state"></oib-save-button>
+              <oib-save-button [insideOfGroup]="false" form="history-query-form" [state]="state" />
             </div>
           </div>
         }
