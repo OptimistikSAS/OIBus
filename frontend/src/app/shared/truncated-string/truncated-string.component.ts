@@ -12,8 +12,8 @@ import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 })
 export class TruncatedStringComponent implements OnChanges {
   @Input({ required: true }) string: string | null | undefined;
-  @Input() maxLength: number = 40;
-  displayedString: string = '';
+  @Input() maxLength = 40;
+  displayedString = '';
   truncated = false;
 
   ngOnChanges() {

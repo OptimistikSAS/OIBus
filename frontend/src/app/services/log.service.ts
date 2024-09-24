@@ -18,7 +18,7 @@ export class LogService {
    * @param searchParams - The search params
    */
   searchLogs(searchParams: LogSearchParam): Observable<Page<LogDTO>> {
-    const params: { [key: string]: string | string[] } = {
+    const params: Record<string, string | Array<string>> = {
       page: `${searchParams.page || 0}`
     };
     if (searchParams.messageContent) {

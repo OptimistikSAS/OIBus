@@ -14,9 +14,9 @@ import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-c
 export class FileContentModalComponent implements AfterViewInit {
   constructor(private modal: NgbActiveModal) {}
   @ViewChild('codeBlock') codeBlock!: OibCodeBlockComponent;
-  content: string = '';
-  filename: string = '';
-  contentType: string = '';
+  content = '';
+  filename = '';
+  contentType = '';
   private callbackSet = false;
 
   ngAfterViewInit() {
