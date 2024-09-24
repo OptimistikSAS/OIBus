@@ -6,7 +6,7 @@ import { Router, NavigationEnd } from '@angular/router';
   providedIn: 'root'
 })
 export class NavigationService {
-  private history: string[] = [];
+  private history: Array<string> = [];
 
   constructor(
     private router: Router,

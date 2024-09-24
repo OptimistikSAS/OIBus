@@ -18,7 +18,7 @@ export class SouthItemTestModalComponent implements AfterViewInit {
   @ViewChild('monacoEditor') codeBlock: OibCodeBlockComponent = new OibCodeBlockComponent(new MonacoEditorLoaderService());
   result: OIBusContent | null = null;
   item: SouthConnectorItemDTO | null = null;
-  contentType: string = 'plaintext';
+  contentType = 'plaintext';
 
   constructor(private modal: NgbActiveModal) {}
 
