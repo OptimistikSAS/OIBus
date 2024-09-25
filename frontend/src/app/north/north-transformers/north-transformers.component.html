@@ -6,7 +6,7 @@
   <ng-template oibBoxTitle>
     <div class="d-flex justify-content-between align-items-center">
       <div>
-        <span id="logs-title">{{ 'transformations' | translate }}</span>
+        <span id="logs-title">{{ 'transformers.title' | translate }}</span>
       </div>
     </div>
   </ng-template>
@@ -14,10 +14,10 @@
     <table class="table table-sm table-hover oib-table">
       <thead class="light">
         <tr>
-          <th class="w-auto">{{ 'input' | translate }}</th>
-          <th class="w-auto">{{ 'output' | translate }}</th>
-          <th class="w-auto">{{ 'type' | translate }}</th>
-          <th class="w-auto">{{ 'implementation' | translate }}</th>
+          <th class="w-auto">{{ 'transformers.input-data' | translate }}</th>
+          <th class="w-auto">{{ 'transformers.output-data' | translate }}</th>
+          <th class="w-auto">{{ 'transformers.transformer-type' | translate }}</th>
+          <th class="w-auto">{{ 'transformers.transformer-implementation' | translate }}</th>
         </tr>
       </thead>
       <tbody>
@@ -56,7 +56,7 @@
             </td>
 
             @if (getSelectedValue(row.transformerTypes) === 'standard') {
-              <td>Using standard implementation</td>
+              <td>{{ 'transformers.standard-implementation' | translate }}</td>
             } @else {
               <td>
                 <oib-rich-select
