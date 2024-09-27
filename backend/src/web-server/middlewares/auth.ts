@@ -61,6 +61,9 @@ const auth = () => {
         return authError(ctx);
       }
     } else {
+      if (ctx.request.url === '/api/status') {
+        return next();
+      }
       return authError(ctx);
     }
 
