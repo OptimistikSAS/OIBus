@@ -28,12 +28,12 @@ const LOG_FOLDER_NAME = 'logs';
 const LOG_DB_NAME = 'logs.db';
 
 (async () => {
-  const { configFile, check } = getCommandLineArguments();
+  const { configFile, check, ignoreIpFilters } = getCommandLineArguments();
 
   const binaryFolder = process.cwd();
 
   const baseDir = path.resolve(configFile);
-  console.info(`Starting OIBus with base directory ${baseDir}...`);
+  console.info(`Starting OIBus with data folder directory ${baseDir}...`);
   process.chdir(baseDir);
 
   // Create the base cache folder
@@ -171,6 +171,7 @@ const LOG_DB_NAME = 'logs.db';
     northService,
     oibusService,
     engineMetricsService,
+    ignoreIpFilters,
     loggerService.createChildLogger('web-server')
   );
   await server.init();

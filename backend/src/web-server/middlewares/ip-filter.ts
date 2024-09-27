@@ -4,11 +4,13 @@ import { KoaContext } from '../koa';
  * Filter connection based on IP addresses. IPv4 and IPv6 are both accepted
  * Return ipFilter middleware
  */
-const ipFilter = () => async (ctx: KoaContext<any, any>, next: () => Promise<any>) => {
-  const allowed = ctx.app.ipFilters.some(ipToTest => {
-    const formattedRegext = `^${ipToTest.replace(/\\/g, '\\\\').replace(/\./g, '\\.').replace(/\*$/g, '.*')}$`;
-    return new RegExp(formattedRegext).test(ctx.request.ip);
-  });
+const ipFilter = (ignoreIpFilters: boolean) => async (ctx: KoaContext<any, any>, next: () => Promise<any>) => {
+  const allowed =
+    ignoreIpFilters ||
+    ctx.app.ipFilters.some(ipToTest => {
+      const formattedRegext = `^${ipToTest.replace(/\\/g, '\\\\').replace(/\./g, '\\.').replace(/\*$/g, '.*')}$`;
+      return new RegExp(formattedRegext).test(ctx.request.ip);
+    });
   if (allowed) {
     await next();
   } else {

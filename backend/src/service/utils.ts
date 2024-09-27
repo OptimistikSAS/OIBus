@@ -30,8 +30,9 @@ const COMPRESSION_LEVEL = 9;
  */
 export const getCommandLineArguments = () => {
   const args = minimist(process.argv.slice(2));
-  const { config = './', check = false } = args;
-  return { configFile: path.resolve(config), check };
+  console.info(`OIBus starting with the following arguments: ${JSON.stringify(args)}`);
+  const { config = './', check = false, ignoreIpFilters = false } = args;
+  return { configFile: path.resolve(config), check, ignoreIpFilters };
 };
 
 /**

@@ -45,6 +45,7 @@ export default class WebServer {
     private readonly northService: NorthService,
     private readonly oibusService: OIBusService,
     private readonly engineMetricsService: EngineMetricsService,
+    private readonly ignoreIpFilters: boolean,
     logger: pino.Logger
   ) {
     this._id = id;
@@ -108,7 +109,7 @@ export default class WebServer {
     this.app.use(respond());
 
     // filter IP addresses
-    this.app.use(ipFilter());
+    this.app.use(ipFilter(this.ignoreIpFilters));
 
     this.app.use(webClient);
 
