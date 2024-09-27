@@ -28,13 +28,9 @@ export default class Launcher {
       await this.update();
     }
 
-    const args = ['--config', this.config];
-    if (this.check) {
-      args.push('--check');
-    }
-    console.log(`Starting OIBus: ${oibusPath} ${args.join(' ')}`);
+    console.log(`Starting OIBus: ${oibusPath} ${process.argv.join(' ')}`);
     try {
-      this.child = spawn(oibusPath, args, { cwd: this.workDir });
+      this.child = spawn(oibusPath, process.argv, { cwd: this.workDir });
 
       this.child.stdout.on('data', data => {
         console.info(`OIBus stdout: ${data.toString()}`);
