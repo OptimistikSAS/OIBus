@@ -3,7 +3,7 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { ChildProcessWithoutNullStreams } from 'child_process';
 import * as os from 'os';
-import { createFolder, filesExists } from './utils';
+import { createFolder, filesExists, replaceConfigArgumentWithAbsolutePath } from './utils';
 
 const STARTED_DELAY = 30000;
 
@@ -28,9 +28,10 @@ export default class Launcher {
       await this.update();
     }
 
-    console.log(`Starting OIBus: ${oibusPath} ${process.argv.join(' ')}`);
+    const args = replaceConfigArgumentWithAbsolutePath(process.argv, this.config);
+    console.log(`Starting OIBus launcher: ${oibusPath} ${args}`);
     try {
-      this.child = spawn(oibusPath, process.argv, { cwd: this.workDir });
+      this.child = spawn(oibusPath, args, { cwd: this.workDir });
 
       this.child.stdout.on('data', data => {
         console.info(`OIBus stdout: ${data.toString()}`);

@@ -1,6 +1,18 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+export const replaceConfigArgumentWithAbsolutePath = (args: Array<string>, absoluteConfigPath: string): Array<string> => {
+  const foundIndex = args.findIndex(element => element === '--config');
+  // Find the index of the target element
+  const targetIndex = args.indexOf('--config');
+
+  if (targetIndex !== -1) {
+    // Insert the new element after the target element
+    args[foundIndex + 1] = absoluteConfigPath;
+  }
+  return args;
+};
+
 /**
  * Method to return a delayed promise.
  */
