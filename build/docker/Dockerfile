@@ -12,11 +12,10 @@ WORKDIR /app
 RUN curl -LO https://github.com/OptimistikSAS/OIBus/releases/download/${version}/oibus-linux_${arch}-${version}.zip
 RUN unzip -a oibus-linux_${arch}-${version}.zip -d OIBus/
 WORKDIR /app/OIBus
-COPY ./oibus-init.sh .
 RUN mkdir OIBusData
 
 # Expose port 2223 for OIBus
 EXPOSE 2223
 
 # Start OIBus
-CMD ["./oibus-launcher", "--config", "./OIBusData"]
+CMD ["./oibus-launcher", "--config", "../OIBusData", "--ignoreIpFilters", "true"]
