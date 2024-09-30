@@ -155,13 +155,31 @@ describe('Service utils', () => {
     it('should parse command line arguments without args', () => {
       (minimist as unknown as jest.Mock).mockReturnValue({});
       const result = getCommandLineArguments();
-      expect(result).toEqual({ check: false, configFile: path.resolve('./'), ignoreIpFilters: false });
+      expect(result).toEqual({
+        check: false,
+        configFile: path.resolve('./'),
+        ignoreIpFilters: false,
+        ignoreRemoteUpdate: false,
+        ignoreRemoteConfig: false
+      });
     });
 
     it('should parse command line arguments with args', () => {
-      (minimist as unknown as jest.Mock).mockReturnValue({ check: true, config: 'myConfig.json', ignoreIpFilters: true });
+      (minimist as unknown as jest.Mock).mockReturnValue({
+        check: true,
+        config: 'myConfig.json',
+        ignoreIpFilters: true,
+        ignoreRemoteUpdate: true,
+        ignoreRemoteConfig: true
+      });
       const result = getCommandLineArguments();
-      expect(result).toEqual({ check: true, configFile: path.resolve('myConfig.json'), ignoreIpFilters: true });
+      expect(result).toEqual({
+        check: true,
+        configFile: path.resolve('myConfig.json'),
+        ignoreIpFilters: true,
+        ignoreRemoteUpdate: true,
+        ignoreRemoteConfig: true
+      });
     });
   });
 
