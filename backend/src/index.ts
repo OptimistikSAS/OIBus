@@ -28,12 +28,14 @@ const LOG_FOLDER_NAME = 'logs';
 const LOG_DB_NAME = 'logs.db';
 
 (async () => {
-  const { configFile, check, ignoreIpFilters } = getCommandLineArguments();
+  const { configFile, check, ignoreIpFilters, ignoreRemoteUpdate } = getCommandLineArguments();
 
   const binaryFolder = process.cwd();
 
   const baseDir = path.resolve(configFile);
-  console.info(`Starting OIBus with data folder directory ${baseDir}...`);
+  console.info(
+    `Starting OIBus with ignoreIpFilters = ${ignoreIpFilters}, ignoreRemoteUpdate = ${ignoreRemoteUpdate} and data folder directory ${baseDir}...`
+  );
   process.chdir(baseDir);
 
   // Create the base cache folder
@@ -115,7 +117,8 @@ const LOG_DB_NAME = 'logs.db';
     encryptionService,
     oianalyticsMessageService,
     loggerService.logger!,
-    binaryFolder
+    binaryFolder,
+    ignoreRemoteUpdate
   );
   commandService.start();
 

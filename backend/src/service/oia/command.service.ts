@@ -27,7 +27,8 @@ export default class CommandService {
     private encryptionService: EncryptionService,
     private oianalyticsMessageService: OIAnalyticsMessageService,
     private logger: pino.Logger,
-    private binaryFolder: string
+    private binaryFolder: string,
+    private ignoreRemoteUpdate: boolean
   ) {
     const engineSettings = this.repositoryService.engineRepository.getEngineSettings()!;
     const currentUpgradeCommand = this.repositoryService.commandRepository.searchCommandsList({ status: ['RUNNING'], types: ['UPGRADE'] });
@@ -115,6 +116,11 @@ export default class CommandService {
   }
 
   async executeCommand(command: OIBusCommandDTO): Promise<void> {
+    if (this.ignoreRemoteUpdate) {
+      this.logger.error(`OIBus is not set up to execute remote`);
+      this.repositoryService.commandRepository.markAsErrored(command.id, 'OIBus is not set up to execute remote');
+      return;
+    }
     const runStart = DateTime.now();
     const engineSettings = this.repositoryService.engineRepository.getEngineSettings()!;
     const oibusInfo = getOIBusInfo(engineSettings);

@@ -62,7 +62,7 @@ describe('Command service with running command', () => {
     (repositoryService.engineRepository.getEngineSettings as jest.Mock).mockReturnValue({ version: '3.2.0' });
     (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(registration);
     (repositoryService.commandRepository.searchCommandsList as jest.Mock).mockReturnValue([command]);
-    service = new CommandService(repositoryService, encryptionService, oianalyticsMessageService, logger, 'binaryFolder');
+    service = new CommandService(repositoryService, encryptionService, oianalyticsMessageService, logger, 'binaryFolder', false);
   });
 
   it('should properly start and stop after an update', async () => {
@@ -151,7 +151,7 @@ describe('Command service without command', () => {
 
     (repositoryService.commandRepository.searchCommandsList as jest.Mock).mockReturnValue([]);
     (repositoryService.engineRepository.getEngineSettings as jest.Mock).mockReturnValue({ version: '3.2.0' });
-    service = new CommandService(repositoryService, encryptionService, oianalyticsMessageService, logger, 'binaryFolder');
+    service = new CommandService(repositoryService, encryptionService, oianalyticsMessageService, logger, 'binaryFolder', false);
   });
 
   it('should properly start when not registered', () => {
@@ -251,7 +251,7 @@ describe('Command service with running command', () => {
     (repositoryService.engineRepository.getEngineSettings as jest.Mock).mockReturnValue({ version });
     (repositoryService.registrationRepository.getRegistrationSettings as jest.Mock).mockReturnValue(registration);
     (repositoryService.commandRepository.searchCommandsList as jest.Mock).mockReturnValue([command]);
-    service = new CommandService(repositoryService, encryptionService, oianalyticsMessageService, logger, 'binaryFolder');
+    service = new CommandService(repositoryService, encryptionService, oianalyticsMessageService, logger, 'binaryFolder', true);
   });
 
   it('should properly start and stop after a failed update', async () => {
@@ -261,5 +261,11 @@ describe('Command service with running command', () => {
       command.id,
       `OIBus has not been updated. Rollback to version ${version}`
     );
+  });
+
+  it('should not run an update', () => {
+    service.executeCommand(command);
+    expect(logger.error).toHaveBeenCalledWith('OIBus is not set up to execute remote');
+    expect(repositoryService.commandRepository.markAsErrored).toHaveBeenCalledWith(command.id, 'OIBus is not set up to execute remote');
   });
 });
