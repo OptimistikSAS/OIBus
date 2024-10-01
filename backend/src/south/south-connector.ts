@@ -148,14 +148,10 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
       const subscriptionItems = this.items.filter(item => item.scanModeId === 'subscription');
 
       const itemsToSubscribe = subscriptionItems.filter(item => {
-        return !this.subscribedItems.some(
-          subscribedItem => subscribedItem.id === item.id && JSON.stringify(subscribedItem.settings) === JSON.stringify(item.settings)
-        );
+        return !this.subscribedItems.some(subscribedItem => JSON.stringify(subscribedItem) === JSON.stringify(item));
       });
       const itemsToUnsubscribe = this.subscribedItems.filter(item => {
-        return !subscriptionItems.some(
-          subscribedItem => subscribedItem.id === item.id && JSON.stringify(subscribedItem.settings) === JSON.stringify(item.settings)
-        );
+        return !subscriptionItems.some(subscribedItem => JSON.stringify(subscribedItem) === JSON.stringify(item));
       });
 
       if (itemsToUnsubscribe.length > 0) {
