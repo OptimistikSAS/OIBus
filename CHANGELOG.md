@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.4.5](https://github.com/OptimistikSAS/OIBus/compare/v3.4.4...v3.4.5) (2024-10-01)
+
+
+### Bug Fixes
+
+* **mqtt:** fix payload parsing and unsubscribe on item change ([2aa36c4](https://github.com/OptimistikSAS/OIBus/commit/2aa36c4660c2c272de18a3a9f78d4aa7b4dcfcaf))
+* **oibus-launcher:** pass full arg list to oibus child process ([7fa09f5](https://github.com/OptimistikSAS/OIBus/commit/7fa09f531e05f4449a14957dccbcf170f5748bd7))
+* **oibus:** ignore remote update if arg is passed at startup ([523dda7](https://github.com/OptimistikSAS/OIBus/commit/523dda79312e2b9f5a5fe553f8bd4a85dc77d5ec))
+* **oibus:** manage ignoreIpFilters arg ([56293f8](https://github.com/OptimistikSAS/OIBus/commit/56293f8b1cd7f4d1378580a16864d2a42c711c89))
+* **oibus:** manage status endpoint without auth ([b9d2299](https://github.com/OptimistikSAS/OIBus/commit/b9d22997dda025bba54066fd36d147118bd3e940))
+* **oibus:** resolve absolute path of config in oibus launcher argument ([bf3f915](https://github.com/OptimistikSAS/OIBus/commit/bf3f915e58932ee0b7264a023f75a3a3ef144ab9))
+* **subscribe:** fix subscribed item on name or other settings change ([589d6ed](https://github.com/OptimistikSAS/OIBus/commit/589d6ed5d80b1b1a7818bd749b04fd038e771506))
+
 ## [3.4.4](https://github.com/OptimistikSAS/OIBus/compare/v3.4.3...v3.4.4) (2024-09-23)
 
 
