@@ -23,4 +23,4 @@ RUN mkdir OIBusData
 EXPOSE 2223
 
 # Start OIBus
-CMD ["./oibus-launcher", "--config", "../../../OIBusData", "--ignoreIpFilters", "true", "--ignoreRemoteUpdate", "true"]
+CMD ["./oibus-launcher", "--config", "./OIBusData", "--ignoreIpFilters", "true", "--ignoreRemoteUpdate", "true"]
