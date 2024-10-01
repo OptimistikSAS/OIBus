@@ -76,7 +76,7 @@ const items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>> = [
     enabled: true,
     connectorId: 'southId',
     settings: {
-      topic: 'my/+/#/topic/with/wildcard/#',
+      topic: 'my/+/+/topic/with/wildcard/#',
       valueType: 'string'
     },
     scanModeId: 'subscription'
@@ -412,13 +412,19 @@ describe('SouthMQTT with Basic Auth', () => {
   });
 
   it('should get item', async () => {
-    south.wildcardTopic = jest.fn().mockReturnValueOnce(['bad', 'topic']).mockReturnValueOnce(null).mockReturnValue([]);
+    south.wildcardTopic = jest
+      .fn()
+      .mockReturnValueOnce(['bad', 'topic'])
+      .mockReturnValueOnce(null)
+      .mockReturnValueOnce(['+', '+', '#'])
+      .mockReturnValueOnce(['+', '+', '#'])
+      .mockReturnValue([]);
     (repositoryService.southItemRepository.listSouthItems as jest.Mock)
       .mockReturnValueOnce([items[1]])
       .mockReturnValueOnce([items[1]])
       .mockReturnValueOnce([items[1], { ...items[1], id: 'anotherId' }])
       .mockReturnValueOnce([])
-      .mockReturnValue([items[1]]);
+      .mockReturnValue([items[0]]);
 
     south.subscribe = jest.fn();
     await south.start();
@@ -467,7 +473,7 @@ describe('SouthMQTT with Basic Auth', () => {
 
     await south.start();
     await south.onItemChange();
-    expect(south.getItem(items[1].settings.topic)).toEqual(items[1]);
+    expect(south.getItem(items[0].settings.topic)).toEqual(items[0]);
   });
 
   it('should format value', () => {

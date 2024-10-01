@@ -230,10 +230,12 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
   getItem(topic: string): SouthConnectorItemDTO<SouthMQTTItemSettings> {
     const matchedPoints: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>> = [];
 
-    for (const item of this.subscribedItems) {
+    const subscriptionItems = this.items.filter(item => item.scanModeId === 'subscription' && item.enabled);
+    // FIXME: simplify this code to find associated item from the most specific topic to the most generic
+    for (const item of subscriptionItems) {
       const matchList = this.wildcardTopic(topic, item.settings.topic);
       if (Array.isArray(matchList)) {
-        const nrWildcards = (item.name.match(/[+#]/g) || []).length;
+        const nrWildcards = (item.settings.topic.match(/[+#]/g) || []).length;
         if (nrWildcards === matchList.length) {
           matchedPoints.push(item);
         } else {
