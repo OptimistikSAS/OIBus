@@ -48,7 +48,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
   public connectedEvent: EventEmitter = new EventEmitter();
   private stopping = false;
   private runProgress$: DeferredPromise | null = null;
-  protected subscribedItems: Array<SouthConnectorItemDTO<I>> = [];
+  private subscribedItems: Array<SouthConnectorItemDTO<I>> = [];
   protected items: Array<SouthConnectorItemDTO<I>> = [];
   protected cacheService: SouthCacheService | null = null;
   private metricsService: SouthConnectorMetricsService | null = null;
@@ -148,22 +148,16 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
       const subscriptionItems = this.items.filter(item => item.scanModeId === 'subscription');
 
       const itemsToSubscribe = subscriptionItems.filter(item => {
-        return !this.subscribedItems.some(subscribedItem => subscribedItem.id === item.id);
+        return !this.subscribedItems.some(
+          subscribedItem => subscribedItem.id === item.id && JSON.stringify(subscribedItem.settings) === JSON.stringify(item.settings)
+        );
       });
-
-      if (itemsToSubscribe.length > 0) {
-        try {
-          this.logger.trace(`Subscribing to ${itemsToSubscribe.length} new items`);
-          await this.subscribe(itemsToSubscribe);
-          this.subscribedItems.push(...itemsToSubscribe);
-        } catch (error) {
-          this.logger.error(`Error when subscribing to new items. ${error}`);
-        }
-      }
-
       const itemsToUnsubscribe = this.subscribedItems.filter(item => {
-        return !subscriptionItems.some(subscribedItem => subscribedItem.id === item.id);
+        return !subscriptionItems.some(
+          subscribedItem => subscribedItem.id === item.id && JSON.stringify(subscribedItem.settings) === JSON.stringify(item.settings)
+        );
       });
+
       if (itemsToUnsubscribe.length > 0) {
         try {
           this.logger.trace(`Unsubscribing to ${itemsToUnsubscribe.length} items`);
@@ -173,6 +167,16 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
           );
         } catch (error) {
           this.logger.error(`Error when unsubscribing to items. ${error}`);
+        }
+      }
+
+      if (itemsToSubscribe.length > 0) {
+        try {
+          this.logger.trace(`Subscribing to ${itemsToSubscribe.length} new items`);
+          await this.subscribe(itemsToSubscribe);
+          this.subscribedItems.push(...itemsToSubscribe);
+        } catch (error) {
+          this.logger.error(`Error when subscribing to new items. ${error}`);
         }
       }
     }
