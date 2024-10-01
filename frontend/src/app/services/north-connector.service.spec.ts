@@ -14,6 +14,7 @@ import {
 } from '../../../../shared/model/north-connector.model';
 import { SubscriptionDTO } from '../../../../shared/model/subscription.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { TransformerDTO } from '../../../../shared/model/transformer.model';
 
 describe('NorthConnectorService', () => {
   let http: HttpTestingController;
@@ -421,6 +422,46 @@ describe('NorthConnectorService', () => {
 
     service.stopNorth('id1').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/north/id1/stop' });
+    expect(testRequest.request.body).toEqual(null);
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should get transformers for a North', () => {
+    const mockTransformers: TransformerDTO[] = [
+      { id: 'transformer1', name: 'Transformer 1' } as TransformerDTO,
+      { id: 'transformer2', name: 'Transformer 2' } as TransformerDTO
+    ];
+
+    service.getTransformers('id1').subscribe(transformers => {
+      expect(transformers).toEqual(mockTransformers);
+    });
+
+    const testRequest = http.expectOne({ method: 'GET', url: '/api/north/id1/transformers' });
+    testRequest.flush(mockTransformers);
+  });
+
+  it('should assign a transformer to a North', () => {
+    let done = false;
+
+    service.assignTransformer('id1', 'transformer1').subscribe(() => (done = true));
+    const testRequest = http.expectOne({
+      method: 'POST',
+      url: '/api/north/id1/transformers/transformer1'
+    });
+    expect(testRequest.request.body).toEqual(null);
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should remove a transformer from a North', () => {
+    let done = false;
+
+    service.removeTransformer('id1', 'transformer1').subscribe(() => (done = true));
+    const testRequest = http.expectOne({
+      method: 'DELETE',
+      url: '/api/north/id1/transformers/transformer1'
+    });
     expect(testRequest.request.body).toEqual(null);
     testRequest.flush(null);
     expect(done).toBe(true);

@@ -14,9 +14,8 @@ import { RichSelectOptionComponent } from './rich-select-option.component';
  * ```
  * <oib-rich-select formControlName="users" placeholder="Choose a user">
  *   @for (user of users; track user.id) {
- *    <oib-rich-select-option [value]="user.id" [label]="user.name">
+ *    <oib-rich-select-option [value]="user.id" [label]="user.name" />
  *   }
- *   </oib-rich-select-option>
  * </oib-rich-select>
  * ```
  *
@@ -30,9 +29,8 @@ import { RichSelectOptionComponent } from './rich-select-option.component';
  *        <span>User is {{ user.name }}</span>
  *        <button>delete</button>
  *      </div>
- *    </<oib-rich-select-option>
+ *    </oib-rich-select-option>
  *   }
- *   </oib-rich-select-option>
  * </oib-rich-select>
  * ```
  *

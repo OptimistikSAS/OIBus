@@ -6,7 +6,7 @@
   <ng-template oibBoxTitle>
     <div class="d-flex justify-content-between align-items-center">
       <div>
-        <span id="logs-title">{{ 'transformers.title' | translate }}</span>
+        <span id="transformers-title">{{ 'transformers.title' | translate }}</span>
       </div>
     </div>
   </ng-template>
@@ -34,7 +34,7 @@
                 [defaultSelected]="getSelectedValue(row.outputs)"
                 (selectionChange)="onOutputChange($event, rowIndex)"
               >
-                @for (output of row.outputs; track output) {
+                @for (output of row.outputs; track output.value) {
                   <oib-rich-select-option [value]="output.value" [label]="output.value" />
                 }
               </oib-rich-select>
@@ -49,7 +49,7 @@
                 [defaultSelected]="getSelectedValue(row.transformerTypes)"
                 (selectionChange)="onTransformerTypeChange($event, rowIndex)"
               >
-                @for (transformerType of row.transformerTypes; track transformerType) {
+                @for (transformerType of row.transformerTypes; track transformerType.value) {
                   <oib-rich-select-option [value]="transformerType.value" [label]="transformerType.value" />
                 }
               </oib-rich-select>
@@ -68,7 +68,7 @@
                   (selectionChange)="onSelectTransformer($event, rowIndex)"
                 >
                   <!-- List available transformers -->
-                  @for (transformer of row.transformers; track transformer) {
+                  @for (transformer of row.transformers; track transformer.value.id) {
                     <oib-rich-select-option [value]="transformer.value.id" [label]="transformer.value.name">
                       <div class="align-items-center d-inline-flex gap-3 justify-content-between w-100">
                         <span> {{ transformer.value.name }} </span>

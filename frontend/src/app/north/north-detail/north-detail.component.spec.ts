@@ -12,6 +12,9 @@ import { ScanModeService } from '../../services/scan-mode.service';
 import { NotificationService } from '../../shared/notification.service';
 import { EngineService } from '../../services/engine.service';
 import { OIBusInfo } from '../../../../../shared/model/engine.model';
+import { NorthTransformersComponent } from '../north-transformers/north-transformers.component';
+import { TransformerService } from '../../services/transformer.service';
+import { TransformerDTO } from '../../../../../shared/model/transformer.model';
 
 class NorthDetailComponentTester extends ComponentTester<NorthDetailComponent> {
   constructor() {
@@ -41,6 +44,7 @@ describe('NorthDetailComponent', () => {
   let scanModeService: jasmine.SpyObj<ScanModeService>;
   let engineService: jasmine.SpyObj<EngineService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
+  let transformerService: jasmine.SpyObj<TransformerService>;
 
   const northConnector: NorthConnectorDTO = {
     id: 'id1',
@@ -93,6 +97,11 @@ describe('NorthDetailComponent', () => {
         ],
         displayInViewMode: true
       }
+    ],
+    transformers: [
+      { inputType: 'time-values', outputType: 'transformer-data', type: 'standard' },
+      { inputType: 'time-values', outputType: 'transformer-data', type: 'custom' },
+      { inputType: 'raw', outputType: 'transformer-data', type: 'standard' }
     ]
   };
   const engineInfo: OIBusInfo = {
@@ -107,12 +116,33 @@ describe('NorthDetailComponent', () => {
     oibusId: 'id',
     oibusName: 'name'
   };
+  const testTransformerDtos: TransformerDTO[] = [
+    {
+      id: 't1',
+      name: 'transformer 1',
+      description: '',
+      inputType: 'time-values',
+      outputType: 'transformer-data',
+      code: '',
+      fileRegex: ''
+    },
+    {
+      id: 't2',
+      name: 'transformer 2',
+      description: '',
+      inputType: 'raw',
+      outputType: 'transformer-data',
+      code: '',
+      fileRegex: ''
+    }
+  ];
 
   beforeEach(() => {
     northConnectorService = createMock(NorthConnectorService);
     scanModeService = createMock(ScanModeService);
     notificationService = createMock(NotificationService);
     engineService = createMock(EngineService);
+    transformerService = createMock(TransformerService);
 
     TestBed.configureTestingModule({
       providers: [
@@ -130,7 +160,8 @@ describe('NorthDetailComponent', () => {
         { provide: NorthConnectorService, useValue: northConnectorService },
         { provide: NotificationService, useValue: notificationService },
         { provide: EngineService, useValue: engineService },
-        { provide: ScanModeService, useValue: scanModeService }
+        { provide: ScanModeService, useValue: scanModeService },
+        { provide: TransformerService, useValue: transformerService }
       ]
     });
 
@@ -140,6 +171,7 @@ describe('NorthDetailComponent', () => {
     northConnectorService.stopNorth.and.returnValue(of(undefined));
     engineService.getInfo.and.returnValue(of(engineInfo));
     scanModeService.list.and.returnValue(of([]));
+    transformerService.list.and.returnValues(of(testTransformerDtos), of([]));
 
     tester = new NorthDetailComponentTester();
   });
@@ -173,5 +205,10 @@ describe('NorthDetailComponent', () => {
     tester.toggleButton.click();
     expect(northConnectorService.startNorth).toHaveBeenCalledWith(northConnector.id);
     expect(notificationService.success).toHaveBeenCalledWith('north.started', { name: northConnector.name });
+  });
+
+  it('should display transformers', () => {
+    tester.detectChanges();
+    expect(tester.component(NorthTransformersComponent)).toBeDefined();
   });
 });
