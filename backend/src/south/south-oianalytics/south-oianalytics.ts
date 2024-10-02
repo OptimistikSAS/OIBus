@@ -92,10 +92,9 @@ export default class SouthOIAnalytics
   async historyQuery(
     items: Array<SouthConnectorItemDTO<SouthOIAnalyticsItemSettings>>,
     startTime: Instant,
-    endTime: Instant,
-    startTimeFromCache: Instant
+    endTime: Instant
   ): Promise<Instant> {
-    let updatedStartTime = startTimeFromCache;
+    let updatedStartTime = startTime;
 
     for (const item of items) {
       const startRequest = DateTime.now().toMillis();

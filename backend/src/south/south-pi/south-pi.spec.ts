@@ -247,7 +247,7 @@ describe('South PI', () => {
         })
       );
 
-    const result = await south.historyQuery(items, startTime, endTime, startTime);
+    const result = await south.historyQuery(items, startTime, endTime);
 
     expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/pi/${configuration.id}/read`, {
       method: 'PUT',
@@ -269,7 +269,7 @@ describe('South PI', () => {
     expect(logger.warn).toHaveBeenCalledWith('log1');
     expect(logger.warn).toHaveBeenCalledWith('log2');
 
-    const noResult = await south.historyQuery(items, startTime, endTime, startTime);
+    const noResult = await south.historyQuery(items, startTime, endTime);
     expect(noResult).toEqual('2020-01-01T00:00:00.000Z');
     expect(logger.debug).toHaveBeenCalledWith('No result found. Request done in 0 ms');
     expect(logger.warn).toHaveBeenCalledTimes(2);
@@ -292,10 +292,10 @@ describe('South PI', () => {
         })
       );
 
-    await expect(south.historyQuery(items, startTime, endTime, startTime)).rejects.toThrow(
+    await expect(south.historyQuery(items, startTime, endTime)).rejects.toThrow(
       `Error occurred when querying remote agent with status 400: bad request`
     );
-    await expect(south.historyQuery(items, startTime, endTime, startTime)).rejects.toThrow(
+    await expect(south.historyQuery(items, startTime, endTime)).rejects.toThrow(
       `Error occurred when querying remote agent with status 500`
     );
   });
@@ -308,10 +308,10 @@ describe('South PI', () => {
       throw new Error('bad request');
     });
 
-    await expect(south.historyQuery(items, startTime, endTime, startTime)).rejects.toThrow(new Error('bad request'));
+    await expect(south.historyQuery(items, startTime, endTime)).rejects.toThrow(new Error('bad request'));
     repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue({ ...configuration, enabled: false });
 
     await south.start();
-    await expect(south.historyQuery(items, startTime, endTime, startTime)).rejects.toThrow(new Error('bad request'));
+    await expect(south.historyQuery(items, startTime, endTime)).rejects.toThrow(new Error('bad request'));
   });
 });

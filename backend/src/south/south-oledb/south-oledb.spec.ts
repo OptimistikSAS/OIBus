@@ -271,7 +271,7 @@ describe('SouthOLEDB with authentication', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     south.queryRemoteAgentData = jest.fn().mockReturnValueOnce('2023-02-01T00:00:00.000Z').mockReturnValue('2023-02-01T00:00:00.000Z');
 
-    await south.historyQuery(items, startTime, nowDateString, startTime);
+    await south.historyQuery(items, startTime, nowDateString);
     expect(south.queryRemoteAgentData).toHaveBeenCalledTimes(3);
     expect(south.queryRemoteAgentData).toHaveBeenCalledWith(items[0], startTime, nowDateString);
     expect(south.queryRemoteAgentData).toHaveBeenCalledWith(items[1], '2023-02-01T00:00:00.000Z', nowDateString);
@@ -391,10 +391,14 @@ describe('SouthOLEDB with authentication', () => {
           status: 500
         })
       );
-    await south.queryRemoteAgentData(items[0], startTime, endTime);
-    await south.queryRemoteAgentData(items[0], startTime, endTime);
-
+    await expect(south.queryRemoteAgentData(items[0], startTime, endTime)).rejects.toThrow(
+      `Error occurred when querying remote agent with status 400: bad request`
+    );
     expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 400: bad request`);
+
+    await expect(south.queryRemoteAgentData(items[0], startTime, endTime)).rejects.toThrow(
+      `Error occurred when querying remote agent with status 500`
+    );
     expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 500`);
   });
 });

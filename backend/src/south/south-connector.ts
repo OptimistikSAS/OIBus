@@ -382,7 +382,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
 
     for (const [index, interval] of intervals.entries()) {
       // @ts-ignore
-      const lastInstantRetrieved = await this.historyQuery(items, interval.start, interval.end, startTimeFromCache);
+      const lastInstantRetrieved = await this.historyQuery(items, interval.start, interval.end);
 
       if (lastInstantRetrieved > southCache.maxInstant) {
         // With overlap, it may return a lastInstantRetrieved inferior
