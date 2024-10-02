@@ -8,7 +8,6 @@
     "node": ">=v18",
     "npm": ">=9"
   },
-  "type": "module",
   "scripts": {
     "start:macos": "../build/bin/macos/binaries/oibus --config ../data-folder",
     "start:macos-arm64": "../build/bin/macos-arm64/binaries/oibus --config ../data-folder",
