@@ -168,7 +168,7 @@ export default class SouthOPCUA
           .toUTC()
           .toISO() as Instant;
         const endTime = DateTime.now().toUTC().toISO() as Instant;
-        content = (await this.getHAValues([item], startTime, endTime, startTime, session, true)) as OIBusContent;
+        content = (await this.getHAValues([item], startTime, endTime, session, true)) as OIBusContent;
       }
       callback(content);
     } catch (error: any) {
@@ -217,19 +217,18 @@ export default class SouthOPCUA
       this.logger.error('OPCUA session not set. The connector cannot read values');
       return startTime;
     }
-    return (await this.getHAValues(items, startTime, endTime, startTimeFromCache, session)) as Instant;
+    return (await this.getHAValues(items, startTime, endTime, session)) as Instant;
   }
 
   async getHAValues(
     items: Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>>,
     startTime: Instant,
     endTime: Instant,
-    startTimeFromCache: Instant,
     session: ClientSession,
-    testingItem: boolean = false
+    testingItem = false
   ): Promise<Instant | OIBusContent> {
     try {
-      let maxTimestamp = DateTime.fromISO(startTimeFromCache).toMillis();
+      let maxTimestamp = DateTime.fromISO(startTime).toMillis();
       const itemsByAggregates = new Map<Aggregate, Map<Resampling | undefined, Array<{ nodeId: string; itemName: string }>>>();
 
       items.forEach(item => {
@@ -259,7 +258,7 @@ export default class SouthOPCUA
       let dataByItems: Array<OIBusTimeValue> = [];
       for (const [aggregate, aggregatedItems] of itemsByAggregates.entries()) {
         for (const [resampling, resampledItems] of aggregatedItems.entries()) {
-          const logs: Map<string, { description: string; affectedNodes: Array<string> }> = new Map();
+          const logs = new Map<string, { description: string; affectedNodes: Array<string> }>();
 
           let nodesToRead: Array<HistoryReadValueIdOptions> = resampledItems.map(item => ({
             continuationPoint: undefined,
