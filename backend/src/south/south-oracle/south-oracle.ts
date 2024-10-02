@@ -114,13 +114,8 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
    * Get entries from the database between startTime and endTime (if used in the SQL query)
    * and write them into a CSV file and send it to the engine.
    */
-  async historyQuery(
-    items: Array<SouthConnectorItemDTO<SouthOracleItemSettings>>,
-    startTime: Instant,
-    endTime: Instant,
-    startTimeFromCache: Instant
-  ): Promise<Instant> {
-    let updatedStartTime = startTimeFromCache;
+  async historyQuery(items: Array<SouthConnectorItemDTO<SouthOracleItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
+    let updatedStartTime = startTime;
 
     for (const item of items) {
       const startRequest = DateTime.now().toMillis();

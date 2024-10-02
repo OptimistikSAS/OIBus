@@ -195,13 +195,8 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
    * Get entries from the database between startTime and endTime (if used in the SQL query)
    * and write them into a CSV file and send it to the engine.
    */
-  async historyQuery(
-    items: Array<SouthConnectorItemDTO<SouthODBCItemSettings>>,
-    startTime: Instant,
-    endTime: Instant,
-    startTimeFromCache: Instant
-  ): Promise<Instant> {
-    let updatedStartTime = startTimeFromCache;
+  async historyQuery(items: Array<SouthConnectorItemDTO<SouthODBCItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
+    let updatedStartTime = startTime;
 
     for (const item of items) {
       if (this.connector.settings.remoteAgent) {
@@ -271,8 +266,10 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     } else if (response.status === 400) {
       const errorMessage = await response.text();
       this.logger.error(`Error occurred when querying remote agent with status ${response.status}: ${errorMessage}`);
+      throw new Error(`Error occurred when querying remote agent with status ${response.status}: ${errorMessage}`);
     } else {
       this.logger.error(`Error occurred when querying remote agent with status ${response.status}`);
+      throw new Error(`Error occurred when querying remote agent with status ${response.status}`);
     }
 
     return updatedStartTime;

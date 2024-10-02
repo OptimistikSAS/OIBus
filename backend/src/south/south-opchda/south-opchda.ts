@@ -98,14 +98,9 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
    * Get entries from the database between startTime and endTime (if used in the SQL query)
    * and write them into the cache and send it to the engine.
    */
-  async historyQuery(
-    items: Array<SouthConnectorItemDTO<SouthOPCHDAItemSettings>>,
-    startTime: Instant,
-    endTime: Instant,
-    startTimeFromCache: Instant
-  ): Promise<Instant> {
+  async historyQuery(items: Array<SouthConnectorItemDTO<SouthOPCHDAItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
     try {
-      let updatedStartTime = startTimeFromCache;
+      let updatedStartTime = startTime;
       const itemsByAggregates = new Map<
         Aggregate,
         Map<
@@ -195,8 +190,10 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
           } else if (response.status === 400) {
             const errorMessage = await response.text();
             this.logger.error(`Error occurred when querying remote agent with status ${response.status}: ${errorMessage}`);
+            throw new Error(`Error occurred when querying remote agent with status ${response.status}: ${errorMessage}`);
           } else {
             this.logger.error(`Error occurred when querying remote agent with status ${response.status}`);
+            throw new Error(`Error occurred when querying remote agent with status ${response.status}`);
           }
         }
       }

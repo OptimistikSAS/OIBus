@@ -212,7 +212,7 @@ describe('SouthODBC odbc driver with authentication', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     south.queryOdbcData = jest.fn().mockReturnValueOnce('2023-02-01T00:00:00.000Z').mockReturnValue('2023-02-01T00:00:00.000Z');
 
-    await south.historyQuery(items, startTime, nowDateString, startTime);
+    await south.historyQuery(items, startTime, nowDateString);
     expect(south.queryOdbcData).toHaveBeenCalledTimes(3);
     expect(south.queryOdbcData).toHaveBeenCalledWith(items[0], startTime, nowDateString);
     expect(south.queryOdbcData).toHaveBeenCalledWith(items[1], '2023-02-01T00:00:00.000Z', nowDateString);
@@ -304,7 +304,7 @@ describe('SouthODBC odbc driver with authentication', () => {
         .mockImplementationOnce(() => {
           throw new Error('query error');
         })
-        .mockImplementation(() => {
+        .mockImplementationOnce(() => {
           throw {
             odbcErrors: [{ message: 'error1' }, { message: 'error2' }]
           };
@@ -312,17 +312,11 @@ describe('SouthODBC odbc driver with authentication', () => {
     };
     (odbc.connect as jest.Mock).mockReturnValue(odbcConnection);
 
-    let error;
-    try {
-      await south.queryOdbcData(items[0], startTime, endTime);
-    } catch (err) {
-      error = err;
-    }
-
+    await expect(south.queryOdbcData(items[0], startTime, endTime)).rejects.toThrow('query error');
     expect(odbcConnection.query).toHaveBeenCalledWith(items[0].settings.query);
-    expect(error).toEqual(new Error('query error'));
     expect(odbcConnection.close).toHaveBeenCalledTimes(1);
 
+    let error;
     try {
       await south.queryOdbcData(items[0], startTime, endTime);
     } catch (err) {
@@ -728,7 +722,7 @@ describe('SouthODBC odbc remote with authentication', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     south.queryRemoteAgentData = jest.fn().mockReturnValueOnce('2023-02-01T00:00:00.000Z').mockReturnValue('2023-02-01T00:00:00.000Z');
 
-    await south.historyQuery(items, startTime, nowDateString, startTime);
+    await south.historyQuery(items, startTime, nowDateString);
     expect(south.queryRemoteAgentData).toHaveBeenCalledTimes(3);
     expect(south.queryRemoteAgentData).toHaveBeenCalledWith(items[0], startTime, nowDateString);
     expect(south.queryRemoteAgentData).toHaveBeenCalledWith(items[1], '2023-02-01T00:00:00.000Z', nowDateString);
@@ -853,10 +847,14 @@ describe('SouthODBC odbc remote with authentication', () => {
         })
       );
 
-    await south.queryRemoteAgentData(items[0], startTime, endTime);
+    await expect(south.queryRemoteAgentData(items[0], startTime, endTime)).rejects.toThrow(
+      `Error occurred when querying remote agent with status 400: bad request`
+    );
     expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 400: bad request`);
 
-    await south.queryRemoteAgentData(items[0], startTime, endTime);
+    await expect(south.queryRemoteAgentData(items[0], startTime, endTime)).rejects.toThrow(
+      `Error occurred when querying remote agent with status 500`
+    );
     expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 500`);
   });
 });
