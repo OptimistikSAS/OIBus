@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.6](https://github.com/OptimistikSAS/OIBus/compare/v3.4.5...v3.4.6) (2024-10-02)
+
+
+### Bug Fixes
+
+* **south:** fix history interval query and error management ([266570f](https://github.com/OptimistikSAS/OIBus/commit/266570f669918a689602443fb2df4940715f9b91))
+
 ## [3.4.5](https://github.com/OptimistikSAS/OIBus/compare/v3.4.4...v3.4.5) (2024-10-01)
 
 
