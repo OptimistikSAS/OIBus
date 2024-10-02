@@ -59,43 +59,4 @@ export default class EngineController extends AbstractController {
   async getStatus(ctx: KoaContext<void, void>): Promise<void> {
     ctx.ok();
   }
-
-  async addValues(ctx: KoaContext<void, void>): Promise<void> {
-    const { name } = ctx.request.query;
-    if (name && Array.isArray(ctx.request.body)) {
-      const externalSource = ctx.app.repositoryService.externalSourceRepository.findExternalSourceByReference(name as string);
-      if (!externalSource) {
-        ctx.app.logger.info(`External source "${name}" not found`);
-        return ctx.badRequest();
-      }
-
-      try {
-        await ctx.app.oibusService.addValues(externalSource.id, ctx.request.body);
-        return ctx.noContent();
-      } catch (error) {
-        return ctx.internalServerError();
-      }
-    }
-    return ctx.badRequest();
-  }
-
-  async addFile(ctx: KoaContext<void, void>): Promise<void> {
-    const { name } = ctx.request.query;
-    const file = ctx.request.file;
-    if (name && file) {
-      const externalSource = ctx.app.repositoryService.externalSourceRepository.findExternalSourceByReference(name as string);
-      if (!externalSource) {
-        ctx.app.logger.info(`External source "${name}" not found`);
-        return ctx.badRequest();
-      }
-
-      try {
-        await ctx.app.oibusService.addFile(externalSource.id, ctx.request.file.path);
-        return ctx.noContent();
-      } catch (error) {
-        return ctx.internalServerError();
-      }
-    }
-    return ctx.badRequest();
-  }
 }
