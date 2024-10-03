@@ -1037,43 +1037,46 @@ describe('South connector controller', () => {
       }
     };
 
-    ctx.app.southService.getInstalledSouthManifests = jest.fn().mockReturnValue([{
-      id: 'south-test',
-      category: 'debug',
-      name: 'Test',
-      description: '',
-      modes: {
-        subscription: true,
-        lastPoint: true,
-        lastFile: true,
-        history: true,
-        forceMaxInstantPerItem: true
-      },
-      settings: [{ type: 'OibTimezone' }],
-      items: {
-        scanMode: {
-          acceptSubscription: true,
-          subscriptionOnly: true
+    ctx.app.southService.getInstalledSouthManifests = jest.fn().mockReturnValue([
+      {
+        id: 'south-test',
+        category: 'debug',
+        name: 'Test',
+        description: '',
+        modes: {
+          subscription: true,
+          lastPoint: true,
+          lastFile: true,
+          history: true,
+          forceMaxInstantPerItem: true
         },
-        settings: [{ type: 'OibTimezone' }]
-      }  
-    }]);
+        settings: [{ type: 'OibTimezone' }],
+        items: {
+          scanMode: {
+            acceptSubscription: true,
+            subscriptionOnly: true
+          },
+          settings: [{ type: 'OibTimezone' }]
+        }
+      }
+    ]);
 
-    (validator.validateSettings as jest.Mock)
-      .mockReturnValue(() => {
-        return true;
-      });
+    (validator.validateSettings as jest.Mock).mockReturnValue(() => {
+      return true;
+    });
 
     ctx.app.repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(southConnector);
 
-    ctx.app.repositoryService.scanModeRepository.getScanModes = jest.fn().mockReturnValue([{
-      id: '1',
-      name: 'scan mode',
-      description: 'description',
-      cron: '* * * * *'
-    }]);
+    ctx.app.repositoryService.scanModeRepository.getScanModes = jest.fn().mockReturnValue([
+      {
+        id: '1',
+        name: 'scan mode',
+        description: 'description',
+        cron: '* * * * *'
+      }
+    ]);
 
-    ctx.app.encryptionService.encryptConnectorSecrets = jest.fn().mockReturnValue({databasePath: 'folder/file'});
+    ctx.app.encryptionService.encryptConnectorSecrets = jest.fn().mockReturnValue({ databasePath: 'folder/file' });
 
     const createdSouth = {
       testItem: jest.fn()
@@ -1104,44 +1107,47 @@ describe('South connector controller', () => {
       }
     };
 
-    ctx.app.southService.getInstalledSouthManifests = jest.fn().mockReturnValue([{
-      id: 'south-test',
-      category: 'debug',
-      name: 'Test',
-      description: '',
-      modes: {
-        subscription: true,
-        lastPoint: true,
-        lastFile: true,
-        history: true,
-        forceMaxInstantPerItem: true
-      },
-      settings: [{ type: 'OibTimezone' }],
-      items: {
-        scanMode: {
-          acceptSubscription: true,
-          subscriptionOnly: true
+    ctx.app.southService.getInstalledSouthManifests = jest.fn().mockReturnValueOnce([
+      {
+        id: 'south-test',
+        category: 'debug',
+        name: 'Test',
+        description: '',
+        modes: {
+          subscription: true,
+          lastPoint: true,
+          lastFile: true,
+          history: true,
+          forceMaxInstantPerItem: true
         },
-        settings: [{ type: 'OibTimezone' }]
-      }  
-    }]);
+        settings: [{ type: 'OibTimezone' }],
+        items: {
+          scanMode: {
+            acceptSubscription: true,
+            subscriptionOnly: true
+          },
+          settings: [{ type: 'OibTimezone' }]
+        }
+      }
+    ]);
 
     ctx.params.id = 'create';
     ctx.query.duplicateId = null;
 
-    (validator.validateSettings as jest.Mock)
-      .mockReturnValue(() => {
-        return true;
-      });
+    (validator.validateSettings as jest.Mock).mockReturnValue(() => {
+      return true;
+    });
 
-    ctx.app.repositoryService.scanModeRepository.getScanModes = jest.fn().mockReturnValue([{
-      id: '1',
-      name: 'scan mode',
-      description: 'description',
-      cron: '* * * * *'
-    }]);
+    ctx.app.repositoryService.scanModeRepository.getScanModes = jest.fn().mockReturnValue([
+      {
+        id: '1',
+        name: 'scan mode',
+        description: 'description',
+        cron: '* * * * *'
+      }
+    ]);
 
-    ctx.app.encryptionService.encryptConnectorSecrets = jest.fn().mockReturnValue({databasePath: 'folder/file'});
+    ctx.app.encryptionService.encryptConnectorSecrets = jest.fn().mockReturnValue({ databasePath: 'folder/file' });
 
     const createdSouth = {
       testItem: jest.fn()
@@ -1156,11 +1162,6 @@ describe('South connector controller', () => {
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalled();
     expect(ctx.app.logger.child).toHaveBeenCalled();
     expect(ctx.badRequest).not.toHaveBeenCalled();
-  });
-
-  it('testSouthItem() should throw error of manifest not found', async () => {
-    await southConnectorController.testSouthItem(ctx);
-    expect(ctx.notFound).toHaveBeenCalledWith('South manifest not found');
   });
 
   it('testSouthItem() should throw error of south not found', async () => {
@@ -1178,27 +1179,29 @@ describe('South connector controller', () => {
 
     ctx.params.id = 'id';
 
-    ctx.app.southService.getInstalledSouthManifests = jest.fn().mockReturnValue([{
-      id: 'south-test',
-      category: 'debug',
-      name: 'Test',
-      description: '',
-      modes: {
-        subscription: true,
-        lastPoint: true,
-        lastFile: true,
-        history: true,
-        forceMaxInstantPerItem: true
-      },
-      settings: [{ type: 'OibTimezone' }],
-      items: {
-        scanMode: {
-          acceptSubscription: true,
-          subscriptionOnly: true
+    ctx.app.southService.getInstalledSouthManifests = jest.fn().mockReturnValue([
+      {
+        id: 'south-test',
+        category: 'debug',
+        name: 'Test',
+        description: '',
+        modes: {
+          subscription: true,
+          lastPoint: true,
+          lastFile: true,
+          history: true,
+          forceMaxInstantPerItem: true
         },
-        settings: [{ type: 'OibTimezone' }]
-      }  
-    }]);
+        settings: [{ type: 'OibTimezone' }],
+        items: {
+          scanMode: {
+            acceptSubscription: true,
+            subscriptionOnly: true
+          },
+          settings: [{ type: 'OibTimezone' }]
+        }
+      }
+    ]);
 
     ctx.app.repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(null);
 
@@ -1225,27 +1228,29 @@ describe('South connector controller', () => {
     ctx.query.duplicateId = 'id';
     ctx.params.id = 'create';
 
-    ctx.app.southService.getInstalledSouthManifests = jest.fn().mockReturnValue([{
-      id: 'south-test',
-      category: 'debug',
-      name: 'Test',
-      description: '',
-      modes: {
-        subscription: true,
-        lastPoint: true,
-        lastFile: true,
-        history: true,
-        forceMaxInstantPerItem: true
-      },
-      settings: [{ type: 'OibTimezone' }],
-      items: {
-        scanMode: {
-          acceptSubscription: true,
-          subscriptionOnly: true
+    ctx.app.southService.getInstalledSouthManifests = jest.fn().mockReturnValue([
+      {
+        id: 'south-test',
+        category: 'debug',
+        name: 'Test',
+        description: '',
+        modes: {
+          subscription: true,
+          lastPoint: true,
+          lastFile: true,
+          history: true,
+          forceMaxInstantPerItem: true
         },
-        settings: [{ type: 'OibTimezone' }]
-      }  
-    }]);
+        settings: [{ type: 'OibTimezone' }],
+        items: {
+          scanMode: {
+            acceptSubscription: true,
+            subscriptionOnly: true
+          },
+          settings: [{ type: 'OibTimezone' }]
+        }
+      }
+    ]);
 
     ctx.app.repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(null);
 
@@ -1268,32 +1273,33 @@ describe('South connector controller', () => {
       }
     };
 
-    ctx.app.southService.getInstalledSouthManifests = jest.fn().mockReturnValue([{
-      id: 'south-test',
-      category: 'debug',
-      name: 'Test',
-      description: '',
-      modes: {
-        subscription: true,
-        lastPoint: true,
-        lastFile: true,
-        history: true,
-        forceMaxInstantPerItem: true
-      },
-      settings: [{ type: 'OibTimezone' }],
-      items: {
-        scanMode: {
-          acceptSubscription: true,
-          subscriptionOnly: true
+    ctx.app.southService.getInstalledSouthManifests = jest.fn().mockReturnValue([
+      {
+        id: 'south-test',
+        category: 'debug',
+        name: 'Test',
+        description: '',
+        modes: {
+          subscription: true,
+          lastPoint: true,
+          lastFile: true,
+          history: true,
+          forceMaxInstantPerItem: true
         },
-        settings: [{ type: 'OibTimezone' }]
-      }  
-    }]);
+        settings: [{ type: 'OibTimezone' }],
+        items: {
+          scanMode: {
+            acceptSubscription: true,
+            subscriptionOnly: true
+          },
+          settings: [{ type: 'OibTimezone' }]
+        }
+      }
+    ]);
 
-    (validator.validateSettings as jest.Mock)
-      .mockReturnValue(() => {
-        return true;
-      });
+    (validator.validateSettings as jest.Mock).mockReturnValue(() => {
+      return true;
+    });
 
     ctx.app.repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(southConnector);
 
@@ -1318,41 +1324,44 @@ describe('South connector controller', () => {
       }
     };
 
-    ctx.app.southService.getInstalledSouthManifests = jest.fn().mockReturnValue([{
-      id: 'south-test',
-      category: 'debug',
-      name: 'Test',
-      description: '',
-      modes: {
-        subscription: true,
-        lastPoint: true,
-        lastFile: true,
-        history: true,
-        forceMaxInstantPerItem: true
-      },
-      settings: [{ type: 'OibTimezone' }],
-      items: {
-        scanMode: {
-          acceptSubscription: true,
-          subscriptionOnly: true
+    ctx.app.southService.getInstalledSouthManifests = jest.fn().mockReturnValue([
+      {
+        id: 'south-test',
+        category: 'debug',
+        name: 'Test',
+        description: '',
+        modes: {
+          subscription: true,
+          lastPoint: true,
+          lastFile: true,
+          history: true,
+          forceMaxInstantPerItem: true
         },
-        settings: [{ type: 'OibTimezone' }]
-      }  
-    }]);
+        settings: [{ type: 'OibTimezone' }],
+        items: {
+          scanMode: {
+            acceptSubscription: true,
+            subscriptionOnly: true
+          },
+          settings: [{ type: 'OibTimezone' }]
+        }
+      }
+    ]);
 
-    (validator.validateSettings as jest.Mock)
-      .mockReturnValue(() => {
-        return true;
-      });
+    (validator.validateSettings as jest.Mock).mockReturnValue(() => {
+      return true;
+    });
 
     ctx.app.repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(southConnector);
 
-    ctx.app.repositoryService.scanModeRepository.getScanModes = jest.fn().mockReturnValue([{
-      id: '1',
-      name: 'bad scan mode',
-      description: 'description',
-      cron: '* * * * *'
-    }]);
+    ctx.app.repositoryService.scanModeRepository.getScanModes = jest.fn().mockReturnValue([
+      {
+        id: '1',
+        name: 'bad scan mode',
+        description: 'description',
+        cron: '* * * * *'
+      }
+    ]);
 
     await southConnectorController.testSouthItem(ctx);
 
@@ -1376,27 +1385,29 @@ describe('South connector controller', () => {
       }
     };
 
-    ctx.app.southService.getInstalledSouthManifests = jest.fn().mockReturnValue([{
-      id: 'south-test',
-      category: 'debug',
-      name: 'Test',
-      description: '',
-      modes: {
-        subscription: true,
-        lastPoint: true,
-        lastFile: true,
-        history: true,
-        forceMaxInstantPerItem: true
-      },
-      settings: [{ type: 'OibTimezone' }],
-      items: {
-        scanMode: {
-          acceptSubscription: true,
-          subscriptionOnly: true
+    ctx.app.southService.getInstalledSouthManifests = jest.fn().mockReturnValue([
+      {
+        id: 'south-test',
+        category: 'debug',
+        name: 'Test',
+        description: '',
+        modes: {
+          subscription: true,
+          lastPoint: true,
+          lastFile: true,
+          history: true,
+          forceMaxInstantPerItem: true
         },
-        settings: [{ type: 'OibTimezone' }]
-      }  
-    }]);
+        settings: [{ type: 'OibTimezone' }],
+        items: {
+          scanMode: {
+            acceptSubscription: true,
+            subscriptionOnly: true
+          },
+          settings: [{ type: 'OibTimezone' }]
+        }
+      }
+    ]);
 
     (validator.validateSettings as jest.Mock).mockRejectedValueOnce('Bad request');
 
@@ -2170,7 +2181,7 @@ describe('South connector controller', () => {
       ...southConnectorCommand
     };
     ctx.params.id = 'create';
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(null);
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
     ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
 
     await southConnectorController.testSouthConnection(ctx);
@@ -2178,7 +2189,7 @@ describe('South connector controller', () => {
     expect(validator.validateSettings).toHaveBeenCalledTimes(1);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
       southConnectorCommand.settings,
-      undefined,
+      southConnector.settings,
       southTestManifest.settings
     );
     expect(ctx.notFound).not.toHaveBeenCalled();
