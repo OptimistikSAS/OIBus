@@ -105,19 +105,19 @@ interface NorthConnectorManifestBase<THandlesItems = boolean, TInputTypes extend
   transformers?: Array<NorthTransformerDefinition<TInputTypes>>;
   settings: Array<OibFormControl>;
 }
-export type NorthTransformerDefinition<TInputTypes extends string = string> = {
+export interface NorthTransformerDefinition<TInputTypes extends string = string> {
   type: 'standard' | 'custom';
   inputType: OIBusContent['type'];
   outputType: TInputTypes;
-};
-export type NorthInputDataDefinition<TInputTypes extends string = string> = {
+}
+export interface NorthInputDataDefinition<TInputTypes extends string = string> {
   type: TInputTypes;
   data: Joi.Schema;
-};
-export type NorthInputData<TInputTypes extends string = string> = {
+}
+export interface NorthInputData<TInputTypes extends string = string> {
   type: TInputTypes;
   data: any;
-};
+}
 
 // When modes.items is set to true, require an items definition
 export type NorthConnectorManifest<THandlesItems = boolean, TInputTypes extends string = string> = THandlesItems extends true

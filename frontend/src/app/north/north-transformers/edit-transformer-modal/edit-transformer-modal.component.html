@@ -10,7 +10,7 @@
           <div class="form-group">
             <label class="form-label" for="name" translate="transformers.name"></label>
             <input formControlName="name" id="name" class="form-control" />
-            <val-errors controlName="name"></val-errors>
+            <val-errors controlName="name" />
           </div>
         </div>
 
@@ -20,7 +20,7 @@
             <div class="form-group">
               <label class="form-label" for="fileRegex" translate="transformers.fileRegex"></label>
               <input formControlName="fileRegex" id="fileRegex" class="form-control" />
-              <val-errors controlName="fileRegex"></val-errors>
+              <val-errors controlName="fileRegex" />
             </div>
           </div>
         }
@@ -31,20 +31,20 @@
         <div class="form-group">
           <label class="form-label" for="description" translate="transformers.description"></label>
           <input formControlName="description" id="description" class="form-control" />
-          <val-errors controlName="description"></val-errors>
+          <val-errors controlName="description" />
         </div>
       </div>
 
       <div class="row">
         <oib-code-block key="tranformer-code-block" formControlName="code" contentType="javascript" />
-        <val-errors controlName="code"></val-errors>
+        <val-errors controlName="code" />
       </div>
     </form>
   </div>
 }
 <div class="modal-footer">
   <div class="btn-group">
-    <oib-save-button form="form" [state]="state"></oib-save-button>
+    <oib-save-button form="form" [state]="state" />
     <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
   </div>
 </div>

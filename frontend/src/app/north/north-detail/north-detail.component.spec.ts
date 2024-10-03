@@ -116,7 +116,7 @@ describe('NorthDetailComponent', () => {
     oibusId: 'id',
     oibusName: 'name'
   };
-  const testTransformerDtos: TransformerDTO[] = [
+  const testTransformerDtos: Array<TransformerDTO> = [
     {
       id: 't1',
       name: 'transformer 1',

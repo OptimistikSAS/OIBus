@@ -24,7 +24,7 @@ describe('TransformerService', () => {
 
   describe('list', () => {
     it('should get all transformers', () => {
-      const mockTransformers: TransformerDTO[] = [
+      const mockTransformers: Array<TransformerDTO> = [
         { id: '1', name: 'Transformer 1' } as TransformerDTO,
         { id: '2', name: 'Transformer 2' } as TransformerDTO
       ];
@@ -38,7 +38,7 @@ describe('TransformerService', () => {
     });
 
     it('should get transformers for a north connector', () => {
-      const mockTransformers: TransformerDTO[] = [{ id: '1', name: 'North Transformer' } as TransformerDTO];
+      const mockTransformers: Array<TransformerDTO> = [{ id: '1', name: 'North Transformer' } as TransformerDTO];
       const northId = 'north1';
 
       service.list({}, { northId }).subscribe(transformers => {
@@ -50,7 +50,7 @@ describe('TransformerService', () => {
     });
 
     it('should get transformers for a south connector', () => {
-      const mockTransformers: TransformerDTO[] = [{ id: '1', name: 'South Transformer' } as TransformerDTO];
+      const mockTransformers: Array<TransformerDTO> = [{ id: '1', name: 'South Transformer' } as TransformerDTO];
       const southId = 'south1';
 
       service.list({}, { southId }).subscribe(transformers => {
@@ -62,7 +62,7 @@ describe('TransformerService', () => {
     });
 
     it('should get transformers for a history query with north connector type', () => {
-      const mockTransformers: TransformerDTO[] = [{ id: '1', name: 'History North Transformer' } as TransformerDTO];
+      const mockTransformers: Array<TransformerDTO> = [{ id: '1', name: 'History North Transformer' } as TransformerDTO];
       const historyId = 'history1';
       const connectorType = 'north';
 
@@ -75,7 +75,7 @@ describe('TransformerService', () => {
     });
 
     it('should get transformers for a history query with south connector type', () => {
-      const mockTransformers: TransformerDTO[] = [{ id: '1', name: 'History South Transformer' } as TransformerDTO];
+      const mockTransformers: Array<TransformerDTO> = [{ id: '1', name: 'History South Transformer' } as TransformerDTO];
       const historyId = 'history1';
       const connectorType = 'south';
 

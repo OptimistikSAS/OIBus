@@ -428,7 +428,7 @@ describe('NorthConnectorService', () => {
   });
 
   it('should get transformers for a North', () => {
-    const mockTransformers: TransformerDTO[] = [
+    const mockTransformers: Array<TransformerDTO> = [
       { id: 'transformer1', name: 'Transformer 1' } as TransformerDTO,
       { id: 'transformer2', name: 'Transformer 2' } as TransformerDTO
     ];

@@ -18,7 +18,7 @@ const testManifest: NorthConnectorManifest = {
   ]
 } as NorthConnectorManifest;
 
-const testTransformerDtos: TransformerDTO[] = [
+const testTransformerDtos: Array<TransformerDTO> = [
   {
     id: 't1',
     name: 'transformer 1',
@@ -42,7 +42,7 @@ const testTransformerDtos: TransformerDTO[] = [
 const mockVoid = '' as any;
 
 @Component({
-  template: `<oib-north-transformers [transformersManifest]="manifest.transformers" [northId]="northId"></oib-north-transformers>`,
+  template: `<oib-north-transformers [transformersManifest]="manifest.transformers" [northId]="northId" />`,
   standalone: true,
   imports: [NorthTransformersComponent]
 })

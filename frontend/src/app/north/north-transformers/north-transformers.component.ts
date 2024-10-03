@@ -13,7 +13,10 @@ import { EditTransformerModalComponent } from './edit-transformer-modal/edit-tra
 import { NotificationService } from '../../shared/notification.service';
 import { forkJoin } from 'rxjs';
 
-type Selectable<TValue = any> = { value: TValue; selected: boolean };
+interface Selectable<TValue = any> {
+  value: TValue;
+  selected: boolean;
+}
 export type TableState = Array<{
   input: string;
   outputs: Array<Selectable<string>>;
