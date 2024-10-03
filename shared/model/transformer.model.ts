@@ -8,6 +8,6 @@ export interface TransformerDTO {
   fileRegex: string | null;
 }
 
-export interface TransformerFilterDTO extends Partial<Pick<TransformerDTO, 'inputType' | 'outputType' | 'name'>> {}
+export type TransformerFilterDTO = Partial<Pick<TransformerDTO, 'inputType' | 'outputType' | 'name'>>;
 
-export interface TransformerCommandDTO extends Omit<TransformerDTO, 'id'> {}
+export type TransformerCommandDTO = Omit<TransformerDTO, 'id'>;
