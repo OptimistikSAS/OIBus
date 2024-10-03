@@ -4,7 +4,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { fakeAsync, TestBed } from '@angular/core/testing';
 import { SouthConnectorItemManifest } from '../../../../../backend/shared/model/south-connector.model';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
-import { HistoryQueryItemDTO } from '../../../../../backend/shared/model/history-query.model';
+import { HistoryQuerySouthItemDTO } from '../../../../../backend/shared/model/history-query.model';
 import { SouthItemSettings } from '../../../../../backend/shared/model/south-settings.model';
 
 class ImportSouthItemsModalComponentTester extends ComponentTester<ImportHistoryQueryItemsModalComponent> {
@@ -30,7 +30,7 @@ describe('ImportHistoryQueryItemsModalComponent', () => {
     settings: [],
     schema: []
   } as SouthConnectorItemManifest;
-  const allItems: Array<HistoryQueryItemDTO<SouthItemSettings>> = [
+  const allItems: Array<HistoryQuerySouthItemDTO<SouthItemSettings>> = [
     {
       id: 'id1',
       enabled: true,
@@ -56,8 +56,8 @@ describe('ImportHistoryQueryItemsModalComponent', () => {
     tester.componentInstance.prepare(
       southItemSchema,
       allItems,
-      [{ name: 'item1' } as HistoryQueryItemDTO<SouthItemSettings>],
-      [{ item: { name: 'item2' } as HistoryQueryItemDTO<SouthItemSettings>, error: '' }]
+      [{ name: 'item1' } as HistoryQuerySouthItemDTO<SouthItemSettings>],
+      [{ item: { name: 'item2' } as HistoryQuerySouthItemDTO<SouthItemSettings>, error: '' }]
     );
     tester.detectChanges();
   });

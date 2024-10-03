@@ -64,6 +64,7 @@ describe('SouthOLEDB', () => {
       retryInterval: 1000,
       requestTimeout: 1000
     },
+    transformers: [],
     items: [
       {
         id: 'id1',

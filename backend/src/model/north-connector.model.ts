@@ -1,7 +1,8 @@
 import { BaseEntity } from './types';
-import { NorthSettings } from '../../shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../shared/model/north-settings.model';
 import { SouthConnectorEntityLight } from './south-connector.model';
 import { OIBusNorthType } from '../../shared/model/north-connector.model';
+import { Transformer } from './transformer.model';
 
 export interface NorthConnectorEntityLight extends BaseEntity {
   name: string;
@@ -10,7 +11,7 @@ export interface NorthConnectorEntityLight extends BaseEntity {
   enabled: boolean;
 }
 
-export interface NorthConnectorEntity<T extends NorthSettings> extends BaseEntity {
+export interface NorthConnectorEntity<T extends NorthSettings, I extends NorthItemSettings> extends BaseEntity {
   name: string;
   type: OIBusNorthType;
   description: string;
@@ -34,12 +35,11 @@ export interface NorthConnectorEntity<T extends NorthSettings> extends BaseEntit
     };
   };
   subscriptions: Array<SouthConnectorEntityLight>;
+  transformers: Array<{ order: number; transformer: Transformer }>;
+  items: Array<NorthConnectorItemEntity<I>>;
 }
 
-// TODO: Change this type with generated types for every type of north item settings. Also change in NorthConnector class
-type NorthItemSettings = any;
-
-export interface NorthConnectorItemEntity<T extends NorthItemSettings = any> extends BaseEntity {
+export interface NorthConnectorItemEntity<T extends NorthItemSettings> extends BaseEntity {
   name: string;
   enabled: boolean;
   settings: T;

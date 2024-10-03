@@ -47,6 +47,8 @@ import {
   NorthCacheFiles,
   NorthConnectorCommandDTO,
   NorthConnectorDTO,
+  NorthConnectorItemCommandDTO,
+  NorthConnectorItemDTO,
   NorthConnectorLightDTO,
   NorthConnectorManifest,
   NorthType
@@ -63,15 +65,19 @@ import {
 import {
   HistoryQueryCommandDTO,
   HistoryQueryDTO,
-  HistoryQueryItemCommandDTO,
-  HistoryQueryItemDTO,
-  HistoryQueryLightDTO
+  HistoryQuerySouthItemCommandDTO,
+  HistoryQuerySouthItemDTO,
+  HistoryQueryLightDTO,
+  HistoryQueryNorthItemCommandDTO,
+  HistoryQueryNorthItemDTO
 } from '../../../shared/model/history-query.model';
 import { LogDTO, LogStreamCommandDTO, Scope } from '../../../shared/model/logs.model';
 import { OIBusCommandDTO } from '../../../shared/model/command.model';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../shared/model/north-settings.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import TransformerController from '../controllers/transformer.controller';
+import { TransformerCommand, TransformerDTO } from '../../../shared/model/transformer.model';
+import { Transformer } from '../../model/transformer.model';
 
 const joiValidator = new JoiValidator();
 const scanModeController = new ScanModeController(joiValidator, scanModeSchema);
@@ -144,21 +150,27 @@ router.get('/api/north-types/:id', (ctx: KoaContext<void, NorthConnectorManifest
   northConnectorController.getNorthConnectorManifest(ctx)
 );
 
-router.get('/api/transformers', (ctx: KoaContext<any, any>) => transformerController.getTransformers(ctx));
-router.get('/api/transformers/:id', (ctx: KoaContext<any, any>) => transformerController.getTransformer(ctx));
-router.post('/api/transformers', (ctx: KoaContext<any, any>) => transformerController.createTransformer(ctx));
-router.put('/api/transformers/:id', (ctx: KoaContext<any, any>) => transformerController.updateTransformer(ctx));
-router.delete('/api/transformers/:id', (ctx: KoaContext<any, any>) => transformerController.deleteTransformer(ctx));
+router.get('/api/transformers', (ctx: KoaContext<void, Array<TransformerDTO>>) => transformerController.getTransformers(ctx));
+router.get('/api/transformers/:id', (ctx: KoaContext<void, TransformerDTO>) => transformerController.getTransformer(ctx));
+router.post('/api/transformers', (ctx: KoaContext<TransformerCommand, Transformer>) => transformerController.createTransformer(ctx));
+router.put('/api/transformers/:id', (ctx: KoaContext<TransformerCommand, void>) => transformerController.updateTransformer(ctx));
+router.delete('/api/transformers/:id', (ctx: KoaContext<void, void>) => transformerController.deleteTransformer(ctx));
 
 router.get('/api/north', (ctx: KoaContext<void, Array<NorthConnectorLightDTO>>) => northConnectorController.findAll(ctx));
-router.put('/api/north/:id/test-connection', (ctx: KoaContext<NorthConnectorCommandDTO<NorthSettings>, void>) =>
+router.put('/api/north/:id/test-connection', (ctx: KoaContext<NorthConnectorCommandDTO<NorthSettings, NorthItemSettings>, void>) =>
   northConnectorController.testNorthConnection(ctx)
 );
-router.get('/api/north/:id', (ctx: KoaContext<void, NorthConnectorDTO<NorthSettings>>) => northConnectorController.findById(ctx));
-router.post('/api/north', (ctx: KoaContext<NorthConnectorCommandDTO<NorthSettings>, NorthConnectorDTO<NorthSettings>>) =>
-  northConnectorController.create(ctx)
+router.get('/api/north/:id', (ctx: KoaContext<void, NorthConnectorDTO<NorthSettings, NorthItemSettings>>) =>
+  northConnectorController.findById(ctx)
 );
-router.put('/api/north/:id', (ctx: KoaContext<NorthConnectorCommandDTO<NorthSettings>, void>) => northConnectorController.updateNorth(ctx));
+router.post(
+  '/api/north',
+  (ctx: KoaContext<NorthConnectorCommandDTO<NorthSettings, NorthItemSettings>, NorthConnectorDTO<NorthSettings, NorthItemSettings>>) =>
+    northConnectorController.create(ctx)
+);
+router.put('/api/north/:id', (ctx: KoaContext<NorthConnectorCommandDTO<NorthSettings, NorthItemSettings>, void>) =>
+  northConnectorController.updateNorth(ctx)
+);
 router.delete('/api/north/:id', (ctx: KoaContext<void, void>) => northConnectorController.delete(ctx));
 router.put('/api/north/:id/start', (ctx: KoaContext<void, void>) => northConnectorController.start(ctx));
 router.put('/api/north/:id/stop', (ctx: KoaContext<void, void>) => northConnectorController.stop(ctx));
@@ -213,22 +225,54 @@ router.delete('/api/north/:northId/cache/archive-files/remove-all', (ctx: KoaCon
 router.delete('/api/north/:northId/cache/archive-files/retry-all', (ctx: KoaContext<void, void>) =>
   northConnectorController.retryAllArchiveFiles(ctx)
 );
-router.get('/api/north/:northId/items', (ctx: KoaContext<any, any>) => northConnectorController.searchNorthItems(ctx));
-router.get('/api/north/:northId/items/all', (ctx: KoaContext<any, any>) => northConnectorController.listNorthItems(ctx));
-router.post('/api/north/:northId/items', (ctx: KoaContext<any, any>) => northConnectorController.createNorthItem(ctx));
-router.post('/api/north/:northType/items/check-import/:northId', upload.single('file'), (ctx: KoaContext<any, any>) =>
-  northConnectorController.checkImportNorthItems(ctx)
+router.get('/api/north/:northId/items', (ctx: KoaContext<void, Page<NorthConnectorItemDTO<NorthItemSettings>>>) =>
+  northConnectorController.searchNorthItems(ctx)
 );
-router.post('/api/north/:northId/items/import', (ctx: KoaContext<any, any>) => northConnectorController.importNorthItems(ctx));
-router.get('/api/north/:northId/items/export', (ctx: KoaContext<any, any>) => northConnectorController.exportNorthItems(ctx));
-router.put('/api/north/items/to-csv', (ctx: KoaContext<any, any>) => northConnectorController.northItemsToCsv(ctx));
-router.get('/api/north/:northId/items/:id', (ctx: KoaContext<any, any>) => northConnectorController.getNorthItem(ctx));
-router.put('/api/north/:northId/items/:id', (ctx: KoaContext<any, any>) => northConnectorController.updateNorthItem(ctx));
-router.put('/api/north/:northId/items/:id/enable', (ctx: KoaContext<any, any>) => northConnectorController.enableNorthItem(ctx));
-router.put('/api/north/:northId/items/:id/disable', (ctx: KoaContext<any, any>) => northConnectorController.disableNorthItem(ctx));
-router.delete('/api/north/:northId/items/all', (ctx: KoaContext<any, any>) => northConnectorController.deleteAllNorthItem(ctx));
-router.delete('/api/north/:northId/items/:id', (ctx: KoaContext<any, any>) => northConnectorController.deleteNorthItem(ctx));
-router.put('/api/north/:northId/cache/reset-metrics', (ctx: KoaContext<void, void>) => northConnectorController.resetMetrics(ctx));
+router.get('/api/north/:northId/items/all', (ctx: KoaContext<void, Array<NorthConnectorItemDTO<NorthItemSettings>>>) =>
+  northConnectorController.listNorthItems(ctx)
+);
+router.post(
+  '/api/north/:northId/items',
+  (ctx: KoaContext<NorthConnectorItemCommandDTO<NorthItemSettings>, NorthConnectorItemDTO<NorthItemSettings>>) =>
+    northConnectorController.createNorthItem(ctx)
+);
+router.post(
+  '/api/north/:northType/items/check-import/:northId',
+  upload.single('file'),
+  (
+    ctx: KoaContext<
+      { delimiter: string; currentItems: string },
+      {
+        items: Array<NorthConnectorItemCommandDTO<NorthItemSettings>>;
+        errors: Array<{ item: NorthConnectorItemCommandDTO<NorthItemSettings>; error: string }>;
+      }
+    >
+  ) => northConnectorController.checkImportNorthItems(ctx)
+);
+router.post(
+  '/api/north/:northId/items/import',
+  (ctx: KoaContext<{ items: Array<NorthConnectorItemCommandDTO<NorthItemSettings>> }, void>) =>
+    northConnectorController.importNorthItems(ctx)
+);
+router.get('/api/north/:northId/items/export', (ctx: KoaContext<{ delimiter: string }, string>) =>
+  northConnectorController.exportNorthItems(ctx)
+);
+router.put(
+  '/api/north/items/to-csv',
+  (ctx: KoaContext<{ items: Array<NorthConnectorItemDTO<NorthItemSettings>>; delimiter: string }, string>) =>
+    northConnectorController.northConnectorItemsToCsv(ctx)
+);
+router.get('/api/north/:northId/items/:id', (ctx: KoaContext<void, NorthConnectorItemDTO<NorthItemSettings>>) =>
+  northConnectorController.getNorthItem(ctx)
+);
+router.put('/api/north/:northId/items/:id', (ctx: KoaContext<NorthConnectorItemCommandDTO<NorthItemSettings>, void>) =>
+  northConnectorController.updateNorthItem(ctx)
+);
+router.put('/api/north/:northId/items/:id/enable', (ctx: KoaContext<void, void>) => northConnectorController.enableNorthItem(ctx));
+router.put('/api/north/:northId/items/:id/disable', (ctx: KoaContext<void, void>) => northConnectorController.disableNorthItem(ctx));
+router.delete('/api/north/:northId/items/all', (ctx: KoaContext<void, void>) => northConnectorController.deleteAllNorthItem(ctx));
+router.delete('/api/north/:northId/items/:id', (ctx: KoaContext<void, void>) => northConnectorController.deleteNorthItem(ctx));
+router.put('/api/north/:northId/cache/reset-metrics', (ctx: KoaContext<void, void>) => northConnectorController.resetNorthMetrics(ctx));
 
 router.get('/api/north/:northId/cache/values', (ctx: KoaContext<void, Array<NorthCacheFiles>>) =>
   northConnectorController.getCacheValues(ctx)
@@ -252,11 +296,6 @@ router.post('/api/north/:northId/cache/value-errors/retry', (ctx: KoaContext<Arr
 );
 router.delete('/api/north/:northId/cache/value-errors/retry-all', (ctx: KoaContext<void, void>) =>
   northConnectorController.retryAllErrorValues(ctx)
-);
-router.get('/api/north/:northId/transformers', (ctx: KoaContext<any, any>) => northConnectorController.getTransformers(ctx));
-router.post('/api/north/:northId/transformers/:transformerId', (ctx: KoaContext<any, any>) => northConnectorController.addTransformer(ctx));
-router.delete('/api/north/:northId/transformers/:transformerId', (ctx: KoaContext<any, any>) =>
-  northConnectorController.removeTransformer(ctx)
 );
 
 router.get('/api/south-types', (ctx: KoaContext<void, Array<SouthType>>) => southConnectorController.getSouthConnectorTypes(ctx));
@@ -343,34 +382,33 @@ router.put('/api/south/:southId/items/:id/disable', (ctx: KoaContext<void, void>
 router.delete('/api/south/:southId/items/all', (ctx: KoaContext<void, void>) => southConnectorController.deleteAllSouthItem(ctx));
 router.delete('/api/south/:southId/items/:id', (ctx: KoaContext<void, void>) => southConnectorController.deleteSouthItem(ctx));
 router.put('/api/south/:southId/cache/reset-metrics', (ctx: KoaContext<void, void>) => southConnectorController.resetSouthMetrics(ctx));
-router.get('/api/south/:southId/transformers', (ctx: KoaContext<any, any>) => southConnectorController.getTransformers(ctx));
-router.post('/api/south/:southId/transformers/:transformerId', (ctx: KoaContext<any, any>) => southConnectorController.addTransformer(ctx));
-router.delete('/api/south/:southId/transformers/:transformerId', (ctx: KoaContext<any, any>) =>
-  southConnectorController.removeTransformer(ctx)
-);
 
 router.get('/api/history-queries', (ctx: KoaContext<void, Array<HistoryQueryLightDTO>>) => historyQueryController.findAll(ctx));
-router.get('/api/history-queries/:id', (ctx: KoaContext<void, HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>>) =>
-  historyQueryController.findById(ctx)
+router.get(
+  '/api/history-queries/:id',
+  (ctx: KoaContext<void, HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings>>) =>
+    historyQueryController.findById(ctx)
 );
 router.post(
   '/api/history-queries',
   (
     ctx: KoaContext<
-      HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>,
-      HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>
+      HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings>,
+      HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings>
     >
   ) => historyQueryController.createHistoryQuery(ctx)
 );
 router.put('/api/history-queries/:id/start', (ctx: KoaContext<void, void>) => historyQueryController.startHistoryQuery(ctx));
 router.put('/api/history-queries/:id/pause', (ctx: KoaContext<void, void>) => historyQueryController.pauseHistoryQuery(ctx));
-router.put('/api/history-queries/:id', (ctx: KoaContext<HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>, void>) =>
-  historyQueryController.updateHistoryQuery(ctx)
+router.put(
+  '/api/history-queries/:id',
+  (ctx: KoaContext<HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings>, void>) =>
+    historyQueryController.updateHistoryQuery(ctx)
 );
 router.delete('/api/history-queries/:id', (ctx: KoaContext<void, void>) => historyQueryController.deleteHistoryQuery(ctx));
 
-router.get('/api/history-queries/:historyQueryId/south-items', (ctx: KoaContext<void, Page<HistoryQueryItemDTO<SouthItemSettings>>>) =>
-  historyQueryController.searchHistoryQueryItems(ctx)
+router.get('/api/history-queries/:historyQueryId/south-items', (ctx: KoaContext<void, Page<HistoryQuerySouthItemDTO<SouthItemSettings>>>) =>
+  historyQueryController.searchSouthHistoryQueryItems(ctx)
 );
 router.post(
   '/api/history-queries/:southType/south-items/check-south-import/:historyQueryId',
@@ -379,54 +417,111 @@ router.post(
     ctx: KoaContext<
       { delimiter: string; currentItems: string },
       {
-        items: Array<HistoryQueryItemCommandDTO<SouthItemSettings>>;
-        errors: Array<{ item: HistoryQueryItemCommandDTO<SouthItemSettings>; error: string }>;
+        items: Array<HistoryQuerySouthItemCommandDTO<SouthItemSettings>>;
+        errors: Array<{ item: HistoryQuerySouthItemCommandDTO<SouthItemSettings>; error: string }>;
       }
     >
   ) => historyQueryController.checkImportSouthItems(ctx)
 );
 router.post(
   '/api/history-queries/:historyQueryId/south-items/import',
-  (ctx: KoaContext<{ items: Array<HistoryQueryItemCommandDTO<SouthItemSettings>> }, void>) => historyQueryController.importSouthItems(ctx)
+  (ctx: KoaContext<{ items: Array<HistoryQuerySouthItemCommandDTO<SouthItemSettings>> }, void>) =>
+    historyQueryController.importSouthItems(ctx)
 );
 router.put('/api/history-queries/:historyQueryId/south-items/export', (ctx: KoaContext<{ delimiter: string }, string>) =>
   historyQueryController.exportSouthItems(ctx)
 );
 router.put(
   '/api/history-queries/:southType/south-items/to-csv',
-  (ctx: KoaContext<{ items: Array<HistoryQueryItemDTO<SouthItemSettings>>; delimiter: string }, string>) =>
-    historyQueryController.historyQueryItemsToCsv(ctx)
+  (ctx: KoaContext<{ items: Array<HistoryQuerySouthItemDTO<SouthItemSettings>>; delimiter: string }, string>) =>
+    historyQueryController.historyQuerySouthItemsToCsv(ctx)
 );
 
-router.get('/api/history-queries/:historyQueryId/south-items/:id', (ctx: KoaContext<void, HistoryQueryItemDTO<SouthItemSettings>>) =>
-  historyQueryController.getHistoryQueryItem(ctx)
+router.get('/api/history-queries/:historyQueryId/south-items/:id', (ctx: KoaContext<void, HistoryQuerySouthItemDTO<SouthItemSettings>>) =>
+  historyQueryController.getSouthHistoryQueryItem(ctx)
 );
 router.post(
   '/api/history-queries/:historyQueryId/south-items',
-  (ctx: KoaContext<HistoryQueryItemCommandDTO<SouthItemSettings>, HistoryQueryItemDTO<SouthItemSettings>>) =>
-    historyQueryController.createHistoryQueryItem(ctx)
+  (ctx: KoaContext<HistoryQuerySouthItemCommandDTO<SouthItemSettings>, HistoryQuerySouthItemDTO<SouthItemSettings>>) =>
+    historyQueryController.createSouthHistoryQueryItem(ctx)
 );
-router.put('/api/history-queries/:historyQueryId/south-items/:id', (ctx: KoaContext<HistoryQueryItemCommandDTO<SouthItemSettings>, void>) =>
-  historyQueryController.updateHistoryQueryItem(ctx)
+router.put(
+  '/api/history-queries/:historyQueryId/south-items/:id',
+  (ctx: KoaContext<HistoryQuerySouthItemCommandDTO<SouthItemSettings>, void>) => historyQueryController.updateSouthHistoryQueryItem(ctx)
 );
 router.put('/api/history-queries/:historyQueryId/south-items/:id/enable', (ctx: KoaContext<void, void>) =>
-  historyQueryController.enableHistoryQueryItem(ctx)
+  historyQueryController.enableSouthHistoryQueryItem(ctx)
 );
 router.put('/api/history-queries/:historyQueryId/south-items/:id/disable', (ctx: KoaContext<void, void>) =>
-  historyQueryController.disableHistoryQueryItem(ctx)
+  historyQueryController.disableSouthHistoryQueryItem(ctx)
 );
 router.delete('/api/history-queries/:historyQueryId/south-items/all', (ctx: KoaContext<void, void>) =>
-  historyQueryController.deleteAllItems(ctx)
+  historyQueryController.deleteAllSouthItems(ctx)
 );
 router.delete('/api/history-queries/:historyQueryId/south-items/:id', (ctx: KoaContext<void, void>) =>
-  historyQueryController.deleteHistoryQueryItem(ctx)
+  historyQueryController.deleteSouthHistoryQueryItem(ctx)
+);
+router.get('/api/history-queries/:historyQueryId/north-items', (ctx: KoaContext<void, Page<HistoryQuerySouthItemDTO<SouthItemSettings>>>) =>
+  historyQueryController.searchNorthHistoryQueryItems(ctx)
+);
+router.post(
+  '/api/history-queries/:northType/north-items/check-north-import/:historyQueryId',
+  upload.single('file'),
+  (
+    ctx: KoaContext<
+      { delimiter: string; currentItems: string },
+      {
+        items: Array<HistoryQueryNorthItemCommandDTO<NorthItemSettings>>;
+        errors: Array<{ item: HistoryQueryNorthItemCommandDTO<NorthItemSettings>; error: string }>;
+      }
+    >
+  ) => historyQueryController.checkImportNorthItems(ctx)
+);
+router.post(
+  '/api/history-queries/:historyQueryId/north-items/import',
+  (ctx: KoaContext<{ items: Array<HistoryQueryNorthItemCommandDTO<NorthItemSettings>> }, void>) =>
+    historyQueryController.importNorthItems(ctx)
+);
+router.put('/api/history-queries/:historyQueryId/north-items/export', (ctx: KoaContext<{ delimiter: string }, string>) =>
+  historyQueryController.exportNorthItems(ctx)
+);
+router.put(
+  '/api/history-queries/:northType/north-items/to-csv',
+  (ctx: KoaContext<{ items: Array<HistoryQueryNorthItemDTO<NorthItemSettings>>; delimiter: string }, string>) =>
+    historyQueryController.historyQueryNorthItemsToCsv(ctx)
+);
+
+router.get('/api/history-queries/:historyQueryId/north-items/:id', (ctx: KoaContext<void, HistoryQueryNorthItemDTO<NorthItemSettings>>) =>
+  historyQueryController.getNorthHistoryQueryItem(ctx)
+);
+router.post(
+  '/api/history-queries/:historyQueryId/north-items',
+  (ctx: KoaContext<HistoryQueryNorthItemCommandDTO<NorthItemSettings>, HistoryQueryNorthItemDTO<NorthItemSettings>>) =>
+    historyQueryController.createNorthHistoryQueryItem(ctx)
+);
+router.put(
+  '/api/history-queries/:historyQueryId/north-items/:id',
+  (ctx: KoaContext<HistoryQueryNorthItemCommandDTO<NorthItemSettings>, void>) => historyQueryController.updateNorthHistoryQueryItem(ctx)
+);
+router.put('/api/history-queries/:historyQueryId/north-items/:id/enable', (ctx: KoaContext<void, void>) =>
+  historyQueryController.enableNorthHistoryQueryItem(ctx)
+);
+router.put('/api/history-queries/:historyQueryId/north-items/:id/disable', (ctx: KoaContext<void, void>) =>
+  historyQueryController.disableNorthHistoryQueryItem(ctx)
+);
+router.delete('/api/history-queries/:historyQueryId/north-items/all', (ctx: KoaContext<void, void>) =>
+  historyQueryController.deleteAllNorthItems(ctx)
+);
+router.delete('/api/history-queries/:historyQueryId/north-items/:id', (ctx: KoaContext<void, void>) =>
+  historyQueryController.deleteNorthHistoryQueryItem(ctx)
 );
 router.put(
   '/api/history-queries/:id/south/test-connection',
   (ctx: KoaContext<SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>, void>) => historyQueryController.testSouthConnection(ctx)
 );
-router.put('/api/history-queries/:id/north/test-connection', (ctx: KoaContext<NorthConnectorCommandDTO<NorthSettings>, void>) =>
-  historyQueryController.testNorthConnection(ctx)
+router.put(
+  '/api/history-queries/:id/north/test-connection',
+  (ctx: KoaContext<NorthConnectorCommandDTO<NorthSettings, NorthItemSettings>, void>) => historyQueryController.testNorthConnection(ctx)
 );
 router.put(
   '/api/history-queries/:id/south/items/test-item',
@@ -434,30 +529,12 @@ router.put(
     ctx: KoaContext<
       {
         south: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
-        item: HistoryQueryItemCommandDTO<SouthItemSettings>;
+        item: HistoryQuerySouthItemCommandDTO<SouthItemSettings>;
         testingSettings: SouthConnectorItemTestingSettings;
       },
       void
     >
-  ) => historyQueryController.testHistoryQueryItem(ctx)
-);
-router.get('/api/history-queries/:historyQueryId/south-transformers', (ctx: KoaContext<any, any>) =>
-  historyQueryController.getTransformers(ctx, 'south')
-);
-router.post('/api/history-queries/:historyQueryId/south-transformers/:transformerId', (ctx: KoaContext<any, any>) =>
-  historyQueryController.addTransformer(ctx, 'south')
-);
-router.delete('/api/history-queries/:historyQueryId/south-transformers/:transformerId', (ctx: KoaContext<any, any>) =>
-  historyQueryController.removeTransformer(ctx, 'south')
-);
-router.get('/api/history-queries/:historyQueryId/north-transformers', (ctx: KoaContext<any, any>) =>
-  historyQueryController.getTransformers(ctx, 'north')
-);
-router.post('/api/history-queries/:historyQueryId/north-transformers/:transformerId', (ctx: KoaContext<any, any>) =>
-  historyQueryController.addTransformer(ctx, 'north')
-);
-router.delete('/api/history-queries/:historyQueryId/north-transformers/:transformerId', (ctx: KoaContext<any, any>) =>
-  historyQueryController.removeTransformer(ctx, 'north')
+  ) => historyQueryController.testSouthHistoryQueryItem(ctx)
 );
 
 router.get('/api/logs', (ctx: KoaContext<void, Page<LogDTO>>) => logController.search(ctx));

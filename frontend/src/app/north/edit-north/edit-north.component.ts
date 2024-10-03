@@ -29,7 +29,7 @@ import { CertificateService } from '../../services/certificate.service';
 import { NorthSubscriptionsComponent } from '../north-subscriptions/north-subscriptions.component';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { SouthConnectorLightDTO } from '../../../../../backend/shared/model/south-connector.model';
-import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 
 @Component({
@@ -62,7 +62,7 @@ export class EditNorthComponent implements OnInit {
   private route = inject(ActivatedRoute);
 
   mode: 'create' | 'edit' = 'create';
-  northConnector: NorthConnectorDTO<NorthSettings> | null = null;
+  northConnector: NorthConnectorDTO<NorthSettings, NorthItemSettings> | null = null;
   northType = '';
   duplicateId = '';
   state = new ObservableState();
@@ -172,8 +172,8 @@ export class EditNorthComponent implements OnInit {
       });
   }
 
-  createOrUpdateNorthConnector(command: NorthConnectorCommandDTO<NorthSettings>): void {
-    let createOrUpdate: Observable<NorthConnectorDTO<NorthSettings>>;
+  createOrUpdateNorthConnector(command: NorthConnectorCommandDTO<NorthSettings, NorthItemSettings>): void {
+    let createOrUpdate: Observable<NorthConnectorDTO<NorthSettings, NorthItemSettings>>;
     if (this.mode === 'edit') {
       createOrUpdate = this.northConnectorService.update(this.northConnector!.id, command).pipe(
         tap(() => this.notificationService.success('north.updated', { name: command.name })),
@@ -196,7 +196,7 @@ export class EditNorthComponent implements OnInit {
 
     const formValue = this.northForm!.value;
 
-    const command: NorthConnectorCommandDTO<NorthSettings> = {
+    const command: NorthConnectorCommandDTO<NorthSettings, NorthItemSettings> = {
       name: formValue.name!,
       type: this.northType as OIBusNorthType,
       description: formValue.description!,
@@ -222,7 +222,9 @@ export class EditNorthComponent implements OnInit {
       },
       subscriptions: this.northConnector
         ? this.northConnector.subscriptions.map(subscription => subscription.id)
-        : this.inMemorySubscriptions.map(subscription => subscription.id)
+        : this.inMemorySubscriptions.map(subscription => subscription.id),
+      transformers: [], // TODO,
+      items: [] // TODO,
     };
     if (value === 'save') {
       this.createOrUpdateNorthConnector(command);

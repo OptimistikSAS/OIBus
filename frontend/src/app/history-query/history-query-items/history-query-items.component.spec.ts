@@ -1,6 +1,6 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ComponentTester, createMock, TestInput } from 'ngx-speculoos';
-import { SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
+import { SouthConnectorCommandDTO, SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
 import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
@@ -8,12 +8,12 @@ import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 import { Component } from '@angular/core';
 import { HistoryQueryItemsComponent } from './history-query-items.component';
-import { HistoryQueryDTO, HistoryQueryItemCommandDTO } from '../../../../../backend/shared/model/history-query.model';
+import { HistoryQueryDTO, HistoryQuerySouthItemCommandDTO } from '../../../../../backend/shared/model/history-query.model';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
-import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
-const testHistoryQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
+const testHistoryQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings> = {
   id: 'historyId',
   name: 'History query',
   description: 'My History query description',
@@ -45,6 +45,38 @@ const testHistoryQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemS
       }
     }
   },
+  southItems: [
+    {
+      id: 'id1',
+      name: 'item1',
+      enabled: true,
+      settings: {
+        query: 'sql'
+      } as SouthItemSettings
+    },
+    {
+      id: 'id2',
+      name: 'item1-copy',
+      enabled: false,
+      settings: {
+        query: 'sql'
+      } as SouthItemSettings
+    },
+    {
+      id: 'id3',
+      name: 'item3',
+      enabled: false,
+      settings: {
+        query: 'sql'
+      } as SouthItemSettings
+    }
+  ],
+  northItems: [],
+  southTransformers: [],
+  northTransformers: []
+};
+const testSouthConnectorCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
+  name: 'South Connector',
   items: [
     {
       id: 'id1',
@@ -71,11 +103,12 @@ const testHistoryQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemS
       } as SouthItemSettings
     }
   ]
-};
+} as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
 
 @Component({
   template: `<oib-history-query-items
-    [historyId]="historyQuery.id"
+    [historyId]="historyId"
+    [southConnectorCommand]="southConnectorCommand"
     [historyQuery]="historyQuery"
     [southManifest]="manifest"
     [saveChangesDirectly]="saveChangesDirectly"
@@ -85,8 +118,11 @@ const testHistoryQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemS
 })
 class TestComponent {
   _historyQueryService!: HistoryQueryService;
+  historyId = 'historyId';
 
   historyQuery = structuredClone(testHistoryQuery);
+  southConnectorCommand = structuredClone(testSouthConnectorCommand);
+
   manifest: SouthConnectorManifest = {
     id: 'mssql',
     category: 'database',
@@ -110,13 +146,13 @@ class TestComponent {
     }
   };
   saveChangesDirectly!: boolean;
-  inMemoryItems: Array<HistoryQueryItemCommandDTO<SouthItemSettings>> = [];
-  updateInMemoryItems(items: Array<HistoryQueryItemCommandDTO<SouthItemSettings>> | null) {
+  inMemoryItems: Array<HistoryQuerySouthItemCommandDTO<SouthItemSettings>> = [];
+  updateInMemoryItems(items: Array<HistoryQuerySouthItemCommandDTO<SouthItemSettings>> | null) {
     if (items) {
       this.inMemoryItems = items;
     } else {
-      this._historyQueryService.get(this.historyQuery!.id).subscribe(historyQuery => {
-        this.historyQuery!.items = historyQuery.items;
+      this._historyQueryService.get(this.historyId).subscribe(historyQuery => {
+        this.historyQuery!.southItems = historyQuery.southItems;
         this.historyQuery = JSON.parse(JSON.stringify(this.historyQuery)); // Used to force a refresh in history query item list
       });
     }
@@ -200,26 +236,30 @@ describe('HistoryQueryItemsComponent with saving changes directly', () => {
   it('should display items', () => {
     expect(tester.southItems.length).toBe(3);
     const item = tester.southItems[0];
-    expect(item.elements('td')[1]).toContainText(testHistoryQuery.items[0].name);
+    expect(item.elements('td')[1]).toContainText(testHistoryQuery.southItems[0].name);
     expect(item.elements('td')[2]).toContainText('sql');
   });
 
   it('should enable history item', () => {
     const btnIdx = 1; // second one is disabled by default
     tester.toggleButtons[btnIdx].click();
-    expect(historyQueryService.enableItem).toHaveBeenCalledWith(testHistoryQuery.id, testHistoryQuery.items[btnIdx].id);
-    expect(notificationService.success).toHaveBeenCalledWith('history-query.items.enabled', { name: testHistoryQuery.items[btnIdx].name });
+    expect(historyQueryService.enableItem).toHaveBeenCalledWith(testHistoryQuery.id, testHistoryQuery.southItems[btnIdx].id);
+    expect(notificationService.success).toHaveBeenCalledWith('history-query.items.enabled', {
+      name: testHistoryQuery.southItems[btnIdx].name
+    });
   });
 
   it('should disable history item', () => {
     const btnIdx = 0; // first one is enabled by default
     tester.toggleButtons[btnIdx].click();
-    expect(historyQueryService.disableItem).toHaveBeenCalledWith(testHistoryQuery.id, testHistoryQuery.items[btnIdx].id);
-    expect(notificationService.success).toHaveBeenCalledWith('history-query.items.disabled', { name: testHistoryQuery.items[btnIdx].name });
+    expect(historyQueryService.disableItem).toHaveBeenCalledWith(testHistoryQuery.id, testHistoryQuery.southItems[btnIdx].id);
+    expect(notificationService.success).toHaveBeenCalledWith('history-query.items.disabled', {
+      name: testHistoryQuery.southItems[btnIdx].name
+    });
   });
 
   it('should delete all', () => {
-    historyQueryService.get.and.returnValue(of({ ...testHistoryQuery, items: [] }));
+    historyQueryService.get.and.returnValue(of({ ...testHistoryQuery, southItems: [] }));
 
     tester.deleteAllButton.click();
 
@@ -253,7 +293,7 @@ describe('HistoryQueryItemsComponent with saving changes directly', () => {
 
   it('should delete one item', () => {
     // mock API response to delete first item
-    historyQueryService.get.and.returnValue(of({ ...testHistoryQuery, items: testHistoryQuery.items.slice(1) }));
+    historyQueryService.get.and.returnValue(of({ ...testHistoryQuery, southItems: testHistoryQuery.southItems.slice(1) }));
 
     tester.southItems[0].button('.delete-south-item')!.click();
 
@@ -269,7 +309,7 @@ describe('HistoryQueryItemsComponent with saving changes directly', () => {
     expect(tester.tableItemNames).toEqual(['item3', 'item1-copy', 'item1']);
 
     // mock API response to delete third item
-    historyQueryService.get.and.returnValue(of({ ...testHistoryQuery, items: testHistoryQuery.items.slice(0, 2) }));
+    historyQueryService.get.and.returnValue(of({ ...testHistoryQuery, southItems: testHistoryQuery.southItems.slice(0, 2) }));
 
     tester.southItems[2].button('.delete-south-item')!.click();
 
@@ -308,7 +348,7 @@ describe('HistoryQueryItemsComponent with saving changes directly', () => {
     expect(tester.tableItemNames).toEqual(['item3']);
 
     // Delete the third item in the list
-    historyQueryService.get.and.returnValue(of({ ...testHistoryQuery, items: testHistoryQuery.items.slice(0, 2) }));
+    historyQueryService.get.and.returnValue(of({ ...testHistoryQuery, southItems: testHistoryQuery.southItems.slice(0, 2) }));
     tester.southItems[0].button('.delete-south-item')!.click();
 
     expect(confirmationService.confirm).toHaveBeenCalledTimes(1);
@@ -361,7 +401,7 @@ describe('HistoryQueryItemsComponent without saving changes directly', () => {
   it('should display items', () => {
     expect(tester.southItems.length).toBe(3);
     const item = tester.southItems[0];
-    expect(item.elements('td')[1]).toContainText(testHistoryQuery.items[0].name);
+    expect(item.elements('td')[1]).toContainText(testHistoryQuery.southItems[0].name);
     expect(item.elements('td')[2]).toContainText('sql');
   });
 

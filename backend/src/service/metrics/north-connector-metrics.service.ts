@@ -4,7 +4,7 @@ import { PassThrough } from 'node:stream';
 import { NorthConnectorMetrics, OIBusTimeValue } from '../../../shared/model/engine.model';
 import NorthConnectorMetricsRepository from '../../repository/logs/north-connector-metrics.repository';
 import NorthConnector from '../../north/north-connector';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../shared/model/north-settings.model';
 
 export default class NorthConnectorMetricsService {
   private _stream: PassThrough | null = null;
@@ -24,7 +24,7 @@ export default class NorthConnectorMetricsService {
   };
 
   constructor(
-    private readonly northConnector: NorthConnector<NorthSettings>,
+    private readonly northConnector: NorthConnector<NorthSettings, NorthItemSettings>,
     private readonly northConnectorMetricsRepository: NorthConnectorMetricsRepository
   ) {
     this.initMetrics();

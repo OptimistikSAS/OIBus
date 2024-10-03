@@ -12,7 +12,7 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { SouthItemTestComponent } from './south-item-test.component';
 import { Component, ViewChild } from '@angular/core';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
-import { HistoryQueryItemCommandDTO } from '../../../../../backend/shared/model/history-query.model';
+import { HistoryQuerySouthItemCommandDTO } from '../../../../../backend/shared/model/history-query.model';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { DateTime, Settings } from 'luxon';
 import { provideDatepicker } from '../../shared/datepicker.providers';
@@ -39,7 +39,7 @@ class TestComponent {
   type!: string;
   entityId!: string;
 
-  item = {} as SouthConnectorItemCommandDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>;
+  item = {} as SouthConnectorItemCommandDTO<SouthItemSettings> | HistoryQuerySouthItemCommandDTO<SouthItemSettings>;
   connectorCommand = {} as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
   manifest = {
     id: 'mssql',

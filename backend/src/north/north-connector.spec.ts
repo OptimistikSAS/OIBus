@@ -11,7 +11,12 @@ import { dirSize, validateCronExpression } from '../service/utils';
 import { OIBusContent, OIBusTimeValue } from '../../shared/model/engine.model';
 import path from 'node:path';
 import testData from '../tests/utils/test-data';
-import { NorthFileWriterSettings, NorthOIAnalyticsSettings, NorthSettings } from '../../shared/model/north-settings.model';
+import {
+  NorthFileWriterSettings,
+  NorthItemSettings,
+  NorthOIAnalyticsSettings,
+  NorthSettings
+} from '../../shared/model/north-settings.model';
 import NorthFileWriter from './north-file-writer/north-file-writer';
 import { NorthConnectorEntity } from '../model/north-connector.model';
 import { flushPromises, mockBaseFolders } from '../tests/utils/test-utils';
@@ -59,9 +64,7 @@ jest.mock(
 const logger: pino.Logger = new PinoLogger();
 const anotherLogger: pino.Logger = new PinoLogger();
 
-let north: NorthConnector<NorthSettings>;
-class TestNorthWithItems extends NorthConnector {}
-let northWithItems: TestNorthWithItems;
+let north: NorthConnector<NorthSettings, NorthItemSettings>;
 
 describe('NorthConnector', () => {
   beforeEach(async () => {
@@ -70,11 +73,10 @@ describe('NorthConnector', () => {
 
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(testData.north.list[0]);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
-    northWithItems = new TestNorthWithItems(configuration, encryptionService, repositoryService, logger, 'baseFolder');
     (dirSize as jest.Mock).mockReturnValue(123);
 
     north = new NorthFileWriter(
-      testData.north.list[0] as NorthConnectorEntity<NorthFileWriterSettings>,
+      testData.north.list[0] as NorthConnectorEntity<NorthFileWriterSettings, NorthItemSettings>,
       encryptionService,
       northConnectorRepository,
       scanModeRepository,
@@ -82,7 +84,6 @@ describe('NorthConnector', () => {
       mockBaseFolders(testData.north.list[0].id)
     );
     await north.start();
-    await northWithItems.start();
   });
 
   afterEach(() => {
@@ -512,11 +513,6 @@ describe('NorthConnector', () => {
     await north.getArchiveFileContent('file1.queue.tmp');
     expect(fileCacheService.getArchiveFileContent).toHaveBeenCalledWith('file1.queue.tmp');
   });
-
-  it('should properly handle item change', async () => {
-    await north.onItemChange();
-    expect(repositoryService.northItemRepository.listNorthItems).toHaveBeenCalledWith(configuration.id, { enabled: true });
-  });
 });
 
 describe('NorthConnector disabled', () => {
@@ -537,7 +533,7 @@ describe('NorthConnector disabled', () => {
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
 
     north = new NorthOIAnalytics(
-      testData.north.list[1] as NorthConnectorEntity<NorthOIAnalyticsSettings>,
+      testData.north.list[1] as NorthConnectorEntity<NorthOIAnalyticsSettings, NorthItemSettings>,
       encryptionService,
       northConnectorRepository,
       scanModeRepository,
@@ -676,7 +672,7 @@ describe('NorthConnector test', () => {
     testSettings.id = 'test';
 
     north = new NorthOIAnalytics(
-      testSettings as NorthConnectorEntity<NorthOIAnalyticsSettings>,
+      testSettings as NorthConnectorEntity<NorthOIAnalyticsSettings, NorthItemSettings>,
       encryptionService,
       northConnectorRepository,
       scanModeRepository,
@@ -694,5 +690,10 @@ describe('NorthConnector test', () => {
 
   it('should check if North caches are empty', async () => {
     expect(await north.isCacheEmpty()).toBeFalsy();
+  });
+
+  it('should manage item changes', async () => {
+    await north.onItemChange();
+    expect(northConnectorRepository.findAllItemsForNorth).toHaveBeenCalled();
   });
 });

@@ -1,746 +1,226 @@
 import SouthConnectorController from './south-connector.controller';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
 import JoiValidator from './validators/joi.validator';
-import csv from 'papaparse';
-import fs from 'node:fs/promises';
-import {
-  SouthConnectorCommandDTO,
-  SouthConnectorDTO,
-  SouthConnectorItemCommandDTO,
-  SouthConnectorItemDTO
-} from '../../../../shared/model/south-connector.model';
-import { southTestManifest } from '../../tests/__mocks__/south-service.mock';
-import { TransformerDTO, TransformerFilterDTO } from '../../../../shared/model/transformer.model';
-import { ScanModeDTO } from '../../../../shared/model/scan-mode.model';
+import testData from '../../tests/utils/test-data';
+import { toSouthConnectorDTO, toSouthConnectorItemDTO, toSouthConnectorLightDTO } from '../../service/south.service';
+import { southItemToFlattenedCSV } from '../../service/utils';
+import pino from 'pino';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 
-jest.mock('./validators/joi.validator');
-jest.mock('papaparse');
 jest.mock('node:fs/promises');
+jest.mock('./validators/joi.validator');
+jest.mock('../../service/utils');
 
-let ctx = new KoaContextMock();
+const logger: pino.Logger = new PinoLogger();
+const ctx = new KoaContextMock();
 const validator = new JoiValidator();
 const southConnectorController = new SouthConnectorController(validator);
-
-const sqliteConnectorCommand: SouthConnectorCommandDTO = {
-  name: 'name',
-  type: 'south-test',
-  description: 'description',
-  enabled: true,
-  settings: {
-    databasePath: 'databasePath.db'
-  },
-  history: {
-    maxInstantPerItem: true,
-    maxReadInterval: 0,
-    readDelay: 0,
-    overlap: 0
-  }
-};
-const southConnectorCommand: SouthConnectorCommandDTO = {
-  name: 'name',
-  type: 'south-test',
-  description: 'description',
-  enabled: true,
-  settings: {
-    inputFolder: '/tmp',
-    minAge: 10,
-    ignoreModifiedDate: false,
-    compression: false,
-    preserveFiles: false
-  },
-  history: {
-    maxInstantPerItem: true,
-    maxReadInterval: 0,
-    readDelay: 0,
-    overlap: 0
-  }
-};
-const southConnector: SouthConnectorDTO = {
-  id: 'id',
-  ...southConnectorCommand
-};
-const itemCommand: SouthConnectorItemCommandDTO = {
-  name: 'name',
-  enabled: true,
-  settings: {
-    regex: '.*'
-  },
-  scanModeId: 'scanModeId'
-};
-const item: SouthConnectorItemDTO = {
-  id: 'id',
-  connectorId: 'connectorId',
-  enabled: true,
-  name: 'name',
-  settings: {
-    regex: '.*'
-  },
-  scanModeId: 'scanModeId'
-};
-const page = {
-  content: [item],
-  size: 10,
-  number: 1,
-  totalElements: 1,
-  totalPages: 1
-};
-const transformer: TransformerDTO = {
-  id: 'transformerId',
-  name: 'Transformer',
-  description: 'Transformer description',
-  code: 'code',
-  inputType: 'time-values',
-  outputType: 'values',
-  fileRegex: null
-};
 
 describe('South connector controller', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
-    // Resetting context to prevent variables set in one test to pass into others
-    ctx = new KoaContextMock();
   });
 
   it('getSouthConnectorTypes() should return South connector types', async () => {
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValueOnce([testData.south.manifest]);
+
     await southConnectorController.getSouthConnectorTypes(ctx);
 
     expect(ctx.ok).toHaveBeenCalledWith([
       {
-        id: 'south-test',
-        category: 'debug',
-        name: 'Test',
-        description: '',
-        modes: {
-          subscription: true,
-          lastPoint: true,
-          lastFile: true,
-          history: true,
-          forceMaxInstantPerItem: true
-        }
+        id: testData.south.manifest.id,
+        category: testData.south.manifest.category,
+        modes: testData.south.manifest.modes
       }
     ]);
   });
 
   it('getSouthConnectorManifest() should return South connector manifest', async () => {
-    ctx.params.id = 'south-test';
+    ctx.params.id = testData.south.manifest.id;
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValueOnce([testData.south.manifest]);
 
     await southConnectorController.getSouthConnectorManifest(ctx);
 
-    expect(ctx.ok).toHaveBeenCalledWith(southTestManifest);
+    expect(ctx.ok).toHaveBeenCalledWith(testData.south.manifest);
   });
 
   it('getSouthConnectorManifest() should return not found', async () => {
     ctx.params.id = 'invalid';
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValueOnce([testData.south.manifest]);
 
     await southConnectorController.getSouthConnectorManifest(ctx);
 
     expect(ctx.throw).toHaveBeenCalledWith(404, 'South not found');
   });
 
-  it('getSouthConnectors() should return South connectors', async () => {
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnectors.mockReturnValue([southConnector]);
-    ctx.app.encryptionService.filterSecrets.mockReturnValue(southConnector.settings);
+  it('findAll() should return South connectors', async () => {
+    ctx.app.southService.findAll.mockReturnValue(testData.south.list);
 
-    await southConnectorController.getSouthConnectors(ctx);
+    await southConnectorController.findAll(ctx);
 
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnectors).toHaveBeenCalled();
-    expect(ctx.app.encryptionService.filterSecrets).toHaveBeenCalledWith(southConnector.settings, southTestManifest.settings);
-    expect(ctx.ok).toHaveBeenCalledWith([southConnector]);
+    expect(ctx.app.southService.findAll).toHaveBeenCalled();
+    expect(ctx.ok).toHaveBeenCalledWith(testData.south.list.map(element => toSouthConnectorLightDTO(element)));
   });
 
-  it('getSouthConnectors() should return null when manifest is missing', async () => {
-    const invalidSouthConnector = {
-      ...southConnector,
-      type: 'invalid'
-    };
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnectors.mockReturnValue([southConnector, invalidSouthConnector]);
-    ctx.app.encryptionService.filterSecrets.mockReturnValue(southConnector.settings);
+  it('findById() should return South connector', async () => {
+    ctx.params.id = testData.south.list[0].id;
+    ctx.app.southService.findById.mockReturnValueOnce(testData.south.list[0]);
 
-    await southConnectorController.getSouthConnectors(ctx);
+    await southConnectorController.findById(ctx);
 
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnectors).toHaveBeenCalled();
-    expect(ctx.app.encryptionService.filterSecrets).toHaveBeenCalledWith(southConnector.settings, southTestManifest.settings);
-    expect(ctx.ok).toHaveBeenCalledWith([southConnector, null]);
+    expect(ctx.app.southService.findById).toHaveBeenCalledWith(testData.south.list[0].id);
+    expect(ctx.ok).toHaveBeenCalledWith(toSouthConnectorDTO(testData.south.list[0], ctx.app.encryptionService));
   });
 
-  it('getSouthConnector() should return South connector', async () => {
-    ctx.params.id = 'id';
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    ctx.app.encryptionService.filterSecrets.mockReturnValue(southConnector.settings);
+  it('findById() should return not found when South connector not found', async () => {
+    ctx.params.id = testData.south.list[0].id;
+    ctx.app.southService.findById.mockReturnValueOnce(null);
 
-    await southConnectorController.getSouthConnector(ctx);
+    await southConnectorController.findById(ctx);
 
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('id');
-    expect(ctx.app.encryptionService.filterSecrets).toHaveBeenCalledWith(southConnector.settings, southTestManifest.settings);
-    expect(ctx.ok).toHaveBeenCalledWith(southConnector);
-  });
-
-  it('getSouthConnector() should return not found when South connector not found', async () => {
-    ctx.params.id = 'id';
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(null);
-
-    await southConnectorController.getSouthConnector(ctx);
-
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('id');
-    expect(ctx.app.encryptionService.filterSecrets).not.toHaveBeenCalled();
+    expect(ctx.app.southService.findById).toHaveBeenCalledWith(testData.south.list[0].id);
     expect(ctx.notFound).toHaveBeenCalled();
   });
 
-  it('getSouthConnector() should return not found when manifest not found', async () => {
-    ctx.params.id = 'id';
-    const invalidSouthConnector = {
-      ...southConnector,
-      type: 'invalid'
-    };
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(invalidSouthConnector);
+  it('create() should create South connector', async () => {
+    ctx.request.body = testData.south.command;
+    ctx.app.southService.createSouth.mockReturnValueOnce(testData.south.list[0]);
 
-    await southConnectorController.getSouthConnector(ctx);
+    await southConnectorController.createSouth(ctx);
 
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('id');
-    expect(ctx.app.encryptionService.filterSecrets).not.toHaveBeenCalled();
-    expect(ctx.throw).toHaveBeenCalledWith(404, 'South type not found');
+    expect(ctx.app.southService.createSouth).toHaveBeenCalledWith(ctx.request.body, null);
+    expect(ctx.created).toHaveBeenCalledWith(toSouthConnectorDTO(testData.south.list[0], ctx.app.encryptionService));
   });
 
-  it('createSouthConnector() should create South connector', async () => {
-    ctx.request.body = {
-      south: southConnectorCommand,
-      items: []
-    };
-    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
-    ctx.app.reloadService.onCreateSouth.mockReturnValue(southConnector);
-
-    await southConnectorController.createSouthConnector(ctx);
-
-    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).toHaveBeenCalled();
-    expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.settings, southConnectorCommand.settings);
-    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
-      southConnectorCommand.settings,
-      undefined,
-      southTestManifest.settings
-    );
-    expect(ctx.app.reloadService.onCreateSouth).toHaveBeenCalledWith(southConnectorCommand);
-    expect(ctx.created).toHaveBeenCalledWith(southConnector);
-  });
-
-  it('createSouthConnector() should create South connector with scanModeName', async () => {
-    ctx.request.body = {
-      south: southConnectorCommand,
-      items: [
-        item,
-        {
-          id: 'id2',
-          name: 'item2',
-          scanModeName: 'scanModeName2',
-          enabled: true,
-          settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
-        }
-      ]
-    };
-    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
-    ctx.app.reloadService.onCreateSouth.mockReturnValue(southConnector);
-    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValue([
-      {
-        name: 'scanModeName2',
-        description: '',
-        cron: 'cron'
-      }
-    ]);
-
-    await southConnectorController.createSouthConnector(ctx);
-
-    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).toHaveBeenCalled();
-    expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.settings, southConnectorCommand.settings);
-    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
-      southConnectorCommand.settings,
-      undefined,
-      southTestManifest.settings
-    );
-    expect(ctx.app.reloadService.onCreateSouth).toHaveBeenCalledWith(southConnectorCommand);
-    expect(ctx.created).toHaveBeenCalledWith(southConnector);
-  });
-
-  it('createSouthConnector() should create South connector with duplicate', async () => {
-    ctx.request.body = {
-      south: { ...southConnectorCommand, enabled: false },
-      items: []
-    };
-    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
-    ctx.app.reloadService.onCreateSouth.mockReturnValue(southConnector);
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    ctx.query.duplicateId = 'duplicateId';
-
-    await southConnectorController.createSouthConnector(ctx);
-
-    expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.settings, southConnectorCommand.settings);
-    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
-      southConnectorCommand.settings,
-      southConnectorCommand.settings,
-      southTestManifest.settings
-    );
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('duplicateId');
-    expect(ctx.app.reloadService.onCreateSouth).toHaveBeenCalledWith({ ...southConnectorCommand, enabled: false });
-    expect(ctx.created).toHaveBeenCalledWith(southConnector);
-    ctx.query.duplicateId = null;
-  });
-
-  it('createSouthConnector() should throw error when scan mode is not specified in item', async () => {
-    ctx.request.body = {
-      south: southConnectorCommand,
-      items: [
-        {
-          name: 'name',
-          enabled: true,
-          settings: {
-            regex: '.*'
-          }
-        }
-      ]
-    };
-    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(sqliteConnectorCommand.settings);
-    ctx.app.reloadService.onCreateSouth.mockReturnValue(southConnector);
-    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
-
-    await southConnectorController.createSouthConnector(ctx);
-    expect(ctx.badRequest).toHaveBeenCalledWith('Scan mode not specified for item name');
-  });
-
-  it('createSouthConnector() should throw error when scan mode is not found', async () => {
-    ctx.request.body = {
-      south: southConnectorCommand,
-      items: [
-        {
-          name: 'name',
-          scanModeName: 'invalid',
-          enabled: true,
-          settings: {
-            regex: '.*'
-          }
-        }
-      ]
-    };
-    const scanMode: ScanModeDTO = {
-      id: '1',
-      name: 'scan mode',
-      description: 'description',
-      cron: '* * * * *'
-    };
-    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValue([scanMode]);
-
-    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(sqliteConnectorCommand.settings);
-    ctx.app.reloadService.onCreateSouth.mockReturnValue(southConnector);
-    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
-
-    await southConnectorController.createSouthConnector(ctx);
-    expect(ctx.badRequest).toHaveBeenCalledWith('Scan mode invalid not found for item name');
-  });
-
-  it('createSouthConnector() should create connector with items', async () => {
-    ctx.request.body = {
-      south: southConnectorCommand,
-      items: [
-        {
-          name: 'name',
-          scanModeName: 'scan mode',
-          enabled: true,
-          settings: {
-            regex: '.*'
-          }
-        }
-      ]
-    };
-    const scanMode: ScanModeDTO = {
-      id: '1',
-      name: 'scan mode',
-      description: 'description',
-      cron: '* * * * *'
-    };
-    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValue([scanMode]);
-    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(sqliteConnectorCommand.settings);
-    ctx.app.reloadService.onCreateSouth.mockReturnValue(southConnector);
-    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
-
-    await southConnectorController.createSouthConnector(ctx);
-    expect(ctx.app.reloadService.onCreateSouth).toHaveBeenCalledWith(sqliteConnectorCommand);
-    expect(ctx.created).toHaveBeenCalledWith(southConnector);
-  });
-
-  it('createSouthConnector() should create South connector with forceMaxInstantPerItem', async () => {
-    ctx.request.body = {
-      south: sqliteConnectorCommand,
-      items: [itemCommand]
-    };
-    ctx.query.duplicateId = undefined;
-    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(sqliteConnectorCommand.settings);
-    ctx.app.reloadService.onCreateSouth.mockReturnValue(southConnector);
-
-    await southConnectorController.createSouthConnector(ctx);
-
-    expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.settings, sqliteConnectorCommand.settings);
-    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
-      sqliteConnectorCommand.settings,
-      undefined,
-      southTestManifest.settings
-    );
-    expect(ctx.app.reloadService.onCreateSouth).toHaveBeenCalledWith(sqliteConnectorCommand);
-    expect(ctx.created).toHaveBeenCalledWith(southConnector);
-  });
-
-  it('createSouthConnector() should return 404 when duplicate not found', async () => {
-    ctx.request.body = {
-      south: sqliteConnectorCommand,
-      items: []
-    };
-
-    ctx.query.duplicateId = 'notFound';
-
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValueOnce(null);
-
-    await southConnectorController.createSouthConnector(ctx);
-
-    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onCreateSouth).not.toHaveBeenCalled();
-    expect(ctx.notFound).toHaveBeenCalled();
-
-    ctx.query.duplicateId = null;
-  });
-
-  it('createSouthConnector() should return 404 when manifest not found', async () => {
-    ctx.request.body = {
-      south: sqliteConnectorCommand,
-      items: []
-    };
-    ctx.request.body.south.type = 'invalid';
-
-    await southConnectorController.createSouthConnector(ctx);
-
-    expect(validator.validateSettings).not.toHaveBeenCalled();
-    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onCreateSouth).not.toHaveBeenCalled();
-    expect(ctx.throw).toHaveBeenCalledWith(404, 'South manifest not found');
-  });
-
-  it('createSouthConnector() should return 404 when body is null', async () => {
-    ctx.request.body = { south: {}, items: null };
-
-    await southConnectorController.createSouthConnector(ctx);
-
-    expect(validator.validateSettings).not.toHaveBeenCalled();
-    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onCreateSouth).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalled();
-  });
-
-  it('createSouthConnector() should return bad request when validation fails', async () => {
-    ctx.request.body = { south: southConnectorCommand, items: [] };
-
-    const validationError = new Error('invalid body');
-    validator.validateSettings = jest.fn().mockImplementationOnce(() => {
-      throw validationError;
+  it('create() should return bad request', async () => {
+    ctx.request.body = testData.south.command;
+    ctx.query.duplicate = 'southId';
+    ctx.app.southService.createSouth.mockImplementationOnce(() => {
+      throw new Error('bad request');
     });
 
-    await southConnectorController.createSouthConnector(ctx);
+    await southConnectorController.createSouth(ctx);
 
-    expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.settings, southConnectorCommand.settings);
-    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onCreateSouth).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
+    expect(ctx.app.southService.createSouth).toHaveBeenCalledWith(ctx.request.body, 'southId');
+    expect(ctx.created).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('bad request');
   });
 
-  it('updateSouthConnector() should update South connector', async () => {
-    ctx.request.body = { south: { ...southConnectorCommand }, items: [], itemIdsToDelete: ['id1'] };
-    ctx.params.id = 'id';
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
+  it('update() should update South connector', async () => {
+    ctx.request.body = testData.south.command;
+    ctx.params.id = testData.south.list[0].id;
 
-    await southConnectorController.updateSouthConnector(ctx);
+    await southConnectorController.updateSouth(ctx);
 
-    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).toHaveBeenCalled();
-    expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.settings, southConnectorCommand.settings);
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('id');
-    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
-      southConnectorCommand.settings,
-      southConnector.settings,
-      southTestManifest.settings
-    );
-    expect(ctx.app.reloadService.onUpdateSouth).toHaveBeenCalledWith(southConnector, southConnectorCommand, [], []);
-    expect(ctx.app.reloadService.onDeleteSouthItem).toHaveBeenCalledWith('id1');
+    expect(ctx.app.southService.updateSouth).toHaveBeenCalledWith(ctx.params.id, ctx.request.body);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
-  it('updateSouthConnector() should update South connector with scanModeName', async () => {
-    ctx.request.body = {
-      south: { ...southConnectorCommand },
-      items: [
-        item,
-        {
-          id: 'id2',
-          name: 'item2',
-          scanModeName: 'scanModeName2',
-          enabled: true,
-          settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
-        }
-      ],
-      itemIdsToDelete: ['id1']
-    };
-    ctx.params.id = 'id';
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
-    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValue([
-      {
-        id: 'scanModeId2',
-        name: 'scanModeName2',
-        description: '',
-        cron: 'cron'
-      }
-    ]);
+  it('update() should return bad request', async () => {
+    ctx.request.body = testData.south.command;
+    ctx.params.id = testData.south.list[0].id;
 
-    await southConnectorController.updateSouthConnector(ctx);
+    ctx.app.southService.updateSouth.mockImplementationOnce(() => {
+      throw new Error('bad request');
+    });
 
-    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).toHaveBeenCalled();
-    expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.settings, southConnectorCommand.settings);
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('id');
-    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
-      southConnectorCommand.settings,
-      southConnector.settings,
-      southTestManifest.settings
-    );
-    expect(ctx.app.reloadService.onUpdateSouth).toHaveBeenCalledWith(
-      southConnector,
-      southConnectorCommand,
-      [],
-      [
-        item,
-        {
-          id: 'id2',
-          name: 'item2',
-          scanModeId: 'scanModeId2',
-          enabled: true,
-          settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
-        }
-      ]
-    );
-    expect(ctx.app.reloadService.onDeleteSouthItem).toHaveBeenCalledWith('id1');
+    await southConnectorController.updateSouth(ctx);
+
+    expect(ctx.app.southService.updateSouth).toHaveBeenCalledWith(ctx.params.id, ctx.request.body);
+    expect(ctx.noContent).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('bad request');
+  });
+
+  it('delete() should delete South connector', async () => {
+    ctx.params.id = testData.south.list[0].id;
+
+    await southConnectorController.delete(ctx);
+
+    expect(ctx.app.southService.deleteSouth).toHaveBeenCalledWith(ctx.params.id);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
-  it('updateSouthConnector() should fail to update South connector without scanMode', async () => {
-    ctx.request.body = {
-      south: { ...southConnectorCommand },
-      items: [
-        item,
-        {
-          id: 'id2',
-          name: 'item2',
-          scanModeName: 'bad scan mode',
-          enabled: true,
-          settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
-        }
-      ],
-      itemIdsToDelete: ['id1']
-    };
-    ctx.params.id = 'id';
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
-    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValue([
-      {
-        name: 'scanModeName2',
-        description: '',
-        cron: 'cron'
-      }
-    ]);
+  it('delete() should return bad request', async () => {
+    ctx.params.id = testData.south.list[0].id;
 
-    await southConnectorController.updateSouthConnector(ctx);
-    expect(ctx.badRequest).toHaveBeenCalledWith('Scan mode bad scan mode not found for item item2');
-
-    ctx.request.body = {
-      south: { ...southConnectorCommand },
-      items: [
-        item,
-        {
-          id: 'id2',
-          name: 'item2',
-          enabled: true,
-          settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
-        }
-      ],
-      itemIdsToDelete: ['id1']
-    };
-    await southConnectorController.updateSouthConnector(ctx);
-    expect(ctx.badRequest).toHaveBeenCalledWith('Scan mode not specified for item item2');
-  });
-
-  it('updateSouthConnector() should throw 404 when manifest not found', async () => {
-    ctx.request.body = {
-      south: {
-        ...southConnectorCommand,
-        type: 'invalid'
-      },
-      items: []
-    };
-    ctx.params.id = 'id';
-
-    await southConnectorController.updateSouthConnector(ctx);
-
-    expect(validator.validateSettings).not.toHaveBeenCalled();
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).not.toHaveBeenCalled();
-    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onUpdateSouth).not.toHaveBeenCalled();
-    expect(ctx.throw).toHaveBeenCalledWith(404, 'South manifest not found');
-  });
-
-  it('updateSouthConnector() should return 400 when south is null', async () => {
-    ctx.request.body = { south: null, items: [] };
-    ctx.params.id = 'id';
-
-    await southConnectorController.updateSouthConnector(ctx);
-
-    expect(validator.validateSettings).not.toHaveBeenCalled();
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).not.toHaveBeenCalled();
-    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onUpdateSouth).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalled();
-  });
-
-  it('updateSouthConnector() should return bad request when validation fails', async () => {
-    ctx.request.body = {
-      south: { ...southConnectorCommand },
-      items: []
-    };
-    ctx.params.id = 'id';
-    const validationError = new Error('invalid body');
-    validator.validateSettings = jest.fn().mockImplementationOnce(() => {
-      throw validationError;
+    ctx.app.southService.deleteSouth.mockImplementationOnce(() => {
+      throw new Error('bad request');
     });
 
-    await southConnectorController.updateSouthConnector(ctx);
+    await southConnectorController.delete(ctx);
 
-    expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.settings, southConnectorCommand.settings);
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).not.toHaveBeenCalled();
-    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onUpdateSouth).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
+    expect(ctx.app.southService.deleteSouth).toHaveBeenCalledWith(ctx.params.id);
+    expect(ctx.noContent).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('bad request');
   });
 
-  it('updateSouthConnector() should return not found when South connector not found', async () => {
-    ctx.request.body = {
-      south: { ...southConnectorCommand },
-      items: []
-    };
+  it('start() should enable South connector', async () => {
     ctx.params.id = 'id';
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(null);
 
-    await southConnectorController.updateSouthConnector(ctx);
+    await southConnectorController.start(ctx);
 
-    expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.settings, southConnectorCommand.settings);
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('id');
-    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onUpdateSouth).not.toHaveBeenCalled();
-    expect(ctx.notFound).toHaveBeenCalled();
-  });
-
-  it('deleteSouthConnector() should delete South connector', async () => {
-    ctx.params.id = 'id';
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-
-    await southConnectorController.deleteSouthConnector(ctx);
-
-    expect(ctx.app.reloadService.onDeleteSouth).toHaveBeenCalledWith('id');
+    expect(ctx.app.southService.startSouth).toHaveBeenCalledWith(ctx.params.id);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
-  it('deleteSouthConnector() should return not found when South connector not found', async () => {
-    ctx.params.id = 'id';
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(null);
+  it('start() should return bad request', async () => {
+    ctx.params.id = testData.south.list[0].id;
 
-    await southConnectorController.deleteSouthConnector(ctx);
-
-    expect(ctx.app.reloadService.onDeleteSouth).not.toHaveBeenCalled();
-    expect(ctx.notFound).toHaveBeenCalled();
-  });
-
-  it('startSouthConnector() should enable South connector', async () => {
-    ctx.params.enable = true;
-    ctx.params.id = 'id';
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-
-    await southConnectorController.startSouthConnector(ctx);
-
-    expect(ctx.app.reloadService.onStartSouth).toHaveBeenCalledTimes(1);
-    expect(ctx.badRequest).not.toHaveBeenCalled();
-  });
-
-  it('startSouthConnector() should throw badRequest if fail to enable', async () => {
-    ctx.params.enable = true;
-    ctx.params.id = 'id';
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-
-    ctx.app.reloadService.onStartSouth.mockImplementation(() => {
-      throw new Error('bad');
+    ctx.app.southService.startSouth.mockImplementationOnce(() => {
+      throw new Error('bad request');
     });
 
-    await southConnectorController.startSouthConnector(ctx);
+    await southConnectorController.start(ctx);
 
-    expect(ctx.badRequest).toHaveBeenCalled();
+    expect(ctx.app.southService.startSouth).toHaveBeenCalledWith(ctx.params.id);
+    expect(ctx.noContent).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('bad request');
   });
 
-  it('startSouthConnector() should return not found if South not found', async () => {
-    ctx.params.id = 'id';
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(null);
+  it('stop() should disable South connector', async () => {
+    ctx.params.id = testData.south.list[0].id;
 
-    await southConnectorController.startSouthConnector(ctx);
+    await southConnectorController.stop(ctx);
 
-    expect(ctx.app.reloadService.onStartSouth).not.toHaveBeenCalled();
-    expect(ctx.badRequest).not.toHaveBeenCalled();
-    expect(ctx.notFound).toHaveBeenCalled();
+    expect(ctx.app.southService.stopSouth).toHaveBeenCalledWith(ctx.params.id);
+    expect(ctx.noContent).toHaveBeenCalled();
   });
 
-  it('stopSouthConnector() should enable South connector', async () => {
-    ctx.params.enable = true;
-    ctx.params.id = 'id';
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
+  it('stop() should return bad request', async () => {
+    ctx.params.id = testData.south.list[0].id;
 
-    await southConnectorController.stopSouthConnector(ctx);
-
-    expect(ctx.app.reloadService.onStopSouth).toHaveBeenCalledTimes(1);
-    expect(ctx.badRequest).not.toHaveBeenCalled();
-  });
-
-  it('stopSouthConnector() should throw badRequest if fail to enable', async () => {
-    ctx.params.enable = true;
-    ctx.params.id = 'id';
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-
-    ctx.app.reloadService.onStopSouth.mockImplementation(() => {
-      throw new Error('bad');
+    ctx.app.southService.stopSouth.mockImplementationOnce(() => {
+      throw new Error('bad request');
     });
 
-    await southConnectorController.stopSouthConnector(ctx);
+    await southConnectorController.stop(ctx);
 
-    expect(ctx.badRequest).toHaveBeenCalled();
-  });
-
-  it('stopSouthConnector() should return not found if South not found', async () => {
-    ctx.params.id = 'id';
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(null);
-
-    await southConnectorController.stopSouthConnector(ctx);
-
-    expect(ctx.app.reloadService.onStopSouth).not.toHaveBeenCalled();
-    expect(ctx.badRequest).not.toHaveBeenCalled();
-    expect(ctx.notFound).toHaveBeenCalled();
+    expect(ctx.app.southService.stopSouth).toHaveBeenCalledWith(ctx.params.id);
+    expect(ctx.noContent).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('bad request');
   });
 
   it('listSouthItems() should return all South items', async () => {
-    ctx.params.southId = 'id';
-    ctx.app.repositoryService.southItemRepository.listSouthItems.mockReturnValue([item]);
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.app.southService.getSouthItems.mockReturnValue(testData.south.list[0].items);
+    ctx.app.southService.findById.mockReturnValueOnce(testData.south.list[0]);
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValueOnce([{ ...testData.south.manifest, id: testData.south.list[0].type }]);
 
     await southConnectorController.listSouthItems(ctx);
-    expect(ctx.app.repositoryService.southItemRepository.listSouthItems).toHaveBeenCalledWith('id', {});
-    expect(ctx.ok).toHaveBeenCalledWith([item]);
+    expect(ctx.app.southService.getSouthItems).toHaveBeenCalledWith(testData.south.list[0].id);
+    expect(ctx.ok).toHaveBeenCalledWith(testData.south.list[0].items);
+  });
+
+  it('listSouthItems() should return not found', async () => {
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.app.southService.findById.mockReturnValueOnce(null);
+
+    await southConnectorController.listSouthItems(ctx);
+    expect(ctx.notFound).toHaveBeenCalled();
   });
 
   it('searchSouthItems() should return South items', async () => {
-    ctx.params.southId = 'id';
+    ctx.params.southId = testData.south.list[0].id;
     ctx.query = {
       page: 1,
       name: 'name'
@@ -749,1699 +229,432 @@ describe('South connector controller', () => {
       page: 1,
       name: 'name'
     };
-    ctx.app.repositoryService.southItemRepository.searchSouthItems.mockReturnValue(page);
+    ctx.app.southService.searchSouthItems.mockReturnValue({
+      content: testData.south.list[0].items.map(item =>
+        toSouthConnectorItemDTO(item, testData.south.list[0].type, ctx.app.encryptionService)
+      ),
+      totalElements: testData.south.list[0].items.length,
+      size: 25,
+      number: 1,
+      totalPages: 1
+    });
+    ctx.app.southService.findById.mockReturnValueOnce(testData.south.list[0]);
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValueOnce([{ ...testData.south.manifest, id: testData.south.list[0].type }]);
 
     await southConnectorController.searchSouthItems(ctx);
 
-    expect(ctx.app.repositoryService.southItemRepository.searchSouthItems).toHaveBeenCalledWith('id', searchParams);
-    expect(ctx.ok).toHaveBeenCalledWith(page);
+    expect(ctx.app.southService.searchSouthItems).toHaveBeenCalledWith(testData.south.list[0].id, searchParams);
+    expect(ctx.ok).toHaveBeenCalledWith({
+      content: testData.south.list[0].items.map(item =>
+        toSouthConnectorItemDTO(item, testData.south.list[0].type, ctx.app.encryptionService)
+      ),
+      totalElements: testData.south.list[0].items.length,
+      size: 25,
+      number: 1,
+      totalPages: 1
+    });
   });
 
-  it('searchSouthItems() should return South items with default search params', async () => {
-    ctx.params.southId = 'id';
-    ctx.query = {};
-    const searchParams = {
-      page: 0
+  it('searchSouthItems() without page should return South items', async () => {
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.query = {
+      name: 'name'
     };
-    ctx.app.repositoryService.southItemRepository.searchSouthItems.mockReturnValue(page);
+    const searchParams = {
+      page: 0,
+      name: 'name'
+    };
+    ctx.app.southService.findById.mockReturnValueOnce(testData.south.list[0]);
+    ctx.app.southService.searchSouthItems.mockReturnValue({
+      content: testData.south.list[0].items.map(item =>
+        toSouthConnectorItemDTO(item, testData.south.list[0].type, ctx.app.encryptionService)
+      ),
+      totalElements: testData.south.list[0].items.length,
+      size: 25,
+      number: 0,
+      totalPages: 1
+    });
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValueOnce([{ ...testData.south.manifest, id: testData.south.list[0].type }]);
 
     await southConnectorController.searchSouthItems(ctx);
 
-    expect(ctx.app.repositoryService.southItemRepository.searchSouthItems).toHaveBeenCalledWith('id', searchParams);
-    expect(ctx.ok).toHaveBeenCalledWith(page);
+    expect(ctx.app.southService.searchSouthItems).toHaveBeenCalledWith(testData.south.list[0].id, searchParams);
+    expect(ctx.ok).toHaveBeenCalledWith({
+      content: testData.south.list[0].items.map(item =>
+        toSouthConnectorItemDTO(item, testData.south.list[0].type, ctx.app.encryptionService)
+      ),
+      totalElements: testData.south.list[0].items.length,
+      size: 25,
+      number: 0,
+      totalPages: 1
+    });
+  });
+
+  it('searchSouthItems() should return not found', async () => {
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.app.southService.findById.mockReturnValueOnce(null);
+
+    await southConnectorController.searchSouthItems(ctx);
+    expect(ctx.notFound).toHaveBeenCalled();
   });
 
   it('getSouthItem() should return South item', async () => {
-    ctx.params.id = 'id';
-    ctx.app.repositoryService.southItemRepository.getSouthItem.mockReturnValue(item);
+    ctx.params.id = testData.south.list[0].items[0].id;
+    ctx.params.souhtId = testData.south.list[0].id;
+    ctx.app.southService.findSouthConnectorItemById.mockReturnValue(testData.south.list[0].items[0]);
+    ctx.app.southService.findById.mockReturnValueOnce(testData.south.list[0]);
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValueOnce([{ ...testData.south.manifest, id: testData.south.list[0].type }]);
 
     await southConnectorController.getSouthItem(ctx);
 
-    expect(ctx.app.repositoryService.southItemRepository.getSouthItem).toHaveBeenCalledWith('id');
-    expect(ctx.ok).toHaveBeenCalledWith(item);
+    expect(ctx.app.southService.findSouthConnectorItemById).toHaveBeenCalledWith(
+      testData.south.list[0].id,
+      testData.south.list[0].items[0].id
+    );
+    expect(ctx.ok).toHaveBeenCalledWith(testData.south.list[0].items[0]);
   });
 
   it('getSouthItem() should return not found when South item not found', async () => {
-    ctx.params.id = 'id';
-    ctx.app.repositoryService.southItemRepository.getSouthItem.mockReturnValue(null);
+    ctx.params.id = testData.south.list[0].items[0].id;
+    ctx.params.souhtId = testData.south.list[0].id;
+    ctx.app.southService.findSouthConnectorItemById.mockReturnValue(null);
+    ctx.app.southService.findById.mockReturnValueOnce(testData.south.list[0]);
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValueOnce([{ ...testData.south.manifest, id: testData.south.list[0].type }]);
 
     await southConnectorController.getSouthItem(ctx);
 
-    expect(ctx.app.repositoryService.southItemRepository.getSouthItem).toHaveBeenCalledWith('id');
+    expect(ctx.app.southService.findSouthConnectorItemById).toHaveBeenCalledWith(
+      testData.south.list[0].id,
+      testData.south.list[0].items[0].id
+    );
+    expect(ctx.notFound).toHaveBeenCalled();
+  });
+
+  it('getSouthItem() should return not found', async () => {
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.app.southService.findById.mockReturnValueOnce(null);
+
+    await southConnectorController.getSouthItem(ctx);
     expect(ctx.notFound).toHaveBeenCalled();
   });
 
   it('createSouthItem() should create South item', async () => {
-    ctx.params.southId = 'southId';
-    ctx.request.body = {
-      ...itemCommand
-    };
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    ctx.app.reloadService.onCreateSouthItem.mockReturnValue(item);
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.request.body = testData.south.itemCommand;
+    ctx.app.southService.createItem.mockReturnValueOnce(testData.south.list[0].items[0]);
+    ctx.app.southService.findById.mockReturnValueOnce(testData.south.list[0]);
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValueOnce([{ ...testData.south.manifest, id: testData.south.list[0].type }]);
 
     await southConnectorController.createSouthItem(ctx);
 
-    expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.items.settings, itemCommand.settings);
-    expect(ctx.app.reloadService.onCreateSouthItem).toHaveBeenCalledWith('southId', itemCommand);
-    expect(ctx.created).toHaveBeenCalledWith(item);
+    expect(ctx.app.southService.createItem).toHaveBeenCalledWith(testData.south.list[0].id, testData.south.itemCommand);
+    expect(ctx.created).toHaveBeenCalledWith(testData.south.list[0].items[0]);
   });
 
-  it('createSouthItem() should throw 404 when South connector not found', async () => {
-    ctx.request.body = {
-      ...itemCommand,
-      type: 'invalid'
-    };
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(null);
-
-    await southConnectorController.createSouthItem(ctx);
-
-    expect(validator.validateSettings).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onCreateSouthItem).not.toHaveBeenCalled();
-    expect(ctx.throw).toHaveBeenCalledWith(404, 'South not found');
-  });
-
-  it('createSouthItem() should throw 404 when manifest not found', async () => {
-    ctx.request.body = {
-      ...itemCommand
-    };
-    const invalidSouthConnector = {
-      ...southConnector,
-      type: 'invalid'
-    };
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(invalidSouthConnector);
-
-    await southConnectorController.createSouthItem(ctx);
-
-    expect(validator.validateSettings).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onCreateSouthItem).not.toHaveBeenCalled();
-    expect(ctx.throw).toHaveBeenCalledWith(404, 'South manifest not found');
-  });
-
-  it('createSouthItem() should return bad request when body is missing', async () => {
-    ctx.request.body = null;
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    const validationError = new Error('invalid body');
-    validator.validateSettings = jest.fn().mockImplementationOnce(() => {
-      throw validationError;
+  it('createSouthItem() should return bad request', async () => {
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.app.southService.findById.mockReturnValueOnce(testData.south.list[0]);
+    ctx.app.southService.createItem.mockImplementationOnce(() => {
+      throw new Error('create error');
     });
-
     await southConnectorController.createSouthItem(ctx);
-
-    expect(validator.validateSettings).toHaveBeenCalledTimes(1);
-    expect(ctx.app.reloadService.onCreateSouthItem).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('create error');
   });
 
-  it('createSouthItem() should return bad request when validation fails', async () => {
-    ctx.request.body = {
-      ...itemCommand
-    };
-    const validationError = new Error('invalid body');
-    validator.validateSettings = jest.fn().mockImplementationOnce(() => {
-      throw validationError;
-    });
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
+  it('createSouthItem() should return not found', async () => {
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.app.southService.findById.mockReturnValueOnce(null);
 
     await southConnectorController.createSouthItem(ctx);
-
-    expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.items.settings, itemCommand.settings);
-    expect(ctx.app.reloadService.onCreateSouthItem).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
+    expect(ctx.notFound).toHaveBeenCalled();
   });
 
   it('updateSouthItem() should update South item', async () => {
-    ctx.params.id = 'id';
-    ctx.params.southId = 'southId';
-    ctx.request.body = {
-      ...itemCommand
-    };
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    ctx.app.repositoryService.southItemRepository.getSouthItem.mockReturnValue(item);
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.params.id = testData.south.list[0].items[0].id;
+    ctx.request.body = testData.south.itemCommand;
 
     await southConnectorController.updateSouthItem(ctx);
 
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
-    expect(ctx.app.repositoryService.southItemRepository.getSouthItem).toHaveBeenCalledWith('id');
-    expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.items.settings, itemCommand.settings);
-    expect(ctx.app.reloadService.onUpdateSouthItemSettings).toHaveBeenCalledWith('southId', item, itemCommand);
+    expect(ctx.app.southService.updateItem).toHaveBeenCalledWith(
+      testData.south.list[0].id,
+      testData.south.list[0].items[0].id,
+      testData.south.itemCommand
+    );
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
-  it('updateSouthItem() should throw 404 when South connector not found', async () => {
-    ctx.params.southId = 'southId';
-    ctx.request.body = {
-      ...itemCommand,
-      type: 'invalid'
-    };
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(null);
-
-    await southConnectorController.updateSouthItem(ctx);
-
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
-    expect(ctx.app.repositoryService.southItemRepository.getSouthItem).not.toHaveBeenCalled();
-    expect(validator.validateSettings).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onUpdateSouthItemSettings).not.toHaveBeenCalled();
-    expect(ctx.throw).toHaveBeenCalledWith(404, 'South not found');
-  });
-
-  it('updateSouthItem() should throw 404 when manifest not found', async () => {
-    ctx.params.southId = 'southId';
-    ctx.request.body = {
-      ...itemCommand
-    };
-    const invalidSouthConnector = {
-      ...southConnector,
-      type: 'invalid'
-    };
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(invalidSouthConnector);
-
-    await southConnectorController.updateSouthItem(ctx);
-
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
-    expect(ctx.app.repositoryService.southItemRepository.getSouthItem).not.toHaveBeenCalled();
-    expect(validator.validateSettings).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onUpdateSouthItemSettings).not.toHaveBeenCalled();
-    expect(ctx.throw).toHaveBeenCalledWith(404, 'South manifest not found');
-  });
-
-  it('updateSouthItem() should return not found when South item is not found', async () => {
-    ctx.params.id = 'id';
-    ctx.params.southId = 'southId';
-    ctx.request.body = null;
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    ctx.app.repositoryService.southItemRepository.getSouthItem.mockReturnValue(null);
-
-    await southConnectorController.updateSouthItem(ctx);
-
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
-    expect(ctx.app.repositoryService.southItemRepository.getSouthItem).toHaveBeenCalledWith('id');
-    expect(validator.validateSettings).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onUpdateSouthItemSettings).not.toHaveBeenCalled();
-    expect(ctx.notFound).toHaveBeenCalled();
-  });
-
-  it('updateSouthItem() should return bad request when body is missing', async () => {
-    ctx.params.id = 'id';
-    ctx.params.southId = 'southId';
-    ctx.request.body = null;
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    ctx.app.repositoryService.southItemRepository.getSouthItem.mockReturnValue(item);
-    const validationError = new Error('invalid body');
-    validator.validateSettings = jest.fn().mockImplementationOnce(() => {
-      throw validationError;
+  it('updateSouthItem() should return bad request', async () => {
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.params.id = testData.south.list[0].items[0].id;
+    ctx.request.body = testData.south.itemCommand;
+    ctx.app.southService.updateItem.mockImplementationOnce(() => {
+      throw new Error('update error');
     });
 
     await southConnectorController.updateSouthItem(ctx);
-
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
-    expect(ctx.app.repositoryService.southItemRepository.getSouthItem).toHaveBeenCalledWith('id');
-    expect(validator.validateSettings).toHaveBeenCalledTimes(1);
-    expect(ctx.app.reloadService.onUpdateSouthItemSettings).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalled();
-  });
-
-  it('updateSouthItem() should return bad request when validation fails', async () => {
-    ctx.params.id = 'id';
-    ctx.params.southId = 'southId';
-    ctx.request.body = {
-      ...itemCommand
-    };
-    const validationError = new Error('invalid body');
-    validator.validateSettings = jest.fn().mockImplementationOnce(() => {
-      throw validationError;
-    });
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    ctx.app.repositoryService.southItemRepository.getSouthItem.mockReturnValue(item);
-
-    await southConnectorController.updateSouthItem(ctx);
-
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
-    expect(ctx.app.repositoryService.southItemRepository.getSouthItem).toHaveBeenCalledWith('id');
-    expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.items.settings, itemCommand.settings);
-    expect(ctx.app.reloadService.onUpdateSouthItemSettings).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
+    expect(ctx.badRequest).toHaveBeenCalledWith('update error');
   });
 
   it('deleteSouthItem() should delete South item', async () => {
-    ctx.params.id = 'id';
-    ctx.params.southId = 'southId';
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.params.id = testData.south.list[0].items[0].id;
 
     await southConnectorController.deleteSouthItem(ctx);
 
-    expect(ctx.app.reloadService.onDeleteSouthItem).toHaveBeenCalledWith('id');
-    expect(ctx.app.reloadService.oibusEngine.onSouthItemsChange).toHaveBeenCalledWith('southId');
+    expect(ctx.app.southService.deleteItem).toHaveBeenCalledWith(testData.south.list[0].id, testData.south.list[0].items[0].id);
     expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('deleteSouthItem() should return bad request', async () => {
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.params.id = testData.south.list[0].items[0].id;
+    ctx.app.southService.deleteItem.mockImplementationOnce(() => {
+      throw new Error('delete error');
+    });
+
+    await southConnectorController.deleteSouthItem(ctx);
+    expect(ctx.badRequest).toHaveBeenCalledWith('delete error');
   });
 
   it('enableSouthItem() should enable South item', async () => {
-    ctx.params.id = 'id';
+    ctx.params.id = testData.south.list[0].items[0].id;
+    ctx.params.southId = testData.south.list[0].id;
 
     await southConnectorController.enableSouthItem(ctx);
 
-    expect(ctx.app.reloadService.onEnableSouthItem).toHaveBeenCalledWith('id');
+    expect(ctx.app.southService.enableItem).toHaveBeenCalledWith(testData.south.list[0].id, testData.south.list[0].items[0].id);
     expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('enableSouthItem() should return bad request', async () => {
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.params.id = testData.south.list[0].items[0].id;
+    ctx.app.southService.enableItem.mockImplementationOnce(() => {
+      throw new Error('enable error');
+    });
+
+    await southConnectorController.enableSouthItem(ctx);
+    expect(ctx.badRequest).toHaveBeenCalledWith('enable error');
   });
 
   it('disableSouthItem() should disable South item', async () => {
-    ctx.params.id = 'id';
+    ctx.params.id = testData.south.list[0].items[0].id;
+    ctx.params.southId = testData.south.list[0].id;
 
     await southConnectorController.disableSouthItem(ctx);
 
-    expect(ctx.app.reloadService.onDisableSouthItem).toHaveBeenCalledWith('id');
+    expect(ctx.app.southService.disableItem).toHaveBeenCalledWith(testData.south.list[0].id, testData.south.list[0].items[0].id);
     expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('disableSouthItem() should return bad request', async () => {
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.params.id = testData.south.list[0].items[0].id;
+    ctx.app.southService.disableItem.mockImplementationOnce(() => {
+      throw new Error('disable error');
+    });
+
+    await southConnectorController.disableSouthItem(ctx);
+    expect(ctx.badRequest).toHaveBeenCalledWith('disable error');
   });
 
   it('deleteAllSouthItem() should delete all South items', async () => {
-    ctx.params.southId = 'id';
+    ctx.params.southId = testData.south.list[0].id;
 
     await southConnectorController.deleteAllSouthItem(ctx);
 
-    expect(ctx.app.reloadService.onDeleteAllSouthItems).toHaveBeenCalledWith('id');
+    expect(ctx.app.southService.deleteAllItemsForSouthConnector).toHaveBeenCalledWith(testData.south.list[0].id);
     expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('deleteAllSouthItem() should return bad request', async () => {
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.app.southService.deleteAllItemsForSouthConnector.mockImplementationOnce(() => {
+      throw new Error('delete all error');
+    });
+
+    await southConnectorController.deleteAllSouthItem(ctx);
+    expect(ctx.badRequest).toHaveBeenCalledWith('delete all error');
   });
 
   it('resetSouthMetrics() should reset South metrics', async () => {
-    ctx.params.southId = 'id';
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
+    ctx.params.southId = testData.south.list[0].id;
 
     await southConnectorController.resetSouthMetrics(ctx);
-
-    expect(ctx.app.reloadService.oibusEngine.resetSouthMetrics).toHaveBeenCalledWith('id');
+    expect(ctx.app.oIBusService.resetSouthConnectorMetrics).toHaveBeenCalledWith(testData.south.list[0].id);
     expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('resetSouthMetrics() should not reset South metrics if not found', async () => {
-    ctx.params.southId = 'id';
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValueOnce(null);
-
-    await southConnectorController.resetSouthMetrics(ctx);
-
-    expect(ctx.app.reloadService.oibusEngine.resetSouthMetrics).not.toHaveBeenCalled();
-    expect(ctx.notFound).toHaveBeenCalled();
-  });
-
-  it('testSouthItem() should test item', async () => {
-    ctx.request.body = {
-      south: southConnectorCommand,
-      item: {
-        name: 'name',
-        enabled: true,
-        settings: {
-          regex: '.*'
-        },
-        scanModeName: 'scan mode'
-      }
-    };
-
-    ctx.app.southService.getInstalledSouthManifests = jest.fn().mockReturnValue([
-      {
-        id: 'south-test',
-        category: 'debug',
-        name: 'Test',
-        description: '',
-        modes: {
-          subscription: true,
-          lastPoint: true,
-          lastFile: true,
-          history: true,
-          forceMaxInstantPerItem: true
-        },
-        settings: [{ type: 'OibTimezone' }],
-        items: {
-          scanMode: {
-            acceptSubscription: true,
-            subscriptionOnly: true
-          },
-          settings: [{ type: 'OibTimezone' }]
-        }
-      }
-    ]);
-
-    (validator.validateSettings as jest.Mock).mockReturnValue(() => {
-      return true;
-    });
-
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(southConnector);
-
-    ctx.app.repositoryService.scanModeRepository.getScanModes = jest.fn().mockReturnValue([
-      {
-        id: '1',
-        name: 'scan mode',
-        description: 'description',
-        cron: '* * * * *'
-      }
-    ]);
-
-    ctx.app.encryptionService.encryptConnectorSecrets = jest.fn().mockReturnValue({ databasePath: 'folder/file' });
-
-    const createdSouth = {
-      testItem: jest.fn()
-    };
-    (ctx.app.southService.createSouth as jest.Mock).mockReturnValue(createdSouth);
-
-    await southConnectorController.testSouthItem(ctx);
-
-    expect(ctx.app.southService.getInstalledSouthManifests).toHaveBeenCalled();
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalled();
-    expect(validator.validateSettings).toHaveBeenCalledTimes(2);
-    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).toHaveBeenCalled();
-    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalled();
-    expect(ctx.app.logger.child).toHaveBeenCalled();
-    expect(ctx.badRequest).not.toHaveBeenCalled();
-  });
-
-  it('testSouthItem() should test item in case of null southConnector', async () => {
-    ctx.request.body = {
-      south: southConnectorCommand,
-      item: {
-        name: 'name',
-        enabled: true,
-        settings: {
-          regex: '.*'
-        },
-        scanModeName: 'scan mode'
-      }
-    };
-
-    ctx.app.southService.getInstalledSouthManifests = jest.fn().mockReturnValueOnce([
-      {
-        id: 'south-test',
-        category: 'debug',
-        name: 'Test',
-        description: '',
-        modes: {
-          subscription: true,
-          lastPoint: true,
-          lastFile: true,
-          history: true,
-          forceMaxInstantPerItem: true
-        },
-        settings: [{ type: 'OibTimezone' }],
-        items: {
-          scanMode: {
-            acceptSubscription: true,
-            subscriptionOnly: true
-          },
-          settings: [{ type: 'OibTimezone' }]
-        }
-      }
-    ]);
-
-    ctx.params.id = 'create';
-    ctx.query.duplicateId = null;
-
-    (validator.validateSettings as jest.Mock).mockReturnValue(() => {
-      return true;
-    });
-
-    ctx.app.repositoryService.scanModeRepository.getScanModes = jest.fn().mockReturnValue([
-      {
-        id: '1',
-        name: 'scan mode',
-        description: 'description',
-        cron: '* * * * *'
-      }
-    ]);
-
-    ctx.app.encryptionService.encryptConnectorSecrets = jest.fn().mockReturnValue({ databasePath: 'folder/file' });
-
-    const createdSouth = {
-      testItem: jest.fn()
-    };
-    (ctx.app.southService.createSouth as jest.Mock).mockReturnValue(createdSouth);
-
-    await southConnectorController.testSouthItem(ctx);
-
-    expect(ctx.app.southService.getInstalledSouthManifests).toHaveBeenCalled();
-    expect(validator.validateSettings).toHaveBeenCalledTimes(2);
-    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).toHaveBeenCalled();
-    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalled();
-    expect(ctx.app.logger.child).toHaveBeenCalled();
-    expect(ctx.badRequest).not.toHaveBeenCalled();
-  });
-
-  it('testSouthItem() should throw error of south not found', async () => {
-    ctx.request.body = {
-      south: southConnectorCommand,
-      item: {
-        name: 'name',
-        enabled: true,
-        settings: {
-          regex: '.*'
-        },
-        scanModeName: 'scan mode'
-      }
-    };
-
-    ctx.params.id = 'id';
-
-    ctx.app.southService.getInstalledSouthManifests = jest.fn().mockReturnValue([
-      {
-        id: 'south-test',
-        category: 'debug',
-        name: 'Test',
-        description: '',
-        modes: {
-          subscription: true,
-          lastPoint: true,
-          lastFile: true,
-          history: true,
-          forceMaxInstantPerItem: true
-        },
-        settings: [{ type: 'OibTimezone' }],
-        items: {
-          scanMode: {
-            acceptSubscription: true,
-            subscriptionOnly: true
-          },
-          settings: [{ type: 'OibTimezone' }]
-        }
-      }
-    ]);
-
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(null);
-
-    await southConnectorController.testSouthItem(ctx);
-
-    expect(ctx.app.southService.getInstalledSouthManifests).toHaveBeenCalled();
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalled();
-    expect(ctx.notFound).toHaveBeenCalledWith('South not found: id');
-  });
-
-  it('testSouthItem() should throw error of south not found duplicated id', async () => {
-    ctx.request.body = {
-      south: southConnectorCommand,
-      item: {
-        name: 'name',
-        enabled: true,
-        settings: {
-          regex: '.*'
-        },
-        scanModeName: 'scan mode'
-      }
-    };
-
-    ctx.query.duplicateId = 'id';
-    ctx.params.id = 'create';
-
-    ctx.app.southService.getInstalledSouthManifests = jest.fn().mockReturnValue([
-      {
-        id: 'south-test',
-        category: 'debug',
-        name: 'Test',
-        description: '',
-        modes: {
-          subscription: true,
-          lastPoint: true,
-          lastFile: true,
-          history: true,
-          forceMaxInstantPerItem: true
-        },
-        settings: [{ type: 'OibTimezone' }],
-        items: {
-          scanMode: {
-            acceptSubscription: true,
-            subscriptionOnly: true
-          },
-          settings: [{ type: 'OibTimezone' }]
-        }
-      }
-    ]);
-
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(null);
-
-    await southConnectorController.testSouthItem(ctx);
-
-    expect(ctx.app.southService.getInstalledSouthManifests).toHaveBeenCalled();
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalled();
-    expect(ctx.notFound).toHaveBeenCalledWith('South not found: id');
-  });
-
-  it('testSouthItem() should throw a bad request if scan mode not specifed', async () => {
-    ctx.request.body = {
-      south: southConnectorCommand,
-      item: {
-        name: 'name',
-        enabled: true,
-        settings: {
-          regex: '.*'
-        }
-      }
-    };
-
-    ctx.app.southService.getInstalledSouthManifests = jest.fn().mockReturnValue([
-      {
-        id: 'south-test',
-        category: 'debug',
-        name: 'Test',
-        description: '',
-        modes: {
-          subscription: true,
-          lastPoint: true,
-          lastFile: true,
-          history: true,
-          forceMaxInstantPerItem: true
-        },
-        settings: [{ type: 'OibTimezone' }],
-        items: {
-          scanMode: {
-            acceptSubscription: true,
-            subscriptionOnly: true
-          },
-          settings: [{ type: 'OibTimezone' }]
-        }
-      }
-    ]);
-
-    (validator.validateSettings as jest.Mock).mockReturnValue(() => {
-      return true;
-    });
-
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(southConnector);
-
-    await southConnectorController.testSouthItem(ctx);
-
-    expect(ctx.app.southService.getInstalledSouthManifests).toHaveBeenCalled();
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalled();
-    expect(validator.validateSettings).toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('Scan mode not specified for item name');
-  });
-
-  it('testSouthItem() should throw a bad request if scan mode not found', async () => {
-    ctx.request.body = {
-      south: southConnectorCommand,
-      item: {
-        name: 'name',
-        enabled: true,
-        settings: {
-          regex: '.*'
-        },
-        scanModeName: 'scan mode'
-      }
-    };
-
-    ctx.app.southService.getInstalledSouthManifests = jest.fn().mockReturnValue([
-      {
-        id: 'south-test',
-        category: 'debug',
-        name: 'Test',
-        description: '',
-        modes: {
-          subscription: true,
-          lastPoint: true,
-          lastFile: true,
-          history: true,
-          forceMaxInstantPerItem: true
-        },
-        settings: [{ type: 'OibTimezone' }],
-        items: {
-          scanMode: {
-            acceptSubscription: true,
-            subscriptionOnly: true
-          },
-          settings: [{ type: 'OibTimezone' }]
-        }
-      }
-    ]);
-
-    (validator.validateSettings as jest.Mock).mockReturnValue(() => {
-      return true;
-    });
-
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(southConnector);
-
-    ctx.app.repositoryService.scanModeRepository.getScanModes = jest.fn().mockReturnValue([
-      {
-        id: '1',
-        name: 'bad scan mode',
-        description: 'description',
-        cron: '* * * * *'
-      }
-    ]);
-
-    await southConnectorController.testSouthItem(ctx);
-
-    expect(ctx.app.southService.getInstalledSouthManifests).toHaveBeenCalled();
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalled();
-    expect(validator.validateSettings).toHaveBeenCalled();
-    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('Scan mode scan mode not found for item name');
-  });
-
-  it('testSouthItem() should throw a bad request', async () => {
-    ctx.request.body = {
-      south: southConnectorCommand,
-      item: {
-        name: 'name',
-        enabled: true,
-        settings: {
-          regex: '.*'
-        },
-        scanModeName: 'scan mode'
-      }
-    };
-
-    ctx.app.southService.getInstalledSouthManifests = jest.fn().mockReturnValue([
-      {
-        id: 'south-test',
-        category: 'debug',
-        name: 'Test',
-        description: '',
-        modes: {
-          subscription: true,
-          lastPoint: true,
-          lastFile: true,
-          history: true,
-          forceMaxInstantPerItem: true
-        },
-        settings: [{ type: 'OibTimezone' }],
-        items: {
-          scanMode: {
-            acceptSubscription: true,
-            subscriptionOnly: true
-          },
-          settings: [{ type: 'OibTimezone' }]
-        }
-      }
-    ]);
-
-    (validator.validateSettings as jest.Mock).mockRejectedValueOnce('Bad request');
-
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(southConnector);
-
-    await southConnectorController.testSouthItem(ctx);
-
-    expect(ctx.app.southService.getInstalledSouthManifests).toHaveBeenCalled();
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalled();
-    expect(validator.validateSettings).toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalled();
   });
 
   it('southItemsToCsv() should download a csv file', async () => {
-    ctx.params.southId = 'id';
+    ctx.params.southType = testData.south.list[0].type;
     ctx.request.body = {
-      items: [
-        item,
-        {
-          id: 'id2',
-          name: 'item2',
-          scanModeId: 'scanModeId2',
-          enabled: true,
-          settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
-        }
-      ],
+      items: testData.south.list[0].items,
       delimiter: ';'
     };
-    (csv.unparse as jest.Mock).mockReturnValue('csv content');
-    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValueOnce([{ id: 'scanModeId', name: 'scanMode' }]);
+    (southItemToFlattenedCSV as jest.Mock).mockReturnValue('csv content');
+    ctx.app.scanModeService.findAll.mockReturnValueOnce(testData.scanMode.list);
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValueOnce([{ ...testData.south.manifest, id: testData.south.list[0].type }]);
 
-    await southConnectorController.southItemsToCsv(ctx);
+    await southConnectorController.southConnectorItemsToCsv(ctx);
 
-    expect(ctx.ok).toHaveBeenCalled();
+    expect(ctx.ok).toHaveBeenCalledWith();
     expect(ctx.body).toEqual('csv content');
-    expect(csv.unparse).toHaveBeenCalledWith(
-      [
-        {
-          name: 'name',
-          enabled: true,
-          scanMode: 'scanMode',
-          settings_regex: '.*'
-        },
-        {
-          name: 'item2',
-          enabled: true,
-          scanMode: '',
-          settings_objectArray: '[]',
-          settings_objectSettings: '{}',
-          settings_objectValue: 1
-        }
-      ],
-      {
-        delimiter: ';'
-      }
-    );
+  });
+
+  it('southItemsToCsv() should throw not found a csv file', async () => {
+    ctx.params.southType = 'bad';
+    ctx.request.body = {
+      items: testData.south.list[0].items,
+      delimiter: ';'
+    };
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValueOnce([{ ...testData.south.manifest, id: testData.south.list[0].type }]);
+
+    await southConnectorController.southConnectorItemsToCsv(ctx);
+
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'South manifest not found');
   });
 
   it('exportSouthItems() should download a csv file', async () => {
-    ctx.params.southId = 'id';
-    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValueOnce([{ id: 'scanModeId', name: 'scanMode' }]);
-    ctx.app.repositoryService.southItemRepository.getSouthItems.mockReturnValueOnce([
-      item,
-      {
-        id: 'id2',
-        name: 'item2',
-        scanModeId: 'badScanModeId',
-        enabled: true,
-        settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
-      }
-    ]);
+    ctx.params.southType = testData.south.list[0].type;
+    ctx.params.southId = testData.south.list[0].id;
+    (southItemToFlattenedCSV as jest.Mock).mockReturnValueOnce('csv content');
+    ctx.app.southService.findById.mockReturnValueOnce(testData.south.list[0]);
     ctx.request.body = { delimiter: ';' };
-    (csv.unparse as jest.Mock).mockReturnValue('csv content');
 
     await southConnectorController.exportSouthItems(ctx);
 
-    expect(ctx.ok).toHaveBeenCalled();
+    expect(ctx.ok).toHaveBeenCalledWith();
     expect(ctx.body).toEqual('csv content');
-    expect(csv.unparse).toHaveBeenCalledWith(
-      [
-        {
-          name: 'name',
-          enabled: true,
-          scanMode: 'scanMode',
-          settings_regex: '.*'
-        },
-        {
-          name: 'item2',
-          enabled: true,
-          scanMode: '',
-          settings_objectArray: '[]',
-          settings_objectSettings: '{}',
-          settings_objectValue: 1
-        }
-      ],
-      {
-        columns: [
-          'name',
-          'enabled',
-          'scanMode',
-          'settings_regex',
-          'settings_objectSettings',
-          'settings_objectArray',
-          'settings_objectValue'
-        ],
-        delimiter: ';'
-      }
-    );
+  });
+
+  it('exportSouthItems() should return not found', async () => {
+    ctx.params.southType = testData.south.list[0].type;
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.request.body = { delimiter: ';' };
+    ctx.app.southService.findById.mockReturnValueOnce(null);
+
+    await southConnectorController.exportSouthItems(ctx);
+
+    expect(ctx.notFound).toHaveBeenCalledWith();
   });
 
   it('checkImportSouthItems() should check import of items in a csv file with new south', async () => {
-    ctx.params.southType = 'south-test';
-    ctx.params.southId = 'create';
-    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValueOnce([{ id: 'scanModeId', name: 'scanMode' }]);
-
-    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
+    ctx.params.southType = testData.south.list[0].type;
     ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
-    ctx.request.body = { itemIdsToDelete: '[]', delimiter: ',' };
-    (fs.readFile as jest.Mock).mockReturnValue('file content');
-    (validator.validateSettings as jest.Mock)
-      .mockImplementationOnce(() => {
-        throw new Error('validation fail');
-      })
-      .mockImplementationOnce(() => {
-        return true;
-      });
-    (csv.parse as jest.Mock).mockReturnValue({
-      meta: {
-        delimiter: ','
-      },
-      data: [
-        {
-          name: 'item1',
-          enabled: 'false',
-          scanMode: 'badScanMode'
-        },
-        {
-          name: 'item2',
-          enabled: 'true',
-          scanMode: 'scanMode',
-          settings_badField: 'badField'
-        },
-        {
-          name: 'item3',
-          enabled: 'true',
-          scanMode: 'scanMode',
-          settings_objectArray: '[]',
-          settings_objectSettings: '{}',
-          settings_objectValue: 1
-        },
-        {
-          name: 'item4',
-          enabled: 'true',
-          scanMode: 'scanMode',
-          settings_objectArray: '[]',
-          settings_objectSettings: '{}',
-          settings_objectValue: 1
-        }
-      ],
-      errors: []
-    });
+    ctx.request.body = { currentItems: '[]', delimiter: ',' };
+    ctx.app.scanModeService.findAll.mockReturnValueOnce(testData.scanMode.list);
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValue(testData.south.manifest);
 
     await southConnectorController.checkImportSouthItems(ctx);
-    expect(ctx.badRequest).not.toHaveBeenCalled();
-    expect(ctx.throw).not.toHaveBeenCalled();
-
-    expect(validator.validateSettings).toHaveBeenCalledTimes(2);
-    expect(csv.parse).toHaveBeenCalledWith('file content', { header: true });
-    expect(fs.readFile).toHaveBeenCalledWith('myFile.csv');
-    expect(ctx.ok).toHaveBeenCalledWith({
-      items: [
-        {
-          id: '',
-          name: 'item4',
-          connectorId: '',
-          enabled: true,
-          scanModeId: 'scanModeId',
-          settings: {
-            objectArray: [],
-            objectSettings: {},
-            objectValue: 1
-          }
-        }
-      ],
-      errors: [
-        {
-          item: {
-            id: '',
-            name: 'item1',
-            enabled: false,
-            connectorId: '',
-            scanModeId: '',
-            settings: {}
-          },
-          message: 'Scan mode "badScanMode" not found for item item1'
-        },
-        {
-          item: {
-            id: '',
-            name: 'item2',
-            enabled: true,
-            connectorId: '',
-            scanModeId: '',
-            settings: {}
-          },
-          message: 'Settings "badField" not accepted in manifest'
-        },
-        {
-          item: {
-            id: '',
-            name: 'item3',
-            enabled: true,
-            connectorId: '',
-            scanModeId: 'scanModeId',
-            settings: {
-              objectArray: [],
-              objectSettings: {},
-              objectValue: 1
-            }
-          },
-          message: 'validation fail'
-        }
-      ]
-    });
+    expect(ctx.app.southService.checkCsvFileImport).toHaveBeenCalledWith(
+      testData.south.list[0].type,
+      ctx.request.file,
+      ctx.request.body.delimiter,
+      JSON.parse(ctx.request.body.currentItems)
+    );
+    expect(ctx.ok).toHaveBeenCalled();
   });
 
-  it('checkImportSouthItems() should check import of items in a csv file with existing south', async () => {
-    ctx.params.southType = 'south-test';
-    ctx.params.southId = 'southId';
-    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValueOnce([{ id: 'scanModeId', name: 'scanMode' }]);
-    ctx.app.repositoryService.southItemRepository.getSouthItems.mockReturnValueOnce([
-      { id: 'id1', name: 'existingItem' },
-      { id: 'itemIdToDelete', name: 'willBeDeleted' }
-    ]);
-
-    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
+  it('checkImportSouthItems() should return bad request', async () => {
+    ctx.params.southType = testData.south.list[0].type;
     ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
-    ctx.request.body = { itemIdsToDelete: JSON.stringify(['itemIdToDelete']), delimiter: ',' };
-    (fs.readFile as jest.Mock).mockReturnValue('file content');
-    (validator.validateSettings as jest.Mock).mockImplementationOnce(() => {
-      return true;
-    });
-    (csv.parse as jest.Mock).mockReturnValue({
-      meta: {
-        delimiter: ','
-      },
-      data: [
-        {
-          name: 'existingItem',
-          enabled: 'true',
-          scanMode: 'scanMode',
-          settings_objectArray: '[]',
-          settings_objectSettings: '{}',
-          settings_objectValue: 1
-        },
-        {
-          name: 'newItem',
-          enabled: 'true',
-          scanMode: 'scanMode',
-          settings_objectArray: '[]',
-          settings_objectSettings: '{}',
-          settings_objectValue: 1
-        },
-        {
-          name: 'willBeDeleted',
-          enabled: 'true',
-          scanMode: 'scanMode',
-          settings_objectArray: '[]',
-          settings_objectSettings: '{}',
-          settings_objectValue: 1
-        }
-      ],
-      errors: []
+    ctx.request.body = { currentItems: '[]', delimiter: ',' };
+    ctx.app.southService.checkCsvFileImport.mockImplementationOnce(() => {
+      throw new Error('bad items');
     });
 
     await southConnectorController.checkImportSouthItems(ctx);
-    expect(ctx.badRequest).not.toHaveBeenCalled();
-    expect(ctx.throw).not.toHaveBeenCalled();
-
-    expect(validator.validateSettings).toHaveBeenCalledTimes(2);
-    expect(csv.parse).toHaveBeenCalledWith('file content', { header: true });
-    expect(fs.readFile).toHaveBeenCalledWith('myFile.csv');
-    expect(ctx.ok).toHaveBeenCalledWith({
-      items: [
-        {
-          id: '',
-          name: 'newItem',
-          connectorId: 'southId',
-          enabled: true,
-          scanModeId: 'scanModeId',
-          settings: {
-            objectArray: [],
-            objectSettings: {},
-            objectValue: 1
-          }
-        },
-        {
-          id: '',
-          name: 'willBeDeleted',
-          connectorId: 'southId',
-          enabled: true,
-          scanModeId: 'scanModeId',
-          settings: {
-            objectArray: [],
-            objectSettings: {},
-            objectValue: 1
-          }
-        }
-      ],
-      errors: [
-        {
-          item: {
-            id: '',
-            name: 'existingItem',
-            enabled: true,
-            connectorId: 'southId',
-            scanModeId: '',
-            settings: {
-              objectArray: [],
-              objectSettings: {},
-              objectValue: 1
-            }
-          },
-          message: 'Item name "existingItem" already used'
-        }
-      ]
-    });
+    expect(ctx.badRequest).toHaveBeenCalledWith('bad items');
   });
 
-  it('checkImportSouthItems() should check import of items in a csv file with UndetectableDelimiter', async () => {
-    ctx.params.southType = 'south-test';
-    ctx.params.southId = 'create';
-    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValueOnce([{ id: 'scanModeId', name: 'scanMode' }]);
-
-    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
-    ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
-    ctx.request.body = { itemIdsToDelete: '[]', delimiter: '/' };
-    (fs.readFile as jest.Mock).mockReturnValue('file content');
-    (validator.validateSettings as jest.Mock)
-      .mockImplementationOnce(() => {
-        throw new Error('validation fail');
-      })
-      .mockImplementationOnce(() => {
-        return true;
-      });
-    (csv.parse as jest.Mock).mockReturnValueOnce({
-      meta: {
-        delimiter: ','
-      },
-      data: [],
-      errors: [{ code: 'UndetectableDelimiter' }]
-    });
-    (csv.parse as jest.Mock).mockReturnValue({
-      meta: {
-        delimiter: '/'
-      },
-      data: [
-        {
-          name: 'item1',
-          enabled: 'false',
-          scanMode: 'badScanMode'
-        }
-      ],
-      errors: []
-    });
-
-    await southConnectorController.checkImportSouthItems(ctx);
-    expect(ctx.badRequest).not.toHaveBeenCalled();
-    expect(ctx.throw).not.toHaveBeenCalled();
-
-    expect(csv.parse).toHaveBeenCalledWith('file content', { header: true });
-    expect(fs.readFile).toHaveBeenCalledWith('myFile.csv');
-    expect(ctx.ok).toHaveBeenCalledWith({
-      items: [],
-      errors: [
-        {
-          item: {
-            id: '',
-            name: 'item1',
-            enabled: false,
-            connectorId: '',
-            scanModeId: '',
-            settings: {}
-          },
-          message: 'Scan mode "badScanMode" not found for item item1'
-        }
-      ]
-    });
-  });
-
-  it('checkImportSouthItems() should throw not found connector', async () => {
-    ctx.params.southType = 'id';
-    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
-
-    await southConnectorController.checkImportSouthItems(ctx);
-
-    expect(csv.parse).not.toHaveBeenCalled();
-    expect(fs.readFile).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onCreateOrUpdateSouthItems).not.toHaveBeenCalled();
-    expect(ctx.noContent).not.toHaveBeenCalled();
-    expect(ctx.throw).toHaveBeenCalledWith(404, 'South manifest not found');
-  });
-
-  it('checkImportSouthItems() should throw badRequest when file not parsed', async () => {
-    ctx.params.southType = 'south-test';
-    ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
-    ctx.request.body = { itemIdsToDelete: '[]' };
-    (fs.readFile as jest.Mock).mockReturnValue('file content');
-    ctx.app.repositoryService.southItemRepository.getSouthItems.mockReturnValueOnce([]);
-    (csv.parse as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('parsing error');
-    });
-
-    await southConnectorController.checkImportSouthItems(ctx);
-
-    expect(ctx.badRequest).toHaveBeenCalledWith('parsing error');
-    expect(ctx.throw).not.toHaveBeenCalled();
-
-    expect(validator.validateSettings).not.toHaveBeenCalled();
-    expect(csv.parse).toHaveBeenCalledWith('file content', { header: true });
-    expect(fs.readFile).toHaveBeenCalledWith('myFile.csv');
-    expect(ctx.app.reloadService.onCreateOrUpdateSouthItems).not.toHaveBeenCalled();
-    expect(ctx.noContent).not.toHaveBeenCalled();
-  });
-
-  it('checkImportSouthItems() should throw when itemIdsToDelete not parsed', async () => {
-    ctx.params.southType = 'south-test';
-    ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
-    ctx.request.body = { itemIdsToDelete: 'not json' };
-    (fs.readFile as jest.Mock).mockReturnValue('file content');
-    ctx.app.repositoryService.southItemRepository.getSouthItems.mockReturnValueOnce([]);
-
-    await southConnectorController.checkImportSouthItems(ctx);
-
-    expect(ctx.throw).toHaveBeenCalledWith(400, 'Could not parse item ids to delete array');
-
-    expect(validator.validateSettings).not.toHaveBeenCalled();
-    expect(csv.parse).not.toHaveBeenCalled();
-    expect(fs.readFile).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onCreateOrUpdateSouthItems).not.toHaveBeenCalled();
-    expect(ctx.noContent).not.toHaveBeenCalled();
-  });
-
-  it('checkImportSouthItems() should throw badRequest when delimiter not the same in file and entered', async () => {
-    ctx.params.southType = 'south-test';
-    ctx.params.southId = 'create';
-    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValueOnce([{ id: 'scanModeId', name: 'scanMode' }]);
-
-    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
-    ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
-    ctx.request.body = { itemIdsToDelete: '[]', delimiter: ';' };
-    (fs.readFile as jest.Mock).mockReturnValue('file content');
-    (csv.parse as jest.Mock).mockReturnValue({
-      meta: {
-        delimiter: ','
-      },
-      data: [],
-      errors: []
-    });
-
-    await southConnectorController.checkImportSouthItems(ctx);
-
-    expect(ctx.badRequest).toHaveBeenCalledWith('The entered delimiter does not correspond to the file delimiter');
-    expect(ctx.throw).not.toHaveBeenCalled();
-    expect(csv.parse).toHaveBeenCalledWith('file content', { header: true });
-    expect(fs.readFile).toHaveBeenCalledWith('myFile.csv');
-    expect(ctx.noContent).not.toHaveBeenCalled();
-  });
-
-  it('checkImportSouthItems() should throw badRequest when errors in csv parse', async () => {
-    ctx.params.southType = 'south-test';
-    ctx.params.southId = 'create';
-    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValueOnce([{ id: 'scanModeId', name: 'scanMode' }]);
-
-    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
-    ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
-    ctx.request.body = { itemIdsToDelete: '[]', delimiter: ';' };
-    (fs.readFile as jest.Mock).mockReturnValue('file content');
-    (csv.parse as jest.Mock).mockReturnValue({
-      meta: {
-        delimiter: ','
-      },
-      data: [],
-      errors: [{ message: 'Trailing quote on quoted field is malformed' }]
-    });
-
-    await southConnectorController.checkImportSouthItems(ctx);
-
-    expect(ctx.badRequest).toHaveBeenCalledWith('Trailing quote on quoted field is malformed');
-    expect(ctx.throw).not.toHaveBeenCalled();
-    expect(csv.parse).toHaveBeenCalledWith('file content', { header: true });
-    expect(fs.readFile).toHaveBeenCalledWith('myFile.csv');
-    expect(ctx.noContent).not.toHaveBeenCalled();
-  });
-
-  it('checkImportSouthItems() should throw badRequest whith UndetectableDelimiter', async () => {
-    ctx.params.southType = 'south-test';
-    ctx.params.southId = 'create';
-    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValueOnce([{ id: 'scanModeId', name: 'scanMode' }]);
-
-    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
-    ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
-    ctx.request.body = { itemIdsToDelete: '[]', delimiter: ';' };
-    (fs.readFile as jest.Mock).mockReturnValue('file content');
-    (csv.parse as jest.Mock).mockReturnValueOnce({
-      meta: {
-        delimiter: ','
-      },
-      data: [{ data: 'yes' }],
-      errors: [{ code: 'UndetectableDelimiter' }]
-    });
-    (csv.parse as jest.Mock).mockReturnValue({
-      meta: {
-        delimiter: '/'
-      },
-      data: [{ data: 'yes' }],
-      errors: []
-    });
-
-    await southConnectorController.checkImportSouthItems(ctx);
-
-    expect(ctx.badRequest).toHaveBeenCalledWith('The entered delimiter does not correspond to the file delimiter');
-    expect(ctx.throw).not.toHaveBeenCalled();
-    expect(csv.parse).toHaveBeenCalledWith('file content', { header: true });
-    expect(fs.readFile).toHaveBeenCalledWith('myFile.csv');
-    expect(ctx.noContent).not.toHaveBeenCalled();
-  });
-
-  it('importSouthItems() should throw not found if connector not found', async () => {
-    ctx.params.southId = 'id';
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(null);
+  it('importSouthItems() should import south items', async () => {
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.request.body = { items: testData.south.list[0].items };
     await southConnectorController.importSouthItems(ctx);
-    expect(ctx.throw).toHaveBeenCalledWith(404, 'South not found');
+    expect(ctx.app.southService.importItems).toHaveBeenCalledWith(testData.south.list[0].id, testData.south.list[0].items);
+    expect(ctx.noContent).toHaveBeenCalled();
   });
 
-  it('importSouthItems() should throw not found if manifest not found', async () => {
-    ctx.params.southId = 'id';
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([]);
-    await southConnectorController.importSouthItems(ctx);
-    expect(ctx.throw).toHaveBeenCalledWith(404, 'South manifest not found');
-  });
-
-  it('importSouthItems() should throw error on validation fail', async () => {
-    ctx.params.southId = 'id';
-    ctx.request.body = {
-      items: [
-        item,
-        {
-          id: 'id2',
-          name: 'item2',
-          scanModeId: 'scanModeId',
-          enabled: true,
-          settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
-        }
-      ]
-    };
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
-    (validator.validateSettings as jest.Mock).mockImplementation(() => {
-      throw new Error('validation fail');
+  it('importSouthItems() should return bad request', async () => {
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.request.body = { items: testData.south.list[0].items };
+    ctx.app.southService.importItems.mockImplementationOnce(() => {
+      throw new Error('bad import');
     });
     await southConnectorController.importSouthItems(ctx);
-    expect(ctx.badRequest).toHaveBeenCalledWith('validation fail');
-  });
-
-  it('importSouthItems() should throw error on creation fail', async () => {
-    ctx.params.southId = 'id';
-    ctx.request.body = {
-      items: [
-        item,
-        {
-          id: 'id2',
-          name: 'item2',
-          scanModeId: 'scanModeId',
-          enabled: true,
-          settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
-        }
-      ]
-    };
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
-    (validator.validateSettings as jest.Mock).mockImplementation(() => {
-      return true;
-    });
-    ctx.app.reloadService.onCreateOrUpdateSouthItems.mockImplementation(() => {
-      throw new Error('onCreateOrUpdateSouthItems error');
-    });
-    await southConnectorController.importSouthItems(ctx);
-    expect(ctx.badRequest).toHaveBeenCalledWith('onCreateOrUpdateSouthItems error');
-  });
-
-  it('importSouthItems() should import items', async () => {
-    ctx.params.southId = 'id';
-    ctx.request.body = {
-      items: [
-        item,
-        {
-          id: 'id2',
-          name: 'item2',
-          scanModeId: 'scanModeId',
-          enabled: true,
-          settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
-        }
-      ]
-    };
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
-    (validator.validateSettings as jest.Mock).mockImplementation(() => {
-      return true;
-    });
-    ctx.app.reloadService.onCreateOrUpdateSouthItems.mockImplementation(() => {
-      return true;
-    });
-    await southConnectorController.importSouthItems(ctx);
-    expect(ctx.noContent).toHaveBeenCalledTimes(1);
-  });
-
-  it('importSouthItems() should import items with scanModeName', async () => {
-    ctx.params.southId = 'id';
-    ctx.request.body = {
-      items: [
-        item,
-        {
-          id: 'id2',
-          name: 'item2',
-          scanModeName: 'scanModeName',
-          enabled: true,
-          settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
-        }
-      ]
-    };
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
-    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValue([
-      {
-        name: 'scanModeName',
-        description: '',
-        cron: 'cron'
-      }
-    ]);
-    (validator.validateSettings as jest.Mock).mockImplementation(() => {
-      return true;
-    });
-    ctx.app.reloadService.onCreateOrUpdateSouthItems.mockImplementation(() => {
-      return true;
-    });
-    await southConnectorController.importSouthItems(ctx);
-    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).toHaveBeenCalled();
-    expect(validator.validateSettings).toHaveBeenCalled();
-    expect(ctx.noContent).toHaveBeenCalledTimes(1);
-  });
-
-  it('importSouthItems() should fail to import items without scanMode', async () => {
-    ctx.params.southId = 'id';
-    ctx.request.body = {
-      items: [
-        item,
-        {
-          id: 'id2',
-          name: 'item2',
-          scanModeName: 'bad scan mode',
-          enabled: true,
-          settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
-        }
-      ]
-    };
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
-    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValue([
-      {
-        name: 'scanModeName',
-        description: '',
-        cron: 'cron'
-      }
-    ]);
-    (validator.validateSettings as jest.Mock).mockImplementation(() => {
-      return true;
-    });
-    ctx.app.reloadService.onCreateOrUpdateSouthItems.mockImplementation(() => {
-      return true;
-    });
-    await southConnectorController.importSouthItems(ctx);
-    expect(ctx.badRequest).toHaveBeenCalledWith('Scan mode bad scan mode not found for item item2');
-
-    ctx.request.body = {
-      items: [
-        item,
-        {
-          id: 'id2',
-          name: 'item2',
-          enabled: true,
-          settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
-        }
-      ]
-    };
-    await southConnectorController.importSouthItems(ctx);
-    expect(ctx.badRequest).toHaveBeenCalledWith('Scan mode not specified for item item2');
+    expect(ctx.app.southService.importItems).toHaveBeenCalledWith(testData.south.list[0].id, testData.south.list[0].items);
+    expect(ctx.badRequest).toHaveBeenCalledWith('bad import');
   });
 
   it('testSouthConnection() should test South connector settings on connector update', async () => {
-    const createdSouth = {
-      testConnection: jest.fn()
-    };
-    ctx.request.body = {
-      ...southConnectorCommand
-    };
-    ctx.params.id = 'id1';
-    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
-    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    (ctx.app.southService.createSouth as jest.Mock).mockReturnValue(createdSouth);
+    ctx.params.id = testData.south.list[0].id;
+    ctx.request.body = testData.south.command;
+    ctx.app.logger.child = jest.fn().mockImplementation(() => logger);
 
     await southConnectorController.testSouthConnection(ctx);
-    await southConnectorController.addContent('id1', { type: 'time-values', content: [] });
-    expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.settings, southConnectorCommand.settings);
-    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
-      southConnectorCommand.settings,
-      southConnector.settings,
-      southTestManifest.settings
-    );
+
+    expect(ctx.app.southService.testSouth).toHaveBeenCalledWith(testData.south.list[0].id, testData.south.command, logger);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
-  it('testSouthConnection() should throw 404 when manifest not found', async () => {
-    ctx.request.body = {
-      ...southConnectorCommand,
-      type: 'invalid'
-    };
-
+  it('testSouthConnection() should throw bad request if test fails', async () => {
+    ctx.params.id = testData.south.list[0].id;
+    ctx.request.body = testData.south.command;
+    ctx.app.logger.child = jest.fn().mockImplementation(() => logger);
+    (ctx.app.southService.testSouth as jest.Mock).mockImplementation(() => {
+      throw new Error('test error');
+    });
     await southConnectorController.testSouthConnection(ctx);
 
-    expect(validator.validateSettings).not.toHaveBeenCalled();
-    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.oibusEngine.testSouth).not.toHaveBeenCalled();
-    expect(ctx.throw).toHaveBeenCalledWith(404, 'South manifest not found');
+    expect(ctx.app.southService.testSouth).toHaveBeenCalledWith(testData.south.list[0].id, testData.south.command, logger);
+    expect(ctx.noContent).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('test error');
   });
 
-  it('testSouthConnection() should return 404 when south connector is not found', async () => {
+  it('testSouthItem() should test South connector settings on connector update', async () => {
+    ctx.params.id = testData.south.list[0].id;
     ctx.request.body = {
-      ...southConnectorCommand
+      south: testData.south.command,
+      item: testData.south.itemCommand,
+      testingSettings: testData.south.itemTestingSettings
     };
-    ctx.params.id = 'id1';
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(null);
+    ctx.app.logger.child = jest.fn().mockImplementation(() => logger);
 
-    await southConnectorController.testSouthConnection(ctx);
+    await southConnectorController.testSouthItem(ctx);
 
-    expect(validator.validateSettings).not.toHaveBeenCalled();
-    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.oibusEngine.testSouth).not.toHaveBeenCalled();
-    expect(ctx.notFound).toHaveBeenCalledTimes(1);
-  });
-
-  it('testSouthConnection() should test connector on connector creation', async () => {
-    ctx.request.body = {
-      ...southConnectorCommand
-    };
-    ctx.params.id = 'create';
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
-
-    await southConnectorController.testSouthConnection(ctx);
-
-    expect(validator.validateSettings).toHaveBeenCalledTimes(1);
-    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
-      southConnectorCommand.settings,
-      southConnector.settings,
-      southTestManifest.settings
+    expect(ctx.app.southService.testSouthItem).toHaveBeenCalledWith(
+      testData.south.list[0].id,
+      testData.south.command,
+      testData.south.itemCommand,
+      testData.south.itemTestingSettings,
+      ctx.ok,
+      logger
     );
-    expect(ctx.notFound).not.toHaveBeenCalled();
   });
 
-  it('testSouthConnection() should test connector on connector creation with duplicate', async () => {
+  it('testSouthItem() should throw bad request if test fails', async () => {
+    ctx.params.id = testData.south.list[0].id;
     ctx.request.body = {
-      ...southConnectorCommand
+      south: testData.south.command,
+      item: testData.south.itemCommand,
+      testingSettings: testData.south.itemTestingSettings
     };
-    ctx.params.id = 'create';
-    ctx.query.duplicateId = 'duplicateId';
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
+    ctx.app.logger.child = jest.fn().mockImplementation(() => logger);
+    (ctx.app.southService.testSouthItem as jest.Mock).mockImplementation(() => {
+      throw new Error('test error');
+    });
+    await southConnectorController.testSouthItem(ctx);
 
-    await southConnectorController.testSouthConnection(ctx);
-
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('duplicateId');
-    expect(validator.validateSettings).toHaveBeenCalledTimes(1);
-    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
-      southConnectorCommand.settings,
-      southConnector.settings,
-      southTestManifest.settings
+    expect(ctx.app.southService.testSouthItem).toHaveBeenCalledWith(
+      testData.south.list[0].id,
+      testData.south.command,
+      testData.south.itemCommand,
+      testData.south.itemTestingSettings,
+      ctx.ok,
+      logger
     );
-    expect(ctx.notFound).not.toHaveBeenCalled();
-    ctx.query.duplicateId = null;
-  });
-
-  it('testSouthConnection() should return 404 when duplicate is not found', async () => {
-    ctx.request.body = {
-      ...southConnectorCommand
-    };
-    ctx.params.id = 'create';
-    ctx.query.duplicateId = 'duplicateId';
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(null);
-    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
-
-    await southConnectorController.testSouthConnection(ctx);
-
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('duplicateId');
-    expect(validator.validateSettings).not.toHaveBeenCalled();
-    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
-    expect(ctx.notFound).toHaveBeenCalled();
-    ctx.query.duplicateId = null;
-  });
-
-  it('testSouthConnection() should return 404 when body is null', async () => {
-    ctx.request.body = null;
-
-    await southConnectorController.testSouthConnection(ctx);
-
-    expect(validator.validateSettings).not.toHaveBeenCalled();
-    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.oibusEngine.testSouth).not.toHaveBeenCalled();
-    expect(ctx.throw).toHaveBeenCalledWith(404, 'South manifest not found');
-  });
-
-  it('testSouthConnection() should return bad request when validation fails', async () => {
-    ctx.request.body = {
-      ...southConnectorCommand
-    };
-    ctx.params.id = 'id1';
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    const validationError = new Error('invalid body');
-    validator.validateSettings = jest.fn().mockImplementationOnce(() => {
-      throw validationError;
-    });
-
-    await southConnectorController.testSouthConnection(ctx);
-
-    expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.settings, southConnectorCommand.settings);
-    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.oibusEngine.testSouth).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
-  });
-
-  it('addTransformer() should add a transformer to the south connector', async () => {
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    ctx.app.repositoryService.transformerRepository.getTransformer.mockReturnValue(transformer);
-    ctx.params.southId = 'southId';
-    ctx.params.transformerId = 'transformerId';
-
-    await southConnectorController.addTransformer(ctx);
-
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
-    expect(ctx.app.repositoryService.transformerRepository.getTransformer).toHaveBeenCalledWith('transformerId');
-    expect(ctx.app.repositoryService.southTransformerRepository.addTransformer).toHaveBeenCalledWith('southId', 'transformerId');
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('addTransformer() should not add a transformer to the south connector when south connector is not found', async () => {
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(null);
-    ctx.params.southId = 'southId';
-
-    await southConnectorController.addTransformer(ctx);
-
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
-    expect(ctx.app.repositoryService.transformerRepository.getTransformer).not.toHaveBeenCalled();
-    expect(ctx.app.repositoryService.southTransformerRepository.addTransformer).not.toHaveBeenCalled();
     expect(ctx.noContent).not.toHaveBeenCalled();
-    expect(ctx.throw).toHaveBeenCalledWith(404, 'South not found');
-  });
-
-  it('addTransformer() should not add a transformer to the south connector when transformer is not found', async () => {
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    ctx.app.repositoryService.transformerRepository.getTransformer.mockReturnValue(null);
-    ctx.params.southId = 'southId';
-    ctx.params.transformerId = 'transformerId';
-
-    await southConnectorController.addTransformer(ctx);
-
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
-    expect(ctx.app.repositoryService.transformerRepository.getTransformer).toHaveBeenCalledWith('transformerId');
-    expect(ctx.app.repositoryService.southTransformerRepository.addTransformer).not.toHaveBeenCalled();
-    expect(ctx.noContent).not.toHaveBeenCalled();
-    expect(ctx.throw).toHaveBeenCalledWith(404, 'Transformer not found');
-  });
-
-  it('addTransformer() should not add transformer to the south connector when error is thrown', async () => {
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    ctx.app.repositoryService.transformerRepository.getTransformer.mockReturnValue(transformer);
-    ctx.app.repositoryService.southTransformerRepository.addTransformer.mockImplementationOnce(() => {
-      throw new Error('SQL Duplicate key constraint failed');
-    });
-    ctx.params.southId = 'southId';
-    ctx.params.transformerId = 'transformerId';
-
-    await southConnectorController.addTransformer(ctx);
-
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
-    expect(ctx.app.repositoryService.transformerRepository.getTransformer).toHaveBeenCalledWith('transformerId');
-    expect(ctx.app.repositoryService.southTransformerRepository.addTransformer).toHaveBeenCalledWith('southId', 'transformerId');
-    expect(ctx.noContent).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('SQL Duplicate key constraint failed');
-  });
-
-  it('getTransformers() should return transformers added to the south connector', async () => {
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    ctx.app.repositoryService.southTransformerRepository.getTransformers.mockReturnValue([transformer]);
-    ctx.params.southId = 'southId';
-    const filter = {};
-
-    await southConnectorController.getTransformers(ctx);
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
-    expect(ctx.app.repositoryService.southTransformerRepository.getTransformers).toHaveBeenCalledWith('southId', filter);
-    expect(ctx.ok).toHaveBeenCalledWith([transformer]);
-  });
-
-  it('getTransformers() should return transformers added to the south connector with filters', async () => {
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    ctx.app.repositoryService.southTransformerRepository.getTransformers.mockReturnValue([transformer]);
-    ctx.params.southId = 'southId';
-    ctx.query.inputType = 'time-values';
-    ctx.query.outputType = 'values';
-    ctx.query.name = 'name';
-    const filter: TransformerFilterDTO = {
-      inputType: 'time-values',
-      outputType: 'values',
-      name: 'name'
-    };
-
-    await southConnectorController.getTransformers(ctx);
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
-    expect(ctx.app.repositoryService.southTransformerRepository.getTransformers).toHaveBeenCalledWith('southId', filter);
-    expect(ctx.ok).toHaveBeenCalledWith([transformer]);
-  });
-
-  it('getTransformers() should not return transformers added to the south connector when south connector is not found', async () => {
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(null);
-    ctx.params.southId = 'southId';
-
-    await southConnectorController.getTransformers(ctx);
-
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
-    expect(ctx.app.repositoryService.southTransformerRepository.getTransformers).not.toHaveBeenCalled();
-    expect(ctx.ok).not.toHaveBeenCalled();
-    expect(ctx.throw).toHaveBeenCalledWith(404, 'South not found');
-  });
-
-  it('getTransformers() should not return transformers added to the south connector when error is thrown', async () => {
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    ctx.app.repositoryService.southTransformerRepository.getTransformers.mockImplementationOnce(() => {
-      throw new Error('Unexpected filter value');
-    });
-    ctx.params.southId = 'southId';
-    const filter = {};
-
-    await southConnectorController.getTransformers(ctx);
-
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
-    expect(ctx.app.repositoryService.southTransformerRepository.getTransformers).toHaveBeenCalledWith('southId', filter);
-    expect(ctx.ok).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('Unexpected filter value');
-  });
-
-  it('removeTransformer() should remove a transformer from the south connector', async () => {
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    ctx.app.repositoryService.transformerRepository.getTransformer.mockReturnValue(transformer);
-    ctx.params.southId = 'southId';
-    ctx.params.transformerId = 'transformerId';
-
-    await southConnectorController.removeTransformer(ctx);
-
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
-    expect(ctx.app.repositoryService.transformerRepository.getTransformer).toHaveBeenCalledWith('transformerId');
-    expect(ctx.app.repositoryService.southTransformerRepository.removeTransformer).toHaveBeenCalledWith('southId', 'transformerId');
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('removeTransformer() should not remove a transformer from the south connector when south connector is not found', async () => {
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(null);
-    ctx.params.southId = 'southId';
-
-    await southConnectorController.removeTransformer(ctx);
-
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
-    expect(ctx.app.repositoryService.transformerRepository.getTransformer).not.toHaveBeenCalled();
-    expect(ctx.app.repositoryService.southTransformerRepository.removeTransformer).not.toHaveBeenCalled();
-    expect(ctx.noContent).not.toHaveBeenCalled();
-    expect(ctx.throw).toHaveBeenCalledWith(404, 'South not found');
-  });
-
-  it('removeTransformer() should not remove a transformer from the south connector when transformer is not found', async () => {
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    ctx.app.repositoryService.transformerRepository.getTransformer.mockReturnValue(null);
-    ctx.params.southId = 'southId';
-    ctx.params.transformerId = 'transformerId';
-
-    await southConnectorController.removeTransformer(ctx);
-
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
-    expect(ctx.app.repositoryService.transformerRepository.getTransformer).toHaveBeenCalledWith('transformerId');
-    expect(ctx.app.repositoryService.southTransformerRepository.removeTransformer).not.toHaveBeenCalled();
-    expect(ctx.noContent).not.toHaveBeenCalled();
-    expect(ctx.throw).toHaveBeenCalledWith(404, 'Transformer not found');
-  });
-
-  it('removeTransformer() should not remove a transformer from the south connector when error is thrown', async () => {
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    ctx.app.repositoryService.transformerRepository.getTransformer.mockReturnValue(transformer);
-    ctx.app.repositoryService.southTransformerRepository.removeTransformer.mockImplementationOnce(() => {
-      throw new Error('Unexpected error occurred');
-    });
-    ctx.params.southId = 'southId';
-    ctx.params.transformerId = 'transformerId';
-
-    await southConnectorController.removeTransformer(ctx);
-
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
-    expect(ctx.app.repositoryService.transformerRepository.getTransformer).toHaveBeenCalledWith('transformerId');
-    expect(ctx.app.repositoryService.southTransformerRepository.removeTransformer).toHaveBeenCalledWith('southId', 'transformerId');
-    expect(ctx.noContent).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('Unexpected error occurred');
+    expect(ctx.badRequest).toHaveBeenCalledWith('test error');
   });
 });

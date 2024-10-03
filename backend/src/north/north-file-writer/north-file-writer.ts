@@ -5,7 +5,7 @@ import NorthConnector from '../north-connector';
 import EncryptionService from '../../service/encryption.service';
 import pino from 'pino';
 import { DateTime } from 'luxon';
-import { NorthFileWriterSettings } from '../../../shared/model/north-settings.model';
+import { NorthFileWriterItemSettings, NorthFileWriterSettings } from '../../../shared/model/north-settings.model';
 import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import csv from 'papaparse';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
@@ -16,9 +16,9 @@ import { BaseFolders } from '../../model/types';
 /**
  * Class NorthFileWriter - Write files in an output folder
  */
-export default class NorthFileWriter extends NorthConnector<NorthFileWriterSettings> {
+export default class NorthFileWriter extends NorthConnector<NorthFileWriterSettings, NorthFileWriterItemSettings> {
   constructor(
-    configuration: NorthConnectorEntity<NorthFileWriterSettings>,
+    configuration: NorthConnectorEntity<NorthFileWriterSettings, NorthFileWriterItemSettings>,
     encryptionService: EncryptionService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,

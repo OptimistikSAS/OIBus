@@ -18,6 +18,7 @@ export default jest.fn().mockImplementation(() => {
     deleteItem: jest.fn(),
     deleteAllItemsBySouth: jest.fn(),
     enableItem: jest.fn(),
-    disableItem: jest.fn()
+    disableItem: jest.fn(),
+    findAllTransformersForSouth: jest.fn()
   };
 });

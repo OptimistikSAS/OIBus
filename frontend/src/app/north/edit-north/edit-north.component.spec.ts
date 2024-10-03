@@ -11,7 +11,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
 import { CertificateService } from '../../services/certificate.service';
-import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
 class EditNorthComponentTester extends ComponentTester<EditNorthComponent> {
   constructor() {
@@ -75,11 +75,10 @@ describe('EditNorthComponent', () => {
         description: 'Console description',
         modes: {
           files: true,
-          points: true,
-          items: false
+          points: true
         },
         settings: [],
-        schema: {} as unknown
+        items: { settings: [] }
       } as NorthConnectorManifest)
     );
   });
@@ -103,7 +102,7 @@ describe('EditNorthComponent', () => {
   });
 
   describe('edit mode', () => {
-    const northConnector: NorthConnectorDTO<NorthSettings> = {
+    const northConnector: NorthConnectorDTO<NorthSettings, NorthItemSettings> = {
       id: 'id1',
       type: 'console',
       name: 'North Connector',
@@ -127,7 +126,9 @@ describe('EditNorthComponent', () => {
           }
         }
       },
-      subscriptions: []
+      subscriptions: [],
+      items: [],
+      transformers: []
     };
 
     beforeEach(() => {

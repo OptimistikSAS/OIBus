@@ -3,7 +3,7 @@ import HistoryQuery from './history-query';
 import path from 'node:path';
 import { HistoryQueryEntity } from '../model/histor-query.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
-import { NorthSettings } from '../../shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../shared/model/north-settings.model';
 import HistoryQueryMetricsService from '../service/metrics/history-query-metrics.service';
 import HistoryQueryMetricsRepository from '../repository/logs/history-query-metrics.repository';
 import { PassThrough } from 'node:stream';
@@ -93,7 +93,10 @@ export default class HistoryQueryEngine {
     this.historyQueryMetrics.get(historyId)?.resetMetrics();
   }
 
-  async reloadHistoryQuery(historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>, resetCache: boolean) {
+  async reloadHistoryQuery(
+    historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings>,
+    resetCache: boolean
+  ) {
     await this.stopHistoryQuery(historyQuery.id);
     this.historyQueries
       .get(historyQuery.id)
@@ -117,7 +120,9 @@ export default class HistoryQueryEngine {
   /**
    * Stops the History query and deletes all cache inside the base folder
    */
-  async deleteHistoryQuery(historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>): Promise<void> {
+  async deleteHistoryQuery(
+    historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings>
+  ): Promise<void> {
     await this.stopHistoryQuery(historyQuery.id);
     await this.resetCache(historyQuery.id);
   }

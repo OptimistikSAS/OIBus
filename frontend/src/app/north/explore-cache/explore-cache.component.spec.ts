@@ -13,7 +13,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { CacheFilesComponent } from './cache-files/cache-files.component';
 import { CacheValuesComponent } from './cache-values/cache-values.component';
 import { ErrorValuesComponent } from './error-values/error-values.component';
-import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
 class ExploreCacheComponentTester extends ComponentTester<ExploreCacheComponent> {
   constructor() {
@@ -48,7 +48,7 @@ describe('ExploreCacheComponent', () => {
   let tester: ExploreCacheComponentTester;
   let northConnectorService: jasmine.SpyObj<NorthConnectorService>;
 
-  const northConnector: NorthConnectorDTO<NorthSettings> = {
+  const northConnector: NorthConnectorDTO<NorthSettings, NorthItemSettings> = {
     id: 'id1',
     type: 'file-writer',
     name: 'North Connector',
@@ -64,7 +64,7 @@ describe('ExploreCacheComponent', () => {
         maxSendCount: 10000
       }
     }
-  } as NorthConnectorDTO<NorthSettings>;
+  } as NorthConnectorDTO<NorthSettings, NorthItemSettings>;
 
   beforeEach(() => {
     northConnectorService = createMock(NorthConnectorService);

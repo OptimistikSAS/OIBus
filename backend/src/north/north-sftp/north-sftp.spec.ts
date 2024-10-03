@@ -6,7 +6,7 @@ import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-serv
 import ValueCacheServiceMock from '../../tests/__mocks__/service/cache/value-cache-service.mock';
 import FileCacheServiceMock from '../../tests/__mocks__/service/cache/file-cache-service.mock';
 import csv from 'papaparse';
-import { NorthSFTPSettings } from '../../../shared/model/north-settings.model';
+import { NorthSFTPItemSettings, NorthSFTPSettings } from '../../../shared/model/north-settings.model';
 import sftpClient from 'ssh2-sftp-client';
 import { OIBusTimeValue } from '../../../shared/model/engine.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
@@ -53,7 +53,7 @@ jest.mock('ssh2-sftp-client');
 jest.mock('../../service/utils');
 jest.mock('papaparse');
 
-let configuration: NorthConnectorEntity<NorthSFTPSettings>;
+let configuration: NorthConnectorEntity<NorthSFTPSettings, NorthSFTPItemSettings>;
 let north: NorthSftp;
 
 describe('NorthSFTP', () => {

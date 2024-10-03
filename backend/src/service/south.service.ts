@@ -108,6 +108,9 @@ import CertificateRepository from '../repository/config/certificate.repository';
 import DataStreamEngine from '../engine/data-stream-engine';
 import { PassThrough } from 'node:stream';
 import { BaseFolders } from '../model/types';
+import { toTransformerDTO } from './transformer.service';
+import { Transformer } from '../model/transformer.model';
+import TransformerRepository from '../repository/config/transformer.repository';
 
 export const southManifestList: Array<SouthConnectorManifest> = [
   folderScannerManifest,
@@ -137,6 +140,7 @@ export default class SouthService {
     private readonly southMetricsRepository: SouthConnectorMetricsRepository,
     private readonly southCacheRepository: SouthCacheRepository,
     private readonly scanModeRepository: ScanModeRepository,
+    private readonly transformerRepository: TransformerRepository,
     private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
     private readonly certificateRepository: CertificateRepository,
     private readonly oIAnalyticsMessageService: OIAnalyticsMessageService,
@@ -376,7 +380,15 @@ export default class SouthService {
         manifest.settings
       ),
       name: southConnector ? southConnector.name : `${command!.type}:test-connection`,
-      items: []
+      items: [],
+      transformers: command.transformers.map(element => {
+        const foundTransformer = this.transformerRepository.searchTransformers({}).find(transformer => transformer.id === element.id);
+        if (!foundTransformer) throw new Error(`Transformer ${element.id} not found`);
+        return {
+          transformer: foundTransformer,
+          order: element.order
+        };
+      })
     };
 
     const south = this.runSouth(testToRun, async (_southId: string, _content: OIBusContent): Promise<void> => Promise.resolve(), logger, {
@@ -425,7 +437,15 @@ export default class SouthService {
         manifest.settings
       ),
       name: southConnector ? southConnector.name : `${command!.type}:test-connection`,
-      items: [testItemToRun]
+      items: [testItemToRun],
+      transformers: command.transformers.map(element => {
+        const foundTransformer = this.transformerRepository.searchTransformers({}).find(transformer => transformer.id === element.id);
+        if (!foundTransformer) throw new Error(`Transformer ${element.id} not found`);
+        return {
+          transformer: foundTransformer,
+          order: element.order
+        };
+      })
     };
 
     const mockedAddContent = async (_southId: string, _content: OIBusContent): Promise<void> => Promise.resolve();
@@ -470,6 +490,7 @@ export default class SouthService {
       this.retrieveSecretsFromSouth(retrieveSecretsFromSouth, manifest),
       this.encryptionService,
       this.scanModeRepository.findAll(),
+      this.transformerRepository.searchTransformers({}),
       !!retrieveSecretsFromSouth
     );
     this.southConnectorRepository.saveSouthConnector(southEntity);
@@ -514,7 +535,8 @@ export default class SouthService {
       command,
       previousSettings,
       this.encryptionService,
-      this.scanModeRepository.findAll()
+      this.scanModeRepository.findAll(),
+      this.transformerRepository.searchTransformers({})
     );
     this.southConnectorRepository.saveSouthConnector(southEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
@@ -601,7 +623,7 @@ export default class SouthService {
     );
     this.southConnectorRepository.saveItem<I>(southConnector.id, southItemEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    await this.dataStreamEngine.reloadItems(southConnector.id);
+    await this.dataStreamEngine.reloadSouthItems(southConnector.id);
     return southItemEntity;
   }
 
@@ -633,7 +655,7 @@ export default class SouthService {
     );
     this.southConnectorRepository.saveItem<I>(southConnectorId, southItemEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    await this.dataStreamEngine.reloadItems(southConnector.id);
+    await this.dataStreamEngine.reloadSouthItems(southConnector.id);
   }
 
   async deleteItem(southConnectorId: string, itemId: string): Promise<void> {
@@ -645,7 +667,7 @@ export default class SouthService {
     if (!southItem) throw new Error(`South item ${itemId} not found`);
     this.southConnectorRepository.deleteItem(southItem.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    await this.dataStreamEngine.reloadItems(southConnector.id);
+    await this.dataStreamEngine.reloadSouthItems(southConnector.id);
   }
 
   async deleteAllItemsForSouthConnector(southConnectorId: string): Promise<void> {
@@ -657,7 +679,7 @@ export default class SouthService {
     this.southCacheRepository.deleteAllBySouthConnector(southConnectorId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
 
-    await this.dataStreamEngine.reloadItems(southConnector.id);
+    await this.dataStreamEngine.reloadSouthItems(southConnector.id);
   }
 
   async enableItem(southConnectorId: string, itemId: string): Promise<void> {
@@ -666,7 +688,7 @@ export default class SouthService {
     this.southConnectorRepository.enableItem(southItem.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
 
-    await this.dataStreamEngine.reloadItems(southConnectorId);
+    await this.dataStreamEngine.reloadSouthItems(southConnectorId);
   }
 
   async disableItem(southConnectorId: string, itemId: string): Promise<void> {
@@ -675,7 +697,7 @@ export default class SouthService {
     this.southConnectorRepository.disableItem(southItem.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
 
-    await this.dataStreamEngine.reloadItems(southConnectorId);
+    await this.dataStreamEngine.reloadSouthItems(southConnectorId);
   }
 
   async checkCsvFileImport<I extends SouthItemSettings>(
@@ -806,7 +828,7 @@ export default class SouthService {
     this.southConnectorRepository.saveAllItems(southConnector.id, itemsToAdd, deleteItemsNotPresent);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
 
-    await this.dataStreamEngine.reloadItems(southConnectorId);
+    await this.dataStreamEngine.reloadSouthItems(southConnectorId);
   }
 
   private async deleteBaseFolders(south: SouthConnectorEntity<SouthSettings, SouthItemSettings>) {
@@ -873,6 +895,7 @@ const copySouthConnectorCommandToSouthEntity = async <S extends SouthSettings, I
   currentSettings: SouthConnectorEntity<S, I> | null,
   encryptionService: EncryptionService,
   scanModes: Array<ScanMode>,
+  transformers: Array<Transformer>,
   retrieveSecretsFromSouth = false
 ): Promise<void> => {
   const manifest = southManifestList.find(element => element.id === command.type)!;
@@ -900,6 +923,14 @@ const copySouthConnectorCommandToSouthEntity = async <S extends SouthSettings, I
       return itemEntity;
     })
   );
+  southEntity.transformers = command.transformers.map(element => {
+    const foundTransformer = transformers.find(transformer => transformer.id === element.id);
+    if (!foundTransformer) throw new Error(`Transformer ${element.id} not found`);
+    return {
+      transformer: foundTransformer,
+      order: element.order
+    };
+  });
 };
 
 const copySouthItemCommandToSouthItemEntity = async <I extends SouthItemSettings>(
@@ -935,7 +966,11 @@ export const toSouthConnectorDTO = <S extends SouthSettings, I extends SouthItem
     description: southEntity.description,
     enabled: southEntity.enabled,
     settings: encryptionService.filterSecrets<S>(southEntity.settings, manifest.settings),
-    items: southEntity.items.map(item => toSouthConnectorItemDTO<I>(item, southEntity.type, encryptionService))
+    items: southEntity.items.map(item => toSouthConnectorItemDTO<I>(item, southEntity.type, encryptionService)),
+    transformers: southEntity.transformers.map(transformer => ({
+      order: transformer.order,
+      transformer: toTransformerDTO(transformer.transformer)
+    }))
   };
 };
 

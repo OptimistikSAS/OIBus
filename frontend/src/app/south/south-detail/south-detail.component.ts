@@ -197,7 +197,8 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
   get southConnectorCommand() {
     const command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
       ...this.southConnector!,
-      items: this.southConnector!.items.map(i => ({ ...i, scanModeName: null }))
+      items: this.southConnector!.items.map(i => ({ ...i, scanModeName: null })),
+      transformers: this.southConnector!.transformers.map(transformer => ({ order: transformer.order, id: transformer.transformer.id }))
     };
 
     return command;

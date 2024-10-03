@@ -17,11 +17,11 @@ import {
 import { OIAnalyticsMessage } from '../../model/oianalytics-message.model';
 import { Certificate } from '../../model/certificate.model';
 import { User } from '../../model/user.model';
-import { HistoryQueryEntity, HistoryQueryItemEntity } from '../../model/histor-query.model';
+import { HistoryQueryEntity, NorthHistoryQueryItemEntity, SouthHistoryQueryItemEntity } from '../../model/histor-query.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../shared/model/north-settings.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
-import { NorthConnectorEntity } from '../../model/north-connector.model';
+import { NorthConnectorEntity, NorthConnectorItemEntity } from '../../model/north-connector.model';
 import {
   CryptoSettings,
   EngineMetrics,
@@ -30,6 +30,7 @@ import {
   SouthConnectorMetrics
 } from '../../../shared/model/engine.model';
 import { BaseFolders } from 'src/model/types';
+import { Transformer } from '../../model/transformer.model';
 
 const CONFIG_TEST_DATABASE = path.resolve('src', 'tests', 'test-config.db');
 const CRYPTO_TEST_DATABASE = path.resolve('src', 'tests', 'test-crypto.db');
@@ -265,6 +266,9 @@ const populateConfigDatabase = async () => {
   for (const element of testData.scanMode.list) {
     await createScanMode(testDatabase, element);
   }
+  for (const element of testData.transformers.list) {
+    await createTransformer(testDatabase, element);
+  }
   for (const element of testData.south.list) {
     await createSouth(testDatabase, element);
   }
@@ -418,7 +422,7 @@ const createOIAnalyticsMessage = async (database: knex.Knex, command: OIAnalytic
     .into('oianalytics_messages');
 };
 
-const createNorth = async (database: knex.Knex, north: NorthConnectorEntity<NorthSettings>) => {
+const createNorth = async (database: knex.Knex, north: NorthConnectorEntity<NorthSettings, NorthItemSettings>) => {
   await database
     .insert({
       id: north.id,
@@ -442,6 +446,12 @@ const createNorth = async (database: knex.Knex, north: NorthConnectorEntity<Nort
   for (const element of north.subscriptions) {
     await createSubscription(database, north.id, element.id);
   }
+  for (const element of north.items) {
+    await createNorthConnectorItem(database, north.id, element);
+  }
+  for (const element of north.transformers) {
+    await createNorthTransformer(database, north.id, element.transformer.id, element.order);
+  }
 };
 
 const createSouth = async (database: knex.Knex, south: SouthConnectorEntity<SouthSettings, SouthItemSettings>) => {
@@ -458,6 +468,9 @@ const createSouth = async (database: knex.Knex, south: SouthConnectorEntity<Sout
 
   for (const item of south.items) {
     await createSouthConnectorItem(database, south.id, item);
+  }
+  for (const element of south.transformers) {
+    await createSouthTransformer(database, south.id, element.transformer.id, element.order);
   }
 };
 
@@ -476,6 +489,22 @@ const createSouthConnectorItem = async (
       settings: JSON.stringify(item.settings)
     })
     .into('south_items');
+};
+
+const createNorthConnectorItem = async (
+  database: knex.Knex,
+  northConnectorId: string,
+  item: NorthConnectorItemEntity<NorthItemSettings>
+) => {
+  await database
+    .insert({
+      id: item.id,
+      connector_id: northConnectorId,
+      name: item.name,
+      enabled: item.enabled,
+      settings: JSON.stringify(item.settings)
+    })
+    .into('north_items');
 };
 
 const createIpFilter = async (database: knex.Knex, ipFilter: IPFilter) => {
@@ -497,6 +526,39 @@ const createScanMode = async (database: knex.Knex, scanMode: ScanMode) => {
       cron: scanMode.cron
     })
     .into('scan_modes');
+};
+
+const createTransformer = async (database: knex.Knex, transformer: Transformer) => {
+  await database
+    .insert({
+      id: transformer.id,
+      name: transformer.name,
+      description: transformer.description,
+      input_type: transformer.inputType,
+      output_type: transformer.outputType,
+      code: transformer.code
+    })
+    .into('transformers');
+};
+
+const createNorthTransformer = async (database: knex.Knex, northId: string, transformerId: string, order: number) => {
+  await database.insert({ north_id: northId, transformer_id: transformerId, transformer_order: order }).into('north_transformers');
+};
+
+const createSouthTransformer = async (database: knex.Knex, southId: string, transformerId: string, order: number) => {
+  await database.insert({ south_id: southId, transformer_id: transformerId, transformer_order: order }).into('south_transformers');
+};
+
+const createHistoryQueryTransformer = async (
+  database: knex.Knex,
+  historyId: string,
+  transformerId: string,
+  order: number,
+  type: 'south' | 'north'
+) => {
+  await database
+    .insert({ history_id: historyId, connector_type: type, transformer_id: transformerId, transformer_order: order })
+    .into('history_transformers');
 };
 
 const createSubscription = async (database: knex.Knex, northId: string, southId: string) => {
@@ -534,7 +596,7 @@ const createUser = async (database: knex.Knex, user: User) => {
 
 const createHistoryQuery = async (
   database: knex.Knex,
-  historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>
+  historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings>
 ) => {
   await database
     .insert({
@@ -560,12 +622,25 @@ const createHistoryQuery = async (
     })
     .into('history_queries');
 
-  for (const item of historyQuery.items) {
-    await createHistoryQueryItem(database, historyQuery.id, item);
+  for (const item of historyQuery.southItems) {
+    await createSouthHistoryQueryItem(database, historyQuery.id, item);
+  }
+  for (const item of historyQuery.northItems) {
+    await createNorthHistoryQueryItem(database, historyQuery.id, item);
+  }
+  for (const element of historyQuery.northTransformers) {
+    await createHistoryQueryTransformer(database, historyQuery.id, element.transformer.id, element.order, 'north');
+  }
+  for (const element of historyQuery.southTransformers) {
+    await createHistoryQueryTransformer(database, historyQuery.id, element.transformer.id, element.order, 'south');
   }
 };
 
-const createHistoryQueryItem = async (database: knex.Knex, historyQueryId: string, item: HistoryQueryItemEntity<SouthItemSettings>) => {
+const createSouthHistoryQueryItem = async (
+  database: knex.Knex,
+  historyQueryId: string,
+  item: SouthHistoryQueryItemEntity<SouthItemSettings>
+) => {
   await database
     .insert({
       id: item.id,
@@ -574,5 +649,21 @@ const createHistoryQueryItem = async (database: knex.Knex, historyQueryId: strin
       enabled: item.enabled,
       settings: JSON.stringify(item.settings)
     })
-    .into('history_items');
+    .into('history_south_items');
+};
+
+const createNorthHistoryQueryItem = async (
+  database: knex.Knex,
+  historyQueryId: string,
+  item: NorthHistoryQueryItemEntity<NorthItemSettings>
+) => {
+  await database
+    .insert({
+      id: item.id,
+      history_id: historyQueryId,
+      name: item.name,
+      enabled: item.enabled,
+      settings: JSON.stringify(item.settings)
+    })
+    .into('history_north_items');
 };

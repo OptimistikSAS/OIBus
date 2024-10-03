@@ -67,6 +67,7 @@ describe('SouthSFTP', () => {
       password: 'pass',
       compression: false
     },
+    transformers: [],
     items: [
       {
         id: 'id1',
@@ -292,6 +293,7 @@ describe('SouthFTP with preserve file and compression', () => {
       password: 'pass',
       compression: true
     },
+    transformers: [],
     items: [
       {
         id: 'id1',
@@ -449,6 +451,7 @@ describe('SouthSFTP test connection with private key', () => {
       username: null,
       compression: false
     },
+    transformers: [],
     items: [
       {
         id: 'id1',

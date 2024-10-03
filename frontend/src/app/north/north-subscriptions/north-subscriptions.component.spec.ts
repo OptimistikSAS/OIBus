@@ -9,14 +9,14 @@ import { SouthConnectorService } from '../../services/south-connector.service';
 import { SouthConnectorLightDTO } from '../../../../../backend/shared/model/south-connector.model';
 import { Component } from '@angular/core';
 import { NorthConnectorDTO } from '../../../../../backend/shared/model/north-connector.model';
-import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
 @Component({
   template: `<oib-north-subscriptions [northConnector]="northConnector" />`,
   imports: [NorthSubscriptionsComponent]
 })
 class TestComponent {
-  northConnector: NorthConnectorDTO<NorthSettings> = {
+  northConnector: NorthConnectorDTO<NorthSettings, NorthItemSettings> = {
     id: 'northId',
     name: 'North Connector',
     subscriptions: [
@@ -35,7 +35,7 @@ class TestComponent {
         description: ''
       }
     ]
-  } as NorthConnectorDTO<NorthSettings>;
+  } as NorthConnectorDTO<NorthSettings, NorthItemSettings>;
 }
 
 class NorthSubscriptionsComponentTester extends ComponentTester<TestComponent> {

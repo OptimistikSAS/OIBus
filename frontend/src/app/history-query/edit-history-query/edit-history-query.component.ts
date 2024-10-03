@@ -23,7 +23,7 @@ import { createFormGroup, groupFormControlsByRow } from '../../shared/form-utils
 import {
   HistoryQueryCommandDTO,
   HistoryQueryDTO,
-  HistoryQueryItemCommandDTO
+  HistoryQuerySouthItemCommandDTO
 } from '../../../../../backend/shared/model/history-query.model';
 import {
   OIBusSouthType,
@@ -44,7 +44,7 @@ import { TestConnectionResultModalComponent } from '../../shared/test-connection
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { ResetCacheHistoryQueryModalComponent } from '../reset-cache-history-query-modal/reset-cache-history-query-modal.component';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
-import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 import { dateTimeRangeValidatorBuilder } from '../../shared/validators';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
@@ -83,7 +83,7 @@ export class EditHistoryQueryComponent implements OnInit {
 
   mode: 'create' | 'edit' = 'create';
   historyId!: string;
-  historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> | null = null;
+  historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings> | null = null;
   state = new ObservableState();
   northSettingsControls: Array<Array<OibFormControl>> = [];
   southSettingsControls: Array<Array<OibFormControl>> = [];
@@ -120,7 +120,7 @@ export class EditHistoryQueryComponent implements OnInit {
     southSettings: FormGroup;
   }> | null = null;
 
-  inMemoryItems: Array<HistoryQueryItemCommandDTO<SouthItemSettings>> = [];
+  inMemoryItems: Array<HistoryQuerySouthItemCommandDTO<SouthItemSettings>> = [];
 
   ngOnInit() {
     combineLatest([this.scanModeService.list(), this.route.paramMap, this.route.queryParamMap])
@@ -133,8 +133,9 @@ export class EditHistoryQueryComponent implements OnInit {
           const southId = queryParams.get('southId');
           const northId = queryParams.get('northId') || '';
 
-          let historyQueryObs: Observable<null | HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>> = of(null);
-          let northObs: Observable<null | NorthConnectorDTO<NorthSettings>> = of(null);
+          let historyQueryObs: Observable<null | HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings>> =
+            of(null);
+          let northObs: Observable<null | NorthConnectorDTO<NorthSettings, NorthItemSettings>> = of(null);
           let southObs: Observable<null | SouthConnectorDTO<SouthSettings, SouthItemSettings>> = of(null);
 
           // if there is a History ID, we are editing a South connector
@@ -181,7 +182,7 @@ export class EditHistoryQueryComponent implements OnInit {
 
             // When changes are not saved directly, items come from memory
             if (!this.saveItemChangesDirectly) {
-              this.inMemoryItems = historyQuery.items.map(item => ({
+              this.inMemoryItems = historyQuery.southItems.map(item => ({
                 ...item,
                 id: null // we need to remove the exiting ids
               }));
@@ -274,7 +275,7 @@ export class EditHistoryQueryComponent implements OnInit {
     }
 
     const formValue = this.historyQueryForm!.value;
-    const command: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
+    const command: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings> = {
       name: formValue.name!,
       description: formValue.description!,
       startTime: formValue.startTime!,
@@ -301,15 +302,18 @@ export class EditHistoryQueryComponent implements OnInit {
           }
         }
       },
-      items:
+      southItems:
         this.saveItemChangesDirectly && this.historyQuery
-          ? this.historyQuery.items.map(item => ({
+          ? this.historyQuery.southItems.map(item => ({
               id: item.id,
               name: item.name,
               enabled: item.enabled,
               settings: item.settings
             }))
-          : this.inMemoryItems
+          : this.inMemoryItems,
+      northItems: [], // TODO
+      southTransformers: [], // TODO
+      northTransformers: [] // TODO
     };
     if (this.mode === 'edit') {
       const modalRef = this.modalService.open(ResetCacheHistoryQueryModalComponent);
@@ -321,8 +325,11 @@ export class EditHistoryQueryComponent implements OnInit {
     }
   }
 
-  createOrUpdateHistoryQuery(command: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>, resetCache: boolean): void {
-    let createOrUpdate: Observable<HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>>;
+  createOrUpdateHistoryQuery(
+    command: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings>,
+    resetCache: boolean
+  ): void {
+    let createOrUpdate: Observable<HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings>>;
     // if we are editing
     if (this.mode === 'edit') {
       createOrUpdate = this.historyQueryService.update(this.historyQuery!.id, command, resetCache).pipe(
@@ -339,12 +346,12 @@ export class EditHistoryQueryComponent implements OnInit {
     });
   }
 
-  updateInMemoryItems(items: Array<HistoryQueryItemCommandDTO<SouthItemSettings>> | null) {
+  updateInMemoryItems(items: Array<HistoryQuerySouthItemCommandDTO<SouthItemSettings>> | null) {
     if (items) {
       this.inMemoryItems = items;
     } else {
       this.historyQueryService.get(this.historyQuery!.id).subscribe(historyQuery => {
-        this.historyQuery!.items = historyQuery.items;
+        this.historyQuery!.southItems = historyQuery.southItems;
         this.historyQuery = JSON.parse(JSON.stringify(this.historyQuery)); // Used to force a refresh in history query item list
       });
     }
@@ -358,7 +365,7 @@ export class EditHistoryQueryComponent implements OnInit {
     }
 
     const historyQueryId = this.historyQuery?.id ?? null;
-    let command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> | NorthConnectorCommandDTO<NorthSettings>;
+    let command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> | NorthConnectorCommandDTO<NorthSettings, NorthItemSettings>;
     let fromConnectorId;
 
     if (type === 'south') {
@@ -390,6 +397,6 @@ export class EditHistoryQueryComponent implements OnInit {
       type: this.northManifest!.id,
       settings: formValue.northSettings,
       caching: formValue.caching
-    } as NorthConnectorCommandDTO<NorthSettings>;
+    } as NorthConnectorCommandDTO<NorthSettings, NorthItemSettings>;
   }
 }

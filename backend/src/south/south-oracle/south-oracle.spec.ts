@@ -68,6 +68,7 @@ describe('SouthOracle with authentication', () => {
       password: 'password',
       connectionTimeout: 1000
     },
+    transformers: [],
     items: [
       {
         id: 'id1',
@@ -402,6 +403,7 @@ describe('SouthOracle without authentication but with thick mode', () => {
       thickMode: true,
       oracleClient: 'path'
     },
+    transformers: [],
     items: [
       {
         id: 'id1',
@@ -561,6 +563,7 @@ describe('SouthOracle test connection', () => {
       connectionTimeout: 1000,
       thickMode: false
     },
+    transformers: [],
     items: [
       {
         id: 'id1',

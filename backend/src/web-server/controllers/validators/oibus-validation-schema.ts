@@ -160,8 +160,7 @@ const transformerSchema: Joi.ObjectSchema = Joi.object({
   description: Joi.string().required().allow(null, ''),
   inputType: Joi.string().required(),
   outputType: Joi.string().required(),
-  code: Joi.string().required(),
-  fileRegex: Joi.string().required().allow(null, '')
+  code: Joi.string().required()
 });
 
 function cronValidator(value: string, helper: Joi.CustomHelpers) {

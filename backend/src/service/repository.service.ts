@@ -18,10 +18,7 @@ import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-
 import OIAnalyticsCommandRepository from '../repository/config/oianalytics-command.repository';
 import OIAnalyticsMessageRepository from '../repository/config/oianalytics-message.repository';
 import HistoryQueryMetricsRepository from '../repository/logs/history-query-metrics.repository';
-import TransformerRepository from '../repository/transformer.repository';
-import NorthTransformerRepository from '../repository/north-transformer.repository';
-import SouthTransformerRepository from '../repository/south-transformer.repository';
-import HistoryTransformerRepository from '../repository/history-transformer.repository';
+import TransformerRepository from '../repository/config/transformer.repository';
 
 export default class RepositoryService {
   private readonly _engineRepository: EngineRepository;
@@ -42,9 +39,6 @@ export default class RepositoryService {
   private readonly _oianalyticsRegistrationRepository: OIAnalyticsRegistrationRepository;
   private readonly _oianalyticsCommandRepository: OIAnalyticsCommandRepository;
   private readonly _transformerRepository: TransformerRepository;
-  private readonly _northTransformerRepository: NorthTransformerRepository;
-  private readonly _southTransformerRepository: SouthTransformerRepository;
-  private readonly _historyTransformerRepository: HistoryTransformerRepository;
   private readonly _oianalyticsMessageRepository: OIAnalyticsMessageRepository;
 
   constructor(
@@ -83,9 +77,6 @@ export default class RepositoryService {
     this._logRepository = new LogRepository(logsDatabase);
 
     this._transformerRepository = new TransformerRepository(oibusDatabase);
-    this._northTransformerRepository = new NorthTransformerRepository(oibusDatabase);
-    this._southTransformerRepository = new SouthTransformerRepository(oibusDatabase);
-    this._historyTransformerRepository = new HistoryTransformerRepository(oibusDatabase);
   }
 
   get cryptoRepository(): CryptoRepository {
@@ -162,17 +153,5 @@ export default class RepositoryService {
 
   get transformerRepository(): TransformerRepository {
     return this._transformerRepository;
-  }
-
-  get northTransformerRepository(): NorthTransformerRepository {
-    return this._northTransformerRepository;
-  }
-
-  get southTransformerRepository(): SouthTransformerRepository {
-    return this._southTransformerRepository;
-  }
-
-  get historyTransformerRepository(): HistoryTransformerRepository {
-    return this._historyTransformerRepository;
   }
 }

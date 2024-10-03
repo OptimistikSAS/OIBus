@@ -97,3 +97,18 @@ export type NorthSettings =
   | NorthFileWriterSettings
   | NorthOIAnalyticsSettings
   | NorthSFTPSettings;
+
+export type NorthAmazonS3ItemSettings = object;
+export type NorthAzureBlobItemSettings = object;
+export type NorthConsoleItemSettings = object;
+export type NorthFileWriterItemSettings = object;
+export type NorthOIAnalyticsItemSettings = object;
+export type NorthSFTPItemSettings = object;
+
+export type NorthItemSettings =
+  | NorthAmazonS3ItemSettings
+  | NorthAzureBlobItemSettings
+  | NorthConsoleItemSettings
+  | NorthFileWriterItemSettings
+  | NorthOIAnalyticsItemSettings
+  | NorthSFTPItemSettings;

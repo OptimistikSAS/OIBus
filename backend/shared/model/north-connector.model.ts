@@ -1,7 +1,8 @@
 import { OibFormControl } from './form.model';
 import { BaseEntity, Instant } from './types';
-import { NorthSettings } from './north-settings.model';
+import { NorthSettings, NorthItemSettings } from './north-settings.model';
 import { SouthConnectorLightDTO } from './south-connector.model';
+import { TransformerDTO } from './transformer.model';
 
 export const OIBUS_NORTH_CATEGORIES = ['debug', 'api', 'file'] as const;
 export type OIBusNorthCategory = (typeof OIBUS_NORTH_CATEGORIES)[number];
@@ -25,7 +26,7 @@ export interface NorthConnectorLightDTO extends BaseEntity {
   enabled: boolean;
 }
 
-export interface NorthConnectorDTO<T extends NorthSettings> extends BaseEntity {
+export interface NorthConnectorDTO<T extends NorthSettings, I extends NorthItemSettings> extends BaseEntity {
   name: string;
   type: OIBusNorthType;
   description: string;
@@ -49,9 +50,11 @@ export interface NorthConnectorDTO<T extends NorthSettings> extends BaseEntity {
     };
   };
   subscriptions: Array<SouthConnectorLightDTO>;
+  items: Array<NorthConnectorItemDTO<I>>;
+  transformers: Array<{ transformer: TransformerDTO; order: number }>;
 }
 
-export interface NorthConnectorCommandDTO<T extends NorthSettings> {
+export interface NorthConnectorCommandDTO<T extends NorthSettings, I extends NorthItemSettings> {
   name: string;
   type: OIBusNorthType;
   description: string;
@@ -76,6 +79,30 @@ export interface NorthConnectorCommandDTO<T extends NorthSettings> {
     };
   };
   subscriptions: Array<string>;
+  items: Array<NorthConnectorItemCommandDTO<I>>;
+  transformers: Array<{ id: string; order: number }>;
+}
+
+/**
+ * DTO used for an item to query within a north
+ */
+export interface NorthConnectorItemDTO<T extends NorthItemSettings> extends BaseEntity {
+  name: string;
+  enabled: boolean;
+  settings: T;
+}
+
+export interface NorthConnectorItemCommandDTO<T extends NorthItemSettings> {
+  id: string | null;
+  enabled: boolean;
+  name: string;
+  settings: T;
+}
+
+export interface NorthConnectorItemSearchParam {
+  name?: string;
+  enabled?: boolean;
+  page?: number;
 }
 
 export interface NorthConnectorManifest {
@@ -86,6 +113,7 @@ export interface NorthConnectorManifest {
     points: boolean;
   };
   settings: Array<OibFormControl>;
+  items: { settings: Array<OibFormControl> };
 }
 
 export interface NorthCacheFiles {

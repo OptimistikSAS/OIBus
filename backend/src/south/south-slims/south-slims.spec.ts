@@ -67,6 +67,7 @@ describe('SouthSlims with body', () => {
       useProxy: false,
       acceptUnauthorized: false
     },
+    transformers: [],
     items: [
       {
         id: 'id1',
@@ -322,6 +323,7 @@ describe('SouthSlims with body and accept self signed', () => {
       useProxy: false,
       acceptUnauthorized: true
     },
+    transformers: [],
     items: [
       {
         id: 'id1',
@@ -500,6 +502,7 @@ describe('SouthSlims with query params', () => {
       proxyPassword: null,
       acceptUnauthorized: false
     },
+    transformers: [],
     items: [
       {
         id: 'id1',
@@ -1226,6 +1229,7 @@ describe('SouthSlims with query params and accept self signed', () => {
       proxyUsername: 'proxy username',
       acceptUnauthorized: false
     },
+    transformers: [],
     items: [
       {
         id: 'id1',

@@ -4,7 +4,7 @@ import NorthConnector from '../north-connector';
 import EncryptionService from '../../service/encryption.service';
 import pino from 'pino';
 import { DateTime } from 'luxon';
-import { NorthSFTPSettings } from '../../../shared/model/north-settings.model';
+import { NorthSFTPItemSettings, NorthSFTPSettings } from '../../../shared/model/north-settings.model';
 import csv from 'papaparse';
 import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 
@@ -18,9 +18,9 @@ import { BaseFolders } from '../../model/types';
 /**
  * Class NorthSFTP - Write files in an output folder
  */
-export default class NorthSFTP extends NorthConnector<NorthSFTPSettings> {
+export default class NorthSFTP extends NorthConnector<NorthSFTPSettings, NorthSFTPItemSettings> {
   constructor(
-    configuration: NorthConnectorEntity<NorthSFTPSettings>,
+    configuration: NorthConnectorEntity<NorthSFTPSettings, NorthSFTPItemSettings>,
     encryptionService: EncryptionService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,

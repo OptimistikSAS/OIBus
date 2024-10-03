@@ -7,7 +7,7 @@ import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import ValueCacheServiceMock from '../../tests/__mocks__/service/cache/value-cache-service.mock';
 import FileCacheServiceMock from '../../tests/__mocks__/service/cache/file-cache-service.mock';
-import { NorthConsoleSettings } from '../../../shared/model/north-settings.model';
+import { NorthConsoleItemSettings, NorthConsoleSettings } from '../../../shared/model/north-settings.model';
 import { OIBusTimeValue } from '../../../shared/model/engine.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
@@ -44,7 +44,7 @@ jest.mock(
     }
 );
 
-let configuration: NorthConnectorEntity<NorthConsoleSettings>;
+let configuration: NorthConnectorEntity<NorthConsoleSettings, NorthConsoleItemSettings>;
 let north: NorthConsole;
 
 describe('NorthConsole with verbose mode', () => {

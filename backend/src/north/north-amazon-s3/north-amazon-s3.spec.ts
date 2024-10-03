@@ -9,7 +9,7 @@ import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import ValueCacheServiceMock from '../../tests/__mocks__/service/cache/value-cache-service.mock';
 import FileCacheServiceMock from '../../tests/__mocks__/service/cache/file-cache-service.mock';
-import { NorthAmazonS3Settings } from '../../../shared/model/north-settings.model';
+import { NorthAmazonS3ItemSettings, NorthAmazonS3Settings } from '../../../shared/model/north-settings.model';
 import csv from 'papaparse';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
@@ -51,7 +51,7 @@ jest.mock(
 );
 
 let north: NorthAmazonS3;
-let configuration: NorthConnectorEntity<NorthAmazonS3Settings>;
+let configuration: NorthConnectorEntity<NorthAmazonS3Settings, NorthAmazonS3ItemSettings>;
 
 describe('NorthAmazonS3', () => {
   describe('with proxy', () => {

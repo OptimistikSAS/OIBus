@@ -8,7 +8,11 @@ import { NorthConnectorCommandDTO, NorthConnectorManifest } from '../../../../..
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
-import { HistoryQueryDTO, HistoryQueryItemCommandDTO, HistoryQueryStatus } from '../../../../../backend/shared/model/history-query.model';
+import {
+  HistoryQueryDTO,
+  HistoryQuerySouthItemCommandDTO,
+  HistoryQueryStatus
+} from '../../../../../backend/shared/model/history-query.model';
 import {
   SouthConnectorCommandDTO,
   SouthConnectorItemSearchParam,
@@ -32,7 +36,7 @@ import { ModalService } from '../../shared/modal.service';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { LogsComponent } from '../../logs/logs.component';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
-import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
 
@@ -74,7 +78,7 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
   private cd = inject(ChangeDetectorRef);
   private translateService = inject(TranslateService);
 
-  historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> | null = null;
+  historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings> | null = null;
   northDisplayedSettings: Array<{ key: string; value: string }> = [];
   southDisplayedSettings: Array<{ key: string; value: string }> = [];
 
@@ -164,9 +168,9 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
       });
   }
 
-  updateInMemoryItems(_items: Array<HistoryQueryItemCommandDTO<SouthItemSettings>> | null) {
+  updateInMemoryItems(_items: Array<HistoryQuerySouthItemCommandDTO<SouthItemSettings>> | null) {
     this.historyQueryService.get(this.historyQuery!.id).subscribe(historyQuery => {
-      this.historyQuery!.items = historyQuery.items;
+      this.historyQuery!.southItems = historyQuery.southItems;
       this.historyQuery = JSON.parse(JSON.stringify(this.historyQuery)); // Used to force a refresh in history query item list
     });
   }
@@ -239,11 +243,11 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
   }
 
   test(type: 'south' | 'north') {
-    let command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> | NorthConnectorCommandDTO<NorthSettings>;
+    let command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> | NorthConnectorCommandDTO<NorthSettings, NorthItemSettings>;
     if (type === 'south') {
       command = this.southConnectorCommand;
     } else {
-      command = this.northConnectorComand;
+      command = this.northConnectorCommand;
     }
 
     const modalRef = this.modalService.open(TestConnectionResultModalComponent);
@@ -270,11 +274,11 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
     } as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
   }
 
-  get northConnectorComand() {
+  get northConnectorCommand() {
     return {
       type: this.northManifest!.id,
       settings: this.historyQuery!.northSettings,
       caching: this.historyQuery!.caching
-    } as NorthConnectorCommandDTO<NorthSettings>;
+    } as NorthConnectorCommandDTO<NorthSettings, NorthItemSettings>;
   }
 }

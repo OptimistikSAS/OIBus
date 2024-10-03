@@ -6,7 +6,7 @@ import { of } from 'rxjs';
 import { NorthConnectorDTO } from '../../../../../../backend/shared/model/north-connector.model';
 import { Component, viewChild } from '@angular/core';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
-import { NorthSettings } from '../../../../../../backend/shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../../../../backend/shared/model/north-settings.model';
 
 @Component({
   template: `<oib-error-files #component [northConnector]="northConnector" />`,
@@ -14,10 +14,10 @@ import { NorthSettings } from '../../../../../../backend/shared/model/north-sett
 })
 class TestComponent {
   readonly component = viewChild.required<ErrorFilesComponent>('component');
-  northConnector: NorthConnectorDTO<NorthSettings> = {
+  northConnector: NorthConnectorDTO<NorthSettings, NorthItemSettings> = {
     id: 'northId',
     name: 'North Connector'
-  } as NorthConnectorDTO<NorthSettings>;
+  } as NorthConnectorDTO<NorthSettings, NorthItemSettings>;
 }
 
 class ErrorFilesComponentTester extends ComponentTester<TestComponent> {

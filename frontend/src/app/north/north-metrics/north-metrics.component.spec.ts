@@ -9,7 +9,7 @@ import { NotificationService } from '../../shared/notification.service';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { NorthConnectorMetrics } from '../../../../../backend/shared/model/engine.model';
 import { provideHttpClient } from '@angular/common/http';
-import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
 @Component({
   template: `<oib-north-metrics [connectorMetrics]="metrics" [northConnector]="northConnector" [manifest]="manifest" />`,
@@ -29,17 +29,16 @@ class TestComponent {
     errorSize: 15,
     archiveSize: 16
   };
-  northConnector: NorthConnectorDTO<NorthSettings> = {
+  northConnector: NorthConnectorDTO<NorthSettings, NorthItemSettings> = {
     id: 'northId',
     name: 'North Connector'
-  } as NorthConnectorDTO<NorthSettings>;
+  } as NorthConnectorDTO<NorthSettings, NorthItemSettings>;
   manifest: NorthConnectorManifest = {
     id: 'oianalytics',
     category: 'api',
     modes: {
       files: true,
-      points: true,
-      items: false
+      points: true
     },
     settings: [
       {
@@ -55,7 +54,8 @@ class TestComponent {
         ],
         displayInViewMode: true
       }
-    ]
+    ],
+    items: { settings: [] }
   };
 }
 

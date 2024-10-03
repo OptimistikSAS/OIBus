@@ -1,8 +1,9 @@
 import { BaseEntity } from './types';
 import { SouthItemSettings, SouthSettings } from './south-settings.model';
-import { NorthSettings } from './north-settings.model';
+import { NorthItemSettings, NorthSettings } from './north-settings.model';
 import { OIBusSouthType } from './south-connector.model';
 import { OIBusNorthType } from './north-connector.model';
+import { Transformer } from '../../src/model/transformer.model';
 
 export const HISTORY_QUERY_STATUS = ['PENDING', 'RUNNING', 'PAUSED', 'FINISHED', 'ERRORED'] as const;
 export type HistoryQueryStatus = (typeof HISTORY_QUERY_STATUS)[number];
@@ -17,7 +18,8 @@ export interface HistoryQueryLightDTO extends BaseEntity {
   northType: OIBusNorthType;
 }
 
-export interface HistoryQueryDTO<S extends SouthSettings, N extends NorthSettings, I extends SouthItemSettings> extends BaseEntity {
+export interface HistoryQueryDTO<S extends SouthSettings, N extends NorthSettings, I extends SouthItemSettings, J extends NorthItemSettings>
+  extends BaseEntity {
   name: string;
   description: string;
   status: HistoryQueryStatus;
@@ -41,10 +43,18 @@ export interface HistoryQueryDTO<S extends SouthSettings, N extends NorthSetting
       archive: { enabled: boolean; retentionDuration: number };
     };
   };
-  items: Array<HistoryQueryItemDTO<I>>;
+  southItems: Array<HistoryQuerySouthItemDTO<I>>;
+  northItems: Array<HistoryQueryNorthItemDTO<J>>;
+  southTransformers: Array<{ order: number; transformer: Transformer }>;
+  northTransformers: Array<{ order: number; transformer: Transformer }>;
 }
 
-export interface HistoryQueryCommandDTO<S extends SouthSettings, N extends NorthSettings, I extends SouthItemSettings> {
+export interface HistoryQueryCommandDTO<
+  S extends SouthSettings,
+  N extends NorthSettings,
+  I extends SouthItemSettings,
+  J extends NorthItemSettings
+> {
   name: string;
   description: string;
   startTime: string;
@@ -71,7 +81,10 @@ export interface HistoryQueryCommandDTO<S extends SouthSettings, N extends North
       };
     };
   };
-  items: Array<HistoryQueryItemCommandDTO<I>>;
+  southItems: Array<HistoryQuerySouthItemCommandDTO<I>>;
+  northItems: Array<HistoryQueryNorthItemCommandDTO<J>>;
+  southTransformers: Array<{ order: number; id: string }>;
+  northTransformers: Array<{ order: number; id: string }>;
 }
 
 export interface HistoryQueryItemSearchParam {
@@ -80,13 +93,26 @@ export interface HistoryQueryItemSearchParam {
   page?: number;
 }
 
-export interface HistoryQueryItemDTO<T extends SouthItemSettings> extends BaseEntity {
+export interface HistoryQuerySouthItemDTO<T extends SouthItemSettings> extends BaseEntity {
   name: string;
   enabled: boolean;
   settings: T;
 }
 
-export interface HistoryQueryItemCommandDTO<T extends SouthItemSettings> {
+export interface HistoryQueryNorthItemDTO<T extends NorthItemSettings> extends BaseEntity {
+  name: string;
+  enabled: boolean;
+  settings: T;
+}
+
+export interface HistoryQuerySouthItemCommandDTO<T extends SouthItemSettings> {
+  id: string | null;
+  name: string;
+  enabled: boolean;
+  settings: T;
+}
+
+export interface HistoryQueryNorthItemCommandDTO<T extends NorthItemSettings> {
   id: string | null;
   name: string;
   enabled: boolean;

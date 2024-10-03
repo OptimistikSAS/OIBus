@@ -12,7 +12,7 @@ import { NorthConnectorLightDTO } from '../../../../../backend/shared/model/nort
 import { SouthConnectorLightDTO } from '../../../../../backend/shared/model/south-connector.model';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
-import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
 class CreateHistoryQueryModalComponentTester extends ComponentTester<CreateHistoryQueryModalComponent> {
   constructor() {
@@ -79,7 +79,9 @@ describe('CreateHistoryQueryModalComponent', () => {
     });
     tester = new CreateHistoryQueryModalComponentTester();
 
-    historyQueryService.create.and.returnValue(of({ id: 'historyId' } as HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>));
+    historyQueryService.create.and.returnValue(
+      of({ id: 'historyId' } as HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings>)
+    );
     northConnectorService.getNorthConnectorTypes.and.returnValue(
       of([
         { id: 'console', category: 'debug', name: 'Console', description: 'Console description', modes: { files: false, points: true } },

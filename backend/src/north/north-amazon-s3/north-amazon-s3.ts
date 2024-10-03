@@ -7,9 +7,9 @@ import { NodeHttpHandler } from '@aws-sdk/node-http-handler';
 import NorthConnector from '../north-connector';
 import EncryptionService from '../../service/encryption.service';
 import pino from 'pino';
-import { NorthAmazonS3Settings } from '../../../shared/model/north-settings.model';
+import { NorthAmazonS3ItemSettings, NorthAmazonS3Settings } from '../../../shared/model/north-settings.model';
 import { createProxyAgent } from '../../service/proxy-agent';
-import { OIBusContent } from '../../../shared/model/engine.model';
+import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
 import csv from 'papaparse';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
@@ -20,11 +20,11 @@ import { BaseFolders } from '../../model/types';
 /**
  * Class NorthAmazonS3 - sends files to Amazon AWS S3
  */
-export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings> {
+export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings, NorthAmazonS3ItemSettings> {
   private s3: S3Client | undefined;
 
   constructor(
-    connector: NorthConnectorEntity<NorthAmazonS3Settings>,
+    connector: NorthConnectorEntity<NorthAmazonS3Settings, NorthAmazonS3ItemSettings>,
     encryptionService: EncryptionService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,

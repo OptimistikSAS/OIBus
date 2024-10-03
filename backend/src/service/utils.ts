@@ -14,16 +14,17 @@ import https from 'node:https';
 import http from 'node:http';
 import { EngineSettingsDTO, OIBusContent, OIBusInfo, OIBusTimeValue } from '../../shared/model/engine.model';
 import os from 'node:os';
-import { NorthCacheFiles } from '../../shared/model/north-connector.model';
+import { NorthCacheFiles, NorthConnectorItemDTO } from '../../shared/model/north-connector.model';
 import cronstrue from 'cronstrue';
 import cronparser from 'cron-parser';
 import { ValidatedCronExpression } from '../../shared/model/scan-mode.model';
 import { SouthConnectorItemDTO } from '../../shared/model/south-connector.model';
 import { ScanMode } from '../model/scan-mode.model';
-import { HistoryQueryItemDTO } from '../../shared/model/history-query.model';
+import { HistoryQuerySouthItemDTO } from '../../shared/model/history-query.model';
 import { SouthItemSettings } from '../../shared/model/south-settings.model';
 import { EventEmitter } from 'node:events';
 import { BaseFolders } from '../model/types';
+import { NorthItemSettings } from '../../shared/model/north-settings.model';
 
 const COMPRESSION_LEVEL = 9;
 
@@ -659,8 +660,8 @@ export const checkScanMode = (scanModes: Array<ScanMode>, scanModeId: string | n
   return scanMode.id;
 };
 
-export const itemToFlattenedCSV = <I extends SouthItemSettings>(
-  items: Array<SouthConnectorItemDTO<I> | HistoryQueryItemDTO<I>>,
+export const southItemToFlattenedCSV = <I extends SouthItemSettings>(
+  items: Array<SouthConnectorItemDTO<I> | HistoryQuerySouthItemDTO<I>>,
   delimiter: string,
   scanModes?: Array<ScanMode>
 ): string => {
@@ -684,6 +685,31 @@ export const itemToFlattenedCSV = <I extends SouthItemSettings>(
       }
       delete flattenedItem.id;
       delete flattenedItem.scanModeId;
+      delete flattenedItem.settings;
+      delete flattenedItem.connectorId;
+      return flattenedItem;
+    }),
+    { columns: Array.from(columns), delimiter }
+  );
+};
+
+export const northItemToFlattenedCSV = <I extends NorthItemSettings>(items: Array<NorthConnectorItemDTO<I>>, delimiter: string): string => {
+  const columns: Set<string> = new Set<string>(['name', 'enabled']);
+
+  return csv.unparse(
+    items.map(item => {
+      const flattenedItem: Record<string, string | object | boolean> = {
+        ...item
+      };
+      for (const [itemSettingsKey, itemSettingsValue] of Object.entries(item.settings)) {
+        columns.add(`settings_${itemSettingsKey}`);
+        if (typeof itemSettingsValue === 'object') {
+          flattenedItem[`settings_${itemSettingsKey}`] = JSON.stringify(itemSettingsValue);
+        } else {
+          flattenedItem[`settings_${itemSettingsKey}`] = itemSettingsValue as string;
+        }
+      }
+      delete flattenedItem.id;
       delete flattenedItem.settings;
       delete flattenedItem.connectorId;
       return flattenedItem;

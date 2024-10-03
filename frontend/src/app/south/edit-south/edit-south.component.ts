@@ -210,7 +210,8 @@ export class EditSouthComponent implements OnInit {
               scanModeName: null,
               settings: item.settings
             }))
-          : this.inMemoryItems
+          : this.inMemoryItems,
+      transformers: [] // TODO
     };
 
     return command;

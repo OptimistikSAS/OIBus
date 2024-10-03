@@ -3,10 +3,14 @@ import HistoryQueryConnectorController from './history-query.controller';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
 import JoiValidator from './validators/joi.validator';
 import { historyQuerySchema } from './validators/oibus-validation-schema';
-import { TransformerDTO, TransformerFilterDTO } from '../../../../shared/model/transformer.model';
 import testData from '../../tests/utils/test-data';
-import { toHistoryQueryDTO, toHistoryQueryItemDTO, toHistoryQueryLightDTO } from '../../service/history-query.service';
-import { itemToFlattenedCSV } from '../../service/utils';
+import {
+  toHistoryQueryDTO,
+  toHistoryQueryLightDTO,
+  toNorthHistoryQueryItemDTO,
+  toSouthHistoryQueryItemDTO
+} from '../../service/history-query.service';
+import { northItemToFlattenedCSV, southItemToFlattenedCSV } from '../../service/utils';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 
@@ -35,7 +39,6 @@ describe('History query controller', () => {
 
   it('findById() should return history query', async () => {
     ctx.params.id = testData.historyQueries.list[0].id;
-    ctx.params.id = 'id';
     ctx.app.historyQueryService.findById.mockReturnValueOnce(testData.historyQueries.list[0]);
 
     await historyQueryController.findById(ctx);
@@ -166,7 +169,7 @@ describe('History query controller', () => {
 
     ctx.app.logger.child.mockReturnValueOnce(logger);
 
-    await historyQueryController.testHistoryQueryItem(ctx);
+    await historyQueryController.testSouthHistoryQueryItem(ctx);
 
     expect(ctx.app.historyQueryService.testSouthItem).toHaveBeenCalledWith(
       testData.historyQueries.list[0].id,
@@ -193,7 +196,7 @@ describe('History query controller', () => {
       throw new Error('test error');
     });
 
-    await historyQueryController.testHistoryQueryItem(ctx);
+    await historyQueryController.testSouthHistoryQueryItem(ctx);
 
     expect(ctx.app.historyQueryService.testSouthItem).toHaveBeenCalledWith(
       testData.historyQueries.list[0].id,
@@ -291,7 +294,7 @@ describe('History query controller', () => {
     expect(ctx.badRequest).toHaveBeenCalledWith('delete error');
   });
 
-  it('searchHistoryQueryItems() should return South items', async () => {
+  it('searchSouthHistoryQueryItems() should return South items', async () => {
     ctx.params.historyQueryId = testData.historyQueries.list[0].id;
     ctx.query = {
       page: 1,
@@ -301,33 +304,33 @@ describe('History query controller', () => {
       page: 1,
       name: 'name'
     };
-    ctx.app.historyQueryService.searchHistoryQueryItems.mockReturnValue({
-      content: testData.historyQueries.list[0].items.map(item =>
-        toHistoryQueryItemDTO(item, testData.historyQueries.list[0].southType, ctx.app.encryptionService)
+    ctx.app.historyQueryService.searchSouthHistoryQueryItems.mockReturnValue({
+      content: testData.historyQueries.list[0].southItems.map(item =>
+        toSouthHistoryQueryItemDTO(item, testData.historyQueries.list[0].southType, ctx.app.encryptionService)
       ),
-      totalElements: testData.historyQueries.list[0].items.length,
+      totalElements: testData.historyQueries.list[0].southItems.length,
       size: 25,
       number: 1,
       totalPages: 1
     });
     ctx.app.historyQueryService.findById.mockReturnValueOnce(testData.historyQueries.list[0]);
 
-    await historyQueryController.searchHistoryQueryItems(ctx);
+    await historyQueryController.searchSouthHistoryQueryItems(ctx);
 
     expect(ctx.app.historyQueryService.findById).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
-    expect(ctx.app.historyQueryService.searchHistoryQueryItems).toHaveBeenCalledWith(testData.historyQueries.list[0].id, searchParams);
+    expect(ctx.app.historyQueryService.searchSouthHistoryQueryItems).toHaveBeenCalledWith(testData.historyQueries.list[0].id, searchParams);
     expect(ctx.ok).toHaveBeenCalledWith({
-      content: testData.historyQueries.list[0].items.map(item =>
-        toHistoryQueryItemDTO(item, testData.historyQueries.list[0].southType, ctx.app.encryptionService)
+      content: testData.historyQueries.list[0].southItems.map(item =>
+        toSouthHistoryQueryItemDTO(item, testData.historyQueries.list[0].southType, ctx.app.encryptionService)
       ),
-      totalElements: testData.historyQueries.list[0].items.length,
+      totalElements: testData.historyQueries.list[0].southItems.length,
       size: 25,
       number: 1,
       totalPages: 1
     });
   });
 
-  it('searchHistoryQueryItems() should return South items with default search params', async () => {
+  it('searchSouthHistoryQueryItems() should return South items with default search params', async () => {
     ctx.params.historyQueryId = 'id';
     ctx.params.historyQueryId = testData.historyQueries.list[0].id;
     ctx.query = {};
@@ -335,271 +338,275 @@ describe('History query controller', () => {
       page: 0
     };
     ctx.app.historyQueryService.findById.mockReturnValueOnce(testData.historyQueries.list[0]);
-    ctx.app.historyQueryService.searchHistoryQueryItems.mockReturnValue({
-      content: testData.historyQueries.list[0].items.map(item =>
-        toHistoryQueryItemDTO(item, testData.historyQueries.list[0].southType, ctx.app.encryptionService)
+    ctx.app.historyQueryService.searchSouthHistoryQueryItems.mockReturnValue({
+      content: testData.historyQueries.list[0].southItems.map(item =>
+        toSouthHistoryQueryItemDTO(item, testData.historyQueries.list[0].southType, ctx.app.encryptionService)
       ),
-      totalElements: testData.historyQueries.list[0].items.length,
+      totalElements: testData.historyQueries.list[0].southItems.length,
       size: 25,
       number: 1,
       totalPages: 1
     });
 
-    await historyQueryController.searchHistoryQueryItems(ctx);
+    await historyQueryController.searchSouthHistoryQueryItems(ctx);
 
     expect(ctx.app.historyQueryService.findById).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
-    expect(ctx.app.historyQueryService.searchHistoryQueryItems).toHaveBeenCalledWith(testData.historyQueries.list[0].id, searchParams);
+    expect(ctx.app.historyQueryService.searchSouthHistoryQueryItems).toHaveBeenCalledWith(testData.historyQueries.list[0].id, searchParams);
     expect(ctx.ok).toHaveBeenCalledWith({
-      content: testData.historyQueries.list[0].items.map(item =>
-        toHistoryQueryItemDTO(item, testData.historyQueries.list[0].southType, ctx.app.encryptionService)
+      content: testData.historyQueries.list[0].southItems.map(item =>
+        toSouthHistoryQueryItemDTO(item, testData.historyQueries.list[0].southType, ctx.app.encryptionService)
       ),
-      totalElements: testData.historyQueries.list[0].items.length,
+      totalElements: testData.historyQueries.list[0].southItems.length,
       size: 25,
       number: 1,
       totalPages: 1
     });
   });
 
-  it('searchHistoryQueryItems() should return not found if history query is not found', async () => {
+  it('searchSouthHistoryQueryItems() should return not found if history query is not found', async () => {
     ctx.params.historyQueryId = testData.historyQueries.list[0].id;
     ctx.app.historyQueryService.findById.mockReturnValueOnce(null);
 
-    await historyQueryController.searchHistoryQueryItems(ctx);
+    await historyQueryController.searchSouthHistoryQueryItems(ctx);
 
     expect(ctx.notFound).toHaveBeenCalledTimes(1);
   });
 
-  it('getHistoryItem() should return item', async () => {
+  it('getSouthHistoryQueryItem() should return item', async () => {
     ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.params.id = testData.historyQueries.list[0].items[0].id;
+    ctx.params.id = testData.historyQueries.list[0].southItems[0].id;
     ctx.app.historyQueryService.findById.mockReturnValueOnce(testData.historyQueries.list[0]);
-    ctx.app.historyQueryService.findHistoryQueryItem.mockReturnValueOnce(testData.historyQueries.list[0].items[0]);
+    ctx.app.historyQueryService.findSouthHistoryQueryItem.mockReturnValueOnce(testData.historyQueries.list[0].southItems[0]);
 
-    await historyQueryController.getHistoryQueryItem(ctx);
+    await historyQueryController.getSouthHistoryQueryItem(ctx);
 
-    expect(ctx.app.historyQueryService.findHistoryQueryItem).toHaveBeenCalledWith(
+    expect(ctx.app.historyQueryService.findSouthHistoryQueryItem).toHaveBeenCalledWith(
       testData.historyQueries.list[0].id,
-      testData.historyQueries.list[0].items[0].id
+      testData.historyQueries.list[0].southItems[0].id
     );
-    expect(ctx.ok).toHaveBeenCalledWith(testData.historyQueries.list[0].items[0]);
+    expect(ctx.ok).toHaveBeenCalledWith(testData.historyQueries.list[0].southItems[0]);
   });
 
-  it('getHistoryItem() should return not found if history query is not found', async () => {
+  it('getSouthHistoryQueryItem() should return not found if history query is not found', async () => {
     ctx.params.historyQueryId = testData.historyQueries.list[0].id;
     ctx.app.historyQueryService.findById.mockReturnValueOnce(null);
 
-    await historyQueryController.getHistoryQueryItem(ctx);
+    await historyQueryController.getSouthHistoryQueryItem(ctx);
 
     expect(ctx.notFound).toHaveBeenCalledTimes(1);
   });
 
-  it('getHistoryItem() should return not found when South item not found', async () => {
+  it('getSouthHistoryQueryItem() should return not found when South item not found', async () => {
     ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.params.id = testData.historyQueries.list[0].items[0].id;
+    ctx.params.id = testData.historyQueries.list[0].southItems[0].id;
     ctx.app.historyQueryService.findById.mockReturnValueOnce(testData.historyQueries.list[0]);
-    ctx.app.historyQueryService.findHistoryQueryItem.mockReturnValueOnce(null);
+    ctx.app.historyQueryService.findSouthHistoryQueryItem.mockReturnValueOnce(null);
 
-    await historyQueryController.getHistoryQueryItem(ctx);
+    await historyQueryController.getSouthHistoryQueryItem(ctx);
 
-    expect(ctx.app.historyQueryService.findHistoryQueryItem).toHaveBeenCalledWith(
+    expect(ctx.app.historyQueryService.findSouthHistoryQueryItem).toHaveBeenCalledWith(
       testData.historyQueries.list[0].id,
-      testData.historyQueries.list[0].items[0].id
+      testData.historyQueries.list[0].southItems[0].id
     );
     expect(ctx.notFound).toHaveBeenCalled();
   });
 
-  it('createHistoryQueryItem() should create item', async () => {
+  it('createSouthHistoryQueryItem() should create item', async () => {
     ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.request.body = testData.historyQueries.itemCommand;
+    ctx.request.body = testData.historyQueries.southItemCommand;
     ctx.app.historyQueryService.findById.mockReturnValueOnce(testData.historyQueries.list[0]);
-    ctx.app.historyQueryService.createHistoryQueryItem.mockReturnValueOnce(testData.historyQueries.list[0].items[0]);
+    ctx.app.historyQueryService.createSouthHistoryQueryItem.mockReturnValueOnce(testData.historyQueries.list[0].southItems[0]);
     ctx.app.southService.getInstalledSouthManifests.mockReturnValueOnce([
       { ...testData.south.manifest, id: testData.historyQueries.list[0].southType }
     ]);
 
-    await historyQueryController.createHistoryQueryItem(ctx);
+    await historyQueryController.createSouthHistoryQueryItem(ctx);
 
-    expect(ctx.app.historyQueryService.createHistoryQueryItem).toHaveBeenCalledWith(
+    expect(ctx.app.historyQueryService.createSouthHistoryQueryItem).toHaveBeenCalledWith(
       testData.historyQueries.list[0].id,
-      testData.historyQueries.itemCommand
+      testData.historyQueries.southItemCommand
     );
     expect(ctx.created).toHaveBeenCalledWith(
-      toHistoryQueryItemDTO(testData.historyQueries.list[0].items[0], testData.historyQueries.list[0].southType, ctx.app.encryptionService)
+      toSouthHistoryQueryItemDTO(
+        testData.historyQueries.list[0].southItems[0],
+        testData.historyQueries.list[0].southType,
+        ctx.app.encryptionService
+      )
     );
   });
 
-  it('createHistoryQueryItem() should return not found if history query is not found', async () => {
+  it('createSouthHistoryQueryItem() should return not found if history query is not found', async () => {
     ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.request.body = testData.historyQueries.itemCommand;
+    ctx.request.body = testData.historyQueries.southItemCommand;
     ctx.app.historyQueryService.findById.mockReturnValueOnce(null);
-    await historyQueryController.createHistoryQueryItem(ctx);
+    await historyQueryController.createSouthHistoryQueryItem(ctx);
 
     expect(ctx.notFound).toHaveBeenCalledTimes(1);
   });
 
-  it('createHistoryQueryItem() should return bad request on item creation error', async () => {
+  it('createSouthHistoryQueryItem() should return bad request on item creation error', async () => {
     ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.request.body = testData.historyQueries.itemCommand;
+    ctx.request.body = testData.historyQueries.southItemCommand;
     ctx.app.historyQueryService.findById.mockReturnValueOnce(testData.historyQueries.list[0]);
 
-    ctx.app.historyQueryService.createHistoryQueryItem.mockImplementationOnce(() => {
+    ctx.app.historyQueryService.createSouthHistoryQueryItem.mockImplementationOnce(() => {
       throw new Error('create error');
     });
-    await historyQueryController.createHistoryQueryItem(ctx);
+    await historyQueryController.createSouthHistoryQueryItem(ctx);
 
     expect(ctx.badRequest).toHaveBeenCalledWith('create error');
   });
 
-  it('updateHistoryQueryItem() should update item', async () => {
+  it('updateSouthHistoryQueryItem() should update item', async () => {
     ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.params.id = testData.historyQueries.list[0].items[0].id;
-    ctx.request.body = testData.historyQueries.itemCommand;
+    ctx.params.id = testData.historyQueries.list[0].southItems[0].id;
+    ctx.request.body = testData.historyQueries.southItemCommand;
 
-    await historyQueryController.updateHistoryQueryItem(ctx);
+    await historyQueryController.updateSouthHistoryQueryItem(ctx);
 
-    expect(ctx.app.historyQueryService.updateHistoryQueryItem).toHaveBeenCalledWith(
+    expect(ctx.app.historyQueryService.updateSouthHistoryQueryItem).toHaveBeenCalledWith(
       testData.historyQueries.list[0].id,
-      testData.historyQueries.list[0].items[0].id,
-      testData.historyQueries.itemCommand
+      testData.historyQueries.list[0].southItems[0].id,
+      testData.historyQueries.southItemCommand
     );
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
-  it('updateHistoryQueryItem() should return bad request on item update error', async () => {
+  it('updateSouthHistoryQueryItem() should return bad request on item update error', async () => {
     ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.params.id = testData.historyQueries.list[0].items[0].id;
-    ctx.request.body = testData.historyQueries.itemCommand;
+    ctx.params.id = testData.historyQueries.list[0].southItems[0].id;
+    ctx.request.body = testData.historyQueries.southItemCommand;
 
-    ctx.app.historyQueryService.updateHistoryQueryItem.mockImplementationOnce(() => {
+    ctx.app.historyQueryService.updateSouthHistoryQueryItem.mockImplementationOnce(() => {
       throw new Error('update error');
     });
-    await historyQueryController.updateHistoryQueryItem(ctx);
+    await historyQueryController.updateSouthHistoryQueryItem(ctx);
 
     expect(ctx.badRequest).toHaveBeenCalledWith('update error');
   });
 
-  it('deleteHistoryQueryItem() should delete item', async () => {
+  it('deleteSouthHistoryQueryItem() should delete item', async () => {
     ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.params.id = testData.historyQueries.list[0].items[0].id;
+    ctx.params.id = testData.historyQueries.list[0].southItems[0].id;
 
-    await historyQueryController.deleteHistoryQueryItem(ctx);
+    await historyQueryController.deleteSouthHistoryQueryItem(ctx);
 
-    expect(ctx.app.historyQueryService.deleteHistoryQueryItem).toHaveBeenCalledWith(
+    expect(ctx.app.historyQueryService.deleteSouthHistoryQueryItem).toHaveBeenCalledWith(
       testData.historyQueries.list[0].id,
-      testData.historyQueries.list[0].items[0].id
+      testData.historyQueries.list[0].southItems[0].id
     );
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
-  it('deleteHistoryQueryItem() should return bad request on item delete error', async () => {
+  it('deleteSouthHistoryQueryItem() should return bad request on item delete error', async () => {
     ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.params.id = testData.historyQueries.list[0].items[0].id;
+    ctx.params.id = testData.historyQueries.list[0].southItems[0].id;
 
-    ctx.app.historyQueryService.deleteHistoryQueryItem.mockImplementationOnce(() => {
+    ctx.app.historyQueryService.deleteSouthHistoryQueryItem.mockImplementationOnce(() => {
       throw new Error('delete error');
     });
-    await historyQueryController.deleteHistoryQueryItem(ctx);
+    await historyQueryController.deleteSouthHistoryQueryItem(ctx);
 
     expect(ctx.badRequest).toHaveBeenCalledWith('delete error');
   });
 
-  it('enableHistoryQueryItem() should enable History item', async () => {
+  it('enableSouthHistoryQueryItem() should enable History item', async () => {
     ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.params.id = testData.historyQueries.list[0].items[0].id;
+    ctx.params.id = testData.historyQueries.list[0].southItems[0].id;
 
-    await historyQueryController.enableHistoryQueryItem(ctx);
+    await historyQueryController.enableSouthHistoryQueryItem(ctx);
 
-    expect(ctx.app.historyQueryService.enableHistoryQueryItem).toHaveBeenCalledWith(
+    expect(ctx.app.historyQueryService.enableSouthHistoryQueryItem).toHaveBeenCalledWith(
       testData.historyQueries.list[0].id,
-      testData.historyQueries.list[0].items[0].id
+      testData.historyQueries.list[0].southItems[0].id
     );
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
-  it('enableHistoryQueryItem() should return bad request on item enable error', async () => {
+  it('enableSouthHistoryQueryItem() should return bad request on item enable error', async () => {
     ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.params.id = testData.historyQueries.list[0].items[0].id;
+    ctx.params.id = testData.historyQueries.list[0].southItems[0].id;
 
-    ctx.app.historyQueryService.enableHistoryQueryItem.mockImplementationOnce(() => {
+    ctx.app.historyQueryService.enableSouthHistoryQueryItem.mockImplementationOnce(() => {
       throw new Error('enable error');
     });
-    await historyQueryController.enableHistoryQueryItem(ctx);
+    await historyQueryController.enableSouthHistoryQueryItem(ctx);
 
     expect(ctx.badRequest).toHaveBeenCalledWith('enable error');
   });
 
-  it('disableHistoryQueryItem() should disable History item', async () => {
+  it('disableSouthHistoryQueryItem() should disable History item', async () => {
     ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.params.id = testData.historyQueries.list[0].items[0].id;
+    ctx.params.id = testData.historyQueries.list[0].southItems[0].id;
 
-    await historyQueryController.disableHistoryQueryItem(ctx);
+    await historyQueryController.disableSouthHistoryQueryItem(ctx);
 
-    expect(ctx.app.historyQueryService.disableHistoryQueryItem).toHaveBeenCalledWith(
+    expect(ctx.app.historyQueryService.disableSouthHistoryQueryItem).toHaveBeenCalledWith(
       testData.historyQueries.list[0].id,
-      testData.historyQueries.list[0].items[0].id
+      testData.historyQueries.list[0].southItems[0].id
     );
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
-  it('disableHistoryQueryItem() should return bad request on item disable error', async () => {
+  it('disableSouthHistoryQueryItem() should return bad request on item disable error', async () => {
     ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.params.id = testData.historyQueries.list[0].items[0].id;
+    ctx.params.id = testData.historyQueries.list[0].southItems[0].id;
 
-    ctx.app.historyQueryService.disableHistoryQueryItem.mockImplementationOnce(() => {
+    ctx.app.historyQueryService.disableSouthHistoryQueryItem.mockImplementationOnce(() => {
       throw new Error('disable error');
     });
-    await historyQueryController.disableHistoryQueryItem(ctx);
+    await historyQueryController.disableSouthHistoryQueryItem(ctx);
 
     expect(ctx.badRequest).toHaveBeenCalledWith('disable error');
   });
 
-  it('deleteAllItems() should delete all South items', async () => {
+  it('deleteAllSouthItems() should delete all South items', async () => {
     ctx.params.historyQueryId = testData.historyQueries.list[0].id;
 
-    await historyQueryController.deleteAllItems(ctx);
+    await historyQueryController.deleteAllSouthItems(ctx);
 
-    expect(ctx.app.historyQueryService.deleteAllItemsForHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+    expect(ctx.app.historyQueryService.deleteAllSouthItemsForHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
-  it('deleteAllItems() should return bad request on delete all item error', async () => {
+  it('deleteAllSouthItems() should return bad request on delete all item error', async () => {
     ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.params.id = testData.historyQueries.list[0].items[0].id;
+    ctx.params.id = testData.historyQueries.list[0].southItems[0].id;
 
-    ctx.app.historyQueryService.deleteAllItemsForHistoryQuery.mockImplementationOnce(() => {
+    ctx.app.historyQueryService.deleteAllSouthItemsForHistoryQuery.mockImplementationOnce(() => {
       throw new Error('delete all error');
     });
-    await historyQueryController.deleteAllItems(ctx);
+    await historyQueryController.deleteAllSouthItems(ctx);
 
     expect(ctx.badRequest).toHaveBeenCalledWith('delete all error');
   });
 
-  it('historyQueryItemsToCsv() should download a csv file', async () => {
+  it('historyQuerySouthItemsToCsv() should download a csv file', async () => {
     ctx.params.southType = testData.historyQueries.list[0].southType;
     ctx.request.body = {
-      items: testData.historyQueries.list[0].items,
+      items: testData.historyQueries.list[0].southItems,
       delimiter: ';'
     };
-    (itemToFlattenedCSV as jest.Mock).mockReturnValue('csv content');
+    (southItemToFlattenedCSV as jest.Mock).mockReturnValue('csv content');
     ctx.app.southService.getInstalledSouthManifests.mockReturnValueOnce([
       { ...testData.south.manifest, id: testData.historyQueries.list[0].southType }
     ]);
 
-    await historyQueryController.historyQueryItemsToCsv(ctx);
+    await historyQueryController.historyQuerySouthItemsToCsv(ctx);
 
     expect(ctx.ok).toHaveBeenCalledWith();
     expect(ctx.body).toEqual('csv content');
   });
 
-  it('historyQueryItemsToCsv() should throw not found if manifest not found', async () => {
+  it('historyQuerySouthItemsToCsv() should throw not found if manifest not found', async () => {
     ctx.params.southType = 'bad type';
     ctx.request.body = {
-      items: testData.historyQueries.list[0].items,
+      items: testData.historyQueries.list[0].southItems,
       delimiter: ';'
     };
     ctx.app.southService.getInstalledSouthManifests.mockReturnValueOnce([]);
 
-    await historyQueryController.historyQueryItemsToCsv(ctx);
+    await historyQueryController.historyQuerySouthItemsToCsv(ctx);
 
     expect(ctx.throw).toHaveBeenCalledWith(404, 'South manifest not found');
   });
@@ -607,7 +614,7 @@ describe('History query controller', () => {
   it('exportSouthItems() should download a csv file', async () => {
     ctx.params.historyQueryId = testData.historyQueries.list[0].id;
     ctx.app.historyQueryService.findById.mockReturnValueOnce(testData.historyQueries.list[0]);
-    (itemToFlattenedCSV as jest.Mock).mockReturnValue('csv content');
+    (southItemToFlattenedCSV as jest.Mock).mockReturnValue('csv content');
     ctx.request.body = { delimiter: ';' };
 
     await historyQueryController.exportSouthItems(ctx);
@@ -631,20 +638,23 @@ describe('History query controller', () => {
     ctx.params.southType = testData.historyQueries.list[0].southType;
     ctx.request.body = { delimiter: ',', currentItems: '[]' };
     ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
-    ctx.app.historyQueryService.checkCsvFileImport.mockReturnValueOnce({ items: testData.historyQueries.list[0].items, errors: [] });
+    ctx.app.historyQueryService.checkSouthCsvFileImport.mockReturnValueOnce({
+      items: testData.historyQueries.list[0].southItems,
+      errors: []
+    });
 
     await historyQueryController.checkImportSouthItems(ctx);
 
     expect(ctx.badRequest).not.toHaveBeenCalled();
     expect(ctx.throw).not.toHaveBeenCalled();
 
-    expect(ctx.app.historyQueryService.checkCsvFileImport).toHaveBeenCalledWith(
+    expect(ctx.app.historyQueryService.checkSouthCsvFileImport).toHaveBeenCalledWith(
       testData.historyQueries.list[0].southType,
       ctx.request.file,
       ctx.request.body.delimiter,
       JSON.parse(ctx.request.body.currentItems)
     );
-    expect(ctx.ok).toHaveBeenCalledWith({ items: testData.historyQueries.list[0].items, errors: [] });
+    expect(ctx.ok).toHaveBeenCalledWith({ items: testData.historyQueries.list[0].southItems, errors: [] });
   });
 
   it('checkImportSouthItems() should return bad request if check csv import fails', async () => {
@@ -652,7 +662,7 @@ describe('History query controller', () => {
     ctx.params.southType = testData.historyQueries.list[0].southType;
     ctx.request.body = { delimiter: ',', currentItems: '[]' };
     ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
-    ctx.app.historyQueryService.checkCsvFileImport.mockImplementationOnce(() => {
+    ctx.app.historyQueryService.checkSouthCsvFileImport.mockImplementationOnce(() => {
       throw new Error('check import error');
     });
 
@@ -663,26 +673,429 @@ describe('History query controller', () => {
 
   it('importSouthItems() should import items', async () => {
     ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.request.body = { items: testData.historyQueries.list[0].items };
+    ctx.request.body = { items: testData.historyQueries.list[0].southItems };
 
     await historyQueryController.importSouthItems(ctx);
-    expect(ctx.app.historyQueryService.importItems).toHaveBeenCalledWith(
+    expect(ctx.app.historyQueryService.importSouthItems).toHaveBeenCalledWith(
       testData.historyQueries.list[0].id,
-      testData.historyQueries.list[0].items
+      testData.historyQueries.list[0].southItems
     );
   });
 
   it('importSouthItems() should import items', async () => {
     ctx.params.historyQueryId = testData.historyQueries.list[0].id;
-    ctx.request.body = { items: testData.historyQueries.list[0].items };
-    ctx.app.historyQueryService.importItems.mockImplementationOnce(() => {
+    ctx.request.body = { items: testData.historyQueries.list[0].southItems };
+    ctx.app.historyQueryService.importSouthItems.mockImplementationOnce(() => {
       throw new Error('import items error');
     });
 
     await historyQueryController.importSouthItems(ctx);
-    expect(ctx.app.historyQueryService.importItems).toHaveBeenCalledWith(
+    expect(ctx.app.historyQueryService.importSouthItems).toHaveBeenCalledWith(
       testData.historyQueries.list[0].id,
-      testData.historyQueries.list[0].items
+      testData.historyQueries.list[0].southItems
+    );
+    expect(ctx.badRequest).toHaveBeenCalledWith('import items error');
+  });
+
+  it('searchNorthHistoryQueryItems() should return North items', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.query = {
+      page: 1,
+      name: 'name'
+    };
+    const searchParams = {
+      page: 1,
+      name: 'name'
+    };
+    ctx.app.historyQueryService.searchNorthHistoryQueryItems.mockReturnValue({
+      content: testData.historyQueries.list[0].northItems.map(item =>
+        toNorthHistoryQueryItemDTO(item, testData.historyQueries.list[0].northType, ctx.app.encryptionService)
+      ),
+      totalElements: testData.historyQueries.list[0].northItems.length,
+      size: 25,
+      number: 1,
+      totalPages: 1
+    });
+    ctx.app.historyQueryService.findById.mockReturnValueOnce(testData.historyQueries.list[0]);
+
+    await historyQueryController.searchNorthHistoryQueryItems(ctx);
+
+    expect(ctx.app.historyQueryService.findById).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+    expect(ctx.app.historyQueryService.searchNorthHistoryQueryItems).toHaveBeenCalledWith(testData.historyQueries.list[0].id, searchParams);
+    expect(ctx.ok).toHaveBeenCalledWith({
+      content: testData.historyQueries.list[0].northItems.map(item =>
+        toNorthHistoryQueryItemDTO(item, testData.historyQueries.list[0].northType, ctx.app.encryptionService)
+      ),
+      totalElements: testData.historyQueries.list[0].northItems.length,
+      size: 25,
+      number: 1,
+      totalPages: 1
+    });
+  });
+
+  it('searchNorthHistoryQueryItems() should return North items with default search params', async () => {
+    ctx.params.historyQueryId = 'id';
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.query = {};
+    const searchParams = {
+      page: 0
+    };
+    ctx.app.historyQueryService.findById.mockReturnValueOnce(testData.historyQueries.list[0]);
+    ctx.app.historyQueryService.searchNorthHistoryQueryItems.mockReturnValue({
+      content: testData.historyQueries.list[0].northItems.map(item =>
+        toNorthHistoryQueryItemDTO(item, testData.historyQueries.list[0].northType, ctx.app.encryptionService)
+      ),
+      totalElements: testData.historyQueries.list[0].northItems.length,
+      size: 25,
+      number: 1,
+      totalPages: 1
+    });
+
+    await historyQueryController.searchNorthHistoryQueryItems(ctx);
+
+    expect(ctx.app.historyQueryService.findById).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+    expect(ctx.app.historyQueryService.searchNorthHistoryQueryItems).toHaveBeenCalledWith(testData.historyQueries.list[0].id, searchParams);
+    expect(ctx.ok).toHaveBeenCalledWith({
+      content: testData.historyQueries.list[0].northItems.map(item =>
+        toNorthHistoryQueryItemDTO(item, testData.historyQueries.list[0].northType, ctx.app.encryptionService)
+      ),
+      totalElements: testData.historyQueries.list[0].northItems.length,
+      size: 25,
+      number: 1,
+      totalPages: 1
+    });
+  });
+
+  it('searchNorthHistoryQueryItems() should return not found if history query is not found', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.app.historyQueryService.findById.mockReturnValueOnce(null);
+
+    await historyQueryController.searchNorthHistoryQueryItems(ctx);
+
+    expect(ctx.notFound).toHaveBeenCalledTimes(1);
+  });
+
+  it('getNorthHistoryQueryItem() should return item', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.params.id = testData.historyQueries.list[0].northItems[0].id;
+    ctx.app.historyQueryService.findById.mockReturnValueOnce(testData.historyQueries.list[0]);
+    ctx.app.historyQueryService.findNorthHistoryQueryItem.mockReturnValueOnce(testData.historyQueries.list[0].northItems[0]);
+
+    await historyQueryController.getNorthHistoryQueryItem(ctx);
+
+    expect(ctx.app.historyQueryService.findNorthHistoryQueryItem).toHaveBeenCalledWith(
+      testData.historyQueries.list[0].id,
+      testData.historyQueries.list[0].northItems[0].id
+    );
+    expect(ctx.ok).toHaveBeenCalledWith(testData.historyQueries.list[0].northItems[0]);
+  });
+
+  it('getNorthHistoryQueryItem() should return not found if history query is not found', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.app.historyQueryService.findById.mockReturnValueOnce(null);
+
+    await historyQueryController.getNorthHistoryQueryItem(ctx);
+
+    expect(ctx.notFound).toHaveBeenCalledTimes(1);
+  });
+
+  it('getNorthHistoryQueryItem() should return not found when North item not found', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.params.id = testData.historyQueries.list[0].northItems[0].id;
+    ctx.app.historyQueryService.findById.mockReturnValueOnce(testData.historyQueries.list[0]);
+    ctx.app.historyQueryService.findNorthHistoryQueryItem.mockReturnValueOnce(null);
+
+    await historyQueryController.getNorthHistoryQueryItem(ctx);
+
+    expect(ctx.app.historyQueryService.findNorthHistoryQueryItem).toHaveBeenCalledWith(
+      testData.historyQueries.list[0].id,
+      testData.historyQueries.list[0].northItems[0].id
+    );
+    expect(ctx.notFound).toHaveBeenCalled();
+  });
+
+  it('createNorthHistoryQueryItem() should create item', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.request.body = testData.historyQueries.northItemCommand;
+    ctx.app.historyQueryService.findById.mockReturnValueOnce(testData.historyQueries.list[0]);
+    ctx.app.historyQueryService.createNorthHistoryQueryItem.mockReturnValueOnce(testData.historyQueries.list[0].northItems[0]);
+    ctx.app.northService.getInstalledNorthManifests.mockReturnValueOnce([
+      { ...testData.north.manifest, id: testData.historyQueries.list[0].northType }
+    ]);
+
+    await historyQueryController.createNorthHistoryQueryItem(ctx);
+
+    expect(ctx.app.historyQueryService.createNorthHistoryQueryItem).toHaveBeenCalledWith(
+      testData.historyQueries.list[0].id,
+      testData.historyQueries.northItemCommand
+    );
+    expect(ctx.created).toHaveBeenCalledWith(
+      toNorthHistoryQueryItemDTO(
+        testData.historyQueries.list[0].northItems[0],
+        testData.historyQueries.list[0].northType,
+        ctx.app.encryptionService
+      )
+    );
+  });
+
+  it('createNorthHistoryQueryItem() should return not found if history query is not found', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.request.body = testData.historyQueries.northItemCommand;
+    ctx.app.historyQueryService.findById.mockReturnValueOnce(null);
+    await historyQueryController.createNorthHistoryQueryItem(ctx);
+
+    expect(ctx.notFound).toHaveBeenCalledTimes(1);
+  });
+
+  it('createNorthHistoryQueryItem() should return bad request on item creation error', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.request.body = testData.historyQueries.northItemCommand;
+    ctx.app.historyQueryService.findById.mockReturnValueOnce(testData.historyQueries.list[0]);
+
+    ctx.app.historyQueryService.createNorthHistoryQueryItem.mockImplementationOnce(() => {
+      throw new Error('create error');
+    });
+    await historyQueryController.createNorthHistoryQueryItem(ctx);
+
+    expect(ctx.badRequest).toHaveBeenCalledWith('create error');
+  });
+
+  it('updateNorthHistoryQueryItem() should update item', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.params.id = testData.historyQueries.list[0].northItems[0].id;
+    ctx.request.body = testData.historyQueries.northItemCommand;
+
+    await historyQueryController.updateNorthHistoryQueryItem(ctx);
+
+    expect(ctx.app.historyQueryService.updateNorthHistoryQueryItem).toHaveBeenCalledWith(
+      testData.historyQueries.list[0].id,
+      testData.historyQueries.list[0].northItems[0].id,
+      testData.historyQueries.northItemCommand
+    );
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('updateNorthHistoryQueryItem() should return bad request on item update error', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.params.id = testData.historyQueries.list[0].northItems[0].id;
+    ctx.request.body = testData.historyQueries.northItemCommand;
+
+    ctx.app.historyQueryService.updateNorthHistoryQueryItem.mockImplementationOnce(() => {
+      throw new Error('update error');
+    });
+    await historyQueryController.updateNorthHistoryQueryItem(ctx);
+
+    expect(ctx.badRequest).toHaveBeenCalledWith('update error');
+  });
+
+  it('deleteNorthHistoryQueryItem() should delete item', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.params.id = testData.historyQueries.list[0].northItems[0].id;
+
+    await historyQueryController.deleteNorthHistoryQueryItem(ctx);
+
+    expect(ctx.app.historyQueryService.deleteNorthHistoryQueryItem).toHaveBeenCalledWith(
+      testData.historyQueries.list[0].id,
+      testData.historyQueries.list[0].northItems[0].id
+    );
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('deleteNorthHistoryQueryItem() should return bad request on item delete error', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.params.id = testData.historyQueries.list[0].northItems[0].id;
+
+    ctx.app.historyQueryService.deleteNorthHistoryQueryItem.mockImplementationOnce(() => {
+      throw new Error('delete error');
+    });
+    await historyQueryController.deleteNorthHistoryQueryItem(ctx);
+
+    expect(ctx.badRequest).toHaveBeenCalledWith('delete error');
+  });
+
+  it('enableNorthHistoryQueryItem() should enable History item', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.params.id = testData.historyQueries.list[0].northItems[0].id;
+
+    await historyQueryController.enableNorthHistoryQueryItem(ctx);
+
+    expect(ctx.app.historyQueryService.enableNorthHistoryQueryItem).toHaveBeenCalledWith(
+      testData.historyQueries.list[0].id,
+      testData.historyQueries.list[0].northItems[0].id
+    );
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('enableNorthHistoryQueryItem() should return bad request on item enable error', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.params.id = testData.historyQueries.list[0].northItems[0].id;
+
+    ctx.app.historyQueryService.enableNorthHistoryQueryItem.mockImplementationOnce(() => {
+      throw new Error('enable error');
+    });
+    await historyQueryController.enableNorthHistoryQueryItem(ctx);
+
+    expect(ctx.badRequest).toHaveBeenCalledWith('enable error');
+  });
+
+  it('disableNorthHistoryQueryItem() should disable History item', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.params.id = testData.historyQueries.list[0].northItems[0].id;
+
+    await historyQueryController.disableNorthHistoryQueryItem(ctx);
+
+    expect(ctx.app.historyQueryService.disableNorthHistoryQueryItem).toHaveBeenCalledWith(
+      testData.historyQueries.list[0].id,
+      testData.historyQueries.list[0].northItems[0].id
+    );
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('disableNorthHistoryQueryItem() should return bad request on item disable error', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.params.id = testData.historyQueries.list[0].northItems[0].id;
+
+    ctx.app.historyQueryService.disableNorthHistoryQueryItem.mockImplementationOnce(() => {
+      throw new Error('disable error');
+    });
+    await historyQueryController.disableNorthHistoryQueryItem(ctx);
+
+    expect(ctx.badRequest).toHaveBeenCalledWith('disable error');
+  });
+
+  it('deleteAllNorthItems() should delete all North items', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+
+    await historyQueryController.deleteAllNorthItems(ctx);
+
+    expect(ctx.app.historyQueryService.deleteAllNorthItemsForHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('deleteAllNorthItems() should return bad request on delete all item error', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.params.id = testData.historyQueries.list[0].northItems[0].id;
+
+    ctx.app.historyQueryService.deleteAllNorthItemsForHistoryQuery.mockImplementationOnce(() => {
+      throw new Error('delete all error');
+    });
+    await historyQueryController.deleteAllNorthItems(ctx);
+
+    expect(ctx.badRequest).toHaveBeenCalledWith('delete all error');
+  });
+
+  it('historyQueryNorthItemsToCsv() should download a csv file', async () => {
+    ctx.params.northType = testData.historyQueries.list[0].northType;
+    ctx.request.body = {
+      items: testData.historyQueries.list[0].northItems,
+      delimiter: ';'
+    };
+    (northItemToFlattenedCSV as jest.Mock).mockReturnValue('csv content');
+    ctx.app.northService.getInstalledNorthManifests.mockReturnValueOnce([
+      { ...testData.north.manifest, id: testData.historyQueries.list[0].northType }
+    ]);
+
+    await historyQueryController.historyQueryNorthItemsToCsv(ctx);
+
+    expect(ctx.ok).toHaveBeenCalledWith();
+    expect(ctx.body).toEqual('csv content');
+  });
+
+  it('historyQueryNorthItemsToCsv() should throw not found if manifest not found', async () => {
+    ctx.params.northType = 'bad type';
+    ctx.request.body = {
+      items: testData.historyQueries.list[0].northItems,
+      delimiter: ';'
+    };
+    ctx.app.northService.getInstalledNorthManifests.mockReturnValueOnce([]);
+
+    await historyQueryController.historyQueryNorthItemsToCsv(ctx);
+
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'North manifest not found');
+  });
+
+  it('exportNorthItems() should download a csv file', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.app.historyQueryService.findById.mockReturnValueOnce(testData.historyQueries.list[0]);
+    (northItemToFlattenedCSV as jest.Mock).mockReturnValue('csv content');
+    ctx.request.body = { delimiter: ';' };
+
+    await historyQueryController.exportNorthItems(ctx);
+
+    expect(ctx.ok).toHaveBeenCalledWith();
+    expect(ctx.body).toEqual('csv content');
+  });
+
+  it('exportNorthItems() should return not found if history query not found', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.app.historyQueryService.findById.mockReturnValueOnce(null);
+    ctx.request.body = { delimiter: ';' };
+
+    await historyQueryController.exportNorthItems(ctx);
+
+    expect(ctx.notFound).toHaveBeenCalledWith();
+  });
+
+  it('checkImportNorthItems() should check import of items in a csv file with new history', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.params.northType = testData.historyQueries.list[0].northType;
+    ctx.request.body = { delimiter: ',', currentItems: '[]' };
+    ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
+    ctx.app.historyQueryService.checkNorthCsvFileImport.mockReturnValueOnce({
+      items: testData.historyQueries.list[0].northItems,
+      errors: []
+    });
+
+    await historyQueryController.checkImportNorthItems(ctx);
+
+    expect(ctx.badRequest).not.toHaveBeenCalled();
+    expect(ctx.throw).not.toHaveBeenCalled();
+
+    expect(ctx.app.historyQueryService.checkNorthCsvFileImport).toHaveBeenCalledWith(
+      testData.historyQueries.list[0].northType,
+      ctx.request.file,
+      ctx.request.body.delimiter,
+      JSON.parse(ctx.request.body.currentItems)
+    );
+    expect(ctx.ok).toHaveBeenCalledWith({ items: testData.historyQueries.list[0].northItems, errors: [] });
+  });
+
+  it('checkImportNorthItems() should return bad request if check csv import fails', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.params.northType = testData.historyQueries.list[0].northType;
+    ctx.request.body = { delimiter: ',', currentItems: '[]' };
+    ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
+    ctx.app.historyQueryService.checkNorthCsvFileImport.mockImplementationOnce(() => {
+      throw new Error('check import error');
+    });
+
+    await historyQueryController.checkImportNorthItems(ctx);
+
+    expect(ctx.badRequest).toHaveBeenCalledWith('check import error');
+  });
+
+  it('importNorthItems() should import items', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.request.body = { items: testData.historyQueries.list[0].northItems };
+
+    await historyQueryController.importNorthItems(ctx);
+    expect(ctx.app.historyQueryService.importNorthItems).toHaveBeenCalledWith(
+      testData.historyQueries.list[0].id,
+      testData.historyQueries.list[0].northItems
+    );
+  });
+
+  it('importNorthItems() should import items', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.request.body = { items: testData.historyQueries.list[0].northItems };
+    ctx.app.historyQueryService.importNorthItems.mockImplementationOnce(() => {
+      throw new Error('import items error');
+    });
+
+    await historyQueryController.importNorthItems(ctx);
+    expect(ctx.app.historyQueryService.importNorthItems).toHaveBeenCalledWith(
+      testData.historyQueries.list[0].id,
+      testData.historyQueries.list[0].northItems
     );
     expect(ctx.badRequest).toHaveBeenCalledWith('import items error');
   });

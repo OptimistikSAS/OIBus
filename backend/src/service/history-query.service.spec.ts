@@ -515,30 +515,53 @@ describe('History Query service', () => {
     expect(historyQueryEngine.stopHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
   });
 
-  it('listItems() should list history query items', async () => {
-    service.listItems(testData.historyQueries.list[0].id, {});
-    expect(historyQueryRepository.listHistoryQueryItems).toHaveBeenCalledWith(testData.historyQueries.list[0].id, {});
+  it('listSouthHistoryQueryItems() should list history query south items', async () => {
+    service.listSouthHistoryQueryItems(testData.historyQueries.list[0].id, {});
+    expect(historyQueryRepository.listSouthHistoryQueryItems).toHaveBeenCalledWith(testData.historyQueries.list[0].id, {});
   });
 
-  it('searchHistoryQueryItems() should list history query items', async () => {
-    service.searchHistoryQueryItems(testData.historyQueries.list[0].id, {});
-    expect(historyQueryRepository.searchHistoryQueryItems).toHaveBeenCalledWith(testData.historyQueries.list[0].id, {});
+  it('listNorthHistoryQueryItems() should list history query north items', async () => {
+    service.listNorthHistoryQueryItems(testData.historyQueries.list[0].id, {});
+    expect(historyQueryRepository.listNorthHistoryQueryItems).toHaveBeenCalledWith(testData.historyQueries.list[0].id, {});
   });
 
-  it('findAllItemsForHistoryQuery() should list history query items', async () => {
-    service.findAllItemsForHistoryQuery(testData.historyQueries.list[0].id);
-    expect(historyQueryRepository.findAllItemsForHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+  it('searchSouthHistoryQueryItems() should list history query south items', async () => {
+    service.searchSouthHistoryQueryItems(testData.historyQueries.list[0].id, {});
+    expect(historyQueryRepository.searchSouthHistoryQueryItems).toHaveBeenCalledWith(testData.historyQueries.list[0].id, {});
   });
 
-  it('findHistoryQueryItem() should find a history query item', async () => {
-    service.findHistoryQueryItem(testData.historyQueries.list[0].id, testData.historyQueries.list[0].items[0].id);
-    expect(historyQueryRepository.findHistoryQueryItemById).toHaveBeenCalledWith(
+  it('searchNorthHistoryQueryItems() should list history query north items', async () => {
+    service.searchNorthHistoryQueryItems(testData.historyQueries.list[0].id, {});
+    expect(historyQueryRepository.searchNorthHistoryQueryItems).toHaveBeenCalledWith(testData.historyQueries.list[0].id, {});
+  });
+
+  it('findAllSouthItemsForHistoryQuery() should list history query south items', async () => {
+    service.findAllSouthItemsForHistoryQuery(testData.historyQueries.list[0].id);
+    expect(historyQueryRepository.findAllSouthItemsForHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+  });
+
+  it('findAllNorthItemsForHistoryQuery() should list history query north items', async () => {
+    service.findAllNorthItemsForHistoryQuery(testData.historyQueries.list[0].id);
+    expect(historyQueryRepository.findAllNorthItemsForHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+  });
+
+  it('findSouthHistoryQueryItem() should find a history query south item', async () => {
+    service.findSouthHistoryQueryItem(testData.historyQueries.list[0].id, testData.historyQueries.list[0].southItems[0].id);
+    expect(historyQueryRepository.findSouthHistoryQueryItemById).toHaveBeenCalledWith(
       testData.historyQueries.list[0].id,
-      testData.historyQueries.list[0].items[0].id
+      testData.historyQueries.list[0].southItems[0].id
     );
   });
 
-  it('createHistoryQueryItem() should create an item', async () => {
+  it('findNorthHistoryQueryItem() should find a history query north item', async () => {
+    service.findNorthHistoryQueryItem(testData.historyQueries.list[0].id, testData.historyQueries.list[0].northItems[0].id);
+    expect(historyQueryRepository.findNorthHistoryQueryItemById).toHaveBeenCalledWith(
+      testData.historyQueries.list[0].id,
+      testData.historyQueries.list[0].northItems[0].id
+    );
+  });
+
+  it('createSouthHistoryQueryItem() should create a south item', async () => {
     (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
       {
         ...southManifestList[0], // folder-scanner
@@ -553,14 +576,14 @@ describe('History Query service', () => {
       ignoreModifiedDate: false,
       minAge: 100
     };
-    await service.createHistoryQueryItem(testData.historyQueries.list[0].id, itemCommand);
+    await service.createSouthHistoryQueryItem(testData.historyQueries.list[0].id, itemCommand);
     expect(historyQueryRepository.findHistoryQueryById).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
-    expect(historyQueryRepository.saveHistoryQueryItem).toHaveBeenCalledTimes(1);
+    expect(historyQueryRepository.saveSouthHistoryQueryItem).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(historyQueryEngine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
   });
 
-  it('createHistoryQueryItem() should throw an error if connector does not exist', async () => {
+  it('createSouthHistoryQueryItem() should throw an error if connector does not exist', async () => {
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(null);
     const itemCommand = JSON.parse(JSON.stringify(testData.south.itemCommand));
     itemCommand.settings = {
@@ -569,12 +592,12 @@ describe('History Query service', () => {
       ignoreModifiedDate: false,
       minAge: 100
     };
-    await expect(service.createHistoryQueryItem(testData.historyQueries.list[0].id, itemCommand)).rejects.toThrow(
+    await expect(service.createSouthHistoryQueryItem(testData.historyQueries.list[0].id, itemCommand)).rejects.toThrow(
       `History Query ${testData.historyQueries.list[0].id} does not exist`
     );
   });
 
-  it('createHistoryQueryItem() should throw an error if manifest is not found', async () => {
+  it('createSouthHistoryQueryItem() should throw an error if manifest is not found', async () => {
     (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
       {
         ...southManifestList[4] // mssql
@@ -583,26 +606,69 @@ describe('History Query service', () => {
     const badSouth = JSON.parse(JSON.stringify(testData.historyQueries.list[0]));
     badSouth.southType = 'bad';
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(badSouth);
-    const itemCommand = JSON.parse(JSON.stringify(testData.historyQueries.itemCommand));
+    const itemCommand = JSON.parse(JSON.stringify(testData.historyQueries.southItemCommand));
     itemCommand.settings = {
       regex: '*',
       preserveFiles: true,
       ignoreModifiedDate: false,
       minAge: 100
     };
-    await expect(service.createHistoryQueryItem(testData.historyQueries.list[0].id, itemCommand)).rejects.toThrow(
+    await expect(service.createSouthHistoryQueryItem(testData.historyQueries.list[0].id, itemCommand)).rejects.toThrow(
       `South manifest does not exist for type bad`
     );
   });
 
-  it('updateHistoryQueryItem() should update an item', async () => {
+  it('createNorthHistoryQueryItem() should create a north item', async () => {
+    (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...northManifestList[0], // console
+        id: testData.historyQueries.list[0].northType
+      }
+    ]);
+    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
+    const itemCommand = JSON.parse(JSON.stringify(testData.north.itemCommand));
+    itemCommand.settings = {};
+    await service.createNorthHistoryQueryItem(testData.historyQueries.list[0].id, itemCommand);
+    expect(historyQueryRepository.findHistoryQueryById).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+    expect(historyQueryRepository.saveNorthHistoryQueryItem).toHaveBeenCalledTimes(1);
+    expect(oIAnalyticsMessageService.createHistoryQueryMessage).toHaveBeenCalledTimes(1);
+    expect(historyQueryEngine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
+  });
+
+  it('createNorthHistoryQueryItem() should throw an error if connector does not exist', async () => {
+    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(null);
+    const itemCommand = JSON.parse(JSON.stringify(testData.south.itemCommand));
+    itemCommand.settings = {};
+    await expect(service.createNorthHistoryQueryItem(testData.historyQueries.list[0].id, itemCommand)).rejects.toThrow(
+      `History Query ${testData.historyQueries.list[0].id} does not exist`
+    );
+  });
+
+  it('createNorthHistoryQueryItem() should throw an error if manifest is not found', async () => {
+    (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...northManifestList[4], // file writer
+        id: testData.historyQueries.list[0].northType
+      }
+    ]);
+    const badNorth = JSON.parse(JSON.stringify(testData.historyQueries.list[0]));
+    badNorth.northType = 'bad';
+    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(badNorth);
+    const itemCommand = JSON.parse(JSON.stringify(testData.historyQueries.southItemCommand));
+    itemCommand.settings = {};
+    await expect(service.createNorthHistoryQueryItem(testData.historyQueries.list[0].id, itemCommand)).rejects.toThrow(
+      `North manifest does not exist for type bad`
+    );
+  });
+
+  it('updateSouthHistoryQueryItem() should update an item', async () => {
     (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
       {
         ...southManifestList[4] // mssql
       }
     ]);
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
-    (historyQueryRepository.findHistoryQueryItemById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0].items[0]);
+    (historyQueryRepository.findSouthHistoryQueryItemById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0].southItems[0]);
     const itemCommand = JSON.parse(JSON.stringify(testData.south.itemCommand));
     itemCommand.settings = {
       regex: '*',
@@ -610,15 +676,15 @@ describe('History Query service', () => {
       ignoreModifiedDate: false,
       minAge: 100
     };
-    await service.updateHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId', itemCommand);
-    expect(historyQueryRepository.findHistoryQueryItemById).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'itemId');
-    expect(historyQueryRepository.saveHistoryQueryItem).toHaveBeenCalledTimes(1);
+    await service.updateSouthHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId', itemCommand);
+    expect(historyQueryRepository.findSouthHistoryQueryItemById).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'itemId');
+    expect(historyQueryRepository.saveSouthHistoryQueryItem).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(historyQueryEngine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
   });
 
-  it('updateHistoryQueryItem() should throw an error if item does not exist', async () => {
-    (historyQueryRepository.findHistoryQueryItemById as jest.Mock).mockReturnValueOnce(null);
+  it('updateSouthHistoryQueryItem() should throw an error if item does not exist', async () => {
+    (historyQueryRepository.findSouthHistoryQueryItemById as jest.Mock).mockReturnValueOnce(null);
     const itemCommand = JSON.parse(JSON.stringify(testData.south.itemCommand));
     itemCommand.settings = {
       regex: '*',
@@ -626,14 +692,14 @@ describe('History Query service', () => {
       ignoreModifiedDate: false,
       minAge: 100
     };
-    await expect(service.updateHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId', itemCommand)).rejects.toThrow(
-      `History query item with ID itemId does not exist`
+    await expect(service.updateSouthHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId', itemCommand)).rejects.toThrow(
+      `History query south item with ID itemId does not exist`
     );
   });
 
-  it('updateHistoryQueryItem() should throw an error if history query does not exist', async () => {
+  it('updateSouthHistoryQueryItem() should throw an error if history query does not exist', async () => {
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(null);
-    (historyQueryRepository.findHistoryQueryItemById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0].items[0]);
+    (historyQueryRepository.findSouthHistoryQueryItemById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0].southItems[0]);
 
     const itemCommand = JSON.parse(JSON.stringify(testData.south.itemCommand));
     itemCommand.settings = {
@@ -642,12 +708,12 @@ describe('History Query service', () => {
       ignoreModifiedDate: false,
       minAge: 100
     };
-    await expect(service.updateHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId', itemCommand)).rejects.toThrow(
+    await expect(service.updateSouthHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId', itemCommand)).rejects.toThrow(
       `History query ${testData.historyQueries.list[0].id} does not exist`
     );
   });
 
-  it('updateHistoryQueryItem() should throw an error if manifest is not found', async () => {
+  it('updateSouthHistoryQueryItem() should throw an error if manifest is not found', async () => {
     (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
       {
         ...southManifestList[4] // mssql
@@ -656,7 +722,7 @@ describe('History Query service', () => {
     const badSouth = JSON.parse(JSON.stringify(testData.historyQueries.list[0]));
     badSouth.southType = 'bad';
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(badSouth);
-    (historyQueryRepository.findHistoryQueryItemById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0].items[0]);
+    (historyQueryRepository.findSouthHistoryQueryItemById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0].southItems[0]);
 
     const itemCommand = JSON.parse(JSON.stringify(testData.south.itemCommand));
     itemCommand.settings = {
@@ -665,89 +731,218 @@ describe('History Query service', () => {
       ignoreModifiedDate: false,
       minAge: 100
     };
-    await expect(service.updateHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId', itemCommand)).rejects.toThrow(
+    await expect(service.updateSouthHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId', itemCommand)).rejects.toThrow(
       `South manifest does not exist for type bad`
     );
   });
 
-  it('deleteHistoryQueryItem() should delete an item', async () => {
+  it('updateNorthHistoryQueryItem() should update an item', async () => {
+    (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...northManifestList[4], // file-writer
+        id: testData.historyQueries.list[0].northType
+      }
+    ]);
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
-    (historyQueryRepository.findHistoryQueryItemById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0].items[0]);
-    await service.deleteHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId');
-    expect(historyQueryRepository.findHistoryQueryItemById).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'itemId');
-    expect(historyQueryRepository.deleteHistoryQueryItem).toHaveBeenCalledWith(testData.historyQueries.list[0].items[0].id);
-    expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalledTimes(1);
+    (historyQueryRepository.findNorthHistoryQueryItemById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0].northItems[0]);
+    const itemCommand = JSON.parse(JSON.stringify(testData.north.itemCommand));
+    itemCommand.settings = {};
+    await service.updateNorthHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId', itemCommand);
+    expect(historyQueryRepository.findNorthHistoryQueryItemById).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'itemId');
+    expect(historyQueryRepository.saveNorthHistoryQueryItem).toHaveBeenCalledTimes(1);
     expect(historyQueryEngine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
   });
 
-  it('deleteHistoryQueryItem() should throw an error if item does not exist', async () => {
-    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
-    (historyQueryRepository.findHistoryQueryItemById as jest.Mock).mockReturnValueOnce(null);
-
-    await expect(service.deleteHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId')).rejects.toThrow(
-      `History query item itemId not found`
+  it('updateNorthHistoryQueryItem() should throw an error if item does not exist', async () => {
+    (historyQueryRepository.findNorthHistoryQueryItemById as jest.Mock).mockReturnValueOnce(null);
+    const itemCommand = JSON.parse(JSON.stringify(testData.north.itemCommand));
+    itemCommand.settings = {};
+    await expect(service.updateNorthHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId', itemCommand)).rejects.toThrow(
+      `History query north item with ID itemId does not exist`
     );
   });
 
-  it('deleteHistoryQueryItem() should throw an error if connector does not exist', async () => {
+  it('updateNorthHistoryQueryItem() should throw an error if history query does not exist', async () => {
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(null);
+    (historyQueryRepository.findNorthHistoryQueryItemById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0].northItems[0]);
 
-    await expect(service.deleteHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId')).rejects.toThrow(
+    const itemCommand = JSON.parse(JSON.stringify(testData.north.itemCommand));
+    itemCommand.settings = {};
+    await expect(service.updateNorthHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId', itemCommand)).rejects.toThrow(
       `History query ${testData.historyQueries.list[0].id} does not exist`
     );
   });
 
-  it('deleteAllItemsForHistoryQuery() should delete all items', async () => {
+  it('updateNorthHistoryQueryItem() should throw an error if manifest is not found', async () => {
+    (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...northManifestList[4], // file-writer
+        id: testData.historyQueries.list[0].northType
+      }
+    ]);
+    const badNorth = JSON.parse(JSON.stringify(testData.historyQueries.list[0]));
+    badNorth.northType = 'bad';
+    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(badNorth);
+    (historyQueryRepository.findNorthHistoryQueryItemById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0].northItems[0]);
+
+    const itemCommand = JSON.parse(JSON.stringify(testData.north.itemCommand));
+    itemCommand.settings = {};
+    await expect(service.updateNorthHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId', itemCommand)).rejects.toThrow(
+      `North manifest does not exist for type bad`
+    );
+  });
+
+  it('deleteSouthHistoryQueryItem() should delete an item', async () => {
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
-    await service.deleteAllItemsForHistoryQuery(testData.historyQueries.list[0].id);
-    expect(historyQueryRepository.deleteAllHistoryQueryItemsByHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+    (historyQueryRepository.findSouthHistoryQueryItemById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0].southItems[0]);
+    await service.deleteSouthHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId');
+    expect(historyQueryRepository.findSouthHistoryQueryItemById).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'itemId');
+    expect(historyQueryRepository.deleteSouthHistoryQueryItem).toHaveBeenCalledWith(testData.historyQueries.list[0].southItems[0].id);
+    expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalledTimes(1);
+    expect(historyQueryEngine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
+  });
+
+  it('deleteSouthHistoryQueryItem() should throw an error if item does not exist', async () => {
+    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
+    (historyQueryRepository.findSouthHistoryQueryItemById as jest.Mock).mockReturnValueOnce(null);
+
+    await expect(service.deleteSouthHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId')).rejects.toThrow(
+      `History query south item itemId not found`
+    );
+  });
+
+  it('deleteSouthHistoryQueryItem() should throw an error if connector does not exist', async () => {
+    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(null);
+
+    await expect(service.deleteSouthHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId')).rejects.toThrow(
+      `History query ${testData.historyQueries.list[0].id} does not exist`
+    );
+  });
+
+  it('deleteNorthHistoryQueryItem() should delete an item', async () => {
+    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
+    (historyQueryRepository.findNorthHistoryQueryItemById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0].northItems[0]);
+    await service.deleteNorthHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId');
+    expect(historyQueryRepository.findNorthHistoryQueryItemById).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'itemId');
+    expect(historyQueryRepository.deleteNorthHistoryQueryItem).toHaveBeenCalledWith(testData.historyQueries.list[0].northItems[0].id);
+    expect(historyQueryEngine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
+  });
+
+  it('deleteNorthHistoryQueryItem() should throw an error if item does not exist', async () => {
+    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
+    (historyQueryRepository.findNorthHistoryQueryItemById as jest.Mock).mockReturnValueOnce(null);
+
+    await expect(service.deleteNorthHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId')).rejects.toThrow(
+      `History query north item itemId not found`
+    );
+  });
+
+  it('deleteNorthHistoryQueryItem() should throw an error if connector does not exist', async () => {
+    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(null);
+
+    await expect(service.deleteNorthHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId')).rejects.toThrow(
+      `History query ${testData.historyQueries.list[0].id} does not exist`
+    );
+  });
+
+  it('deleteAllSouthItemsForHistoryQuery() should delete all items', async () => {
+    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
+    await service.deleteAllSouthItemsForHistoryQuery(testData.historyQueries.list[0].id);
+    expect(historyQueryRepository.deleteAllSouthHistoryQueryItemsByHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
     expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(historyQueryEngine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], true);
   });
 
-  it('deleteAllItemsForHistoryQuery() should throw an error if connector does not exist', async () => {
+  it('deleteAllSouthItemsForHistoryQuery() should throw an error if connector does not exist', async () => {
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(null);
 
-    await expect(service.deleteAllItemsForHistoryQuery(testData.historyQueries.list[0].id)).rejects.toThrow(
+    await expect(service.deleteAllSouthItemsForHistoryQuery(testData.historyQueries.list[0].id)).rejects.toThrow(
       `History query ${testData.historyQueries.list[0].id} not found`
     );
   });
 
-  it('enableHistoryQueryItem() should enable an item', async () => {
+  it('deleteAllNorthItemsForHistoryQuery() should delete all items', async () => {
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
-    (historyQueryRepository.findHistoryQueryItemById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0].items[0]);
-    await service.enableHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId');
-    expect(historyQueryRepository.findHistoryQueryItemById).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'itemId');
-    expect(historyQueryRepository.enableHistoryQueryItem).toHaveBeenCalledWith(testData.historyQueries.list[0].items[0].id);
+    await service.deleteAllNorthItemsForHistoryQuery(testData.historyQueries.list[0].id);
+    expect(historyQueryRepository.deleteAllNorthHistoryQueryItemsByHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+    expect(historyQueryEngine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], true);
+  });
+
+  it('deleteAllNorthItemsForHistoryQuery() should throw an error if connector does not exist', async () => {
+    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(null);
+
+    await expect(service.deleteAllNorthItemsForHistoryQuery(testData.historyQueries.list[0].id)).rejects.toThrow(
+      `History query ${testData.historyQueries.list[0].id} not found`
+    );
+  });
+
+  it('enableSouthHistoryQueryItem() should enable an item', async () => {
+    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
+    (historyQueryRepository.findSouthHistoryQueryItemById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0].southItems[0]);
+    await service.enableSouthHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId');
+    expect(historyQueryRepository.findSouthHistoryQueryItemById).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'itemId');
+    expect(historyQueryRepository.enableSouthHistoryQueryItem).toHaveBeenCalledWith(testData.historyQueries.list[0].southItems[0].id);
     expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(historyQueryEngine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
   });
 
-  it('enableHistoryQueryItem() should throw an error if item is not found', async () => {
-    (historyQueryRepository.findHistoryQueryItemById as jest.Mock).mockReturnValueOnce(null);
-    await expect(service.enableHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId')).rejects.toThrow(
-      'History query item itemId not found'
+  it('enableSouthHistoryQueryItem() should throw an error if item is not found', async () => {
+    (historyQueryRepository.findSouthHistoryQueryItemById as jest.Mock).mockReturnValueOnce(null);
+    await expect(service.enableSouthHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId')).rejects.toThrow(
+      'History query south item itemId not found'
     );
   });
 
-  it('disableHistoryQueryItem() should disable an item', async () => {
+  it('enableNorthHistoryQueryItem() should enable an item', async () => {
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
-    (historyQueryRepository.findHistoryQueryItemById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0].items[0]);
-    await service.disableHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId');
-    expect(historyQueryRepository.findHistoryQueryItemById).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'itemId');
-    expect(historyQueryRepository.disableHistoryQueryItem).toHaveBeenCalledWith(testData.historyQueries.list[0].items[0].id);
+    (historyQueryRepository.findNorthHistoryQueryItemById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0].southItems[0]);
+    await service.enableNorthHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId');
+    expect(historyQueryRepository.findNorthHistoryQueryItemById).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'itemId');
+    expect(historyQueryRepository.enableNorthHistoryQueryItem).toHaveBeenCalledWith(testData.historyQueries.list[0].southItems[0].id);
+    expect(historyQueryEngine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
+  });
+
+  it('enableNorthHistoryQueryItem() should throw an error if item is not found', async () => {
+    (historyQueryRepository.findNorthHistoryQueryItemById as jest.Mock).mockReturnValueOnce(null);
+    await expect(service.enableNorthHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId')).rejects.toThrow(
+      'History query north item itemId not found'
+    );
+  });
+
+  it('disableSouthHistoryQueryItem() should disable an item', async () => {
+    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
+    (historyQueryRepository.findSouthHistoryQueryItemById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0].southItems[0]);
+    await service.disableSouthHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId');
+    expect(historyQueryRepository.findSouthHistoryQueryItemById).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'itemId');
+    expect(historyQueryRepository.disableSouthHistoryQueryItem).toHaveBeenCalledWith(testData.historyQueries.list[0].southItems[0].id);
     expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(historyQueryEngine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
   });
 
-  it('disableHistoryQueryItem() should throw an error if item is not found', async () => {
-    (historyQueryRepository.findHistoryQueryItemById as jest.Mock).mockReturnValueOnce(null);
-    await expect(service.disableHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId')).rejects.toThrow(
-      'History query item itemId not found'
+  it('disableSouthHistoryQueryItem() should throw an error if item is not found', async () => {
+    (historyQueryRepository.findSouthHistoryQueryItemById as jest.Mock).mockReturnValueOnce(null);
+    await expect(service.disableSouthHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId')).rejects.toThrow(
+      'History query south item itemId not found'
     );
   });
 
-  it('checkCsvImport() should properly parse csv and check items', async () => {
+  it('disableNorthHistoryQueryItem() should disable an item', async () => {
+    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
+    (historyQueryRepository.findNorthHistoryQueryItemById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0].northItems[0]);
+    await service.disableNorthHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId');
+    expect(historyQueryRepository.findNorthHistoryQueryItemById).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'itemId');
+    expect(historyQueryRepository.disableNorthHistoryQueryItem).toHaveBeenCalledWith(testData.historyQueries.list[0].northItems[0].id);
+    expect(historyQueryEngine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
+  });
+
+  it('disableNorthHistoryQueryItem() should throw an error if item is not found', async () => {
+    (historyQueryRepository.findNorthHistoryQueryItemById as jest.Mock).mockReturnValueOnce(null);
+    await expect(service.disableNorthHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId')).rejects.toThrow(
+      'History query north item itemId not found'
+    );
+  });
+
+  it('checkSouthCsvFileImport() should properly parse csv and check items', async () => {
     (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
       {
         ...southManifestList[0], // folder scanner
@@ -797,7 +992,7 @@ describe('History Query service', () => {
     (validator.validateSettings as jest.Mock).mockImplementationOnce(() => {
       throw new Error(`"ignoreModifiedDate" must be a boolean`);
     });
-    const result = await service.checkCsvFileImport(
+    const result = await service.checkSouthCsvFileImport(
       testData.historyQueries.command.southType,
       { path: 'file/path.csv' } as multer.File,
       ',',
@@ -854,7 +1049,7 @@ describe('History Query service', () => {
     });
   });
 
-  it('checkCsvImport() should properly parse csv and check items with array or object', async () => {
+  it('checkSouthCsvFileImport() should properly parse csv and check items with array or object', async () => {
     (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
       {
         ...southManifestList[4], // mssql
@@ -882,7 +1077,7 @@ describe('History Query service', () => {
       meta: { delimiter: ',' },
       data: csvData
     });
-    const result = await service.checkCsvFileImport(
+    const result = await service.checkSouthCsvFileImport(
       testData.historyQueries.command.southType,
       { path: 'file/path.csv' } as multer.File,
       ',',
@@ -912,19 +1107,19 @@ describe('History Query service', () => {
     });
   });
 
-  it('checkCsvContentImport() should throw error if manifest not found', async () => {
+  it('checkSouthCsvContentImport() should throw error if manifest not found', async () => {
     (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
       {
         ...testData.south.manifest,
         id: testData.historyQueries.command.southType
       }
     ]);
-    await expect(service.checkCsvContentImport('bad', 'fileContent', ',', testData.south.list[0].items)).rejects.toThrow(
+    await expect(service.checkSouthCsvContentImport('bad', 'fileContent', ',', testData.south.list[0].items)).rejects.toThrow(
       `South manifest does not exist for type bad`
     );
   });
 
-  it('checkCsvImport() should throw error if delimiter does not match', async () => {
+  it('checkSouthCsvFileImport() should throw error if delimiter does not match', async () => {
     (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
       {
         ...testData.south.manifest,
@@ -938,7 +1133,7 @@ describe('History Query service', () => {
     });
 
     await expect(
-      service.checkCsvFileImport(
+      service.checkSouthCsvFileImport(
         testData.historyQueries.command.southType,
         { path: 'file/path.csv' } as multer.File,
         ',',
@@ -947,14 +1142,86 @@ describe('History Query service', () => {
     ).rejects.toThrow(`The entered delimiter "," does not correspond to the file delimiter ";"`);
   });
 
-  it('importItems() should import items', async () => {
+  it('checkNorthCsvFileImport() should properly parse csv and check items with array or object', async () => {
+    (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...northManifestList[4], // file-writer
+        id: testData.historyQueries.command.northType
+      }
+    ]);
+    const csvData = [
+      {
+        name: 'item',
+        enabled: 'true'
+      }
+    ];
+    (fs.readFile as jest.Mock).mockReturnValueOnce('file content');
+    (csv.parse as jest.Mock).mockReturnValueOnce({
+      meta: { delimiter: ',' },
+      data: csvData
+    });
+    const result = await service.checkNorthCsvFileImport(
+      testData.historyQueries.command.northType,
+      { path: 'file/path.csv' } as multer.File,
+      ',',
+      testData.north.list[1].items
+    );
+    expect(result).toEqual({
+      items: [
+        {
+          id: '',
+          name: csvData[0].name,
+          enabled: csvData[0].enabled.toLowerCase() === 'true',
+          settings: {}
+        }
+      ],
+      errors: []
+    });
+  });
+
+  it('checkNorthCsvContentImport() should throw error if manifest not found', async () => {
+    (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...testData.north.manifest,
+        id: testData.historyQueries.command.northType
+      }
+    ]);
+    await expect(service.checkNorthCsvContentImport('bad', 'fileContent', ',', testData.north.list[0].items)).rejects.toThrow(
+      `North manifest does not exist for type bad`
+    );
+  });
+
+  it('checkNorthCsvFileImport() should throw error if delimiter does not match', async () => {
+    (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...testData.north.manifest,
+        id: testData.historyQueries.command.northType
+      }
+    ]);
+    (fs.readFile as jest.Mock).mockReturnValueOnce('file content');
+    (csv.parse as jest.Mock).mockReturnValueOnce({
+      meta: { delimiter: ';' },
+      data: []
+    });
+
+    await expect(
+      service.checkNorthCsvFileImport(
+        testData.historyQueries.command.northType,
+        { path: 'file/path.csv' } as multer.File,
+        ',',
+        testData.north.list[0].items
+      )
+    ).rejects.toThrow(`The entered delimiter "," does not correspond to the file delimiter ";"`);
+  });
+
+  it('importSouthItems() should import items', async () => {
     (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
       {
         ...testData.south.manifest,
         id: testData.historyQueries.command.southType
       }
     ]);
-    const itemCommand = JSON.parse(JSON.stringify(testData.historyQueries.itemCommand));
+    const itemCommand = JSON.parse(JSON.stringify(testData.historyQueries.southItemCommand));
     itemCommand.id = null;
     itemCommand.settings = {
       regex: '*',
@@ -964,20 +1231,20 @@ describe('History Query service', () => {
     };
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
 
-    await service.importItems(testData.historyQueries.list[0].id, [itemCommand]);
-    expect(historyQueryRepository.saveAllItems).toHaveBeenCalledTimes(1);
+    await service.importSouthItems(testData.historyQueries.list[0].id, [itemCommand]);
+    expect(historyQueryRepository.saveAllSouthItems).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(historyQueryEngine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
   });
 
-  it('importItems() should import items', async () => {
+  it('importSouthItems() should import items', async () => {
     (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
       {
         ...testData.south.manifest,
         id: testData.historyQueries.command.southType
       }
     ]);
-    const itemCommand = JSON.parse(JSON.stringify(testData.historyQueries.itemCommand));
+    const itemCommand = JSON.parse(JSON.stringify(testData.historyQueries.southItemCommand));
     itemCommand.settings = {
       regex: '*',
       preserveFiles: true,
@@ -986,7 +1253,40 @@ describe('History Query service', () => {
     };
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(null);
 
-    await expect(service.importItems(testData.historyQueries.list[0].id, [itemCommand])).rejects.toThrow(
+    await expect(service.importSouthItems(testData.historyQueries.list[0].id, [itemCommand])).rejects.toThrow(
+      `History query ${testData.historyQueries.list[0].id} does not exist`
+    );
+  });
+
+  it('importNorthItems() should import items', async () => {
+    (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...testData.north.manifest,
+        id: testData.historyQueries.list[0].northType
+      }
+    ]);
+    const itemCommand = JSON.parse(JSON.stringify(testData.historyQueries.northItemCommand));
+    itemCommand.id = null;
+    itemCommand.settings = {};
+    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
+
+    await service.importNorthItems(testData.historyQueries.list[0].id, [itemCommand]);
+    expect(historyQueryRepository.saveAllNorthItems).toHaveBeenCalledTimes(1);
+    expect(historyQueryEngine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
+  });
+
+  it('importNorthItems() should import items', async () => {
+    (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...testData.north.manifest,
+        id: testData.historyQueries.command.northType
+      }
+    ]);
+    const itemCommand = JSON.parse(JSON.stringify(testData.historyQueries.northItemCommand));
+    itemCommand.settings = {};
+    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(null);
+
+    await expect(service.importNorthItems(testData.historyQueries.list[0].id, [itemCommand])).rejects.toThrow(
       `History query ${testData.historyQueries.list[0].id} does not exist`
     );
   });
@@ -1055,9 +1355,10 @@ describe('History Query service', () => {
     expect(result).toEqual({
       southType: south.type,
       southSettings: south.settings,
-      items: south.items,
+      southItems: south.items,
       northType: north.type,
-      northSettings: north.settings
+      northSettings: north.settings,
+      northItems: north.items
     });
   });
 

@@ -274,12 +274,20 @@ export default class OIAnalyticsMessageService {
                 }
               }
             },
-            items: historyQuery.items.map(item => ({
+            southItems: historyQuery.southItems.map(item => ({
               id: item.id,
               name: item.name,
               enabled: item.enabled,
               settings: this.encryptionService.filterSecrets(item.settings, southManifest.items.settings)
-            }))
+            })),
+            northItems: historyQuery.northItems.map(item => ({
+              id: item.id,
+              name: item.name,
+              enabled: item.enabled,
+              settings: this.encryptionService.filterSecrets(item.settings, southManifest.items.settings)
+            })),
+            northTransformers: [],
+            southTransformers: []
           }
         };
       })
@@ -415,7 +423,8 @@ export default class OIAnalyticsMessageService {
             scanModeId: item.scanModeId,
             scanModeName: null,
             settings: this.encryptionService.filterSecrets(item.settings, manifest.items.settings)
-          }))
+          })),
+          transformers: south.transformers.map(element => ({ order: element.order, id: element.transformer.id }))
         }
       };
     });
@@ -453,7 +462,14 @@ export default class OIAnalyticsMessageService {
               }
             }
           },
-          subscriptions: north.subscriptions.map(south => south.id)
+          subscriptions: north.subscriptions.map(south => south.id),
+          items: north.items.map(item => ({
+            id: item.id,
+            name: item.name,
+            enabled: item.enabled,
+            settings: this.encryptionService.filterSecrets(item.settings, manifest.items.settings)
+          })),
+          transformers: north.transformers.map(element => ({ order: element.order, id: element.transformer.id }))
         }
       };
     });

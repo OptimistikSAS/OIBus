@@ -95,6 +95,7 @@ describe('SouthOIAnalytics with Basic auth', () => {
         useProxy: false
       }
     },
+    transformers: [],
     items: [
       {
         id: 'id1',
@@ -321,6 +322,7 @@ describe('SouthOIAnalytics without proxy but with accept self signed', () => {
         useProxy: false
       }
     },
+    transformers: [],
     items: [
       {
         id: 'id1',
@@ -555,6 +557,7 @@ describe('SouthOIAnalytics with proxy', () => {
         proxyUsername: 'proxyUsername'
       }
     },
+    transformers: [],
     items: [
       {
         id: 'id1',
@@ -704,6 +707,7 @@ describe('SouthOIAnalytics with proxy but without proxy password', () => {
         proxyUsername: 'proxyUsername'
       }
     },
+    transformers: [],
     items: [
       {
         id: 'id1',
@@ -865,6 +869,7 @@ describe('SouthOIAnalytics without proxy but with acceptUnauthorized', () => {
         useProxy: false
       }
     },
+    transformers: [],
     items: [
       {
         id: 'id1',
@@ -978,6 +983,7 @@ describe('SouthOIAnalytics with aad-certificate', () => {
         useProxy: false
       }
     },
+    transformers: [],
     items: [
       {
         id: 'id1',
@@ -1096,6 +1102,7 @@ describe('SouthOIAnalytics with OIA module', () => {
       useOiaModule: true,
       timeout: 30
     },
+    transformers: [],
     items: [
       {
         id: 'id1',

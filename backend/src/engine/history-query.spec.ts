@@ -12,7 +12,7 @@ import testData from '../tests/utils/test-data';
 import HistoryQueryRepository from '../repository/config/history-query.repository';
 import HistoryQueryRepositoryMock from '../tests/__mocks__/repository/config/history-query-repository.mock';
 import NorthConnector from '../north/north-connector';
-import { NorthSettings } from '../../shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../shared/model/north-settings.model';
 import NorthConnectorMock from '../tests/__mocks__/north-connector.mock';
 import SouthConnector from '../south/south-connector';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
@@ -44,7 +44,7 @@ const historyQueryRepository: HistoryQueryRepository = new HistoryQueryRepositor
 
 describe('HistoryQuery enabled', () => {
   let historyQuery: HistoryQuery;
-  const mockedNorth1 = new NorthConnectorMock(testData.north.list[0]) as unknown as NorthConnector<NorthSettings>;
+  const mockedNorth1 = new NorthConnectorMock(testData.north.list[0]) as unknown as NorthConnector<NorthSettings, NorthItemSettings>;
   const mockedSouth1 = new SouthConnectorMock(testData.south.list[0]) as unknown as SouthConnector<SouthSettings, SouthItemSettings>;
 
   beforeEach(async () => {
@@ -91,7 +91,7 @@ describe('HistoryQuery enabled', () => {
     expect(mockedSouth1.start).toHaveBeenCalledTimes(1);
     expect(mockedSouth1.historyQueryHandler).toHaveBeenCalledTimes(1);
     expect(mockedSouth1.historyQueryHandler).toHaveBeenCalledWith(
-      testData.historyQueries.list[0].items.map(item => ({ ...item, scanModeId: 'history' })),
+      testData.historyQueries.list[0].southItems.map(item => ({ ...item, scanModeId: 'history' })),
       testData.historyQueries.list[0].startTime,
       testData.historyQueries.list[0].endTime,
       'history',
@@ -130,7 +130,7 @@ describe('HistoryQuery enabled', () => {
     await flushPromises();
     expect(mockedSouth1.historyQueryHandler).toHaveBeenCalledTimes(1);
     expect(mockedSouth1.historyQueryHandler).toHaveBeenCalledWith(
-      testData.historyQueries.list[0].items.map(item => ({ ...item, scanModeId: 'history' })),
+      testData.historyQueries.list[0].southItems.map(item => ({ ...item, scanModeId: 'history' })),
       testData.historyQueries.list[0].startTime,
       testData.historyQueries.list[0].endTime,
       'history',
@@ -302,7 +302,7 @@ describe('HistoryQuery enabled', () => {
 
 describe('HistoryQuery disabled', () => {
   let historyQuery: HistoryQuery;
-  const mockedNorth1 = new NorthConnectorMock(testData.north.list[0]) as unknown as NorthConnector<NorthSettings>;
+  const mockedNorth1 = new NorthConnectorMock(testData.north.list[0]) as unknown as NorthConnector<NorthSettings, NorthItemSettings>;
   const mockedSouth1 = new SouthConnectorMock(testData.south.list[0]) as unknown as SouthConnector<SouthSettings, SouthItemSettings>;
 
   beforeEach(async () => {

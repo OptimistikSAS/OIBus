@@ -31,6 +31,8 @@ import SouthConnectorMock from '../tests/__mocks__/south-connector.mock';
 import { createBaseFolders, filesExists } from './utils';
 import multer from '@koa/multer';
 import csv from 'papaparse';
+import TransformerRepository from '../repository/config/transformer.repository';
+import TransformerRepositoryMock from '../tests/__mocks__/repository/config/transformer-repository.mock';
 
 jest.mock('../south/south-opcua/south-opcua');
 jest.mock('./metrics/south-connector-metrics.service');
@@ -45,6 +47,7 @@ const logRepository: LogRepository = new LogRepositoryMock();
 const southMetricsRepository: SouthConnectorMetricsRepository = new SouthMetricsRepositoryMock();
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
+const transformerRepository: TransformerRepository = new TransformerRepositoryMock();
 const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OIAnalyticsRegistrationRepositoryMock();
 const certificateRepository: CertificateRepository = new CertificateRepositoryMock();
 const oIAnalyticsMessageService: OIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
@@ -177,6 +180,7 @@ let service: SouthService;
 describe('south service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    (transformerRepository.searchTransformers as jest.Mock).mockReturnValue(testData.transformers.list);
     service = new SouthService(
       validator,
       southConnectorRepository,
@@ -184,6 +188,7 @@ describe('south service', () => {
       southMetricsRepository,
       southCacheRepository,
       scanModeRepository,
+      transformerRepository,
       oIAnalyticsRegistrationRepository,
       certificateRepository,
       oIAnalyticsMessageService,
@@ -373,6 +378,16 @@ describe('south service', () => {
     expect(service.runSouth).not.toHaveBeenCalled();
   });
 
+  it('testSouth() should fail to test South connector in edit mode if transformer not found', async () => {
+    service.runSouth = jest.fn().mockReturnValue(mockedSouth1);
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(testData.south.list[0]);
+    (transformerRepository.searchTransformers as jest.Mock).mockReturnValueOnce([]);
+    await expect(service.testSouth(testData.south.list[0].id, testData.south.command, logger)).rejects.toThrow(
+      `Transformer ${testData.south.list[0].transformers[0].transformer.id} not found`
+    );
+    expect(service.runSouth).not.toHaveBeenCalled();
+  });
+
   it('testSouthItem() should test South connector in creation mode', async () => {
     const callback = jest.fn();
     service.runSouth = jest.fn().mockReturnValue(mockedSouth1);
@@ -439,6 +454,24 @@ describe('south service', () => {
     expect(service.runSouth).not.toHaveBeenCalled();
   });
 
+  it('testSouthItem() should fail to test South connector in edit mode if transformer not found', async () => {
+    const callback = jest.fn();
+    service.runSouth = jest.fn().mockReturnValue(mockedSouth1);
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(testData.south.list[0]);
+    (transformerRepository.searchTransformers as jest.Mock).mockReturnValueOnce([]);
+    await expect(
+      service.testSouthItem(
+        testData.south.list[0].id,
+        testData.south.command,
+        testData.south.itemCommand,
+        testData.south.itemTestingSettings,
+        callback,
+        logger
+      )
+    ).rejects.toThrow(`Transformer ${testData.south.list[0].transformers[0].transformer.id} not found`);
+    expect(service.runSouth).not.toHaveBeenCalled();
+  });
+
   it('should retrieve a list of south manifest', () => {
     const list = service.getInstalledSouthManifests();
     expect(list).toBeDefined();
@@ -479,6 +512,15 @@ describe('south service', () => {
     expect(createBaseFolders).toHaveBeenCalledTimes(1);
     expect(dataStreamEngine.createSouth).toHaveBeenCalledWith(mockedSouth1);
     expect(dataStreamEngine.startSouth).toHaveBeenCalled();
+  });
+
+  it('createSouth() should fail to create South connector if transformer not found', async () => {
+    service.runSouth = jest.fn().mockReturnValue(mockedSouth1);
+    (scanModeRepository.findAll as jest.Mock).mockReturnValue(testData.scanMode.list);
+    (transformerRepository.searchTransformers as jest.Mock).mockReturnValueOnce([]);
+    const command = JSON.parse(JSON.stringify(testData.south.command));
+    await expect(service.createSouth(command, null)).rejects.toThrow(`Transformer ${testData.south.command.transformers[0].id} not found`);
+    expect(dataStreamEngine.createSouth).not.toHaveBeenCalled();
   });
 
   it('createSouth() should create South connector and retrieve secrets from another connector', async () => {
@@ -643,7 +685,7 @@ describe('south service', () => {
     expect(southConnectorRepository.findSouthById).toHaveBeenCalledWith(testData.south.list[0].id);
     expect(southConnectorRepository.saveItem).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(dataStreamEngine.reloadItems).toHaveBeenCalledWith(testData.south.list[0].id);
+    expect(dataStreamEngine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0].id);
   });
 
   it('createItem() should throw an error if connector does not exist', async () => {
@@ -688,7 +730,7 @@ describe('south service', () => {
     expect(southConnectorRepository.findItemById).toHaveBeenCalledWith(testData.south.list[0].id, 'itemId');
     expect(southConnectorRepository.saveItem).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(dataStreamEngine.reloadItems).toHaveBeenCalledWith(testData.south.list[0].id);
+    expect(dataStreamEngine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0].id);
   });
 
   it('updateItem() should throw an error if item does not exist', async () => {
@@ -730,7 +772,7 @@ describe('south service', () => {
     expect(southConnectorRepository.findItemById).toHaveBeenCalledWith(testData.south.list[0].id, 'itemId');
     expect(southConnectorRepository.deleteItem).toHaveBeenCalledWith(testData.south.list[0].items[0].id);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(dataStreamEngine.reloadItems).toHaveBeenCalledWith(testData.south.list[0].id);
+    expect(dataStreamEngine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0].id);
   });
 
   it('deleteItem() should throw an error if item does not exist', async () => {
@@ -754,7 +796,7 @@ describe('south service', () => {
     expect(southConnectorRepository.deleteAllItemsBySouth).toHaveBeenCalledWith(testData.south.list[0].id);
     expect(southCacheRepository.deleteAllBySouthConnector).toHaveBeenCalledWith(testData.south.list[0].id);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(dataStreamEngine.reloadItems).toHaveBeenCalledWith(testData.south.list[0].id);
+    expect(dataStreamEngine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0].id);
   });
 
   it('deleteAllItemsForSouthConnector() should throw an error if connector does not exist', async () => {
@@ -771,7 +813,7 @@ describe('south service', () => {
     expect(southConnectorRepository.findItemById).toHaveBeenCalledWith(testData.south.list[0].id, 'itemId');
     expect(southConnectorRepository.enableItem).toHaveBeenCalledWith(testData.south.list[0].items[0].id);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(dataStreamEngine.reloadItems).toHaveBeenCalledWith(testData.south.list[0].id);
+    expect(dataStreamEngine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0].id);
   });
 
   it('enableItem() should throw an error if item is not found', async () => {
@@ -785,7 +827,7 @@ describe('south service', () => {
     expect(southConnectorRepository.findItemById).toHaveBeenCalledWith(testData.south.list[0].id, 'itemId');
     expect(southConnectorRepository.disableItem).toHaveBeenCalledWith(testData.south.list[0].items[0].id);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(dataStreamEngine.reloadItems).toHaveBeenCalledWith(testData.south.list[0].id);
+    expect(dataStreamEngine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0].id);
   });
 
   it('disableItem() should throw an error if item is not found', async () => {
@@ -1009,10 +1051,10 @@ describe('south service', () => {
     await service.importItems(testData.south.list[0].id, [itemCommand]);
     expect(southConnectorRepository.saveAllItems).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(dataStreamEngine.reloadItems).toHaveBeenCalledWith(testData.south.list[0].id);
+    expect(dataStreamEngine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0].id);
   });
 
-  it('importItems() should import items', async () => {
+  it('importItems() should not import items if connector not found', async () => {
     const itemCommand = JSON.parse(JSON.stringify(testData.south.itemCommand));
     itemCommand.settings = {
       regex: '*',

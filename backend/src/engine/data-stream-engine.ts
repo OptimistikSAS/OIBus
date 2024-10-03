@@ -6,7 +6,7 @@ import { Instant } from '../../shared/model/types';
 import { BaseFolders } from '../model/types';
 import { NorthConnectorMetrics, OIBusContent, SouthConnectorMetrics } from '../../shared/model/engine.model';
 import { ScanMode } from '../model/scan-mode.model';
-import { NorthSettings } from '../../shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../shared/model/north-settings.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { SouthConnectorEntity } from '../model/south-connector.model';
 import { NorthConnectorEntity } from '../model/north-connector.model';
@@ -23,7 +23,7 @@ const ARCHIVE_FOLDER = './archive';
 const ERROR_FOLDER = './error';
 
 export default class DataStreamEngine {
-  private northConnectors = new Map<string, NorthConnector<NorthSettings>>();
+  private northConnectors = new Map<string, NorthConnector<NorthSettings, NorthItemSettings>>();
   private northConnectorMetrics: Map<string, NorthConnectorMetricsService> = new Map<string, NorthConnectorMetricsService>();
   private southConnectors = new Map<string, SouthConnector<SouthSettings, SouthItemSettings>>();
   private southConnectorMetrics: Map<string, SouthConnectorMetricsService> = new Map<string, SouthConnectorMetricsService>();
@@ -124,7 +124,7 @@ export default class DataStreamEngine {
    * Creates CronJobs based on the ScanModes and starts them.
    */
   async start(
-    northConnectorList: Array<NorthConnector<NorthSettings>>,
+    northConnectorList: Array<NorthConnector<NorthSettings, NorthItemSettings>>,
     southConnectorList: Array<SouthConnector<SouthSettings, SouthItemSettings>>
   ): Promise<void> {
     for (const north of northConnectorList) {
@@ -194,7 +194,7 @@ export default class DataStreamEngine {
     });
   }
 
-  async createNorth<N extends NorthSettings>(north: NorthConnector<N>): Promise<void> {
+  async createNorth<N extends NorthSettings, I extends NorthItemSettings>(north: NorthConnector<N, I>): Promise<void> {
     this.northConnectors.set(north.settings.id, north);
     this.northConnectorMetrics.set(north.settings.id, new NorthConnectorMetricsService(north, this.northConnectorMetricsRepository));
   }
@@ -235,7 +235,7 @@ export default class DataStreamEngine {
   /**
    * Stops the north connector and deletes all cache inside the base folder
    */
-  async deleteNorth(north: NorthConnectorEntity<NorthSettings>): Promise<void> {
+  async deleteNorth(north: NorthConnectorEntity<NorthSettings, NorthItemSettings>): Promise<void> {
     await this.stopNorth(north.id);
     // this.homeMetricsService.removeNorth(northId);
     this.northConnectors.delete(north.id);
@@ -373,8 +373,12 @@ export default class DataStreamEngine {
     }
   }
 
-  async reloadItems(southId: string): Promise<void> {
+  async reloadSouthItems(southId: string): Promise<void> {
     await this.southConnectors.get(southId)?.onItemChange();
+  }
+
+  async reloadNorthItems(northId: string): Promise<void> {
+    await this.northConnectors.get(northId)?.onItemChange();
   }
 
   async reloadSouth(southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings>) {
@@ -391,7 +395,7 @@ export default class DataStreamEngine {
     }
   }
 
-  async reloadNorth(northConnector: NorthConnectorEntity<NorthSettings>) {
+  async reloadNorth(northConnector: NorthConnectorEntity<NorthSettings, NorthItemSettings>) {
     await this.stopNorth(northConnector.id);
     const north = this.northConnectors.get(northConnector.id);
     if (north) {

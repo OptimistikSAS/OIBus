@@ -142,4 +142,5 @@ export interface ConnectorManifest {
   name: string;
   description: string;
   settings: Array<OibFormControl>;
+  items: { settings: Array<OibFormControl> };
 }

@@ -13,7 +13,7 @@ import {
 import { createFormGroup, groupFormControlsByRow } from '../../shared/form-utils';
 import { OibFormControl } from '../../../../../backend/shared/model/form.model';
 import { FormComponent } from '../../shared/form/form.component';
-import { HistoryQueryItemCommandDTO, HistoryQueryItemDTO } from '../../../../../backend/shared/model/history-query.model';
+import { HistoryQuerySouthItemCommandDTO, HistoryQuerySouthItemDTO } from '../../../../../backend/shared/model/history-query.model';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { SouthItemTestComponent } from '../../south/south-item-test/south-item-test.component';
 
@@ -36,8 +36,8 @@ export class EditHistoryQueryItemModalComponent {
   historyId!: string;
   southConnectorCommand!: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
   southManifest!: SouthConnectorManifest;
-  item: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings> | null = null;
-  itemList: Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>> = [];
+  item: HistoryQuerySouthItemDTO<SouthItemSettings> | HistoryQuerySouthItemCommandDTO<SouthItemSettings> | null = null;
+  itemList: Array<HistoryQuerySouthItemDTO<SouthItemSettings> | HistoryQuerySouthItemCommandDTO<SouthItemSettings>> = [];
 
   /** Not every item passed will have an id, but we still need to check for uniqueness.
    * This ensures that we have a backup identifier for the currently edited item.
@@ -72,7 +72,7 @@ export class EditHistoryQueryItemModalComponent {
     };
   }
 
-  private createForm(item: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings> | null) {
+  private createForm(item: HistoryQuerySouthItemDTO<SouthItemSettings> | HistoryQuerySouthItemCommandDTO<SouthItemSettings> | null) {
     this.form = this.fb.group({
       name: ['', [Validators.required, this.checkUniqueness()]],
       enabled: [true, Validators.required],
@@ -92,7 +92,7 @@ export class EditHistoryQueryItemModalComponent {
    */
   prepareForCreation(
     southItemSchema: SouthConnectorItemManifest,
-    itemList: Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>>,
+    itemList: Array<HistoryQuerySouthItemDTO<SouthItemSettings> | HistoryQuerySouthItemCommandDTO<SouthItemSettings>>,
     historyId: string,
     southConnectorCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
     southManifest: SouthConnectorManifest
@@ -113,8 +113,8 @@ export class EditHistoryQueryItemModalComponent {
    */
   prepareForEdition(
     southItemSchema: SouthConnectorItemManifest,
-    itemList: Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>>,
-    historyQueryItem: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>,
+    itemList: Array<HistoryQuerySouthItemDTO<SouthItemSettings> | HistoryQuerySouthItemCommandDTO<SouthItemSettings>>,
+    historyQueryItem: HistoryQuerySouthItemDTO<SouthItemSettings> | HistoryQuerySouthItemCommandDTO<SouthItemSettings>,
     historyId: string,
     southConnectorCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
     southManifest: SouthConnectorManifest,
@@ -137,8 +137,8 @@ export class EditHistoryQueryItemModalComponent {
    */
   prepareForCopy(
     southItemSchema: SouthConnectorItemManifest,
-    itemList: Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>>,
-    southItem: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>,
+    itemList: Array<HistoryQuerySouthItemDTO<SouthItemSettings> | HistoryQuerySouthItemCommandDTO<SouthItemSettings>>,
+    southItem: HistoryQuerySouthItemDTO<SouthItemSettings> | HistoryQuerySouthItemCommandDTO<SouthItemSettings>,
     historyId: string,
     southConnectorCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
     southManifest: SouthConnectorManifest
@@ -146,7 +146,7 @@ export class EditHistoryQueryItemModalComponent {
     this.historyId = historyId;
     this.southConnectorCommand = southConnectorCommand;
     this.southManifest = southManifest;
-    this.item = JSON.parse(JSON.stringify(southItem)) as HistoryQueryItemDTO<SouthItemSettings>;
+    this.item = JSON.parse(JSON.stringify(southItem)) as HistoryQuerySouthItemDTO<SouthItemSettings>;
     this.item.name = `${southItem.name}-copy`;
     this.mode = 'copy';
     this.itemList = itemList;
@@ -174,7 +174,7 @@ export class EditHistoryQueryItemModalComponent {
       id = this.item?.id || null;
     }
 
-    const command: HistoryQueryItemCommandDTO<SouthItemSettings> = {
+    const command: HistoryQuerySouthItemCommandDTO<SouthItemSettings> = {
       id,
       enabled: formValue.enabled!,
       name: formValue.name!,

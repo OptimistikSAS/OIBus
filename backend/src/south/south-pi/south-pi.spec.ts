@@ -55,6 +55,7 @@ describe('South PI', () => {
       agentUrl: 'http://localhost:2224',
       retryInterval: 1000
     },
+    transformers: [],
     items: [
       {
         id: 'id1',

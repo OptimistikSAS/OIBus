@@ -3,11 +3,11 @@ import NorthMetricsRepositoryMock from '../../tests/__mocks__/repository/log/nor
 import NorthConnectorMetricsRepository from '../../repository/logs/north-connector-metrics.repository';
 import testData from '../../tests/utils/test-data';
 import NorthConnector from '../../north/north-connector';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../shared/model/north-settings.model';
 import NorthConnectorMock from '../../tests/__mocks__/north-connector.mock';
 
 const northConnectorMetricsRepository: NorthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
-const northMock = new NorthConnectorMock(testData.north.list[0]) as unknown as NorthConnector<NorthSettings>;
+const northMock = new NorthConnectorMock(testData.north.list[0]) as unknown as NorthConnector<NorthSettings, NorthItemSettings>;
 
 describe('NorthConnectorMetricsService', () => {
   let service: NorthConnectorMetricsService;
