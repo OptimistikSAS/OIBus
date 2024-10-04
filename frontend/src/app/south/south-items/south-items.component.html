@@ -61,7 +61,12 @@
             @if (!inMemory) {
               <th></th>
             }
-            <th translate="south.items.name"></th>
+            <th class="w-25">
+              <button type="button" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('name')">
+                <span translate="south.items.name" class="me-2"></span>
+                <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.name] }}"></span>
+              </button>
+            </th>
             @if (!southManifest.items.scanMode.subscriptionOnly) {
               <th translate="south.items.scan-mode" style="width: 8rem"></th>
             }
