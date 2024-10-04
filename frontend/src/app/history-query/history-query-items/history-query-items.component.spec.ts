@@ -115,6 +115,14 @@ class HistoryQueryItemsComponentTester extends ComponentTester<TestComponent> {
   get spinner() {
     return this.element('#import-button .spinner-border')!;
   }
+
+  get sortByNameBtn() {
+    return this.button('button:has( > span[translate="history-query.items.name"])')!;
+  }
+
+  get tableItemNames() {
+    return this.elements<HTMLTableCellElement>('tbody tr.south-item td:nth-child(2)').map(e => e.nativeElement.innerText);
+  }
 }
 
 describe('HistoryQueryItemsComponent', () => {
@@ -199,5 +207,27 @@ describe('HistoryQueryItemsComponent', () => {
     expect(confirmationService.confirm).toHaveBeenCalledTimes(1);
     expect(historyQueryService.deleteAllItems).toHaveBeenCalledTimes(1);
     expect(notificationService.success).toHaveBeenCalledWith('history-query.items.all-deleted');
+  });
+
+  it('should sort items by name', () => {
+    const expectedOrder = tester.tableItemNames;
+
+    // Ascending
+    tester.sortByNameBtn.click();
+    expect(tester.tableItemNames).toEqual(expectedOrder);
+
+    // Descending
+    tester.sortByNameBtn.click();
+    expectedOrder.reverse();
+    expect(tester.tableItemNames).toEqual(expectedOrder);
+
+    // Unset
+    tester.sortByNameBtn.click();
+    expect(tester.tableItemNames).toEqual(expectedOrder);
+
+    // Ascending (this call reverses the list to the original sorting, if omitted, tests fail)
+    tester.sortByNameBtn.click();
+    expectedOrder.reverse();
+    expect(tester.tableItemNames).toEqual(expectedOrder);
   });
 });
