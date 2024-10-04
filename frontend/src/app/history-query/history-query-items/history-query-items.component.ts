@@ -30,6 +30,15 @@ import { ExportItemModalComponent } from '../../shared/export-item-modal/export-
 import { ImportItemModalComponent } from '../../shared/import-item-modal/import-item-modal.component';
 
 const PAGE_SIZE = 20;
+const enum ColumnSortState {
+  INDETERMINATE = 0,
+  ASCENDING = 1,
+  DESCENDING = 2
+}
+
+export interface TableData {
+  name: string;
+}
 
 @Component({
   selector: 'oib-history-query-items',
@@ -74,6 +83,11 @@ export class HistoryQueryItemsComponent implements OnInit {
 
   searchControl = inject(NonNullableFormBuilder).control(null as string | null);
 
+  columnSortStates: { [key in keyof TableData]: ColumnSortState } = {
+    name: ColumnSortState.INDETERMINATE
+  };
+  currentColumnSort: keyof TableData | null = 'name';
+
   ngOnInit() {
     this.southManifest.items.scanMode.subscriptionOnly = true;
     if (!this.historyQuery) {
@@ -90,6 +104,10 @@ export class HistoryQueryItemsComponent implements OnInit {
   }
 
   fetchItemsAndResetPage(fromMemory: boolean) {
+    // reset column sorting
+    this.columnSortStates = { name: ColumnSortState.INDETERMINATE };
+    this.currentColumnSort = 'name';
+
     if (this.historyQuery && !fromMemory) {
       this.historyQueryService.listItems(this.historyQuery.id).subscribe(items => {
         this.allItems = items;
@@ -105,6 +123,7 @@ export class HistoryQueryItemsComponent implements OnInit {
   }
 
   changePage(pageNumber: number) {
+    this.sortTable();
     this.displayedItems = this.createPage(pageNumber);
   }
 
@@ -361,6 +380,33 @@ export class HistoryQueryItemsComponent implements OnInit {
           this.filteredItems = this.filter(items);
           this.changePage(this.displayedItems.number);
         });
+    }
+  }
+
+  toggleColumnSort(columnName: keyof TableData) {
+    this.currentColumnSort = columnName;
+    // Toggle state
+    this.columnSortStates[this.currentColumnSort] = (this.columnSortStates[this.currentColumnSort] + 1) % 3;
+
+    // Reset state for every other column
+    Object.keys(this.columnSortStates).forEach(key => {
+      if (this.currentColumnSort !== key) {
+        this.columnSortStates[key as keyof typeof this.columnSortStates] = 0;
+      }
+    });
+
+    this.changePage(0);
+  }
+
+  private sortTable() {
+    if (this.currentColumnSort && this.columnSortStates[this.currentColumnSort] !== ColumnSortState.INDETERMINATE) {
+      const ascending = this.columnSortStates[this.currentColumnSort] === ColumnSortState.ASCENDING;
+
+      switch (this.currentColumnSort) {
+        case 'name':
+          this.filteredItems.sort((a, b) => (ascending ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)));
+          break;
+      }
     }
   }
 }
