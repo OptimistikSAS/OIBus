@@ -7,7 +7,8 @@ const manifest: NorthConnectorManifest = {
   description: 'Display filename or values in Console (used for debug)',
   modes: {
     files: true,
-    points: true
+    points: true,
+    items: false
   },
   settings: [
     {

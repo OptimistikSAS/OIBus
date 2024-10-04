@@ -10,6 +10,7 @@ import {
   NorthValueFiles
 } from '../../../../shared/model/north-connector.model';
 import { OIBusSubscription, SubscriptionDTO } from '../../../../shared/model/subscription.model';
+import { TransformerDTO } from '../../../../shared/model/transformer.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on North connectors
@@ -230,5 +231,17 @@ export class NorthConnectorService {
 
   testConnection(northId: string, settings: NorthConnectorCommandDTO<any>): Observable<void> {
     return this.http.put<void>(`/api/north/${northId}/test-connection`, settings);
+  }
+
+  getTransformers(northId: string): Observable<Array<TransformerDTO>> {
+    return this.http.get<Array<TransformerDTO>>(`/api/north/${northId}/transformers`);
+  }
+
+  assignTransformer(northId: string, transformerId: string): Observable<void> {
+    return this.http.post<void>(`/api/north/${northId}/transformers/${transformerId}`, null);
+  }
+
+  removeTransformer(northId: string, transformerId: string): Observable<void> {
+    return this.http.delete<void>(`/api/north/${northId}/transformers/${transformerId}`);
   }
 }

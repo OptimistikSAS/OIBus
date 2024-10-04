@@ -16,7 +16,7 @@ export class MonacoEditorLoaderService {
       }
       const onAmdLoader: any = () => {
         // Load monaco
-        (window as any).require.config({ paths: { vs: 'vendor/monaco-editor/vs' } });
+        (window as any).require.config({ paths: { vs: `${window.location.origin}/vendor/monaco-editor/vs` } });
 
         (window as any).require(['vs/editor/editor.main'], () => {
           resolve();

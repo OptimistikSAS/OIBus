@@ -32,6 +32,7 @@ export class OibCodeBlockComponent implements AfterViewInit, ControlValueAccesso
 
   onChange: (value: string) => void = () => {};
   onTouched = () => {};
+  onLoaded: () => void = () => {};
 
   /**
    * Holds the instance of the current code editor
@@ -48,6 +49,25 @@ export class OibCodeBlockComponent implements AfterViewInit, ControlValueAccesso
 
   registerOnTouched(fn: any): void {
     this.onTouched = fn;
+  }
+
+  registerOnLoaded(fn: any): void {
+    this.onLoaded = fn;
+  }
+
+  replaceModel(model: monaco.editor.ITextModel) {
+    // Replace
+    const currentModel = this.codeEditorInstance?.getModel();
+    this.codeEditorInstance?.setModel(model);
+    currentModel?.dispose();
+
+    // Attach listener to new model
+    model.onDidChangeContent(() => {
+      this.onChange(this.codeEditorInstance!.getValue());
+    });
+    if (this.pendingValueToWrite) {
+      this.codeEditorInstance!.setValue(this.pendingValueToWrite);
+    }
   }
 
   setDisabledState(_isDisabled: boolean): void {}
@@ -70,6 +90,8 @@ export class OibCodeBlockComponent implements AfterViewInit, ControlValueAccesso
       if (this.pendingValueToWrite) {
         this.codeEditorInstance.setValue(this.pendingValueToWrite);
       }
+
+      this.onLoaded();
     });
   }
 

@@ -146,7 +146,8 @@ describe('EditHistoryQueryComponent', () => {
         description: 'Console description',
         modes: {
           files: true,
-          points: true
+          points: true,
+          items: false
         },
         settings: [],
         schema: {} as unknown
