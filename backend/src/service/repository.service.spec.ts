@@ -22,6 +22,11 @@ import CertificateRepository from '../repository/certificate.repository';
 import RegistrationRepository from '../repository/registration.repository';
 import CommandRepository from '../repository/command.repository';
 import OianalyticsMessageRepository from '../repository/oianalytics-message.repository';
+import NorthItemRepository from '../repository/north-item.repository';
+import TransformerRepository from '../repository/transformer.repository';
+import NorthTransformerRepository from '../repository/north-transformer.repository';
+import SouthTransformerRepository from '../repository/south-transformer.repository';
+import HistoryTransformerRepository from '../repository/history-transformer.repository';
 
 jest.mock('better-sqlite3', () => jest.fn(() => 'sqlite database'));
 jest.mock('../repository/crypto.repository');
@@ -44,6 +49,11 @@ jest.mock('../repository/certificate.repository');
 jest.mock('../repository/registration.repository');
 jest.mock('../repository/command.repository');
 jest.mock('../repository/oianalytics-message.repository');
+jest.mock('../repository/north-item.repository');
+jest.mock('../repository/transformer.repository');
+jest.mock('../repository/north-transformer.repository');
+jest.mock('../repository/south-transformer.repository');
+jest.mock('../repository/history-transformer.repository');
 
 describe('Repository service', () => {
   it('should properly initialize service', () => {
@@ -63,6 +73,7 @@ describe('Repository service', () => {
     expect(EngineMetricsRepository).toHaveBeenCalledWith('sqlite database');
     expect(SouthCacheRepository).toHaveBeenCalledWith('sqlite database');
     expect(SouthItemRepository).toHaveBeenCalledWith('sqlite database');
+    expect(NorthItemRepository).toHaveBeenCalledWith('sqlite database');
     expect(LogRepository).toHaveBeenCalledWith('sqlite database');
     expect(HistoryQueryRepository).toHaveBeenCalledWith('sqlite database');
     expect(HistoryQueryItemRepository).toHaveBeenCalledWith('sqlite database');
@@ -71,6 +82,10 @@ describe('Repository service', () => {
     expect(RegistrationRepository).toHaveBeenCalledWith('sqlite database');
     expect(CertificateRepository).toHaveBeenCalledWith('sqlite database');
     expect(CommandRepository).toHaveBeenCalledWith('sqlite database');
+    expect(TransformerRepository).toHaveBeenCalledWith('sqlite database');
+    expect(NorthTransformerRepository).toHaveBeenCalledWith('sqlite database');
+    expect(SouthTransformerRepository).toHaveBeenCalledWith('sqlite database');
+    expect(HistoryTransformerRepository).toHaveBeenCalledWith('sqlite database');
     expect(OianalyticsMessageRepository).toHaveBeenCalledWith('sqlite database');
 
     expect(repositoryService.engineRepository).toBeDefined();
@@ -81,6 +96,7 @@ describe('Repository service', () => {
     expect(repositoryService.northMetricsRepository).toBeDefined();
     expect(repositoryService.southConnectorRepository).toBeDefined();
     expect(repositoryService.southItemRepository).toBeDefined();
+    expect(repositoryService.northItemRepository).toBeDefined();
     expect(repositoryService.southMetricsRepository).toBeDefined();
     expect(repositoryService.engineMetricsRepository).toBeDefined();
     expect(repositoryService.registrationRepository).toBeDefined();
@@ -92,6 +108,10 @@ describe('Repository service', () => {
     expect(repositoryService.subscriptionRepository).toBeDefined();
     expect(repositoryService.certificateRepository).toBeDefined();
     expect(repositoryService.commandRepository).toBeDefined();
+    expect(repositoryService.transformerRepository).toBeDefined();
+    expect(repositoryService.northTransformerRepository).toBeDefined();
+    expect(repositoryService.southTransformerRepository).toBeDefined();
+    expect(repositoryService.historyTransformerRepository).toBeDefined();
     expect(repositoryService.oianalyticsMessageRepository).toBeDefined();
   });
 });

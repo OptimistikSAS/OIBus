@@ -8,7 +8,8 @@ const manifest: NorthConnectorManifest = {
   description: 'Store files into AWS S3 bucket',
   modes: {
     files: true,
-    points: true
+    points: true,
+    items: false
   },
   settings: [
     {

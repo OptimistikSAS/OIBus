@@ -12,25 +12,25 @@ jest.mock('./encryption.service');
 jest.mock('./north-connector-metrics.service');
 
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
-const repositoryRepository: RepositoryService = new RepositoryServiceMock('', '');
+const repositoryService: RepositoryService = new RepositoryServiceMock('', '');
 
 const logger: pino.Logger = new PinoLogger();
 let service: NorthService;
 describe('north service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new NorthService(encryptionService, repositoryRepository);
+    service = new NorthService(encryptionService, repositoryService);
   });
 
   it('should get a North connector settings', () => {
     service.getNorth('northId');
-    expect(repositoryRepository.northConnectorRepository.getNorthConnector).toHaveBeenCalledTimes(1);
-    expect(repositoryRepository.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('northId');
+    expect(repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledTimes(1);
+    expect(repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('northId');
   });
 
   it('should get all North connector settings', () => {
     service.getNorthList();
-    expect(repositoryRepository.northConnectorRepository.getNorthConnectors).toHaveBeenCalledTimes(1);
+    expect(repositoryService.northConnectorRepository.getNorthConnectors).toHaveBeenCalledTimes(1);
   });
 
   it('should create North connector', () => {

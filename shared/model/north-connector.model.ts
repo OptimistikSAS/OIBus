@@ -83,7 +83,11 @@ export interface NorthConnectorWithItemsCommandDTO<> {
   subscriptionsToDelete: Array<OIBusSubscription>;
 }
 
-export interface NorthConnectorManifest {
+export interface NorthConnectorItemManifest {
+  settings: Array<OibFormControl>;
+}
+
+interface NorthConnectorManifestBase<THandlesItems = boolean> {
   id: string;
   category: string;
   name: string;
@@ -91,9 +95,15 @@ export interface NorthConnectorManifest {
   modes: {
     files: boolean;
     points: boolean;
+    items: THandlesItems;
   };
   settings: Array<OibFormControl>;
 }
+
+// When modes.items is set to true, require an items definition
+export type NorthConnectorManifest<THandlesItems = boolean> = THandlesItems extends true
+  ? NorthConnectorManifestBase<THandlesItems> & { items: NorthConnectorItemManifest }
+  : NorthConnectorManifestBase<THandlesItems>;
 
 export interface NorthCacheFiles {
   filename: string;
@@ -106,4 +116,33 @@ export type NorthArchiveFiles = NorthCacheFiles;
 export interface NorthValueFiles {
   filename: string;
   valuesCount: number;
+}
+
+// TODO: Change this type with generated types for every type of north item settings. Also change in NorthConnector class
+type NorthItemSettings = any;
+
+/**
+ * DTO used for an item to query within a north
+ */
+export interface NorthConnectorItemDTO<T extends NorthItemSettings = any> extends BaseEntity {
+  name: string;
+  enabled: boolean;
+  connectorId: string;
+  settings: T;
+}
+
+/**
+ * Command DTO used to create an NorthConnectorItem
+ */
+export interface NorthConnectorItemCommandDTO<T extends NorthItemSettings = any> {
+  id?: string;
+  enabled: boolean;
+  name: string;
+  settings: T;
+}
+
+export interface NorthConnectorItemSearchParam {
+  name?: string;
+  enabled?: boolean;
+  page?: number;
 }
