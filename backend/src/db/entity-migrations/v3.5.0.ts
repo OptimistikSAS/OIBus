@@ -1,11 +1,12 @@
 import { Knex } from 'knex';
-import { HISTORY_QUERIES_TABLE } from '../../repository/history-query.repository';
-import { NORTH_CONNECTORS_TABLE } from '../../repository/north-connector.repository';
 import path from 'node:path';
 import { filesExists } from '../../service/utils';
 import fs from 'node:fs/promises';
-import { HISTORY_ITEMS_TABLE } from '../../repository/history-query-item.repository';
 
+const NORTH_CONNECTORS_TABLE = 'north_connectors';
+const SOUTH_CONNECTORS_TABLE = 'south_connectors';
+const HISTORY_QUERIES_TABLE = 'history_queries';
+const HISTORY_ITEMS_TABLE = 'history_items';
 const EXTERNAL_SOURCES_TABLE = 'external_sources';
 const EXTERNAL_SUBSCRIPTION_TABLE = 'external_subscription';
 
@@ -13,6 +14,8 @@ export async function up(knex: Knex): Promise<void> {
   await removeNorthOIBusConnectors(knex);
   await removeNorthOIBusHistoryQueries(knex);
   await removeExternalSubscriptions(knex);
+  await updateSouthConnectorsTable(knex);
+  await updateHistoryQueriesTable(knex);
 }
 
 async function removeNorthOIBusConnectors(knex: Knex): Promise<void> {
@@ -48,4 +51,18 @@ async function removeExternalSubscriptions(knex: Knex): Promise<void> {
   await knex.schema.dropTableIfExists(EXTERNAL_SOURCES_TABLE);
 }
 
-export async function down(): Promise<void> {}
+async function updateSouthConnectorsTable(knex: Knex): Promise<void> {
+  await knex.schema.alterTable(SOUTH_CONNECTORS_TABLE, table => {
+    table.boolean('shared_connection').defaultTo(false);
+  });
+}
+
+async function updateHistoryQueriesTable(knex: Knex): Promise<void> {
+  await knex.schema.alterTable(HISTORY_QUERIES_TABLE, table => {
+    table.boolean('south_shared_connection').defaultTo(false);
+  });
+}
+
+export async function down(_knex: Knex): Promise<void> {
+  return;
+}
