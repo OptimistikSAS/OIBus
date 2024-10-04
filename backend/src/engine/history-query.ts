@@ -46,7 +46,7 @@ export default class HistoryQuery {
    * Run history query according to its status
    */
   async start<S extends SouthSettings, N extends NorthSettings>(): Promise<void> {
-    this.historyConfiguration = this.historyService.repositoryService.historyQueryRepository.getHistoryQuery(this.historyConfiguration.id)!;
+    this.historyConfiguration = this.historyService.repositoryService.historyQueryRepository.findById(this.historyConfiguration.id)!;
     const southConfiguration: SouthConnectorDTO<S> = {
       id: this.historyConfiguration.id,
       name: this.historyConfiguration.name,
@@ -108,9 +108,7 @@ export default class HistoryQuery {
           this.logger.error(`Error while executing history query. ${error}`);
           this.south!.resolveDeferredPromise();
           await delay(FINISH_INTERVAL);
-          this.historyConfiguration = this.historyService.repositoryService.historyQueryRepository.getHistoryQuery(
-            this.historyConfiguration.id
-          )!;
+          this.historyConfiguration = this.historyService.repositoryService.historyQueryRepository.findById(this.historyConfiguration.id)!;
           if (this.historyConfiguration.status === 'RUNNING' && !this.stopping) {
             await this.south!.stop(false);
             await this.south!.start(false);
@@ -175,10 +173,8 @@ export default class HistoryQuery {
     if (!this.north || !this.south || ((await this.north.isCacheEmpty()) && !this.south.historyIsRunning)) {
       this.logger.info(`Finish "${this.historyConfiguration.name}" (${this.historyConfiguration.id})`);
       await this.stop();
-      this.historyService.repositoryService.historyQueryRepository.setHistoryQueryStatus(this.historyConfiguration.id, 'FINISHED');
-      this.historyConfiguration = this.historyService.repositoryService.historyQueryRepository.getHistoryQuery(
-        this.historyConfiguration.id
-      )!;
+      this.historyService.repositoryService.historyQueryRepository.updateStatus(this.historyConfiguration.id, 'FINISHED');
+      this.historyConfiguration = this.historyService.repositoryService.historyQueryRepository.findById(this.historyConfiguration.id)!;
     } else {
       this.logger.debug(`History query "${this.historyConfiguration.name}" is still running`);
     }

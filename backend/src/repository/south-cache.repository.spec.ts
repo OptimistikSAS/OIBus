@@ -27,7 +27,7 @@ describe('SouthCacheRepository', () => {
       maxInstant: '2023-03-01T10:30:16.000Z'
     };
     get.mockReturnValueOnce({ scanModeId: 'id1', itemId: 'itemId', southId: 'southId', maxInstant: '2023-03-01T10:30:16.000Z' });
-    const southCache = repository.getSouthCacheScanMode('southId', 'id1', 'itemId');
+    const southCache = repository.getScanMode('southId', 'id1', 'itemId');
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT south_id AS southId, scan_mode_id AS scanModeId, item_id AS itemId, max_instant AS maxInstant FROM cache_history WHERE south_id = ? AND scan_mode_id = ? AND item_id = ?;'
     );
@@ -46,7 +46,7 @@ describe('SouthCacheRepository', () => {
       maxInstant: '2023-03-01T10:30:16.000Z'
     };
 
-    repository.createOrUpdateCacheScanMode(command);
+    repository.createOrUpdate(command);
     expect(get).toHaveBeenCalledWith('southId', 'id1', 'itemId');
     expect(database.prepare).toHaveBeenCalledWith(
       'INSERT INTO cache_history (south_id, scan_mode_id, item_id, max_instant) VALUES (?, ?, ?, ?);'
@@ -65,7 +65,7 @@ describe('SouthCacheRepository', () => {
       maxInstant: '2023-03-01T10:30:16.000Z'
     };
 
-    repository.createOrUpdateCacheScanMode(command);
+    repository.createOrUpdate(command);
     expect(get).toHaveBeenCalledWith('southId', 'id1', 'itemId');
     expect(database.prepare).toHaveBeenCalledWith(
       'UPDATE cache_history SET max_instant = ? WHERE south_id = ? AND scan_mode_id = ? AND item_id = ?;'
@@ -74,13 +74,13 @@ describe('SouthCacheRepository', () => {
   });
 
   it('should delete a south connector', () => {
-    repository.deleteCacheScanMode('southId', 'id1', 'itemId');
+    repository.delete('southId', 'id1', 'itemId');
     expect(database.prepare).toHaveBeenCalledWith('DELETE FROM cache_history WHERE south_id = ? AND scan_mode_id = ? AND item_id = ?;');
     expect(run).toHaveBeenCalledWith('southId', 'id1', 'itemId');
   });
 
   it('should reset cache', () => {
-    repository.resetSouthCacheDatabase('id');
+    repository.reset('id');
     expect(database.prepare).toHaveBeenCalledWith('DELETE FROM cache_history WHERE south_id = ?;');
     expect(run).toHaveBeenCalledTimes(1);
   });
@@ -109,19 +109,19 @@ describe('SouthCacheRepository', () => {
   });
 
   it('should delete all cache rows of a south connector', () => {
-    repository.deleteAllCacheScanModes('southId');
+    repository.deleteAllBySouthConnector('southId');
     expect(database.prepare).toHaveBeenCalledWith(`DELETE FROM ${SOUTH_CACHE_TABLE} WHERE south_id = ?;`);
     expect(run).toHaveBeenCalledWith('southId');
   });
 
   it('should delete all cache rows of an item', () => {
-    repository.deleteCacheScanModesByItem('itemId');
+    repository.deleteAllBySouthItem('itemId');
     expect(database.prepare).toHaveBeenCalledWith(`DELETE FROM ${SOUTH_CACHE_TABLE} WHERE item_id = ?;`);
     expect(run).toHaveBeenCalledWith('itemId');
   });
 
   it('should delete all cache rows of a scan mode', () => {
-    repository.deleteCacheScanModesByScanMode('scanModeId');
+    repository.deleteAllByScanMode('scanModeId');
     expect(database.prepare).toHaveBeenCalledWith(`DELETE FROM ${SOUTH_CACHE_TABLE} WHERE scan_mode_id = ?;`);
     expect(run).toHaveBeenCalledWith('scanModeId');
   });
@@ -150,7 +150,7 @@ describe('SouthCacheRepository', () => {
 
   it("should update a cache row's scan mode id", () => {
     get.mockReturnValueOnce({});
-    repository.updateCacheScanModeId('southId', 'itemId', 'oldScanModeId', 'newScanModeId');
+    repository.update('southId', 'itemId', 'oldScanModeId', 'newScanModeId');
     expect(database.prepare).toHaveBeenCalledWith(
       `UPDATE ${SOUTH_CACHE_TABLE} SET scan_mode_id = ? WHERE south_id = ? AND scan_mode_id = ? AND item_id = ?;`
     );
@@ -159,7 +159,7 @@ describe('SouthCacheRepository', () => {
 
   it('should not query if no scan mode found', () => {
     get.mockReturnValueOnce(null);
-    repository.updateCacheScanModeId('southId', 'itemId', 'oldScanModeId', 'newScanModeId');
+    repository.update('southId', 'itemId', 'oldScanModeId', 'newScanModeId');
     expect(get).toHaveBeenCalledTimes(1);
   });
 });

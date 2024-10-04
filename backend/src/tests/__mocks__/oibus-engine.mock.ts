@@ -20,6 +20,7 @@ export default jest.fn().mockImplementation(() => {
     addExternalContent: jest.fn(),
     getErrorFiles: jest.fn(),
     updateScanMode: jest.fn(),
+    updateSubscriptions: jest.fn(),
     deleteSouth: jest.fn(),
     deleteNorth: jest.fn()
   };

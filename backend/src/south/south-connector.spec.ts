@@ -1,7 +1,7 @@
 import SouthConnector from './south-connector';
-import PinoLogger from '../tests/__mocks__/logger.mock';
-import EncryptionServiceMock from '../tests/__mocks__/encryption-service.mock';
-import RepositoryServiceMock from '../tests/__mocks__/repository-service.mock';
+import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
+import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
+import RepositoryServiceMock from '../tests/__mocks__/service/repository-service.mock';
 
 import { SouthConnectorDTO, SouthConnectorItemDTO, SouthConnectorManifest } from '../../../shared/model/south-connector.model';
 
@@ -166,7 +166,7 @@ describe('SouthConnector enabled', () => {
       },
       settings: {}
     };
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
 
     south = new TestSouth(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
     await south.start();
@@ -180,8 +180,8 @@ describe('SouthConnector enabled', () => {
       description: 'my description',
       cron: '* * * * * *'
     };
-    (repositoryService.southItemRepository.listSouthItems as jest.Mock).mockReturnValueOnce([items[0]]);
-    (repositoryService.scanModeRepository.getScanMode as jest.Mock).mockReturnValue(scanMode);
+    (repositoryService.southItemRepository.list as jest.Mock).mockReturnValueOnce([items[0]]);
+    (repositoryService.scanModeRepository.findById as jest.Mock).mockReturnValue(scanMode);
 
     await south.onItemChange();
     south.addToQueue(scanMode);
@@ -204,13 +204,13 @@ describe('SouthConnector enabled', () => {
       description: 'my description',
       cron: '* * * * * *'
     };
-    (repositoryService.southItemRepository.listSouthItems as jest.Mock).mockReturnValueOnce([]).mockReturnValueOnce(items);
+    (repositoryService.southItemRepository.list as jest.Mock).mockReturnValueOnce([]).mockReturnValueOnce(items);
 
     await south.onItemChange();
     south.addToQueue(scanMode);
     expect(south.run).not.toHaveBeenCalled();
 
-    (repositoryService.scanModeRepository.getScanMode as jest.Mock).mockReturnValue(scanMode);
+    (repositoryService.scanModeRepository.findById as jest.Mock).mockReturnValue(scanMode);
     await south.onItemChange();
     south.addToQueue(scanMode);
     expect(south.run).not.toHaveBeenCalled();
@@ -528,20 +528,20 @@ describe('SouthConnector enabled', () => {
     south.unsubscribe = jest.fn();
     const scanMode1: ScanModeDTO = { id: 'scanModeId1' } as ScanModeDTO;
     const scanMode2: ScanModeDTO = { id: 'scanModeId2' } as ScanModeDTO;
-    (repositoryService.scanModeRepository.getScanMode as jest.Mock).mockReturnValueOnce(scanMode1).mockReturnValueOnce(scanMode2);
-    (repositoryService.southItemRepository.listSouthItems as jest.Mock).mockReturnValueOnce(items);
+    (repositoryService.scanModeRepository.findById as jest.Mock).mockReturnValueOnce(scanMode1).mockReturnValueOnce(scanMode2);
+    (repositoryService.southItemRepository.list as jest.Mock).mockReturnValueOnce(items);
     await south.onItemChange();
     expect(south.subscribe).toHaveBeenCalledWith([items[2]]);
     expect(logger.trace).toHaveBeenCalledWith(`Subscribing to 1 new items`);
 
-    (repositoryService.southItemRepository.listSouthItems as jest.Mock).mockReturnValueOnce([]);
+    (repositoryService.southItemRepository.list as jest.Mock).mockReturnValueOnce([]);
     await south.onItemChange();
     expect(south.unsubscribe).toHaveBeenCalledTimes(1);
 
     south.subscribe = jest.fn().mockImplementationOnce(() => {
       throw new Error('subscription error');
     });
-    (repositoryService.southItemRepository.listSouthItems as jest.Mock).mockReturnValueOnce([items[2]]);
+    (repositoryService.southItemRepository.list as jest.Mock).mockReturnValueOnce([items[2]]);
     await south.onItemChange();
     expect(logger.error).toHaveBeenCalledWith(`Error when subscribing to new items. ${new Error('subscription error')}`);
 
@@ -549,7 +549,7 @@ describe('SouthConnector enabled', () => {
     south.unsubscribe = jest.fn().mockImplementationOnce(() => {
       throw new Error('unsubscription error');
     });
-    (repositoryService.southItemRepository.listSouthItems as jest.Mock).mockReturnValueOnce([items[2]]).mockReturnValueOnce([]);
+    (repositoryService.southItemRepository.list as jest.Mock).mockReturnValueOnce([items[2]]).mockReturnValueOnce([]);
     await south.onItemChange();
     await south.onItemChange();
     expect(logger.error).toHaveBeenCalledWith(`Error when unsubscribing to items. ${new Error('unsubscription error')}`);
@@ -642,8 +642,8 @@ describe('SouthConnector with max instant per item', () => {
       },
       settings: {}
     };
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
-    (repositoryService.southItemRepository.listSouthItems as jest.Mock).mockReturnValue(items);
+    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
+    (repositoryService.southItemRepository.list as jest.Mock).mockReturnValue(items);
 
     south = new TestSouth(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
     await south.start();
@@ -830,7 +830,7 @@ describe('SouthConnector disabled', () => {
       },
       settings: {}
     };
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
 
     basicSouth = new SouthConnector(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
     await basicSouth.start();
@@ -859,7 +859,7 @@ describe('SouthConnector disabled', () => {
   });
 
   it('should not subscribe if queriesSubscription not supported history query when not history items', async () => {
-    (repositoryService.southItemRepository.listSouthItems as jest.Mock).mockReturnValueOnce([]);
+    (repositoryService.southItemRepository.list as jest.Mock).mockReturnValueOnce([]);
 
     basicSouth.queriesSubscription = jest.fn().mockReturnValueOnce(false);
 
@@ -869,7 +869,7 @@ describe('SouthConnector disabled', () => {
   });
 
   it('should test item', async () => {
-    let callback = jest.fn();
+    const callback = jest.fn();
     await basicSouth.testItem(items[0], callback);
     expect(logger.warn).toHaveBeenCalledWith('testItem must be override to test item item1');
   });

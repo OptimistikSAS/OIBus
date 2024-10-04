@@ -1,161 +1,83 @@
 import SubscriptionController from './subscription.controller';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
+import testData from '../../tests/utils/test-data';
 
 const subscriptionController = new SubscriptionController();
 
 const ctx = new KoaContextMock();
-describe('Subscription controller', () => {
+const northId = 'northId';
+const southId = 'southId';
+
+describe('Subscription Controller', () => {
   beforeEach(async () => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
   });
 
-  it('getNorthSubscriptions() should return subscriptions', async () => {
-    const northId = 'northId';
-
+  it('findByNorth() should return subscriptions', async () => {
     ctx.params.northId = northId;
-    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue({ id: northId });
-    ctx.app.repositoryService.subscriptionRepository.getNorthSubscriptions.mockReturnValue(['south1', 'south2']);
+    ctx.app.subscriptionService.findByNorth.mockReturnValueOnce(testData.subscriptions.list);
 
-    await subscriptionController.getNorthSubscriptions(ctx);
+    await subscriptionController.findByNorth(ctx);
 
-    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith(northId);
-    expect(ctx.app.repositoryService.subscriptionRepository.getNorthSubscriptions).toHaveBeenCalledWith(northId);
-    expect(ctx.ok).toHaveBeenCalledWith(['south1', 'south2']);
+    expect(ctx.app.subscriptionService.findByNorth).toHaveBeenCalledWith(northId);
+    expect(ctx.ok).toHaveBeenCalledWith(testData.subscriptions.dto);
   });
 
-  it('getNorthSubscriptions() should return not found', async () => {
-    const northId = 'northId';
-
+  it('findByNorth() should return bad request', async () => {
     ctx.params.northId = northId;
-    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(null);
+    ctx.app.subscriptionService.findByNorth.mockImplementationOnce(() => {
+      throw new Error('Not Found');
+    });
 
-    await subscriptionController.getNorthSubscriptions(ctx);
+    await subscriptionController.findByNorth(ctx);
 
-    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith(northId);
-    expect(ctx.app.repositoryService.subscriptionRepository.getNorthSubscriptions).not.toHaveBeenCalled();
-    expect(ctx.notFound).toHaveBeenCalled();
+    expect(ctx.app.subscriptionService.findByNorth).toHaveBeenCalledWith(northId);
+    expect(ctx.badRequest).toHaveBeenCalledWith('Not Found');
   });
 
-  it('createNorthSubscription() should create subscription', async () => {
-    const northId = 'northId';
-    const southId = 'southId';
-
+  it('create() should create subscription', async () => {
     ctx.params.northId = northId;
     ctx.params.southId = southId;
-    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue({ id: northId });
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue({ id: southId });
-    ctx.app.repositoryService.subscriptionRepository.checkNorthSubscription.mockReturnValue(false);
 
-    await subscriptionController.createNorthSubscription(ctx);
+    await subscriptionController.create(ctx);
 
-    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith(northId);
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith(southId);
-    expect(ctx.app.repositoryService.subscriptionRepository.checkNorthSubscription).toHaveBeenCalledWith(northId, southId);
-    expect(ctx.app.reloadService.onCreateNorthSubscription).toHaveBeenCalledWith(northId, southId);
+    expect(ctx.app.subscriptionService.create).toHaveBeenCalledWith(northId, southId);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
-  it('createNorthSubscription() return not found when North is not found', async () => {
-    const northId = 'northId';
-    const southId = 'southId';
-
+  it('create() should return bad request', async () => {
     ctx.params.northId = northId;
     ctx.params.southId = southId;
-    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(null);
+    ctx.app.subscriptionService.create.mockImplementationOnce(() => {
+      throw new Error('Not Found');
+    });
 
-    await subscriptionController.createNorthSubscription(ctx);
+    await subscriptionController.create(ctx);
 
-    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith(northId);
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).not.toHaveBeenCalled();
-    expect(ctx.app.repositoryService.subscriptionRepository.checkNorthSubscription).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onCreateNorthSubscription).not.toHaveBeenCalled();
-    expect(ctx.notFound).toHaveBeenCalled();
+    expect(ctx.app.subscriptionService.create).toHaveBeenCalledWith(northId, southId);
+    expect(ctx.badRequest).toHaveBeenCalledWith('Not Found');
   });
 
-  it('createNorthSubscription() return not found when South is not found', async () => {
-    const northId = 'northId';
-    const southId = 'southId';
-
+  it('delete() should delete subscription', async () => {
     ctx.params.northId = northId;
     ctx.params.southId = southId;
-    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue({ id: northId });
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(null);
 
-    await subscriptionController.createNorthSubscription(ctx);
+    await subscriptionController.delete(ctx);
 
-    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith(northId);
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith(southId);
-    expect(ctx.app.repositoryService.subscriptionRepository.checkNorthSubscription).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onCreateNorthSubscription).not.toHaveBeenCalled();
-    expect(ctx.notFound).toHaveBeenCalled();
-  });
-
-  it('createNorthSubscription() return bad request when subscription already exists', async () => {
-    const northId = 'northId';
-    const southId = 'southId';
-
-    ctx.params.northId = northId;
-    ctx.params.southId = southId;
-    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue({ id: northId });
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue({ id: southId });
-    ctx.app.repositoryService.subscriptionRepository.checkNorthSubscription.mockReturnValue(true);
-
-    await subscriptionController.createNorthSubscription(ctx);
-
-    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith(northId);
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith(southId);
-    expect(ctx.app.repositoryService.subscriptionRepository.checkNorthSubscription).toHaveBeenCalledWith(northId, southId);
-    expect(ctx.app.reloadService.onCreateNorthSubscription).not.toHaveBeenCalled();
-    expect(ctx.throw).toHaveBeenCalledWith(409, 'Subscription already exists');
-  });
-
-  it('deleteNorthSubscription() should delete subscription', async () => {
-    const northId = 'northId';
-    const southId = 'southId';
-
-    ctx.params.northId = northId;
-    ctx.params.southId = southId;
-    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue({ id: northId });
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue({ id: southId });
-
-    await subscriptionController.deleteNorthSubscription(ctx);
-
-    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith(northId);
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith(southId);
-    expect(ctx.app.reloadService.onDeleteNorthSubscription).toHaveBeenCalledWith(northId, southId);
+    expect(ctx.app.subscriptionService.delete).toHaveBeenCalledWith(northId, southId);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
-  it('deleteNorthSubscription() should return not found when North is not found', async () => {
-    const northId = 'northId';
-    const southId = 'southId';
-
+  it('delete() should return bad request', async () => {
     ctx.params.northId = northId;
     ctx.params.southId = southId;
-    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(null);
+    ctx.app.subscriptionService.delete.mockImplementationOnce(() => {
+      throw new Error('Not Found');
+    });
 
-    await subscriptionController.deleteNorthSubscription(ctx);
+    await subscriptionController.delete(ctx);
 
-    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith(northId);
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onDeleteNorthSubscription).not.toHaveBeenCalled();
-    expect(ctx.notFound).toHaveBeenCalled();
-  });
-
-  it('deleteNorthSubscription() should return not found when South is not found', async () => {
-    const northId = 'northId';
-    const southId = 'southId';
-
-    ctx.params.northId = northId;
-    ctx.params.southId = southId;
-    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue({ id: northId });
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(null);
-
-    await subscriptionController.deleteNorthSubscription(ctx);
-
-    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith(northId);
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith(southId);
-    expect(ctx.app.reloadService.onDeleteNorthSubscription).not.toHaveBeenCalled();
-    expect(ctx.notFound).toHaveBeenCalled();
+    expect(ctx.app.subscriptionService.delete).toHaveBeenCalledWith(northId, southId);
+    expect(ctx.badRequest).toHaveBeenCalledWith('Not Found');
   });
 });

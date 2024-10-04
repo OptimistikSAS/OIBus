@@ -10,10 +10,7 @@ export const SOUTH_CONNECTORS_TABLE = 'south_connectors';
 export default class SouthConnectorRepository {
   constructor(private readonly database: Database) {}
 
-  /**
-   * Retrieve all South connectors
-   */
-  getSouthConnectors(): Array<SouthConnectorDTO> {
+  findAll(): Array<SouthConnectorDTO> {
     const query =
       `SELECT id, name, type, description, enabled, history_max_instant_per_item AS maxInstantPerItem, shared_connection as sharedConnection, ` +
       `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, history_read_overlap AS overlap, ` +
@@ -38,10 +35,7 @@ export default class SouthConnectorRepository {
       }));
   }
 
-  /**
-   * Retrieve a South connector by its ID
-   */
-  getSouthConnector(id: string): SouthConnectorDTO | null {
+  findById(id: string): SouthConnectorDTO | null {
     const query =
       `SELECT id, name, type, description, enabled, history_max_instant_per_item AS maxInstantPerItem, shared_connection as sharedConnection, ` +
       `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, history_read_overlap AS overlap, ` +
@@ -69,10 +63,7 @@ export default class SouthConnectorRepository {
     };
   }
 
-  /**
-   * Create a South connector with a random generated ID
-   */
-  createSouthConnector(command: SouthConnectorCommandDTO): SouthConnectorDTO {
+  create(command: SouthConnectorCommandDTO): SouthConnectorDTO {
     const id = generateRandomId(6);
     const insertQuery =
       `INSERT INTO ${SOUTH_CONNECTORS_TABLE} (id, name, type, description, enabled, history_max_instant_per_item, ` +
@@ -116,20 +107,17 @@ export default class SouthConnectorRepository {
     };
   }
 
-  startSouthConnector(id: string) {
+  start(id: string) {
     const query = `UPDATE ${SOUTH_CONNECTORS_TABLE} SET enabled = ? WHERE id = ?;`;
     this.database.prepare(query).run(1, id);
   }
 
-  stopSouthConnector(id: string) {
+  stop(id: string) {
     const query = `UPDATE ${SOUTH_CONNECTORS_TABLE} SET enabled = ? WHERE id = ?;`;
     this.database.prepare(query).run(0, id);
   }
 
-  /**
-   * Update a South connector by its ID
-   */
-  updateSouthConnector(id: string, command: SouthConnectorCommandDTO): void {
+  update(id: string, command: SouthConnectorCommandDTO): void {
     const query =
       `UPDATE ${SOUTH_CONNECTORS_TABLE} SET name = ?, description = ?, ` +
       `history_max_instant_per_item = ?, history_max_read_interval = ?, history_read_delay = ?, history_read_overlap = ?, settings = ?, shared_connection = ? WHERE id = ?;`;
@@ -148,10 +136,7 @@ export default class SouthConnectorRepository {
       );
   }
 
-  /**
-   * Delete a South Connector by its ID
-   */
-  deleteSouthConnector(id: string): void {
+  delete(id: string): void {
     const query = `DELETE FROM ${SOUTH_CONNECTORS_TABLE} WHERE id = ?;`;
     this.database.prepare(query).run(id);
   }

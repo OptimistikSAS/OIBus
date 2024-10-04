@@ -67,15 +67,15 @@ describe('Log controller', () => {
       scopeIds: ['scope'],
       messageContent: 'message'
     };
-    ctx.app.repositoryService.logRepository.searchLogs.mockReturnValue(page);
+    ctx.app.repositoryService.logRepository.search.mockReturnValue(page);
 
-    await logController.searchLogs(ctx);
+    await logController.search(ctx);
 
-    expect(ctx.app.repositoryService.logRepository.searchLogs).toHaveBeenCalledWith(searchParams);
+    expect(ctx.app.repositoryService.logRepository.search).toHaveBeenCalledWith(searchParams);
     expect(ctx.ok).toHaveBeenCalledWith(page);
   });
 
-  it('searchLogs() should return logs with default search params', async () => {
+  it('search() should return logs with default search params', async () => {
     ctx.query = {
       levels: 'info',
       scopeTypes: 'scopeType1',
@@ -90,11 +90,11 @@ describe('Log controller', () => {
       scopeIds: ['scope1'],
       messageContent: null
     };
-    ctx.app.repositoryService.logRepository.searchLogs.mockReturnValue(page);
+    ctx.app.repositoryService.logRepository.search.mockReturnValue(page);
 
-    await logController.searchLogs(ctx);
+    await logController.search(ctx);
 
-    expect(ctx.app.repositoryService.logRepository.searchLogs).toHaveBeenCalledWith(searchParams);
+    expect(ctx.app.repositoryService.logRepository.search).toHaveBeenCalledWith(searchParams);
     expect(ctx.ok).toHaveBeenCalledWith(page);
   });
 
@@ -111,7 +111,7 @@ describe('Log controller', () => {
 
   it('addLogs() should return bad request', async () => {
     ctx.request.body = undefined;
-    ctx.app.repositoryService.logRepository.searchLogs.mockReturnValue(page);
+    ctx.app.repositoryService.logRepository.search.mockReturnValue(page);
 
     await logController.addLogs(ctx);
 

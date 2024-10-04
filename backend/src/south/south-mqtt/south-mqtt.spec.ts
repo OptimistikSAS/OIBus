@@ -5,11 +5,11 @@ import mqtt from 'mqtt';
 
 import SouthMQTT from './south-mqtt';
 import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/logger.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import RepositoryService from '../../service/repository.service';
-import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
+import RepositoryServiceMock from '../../tests/__mocks__/service/repository-service.mock';
 import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import DatabaseMock from '../../tests/__mocks__/database.mock';
 import { SouthMQTTItemSettings, SouthMQTTSettings } from '../../../../shared/model/south-settings.model';
@@ -223,7 +223,7 @@ describe('SouthMQTT without authentication', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
     (mqtt.connect as jest.Mock).mockImplementation(() => mqttStream);
 
     south = new SouthMQTT(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
@@ -301,7 +301,7 @@ describe('SouthMQTT with Basic Auth', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
     (mqtt.connect as jest.Mock).mockImplementation(() => mqttStream);
 
     south = new SouthMQTT(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
@@ -418,7 +418,7 @@ describe('SouthMQTT with Basic Auth', () => {
       .mockReturnValueOnce(['+', '+', '#'])
       .mockReturnValueOnce(['+', '+', '#'])
       .mockReturnValue([]);
-    (repositoryService.southItemRepository.listSouthItems as jest.Mock)
+    (repositoryService.southItemRepository.list as jest.Mock)
       .mockReturnValueOnce([items[1]])
       .mockReturnValueOnce([items[1]])
       .mockReturnValueOnce([items[1], { ...items[1], id: 'anotherId' }])
@@ -704,7 +704,7 @@ describe('SouthMQTT with Cert', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
     (mqtt.connect as jest.Mock).mockImplementation(() => mqttStream);
 
     south = new SouthMQTT(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
@@ -774,7 +774,7 @@ describe('SouthMQTT without Cert', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
     mqttStream.removeAllListeners();
     (mqtt.connect as jest.Mock).mockImplementation(() => mqttStream);
 

@@ -75,7 +75,7 @@ describe('User repository', () => {
     ]);
     get.mockReturnValueOnce({ count: 2 });
 
-    const users = repository.searchUsers({ login: 'user', page: 2 });
+    const users = repository.search({ login: 'user', page: 2 });
     expect(database.prepare).toHaveBeenCalledWith(
       "SELECT id, login, first_name as firstName, last_name as lastName FROM users WHERE login like '%' || ? || '%' LIMIT 50 OFFSET 100;"
     );
@@ -102,7 +102,7 @@ describe('User repository', () => {
       email: 'john.doe@optimistik.com',
       language: 'EN'
     });
-    const user = repository.getUserById('id1');
+    const user = repository.findById('id1');
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, login, first_name as firstName, last_name as lastName, email, language, timezone FROM users WHERE id = ?;'
     );
@@ -112,7 +112,7 @@ describe('User repository', () => {
 
   it('should properly get null when a user is not found by ID', () => {
     get.mockReturnValueOnce(null);
-    const user = repository.getUserById('id1');
+    const user = repository.findById('id1');
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, login, first_name as firstName, last_name as lastName, email, language, timezone FROM users WHERE id = ?;'
     );
@@ -140,7 +140,7 @@ describe('User repository', () => {
       email: 'john.doe@optimistik.com',
       language: 'EN'
     });
-    const user = repository.getUserByLogin('user1');
+    const user = repository.findByLogin('user1');
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, login, first_name as firstName, last_name as lastName, email, language, timezone FROM users WHERE login = ?;'
     );
@@ -150,7 +150,7 @@ describe('User repository', () => {
 
   it('should properly get null when user based on a specific login is not found', () => {
     get.mockReturnValueOnce(null);
-    const user = repository.getUserByLogin('user1');
+    const user = repository.findByLogin('user1');
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, login, first_name as firstName, last_name as lastName, email, language, timezone FROM users WHERE login = ?;'
     );
@@ -170,7 +170,7 @@ describe('User repository', () => {
       email: 'john.doe@optimistik.com',
       language: 'EN'
     };
-    await repository.createUser(command, 'pass');
+    await repository.create(command, 'pass');
     expect(generateRandomId).toHaveBeenCalledWith(6);
     expect(database.prepare).toHaveBeenCalledWith(
       'INSERT INTO users (id, login, password, first_name, last_name, email, language, timezone) VALUES (?, ?, ?, ?, ?, ?, ?, ?);'
@@ -199,7 +199,7 @@ describe('User repository', () => {
   });
 
   it('should delete a user', () => {
-    repository.deleteUser('id1');
+    repository.delete('id1');
     expect(database.prepare).toHaveBeenCalledWith('DELETE FROM users WHERE id = ?;');
     expect(run).toHaveBeenCalledWith('id1');
   });
@@ -242,7 +242,7 @@ describe('User repository', () => {
       email: 'john.doe@optimistik.com',
       language: 'EN'
     };
-    repository.updateUser('id1', command);
+    repository.update('id1', command);
     expect(database.prepare).toHaveBeenCalledWith(
       'UPDATE users SET login = ?, first_name = ?, last_name = ?, email = ?, language = ?, timezone = ? WHERE id = ?;'
     );
@@ -264,7 +264,7 @@ describe('User repository', () => {
     (argon2.hash as jest.Mock).mockImplementationOnce(() => {
       throw new Error('create user error');
     });
-    await repository.createDefaultUser();
+    await repository.createDefault();
     expect(consoleSpy).toHaveBeenCalledTimes(1);
     expect(consoleSpy).toHaveBeenCalledWith(new Error('create user error'));
   });

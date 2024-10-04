@@ -3,11 +3,11 @@ import ads from 'ads-client';
 import SouthADS from './south-ads';
 import DatabaseMock from '../../tests/__mocks__/database.mock';
 import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/logger.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import RepositoryService from '../../service/repository.service';
-import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
+import RepositoryServiceMock from '../../tests/__mocks__/service/repository-service.mock';
 import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import { SouthADSItemSettings, SouthADSSettings } from '../../../../shared/model/south-settings.model';
 
@@ -121,7 +121,7 @@ describe('South ADS', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
 
     // Mock ADS Client constructor and the used function
     ads.Client.mockReturnValue({
@@ -517,32 +517,36 @@ describe('South ADS', () => {
   it('should test item and sucess', async () => {
     south.connect = jest.fn();
     south.disconnect = jest.fn();
-    const readAdsSymbol = south.readAdsSymbol = jest.fn();
-    readAdsSymbol.mockReturnValue([{
-      pointId: 'pointId',
-      timestamp: '2024-06-10T14:00:00.000Z',
-      data: {
-        value: 1234
+    const readAdsSymbol = (south.readAdsSymbol = jest.fn());
+    readAdsSymbol.mockReturnValue([
+      {
+        pointId: 'pointId',
+        timestamp: '2024-06-10T14:00:00.000Z',
+        data: {
+          value: 1234
+        }
       }
-    }]);
+    ]);
     await south.start();
-    let callback = jest.fn();
+    const callback = jest.fn();
     await south.testItem(items[0], callback);
     expect(south.disconnect).toHaveBeenCalledTimes(1);
   });
 
   it('should test item and throw an error', async () => {
-    const connect = south.connect = jest.fn();
+    const connect = (south.connect = jest.fn());
     connect.mockRejectedValue('undefined');
-    const readAdsSymbol = south.readAdsSymbol = jest.fn();
-    readAdsSymbol.mockReturnValue([{
-      pointId: 'pointId',
-      timestamp: '2024-06-10T14:00:00.000Z',
-      data: {
-        value: 1234
+    const readAdsSymbol = (south.readAdsSymbol = jest.fn());
+    readAdsSymbol.mockReturnValue([
+      {
+        pointId: 'pointId',
+        timestamp: '2024-06-10T14:00:00.000Z',
+        data: {
+          value: 1234
+        }
       }
-    }]);
-    let callback = jest.fn();
+    ]);
+    const callback = jest.fn();
     await expect(south.testItem(items[0], callback)).rejects.toThrow(new Error(`Unable to connect. undefined`));
   });
 });

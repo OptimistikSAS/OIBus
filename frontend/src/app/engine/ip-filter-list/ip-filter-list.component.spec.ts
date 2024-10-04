@@ -5,7 +5,7 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { ComponentTester, createMock, TestButton } from 'ngx-speculoos';
 import { of } from 'rxjs';
 import { IpFilterService } from '../../services/ip-filter.service';
-import { IpFilterDTO } from '../../../../../shared/model/ip-filter.model';
+import { IPFilterDTO } from '../../../../../shared/model/ip-filter.model';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 
@@ -45,7 +45,7 @@ describe('IpFilterListComponent', () => {
   let confirmationService: jasmine.SpyObj<ConfirmationService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
 
-  let ipFilters: Array<IpFilterDTO>;
+  let ipFilters: Array<IPFilterDTO>;
 
   beforeEach(() => {
     ipFilterService = createMock(IpFilterService);

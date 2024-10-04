@@ -99,15 +99,15 @@ export default class SouthService {
    * Retrieve a south connector from the config
    */
   getSouth(southId: string): SouthConnectorDTO | null {
-    return this.repositoryService.southConnectorRepository.getSouthConnector(southId);
+    return this.repositoryService.southConnectorRepository.findById(southId);
   }
 
   getSouthList(): Array<SouthConnectorDTO> {
-    return this.repositoryService.southConnectorRepository.getSouthConnectors();
+    return this.repositoryService.southConnectorRepository.findAll();
   }
 
   getSouthItems(southId: string): Array<SouthConnectorItemDTO> {
-    return this.repositoryService.southItemRepository.getSouthItems(southId);
+    return this.repositoryService.southItemRepository.findAllForSouthConnector(southId);
   }
 
   getInstalledSouthManifests(): Array<SouthConnectorManifest> {

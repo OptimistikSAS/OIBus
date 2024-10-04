@@ -1,6 +1,5 @@
 import { HomeMetrics } from '../../../shared/model/engine.model';
 import { PassThrough } from 'node:stream';
-import EngineMetricsService from './engine-metrics.service';
 import EngineMetricsRepository from '../repository/engine-metrics.repository';
 import SouthConnector from '../south/south-connector';
 import NorthConnector from '../north/north-connector';
@@ -19,7 +18,6 @@ export default class HomeMetricsService {
 
   constructor(
     private readonly engineId: string,
-    private readonly engineMetricsService: EngineMetricsService,
     private readonly engineMetricsRepository: EngineMetricsRepository,
     private readonly northConnectorMetricsRepository: NorthConnectorMetricsRepository,
     private readonly southConnectorMetricsRepository: SouthConnectorMetricsRepository
@@ -66,11 +64,6 @@ export default class HomeMetricsService {
   get stream(): PassThrough {
     this._stream?.destroy();
     this._stream = new PassThrough();
-
-    this.engineMetricsService.stream.on('data', data => {
-      this._metrics.engine = JSON.parse(data.toString().substring(6));
-      this._stream!.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
-    });
 
     for (const [id, north] of this.norths.entries()) {
       north.getMetricsDataStream().on('data', data => {

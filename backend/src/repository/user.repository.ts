@@ -24,13 +24,10 @@ const DEFAULT_PASSWORD = 'pass';
  */
 export default class UserRepository {
   constructor(private readonly database: Database) {
-    this.createDefaultUser();
+    this.createDefault();
   }
 
-  /**
-   * Retrieve users based on search params
-   */
-  searchUsers(searchParams: UserSearchParam): Page<UserLight> {
+  search(searchParams: UserSearchParam): Page<UserLight> {
     const queryParams = [];
     let whereClause = '';
 
@@ -62,10 +59,7 @@ export default class UserRepository {
     };
   }
 
-  /**
-   * Retrieve a user by its id
-   */
-  getUserById(id: string): User | null {
+  findById(id: string): User | null {
     const query = `SELECT id, login, first_name as firstName, last_name as lastName, email, language, timezone FROM ${USERS_TABLE} WHERE id = ?;`;
     const result: User | null = this.database.prepare(query).get(id) as User | null;
     if (!result) return null;
@@ -81,10 +75,7 @@ export default class UserRepository {
     };
   }
 
-  /**
-   * Retrieve a user by its login
-   */
-  getUserByLogin(login: string): User | null {
+  findByLogin(login: string): User | null {
     const query = `SELECT id, login, first_name as firstName, last_name as lastName, email, language, timezone FROM ${USERS_TABLE} WHERE login = ?;`;
     const result: User | null = this.database.prepare(query).get(login) as User | null;
     if (!result) return null;
@@ -100,9 +91,6 @@ export default class UserRepository {
     };
   }
 
-  /**
-   * Retrieve a user by the login to authenticate the user in middleware
-   */
   getHashedPasswordByLogin(login: string): string | null {
     const query = `SELECT password FROM ${USERS_TABLE} WHERE login = ?;`;
     const result: { password: string } | null = this.database.prepare(query).get(login) as { password: string } | null;
@@ -112,10 +100,7 @@ export default class UserRepository {
     return result.password;
   }
 
-  /**
-   * Create a User with a random generated ID
-   */
-  async createUser(command: UserCommandDTO, password: string): Promise<User> {
+  async create(command: UserCommandDTO, password: string): Promise<User> {
     const id = generateRandomId(6);
     const insertQuery =
       `INSERT INTO ${USERS_TABLE} (id, login, password, first_name, last_name, email, language, timezone) ` +
@@ -147,32 +132,26 @@ export default class UserRepository {
     this.database.prepare(queryUpdate).run(hash, id);
   }
 
-  /**
-   * Update a User by its ID
-   */
-  updateUser(id: string, command: UserCommandDTO): void {
+  update(id: string, command: UserCommandDTO): void {
     const queryUpdate = `UPDATE ${USERS_TABLE} SET login = ?, first_name = ?, last_name = ?, email = ?, language = ?, timezone = ? WHERE id = ?;`;
     this.database
       .prepare(queryUpdate)
       .run(command.login, command.firstName, command.lastName, command.email, command.language, command.timezone, id);
   }
 
-  /**
-   * Delete a User by its ID
-   */
-  deleteUser(id: string): void {
+  delete(id: string): void {
     const query = `DELETE FROM ${USERS_TABLE} WHERE id = ?;`;
     this.database.prepare(query).run(id);
   }
 
-  createDefaultUser(): void {
+  createDefault(): void {
     const query = `SELECT id, login, first_name as firstName, last_name as lastName, email, language, timezone FROM ${USERS_TABLE} WHERE login = ?;`;
     const result = this.database.prepare(query).get(DEFAULT_USER.login);
     if (result) {
       return;
     }
 
-    this.createUser(DEFAULT_USER, DEFAULT_PASSWORD).catch(err => {
+    this.create(DEFAULT_USER, DEFAULT_PASSWORD).catch(err => {
       console.error(err);
     });
   }

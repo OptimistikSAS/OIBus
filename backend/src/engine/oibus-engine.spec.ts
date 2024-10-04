@@ -1,6 +1,6 @@
-import PinoLogger from '../tests/__mocks__/logger.mock';
-import SouthServiceMock from '../tests/__mocks__/south-service.mock';
-import NorthServiceMock from '../tests/__mocks__/north-service.mock';
+import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
+import SouthServiceMock from '../tests/__mocks__/service/south-service.mock';
+import NorthServiceMock from '../tests/__mocks__/service/north-service.mock';
 
 import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
 import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
@@ -10,15 +10,13 @@ import NorthService from '../service/north.service';
 
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
-import EncryptionServiceMock from '../tests/__mocks__/encryption-service.mock';
+import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 import OIBusEngine from './oibus-engine';
 import { EventEmitter } from 'node:events';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 import { filesExists } from '../service/utils';
-import HomeMetricsServiceMock from '../tests/__mocks__/home-metrics-service.mock';
-import HomeMetricsService from '../service/home-metrics.service';
 import { OIBusTimeValue } from '../../../shared/model/engine.model';
 
 jest.mock('../south/south-mqtt/south-mqtt');
@@ -34,7 +32,6 @@ const anotherLogger: pino.Logger = new PinoLogger();
 
 const southService: SouthService = new SouthServiceMock();
 const northService: NorthService = new NorthServiceMock();
-const homeMetrics: HomeMetricsService = new HomeMetricsServiceMock();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
@@ -178,7 +175,7 @@ describe('OIBusEngine', () => {
     (southService.createSouth as jest.Mock).mockReturnValue(createdSouth);
     (northService.createNorth as jest.Mock).mockReturnValue(createdNorth);
 
-    engine = new OIBusEngine(encryptionService, northService, southService, homeMetrics, logger);
+    engine = new OIBusEngine(encryptionService, northService, southService, logger);
   });
 
   it('it should start', async () => {
@@ -464,8 +461,8 @@ describe('OIBusEngine', () => {
     await engine.retryAllValueErrors('northId');
     expect(createdNorth.retryAllValueErrors).toHaveBeenCalledTimes(1);
 
-    engine.updateNorthConnectorSubscriptions(northConnectors[0].id);
-    engine.updateNorthConnectorSubscriptions('northId');
+    engine.updateSubscriptions(northConnectors[0].id);
+    engine.updateSubscriptions('northId');
     expect(createdNorth.updateConnectorSubscription).toHaveBeenCalledTimes(1);
 
     await engine.stopSouth('southId');

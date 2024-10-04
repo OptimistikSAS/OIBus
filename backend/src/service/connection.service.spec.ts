@@ -1,5 +1,5 @@
 import ConnectionService, { ManagedConnectionDTO, ManagedConnection } from './connection.service';
-import PinoLogger from '../tests/__mocks__/logger.mock';
+import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import pino from 'pino';
 import { SouthSettings } from '../../../shared/model/south-settings.model';
 

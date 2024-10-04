@@ -39,67 +39,67 @@ const page = {
 
 describe('User controller', () => {
   beforeEach(async () => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
   });
 
-  it('searchUsers() should return users', async () => {
+  it('search() should return users', async () => {
     ctx.query.page = '10';
     ctx.query.login = 'login';
-    ctx.app.repositoryService.userRepository.searchUsers.mockReturnValue(page);
+    ctx.app.repositoryService.userRepository.search.mockReturnValue(page);
 
-    await userController.searchUsers(ctx);
+    await userController.search(ctx);
 
-    expect(ctx.app.repositoryService.userRepository.searchUsers).toHaveBeenCalledWith({ page: 10, login: 'login' });
+    expect(ctx.app.repositoryService.userRepository.search).toHaveBeenCalledWith({ page: 10, login: 'login' });
     expect(ctx.ok).toHaveBeenCalledWith(page);
   });
 
-  it('searchUsers() should return users when no params are provided', async () => {
+  it('search() should return users when no params are provided', async () => {
     ctx.query = {};
-    ctx.app.repositoryService.userRepository.searchUsers.mockReturnValue(page);
+    ctx.app.repositoryService.userRepository.search.mockReturnValue(page);
 
-    await userController.searchUsers(ctx);
+    await userController.search(ctx);
 
-    expect(ctx.app.repositoryService.userRepository.searchUsers).toHaveBeenCalledWith({ page: 0, login: null });
+    expect(ctx.app.repositoryService.userRepository.search).toHaveBeenCalledWith({ page: 0, login: null });
     expect(ctx.ok).toHaveBeenCalledWith(page);
   });
 
-  it('getUser() should return proxy', async () => {
+  it('findById() should return user', async () => {
     const id = 'id';
     ctx.params.id = id;
-    ctx.app.repositoryService.userRepository.getUserById.mockReturnValue(user);
+    ctx.app.repositoryService.userRepository.findById.mockReturnValue(user);
 
-    await userController.getUser(ctx);
+    await userController.findById(ctx);
 
-    expect(ctx.app.repositoryService.userRepository.getUserById).toHaveBeenCalledWith(id);
+    expect(ctx.app.repositoryService.userRepository.findById).toHaveBeenCalledWith(id);
     expect(ctx.ok).toHaveBeenCalledWith(user);
   });
 
-  it('getUser() should return not found', async () => {
+  it('findById() should return not found', async () => {
     const id = 'id';
     ctx.params.id = id;
-    ctx.app.repositoryService.userRepository.getUserById.mockReturnValue(null);
+    ctx.app.repositoryService.userRepository.findById.mockReturnValue(null);
 
-    await userController.getUser(ctx);
+    await userController.findById(ctx);
 
-    expect(ctx.app.repositoryService.userRepository.getUserById).toHaveBeenCalledWith(id);
+    expect(ctx.app.repositoryService.userRepository.findById).toHaveBeenCalledWith(id);
     expect(ctx.notFound).toHaveBeenCalledWith();
   });
 
-  it('createUser() should create user', async () => {
+  it('create() should create user', async () => {
     ctx.request.body = {
       user: userCommand,
       password: 'password'
     };
-    ctx.app.repositoryService.userRepository.createUser.mockReturnValue(user);
+    ctx.app.repositoryService.userRepository.create.mockReturnValue(user);
 
-    await userController.createUser(ctx);
+    await userController.create(ctx);
 
     expect(validator.validate).toHaveBeenCalledWith(schema, userCommand);
-    expect(ctx.app.repositoryService.userRepository.createUser).toHaveBeenCalledWith(userCommand, 'password');
+    expect(ctx.app.repositoryService.userRepository.create).toHaveBeenCalledWith(userCommand, 'password');
     expect(ctx.created).toHaveBeenCalledWith(user);
   });
 
-  it('createUser() should return bad request when validation fails', async () => {
+  it('create() should return bad request when validation fails', async () => {
     ctx.request.body = {
       user: userCommand,
       password: 'password'
@@ -109,49 +109,49 @@ describe('User controller', () => {
       throw validationError;
     });
 
-    await userController.createUser(ctx);
+    await userController.create(ctx);
 
     expect(validator.validate).toHaveBeenCalledWith(schema, userCommand);
-    expect(ctx.app.repositoryService.userRepository.createUser).not.toHaveBeenCalledWith();
+    expect(ctx.app.repositoryService.userRepository.create).not.toHaveBeenCalledWith();
     expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
   });
 
-  it('createUser() should return bad request when missing password', async () => {
+  it('create() should return bad request when missing password', async () => {
     ctx.request.body = {
       user: userCommand
     };
-    ctx.app.repositoryService.userRepository.createUser.mockReturnValue(user);
+    ctx.app.repositoryService.userRepository.create.mockReturnValue(user);
 
-    await userController.createUser(ctx);
+    await userController.create(ctx);
 
     expect(validator.validate).toHaveBeenCalledWith(schema, userCommand);
-    expect(ctx.app.repositoryService.userRepository.createUser).not.toHaveBeenCalledWith();
+    expect(ctx.app.repositoryService.userRepository.create).not.toHaveBeenCalledWith();
     expect(ctx.badRequest).toHaveBeenCalledWith('No password provided');
   });
 
-  it('updateUser() should update user', async () => {
+  it('update() should update user', async () => {
     const id = 'id';
     ctx.params.id = id;
     ctx.request.body = userCommand;
 
-    await userController.updateUser(ctx);
+    await userController.update(ctx);
 
     expect(validator.validate).toHaveBeenCalledWith(schema, userCommand);
-    expect(ctx.app.repositoryService.userRepository.updateUser).toHaveBeenCalledWith(id, userCommand);
+    expect(ctx.app.repositoryService.userRepository.update).toHaveBeenCalledWith(id, userCommand);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
-  it('updateUser() should return bad request', async () => {
+  it('update() should return bad request', async () => {
     ctx.request.body = userCommand;
     const validationError = new Error('invalid body');
     validator.validate = jest.fn().mockImplementationOnce(() => {
       throw validationError;
     });
 
-    await userController.updateUser(ctx);
+    await userController.update(ctx);
 
     expect(validator.validate).toHaveBeenCalledWith(schema, userCommand);
-    expect(ctx.app.repositoryService.userRepository.updateUser).not.toHaveBeenCalledWith();
+    expect(ctx.app.repositoryService.userRepository.update).not.toHaveBeenCalledWith();
     expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
   });
 
@@ -197,27 +197,27 @@ describe('User controller', () => {
     expect(ctx.badRequest).toHaveBeenCalledWith(error.message);
   });
 
-  it('deleteUser() should delete proxy', async () => {
+  it('delete() should delete proxy', async () => {
     const id = 'id';
     ctx.params.id = id;
-    ctx.app.repositoryService.userRepository.getUserById.mockReturnValue(user);
+    ctx.app.repositoryService.userRepository.findById.mockReturnValue(user);
 
-    await userController.deleteUser(ctx);
+    await userController.delete(ctx);
 
-    expect(ctx.app.repositoryService.userRepository.getUserById).toHaveBeenCalledWith(id);
-    expect(ctx.app.repositoryService.userRepository.deleteUser).toHaveBeenCalledWith(id);
+    expect(ctx.app.repositoryService.userRepository.findById).toHaveBeenCalledWith(id);
+    expect(ctx.app.repositoryService.userRepository.delete).toHaveBeenCalledWith(id);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
-  it('deleteUser() should return not found', async () => {
+  it('delete() should return not found', async () => {
     const id = 'id';
     ctx.params.id = id;
-    ctx.app.repositoryService.userRepository.getUserById.mockReturnValue(null);
+    ctx.app.repositoryService.userRepository.findById.mockReturnValue(null);
 
-    await userController.deleteUser(ctx);
+    await userController.delete(ctx);
 
-    expect(ctx.app.repositoryService.userRepository.getUserById).toHaveBeenCalledWith(id);
-    expect(ctx.app.repositoryService.userRepository.deleteUser).not.toHaveBeenCalled();
+    expect(ctx.app.repositoryService.userRepository.findById).toHaveBeenCalledWith(id);
+    expect(ctx.app.repositoryService.userRepository.delete).not.toHaveBeenCalled();
     expect(ctx.notFound).toHaveBeenCalled();
   });
 });

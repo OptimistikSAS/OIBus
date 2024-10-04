@@ -56,7 +56,7 @@ describe('Log repository', () => {
       }
     ]);
     get.mockReturnValueOnce({ count: 2 });
-    const logs = repository.searchLogs({
+    const logs = repository.search({
       page: 0,
       messageContent: 'messageContent',
       scopeTypes: ['myScopeType1', 'myScopeType2'],
@@ -77,7 +77,7 @@ describe('Log repository', () => {
   });
 
   it('should add logs', () => {
-    repository.addLogs([
+    repository.createAll([
       {
         msg: 'my message 1',
         scopeType: 'myScopeType',
@@ -116,15 +116,15 @@ describe('Log repository', () => {
   });
 
   it('should not add logs if empty array', () => {
-    repository.addLogs();
-    repository.addLogs([]);
+    repository.createAll();
+    repository.createAll([]);
 
     expect(database.prepare).not.toHaveBeenCalled();
   });
 
   it('should count logs', () => {
     get.mockReturnValueOnce({ count: 2 });
-    const result = repository.countLogs();
+    const result = repository.count();
 
     expect(database.prepare).toHaveBeenCalledWith('SELECT COUNT(*) AS count FROM logs');
     expect(get).toHaveBeenCalledTimes(1);
@@ -132,7 +132,7 @@ describe('Log repository', () => {
   });
 
   it('should delete logs', () => {
-    repository.deleteLogs(2);
+    repository.delete(2);
 
     expect(database.prepare).toHaveBeenCalledWith(
       'DELETE FROM logs WHERE timestamp IN (SELECT timestamp FROM logs ORDER BY timestamp LIMIT ?);'

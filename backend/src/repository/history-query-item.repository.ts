@@ -17,10 +17,7 @@ const PAGE_SIZE = 50;
 export default class HistoryQueryItemRepository {
   constructor(private readonly database: Database) {}
 
-  /**
-   * Search History items (point, query, folder...) associated to a History Query
-   */
-  searchHistoryItems(historyId: string, searchParams: SouthConnectorItemSearchParam): Page<SouthConnectorItemDTO> {
+  search(historyId: string, searchParams: SouthConnectorItemSearchParam): Page<SouthConnectorItemDTO> {
     let whereClause = `WHERE history_id = ?`;
     const queryParams = [historyId];
 
@@ -58,10 +55,7 @@ export default class HistoryQueryItemRepository {
     };
   }
 
-  /**
-   * Retrieve all History items (point, query, folder...) associated to a History Query
-   */
-  listHistoryItems(historyId: string, searchParams: SouthConnectorItemSearchParam): Array<SouthConnectorItemDTO> {
+  list(historyId: string, searchParams: SouthConnectorItemSearchParam): Array<SouthConnectorItemDTO> {
     let whereClause = `WHERE history_id = ?`;
     const queryParams = [historyId];
 
@@ -85,10 +79,7 @@ export default class HistoryQueryItemRepository {
       }));
   }
 
-  /**
-   * Retrieve a History item by its ID
-   */
-  getHistoryItem(id: string): SouthConnectorItemDTO {
+  findById(id: string): SouthConnectorItemDTO {
     const query = `SELECT id, name, enabled, history_id AS historyId, settings FROM ${HISTORY_ITEMS_TABLE} WHERE id = ?;`;
     const result: any = this.database.prepare(query).get(id);
     return {
@@ -101,10 +92,7 @@ export default class HistoryQueryItemRepository {
     };
   }
 
-  /**
-   * Create a History item with a random generated ID
-   */
-  createHistoryItem(historyId: string, command: SouthConnectorItemCommandDTO): SouthConnectorItemDTO {
+  create(historyId: string, command: SouthConnectorItemCommandDTO): SouthConnectorItemDTO {
     const id = generateRandomId(6);
     const insertQuery = `INSERT INTO ${HISTORY_ITEMS_TABLE} (id, name, enabled, history_id, settings) ` + `VALUES (?, ?, ?, ?, ?);`;
     const insertResult = this.database
@@ -123,45 +111,32 @@ export default class HistoryQueryItemRepository {
     };
   }
 
-  /**
-   * Update a History item by its ID
-   */
-  updateHistoryItem(id: string, command: SouthConnectorItemCommandDTO): void {
+  update(id: string, command: SouthConnectorItemCommandDTO): void {
     const query = `UPDATE ${HISTORY_ITEMS_TABLE} SET name = ?, enabled = ?, settings = ? WHERE id = ?;`;
     this.database.prepare(query).run(command.name, +command.enabled, JSON.stringify(command.settings), id);
   }
 
-  /**
-   * Delete a History item by its ID
-   */
-  deleteHistoryItem(id: string): void {
+  delete(id: string): void {
     const query = `DELETE FROM ${HISTORY_ITEMS_TABLE} WHERE id = ?;`;
     this.database.prepare(query).run(id);
   }
 
-  /**
-   * Delete History items associated to a history query ID
-   */
-  deleteAllItems(historyId: string): void {
+  deleteAllByHistoryId(historyId: string): void {
     const query = `DELETE FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ?;`;
     this.database.prepare(query).run(historyId);
   }
 
-  enableHistoryItem(id: string): void {
+  enable(id: string): void {
     const query = `UPDATE ${HISTORY_ITEMS_TABLE} SET enabled = 1 WHERE id = ?;`;
     this.database.prepare(query).run(id);
   }
 
-  disableHistoryItem(id: string): void {
+  disable(id: string): void {
     const query = `UPDATE ${HISTORY_ITEMS_TABLE} SET enabled = 0 WHERE id = ?;`;
     this.database.prepare(query).run(id);
   }
 
-  createAndUpdateItems(
-    historyId: string,
-    itemsToAdd: Array<SouthHistoryQueryItemDTO>,
-    itemsToUpdate: Array<SouthHistoryQueryItemDTO>
-  ): void {
+  createAndUpdateAll(historyId: string, itemsToAdd: Array<SouthHistoryQueryItemDTO>, itemsToUpdate: Array<SouthHistoryQueryItemDTO>): void {
     const insert = this.database.prepare(
       `INSERT INTO ${HISTORY_ITEMS_TABLE} (id, name, enabled, history_id, settings) VALUES (?, ?, ?, ?, ?);`
     );

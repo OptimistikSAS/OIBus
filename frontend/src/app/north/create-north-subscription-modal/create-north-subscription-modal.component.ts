@@ -6,8 +6,6 @@ import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
 import { SouthConnectorDTO } from '../../../../../shared/model/south-connector.model';
 
-import { OIBusSubscription } from '../../../../../shared/model/subscription.model';
-
 @Component({
   selector: 'oib-create-north-subscription-modal',
   templateUrl: './create-north-subscription-modal.component.html',
@@ -41,10 +39,6 @@ export class CreateNorthSubscriptionModalComponent {
     }
 
     const formValue = this.form.value;
-    const command: OIBusSubscription = {
-      type: 'south',
-      subscription: formValue.southConnector!
-    };
-    this.modal.close(command);
+    this.modal.close(formValue.southConnector);
   }
 }

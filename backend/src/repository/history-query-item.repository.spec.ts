@@ -66,7 +66,7 @@ describe('History query item repository', () => {
       }
     ]);
     get.mockReturnValueOnce({ count: 2 });
-    const southScans = repository.searchHistoryItems('historyId', {
+    const southScans = repository.search('historyId', {
       page: 1,
       name: 'my item'
     });
@@ -80,7 +80,7 @@ describe('History query item repository', () => {
   it('should properly search history query items', () => {
     all.mockReturnValueOnce([]);
     get.mockReturnValueOnce({ count: 0 });
-    repository.searchHistoryItems('historyId', {
+    repository.search('historyId', {
       name: 'my item'
     });
     expect(database.prepare).toHaveBeenCalledWith(
@@ -126,7 +126,7 @@ describe('History query item repository', () => {
         settings: JSON.stringify({})
       }
     ]);
-    const southScans = repository.listHistoryItems('historyId', { enabled: true });
+    const southScans = repository.list('historyId', { enabled: true });
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, name, enabled, settings FROM history_items WHERE history_id = ? AND enabled = ?;'
     );
@@ -149,7 +149,7 @@ describe('History query item repository', () => {
       historyId: 'historyId',
       settings: JSON.stringify({})
     });
-    const southScan = repository.getHistoryItem('id1');
+    const southScan = repository.findById('id1');
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, name, enabled, history_id AS historyId, settings FROM history_items WHERE id = ?;'
     );
@@ -167,7 +167,7 @@ describe('History query item repository', () => {
       scanModeId: '',
       settings: {}
     };
-    repository.createHistoryItem('historyId', command);
+    repository.create('historyId', command);
     expect(generateRandomId).toHaveBeenCalledWith(6);
     expect(database.prepare).toHaveBeenCalledWith(
       'INSERT INTO history_items (id, name, enabled, history_id, settings) VALUES (?, ?, ?, ?, ?);'
@@ -187,19 +187,19 @@ describe('History query item repository', () => {
       scanModeId: '',
       settings: {}
     };
-    repository.updateHistoryItem('id1', command);
+    repository.update('id1', command);
     expect(database.prepare).toHaveBeenCalledWith('UPDATE history_items SET name = ?, enabled = ?, settings = ? WHERE id = ?;');
     expect(run).toHaveBeenCalledWith(command.name, 0, JSON.stringify(command.settings), 'id1');
   });
 
   it('should delete a history query item', () => {
-    repository.deleteHistoryItem('id1');
+    repository.delete('id1');
     expect(database.prepare).toHaveBeenCalledWith('DELETE FROM history_items WHERE id = ?;');
     expect(run).toHaveBeenCalledWith('id1');
   });
 
   it('should delete all history query items associated to a history id', () => {
-    repository.deleteAllItems('historyId');
+    repository.deleteAllByHistoryId('historyId');
     expect(database.prepare).toHaveBeenCalledWith('DELETE FROM history_items WHERE history_id = ?;');
     expect(run).toHaveBeenCalledWith('historyId');
   });
@@ -226,7 +226,7 @@ describe('History query item repository', () => {
       scanModeId: ''
     };
 
-    repository.createAndUpdateItems('historyId', [itemToAdd], [itemToUpdate]);
+    repository.createAndUpdateAll('historyId', [itemToAdd], [itemToUpdate]);
     expect(database.prepare).toHaveBeenCalledWith(
       `INSERT INTO history_items (id, name, enabled, history_id, settings) VALUES (?, ?, ?, ?, ?);`
     );
@@ -236,13 +236,13 @@ describe('History query item repository', () => {
   });
 
   it('should enable history item', () => {
-    repository.enableHistoryItem('id1');
+    repository.enable('id1');
     expect(database.prepare).toHaveBeenCalledWith('UPDATE history_items SET enabled = 1 WHERE id = ?;');
     expect(run).toHaveBeenCalledWith('id1');
   });
 
   it('should disable history item', () => {
-    repository.disableHistoryItem('id1');
+    repository.disable('id1');
     expect(database.prepare).toHaveBeenCalledWith('UPDATE history_items SET enabled = 0 WHERE id = ?;');
     expect(run).toHaveBeenCalledWith('id1');
   });

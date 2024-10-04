@@ -1,11 +1,11 @@
 import SouthModbus from './south-modbus';
 import DatabaseMock from '../../tests/__mocks__/database.mock';
 import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/logger.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import RepositoryService from '../../service/repository.service';
-import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
+import RepositoryServiceMock from '../../tests/__mocks__/service/repository-service.mock';
 import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import net from 'node:net';
 import Stream from 'node:stream';
@@ -188,7 +188,7 @@ class CustomStream extends Stream {
 
   end() {}
 }
-repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
 
 describe('SouthModbus', () => {
   beforeEach(async () => {
@@ -518,7 +518,7 @@ describe('SouthModbus test connection', () => {
 
   it('Connecting to socket successfully when testing items', async () => {
     testingSouth = new SouthModbus(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
-    let callback = jest.fn();
+    const callback = jest.fn();
 
     // Mock node:net Socket constructor and the used function
     (net.Socket as unknown as jest.Mock).mockReturnValue({
@@ -535,7 +535,7 @@ describe('SouthModbus test connection', () => {
   it('Unable to create connection to socket when testing items', async () => {
     let code: ErrorCodes;
     const errorMessage = 'Error creating connection to socket';
-    let callback = jest.fn();
+    const callback = jest.fn();
 
     for (code in ERROR_CODES) {
       (logger.error as jest.Mock).mockClear();
@@ -556,7 +556,7 @@ describe('SouthModbus test connection', () => {
 
   it('should fail to connect when testing items', async () => {
     testingSouth = new SouthModbus(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
-    let callback = jest.fn();
+    const callback = jest.fn();
 
     const mockedEmitter = new CustomStream();
     mockedEmitter.connect = (_connectionObject: any, _callback: any) => {};

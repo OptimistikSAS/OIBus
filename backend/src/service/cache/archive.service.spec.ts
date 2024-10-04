@@ -7,7 +7,7 @@ import ArchiveService from './archive.service';
 import { DateTime } from 'luxon';
 import { createFolder } from '../utils';
 import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/logger.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 
 import { NorthArchiveSettings } from '../../../../shared/model/north-connector.model';
 

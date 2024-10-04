@@ -1,9 +1,9 @@
 import { HistoryMetrics } from '../../../shared/model/engine.model';
 import HistoryMetricsService from './history-metrics.service';
 import SouthConnectorMetricsRepository from '../repository/south-connector-metrics.repository';
-import SouthMetricsRepositoryMock from '../tests/__mocks__/south-metrics-repository.mock';
+import SouthMetricsRepositoryMock from '../tests/__mocks__/repository/south-metrics-repository.mock';
 import NorthConnectorMetricsRepository from '../repository/north-connector-metrics.repository';
-import NorthMetricsRepositoryMock from '../tests/__mocks__/north-metrics-repository.mock';
+import NorthMetricsRepositoryMock from '../tests/__mocks__/repository/north-metrics-repository.mock';
 
 const southRepositoryMock: SouthConnectorMetricsRepository = new SouthMetricsRepositoryMock();
 const northRepositoryMock: NorthConnectorMetricsRepository = new NorthMetricsRepositoryMock();

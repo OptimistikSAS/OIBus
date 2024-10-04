@@ -33,10 +33,7 @@ interface HistoryQueryResult {
 export default class HistoryQueryRepository {
   constructor(private readonly database: Database) {}
 
-  /**
-   * Get all HistoryQueries
-   */
-  getHistoryQueries(): Array<HistoryQueryDTO> {
+  findAll(): Array<HistoryQueryDTO> {
     const query =
       `SELECT id, name, description, status, history_max_instant_per_item AS maxInstantPerItem, ` +
       `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, start_time AS startTime, end_time AS endTime, ` +
@@ -49,10 +46,7 @@ export default class HistoryQueryRepository {
     return results.map(result => this.toHistoryQueryDTO(result));
   }
 
-  /**
-   * Get a HistoryQuery
-   */
-  getHistoryQuery(id: string): HistoryQueryDTO | null {
+  findById(id: string): HistoryQueryDTO | null {
     const query =
       `SELECT id, name, description, status, history_max_instant_per_item AS maxInstantPerItem, ` +
       `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, start_time AS startTime, end_time AS endTime, ` +
@@ -70,10 +64,7 @@ export default class HistoryQueryRepository {
     return this.toHistoryQueryDTO(result);
   }
 
-  /**
-   * Create a new HistoryQuery
-   */
-  createHistoryQuery(command: HistoryQueryCommandDTO): HistoryQueryDTO {
+  create(command: HistoryQueryCommandDTO): HistoryQueryDTO {
     const id = generateRandomId(6);
 
     const insertQuery =
@@ -120,15 +111,12 @@ export default class HistoryQueryRepository {
     return this.toHistoryQueryDTO(result);
   }
 
-  setHistoryQueryStatus(id: string, status: HistoryQueryStatus) {
+  updateStatus(id: string, status: HistoryQueryStatus) {
     const query = `UPDATE ${HISTORY_QUERIES_TABLE} SET status = ? WHERE id = ?;`;
     this.database.prepare(query).run(status, id);
   }
 
-  /**
-   * Update a History query by its ID
-   */
-  updateHistoryQuery(id: string, command: HistoryQueryCommandDTO): void {
+  update(id: string, command: HistoryQueryCommandDTO): void {
     const query =
       `UPDATE ${HISTORY_QUERIES_TABLE} SET name = ?, description = ?, history_max_instant_per_item = ?, ` +
       `history_max_read_interval = ?, history_read_delay = ?, start_time = ?, ` +
@@ -164,10 +152,7 @@ export default class HistoryQueryRepository {
       );
   }
 
-  /**
-   * Delete a History query by its ID
-   */
-  deleteHistoryQuery(id: string): void {
+  delete(id: string): void {
     const query = `DELETE FROM ${HISTORY_QUERIES_TABLE} WHERE id = ?;`;
     this.database.prepare(query).run(id);
   }

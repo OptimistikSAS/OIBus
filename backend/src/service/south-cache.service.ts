@@ -17,7 +17,7 @@ export default class SouthCacheService {
    * Retrieve south cache or return a new one with startTime
    */
   getSouthCacheScanMode(southId: string, scanModeId: string, itemId: string, startTime: Instant): SouthCache {
-    const southCache = this._cacheRepository.getSouthCacheScanMode(southId, scanModeId, itemId);
+    const southCache = this._cacheRepository.getScanMode(southId, scanModeId, itemId);
     if (!southCache) {
       return {
         southId,
@@ -30,10 +30,10 @@ export default class SouthCacheService {
   }
 
   createOrUpdateCacheScanMode(command: SouthCache): void {
-    this._cacheRepository.createOrUpdateCacheScanMode(command);
+    this._cacheRepository.createOrUpdate(command);
   }
 
   resetCacheScanMode(id: string): void {
-    this._cacheRepository.resetSouthCacheDatabase(id);
+    this._cacheRepository.reset(id);
   }
 }
