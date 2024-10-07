@@ -191,7 +191,7 @@ describe('ProxyServer', () => {
   });
 
   it('should handle webserver errors', async () => {
-    let errorCallback: any;
+    let errorCallback: ((error: Error, param: object, result: unknown) => void) | undefined = undefined;
     jest.spyOn(httpMock, 'on').mockImplementation((event, callback) => {
       if (event === 'error') errorCallback = callback;
     });
@@ -203,7 +203,7 @@ describe('ProxyServer', () => {
 
     await proxyServer.start(9000);
 
-    errorCallback(error, {}, mockRes);
+    errorCallback!(error, {}, mockRes);
     expect(mockRes.writeHead).toHaveBeenCalledWith(500, { 'Content-Type': 'text/plain' });
     expect(mockRes.end).toHaveBeenCalledWith(error);
   });

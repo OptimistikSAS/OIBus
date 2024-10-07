@@ -2,7 +2,6 @@ import path from 'node:path';
 
 import NorthConnector from '../north-connector';
 import manifest from './manifest';
-import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
@@ -13,6 +12,7 @@ import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.mo
 
 import sftpClient, { ConnectOptions } from 'ssh2-sftp-client';
 import fs from 'node:fs/promises';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
 
 /**
  * Class NorthSFTP - Write files in an output folder
@@ -21,7 +21,7 @@ export default class NorthSFTP extends NorthConnector<NorthSFTPSettings> {
   static type = manifest.id;
 
   constructor(
-    configuration: NorthConnectorDTO<NorthSFTPSettings>,
+    configuration: NorthConnectorEntity<NorthSFTPSettings>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
     logger: pino.Logger,

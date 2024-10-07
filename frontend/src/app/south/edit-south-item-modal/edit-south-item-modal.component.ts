@@ -19,6 +19,7 @@ import { Timezone } from '../../../../../shared/model/types';
 import { inMemoryTypeahead } from '../../shared/typeahead';
 import { OibFormControl } from '../../../../../shared/model/form.model';
 import { FormComponent } from '../../shared/form/form.component';
+import { SouthItemSettings } from '../../../../../shared/model/south-settings.model';
 
 // TypeScript issue with Intl: https://github.com/microsoft/TypeScript/issues/49231
 // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -56,8 +57,8 @@ export class EditSouthItemModalComponent {
   southItemSchema: SouthConnectorItemManifest | null = null;
   southItemRows: Array<Array<OibFormControl>> = [];
 
-  item: SouthConnectorItemDTO | null = null;
-  itemList: Array<SouthConnectorItemDTO> = [];
+  item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings> | null = null;
+  itemList: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>> = [];
 
   form: FormGroup<{
     name: FormControl<string>;
@@ -85,7 +86,7 @@ export class EditSouthItemModalComponent {
     };
   }
 
-  private createForm(item: SouthConnectorItemDTO | null) {
+  private createForm(item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings> | null) {
     this.form = this.fb.group({
       name: ['', [Validators.required, this.checkUniqueness()]],
       enabled: [true, Validators.required],
@@ -110,7 +111,11 @@ export class EditSouthItemModalComponent {
   /**
    * Prepares the component for creation.
    */
-  prepareForCreation(southItemSchema: SouthConnectorItemManifest, itemList: Array<SouthConnectorItemDTO>, scanModes: Array<ScanModeDTO>) {
+  prepareForCreation(
+    southItemSchema: SouthConnectorItemManifest,
+    itemList: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>>,
+    scanModes: Array<ScanModeDTO>
+  ) {
     this.mode = 'create';
     this.itemList = itemList;
     this.subscriptionOnly = southItemSchema.scanMode.subscriptionOnly;
@@ -126,9 +131,9 @@ export class EditSouthItemModalComponent {
    */
   prepareForEdition(
     southItemSchema: SouthConnectorItemManifest,
-    itemList: Array<SouthConnectorItemDTO>,
+    itemList: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>>,
     scanModes: Array<ScanModeDTO>,
-    southItem: SouthConnectorItemDTO,
+    southItem: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>,
     maxInstantPerItem: boolean | null = null
   ) {
     this.mode = 'edit';
@@ -146,8 +151,12 @@ export class EditSouthItemModalComponent {
   /**
    * Prepares the component for edition.
    */
-  prepareForCopy(southItemSchema: SouthConnectorItemManifest, scanModes: Array<ScanModeDTO>, southItem: SouthConnectorItemDTO) {
-    this.item = JSON.parse(JSON.stringify(southItem)) as SouthConnectorItemDTO;
+  prepareForCopy(
+    southItemSchema: SouthConnectorItemManifest,
+    scanModes: Array<ScanModeDTO>,
+    southItem: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>
+  ) {
+    this.item = JSON.parse(JSON.stringify(southItem)) as SouthConnectorItemDTO<SouthItemSettings>;
     this.item.name = `${southItem.name}-copy`;
     this.mode = 'copy';
     this.subscriptionOnly = southItemSchema.scanMode.subscriptionOnly;
@@ -168,24 +177,17 @@ export class EditSouthItemModalComponent {
     }
 
     const formValue = this.form!.value;
-    let id;
-    switch (this.mode) {
-      case 'create':
-        id = '';
-        break;
-      case 'edit':
-        id = this.item ? this.item.id : '';
-        break;
-      case 'copy':
-        id = '';
-        break;
+    let id: string | null = null;
+    if (this.mode === 'edit') {
+      id = this.item?.id || null;
     }
 
-    const command: SouthConnectorItemCommandDTO = {
+    const command: SouthConnectorItemCommandDTO<SouthItemSettings> = {
       id,
       enabled: formValue.enabled!,
       name: formValue.name!,
       scanModeId: this.subscriptionOnly ? 'subscription' : formValue.scanModeId!,
+      scanModeName: null,
       settings: formValue.settings!
     };
 

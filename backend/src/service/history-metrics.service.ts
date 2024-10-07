@@ -1,7 +1,7 @@
-import { HistoryMetrics } from '../../../shared/model/engine.model';
+import { HistoryMetrics, SouthHistoryMetrics } from '../../../shared/model/engine.model';
 import { PassThrough } from 'node:stream';
-import SouthConnectorMetricsRepository from '../repository/south-connector-metrics.repository';
-import NorthConnectorMetricsRepository from '../repository/north-connector-metrics.repository';
+import SouthConnectorMetricsRepository from '../repository/logs/south-connector-metrics.repository';
+import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
 
 export default class HistoryMetricsService {
   private _stream: PassThrough | null = null;
@@ -18,7 +18,8 @@ export default class HistoryMetricsService {
     const northMetrics = this.northMetricsRepository.getMetrics(this.historyId)!;
     this._metrics = {
       north: northMetrics,
-      south: southMetrics
+      south: southMetrics,
+      historyMetrics: {} as SouthHistoryMetrics
     };
   }
 
@@ -36,7 +37,8 @@ export default class HistoryMetricsService {
 
     this.updateMetrics({
       north: this.northMetricsRepository.getMetrics(this.historyId)!,
-      south: this.southMetricsRepository.getMetrics(this.historyId)!
+      south: this.southMetricsRepository.getMetrics(this.historyId)!,
+      historyMetrics: {} as SouthHistoryMetrics
     });
   }
 

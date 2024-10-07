@@ -6,6 +6,7 @@ import { of } from 'rxjs';
 import { NorthConnectorDTO } from '../../../../../../shared/model/north-connector.model';
 import { Component, ViewChild } from '@angular/core';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import { NorthSettings } from '../../../../../../shared/model/north-settings.model';
 
 @Component({
   template: `<oib-archive-files #component [northConnector]="northConnector" />`,
@@ -14,10 +15,10 @@ import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 })
 class TestComponent {
   @ViewChild('component') component!: ArchiveFilesComponent;
-  northConnector: NorthConnectorDTO = {
+  northConnector: NorthConnectorDTO<NorthSettings> = {
     id: 'northId',
     name: 'North Connector'
-  } as NorthConnectorDTO;
+  } as NorthConnectorDTO<NorthSettings>;
 }
 
 class ArchiveFilesComponentTester extends ComponentTester<TestComponent> {

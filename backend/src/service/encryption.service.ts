@@ -8,8 +8,6 @@ import selfSigned, { GenerateResult } from 'selfsigned';
 import { createFolder, filesExists } from './utils';
 import { OibFormControl } from '../../../shared/model/form.model';
 import { CryptoSettings } from '../../../shared/model/engine.model';
-import { SouthSettings } from '../../../shared/model/south-settings.model';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { CertificateOptions } from '../../../shared/model/certificate.model';
 
 export const CERT_FOLDER = 'certs';
@@ -143,51 +141,66 @@ export default class EncryptionService {
     );
   }
 
-  async encryptConnectorSecrets(
-    newSettings: any,
-    oldSettings: any | null,
-    formSettings: Array<OibFormControl>
-  ): Promise<SouthSettings | NorthSettings> {
-    const encryptedSettings: any = JSON.parse(JSON.stringify(newSettings));
+  async encryptConnectorSecrets<T>(newSettings: T, oldSettings: T | null, formSettings: Array<OibFormControl>): Promise<T> {
+    const encryptedSettings: Record<string, string | object | Array<object>> = JSON.parse(JSON.stringify(newSettings)) as Record<
+      string,
+      string | object | Array<object>
+    >;
+
+    const previousSettings: Record<string, string | object | Array<object>> | null = oldSettings
+      ? (JSON.parse(JSON.stringify(oldSettings)) as Record<string, string | object | Array<object>>)
+      : null;
+
     for (const fieldSettings of formSettings) {
       if (fieldSettings.type === 'OibSecret') {
         if (encryptedSettings[fieldSettings.key]) {
-          encryptedSettings[fieldSettings.key] = await this.encryptText(encryptedSettings[fieldSettings.key]);
+          encryptedSettings[fieldSettings.key] = await this.encryptText(encryptedSettings[fieldSettings.key] as string);
         } else {
-          encryptedSettings[fieldSettings.key] = oldSettings ? oldSettings[fieldSettings.key] || '' : '';
+          encryptedSettings[fieldSettings.key] = previousSettings ? (previousSettings[fieldSettings.key] as string) || '' : '';
         }
       } else if (fieldSettings.type === 'OibArray' && encryptedSettings[fieldSettings.key]) {
-        for (let i = 0; i < encryptedSettings[fieldSettings.key].length; i++) {
-          encryptedSettings[fieldSettings.key][i] = await this.encryptConnectorSecrets(
-            encryptedSettings[fieldSettings.key][i],
-            oldSettings ? oldSettings[fieldSettings.key] || null : null,
+        for (let i = 0; i < (encryptedSettings[fieldSettings.key] as Array<object>).length; i++) {
+          (encryptedSettings[fieldSettings.key] as Array<object>)[i] = await this.encryptConnectorSecrets<object>(
+            (encryptedSettings[fieldSettings.key] as Array<object>)[i],
+            previousSettings && previousSettings[fieldSettings.key] && Array.isArray(previousSettings[fieldSettings.key])
+              ? (previousSettings[fieldSettings.key] as Array<object>)[i]
+              : null,
             fieldSettings.content
           );
         }
       } else if (fieldSettings.type === 'OibFormGroup' && encryptedSettings[fieldSettings.key]) {
-        encryptedSettings[fieldSettings.key] = await this.encryptConnectorSecrets(
-          encryptedSettings[fieldSettings.key],
-          oldSettings ? oldSettings[fieldSettings.key] || null : null,
+        encryptedSettings[fieldSettings.key] = await this.encryptConnectorSecrets<object>(
+          encryptedSettings[fieldSettings.key] as object,
+          previousSettings ? (previousSettings[fieldSettings.key] as object) || null : null,
           fieldSettings.content
         );
       }
     }
-    return encryptedSettings;
+    return encryptedSettings as T;
   }
 
-  filterSecrets(connectorSettings: any, formSettings: Array<OibFormControl>): SouthSettings | NorthSettings {
+  filterSecrets<T>(connectorSettings: T, formSettings: Array<OibFormControl>): T {
+    const previousSettings: Record<string, string | object | Array<object>> | null = JSON.parse(
+      JSON.stringify(connectorSettings)
+    ) as Record<string, string | object | Array<object>>;
     for (const fieldSettings of formSettings) {
       if (fieldSettings.type === 'OibSecret') {
-        connectorSettings[fieldSettings.key] = '';
-      } else if (fieldSettings.type === 'OibArray' && connectorSettings[fieldSettings.key]) {
-        for (let i = 0; i < connectorSettings[fieldSettings.key].length; i++) {
-          connectorSettings[fieldSettings.key][i] = this.filterSecrets(connectorSettings[fieldSettings.key][i], fieldSettings.content);
+        previousSettings[fieldSettings.key] = '';
+      } else if (fieldSettings.type === 'OibArray' && previousSettings[fieldSettings.key]) {
+        for (let i = 0; i < (previousSettings[fieldSettings.key] as Array<object>).length; i++) {
+          (previousSettings[fieldSettings.key] as Array<object>)[i] = this.filterSecrets(
+            (previousSettings[fieldSettings.key] as Array<object>)[i],
+            fieldSettings.content
+          );
         }
-      } else if (fieldSettings.type === 'OibFormGroup' && connectorSettings[fieldSettings.key]) {
-        this.filterSecrets(connectorSettings[fieldSettings.key], fieldSettings.content);
+      } else if (fieldSettings.type === 'OibFormGroup' && previousSettings[fieldSettings.key]) {
+        previousSettings[fieldSettings.key] = this.filterSecrets<object>(
+          previousSettings[fieldSettings.key] as object,
+          fieldSettings.content
+        );
       }
     }
-    return connectorSettings;
+    return previousSettings as T;
   }
 
   /**

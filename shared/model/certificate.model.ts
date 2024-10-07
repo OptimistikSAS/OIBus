@@ -1,14 +1,5 @@
 import { BaseEntity, Instant } from './types';
 
-export interface Certificate extends BaseEntity {
-  name: string;
-  description: string;
-  publicKey: string;
-  privateKey: string;
-  certificate: string;
-  expiry: Instant;
-}
-
 export interface CertificateDTO extends BaseEntity {
   name: string;
   description: string;

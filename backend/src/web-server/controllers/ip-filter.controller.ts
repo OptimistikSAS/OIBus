@@ -22,8 +22,8 @@ export default class IpFilterController extends AbstractController {
     try {
       const ipFilter = await ctx.app.ipFilterService.create(ctx.request.body!, ctx.app.ipFilters);
       ctx.created(toIPFilterDTO(ipFilter));
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 
@@ -31,8 +31,8 @@ export default class IpFilterController extends AbstractController {
     try {
       await ctx.app.ipFilterService.update(ctx.params.id, ctx.request.body!, ctx.app.ipFilters);
       ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 
@@ -40,8 +40,8 @@ export default class IpFilterController extends AbstractController {
     try {
       await ctx.app.ipFilterService.delete(ctx.params.id!, ctx.app.ipFilters);
       ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 }

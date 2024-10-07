@@ -1,9 +1,10 @@
-// @ts-ignore
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
 import ads from 'ads-client';
 
 import manifest from './manifest';
 import SouthConnector from '../south-connector';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import { DateTime } from 'luxon';
 import { Instant } from '../../../../shared/model/types';
 import EncryptionService from '../../service/encryption.service';
@@ -12,6 +13,7 @@ import pino from 'pino';
 import { QueriesLastPoint } from '../south-interface';
 import { SouthADSItemSettings, SouthADSSettings } from '../../../../shared/model/south-settings.model';
 import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { SouthConnectorEntity } from '../../model/south-connector.model';
 
 interface ADSOptions {
   targetAmsNetId: string;
@@ -34,7 +36,7 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
   private disconnecting = false;
 
   constructor(
-    connector: SouthConnectorDTO<SouthADSSettings>,
+    connector: SouthConnectorEntity<SouthADSSettings, SouthADSItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
@@ -205,14 +207,14 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
   override async testItem(item: SouthConnectorItemDTO<SouthADSItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
     try {
       await this.connect();
-      const dataValues: OIBusTimeValue[] = await this.readAdsSymbol(item, DateTime.now().toUTC().toISO()!);
+      const dataValues: Array<OIBusTimeValue> = await this.readAdsSymbol(item, DateTime.now().toUTC().toISO()!);
       await this.disconnect();
       callback({
         type: 'time-values',
         content: dataValues
       });
-    } catch (error: any) {
-      throw new Error(`Unable to connect. ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`Unable to connect. ${(error as Error).message}`);
     }
   }
 

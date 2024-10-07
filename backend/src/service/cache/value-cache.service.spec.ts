@@ -158,7 +158,7 @@ describe('ValueCache', () => {
   });
 
   it('should remove sent values', async () => {
-    const valuesToRemove: Map<string, Array<any>> = new Map();
+    const valuesToRemove = new Map<string, Array<OIBusTimeValue>>();
     valuesToRemove.set('1.queue.tmp', []);
     valuesToRemove.set('1.compact.tmp', []);
     cache.deleteKeyFromCache = jest.fn();
@@ -217,7 +217,7 @@ describe('ValueCache', () => {
   });
 
   it('should manage error values', async () => {
-    const valuesToRemove: Map<string, Array<any>> = new Map();
+    const valuesToRemove = new Map<string, Array<OIBusTimeValue>>();
     valuesToRemove.set(path.resolve('myCacheFolder', 'values', '1.queue.tmp'), []);
     valuesToRemove.set(path.resolve('myCacheFolder', 'values', '1.compact.tmp'), []);
     fs.rename = jest
@@ -498,9 +498,9 @@ describe('ValueCache', () => {
   });
 
   describe('with values loaded', () => {
-    const valuesToCache: Array<any> = [];
+    const valuesToCache: Array<OIBusTimeValue> = [];
     for (let i = 0; i < 251; i += 1) {
-      valuesToCache.push({});
+      valuesToCache.push({} as OIBusTimeValue);
     }
 
     beforeEach(async () => {
@@ -526,7 +526,7 @@ describe('ValueCache', () => {
     });
 
     it('should properly get values to send from queue', async () => {
-      const expectedValues: Map<string, Array<any>> = new Map();
+      const expectedValues = new Map<string, Array<OIBusTimeValue>>();
       expectedValues.set(path.resolve('myCacheFolder', 'values', 'generated-uuid2.queue.tmp'), valuesToCache);
       expectedValues.set(path.resolve('myCacheFolder', 'values', 'generated-uuid4.queue.tmp'), valuesToCache);
       expectedValues.set(path.resolve('myCacheFolder', 'values', 'generated-uuid6.queue.tmp'), valuesToCache);
@@ -538,8 +538,8 @@ describe('ValueCache', () => {
     it('should properly get values to send from compact and delete from cache', async () => {
       (fs.readFile as jest.Mock).mockImplementationOnce(() => '[{}]');
 
-      const expectedValues: Map<string, Array<any>> = new Map();
-      expectedValues.set(path.resolve('myCacheFolder', 'values', 'generated-uuid9.compact.tmp'), [{}]);
+      const expectedValues = new Map<string, Array<OIBusTimeValue>>();
+      expectedValues.set(path.resolve('myCacheFolder', 'values', 'generated-uuid9.compact.tmp'), [{} as OIBusTimeValue]);
 
       await cache.cacheValues(valuesToCache); // compact queue here
       const valuesToSend = await cache.getValuesToSend();

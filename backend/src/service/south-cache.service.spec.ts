@@ -1,7 +1,7 @@
 import SouthCacheService from './south-cache.service';
 
-import SouthCacheRepositoryMock from '../tests/__mocks__/repository/south-cache-repository.mock';
-import SouthCacheRepository from '../repository/south-cache.repository';
+import SouthCacheRepositoryMock from '../tests/__mocks__/repository/cache/south-cache-repository.mock';
+import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import { SouthCache } from '../../../shared/model/south-connector.model';
 
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
@@ -29,7 +29,7 @@ describe('South cache service', () => {
       maxInstant: ''
     };
     service.createOrUpdateCacheScanMode(command);
-    expect(service.cacheRepository.createOrUpdate).toHaveBeenCalledTimes(1);
+    expect(service.cacheRepository.save).toHaveBeenCalledTimes(1);
   });
 
   it('should get scan mode', () => {
@@ -39,7 +39,7 @@ describe('South cache service', () => {
       southId: 'southId',
       maxInstant: ''
     };
-    (service.cacheRepository.getScanMode as jest.Mock).mockReturnValueOnce(scanMode).mockReturnValue(null);
+    (service.cacheRepository.getSouthCache as jest.Mock).mockReturnValueOnce(scanMode).mockReturnValue(null);
     const result = service.getSouthCacheScanMode('southId', 'id1', 'itemId', nowDateString);
     expect(result).toEqual(scanMode);
 
@@ -54,11 +54,11 @@ describe('South cache service', () => {
 
   it('should reset cache', () => {
     service.resetCacheScanMode('id');
-    expect(service.cacheRepository.reset).toHaveBeenCalledTimes(1);
+    expect(service.cacheRepository.deleteAllBySouthConnector).toHaveBeenCalledTimes(1);
   });
 
   it('should reset cache', () => {
     service.resetCacheScanMode('id');
-    expect(service.cacheRepository.reset).toHaveBeenCalledTimes(1);
+    expect(service.cacheRepository.deleteAllBySouthConnector).toHaveBeenCalledTimes(1);
   });
 });

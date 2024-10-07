@@ -1,85 +1,72 @@
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
-import OIBusEngine from '../engine/oibus-engine';
-import SubscriptionRepository from '../repository/subscription.repository';
-import { Subscription } from '../model/subscription.model';
-import SouthConnectorRepository from '../repository/south-connector.repository';
-import NorthConnectorRepository from '../repository/north-connector.repository';
-import { SubscriptionDTO } from '../../../shared/model/subscription.model';
+import SouthConnectorRepository from '../repository/config/south-connector.repository';
+import NorthConnectorRepository from '../repository/config/north-connector.repository';
+import { SouthConnectorEntityLight } from '../model/south-connector.model';
 
 export default class SubscriptionService {
   constructor(
     protected readonly validator: JoiValidator,
-    private subscriptionRepository: SubscriptionRepository,
     private southConnectorRepository: SouthConnectorRepository,
     private northConnectorRepository: NorthConnectorRepository,
-    private oIAnalyticsMessageService: OIAnalyticsMessageService,
-    private oibusEngine: OIBusEngine
+    private oIAnalyticsMessageService: OIAnalyticsMessageService
   ) {}
 
-  async findByNorth(northId: string): Promise<Array<Subscription>> {
-    const northConnector = this.northConnectorRepository.findById(northId);
+  async findByNorth(northId: string): Promise<Array<SouthConnectorEntityLight>> {
+    const northConnector = this.northConnectorRepository.findNorthById(northId);
     if (!northConnector) {
       throw new Error('North connector not found');
     }
 
-    return this.subscriptionRepository.listSouthByNorth(northConnector.id);
+    return this.northConnectorRepository.listNorthSubscriptions(northConnector.id);
   }
 
   checkSubscription(northId: string, southId: string): boolean {
-    return this.subscriptionRepository.checkSubscription(northId, southId);
+    return this.northConnectorRepository.checkSubscription(northId, southId);
   }
 
   async create(northId: string, southId: string): Promise<void> {
-    const northConnector = this.northConnectorRepository.findById(northId);
+    const northConnector = this.northConnectorRepository.findNorthById(northId);
     if (!northConnector) {
       throw new Error('North connector not found');
     }
 
-    const southConnector = this.southConnectorRepository.findById(southId);
+    const southConnector = this.southConnectorRepository.findSouthById(southId);
     if (!southConnector) {
       throw new Error('South connector not found');
     }
 
-    if (await this.checkSubscription(northId, southId)) {
+    if (this.checkSubscription(northId, southId)) {
       throw new Error('Subscription already exists');
     }
 
-    this.subscriptionRepository.create(northId, southId);
+    this.northConnectorRepository.createSubscription(northId, southId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 
   async delete(northId: string, southId: string): Promise<void> {
-    const northConnector = this.northConnectorRepository.findById(northId);
+    const northConnector = this.northConnectorRepository.findNorthById(northId);
     if (!northConnector) {
       throw new Error('North connector not found');
     }
 
-    const southConnector = this.southConnectorRepository.findById(southId);
+    const southConnector = this.southConnectorRepository.findSouthById(southId);
     if (!southConnector) {
       throw new Error('South connector not found');
     }
 
-    this.subscriptionRepository.delete(northId, southId);
-    this.oibusEngine.updateSubscriptions(northId);
+    this.northConnectorRepository.deleteSubscription(northId, southId);
+    // TODO this.oibusEngine.updateSubscriptions(northId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 
   async deleteAllByNorth(northId: string): Promise<void> {
-    const northConnector = this.northConnectorRepository.findById(northId);
+    const northConnector = this.northConnectorRepository.findNorthById(northId);
     if (!northConnector) {
       throw new Error('North connector not found');
     }
 
-    this.subscriptionRepository.deleteAllByNorth(northId);
+    this.northConnectorRepository.deleteAllSubscriptionsByNorth(northId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 }
-
-export const toSubscriptionDTO = (subscription: Subscription): SubscriptionDTO => {
-  return {
-    southId: subscription.south.id,
-    southType: subscription.south.type,
-    southName: subscription.south.name
-  };
-};

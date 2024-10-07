@@ -7,12 +7,12 @@ import {
   convertDelimiter,
   createFolder,
   formatInstant,
-  logQuery,
-  persistResults,
   generateCsvContent,
-  generateFilenameForSerialization
+  generateFilenameForSerialization,
+  logQuery,
+  persistResults
 } from '../../service/utils';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
@@ -22,6 +22,7 @@ import { QueriesHistory } from '../south-interface';
 import { SouthOLEDBItemSettings, SouthOLEDBSettings } from '../../../../shared/model/south-settings.model';
 import fetch, { HeadersInit, RequestInit } from 'node-fetch';
 import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { SouthConnectorEntity } from '../../model/south-connector.model';
 
 /**
  * Class SouthOLEDB - Retrieve data from SQL databases with OLEDB driver and send them to the cache as CSV files.
@@ -35,7 +36,7 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
   private reconnectTimeout: NodeJS.Timeout | null = null;
 
   constructor(
-    connector: SouthConnectorDTO<SouthOLEDBSettings>,
+    connector: SouthConnectorEntity<SouthOLEDBSettings, SouthOLEDBItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
@@ -131,7 +132,7 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
       .toUTC()
       .toISO() as Instant;
     const endTime = DateTime.now().toUTC().toISO() as Instant;
-    const result: Array<any> = (await this.queryRemoteAgentData(item, startTime, endTime, true)) as any[];
+    const result: Array<any> = (await this.queryRemoteAgentData(item, startTime, endTime, true)) as Array<any>;
 
     const formattedResults = result.map(entry => {
       const formattedEntry: Record<string, any> = {};
@@ -188,7 +189,7 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
     startTime: Instant,
     endTime: Instant,
     test?: boolean
-  ): Promise<string | Record<string, any>[]> {
+  ): Promise<string | Array<Record<string, any>>> {
     // test is here in case we are testing items
     let updatedStartTime = startTime;
     const startRequest = DateTime.now().toMillis();
@@ -219,7 +220,7 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
     if (response.status === 200) {
       const result: { recordCount: number; content: Array<any>; maxInstantRetrieved: Instant } = (await response.json()) as {
         recordCount: number;
-        content: OIBusTimeValue[];
+        content: Array<OIBusTimeValue>;
         maxInstantRetrieved: string;
       };
       const requestDuration = DateTime.now().toMillis() - startRequest;

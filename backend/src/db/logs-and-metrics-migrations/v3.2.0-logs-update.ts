@@ -1,6 +1,6 @@
 import { Knex } from 'knex';
-import { LOG_TABLE } from '../../repository/log.repository';
 import { LOG_LEVELS } from '../../../../shared/model/engine.model';
+const LOG_TABLE = 'logs';
 
 const NEW_SCOPE_TYPES = ['south', 'north', 'history-query', 'internal', 'web-server'];
 

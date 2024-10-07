@@ -6,7 +6,7 @@ import pino from 'pino';
 /**
  * DTO for creating a managed connection
  */
-export type ManagedConnectionDTO<TSession> = {
+export interface ManagedConnectionDTO<TSession> {
   /**
    * The type of the connection (usually the type of the connector eg. 'opcua')
    */
@@ -25,12 +25,12 @@ export type ManagedConnectionDTO<TSession> = {
    * Additional settings for the managed connection
    */
   settings: ManagedConnectionSettings<TSession>;
-};
+}
 
 /**
  * Settings for a managed connection
  */
-export type ManagedConnectionSettings<TSession> = {
+export interface ManagedConnectionSettings<TSession> {
   /**
    * The name of the function to call when closing the connection
    */
@@ -39,20 +39,20 @@ export type ManagedConnectionSettings<TSession> = {
    * Whether the connection can be shared or not
    */
   sharedConnection: boolean;
-};
+}
 
-type ManagedConnectionMetadata = {
-  instance: ManagedConnection<any>;
+interface ManagedConnectionMetadata<TSession> {
+  instance: ManagedConnection<TSession>;
   reliantConnectorIds: Set<string>;
   connectorSettings: SouthSettings;
   sharedConnection: boolean;
-};
+}
 
 /**
  * Service to manage connections within OIBus
  */
 export default class ConnectionService {
-  private readonly connections = new Map<string, ManagedConnectionMetadata[]>();
+  private readonly connections = new Map<string, Array<ManagedConnectionMetadata<any>>>();
   private readonly logger: pino.Logger;
 
   constructor(logger: pino.Logger) {
@@ -134,7 +134,7 @@ export default class ConnectionService {
    * Finds a connection that satisfies the given settings,
    * or returns null if no such connection exists
    */
-  private findConnection(connectorId: string, connectionDTO: ManagedConnectionDTO<any>): ManagedConnectionMetadata | null {
+  private findConnection(connectorId: string, connectionDTO: ManagedConnectionDTO<any>): ManagedConnectionMetadata<any> | null {
     const {
       type,
       connectorSettings,
@@ -208,8 +208,8 @@ class ManagedConnectionClass<TSession> {
 
       this.logger.trace('Session created');
       return this._session;
-    } catch (error: any) {
-      this.logger.error(`Session could not be created: ${error.message}`);
+    } catch (error: unknown) {
+      this.logger.error(`Session could not be created: ${(error as Error).message}`);
       throw error;
     } finally {
       // Unlock the creation of a new session
@@ -253,8 +253,8 @@ class ManagedConnectionClass<TSession> {
       await (this._session[this.dto.settings.closeFnName] as any).call(this._session);
       this._session = null;
       this.logger.trace('Session closed');
-    } catch (error: any) {
-      this.logger.error(`Session could not be closed: ${error.message}`);
+    } catch (error: unknown) {
+      this.logger.error(`Session could not be closed: ${(error as Error).message}`);
       throw error;
     } finally {
       // Unlock the closing of a session

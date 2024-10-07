@@ -6,8 +6,8 @@ import { toOIBusCommandDTO } from '../../service/oia/oianalytics-command.service
 
 export default class OIAnalyticsCommandController extends AbstractController {
   async search(ctx: KoaContext<void, Page<OIBusCommandDTO>>): Promise<void> {
-    const types = Array.isArray(ctx.query.types) ? ctx.query.types : [];
-    const status = Array.isArray(ctx.query.status) ? ctx.query.status : [];
+    const types: Array<string> = Array.isArray(ctx.query.types) ? ctx.query.types : [];
+    const status: Array<string> = Array.isArray(ctx.query.status) ? ctx.query.status : [];
     if (typeof ctx.query.types === 'string') {
       types.push(ctx.query.types);
     }

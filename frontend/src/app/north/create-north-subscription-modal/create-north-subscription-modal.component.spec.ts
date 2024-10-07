@@ -3,7 +3,7 @@ import { ComponentTester, createMock } from 'ngx-speculoos';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { fakeAsync, TestBed } from '@angular/core/testing';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
-import { SouthConnectorDTO } from '../../../../../shared/model/south-connector.model';
+import { SouthConnectorLightDTO } from '../../../../../shared/model/south-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { of } from 'rxjs';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
@@ -37,9 +37,9 @@ describe('CreateNorthSubscriptionModalComponent', () => {
   let northConnectorService: jasmine.SpyObj<NorthConnectorService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
 
-  const southConnectors: Array<SouthConnectorDTO> = [
-    { id: 'id1', name: 'South1' } as SouthConnectorDTO,
-    { id: 'id2', name: 'South2' } as SouthConnectorDTO
+  const southConnectors: Array<SouthConnectorLightDTO> = [
+    { id: 'id1', name: 'South1' } as SouthConnectorLightDTO,
+    { id: 'id2', name: 'South2' } as SouthConnectorLightDTO
   ];
 
   beforeEach(() => {
@@ -80,10 +80,10 @@ describe('CreateNorthSubscriptionModalComponent', () => {
     tester.south.selectLabel('South2');
     tester.save.click();
 
-    const expectedSouth: SouthConnectorDTO = {
+    const expectedSouth: SouthConnectorLightDTO = {
       id: 'id2',
       name: 'South2'
-    } as SouthConnectorDTO;
+    } as SouthConnectorLightDTO;
 
     expect(fakeActiveModal.close).toHaveBeenCalledWith(expectedSouth);
   }));

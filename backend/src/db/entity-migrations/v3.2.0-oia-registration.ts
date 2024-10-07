@@ -1,13 +1,14 @@
 import { Knex } from 'knex';
-import { REGISTRATIONS_TABLE } from '../../repository/oianalytics-registration.repository';
 import { LOG_LEVELS, REGISTRATION_STATUS } from '../../../../shared/model/engine.model';
-import { NORTH_CONNECTORS_TABLE } from '../../repository/north-connector.repository';
-import { COMMANDS_TABLE } from '../../repository/oianalytics-command.repository';
 import { OIBUS_COMMAND_STATUS, OIBUS_COMMAND_TYPES } from '../../../../shared/model/command.model';
 import CreateTableBuilder = Knex.CreateTableBuilder;
-import { SOUTH_CONNECTORS_TABLE } from '../../repository/south-connector.repository';
-import { HISTORY_QUERIES_TABLE } from '../../repository/history-query.repository';
-import { ENGINES_TABLE } from '../../repository/engine.repository';
+
+const SOUTH_CONNECTORS_TABLE = 'south_connectors';
+const NORTH_CONNECTORS_TABLE = 'north_connectors';
+const ENGINES_TABLE = 'engines';
+const HISTORY_QUERIES_TABLE = 'history_queries';
+const REGISTRATIONS_TABLE = 'registrations';
+const COMMANDS_TABLE = 'commands';
 
 export const NORTH_OIANALYTICS_SETTINGS_AUTHENTICATIONS = ['basic', 'aad-client-secret', 'aad-certificate'] as const;
 export type NorthOIAnalyticsSettingsAuthentication = (typeof NORTH_OIANALYTICS_SETTINGS_AUTHENTICATIONS)[number];
@@ -276,7 +277,6 @@ async function updateOIAnalyticsHistoryQueries(knex: Knex): Promise<void> {
   }
 }
 
-export async function down(knex: Knex): Promise<void> {
-  await knex.schema.dropTable(REGISTRATIONS_TABLE);
-  await knex.schema.dropTable(COMMANDS_TABLE);
+export async function down(_knex: Knex): Promise<void> {
+  return;
 }

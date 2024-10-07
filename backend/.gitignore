@@ -6,5 +6,5 @@ yarn-error.log
 /dist
 /src/tests/coverage
 /src/tests/legacy-coverage
-/src/tests/oibus-test.db
+/src/tests/*.db
 /src/tests/out-tsc

@@ -1,7 +1,7 @@
 import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { PassThrough } from 'node:stream';
-import SouthConnectorMetricsRepository from '../repository/south-connector-metrics.repository';
+import SouthConnectorMetricsRepository from '../repository/logs/south-connector-metrics.repository';
 import { SouthConnectorMetrics } from '../../../shared/model/engine.model';
 
 export default class SouthConnectorMetricsService {
@@ -15,8 +15,7 @@ export default class SouthConnectorMetricsService {
     lastFileRetrieved: null,
     lastConnection: null,
     lastRunStart: null,
-    lastRunDuration: null,
-    historyMetrics: {}
+    lastRunDuration: null
   };
 
   constructor(

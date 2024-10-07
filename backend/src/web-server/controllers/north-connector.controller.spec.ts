@@ -166,7 +166,7 @@ describe('North connector controller', () => {
     };
     ctx.params.id = 'id';
 
-    await northConnectorController.update(ctx);
+    await northConnectorController.updateNorthWithoutSubscriptions(ctx);
     expect(ctx.app.northConnectorConfigService.update).toHaveBeenCalledWith(ctx.params.id, northConnectorCommand);
     expect(ctx.noContent).toHaveBeenCalled();
   });
@@ -177,7 +177,7 @@ describe('North connector controller', () => {
     };
     ctx.params.id = 'id';
 
-    await northConnectorController.update(ctx);
+    await northConnectorController.updateNorthWithoutSubscriptions(ctx);
     expect(ctx.app.northConnectorConfigService.create).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalled();
   });

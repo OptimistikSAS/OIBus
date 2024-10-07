@@ -11,6 +11,7 @@ import { DateTime } from 'luxon';
 import { NorthFileWriterSettings } from '../../../../shared/model/north-settings.model';
 import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
 import csv from 'papaparse';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
 
 /**
  * Class NorthFileWriter - Write files in an output folder
@@ -19,7 +20,7 @@ export default class NorthFileWriter extends NorthConnector<NorthFileWriterSetti
   static type = manifest.id;
 
   constructor(
-    configuration: NorthConnectorDTO<NorthFileWriterSettings>,
+    configuration: NorthConnectorEntity<NorthFileWriterSettings>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
     logger: pino.Logger,

@@ -14,6 +14,7 @@ import { emptyPage } from '../../../shared/test-utils';
 import { FileTableComponent, FileTableData, ItemActionEvent } from '../file-table/file-table.component';
 import { FileContentModalComponent } from '../file-content-modal/file-content-modal.component';
 import { ModalService } from '../../../shared/modal.service';
+import { NorthSettings } from '../../../../../../shared/model/north-settings.model';
 
 @Component({
   selector: 'oib-cache-files',
@@ -37,7 +38,7 @@ export class CacheFilesComponent implements OnInit {
   private northConnectorService = inject(NorthConnectorService);
   private modalService = inject(ModalService);
 
-  @Input() northConnector: NorthConnectorDTO | null = null;
+  @Input() northConnector: NorthConnectorDTO<NorthSettings> | null = null;
   cacheFiles: Array<NorthCacheFiles> = [];
   @ViewChild('fileTable') fileTable!: FileTableComponent;
   fileTablePages = emptyPage<FileTableData>();

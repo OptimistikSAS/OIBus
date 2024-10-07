@@ -2,7 +2,7 @@ import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { PassThrough } from 'node:stream';
 import { NorthConnectorMetrics } from '../../../shared/model/engine.model';
-import NorthConnectorMetricsRepository from '../repository/north-connector-metrics.repository';
+import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
 
 export default class NorthConnectorMetricsService {
   private _stream: PassThrough | null = null;

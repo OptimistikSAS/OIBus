@@ -14,7 +14,7 @@ import {
   httpGetWithBody,
   persistResults
 } from '../../service/utils';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
@@ -24,6 +24,7 @@ import { QueriesHistory } from '../south-interface';
 import { SouthSlimsItemSettings, SouthSlimsSettings } from '../../../../shared/model/south-settings.model';
 import { createProxyAgent } from '../../service/proxy-agent';
 import { OIBusContent } from '../../../../shared/model/engine.model';
+import { SouthConnectorEntity } from '../../model/south-connector.model';
 
 export interface SlimsColumn {
   name: string;
@@ -55,7 +56,7 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
   private readonly tmpFolder: string;
 
   constructor(
-    connector: SouthConnectorDTO<SouthSlimsSettings>,
+    connector: SouthConnectorEntity<SouthSlimsSettings, SouthSlimsItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,

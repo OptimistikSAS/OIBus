@@ -1,7 +1,7 @@
 import SouthConnectorMetricsService from './south-connector-metrics.service';
 import { SouthConnectorMetrics } from '../../../shared/model/engine.model';
-import SouthMetricsRepositoryMock, { getMetrics } from '../tests/__mocks__/repository/south-metrics-repository.mock';
-import SouthConnectorMetricsRepository from '../repository/south-connector-metrics.repository';
+import SouthMetricsRepositoryMock, { getMetrics } from '../tests/__mocks__/repository/log/south-metrics-repository.mock';
+import SouthConnectorMetricsRepository from '../repository/logs/south-connector-metrics.repository';
 
 const southRepositoryMock: SouthConnectorMetricsRepository = new SouthMetricsRepositoryMock();
 
@@ -34,8 +34,7 @@ describe('SouthConnectorMetricsService', () => {
       lastFileRetrieved: 'myFile',
       lastConnection: '2020-02-02T02:02:02.222Z',
       lastRunStart: '2020-02-02T02:02:02.222Z',
-      lastRunDuration: 120,
-      historyMetrics: {}
+      lastRunDuration: 120
     };
     service.updateMetrics('southId', newConnectorMetrics);
     expect(service.metricsRepository.updateMetrics).toHaveBeenCalledWith('southId', newConnectorMetrics);

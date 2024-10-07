@@ -141,7 +141,7 @@ describe('FileCache without sendFileImmediately', () => {
 
   it('should properly manage error files', async () => {
     (fs.rename as jest.Mock)
-      .mockImplementationOnce(() => {})
+      .mockImplementationOnce(() => Promise.resolve())
       .mockImplementationOnce(() => {
         throw new Error('rename error');
       });
@@ -359,7 +359,7 @@ describe('FileCache without sendFileImmediately', () => {
 
   it('should properly get error file content', async () => {
     const filename = 'myFile.csv';
-    (createReadStream as jest.Mock).mockImplementation(() => {});
+    (createReadStream as jest.Mock).mockImplementation(() => Promise.resolve());
     await cache.getErrorFileContent(filename);
 
     expect(createReadStream).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'files-errors', filename));
@@ -380,7 +380,7 @@ describe('FileCache without sendFileImmediately', () => {
 
   it('should properly get cache file content', async () => {
     const filename = 'myFile.csv';
-    (createReadStream as jest.Mock).mockImplementation(() => {});
+    (createReadStream as jest.Mock).mockImplementation(() => Promise.resolve());
     await cache.getCacheFileContent(filename);
 
     expect(createReadStream).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'files', filename));

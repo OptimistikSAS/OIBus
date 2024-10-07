@@ -7,7 +7,7 @@ import { NotificationService } from '../shared/notification.service';
 import { ModalService } from '../shared/modal.service';
 import { Router, RouterLink } from '@angular/router';
 import { CreateHistoryQueryModalComponent } from './create-history-query-modal/create-history-query-modal.component';
-import { HistoryQueryDTO, HistoryQueryStatus } from '../../../../shared/model/history-query.model';
+import { HistoryQueryLightDTO, HistoryQueryStatus } from '../../../../shared/model/history-query.model';
 import { HistoryQueryService } from '../services/history-query.service';
 import { PaginationComponent } from '../shared/pagination/pagination.component';
 import { createPageFromArray, Page } from '../../../../shared/model/types';
@@ -49,9 +49,9 @@ export class HistoryQueryListComponent implements OnInit {
   private historyQueryService = inject(HistoryQueryService);
   private router = inject(Router);
 
-  allHistoryQueries: Array<HistoryQueryDTO> | null = null;
-  filteredHistoryQueries: Array<HistoryQueryDTO> = [];
-  displayedHistoryQueries: Page<HistoryQueryDTO> = emptyPage();
+  allHistoryQueries: Array<HistoryQueryLightDTO> | null = null;
+  filteredHistoryQueries: Array<HistoryQueryLightDTO> = [];
+  displayedHistoryQueries: Page<HistoryQueryLightDTO> = emptyPage();
   states = new Map<string, ObservableState>();
 
   searchForm = inject(NonNullableFormBuilder).group({
@@ -85,7 +85,7 @@ export class HistoryQueryListComponent implements OnInit {
     });
   }
 
-  delete(historyQuery: HistoryQueryDTO) {
+  delete(historyQuery: HistoryQueryLightDTO) {
     this.confirmationService
       .confirm({
         messageKey: 'history-query.confirm-deletion',
@@ -126,11 +126,11 @@ export class HistoryQueryListComponent implements OnInit {
     this.displayedHistoryQueries = this.createPage(pageNumber);
   }
 
-  private createPage(pageNumber: number): Page<HistoryQueryDTO> {
+  private createPage(pageNumber: number): Page<HistoryQueryLightDTO> {
     return createPageFromArray(this.filteredHistoryQueries, PAGE_SIZE, pageNumber);
   }
 
-  filter(souths: Array<HistoryQueryDTO>): Array<HistoryQueryDTO> {
+  filter(souths: Array<HistoryQueryLightDTO>): Array<HistoryQueryLightDTO> {
     const formValue = this.searchForm.value;
     let filteredItems = souths;
 
@@ -141,7 +141,7 @@ export class HistoryQueryListComponent implements OnInit {
     return filteredItems;
   }
 
-  toggleHistoryQuery(query: HistoryQueryDTO, newStatus: HistoryQueryStatus) {
+  toggleHistoryQuery(query: HistoryQueryLightDTO, newStatus: HistoryQueryStatus) {
     if (newStatus === 'RUNNING') {
       this.historyQueryService
         .startHistoryQuery(query.id)

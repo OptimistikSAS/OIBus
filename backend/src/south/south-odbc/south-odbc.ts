@@ -7,12 +7,12 @@ import {
   convertDelimiter,
   createFolder,
   formatInstant,
-  logQuery,
-  persistResults,
   generateCsvContent,
-  generateFilenameForSerialization
+  generateFilenameForSerialization,
+  logQuery,
+  persistResults
 } from '../../service/utils';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
@@ -22,8 +22,10 @@ import { QueriesHistory } from '../south-interface';
 import { SouthODBCItemSettings, SouthODBCSettings } from '../../../../shared/model/south-settings.model';
 import fetch, { HeadersInit, RequestInit } from 'node-fetch';
 import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { SouthConnectorEntity } from '../../model/south-connector.model';
 
 let odbc: any | null = null;
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import('odbc')
   .then(obj => {
@@ -45,7 +47,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
   private reconnectTimeout: NodeJS.Timeout | null = null;
 
   constructor(
-    connector: SouthConnectorDTO<SouthODBCSettings>,
+    connector: SouthConnectorEntity<SouthODBCSettings, SouthODBCItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
@@ -126,9 +128,9 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     const endTime = DateTime.now().toUTC().toISO() as Instant;
     let result: Array<any>;
     if (this.connector.settings.remoteAgent) {
-      result = (await this.queryRemoteAgentData(item, startTime, endTime, true)) as any[];
+      result = (await this.queryRemoteAgentData(item, startTime, endTime, true)) as Array<any>;
     } else {
-      result = (await this.queryOdbcData(item, endTime, startTime, true)) as any[];
+      result = (await this.queryOdbcData(item, endTime, startTime, true)) as Array<any>;
     }
 
     const formattedResults = result.map(entry => {
@@ -199,7 +201,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
           throw new Error(`Unable to connect to database`);
       }
     }
-    const tables: { table_name: string; columns: string }[] = [];
+    const tables: Array<{ table_name: string; columns: string }> = [];
 
     try {
       // @ts-ignore
@@ -270,7 +272,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     startTime: Instant,
     endTime: Instant,
     test?: boolean
-  ): Promise<string | Record<string, any>[]> {
+  ): Promise<string | Array<Record<string, any>>> {
     // test is here in case we are testing items
     let updatedStartTime = startTime;
     const startRequest = DateTime.now().toMillis();
@@ -303,7 +305,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     if (response.status === 200) {
       const result: { recordCount: number; content: Array<any>; maxInstantRetrieved: Instant } = (await response.json()) as {
         recordCount: number;
-        content: OIBusTimeValue[];
+        content: Array<OIBusTimeValue>;
         maxInstantRetrieved: string;
       };
       const requestDuration = DateTime.now().toMillis() - startRequest;
@@ -346,7 +348,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     startTime: Instant,
     endTime: Instant,
     test?: boolean
-  ): Promise<string | Record<string, any>[]> {
+  ): Promise<string | Array<Record<string, any>>> {
     // test is here in case we are testing items
     if (!odbc) {
       throw new Error('odbc library not loaded');

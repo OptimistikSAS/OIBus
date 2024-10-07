@@ -1,7 +1,5 @@
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import ScanModeServiceMock from '../../tests/__mocks__/service/scan-mode-service.mock';
-import SouthConnectorConfigServiceMock from '../../tests/__mocks__/service/south-connector-config-service.mock';
-import NorthConnectorConfigServiceMock from '../../tests/__mocks__/service/north-connector-config-service.mock';
 
 import EncryptionService from '../encryption.service';
 import pino from 'pino';
@@ -9,14 +7,12 @@ import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import OIAnalyticsCommandService from './oianalytics-command.service';
 import { version } from '../../../package.json';
 import ScanModeService from '../scan-mode.service';
-import SouthConnectorConfigService from '../south-connector-config.service';
-import NorthConnectorConfigService from '../north-connector-config.service';
 import OIBusService from '../oibus.service';
 import OibusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
-import OIAnalyticsCommandRepository from '../../repository/oianalytics-command.repository';
-import OIAnalyticsRegistrationRepository from '../../repository/oianalytics-registration.repository';
-import OIAnalyticsRegistrationRepositoryMock from '../../tests/__mocks__/repository/oianalytics-registration-repository.mock';
-import OIAnalyticsCommandRepositoryMock from '../../tests/__mocks__/repository/oianalytics-command-repository.mock';
+import OIAnalyticsCommandRepository from '../../repository/config/oianalytics-command.repository';
+import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
+import OIAnalyticsRegistrationRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
+import OIAnalyticsCommandRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-command-repository.mock';
 import testData from '../../tests/utils/test-data';
 import { flushPromises } from '../../tests/utils/test-utils';
 import { delay, downloadFile, getNetworkSettingsFromRegistration, getOIBusInfo, unzip } from '../utils';
@@ -34,22 +30,27 @@ import {
   OIBusUpdateSouthConnectorCommand
 } from '../../model/oianalytics-command.model';
 import { createPageFromArray } from '../../../../shared/model/types';
+import SouthService from '../south.service';
+import NorthService from '../north.service';
+import SouthServiceMock from '../../tests/__mocks__/service/south-service.mock';
+import NorthServiceMock from '../../tests/__mocks__/service/north-service.mock';
 
 jest.mock('node:fs/promises');
 jest.mock('node-fetch');
 jest.mock('../../web-server/controllers/validators/joi.validator');
 jest.mock('../utils');
 
-// @ts-ignore
-jest.spyOn(process, 'exit').mockImplementation(() => {});
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
+jest.spyOn(process, 'exit').mockImplementation(() => Promise.resolve());
 
 const oIAnalyticsCommandRepository: OIAnalyticsCommandRepository = new OIAnalyticsCommandRepositoryMock();
 const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OIAnalyticsRegistrationRepositoryMock();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const oIBusService: OIBusService = new OibusServiceMock();
 const scanModeService: ScanModeService = new ScanModeServiceMock();
-const southConnectorConfigService: SouthConnectorConfigService = new SouthConnectorConfigServiceMock();
-const northConnectorConfigService: NorthConnectorConfigService = new NorthConnectorConfigServiceMock();
+const southService: SouthService = new SouthServiceMock();
+const northService: NorthService = new NorthServiceMock();
 
 const logger: pino.Logger = new PinoLogger();
 const anotherLogger: pino.Logger = new PinoLogger();
@@ -76,8 +77,8 @@ describe('OIAnalytics Command service', () => {
       encryptionService,
       oIBusService,
       scanModeService,
-      southConnectorConfigService,
-      northConnectorConfigService,
+      southService,
+      northService,
       logger,
       'binaryFolder',
       false
@@ -326,7 +327,7 @@ describe('OIAnalytics Command service', () => {
 
     await service.executeCommand();
 
-    expect(southConnectorConfigService.update).toHaveBeenCalledWith(
+    expect(southService.updateSouth).toHaveBeenCalledWith(
       (testData.oIAnalytics.commands.oIBusList[4] as OIBusUpdateSouthConnectorCommand).southConnectorId,
       (testData.oIAnalytics.commands.oIBusList[4] as OIBusUpdateSouthConnectorCommand).commandContent
     );
@@ -342,7 +343,7 @@ describe('OIAnalytics Command service', () => {
 
     await service.executeCommand();
 
-    expect(northConnectorConfigService.update).toHaveBeenCalledWith(
+    expect(northService.updateNorth).toHaveBeenCalledWith(
       (testData.oIAnalytics.commands.oIBusList[5] as OIBusUpdateNorthConnectorCommand).northConnectorId,
       (testData.oIAnalytics.commands.oIBusList[5] as OIBusUpdateNorthConnectorCommand).commandContent
     );
@@ -373,7 +374,7 @@ describe('OIAnalytics Command service', () => {
 
     await service.executeCommand();
 
-    expect(southConnectorConfigService.delete).toHaveBeenCalledWith(
+    expect(southService.deleteSouth).toHaveBeenCalledWith(
       (testData.oIAnalytics.commands.oIBusList[7] as OIBusDeleteSouthConnectorCommand).southConnectorId
     );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
@@ -388,7 +389,7 @@ describe('OIAnalytics Command service', () => {
 
     await service.executeCommand();
 
-    expect(northConnectorConfigService.delete).toHaveBeenCalledWith(
+    expect(northService.deleteNorth).toHaveBeenCalledWith(
       (testData.oIAnalytics.commands.oIBusList[8] as OIBusDeleteNorthConnectorCommand).northConnectorId
     );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
@@ -418,7 +419,7 @@ describe('OIAnalytics Command service', () => {
 
     await service.executeCommand();
 
-    expect(southConnectorConfigService.create).toHaveBeenCalledWith(
+    expect(southService.createSouth).toHaveBeenCalledWith(
       (testData.oIAnalytics.commands.oIBusList[10] as OIBusUpdateSouthConnectorCommand).commandContent
     );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
@@ -433,7 +434,7 @@ describe('OIAnalytics Command service', () => {
 
     await service.executeCommand();
 
-    expect(northConnectorConfigService.create).toHaveBeenCalledWith(
+    expect(northService.createNorth).toHaveBeenCalledWith(
       (testData.oIAnalytics.commands.oIBusList[11] as OIBusCreateNorthConnectorCommand).commandContent
     );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
@@ -446,7 +447,7 @@ describe('OIAnalytics Command service', () => {
   it('should catch error when execution fails', async () => {
     const command = testData.oIAnalytics.commands.oIBusList[11];
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]); // create-north
-    (northConnectorConfigService.create as jest.Mock).mockImplementationOnce(() => {
+    (northService.createNorth as jest.Mock).mockImplementationOnce(() => {
       throw new Error('command execution error');
     });
 
@@ -455,7 +456,7 @@ describe('OIAnalytics Command service', () => {
     expect(logger.error).toHaveBeenCalledWith(
       `Error while executing command ${command.id} (retrieved ${command.retrievedDate}) of type ${command.type}. Error: command execution error`
     );
-    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(command.id, 'Error: command execution error');
+    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(command.id, 'command execution error');
   });
 });
 
@@ -473,8 +474,8 @@ describe('OIAnalytics Command service with update error', () => {
       encryptionService,
       oIBusService,
       scanModeService,
-      southConnectorConfigService,
-      northConnectorConfigService,
+      southService,
+      northService,
       logger,
       'binaryFolder',
       false
@@ -504,8 +505,8 @@ describe('OIAnalytics Command service with no commands', () => {
       encryptionService,
       oIBusService,
       scanModeService,
-      southConnectorConfigService,
-      northConnectorConfigService,
+      southService,
+      northService,
       logger,
       'binaryFolder',
       true

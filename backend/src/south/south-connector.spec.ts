@@ -3,17 +3,22 @@ import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 import RepositoryServiceMock from '../tests/__mocks__/service/repository-service.mock';
 
-import { SouthConnectorDTO, SouthConnectorItemDTO, SouthConnectorManifest } from '../../../shared/model/south-connector.model';
-
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
 import RepositoryService from '../service/repository.service';
 import { CronJob } from 'cron';
 import { delay, generateIntervals, validateCronExpression } from '../service/utils';
-import { QueriesFile, QueriesHistory, QueriesLastPoint, QueriesSubscription } from './south-interface';
-import { Instant } from '../../../shared/model/types';
 import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 import { OIBusTimeValue } from '../../../shared/model/engine.model';
+import testData from '../tests/utils/test-data';
+import SouthFolderScanner from './south-folder-scanner/south-folder-scanner';
+import {
+  SouthFolderScannerItemSettings,
+  SouthFolderScannerSettings,
+  SouthItemSettings,
+  SouthSettings
+} from '../../../shared/model/south-settings.model';
+import { SouthConnectorEntity } from '../model/south-connector.model';
 
 // Mock fs
 jest.mock('node:fs/promises');
@@ -74,74 +79,7 @@ const flushPromises = () => new Promise(jest.requireActual('timers').setImmediat
 
 const addContentCallback = jest.fn();
 
-let configuration: SouthConnectorDTO;
-const manifest: SouthConnectorManifest = {
-  id: 'south',
-  name: 'south',
-  description: 'My South Connector test',
-  category: 'test',
-  modes: {
-    subscription: true,
-    lastPoint: true,
-    lastFile: true,
-    history: true,
-    forceMaxInstantPerItem: false
-  },
-  settings: [],
-  schema: {} as unknown,
-  items: {
-    scanMode: {
-      acceptSubscription: true,
-      subscriptionOnly: true
-    },
-    settings: [],
-    schema: {} as unknown
-  }
-} as SouthConnectorManifest;
-
-const items: Array<SouthConnectorItemDTO> = [
-  {
-    id: 'id1',
-    name: 'item1',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {},
-    scanModeId: 'scanModeId1'
-  },
-  {
-    id: 'id2',
-    name: 'item2',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {},
-    scanModeId: 'scanModeId2'
-  },
-  {
-    id: 'id3',
-    name: 'item3',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {},
-    scanModeId: 'subscription'
-  }
-];
-
-class TestSouth extends SouthConnector implements QueriesLastPoint, QueriesFile, QueriesSubscription, QueriesHistory {
-  async lastPointQuery(): Promise<void> {}
-
-  async fileQuery(): Promise<void> {}
-
-  async historyQuery(): Promise<Instant> {
-    return '';
-  }
-
-  async subscribe(): Promise<void> {}
-  async unsubscribe(): Promise<void> {}
-}
-
-let south: TestSouth;
-let basicSouth: SouthConnector;
-
+let south: SouthConnector<SouthSettings, SouthItemSettings>;
 describe('SouthConnector enabled', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -152,78 +90,54 @@ describe('SouthConnector enabled', () => {
       maxInstant: nowDateString,
       intervalIndex: 0
     });
-    configuration = {
-      id: 'southId',
-      name: 'south',
-      type: 'test',
-      description: 'my test connector',
-      enabled: true,
-      history: {
-        maxInstantPerItem: false,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 30
-      },
-      settings: {}
-    };
-    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
+    repositoryService.southConnectorRepository.findSouthById = jest.fn().mockReturnValue(testData.south.list[0]);
 
-    south = new TestSouth(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthFolderScanner(
+      testData.south.list[0] as SouthConnectorEntity<SouthFolderScannerSettings, SouthFolderScannerItemSettings>,
+      addContentCallback,
+      encryptionService,
+      repositoryService,
+      logger,
+      'baseFolder'
+    );
     await south.start();
   });
 
   it('should properly add to queue a new task and trigger next run', async () => {
     south.run = jest.fn();
-    const scanMode = {
-      id: 'scanModeId1',
-      name: 'my scan mode',
-      description: 'my description',
-      cron: '* * * * * *'
-    };
-    (repositoryService.southItemRepository.list as jest.Mock).mockReturnValueOnce([items[0]]);
-    (repositoryService.scanModeRepository.findById as jest.Mock).mockReturnValue(scanMode);
+
+    (repositoryService.scanModeRepository.findById as jest.Mock).mockReturnValue(testData.scanMode.list[0]);
 
     await south.onItemChange();
-    south.addToQueue(scanMode);
-    expect(south.run).toHaveBeenCalledWith(scanMode.id, [items[0]]);
+    south.addToQueue(testData.scanMode.list[0]);
+    expect(south.run).toHaveBeenCalledWith(testData.scanMode.list[0].id, [
+      testData.south.list[0].items.map(element => element.scanModeId === testData.scanMode.list[0].id)
+    ]);
     expect(south.run).toHaveBeenCalledTimes(1);
 
-    south.addToQueue(scanMode);
+    south.addToQueue(testData.scanMode.list[0]);
     expect(logger.warn).toHaveBeenCalledWith(
-      `Task job not added in South connector queue for cron "${scanMode.name}" (${scanMode.cron}). The previous cron was still running`
+      `Task job not added in South connector queue for cron "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron}). The previous cron was still running`
     );
     expect(south.run).toHaveBeenCalledTimes(1);
-    expect(south.settings).toEqual(configuration);
+    expect(south.settings).toEqual(testData.south.list[0].settings);
   });
 
   it('should properly add to queue a new task and not trigger next run if no item', async () => {
     south.run = jest.fn();
-    const scanMode = {
-      id: 'scanModeId1',
-      name: 'my scan mode',
-      description: 'my description',
-      cron: '* * * * * *'
-    };
-    (repositoryService.southItemRepository.list as jest.Mock).mockReturnValueOnce([]).mockReturnValueOnce(items);
+    (repositoryService.scanModeRepository.findById as jest.Mock).mockReturnValue(testData.scanMode.list[0]);
 
     await south.onItemChange();
-    south.addToQueue(scanMode);
+    south.addToQueue(testData.scanMode.list[0]);
     expect(south.run).not.toHaveBeenCalled();
 
-    (repositoryService.scanModeRepository.findById as jest.Mock).mockReturnValue(scanMode);
+    (repositoryService.scanModeRepository.findById as jest.Mock).mockReturnValue(testData.scanMode.list[0]);
     await south.onItemChange();
-    south.addToQueue(scanMode);
+    south.addToQueue(testData.scanMode.list[0]);
     expect(south.run).not.toHaveBeenCalled();
   });
 
   it('should not add to queue if connector is stopping', async () => {
-    const scanMode = {
-      id: 'scanModeId1',
-      name: 'my scan mode',
-      description: 'my description',
-      cron: '* * * * * *'
-    };
-
     const promise = new Promise<void>(resolve => {
       setTimeout(resolve, 1000);
     });
@@ -233,33 +147,21 @@ describe('SouthConnector enabled', () => {
     south.run = jest.fn();
 
     south.stop();
-    south.addToQueue(scanMode);
+    south.addToQueue(testData.scanMode.list[0]);
     expect(south.run).not.toHaveBeenCalled();
     await flushPromises();
   });
 
   it('should add to queue a new task and not trigger next run if run in progress', async () => {
     south.run = jest.fn();
-    const scanMode = {
-      id: 'scanModeId1',
-      name: 'my scan mode',
-      description: 'my description',
-      cron: '* * * * * *'
-    };
     south.createDeferredPromise();
-    south.addToQueue(scanMode);
+    south.addToQueue(testData.scanMode.list[0]);
 
     expect(south.run).not.toHaveBeenCalled();
     expect(logger.warn).toHaveBeenCalledWith('A South task is already running');
   });
 
   it('should properly run task a task', async () => {
-    const scanMode = {
-      id: 'scanModeId1',
-      name: 'my scan mode',
-      description: 'my description',
-      cron: '* * * * * *'
-    };
     south.historyQueryHandler = jest.fn().mockImplementationOnce(() => {
       throw new Error('history query error');
     });
@@ -270,13 +172,12 @@ describe('SouthConnector enabled', () => {
       throw new Error('last point query error');
     });
 
-    await south.run(scanMode.id, [
+    await south.run(testData.scanMode.list[0].id, [
       {
         id: 'id1',
         name: 'item1',
         enabled: true,
-        connectorId: 'southId',
-        settings: {},
+        settings: {} as SouthItemSettings,
         scanModeId: 'scanModeId1'
       }
     ]);
@@ -288,7 +189,6 @@ describe('SouthConnector enabled', () => {
           id: 'id1',
           name: 'item1',
           enabled: true,
-          connectorId: 'southId',
           settings: {},
           scanModeId: 'scanModeId1'
         }
@@ -303,7 +203,7 @@ describe('SouthConnector enabled', () => {
     expect(logger.error).toHaveBeenCalledWith(`Error when calling fileQuery. ${new Error('file query error')}`);
     expect(logger.error).toHaveBeenCalledWith(`Error when calling lastPointQuery. ${new Error('last point query error')}`);
 
-    await south.run(scanMode.id, items);
+    await south.run(testData.scanMode.list[0].id, testData.south.list[0].items);
     expect(south.historyQueryHandler).toHaveBeenCalledTimes(2);
     expect(south.fileQuery).toHaveBeenCalledTimes(2);
     expect(south.lastPointQuery).toHaveBeenCalledTimes(2);
@@ -318,12 +218,6 @@ describe('SouthConnector enabled', () => {
   });
 
   it('should properly stop with running task ', async () => {
-    const scanMode = {
-      id: 'id1',
-      name: 'my scan mode',
-      description: 'my description',
-      cron: '* * * * * *'
-    };
     const promise = new Promise<void>(resolve => {
       setTimeout(resolve, 1000);
     });
@@ -333,16 +227,16 @@ describe('SouthConnector enabled', () => {
 
     south.disconnect = jest.fn();
 
-    south.run(scanMode.id, items);
+    south.run(testData.scanMode.list[0].id, testData.south.list[0].items);
 
     south.stop();
-    expect(logger.debug).toHaveBeenCalledWith(`Stopping South "${configuration.name}" (${configuration.id})...`);
+    expect(logger.debug).toHaveBeenCalledWith(`Stopping South "${testData.south.list[0].name}" (${testData.south.list[0].id})...`);
     expect(logger.debug).toHaveBeenCalledWith('Waiting for South task to finish');
     expect(south.disconnect).not.toHaveBeenCalled();
     jest.advanceTimersByTime(1000);
     await flushPromises();
     expect(south.disconnect).toHaveBeenCalledTimes(1);
-    expect(logger.info(`South connector "${configuration.name}" stopped`));
+    expect(logger.info(`South connector "${testData.south.list[0].name}" stopped`));
   });
 
   it('should add values', async () => {
@@ -352,14 +246,14 @@ describe('SouthConnector enabled', () => {
     expect(addContentCallback).not.toHaveBeenCalled();
 
     await south.addContent({ type: 'time-values', content: [{}, {}] as Array<OIBusTimeValue> });
-    expect(logger.debug).toHaveBeenCalledWith(`Add 2 values to cache from South "${configuration.name}"`);
-    expect(addContentCallback).toHaveBeenCalledWith(configuration.id, { type: 'time-values', content: [{}, {}] });
+    expect(logger.debug).toHaveBeenCalledWith(`Add 2 values to cache from South "${testData.south.list[0].name}"`);
+    expect(addContentCallback).toHaveBeenCalledWith(testData.south.list[0].id, { type: 'time-values', content: [{}, {}] });
   });
 
   it('should add file', async () => {
     await south.addContent({ type: 'raw', filePath: 'file.csv' });
-    expect(logger.debug).toHaveBeenCalledWith(`Add file "file.csv" to cache from South "${configuration.name}"`);
-    expect(addContentCallback).toHaveBeenCalledWith(configuration.id, { type: 'raw', filePath: 'file.csv' });
+    expect(logger.debug).toHaveBeenCalledWith(`Add file "file.csv" to cache from South "${testData.south.list[0].name}"`);
+    expect(addContentCallback).toHaveBeenCalledWith(testData.south.list[0].id, { type: 'raw', filePath: 'file.csv' });
   });
 
   it('should manage history query with several intervals', async () => {
@@ -375,11 +269,11 @@ describe('SouthConnector enabled', () => {
       .mockReturnValueOnce('2022-02-02T02:02:02.222Z')
       .mockReturnValueOnce('2023-02-02T02:02:02.222Z');
 
-    await south.historyQueryHandler(items, '2020-02-02T02:02:02.222Z', '2023-02-02T02:02:02.222Z', 'scanModeId1');
+    await south.historyQueryHandler(testData.south.list[0].items, '2020-02-02T02:02:02.222Z', '2023-02-02T02:02:02.222Z', 'scanModeId1');
     expect(generateIntervals).toHaveBeenCalledWith(
       '2020-02-02T02:02:02.192Z',
       '2023-02-02T02:02:02.222Z',
-      configuration.history.maxReadInterval
+      testData.south.list[0].history.maxReadInterval
     );
     expect(logger.trace).toHaveBeenCalledWith(
       `Interval split in ${intervals.length} sub-intervals: \r\n` +
@@ -394,17 +288,17 @@ describe('SouthConnector enabled', () => {
     expect(createOrUpdateCacheScanModeMock).toHaveBeenCalledWith({
       scanModeId: 'id1',
       maxInstant: '2021-02-02T02:02:02.222Z',
-      southId: configuration.id
+      southId: testData.south.list[0].id
     });
     expect(createOrUpdateCacheScanModeMock).toHaveBeenCalledWith({
       scanModeId: 'id1',
       maxInstant: '2022-02-02T02:02:02.222Z',
-      southId: configuration.id
+      southId: testData.south.list[0].id
     });
     expect(createOrUpdateCacheScanModeMock).toHaveBeenCalledWith({
       scanModeId: 'id1',
       maxInstant: '2023-02-02T02:02:02.222Z',
-      southId: configuration.id
+      southId: testData.south.list[0].id
     });
   });
 
@@ -416,11 +310,11 @@ describe('SouthConnector enabled', () => {
     (generateIntervals as jest.Mock).mockReturnValueOnce(intervals);
     south.historyQuery = jest.fn().mockReturnValueOnce('2021-02-02T02:02:02.222Z').mockReturnValueOnce('2023-02-02T02:02:02.222Z');
 
-    await south.historyQueryHandler(items, '2020-02-02T02:02:02.222Z', '2023-02-02T02:02:02.222Z', 'scanModeId1');
+    await south.historyQueryHandler(testData.south.list[0].items, '2020-02-02T02:02:02.222Z', '2023-02-02T02:02:02.222Z', 'scanModeId1');
     expect(generateIntervals).toHaveBeenCalledWith(
       '2020-02-02T02:02:02.192Z',
       '2023-02-02T02:02:02.222Z',
-      configuration.history.maxReadInterval
+      testData.south.list[0].history.maxReadInterval
     );
     expect(logger.trace).toHaveBeenCalledWith(
       `Interval split in ${intervals.length} sub-intervals: \r\n` +
@@ -433,12 +327,12 @@ describe('SouthConnector enabled', () => {
     expect(createOrUpdateCacheScanModeMock).toHaveBeenCalledWith({
       scanModeId: 'id1',
       maxInstant: '2021-02-02T02:02:02.222Z',
-      southId: configuration.id
+      southId: testData.south.list[0].id
     });
     expect(createOrUpdateCacheScanModeMock).toHaveBeenCalledWith({
       scanModeId: 'id1',
       maxInstant: '2023-02-02T02:02:02.222Z',
-      southId: configuration.id
+      southId: testData.south.list[0].id
     });
   });
 
@@ -447,11 +341,11 @@ describe('SouthConnector enabled', () => {
     (generateIntervals as jest.Mock).mockReturnValueOnce(intervals);
     south.historyQuery = jest.fn().mockReturnValueOnce('2023-02-02T02:02:02.222Z');
 
-    await south.historyQueryHandler(items, '2020-02-02T02:02:02.222Z', '2023-02-02T02:02:02.222Z', 'scanModeId1');
+    await south.historyQueryHandler(testData.south.list[0].items, '2020-02-02T02:02:02.222Z', '2023-02-02T02:02:02.222Z', 'scanModeId1');
     expect(generateIntervals).toHaveBeenCalledWith(
       '2020-02-02T02:02:02.192Z',
       '2023-02-02T02:02:02.222Z',
-      configuration.history.maxReadInterval
+      testData.south.list[0].history.maxReadInterval
     );
     expect(logger.trace).toHaveBeenCalledWith(`Querying interval: ${JSON.stringify(intervals[0], null, 2)}`);
     expect(south.historyQuery).toHaveBeenCalledTimes(1);
@@ -460,7 +354,7 @@ describe('SouthConnector enabled', () => {
     expect(createOrUpdateCacheScanModeMock).toHaveBeenCalledWith({
       scanModeId: 'id1',
       maxInstant: '2023-02-02T02:02:02.222Z',
-      southId: configuration.id
+      southId: testData.south.list[0].id
     });
   });
 
@@ -482,9 +376,11 @@ describe('SouthConnector enabled', () => {
     );
 
     south.createDeferredPromise();
-    south.historyQueryHandler(items, '2020-02-02T02:02:02.222Z', '2023-02-02T02:02:02.222Z', 'scanModeId1').then(() => {
-      south.resolveDeferredPromise();
-    });
+    south
+      .historyQueryHandler(testData.south.list[0].items, '2020-02-02T02:02:02.222Z', '2023-02-02T02:02:02.222Z', 'scanModeId1')
+      .then(() => {
+        south.resolveDeferredPromise();
+      });
     south.stop();
 
     jest.advanceTimersByTime(10000);
@@ -529,19 +425,16 @@ describe('SouthConnector enabled', () => {
     const scanMode1: ScanModeDTO = { id: 'scanModeId1' } as ScanModeDTO;
     const scanMode2: ScanModeDTO = { id: 'scanModeId2' } as ScanModeDTO;
     (repositoryService.scanModeRepository.findById as jest.Mock).mockReturnValueOnce(scanMode1).mockReturnValueOnce(scanMode2);
-    (repositoryService.southItemRepository.list as jest.Mock).mockReturnValueOnce(items);
     await south.onItemChange();
-    expect(south.subscribe).toHaveBeenCalledWith([items[2]]);
+    expect(south.subscribe).toHaveBeenCalledWith([testData.south.list[0].items[2]]);
     expect(logger.trace).toHaveBeenCalledWith(`Subscribing to 1 new items`);
 
-    (repositoryService.southItemRepository.list as jest.Mock).mockReturnValueOnce([]);
     await south.onItemChange();
     expect(south.unsubscribe).toHaveBeenCalledTimes(1);
 
     south.subscribe = jest.fn().mockImplementationOnce(() => {
       throw new Error('subscription error');
     });
-    (repositoryService.southItemRepository.list as jest.Mock).mockReturnValueOnce([items[2]]);
     await south.onItemChange();
     expect(logger.error).toHaveBeenCalledWith(`Error when subscribing to new items. ${new Error('subscription error')}`);
 
@@ -549,7 +442,6 @@ describe('SouthConnector enabled', () => {
     south.unsubscribe = jest.fn().mockImplementationOnce(() => {
       throw new Error('unsubscription error');
     });
-    (repositoryService.southItemRepository.list as jest.Mock).mockReturnValueOnce([items[2]]).mockReturnValueOnce([]);
     await south.onItemChange();
     await south.onItemChange();
     expect(logger.error).toHaveBeenCalledWith(`Error when unsubscribing to items. ${new Error('unsubscription error')}`);
@@ -628,20 +520,6 @@ describe('SouthConnector with max instant per item', () => {
       southId: configuration.id
     });
 
-    configuration = {
-      id: 'southId',
-      name: 'south',
-      type: 'test',
-      description: 'my test connector',
-      enabled: true,
-      history: {
-        maxInstantPerItem: true,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 30
-      },
-      settings: {}
-    };
     repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
     (repositoryService.southItemRepository.list as jest.Mock).mockReturnValue(items);
 
@@ -697,11 +575,11 @@ describe('SouthConnector with max instant per item', () => {
     (generateIntervals as jest.Mock).mockReturnValue(intervals);
     south.historyQuery = jest.fn().mockReturnValueOnce('2021-02-02T02:02:02.222Z').mockReturnValueOnce('2023-02-02T02:02:02.222Z');
 
-    await south.historyQueryHandler(items, '2020-02-02T02:02:02.222Z', '2023-02-02T02:02:02.222Z', 'scanModeId1');
+    await south.historyQueryHandler(testData.south.list[0].items, '2020-02-02T02:02:02.222Z', '2023-02-02T02:02:02.222Z', 'scanModeId1');
     expect(generateIntervals).toHaveBeenCalledWith(
       '2020-02-02T02:02:02.192Z',
       '2023-02-02T02:02:02.222Z',
-      configuration.history.maxReadInterval
+      testData.south.list[0].history.maxReadInterval
     );
     expect(logger.trace).toHaveBeenCalledWith(
       `Interval split in ${intervals.length} sub-intervals: \r\n` +
@@ -715,12 +593,12 @@ describe('SouthConnector with max instant per item', () => {
     expect(createOrUpdateCacheScanModeMock).toHaveBeenCalledWith({
       scanModeId: 'id1',
       maxInstant: '2021-02-02T02:02:02.222Z',
-      southId: configuration.id
+      southId: testData.south.list[0].id
     });
     expect(createOrUpdateCacheScanModeMock).toHaveBeenCalledWith({
       scanModeId: 'id1',
       maxInstant: '2023-02-02T02:02:02.222Z',
-      southId: configuration.id
+      southId: testData.south.list[0].id
     });
   });
 
@@ -729,11 +607,11 @@ describe('SouthConnector with max instant per item', () => {
     (generateIntervals as jest.Mock).mockReturnValue(intervals);
     south.historyQuery = jest.fn().mockReturnValueOnce('2023-02-02T02:02:02.222Z');
 
-    await south.historyQueryHandler(items, '2020-02-02T02:02:02.222Z', '2023-02-02T02:02:02.222Z', 'scanModeId1');
+    await south.historyQueryHandler(testData.south.list[0].items, '2020-02-02T02:02:02.222Z', '2023-02-02T02:02:02.222Z', 'scanModeId1');
     expect(generateIntervals).toHaveBeenCalledWith(
       '2020-02-02T02:02:02.192Z',
       '2023-02-02T02:02:02.222Z',
-      configuration.history.maxReadInterval
+      testData.south.list[0].history.maxReadInterval
     );
     expect(logger.trace).toHaveBeenCalledWith(`Querying interval: ${JSON.stringify(intervals[0], null, 2)}`);
     expect(south.historyQuery).toHaveBeenCalledTimes(3);
@@ -742,7 +620,7 @@ describe('SouthConnector with max instant per item', () => {
     expect(createOrUpdateCacheScanModeMock).toHaveBeenCalledWith({
       scanModeId: 'id1',
       maxInstant: '2023-02-02T02:02:02.222Z',
-      southId: configuration.id
+      southId: testData.south.list[0].id
     });
   });
 
@@ -751,11 +629,16 @@ describe('SouthConnector with max instant per item', () => {
     (generateIntervals as jest.Mock).mockReturnValue(intervals);
     south.historyQuery = jest.fn().mockReturnValueOnce('2023-02-02T02:02:02.222Z');
 
-    await south.historyQueryHandler([items[0]], '2020-02-02T02:02:02.222Z', '2023-02-02T02:02:02.222Z', 'scanModeId1');
+    await south.historyQueryHandler(
+      [testData.south.list[0].items[0]],
+      '2020-02-02T02:02:02.222Z',
+      '2023-02-02T02:02:02.222Z',
+      'scanModeId1'
+    );
     expect(generateIntervals).toHaveBeenCalledWith(
       '2020-02-02T02:02:02.192Z',
       '2023-02-02T02:02:02.222Z',
-      configuration.history.maxReadInterval
+      testData.south.list[0].history.maxReadInterval
     );
     expect(logger.trace).toHaveBeenCalledWith(`Querying interval: ${JSON.stringify(intervals[0], null, 2)}`);
     expect(south.historyQuery).toHaveBeenCalledTimes(1);
@@ -764,7 +647,7 @@ describe('SouthConnector with max instant per item', () => {
     expect(createOrUpdateCacheScanModeMock).toHaveBeenCalledWith({
       scanModeId: 'id1',
       maxInstant: '2023-02-02T02:02:02.222Z',
-      southId: configuration.id
+      southId: testData.south.list[0].id
     });
   });
 
@@ -786,9 +669,11 @@ describe('SouthConnector with max instant per item', () => {
     );
 
     south.createDeferredPromise();
-    south.historyQueryHandler(items, '2020-02-02T02:02:02.222Z', '2023-02-02T02:02:02.222Z', 'scanModeId1').then(() => {
-      south.resolveDeferredPromise();
-    });
+    south
+      .historyQueryHandler(testData.south.list[0].items, '2020-02-02T02:02:02.222Z', '2023-02-02T02:02:02.222Z', 'scanModeId1')
+      .then(() => {
+        south.resolveDeferredPromise();
+      });
     south.stop();
 
     jest.advanceTimersByTime(10000);
@@ -816,61 +701,43 @@ describe('SouthConnector disabled', () => {
       intervalIndex: 0
     });
 
-    configuration = {
-      id: 'southId',
-      name: 'south',
-      type: 'test',
-      description: 'my test connector',
-      enabled: false,
-      history: {
-        maxInstantPerItem: true,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 30
-      },
-      settings: {}
-    };
-    repositoryService.southConnectorRepository.findById = jest.fn().mockReturnValue(configuration);
-
-    basicSouth = new SouthConnector(configuration, addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
-    await basicSouth.start();
+    south = new SouthConnector(testData.south.list[0], addContentCallback, encryptionService, repositoryService, logger, 'baseFolder');
+    await south.start();
   });
 
   it('should be properly initialized ', async () => {
-    expect(logger.trace(`South connector ${configuration.name} not enabled`));
-    expect(basicSouth.isEnabled()).toEqual(false);
+    expect(logger.trace(`South connector ${testData.south.list[0].name} not enabled`));
+    expect(south.isEnabled()).toEqual(false);
     expect(createCacheHistoryTableMock).not.toHaveBeenCalled();
 
-    basicSouth.historyQueryHandler = jest.fn();
+    south.historyQueryHandler = jest.fn();
 
-    await basicSouth.run('scanModeId', []);
-    expect(basicSouth.historyQueryHandler).not.toHaveBeenCalled();
+    await south.run('scanModeId', []);
+    expect(south.historyQueryHandler).not.toHaveBeenCalled();
   });
 
   it('should test connection', async () => {
-    await basicSouth.testConnection();
+    await south.testConnection();
     expect(logger.warn).toHaveBeenCalledWith('testConnection must be override');
   });
 
   it('should ignore history query when not history items', async () => {
-    basicSouth.filterHistoryItems = jest.fn().mockReturnValueOnce([]);
-    await basicSouth.historyQueryHandler(items, '2020-02-02T02:02:02.222Z', '2020-02-02T02:02:02.222Z', 'scanModeId');
+    south.filterHistoryItems = jest.fn().mockReturnValueOnce([]);
+    await south.historyQueryHandler(testData.south.list[0].items, '2020-02-02T02:02:02.222Z', '2020-02-02T02:02:02.222Z', 'scanModeId');
     expect(logger.trace).toHaveBeenCalledWith('No history items to read. Ignoring historyQuery');
   });
 
   it('should not subscribe if queriesSubscription not supported history query when not history items', async () => {
-    (repositoryService.southItemRepository.list as jest.Mock).mockReturnValueOnce([]);
+    south.queriesSubscription = jest.fn().mockReturnValueOnce(false);
 
-    basicSouth.queriesSubscription = jest.fn().mockReturnValueOnce(false);
+    await south.onItemChange();
 
-    await basicSouth.onItemChange();
-
-    expect(basicSouth.queriesSubscription).toHaveBeenCalledTimes(1);
+    expect(south.queriesSubscription).toHaveBeenCalledTimes(1);
   });
 
   it('should test item', async () => {
     const callback = jest.fn();
-    await basicSouth.testItem(items[0], callback);
+    await south.testItem(testData.south.list[0].items[0], callback);
     expect(logger.warn).toHaveBeenCalledWith('testItem must be override to test item item1');
   });
 });

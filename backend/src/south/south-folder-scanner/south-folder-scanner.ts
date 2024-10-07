@@ -5,7 +5,7 @@ import SouthConnector from '../south-connector';
 import { compress } from '../../service/utils';
 import manifest from './manifest';
 
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import pino from 'pino';
 import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
@@ -13,6 +13,7 @@ import { QueriesFile } from '../south-interface';
 import { SouthFolderScannerItemSettings, SouthFolderScannerSettings } from '../../../../shared/model/south-settings.model';
 import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
+import { SouthConnectorEntity } from '../../model/south-connector.model';
 
 /**
  * Class SouthFolderScanner - Retrieve file from a local or remote folder
@@ -29,7 +30,7 @@ export default class SouthFolderScanner
    * Constructor for SouthFolderScanner
    */
   constructor(
-    connector: SouthConnectorDTO<SouthFolderScannerSettings>,
+    connector: SouthConnectorEntity<SouthFolderScannerSettings, SouthFolderScannerItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
@@ -45,14 +46,14 @@ export default class SouthFolderScanner
 
     try {
       await fs.access(inputFolder, fs.constants.F_OK);
-    } catch (error: any) {
-      throw new Error(`Folder "${inputFolder}" does not exist: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`Folder "${inputFolder}" does not exist: ${(error as Error).message}`);
     }
 
     try {
       await fs.access(inputFolder, fs.constants.R_OK);
-    } catch (error: any) {
-      throw new Error(`Read access error on "${inputFolder}": ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`Read access error on "${inputFolder}": ${(error as Error).message}`);
     }
 
     const stat = await fs.stat(inputFolder);
@@ -75,7 +76,7 @@ export default class SouthFolderScanner
       }
     }
 
-    const values: OIBusTimeValue[] = matchedFiles.map(file => ({
+    const values: Array<OIBusTimeValue> = matchedFiles.map(file => ({
       pointId: item.name,
       timestamp: DateTime.now().toUTC().toISO()!,
       data: { value: file }
