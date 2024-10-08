@@ -68,7 +68,12 @@
               </button>
             </th>
             @if (!southManifest.items.scanMode.subscriptionOnly) {
-              <th translate="south.items.scan-mode" style="width: 8rem"></th>
+              <th style="width: 8rem">
+                <button type="button" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('scanMode')">
+                  <span translate="south.items.scan-mode" class="me-2"></span>
+                  <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.scanMode] }}"></span>
+                </button>
+              </th>
             }
             @for (setting of displaySettings; track setting) {
               <th>{{ setting.label }}</th>
