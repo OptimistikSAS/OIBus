@@ -92,8 +92,16 @@ class SouthItemsComponentTester extends ComponentTester<TestComponent> {
     return this.button('button:has( > span[translate="south.items.name"])')!;
   }
 
+  get sortByScanModeBtn() {
+    return this.button('button:has( > span[translate="south.items.scan-mode"])')!;
+  }
+
   get tableItemNames() {
     return this.elements<HTMLTableCellElement>('tbody tr.south-item td:nth-child(2)').map(e => e.nativeElement.innerText);
+  }
+
+  get tableScanModeNames() {
+    return this.elements<HTMLTableCellElement>('tbody tr.south-item td:nth-child(3)').map(e => e.nativeElement.innerText);
   }
 }
 
@@ -202,5 +210,27 @@ describe('SouthItemsComponent', () => {
     tester.sortByNameBtn.click();
     expectedOrder.reverse();
     expect(tester.tableItemNames).toEqual(expectedOrder);
+  });
+
+  it('should sort items by scan mode', () => {
+    const expectedOrder = tester.tableScanModeNames;
+
+    // Ascending
+    tester.sortByScanModeBtn.click();
+    expect(tester.tableScanModeNames).toEqual(expectedOrder);
+
+    // Descending
+    tester.sortByScanModeBtn.click();
+    expectedOrder.reverse();
+    expect(tester.tableScanModeNames).toEqual(expectedOrder);
+
+    // Unset
+    tester.sortByScanModeBtn.click();
+    expect(tester.tableScanModeNames).toEqual(expectedOrder);
+
+    // Ascending (this call reverses the list to the original sorting, if omitted, tests fail)
+    tester.sortByScanModeBtn.click();
+    expectedOrder.reverse();
+    expect(tester.tableScanModeNames).toEqual(expectedOrder);
   });
 });
