@@ -41,6 +41,7 @@ const enum ColumnSortState {
 
 export interface TableData {
   name: string;
+  scanMode: ScanModeDTO;
 }
 
 @Component({
@@ -90,7 +91,8 @@ export class SouthItemsComponent implements OnInit {
   searchControl = inject(NonNullableFormBuilder).control(null as string | null);
 
   columnSortStates: { [key in keyof TableData]: ColumnSortState } = {
-    name: ColumnSortState.INDETERMINATE
+    name: ColumnSortState.INDETERMINATE,
+    scanMode: ColumnSortState.INDETERMINATE
   };
   currentColumnSort: keyof TableData | null = 'name';
 
@@ -107,7 +109,7 @@ export class SouthItemsComponent implements OnInit {
 
   fetchItemsAndResetPage(fromMemory: boolean) {
     // reset column sorting
-    this.columnSortStates = { name: ColumnSortState.INDETERMINATE };
+    this.columnSortStates = { name: ColumnSortState.INDETERMINATE, scanMode: ColumnSortState.INDETERMINATE };
     this.currentColumnSort = 'name';
 
     if (this.southConnector && !fromMemory) {
@@ -428,6 +430,13 @@ export class SouthItemsComponent implements OnInit {
       switch (this.currentColumnSort) {
         case 'name':
           this.filteredItems.sort((a, b) => (ascending ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)));
+          break;
+        case 'scanMode':
+          this.filteredItems.sort((a, b) =>
+            ascending
+              ? this.getScanMode(a.scanModeId)!.name.localeCompare(this.getScanMode(b.scanModeId)!.name)
+              : this.getScanMode(b.scanModeId)!.name.localeCompare(this.getScanMode(a.scanModeId)!.name)
+          );
           break;
       }
     }
