@@ -616,6 +616,7 @@ export default class SouthOPCUA
   parseOPCUAValue(itemName: string, opcuaVariant: Variant): string {
     switch (opcuaVariant.dataType) {
       case DataType.String:
+        return opcuaVariant.value.split('\0')[0];
       case DataType.Float:
       case DataType.Double:
       case DataType.SByte:
