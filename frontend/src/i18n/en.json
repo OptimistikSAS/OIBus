@@ -37,7 +37,9 @@
       "all-access-control-tag-keys-must-be-valued": "All the tag keys used for access control must have a value. Missing tag key(s): {{ missingTagKeys }}.",
       "parsing-processor-error": "The parsing processor is not valid. {{ error }}",
       "must-be-unique": "Must be unique",
-      "resolve-pending-changes": "Please validate or discard pending changes before saving"
+      "resolve-pending-changes": "Please validate or discard pending changes before saving",
+      "bad-start-date-range": "Start time must be before end time",
+      "bad-end-date-range": "End time must be after start time"
     },
     "period": {
       "none": "None",
