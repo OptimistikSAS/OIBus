@@ -34,11 +34,11 @@ class EditHistoryQueryComponentTester extends ComponentTester<EditHistoryQueryCo
   }
 
   get startTime() {
-    return this.element('#start');
+    return this.element('#startTime');
   }
 
   get endTime() {
-    return this.element('#end');
+    return this.element('#endTime');
   }
 
   get northSpecificTitle() {
@@ -277,5 +277,29 @@ describe('EditHistoryQueryComponent', () => {
     tester.componentInstance.test('south');
     tester.detectChanges();
     expect(spy).toHaveBeenCalledWith('south', command, 'id1', null);
+  });
+
+  it('should validate start and end time', () => {
+    // Should throw error
+    historyQuery.startTime = '2024-01-01T00:00:00.000Z';
+    historyQuery.endTime = '2023-01-01T00:00:00.000Z';
+    tester = new EditHistoryQueryComponentTester();
+    tester.detectChanges();
+
+    expect(tester.componentInstance.historyQueryForm?.controls.startTime.errors).toEqual({
+      badStartDateRange: true
+    });
+    expect(tester.componentInstance.historyQueryForm?.controls.endTime.errors).toEqual({
+      badEndDateRange: true
+    });
+
+    // Should not throw error
+    historyQuery.startTime = '2023-01-01T00:00:00.000Z';
+    historyQuery.endTime = '2024-01-01T00:00:00.000Z';
+    tester = new EditHistoryQueryComponentTester();
+    tester.detectChanges();
+
+    expect(tester.componentInstance.historyQueryForm?.controls.startTime.errors).toEqual(null);
+    expect(tester.componentInstance.historyQueryForm?.controls.endTime.errors).toEqual(null);
   });
 });
