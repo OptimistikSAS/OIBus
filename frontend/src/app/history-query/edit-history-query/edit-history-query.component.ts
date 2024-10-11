@@ -3,7 +3,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { formDirectives } from '../../shared/form-directives';
-import { FormControl, FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
+import { AbstractControl, FormControl, FormGroup, NonNullableFormBuilder, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { combineLatest, Observable, of, switchMap, tap } from 'rxjs';
@@ -186,8 +186,8 @@ export class EditHistoryQueryComponent implements OnInit {
         this.historyQueryForm = this.fb.group({
           name: ['', Validators.required],
           description: '',
-          startTime: DateTime.now().minus({ days: 1 }).toUTC().toISO()!,
-          endTime: DateTime.now().toUTC().toISO()!,
+          startTime: [DateTime.now().minus({ days: 1 }).toUTC().toISO()!, [this.dateRangeValidator('start')]],
+          endTime: [DateTime.now().toUTC().toISO()!, [this.dateRangeValidator('end')]],
           history: this.fb.group({
             maxInstantPerItem: false,
             maxReadInterval: 0,
@@ -230,6 +230,14 @@ export class EditHistoryQueryComponent implements OnInit {
 
         // we should provoke all value changes to make sure fields are properly hidden and disabled
         this.historyQueryForm.setValue(this.historyQueryForm.getRawValue());
+
+        // when changing one of the dates the other should re-evaluate errors
+        this.historyQueryForm.controls.startTime.valueChanges.subscribe(() => {
+          this.historyQueryForm?.controls.endTime.updateValueAndValidity({ emitEvent: false });
+        });
+        this.historyQueryForm.controls.endTime.valueChanges.subscribe(() => {
+          this.historyQueryForm?.controls.startTime.updateValueAndValidity({ emitEvent: false });
+        });
       });
   }
 
@@ -336,5 +344,25 @@ export class EditHistoryQueryComponent implements OnInit {
     const modalRef = this.modalService.open(TestConnectionResultModalComponent);
     const component: TestConnectionResultModalComponent = modalRef.componentInstance;
     component.runHistoryQueryTest(type, command, historyQueryId, fromConnectorId.length ? fromConnectorId : null);
+  }
+
+  dateRangeValidator(type: 'start' | 'end'): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const startTime = control.parent?.get('startTime')?.value as string;
+      const endTime = control.parent?.get('endTime')?.value as string;
+
+      if (!startTime || !endTime) {
+        return null;
+      }
+
+      const startDateTime = DateTime.fromISO(startTime).startOf('minute');
+      const endDateTime = DateTime.fromISO(endTime).startOf('minute');
+
+      if (startDateTime > endDateTime) {
+        return type === 'start' ? { badStartDateRange: true } : { badEndDateRange: true };
+      }
+
+      return null;
+    };
   }
 }
