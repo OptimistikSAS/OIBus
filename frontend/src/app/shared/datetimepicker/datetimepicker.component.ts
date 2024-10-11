@@ -135,6 +135,10 @@ export class DatetimepickerComponent implements OnInit, AfterViewInit, ControlVa
         } else {
           this.onChange(null);
         }
+
+        if (!this.dateCtrl.touched || !this.timeCtrl.touched) {
+          this.onTouched();
+        }
       }
     );
   }
