@@ -25,10 +25,12 @@ import {
   logSchema,
   registrationSchema,
   scanModeSchema,
-  userSchema
+  userSchema,
+  transformerSchema
 } from '../controllers/validators/oibus-validation-schema';
 import CommandController from '../controllers/command.controller';
 import ContentController from '../controllers/content.controller';
+import TransformerController from '../controllers/transformer.controller';
 
 const joiValidator = new JoiValidator();
 const scanModeController = new ScanModeController(joiValidator, scanModeSchema);
@@ -44,6 +46,7 @@ const historyQueryController = new HistoryQueryController(joiValidator, historyQ
 const userController = new UserController(joiValidator, userSchema);
 const logController = new LogController(joiValidator, logSchema);
 const subscriptionController = new SubscriptionController();
+const transformerController = new TransformerController(joiValidator, transformerSchema);
 
 const router = new Router();
 
@@ -97,6 +100,12 @@ router.delete('/api/ip-filters/:id', (ctx: KoaContext<any, any>) => ipFilterCont
 router.get('/api/north-types', (ctx: KoaContext<any, any>) => northConnectorController.getNorthConnectorTypes(ctx));
 router.get('/api/north-types/:id', (ctx: KoaContext<any, any>) => northConnectorController.getNorthConnectorManifest(ctx));
 
+router.get('/api/transformers', (ctx: KoaContext<any, any>) => transformerController.getTransformers(ctx));
+router.get('/api/transformers/:id', (ctx: KoaContext<any, any>) => transformerController.getTransformer(ctx));
+router.post('/api/transformers', (ctx: KoaContext<any, any>) => transformerController.createTransformer(ctx));
+router.put('/api/transformers/:id', (ctx: KoaContext<any, any>) => transformerController.updateTransformer(ctx));
+router.delete('/api/transformers/:id', (ctx: KoaContext<any, any>) => transformerController.deleteTransformer(ctx));
+
 router.get('/api/north', (ctx: KoaContext<any, any>) => northConnectorController.getNorthConnectors(ctx));
 router.put('/api/north/:id/test-connection', (ctx: KoaContext<any, any>) => northConnectorController.testNorthConnection(ctx));
 router.get('/api/north/:id', (ctx: KoaContext<any, any>) => northConnectorController.getNorthConnector(ctx));
@@ -146,7 +155,21 @@ router.delete('/api/north/:northId/cache/archive-files/remove-all', (ctx: KoaCon
 router.delete('/api/north/:northId/cache/archive-files/retry-all', (ctx: KoaContext<any, any>) =>
   northConnectorController.retryAllArchiveFiles(ctx)
 );
-
+router.get('/api/north/:northId/items', (ctx: KoaContext<any, any>) => northConnectorController.searchNorthItems(ctx));
+router.get('/api/north/:northId/items/all', (ctx: KoaContext<any, any>) => northConnectorController.listNorthItems(ctx));
+router.post('/api/north/:northId/items', (ctx: KoaContext<any, any>) => northConnectorController.createNorthItem(ctx));
+router.post('/api/north/:northType/items/check-import/:northId', upload.single('file'), (ctx: KoaContext<any, any>) =>
+  northConnectorController.checkImportNorthItems(ctx)
+);
+router.post('/api/north/:northId/items/import', (ctx: KoaContext<any, any>) => northConnectorController.importNorthItems(ctx));
+router.get('/api/north/:northId/items/export', (ctx: KoaContext<any, any>) => northConnectorController.exportNorthItems(ctx));
+router.put('/api/north/items/to-csv', (ctx: KoaContext<any, any>) => northConnectorController.northItemsToCsv(ctx));
+router.get('/api/north/:northId/items/:id', (ctx: KoaContext<any, any>) => northConnectorController.getNorthItem(ctx));
+router.put('/api/north/:northId/items/:id', (ctx: KoaContext<any, any>) => northConnectorController.updateNorthItem(ctx));
+router.put('/api/north/:northId/items/:id/enable', (ctx: KoaContext<any, any>) => northConnectorController.enableNorthItem(ctx));
+router.put('/api/north/:northId/items/:id/disable', (ctx: KoaContext<any, any>) => northConnectorController.disableNorthItem(ctx));
+router.delete('/api/north/:northId/items/all', (ctx: KoaContext<any, any>) => northConnectorController.deleteAllNorthItem(ctx));
+router.delete('/api/north/:northId/items/:id', (ctx: KoaContext<any, any>) => northConnectorController.deleteNorthItem(ctx));
 router.put('/api/north/:northId/cache/reset-metrics', (ctx: KoaContext<any, any>) => northConnectorController.resetNorthMetrics(ctx));
 
 router.get('/api/north/:northId/cache/values', (ctx: KoaContext<any, any>) => northConnectorController.getCacheValues(ctx));
@@ -165,6 +188,11 @@ router.delete('/api/north/:northId/cache/value-errors/remove-all', (ctx: KoaCont
 router.post('/api/north/:northId/cache/value-errors/retry', (ctx: KoaContext<any, any>) => northConnectorController.retryValueErrors(ctx));
 router.delete('/api/north/:northId/cache/value-errors/retry-all', (ctx: KoaContext<any, any>) =>
   northConnectorController.retryAllValueErrors(ctx)
+);
+router.get('/api/north/:northId/transformers', (ctx: KoaContext<any, any>) => northConnectorController.getTransformers(ctx));
+router.post('/api/north/:northId/transformers/:transformerId', (ctx: KoaContext<any, any>) => northConnectorController.addTransformer(ctx));
+router.delete('/api/north/:northId/transformers/:transformerId', (ctx: KoaContext<any, any>) =>
+  northConnectorController.removeTransformer(ctx)
 );
 
 router.get('/api/south-types', (ctx: KoaContext<any, any>) => southConnectorController.getSouthConnectorTypes(ctx));
@@ -195,6 +223,11 @@ router.put('/api/south/:southId/items/:id/disable', (ctx: KoaContext<any, any>) 
 router.delete('/api/south/:southId/items/all', (ctx: KoaContext<any, any>) => southConnectorController.deleteAllSouthItem(ctx));
 router.delete('/api/south/:southId/items/:id', (ctx: KoaContext<any, any>) => southConnectorController.deleteSouthItem(ctx));
 router.put('/api/south/:southId/cache/reset-metrics', (ctx: KoaContext<any, any>) => southConnectorController.resetSouthMetrics(ctx));
+router.get('/api/south/:southId/transformers', (ctx: KoaContext<any, any>) => southConnectorController.getTransformers(ctx));
+router.post('/api/south/:southId/transformers/:transformerId', (ctx: KoaContext<any, any>) => southConnectorController.addTransformer(ctx));
+router.delete('/api/south/:southId/transformers/:transformerId', (ctx: KoaContext<any, any>) =>
+  southConnectorController.removeTransformer(ctx)
+);
 
 router.get('/api/history-queries', (ctx: KoaContext<any, any>) => historyQueryController.getHistoryQueries(ctx));
 router.get('/api/history-queries/:id', (ctx: KoaContext<any, any>) => historyQueryController.getHistoryQuery(ctx));
@@ -248,6 +281,24 @@ router.put('/api/history-queries/:id/south/test-connection', (ctx: KoaContext<an
 );
 router.put('/api/history-queries/:id/north/test-connection', (ctx: KoaContext<any, any>) =>
   historyQueryController.testNorthConnection(ctx)
+);
+router.get('/api/history-queries/:historyQueryId/south-transformers', (ctx: KoaContext<any, any>) =>
+  historyQueryController.getTransformers(ctx, 'south')
+);
+router.post('/api/history-queries/:historyQueryId/south-transformers/:transformerId', (ctx: KoaContext<any, any>) =>
+  historyQueryController.addTransformer(ctx, 'south')
+);
+router.delete('/api/history-queries/:historyQueryId/south-transformers/:transformerId', (ctx: KoaContext<any, any>) =>
+  historyQueryController.removeTransformer(ctx, 'south')
+);
+router.get('/api/history-queries/:historyQueryId/north-transformers', (ctx: KoaContext<any, any>) =>
+  historyQueryController.getTransformers(ctx, 'north')
+);
+router.post('/api/history-queries/:historyQueryId/north-transformers/:transformerId', (ctx: KoaContext<any, any>) =>
+  historyQueryController.addTransformer(ctx, 'north')
+);
+router.delete('/api/history-queries/:historyQueryId/north-transformers/:transformerId', (ctx: KoaContext<any, any>) =>
+  historyQueryController.removeTransformer(ctx, 'north')
 );
 
 router.get('/api/logs', (ctx: KoaContext<any, any>) => logController.searchLogs(ctx));

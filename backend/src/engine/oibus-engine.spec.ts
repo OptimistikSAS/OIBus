@@ -3,7 +3,7 @@ import SouthServiceMock from '../tests/__mocks__/south-service.mock';
 import NorthServiceMock from '../tests/__mocks__/north-service.mock';
 
 import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
-import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
+import { NorthConnectorDTO, NorthConnectorItemDTO } from '../../../shared/model/north-connector.model';
 
 import SouthService from '../service/south.service';
 import NorthService from '../service/north.service';
@@ -41,7 +41,7 @@ const nowDateString = '2020-02-02T02:02:02.222Z';
 
 let engine: OIBusEngine;
 
-const items: Array<SouthConnectorItemDTO> = [
+const southItems: Array<SouthConnectorItemDTO> = [
   {
     id: 'id1',
     name: 'item1',
@@ -67,6 +67,13 @@ const items: Array<SouthConnectorItemDTO> = [
     scanModeId: 'subscription'
   }
 ];
+const northItem: NorthConnectorItemDTO = {
+  id: 'northItemId',
+  name: 'item1',
+  enabled: true,
+  connectorId: 'northId',
+  settings: {}
+};
 
 const connectedEvent = new EventEmitter();
 
@@ -86,6 +93,13 @@ const northConnectors: Array<NorthConnectorDTO> = [
     type: 'oiconnect'
   } as NorthConnectorDTO
 ];
+const northConnectorWithItems: NorthConnectorDTO = {
+  id: 'northIdWithItems',
+  name: 'myNorthConnectorWithItems3',
+  description: 'a test north connector with items',
+  enabled: true,
+  type: 'modbus'
+} as NorthConnectorDTO;
 const southConnectors: Array<SouthConnectorDTO> = [
   {
     id: 'id1',
@@ -167,7 +181,12 @@ const createdNorth = {
   retryValueErrors: jest.fn(),
   retryAllValueErrors: jest.fn(),
   updateConnectorSubscription: jest.fn(),
+  onItemChange: jest.fn(),
   settings: { id: 'id1', name: 'myNorthConnector1', type: 'oianalytics' }
+};
+
+const createdNorthWithItems = {
+  ...createdNorth
 };
 
 describe('OIBusEngine', () => {
@@ -224,7 +243,7 @@ describe('OIBusEngine', () => {
         reject('error');
       });
     });
-    (southService.getSouthItems as jest.Mock).mockReturnValue(items);
+    (southService.getSouthItems as jest.Mock).mockReturnValue(southItems);
     createdNorth.isSubscribed.mockReturnValue(true);
 
     await engine.createSouth(southConnectors[0]);
@@ -244,6 +263,7 @@ describe('OIBusEngine', () => {
     expect(logger.error).toHaveBeenCalledWith(
       `Error while starting North connector "${northConnectors[0].name}" of type "${northConnectors[0].type}" (${northConnectors[0].id}): error`
     );
+    expect(createdNorth.onItemChange).toHaveBeenCalledTimes(1);
 
     await engine.startSouth(southConnectors[1].id);
     expect(logger.trace).toHaveBeenCalledWith(`South connector ${southConnectors[1].id} not set`);
@@ -404,6 +424,10 @@ describe('OIBusEngine', () => {
     await engine.onSouthItemsChange('southId');
     expect(createdSouth.onItemChange).toHaveBeenCalledTimes(2);
 
+    await engine.onNorthItemsChange(northConnectors[0].id);
+    await engine.onNorthItemsChange('northId');
+    expect(createdNorth.onItemChange).toHaveBeenCalledTimes(2);
+
     // Cache value operations
     // Get cache values
     await engine.getCacheValues('id1', '');
@@ -472,6 +496,12 @@ describe('OIBusEngine', () => {
     expect(createdSouth.stop).not.toHaveBeenCalled();
     await engine.stopNorth('northId');
     expect(createdNorth.stop).not.toHaveBeenCalled();
+
+    // North with items
+    (northService.createNorth as jest.Mock).mockReturnValueOnce(createdNorthWithItems);
+    await engine.startNorth(northConnectorWithItems.id);
+    expect(northService.createNorth).toHaveBeenCalled();
+    expect(createdNorth.isEnabled).toHaveBeenCalled();
 
     await engine.stop();
     expect(createdSouth.stop).toHaveBeenCalledTimes(1);

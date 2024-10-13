@@ -1,0 +1,33 @@
+@import '../../../common';
+
+.form-select {
+  min-height: $input-height;
+}
+
+.form-select.form-select-sm {
+  min-height: $input-height-sm;
+}
+
+.dropdown-menu {
+  max-height: 33vh;
+  overflow-y: auto;
+}
+
+.dropdown-toggle {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+  &::after {
+    display: none;
+  }
+}
+
+.placeholder {
+  color: $input-placeholder-color;
+}
+
+.selected {
+  color: $component-active-color;
+  background-color: $component-active-bg;
+}

@@ -92,6 +92,7 @@ describe('NorthFileWriter', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
+    repositoryService.northTransformerRepository.getTransformers = jest.fn().mockReturnValue([]);
 
     (csv.unparse as jest.Mock).mockReturnValue('csv content');
 
@@ -126,7 +127,23 @@ describe('NorthFileWriter', () => {
     jest.spyOn(fs, 'writeFile').mockImplementationOnce(() => {
       throw new Error('Error handling values');
     });
-    await expect(north.handleValues(values)).rejects.toThrow('Error handling values');
+    await expect(north.handleContent({ type: 'time-values', content: values })).rejects.toThrow('Error handling values');
+  });
+
+  it('should properly catch values transformation error', async () => {
+    const values: Array<OIBusTimeValue> = [
+      {
+        timestamp: '2021-07-29T12:13:31.883Z',
+        data: { value: '666', quality: 'good' },
+        pointId: 'pointId'
+      }
+    ];
+    jest.spyOn(north, 'transform').mockReturnValue(Promise.resolve(null));
+    const writeFileSpy = jest.spyOn(fs, 'writeFile');
+
+    await north.handleContent({ type: 'time-values', content: values });
+
+    expect(writeFileSpy).not.toHaveBeenCalled();
   });
 
   it('should properly handle files', async () => {
@@ -144,7 +161,18 @@ describe('NorthFileWriter', () => {
       throw new Error('Error handling files');
     });
     const filePath = '/path/to/file/example-123456.file';
-    await expect(north.handleFile(filePath)).rejects.toThrow('Error handling files');
+    await expect(north.handleContent({ type: 'raw', filePath })).rejects.toThrow('Error handling files');
+  });
+
+  it('should properly catch values transformation error', async () => {
+    const filePath = '/path/to/file/example-123456.file';
+
+    jest.spyOn(north, 'transform').mockReturnValue(Promise.resolve(null));
+    const copyFileSpy = jest.spyOn(fs, 'copyFile');
+
+    await north.handleContent({ type: 'raw', filePath });
+
+    expect(copyFileSpy).not.toHaveBeenCalled();
   });
 });
 
@@ -186,7 +214,7 @@ describe('NorthFileWriter without suffix or prefix', () => {
         pointId: 'pointId'
       }
     ];
-    await north.handleValues(values);
+    await north.handleContent({ type: 'time-values', content: values });
     const expectedFileName = `${new Date().getTime()}.csv`;
     const expectedOutputFolder = path.resolve(configuration.settings.outputFolder);
     const expectedPath = path.join(expectedOutputFolder, expectedFileName);
@@ -197,7 +225,7 @@ describe('NorthFileWriter without suffix or prefix', () => {
     (fs.stat as jest.Mock).mockReturnValue({ size: 666 });
     const filePath = '/path/to/file/example-123456.file';
     const expectedOutputFolder = path.resolve(configuration.settings.outputFolder);
-    await north.handleFile(filePath);
+    await north.handleContent({ type: 'raw', filePath });
     expect(fs.copyFile).toHaveBeenCalledWith(filePath, path.join(expectedOutputFolder, 'example.file'));
   });
 

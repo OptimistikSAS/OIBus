@@ -24,6 +24,7 @@ import { BooleanEnumPipe } from '../../shared/boolean-enum.pipe';
 import { PipeProviderService } from '../../shared/form/pipe-provider.service';
 import { EngineService } from '../../services/engine.service';
 import { LogsComponent } from '../../logs/logs.component';
+import { NorthTransformersComponent } from '../north-transformers/north-transformers.component';
 
 @Component({
   selector: 'oib-north-detail',
@@ -40,7 +41,8 @@ import { LogsComponent } from '../../logs/logs.component';
     DurationPipe,
     EnabledEnumPipe,
     ClipboardModule,
-    LogsComponent
+    LogsComponent,
+    NorthTransformersComponent
   ],
   templateUrl: './north-detail.component.html',
   styleUrl: './north-detail.component.scss',

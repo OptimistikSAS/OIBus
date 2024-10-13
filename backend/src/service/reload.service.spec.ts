@@ -22,7 +22,12 @@ import {
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO
 } from '../../../shared/model/south-connector.model';
-import { NorthConnectorCommandDTO, NorthConnectorDTO } from '../../../shared/model/north-connector.model';
+import {
+  NorthConnectorCommandDTO,
+  NorthConnectorDTO,
+  NorthConnectorItemCommandDTO,
+  NorthConnectorItemDTO
+} from '../../../shared/model/north-connector.model';
 import { HistoryQueryCommandDTO, HistoryQueryDTO } from '../../../shared/model/history-query.model';
 import HistoryQueryEngine from '../engine/history-query-engine';
 import { ScanModeCommandDTO } from '../../../shared/model/scan-mode.model';
@@ -896,5 +901,103 @@ describe('reload service', () => {
       expect(repositoryService.southItemRepository.getSouthItems).toHaveBeenCalledWith('southId');
       expect(repositoryService.southCacheRepository.deleteCacheScanMode).not.toHaveBeenCalled();
     });
+  });
+
+  it('should create north item', async () => {
+    const command = {};
+    const northItem = { id: 'northItemId', settings: {} };
+    (repositoryService.northItemRepository.createNorthItem as jest.Mock).mockReturnValueOnce(northItem);
+
+    const result = await service.onCreateNorthItem('northId', command as NorthConnectorItemCommandDTO);
+
+    expect(oibusEngine.onNorthItemsChange).toHaveBeenCalledWith('northId');
+    expect(result).toEqual(northItem);
+  });
+
+  it('should update north item', async () => {
+    const command = {};
+    const oldNorthItem = { id: 'northItemId', connectorId: 'northId', settings: { field: 'value' } };
+
+    await service.onUpdateNorthItemSettings('northId', oldNorthItem as NorthConnectorItemDTO, command as NorthConnectorItemCommandDTO);
+
+    expect(repositoryService.northItemRepository.updateNorthItem).toHaveBeenCalledWith('northItemId', command);
+    expect(oibusEngine.onNorthItemsChange).toHaveBeenCalledWith('northId');
+  });
+
+  it('should create or update north items', async () => {
+    service.onCreateOrUpdateNorthItems({ id: 'northId' } as NorthConnectorDTO, [], []);
+    expect(repositoryService.northItemRepository.createAndUpdateNorthItems).toHaveBeenCalledWith('northId', [], []);
+  });
+
+  it('should delete north item', async () => {
+    const northItem = { id: 'northItemId', connectorId: 'northId', settings: {} };
+    (repositoryService.northItemRepository.getNorthItem as jest.Mock).mockReturnValueOnce(northItem);
+
+    await service.onDeleteNorthItem('northItemId');
+    expect(repositoryService.northItemRepository.deleteNorthItem).toHaveBeenCalledWith('northItemId');
+  });
+
+  it('delete should throw when north item not found', async () => {
+    (repositoryService.northItemRepository.getNorthItem as jest.Mock).mockReturnValueOnce(null);
+
+    let error;
+    try {
+      await service.onDeleteNorthItem('northItemId');
+    } catch (err) {
+      error = err;
+    }
+    expect(error).toEqual(new Error('North item not found'));
+    expect(repositoryService.northItemRepository.deleteNorthItem).not.toHaveBeenCalled();
+  });
+
+  it('should enable north item', async () => {
+    const northItem = { id: 'northItemId', connectorId: 'northId', settings: {} };
+    (repositoryService.northItemRepository.getNorthItem as jest.Mock).mockReturnValueOnce(northItem);
+
+    await service.onEnableNorthItem('northItemId');
+    expect(repositoryService.northItemRepository.enableNorthItem).toHaveBeenCalledWith('northItemId');
+    expect(oibusEngine.onNorthItemsChange).toHaveBeenCalledWith('northId');
+  });
+
+  it('enable should throw when north item not found', async () => {
+    (repositoryService.northItemRepository.getNorthItem as jest.Mock).mockReturnValue(null);
+
+    let error;
+    try {
+      await service.onEnableNorthItem('northItemId');
+    } catch (err) {
+      error = err;
+    }
+    expect(error).toEqual(new Error('North item not found'));
+    expect(repositoryService.northItemRepository.enableNorthItem).not.toHaveBeenCalled();
+    expect(oibusEngine.onNorthItemsChange).not.toHaveBeenCalled();
+  });
+
+  it('should disable north item', async () => {
+    const northItem = { id: 'northItemId', connectorId: 'northId', settings: {} };
+    (repositoryService.northItemRepository.getNorthItem as jest.Mock).mockReturnValueOnce(northItem);
+
+    await service.onDisableNorthItem('northItemId');
+    expect(repositoryService.northItemRepository.disableNorthItem).toHaveBeenCalledWith('northItemId');
+    expect(oibusEngine.onNorthItemsChange).toHaveBeenCalledWith('northId');
+  });
+
+  it('disable should throw when north item not found', async () => {
+    (repositoryService.northItemRepository.getNorthItem as jest.Mock).mockReturnValue(null);
+
+    let error;
+    try {
+      await service.onDisableNorthItem('northItemId');
+    } catch (err) {
+      error = err;
+    }
+    expect(error).toEqual(new Error('North item not found'));
+    expect(repositoryService.northItemRepository.disableNorthItem).not.toHaveBeenCalled();
+  });
+
+  it('should delete all north items', async () => {
+    await service.onDeleteAllNorthItems('northId');
+    expect(oibusEngine.onNorthItemsChange).toHaveBeenCalledWith('northId');
+    expect(repositoryService.northItemRepository.deleteAllNorthItems).toHaveBeenCalledWith('northId');
   });
 });

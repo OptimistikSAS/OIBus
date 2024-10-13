@@ -66,6 +66,7 @@
     "http-proxy": "1.18.1",
     "http-proxy-agent": "7.0.2",
     "https-proxy-agent": "7.0.5",
+    "isolated-vm": "^5.0.1",
     "joi": "17.13.3",
     "jsmodbus": "4.0.10",
     "jsonwebtoken": "9.0.2",
