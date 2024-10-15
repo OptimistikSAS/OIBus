@@ -11,83 +11,106 @@
       </div>
     }
     <div>
-      <form class="px-3 mb-4 oib-search-form" id="logs-form" [formGroup]="searchForm" (ngSubmit)="triggerSearch()">
-        <div class="row gx-2 py-3">
-          <label class="col-auto col-form-label"><i class="fa fa-search fa-lg"></i></label>
-          <label for="start" class="col-auto col-form-label" translate="logs.search.start"></label>
-          <div class="col">
-            <oib-datetimepicker formControlName="start" id="start" />
-          </div>
-          <label for="end" class="col-auto col-form-label" translate="logs.search.end"></label>
-          <div class="col">
-            <oib-datetimepicker formControlName="end" id="end" />
-            <val-errors [control]="searchForm" />
-          </div>
-          @if (!this.scopeId && !this.scopeType) {
-            <label for="levels" class="col-auto col-form-label" translate="logs.search.levels"></label>
-            <div class="col-1">
-              <oib-multi-select formControlName="levels" id="levels">
-                @for (level of levels; track level) {
-                  <oib-multi-select-option [value]="level" [label]="level | logLevelsEnum" />
-                }
-              </oib-multi-select>
-            </div>
-            <label for="scope-types" class="col-auto col-form-label" translate="logs.search.scope-type"></label>
-            <div class="col-2">
-              <oib-multi-select formControlName="scopeTypes" id="scope-types">
-                @for (scopeType of scopeTypes; track scopeType) {
-                  <oib-multi-select-option [value]="scopeType" [label]="scopeType | scopeTypesEnum" />
-                }
-              </oib-multi-select>
-            </div>
-          }
-        </div>
-        <div class="row gx-2 py-3">
-          @if (!this.scopeId && !this.scopeType) {
-            <label for="scope-ids" class="col-auto col-form-label" translate="logs.search.scope"></label>
-            <div class="col-2">
-              <input
-                id="scope-ids"
-                class="form-control"
-                formControlName="scopeIds"
-                [ngbTypeahead]="scopeTypeahead"
-                [resultFormatter]="scopeFormatter"
-                [inputFormatter]="scopeFormatter"
-                [editable]="false"
-                (selectItem)="selectScope($event)"
-              />
-              <div [style.margin-top.rem]="selectedScopes.length ? -0.75 : 0">
-                @for (scope of selectedScopes; track scope.scopeId) {
-                  <oib-pill type="secondary" [removable]="true" (removed)="removeScope(scope)"> {{ scope.scopeName }} </oib-pill>
-                }
+      <div ngbAccordion class="mb-4">
+        <div ngbAccordionItem="searchArea" #searchArea="ngbAccordionItem" [collapsed]="this.embedded">
+          <div ngbAccordionHeader>
+            <button
+              ngbAccordionButton
+              class="log-toggle-btn accordion-button btn collapsed d-flex justify-content-between align-items-center w-100
+              {{ searchArea.collapsed ? '' : embedded ? 'rounded-0' : 'rounded-bottom-0' }}
+              {{ embedded ? 'log-toggle-embedded' : '' }}"
+            >
+              <div>
+                <i class="fa fa-search fa-lg me-3"></i>
+                <span>{{ 'common.search' | translate }}</span>
               </div>
-            </div>
-          } @else {
-            <label for="levels" class="col-auto col-form-label" translate="logs.search.levels"></label>
-            <div class="col-2">
-              <oib-multi-select formControlName="levels" id="levels">
-                @for (level of levels; track level) {
-                  <oib-multi-select-option [value]="level" [label]="level | logLevelsEnum" />
-                }
-              </oib-multi-select>
-            </div>
-          }
-          <label for="message-content" class="col-auto col-form-label" translate="logs.search.message-content"></label>
-          <div [ngClass]="!this.scopeId && !this.scopeType ? 'col-8' : 'col-7'">
-            <input type="text" class="form-control" id="message-content" formControlName="messageContent" />
-          </div>
-
-          <div class="col">
-            <button class="btn btn-primary pull-right" id="search-button" [disabled]="loading">
-              @if (loading) {
-                <span class="fa fa-spin fa-spinner"></span>
-              } @else {
-                <span translate="common.search"></span>
-              }
+              <i class="fa {{ searchArea.collapsed ? 'fa-angle-down' : 'fa-angle-up' }}  fa-2x"></i>
             </button>
           </div>
+          <div ngbAccordionCollapse>
+            <div ngbAccordionBody>
+              <ng-template>
+                <form class="px-3 oib-search-form" id="logs-form" [formGroup]="searchForm" (ngSubmit)="triggerSearch()">
+                  <div class="row gx-2 py-3">
+                    <label for="start" class="col-auto col-form-label" translate="logs.search.start"></label>
+                    <div class="col">
+                      <oib-datetimepicker formControlName="start" id="start" />
+                    </div>
+                    <label for="end" class="col-auto col-form-label" translate="logs.search.end"></label>
+                    <div class="col">
+                      <oib-datetimepicker formControlName="end" id="end" />
+                      <val-errors [control]="searchForm" />
+                    </div>
+                    @if (!this.scopeId && !this.scopeType) {
+                      <label for="levels" class="col-auto col-form-label" translate="logs.search.levels"></label>
+                      <div class="col-1">
+                        <oib-multi-select formControlName="levels" id="levels">
+                          @for (level of levels; track level) {
+                            <oib-multi-select-option [value]="level" [label]="level | logLevelsEnum" />
+                          }
+                        </oib-multi-select>
+                      </div>
+                      <label for="scope-types" class="col-auto col-form-label" translate="logs.search.scope-type"></label>
+                      <div class="col-2">
+                        <oib-multi-select formControlName="scopeTypes" id="scope-types">
+                          @for (scopeType of scopeTypes; track scopeType) {
+                            <oib-multi-select-option [value]="scopeType" [label]="scopeType | scopeTypesEnum" />
+                          }
+                        </oib-multi-select>
+                      </div>
+                    }
+                  </div>
+                  <div class="row gx-2 py-3">
+                    @if (!this.scopeId && !this.scopeType) {
+                      <label for="scope-ids" class="col-auto col-form-label" translate="logs.search.scope"></label>
+                      <div class="col-2">
+                        <input
+                          id="scope-ids"
+                          class="form-control"
+                          formControlName="scopeIds"
+                          [ngbTypeahead]="scopeTypeahead"
+                          [resultFormatter]="scopeFormatter"
+                          [inputFormatter]="scopeFormatter"
+                          [editable]="false"
+                          (selectItem)="selectScope($event)"
+                        />
+                        <div [style.margin-top.rem]="selectedScopes.length ? -0.75 : 0">
+                          @for (scope of selectedScopes; track scope.scopeId) {
+                            <oib-pill type="secondary" [removable]="true" (removed)="removeScope(scope)"> {{ scope.scopeName }} </oib-pill>
+                          }
+                        </div>
+                      </div>
+                    } @else {
+                      <label for="levels" class="col-auto col-form-label" translate="logs.search.levels"></label>
+                      <div class="col-2">
+                        <oib-multi-select formControlName="levels" id="levels">
+                          @for (level of levels; track level) {
+                            <oib-multi-select-option [value]="level" [label]="level | logLevelsEnum" />
+                          }
+                        </oib-multi-select>
+                      </div>
+                    }
+                    <label for="message-content" class="col-auto col-form-label" translate="logs.search.message-content"></label>
+                    <div [ngClass]="!this.scopeId && !this.scopeType ? 'col-8' : 'col-7'">
+                      <input type="text" class="form-control" id="message-content" formControlName="messageContent" />
+                    </div>
+
+                    <div class="col">
+                      <button class="btn btn-primary pull-right" id="search-button" [disabled]="loading">
+                        @if (loading) {
+                          <span class="fa fa-spin fa-spinner"></span>
+                        } @else {
+                          <span translate="common.search"></span>
+                        }
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </ng-template>
+            </div>
+          </div>
         </div>
-      </form>
+      </div>
 
       @if (logs.totalElements) {
         <div class="d-flex justify-content-between mb-2">
