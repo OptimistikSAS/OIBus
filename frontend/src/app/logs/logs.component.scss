@@ -26,6 +26,16 @@
   color: $blue;
 }
 
+.log-toggle-btn {
+  background-color: $veryLightGrey !important;
+  font-weight: bold;
+  border-radius: 1em;
+}
+
+.log-toggle-embedded {
+  border-radius: 0em 0em 1em 1em;
+}
+
 // changes of the default display
 .oib-table-logs {
   // table header

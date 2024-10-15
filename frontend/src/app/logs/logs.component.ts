@@ -34,7 +34,7 @@ import { DatetimepickerComponent } from '../shared/datetimepicker/datetimepicker
 import { DatetimePipe } from '../shared/datetime.pipe';
 import { ScopeTypesEnumPipe } from '../shared/scope-types-enum.pipe';
 import { TYPEAHEAD_DEBOUNCE_TIME } from '../shared/typeahead';
-import { NgbTypeahead, NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAccordionModule, NgbTypeahead, NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
 import { PillComponent } from '../shared/pill/pill.component';
 import { LegendComponent } from '../shared/legend/legend.component';
 import { NgClass } from '@angular/common';
@@ -55,7 +55,8 @@ import { NgClass } from '@angular/common';
     NgbTypeahead,
     PillComponent,
     LegendComponent,
-    NgClass
+    NgClass,
+    NgbAccordionModule
   ],
   templateUrl: './logs.component.html',
   styleUrl: './logs.component.scss',
@@ -69,6 +70,7 @@ export class LogsComponent implements OnInit, OnDestroy {
 
   @Input() scopeId: string | null = null;
   @Input() scopeType: ScopeType | null = null;
+  @Input() embedded = false;
 
   readonly searchForm = inject(NonNullableFormBuilder).group(
     {
