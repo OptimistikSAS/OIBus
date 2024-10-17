@@ -36,6 +36,19 @@ export default jest.fn().mockImplementation(() => ({
     deleteAllSouthItems: jest.fn(),
     createAndUpdateSouthItems: jest.fn()
   },
+  northItemRepository: {
+    searchNorthItems: jest.fn(),
+    listNorthItems: jest.fn(),
+    getNorthItem: jest.fn(),
+    getNorthItems: jest.fn(),
+    createNorthItem: jest.fn(),
+    updateNorthItem: jest.fn(),
+    deleteNorthItem: jest.fn(),
+    enableNorthItem: jest.fn(),
+    disableNorthItem: jest.fn(),
+    deleteAllNorthItems: jest.fn(),
+    createAndUpdateNorthItems: jest.fn()
+  },
   historyQueryRepository: {
     getHistoryQueries: jest.fn(),
     getHistoryQuery: jest.fn(),
@@ -161,5 +174,27 @@ export default jest.fn().mockImplementation(() => ({
     createOrUpdateCacheScanMode: jest.fn(),
     deleteCacheScanMode: jest.fn(),
     getSouthCacheScanMode: jest.fn()
+  },
+  transformerRepository: {
+    createTransformer: jest.fn(),
+    updateTransformer: jest.fn(),
+    deleteTransformer: jest.fn(),
+    getTransformer: jest.fn(),
+    getTransformers: jest.fn()
+  },
+  northTransformerRepository: {
+    addTransformer: jest.fn(),
+    getTransformers: jest.fn(),
+    removeTransformer: jest.fn()
+  },
+  southTransformerRepository: {
+    addTransformer: jest.fn(),
+    getTransformers: jest.fn(),
+    removeTransformer: jest.fn()
+  },
+  historyTransformerRepository: {
+    addTransformer: jest.fn(),
+    getTransformers: jest.fn(),
+    removeTransformer: jest.fn()
   }
 }));

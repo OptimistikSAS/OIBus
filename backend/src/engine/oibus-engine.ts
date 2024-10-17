@@ -10,7 +10,7 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 
 import { SouthConnectorDTO } from '../../../shared/model/south-connector.model';
-import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
+import { NorthConnectorDTO, NorthConnectorItemDTO } from '../../../shared/model/north-connector.model';
 import { Instant } from '../../../shared/model/types';
 import { PassThrough } from 'node:stream';
 import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
@@ -173,7 +173,7 @@ export default class OIBusEngine extends BaseEngine {
       this.logger.trace(`North connector ${northId} not set`);
       return;
     }
-
+    await north.onItemChange();
     // Do not await here, so it can start all connectors without blocking the thread
     north.start().catch(error => {
       this.logger.error(
@@ -378,6 +378,10 @@ export default class OIBusEngine extends BaseEngine {
 
   async onSouthItemsChange(southId: string): Promise<void> {
     await this.southConnectors.get(southId)?.onItemChange();
+  }
+
+  async onNorthItemsChange(southId: string): Promise<void> {
+    await this.northConnectors.get(southId)?.onItemChange();
   }
 
   async reloadSouth(southId: string) {
