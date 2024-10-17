@@ -19,15 +19,12 @@ import { flushPromises } from '../tests/utils/test-utils';
 import NorthOIAnalytics from './north-oianalytics/north-oianalytics';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
-import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
 import CertificateRepository from '../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import NorthConnectorRepositoryMock from '../tests/__mocks__/repository/config/north-connector-repository.mock';
 import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
-import NorthMetricsRepositoryMock from '../tests/__mocks__/repository/log/north-metrics-repository.mock';
 import CertificateRepositoryMock from '../tests/__mocks__/repository/config/certificate-repository.mock';
 import OianalyticsRegistrationRepositoryMock from '../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
-import NorthConnectorMetricsServiceMock from '../tests/__mocks__/service/north-connector-metrics-service.mock';
 import { OIBusError } from '../model/engine.model';
 
 // Mock fs
@@ -40,13 +37,12 @@ jest.mock('../service/utils');
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
-const northMetricsRepository: NorthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
 const certificateRepository: CertificateRepository = new CertificateRepositoryMock();
 const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OianalyticsRegistrationRepositoryMock();
 const valueCacheService = new ValueCacheServiceMock();
 const fileCacheService = new FileCacheServiceMock();
 const archiveService = new ArchiveServiceMock();
-const northConnectorMetricsService = new NorthConnectorMetricsServiceMock();
+
 jest.mock(
   '../service/cache/value-cache.service',
   () =>
@@ -68,13 +64,6 @@ jest.mock(
       return archiveService;
     }
 );
-jest.mock(
-  '../service/north-connector-metrics.service',
-  () =>
-    function () {
-      return northConnectorMetricsService;
-    }
-);
 
 const logger: pino.Logger = new PinoLogger();
 const anotherLogger: pino.Logger = new PinoLogger();
@@ -86,7 +75,6 @@ describe('NorthConnector', () => {
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(testData.north.list[0]);
-    (northConnectorMetricsService.metrics as jest.Mock).mockReturnValue(testData.north.metrics);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
     (dirSize as jest.Mock).mockReturnValue(123);
 
@@ -95,7 +83,6 @@ describe('NorthConnector', () => {
       encryptionService,
       northConnectorRepository,
       scanModeRepository,
-      northMetricsRepository,
       logger,
       'baseFolder'
     );
@@ -236,7 +223,6 @@ describe('NorthConnector', () => {
     });
     north.handleValuesWrapper = jest.fn(async () => promise);
     north.handleFilesWrapper = jest.fn();
-    (northConnectorMetricsService.updateMetrics as jest.Mock).mockClear();
 
     valueCacheService.triggerRun.emit('next');
     expect(north.handleValuesWrapper).toHaveBeenCalled();
@@ -247,7 +233,6 @@ describe('NorthConnector', () => {
     valueCacheService.triggerRun.emit('cache-size', 123);
     archiveService.triggerRun.emit('cache-size', 123);
 
-    expect(northConnectorMetricsService.updateMetrics).toHaveBeenCalledTimes(4);
     expect(north.handleFilesWrapper).not.toHaveBeenCalled();
     jest.advanceTimersByTime(1000);
 
@@ -262,7 +247,6 @@ describe('NorthConnector', () => {
     });
     north.handleFilesWrapper = jest.fn(async () => promise);
     north.handleValuesWrapper = jest.fn();
-    (northConnectorMetricsService.updateMetrics as jest.Mock).mockClear();
 
     fileCacheService.triggerRun.emit('next');
     expect(north.handleValuesWrapper).not.toHaveBeenCalled();
@@ -271,7 +255,6 @@ describe('NorthConnector', () => {
 
     valueCacheService.triggerRun.emit('next');
     fileCacheService.triggerRun.emit('cache-size', 123);
-    expect(northConnectorMetricsService.updateMetrics).toHaveBeenCalledTimes(2);
     expect(north.handleValuesWrapper).not.toHaveBeenCalled();
     jest.advanceTimersByTime(1000);
     await flushPromises();
@@ -554,7 +537,6 @@ describe('NorthConnector disabled', () => {
       encryptionService,
       northConnectorRepository,
       scanModeRepository,
-      northMetricsRepository,
       certificateRepository,
       oIAnalyticsRegistrationRepository,
       logger,
@@ -658,16 +640,6 @@ describe('NorthConnector disabled', () => {
     expect(logger.error).toHaveBeenCalledWith(`Error while removing cache files. ${new Error('removeAllCacheFiles error')}`);
   });
 
-  it('should get metrics stream', () => {
-    const stream = north.getMetricsDataStream();
-    expect(stream).toEqual(northConnectorMetricsService.stream);
-  });
-
-  it('should reset metrics', () => {
-    north.resetMetrics();
-    expect(northConnectorMetricsService.resetMetrics).toHaveBeenCalledTimes(1);
-  });
-
   it('should manage caching file when cache size is more than max size', async () => {
     await north.start();
     await north.cacheFile('filePath');
@@ -695,7 +667,6 @@ describe('NorthConnector test', () => {
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(testData.north.list[1]);
-    (northConnectorMetricsService.metrics as jest.Mock).mockReturnValue(testData.north.metrics);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
 
     const testSettings = JSON.parse(JSON.stringify(testData.north.list[1]));
@@ -706,7 +677,6 @@ describe('NorthConnector test', () => {
       encryptionService,
       northConnectorRepository,
       scanModeRepository,
-      northMetricsRepository,
       certificateRepository,
       oIAnalyticsRegistrationRepository,
       logger,
@@ -718,10 +688,6 @@ describe('NorthConnector test', () => {
     valueCacheService.triggerRun.removeAllListeners();
     fileCacheService.triggerRun.removeAllListeners();
     archiveService.triggerRun.removeAllListeners();
-  });
-
-  it('should not init metrics if testing connection', () => {
-    expect(northConnectorMetricsService.initMetrics).not.toHaveBeenCalled();
   });
 
   it('should check if North caches are empty', async () => {

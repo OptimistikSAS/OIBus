@@ -1,7 +1,6 @@
 import path from 'node:path';
 
 import SouthConnector from '../south-connector';
-import manifest from './manifest';
 import {
   convertDateTimeToInstant,
   createFolder,
@@ -12,7 +11,6 @@ import {
   logQuery,
   persistResults
 } from '../../service/utils';
-import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
@@ -22,9 +20,8 @@ import { SouthOracleItemSettings, SouthOracleSettings } from '../../../../shared
 import { OIBusContent } from '../../../../shared/model/engine.model';
 
 import oracledb, { ConnectionAttributes } from 'oracledb';
-import { SouthConnectorEntity } from '../../model/south-connector.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
-import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 
@@ -32,8 +29,6 @@ import ScanModeRepository from '../../repository/config/scan-mode.repository';
  * Class SouthOracle - Retrieve data from Oracle databases and send them to the cache as CSV files.
  */
 export default class SouthOracle extends SouthConnector<SouthOracleSettings, SouthOracleItemSettings> implements QueriesHistory {
-  static type = manifest.id;
-
   private readonly tmpFolder: string;
 
   constructor(
@@ -41,7 +36,6 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     southConnectorRepository: SouthConnectorRepository,
-    southMetricsRepository: SouthConnectorMetricsRepository,
     southCacheRepository: SouthCacheRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
@@ -52,7 +46,6 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
       engineAddContentCallback,
       encryptionService,
       southConnectorRepository,
-      southMetricsRepository,
       southCacheRepository,
       scanModeRepository,
       logger,
@@ -130,7 +123,7 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
     }
   }
 
-  override async testItem(item: SouthConnectorItemDTO<SouthOracleItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
+  override async testItem(item: SouthConnectorItemEntity<SouthOracleItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
     const startTime = DateTime.now()
       .minus(600 * 1000)
       .toUTC()
@@ -178,7 +171,11 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
    * Get entries from the database between startTime and endTime (if used in the SQL query)
    * and write them into a CSV file and send it to the engine.
    */
-  async historyQuery(items: Array<SouthConnectorItemDTO<SouthOracleItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
+  async historyQuery(
+    items: Array<SouthConnectorItemEntity<SouthOracleItemSettings>>,
+    startTime: Instant,
+    endTime: Instant
+  ): Promise<Instant> {
     let updatedStartTime = startTime;
 
     for (const item of items) {
@@ -235,7 +232,7 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
    * Apply the SQL query to the target Oracle database
    */
   async queryData(
-    item: SouthConnectorItemDTO<SouthOracleItemSettings>,
+    item: SouthConnectorItemEntity<SouthOracleItemSettings>,
     startTime: Instant,
     endTime: Instant
   ): Promise<Array<Record<string, string | number>>> {

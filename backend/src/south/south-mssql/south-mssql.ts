@@ -2,7 +2,6 @@ import path from 'node:path';
 import mssql, { config } from 'mssql';
 
 import SouthConnector from '../south-connector';
-import manifest from './manifest';
 import {
   convertDateTimeToInstant,
   createFolder,
@@ -12,7 +11,6 @@ import {
   logQuery,
   persistResults
 } from '../../service/utils';
-import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
@@ -20,9 +18,8 @@ import { QueriesHistory } from '../south-interface';
 import { DateTime } from 'luxon';
 import { SouthMSSQLItemSettings, SouthMSSQLSettings } from '../../../../shared/model/south-settings.model';
 import { OIBusContent } from '../../../../shared/model/engine.model';
-import { SouthConnectorEntity } from '../../model/south-connector.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
-import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 
@@ -30,8 +27,6 @@ import ScanModeRepository from '../../repository/config/scan-mode.repository';
  * Class SouthMSSQL - Retrieve data from MSSQL databases and send them to the cache as CSV files.
  */
 export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, SouthMSSQLItemSettings> implements QueriesHistory {
-  static type = manifest.id;
-
   private readonly tmpFolder: string;
 
   constructor(
@@ -39,7 +34,6 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     southConnectorRepository: SouthConnectorRepository,
-    southMetricsRepository: SouthConnectorMetricsRepository,
     southCacheRepository: SouthCacheRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
@@ -50,7 +44,6 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
       engineAddContentCallback,
       encryptionService,
       southConnectorRepository,
-      southMetricsRepository,
       southCacheRepository,
       scanModeRepository,
       logger,
@@ -131,7 +124,7 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
     }
   }
 
-  override async testItem(item: SouthConnectorItemDTO<SouthMSSQLItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
+  override async testItem(item: SouthConnectorItemEntity<SouthMSSQLItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
     const startTime = DateTime.now()
       .minus(600 * 1000)
       .toUTC()
@@ -179,7 +172,11 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
    * Get entries from the database between startTime and endTime (if used in the SQL query)
    * and write them into a CSV file and send it to the engine.
    */
-  async historyQuery(items: Array<SouthConnectorItemDTO<SouthMSSQLItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
+  async historyQuery(
+    items: Array<SouthConnectorItemEntity<SouthMSSQLItemSettings>>,
+    startTime: Instant,
+    endTime: Instant
+  ): Promise<Instant> {
     let updatedStartTime = startTime;
 
     for (const item of items) {
@@ -233,7 +230,7 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
    * Apply the SQL query to the target MSSQL database
    */
   async queryData(
-    item: SouthConnectorItemDTO<SouthMSSQLItemSettings>,
+    item: SouthConnectorItemEntity<SouthMSSQLItemSettings>,
     startTime: Instant,
     endTime: Instant
   ): Promise<Array<Record<string, string | number>>> {

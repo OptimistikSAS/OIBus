@@ -70,18 +70,6 @@ export default class HistoryQuery {
     await createFolder(northFolder);
     this.north = this.northService.runNorth(northConfiguration, northFolder, this.logger);
 
-    this.south.getMetricsDataStream().on('data', data => {
-      // Remove the 'data: ' start of the string
-      const southMetrics = JSON.parse(Buffer.from(data).toString().slice(6));
-      this._metricsService.updateMetrics({ ...this._metricsService.metrics, south: southMetrics });
-    });
-
-    this.north.getMetricsDataStream().on('data', data => {
-      // Remove the 'data: ' start of the string
-      const northMetrics = JSON.parse(Buffer.from(data).toString().slice(6));
-      this._metricsService.updateMetrics({ ...this._metricsService.metrics, north: northMetrics });
-    });
-
     if (this.historyConfiguration.status !== 'RUNNING') {
       this.logger.trace(`History Query "${this.historyConfiguration.name}" not enabled`);
       return;

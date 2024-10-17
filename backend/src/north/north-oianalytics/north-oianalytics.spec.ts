@@ -23,11 +23,8 @@ import { NorthConnectorEntity } from '../../model/north-connector.model';
 import testData from '../../tests/utils/test-data';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
-import NorthConnectorMetricsRepository from '../../repository/logs/north-connector-metrics.repository';
-import NorthConnectorMetricsServiceMock from '../../tests/__mocks__/service/north-connector-metrics-service.mock';
 import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
 import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
-import NorthMetricsRepositoryMock from '../../tests/__mocks__/repository/log/north-metrics-repository.mock';
 import CertificateRepository from '../../repository/config/certificate.repository';
 import CertificateRepositoryMock from '../../tests/__mocks__/repository/config/certificate-repository.mock';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
@@ -53,13 +50,12 @@ const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
-const northMetricsRepository: NorthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
 const certificateRepository: CertificateRepository = new CertificateRepositoryMock();
 const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OianalyticsRegistrationRepositoryMock();
 const valueCacheService = new ValueCacheServiceMock();
 const fileCacheService = new FileCacheServiceMock();
 const archiveService = new ArchiveServiceMock();
-const northConnectorMetricsService = new NorthConnectorMetricsServiceMock();
+
 jest.mock(
   '../../service/cache/value-cache.service',
   () =>
@@ -79,13 +75,6 @@ jest.mock(
   () =>
     function () {
       return archiveService;
-    }
-);
-jest.mock(
-  '../../service/north-connector-metrics.service',
-  () =>
-    function () {
-      return northConnectorMetricsService;
     }
 );
 
@@ -129,7 +118,7 @@ describe('NorthOIAnalytics without proxy', () => {
       encryptionService,
       northConnectorRepository,
       scanModeRepository,
-      northMetricsRepository,
+
       certificateRepository,
       oIAnalyticsRegistrationRepository,
       logger,
@@ -396,7 +385,7 @@ describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
       encryptionService,
       northConnectorRepository,
       scanModeRepository,
-      northMetricsRepository,
+
       certificateRepository,
       oIAnalyticsRegistrationRepository,
       logger,
@@ -507,7 +496,7 @@ describe('NorthOIAnalytics with proxy', () => {
       encryptionService,
       northConnectorRepository,
       scanModeRepository,
-      northMetricsRepository,
+
       certificateRepository,
       oIAnalyticsRegistrationRepository,
       logger,
@@ -624,7 +613,7 @@ describe('NorthOIAnalytics with proxy but without proxy password', () => {
       encryptionService,
       northConnectorRepository,
       scanModeRepository,
-      northMetricsRepository,
+
       certificateRepository,
       oIAnalyticsRegistrationRepository,
       logger,
@@ -755,7 +744,7 @@ describe('NorthOIAnalytics with aad-certificate', () => {
       encryptionService,
       northConnectorRepository,
       scanModeRepository,
-      northMetricsRepository,
+
       certificateRepository,
       oIAnalyticsRegistrationRepository,
       logger,
@@ -816,7 +805,7 @@ describe('NorthOIAnalytics with OIA module', () => {
       encryptionService,
       northConnectorRepository,
       scanModeRepository,
-      northMetricsRepository,
+
       certificateRepository,
       oIAnalyticsRegistrationRepository,
       logger,

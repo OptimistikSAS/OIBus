@@ -1,11 +1,8 @@
 import path from 'node:path';
 
 import fetch, { HeadersInit, RequestInit } from 'node-fetch';
-
-import manifest from './manifest';
 import SouthConnector from '../south-connector';
 import { createFolder, formatQueryParams, persistResults } from '../../service/utils';
-import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
@@ -15,9 +12,8 @@ import { SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../..
 import { createProxyAgent } from '../../service/proxy-agent';
 import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
 import { ClientCertificateCredential, ClientSecretCredential } from '@azure/identity';
-import { SouthConnectorEntity } from '../../model/south-connector.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
-import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
@@ -49,8 +45,6 @@ export default class SouthOIAnalytics
   extends SouthConnector<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings>
   implements QueriesHistory
 {
-  static type = manifest.id;
-
   private readonly tmpFolder: string;
 
   constructor(
@@ -58,7 +52,6 @@ export default class SouthOIAnalytics
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     southConnectorRepository: SouthConnectorRepository,
-    southMetricsRepository: SouthConnectorMetricsRepository,
     southCacheRepository: SouthCacheRepository,
     scanModeRepository: ScanModeRepository,
     private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
@@ -71,7 +64,6 @@ export default class SouthOIAnalytics
       engineAddContentCallback,
       encryptionService,
       southConnectorRepository,
-      southMetricsRepository,
       southCacheRepository,
       scanModeRepository,
       logger,
@@ -110,7 +102,7 @@ export default class SouthOIAnalytics
   }
 
   override async testItem(
-    item: SouthConnectorItemDTO<SouthOIAnalyticsItemSettings>,
+    item: SouthConnectorItemEntity<SouthOIAnalyticsItemSettings>,
     callback: (data: OIBusContent) => void
   ): Promise<void> {
     const startTime = DateTime.now()
@@ -127,7 +119,7 @@ export default class SouthOIAnalytics
    * Retrieve result from a REST API write them into a CSV file and send it to the Engine.
    */
   async historyQuery(
-    items: Array<SouthConnectorItemDTO<SouthOIAnalyticsItemSettings>>,
+    items: Array<SouthConnectorItemEntity<SouthOIAnalyticsItemSettings>>,
     startTime: Instant,
     endTime: Instant
   ): Promise<Instant> {
@@ -163,7 +155,7 @@ export default class SouthOIAnalytics
   }
 
   async queryData(
-    item: SouthConnectorItemDTO<SouthOIAnalyticsItemSettings>,
+    item: SouthConnectorItemEntity<SouthOIAnalyticsItemSettings>,
     startTime: Instant,
     endTime: Instant
   ): Promise<Array<OIATimeValues>> {

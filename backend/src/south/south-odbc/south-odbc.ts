@@ -1,7 +1,6 @@
 import path from 'node:path';
 
 import SouthConnector from '../south-connector';
-import manifest from './manifest';
 import {
   convertDateTimeToInstant,
   convertDelimiter,
@@ -12,7 +11,6 @@ import {
   logQuery,
   persistResults
 } from '../../service/utils';
-import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
@@ -23,7 +21,6 @@ import fetch, { HeadersInit, RequestInit } from 'node-fetch';
 import { OIBusContent } from '../../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
-import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 
@@ -44,8 +41,6 @@ import('odbc')
  * Class SouthODBC - Retrieve data from SQL databases with ODBC driver and send them to the cache as CSV files.
  */
 export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthODBCItemSettings> implements QueriesHistory {
-  static type = manifest.id;
-
   private readonly tmpFolder: string;
   private connected = false;
   private reconnectTimeout: NodeJS.Timeout | null = null;
@@ -55,7 +50,6 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     southConnectorRepository: SouthConnectorRepository,
-    southMetricsRepository: SouthConnectorMetricsRepository,
     southCacheRepository: SouthCacheRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
@@ -66,7 +60,6 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
       engineAddContentCallback,
       encryptionService,
       southConnectorRepository,
-      southMetricsRepository,
       southCacheRepository,
       scanModeRepository,
       logger,
@@ -348,7 +341,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
   }
 
   async queryOdbcData(
-    item: SouthConnectorItemDTO<SouthODBCItemSettings>,
+    item: SouthConnectorItemEntity<SouthODBCItemSettings>,
     startTime: Instant,
     endTime: Instant,
     test?: boolean

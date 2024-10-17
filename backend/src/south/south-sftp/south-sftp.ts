@@ -3,9 +3,7 @@ import path from 'node:path';
 
 import SouthConnector from '../south-connector';
 import { compress, createFolder } from '../../service/utils';
-import manifest from './manifest';
 
-import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import pino from 'pino';
 import EncryptionService from '../../service/encryption.service';
 import { QueriesFile } from '../south-interface';
@@ -13,9 +11,8 @@ import { SouthSFTPItemSettings, SouthSFTPSettings } from '../../../../shared/mod
 import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
 import sftpClient, { ConnectOptions, FileInfo } from 'ssh2-sftp-client';
-import { SouthConnectorEntity } from '../../model/south-connector.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
-import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 
@@ -23,8 +20,6 @@ import ScanModeRepository from '../../repository/config/scan-mode.repository';
  * Class SouthSFTP - Retrieve files from remote SFTP instance
  */
 export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSFTPItemSettings> implements QueriesFile {
-  static type = manifest.id;
-
   private readonly tmpFolder: string;
 
   /**
@@ -35,7 +30,6 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     southConnectorRepository: SouthConnectorRepository,
-    southMetricsRepository: SouthConnectorMetricsRepository,
     southCacheRepository: SouthCacheRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
@@ -46,7 +40,6 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
       engineAddContentCallback,
       encryptionService,
       southConnectorRepository,
-      southMetricsRepository,
       southCacheRepository,
       scanModeRepository,
       logger,
@@ -67,7 +60,7 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
     }
   }
 
-  override async testItem(item: SouthConnectorItemDTO<SouthSFTPItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
+  override async testItem(item: SouthConnectorItemEntity<SouthSFTPItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
     const filesInFolder = await this.listFiles(item);
 
     const values: Array<OIBusTimeValue> = filesInFolder.map(file => ({
@@ -88,7 +81,7 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
   /**
    * Read the raw file and rewrite it to another file in the folder archive
    */
-  async fileQuery(items: Array<SouthConnectorItemDTO<SouthSFTPItemSettings>>): Promise<void> {
+  async fileQuery(items: Array<SouthConnectorItemEntity<SouthSFTPItemSettings>>): Promise<void> {
     for (const item of items) {
       // List files in the inputFolder
       this.logger.trace(
@@ -109,7 +102,7 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
    * Filter the files if the name and the age of the file meet the request or - when preserveFiles - if they were
    * already sent.
    */
-  checkCondition(item: SouthConnectorItemDTO<SouthSFTPItemSettings>, fileInfo: FileInfo): boolean {
+  checkCondition(item: SouthConnectorItemEntity<SouthSFTPItemSettings>, fileInfo: FileInfo): boolean {
     if (!fileInfo.name.match(item.settings.regex)) {
       this.logger.trace(`File name "${fileInfo.name}" does not match regex ${item.settings.regex}`);
       return false;
@@ -154,7 +147,7 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
    * Retrieve a file from a SFTP server and send it to the Engine.
    */
 
-  async listFiles(item: SouthConnectorItemDTO<SouthSFTPItemSettings>): Promise<Array<FileInfo>> {
+  async listFiles(item: SouthConnectorItemEntity<SouthSFTPItemSettings>): Promise<Array<FileInfo>> {
     const connectionOptions = await this.createConnectionOptions();
     const client = new sftpClient();
     await client.connect(connectionOptions);
@@ -168,7 +161,7 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
   /**
    * Retrieve a file from a SFTP server and send it to the Engine.
    */
-  async getFile(file: FileInfo, item: SouthConnectorItemDTO<SouthSFTPItemSettings>): Promise<void> {
+  async getFile(file: FileInfo, item: SouthConnectorItemEntity<SouthSFTPItemSettings>): Promise<void> {
     const connectionOptions = await this.createConnectionOptions();
 
     const client = new sftpClient();

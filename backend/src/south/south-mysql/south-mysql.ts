@@ -2,7 +2,6 @@ import path from 'node:path';
 import mysql from 'mysql2/promise';
 
 import SouthConnector from '../south-connector';
-import manifest from './manifest';
 import {
   convertDateTimeToInstant,
   createFolder,
@@ -22,7 +21,6 @@ import { SouthMySQLItemSettings, SouthMySQLSettings } from '../../../../shared/m
 import { OIBusContent } from '../../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
-import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 
@@ -30,8 +28,6 @@ import ScanModeRepository from '../../repository/config/scan-mode.repository';
  * Class SouthMySQL - Retrieve data from MySQL / MariaDB databases and send them to the cache as CSV files.
  */
 export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, SouthMySQLItemSettings> implements QueriesHistory {
-  static type = manifest.id;
-
   private readonly tmpFolder: string;
 
   constructor(
@@ -39,7 +35,6 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     southConnectorRepository: SouthConnectorRepository,
-    southMetricsRepository: SouthConnectorMetricsRepository,
     southCacheRepository: SouthCacheRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
@@ -50,7 +45,6 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
       engineAddContentCallback,
       encryptionService,
       southConnectorRepository,
-      southMetricsRepository,
       southCacheRepository,
       scanModeRepository,
       logger,

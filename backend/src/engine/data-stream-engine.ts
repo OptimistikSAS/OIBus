@@ -5,7 +5,6 @@ import { createFolder, filesExists } from '../service/utils';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { Instant } from '../../../shared/model/types';
-import { PassThrough } from 'node:stream';
 import { OIBusContent } from '../../../shared/model/engine.model';
 import { ScanMode } from '../model/scan-mode.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
@@ -330,22 +329,6 @@ export default class DataStreamEngine {
 
   async retryAllValueErrors(northId: string) {
     await this.northConnectors.get(northId)?.retryAllValueErrors();
-  }
-
-  getSouthDataStream(southId: string): PassThrough | null {
-    return this.southConnectors.get(southId)?.getMetricsDataStream() || null;
-  }
-
-  getNorthDataStream(northId: string): PassThrough | null {
-    return this.northConnectors.get(northId)?.getMetricsDataStream() || null;
-  }
-
-  resetSouthMetrics(southId: string): PassThrough | null {
-    return this.southConnectors.get(southId)?.resetMetrics() || null;
-  }
-
-  resetNorthMetrics(northId: string): PassThrough | null {
-    return this.northConnectors.get(northId)?.resetMetrics() || null;
   }
 
   async updateScanMode(scanMode: ScanMode): Promise<void> {
