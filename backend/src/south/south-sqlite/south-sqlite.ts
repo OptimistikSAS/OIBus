@@ -4,7 +4,6 @@ import db from 'better-sqlite3';
 import pino from 'pino';
 
 import SouthConnector from '../south-connector';
-import manifest from './manifest';
 import {
   convertDateTimeToInstant,
   createFolder,
@@ -22,7 +21,6 @@ import { SouthSQLiteItemSettings, SouthSQLiteSettings } from '../../../../shared
 import { OIBusContent } from '../../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
-import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 
@@ -30,8 +28,6 @@ import ScanModeRepository from '../../repository/config/scan-mode.repository';
  * Class SouthSQLite - Retrieve data from SQLite databases and send them to the cache as CSV files.
  */
 export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, SouthSQLiteItemSettings> implements QueriesHistory {
-  static type = manifest.id;
-
   private readonly tmpFolder: string;
 
   constructor(
@@ -39,7 +35,6 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     southConnectorRepository: SouthConnectorRepository,
-    southMetricsRepository: SouthConnectorMetricsRepository,
     southCacheRepository: SouthCacheRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
@@ -50,7 +45,6 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
       engineAddContentCallback,
       encryptionService,
       southConnectorRepository,
-      southMetricsRepository,
       southCacheRepository,
       scanModeRepository,
       logger,

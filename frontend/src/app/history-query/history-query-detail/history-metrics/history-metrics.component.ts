@@ -28,10 +28,7 @@ export class HistoryMetricsComponent {
   constructor() {}
 
   get southProgressbarAnimated(): boolean {
-    if (this.historyQuery.status === 'RUNNING' /*&& this.historyMetrics.south.historyMetrics.intervalProgress !== 1*/) {
-      return true;
-    }
-    return false;
+    return this.historyQuery.status === 'RUNNING' && this.historyMetrics.historyMetrics.intervalProgress !== 1;
   }
 
   get northProgress() {
@@ -42,9 +39,6 @@ export class HistoryMetricsComponent {
   }
 
   get northProgressbarAnimated(): boolean {
-    if (this.historyQuery.status === 'RUNNING' && this.northProgress !== 1) {
-      return true;
-    }
-    return false;
+    return this.historyQuery.status === 'RUNNING' && this.northProgress < 1;
   }
 }
