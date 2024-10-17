@@ -25,6 +25,8 @@ import CertificateRepository from '../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import OIAnalyticsRegistrationRepositoryMock from '../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
 import CertificateRepositoryMock from '../tests/__mocks__/repository/config/certificate-repository.mock';
+import DataStreamEngine from '../engine/data-stream-engine';
+import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
 
 jest.mock('../south/south-opcua/south-opcua');
 
@@ -39,6 +41,7 @@ const certificateRepository: CertificateRepository = new CertificateRepositoryMo
 const oIAnalyticsMessageService: OIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const connectionService: ConnectionService = new ConnectionServiceMock();
+const dataStreamEngine: DataStreamEngine = new DataStreamEngineMock();
 
 const logger: pino.Logger = new PinoLogger();
 let service: SouthService;
@@ -56,7 +59,8 @@ describe('south service', () => {
       certificateRepository,
       oIAnalyticsMessageService,
       encryptionService,
-      connectionService
+      connectionService,
+      dataStreamEngine
     );
   });
 

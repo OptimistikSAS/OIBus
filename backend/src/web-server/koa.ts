@@ -7,7 +7,6 @@ import OIBusService from '../service/oibus.service';
 import NorthService from '../service/north.service';
 import OianalyticsRegistrationService from '../service/oia/oianalytics-registration.service';
 import ScanModeService from '../service/scan-mode.service';
-import SubscriptionService from '../service/subscription.service';
 import IPFilterService from '../service/ip-filter.service';
 import OIAnalyticsCommandService from '../service/oia/oianalytics-command.service';
 import HistoryQueryService from '../service/history-query.service';
@@ -19,7 +18,6 @@ interface KoaRequest<RequestBody> extends Request {
 export interface KoaApplication extends Koa {
   id: string;
   scanModeService: ScanModeService;
-  subscriptionService: SubscriptionService;
   ipFilterService: IPFilterService;
   oIBusService: OIBusService;
   oIAnalyticsRegistrationService: OianalyticsRegistrationService;

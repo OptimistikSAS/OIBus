@@ -1,8 +1,10 @@
 /**
- * Create a mock object for OIBus engine
+ * Create a mock object for Data Stream engine
  */
-export default jest.fn().mockImplementation(() => {
+export default jest.fn().mockImplementation(logger => {
   return {
+    logger,
+    baseFolder: 'base-folder',
     start: jest.fn(),
     stop: jest.fn(),
     setLogger: jest.fn(),
@@ -21,6 +23,7 @@ export default jest.fn().mockImplementation(() => {
     getErrorFiles: jest.fn(),
     updateScanMode: jest.fn(),
     updateSubscriptions: jest.fn(),
+    updateSubscription: jest.fn(),
     deleteSouth: jest.fn(),
     deleteNorth: jest.fn()
   };
