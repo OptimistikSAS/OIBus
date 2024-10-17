@@ -4,7 +4,6 @@ import pino from 'pino';
 import { BlobServiceClient, StorageSharedKeyCredential } from '@azure/storage-blob';
 import { ClientSecretCredential, DefaultAzureCredential } from '@azure/identity';
 import NorthConnector from '../north-connector';
-import manifest from '../north-azure-blob/manifest';
 import EncryptionService from '../../service/encryption.service';
 import { NorthAzureBlobSettings } from '../../../../shared/model/north-settings.model';
 import { ProxyOptions } from '@azure/core-http';
@@ -14,12 +13,10 @@ import csv from 'papaparse';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
-import NorthConnectorMetricsRepository from '../../repository/logs/north-connector-metrics.repository';
 
 const TEST_FILE = 'oibus-azure-test.txt';
 
 export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSettings> {
-  static type = manifest.id;
   private blobClient: BlobServiceClient | null = null;
 
   constructor(
@@ -27,11 +24,10 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
     encryptionService: EncryptionService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
-    northMetricsRepository: NorthConnectorMetricsRepository,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, encryptionService, northConnectorRepository, scanModeRepository, northMetricsRepository, logger, baseFolder);
+    super(connector, encryptionService, northConnectorRepository, scanModeRepository, logger, baseFolder);
   }
 
   async start(dataStream = true): Promise<void> {

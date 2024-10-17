@@ -77,7 +77,6 @@ export default class NorthService {
           this.encryptionService,
           this.northConnectorRepository,
           this.scanModeRepository,
-          this.northMetricsRepository,
           logger,
           baseFolder
         );
@@ -87,7 +86,6 @@ export default class NorthService {
           this.encryptionService,
           this.northConnectorRepository,
           this.scanModeRepository,
-          this.northMetricsRepository,
           logger,
           baseFolder
         );
@@ -97,7 +95,6 @@ export default class NorthService {
           this.encryptionService,
           this.northConnectorRepository,
           this.scanModeRepository,
-          this.northMetricsRepository,
           logger,
           baseFolder
         );
@@ -107,7 +104,6 @@ export default class NorthService {
           this.encryptionService,
           this.northConnectorRepository,
           this.scanModeRepository,
-          this.northMetricsRepository,
           logger,
           baseFolder
         );
@@ -117,7 +113,6 @@ export default class NorthService {
           this.encryptionService,
           this.northConnectorRepository,
           this.scanModeRepository,
-          this.northMetricsRepository,
           this.certificateRepository,
           this.oIAnalyticsRegistrationRepository,
           logger,
@@ -129,7 +124,6 @@ export default class NorthService {
           this.encryptionService,
           this.northConnectorRepository,
           this.scanModeRepository,
-          this.northMetricsRepository,
           logger,
           baseFolder
         );

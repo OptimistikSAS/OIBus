@@ -9,15 +9,12 @@ import EncryptionService from '../service/encryption.service';
 import DeferredPromise from '../service/deferred-promise';
 import { DateTime } from 'luxon';
 import SouthCacheService from '../service/south-cache.service';
-import { PassThrough } from 'node:stream';
 import { DelegatesConnection, QueriesFile, QueriesHistory, QueriesLastPoint, QueriesSubscription } from './south-interface';
-import SouthConnectorMetricsService from '../service/south-connector-metrics.service';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { OIBusContent, OIBusRawContent, OIBusTimeValueContent } from '../../../shared/model/engine.model';
 import path from 'node:path';
 import ConnectionService, { ManagedConnectionDTO } from '../service/connection.service';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../model/south-connector.model';
-import SouthConnectorMetricsRepository from '../repository/logs/south-connector-metrics.repository';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
@@ -45,28 +42,27 @@ import { ScanMode } from '../model/scan-mode.model';
  * and should not be taken care at the South level.
  */
 export default abstract class SouthConnector<T extends SouthSettings, I extends SouthItemSettings> {
-  public static type: string;
-
   private taskJobQueue: Array<ScanMode> = [];
   private cronByScanModeIds: Map<string, CronJob> = new Map<string, CronJob>();
   private taskRunner: EventEmitter = new EventEmitter();
-  public connectedEvent: EventEmitter = new EventEmitter();
   private stopping = false;
   private runProgress$: DeferredPromise | null = null;
   private subscribedItems: Array<SouthConnectorItemEntity<I>> = [];
   protected cacheService: SouthCacheService | null = null;
-  private metricsService: SouthConnectorMetricsService | null = null;
+
+  public connectedEvent: EventEmitter = new EventEmitter();
+  public metricsEvent: EventEmitter = new EventEmitter();
+
   historyIsRunning = false;
 
   /**
    * Constructor for SouthConnector
    */
-  constructor(
+  protected constructor(
     protected connector: SouthConnectorEntity<T, I>,
     private engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     protected readonly encryptionService: EncryptionService,
     private readonly southConnectorRepository: SouthConnectorRepository,
-    private readonly southMetricsRepository: SouthConnectorMetricsRepository,
     private readonly southCacheRepository: SouthCacheRepository,
     private readonly scanModeRepository: ScanModeRepository,
     protected logger: pino.Logger,
@@ -75,8 +71,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     private readonly connectionService: ConnectionService | null = null
   ) {
     if (this.connector.id !== 'test') {
-      this.metricsService = new SouthConnectorMetricsService(this.connector.id, this.southMetricsRepository);
-      this.metricsService.initMetrics();
+      this.metricsEvent.emit('init');
       this.cacheService = new SouthCacheService(this.southCacheRepository);
     }
     this.taskRunner.on('next', async () => {
@@ -108,13 +103,6 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   }
 
   async connect(): Promise<void> {
-    if (this.connector.id !== 'test') {
-      this.metricsService!.updateMetrics(this.connector.id, {
-        ...this.metricsService!.metrics,
-        lastConnection: DateTime.now().toUTC().toISO()
-      });
-    }
-
     if (this.delegatesConnection()) {
       const connectionDTO: ManagedConnectionDTO<unknown> = {
         type: this.connector.type,
@@ -133,6 +121,11 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     }
     this.cronByScanModeIds.clear();
     this.subscribedItems = [];
+    if (this.connector.id !== 'test') {
+      this.metricsEvent.emit('connect', {
+        lastConnection: DateTime.now().toUTC().toISO()
+      });
+    }
     this.connectedEvent.emit('connected');
   }
 
@@ -260,8 +253,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     this.createDeferredPromise();
 
     const runStart = DateTime.now();
-    this.metricsService!.updateMetrics(this.connector.id, {
-      ...this.metricsService!.metrics,
+    this.metricsEvent.emit('run-start', {
       lastRunStart: runStart.toUTC().toISO()
     });
 
@@ -301,8 +293,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       }
     }
 
-    this.metricsService!.updateMetrics(this.connector.id, {
-      ...this.metricsService!.metrics,
+    this.metricsEvent.emit('run-end', {
       lastRunDuration: DateTime.now().toMillis() - runStart.toMillis()
     });
     this.taskJobQueue.shift();
@@ -352,9 +343,9 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       for (const [index, item] of itemsToRead.entries()) {
         if (this.stopping) {
           this.logger.debug(`Connector is stopping. Exiting history query at item ${item.name}`);
-          // TODO const stoppedMetrics = structuredClone(this.metricsService!.metrics);
-          // stoppedMetrics.historyMetrics.running = false;
-          // this.metricsService!.updateMetrics(this.connector.id, stoppedMetrics);
+          this.metricsEvent.emit('history-stop', {
+            running: false
+          });
           this.historyIsRunning = false;
           return;
         }
@@ -386,9 +377,9 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
 
       await this.queryIntervals(intervals, itemsToRead, southCache, startTimeFromCache);
     }
-    // TODO: const stoppedMetrics = structuredClone(this.metricsService!.metrics);
-    // stoppedMetrics.historyMetrics.running = false;
-    // this.metricsService!.updateMetrics(this.connector.id, stoppedMetrics);
+    this.metricsEvent.emit('history-stop', {
+      running: false
+    });
     this.historyIsRunning = false;
   }
 
@@ -396,14 +387,11 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     intervals: Array<Interval>,
     items: Array<SouthConnectorItemEntity<I>>,
     southCache: SouthCache,
-    _startTimeFromCache: Instant
+    startTimeFromCache: Instant
   ) {
-    this.metricsService!.updateMetrics(this.connector.id, {
-      ...this.metricsService!.metrics
-      // historyMetrics: {
-      //   running: true,
-      //   intervalProgress: this.calculateIntervalProgress(intervals, 0, startTimeFromCache)
-      // }
+    this.metricsEvent.emit('history-query-start', {
+      running: true,
+      intervalProgress: this.calculateIntervalProgress(intervals, 0, startTimeFromCache)
     });
 
     for (const [index, interval] of intervals.entries()) {
@@ -421,16 +409,13 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
         });
       }
 
-      this.metricsService!.updateMetrics(this.connector.id, {
-        ...this.metricsService!.metrics
-        // historyMetrics: {
-        //   running: true,
-        //   intervalProgress: this.calculateIntervalProgress(intervals, index, startTimeFromCache),
-        //   currentIntervalStart: interval.start,
-        //   currentIntervalEnd: interval.end,
-        //   currentIntervalNumber: index + 1,
-        //   numberOfIntervals: intervals.length
-        // }
+      this.metricsEvent.emit('history-query-interval', {
+        running: true,
+        intervalProgress: this.calculateIntervalProgress(intervals, index, startTimeFromCache),
+        currentIntervalStart: interval.start,
+        currentIntervalEnd: interval.end,
+        currentIntervalNumber: index + 1,
+        numberOfIntervals: intervals.length
       });
 
       if (this.stopping) {
@@ -502,10 +487,8 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     if (data.content.length > 0 && this.connector.id !== 'test') {
       this.logger.debug(`Add ${data.content.length} values to cache from South "${this.connector.name}"`);
       await this.engineAddContentCallback(this.connector.id, data);
-      const currentMetrics = this.metricsService!.metrics;
-      this.metricsService!.updateMetrics(this.connector.id, {
-        ...currentMetrics,
-        numberOfValuesRetrieved: currentMetrics.numberOfValuesRetrieved + data.content.length,
+      this.metricsEvent.emit('add-values', {
+        numberOfValuesRetrieved: data.content.length,
         lastValueRetrieved: data.content[data.content.length - 1]
       });
     }
@@ -517,10 +500,8 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   private async addFile(data: OIBusRawContent): Promise<void> {
     this.logger.debug(`Add file "${data.filePath}" to cache from South "${this.connector.name}"`);
     await this.engineAddContentCallback(this.connector.id, data);
-    const currentMetrics = this.metricsService!.metrics;
-    this.metricsService!.updateMetrics(this.connector.id, {
-      ...currentMetrics,
-      numberOfFilesRetrieved: currentMetrics.numberOfFilesRetrieved + 1,
+    this.metricsEvent.emit('add-file', {
+      numberOfFilesRetrieved: 1,
       lastFileRetrieved: path.parse(data.filePath).base
     });
   }
@@ -568,14 +549,6 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
 
   async resetCache(): Promise<void> {
     this.cacheService!.resetSouthCache(this.connector.id);
-  }
-
-  getMetricsDataStream(): PassThrough {
-    return this.metricsService!.stream;
-  }
-
-  resetMetrics(): void {
-    this.metricsService!.resetMetrics();
   }
 
   queriesFile(): this is QueriesFile {

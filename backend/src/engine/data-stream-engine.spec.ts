@@ -385,30 +385,6 @@ describe('DataStreamEngine', () => {
     expect(mockedNorth1.retryAllValueErrors).toHaveBeenCalledWith();
   });
 
-  it('should manage data stream and metrics', async () => {
-    await engine.start([mockedNorth1], [mockedSouth1]);
-
-    engine.getNorthDataStream('bad id');
-    expect(mockedNorth1.getMetricsDataStream).not.toHaveBeenCalled();
-    engine.getNorthDataStream(testData.north.list[0].id);
-    expect(mockedNorth1.getMetricsDataStream).toHaveBeenCalled();
-
-    engine.getSouthDataStream('bad id');
-    expect(mockedSouth1.getMetricsDataStream).not.toHaveBeenCalled();
-    engine.getSouthDataStream(testData.south.list[0].id);
-    expect(mockedSouth1.getMetricsDataStream).toHaveBeenCalled();
-
-    engine.resetSouthMetrics('bad id');
-    expect(mockedSouth1.resetMetrics).not.toHaveBeenCalled();
-    engine.resetSouthMetrics(testData.south.list[0].id);
-    expect(mockedSouth1.resetMetrics).toHaveBeenCalled();
-
-    engine.resetNorthMetrics('bad id');
-    expect(mockedNorth1.resetMetrics).not.toHaveBeenCalled();
-    engine.resetNorthMetrics(testData.north.list[0].id);
-    expect(mockedNorth1.resetMetrics).toHaveBeenCalled();
-  });
-
   it('should manage item change', async () => {
     await engine.start([], [mockedSouth1]);
 

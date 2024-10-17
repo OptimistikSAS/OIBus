@@ -3,7 +3,6 @@ import * as pg from 'pg';
 import { ClientConfig } from 'pg';
 
 import SouthConnector from '../south-connector';
-import manifest from './manifest';
 import {
   convertDateTimeToInstant,
   createFolder,
@@ -14,7 +13,6 @@ import {
   logQuery,
   persistResults
 } from '../../service/utils';
-import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
@@ -22,9 +20,8 @@ import { QueriesHistory } from '../south-interface';
 import { DateTime } from 'luxon';
 import { SouthPostgreSQLItemSettings, SouthPostgreSQLSettings } from '../../../../shared/model/south-settings.model';
 import { OIBusContent } from '../../../../shared/model/engine.model';
-import { SouthConnectorEntity } from '../../model/south-connector.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
-import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 
@@ -35,8 +32,6 @@ export default class SouthPostgreSQL
   extends SouthConnector<SouthPostgreSQLSettings, SouthPostgreSQLItemSettings>
   implements QueriesHistory
 {
-  static type = manifest.id;
-
   private readonly tmpFolder: string;
 
   constructor(
@@ -44,7 +39,6 @@ export default class SouthPostgreSQL
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     southConnectorRepository: SouthConnectorRepository,
-    southMetricsRepository: SouthConnectorMetricsRepository,
     southCacheRepository: SouthCacheRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
@@ -55,7 +49,6 @@ export default class SouthPostgreSQL
       engineAddContentCallback,
       encryptionService,
       southConnectorRepository,
-      southMetricsRepository,
       southCacheRepository,
       scanModeRepository,
       logger,
@@ -133,7 +126,10 @@ export default class SouthPostgreSQL
     }
   }
 
-  override async testItem(item: SouthConnectorItemDTO<SouthPostgreSQLItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
+  override async testItem(
+    item: SouthConnectorItemEntity<SouthPostgreSQLItemSettings>,
+    callback: (data: OIBusContent) => void
+  ): Promise<void> {
     const startTime = DateTime.now()
       .minus(600 * 1000)
       .toUTC()
@@ -182,7 +178,7 @@ export default class SouthPostgreSQL
    * and write them into a CSV file and send it to the engine.
    */
   async historyQuery(
-    items: Array<SouthConnectorItemDTO<SouthPostgreSQLItemSettings>>,
+    items: Array<SouthConnectorItemEntity<SouthPostgreSQLItemSettings>>,
     startTime: Instant,
     endTime: Instant
   ): Promise<Instant> {
@@ -242,7 +238,7 @@ export default class SouthPostgreSQL
    * Apply the SQL query to the target PostgreSQL database
    */
   async queryData(
-    item: SouthConnectorItemDTO<SouthPostgreSQLItemSettings>,
+    item: SouthConnectorItemEntity<SouthPostgreSQLItemSettings>,
     startTime: Instant,
     endTime: Instant
   ): Promise<Array<Record<string, string | number>>> {

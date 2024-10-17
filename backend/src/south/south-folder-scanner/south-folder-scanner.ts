@@ -3,18 +3,14 @@ import path from 'node:path';
 
 import SouthConnector from '../south-connector';
 import { compress } from '../../service/utils';
-import manifest from './manifest';
-
-import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import pino from 'pino';
 import EncryptionService from '../../service/encryption.service';
 import { QueriesFile } from '../south-interface';
 import { SouthFolderScannerItemSettings, SouthFolderScannerSettings } from '../../../../shared/model/south-settings.model';
 import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
-import { SouthConnectorEntity } from '../../model/south-connector.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
-import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 
@@ -25,8 +21,6 @@ export default class SouthFolderScanner
   extends SouthConnector<SouthFolderScannerSettings, SouthFolderScannerItemSettings>
   implements QueriesFile
 {
-  static type = manifest.id;
-
   private readonly tmpFolder: string;
 
   /**
@@ -37,7 +31,6 @@ export default class SouthFolderScanner
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     southConnectorRepository: SouthConnectorRepository,
-    southMetricsRepository: SouthConnectorMetricsRepository,
     southCacheRepository: SouthCacheRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
@@ -48,7 +41,6 @@ export default class SouthFolderScanner
       engineAddContentCallback,
       encryptionService,
       southConnectorRepository,
-      southMetricsRepository,
       southCacheRepository,
       scanModeRepository,
       logger,
@@ -79,7 +71,7 @@ export default class SouthFolderScanner
   }
 
   override async testItem(
-    item: SouthConnectorItemDTO<SouthFolderScannerItemSettings>,
+    item: SouthConnectorItemEntity<SouthFolderScannerItemSettings>,
     callback: (data: OIBusContent) => void
   ): Promise<void> {
     const inputFolder = path.resolve(this.connector.settings.inputFolder);
@@ -109,7 +101,7 @@ export default class SouthFolderScanner
   /**
    * Read the raw file and rewrite it to another file in the folder archive
    */
-  async fileQuery(items: Array<SouthConnectorItemDTO<SouthFolderScannerItemSettings>>): Promise<void> {
+  async fileQuery(items: Array<SouthConnectorItemEntity<SouthFolderScannerItemSettings>>): Promise<void> {
     const inputFolder = path.resolve(this.connector.settings.inputFolder);
     this.logger.trace(`Reading "${inputFolder}" directory`);
     // List files in the inputFolder
@@ -158,7 +150,7 @@ export default class SouthFolderScanner
    * Filter the files if the name and the age of the file meet the request or - when preserveFiles - if they were
    * already sent.
    */
-  async checkAge(item: SouthConnectorItemDTO<SouthFolderScannerItemSettings>, filename: string): Promise<boolean> {
+  async checkAge(item: SouthConnectorItemEntity<SouthFolderScannerItemSettings>, filename: string): Promise<boolean> {
     const inputFolder = path.resolve(this.connector.settings.inputFolder);
 
     const timestamp = new Date().getTime();
@@ -200,7 +192,7 @@ export default class SouthFolderScanner
   /**
    * Send the file to the Engine.
    */
-  async sendFile(item: SouthConnectorItemDTO<SouthFolderScannerItemSettings>, filename: string): Promise<void> {
+  async sendFile(item: SouthConnectorItemEntity<SouthFolderScannerItemSettings>, filename: string): Promise<void> {
     const filePath = path.resolve(this.connector.settings.inputFolder, filename);
     this.logger.info(`Sending file "${filePath}" to the engine`);
 

@@ -3,8 +3,6 @@ import net from 'node:net';
 import { client } from 'jsmodbus';
 
 import SouthConnector from '../south-connector';
-import manifest from './manifest';
-import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import pino from 'pino';
 import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
@@ -16,9 +14,8 @@ import {
   SouthModbusSettings
 } from '../../../../shared/model/south-settings.model';
 import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
-import { SouthConnectorEntity } from '../../model/south-connector.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
-import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 
@@ -26,8 +23,6 @@ import ScanModeRepository from '../../repository/config/scan-mode.repository';
  * Class SouthModbus - Provides instruction for Modbus client connection
  */
 export default class SouthModbus extends SouthConnector<SouthModbusSettings, SouthModbusItemSettings> implements QueriesLastPoint {
-  static type = manifest.id;
-
   private socket: net.Socket | null = null;
   private client: ModbusTCPClient | null = null;
   private reconnectTimeout: NodeJS.Timeout | null = null;
@@ -38,7 +33,6 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     southConnectorRepository: SouthConnectorRepository,
-    southMetricsRepository: SouthConnectorMetricsRepository,
     southCacheRepository: SouthCacheRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
@@ -49,7 +43,6 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
       engineAddContentCallback,
       encryptionService,
       southConnectorRepository,
-      southMetricsRepository,
       southCacheRepository,
       scanModeRepository,
       logger,
@@ -57,7 +50,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
     );
   }
 
-  async lastPointQuery(items: Array<SouthConnectorItemDTO<SouthModbusItemSettings>>): Promise<void> {
+  async lastPointQuery(items: Array<SouthConnectorItemEntity<SouthModbusItemSettings>>): Promise<void> {
     const dataValues: Array<OIBusTimeValue> = [];
     try {
       const startRequest = DateTime.now().toMillis();
@@ -90,7 +83,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
   /**
    * Dynamically call the right function based on the given point settings
    */
-  async modbusFunction(item: SouthConnectorItemDTO<SouthModbusItemSettings>): Promise<Array<OIBusTimeValue>> {
+  async modbusFunction(item: SouthConnectorItemEntity<SouthModbusItemSettings>): Promise<Array<OIBusTimeValue>> {
     const offset = this.connector.settings.addressOffset === 'Modbus' ? 0 : -1;
     const address =
       (item.settings.address.match(/^0x[0-9a-f]+$/i) ? parseInt(item.settings.address, 16) : parseInt(item.settings.address, 10)) + offset;
@@ -284,7 +277,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
     }
   }
 
-  override async testItem(item: SouthConnectorItemDTO<SouthModbusItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
+  override async testItem(item: SouthConnectorItemEntity<SouthModbusItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
     try {
       await new Promise<void>((resolve, reject) => {
         this.socket = new net.Socket();

@@ -17,8 +17,6 @@ import {
 } from 'node-opcua-client';
 
 import { Aggregate, Instant, Resampling } from '../../../../shared/model/types';
-
-import manifest from './manifest';
 import SouthConnector from '../south-connector';
 import EncryptionService, { CERT_FILE_NAME, CERT_FOLDER, CERT_PRIVATE_KEY_FILE_NAME } from '../../service/encryption.service';
 import pino from 'pino';
@@ -38,7 +36,6 @@ import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.mo
 import ConnectionService, { ManagedConnection, ManagedConnectionSettings } from '../../service/connection.service';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
-import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 
@@ -52,8 +49,6 @@ export default class SouthOPCUA
   extends SouthConnector<SouthOPCUASettings, SouthOPCUAItemSettings>
   implements QueriesHistory, QueriesLastPoint, QueriesSubscription, DelegatesConnection<ClientSession>
 {
-  static type = manifest.id;
-
   private clientCertificateManager: OPCUACertificateManager | null = null;
   private disconnecting = false;
   private monitoredItems = new Map<string, ClientMonitoredItem>();
@@ -66,7 +61,6 @@ export default class SouthOPCUA
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     southConnectorRepository: SouthConnectorRepository,
-    southMetricsRepository: SouthConnectorMetricsRepository,
     southCacheRepository: SouthCacheRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
@@ -78,7 +72,6 @@ export default class SouthOPCUA
       engineAddContentCallback,
       encryptionService,
       southConnectorRepository,
-      southMetricsRepository,
       southCacheRepository,
       scanModeRepository,
       logger,

@@ -10,15 +10,12 @@ import { EventEmitter } from 'node:events';
 import DeferredPromise from '../service/deferred-promise';
 import { OIBusContent, OIBusRawContent, OIBusTimeValue, OIBusTimeValueContent } from '../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
-import { PassThrough } from 'node:stream';
 import { ReadStream } from 'node:fs';
 import path from 'node:path';
-import NorthConnectorMetricsService from '../service/north-connector-metrics.service';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { dirSize, validateCronExpression } from '../service/utils';
 import { NorthConnectorEntity } from '../model/north-connector.model';
 import { SouthConnectorEntityLight } from '../model/south-connector.model';
-import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
 import { ScanMode } from '../model/scan-mode.model';
@@ -42,12 +39,9 @@ import { OIBusError } from '../model/engine.model';
  * - **logger**: to log an event with different levels (error,warning,info,debug,trace)
  */
 export default abstract class NorthConnector<T extends NorthSettings> {
-  public static type: string;
-
   private archiveService: ArchiveService;
   private valueCacheService: ValueCacheService<T>;
   private fileCacheService: FileCacheService;
-  protected metricsService: NorthConnectorMetricsService | null = null;
   private subscribedTo: Array<SouthConnectorEntityLight> = [];
 
   private cacheSize = 0;
@@ -61,6 +55,9 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   private cronByScanModeIds: Map<string, CronJob> = new Map<string, CronJob>();
   private taskRunner: EventEmitter = new EventEmitter();
   private runProgress$: DeferredPromise | null = null;
+
+  public metricsEvent: EventEmitter = new EventEmitter();
+
   private stopping = false;
 
   protected constructor(
@@ -68,7 +65,6 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     protected readonly encryptionService: EncryptionService,
     protected readonly northConnectorRepository: NorthConnectorRepository,
     protected readonly scanModeRepository: ScanModeRepository,
-    protected readonly northMetricsRepository: NorthConnectorMetricsRepository,
     protected logger: pino.Logger,
     protected readonly baseFolder: string
   ) {
@@ -79,9 +75,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     if (this.connector.id === 'test') {
       return;
     }
-
-    this.metricsService = new NorthConnectorMetricsService(this.connector.id, this.northMetricsRepository);
-    this.metricsService.initMetrics();
+    this.metricsEvent.emit('init');
 
     this.taskRunner.on('next', async () => {
       if (this.taskJobQueue.length > 0) {
@@ -104,8 +98,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
 
     this.valueCacheService.triggerRun.on('cache-size', async (sizeToAdd: number) => {
       this.cacheSize += sizeToAdd;
-      this.metricsService!.updateMetrics(this.connector.id, {
-        ...this.metricsService!.metrics,
+      this.metricsEvent.emit('cache-size', {
         cacheSize: this.cacheSize
       });
     });
@@ -120,16 +113,14 @@ export default abstract class NorthConnector<T extends NorthSettings> {
 
     this.fileCacheService.triggerRun.on('cache-size', async (sizeToAdd: number) => {
       this.cacheSize += sizeToAdd;
-      this.metricsService!.updateMetrics(this.connector.id, {
-        ...this.metricsService!.metrics,
+      this.metricsEvent.emit('cache-size', {
         cacheSize: this.cacheSize
       });
     });
 
     this.archiveService.triggerRun.on('cache-size', async (sizeToAdd: number) => {
       this.cacheSize += sizeToAdd;
-      this.metricsService!.updateMetrics(this.connector.id, {
-        ...this.metricsService!.metrics,
+      this.metricsEvent.emit('cache-size', {
         cacheSize: this.cacheSize
       });
     });
@@ -143,8 +134,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     this.logger.debug(`North connector "${this.connector.name}" enabled. Starting services...`);
     if (this.connector.id !== 'test') {
       this.cacheSize = await dirSize(this.baseFolder);
-      this.metricsService!.updateMetrics(this.connector.id, {
-        ...this.metricsService!.metrics,
+      this.metricsEvent.emit('cache-size', {
         cacheSize: this.cacheSize
       });
       this.updateConnectorSubscription();
@@ -169,11 +159,9 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    */
   async connect(): Promise<void> {
     if (this.connector.id !== 'test') {
-      this.metricsService!.updateMetrics(this.connector.id, {
-        ...this.metricsService!.metrics,
+      this.metricsEvent.emit('connect', {
         lastConnection: DateTime.now().toUTC().toISO()
       });
-
       const scanMode = this.scanModeRepository.findById(this.connector.caching.scanModeId)!;
       this.createCronJob(scanMode);
     }
@@ -247,13 +235,14 @@ export default abstract class NorthConnector<T extends NorthSettings> {
 
     const runStart = DateTime.now();
     if (this.connector.id !== 'test') {
-      this.metricsService!.updateMetrics(this.connector.id, { ...this.metricsService!.metrics, lastRunStart: runStart.toUTC().toISO() });
+      this.metricsEvent.emit('run-start', {
+        lastRunStart: runStart.toUTC().toISO()
+      });
     }
 
     await this.handleContentWrapper(flag);
     if (this.connector.id !== 'test') {
-      this.metricsService!.updateMetrics(this.connector.id, {
-        ...this.metricsService!.metrics,
+      this.metricsEvent.emit('run-end', {
         lastRunDuration: DateTime.now().toMillis() - runStart.toMillis()
       });
     }
@@ -296,10 +285,8 @@ export default abstract class NorthConnector<T extends NorthSettings> {
         await this.handleContent(content);
 
         await this.valueCacheService.removeSentValues(this.valuesBeingSent);
-        const currentMetrics = this.metricsService!.metrics;
-        this.metricsService!.updateMetrics(this.connector.id, {
-          ...currentMetrics,
-          numberOfValuesSent: currentMetrics.numberOfValuesSent + arrayValues.length,
+        this.metricsEvent.emit('send-values', {
+          numberOfValuesSent: arrayValues.length,
           lastValueSent: arrayValues[arrayValues.length - 1]
         });
         this.valuesBeingSent = new Map();
@@ -331,10 +318,8 @@ export default abstract class NorthConnector<T extends NorthSettings> {
           filePath: this.fileBeingSent
         };
         await this.handleContent(content);
-        const currentMetrics = this.metricsService!.metrics;
-        this.metricsService!.updateMetrics(this.connector.id, {
-          ...currentMetrics,
-          numberOfFilesSent: currentMetrics.numberOfFilesSent + 1,
+        this.metricsEvent.emit('send-file', {
+          numberOfFilesSent: 1,
           lastFileSent: path.parse(this.fileBeingSent).base
         });
         this.fileCacheService.removeFileFromQueue();
@@ -643,14 +628,6 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   async retryAllValueErrors(): Promise<void> {
     this.logger.trace(`Retrying all value error files in North connector "${this.connector.name}"...`);
     await this.valueCacheService.retryAllErrorValues();
-  }
-
-  getMetricsDataStream(): PassThrough {
-    return this.metricsService!.stream;
-  }
-
-  resetMetrics(): void {
-    this.metricsService!.resetMetrics();
   }
 
   async updateScanMode(scanMode: ScanMode): Promise<void> {

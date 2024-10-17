@@ -14,12 +14,9 @@ import SouthConnectorRepository from '../../repository/config/south-connector.re
 import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
-import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
-import NorthMetricsRepositoryMock from '../../tests/__mocks__/repository/log/north-metrics-repository.mock';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
-import SouthConnectorMetricsServiceMock from '../../tests/__mocks__/service/south-connector-metrics-service.mock';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
 import testData from '../../tests/utils/test-data';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
@@ -55,26 +52,16 @@ jest.mock('../../service/utils');
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
-const southMetricsRepository: SouthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
 const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OIAnalyticsRegistrationRepositoryMock();
 const certificateRepository: CertificateRepository = new CertificateRepositoryMock();
 const southCacheService = new SouthCacheServiceMock();
-const southConnectorMetricsService = new SouthConnectorMetricsServiceMock();
 
 jest.mock(
   '../../service/south-cache.service',
   () =>
     function () {
       return southCacheService;
-    }
-);
-
-jest.mock(
-  '../../service/south-connector-metrics.service',
-  () =>
-    function () {
-      return southConnectorMetricsService;
     }
 );
 
@@ -180,7 +167,6 @@ describe('SouthOIAnalytics with Basic auth', () => {
       addContentCallback,
       encryptionService,
       southConnectorRepository,
-      southMetricsRepository,
       southCacheRepository,
       scanModeRepository,
       oIAnalyticsRegistrationRepository,
@@ -400,7 +386,6 @@ describe('SouthOIAnalytics without proxy but with accept self signed', () => {
       addContentCallback,
       encryptionService,
       southConnectorRepository,
-      southMetricsRepository,
       southCacheRepository,
       scanModeRepository,
       oIAnalyticsRegistrationRepository,
@@ -640,7 +625,6 @@ describe('SouthOIAnalytics with proxy', () => {
       addContentCallback,
       encryptionService,
       southConnectorRepository,
-      southMetricsRepository,
       southCacheRepository,
       scanModeRepository,
       oIAnalyticsRegistrationRepository,
@@ -792,7 +776,6 @@ describe('SouthOIAnalytics with proxy but without proxy password', () => {
       addContentCallback,
       encryptionService,
       southConnectorRepository,
-      southMetricsRepository,
       southCacheRepository,
       scanModeRepository,
       oIAnalyticsRegistrationRepository,
@@ -952,7 +935,6 @@ describe('SouthOIAnalytics without proxy but with acceptUnauthorized', () => {
       addContentCallback,
       encryptionService,
       southConnectorRepository,
-      southMetricsRepository,
       southCacheRepository,
       scanModeRepository,
       oIAnalyticsRegistrationRepository,
@@ -1066,7 +1048,6 @@ describe('SouthOIAnalytics with aad-certificate', () => {
       addContentCallback,
       encryptionService,
       southConnectorRepository,
-      southMetricsRepository,
       southCacheRepository,
       scanModeRepository,
       oIAnalyticsRegistrationRepository,
@@ -1198,7 +1179,6 @@ describe('SouthOIAnalytics with OIA module', () => {
       addContentCallback,
       encryptionService,
       southConnectorRepository,
-      southMetricsRepository,
       southCacheRepository,
       scanModeRepository,
       oIAnalyticsRegistrationRepository,
