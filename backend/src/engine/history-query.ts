@@ -7,20 +7,20 @@ import NorthService from '../service/north.service';
 import NorthConnector from '../north/north-connector';
 import SouthConnector from '../south/south-connector';
 import HistoryMetricsService from '../service/history-metrics.service';
-import HistoryQueryService from '../service/history-query.service';
 import { PassThrough } from 'node:stream';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { OIBusContent } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity } from '../model/south-connector.model';
 import { NorthConnectorEntity } from '../model/north-connector.model';
-import RepositoryService from '../service/repository.service';
 import { HistoryQueryEntity } from '../model/histor-query.model';
+import SouthConnectorMetricsRepository from '../repository/logs/south-connector-metrics.repository';
+import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
+import HistoryQueryRepository from '../repository/config/history-query.repository';
 
 const FINISH_INTERVAL = 5000;
 
 export default class HistoryQuery {
-  protected readonly baseFolder: string;
   private north: NorthConnector<NorthSettings> | null = null;
   private south: SouthConnector<SouthSettings, SouthItemSettings> | null = null;
   private finishInterval: NodeJS.Timeout | null = null;
@@ -31,21 +31,17 @@ export default class HistoryQuery {
     private historyConfiguration: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>,
     private readonly southService: SouthService,
     private readonly northService: NorthService,
-    private readonly historyService: HistoryQueryService,
-    private readonly repositoryService: RepositoryService,
-    private logger: pino.Logger,
-    baseFolder: string
+    private readonly southMetricsRepository: SouthConnectorMetricsRepository,
+    private readonly northMetricsRepository: NorthConnectorMetricsRepository,
+    private readonly historyQueryRepository: HistoryQueryRepository,
+    private readonly baseFolder: string,
+    private logger: pino.Logger
   ) {
-    this.baseFolder = baseFolder;
-    this._metricsService = new HistoryMetricsService(
-      historyConfiguration.id,
-      this.repositoryService.southMetricsRepository,
-      this.repositoryService.northMetricsRepository
-    );
+    this._metricsService = new HistoryMetricsService(historyConfiguration.id, this.southMetricsRepository, this.northMetricsRepository);
   }
 
   async start(): Promise<void> {
-    this.historyConfiguration = this.repositoryService.historyQueryRepository.findHistoryQueryById(this.historyConfiguration.id)!;
+    this.historyConfiguration = this.historyQueryRepository.findHistoryQueryById(this.historyConfiguration.id)!;
     const southConfiguration: SouthConnectorEntity<SouthSettings, SouthItemSettings> = {
       id: this.historyConfiguration.id,
       name: this.historyConfiguration.name,
@@ -109,7 +105,7 @@ export default class HistoryQuery {
           this.logger.error(`Error while executing history query. ${error}`);
           this.south!.resolveDeferredPromise();
           await delay(FINISH_INTERVAL);
-          this.historyConfiguration = this.repositoryService.historyQueryRepository.findHistoryQueryById(this.historyConfiguration.id)!;
+          this.historyConfiguration = this.historyQueryRepository.findHistoryQueryById(this.historyConfiguration.id)!;
           if (this.historyConfiguration.status === 'RUNNING' && !this.stopping) {
             await this.south!.stop(false);
             await this.south!.start(false);
@@ -174,8 +170,8 @@ export default class HistoryQuery {
     if (!this.north || !this.south || ((await this.north.isCacheEmpty()) && !this.south.historyIsRunning)) {
       this.logger.info(`Finish "${this.historyConfiguration.name}" (${this.historyConfiguration.id})`);
       await this.stop();
-      this.repositoryService.historyQueryRepository.updateHistoryQueryStatus(this.historyConfiguration.id, 'FINISHED');
-      this.historyConfiguration = this.repositoryService.historyQueryRepository.findHistoryQueryById(this.historyConfiguration.id)!;
+      this.historyQueryRepository.updateHistoryQueryStatus(this.historyConfiguration.id, 'FINISHED');
+      this.historyConfiguration = this.historyQueryRepository.findHistoryQueryById(this.historyConfiguration.id)!;
     } else {
       this.logger.debug(`History query "${this.historyConfiguration.name}" is still running`);
     }
@@ -187,5 +183,9 @@ export default class HistoryQuery {
 
   getMetricsDataStream(): PassThrough {
     return this._metricsService.stream;
+  }
+
+  get settings(): HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> {
+    return this.historyConfiguration;
   }
 }

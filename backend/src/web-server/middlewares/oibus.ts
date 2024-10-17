@@ -6,7 +6,6 @@ import OIBusService from '../../service/oibus.service';
 import NorthService from '../../service/north.service';
 import SouthService from '../../service/south.service';
 import ScanModeService from '../../service/scan-mode.service';
-import SubscriptionService from '../../service/subscription.service';
 import IPFilterService from '../../service/ip-filter.service';
 import OIAnalyticsRegistrationService from '../../service/oia/oianalytics-registration.service';
 import OIAnalyticsCommandService from '../../service/oia/oianalytics-command.service';
@@ -18,7 +17,6 @@ import HistoryQueryService from '../../service/history-query.service';
 const oibus = (
   id: string,
   scanModeService: ScanModeService,
-  subscriptionService: SubscriptionService,
   ipFilterService: IPFilterService,
   oIAnalyticsRegistrationService: OIAnalyticsRegistrationService,
   oIAnalyticsCommandService: OIAnalyticsCommandService,
@@ -33,7 +31,6 @@ const oibus = (
   return async (ctx: KoaContext<unknown, unknown>, next: () => void) => {
     ctx.app.id = id;
     ctx.app.scanModeService = scanModeService;
-    ctx.app.subscriptionService = subscriptionService;
     ctx.app.ipFilterService = ipFilterService;
     ctx.app.oIAnalyticsRegistrationService = oIAnalyticsRegistrationService;
     ctx.app.oIAnalyticsCommandService = oIAnalyticsCommandService;

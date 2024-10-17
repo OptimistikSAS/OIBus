@@ -14,15 +14,24 @@ import OIAnalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianal
 import EncryptionService from './encryption.service';
 import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
+import SouthConnectorMetricsRepository from '../repository/logs/south-connector-metrics.repository';
+import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
+import SouthMetricsRepositoryMock from '../tests/__mocks__/repository/log/south-metrics-repository.mock';
+import NorthMetricsRepositoryMock from '../tests/__mocks__/repository/log/north-metrics-repository.mock';
+import HistoryQueryEngine from '../engine/history-query-engine';
+import HistoryQueryEngineMock from '../tests/__mocks__/history-query-engine.mock';
 
 const validator = new JoiValidator();
 const historyQueryRepository: HistoryQueryRepository = new HistoryQueryRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const logRepository: LogRepository = new LogRepositoryMock();
+const southMetricsRepository: SouthConnectorMetricsRepository = new SouthMetricsRepositoryMock();
+const northMetricsRepository: NorthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
 const southService: SouthService = new SouthServiceMock();
 const northService: NorthService = new NorthServiceMock();
 const oIAnalyticsMessageService: OIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
+const historyQueryEngine: HistoryQueryEngine = new HistoryQueryEngineMock();
 
 let service: HistoryQueryService;
 describe('history query service', () => {
@@ -33,10 +42,13 @@ describe('history query service', () => {
       historyQueryRepository,
       scanModeRepository,
       logRepository,
+      southMetricsRepository,
+      northMetricsRepository,
       southService,
       northService,
       oIAnalyticsMessageService,
-      encryptionService
+      encryptionService,
+      historyQueryEngine
     );
   });
 

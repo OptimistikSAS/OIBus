@@ -1,5 +1,4 @@
-import OIBusEngine from '../engine/oibus-engine';
-import OibusEngineMock from '../tests/__mocks__/oibus-engine.mock';
+import DataStreamEngine from '../engine/data-stream-engine';
 import ScanModeService, { toScanModeDTO } from './scan-mode.service';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
@@ -12,6 +11,7 @@ import testData from '../tests/utils/test-data';
 import { scanModeSchema } from '../web-server/controllers/validators/oibus-validation-schema';
 import { validateCronExpression } from './utils';
 import { ValidatedCronExpression } from '../../../shared/model/scan-mode.model';
+import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
 
 jest.mock('./utils');
 jest.mock('../web-server/controllers/validators/joi.validator');
@@ -19,7 +19,7 @@ jest.mock('../web-server/controllers/validators/joi.validator');
 const validator = new JoiValidator();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
-const oibusEngine: OIBusEngine = new OibusEngineMock();
+const dataStreamEngine: DataStreamEngine = new DataStreamEngineMock();
 const oIAnalyticsMessageService: OIAnalyticsMessageService = new OianalyticsMessageServiceMock();
 
 let service: ScanModeService;
@@ -27,7 +27,7 @@ describe('Scan Mode Service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    service = new ScanModeService(validator, scanModeRepository, southCacheRepository, oIAnalyticsMessageService, oibusEngine);
+    service = new ScanModeService(validator, scanModeRepository, southCacheRepository, oIAnalyticsMessageService, dataStreamEngine);
   });
 
   it('findAll() should find all scan modes', () => {
@@ -79,7 +79,7 @@ describe('Scan Mode Service', () => {
     expect(scanModeRepository.findById).toHaveBeenNthCalledWith(2, testData.scanMode.list[0].id);
     expect(scanModeRepository.findById).toHaveBeenCalledTimes(2);
     expect(scanModeRepository.update).toHaveBeenCalledWith(testData.scanMode.list[0].id, testData.scanMode.command);
-    expect(oibusEngine.updateScanMode).toHaveBeenCalledWith(testData.scanMode.list[1]);
+    expect(dataStreamEngine.updateScanMode).toHaveBeenCalledWith(testData.scanMode.list[1]);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
   });
 
@@ -91,7 +91,7 @@ describe('Scan Mode Service', () => {
     await service.update(testData.scanMode.list[0].id, testData.scanMode.command);
 
     expect(scanModeRepository.update).toHaveBeenCalledWith(testData.scanMode.list[0].id, testData.scanMode.command);
-    expect(oibusEngine.updateScanMode).not.toHaveBeenCalled();
+    expect(dataStreamEngine.updateScanMode).not.toHaveBeenCalled();
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
   });
 
@@ -104,7 +104,7 @@ describe('Scan Mode Service', () => {
 
     expect(scanModeRepository.findById).toHaveBeenCalledWith(testData.scanMode.list[0].id);
     expect(scanModeRepository.update).not.toHaveBeenCalled();
-    expect(oibusEngine.updateScanMode).not.toHaveBeenCalled();
+    expect(dataStreamEngine.updateScanMode).not.toHaveBeenCalled();
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).not.toHaveBeenCalled();
   });
 
