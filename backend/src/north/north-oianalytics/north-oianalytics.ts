@@ -1,7 +1,5 @@
 import NorthConnector from '../north-connector';
 
-import manifest from './manifest';
-
 import EncryptionService from '../../service/encryption.service';
 import { createProxyAgent } from '../../service/proxy-agent';
 import pino from 'pino';
@@ -18,7 +16,6 @@ import fs from 'node:fs/promises';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
-import NorthConnectorMetricsRepository from '../../repository/logs/north-connector-metrics.repository';
 import CertificateRepository from '../../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import { OIBusError } from '../../model/engine.model';
@@ -31,20 +28,17 @@ import { HttpProxyAgent } from 'http-proxy-agent';
  * OIAnalytics endpoints are set in this connector
  */
 export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSettings> {
-  static type = manifest.id;
-
   constructor(
     connector: NorthConnectorEntity<NorthOIAnalyticsSettings>,
     encryptionService: EncryptionService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
-    northMetricsRepository: NorthConnectorMetricsRepository,
     private readonly certificateRepository: CertificateRepository,
     private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, encryptionService, northConnectorRepository, scanModeRepository, northMetricsRepository, logger, baseFolder);
+    super(connector, encryptionService, northConnectorRepository, scanModeRepository, logger, baseFolder);
   }
 
   override async testConnection(): Promise<void> {

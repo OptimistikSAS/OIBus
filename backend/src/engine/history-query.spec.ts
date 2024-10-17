@@ -58,8 +58,6 @@ const historyQueryRepository: HistoryQueryRepository = new HistoryQueryRepositor
 
 describe('HistoryQuery enabled', () => {
   let historyQuery: HistoryQuery;
-  const southStream = new Stream();
-  const northStream = new Stream();
   const mockedNorth1: NorthConnector<NorthSettings> = new NorthConnectorMock(testData.north.list[0]);
   const mockedSouth1: SouthConnector<SouthSettings, SouthItemSettings> = new SouthConnectorMock(testData.south.list[0]);
 
@@ -70,8 +68,6 @@ describe('HistoryQuery enabled', () => {
     (southService.runSouth as jest.Mock).mockReturnValue(mockedSouth1);
     (northService.runNorth as jest.Mock).mockReturnValue(mockedNorth1);
 
-    (mockedSouth1.getMetricsDataStream as jest.Mock).mockImplementation(() => southStream);
-    (mockedNorth1.getMetricsDataStream as jest.Mock).mockImplementation(() => northStream);
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValue(testData.historyQueries.list[0]);
 
     historyQuery = new HistoryQuery(
@@ -88,8 +84,6 @@ describe('HistoryQuery enabled', () => {
 
   afterEach(() => {
     mockedSouth1.connectedEvent.removeAllListeners();
-    southStream.removeAllListeners();
-    northStream.removeAllListeners();
   });
 
   it('should be properly initialized', async () => {
@@ -99,12 +93,6 @@ describe('HistoryQuery enabled', () => {
     expect(createFolder).toHaveBeenCalledWith(path.resolve('baseFolder', testData.historyQueries.list[0].id, 'south'));
     expect(createFolder).toHaveBeenCalledWith(path.resolve('baseFolder', testData.historyQueries.list[0].id, 'north'));
     expect(mockedNorth1.start).toHaveBeenCalledTimes(1);
-
-    northStream.emit('data', `data: ${JSON.stringify({})}`);
-    southStream.emit('data', `data: ${JSON.stringify({})}`);
-    expect(updateMetrics).toHaveBeenCalledTimes(2);
-    expect(updateMetrics).toHaveBeenCalledWith({ status: 'my status', south: {} });
-    expect(updateMetrics).toHaveBeenCalledWith({ status: 'my status', north: {} });
   });
 
   it('should start south connector', async () => {
@@ -246,7 +234,6 @@ describe('HistoryQuery enabled', () => {
 
 describe('HistoryQuery disabled', () => {
   let historyQuery: HistoryQuery;
-  const southStream = new Stream();
   const northStream = new Stream();
   const mockedNorth1: NorthConnector<NorthSettings> = new NorthConnectorMock(testData.north.list[0]);
   const mockedSouth1: SouthConnector<SouthSettings, SouthItemSettings> = new SouthConnectorMock(testData.south.list[0]);
@@ -258,8 +245,6 @@ describe('HistoryQuery disabled', () => {
 
     (southService.runSouth as jest.Mock).mockReturnValue(mockedSouth1);
     (northService.runNorth as jest.Mock).mockReturnValue(mockedNorth1);
-    (mockedSouth1.getMetricsDataStream as jest.Mock).mockImplementation(() => southStream);
-    (mockedNorth1.getMetricsDataStream as jest.Mock).mockImplementation(() => northStream);
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValue(testData.historyQueries.list[1]);
 
     historyQuery = new HistoryQuery(
@@ -276,8 +261,6 @@ describe('HistoryQuery disabled', () => {
 
   afterEach(() => {
     mockedSouth1.connectedEvent.removeAllListeners();
-    southStream.removeAllListeners();
-    northStream.removeAllListeners();
   });
 
   it('should be properly initialized', async () => {

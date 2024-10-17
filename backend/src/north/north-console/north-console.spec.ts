@@ -33,7 +33,7 @@ const northMetricsRepository: NorthConnectorMetricsRepository = new NorthMetrics
 const valueCacheService = new ValueCacheServiceMock();
 const fileCacheService = new FileCacheServiceMock();
 const archiveService = new ArchiveServiceMock();
-const northConnectorMetricsService = new NorthConnectorMetricsServiceMock();
+
 jest.mock(
   '../../service/cache/value-cache.service',
   () =>
@@ -55,13 +55,6 @@ jest.mock(
       return archiveService;
     }
 );
-jest.mock(
-  '../../service/north-connector-metrics.service',
-  () =>
-    function () {
-      return northConnectorMetricsService;
-    }
-);
 
 let configuration: NorthConnectorEntity<NorthConsoleSettings>;
 let north: NorthConsole;
@@ -77,15 +70,7 @@ describe('NorthConsole with verbose mode', () => {
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
 
-    north = new NorthConsole(
-      configuration,
-      encryptionService,
-      northConnectorRepository,
-      scanModeRepository,
-      northMetricsRepository,
-      logger,
-      'baseFolder'
-    );
+    north = new NorthConsole(configuration, encryptionService, northConnectorRepository, scanModeRepository, logger, 'baseFolder');
   });
 
   it('should properly handle values in verbose mode', async () => {
@@ -124,15 +109,7 @@ describe('NorthConsole without verbose mode', () => {
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
 
-    north = new NorthConsole(
-      configuration,
-      encryptionService,
-      northConnectorRepository,
-      scanModeRepository,
-      northMetricsRepository,
-      logger,
-      'baseFolder'
-    );
+    north = new NorthConsole(configuration, encryptionService, northConnectorRepository, scanModeRepository, logger, 'baseFolder');
   });
 
   it('should properly handle values in non verbose mode', async () => {

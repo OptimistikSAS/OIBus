@@ -7,7 +7,6 @@ import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-import { SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import mssql, { ConnectionPool } from 'mssql';
 import {
   SouthMSSQLItemSettings,
@@ -18,13 +17,11 @@ import SouthConnectorRepository from '../../repository/config/south-connector.re
 import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
-import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
-import NorthMetricsRepositoryMock from '../../tests/__mocks__/repository/log/north-metrics-repository.mock';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
-import SouthConnectorMetricsServiceMock from '../../tests/__mocks__/service/south-connector-metrics-service.mock';
 import testData from '../../tests/utils/test-data';
+import { SouthConnectorEntity } from '../../model/south-connector.model';
 
 jest.mock('node:fs/promises');
 jest.mock('mssql');
@@ -33,24 +30,14 @@ jest.mock('../../service/utils');
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
-const southMetricsRepository: SouthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
 const southCacheService = new SouthCacheServiceMock();
-const southConnectorMetricsService = new SouthConnectorMetricsServiceMock();
 
 jest.mock(
   '../../service/south-cache.service',
   () =>
     function () {
       return southCacheService;
-    }
-);
-
-jest.mock(
-  '../../service/south-connector-metrics.service',
-  () =>
-    function () {
-      return southConnectorMetricsService;
     }
 );
 
@@ -67,7 +54,7 @@ const connect = jest.fn(() => ({ request, close }));
 
 describe('SouthMSSQL with authentication', () => {
   let south: SouthMSSQL;
-  const configuration: SouthConnectorDTO<SouthMSSQLSettings, SouthMSSQLItemSettings> = {
+  const configuration: SouthConnectorEntity<SouthMSSQLSettings, SouthMSSQLItemSettings> = {
     id: 'southId',
     name: 'south',
     type: 'mssql',
@@ -195,7 +182,6 @@ describe('SouthMSSQL with authentication', () => {
       addContentCallback,
       encryptionService,
       southConnectorRepository,
-      southMetricsRepository,
       southCacheRepository,
       scanModeRepository,
       logger,
@@ -328,7 +314,7 @@ describe('SouthMSSQL with authentication', () => {
 
 describe('SouthMSSQL without authentication', () => {
   let south: SouthMSSQL;
-  const configuration: SouthConnectorDTO<SouthMSSQLSettings, SouthMSSQLItemSettings> = {
+  const configuration: SouthConnectorEntity<SouthMSSQLSettings, SouthMSSQLItemSettings> = {
     id: 'southId',
     name: 'south',
     type: 'mssql',
@@ -456,7 +442,6 @@ describe('SouthMSSQL without authentication', () => {
       addContentCallback,
       encryptionService,
       southConnectorRepository,
-      southMetricsRepository,
       southCacheRepository,
       scanModeRepository,
       logger,
@@ -496,7 +481,7 @@ describe('SouthMSSQL without authentication', () => {
 
 describe('SouthMSSQL test connection', () => {
   let south: SouthMSSQL;
-  const configuration: SouthConnectorDTO<SouthMSSQLSettings, SouthMSSQLItemSettings> = {
+  const configuration: SouthConnectorEntity<SouthMSSQLSettings, SouthMSSQLItemSettings> = {
     id: 'southId',
     name: 'south',
     type: 'mssql',
@@ -647,7 +632,6 @@ describe('SouthMSSQL test connection', () => {
       addContentCallback,
       encryptionService,
       southConnectorRepository,
-      southMetricsRepository,
       southCacheRepository,
       scanModeRepository,
       logger,
