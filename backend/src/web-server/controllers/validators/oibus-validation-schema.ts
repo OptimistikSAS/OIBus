@@ -22,18 +22,13 @@ const certificateSchema: Joi.ObjectSchema = Joi.object({
   }).allow(null)
 });
 
-const externalSourceSchema: Joi.ObjectSchema = Joi.object({
-  reference: Joi.string().required(),
-  description: Joi.string().required().allow(null, '')
-});
-
 const commandSchema: Joi.ObjectSchema = Joi.object({});
 
 const engineSchema: Joi.ObjectSchema = Joi.object({
   name: Joi.string().required(),
   port: Joi.number().required().port(),
   proxyEnabled: Joi.boolean().required(),
-  proxyPort: Joi.number().required().port(),
+  proxyPort: Joi.number().port().optional().allow(null),
   logParameters: Joi.object({
     console: Joi.object({
       level: Joi.string().required().allow('silent', 'error', 'warning', 'info', 'debug', 'trace')
@@ -50,9 +45,9 @@ const engineSchema: Joi.ObjectSchema = Joi.object({
     loki: Joi.object({
       level: Joi.string().required().allow('silent', 'error', 'warning', 'info', 'debug', 'trace'),
       interval: Joi.number().integer().required().min(10),
-      address: Joi.string().required().allow(''),
-      username: Joi.string().required().allow(''),
-      password: Joi.string().required().allow('')
+      address: Joi.string().allow('', null),
+      username: Joi.string().allow('', null),
+      password: Joi.string().allow('', null)
     }),
     oia: Joi.object({
       level: Joi.string().required().allow('silent', 'error', 'warning', 'info', 'debug', 'trace'),
@@ -128,15 +123,14 @@ function cronValidator(value: string, helper: Joi.CustomHelpers) {
   try {
     validateCronExpression(value);
     return true;
-  } catch (error: any) {
-    return helper.message({ custom: error.message });
+  } catch (error: unknown) {
+    return helper.message({ custom: (error as Error).message });
   }
 }
 
 export {
   scanModeSchema,
   certificateSchema,
-  externalSourceSchema,
   engineSchema,
   registrationSchema,
   ipFilterSchema,

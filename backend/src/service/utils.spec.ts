@@ -35,17 +35,18 @@ import csv from 'papaparse';
 import pino from 'pino';
 import AdmZip from 'adm-zip';
 import fetch from 'node-fetch';
-import PinoLogger from '../tests/__mocks__/logger.mock';
+import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import { DateTimeType } from '../../../shared/model/types';
 import Stream from 'node:stream';
 import http from 'node:http';
 import https from 'node:https';
 import os from 'node:os';
-import { EngineSettingsDTO, OIBusInfo, RegistrationSettingsDTO } from '../../../shared/model/engine.model';
+import { EngineSettingsDTO, OIBusInfo } from '../../../shared/model/engine.model';
 import { createProxyAgent } from './proxy-agent';
 import EncryptionService from './encryption.service';
-import EncryptionServiceMock from '../tests/__mocks__/encryption-service.mock';
+import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 import cronstrue from 'cronstrue';
+import { OIAnalyticsRegistration } from '../model/oianalytics-registration.model';
 
 jest.mock('node:zlib');
 jest.mock('node:fs/promises');
@@ -64,26 +65,16 @@ describe('Service utils', () => {
   describe('getNetworkSettings', () => {
     const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 
-    it('should get network settings and throw error if not registered', async () => {
-      await expect(
-        getNetworkSettingsFromRegistration(
-          {
-            status: 'PENDING'
-          } as RegistrationSettingsDTO,
-          '/api/oianalytics/oibus-commands/${oibusId}/check',
-          encryptionService
-        )
-      ).rejects.toThrow('OIBus not registered in OIAnalytics');
-    });
-
     it('should get network settings', async () => {
-      const settings: RegistrationSettingsDTO = {
+      const settings: OIAnalyticsRegistration = {
+        id: 'registrationId1',
+        activationDate: '',
         status: 'REGISTERED',
         host: 'http://localhost:4200/',
         token: 'my token',
         useProxy: false,
         acceptUnauthorized: false
-      } as RegistrationSettingsDTO;
+      };
 
       const result = await getNetworkSettingsFromRegistration(settings, '/endpoint', encryptionService);
       expect(result).toEqual({
@@ -95,7 +86,9 @@ describe('Service utils', () => {
     });
 
     it('should get network settings and proxy', async () => {
-      const settings: RegistrationSettingsDTO = {
+      const settings: OIAnalyticsRegistration = {
+        id: 'registrationId1',
+        activationDate: '',
         status: 'REGISTERED',
         host: 'http://localhost:4200/',
         token: 'my token',
@@ -104,7 +97,7 @@ describe('Service utils', () => {
         proxyUsername: 'user',
         proxyPassword: 'pass',
         acceptUnauthorized: false
-      } as RegistrationSettingsDTO;
+      };
 
       const result = await getNetworkSettingsFromRegistration(settings, '/endpoint', encryptionService);
       expect(result).toEqual({
@@ -121,7 +114,9 @@ describe('Service utils', () => {
     });
 
     it('should get network settings and proxy without pass', async () => {
-      const settings: RegistrationSettingsDTO = {
+      const settings: OIAnalyticsRegistration = {
+        id: 'registrationId1',
+        activationDate: '',
         status: 'REGISTERED',
         host: 'http://localhost:4200/',
         token: 'my token',
@@ -130,7 +125,7 @@ describe('Service utils', () => {
         proxyUsername: 'user',
         proxyPassword: '',
         acceptUnauthorized: false
-      } as RegistrationSettingsDTO;
+      };
 
       const result = await getNetworkSettingsFromRegistration(settings, '/endpoint', encryptionService);
       expect(result).toEqual({

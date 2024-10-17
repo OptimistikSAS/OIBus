@@ -1,7 +1,7 @@
-// @ts-ignore
-import cors from '@koa/cors';
-// @ts-ignore
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
 import respond from 'koa-respond';
+import cors from '@koa/cors';
 import bodyParser from 'koa-bodyparser';
 import helmet from 'koa-helmet';
 
@@ -16,13 +16,15 @@ import pino from 'pino';
 import * as Http from 'http';
 import Koa from 'koa';
 import oibus from './middlewares/oibus';
-import ReloadService from '../service/reload.service';
 import { KoaApplication } from './koa';
 import SouthService from '../service/south.service';
 import OIBusService from '../service/oibus.service';
 import NorthService from '../service/north.service';
-import EngineMetricsService from '../service/engine-metrics.service';
-import RegistrationService from '../service/oia/registration.service';
+import ScanModeService from '../service/scan-mode.service';
+import IPFilterService from '../service/ip-filter.service';
+import OIAnalyticsCommandService from '../service/oia/oianalytics-command.service';
+import OIAnalyticsRegistrationService from '../service/oia/oianalytics-registration.service';
+import HistoryQueryService from '../service/history-query.service';
 
 /**
  * Class Server - Provides the web client and establish socket connections.
@@ -38,13 +40,15 @@ export default class WebServer {
     id: string,
     port: number,
     private readonly encryptionService: EncryptionService,
-    private readonly reloadService: ReloadService,
-    private readonly registrationService: RegistrationService,
-    private readonly repositoryService: RepositoryService,
+    private readonly scanModeService: ScanModeService,
+    private readonly ipFilterService: IPFilterService,
+    private readonly oIAnalyticsRegistrationService: OIAnalyticsRegistrationService,
+    private readonly oIAnalyticsCommandService: OIAnalyticsCommandService,
+    private readonly oIBusService: OIBusService,
     private readonly southService: SouthService,
     private readonly northService: NorthService,
-    private readonly oibusService: OIBusService,
-    private readonly engineMetricsService: EngineMetricsService,
+    private readonly historyQueryService: HistoryQueryService,
+    private readonly repositoryService: RepositoryService,
     private readonly ignoreIpFilters: boolean,
     logger: pino.Logger
   ) {
@@ -79,24 +83,28 @@ export default class WebServer {
   async init(): Promise<void> {
     this.app = new Koa() as KoaApplication;
 
-    this.app.ipFilters = [
-      '127.0.0.1',
-      '::1',
-      '::ffff:127.0.0.1',
-      ...this.repositoryService.ipFilterRepository.getIpFilters().map(filter => filter.address)
-    ];
+    this.app.ipFilters = {
+      whiteList: [
+        '127.0.0.1',
+        '::1',
+        '::ffff:127.0.0.1',
+        ...this.repositoryService.ipFilterRepository.findAll().map(filter => filter.address)
+      ]
+    };
 
     this.app.use(
       oibus(
         this._id,
-        this.repositoryService,
-        this.reloadService,
-        this.registrationService,
-        this.encryptionService,
+        this.scanModeService,
+        this.ipFilterService,
+        this.oIAnalyticsRegistrationService,
+        this.oIAnalyticsCommandService,
+        this.oIBusService,
         this.southService,
         this.northService,
-        this.oibusService,
-        this.engineMetricsService,
+        this.historyQueryService,
+        this.repositoryService,
+        this.encryptionService,
         this.logger
       )
     );
@@ -137,8 +145,8 @@ export default class WebServer {
     this.app.use(router.allowedMethods());
 
     await this.start();
-    this.reloadService.setWebServerChangeLogger(this.setLogger.bind(this));
-    this.reloadService.setWebServerChangePort(this.setPort.bind(this));
+    this.oIBusService.setWebServerChangeLogger(this.setLogger.bind(this));
+    this.oIBusService.setWebServerChangePort(this.setPort.bind(this));
   }
 
   async start(): Promise<void> {

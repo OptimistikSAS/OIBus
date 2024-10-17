@@ -4,7 +4,7 @@ import { NonNullableFormBuilder, Validators } from '@angular/forms';
 import { Observable, switchMap } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
-import { IpFilterCommandDTO, IpFilterDTO } from '../../../../../shared/model/ip-filter.model';
+import { IPFilterCommandDTO, IPFilterDTO } from '../../../../../shared/model/ip-filter.model';
 import { IpFilterService } from '../../services/ip-filter.service';
 import { formDirectives } from '../../shared/form-directives';
 
@@ -21,7 +21,7 @@ export class EditIpFilterModalComponent {
 
   mode: 'create' | 'edit' = 'create';
   state = new ObservableState();
-  ipFilter: IpFilterDTO | null = null;
+  ipFilter: IPFilterDTO | null = null;
   form = inject(NonNullableFormBuilder).group({
     address: ['', Validators.required],
     description: ''
@@ -37,7 +37,7 @@ export class EditIpFilterModalComponent {
   /**
    * Prepares the component for edition.
    */
-  prepareForEdition(ipFilter: IpFilterDTO) {
+  prepareForEdition(ipFilter: IPFilterDTO) {
     this.mode = 'edit';
     this.ipFilter = ipFilter;
 
@@ -58,12 +58,12 @@ export class EditIpFilterModalComponent {
 
     const formValue = this.form.value;
 
-    const command: IpFilterCommandDTO = {
+    const command: IPFilterCommandDTO = {
       address: formValue.address!,
       description: formValue.description!
     };
 
-    let obs: Observable<IpFilterDTO>;
+    let obs: Observable<IPFilterDTO>;
     if (this.mode === 'create') {
       obs = this.ipFilterService.create(command);
     } else {

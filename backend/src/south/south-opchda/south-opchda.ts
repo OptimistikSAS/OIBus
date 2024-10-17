@@ -1,8 +1,5 @@
-import manifest from './manifest';
 import SouthConnector from '../south-connector';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
-import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { Aggregate, Instant, Resampling } from '../../../../shared/model/types';
 import { DateTime } from 'luxon';
@@ -10,27 +7,40 @@ import { QueriesHistory } from '../south-interface';
 import { SouthOPCHDAItemSettings, SouthOPCHDASettings } from '../../../../shared/model/south-settings.model';
 import fetch from 'node-fetch';
 import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import SouthConnectorRepository from '../../repository/config/south-connector.repository';
+import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
 
 /**
  * Class SouthOPCHDA - Run a HDA agent to connect to an OPCHDA server.
  * This connector communicates with the Agent through a HTTP connection
  */
-export default class SouthOPCHDA extends SouthConnector implements QueriesHistory {
-  static type = manifest.id;
-
+export default class SouthOPCHDA extends SouthConnector<SouthOPCHDASettings, SouthOPCHDAItemSettings> implements QueriesHistory {
   private connected = false;
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private disconnecting = false;
 
   constructor(
-    connector: SouthConnectorDTO<SouthOPCHDASettings>,
+    connector: SouthConnectorEntity<SouthOPCHDASettings, SouthOPCHDAItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
-    repositoryService: RepositoryService,
+    southConnectorRepository: SouthConnectorRepository,
+    southCacheRepository: SouthCacheRepository,
+    scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, engineAddContentCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(
+      connector,
+      engineAddContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      baseFolder
+    );
   }
 
   async connect(): Promise<void> {
@@ -93,7 +103,7 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
     }
   }
 
-  override async testItem(item: SouthConnectorItemDTO<SouthOPCHDAItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
+  override async testItem(item: SouthConnectorItemEntity<SouthOPCHDAItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
     await this.connect();
     const content: OIBusContent = { type: 'time-values', content: [] };
 
@@ -126,7 +136,7 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
         maxInstantRetrieved: Instant;
       } = (await response.json()) as {
         recordCount: number;
-        content: OIBusTimeValue[];
+        content: Array<OIBusTimeValue>;
         maxInstantRetrieved: string;
       };
       content.content = result.content;
@@ -142,7 +152,11 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
    * Get entries from the database between startTime and endTime (if used in the SQL query)
    * and write them into the cache and send it to the engine.
    */
-  async historyQuery(items: Array<SouthConnectorItemDTO<SouthOPCHDAItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
+  async historyQuery(
+    items: Array<SouthConnectorItemEntity<SouthOPCHDAItemSettings>>,
+    startTime: Instant,
+    endTime: Instant
+  ): Promise<Instant> {
     try {
       let updatedStartTime = startTime;
       const itemsByAggregates = new Map<
@@ -216,7 +230,7 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
               maxInstantRetrieved: Instant;
             } = (await response.json()) as {
               recordCount: number;
-              content: OIBusTimeValue[];
+              content: Array<OIBusTimeValue>;
               maxInstantRetrieved: string;
             };
             const requestDuration = DateTime.now().toMillis() - startRequest;
