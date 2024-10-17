@@ -1,10 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-expect-error
 import ads from 'ads-client';
-
-import manifest from './manifest';
 import SouthConnector from '../south-connector';
-import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import { DateTime } from 'luxon';
 import { Instant } from '../../../../shared/model/types';
 import EncryptionService from '../../service/encryption.service';
@@ -12,9 +9,8 @@ import pino from 'pino';
 import { QueriesLastPoint } from '../south-interface';
 import { SouthADSItemSettings, SouthADSSettings } from '../../../../shared/model/south-settings.model';
 import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
-import { SouthConnectorEntity } from '../../model/south-connector.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
-import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 
@@ -32,8 +28,6 @@ interface ADSOptions {
  * Class SouthADS - Provides instruction for TwinCAT ADS client connection
  */
 export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSItemSettings> implements QueriesLastPoint {
-  static type = manifest.id;
-
   private client: ads.Client | null = null;
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private disconnecting = false;
@@ -43,7 +37,6 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     southConnectorRepository: SouthConnectorRepository,
-    southMetricsRepository: SouthConnectorMetricsRepository,
     southCacheRepository: SouthCacheRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
@@ -54,7 +47,6 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
       engineAddContentCallback,
       encryptionService,
       southConnectorRepository,
-      southMetricsRepository,
       southCacheRepository,
       scanModeRepository,
       logger,
@@ -181,7 +173,7 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
     return [];
   }
 
-  async lastPointQuery(items: Array<SouthConnectorItemDTO<SouthADSItemSettings>>): Promise<void> {
+  async lastPointQuery(items: Array<SouthConnectorItemEntity<SouthADSItemSettings>>): Promise<void> {
     const timestamp = DateTime.now().toUTC().toISO()!;
     try {
       const startRequest = DateTime.now().toMillis();
@@ -204,7 +196,7 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
     }
   }
 
-  readAdsSymbol(item: SouthConnectorItemDTO<SouthADSItemSettings>, timestamp: Instant): Promise<Array<OIBusTimeValue>> {
+  readAdsSymbol(item: SouthConnectorItemEntity<SouthADSItemSettings>, timestamp: Instant): Promise<Array<OIBusTimeValue>> {
     return new Promise((resolve, reject) => {
       this.client
         .readSymbol(item.settings.address)
@@ -225,7 +217,7 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
     });
   }
 
-  override async testItem(item: SouthConnectorItemDTO<SouthADSItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
+  override async testItem(item: SouthConnectorItemEntity<SouthADSItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
     try {
       await this.connect();
       const dataValues: Array<OIBusTimeValue> = await this.readAdsSymbol(item, DateTime.now().toUTC().toISO()!);

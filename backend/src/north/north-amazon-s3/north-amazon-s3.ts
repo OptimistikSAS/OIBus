@@ -5,7 +5,6 @@ import { HeadBucketCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s
 import { NodeHttpHandler } from '@aws-sdk/node-http-handler';
 
 import NorthConnector from '../north-connector';
-import manifest from './manifest';
 import EncryptionService from '../../service/encryption.service';
 import pino from 'pino';
 import { NorthAmazonS3Settings } from '../../../../shared/model/north-settings.model';
@@ -16,13 +15,11 @@ import csv from 'papaparse';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
-import NorthConnectorMetricsRepository from '../../repository/logs/north-connector-metrics.repository';
 
 /**
  * Class NorthAmazonS3 - sends files to Amazon AWS S3
  */
 export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings> {
-  static type = manifest.id;
   private s3: S3Client | undefined;
 
   constructor(
@@ -30,11 +27,10 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
     encryptionService: EncryptionService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
-    northMetricsRepository: NorthConnectorMetricsRepository,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, encryptionService, northConnectorRepository, scanModeRepository, northMetricsRepository, logger, baseFolder);
+    super(connector, encryptionService, northConnectorRepository, scanModeRepository, logger, baseFolder);
   }
 
   /**

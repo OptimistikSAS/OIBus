@@ -67,19 +67,19 @@ export default class HomeMetricsService {
     this._stream?.destroy();
     this._stream = new PassThrough();
 
-    for (const [id, north] of this.norths.entries()) {
-      north.getMetricsDataStream().on('data', data => {
-        this._metrics.norths[id] = JSON.parse(data.toString().substring(6));
-        this._stream!.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
-      });
-    }
+    // for (const [id, north] of this.norths.entries()) {
+    //   north.getMetricsDataStream().on('data', data => {
+    //     this._metrics.norths[id] = JSON.parse(data.toString().substring(6));
+    //     this._stream!.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
+    //   });
+    // }
 
-    for (const [id, south] of this.souths.entries()) {
-      south.getMetricsDataStream().on('data', data => {
-        this._metrics.souths[id] = JSON.parse(data.toString().substring(6));
-        this._stream!.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
-      });
-    }
+    // for (const [id, south] of this.souths.entries()) {
+    //   south.getMetricsDataStream().on('data', data => {
+    //     this._metrics.souths[id] = JSON.parse(data.toString().substring(6));
+    //     this._stream!.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
+    //   });
+    // }
     setTimeout(() => {
       this._stream!.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
     }, 100);
