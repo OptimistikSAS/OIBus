@@ -5,7 +5,6 @@ import SouthServiceMock from './service/south-service.mock';
 import OIBusServiceMock from './service/oibus-service.mock';
 import EngineMetricsServiceMock from './service/engine-metrics-service.mock';
 import ScanModeServiceMock from './service/scan-mode-service.mock';
-import SubscriptionServiceMock from './service/subscription-service.mock';
 import IpFilterServiceMock from './service/ip-filter-service.mock';
 import OIAnalyticsRegistrationServiceMock from './service/oia/oianalytics-registration-service.mock';
 import OIAnalyticsCommandServiceMock from './service/oia/oianalytics-command-service.mock';
@@ -17,7 +16,6 @@ import HistoryQueryServiceMock from './service/history-query-service.mock';
 export default jest.fn().mockImplementation(() => ({
   app: {
     scanModeService: new ScanModeServiceMock(),
-    subscriptionService: new SubscriptionServiceMock(),
     ipFilterService: new IpFilterServiceMock(),
     repositoryService: new RepositoryServiceMock(),
     encryptionService: new EncryptionServiceMock(),

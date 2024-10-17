@@ -16,23 +16,25 @@ describe('Subscription Controller', () => {
 
   it('findByNorth() should return subscriptions', async () => {
     ctx.params.northId = northId;
-    ctx.app.subscriptionService.findByNorth.mockReturnValueOnce(testData.south.list.map(element => toSouthConnectorLightDTO(element)));
+    ctx.app.northService.findSubscriptionsByNorth.mockReturnValueOnce(
+      testData.south.list.map(element => toSouthConnectorLightDTO(element))
+    );
 
     await subscriptionController.findByNorth(ctx);
 
-    expect(ctx.app.subscriptionService.findByNorth).toHaveBeenCalledWith(northId);
+    expect(ctx.app.northService.findSubscriptionsByNorth).toHaveBeenCalledWith(northId);
     expect(ctx.ok).toHaveBeenCalledWith(testData.south.list.map(element => toSouthConnectorLightDTO(element)));
   });
 
   it('findByNorth() should return bad request', async () => {
     ctx.params.northId = northId;
-    ctx.app.subscriptionService.findByNorth.mockImplementationOnce(() => {
+    ctx.app.northService.findSubscriptionsByNorth.mockImplementationOnce(() => {
       throw new Error('Not Found');
     });
 
     await subscriptionController.findByNorth(ctx);
 
-    expect(ctx.app.subscriptionService.findByNorth).toHaveBeenCalledWith(northId);
+    expect(ctx.app.northService.findSubscriptionsByNorth).toHaveBeenCalledWith(northId);
     expect(ctx.badRequest).toHaveBeenCalledWith('Not Found');
   });
 
@@ -42,20 +44,20 @@ describe('Subscription Controller', () => {
 
     await subscriptionController.create(ctx);
 
-    expect(ctx.app.subscriptionService.create).toHaveBeenCalledWith(northId, southId);
+    expect(ctx.app.northService.createSubscription).toHaveBeenCalledWith(northId, southId);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
   it('create() should return bad request', async () => {
     ctx.params.northId = northId;
     ctx.params.southId = southId;
-    ctx.app.subscriptionService.create.mockImplementationOnce(() => {
+    ctx.app.northService.createSubscription.mockImplementationOnce(() => {
       throw new Error('Not Found');
     });
 
     await subscriptionController.create(ctx);
 
-    expect(ctx.app.subscriptionService.create).toHaveBeenCalledWith(northId, southId);
+    expect(ctx.app.northService.createSubscription).toHaveBeenCalledWith(northId, southId);
     expect(ctx.badRequest).toHaveBeenCalledWith('Not Found');
   });
 
@@ -65,20 +67,20 @@ describe('Subscription Controller', () => {
 
     await subscriptionController.delete(ctx);
 
-    expect(ctx.app.subscriptionService.delete).toHaveBeenCalledWith(northId, southId);
+    expect(ctx.app.northService.deleteSubscription).toHaveBeenCalledWith(northId, southId);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
   it('delete() should return bad request', async () => {
     ctx.params.northId = northId;
     ctx.params.southId = southId;
-    ctx.app.subscriptionService.delete.mockImplementationOnce(() => {
+    ctx.app.northService.deleteSubscription.mockImplementationOnce(() => {
       throw new Error('Not Found');
     });
 
     await subscriptionController.delete(ctx);
 
-    expect(ctx.app.subscriptionService.delete).toHaveBeenCalledWith(northId, southId);
+    expect(ctx.app.northService.deleteSubscription).toHaveBeenCalledWith(northId, southId);
     expect(ctx.badRequest).toHaveBeenCalledWith('Not Found');
   });
 });
