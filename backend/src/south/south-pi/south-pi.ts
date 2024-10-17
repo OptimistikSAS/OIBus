@@ -1,6 +1,4 @@
-import manifest from './manifest';
 import SouthConnector from '../south-connector';
-import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
@@ -9,9 +7,8 @@ import { QueriesHistory } from '../south-interface';
 import { SouthPIItemSettings, SouthPISettings } from '../../../../shared/model/south-settings.model';
 import fetch from 'node-fetch';
 import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
-import { SouthConnectorEntity } from '../../model/south-connector.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
-import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 
@@ -20,8 +17,6 @@ import ScanModeRepository from '../../repository/config/scan-mode.repository';
  * This connector communicates with the Agent through a HTTP connection
  */
 export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItemSettings> implements QueriesHistory {
-  static type = manifest.id;
-
   private connected = false;
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private disconnecting = false;
@@ -31,7 +26,6 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     southConnectorRepository: SouthConnectorRepository,
-    southMetricsRepository: SouthConnectorMetricsRepository,
     southCacheRepository: SouthCacheRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
@@ -42,7 +36,6 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
       engineAddContentCallback,
       encryptionService,
       southConnectorRepository,
-      southMetricsRepository,
       southCacheRepository,
       scanModeRepository,
       logger,
@@ -96,7 +89,7 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
     }
   }
 
-  override async testItem(item: SouthConnectorItemDTO<SouthPIItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
+  override async testItem(item: SouthConnectorItemEntity<SouthPIItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
     await this.connect();
     const content: OIBusContent = { type: 'time-values', content: [] };
 
@@ -148,7 +141,7 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
    * Get entries from the database between startTime and endTime (if used in the SQL query)
    * and write them into the cache and send it to the engine.
    */
-  async historyQuery(items: Array<SouthConnectorItemDTO<SouthPIItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
+  async historyQuery(items: Array<SouthConnectorItemEntity<SouthPIItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
     let updatedStartTime = startTime;
     this.logger.debug(`Requesting ${items.length} items between ${startTime} and ${endTime}`);
     const startRequest = DateTime.now().toMillis();

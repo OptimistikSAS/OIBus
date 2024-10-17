@@ -3,7 +3,6 @@ import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-import { SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import {
   SouthODBCItemSettings,
   SouthODBCItemSettingsDateTimeFields,
@@ -13,12 +12,10 @@ import SouthConnectorRepository from '../../repository/config/south-connector.re
 import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
-import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
-import NorthMetricsRepositoryMock from '../../tests/__mocks__/repository/log/north-metrics-repository.mock';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
-import SouthConnectorMetricsServiceMock from '../../tests/__mocks__/service/south-connector-metrics-service.mock';
+import { SouthConnectorEntity } from '../../model/south-connector.model';
 
 jest.mock('../../service/utils');
 jest.mock(
@@ -35,24 +32,14 @@ jest.mock('../../service/utils');
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
-const southMetricsRepository: SouthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
 const southCacheService = new SouthCacheServiceMock();
-const southConnectorMetricsService = new SouthConnectorMetricsServiceMock();
 
 jest.mock(
   '../../service/south-cache.service',
   () =>
     function () {
       return southCacheService;
-    }
-);
-
-jest.mock(
-  '../../service/south-connector-metrics.service',
-  () =>
-    function () {
-      return southConnectorMetricsService;
     }
 );
 
@@ -65,7 +52,7 @@ jest.spyOn(global.console, 'error').mockImplementation(() => null);
 
 describe('SouthODBC without ODBC Library', () => {
   let south: SouthODBC;
-  const configuration: SouthConnectorDTO<SouthODBCSettings, SouthODBCItemSettings> = {
+  const configuration: SouthConnectorEntity<SouthODBCSettings, SouthODBCItemSettings> = {
     id: 'southId',
     name: 'south',
     type: 'odbc',
@@ -187,7 +174,6 @@ describe('SouthODBC without ODBC Library', () => {
       addContentCallback,
       encryptionService,
       southConnectorRepository,
-      southMetricsRepository,
       southCacheRepository,
       scanModeRepository,
       logger,

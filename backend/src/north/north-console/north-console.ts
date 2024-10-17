@@ -1,7 +1,6 @@
 import fs from 'node:fs/promises';
 
 import NorthConnector from '../north-connector';
-import manifest from './manifest';
 import pino from 'pino';
 import EncryptionService from '../../service/encryption.service';
 import { NorthConsoleSettings } from '../../../../shared/model/north-settings.model';
@@ -9,24 +8,20 @@ import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.mo
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
-import NorthConnectorMetricsRepository from '../../repository/logs/north-connector-metrics.repository';
 
 /**
  * Class Console - display values and file path into the console
  */
 export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
-  static type = manifest.id;
-
   constructor(
     configuration: NorthConnectorEntity<NorthConsoleSettings>,
     encryptionService: EncryptionService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
-    northMetricsRepository: NorthConnectorMetricsRepository,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(configuration, encryptionService, northConnectorRepository, scanModeRepository, northMetricsRepository, logger, baseFolder);
+    super(configuration, encryptionService, northConnectorRepository, scanModeRepository, logger, baseFolder);
   }
 
   async handleContent(data: OIBusContent): Promise<void> {

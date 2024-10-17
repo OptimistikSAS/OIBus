@@ -20,24 +20,24 @@ export default class SouthConnectorMetricsService {
 
   constructor(
     private readonly connectorId: string,
-    private readonly metricsRepository: SouthConnectorMetricsRepository
+    private readonly southConnectorMetricsRepository: SouthConnectorMetricsRepository
   ) {}
 
   initMetrics(): void {
-    this.metricsRepository.initMetrics(this.connectorId);
-    const results = this.metricsRepository.getMetrics(this.connectorId);
+    this.southConnectorMetricsRepository.initMetrics(this.connectorId);
+    const results = this.southConnectorMetricsRepository.getMetrics(this.connectorId);
     this._metrics = results!;
     this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
   }
 
   updateMetrics(southId: string, newMetrics: SouthConnectorMetrics): void {
-    this.metricsRepository.updateMetrics(southId, newMetrics);
+    this.southConnectorMetricsRepository.updateMetrics(southId, newMetrics);
     this._metrics = newMetrics;
     this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
   }
 
   resetMetrics(): void {
-    this.metricsRepository.removeMetrics(this.connectorId);
+    this.southConnectorMetricsRepository.removeMetrics(this.connectorId);
     this.initMetrics();
   }
 
