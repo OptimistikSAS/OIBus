@@ -1,6 +1,5 @@
 import OIBusService from './oibus.service';
-import OIBusEngine from '../engine/oibus-engine';
-import OibusEngineMock from '../tests/__mocks__/oibus-engine.mock';
+import DataStreamEngine from '../engine/data-stream-engine';
 import HistoryQueryEngine from '../engine/history-query-engine';
 import HistoryQueryEngineMock from '../tests/__mocks__/history-query-engine.mock';
 import pino from 'pino';
@@ -25,6 +24,19 @@ import testData from '../tests/utils/test-data';
 import { EngineSettings } from '../model/engine.model';
 import { EngineSettingsCommandDTO } from '../../../shared/model/engine.model';
 import { getOIBusInfo } from './utils';
+import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
+import HistoryQueryRepository from '../repository/config/history-query.repository';
+import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
+import SouthConnectorMetricsRepository from '../repository/logs/south-connector-metrics.repository';
+import SouthMetricsRepositoryMock from '../tests/__mocks__/repository/log/south-metrics-repository.mock';
+import NorthMetricsRepositoryMock from '../tests/__mocks__/repository/log/north-metrics-repository.mock';
+import HistoryQueryRepositoryMock from '../tests/__mocks__/repository/config/history-query-repository.mock';
+import SouthService from './south.service';
+import NorthService from './north.service';
+import HistoryQueryService from './history-query.service';
+import SouthServiceMock from '../tests/__mocks__/service/south-service.mock';
+import NorthServiceMock from '../tests/__mocks__/service/north-service.mock';
+import HistoryQueryServiceMock from '../tests/__mocks__/service/history-query-service.mock';
 
 jest.mock('./utils');
 jest.mock('../web-server/proxy-server');
@@ -34,20 +46,24 @@ const engineRepository: EngineRepository = new EngineRepositoryMock();
 const engineMetricsRepository: EngineMetricsRepository = new EngineMetricsRepositoryMock();
 const ipFilterRepository: IpFilterRepository = new IpFilterRepositoryMock();
 const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OIAnalyticsRegistrationRepositoryMock();
+const southMetricsRepository: SouthConnectorMetricsRepository = new SouthMetricsRepositoryMock();
+const northMetricsRepository: NorthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
+const historyQueryRepository: HistoryQueryRepository = new HistoryQueryRepositoryMock();
 const encryptionService: EncryptionService = new EncryptionServiceMock();
 const loggerService: LoggerService = new LoggerServiceMock();
 const oIAnalyticsMessageService: OIAnalyticsMessageService = new OianalyticsMessageServiceMock();
-const engine: OIBusEngine = new OibusEngineMock();
-const historyQueryEngine: HistoryQueryEngine = new HistoryQueryEngineMock();
+const southService: SouthService = new SouthServiceMock();
+const northService: NorthService = new NorthServiceMock();
+const historyQueryService: HistoryQueryService = new HistoryQueryServiceMock();
 const logger: pino.Logger = new PinoLogger();
-
-const nowDateString = '2020-02-02T02:02:02.222Z';
+const dataStreamEngine: DataStreamEngine = new DataStreamEngineMock(logger);
+const historyQueryEngine: HistoryQueryEngine = new HistoryQueryEngineMock(logger);
 
 let service: OIBusService;
-describe('OIBus service with enabled proxy server', () => {
+describe('OIBus Service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     jest.spyOn(process, 'cpuUsage').mockReturnValue({ user: 1000, system: 1000 });
 
     (engineRepository.get as jest.Mock).mockReturnValue(testData.engine.settings);
@@ -61,42 +77,57 @@ describe('OIBus service with enabled proxy server', () => {
       engineMetricsRepository,
       ipFilterRepository,
       oIAnalyticsRegistrationRepository,
+      southMetricsRepository,
+      northMetricsRepository,
+      historyQueryRepository,
       encryptionService,
       loggerService,
       oIAnalyticsMessageService,
-      engine,
+      southService,
+      northService,
+      historyQueryService,
+      dataStreamEngine,
       historyQueryEngine
     );
   });
 
   it('should start OIBus and stop it', async () => {
+    (northService.findAll as jest.Mock).mockReturnValue(testData.north.list);
+    (southService.findAll as jest.Mock).mockReturnValue(testData.south.list);
+    (historyQueryService.findAll as jest.Mock).mockReturnValue(testData.historyQueries.list);
+    (southService.findById as jest.Mock).mockImplementation(id => testData.south.list.find(element => element.id === id));
+    (southService.runSouth as jest.Mock).mockImplementation(id => testData.south.list.find(element => element.id === id));
+    (northService.findById as jest.Mock).mockImplementation(id => testData.north.list.find(element => element.id === id));
+    (northService.runNorth as jest.Mock).mockImplementation(id => testData.north.list.find(element => element.id === id));
+    (historyQueryService.findById as jest.Mock).mockImplementation(id => testData.historyQueries.list.find(element => element.id === id));
+
     await service.startOIBus();
 
-    expect(engine.start).toHaveBeenCalled();
+    expect(dataStreamEngine.start).toHaveBeenCalled();
     expect(historyQueryEngine.start).toHaveBeenCalled();
     expect(logger.info).toHaveBeenCalled();
     expect(service.getProxyServer()).toBeDefined();
 
     await service.stopOIBus();
 
-    expect(engine.stop).toHaveBeenCalled();
+    expect(dataStreamEngine.stop).toHaveBeenCalled();
     expect(historyQueryEngine.stop).toHaveBeenCalled();
   });
 
   it('should stop OIBus without starting', async () => {
     await service.stopOIBus();
-    expect(engine.stop).toHaveBeenCalled();
+    expect(dataStreamEngine.stop).toHaveBeenCalled();
     expect(historyQueryEngine.stop).toHaveBeenCalled();
   });
 
   it('should add content', async () => {
     await service.addExternalContent('northId', { type: 'time-values', content: [] });
-    expect(engine.addExternalContent).toHaveBeenCalledWith('northId', { type: 'time-values', content: [] });
+    expect(dataStreamEngine.addExternalContent).toHaveBeenCalledWith('northId', { type: 'time-values', content: [] });
   });
 
   it('should set logger', () => {
     service.setLogger(logger);
-    expect(engine.setLogger).toHaveBeenCalledWith(logger);
+    expect(dataStreamEngine.setLogger).toHaveBeenCalledWith(logger);
     expect(historyQueryEngine.setLogger).toHaveBeenCalledWith(logger);
     expect(oIAnalyticsMessageService.setLogger).toHaveBeenCalledWith(logger);
   });
@@ -158,9 +189,9 @@ describe('OIBus service with enabled proxy server', () => {
   it('should correctly restart OIBus', async () => {
     await service.restartOIBus();
 
-    expect(engine.stop).toHaveBeenCalled();
+    expect(dataStreamEngine.stop).toHaveBeenCalled();
     expect(historyQueryEngine.stop).toHaveBeenCalled();
-    expect(engine.start).toHaveBeenCalled();
+    expect(dataStreamEngine.start).toHaveBeenCalled();
     expect(historyQueryEngine.start).toHaveBeenCalled();
   });
 

@@ -21,7 +21,6 @@ import SouthService from '../service/south.service';
 import OIBusService from '../service/oibus.service';
 import NorthService from '../service/north.service';
 import ScanModeService from '../service/scan-mode.service';
-import SubscriptionService from '../service/subscription.service';
 import IPFilterService from '../service/ip-filter.service';
 import OIAnalyticsCommandService from '../service/oia/oianalytics-command.service';
 import OIAnalyticsRegistrationService from '../service/oia/oianalytics-registration.service';
@@ -42,7 +41,6 @@ export default class WebServer {
     port: number,
     private readonly encryptionService: EncryptionService,
     private readonly scanModeService: ScanModeService,
-    private readonly subscriptionService: SubscriptionService,
     private readonly ipFilterService: IPFilterService,
     private readonly oIAnalyticsRegistrationService: OIAnalyticsRegistrationService,
     private readonly oIAnalyticsCommandService: OIAnalyticsCommandService,
@@ -98,7 +96,6 @@ export default class WebServer {
       oibus(
         this._id,
         this.scanModeService,
-        this.subscriptionService,
         this.ipFilterService,
         this.oIAnalyticsRegistrationService,
         this.oIAnalyticsCommandService,
