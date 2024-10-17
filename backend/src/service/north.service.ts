@@ -42,6 +42,8 @@ import NorthAzureBlob from '../north/north-azure-blob/north-azure-blob';
 import NorthFileWriter from '../north/north-file-writer/north-file-writer';
 import NorthOIAnalytics from '../north/north-oianalytics/north-oianalytics';
 import NorthSFTP from '../north/north-sftp/north-sftp';
+import DataStreamEngine from '../engine/data-stream-engine';
+import { SouthConnectorEntityLight } from '../model/south-connector.model';
 
 export const northManifestList: Array<NorthConnectorManifest> = [
   consoleManifest,
@@ -63,7 +65,8 @@ export default class NorthService {
     private readonly certificateRepository: CertificateRepository,
     private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
     private oIAnalyticsMessageService: OIAnalyticsMessageService,
-    private readonly encryptionService: EncryptionService
+    private readonly encryptionService: EncryptionService,
+    private readonly engine: DataStreamEngine
   ) {}
 
   runNorth(settings: NorthConnectorEntity<NorthSettings>, baseFolder: string, logger: pino.Logger): NorthConnector<NorthSettings> {
@@ -197,15 +200,18 @@ export default class NorthService {
       this.southConnectorRepository.findAllSouth()
     );
     this.northConnectorRepository.saveNorthConnector(northEntity);
-
-    //TODO
-    // await this.oibusEngine.createNorth(northConnector);
-
-    if (northEntity.enabled) {
-      // TODO
-      // await this.reloadService.oibusEngine.startNorth(created.id);
-    }
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+
+    await this.engine.createNorth(
+      this.runNorth(
+        this.findById(northEntity.id)!,
+        this.engine.baseFolder,
+        this.engine.logger.child({ scopeType: 'north', scopeId: northEntity.id, scopeName: northEntity.name })
+      )
+    );
+    if (northEntity.enabled) {
+      await this.engine.startNorth(northEntity.id);
+    }
     return northEntity;
   }
 
@@ -231,18 +237,12 @@ export default class NorthService {
     );
     this.northConnectorRepository.saveNorthConnector(northEntity);
 
-    if (previousSettings.name !== northEntity.name) {
-      // TODO: this.oibusEngine.setLogger(this.oibusEngine.logger);
-    }
-    if (northEntity.enabled) {
-      this.northConnectorRepository.startNorth(northConnectorId);
-      // TODO: await this.oibusEngine.reloadNorth(northConnectorId);
-    } else {
-      this.northConnectorRepository.stopNorth(northConnectorId);
-      //TODO: await this.oibusEngine.stopNorth(northConnectorId);
-    }
-
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    if (northEntity.enabled) {
+      await this.engine.reloadNorth(northEntity);
+    } else {
+      await this.engine.stopNorth(northEntity.id);
+    }
   }
 
   async updateNorth<N extends NorthSettings>(northConnectorId: string, command: NorthConnectorCommandDTO<N>) {
@@ -266,19 +266,12 @@ export default class NorthService {
       this.southConnectorRepository.findAllSouth()
     );
     this.northConnectorRepository.saveNorthConnector(northEntity);
-
-    if (previousSettings.name !== northEntity.name) {
-      // TODO: this.oibusEngine.setLogger(this.oibusEngine.logger);
-    }
-    if (northEntity.enabled) {
-      this.northConnectorRepository.startNorth(northConnectorId);
-      // TODO: await this.oibusEngine.reloadNorth(northConnectorId);
-    } else {
-      this.northConnectorRepository.stopNorth(northConnectorId);
-      //TODO: await this.oibusEngine.stopNorth(northConnectorId);
-    }
-
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    if (northEntity.enabled) {
+      await this.engine.reloadNorth(northEntity);
+    } else {
+      await this.engine.stopNorth(northEntity.id);
+    }
   }
 
   async deleteNorth(northConnectorId: string) {
@@ -286,11 +279,10 @@ export default class NorthService {
     if (!northConnector) {
       throw new Error(`North connector ${northConnectorId} does not exist`);
     }
-    // TODO: await this.oibusEngine.deleteNorth(id, name);
+    await this.engine.deleteNorth(northConnector);
     this.northConnectorRepository.deleteNorth(northConnectorId);
     this.logRepository.deleteLogsByScopeId('north', northConnector.id);
     this.northMetricsRepository.removeMetrics(northConnector.id);
-
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 
@@ -301,8 +293,8 @@ export default class NorthService {
     }
 
     this.northConnectorRepository.startNorth(northConnectorId);
-    // TODO: await this.oibusEngine.startNorth(northId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    await this.engine.startNorth(northConnector.id);
   }
 
   async stopNorth(northConnectorId: string) {
@@ -311,9 +303,69 @@ export default class NorthService {
       throw new Error(`North connector ${northConnectorId} does not exist`);
     }
 
-    // TODO: await this.oibusEngine.stopNorth(northId);
     this.northConnectorRepository.stopNorth(northConnectorId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    await this.engine.stopNorth(northConnector.id);
+  }
+
+  async findSubscriptionsByNorth(northId: string): Promise<Array<SouthConnectorEntityLight>> {
+    const northConnector = this.northConnectorRepository.findNorthById(northId);
+    if (!northConnector) {
+      throw new Error('North connector not found');
+    }
+
+    return this.northConnectorRepository.listNorthSubscriptions(northConnector.id);
+  }
+
+  checkSubscription(northId: string, southId: string): boolean {
+    return this.northConnectorRepository.checkSubscription(northId, southId);
+  }
+
+  async createSubscription(northId: string, southId: string): Promise<void> {
+    const northConnector = this.northConnectorRepository.findNorthById(northId);
+    if (!northConnector) {
+      throw new Error('North connector not found');
+    }
+
+    const southConnector = this.southConnectorRepository.findSouthById(southId);
+    if (!southConnector) {
+      throw new Error('South connector not found');
+    }
+
+    if (this.checkSubscription(northId, southId)) {
+      throw new Error('Subscription already exists');
+    }
+
+    this.northConnectorRepository.createSubscription(northId, southId);
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    this.engine.updateSubscription(northId);
+  }
+
+  async deleteSubscription(northId: string, southId: string): Promise<void> {
+    const northConnector = this.northConnectorRepository.findNorthById(northId);
+    if (!northConnector) {
+      throw new Error('North connector not found');
+    }
+
+    const southConnector = this.southConnectorRepository.findSouthById(southId);
+    if (!southConnector) {
+      throw new Error('South connector not found');
+    }
+
+    this.northConnectorRepository.deleteSubscription(northId, southId);
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    this.engine.updateSubscription(northId);
+  }
+
+  async deleteAllSubscriptionsByNorth(northId: string): Promise<void> {
+    const northConnector = this.northConnectorRepository.findNorthById(northId);
+    if (!northConnector) {
+      throw new Error('North connector not found');
+    }
+
+    this.northConnectorRepository.deleteAllSubscriptionsByNorth(northId);
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    this.engine.updateSubscription(northId);
   }
 }
 

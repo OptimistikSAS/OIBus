@@ -7,7 +7,7 @@ import { createFolder, getCommandLineArguments, getOIBusInfo } from './service/u
 import RepositoryService from './service/repository.service';
 import NorthService from './service/north.service';
 import SouthService from './service/south.service';
-import OIBusEngine from './engine/oibus-engine';
+import DataStreamEngine from './engine/data-stream-engine';
 import HistoryQueryEngine from './engine/history-query-engine';
 import HistoryQueryService from './service/history-query.service';
 import OIBusService from './service/oibus.service';
@@ -18,7 +18,6 @@ import ConnectionService from './service/connection.service';
 import OIAnalyticsMessageService from './service/oia/oianalytics-message.service';
 import JoiValidator from './web-server/controllers/validators/joi.validator';
 import ScanModeService from './service/scan-mode.service';
-import SubscriptionService from './service/subscription.service';
 import IPFilterService from './service/ip-filter.service';
 
 const CONFIG_DATABASE = 'oibus.db';
@@ -83,6 +82,10 @@ const LOG_DB_NAME = 'logs.db';
   await createFolder(LOG_FOLDER_NAME);
   const loggerService = new LoggerService(encryptionService, path.resolve(LOG_FOLDER_NAME));
   await loggerService.start(oibusSettings, repositoryService.oianalyticsRegistrationRepository.get()!);
+
+  const dataStreamEngine = new DataStreamEngine(loggerService.logger!);
+  const historyQueryEngine = new HistoryQueryEngine(loggerService.logger!);
+
   const oIAnalyticsMessageService = new OIAnalyticsMessageService(
     repositoryService.oianalyticsMessageRepository,
     repositoryService.oianalyticsRegistrationRepository,
@@ -106,7 +109,8 @@ const LOG_DB_NAME = 'logs.db';
     repositoryService.certificateRepository,
     repositoryService.oianalyticsRegistrationRepository,
     oIAnalyticsMessageService,
-    encryptionService
+    encryptionService,
+    dataStreamEngine
   );
   const southService = new SouthService(
     new JoiValidator(),
@@ -119,27 +123,21 @@ const LOG_DB_NAME = 'logs.db';
     repositoryService.certificateRepository,
     oIAnalyticsMessageService,
     encryptionService,
-    connectionService
+    connectionService,
+    dataStreamEngine
   );
   const historyQueryService = new HistoryQueryService(
     new JoiValidator(),
     repositoryService.historyQueryRepository,
     repositoryService.scanModeRepository,
     repositoryService.logRepository,
+    repositoryService.southMetricsRepository,
+    repositoryService.northMetricsRepository,
     southService,
     northService,
     oIAnalyticsMessageService,
-    encryptionService
-  );
-
-  const engine = new OIBusEngine(encryptionService, northService, southService, repositoryService, loggerService.logger!);
-  const historyQueryEngine = new HistoryQueryEngine(
     encryptionService,
-    northService,
-    southService,
-    repositoryService,
-    historyQueryService,
-    loggerService.logger!
+    historyQueryEngine
   );
 
   const oIBusService = new OIBusService(
@@ -148,10 +146,16 @@ const LOG_DB_NAME = 'logs.db';
     repositoryService.engineMetricsRepository,
     repositoryService.ipFilterRepository,
     repositoryService.oianalyticsRegistrationRepository,
+    repositoryService.southMetricsRepository,
+    repositoryService.northMetricsRepository,
+    repositoryService.historyQueryRepository,
     encryptionService,
     loggerService,
     oIAnalyticsMessageService,
-    engine,
+    southService,
+    northService,
+    historyQueryService,
+    dataStreamEngine,
     historyQueryEngine
   );
 
@@ -162,13 +166,7 @@ const LOG_DB_NAME = 'logs.db';
     repositoryService.scanModeRepository,
     repositoryService.southCacheRepository,
     oIAnalyticsMessageService,
-    engine
-  );
-  const subscriptionService = new SubscriptionService(
-    new JoiValidator(),
-    repositoryService.southConnectorRepository,
-    repositoryService.northConnectorRepository,
-    oIAnalyticsMessageService
+    dataStreamEngine
   );
   const ipFilterService = new IPFilterService(
     new JoiValidator(),
@@ -205,7 +203,6 @@ const LOG_DB_NAME = 'logs.db';
     oibusSettings.port,
     encryptionService,
     scanModeService,
-    subscriptionService,
     ipFilterService,
     oIAnalyticsRegistrationService,
     oIAnalyticsCommandService,

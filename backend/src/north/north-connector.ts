@@ -135,13 +135,6 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     });
   }
 
-  isEnabled(): boolean {
-    return this.connector.enabled;
-  }
-
-  /**
-   * Initialize services at startup
-   */
   async start(dataStream = true): Promise<void> {
     if (dataStream) {
       // Reload the settings only on data stream case, otherwise let the history query manage the settings
@@ -164,6 +157,10 @@ export default abstract class NorthConnector<T extends NorthSettings> {
 
   updateConnectorSubscription() {
     this.subscribedTo = this.northConnectorRepository.listNorthSubscriptions(this.connector.id);
+  }
+
+  isEnabled(): boolean {
+    return this.connector.enabled;
   }
 
   /**

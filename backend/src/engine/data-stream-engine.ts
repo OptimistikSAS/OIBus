@@ -1,40 +1,35 @@
-import BaseEngine from './base-engine';
-import EncryptionService from '../service/encryption.service';
 import pino from 'pino';
 import NorthConnector from '../north/north-connector';
 import SouthConnector from '../south/south-connector';
-import NorthService from '../service/north.service';
-import SouthService from '../service/south.service';
 import { createFolder, filesExists } from '../service/utils';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { Instant } from '../../../shared/model/types';
 import { PassThrough } from 'node:stream';
 import { OIBusContent } from '../../../shared/model/engine.model';
-import { SouthConnectorEntity } from '../model/south-connector.model';
-import { NorthConnectorEntity } from '../model/north-connector.model';
 import { ScanMode } from '../model/scan-mode.model';
-import RepositoryService from '../service/repository.service';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
+import { SouthConnectorEntity } from '../model/south-connector.model';
+import { NorthConnectorEntity } from '../model/north-connector.model';
 
 const CACHE_FOLDER = './cache/data-stream';
 
-/**
- * At startup, handles of North and South connectors.
- */
-export default class OIBusEngine extends BaseEngine {
+export default class DataStreamEngine {
   private northConnectors = new Map<string, NorthConnector<NorthSettings>>();
   private southConnectors = new Map<string, SouthConnector<SouthSettings, SouthItemSettings>>();
+  private readonly cacheFolder: string;
 
-  constructor(
-    encryptionService: EncryptionService,
-    northService: NorthService,
-    southService: SouthService,
-    repositoryService: RepositoryService,
-    logger: pino.Logger
-  ) {
-    super(encryptionService, northService, southService, repositoryService, logger, CACHE_FOLDER);
+  constructor(private _logger: pino.Logger) {
+    this.cacheFolder = path.resolve(CACHE_FOLDER);
+  }
+
+  get logger() {
+    return this._logger;
+  }
+
+  get baseFolder() {
+    return this.cacheFolder;
   }
 
   /**
@@ -78,40 +73,43 @@ export default class OIBusEngine extends BaseEngine {
    * Creates a new instance for every North and South connectors and initialize them.
    * Creates CronJobs based on the ScanModes and starts them.
    */
-  override async start(): Promise<void> {
-    // North connectors
-    const northListSettings = this.northService.findAll();
-    for (const settings of northListSettings) {
+  async start(
+    northConnectorList: Array<NorthConnector<NorthSettings>>,
+    southConnectorList: Array<SouthConnector<SouthSettings, SouthItemSettings>>
+  ): Promise<void> {
+    for (const north of northConnectorList) {
       try {
-        await this.createNorth(this.northService.findById(settings.id)!);
-        if (settings.enabled) {
-          await this.startNorth(settings.id);
+        await this.createNorth(north);
+        if (north.settings.enabled) {
+          await this.startNorth(north.settings.id);
         }
       } catch (error) {
-        this.logger.error(`Error while creating North connector "${settings.name}" of type "${settings.type}" (${settings.id}): ${error}`);
+        this._logger.error(
+          `Error while creating North connector "${north.settings.name}" of type "${north.settings.type}" (${north.settings.id}): ${error}`
+        );
       }
     }
 
-    // South connectors
-    const southListSettings = this.southService.findAll();
-    for (const settings of southListSettings) {
+    for (const south of southConnectorList) {
       try {
-        await this.createSouth(this.southService.findById(settings.id)!);
-        if (settings.enabled) {
-          await this.startSouth(settings.id);
+        await this.createSouth(south);
+        if (south.settings.enabled) {
+          await this.startSouth(south.settings.id);
         }
       } catch (error) {
-        this.logger.error(`Error while creating South connector "${settings.name}" of type "${settings.type}" (${settings.id}): ${error}`);
+        this._logger.error(
+          `Error while creating South connector "${south.settings.name}" of type "${south.settings.type}" (${south.settings.id}): ${error}`
+        );
       }
     }
 
-    this.logger.info('OIBus engine started');
+    this._logger.info('OIBus engine started');
   }
 
   /**
    * Gracefully stop every timer, South and North connectors
    */
-  override async stop(): Promise<void> {
+  async stop(): Promise<void> {
     for (const id of this.southConnectors.keys()) {
       await this.stopSouth(id);
     }
@@ -121,24 +119,18 @@ export default class OIBusEngine extends BaseEngine {
     }
   }
 
-  async createSouth<S extends SouthSettings, I extends SouthItemSettings>(settings: SouthConnectorEntity<S, I>): Promise<void> {
-    const baseFolder = path.resolve(this.cacheFolder, `south-${settings.id}`);
+  async createSouth<S extends SouthSettings, I extends SouthItemSettings>(south: SouthConnector<S, I>): Promise<void> {
+    const baseFolder = path.resolve(this.cacheFolder, `south-${south.settings.id}`);
     await createFolder(baseFolder);
 
-    const south = this.southService.runSouth(
-      settings,
-      this.addContent.bind(this),
-      baseFolder,
-      this.logger.child({ scopeType: 'south', scopeId: settings.id, scopeName: settings.name })
-    );
-    this.southConnectors.set(settings.id, south);
+    this.southConnectors.set(south.settings.id, south);
     // this.homeMetricsService.addSouth(south, south.settings.id);
   }
 
   async startSouth(southId: string): Promise<void> {
     const south = this.southConnectors.get(southId);
     if (!south) {
-      this.logger.trace(`South connector ${southId} not set`);
+      this._logger.trace(`South connector ${southId} not set`);
       return;
     }
 
@@ -149,35 +141,30 @@ export default class OIBusEngine extends BaseEngine {
     });
     // Do not await here, so it can start all connectors without blocking the thread
     south.start().catch(error => {
-      this.logger.error(
+      this._logger.error(
         `Error while starting South connector "${south.settings.name}" of type "${south.settings.type}" (${south.settings.id}): ${error.message}`
       );
     });
   }
 
-  async createNorth<N extends NorthSettings>(settings: NorthConnectorEntity<N>): Promise<void> {
-    const baseFolder = path.resolve(this.cacheFolder, `north-${settings.id}`);
+  async createNorth<N extends NorthSettings>(north: NorthConnector<N>): Promise<void> {
+    const baseFolder = path.resolve(this.cacheFolder, `north-${north.settings.id}`);
     await createFolder(baseFolder);
 
-    const north = this.northService.runNorth(
-      settings,
-      baseFolder,
-      this.logger.child({ scopeType: 'north', scopeId: settings.id, scopeName: settings.name })
-    );
-    this.northConnectors.set(settings.id, north);
+    this.northConnectors.set(north.settings.id, north);
     // this.homeMetricsService.addNorth(north, north.settings.id);
   }
 
   async startNorth(northId: string): Promise<void> {
     const north = this.northConnectors.get(northId);
     if (!north) {
-      this.logger.trace(`North connector ${northId} not set`);
+      this._logger.trace(`North connector ${northId} not set`);
       return;
     }
 
     // Do not await here, so it can start all connectors without blocking the thread
     north.start().catch(error => {
-      this.logger.error(
+      this._logger.error(
         `Error while starting North connector "${north.settings.name}" of type "${north.settings.type}" (${north.settings.id}): ${error.message}`
       );
     });
@@ -195,63 +182,57 @@ export default class OIBusEngine extends BaseEngine {
   /**
    * Stops the south connector and deletes all cache inside the base folder
    */
-  async deleteSouth(southId: string, name: string): Promise<void> {
-    await this.stopSouth(southId);
+  async deleteSouth(south: SouthConnectorEntity<SouthSettings, SouthItemSettings>): Promise<void> {
+    await this.stopSouth(south.id);
     // this.homeMetricsService.removeSouth(southId);
-    this.southConnectors.delete(southId);
-    const baseFolder = path.resolve(this.cacheFolder, `south-${southId}`);
+    this.southConnectors.delete(south.id);
+    const baseFolder = path.resolve(this.cacheFolder, `south-${south.id}`);
 
     try {
-      this.logger.trace(`Deleting base folder "${baseFolder}" of South connector "${name}" (${southId})`);
+      this._logger.trace(`Deleting base folder "${baseFolder}" of South connector "${south.name}" (${south.id})`);
 
       if (await filesExists(baseFolder)) {
         await fs.rm(baseFolder, { recursive: true });
       }
 
-      this.logger.info(`Deleted South connector "${name}" (${southId})`);
+      this._logger.info(`Deleted South connector "${south.name}" (${south.id})`);
     } catch (error) {
-      this.logger.error(`Unable to delete South connector "${name}" (${southId} base folder: ${error}`);
+      this._logger.error(`Unable to delete South connector "${south.name}" (${south.id} base folder: ${error}`);
     }
   }
 
   /**
    * Stops the north connector and deletes all cache inside the base folder
    */
-  async deleteNorth(northId: string, name: string): Promise<void> {
-    await this.stopNorth(northId);
+  async deleteNorth(north: NorthConnectorEntity<NorthSettings>): Promise<void> {
+    await this.stopNorth(north.id);
     // this.homeMetricsService.removeNorth(northId);
-    this.northConnectors.delete(northId);
+    this.northConnectors.delete(north.id);
 
-    const baseFolder = path.resolve(this.cacheFolder, `north-${northId}`);
+    const baseFolder = path.resolve(this.cacheFolder, `north-${north.id}`);
 
     try {
-      this.logger.trace(`Deleting base folder "${baseFolder}" of North connector "${name}" (${northId})`);
+      this._logger.trace(`Deleting base folder "${baseFolder}" of North connector "${north.name}" (${north.id})`);
 
       if (await filesExists(baseFolder)) {
         await fs.rm(baseFolder, { recursive: true });
       }
 
-      this.logger.info(`Deleted North connector "${name}" (${northId})`);
+      this._logger.info(`Deleted North connector "${north.name}" (${north.id})`);
     } catch (error) {
-      this.logger.error(`Unable to delete North connector "${name}" (${northId}) base folder: ${error}`);
+      this._logger.error(`Unable to delete North connector "${north.name}" (${north.id}) base folder: ${error}`);
     }
   }
 
   setLogger(value: pino.Logger) {
-    super.setLogger(value);
+    this._logger = value;
 
-    for (const [id, south] of this.southConnectors.entries()) {
-      const southSettings = this.southService.findById(id);
-      if (southSettings) {
-        south.setLogger(this.logger.child({ scopeType: 'south', scopeId: southSettings.id, scopeName: southSettings.name }));
-      }
+    for (const south of this.southConnectors.values()) {
+      south.setLogger(this._logger.child({ scopeType: 'south', scopeId: south.settings.id, scopeName: south.settings.name }));
     }
 
-    for (const [id, north] of this.northConnectors.entries()) {
-      const northSettings = this.northService.findById(id);
-      if (northSettings) {
-        north.setLogger(this.logger.child({ scopeType: 'north', scopeId: northSettings.id, scopeName: northSettings.name }));
-      }
+    for (const north of this.northConnectors.values()) {
+      north.setLogger(this._logger.child({ scopeType: 'north', scopeId: north.settings.id, scopeName: north.settings.name }));
     }
   }
 
@@ -377,21 +358,29 @@ export default class OIBusEngine extends BaseEngine {
     }
   }
 
-  async onSouthItemsChange(southId: string): Promise<void> {
+  async reloadItems(southId: string): Promise<void> {
     await this.southConnectors.get(southId)?.onItemChange();
   }
 
-  async reloadSouth(southId: string) {
-    await this.stopSouth(southId);
-    await this.startSouth(southId);
+  async reloadSouth(south: SouthConnectorEntity<SouthSettings, SouthItemSettings>) {
+    await this.stopSouth(south.id);
+    this.southConnectors.get(south.id)?.setLogger(this.logger.child({ scopeType: 'south', scopeId: south.id, scopeName: south.name }));
+    await this.startSouth(south.id);
   }
 
-  async reloadNorth(northId: string) {
-    await this.stopNorth(northId);
-    await this.startNorth(northId);
+  async reloadNorth(north: NorthConnectorEntity<NorthSettings>) {
+    await this.stopNorth(north.id);
+    this.northConnectors.get(north.id)?.setLogger(this.logger.child({ scopeType: 'north', scopeId: north.id, scopeName: north.name }));
+    await this.startNorth(north.id);
   }
 
-  updateSubscriptions(northId: string) {
+  updateSubscriptions() {
+    for (const north of this.northConnectors.values()) {
+      north.updateConnectorSubscription();
+    }
+  }
+
+  updateSubscription(northId: string) {
     this.northConnectors.get(northId)?.updateConnectorSubscription();
   }
 }
