@@ -6,7 +6,7 @@ import { scanModeSchema } from '../web-server/controllers/validators/oibus-valid
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import { ScanMode } from '../model/scan-mode.model';
 import { validateCronExpression } from './utils';
-import OIBusEngine from '../engine/oibus-engine';
+import DataStreamEngine from '../engine/data-stream-engine';
 
 export default class ScanModeService {
   constructor(
@@ -14,7 +14,7 @@ export default class ScanModeService {
     private scanModeRepository: ScanModeRepository,
     private southCacheRepository: SouthCacheRepository,
     private oIAnalyticsMessageService: OIAnalyticsMessageService,
-    private oibusEngine: OIBusEngine
+    private dataStreamEngine: DataStreamEngine
   ) {}
 
   findAll(): Array<ScanMode> {
@@ -41,7 +41,7 @@ export default class ScanModeService {
     this.scanModeRepository.update(scanModeId, command);
     const newScanMode = this.scanModeRepository.findById(scanModeId)!;
     if (oldScanMode.cron !== newScanMode.cron) {
-      await this.oibusEngine.updateScanMode(newScanMode);
+      await this.dataStreamEngine.updateScanMode(newScanMode);
     }
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
