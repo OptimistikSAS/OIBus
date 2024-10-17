@@ -23,6 +23,8 @@ import CertificateRepository from '../repository/config/certificate.repository';
 import CertificateRepositoryMock from '../tests/__mocks__/repository/config/certificate-repository.mock';
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import OianalyticsRegistrationRepositoryMock from '../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
+import DataStreamEngine from '../engine/data-stream-engine';
+import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
 
 jest.mock('./encryption.service');
 jest.mock('./north-connector-metrics.service');
@@ -37,6 +39,7 @@ const certificateRepository: CertificateRepository = new CertificateRepositoryMo
 const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OianalyticsRegistrationRepositoryMock();
 const oIAnalyticsMessageService: OIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
+const dataStreamEngine: DataStreamEngine = new DataStreamEngineMock();
 
 const logger: pino.Logger = new PinoLogger();
 let service: NorthService;
@@ -53,7 +56,8 @@ describe('north service', () => {
       certificateRepository,
       oIAnalyticsRegistrationRepository,
       oIAnalyticsMessageService,
-      encryptionService
+      encryptionService,
+      dataStreamEngine
     );
   });
 
@@ -97,5 +101,140 @@ describe('north service', () => {
   it('should retrieve a list of north manifest', () => {
     const list = service.getInstalledNorthManifests();
     expect(list).toBeDefined();
+  });
+
+  it('findByNorth() should list Subscription by North', async () => {
+    (northConnectorRepository.listNorthSubscriptions as jest.Mock).mockReturnValueOnce(testData.north.list[0].subscriptions);
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(testData.north.list[0]);
+
+    const result = await service.findSubscriptionsByNorth(testData.north.list[0].id);
+
+    expect(northConnectorRepository.findNorthById).toHaveBeenCalledWith(testData.north.list[0].id);
+    expect(northConnectorRepository.listNorthSubscriptions).toHaveBeenCalledWith(testData.north.list[0].id);
+    expect(result).toEqual(testData.north.list[0].subscriptions);
+  });
+
+  it('findByNorth() should throw an error if North not found', async () => {
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(null);
+
+    await expect(service.findSubscriptionsByNorth(testData.north.list[0].id)).rejects.toThrow('North connector not found');
+    expect(northConnectorRepository.findNorthById).toHaveBeenCalledWith(testData.north.list[0].id);
+    expect(northConnectorRepository.listNorthSubscriptions).not.toHaveBeenCalled();
+  });
+
+  it('checkSubscription() should check if subscription is set', () => {
+    (northConnectorRepository.checkSubscription as jest.Mock).mockReturnValueOnce(true);
+
+    expect(service.checkSubscription(testData.north.list[0].id, testData.south.list[0].id)).toEqual(true);
+
+    expect(northConnectorRepository.checkSubscription).toHaveBeenCalledWith(testData.north.list[0].id, testData.south.list[0].id);
+  });
+
+  it('create() should create a subscription', async () => {
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(testData.north.list[0]);
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(testData.south.list[0]);
+    (northConnectorRepository.checkSubscription as jest.Mock).mockReturnValueOnce(false);
+
+    await service.createSubscription(testData.north.list[0].id, testData.south.list[0].id);
+
+    expect(northConnectorRepository.findNorthById).toHaveBeenCalledWith(testData.north.list[0].id);
+    expect(southConnectorRepository.findSouthById).toHaveBeenCalledWith(testData.south.list[0].id);
+    expect(northConnectorRepository.checkSubscription).toHaveBeenCalledWith(testData.north.list[0].id, testData.south.list[0].id);
+    expect(northConnectorRepository.createSubscription).toHaveBeenCalledWith(testData.north.list[0].id, testData.south.list[0].id);
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
+  });
+
+  it('create() should throw if subscription already exists', async () => {
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(testData.north.list[0]);
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(testData.south.list[0]);
+    (northConnectorRepository.checkSubscription as jest.Mock).mockReturnValueOnce(true);
+
+    await expect(service.createSubscription(testData.north.list[0].id, testData.south.list[0].id)).rejects.toThrow(
+      'Subscription already exists'
+    );
+
+    expect(northConnectorRepository.createSubscription).not.toHaveBeenCalled();
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).not.toHaveBeenCalled();
+  });
+
+  it('create() should throw if South not found', async () => {
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(testData.north.list[0]);
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(null);
+
+    await expect(service.createSubscription(testData.north.list[0].id, testData.south.list[0].id)).rejects.toThrow(
+      'South connector not found'
+    );
+
+    expect(northConnectorRepository.checkSubscription).not.toHaveBeenCalled();
+    expect(northConnectorRepository.createSubscription).not.toHaveBeenCalled();
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).not.toHaveBeenCalled();
+  });
+
+  it('create() should throw if North not found', async () => {
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(null);
+
+    await expect(service.createSubscription(testData.north.list[0].id, testData.south.list[0].id)).rejects.toThrow(
+      'North connector not found'
+    );
+
+    expect(southConnectorRepository.findSouthById).not.toHaveBeenCalled();
+    expect(northConnectorRepository.checkSubscription).not.toHaveBeenCalled();
+    expect(northConnectorRepository.createSubscription).not.toHaveBeenCalled();
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).not.toHaveBeenCalled();
+  });
+
+  it('delete() should delete a subscription', async () => {
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(testData.north.list[0]);
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(testData.south.list[0]);
+
+    await service.deleteSubscription(testData.north.list[0].id, testData.south.list[0].id);
+
+    expect(northConnectorRepository.findNorthById).toHaveBeenCalledWith(testData.north.list[0].id);
+    expect(southConnectorRepository.findSouthById).toHaveBeenCalledWith(testData.south.list[0].id);
+    expect(northConnectorRepository.deleteSubscription).toHaveBeenCalledWith(testData.north.list[0].id, testData.south.list[0].id);
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
+  });
+
+  it('delete() should throw if South not found', async () => {
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(testData.north.list[0]);
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(null);
+
+    await expect(service.deleteSubscription(testData.north.list[0].id, testData.south.list[0].id)).rejects.toThrow(
+      'South connector not found'
+    );
+
+    expect(northConnectorRepository.deleteSubscription).not.toHaveBeenCalled();
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).not.toHaveBeenCalled();
+  });
+
+  it('delete() should throw if North not found', async () => {
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(null);
+
+    await expect(service.deleteSubscription(testData.north.list[0].id, testData.south.list[0].id)).rejects.toThrow(
+      'North connector not found'
+    );
+
+    expect(southConnectorRepository.findSouthById).not.toHaveBeenCalled();
+    expect(northConnectorRepository.deleteSubscription).not.toHaveBeenCalled();
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).not.toHaveBeenCalled();
+  });
+
+  it('deleteAllByNorth() should delete all subscriptions by North', async () => {
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(testData.north.list[0]);
+
+    await service.deleteAllSubscriptionsByNorth(testData.north.list[0].id);
+
+    expect(northConnectorRepository.findNorthById).toHaveBeenCalledWith(testData.north.list[0].id);
+    expect(northConnectorRepository.deleteAllSubscriptionsByNorth).toHaveBeenCalledWith(testData.north.list[0].id);
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
+  });
+
+  it('deleteAllByNorth() should throw if North not found', async () => {
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(null);
+
+    await expect(service.deleteAllSubscriptionsByNorth(testData.north.list[0].id)).rejects.toThrow('North connector not found');
+
+    expect(northConnectorRepository.deleteAllSubscriptionsByNorth).not.toHaveBeenCalled();
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).not.toHaveBeenCalled();
   });
 });

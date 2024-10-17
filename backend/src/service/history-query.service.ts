@@ -27,6 +27,10 @@ import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import multer from '@koa/multer';
 import fs from 'node:fs/promises';
 import csv from 'papaparse';
+import HistoryQueryEngine from '../engine/history-query-engine';
+import HistoryQuery from '../engine/history-query';
+import SouthConnectorMetricsRepository from '../repository/logs/south-connector-metrics.repository';
+import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
 
 export default class HistoryQueryService {
   constructor(
@@ -34,10 +38,13 @@ export default class HistoryQueryService {
     private readonly historyQueryRepository: HistoryQueryRepository,
     private readonly scanModeRepository: ScanModeRepository,
     private readonly logRepository: LogRepository,
+    private readonly southMetricsRepository: SouthConnectorMetricsRepository,
+    private readonly northMetricsRepository: NorthConnectorMetricsRepository,
     private readonly southService: SouthService,
     private readonly northService: NorthService,
     private readonly oIAnalyticsMessageService: OIAnalyticsMessageService,
-    private readonly encryptionService: EncryptionService
+    private readonly encryptionService: EncryptionService,
+    private readonly historyQueryEngine: HistoryQueryEngine
   ) {}
 
   async testNorth<N extends NorthSettings>(
@@ -164,10 +171,20 @@ export default class HistoryQueryService {
       this.scanModeRepository.findAll()
     );
     this.historyQueryRepository.saveHistoryQuery<S, N, I>(historyQuery);
-
-    // TODO await this.historyEngine.createHistoryQuery(historyQuery);
-    // TODO await this.historyEngine.startHistoryQuery(historyQuery.id);
     this.oIAnalyticsMessageService.createHistoryQueryMessage(historyQuery);
+
+    await this.historyQueryEngine.createHistoryQuery(
+      new HistoryQuery(
+        this.findById(historyQuery.id)!,
+        this.southService,
+        this.northService,
+        this.southMetricsRepository,
+        this.northMetricsRepository,
+        this.historyQueryRepository,
+        this.historyQueryEngine.baseFolder,
+        this.historyQueryEngine.logger.child({ scopeType: 'history-query', scopeId: historyQuery.id, scopeName: historyQuery.name })
+      )
+    );
     return historyQuery;
   }
 
@@ -203,18 +220,9 @@ export default class HistoryQueryService {
       this.encryptionService,
       this.scanModeRepository.findAll()
     );
-
     this.historyQueryRepository.saveHistoryQuery<S, N, I>(historyQuery);
-
-    // TODO await ctx.app.reloadService.historyEngine.stopHistoryQuery(historyQuery.id);
-    if (previousSettings.name !== command.name) {
-      // TODO this.historyEngine.setLogger(this.historyEngine.logger);
-    }
-    if (resetCache) {
-      // TODO await ctx.app.reloadService.historyEngine.resetCache(ctx.params.id); // Reset cache to start the history from scratch when changing the settings
-    }
-    // TODO await ctx.app.reloadService.historyEngine.startHistoryQuery(historyQuery.id);
     this.oIAnalyticsMessageService.createHistoryQueryMessage(historyQuery);
+    await this.historyQueryEngine.reloadHistoryQuery(historyQuery, resetCache);
   }
 
   async deleteHistoryQuery(historyQueryId: string): Promise<void> {
@@ -223,9 +231,10 @@ export default class HistoryQueryService {
       throw new Error(`History query ${historyQueryId} not found`);
     }
 
-    // TODO await this.historyEngine.deleteHistoryQuery(id, name);
-    this.historyQueryRepository.deleteHistoryQuery(historyQueryId);
-    this.logRepository.deleteLogsByScopeId('history-query', historyQueryId);
+    await this.historyQueryEngine.deleteHistoryQuery(historyQuery);
+    this.historyQueryRepository.deleteHistoryQuery(historyQuery.id);
+    this.logRepository.deleteLogsByScopeId('history-query', historyQuery.id);
+    this.oIAnalyticsMessageService.createHistoryQueryMessage(historyQuery);
   }
 
   async startHistoryQuery(historyQueryId: string): Promise<void> {
@@ -234,12 +243,8 @@ export default class HistoryQueryService {
       throw new Error(`History query ${historyQueryId} not found`);
     }
 
-    if (historyQuery.status === 'FINISHED' || historyQuery.status === 'ERRORED') {
-      // TODO await ctx.app.reloadService.historyEngine.stopHistoryQuery(ctx.params.id);
-      // TODO await ctx.app.reloadService.historyEngine.resetCache(ctx.params.id);
-    }
     this.historyQueryRepository.updateHistoryQueryStatus(historyQueryId, 'RUNNING');
-    // TODO await this.historyEngine.startHistoryQuery(historyId);
+    await this.historyQueryEngine.reloadHistoryQuery(historyQuery, historyQuery.status === 'FINISHED' || historyQuery.status === 'ERRORED');
   }
 
   async pauseHistoryQuery(historyQueryId: string): Promise<void> {
@@ -248,8 +253,8 @@ export default class HistoryQueryService {
       throw new Error(`History query ${historyQueryId} not found`);
     }
 
-    // TODO await this.historyEngine.stopHistoryQuery(historyId);
     this.historyQueryRepository.updateHistoryQueryStatus(historyQueryId, 'PAUSED');
+    await this.historyQueryEngine.stopHistoryQuery(historyQuery.id);
   }
 
   listItems<I extends SouthItemSettings>(
@@ -298,9 +303,9 @@ export default class HistoryQueryService {
     );
     this.historyQueryRepository.saveHistoryQueryItem<I>(historyQuery.id, historyQueryItemEntity);
 
-    // TODO await this.historyEngine.stopHistoryQuery(historyId);
-    // TODO await this.historyEngine.startHistoryQuery(historyId);
     this.oIAnalyticsMessageService.createHistoryQueryMessage(historyQuery);
+
+    await this.historyQueryEngine.reloadHistoryQuery(historyQuery, false);
     return historyQueryItemEntity;
   }
 
@@ -332,10 +337,8 @@ export default class HistoryQueryService {
       this.encryptionService
     );
     this.historyQueryRepository.saveHistoryQueryItem<I>(historyQuery.id, historyQueryItemEntity);
-
-    // TODO await this.historyEngine.stopHistoryQuery(historyId);
-    // TODO await this.historyEngine.startHistoryQuery(historyId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    await this.historyQueryEngine.reloadHistoryQuery(historyQuery, false);
   }
 
   async deleteHistoryQueryItem(historyQueryId: string, historyQueryItemId: string): Promise<void> {
@@ -346,10 +349,9 @@ export default class HistoryQueryService {
     const historyQueryItem = this.historyQueryRepository.findHistoryQueryItemById(historyQueryId, historyQueryItemId);
     if (!historyQueryItem) throw new Error('History Query item not found');
 
-    this.historyQueryRepository.deleteHistoryQueryItem(historyQueryItemId);
-    // TODO await ctx.app.reloadService.historyEngine.stopHistoryQuery(ctx.params.historyQueryId);
-    // TODO await ctx.app.reloadService.historyEngine.startHistoryQuery(ctx.params.historyQueryId);
+    this.historyQueryRepository.deleteHistoryQueryItem(historyQueryItem.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    await this.historyQueryEngine.reloadHistoryQuery(historyQuery, false);
   }
 
   async deleteAllItemsForHistoryQuery(historyQueryId: string): Promise<void> {
@@ -358,10 +360,8 @@ export default class HistoryQueryService {
       throw new Error(`History query ${historyQueryId} not found`);
     }
     this.historyQueryRepository.deleteAllHistoryQueryItemsByHistoryQuery(historyQueryId);
-
-    // TODO await ctx.app.reloadService.historyEngine.stopHistoryQuery(ctx.params.historyQueryId);
-    // TODO await ctx.app.reloadService.historyEngine.resetCache(ctx.params.id); // Reset cache to start the history from scratch when changing the settings
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    await this.historyQueryEngine.reloadHistoryQuery(historyQuery, true);
   }
 
   async enableHistoryQueryItem(historyQueryId: string, historyQueryItemId: string): Promise<void> {
@@ -370,10 +370,9 @@ export default class HistoryQueryService {
       throw new Error(`History query item ${historyQueryItemId} not found`);
     }
 
-    this.historyQueryRepository.enableHistoryQueryItem(historyQueryItemId);
-    // TODO await ctx.app.reloadService.historyEngine.stopHistoryQuery(ctx.params.historyQueryId);
-    // TODO await ctx.app.reloadService.historyEngine.startHistoryQuery(ctx.params.historyQueryId);
+    this.historyQueryRepository.enableHistoryQueryItem(historyQueryItem.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    await this.historyQueryEngine.reloadHistoryQuery(this.historyQueryRepository.findHistoryQueryById(historyQueryId)!, false);
   }
 
   async disableHistoryQueryItem(historyQueryId: string, historyQueryItemId: string): Promise<void> {
@@ -383,9 +382,8 @@ export default class HistoryQueryService {
     }
 
     this.historyQueryRepository.disableHistoryQueryItem(historyQueryItemId);
-    // TODO await ctx.app.reloadService.historyEngine.stopHistoryQuery(ctx.params.historyQueryId);
-    // TODO await ctx.app.reloadService.historyEngine.startHistoryQuery(ctx.params.historyQueryId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    await this.historyQueryEngine.reloadHistoryQuery(this.historyQueryRepository.findHistoryQueryById(historyQueryId)!, false);
   }
 
   async checkCsvImport<I extends SouthItemSettings>(
@@ -478,8 +476,8 @@ export default class HistoryQueryService {
       itemsToAdd.push(historyQueryItemEntity);
     }
     this.historyQueryRepository.saveAllItems<I>(historyQuery.id, itemsToAdd);
-    // TODO await ctx.app.reloadService.oibusEngine.onSouthItemsChange(southConnector.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    await this.historyQueryEngine.reloadHistoryQuery(historyQuery, false);
   }
 }
 

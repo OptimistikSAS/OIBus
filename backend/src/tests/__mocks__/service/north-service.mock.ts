@@ -12,5 +12,10 @@ export default jest.fn().mockImplementation(() => ({
   updateNorth: jest.fn(),
   deleteNorth: jest.fn(),
   startNorth: jest.fn(),
-  stopNorth: jest.fn()
+  stopNorth: jest.fn(),
+  findSubscriptionsByNorth: jest.fn(),
+  checkSubscription: jest.fn(),
+  createSubscription: jest.fn(),
+  deleteSubscription: jest.fn(),
+  deleteAllSubscriptionsByNorth: jest.fn()
 }));

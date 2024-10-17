@@ -104,6 +104,7 @@ import SouthSlims from '../south/south-slims/south-slims';
 import SouthSQLite from '../south/south-sqlite/south-sqlite';
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import CertificateRepository from '../repository/config/certificate.repository';
+import DataStreamEngine from '../engine/data-stream-engine';
 
 export const southManifestList: Array<SouthConnectorManifest> = [
   folderScannerManifest,
@@ -137,7 +138,8 @@ export default class SouthService {
     private readonly certificateRepository: CertificateRepository,
     private readonly oIAnalyticsMessageService: OIAnalyticsMessageService,
     private readonly encryptionService: EncryptionService,
-    private readonly _connectionService: ConnectionService
+    private readonly _connectionService: ConnectionService,
+    private readonly dataStreamEngine: DataStreamEngine
   ) {}
 
   runSouth<S extends SouthSettings, I extends SouthItemSettings>(
@@ -475,12 +477,19 @@ export default class SouthService {
     const southEntity = {} as SouthConnectorEntity<S, I>;
     await copySouthConnectorCommandToSouthEntity(southEntity, command, null, this.encryptionService, this.scanModeRepository.findAll());
     this.southConnectorRepository.saveSouthConnector(southEntity);
-    // TODO: await this.oibusEngine.createSouth(southConnector);
-
-    if (southEntity.enabled) {
-      // TODO: await this.reloadService.oibusEngine.startSouth(southConnector.id);
-    }
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+
+    await this.dataStreamEngine.createSouth(
+      this.runSouth(
+        this.findById(southEntity.id)!,
+        this.dataStreamEngine.addContent.bind(this.dataStreamEngine),
+        this.dataStreamEngine.baseFolder,
+        this.dataStreamEngine.logger.child({ scopeType: 'south', scopeId: southEntity.id, scopeName: southEntity.name })
+      )
+    );
+    if (southEntity.enabled) {
+      await this.dataStreamEngine.startSouth(southEntity.id);
+    }
     return southEntity;
   }
 
@@ -508,14 +517,15 @@ export default class SouthService {
     );
     this.southConnectorRepository.saveSouthConnector(southEntity);
 
-    if (previousSettings.name !== southEntity.name) {
-      // TODO: this.oibusEngine.setLogger(this.oibusEngine.logger);
-    }
-
     // Handle all cases regarding cache changes when max instant per item changes
     this.onSouthMaxInstantPerItemChange(previousSettings, southEntity);
 
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    if (southEntity.enabled) {
+      await this.dataStreamEngine.reloadSouth(southEntity);
+    } else {
+      await this.dataStreamEngine.stopSouth(southEntity.id);
+    }
   }
 
   async updateSouth<S extends SouthSettings, I extends SouthItemSettings>(
@@ -542,24 +552,16 @@ export default class SouthService {
     );
     this.southConnectorRepository.saveSouthConnector(southEntity);
 
-    if (previousSettings.name !== southEntity.name) {
-      // TODO: this.oibusEngine.setLogger(this.oibusEngine.logger);
-    }
-
     if (previousSettings.history.maxInstantPerItem !== southEntity.history.maxInstantPerItem) {
       // Handle all cases regarding cache changes when max instant per item changes
       this.onSouthMaxInstantPerItemChange(previousSettings, southEntity);
     }
-
-    if (southEntity.enabled) {
-      this.southConnectorRepository.start(southEntity.id);
-      // TODO: await this.oibusEngine.reloadSouth(newSouthConnectorSettings.id);
-    } else {
-      this.southConnectorRepository.stop(southEntity.id);
-      // TODO: await this.oibusEngine.stopSouth(newSouthConnectorSettings.id);
-    }
-
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    if (southEntity.enabled) {
+      await this.dataStreamEngine.reloadSouth(southEntity);
+    } else {
+      await this.dataStreamEngine.stopSouth(southEntity.id);
+    }
   }
 
   async deleteSouth(southConnectorId: string): Promise<void> {
@@ -567,13 +569,13 @@ export default class SouthService {
     if (!southConnector) {
       throw new Error(`South connector ${southConnectorId} does not exist`);
     }
-    // TODO: this.oibusEngine.updateSubscriptions(northId);
-    // TODO: await this.oibusEngine.deleteSouth(southConnector.id, southConnector.name);
+
+    await this.dataStreamEngine.deleteSouth(southConnector);
     this.southConnectorRepository.deleteSouth(southConnector.id);
+    this.dataStreamEngine.updateSubscriptions();
     this.logRepository.deleteLogsByScopeId('south', southConnector.id);
     this.southMetricsRepository.removeMetrics(southConnector.id);
     this.southCacheRepository.deleteAllBySouthConnector(southConnector.id);
-
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 
@@ -583,9 +585,9 @@ export default class SouthService {
       throw new Error(`South connector ${southConnectorId} does not exist`);
     }
 
-    this.southConnectorRepository.start(southConnectorId);
-    // TODO: await this.oibusEngine.startSouth(southId);
+    this.southConnectorRepository.start(southConnector.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    await this.dataStreamEngine.startSouth(southConnector.id);
   }
 
   async stopSouth(southConnectorId: string): Promise<void> {
@@ -594,9 +596,9 @@ export default class SouthService {
       throw new Error(`South connector ${southConnectorId} does not exist`);
     }
 
-    this.southConnectorRepository.stop(southConnectorId);
-    // TODO await this.oibusEngine.stopSouth(southId);
+    this.southConnectorRepository.stop(southConnector.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    await this.dataStreamEngine.stopSouth(southConnector.id);
   }
 
   getSouthItems<I extends SouthItemSettings>(southId: string): Array<SouthConnectorItemEntity<I>> {
@@ -608,10 +610,6 @@ export default class SouthService {
     searchParams: SouthConnectorItemSearchParam
   ): Page<SouthConnectorItemEntity<I>> {
     return this.southConnectorRepository.searchItems<I>(southId, searchParams);
-  }
-
-  findAllItemsForSouthConnector<I extends SouthItemSettings>(southConnectorId: string): Array<SouthConnectorItemEntity<I>> {
-    return this.southConnectorRepository.findAllItemsForSouth<I>(southConnectorId);
   }
 
   findSouthConnectorItemById(southConnectorId: string, itemId: string): SouthConnectorItemEntity<SouthItemSettings> | null {
@@ -643,8 +641,9 @@ export default class SouthService {
     );
     this.southConnectorRepository.saveItem<I>(southConnector.id, southItemEntity);
 
-    // TODO: await this.oibusEngine.onSouthItemsChange(southId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+
+    await this.dataStreamEngine.reloadItems(southConnector.id);
     return southItemEntity;
   }
 
@@ -677,8 +676,9 @@ export default class SouthService {
     this.southConnectorRepository.saveItem<I>(southConnectorId, southItemEntity);
 
     this.onSouthItemScanModeChange(southConnector, previousSettings, southItemEntity);
-    // TODO: await this.oibusEngine.onSouthItemsChange(southId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+
+    await this.dataStreamEngine.reloadItems(southConnector.id);
   }
 
   async deleteItem(southConnectorId: string, itemId: string): Promise<void> {
@@ -690,8 +690,9 @@ export default class SouthService {
     if (!southItem) throw new Error('South item not found');
     this.southConnectorRepository.deleteItem(southItem.id);
     this.safeDeleteSouthCacheEntry(southConnector, southItem);
-    // TODO await this.oibusEngine.onSouthItemsChange(southConnectorId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+
+    await this.dataStreamEngine.reloadItems(southConnector.id);
   }
 
   async deleteAllItemsForSouthConnector(southConnectorId: string): Promise<void> {
@@ -701,24 +702,27 @@ export default class SouthService {
     }
     this.southConnectorRepository.deleteAllItemsBySouth(southConnectorId);
     this.southCacheRepository.deleteAllBySouthConnector(southConnectorId);
-    // TODO await this.oibusEngine.onSouthItemsChange(southId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+
+    await this.dataStreamEngine.reloadItems(southConnector.id);
   }
 
   async enableItem(southConnectorId: string, itemId: string): Promise<void> {
     const southItem = this.southConnectorRepository.findItemById(southConnectorId, itemId);
     if (!southItem) throw new Error('South item not found');
     this.southConnectorRepository.enableItem(itemId);
-    // TODO await this.oibusEngine.onSouthItemsChange(southItem.connectorId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+
+    await this.dataStreamEngine.reloadItems(southConnectorId);
   }
 
   async disableItem(southConnectorId: string, itemId: string): Promise<void> {
     const southItem = this.southConnectorRepository.findItemById(southConnectorId, itemId);
     if (!southItem) throw new Error('South item not found');
     this.southConnectorRepository.disableItem(itemId);
-    // TODO await this.oibusEngine.onSouthItemsChange(southItem.connectorId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+
+    await this.dataStreamEngine.reloadItems(southConnectorId);
   }
 
   async checkCsvImport<I extends SouthItemSettings>(
@@ -831,8 +835,9 @@ export default class SouthService {
     }
 
     this.southConnectorRepository.saveAllItems(southConnector.id, itemsToAdd);
-    // TODO await ctx.app.reloadService.oibusEngine.onSouthItemsChange(southConnector.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+
+    await this.dataStreamEngine.reloadItems(southConnectorId);
   }
 
   /**
