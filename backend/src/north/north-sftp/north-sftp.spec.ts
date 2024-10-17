@@ -14,9 +14,6 @@ import NorthConnectorRepository from '../../repository/config/north-connector.re
 import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
-import NorthConnectorMetricsRepository from '../../repository/logs/north-connector-metrics.repository';
-import NorthMetricsRepositoryMock from '../../tests/__mocks__/repository/log/north-metrics-repository.mock';
-import NorthConnectorMetricsServiceMock from '../../tests/__mocks__/service/north-connector-metrics-service.mock';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import testData from '../../tests/utils/test-data';
 
@@ -26,11 +23,10 @@ const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
-const northMetricsRepository: NorthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
 const valueCacheService = new ValueCacheServiceMock();
 const fileCacheService = new FileCacheServiceMock();
 const archiveService = new ArchiveServiceMock();
-const northConnectorMetricsService = new NorthConnectorMetricsServiceMock();
+
 jest.mock(
   '../../service/cache/value-cache.service',
   () =>
@@ -52,13 +48,7 @@ jest.mock(
       return archiveService;
     }
 );
-jest.mock(
-  '../../service/north-connector-metrics.service',
-  () =>
-    function () {
-      return northConnectorMetricsService;
-    }
-);
+
 const mockSftpClient = {
   connect: jest.fn(),
   list: jest.fn(),
@@ -95,15 +85,7 @@ describe('NorthSFTP', () => {
     (sftpClient as jest.Mock).mockImplementation(() => mockSftpClient);
     (csv.unparse as jest.Mock).mockReturnValue('csv content');
 
-    north = new NorthSftp(
-      configuration,
-      encryptionService,
-      northConnectorRepository,
-      scanModeRepository,
-      northMetricsRepository,
-      logger,
-      'baseFolder'
-    );
+    north = new NorthSftp(configuration, encryptionService, northConnectorRepository, scanModeRepository, logger, 'baseFolder');
     await north.start();
   });
 
@@ -197,15 +179,7 @@ describe('NorthSFTP without suffix or prefix', () => {
 
     (sftpClient as jest.Mock).mockImplementation(() => mockSftpClient);
 
-    north = new NorthSftp(
-      configuration,
-      encryptionService,
-      northConnectorRepository,
-      scanModeRepository,
-      northMetricsRepository,
-      logger,
-      'baseFolder'
-    );
+    north = new NorthSftp(configuration, encryptionService, northConnectorRepository, scanModeRepository, logger, 'baseFolder');
   });
 
   it('should properly handle values', async () => {

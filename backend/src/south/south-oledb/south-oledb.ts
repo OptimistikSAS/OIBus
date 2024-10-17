@@ -1,7 +1,6 @@
 import path from 'node:path';
 
 import SouthConnector from '../south-connector';
-import manifest from './manifest';
 import {
   convertDateTimeToInstant,
   convertDelimiter,
@@ -12,7 +11,6 @@ import {
   logQuery,
   persistResults
 } from '../../service/utils';
-import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
@@ -21,9 +19,8 @@ import { QueriesHistory } from '../south-interface';
 import { SouthOLEDBItemSettings, SouthOLEDBSettings } from '../../../../shared/model/south-settings.model';
 import fetch, { HeadersInit, RequestInit } from 'node-fetch';
 import { OIBusContent } from '../../../../shared/model/engine.model';
-import { SouthConnectorEntity } from '../../model/south-connector.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
-import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 
@@ -32,8 +29,6 @@ import ScanModeRepository from '../../repository/config/scan-mode.repository';
  */
 
 export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, SouthOLEDBItemSettings> implements QueriesHistory {
-  static type = manifest.id;
-
   private readonly tmpFolder: string;
   private connected = false;
   private reconnectTimeout: NodeJS.Timeout | null = null;
@@ -43,7 +38,6 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     southConnectorRepository: SouthConnectorRepository,
-    southMetricsRepository: SouthConnectorMetricsRepository,
     southCacheRepository: SouthCacheRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
@@ -54,7 +48,6 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
       engineAddContentCallback,
       encryptionService,
       southConnectorRepository,
-      southMetricsRepository,
       southCacheRepository,
       scanModeRepository,
       logger,
@@ -142,7 +135,7 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
     }
   }
 
-  override async testItem(item: SouthConnectorItemDTO<SouthOLEDBItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
+  override async testItem(item: SouthConnectorItemEntity<SouthOLEDBItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
     const startTime = DateTime.now()
       .minus(600 * 1000)
       .toUTC()
@@ -192,7 +185,11 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
    * Get entries from the database between startTime and endTime (if used in the SQL query)
    * and write them into a CSV file and send it to the engine.
    */
-  async historyQuery(items: Array<SouthConnectorItemDTO<SouthOLEDBItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
+  async historyQuery(
+    items: Array<SouthConnectorItemEntity<SouthOLEDBItemSettings>>,
+    startTime: Instant,
+    endTime: Instant
+  ): Promise<Instant> {
     let updatedStartTime = startTime;
 
     for (const item of items) {
@@ -203,7 +200,7 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
   }
 
   async queryRemoteAgentData(
-    item: SouthConnectorItemDTO<SouthOLEDBItemSettings>,
+    item: SouthConnectorItemEntity<SouthOLEDBItemSettings>,
     startTime: Instant,
     endTime: Instant,
     test?: boolean
