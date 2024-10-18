@@ -44,6 +44,7 @@ import NorthOIAnalytics from '../north/north-oianalytics/north-oianalytics';
 import NorthSFTP from '../north/north-sftp/north-sftp';
 import DataStreamEngine from '../engine/data-stream-engine';
 import { SouthConnectorEntityLight } from '../model/south-connector.model';
+import { PassThrough } from 'node:stream';
 
 export const northManifestList: Array<NorthConnectorManifest> = [
   consoleManifest,
@@ -66,7 +67,7 @@ export default class NorthService {
     private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
     private oIAnalyticsMessageService: OIAnalyticsMessageService,
     private readonly encryptionService: EncryptionService,
-    private readonly engine: DataStreamEngine
+    private readonly dataStreamEngine: DataStreamEngine
   ) {}
 
   runNorth(settings: NorthConnectorEntity<NorthSettings>, baseFolder: string, logger: pino.Logger): NorthConnector<NorthSettings> {
@@ -196,17 +197,21 @@ export default class NorthService {
     this.northConnectorRepository.saveNorthConnector(northEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
 
-    await this.engine.createNorth(
+    await this.dataStreamEngine.createNorth(
       this.runNorth(
         this.findById(northEntity.id)!,
-        this.engine.baseFolder,
-        this.engine.logger.child({ scopeType: 'north', scopeId: northEntity.id, scopeName: northEntity.name })
+        this.dataStreamEngine.baseFolder,
+        this.dataStreamEngine.logger.child({ scopeType: 'north', scopeId: northEntity.id, scopeName: northEntity.name })
       )
     );
     if (northEntity.enabled) {
-      await this.engine.startNorth(northEntity.id);
+      await this.dataStreamEngine.startNorth(northEntity.id);
     }
     return northEntity;
+  }
+
+  getNorthDataStream(northConnectorId: string): PassThrough | null {
+    return this.dataStreamEngine.getNorthDataStream(northConnectorId);
   }
 
   async updateNorthWithoutSubscriptions(northConnectorId: string, command: NorthConnectorWithoutSubscriptionsCommandDTO) {
@@ -233,9 +238,9 @@ export default class NorthService {
 
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     if (northEntity.enabled) {
-      await this.engine.reloadNorth(northEntity);
+      await this.dataStreamEngine.reloadNorth(northEntity);
     } else {
-      await this.engine.stopNorth(northEntity.id);
+      await this.dataStreamEngine.stopNorth(northEntity.id);
     }
   }
 
@@ -262,9 +267,9 @@ export default class NorthService {
     this.northConnectorRepository.saveNorthConnector(northEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     if (northEntity.enabled) {
-      await this.engine.reloadNorth(northEntity);
+      await this.dataStreamEngine.reloadNorth(northEntity);
     } else {
-      await this.engine.stopNorth(northEntity.id);
+      await this.dataStreamEngine.stopNorth(northEntity.id);
     }
   }
 
@@ -273,7 +278,7 @@ export default class NorthService {
     if (!northConnector) {
       throw new Error(`North connector ${northConnectorId} does not exist`);
     }
-    await this.engine.deleteNorth(northConnector);
+    await this.dataStreamEngine.deleteNorth(northConnector);
     this.northConnectorRepository.deleteNorth(northConnectorId);
     this.logRepository.deleteLogsByScopeId('north', northConnector.id);
     this.northMetricsRepository.removeMetrics(northConnector.id);
@@ -288,7 +293,7 @@ export default class NorthService {
 
     this.northConnectorRepository.startNorth(northConnectorId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    await this.engine.startNorth(northConnector.id);
+    await this.dataStreamEngine.startNorth(northConnector.id);
   }
 
   async stopNorth(northConnectorId: string) {
@@ -299,7 +304,7 @@ export default class NorthService {
 
     this.northConnectorRepository.stopNorth(northConnectorId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    await this.engine.stopNorth(northConnector.id);
+    await this.dataStreamEngine.stopNorth(northConnector.id);
   }
 
   async findSubscriptionsByNorth(northId: string): Promise<Array<SouthConnectorEntityLight>> {
@@ -332,7 +337,7 @@ export default class NorthService {
 
     this.northConnectorRepository.createSubscription(northId, southId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    this.engine.updateSubscription(northId);
+    this.dataStreamEngine.updateSubscription(northId);
   }
 
   async deleteSubscription(northId: string, southId: string): Promise<void> {
@@ -348,7 +353,7 @@ export default class NorthService {
 
     this.northConnectorRepository.deleteSubscription(northId, southId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    this.engine.updateSubscription(northId);
+    this.dataStreamEngine.updateSubscription(northId);
   }
 
   async deleteAllSubscriptionsByNorth(northId: string): Promise<void> {
@@ -359,7 +364,7 @@ export default class NorthService {
 
     this.northConnectorRepository.deleteAllSubscriptionsByNorth(northId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    this.engine.updateSubscription(northId);
+    this.dataStreamEngine.updateSubscription(northId);
   }
 }
 

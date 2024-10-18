@@ -1,5 +1,5 @@
 /**
- * Create a mock object for North Connector Metrics Repository
+ * Create a mock object for History Query Repository
  */
 export default jest.fn().mockImplementation(() => {
   return {

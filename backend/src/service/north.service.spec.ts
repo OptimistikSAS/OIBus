@@ -27,7 +27,7 @@ import DataStreamEngine from '../engine/data-stream-engine';
 import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
 
 jest.mock('./encryption.service');
-jest.mock('./north-connector-metrics.service');
+jest.mock('./metrics/north-connector-metrics.service');
 
 const validator = new JoiValidator();
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();

@@ -14,27 +14,27 @@ const sse = () => {
     });
 
     if (ctx.path.startsWith('/sse/south/')) {
-      // const splitString = ctx.path.split('/');
-      // TODO ctx.body = ctx.app.reloadService.oibusEngine.getSouthDataStream(splitString[3]);
-      return ctx.noContent();
+      const splitString = ctx.path.split('/');
+      ctx.body = ctx.app.southService.getSouthDataStream(splitString[3]);
+      return ctx.ok();
     }
     if (ctx.path.startsWith('/sse/north/')) {
-      // const splitString = ctx.path.split('/');
-      // TODO ctx.body = ctx.app.reloadService.oibusEngine.getNorthDataStream(splitString[3]);
-      return ctx.noContent();
+      const splitString = ctx.path.split('/');
+      ctx.body = ctx.app.northService.getNorthDataStream(splitString[3]);
+      return ctx.ok();
     }
     if (ctx.path.startsWith('/sse/engine')) {
       ctx.body = ctx.app.oIBusService.stream;
-      return ctx.noContent();
+      return ctx.ok();
     }
     if (ctx.path.startsWith('/sse/home')) {
       // ctx.body = ctx.app.reloadService.homeMetricsService.stream;
-      return ctx.noContent();
+      return ctx.ok();
     }
     if (ctx.path.startsWith('/sse/history-queries/')) {
-      // TODO const splitString = ctx.path.split('/');
-      // ctx.body = ctx.app.reloadService.historyEngine.getHistoryDataStream(splitString[3]);
-      return ctx.noContent();
+      const splitString = ctx.path.split('/');
+      ctx.body = ctx.app.historyQueryService.getHistoryQueryDataStream(splitString[3]);
+      return ctx.ok();
     }
     return next();
   };

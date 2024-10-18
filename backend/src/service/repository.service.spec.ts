@@ -19,6 +19,7 @@ import CertificateRepository from '../repository/config/certificate.repository';
 import OianalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import OianalyticsCommandRepository from '../repository/config/oianalytics-command.repository';
 import OianalyticsMessageRepository from '../repository/config/oianalytics-message.repository';
+import HistoryQueryMetricsRepository from '../repository/logs/history-query-metrics.repository';
 
 jest.mock('better-sqlite3', () => jest.fn(() => 'sqlite database'));
 jest.mock('../repository/crypto/crypto.repository');
@@ -30,6 +31,7 @@ jest.mock('../repository/logs/north-connector-metrics.repository');
 jest.mock('../repository/config/south-connector.repository');
 jest.mock('../repository/cache/south-cache.repository');
 jest.mock('../repository/logs/south-connector-metrics.repository');
+jest.mock('../repository/logs/history-query-metrics.repository');
 jest.mock('../repository/logs/engine-metrics.repository');
 jest.mock('../repository/logs/log.repository');
 jest.mock('../repository/config/history-query.repository');
@@ -54,6 +56,7 @@ describe('Repository service', () => {
     expect(NorthConnectorMetricsRepository).toHaveBeenCalledWith('sqlite database');
     expect(SouthConnectorRepository).toHaveBeenCalledWith('sqlite database');
     expect(SouthConnectorMetricsRepository).toHaveBeenCalledWith('sqlite database');
+    expect(HistoryQueryMetricsRepository).toHaveBeenCalledWith('sqlite database');
     expect(EngineMetricsRepository).toHaveBeenCalledWith('sqlite database');
     expect(SouthCacheRepository).toHaveBeenCalledWith('sqlite database');
     expect(LogRepository).toHaveBeenCalledWith('sqlite database');
@@ -72,6 +75,7 @@ describe('Repository service', () => {
     expect(repositoryService.northMetricsRepository).toBeDefined();
     expect(repositoryService.southConnectorRepository).toBeDefined();
     expect(repositoryService.southMetricsRepository).toBeDefined();
+    expect(repositoryService.historyQueryMetricsRepository).toBeDefined();
     expect(repositoryService.engineMetricsRepository).toBeDefined();
     expect(repositoryService.oianalyticsRegistrationRepository).toBeDefined();
     expect(repositoryService.southCacheRepository).toBeDefined();

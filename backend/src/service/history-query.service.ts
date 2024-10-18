@@ -29,8 +29,8 @@ import fs from 'node:fs/promises';
 import csv from 'papaparse';
 import HistoryQueryEngine from '../engine/history-query-engine';
 import HistoryQuery from '../engine/history-query';
-import SouthConnectorMetricsRepository from '../repository/logs/south-connector-metrics.repository';
-import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
+import HistoryQueryMetricsRepository from '../repository/logs/history-query-metrics.repository';
+import { PassThrough } from 'node:stream';
 
 export default class HistoryQueryService {
   constructor(
@@ -38,8 +38,7 @@ export default class HistoryQueryService {
     private readonly historyQueryRepository: HistoryQueryRepository,
     private readonly scanModeRepository: ScanModeRepository,
     private readonly logRepository: LogRepository,
-    private readonly southMetricsRepository: SouthConnectorMetricsRepository,
-    private readonly northMetricsRepository: NorthConnectorMetricsRepository,
+    private readonly historyQueryMetricsRepository: HistoryQueryMetricsRepository,
     private readonly southService: SouthService,
     private readonly northService: NorthService,
     private readonly oIAnalyticsMessageService: OIAnalyticsMessageService,
@@ -178,14 +177,16 @@ export default class HistoryQueryService {
         this.findById(historyQuery.id)!,
         this.southService,
         this.northService,
-        this.southMetricsRepository,
-        this.northMetricsRepository,
         this.historyQueryRepository,
         this.historyQueryEngine.baseFolder,
         this.historyQueryEngine.logger.child({ scopeType: 'history-query', scopeId: historyQuery.id, scopeName: historyQuery.name })
       )
     );
     return historyQuery;
+  }
+
+  getHistoryQueryDataStream(historyQueryId: string): PassThrough | null {
+    return this.historyQueryEngine.getHistoryQueryDataStream(historyQueryId);
   }
 
   async updateHistoryQuery<S extends SouthSettings, N extends NorthSettings, I extends SouthItemSettings>(
@@ -233,6 +234,7 @@ export default class HistoryQueryService {
 
     await this.historyQueryEngine.deleteHistoryQuery(historyQuery);
     this.historyQueryRepository.deleteHistoryQuery(historyQuery.id);
+    this.historyQueryMetricsRepository.removeMetrics(historyQuery.id);
     this.logRepository.deleteLogsByScopeId('history-query', historyQuery.id);
     this.oIAnalyticsMessageService.createHistoryQueryMessage(historyQuery);
   }
