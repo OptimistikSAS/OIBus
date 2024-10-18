@@ -84,11 +84,12 @@ describe('HistoryQueryEngine', () => {
   it('should reload history query', async () => {
     await engine.start([mockedHistoryQuery1]);
 
-    await engine.reloadHistoryQuery({ ...testData.historyQueries.list[0], id: 'bad id' }, true);
-    await engine.reloadHistoryQuery(testData.historyQueries.list[0], false);
+    await engine.reloadHistoryQuery({ ...testData.historyQueries.list[0], id: 'bad id' }, false);
+
+    await engine.reloadHistoryQuery(testData.historyQueries.list[0], true);
 
     expect(mockedHistoryQuery1.stop).toHaveBeenCalled();
-    expect(mockedHistoryQuery1.resetCache).not.toHaveBeenCalled();
+    expect(mockedHistoryQuery1.resetCache).toHaveBeenCalledTimes(1);
     expect(mockedHistoryQuery1.setLogger).toHaveBeenCalledTimes(1);
     expect(logger.child).toHaveBeenCalledTimes(1);
     expect(mockedHistoryQuery1.start).toHaveBeenCalled();
@@ -154,5 +155,12 @@ describe('HistoryQueryEngine', () => {
     expect(logger.error).toHaveBeenCalledWith(
       `Unable to delete History query "${testData.historyQueries.list[0].name}" (${testData.historyQueries.list[0].id}) base folder: ${error}`
     );
+  });
+
+  it('should get data stream', async () => {
+    await engine.start([mockedHistoryQuery1]);
+
+    expect(engine.getHistoryQueryDataStream(testData.historyQueries.list[0].id)).not.toBeNull();
+    expect(engine.getHistoryQueryDataStream('bad id')).toBeNull();
   });
 });

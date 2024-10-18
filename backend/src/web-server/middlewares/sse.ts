@@ -28,7 +28,7 @@ const sse = () => {
       return ctx.ok();
     }
     if (ctx.path.startsWith('/sse/home')) {
-      // ctx.body = ctx.app.reloadService.homeMetricsService.stream;
+      ctx.body = ctx.app.homeMetricsService.stream;
       return ctx.ok();
     }
     if (ctx.path.startsWith('/sse/history-queries/')) {

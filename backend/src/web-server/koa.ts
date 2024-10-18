@@ -10,6 +10,7 @@ import ScanModeService from '../service/scan-mode.service';
 import IPFilterService from '../service/ip-filter.service';
 import OIAnalyticsCommandService from '../service/oia/oianalytics-command.service';
 import HistoryQueryService from '../service/history-query.service';
+import HomeMetricsService from '../service/metrics/home-metrics.service';
 
 interface KoaRequest<RequestBody> extends Request {
   body?: RequestBody;
@@ -25,6 +26,7 @@ export interface KoaApplication extends Koa {
   southService: SouthService;
   northService: NorthService;
   historyQueryService: HistoryQueryService;
+  homeMetricsService: HomeMetricsService;
   repositoryService: RepositoryService;
   ipFilters: {
     whiteList: Array<string>;
