@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
-import { HistoryMetrics } from '../../../../../../shared/model/engine.model';
+import { HistoryQueryMetrics } from '../../../../../../shared/model/engine.model';
 import { JsonPipe } from '@angular/common';
 import { DatetimePipe } from '../../../shared/datetime.pipe';
 import { DurationPipe } from '../../../shared/duration.pipe';
@@ -23,7 +23,7 @@ export class HistoryMetricsComponent {
   @Input({ required: true }) historyQuery!: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>;
   @Input({ required: true }) northManifest!: NorthConnectorManifest;
   @Input({ required: true }) southManifest!: SouthConnectorManifest;
-  @Input({ required: true }) historyMetrics!: HistoryMetrics;
+  @Input({ required: true }) historyMetrics!: HistoryQueryMetrics;
 
   constructor() {}
 

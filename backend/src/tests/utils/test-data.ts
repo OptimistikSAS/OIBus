@@ -12,6 +12,7 @@ import { EngineSettings } from '../../model/engine.model';
 import {
   EngineMetrics,
   EngineSettingsCommandDTO,
+  HistoryQueryMetrics,
   NorthConnectorMetrics,
   OIBusContent,
   OIBusInfo,
@@ -782,6 +783,36 @@ const northMetrics: NorthConnectorMetrics = {
   lastFileSent: null,
   cacheSize: 10
 };
+const historyQueryMetrics: HistoryQueryMetrics = {
+  metricsStart: constants.dates.DATE_1,
+  south: {
+    lastConnection: null,
+    lastRunStart: null,
+    lastRunDuration: null,
+    numberOfValuesRetrieved: 11,
+    numberOfFilesRetrieved: 11,
+    lastValueRetrieved: null,
+    lastFileRetrieved: null
+  },
+  north: {
+    lastConnection: null,
+    lastRunStart: null,
+    lastRunDuration: null,
+    numberOfValuesSent: 11,
+    numberOfFilesSent: 11,
+    lastValueSent: null,
+    lastFileSent: null,
+    cacheSize: 10
+  },
+  historyMetrics: {
+    running: false,
+    intervalProgress: 0,
+    currentIntervalStart: null,
+    currentIntervalEnd: null,
+    currentIntervalNumber: 0,
+    numberOfIntervals: 0
+  }
+};
 
 const logs: Array<OIBusLog> = [
   {
@@ -1149,7 +1180,8 @@ export default Object.freeze({
   historyQueries: {
     list: historyQueries,
     command: historyQueryCommand,
-    itemCommand: historyQueryItemCommand
+    itemCommand: historyQueryItemCommand,
+    metrics: historyQueryMetrics
   },
   users: {
     list: users,

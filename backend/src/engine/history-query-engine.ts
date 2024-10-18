@@ -3,10 +3,12 @@ import HistoryQuery from './history-query';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { createFolder, filesExists } from '../service/utils';
-import { PassThrough } from 'node:stream';
 import { HistoryQueryEntity } from '../model/histor-query.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
+import HistoryQueryMetricsService from '../service/metrics/history-query-metrics.service';
+import HistoryQueryMetricsRepository from '../repository/logs/history-query-metrics.repository';
+import { PassThrough } from 'node:stream';
 
 const CACHE_FOLDER = './cache/history-query';
 
@@ -16,9 +18,13 @@ const CACHE_FOLDER = './cache/history-query';
  */
 export default class HistoryQueryEngine {
   private historyQueries: Map<string, HistoryQuery> = new Map<string, HistoryQuery>();
+  private historyQueryMetrics: Map<string, HistoryQueryMetricsService> = new Map<string, HistoryQueryMetricsService>();
   private readonly cacheFolder: string;
 
-  constructor(private _logger: pino.Logger) {
+  constructor(
+    private historyQueryMetricsRepository: HistoryQueryMetricsRepository,
+    private _logger: pino.Logger
+  ) {
     this.cacheFolder = path.resolve(CACHE_FOLDER);
   }
 
@@ -28,6 +34,10 @@ export default class HistoryQueryEngine {
 
   get baseFolder() {
     return this.cacheFolder;
+  }
+
+  getHistoryQueryDataStream(historyQueryId: string): PassThrough | null {
+    return this.historyQueryMetrics.get(historyQueryId)?.stream || null;
   }
 
   async start(historyQueryList: Array<HistoryQuery>): Promise<void> {
@@ -50,7 +60,10 @@ export default class HistoryQueryEngine {
   async createHistoryQuery(historyQuery: HistoryQuery): Promise<void> {
     const baseFolder = path.resolve(this.cacheFolder, `history-${historyQuery.settings.id}`);
     await createFolder(baseFolder);
-
+    this.historyQueryMetrics.set(
+      historyQuery.settings.id,
+      new HistoryQueryMetricsService(historyQuery, this.historyQueryMetricsRepository)
+    );
     this.historyQueries.set(historyQuery.settings.id, historyQuery);
   }
 
@@ -83,6 +96,7 @@ export default class HistoryQueryEngine {
       ?.setLogger(this.logger.child({ scopeType: 'history-query', scopeId: historyQuery.id, scopeName: historyQuery.name }));
     if (resetCache) {
       await this.resetCache(historyQuery.id);
+      this.historyQueryMetrics.get(historyQuery.id)?.resetMetrics();
     }
     await this.startHistoryQuery(historyQuery.id);
   }
@@ -95,10 +109,6 @@ export default class HistoryQueryEngine {
         this._logger.child({ scopeType: 'history-query', scopeId: historyQuery.settings.id, scopeName: historyQuery.settings.name })
       );
     }
-  }
-
-  getHistoryDataStream(historyId: string): PassThrough | null {
-    return this.historyQueries.get(historyId)?.getMetricsDataStream() || null;
   }
 
   /**
