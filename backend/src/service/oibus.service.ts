@@ -76,7 +76,6 @@ export default class OIBusService {
       this.northService.findAll().map(element => {
         return this.northService.runNorth(
           this.northService.findById(element.id)!,
-          this.dataStreamEngine.baseFolder,
           this.dataStreamEngine.logger.child({ scopeType: 'north', scopeId: element.id, scopeName: element.name })
         );
       }),
@@ -84,21 +83,13 @@ export default class OIBusService {
         return this.southService.runSouth(
           this.southService.findById(element.id)!,
           this.dataStreamEngine.addContent.bind(this.dataStreamEngine),
-          this.dataStreamEngine.baseFolder,
           this.dataStreamEngine.logger.child({ scopeType: 'south', scopeId: element.id, scopeName: element.name })
         );
       })
     );
     await this.historyQueryEngine.start(
       this.historyQueryService.findAll().map(element => {
-        return new HistoryQuery(
-          this.historyQueryService.findById(element.id)!,
-          this.southService,
-          this.northService,
-          this.historyQueryRepository,
-          this.historyQueryEngine.baseFolder,
-          this.historyQueryEngine.logger.child({ scopeType: 'history-query', scopeId: element.id, scopeName: element.name })
-        );
+        return this.historyQueryService.runHistoryQuery(element);
       })
     );
 

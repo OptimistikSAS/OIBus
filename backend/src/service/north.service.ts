@@ -22,7 +22,7 @@ import ScanModeRepository from '../repository/config/scan-mode.repository';
 import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
 import LogRepository from '../repository/logs/log.repository';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
-import { checkScanMode } from './utils';
+import { checkScanMode, createFolder } from './utils';
 import { ScanMode } from '../model/scan-mode.model';
 import { SouthConnectorLightDTO } from '../../../shared/model/south-connector.model';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
@@ -45,6 +45,7 @@ import NorthSFTP from '../north/north-sftp/north-sftp';
 import DataStreamEngine from '../engine/data-stream-engine';
 import { SouthConnectorEntityLight } from '../model/south-connector.model';
 import { PassThrough } from 'node:stream';
+import path from 'node:path';
 
 export const northManifestList: Array<NorthConnectorManifest> = [
   consoleManifest,
@@ -70,7 +71,9 @@ export default class NorthService {
     private readonly dataStreamEngine: DataStreamEngine
   ) {}
 
-  runNorth(settings: NorthConnectorEntity<NorthSettings>, baseFolder: string, logger: pino.Logger): NorthConnector<NorthSettings> {
+  runNorth(settings: NorthConnectorEntity<NorthSettings>, logger: pino.Logger, baseFolder: string | undefined = undefined): NorthConnector<NorthSettings> {
+    const northBaseFolder = baseFolder ?? this.getDefaultBaseFolder(settings.id);
+
     switch (settings.type) {
       case 'aws-s3':
         return new NorthAmazonS3(
@@ -79,7 +82,7 @@ export default class NorthService {
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
-          baseFolder
+          northBaseFolder
         );
       case 'azure-blob':
         return new NorthAzureBlob(
@@ -88,7 +91,7 @@ export default class NorthService {
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
-          baseFolder
+          northBaseFolder
         );
       case 'console':
         return new NorthConsole(
@@ -97,7 +100,7 @@ export default class NorthService {
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
-          baseFolder
+          northBaseFolder
         );
       case 'file-writer':
         return new NorthFileWriter(
@@ -106,7 +109,7 @@ export default class NorthService {
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
-          baseFolder
+          northBaseFolder
         );
       case 'oianalytics':
         return new NorthOIAnalytics(
@@ -117,7 +120,7 @@ export default class NorthService {
           this.certificateRepository,
           this.oIAnalyticsRegistrationRepository,
           logger,
-          baseFolder
+          northBaseFolder
         );
       case 'sftp':
         return new NorthSFTP(
@@ -126,7 +129,7 @@ export default class NorthService {
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
-          baseFolder
+          northBaseFolder
         );
       default:
         throw Error(`North connector of type ${settings.type} not installed`);
@@ -162,7 +165,7 @@ export default class NorthService {
       subscriptions: []
     };
 
-    const north = this.runNorth(testToRun, 'baseFolder', logger);
+    const north = this.runNorth(testToRun, logger, 'baseFolder');
     return await north.testConnection();
   }
 
@@ -197,10 +200,13 @@ export default class NorthService {
     this.northConnectorRepository.saveNorthConnector(northEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
 
+    if (northEntity.id !== 'test') {
+      await createFolder(this.getDefaultBaseFolder(northEntity.id));
+    }
+
     await this.dataStreamEngine.createNorth(
       this.runNorth(
         this.findById(northEntity.id)!,
-        this.dataStreamEngine.baseFolder,
         this.dataStreamEngine.logger.child({ scopeType: 'north', scopeId: northEntity.id, scopeName: northEntity.name })
       )
     );
@@ -365,6 +371,10 @@ export default class NorthService {
     this.northConnectorRepository.deleteAllSubscriptionsByNorth(northId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     this.dataStreamEngine.updateSubscription(northId);
+  }
+
+  private getDefaultBaseFolder(northId: string) {
+    return path.resolve(this.dataStreamEngine.baseFolder, `north-${northId}`);
   }
 }
 
