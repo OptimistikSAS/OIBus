@@ -2,6 +2,7 @@
  * Create a mock object for History Query Service
  */
 export default jest.fn().mockImplementation(() => ({
+  runHistoryQuery: jest.fn(),
   testNorth: jest.fn(),
   testSouth: jest.fn(),
   testSouthItem: jest.fn(),
