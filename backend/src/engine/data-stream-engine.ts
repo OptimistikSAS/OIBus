@@ -11,15 +11,27 @@ import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { SouthConnectorEntity } from '../model/south-connector.model';
 import { NorthConnectorEntity } from '../model/north-connector.model';
+import SouthConnectorMetricsService from '../service/metrics/south-connector-metrics.service';
+import SouthConnectorMetricsRepository from '../repository/logs/south-connector-metrics.repository';
+import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
+import NorthConnectorMetricsService from '../service/metrics/north-connector-metrics.service';
+import { PassThrough } from 'node:stream';
 
 const CACHE_FOLDER = './cache/data-stream';
 
 export default class DataStreamEngine {
   private northConnectors = new Map<string, NorthConnector<NorthSettings>>();
+  private northConnectorMetrics: Map<string, NorthConnectorMetricsService> = new Map<string, NorthConnectorMetricsService>();
   private southConnectors = new Map<string, SouthConnector<SouthSettings, SouthItemSettings>>();
+  private southConnectorMetrics: Map<string, SouthConnectorMetricsService> = new Map<string, SouthConnectorMetricsService>();
+
   private readonly cacheFolder: string;
 
-  constructor(private _logger: pino.Logger) {
+  constructor(
+    private northConnectorMetricsRepository: NorthConnectorMetricsRepository,
+    private southConnectorMetricsRepository: SouthConnectorMetricsRepository,
+    private _logger: pino.Logger
+  ) {
     this.cacheFolder = path.resolve(CACHE_FOLDER);
   }
 
@@ -29,6 +41,14 @@ export default class DataStreamEngine {
 
   get baseFolder() {
     return this.cacheFolder;
+  }
+
+  getSouthDataStream(southConnectorId: string): PassThrough | null {
+    return this.southConnectorMetrics.get(southConnectorId)?.stream || null;
+  }
+
+  getNorthDataStream(northConnectorId: string): PassThrough | null {
+    return this.northConnectorMetrics.get(northConnectorId)?.stream || null;
   }
 
   /**
@@ -121,9 +141,10 @@ export default class DataStreamEngine {
   async createSouth<S extends SouthSettings, I extends SouthItemSettings>(south: SouthConnector<S, I>): Promise<void> {
     const baseFolder = path.resolve(this.cacheFolder, `south-${south.settings.id}`);
     await createFolder(baseFolder);
-
     this.southConnectors.set(south.settings.id, south);
-    // this.homeMetricsService.addSouth(south, south.settings.id);
+    this.southConnectorMetrics.set(south.settings.id, new SouthConnectorMetricsService(south, this.southConnectorMetricsRepository));
+    console.log('south.settings.id', south.settings.id);
+    // TODO: this.homeMetricsService.addSouth(south, south.settings.id);
   }
 
   async startSouth(southId: string): Promise<void> {
@@ -151,7 +172,8 @@ export default class DataStreamEngine {
     await createFolder(baseFolder);
 
     this.northConnectors.set(north.settings.id, north);
-    // this.homeMetricsService.addNorth(north, north.settings.id);
+    this.northConnectorMetrics.set(north.settings.id, new NorthConnectorMetricsService(north, this.northConnectorMetricsRepository));
+    // TODO: this.homeMetricsService.addNorth(north, north.settings.id);
   }
 
   async startNorth(northId: string): Promise<void> {

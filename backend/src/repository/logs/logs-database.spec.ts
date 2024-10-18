@@ -6,7 +6,8 @@ import EngineMetricsRepository from './engine-metrics.repository';
 import NorthConnectorMetricsRepository from './north-connector-metrics.repository';
 import SouthConnectorMetricsRepository from './south-connector-metrics.repository';
 import { createPageFromArray } from '../../../../shared/model/types';
-import { EngineMetrics, NorthConnectorMetrics, SouthConnectorMetrics } from '../../../../shared/model/engine.model';
+import { EngineMetrics, HistoryQueryMetrics, NorthConnectorMetrics, SouthConnectorMetrics } from '../../../../shared/model/engine.model';
+import HistoryQueryMetricsRepository from './history-query-metrics.repository';
 
 let database: Database;
 describe('Repository with populated database', () => {
@@ -239,6 +240,61 @@ describe('Repository with populated database', () => {
       expect(repository.getMetrics(testData.south.list[0].id)).toEqual(null);
     });
   });
+
+  describe('History Query Metrics', () => {
+    let repository: HistoryQueryMetricsRepository;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+
+      repository = new HistoryQueryMetricsRepository(database);
+    });
+
+    it('should get metrics', () => {
+      repository.initMetrics(testData.historyQueries.list[0].id);
+      const result = repository.getMetrics(testData.historyQueries.list[0].id);
+      expect(result).toEqual(testData.historyQueries.metrics);
+    });
+
+    it('should update metrics', () => {
+      const newMetrics: HistoryQueryMetrics = JSON.parse(JSON.stringify(testData.historyQueries.metrics));
+      newMetrics.metricsStart = testData.constants.dates.DATE_1;
+      newMetrics.south.numberOfFilesRetrieved = 45;
+      newMetrics.south.lastValueRetrieved = {
+        pointId: 'my reference',
+        timestamp: testData.constants.dates.DATE_3,
+        data: {
+          value: 'my value'
+        }
+      };
+      newMetrics.north.lastValueSent = {
+        pointId: 'my reference',
+        timestamp: testData.constants.dates.DATE_3,
+        data: {
+          value: 'my value'
+        }
+      };
+      repository.updateMetrics(testData.historyQueries.list[0].id, newMetrics);
+
+      const result = repository.getMetrics(testData.historyQueries.list[0].id)!;
+      expect(result.metricsStart).toEqual(newMetrics.metricsStart);
+      expect(result.south.numberOfFilesRetrieved).toEqual(newMetrics.south.numberOfFilesRetrieved);
+      expect(result.south.lastValueRetrieved).toEqual(newMetrics.south.lastValueRetrieved);
+
+      newMetrics.south.lastValueRetrieved = null;
+      newMetrics.north.lastValueSent = null;
+      repository.updateMetrics(testData.historyQueries.list[0].id, newMetrics);
+      const resultWithoutValue = repository.getMetrics(testData.historyQueries.list[0].id)!;
+      expect(resultWithoutValue.south.lastValueRetrieved).toEqual(null);
+      expect(resultWithoutValue.north.lastValueSent).toEqual(null);
+    });
+
+    it('should remove metrics', () => {
+      repository.removeMetrics(testData.historyQueries.list[0].id);
+      expect(repository.getMetrics(testData.historyQueries.list[0].id)).toEqual(null);
+    });
+  });
 });
 
 describe('Repository with empty database', () => {
@@ -338,6 +394,52 @@ describe('Repository with empty database', () => {
         lastValueSent: null,
         lastFileSent: null,
         cacheSize: 0
+      });
+    });
+  });
+
+  describe('History Query Metrics', () => {
+    let repository: HistoryQueryMetricsRepository;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+
+      repository = new HistoryQueryMetricsRepository(database);
+    });
+
+    it('should init and get metrics', () => {
+      repository.initMetrics(testData.historyQueries.list[0].id);
+      const result = repository.getMetrics(testData.historyQueries.list[0].id);
+      expect(result).toEqual({
+        metricsStart: testData.constants.dates.FAKE_NOW,
+        north: {
+          lastConnection: null,
+          lastRunStart: null,
+          lastRunDuration: null,
+          numberOfValuesSent: 0,
+          numberOfFilesSent: 0,
+          lastValueSent: null,
+          lastFileSent: null,
+          cacheSize: 0
+        },
+        south: {
+          lastConnection: null,
+          lastRunStart: null,
+          lastRunDuration: null,
+          numberOfValuesRetrieved: 0,
+          numberOfFilesRetrieved: 0,
+          lastValueRetrieved: null,
+          lastFileRetrieved: null
+        },
+        historyMetrics: {
+          running: false,
+          intervalProgress: 0,
+          currentIntervalStart: null,
+          currentIntervalEnd: null,
+          currentIntervalNumber: 0,
+          numberOfIntervals: 0
+        }
       });
     });
   });

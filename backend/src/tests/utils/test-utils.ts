@@ -23,7 +23,13 @@ import { SouthItemSettings, SouthSettings } from '../../../../shared/model/south
 import { NorthSettings } from '../../../../shared/model/north-settings.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import { CryptoSettings, EngineMetrics, NorthConnectorMetrics, SouthConnectorMetrics } from '../../../../shared/model/engine.model';
+import {
+  CryptoSettings,
+  EngineMetrics,
+  HistoryQueryMetrics,
+  NorthConnectorMetrics,
+  SouthConnectorMetrics
+} from '../../../../shared/model/engine.model';
 
 const CONFIG_TEST_DATABASE = path.resolve('src', 'tests', 'test-config.db');
 const CRYPTO_TEST_DATABASE = path.resolve('src', 'tests', 'test-crypto.db');
@@ -110,6 +116,7 @@ const populateLogsAndMetricsDatabase = async () => {
   await createEngineMetrics(testDatabase, testData.engine.settings.id, testData.engine.metrics);
   await createNorthMetrics(testDatabase, testData.north.list[0].id, testData.north.metrics);
   await createSouthMetrics(testDatabase, testData.south.list[0].id, testData.south.metrics);
+  await createHistoryQueryMetrics(testDatabase, testData.historyQueries.list[0].id, testData.historyQueries.metrics);
 
   // Destroy the connection
   await testDatabase.destroy();
@@ -175,6 +182,30 @@ const createSouthMetrics = async (database: knex.Knex, southId: string, southMet
       last_file: southMetrics.lastFileRetrieved
     })
     .into('south_metrics');
+};
+
+const createHistoryQueryMetrics = async (database: knex.Knex, historyQueryId: string, historyQueryMetrics: HistoryQueryMetrics) => {
+  await database
+    .insert({
+      history_query_id: historyQueryId,
+      metrics_start: historyQueryMetrics.metricsStart,
+      nb_values_retrieved: historyQueryMetrics.south.numberOfValuesRetrieved,
+      nb_files_retrieved: historyQueryMetrics.south.numberOfFilesRetrieved,
+      last_south_connection: historyQueryMetrics.south.lastConnection,
+      last_south_run_start: historyQueryMetrics.south.lastRunStart,
+      last_south_run_duration: historyQueryMetrics.south.lastRunDuration,
+      last_value_retrieved: historyQueryMetrics.south.lastValueRetrieved,
+      last_file_retrieved: historyQueryMetrics.south.lastFileRetrieved,
+      nb_values_sent: historyQueryMetrics.north.numberOfValuesSent,
+      nb_files_sent: historyQueryMetrics.north.numberOfFilesSent,
+      last_value_sent: historyQueryMetrics.north.lastValueSent,
+      last_file_sent: historyQueryMetrics.north.lastFileSent,
+      last_north_connection: historyQueryMetrics.north.lastConnection,
+      last_north_run_start: historyQueryMetrics.north.lastRunStart,
+      last_north_run_duration: historyQueryMetrics.north.lastRunDuration,
+      north_cache_size: historyQueryMetrics.north.cacheSize
+    })
+    .into('history_query_metrics');
 };
 
 const populateCryptoDatabase = async () => {

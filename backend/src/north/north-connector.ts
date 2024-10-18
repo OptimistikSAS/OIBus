@@ -75,7 +75,6 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     if (this.connector.id === 'test') {
       return;
     }
-    this.metricsEvent.emit('init');
 
     this.taskRunner.on('next', async () => {
       if (this.taskJobQueue.length > 0) {
@@ -160,7 +159,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   async connect(): Promise<void> {
     if (this.connector.id !== 'test') {
       this.metricsEvent.emit('connect', {
-        lastConnection: DateTime.now().toUTC().toISO()
+        lastConnection: DateTime.now().toUTC().toISO()!
       });
       const scanMode = this.scanModeRepository.findById(this.connector.caching.scanModeId)!;
       this.createCronJob(scanMode);
@@ -234,18 +233,15 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     this.logger.trace(`North run triggered with flag ${flag}`);
 
     const runStart = DateTime.now();
-    if (this.connector.id !== 'test') {
-      this.metricsEvent.emit('run-start', {
-        lastRunStart: runStart.toUTC().toISO()
-      });
-    }
+
+    this.metricsEvent.emit('run-start', {
+      lastRunStart: runStart.toUTC().toISO()!
+    });
 
     await this.handleContentWrapper(flag);
-    if (this.connector.id !== 'test') {
-      this.metricsEvent.emit('run-end', {
-        lastRunDuration: DateTime.now().toMillis() - runStart.toMillis()
-      });
-    }
+    this.metricsEvent.emit('run-end', {
+      lastRunDuration: DateTime.now().toMillis() - runStart.toMillis()
+    });
 
     this.taskJobQueue.shift();
     this.resolveDeferredPromise();
@@ -319,7 +315,6 @@ export default abstract class NorthConnector<T extends NorthSettings> {
         };
         await this.handleContent(content);
         this.metricsEvent.emit('send-file', {
-          numberOfFilesSent: 1,
           lastFileSent: path.parse(this.fileBeingSent).base
         });
         this.fileCacheService.removeFileFromQueue();

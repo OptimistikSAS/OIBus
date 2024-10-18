@@ -83,8 +83,12 @@ const LOG_DB_NAME = 'logs.db';
   const loggerService = new LoggerService(encryptionService, path.resolve(LOG_FOLDER_NAME));
   await loggerService.start(oibusSettings, repositoryService.oianalyticsRegistrationRepository.get()!);
 
-  const dataStreamEngine = new DataStreamEngine(loggerService.logger!);
-  const historyQueryEngine = new HistoryQueryEngine(loggerService.logger!);
+  const dataStreamEngine = new DataStreamEngine(
+    repositoryService.northMetricsRepository,
+    repositoryService.southMetricsRepository,
+    loggerService.logger!
+  );
+  const historyQueryEngine = new HistoryQueryEngine(repositoryService.historyQueryMetricsRepository, loggerService.logger!);
 
   const oIAnalyticsMessageService = new OIAnalyticsMessageService(
     repositoryService.oianalyticsMessageRepository,
@@ -131,8 +135,7 @@ const LOG_DB_NAME = 'logs.db';
     repositoryService.historyQueryRepository,
     repositoryService.scanModeRepository,
     repositoryService.logRepository,
-    repositoryService.southMetricsRepository,
-    repositoryService.northMetricsRepository,
+    repositoryService.historyQueryMetricsRepository,
     southService,
     northService,
     oIAnalyticsMessageService,
@@ -146,8 +149,6 @@ const LOG_DB_NAME = 'logs.db';
     repositoryService.engineMetricsRepository,
     repositoryService.ipFilterRepository,
     repositoryService.oianalyticsRegistrationRepository,
-    repositoryService.southMetricsRepository,
-    repositoryService.northMetricsRepository,
     repositoryService.historyQueryRepository,
     encryptionService,
     loggerService,

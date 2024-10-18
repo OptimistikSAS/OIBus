@@ -3,7 +3,7 @@ import EncryptionServiceMock from './service/encryption-service.mock';
 import NorthServiceMock from './service/north-service.mock';
 import SouthServiceMock from './service/south-service.mock';
 import OIBusServiceMock from './service/oibus-service.mock';
-import EngineMetricsServiceMock from './service/engine-metrics-service.mock';
+import EngineMetricsServiceMock from './service/metrics/engine-metrics-service.mock';
 import ScanModeServiceMock from './service/scan-mode-service.mock';
 import IpFilterServiceMock from './service/ip-filter-service.mock';
 import OIAnalyticsRegistrationServiceMock from './service/oia/oianalytics-registration-service.mock';

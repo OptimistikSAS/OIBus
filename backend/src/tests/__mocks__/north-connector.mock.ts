@@ -1,3 +1,5 @@
+import { EventEmitter } from 'node:events';
+
 /**
  * Create a mock object for North Connector
  */
@@ -51,6 +53,7 @@ export default jest.fn().mockImplementation(settings => {
     removeAllValueErrors: jest.fn(),
     retryValueErrors: jest.fn(),
     retryAllValueErrors: jest.fn(),
-    settings: settings
+    settings: settings,
+    metricsEvent: new EventEmitter()
   };
 });

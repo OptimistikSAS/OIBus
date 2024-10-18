@@ -17,6 +17,7 @@ import CertificateRepository from '../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import OIAnalyticsCommandRepository from '../repository/config/oianalytics-command.repository';
 import OIAnalyticsMessageRepository from '../repository/config/oianalytics-message.repository';
+import HistoryQueryMetricsRepository from '../repository/logs/history-query-metrics.repository';
 
 export default class RepositoryService {
   private readonly _engineRepository: EngineRepository;
@@ -31,6 +32,7 @@ export default class RepositoryService {
   private readonly _engineMetricsRepository: EngineMetricsRepository;
   private readonly _southCacheRepository: SouthCacheRepository;
   private readonly _northMetricsRepository: NorthConnectorMetricsRepository;
+  private readonly _historyQueryMetricsRepository: HistoryQueryMetricsRepository;
   private readonly _historyQueryRepository: HistoryQueryRepository;
   private readonly _userRepository: UserRepository;
   private readonly _oianalyticsRegistrationRepository: OIAnalyticsRegistrationRepository;
@@ -63,6 +65,7 @@ export default class RepositoryService {
     this._engineMetricsRepository = new EngineMetricsRepository(logsDatabase);
     this._southMetricsRepository = new SouthConnectorMetricsRepository(logsDatabase);
     this._northMetricsRepository = new NorthConnectorMetricsRepository(logsDatabase);
+    this._historyQueryMetricsRepository = new HistoryQueryMetricsRepository(logsDatabase);
     this._logRepository = new LogRepository(logsDatabase);
   }
 
@@ -104,6 +107,10 @@ export default class RepositoryService {
 
   get northMetricsRepository(): NorthConnectorMetricsRepository {
     return this._northMetricsRepository;
+  }
+
+  get historyQueryMetricsRepository(): HistoryQueryMetricsRepository {
+    return this._historyQueryMetricsRepository;
   }
 
   get engineRepository(): EngineRepository {
