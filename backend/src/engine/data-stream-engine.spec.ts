@@ -450,4 +450,21 @@ describe('DataStreamEngine', () => {
     await engine.reloadSouth({ ...testData.south.list[0], id: 'bad id' });
     expect(logger.child).toHaveBeenCalledTimes(2);
   });
+
+  it('should properly get stream', async () => {
+    await engine.start([mockedNorth1], [mockedSouth1]);
+
+    expect(engine.getNorthDataStream(mockedNorth1.settings.id)).not.toBeNull();
+    expect(engine.getNorthDataStream('bad id')).toBeNull();
+
+    expect(engine.getSouthDataStream(mockedSouth1.settings.id)).not.toBeNull();
+    expect(engine.getSouthDataStream('bad id')).toBeNull();
+  });
+
+  it('should properly get metrics', async () => {
+    await engine.start([mockedNorth1], [mockedSouth1]);
+
+    expect(engine.getNorthConnectorMetrics()).toEqual({ [mockedNorth1.settings.id]: undefined });
+    expect(engine.getSouthConnectorMetrics()).toEqual({ [mockedSouth1.settings.id]: undefined });
+  });
 });

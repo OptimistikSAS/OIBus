@@ -213,6 +213,40 @@ describe('HistoryQuery enabled', () => {
     await historyQuery.finish();
     expect(anotherLogger.info).toHaveBeenCalledTimes(1);
   });
+
+  it('should listen on metrics', async () => {
+    const emitSpy = jest.spyOn(historyQuery.metricsEvent, 'emit');
+
+    await historyQuery.start();
+    mockedNorth1.metricsEvent.emit('connect', {});
+    expect(emitSpy).toHaveBeenCalledWith('north-connect', {});
+    mockedNorth1.metricsEvent.emit('run-start', {});
+    expect(emitSpy).toHaveBeenCalledWith('north-run-start', {});
+    mockedNorth1.metricsEvent.emit('run-end', {});
+    expect(emitSpy).toHaveBeenCalledWith('north-run-end', {});
+    mockedNorth1.metricsEvent.emit('cache-size', {});
+    expect(emitSpy).toHaveBeenCalledWith('north-cache-size', {});
+    mockedNorth1.metricsEvent.emit('send-values', {});
+    expect(emitSpy).toHaveBeenCalledWith('north-send-values', {});
+    mockedNorth1.metricsEvent.emit('send-file', {});
+    expect(emitSpy).toHaveBeenCalledWith('north-send-file', {});
+    mockedSouth1.metricsEvent.emit('connect', {});
+    expect(emitSpy).toHaveBeenCalledWith('south-connect', {});
+    mockedSouth1.metricsEvent.emit('run-start', {});
+    expect(emitSpy).toHaveBeenCalledWith('south-run-start', {});
+    mockedSouth1.metricsEvent.emit('run-end', {});
+    expect(emitSpy).toHaveBeenCalledWith('south-run-end', {});
+    mockedSouth1.metricsEvent.emit('history-query-start', {});
+    expect(emitSpy).toHaveBeenCalledWith('south-history-query-start', {});
+    mockedSouth1.metricsEvent.emit('history-query-interval', {});
+    expect(emitSpy).toHaveBeenCalledWith('south-history-query-interval', {});
+    mockedSouth1.metricsEvent.emit('history-query-stop', {});
+    expect(emitSpy).toHaveBeenCalledWith('south-history-query-stop', {});
+    mockedSouth1.metricsEvent.emit('add-values', {});
+    expect(emitSpy).toHaveBeenCalledWith('south-add-values', {});
+    mockedSouth1.metricsEvent.emit('add-file', {});
+    expect(emitSpy).toHaveBeenCalledWith('south-add-file', {});
+  });
 });
 
 describe('HistoryQuery disabled', () => {
