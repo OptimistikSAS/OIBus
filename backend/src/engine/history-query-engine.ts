@@ -96,7 +96,6 @@ export default class HistoryQueryEngine {
       ?.setLogger(this.logger.child({ scopeType: 'history-query', scopeId: historyQuery.id, scopeName: historyQuery.name }));
     if (resetCache) {
       await this.resetCache(historyQuery.id);
-      this.historyQueryMetrics.get(historyQuery.id)?.resetMetrics();
     }
     await this.startHistoryQuery(historyQuery.id);
   }
