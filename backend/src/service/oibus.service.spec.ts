@@ -26,10 +26,6 @@ import { EngineSettingsCommandDTO } from '../../../shared/model/engine.model';
 import { getOIBusInfo } from './utils';
 import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
 import HistoryQueryRepository from '../repository/config/history-query.repository';
-import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
-import SouthConnectorMetricsRepository from '../repository/logs/south-connector-metrics.repository';
-import SouthMetricsRepositoryMock from '../tests/__mocks__/repository/log/south-metrics-repository.mock';
-import NorthMetricsRepositoryMock from '../tests/__mocks__/repository/log/north-metrics-repository.mock';
 import HistoryQueryRepositoryMock from '../tests/__mocks__/repository/config/history-query-repository.mock';
 import SouthService from './south.service';
 import NorthService from './north.service';
@@ -46,8 +42,6 @@ const engineRepository: EngineRepository = new EngineRepositoryMock();
 const engineMetricsRepository: EngineMetricsRepository = new EngineMetricsRepositoryMock();
 const ipFilterRepository: IpFilterRepository = new IpFilterRepositoryMock();
 const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OIAnalyticsRegistrationRepositoryMock();
-const southMetricsRepository: SouthConnectorMetricsRepository = new SouthMetricsRepositoryMock();
-const northMetricsRepository: NorthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
 const historyQueryRepository: HistoryQueryRepository = new HistoryQueryRepositoryMock();
 const encryptionService: EncryptionService = new EncryptionServiceMock();
 const loggerService: LoggerService = new LoggerServiceMock();
@@ -77,8 +71,6 @@ describe('OIBus Service', () => {
       engineMetricsRepository,
       ipFilterRepository,
       oIAnalyticsRegistrationRepository,
-      southMetricsRepository,
-      northMetricsRepository,
       historyQueryRepository,
       encryptionService,
       loggerService,

@@ -142,20 +142,6 @@ export interface NorthConnectorMetrics extends BaseConnectorMetrics {
   cacheSize: number;
 }
 
-export interface SouthHistoryMetrics {
-  running: boolean;
-  // Percentage of the current interval that has been processed [0,1]
-  intervalProgress: number;
-  // Start of the current interval
-  currentIntervalStart: Instant | null;
-  // End of the current interval
-  currentIntervalEnd: Instant | null;
-  // Number of the current interval
-  currentIntervalNumber: number;
-  // Maximum number of intervals
-  numberOfIntervals: number;
-}
-
 export interface SouthConnectorMetrics extends BaseConnectorMetrics {
   numberOfValuesRetrieved: number;
   numberOfFilesRetrieved: number;
@@ -163,10 +149,40 @@ export interface SouthConnectorMetrics extends BaseConnectorMetrics {
   lastFileRetrieved: string | null;
 }
 
-export interface HistoryMetrics {
-  north: NorthConnectorMetrics;
-  south: SouthConnectorMetrics;
-  historyMetrics: SouthHistoryMetrics;
+export interface HistoryQueryMetrics {
+  metricsStart: Instant;
+  north: {
+    lastConnection: Instant | null;
+    lastRunStart: Instant | null;
+    lastRunDuration: number | null;
+    numberOfValuesSent: number;
+    numberOfFilesSent: number;
+    lastValueSent: OIBusTimeValue | null;
+    lastFileSent: string | null;
+    cacheSize: number;
+  };
+  south: {
+    lastConnection: Instant | null;
+    lastRunStart: Instant | null;
+    lastRunDuration: number | null;
+    numberOfValuesRetrieved: number;
+    numberOfFilesRetrieved: number;
+    lastValueRetrieved: OIBusTimeValue | null;
+    lastFileRetrieved: string | null;
+  };
+  historyMetrics: {
+    running: boolean;
+    // Percentage of the current interval that has been processed [0,1]
+    intervalProgress: number;
+    // Start of the current interval
+    currentIntervalStart: Instant | null;
+    // End of the current interval
+    currentIntervalEnd: Instant | null;
+    // Number of the current interval
+    currentIntervalNumber: number;
+    // Maximum number of intervals
+    numberOfIntervals: number;
+  };
 }
 
 export interface EngineMetrics {

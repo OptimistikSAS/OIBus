@@ -82,8 +82,6 @@ async function createEngineMetricsTable(knex: Knex): Promise<void> {
   });
 }
 
-export async function down(knex: Knex): Promise<void> {
-  await knex.schema.dropTable(LOG_TABLE);
-  await knex.schema.dropTable(SOUTH_METRICS_TABLE);
-  await knex.schema.dropTable(NORTH_METRICS_TABLE);
+export async function down(): Promise<void> {
+  return;
 }

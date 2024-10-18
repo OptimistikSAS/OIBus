@@ -13,6 +13,10 @@ import SouthConnector from '../south/south-connector';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import NorthConnectorMock from '../tests/__mocks__/north-connector.mock';
 import SouthConnectorMock from '../tests/__mocks__/south-connector.mock';
+import SouthConnectorMetricsRepository from '../repository/logs/south-connector-metrics.repository';
+import SouthMetricsRepositoryMock from '../tests/__mocks__/repository/log/south-metrics-repository.mock';
+import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
+import NorthMetricsRepositoryMock from '../tests/__mocks__/repository/log/north-metrics-repository.mock';
 
 jest.mock('../south/south-mqtt/south-mqtt');
 jest.mock('../service/south.service');
@@ -21,6 +25,9 @@ jest.mock('../service/repository.service');
 jest.mock('../service/encryption.service');
 jest.mock('../service/utils');
 jest.mock('node:fs/promises');
+
+const southConnectorMetricsRepository: SouthConnectorMetricsRepository = new SouthMetricsRepositoryMock();
+const northConnectorMetricsRepository: NorthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
 
 const logger: pino.Logger = new PinoLogger();
 const anotherLogger: pino.Logger = new PinoLogger();
@@ -37,7 +44,7 @@ describe('DataStreamEngine', () => {
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     (logger.child as jest.Mock).mockReturnValue(logger);
 
-    engine = new DataStreamEngine(logger);
+    engine = new DataStreamEngine(northConnectorMetricsRepository, southConnectorMetricsRepository, logger);
   });
 
   afterEach(() => {

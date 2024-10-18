@@ -54,4 +54,6 @@ async function createLogsTable(knex: Knex): Promise<void> {
   await knex.schema.raw(`drop table ${LOG_TABLE}_dg_tmp;`);
 }
 
-export async function down(): Promise<void> {}
+export async function down(): Promise<void> {
+  return;
+}
