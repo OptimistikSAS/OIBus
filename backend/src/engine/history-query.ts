@@ -50,7 +50,7 @@ export default class HistoryQuery {
     };
     const southFolder = path.resolve(this.baseFolder, 'south');
     await createFolder(southFolder);
-    this.south = this.southService.runSouth(southConfiguration, this.addContent.bind(this), southFolder, this.logger);
+    this.south = this.southService.runSouth(southConfiguration, this.addContent.bind(this), this.logger, southFolder);
     const northConfiguration: NorthConnectorEntity<NorthSettings> = {
       id: this.historyConfiguration.id,
       name: this.historyConfiguration.name,
@@ -63,7 +63,7 @@ export default class HistoryQuery {
     };
     const northFolder = path.resolve(this.baseFolder, 'north');
     await createFolder(northFolder);
-    this.north = this.northService.runNorth(northConfiguration, northFolder, this.logger);
+    this.north = this.northService.runNorth(northConfiguration, this.logger, northFolder);
 
     if (this.historyConfiguration.status !== 'RUNNING') {
       this.logger.trace(`History Query "${this.historyConfiguration.name}" not enabled`);

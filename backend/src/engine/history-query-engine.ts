@@ -2,7 +2,7 @@ import pino from 'pino';
 import HistoryQuery from './history-query';
 import path from 'node:path';
 import fs from 'node:fs/promises';
-import { createFolder, filesExists } from '../service/utils';
+import { filesExists } from '../service/utils';
 import { HistoryQueryEntity } from '../model/histor-query.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
@@ -58,8 +58,6 @@ export default class HistoryQueryEngine {
   }
 
   async createHistoryQuery(historyQuery: HistoryQuery): Promise<void> {
-    const baseFolder = path.resolve(this.cacheFolder, `history-${historyQuery.settings.id}`);
-    await createFolder(baseFolder);
     this.historyQueryMetrics.set(
       historyQuery.settings.id,
       new HistoryQueryMetricsService(historyQuery, this.historyQueryMetricsRepository)
