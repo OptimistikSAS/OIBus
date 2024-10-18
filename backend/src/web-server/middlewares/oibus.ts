@@ -10,6 +10,7 @@ import IPFilterService from '../../service/ip-filter.service';
 import OIAnalyticsRegistrationService from '../../service/oia/oianalytics-registration.service';
 import OIAnalyticsCommandService from '../../service/oia/oianalytics-command.service';
 import HistoryQueryService from '../../service/history-query.service';
+import HomeMetricsService from '../../service/metrics/home-metrics.service';
 
 /**
  * OIBus middleware for Koa
@@ -24,6 +25,7 @@ const oibus = (
   southService: SouthService,
   northService: NorthService,
   historyQueryService: HistoryQueryService,
+  homeMetricsService: HomeMetricsService,
   repositoryService: RepositoryService,
   encryptionService: EncryptionService,
   logger: pino.Logger
@@ -38,6 +40,7 @@ const oibus = (
     ctx.app.southService = southService;
     ctx.app.northService = northService;
     ctx.app.historyQueryService = historyQueryService;
+    ctx.app.homeMetricsService = homeMetricsService;
     ctx.app.repositoryService = repositoryService;
     ctx.app.encryptionService = encryptionService;
     ctx.app.logger = logger;
