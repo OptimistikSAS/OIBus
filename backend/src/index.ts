@@ -19,6 +19,7 @@ import OIAnalyticsMessageService from './service/oia/oianalytics-message.service
 import JoiValidator from './web-server/controllers/validators/joi.validator';
 import ScanModeService from './service/scan-mode.service';
 import IPFilterService from './service/ip-filter.service';
+import HomeMetricsService from './service/metrics/home-metrics.service';
 
 const CONFIG_DATABASE = 'oibus.db';
 const CRYPTO_DATABASE = 'crypto.db';
@@ -159,8 +160,9 @@ const LOG_DB_NAME = 'logs.db';
     dataStreamEngine,
     historyQueryEngine
   );
-
   await oIBusService.startOIBus();
+
+  const homeMetricsService = new HomeMetricsService(oIBusService, dataStreamEngine);
 
   const scanModeService = new ScanModeService(
     new JoiValidator(),
@@ -211,6 +213,7 @@ const LOG_DB_NAME = 'logs.db';
     southService,
     northService,
     historyQueryService,
+    homeMetricsService,
     repositoryService,
     ignoreIpFilters,
     loggerService.createChildLogger('web-server')
