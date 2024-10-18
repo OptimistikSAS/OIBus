@@ -14,35 +14,24 @@ import { OIBusTimeValue } from '../../../shared/model/engine.model';
 import testData from '../tests/utils/test-data';
 import HistoryQueryRepository from '../repository/config/history-query.repository';
 import HistoryQueryRepositoryMock from '../tests/__mocks__/repository/config/history-query-repository.mock';
-import SouthConnectorMetricsRepository from '../repository/logs/south-connector-metrics.repository';
-import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
-import SouthMetricsRepositoryMock from '../tests/__mocks__/repository/log/south-metrics-repository.mock';
-import NorthMetricsRepositoryMock from '../tests/__mocks__/repository/log/north-metrics-repository.mock';
 import NorthConnector from '../north/north-connector';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import NorthConnectorMock from '../tests/__mocks__/north-connector.mock';
 import SouthConnector from '../south/south-connector';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import SouthConnectorMock from '../tests/__mocks__/south-connector.mock';
-import Stream from 'node:stream';
 import { flushPromises } from '../tests/utils/test-utils';
+import HistoryQueryMetricsServiceMock from '../tests/__mocks__/service/metrics/history-query-metrics-service.mock';
 
 jest.mock('../service/south.service');
 jest.mock('../service/north.service');
-const updateMetrics = jest.fn();
-const resetMetrics = jest.fn();
+
+const historyQueryMetricsServiceMock = new HistoryQueryMetricsServiceMock();
 jest.mock(
-  '../service/history-metrics.service',
+  '../service/metrics/history-query-metrics.service',
   () =>
     function () {
-      return {
-        updateMetrics,
-        resetMetrics,
-        metrics: { status: 'my status' },
-        get stream() {
-          return { stream: 'myStream' };
-        }
-      };
+      return historyQueryMetricsServiceMock;
     }
 );
 jest.mock('../service/utils');
@@ -52,8 +41,6 @@ const anotherLogger: pino.Logger = new PinoLogger();
 
 const southService: SouthService = new SouthServiceMock();
 const northService: NorthService = new NorthServiceMock();
-const southMetricsRepository: SouthConnectorMetricsRepository = new SouthMetricsRepositoryMock();
-const northMetricsRepository: NorthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
 const historyQueryRepository: HistoryQueryRepository = new HistoryQueryRepositoryMock();
 
 describe('HistoryQuery enabled', () => {
@@ -74,8 +61,6 @@ describe('HistoryQuery enabled', () => {
       testData.historyQueries.list[0],
       southService,
       northService,
-      southMetricsRepository,
-      northMetricsRepository,
       historyQueryRepository,
       path.resolve('baseFolder', testData.historyQueries.list[0].id),
       logger
@@ -196,13 +181,11 @@ describe('HistoryQuery enabled', () => {
     expect(mockedNorth1.stop).toHaveBeenCalledTimes(1);
     expect(mockedNorth1.resetCache).not.toHaveBeenCalled();
     expect(mockedSouth1.resetCache).not.toHaveBeenCalled();
-    expect(resetMetrics).not.toHaveBeenCalled();
 
     await historyQuery.stop();
     expect(logger.debug).not.toHaveBeenCalled();
 
     await historyQuery.resetCache();
-    expect(resetMetrics).toHaveBeenCalled();
     expect(mockedNorth1.resetCache).toHaveBeenCalledTimes(1);
     expect(mockedSouth1.resetCache).toHaveBeenCalledTimes(1);
   });
@@ -234,7 +217,6 @@ describe('HistoryQuery enabled', () => {
 
 describe('HistoryQuery disabled', () => {
   let historyQuery: HistoryQuery;
-  const northStream = new Stream();
   const mockedNorth1: NorthConnector<NorthSettings> = new NorthConnectorMock(testData.north.list[0]);
   const mockedSouth1: SouthConnector<SouthSettings, SouthItemSettings> = new SouthConnectorMock(testData.south.list[0]);
 
@@ -251,8 +233,6 @@ describe('HistoryQuery disabled', () => {
       testData.historyQueries.list[0],
       southService,
       northService,
-      southMetricsRepository,
-      northMetricsRepository,
       historyQueryRepository,
       'baseFolder',
       logger
@@ -289,9 +269,5 @@ describe('HistoryQuery disabled', () => {
     expect(mockedSouth1.resetCache).not.toHaveBeenCalled();
     expect(mockedNorth1.stop).not.toHaveBeenCalled();
     expect(mockedNorth1.resetCache).not.toHaveBeenCalled();
-  });
-
-  it('should get stream', () => {
-    expect(historyQuery.getMetricsDataStream()).toEqual({ stream: 'myStream' });
   });
 });

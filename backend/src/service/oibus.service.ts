@@ -22,8 +22,6 @@ import SouthService from './south.service';
 import NorthService from './north.service';
 import HistoryQueryService from './history-query.service';
 import HistoryQuery from '../engine/history-query';
-import SouthConnectorMetricsRepository from '../repository/logs/south-connector-metrics.repository';
-import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
 import HistoryQueryRepository from '../repository/config/history-query.repository';
 
 const HEALTH_SIGNAL_INTERVAL = 60_000_000; // 10 minutes
@@ -52,8 +50,6 @@ export default class OIBusService {
     private engineMetricsRepository: EngineMetricsRepository,
     private ipFilterRepository: IpFilterRepository,
     private oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
-    private southMetricsRepository: SouthConnectorMetricsRepository,
-    private northMetricsRepository: NorthConnectorMetricsRepository,
     private historyQueryRepository: HistoryQueryRepository,
     private encryptionService: EncryptionService,
     private loggerService: LoggerService,
@@ -99,8 +95,6 @@ export default class OIBusService {
           this.historyQueryService.findById(element.id)!,
           this.southService,
           this.northService,
-          this.southMetricsRepository,
-          this.northMetricsRepository,
           this.historyQueryRepository,
           this.historyQueryEngine.baseFolder,
           this.historyQueryEngine.logger.child({ scopeType: 'history-query', scopeId: element.id, scopeName: element.name })

@@ -105,6 +105,7 @@ import SouthSQLite from '../south/south-sqlite/south-sqlite';
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import CertificateRepository from '../repository/config/certificate.repository';
 import DataStreamEngine from '../engine/data-stream-engine';
+import { PassThrough } from 'node:stream';
 
 export const southManifestList: Array<SouthConnectorManifest> = [
   folderScannerManifest,
@@ -474,6 +475,10 @@ export default class SouthService {
       await this.dataStreamEngine.startSouth(southEntity.id);
     }
     return southEntity;
+  }
+
+  getSouthDataStream(southConnectorId: string): PassThrough | null {
+    return this.dataStreamEngine.getSouthDataStream(southConnectorId);
   }
 
   async updateSouthWithoutItems<S extends SouthSettings, I extends SouthItemSettings>(

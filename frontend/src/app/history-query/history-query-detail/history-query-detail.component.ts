@@ -25,7 +25,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { HistoryMetricsComponent } from './history-metrics/history-metrics.component';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 import { SouthMetricsComponent } from '../../south/south-metrics/south-metrics.component';
-import { HistoryMetrics, OIBusInfo } from '../../../../../shared/model/engine.model';
+import { HistoryQueryMetrics, OIBusInfo } from '../../../../../shared/model/engine.model';
 import { WindowService } from '../../shared/window.service';
 import { NotificationService } from '../../shared/notification.service';
 import { ObservableState } from '../../shared/save-button/save-button.component';
@@ -86,7 +86,7 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
   importing = false;
   exporting = false;
 
-  historyMetrics: HistoryMetrics | null = null;
+  historyMetrics: HistoryQueryMetrics | null = null;
   historyStream: EventSource | null = null;
   state = new ObservableState();
   oibusInfo: OIBusInfo | null = null;

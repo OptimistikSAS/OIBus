@@ -1,3 +1,5 @@
+import { EventEmitter } from 'node:events';
+
 /**
  * Create a mock object for History Query
  */
@@ -10,6 +12,7 @@ export default jest.fn().mockImplementation(settings => {
     finish: jest.fn(),
     setLogger: jest.fn(),
     getMetricsDataStream: jest.fn().mockReturnValue(settings.id),
-    settings: settings
+    settings: settings,
+    metricsEvent: new EventEmitter()
   };
 });
