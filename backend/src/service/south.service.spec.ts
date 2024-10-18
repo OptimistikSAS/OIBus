@@ -83,7 +83,7 @@ describe('south service', () => {
   });
 
   it('should create South connector', () => {
-    const connector = service.runSouth(testData.south.list[0], jest.fn(), 'myBaseFolder', logger);
+    const connector = service.runSouth(testData.south.list[0], jest.fn(), logger, 'myBaseFolder');
     expect(connector).toBeDefined();
   });
 
@@ -99,8 +99,8 @@ describe('south service', () => {
           type: 'another'
         } as SouthConnectorEntity<SouthSettings, SouthItemSettings>,
         jest.fn(),
-        'myBaseFolder',
-        logger
+        logger,
+        'myBaseFolder'
       );
     } catch (err) {
       error = err;
