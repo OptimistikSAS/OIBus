@@ -12,6 +12,7 @@ import { FileSizePipe } from '../../../shared/file-size.pipe';
 import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
 import { emptyPage } from '../../../shared/test-utils';
 import { ValueTableComponent, ValueTableData } from '../value-table/value-table.component';
+import { NorthSettings } from '../../../../../../shared/model/north-settings.model';
 
 @Component({
   selector: 'oib-cache-values',
@@ -34,7 +35,7 @@ import { ValueTableComponent, ValueTableData } from '../value-table/value-table.
 export class CacheValuesComponent implements OnInit {
   private northConnectorService = inject(NorthConnectorService);
 
-  @Input() northConnector: NorthConnectorDTO | null = null;
+  @Input() northConnector: NorthConnectorDTO<NorthSettings> | null = null;
   cacheValues: Array<NorthValueFiles> = [];
   @ViewChild('valueTable') valueTable!: ValueTableComponent;
   valueTablePages = emptyPage<ValueTableData>();

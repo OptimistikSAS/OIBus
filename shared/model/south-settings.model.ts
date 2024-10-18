@@ -413,7 +413,7 @@ export interface SouthSFTPSettings {
   compression: boolean;
 }
 
-export interface SouthSlimsSettings {
+export interface SouthSlimsSettings extends BaseSouthSettings {
   url: string;
   port: number;
   acceptUnauthorized: boolean;
@@ -426,7 +426,11 @@ export interface SouthSlimsSettings {
   proxyPassword?: string | null;
 }
 
-export interface SouthSQLiteSettings {
+export interface BaseSouthSettings {
+  sharedConnection?: boolean;
+}
+
+export interface SouthSQLiteSettings extends BaseSouthSettings {
   databasePath: string;
 }
 

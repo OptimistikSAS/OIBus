@@ -4,6 +4,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TestBed } from '@angular/core/testing';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { SouthConnectorItemDTO } from '../../../../../shared/model/south-connector.model';
+import { SouthItemSettings } from '../../../../../shared/model/south-settings.model';
 
 class TestSouthModalComponentTester extends ComponentTester<SouthItemTestModalComponent> {
   constructor() {
@@ -27,7 +28,9 @@ describe('SouthItemTestModalComponent', () => {
     });
     tester = new TestSouthModalComponentTester();
 
-    tester.componentInstance.prepare({ content: '1234', type: 'raw', filePath: 'filePath' }, { name: 'itemName' } as SouthConnectorItemDTO);
+    tester.componentInstance.prepare({ content: '1234', type: 'raw', filePath: 'filePath' }, {
+      name: 'itemName'
+    } as SouthConnectorItemDTO<SouthItemSettings>);
   });
 
   it('should close', () => {

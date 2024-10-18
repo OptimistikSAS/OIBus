@@ -4,6 +4,7 @@ import LogController from './log.controller';
 import JoiValidator from './validators/joi.validator';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
 import { LogSearchParam, Scope } from '../../../../shared/model/logs.model';
+import testData from '../../tests/utils/test-data';
 
 jest.mock('./validators/joi.validator');
 
@@ -42,12 +43,11 @@ const page = {
   totalElements: 1,
   totalPages: 1
 };
-const nowDateString = '2020-02-02T02:02:02.222Z';
 
 describe('Log controller', () => {
   beforeEach(async () => {
     jest.resetAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
   });
 
   it('searchLogs() should return logs', async () => {
@@ -67,15 +67,15 @@ describe('Log controller', () => {
       scopeIds: ['scope'],
       messageContent: 'message'
     };
-    ctx.app.repositoryService.logRepository.searchLogs.mockReturnValue(page);
+    ctx.app.repositoryService.logRepository.search.mockReturnValue(page);
 
-    await logController.searchLogs(ctx);
+    await logController.search(ctx);
 
-    expect(ctx.app.repositoryService.logRepository.searchLogs).toHaveBeenCalledWith(searchParams);
+    expect(ctx.app.repositoryService.logRepository.search).toHaveBeenCalledWith(searchParams);
     expect(ctx.ok).toHaveBeenCalledWith(page);
   });
 
-  it('searchLogs() should return logs with default search params', async () => {
+  it('search() should return logs with default search params', async () => {
     ctx.query = {
       levels: 'info',
       scopeTypes: 'scopeType1',
@@ -90,15 +90,15 @@ describe('Log controller', () => {
       scopeIds: ['scope1'],
       messageContent: null
     };
-    ctx.app.repositoryService.logRepository.searchLogs.mockReturnValue(page);
+    ctx.app.repositoryService.logRepository.search.mockReturnValue(page);
 
-    await logController.searchLogs(ctx);
+    await logController.search(ctx);
 
-    expect(ctx.app.repositoryService.logRepository.searchLogs).toHaveBeenCalledWith(searchParams);
+    expect(ctx.app.repositoryService.logRepository.search).toHaveBeenCalledWith(searchParams);
     expect(ctx.ok).toHaveBeenCalledWith(page);
   });
 
-  const levels: string[] = ['trace', 'debug', 'info', 'warn', 'error'];
+  const levels: Array<string> = ['trace', 'debug', 'info', 'warn', 'error'];
   it.each(levels)(`addLogs() should %p log`, async level => {
     ctx.request.body = logStreamCommand;
     ctx.request.body.streams[0].stream.level = level;
@@ -111,7 +111,7 @@ describe('Log controller', () => {
 
   it('addLogs() should return bad request', async () => {
     ctx.request.body = undefined;
-    ctx.app.repositoryService.logRepository.searchLogs.mockReturnValue(page);
+    ctx.app.repositoryService.logRepository.search.mockReturnValue(page);
 
     await logController.addLogs(ctx);
 

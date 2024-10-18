@@ -1,15 +1,13 @@
-import BaseEngine from './base-engine';
-import EncryptionService from '../service/encryption.service';
-import NorthService from '../service/north.service';
-import SouthService from '../service/south.service';
 import pino from 'pino';
-import HistoryQueryService from '../service/history-query.service';
 import HistoryQuery from './history-query';
 import path from 'node:path';
 import fs from 'node:fs/promises';
-import { createFolder, filesExists } from '../service/utils';
-
-import { HistoryQueryDTO } from '../../../shared/model/history-query.model';
+import { filesExists } from '../service/utils';
+import { HistoryQueryEntity } from '../model/histor-query.model';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
+import { NorthSettings } from '../../../shared/model/north-settings.model';
+import HistoryQueryMetricsService from '../service/metrics/history-query-metrics.service';
+import HistoryQueryMetricsRepository from '../repository/logs/history-query-metrics.repository';
 import { PassThrough } from 'node:stream';
 
 const CACHE_FOLDER = './cache/history-query';
@@ -18,24 +16,34 @@ const CACHE_FOLDER = './cache/history-query';
  * Manage history queries by running {@link HistoryQuery} one after another
  * @class HistoryQueryEngine
  */
-export default class HistoryQueryEngine extends BaseEngine {
+export default class HistoryQueryEngine {
   private historyQueries: Map<string, HistoryQuery> = new Map<string, HistoryQuery>();
+  private historyQueryMetrics: Map<string, HistoryQueryMetricsService> = new Map<string, HistoryQueryMetricsService>();
+  private readonly cacheFolder: string;
 
   constructor(
-    encryptionService: EncryptionService,
-    northService: NorthService,
-    southService: SouthService,
-    private readonly historyQueryService: HistoryQueryService,
-    logger: pino.Logger
+    private historyQueryMetricsRepository: HistoryQueryMetricsRepository,
+    private _logger: pino.Logger
   ) {
-    super(encryptionService, northService, southService, logger, CACHE_FOLDER);
+    this.cacheFolder = path.resolve(CACHE_FOLDER);
   }
 
-  override async start(): Promise<void> {
-    const historyQueriesSettings = this.historyQueryService.getHistoryQueryList();
-    for (const settings of historyQueriesSettings) {
-      await this.createHistoryQuery(settings);
-      await this.startHistoryQuery(settings.id);
+  get logger() {
+    return this._logger;
+  }
+
+  get baseFolder() {
+    return this.cacheFolder;
+  }
+
+  getHistoryQueryDataStream(historyQueryId: string): PassThrough | null {
+    return this.historyQueryMetrics.get(historyQueryId)?.stream || null;
+  }
+
+  async start(historyQueryList: Array<HistoryQuery>): Promise<void> {
+    for (const historyQuery of historyQueryList) {
+      await this.createHistoryQuery(historyQuery);
+      await this.startHistoryQuery(historyQuery.settings.id);
     }
   }
 
@@ -49,80 +57,72 @@ export default class HistoryQueryEngine extends BaseEngine {
     this.historyQueries.clear();
   }
 
-  async createHistoryQuery(settings: HistoryQueryDTO): Promise<void> {
-    const baseFolder = path.resolve(this.cacheFolder, `history-${settings.id}`);
-    await createFolder(baseFolder);
-    const historyQuery = new HistoryQuery(
-      settings,
-      this.southService,
-      this.northService,
-      this.historyQueryService,
-      this.logger.child({ scopeType: 'history-query', scopeId: settings.id, scopeName: settings.name }),
-      baseFolder
+  async createHistoryQuery(historyQuery: HistoryQuery): Promise<void> {
+    this.historyQueryMetrics.set(
+      historyQuery.settings.id,
+      new HistoryQueryMetricsService(historyQuery, this.historyQueryMetricsRepository)
     );
-    if (!this.historyQueries.get(settings.id)) {
-      this.historyQueries.set(settings.id, historyQuery);
-    } else {
-      await this.historyQueries.get(settings.id)!.stop();
-      this.historyQueries.delete(settings.id);
-      this.historyQueries.set(settings.id, historyQuery);
-    }
+    this.historyQueries.set(historyQuery.settings.id, historyQuery);
   }
 
   async startHistoryQuery(historyId: string): Promise<void> {
-    if (this.historyQueries.has(historyId)) {
-      this.historyQueries
-        .get(historyId)!
-        .start()
-        .catch(error => {
-          this.logger.error(error);
-        });
-    }
-  }
-
-  async stopHistoryQuery(historyId: string): Promise<void> {
     const historyQuery = this.historyQueries.get(historyId);
     if (!historyQuery) {
+      this._logger.trace(`History Query "${historyId}" not set`);
       return;
     }
 
-    await historyQuery.stop();
+    historyQuery.start().catch(error => {
+      this._logger.error(
+        `Error while starting History Query "${historyQuery.settings.name}" (${historyQuery.settings.id}): ${error.message}`
+      );
+    });
+  }
+
+  async stopHistoryQuery(historyId: string): Promise<void> {
+    await this.historyQueries.get(historyId)?.stop();
   }
 
   async resetCache(historyId: string) {
     await this.historyQueries.get(historyId)?.resetCache();
   }
 
-  setLogger(value: pino.Logger) {
-    super.setLogger(value);
-
-    for (const [id, historyQuery] of this.historyQueries.entries()) {
-      const settings = this.historyQueryService.getHistoryQuery(id);
-      if (settings) {
-        historyQuery.setLogger(this.logger.child({ scopeType: 'history-query', scopeId: settings.id, scopeName: settings.name }));
-      }
+  async reloadHistoryQuery(historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>, resetCache: boolean) {
+    await this.stopHistoryQuery(historyQuery.id);
+    this.historyQueries
+      .get(historyQuery.id)
+      ?.setLogger(this.logger.child({ scopeType: 'history-query', scopeId: historyQuery.id, scopeName: historyQuery.name }));
+    if (resetCache) {
+      await this.resetCache(historyQuery.id);
     }
+    await this.startHistoryQuery(historyQuery.id);
   }
 
-  getHistoryDataStream(historyId: string): PassThrough | null {
-    return this.historyQueries.get(historyId)?.getMetricsDataStream() || null;
+  setLogger(value: pino.Logger) {
+    this._logger = value;
+
+    for (const historyQuery of this.historyQueries.values()) {
+      historyQuery.setLogger(
+        this._logger.child({ scopeType: 'history-query', scopeId: historyQuery.settings.id, scopeName: historyQuery.settings.name })
+      );
+    }
   }
 
   /**
    * Stops the History query and deletes all cache inside the base folder
    */
-  async deleteHistoryQuery(historyId: string, name: string): Promise<void> {
-    await this.stopHistoryQuery(historyId);
-    await this.resetCache(historyId);
-    const baseFolder = path.resolve(this.cacheFolder, `history-${historyId}`);
+  async deleteHistoryQuery(historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>): Promise<void> {
+    await this.stopHistoryQuery(historyQuery.id);
+    await this.resetCache(historyQuery.id);
+    const baseFolder = path.resolve(this.cacheFolder, `history-${historyQuery.id}`);
     try {
-      this.logger.trace(`Deleting base folder "${baseFolder}" of History query "${name}" (${historyId})`);
+      this._logger.trace(`Deleting base folder "${baseFolder}" of History query "${historyQuery.name}" (${historyQuery.id})`);
       if (await filesExists(baseFolder)) {
         await fs.rm(baseFolder, { recursive: true });
       }
-      this.logger.info(`Deleted History query "${name}" (${historyId})`);
+      this._logger.info(`Deleted History query "${historyQuery.name}" (${historyQuery.id})`);
     } catch (error) {
-      this.logger.error(`Unable to delete History query "${name}" (${historyId}) base folder: ${error}`);
+      this._logger.error(`Unable to delete History query "${historyQuery.name}" (${historyQuery.id}) base folder: ${error}`);
     }
   }
 }

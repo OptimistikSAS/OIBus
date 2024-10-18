@@ -1,21 +1,10 @@
-import { BaseEntity, Instant } from './types';
+import { Instant } from './types';
 
 export const OIANALYTICS_MESSAGE_STATUS = ['PENDING', 'COMPLETED', 'ERRORED'] as const;
 export type OIAnalyticsMessageStatus = (typeof OIANALYTICS_MESSAGE_STATUS)[number];
 
-export const OIANALYTICS_MESSAGE_TYPES = ['INFO'] as const;
+export const OIANALYTICS_MESSAGE_TYPES = ['full-config'] as const;
 export type OIAnalyticsMessageType = (typeof OIANALYTICS_MESSAGE_TYPES)[number];
-
-interface BaseOIAnalyticsMessageDTO extends BaseEntity {
-  type: OIAnalyticsMessageType;
-  status: OIAnalyticsMessageStatus;
-  error?: string;
-  completedDate?: Instant;
-}
-
-interface BaseOIAnalyticsMessageCommandDTO {
-  type: string;
-}
 
 export interface OIAnalyticsMessageSearchParam {
   types: Array<OIAnalyticsMessageType>;
@@ -24,38 +13,12 @@ export interface OIAnalyticsMessageSearchParam {
   end?: Instant;
 }
 
-export interface InfoMessageContent {
-  version: string;
-  oibusName: string;
-  oibusId: string;
-  dataDirectory: string;
-  binaryDirectory: string;
-  processId: string;
-  hostname: string;
-  operatingSystem: string;
-  architecture: string;
-  platform: string;
+// DTO used to update or create messages in OIBus and send messages to OIAnalytics
+interface BaseOIAnalyticsMessageCommandDTO {
+  type: OIAnalyticsMessageType;
 }
 
-export interface OIAnalyticsMessageInfoDTO extends BaseOIAnalyticsMessageDTO {
-  type: 'INFO';
-  content: InfoMessageContent;
+export interface OIAnalyticsMessageFullConfigCommandDTO extends BaseOIAnalyticsMessageCommandDTO {
+  type: 'full-config';
 }
-
-export interface OIAnalyticsMessageInfoCommandDTO extends BaseOIAnalyticsMessageCommandDTO {
-  type: 'INFO';
-  version: string;
-  oibusName: string;
-  oibusId: string;
-  dataDirectory: string;
-  binaryDirectory: string;
-  processId: string;
-  hostname: string;
-  operatingSystem: string;
-  architecture: string;
-  platform: string;
-}
-
-export type OIAnalyticsMessageCommand = OIAnalyticsMessageInfoCommandDTO;
-export type OIAnalyticsMessageDTO = OIAnalyticsMessageInfoDTO;
-export type InfoMessage = InfoMessageContent;
+export type OIAnalyticsMessageCommandDTO = OIAnalyticsMessageFullConfigCommandDTO;

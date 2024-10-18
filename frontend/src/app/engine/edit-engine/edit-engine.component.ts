@@ -60,6 +60,16 @@ export class EditEngineComponent implements OnInit {
 
   state = new ObservableState();
 
+  constructor() {
+    this.engineForm.controls.proxyEnabled.valueChanges.subscribe(next => {
+      if (next) {
+        this.engineForm.controls.proxyPort.enable();
+      } else {
+        this.engineForm.controls.proxyPort.disable();
+      }
+    });
+  }
+
   ngOnInit(): void {
     this.engineService.getEngineSettings().subscribe(settings => {
       this.engineForm.patchValue(settings);
@@ -76,7 +86,7 @@ export class EditEngineComponent implements OnInit {
       name: formValue.name!,
       port: formValue.port!,
       proxyEnabled: formValue.proxyEnabled!,
-      proxyPort: formValue.proxyPort!,
+      proxyPort: formValue.proxyPort! || null,
       logParameters: {
         console: {
           level: formValue.logParameters!.console!.level!

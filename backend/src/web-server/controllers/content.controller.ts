@@ -23,10 +23,10 @@ export default class ContentController extends AbstractController {
 
     try {
       for (const id of ids) {
-        await ctx.app.oibusService.addExternalContent(id, content);
+        await ctx.app.oIBusService.addExternalContent(id, content);
       }
-    } catch {
-      return ctx.internalServerError();
+    } catch (error: unknown) {
+      return ctx.badRequest((error as Error).message);
     }
     return ctx.noContent();
   }

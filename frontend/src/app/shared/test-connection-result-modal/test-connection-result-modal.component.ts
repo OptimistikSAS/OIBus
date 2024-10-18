@@ -9,6 +9,8 @@ import { SouthConnectorService } from '../../services/south-connector.service';
 import { NorthConnectorCommandDTO, NorthConnectorDTO } from '../../../../../shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { HistoryQueryService } from '../../services/history-query.service';
+import { SouthItemSettings, SouthSettings } from '../../../../../shared/model/south-settings.model';
+import { NorthSettings } from '../../../../../shared/model/north-settings.model';
 
 @Component({
   selector: 'oib-test-connection-result-modal',
@@ -27,24 +29,27 @@ export class TestConnectionResultModalComponent {
   loading = false;
   success = false;
   error: string | null = null;
-  connector: SouthConnectorDTO | NorthConnectorDTO | null = null;
+  connector: SouthConnectorDTO<SouthSettings, SouthItemSettings> | NorthConnectorDTO<NorthSettings> | null = null;
 
   /**
    * Prepares the component for creation.
    */
   runTest(
     type: 'south' | 'north',
-    connector: SouthConnectorDTO | NorthConnectorDTO | null,
-    command: SouthConnectorCommandDTO | NorthConnectorCommandDTO
+    connector: SouthConnectorDTO<SouthSettings, SouthItemSettings> | NorthConnectorDTO<NorthSettings> | null,
+    command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> | NorthConnectorCommandDTO<NorthSettings>
   ) {
     this.type = type;
     this.loading = true;
     this.connector = connector;
     let obs;
     if (type === 'south') {
-      obs = this.southConnectorService.testConnection(this.connector?.id || 'create', command as SouthConnectorCommandDTO);
+      obs = this.southConnectorService.testConnection(
+        this.connector?.id || 'create',
+        command as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>
+      );
     } else {
-      obs = this.northConnectorService.testConnection(this.connector?.id || 'create', command as NorthConnectorCommandDTO);
+      obs = this.northConnectorService.testConnection(this.connector?.id || 'create', command as NorthConnectorCommandDTO<NorthSettings>);
     }
     obs.subscribe({
       error: httpError => {
@@ -63,7 +68,7 @@ export class TestConnectionResultModalComponent {
    */
   runHistoryQueryTest(
     type: 'south' | 'north',
-    command: SouthConnectorCommandDTO | NorthConnectorCommandDTO,
+    command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> | NorthConnectorCommandDTO<NorthSettings>,
     historyQueryId: string | null,
     fromConnectorId: string | null = null
   ) {
@@ -71,9 +76,17 @@ export class TestConnectionResultModalComponent {
     this.loading = true;
     let obs;
     if (type === 'south') {
-      obs = this.historyQueryService.testSouthConnection(historyQueryId || 'create', command as SouthConnectorCommandDTO, fromConnectorId);
+      obs = this.historyQueryService.testSouthConnection(
+        historyQueryId || 'create',
+        command as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
+        fromConnectorId
+      );
     } else {
-      obs = this.historyQueryService.testNorthConnection(historyQueryId || 'create', command as NorthConnectorCommandDTO, fromConnectorId);
+      obs = this.historyQueryService.testNorthConnection(
+        historyQueryId || 'create',
+        command as NorthConnectorCommandDTO<NorthSettings>,
+        fromConnectorId
+      );
     }
     obs.subscribe({
       error: httpError => {

@@ -10,61 +10,6 @@ export const AUTHENTICATION_TYPES = ['none', 'basic', 'bearer', 'api-key', 'cert
 export type AuthenticationType = (typeof AUTHENTICATION_TYPES)[number];
 
 /**
- * Base settings for log parameters
- */
-interface BaseLogSettings {
-  level: LogLevel;
-}
-
-/**
- * Settings to write logs into console
- */
-type ConsoleLogSettings = BaseLogSettings;
-
-/**
- * Settings to write logs into files
- */
-interface FileLogSettings extends BaseLogSettings {
-  maxFileSize: number;
-  numberOfFiles: number;
-}
-
-/**
- * Settings to write logs into a locale database
- */
-interface DatabaseLogSettings extends BaseLogSettings {
-  maxNumberOfLogs: number;
-}
-
-/**
- * Settings to write logs into a remote loki instance
- */
-interface LokiLogSettings extends BaseLogSettings {
-  interval: number;
-  address: string;
-  username: string;
-  password: string;
-}
-
-/**
- * Settings to write logs into a remote loki instance
- */
-interface OiaLogSettings extends BaseLogSettings {
-  interval: number;
-}
-
-/**
- * Logs settings used in the engine
- */
-export interface LogSettings {
-  console: ConsoleLogSettings;
-  file: FileLogSettings;
-  database: DatabaseLogSettings;
-  loki: LokiLogSettings;
-  oia: OiaLogSettings;
-}
-
-/**
  * Engine settings DTO
  */
 export interface EngineSettingsDTO extends BaseEntity {
@@ -72,8 +17,32 @@ export interface EngineSettingsDTO extends BaseEntity {
   port: number;
   version: string;
   proxyEnabled: boolean;
-  proxyPort: number;
-  logParameters: LogSettings;
+  proxyPort: number | null;
+  logParameters: {
+    console: {
+      level: LogLevel;
+    };
+    file: {
+      level: LogLevel;
+      maxFileSize: number;
+      numberOfFiles: number;
+    };
+    database: {
+      level: LogLevel;
+      maxNumberOfLogs: number;
+    };
+    loki: {
+      level: LogLevel;
+      interval: number;
+      address: string;
+      username: string;
+      password: string;
+    };
+    oia: {
+      level: LogLevel;
+      interval: number;
+    };
+  };
 }
 
 export const REGISTRATION_STATUS = ['NOT_REGISTERED', 'PENDING', 'REGISTERED'] as const;
@@ -85,7 +54,6 @@ export type RegistrationStatus = (typeof REGISTRATION_STATUS)[number];
 export interface RegistrationSettingsDTO extends BaseEntity {
   host: string;
   activationCode?: string;
-  token?: string;
   status: RegistrationStatus;
   activationDate: Instant;
   activationExpirationDate?: Instant;
@@ -93,7 +61,6 @@ export interface RegistrationSettingsDTO extends BaseEntity {
   useProxy: boolean;
   proxyUrl?: string;
   proxyUsername?: string | null;
-  proxyPassword?: string | null;
   acceptUnauthorized: boolean;
 }
 
@@ -119,13 +86,32 @@ export interface EngineSettingsCommandDTO {
   name: string;
   port: number;
   proxyEnabled: boolean;
-  proxyPort: number;
-  logParameters: LogSettings;
-}
-
-export interface OIBusError {
-  retry: boolean;
-  message: string;
+  proxyPort: number | null;
+  logParameters: {
+    console: {
+      level: LogLevel;
+    };
+    file: {
+      level: LogLevel;
+      maxFileSize: number;
+      numberOfFiles: number;
+    };
+    database: {
+      level: LogLevel;
+      maxNumberOfLogs: number;
+    };
+    loki: {
+      level: LogLevel;
+      interval: number;
+      address: string;
+      username: string;
+      password: string;
+    };
+    oia: {
+      level: LogLevel;
+      interval: number;
+    };
+  };
 }
 
 export interface OIBusInfo {
@@ -156,31 +142,47 @@ export interface NorthConnectorMetrics extends BaseConnectorMetrics {
   cacheSize: number;
 }
 
-export interface SouthHistoryMetrics {
-  running?: boolean;
-  // Percentage of the current interval that has been processed [0,1]
-  intervalProgress?: number;
-  // Start of the current interval
-  currentIntervalStart?: Instant;
-  // End of the current interval
-  currentIntervalEnd?: Instant;
-  // Number of the current interval
-  currentIntervalNumber?: number;
-  // Maximum number of intervals
-  numberOfIntervals?: number;
-}
-
 export interface SouthConnectorMetrics extends BaseConnectorMetrics {
   numberOfValuesRetrieved: number;
   numberOfFilesRetrieved: number;
   lastValueRetrieved: OIBusTimeValue | null;
   lastFileRetrieved: string | null;
-  historyMetrics: SouthHistoryMetrics;
 }
 
-export interface HistoryMetrics {
-  north: NorthConnectorMetrics;
-  south: SouthConnectorMetrics;
+export interface HistoryQueryMetrics {
+  metricsStart: Instant;
+  north: {
+    lastConnection: Instant | null;
+    lastRunStart: Instant | null;
+    lastRunDuration: number | null;
+    numberOfValuesSent: number;
+    numberOfFilesSent: number;
+    lastValueSent: OIBusTimeValue | null;
+    lastFileSent: string | null;
+    cacheSize: number;
+  };
+  south: {
+    lastConnection: Instant | null;
+    lastRunStart: Instant | null;
+    lastRunDuration: number | null;
+    numberOfValuesRetrieved: number;
+    numberOfFilesRetrieved: number;
+    lastValueRetrieved: OIBusTimeValue | null;
+    lastFileRetrieved: string | null;
+  };
+  historyMetrics: {
+    running: boolean;
+    // Percentage of the current interval that has been processed [0,1]
+    intervalProgress: number;
+    // Start of the current interval
+    currentIntervalStart: Instant | null;
+    // End of the current interval
+    currentIntervalEnd: Instant | null;
+    // Number of the current interval
+    currentIntervalNumber: number;
+    // Maximum number of intervals
+    numberOfIntervals: number;
+  };
 }
 
 export interface EngineMetrics {

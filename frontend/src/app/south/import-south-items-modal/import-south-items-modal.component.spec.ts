@@ -5,6 +5,7 @@ import { fakeAsync, TestBed } from '@angular/core/testing';
 import { SouthConnectorItemDTO, SouthConnectorItemManifest } from '../../../../../shared/model/south-connector.model';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import { SouthItemSettings } from '../../../../../shared/model/south-settings.model';
 
 class ImportSouthItemsModalComponentTester extends ComponentTester<ImportSouthItemsModalComponent> {
   constructor() {
@@ -29,22 +30,20 @@ describe('ImportSouthItemsModalComponent', () => {
     settings: [],
     schema: []
   } as SouthConnectorItemManifest;
-  const allItems: Array<SouthConnectorItemDTO> = [
+  const allItems: Array<SouthConnectorItemDTO<SouthItemSettings>> = [
     {
       id: 'id1',
       enabled: true,
       name: 'item',
-      connectorId: 'southId',
       scanModeId: 'scanModeId1',
-      settings: {}
+      settings: {} as SouthItemSettings
     },
     {
       id: 'id2',
       enabled: true,
       name: 'item2',
-      connectorId: 'southId',
       scanModeId: 'scanModeId1',
-      settings: {}
+      settings: {} as SouthItemSettings
     }
   ];
   const scanModes: Array<ScanModeDTO> = [
@@ -73,8 +72,8 @@ describe('ImportSouthItemsModalComponent', () => {
     tester.componentInstance.prepare(
       southItemSchema,
       allItems,
-      [{ name: 'item1' } as SouthConnectorItemDTO],
-      [{ item: { name: 'item2' } as SouthConnectorItemDTO, message: '' }],
+      [{ name: 'item1' } as SouthConnectorItemDTO<SouthItemSettings>],
+      [{ item: { name: 'item2' } as SouthConnectorItemDTO<SouthItemSettings>, error: '' }],
       scanModes
     );
     tester.detectChanges();
