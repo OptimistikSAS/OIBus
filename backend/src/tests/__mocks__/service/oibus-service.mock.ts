@@ -1,3 +1,5 @@
+import { EventEmitter } from 'node:events';
+
 /**
  * Create a mock object for OIBus Service
  */
@@ -17,5 +19,5 @@ export default jest.fn().mockImplementation(() => ({
   logHealthSignal: jest.fn(),
   updateMetrics: jest.fn(),
   resetMetrics: jest.fn(),
-  stream: jest.fn()
+  stream: new EventEmitter()
 }));
