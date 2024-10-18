@@ -35,7 +35,7 @@ export default class SouthConnectorRepository {
     if (!result) {
       return null;
     }
-    return this.toSouthConnector<S, I>(result as Record<string, string>);
+    return this.toSouthConnector<S, I>(result as Record<string, string | number>);
   }
 
   saveSouthConnector<S extends SouthSettings, I extends SouthItemSettings>(south: SouthConnectorEntity<S, I>): void {
@@ -264,23 +264,23 @@ export default class SouthConnectorRepository {
   }
 
   private toSouthConnector<S extends SouthSettings, I extends SouthItemSettings>(
-    result: Record<string, string>
+    result: Record<string, string | number>
   ): SouthConnectorEntity<S, I> {
     return {
-      id: result.id,
-      name: result.name,
-      type: result.type,
-      description: result.description,
+      id: result.id as string,
+      name: result.name as string,
+      type: result.type as string,
+      description: result.description as string,
       enabled: Boolean(result.enabled),
       sharedConnection: Boolean(result.shared_connection),
       history: {
         maxInstantPerItem: Boolean(result.history_max_instant_per_item),
-        maxReadInterval: parseInt(result.history_max_read_interval),
-        readDelay: parseInt(result.history_read_delay),
-        overlap: parseInt(result.history_read_overlap)
+        maxReadInterval: result.history_max_read_interval as number,
+        readDelay: result.history_read_delay as number,
+        overlap: result.history_read_overlap as number
       },
-      settings: JSON.parse(result.settings) as S,
-      items: this.findAllItemsForSouth<I>(result.id)
+      settings: JSON.parse(result.settings as string) as S,
+      items: this.findAllItemsForSouth<I>(result.id as string)
     };
   }
 }

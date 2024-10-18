@@ -1,18 +1,18 @@
-import EngineMetricsRepositoryMock from '../tests/__mocks__/repository/log/engine-metrics-repository.mock';
-import EngineMetricsRepository from '../repository/logs/engine-metrics.repository';
+import EngineMetricsRepositoryMock from '../../tests/__mocks__/repository/log/engine-metrics-repository.mock';
+import EngineMetricsRepository from '../../repository/logs/engine-metrics.repository';
 import HomeMetricsService from './home-metrics.service';
 import { EventEmitter } from 'node:events';
-import NorthConnector from '../north/north-connector';
-import SouthConnector from '../south/south-connector';
-import SouthMetricsRepositoryMock from '../tests/__mocks__/repository/log/south-metrics-repository.mock';
-import NorthMetricsRepositoryMock from '../tests/__mocks__/repository/log/north-metrics-repository.mock';
-import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
-import SouthConnectorMetricsRepository from '../repository/logs/south-connector-metrics.repository';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
-import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
+import NorthConnector from '../../north/north-connector';
+import SouthConnector from '../../south/south-connector';
+import SouthMetricsRepositoryMock from '../../tests/__mocks__/repository/log/south-metrics-repository.mock';
+import NorthMetricsRepositoryMock from '../../tests/__mocks__/repository/log/north-metrics-repository.mock';
+import NorthConnectorMetricsRepository from '../../repository/logs/north-connector-metrics.repository';
+import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
+import { NorthSettings } from '../../../../shared/model/north-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../../../shared/model/south-settings.model';
 
-jest.mock('./utils');
-jest.mock('./oibus.service');
+jest.mock('../utils');
+jest.mock('../oibus.service');
 
 let service: HomeMetricsService;
 const engineMetricsRepository: EngineMetricsRepository = new EngineMetricsRepositoryMock();
