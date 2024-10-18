@@ -1,7 +1,7 @@
 import pino from 'pino';
 import NorthConnector from '../north/north-connector';
 import SouthConnector from '../south/south-connector';
-import { createFolder, filesExists } from '../service/utils';
+import { filesExists } from '../service/utils';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { Instant } from '../../../shared/model/types';
@@ -155,8 +155,6 @@ export default class DataStreamEngine {
   }
 
   async createSouth<S extends SouthSettings, I extends SouthItemSettings>(south: SouthConnector<S, I>): Promise<void> {
-    const baseFolder = path.resolve(this.cacheFolder, `south-${south.settings.id}`);
-    await createFolder(baseFolder);
     this.southConnectors.set(south.settings.id, south);
     this.southConnectorMetrics.set(south.settings.id, new SouthConnectorMetricsService(south, this.southConnectorMetricsRepository));
   }
@@ -182,9 +180,6 @@ export default class DataStreamEngine {
   }
 
   async createNorth<N extends NorthSettings>(north: NorthConnector<N>): Promise<void> {
-    const baseFolder = path.resolve(this.cacheFolder, `north-${north.settings.id}`);
-    await createFolder(baseFolder);
-
     this.northConnectors.set(north.settings.id, north);
     this.northConnectorMetrics.set(north.settings.id, new NorthConnectorMetricsService(north, this.northConnectorMetricsRepository));
   }

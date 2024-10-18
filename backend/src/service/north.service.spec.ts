@@ -73,7 +73,7 @@ describe('north service', () => {
   });
 
   it('should create North connector', () => {
-    const connector = service.runNorth(testData.north.list[0], 'myBaseFolder', logger);
+    const connector = service.runNorth(testData.north.list[0], logger, 'myBaseFolder');
     expect(connector).toBeDefined();
   });
 
@@ -88,8 +88,8 @@ describe('north service', () => {
           description: 'my test connector',
           type: 'another'
         } as NorthConnectorEntity<NorthSettings>,
-        'myBaseFolder',
-        logger
+        logger,
+        'myBaseFolder'
       );
     } catch (err) {
       error = err;

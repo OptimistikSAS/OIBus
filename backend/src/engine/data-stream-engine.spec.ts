@@ -53,16 +53,15 @@ describe('DataStreamEngine', () => {
   });
 
   it('it should start and stop', async () => {
-    (createFolder as jest.Mock)
-      .mockImplementationOnce(() => Promise.resolve())
-      .mockImplementationOnce(() => {
-        throw new Error('North error');
-      })
-      .mockImplementationOnce(() => Promise.resolve())
-      .mockImplementationOnce(() => {
-        throw new Error('South error');
-      });
+    (mockedNorth2.start as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('North error');
+    });
+    (mockedSouth2.start as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('South error');
+    });
 
+    mockedNorth2['settings']['enabled'] = true;
+    mockedSouth2['settings']['enabled'] = true;
     await engine.start([mockedNorth1, mockedNorth2], [mockedSouth1, mockedSouth2]);
 
     expect(engine.logger).toBeDefined();

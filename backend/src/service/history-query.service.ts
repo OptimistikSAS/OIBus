@@ -15,7 +15,7 @@ import EncryptionService from './encryption.service';
 import HistoryQueryRepository from '../repository/config/history-query.repository';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
-import { checkScanMode } from './utils';
+import { checkScanMode, createFolder } from './utils';
 import SouthService, { southManifestList } from './south.service';
 import NorthService, { northManifestList } from './north.service';
 import LogRepository from '../repository/logs/log.repository';
@@ -26,6 +26,7 @@ import { ScanMode } from '../model/scan-mode.model';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import multer from '@koa/multer';
 import fs from 'node:fs/promises';
+import path from 'node:path';
 import csv from 'papaparse';
 import HistoryQueryEngine from '../engine/history-query-engine';
 import HistoryQuery from '../engine/history-query';
@@ -45,6 +46,19 @@ export default class HistoryQueryService {
     private readonly encryptionService: EncryptionService,
     private readonly historyQueryEngine: HistoryQueryEngine
   ) {}
+
+  runHistoryQuery(settings: HistoryQueryEntityLight, baseFolder: string | undefined = undefined) {
+    const historyQueryBaseFolder = baseFolder ?? this.getDefaultBaseFolder(settings.id);
+
+    return new HistoryQuery(
+      this.findById(settings.id)!,
+      this.southService,
+      this.northService,
+      this.historyQueryRepository,
+      historyQueryBaseFolder,
+      this.historyQueryEngine.logger.child({ scopeType: 'history-query', scopeId: settings.id, scopeName: settings.name })
+    );
+  }
 
   async testNorth<N extends NorthSettings>(
     historyQueryId: string,
@@ -172,15 +186,10 @@ export default class HistoryQueryService {
     this.historyQueryRepository.saveHistoryQuery<S, N, I>(historyQuery);
     this.oIAnalyticsMessageService.createHistoryQueryMessage(historyQuery);
 
+    await createFolder(this.getDefaultBaseFolder(historyQuery.id));
+
     await this.historyQueryEngine.createHistoryQuery(
-      new HistoryQuery(
-        this.findById(historyQuery.id)!,
-        this.southService,
-        this.northService,
-        this.historyQueryRepository,
-        this.historyQueryEngine.baseFolder,
-        this.historyQueryEngine.logger.child({ scopeType: 'history-query', scopeId: historyQuery.id, scopeName: historyQuery.name })
-      )
+      this.runHistoryQuery(historyQuery)
     );
     return historyQuery;
   }
@@ -480,6 +489,10 @@ export default class HistoryQueryService {
     this.historyQueryRepository.saveAllItems<I>(historyQuery.id, itemsToAdd);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.historyQueryEngine.reloadHistoryQuery(historyQuery, false);
+  }
+
+  private getDefaultBaseFolder(historyId: string) {
+    return path.resolve(this.historyQueryEngine.baseFolder, `history-${historyId}`);
   }
 }
 
