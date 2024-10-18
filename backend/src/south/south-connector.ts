@@ -71,7 +71,6 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     private readonly connectionService: ConnectionService | null = null
   ) {
     if (this.connector.id !== 'test') {
-      this.metricsEvent.emit('init');
       this.cacheService = new SouthCacheService(this.southCacheRepository);
     }
     this.taskRunner.on('next', async () => {
@@ -123,7 +122,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     this.subscribedItems = [];
     if (this.connector.id !== 'test') {
       this.metricsEvent.emit('connect', {
-        lastConnection: DateTime.now().toUTC().toISO()
+        lastConnection: DateTime.now().toUTC().toISO()!
       });
     }
     this.connectedEvent.emit('connected');
@@ -254,7 +253,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
 
     const runStart = DateTime.now();
     this.metricsEvent.emit('run-start', {
-      lastRunStart: runStart.toUTC().toISO()
+      lastRunStart: runStart.toUTC().toISO()!
     });
 
     if (this.queriesFile()) {
@@ -343,7 +342,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       for (const [index, item] of itemsToRead.entries()) {
         if (this.stopping) {
           this.logger.debug(`Connector is stopping. Exiting history query at item ${item.name}`);
-          this.metricsEvent.emit('history-stop', {
+          this.metricsEvent.emit('history-query-stop', {
             running: false
           });
           this.historyIsRunning = false;
@@ -377,7 +376,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
 
       await this.queryIntervals(intervals, itemsToRead, southCache, startTimeFromCache);
     }
-    this.metricsEvent.emit('history-stop', {
+    this.metricsEvent.emit('history-query-stop', {
       running: false
     });
     this.historyIsRunning = false;
@@ -501,7 +500,6 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     this.logger.debug(`Add file "${data.filePath}" to cache from South "${this.connector.name}"`);
     await this.engineAddContentCallback(this.connector.id, data);
     this.metricsEvent.emit('add-file', {
-      numberOfFilesRetrieved: 1,
       lastFileRetrieved: path.parse(data.filePath).base
     });
   }

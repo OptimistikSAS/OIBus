@@ -7,7 +7,7 @@ import { NorthConnectorManifest } from '../../../../../../shared/model/north-con
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { SouthConnectorManifest } from '../../../../../../shared/model/south-connector.model';
 import { HistoryQueryDTO } from '../../../../../../shared/model/history-query.model';
-import { HistoryMetrics } from '../../../../../../shared/model/engine.model';
+import { HistoryQueryMetrics } from '../../../../../../shared/model/engine.model';
 import { provideHttpClient } from '@angular/common/http';
 import { SouthItemSettings, SouthSettings } from '../../../../../../shared/model/south-settings.model';
 import { NorthSettings } from '../../../../../../shared/model/north-settings.model';
@@ -126,25 +126,36 @@ class TestComponent {
     },
     items: []
   };
-  historyMetrics: HistoryMetrics = {
-    north: {
-      numberOfValuesSent: 10,
-      numberOfFilesSent: 0,
-      lastValueSent: null,
-      lastFileSent: null,
-      cacheSize: 0,
-      metricsStart: '2023-01-01T00:00:00.000Z',
+  historyMetrics: HistoryQueryMetrics = {
+    metricsStart: '2020-01-01T00:00:00.000Z',
+    south: {
       lastConnection: null,
       lastRunStart: null,
-      lastRunDuration: null
-    },
-    south: {
-      numberOfValuesRetrieved: 20,
-      numberOfFilesRetrieved: 0,
+      lastRunDuration: null,
+      numberOfValuesRetrieved: 11,
+      numberOfFilesRetrieved: 11,
       lastValueRetrieved: null,
       lastFileRetrieved: null
+    },
+    north: {
+      lastConnection: null,
+      lastRunStart: null,
+      lastRunDuration: null,
+      numberOfValuesSent: 11,
+      numberOfFilesSent: 11,
+      lastValueSent: null,
+      lastFileSent: null,
+      cacheSize: 10
+    },
+    historyMetrics: {
+      running: false,
+      intervalProgress: 0,
+      currentIntervalStart: null,
+      currentIntervalEnd: null,
+      currentIntervalNumber: 0,
+      numberOfIntervals: 0
     }
-  } as HistoryMetrics;
+  };
 }
 
 class HistoryMetricsComponentTester extends ComponentTester<TestComponent> {

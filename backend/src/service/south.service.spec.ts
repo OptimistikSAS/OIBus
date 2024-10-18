@@ -29,6 +29,7 @@ import DataStreamEngine from '../engine/data-stream-engine';
 import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
 
 jest.mock('../south/south-opcua/south-opcua');
+jest.mock('./metrics/south-connector-metrics.service');
 
 const validator = new JoiValidator();
 const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();

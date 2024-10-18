@@ -11,13 +11,11 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { filesExists } from '../service/utils';
 import testData from '../tests/utils/test-data';
-import SouthConnectorMetricsRepository from '../repository/logs/south-connector-metrics.repository';
-import SouthMetricsRepositoryMock from '../tests/__mocks__/repository/log/south-metrics-repository.mock';
-import NorthMetricsRepositoryMock from '../tests/__mocks__/repository/log/north-metrics-repository.mock';
-import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
 import HistoryQueryRepository from '../repository/config/history-query.repository';
 import HistoryQueryRepositoryMock from '../tests/__mocks__/repository/config/history-query-repository.mock';
 import HistoryQueryMock from '../tests/__mocks__/history-query.mock';
+import HistoryQueryMetricsRepository from '../repository/logs/history-query-metrics.repository';
+import HistoryQueryMetricsRepositoryMock from '../tests/__mocks__/repository/log/history-query-metrics-repository.mock';
 
 jest.mock('../service/south.service');
 jest.mock('../service/north.service');
@@ -33,8 +31,7 @@ const anotherLogger: pino.Logger = new PinoLogger();
 
 const southService: SouthService = new SouthServiceMock();
 const northService: NorthService = new NorthServiceMock();
-const southMetricsRepository: SouthConnectorMetricsRepository = new SouthMetricsRepositoryMock();
-const northMetricsRepository: NorthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
+const historyQueryMetricsRepository: HistoryQueryMetricsRepository = new HistoryQueryMetricsRepositoryMock();
 const historyQueryRepository: HistoryQueryRepository = new HistoryQueryRepositoryMock();
 
 describe('HistoryQueryEngine', () => {
@@ -44,8 +41,6 @@ describe('HistoryQueryEngine', () => {
     testData.historyQueries.list[0],
     southService,
     northService,
-    southMetricsRepository,
-    northMetricsRepository,
     historyQueryRepository,
     'baseFolder',
     logger
@@ -54,8 +49,6 @@ describe('HistoryQueryEngine', () => {
     testData.historyQueries.list[1],
     southService,
     northService,
-    southMetricsRepository,
-    northMetricsRepository,
     historyQueryRepository,
     'baseFolder',
     logger
@@ -66,7 +59,7 @@ describe('HistoryQueryEngine', () => {
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     (logger.child as jest.Mock).mockReturnValue(logger);
 
-    engine = new HistoryQueryEngine(logger);
+    engine = new HistoryQueryEngine(historyQueryMetricsRepository, logger);
   });
 
   it('it should start connectors and stop all', async () => {
@@ -74,8 +67,6 @@ describe('HistoryQueryEngine', () => {
 
     expect(engine.logger).toBeDefined();
     expect(engine.baseFolder).toBeDefined();
-    expect(engine.getHistoryDataStream('bad id')).toEqual(null);
-    expect(engine.getHistoryDataStream(testData.historyQueries.list[0].id)).toEqual(mockedHistoryQuery1.getMetricsDataStream());
 
     (mockedHistoryQuery1.start as jest.Mock).mockImplementationOnce(() => Promise.reject(new Error('start fail')));
     await engine.startHistoryQuery(testData.historyQueries.list[0].id);

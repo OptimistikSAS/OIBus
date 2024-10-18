@@ -24,6 +24,7 @@ export default jest.fn().mockImplementation(settings => {
     getMetricsDataStream: jest.fn(),
     resetMetrics: jest.fn(),
     settings: settings,
-    connectedEvent: new EventEmitter()
+    connectedEvent: new EventEmitter(),
+    metricsEvent: new EventEmitter()
   };
 });

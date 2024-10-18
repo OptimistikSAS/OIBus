@@ -6,17 +6,15 @@ import SouthService from '../service/south.service';
 import NorthService from '../service/north.service';
 import NorthConnector from '../north/north-connector';
 import SouthConnector from '../south/south-connector';
-import HistoryMetricsService from '../service/history-metrics.service';
-import { PassThrough } from 'node:stream';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
-import { OIBusContent } from '../../../shared/model/engine.model';
+import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity } from '../model/south-connector.model';
 import { NorthConnectorEntity } from '../model/north-connector.model';
 import { HistoryQueryEntity } from '../model/histor-query.model';
-import SouthConnectorMetricsRepository from '../repository/logs/south-connector-metrics.repository';
-import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
 import HistoryQueryRepository from '../repository/config/history-query.repository';
+import { EventEmitter } from 'node:events';
+import { Instant } from '../model/types';
 
 const FINISH_INTERVAL = 5000;
 
@@ -24,21 +22,18 @@ export default class HistoryQuery {
   private north: NorthConnector<NorthSettings> | null = null;
   private south: SouthConnector<SouthSettings, SouthItemSettings> | null = null;
   private finishInterval: NodeJS.Timeout | null = null;
-  private readonly _metricsService: HistoryMetricsService;
   private stopping = false;
+
+  public metricsEvent: EventEmitter = new EventEmitter();
 
   constructor(
     private historyConfiguration: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>,
     private readonly southService: SouthService,
     private readonly northService: NorthService,
-    private readonly southMetricsRepository: SouthConnectorMetricsRepository,
-    private readonly northMetricsRepository: NorthConnectorMetricsRepository,
     private readonly historyQueryRepository: HistoryQueryRepository,
     private readonly baseFolder: string,
     private logger: pino.Logger
-  ) {
-    this._metricsService = new HistoryMetricsService(historyConfiguration.id, this.southMetricsRepository, this.northMetricsRepository);
-  }
+  ) {}
 
   async start(): Promise<void> {
     this.historyConfiguration = this.historyQueryRepository.findHistoryQueryById(this.historyConfiguration.id)!;
@@ -75,6 +70,24 @@ export default class HistoryQuery {
       return;
     }
 
+    this.north.metricsEvent.on('connect', (data: { lastConnection: Instant }) => {
+      this.metricsEvent.emit('north-connect', data);
+    });
+    this.north.metricsEvent.on('run-start', (data: { lastRunStart: Instant }) => {
+      this.metricsEvent.emit('north-run-start', data);
+    });
+    this.north.metricsEvent.on('run-end', (data: { lastRunDuration: number }) => {
+      this.metricsEvent.emit('north-run-end', data);
+    });
+    this.north.metricsEvent.on('cache-size', (data: { cacheSize: number }) => {
+      this.metricsEvent.emit('north-cache-size', data);
+    });
+    this.north.metricsEvent.on('send-values', (data: { numberOfValuesSent: number; lastValueSent: OIBusTimeValue }) => {
+      this.metricsEvent.emit('north-send-values', data);
+    });
+    this.north.metricsEvent.on('send-file', (data: { lastFileSent: string }) => {
+      this.metricsEvent.emit('north-send-file', data);
+    });
     await this.north.start(false);
 
     this.south.connectedEvent.on('connected', async () => {
@@ -104,6 +117,40 @@ export default class HistoryQuery {
       }
       this.finishInterval = setInterval(this.finish.bind(this), FINISH_INTERVAL);
     });
+    this.south.metricsEvent.on('connect', (data: { lastConnection: Instant }) => {
+      this.metricsEvent.emit('south-connect', data);
+    });
+    this.south.metricsEvent.on('run-start', (data: { lastRunStart: Instant }) => {
+      this.metricsEvent.emit('south-run-start', data);
+    });
+    this.south.metricsEvent.on('run-end', (data: { lastRunDuration: number }) => {
+      this.metricsEvent.emit('south-run-end', data);
+    });
+    this.south.metricsEvent.on('history-query-start', (data: { running: boolean; intervalProgress: number }) => {
+      this.metricsEvent.emit('south-history-query-start', data);
+    });
+    this.south.metricsEvent.on(
+      'history-query-interval',
+      (data: {
+        running: boolean;
+        intervalProgress: number;
+        currentIntervalStart: Instant;
+        currentIntervalEnd: Instant;
+        currentIntervalNumber: number;
+        numberOfIntervals: number;
+      }) => {
+        this.metricsEvent.emit('south-history-query-interval', data);
+      }
+    );
+    this.south.metricsEvent.on('history-query-stop', (data: { running: boolean }) => {
+      this.metricsEvent.emit('south-history-query-stop', data);
+    });
+    this.south.metricsEvent.on('add-values', (data: { numberOfValuesRetrieved: number; lastValueRetrieved: OIBusTimeValue }) => {
+      this.metricsEvent.emit('south-add-values', data);
+    });
+    this.south.metricsEvent.on('add-file', (data: { lastFileRetrieved: string }) => {
+      this.metricsEvent.emit('south-add-file', data);
+    });
     await this.south.start(false);
   }
 
@@ -120,9 +167,6 @@ export default class HistoryQuery {
     }
   }
 
-  /**
-   * Stop history query
-   */
   async stop(): Promise<void> {
     this.stopping = true;
     if (this.finishInterval) {
@@ -131,10 +175,12 @@ export default class HistoryQuery {
     }
     if (this.south) {
       this.south.connectedEvent.removeAllListeners();
+      this.south.metricsEvent.removeAllListeners();
       await this.south.stop(false);
     }
     if (this.north) {
       await this.north.stop(false);
+      this.north.metricsEvent.removeAllListeners();
     }
     this.stopping = false;
   }
@@ -145,9 +191,6 @@ export default class HistoryQuery {
     }
     if (this.north) {
       await this.north.resetCache();
-    }
-    if (this._metricsService) {
-      this._metricsService.resetMetrics();
     }
   }
 
@@ -167,10 +210,6 @@ export default class HistoryQuery {
 
   setLogger(value: pino.Logger) {
     this.logger = value;
-  }
-
-  getMetricsDataStream(): PassThrough {
-    return this._metricsService.stream;
   }
 
   get settings(): HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> {
