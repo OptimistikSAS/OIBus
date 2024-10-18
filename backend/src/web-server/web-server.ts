@@ -25,6 +25,7 @@ import IPFilterService from '../service/ip-filter.service';
 import OIAnalyticsCommandService from '../service/oia/oianalytics-command.service';
 import OIAnalyticsRegistrationService from '../service/oia/oianalytics-registration.service';
 import HistoryQueryService from '../service/history-query.service';
+import HomeMetricsService from '../service/metrics/home-metrics.service';
 
 /**
  * Class Server - Provides the web client and establish socket connections.
@@ -48,6 +49,7 @@ export default class WebServer {
     private readonly southService: SouthService,
     private readonly northService: NorthService,
     private readonly historyQueryService: HistoryQueryService,
+    private readonly homeMetricsService: HomeMetricsService,
     private readonly repositoryService: RepositoryService,
     private readonly ignoreIpFilters: boolean,
     logger: pino.Logger
@@ -103,6 +105,7 @@ export default class WebServer {
         this.southService,
         this.northService,
         this.historyQueryService,
+        this.homeMetricsService,
         this.repositoryService,
         this.encryptionService,
         this.logger

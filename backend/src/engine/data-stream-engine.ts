@@ -5,7 +5,7 @@ import { createFolder, filesExists } from '../service/utils';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { Instant } from '../../../shared/model/types';
-import { OIBusContent } from '../../../shared/model/engine.model';
+import { NorthConnectorMetrics, OIBusContent, SouthConnectorMetrics } from '../../../shared/model/engine.model';
 import { ScanMode } from '../model/scan-mode.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
@@ -47,8 +47,24 @@ export default class DataStreamEngine {
     return this.southConnectorMetrics.get(southConnectorId)?.stream || null;
   }
 
+  getSouthConnectorMetrics(): Record<string, SouthConnectorMetrics> {
+    const metricsList: Record<string, SouthConnectorMetrics> = {};
+    for (const [id, value] of this.southConnectorMetrics.entries()) {
+      metricsList[id] = value.metrics;
+    }
+    return metricsList;
+  }
+
   getNorthDataStream(northConnectorId: string): PassThrough | null {
     return this.northConnectorMetrics.get(northConnectorId)?.stream || null;
+  }
+
+  getNorthConnectorMetrics(): Record<string, NorthConnectorMetrics> {
+    const metricsList: Record<string, NorthConnectorMetrics> = {};
+    for (const [id, value] of this.northConnectorMetrics.entries()) {
+      metricsList[id] = value.metrics;
+    }
+    return metricsList;
   }
 
   /**
@@ -143,8 +159,6 @@ export default class DataStreamEngine {
     await createFolder(baseFolder);
     this.southConnectors.set(south.settings.id, south);
     this.southConnectorMetrics.set(south.settings.id, new SouthConnectorMetricsService(south, this.southConnectorMetricsRepository));
-    console.log('south.settings.id', south.settings.id);
-    // TODO: this.homeMetricsService.addSouth(south, south.settings.id);
   }
 
   async startSouth(southId: string): Promise<void> {
@@ -173,7 +187,6 @@ export default class DataStreamEngine {
 
     this.northConnectors.set(north.settings.id, north);
     this.northConnectorMetrics.set(north.settings.id, new NorthConnectorMetricsService(north, this.northConnectorMetricsRepository));
-    // TODO: this.homeMetricsService.addNorth(north, north.settings.id);
   }
 
   async startNorth(northId: string): Promise<void> {
