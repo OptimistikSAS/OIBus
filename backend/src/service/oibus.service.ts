@@ -265,6 +265,14 @@ export default class OIBusService {
     this.updateMetrics();
   }
 
+  resetNorthConnectorMetrics(northConnectorId: string): void {
+    this.dataStreamEngine.resetNorthConnectorMetrics(northConnectorId);
+  }
+
+  resetSouthConnectorMetrics(southConnectorId: string): void {
+    this.dataStreamEngine.resetSouthConnectorMetrics(southConnectorId);
+  }
+
   /**
    * Create a PassThrough object used to send a data to a stream to the frontend
    * The timeout is used to auto-initialize the stream at creation
