@@ -351,7 +351,7 @@ describe('South connector controller', () => {
     ctx.params.southId = testData.south.list[0].id;
 
     await southConnectorController.resetSouthMetrics(ctx);
-
+    expect(ctx.app.oIBusService.resetSouthConnectorMetrics).toHaveBeenCalledWith(testData.south.list[0].id);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
