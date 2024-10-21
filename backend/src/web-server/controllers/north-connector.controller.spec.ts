@@ -130,7 +130,7 @@ describe('North connector controller', () => {
     ctx.params.northId = testData.north.list[0].id;
 
     await northConnectorController.resetMetrics(ctx);
-
+    expect(ctx.app.oIBusService.resetNorthConnectorMetrics).toHaveBeenCalledWith(testData.north.list[0].id);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
