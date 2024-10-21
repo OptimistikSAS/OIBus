@@ -47,6 +47,10 @@ export default class DataStreamEngine {
     return this.southConnectorMetrics.get(southConnectorId)?.stream || null;
   }
 
+  resetSouthConnectorMetrics(southConnectorId: string): PassThrough | null {
+    return this.southConnectorMetrics.get(southConnectorId)?.resetMetrics() || null;
+  }
+
   getSouthConnectorMetrics(): Record<string, SouthConnectorMetrics> {
     const metricsList: Record<string, SouthConnectorMetrics> = {};
     for (const [id, value] of this.southConnectorMetrics.entries()) {
@@ -57,6 +61,10 @@ export default class DataStreamEngine {
 
   getNorthDataStream(northConnectorId: string): PassThrough | null {
     return this.northConnectorMetrics.get(northConnectorId)?.stream || null;
+  }
+
+  resetNorthConnectorMetrics(northConnectorId: string): PassThrough | null {
+    return this.northConnectorMetrics.get(northConnectorId)?.resetMetrics() || null;
   }
 
   getNorthConnectorMetrics(): Record<string, NorthConnectorMetrics> {
