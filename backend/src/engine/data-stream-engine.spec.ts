@@ -17,6 +17,10 @@ import SouthConnectorMetricsRepository from '../repository/logs/south-connector-
 import SouthMetricsRepositoryMock from '../tests/__mocks__/repository/log/south-metrics-repository.mock';
 import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
 import NorthMetricsRepositoryMock from '../tests/__mocks__/repository/log/north-metrics-repository.mock';
+import NorthConnectorMetricsService from '../service/metrics/north-connector-metrics.service';
+import NorthConnectorMetricsServiceMock from '../tests/__mocks__/service/metrics/north-connector-metrics-service.mock';
+import SouthConnectorMetricsService from '../service/metrics/south-connector-metrics.service';
+import SouthConnectorMetricsServiceMock from '../tests/__mocks__/service/metrics/south-connector-metrics-service.mock';
 
 jest.mock('../south/south-mqtt/south-mqtt');
 jest.mock('../service/south.service');
@@ -25,6 +29,24 @@ jest.mock('../service/repository.service');
 jest.mock('../service/encryption.service');
 jest.mock('../service/utils');
 jest.mock('node:fs/promises');
+
+const northConnectorMetricsService: NorthConnectorMetricsService = new NorthConnectorMetricsServiceMock();
+jest.mock(
+  '../service/metrics/north-connector-metrics.service',
+  () =>
+    function () {
+      return northConnectorMetricsService;
+    }
+);
+
+const southConnectorMetricsService: SouthConnectorMetricsService = new SouthConnectorMetricsServiceMock();
+jest.mock(
+  '../service/metrics/south-connector-metrics.service',
+  () =>
+    function () {
+      return southConnectorMetricsService;
+    }
+);
 
 const southConnectorMetricsRepository: SouthConnectorMetricsRepository = new SouthMetricsRepositoryMock();
 const northConnectorMetricsRepository: NorthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
@@ -463,7 +485,19 @@ describe('DataStreamEngine', () => {
   it('should properly get metrics', async () => {
     await engine.start([mockedNorth1], [mockedSouth1]);
 
-    expect(engine.getNorthConnectorMetrics()).toEqual({ [mockedNorth1.settings.id]: undefined });
-    expect(engine.getSouthConnectorMetrics()).toEqual({ [mockedSouth1.settings.id]: undefined });
+    expect(engine.getNorthConnectorMetrics()).toEqual({ [mockedNorth1.settings.id]: {} });
+    expect(engine.getSouthConnectorMetrics()).toEqual({ [mockedSouth1.settings.id]: {} });
+  });
+
+  it('should properly reset metrics', async () => {
+    await engine.start([mockedNorth1], [mockedSouth1]);
+
+    engine.resetNorthConnectorMetrics(mockedNorth1.settings.id);
+    engine.resetNorthConnectorMetrics('bad id');
+    expect(northConnectorMetricsService.resetMetrics).toHaveBeenCalledTimes(1);
+
+    engine.resetSouthConnectorMetrics(mockedSouth1.settings.id);
+    engine.resetSouthConnectorMetrics('bad id');
+    expect(southConnectorMetricsService.resetMetrics).toHaveBeenCalledTimes(1);
   });
 });
