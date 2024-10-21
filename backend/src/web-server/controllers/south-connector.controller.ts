@@ -109,7 +109,7 @@ export default class SouthConnectorController {
   }
 
   async resetSouthMetrics(ctx: KoaContext<void, void>): Promise<void> {
-    // TODO ctx.app.southService.resetSouthMetrics(ctx.params.southId);
+    ctx.app.oIBusService.resetSouthConnectorMetrics(ctx.params.southId);
     ctx.noContent();
   }
 

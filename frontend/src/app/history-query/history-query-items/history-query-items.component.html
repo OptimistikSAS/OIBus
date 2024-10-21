@@ -35,6 +35,7 @@
           class="btn btn-secondary btn-sm"
           id="export-items"
           (click)="exportItems()"
+          [disabled]="this.historyQuery ? this.historyQuery.items.length === 0 : this.allItems.length === 0"
           translate="south.items.export"
         ></button>
         <button type="button" class="btn btn-secondary btn-sm" (click)="importItems()" id="import-button">

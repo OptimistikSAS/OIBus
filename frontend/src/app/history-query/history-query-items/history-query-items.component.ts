@@ -331,7 +331,7 @@ export class HistoryQueryItemsComponent implements OnInit, OnChanges {
       )
       .subscribe(() => {
         if (this.historyQuery) {
-          this.notificationService.success(`history-query.items.import.imported`);
+          this.notificationService.success(`history-query.items.imported`);
           this.inMemoryItems.emit(null);
         } else {
           this.inMemoryItems.emit(this.allItems);

@@ -19,5 +19,7 @@ export default jest.fn().mockImplementation(() => ({
   logHealthSignal: jest.fn(),
   updateMetrics: jest.fn(),
   resetMetrics: jest.fn(),
+  resetNorthConnectorMetrics: jest.fn(),
+  resetSouthConnectorMetrics: jest.fn(),
   stream: new EventEmitter()
 }));
