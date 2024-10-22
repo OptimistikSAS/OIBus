@@ -227,4 +227,51 @@ export default class EncryptionService {
     decryptedData += decipher.final('utf8');
     return decryptedData;
   }
+
+  async decryptTextWithPrivateKey(encryptedText: string, privateKey: string): Promise<string> {
+    return crypto
+      .privateDecrypt(
+        {
+          key: privateKey,
+          padding: crypto.constants.RSA_PKCS1_PADDING // This is commonly used padding
+        },
+        Buffer.from(encryptedText)
+      )
+      .toString();
+  }
+
+  async decryptSecretsWithPrivateKey<T>(newSettings: T, formSettings: Array<OibFormControl>, privateKey: string): Promise<T> {
+    const encryptedSettings: Record<string, string | object | Array<object>> = JSON.parse(JSON.stringify(newSettings)) as Record<
+      string,
+      string | object | Array<object>
+    >;
+
+    for (const fieldSettings of formSettings) {
+      if (fieldSettings.type === 'OibSecret') {
+        if (encryptedSettings[fieldSettings.key]) {
+          encryptedSettings[fieldSettings.key] = await this.decryptTextWithPrivateKey(
+            encryptedSettings[fieldSettings.key] as string,
+            privateKey
+          );
+        } else {
+          encryptedSettings[fieldSettings.key] = '';
+        }
+      } else if (fieldSettings.type === 'OibArray' && encryptedSettings[fieldSettings.key]) {
+        for (let i = 0; i < (encryptedSettings[fieldSettings.key] as Array<object>).length; i++) {
+          (encryptedSettings[fieldSettings.key] as Array<object>)[i] = await this.decryptSecretsWithPrivateKey<object>(
+            (encryptedSettings[fieldSettings.key] as Array<object>)[i],
+            fieldSettings.content,
+            privateKey
+          );
+        }
+      } else if (fieldSettings.type === 'OibFormGroup' && encryptedSettings[fieldSettings.key]) {
+        encryptedSettings[fieldSettings.key] = await this.decryptSecretsWithPrivateKey<object>(
+          encryptedSettings[fieldSettings.key] as object,
+          fieldSettings.content,
+          privateKey
+        );
+      }
+    }
+    return encryptedSettings as T;
+  }
 }

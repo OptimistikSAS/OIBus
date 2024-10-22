@@ -140,4 +140,11 @@ describe('Log controller', () => {
     expect(ctx.ok).toHaveBeenCalledWith(scope);
     expect(ctx.app.repositoryService.logRepository.getScopeById).toHaveBeenCalledWith('id');
   });
+
+  it('should get scope by its ID', async () => {
+    ctx.app.repositoryService.logRepository.getScopeById.mockReturnValue(null);
+    ctx.params = { id: 'id' };
+    await logController.getScopeById(ctx);
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
 });
