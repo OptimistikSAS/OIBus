@@ -1172,7 +1172,14 @@ describe('SouthOIAnalytics with OIA module', () => {
       status: 'REGISTERED',
       activationDate: '2020-01-01T00:00:00Z',
       useProxy: false,
-      acceptUnauthorized: false
+      acceptUnauthorized: false,
+      activationCode: null,
+      publicCipherKey: null,
+      privateCipherKey: null,
+      checkUrl: null,
+      proxyUrl: null,
+      proxyUsername: null,
+      proxyPassword: null
     };
     south = new SouthOianalytics(
       configuration,
@@ -1233,7 +1240,7 @@ describe('SouthOIAnalytics with OIA module', () => {
     expect(createProxyAgent).toHaveBeenCalledWith(
       registrationSettings.useProxy,
       `${registrationSettings.host}/endpoint`,
-      { url: registrationSettings.proxyUrl, username: undefined, password: null },
+      { url: registrationSettings.proxyUrl, username: null, password: null },
       registrationSettings.acceptUnauthorized
     );
     expect(result.agent).toEqual({});

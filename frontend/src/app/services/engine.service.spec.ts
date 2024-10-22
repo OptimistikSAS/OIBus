@@ -86,7 +86,10 @@ describe('EngineService', () => {
     const command: RegistrationSettingsCommandDTO = {
       host: 'host',
       useProxy: false,
-      acceptUnauthorized: false
+      acceptUnauthorized: false,
+      proxyUrl: null,
+      proxyUsername: null,
+      proxyPassword: null
     };
     service.editRegistrationSettings(command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/registration/edit' });

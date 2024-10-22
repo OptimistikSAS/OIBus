@@ -296,4 +296,14 @@ describe('OIBus Service', () => {
     service.updateOIBusVersion('3.4.0');
     expect(engineRepository.updateVersion).toHaveBeenCalledWith('3.4.0');
   });
+
+  it('should reset North Connector Metrics', () => {
+    service.resetNorthConnectorMetrics('id');
+    expect(dataStreamEngine.resetNorthConnectorMetrics).toHaveBeenCalledWith('id');
+  });
+
+  it('should reset South Connector Metrics', () => {
+    service.resetSouthConnectorMetrics('id');
+    expect(dataStreamEngine.resetSouthConnectorMetrics).toHaveBeenCalledWith('id');
+  });
 });

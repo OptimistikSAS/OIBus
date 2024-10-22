@@ -92,7 +92,7 @@ describe('Logger', () => {
           useProxy: registration.useProxy,
           proxyUrl: registration.proxyUrl,
           proxyUsername: registration.proxyUsername,
-          proxyPassword: registration.proxyPassword,
+          proxyPassword: '',
           acceptUnauthorized: registration.acceptUnauthorized
         },
         level: engineSettings.logParameters.oia.level
