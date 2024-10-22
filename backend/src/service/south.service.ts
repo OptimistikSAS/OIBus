@@ -985,7 +985,6 @@ const copySouthConnectorCommandToSouthEntity = async <S extends SouthSettings, I
     currentSettings?.settings || null,
     manifest.settings
   );
-  southEntity.sharedConnection = command.sharedConnection;
   southEntity.history = {
     maxInstantPerItem: manifest.modes.forceMaxInstantPerItem ? true : command.history.maxInstantPerItem,
     maxReadInterval: command.history.maxReadInterval,
@@ -1039,7 +1038,6 @@ export const toSouthConnectorDTO = <S extends SouthSettings, I extends SouthItem
     type: southEntity.type,
     description: southEntity.description,
     enabled: southEntity.enabled,
-    sharedConnection: southEntity.sharedConnection,
     settings: encryptionService.filterSecrets<S>(southEntity.settings, manifest.settings),
     history: {
       maxInstantPerItem: southEntity.history.maxInstantPerItem,

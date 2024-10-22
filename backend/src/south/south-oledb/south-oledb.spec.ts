@@ -57,7 +57,6 @@ describe('SouthOLEDB', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       agentUrl: 'http://localhost:2224',
       connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
