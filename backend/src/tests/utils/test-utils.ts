@@ -410,8 +410,7 @@ const createSouth = async (database: knex.Knex, south: SouthConnectorEntity<Sout
       history_max_instant_per_item: south.history.maxInstantPerItem,
       history_max_read_interval: south.history.maxReadInterval,
       history_read_delay: south.history.readDelay,
-      history_read_overlap: south.history.overlap,
-      shared_connection: south.sharedConnection
+      history_read_overlap: south.history.overlap
     })
     .into('south_connectors');
 
@@ -518,8 +517,7 @@ const createHistoryQuery = async (
       caching_send_file_immediately: historyQuery.caching.rawFiles.sendFileImmediately,
       caching_max_size: historyQuery.caching.maxSize,
       archive_enabled: historyQuery.caching.rawFiles.archive.enabled,
-      archive_retention_duration: historyQuery.caching.rawFiles.archive.retentionDuration,
-      south_shared_connection: historyQuery.southSharedConnection
+      archive_retention_duration: historyQuery.caching.rawFiles.archive.retentionDuration
     })
     .into('history_queries');
 

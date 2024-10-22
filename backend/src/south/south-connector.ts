@@ -569,7 +569,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     return 'subscribe' in this && 'unsubscribe' in this;
   }
 
-  delegatesConnection(): this is DelegatesConnection {
+  delegatesConnection<T>(): this is DelegatesConnection<T> {
     return 'connectionSettings' in this && 'createSession' in this;
   }
 

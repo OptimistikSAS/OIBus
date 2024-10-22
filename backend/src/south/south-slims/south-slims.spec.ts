@@ -58,7 +58,6 @@ describe('SouthSlims with body', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       url: 'http://localhost',
       port: 4200,
@@ -306,7 +305,6 @@ describe('SouthSlims with body and accept self signed', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       url: 'https://localhost/',
       port: 4200,
@@ -484,7 +482,6 @@ describe('SouthSlims with query params', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       url: 'http://localhost',
       port: 4200,
@@ -1212,7 +1209,6 @@ describe('SouthSlims with query params and accept self signed', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       url: 'http://localhost',
       port: 4200,

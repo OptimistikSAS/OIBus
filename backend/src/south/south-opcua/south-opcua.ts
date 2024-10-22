@@ -81,7 +81,7 @@ export default class SouthOPCUA
 
     this.connectionSettings = {
       closeFnName: 'close',
-      sharedConnection: connector.sharedConnection
+      sharedConnection: connector.settings.sharedConnection
     };
   }
 

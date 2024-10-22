@@ -33,7 +33,7 @@ export interface QueriesSubscription {
   unsubscribe(items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void>;
 }
 
-export interface DelegatesConnection<TConnection = any> {
+export interface DelegatesConnection<TConnection> {
   /**
    * The connection that is being managed
    */
