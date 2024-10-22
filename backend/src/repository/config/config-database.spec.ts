@@ -133,6 +133,10 @@ describe('Repository with populated database', () => {
       repository = new UserRepository(database);
     });
 
+    it('should properly find all certificates', () => {
+      expect(repository.findAll()).toEqual(testData.users.list);
+    });
+
     it('should search users', () => {
       expect(
         repository.search({
@@ -220,7 +224,9 @@ describe('Repository with populated database', () => {
         testData.oIAnalytics.registration.command,
         '123ABC',
         'http://localhost:4200/api/oianalytics/oibus/registration?id=id',
-        testData.constants.dates.FAKE_NOW
+        testData.constants.dates.FAKE_NOW,
+        'public key',
+        'private key'
       );
 
       expect(repository.get()).toEqual(expectedResult);
@@ -337,6 +343,7 @@ describe('Repository with populated database', () => {
         type: command.type,
         status: 'RETRIEVED',
         ack: false,
+        targetVersion: command.targetVersion,
         retrievedDate: testData.constants.dates.FAKE_NOW,
         completedDate: null,
         result: null,
@@ -373,6 +380,7 @@ describe('Repository with populated database', () => {
         type: command.type,
         status: 'RETRIEVED',
         ack: false,
+        targetVersion: command.targetVersion,
         retrievedDate: testData.constants.dates.FAKE_NOW,
         completedDate: null,
         result: null
@@ -1201,6 +1209,8 @@ describe('Repository with empty database', () => {
         activationDate: null,
         acceptUnauthorized: false,
         useProxy: false,
+        privateCipherKey: null,
+        publicCipherKey: null,
         proxyUrl: null,
         proxyUsername: null,
         proxyPassword: null

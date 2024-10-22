@@ -21,7 +21,6 @@ import { getOIBusInfo } from './utils';
 import SouthService from './south.service';
 import NorthService from './north.service';
 import HistoryQueryService from './history-query.service';
-import HistoryQuery from '../engine/history-query';
 import HistoryQueryRepository from '../repository/config/history-query.repository';
 
 const HEALTH_SIGNAL_INTERVAL = 60_000_000; // 10 minutes

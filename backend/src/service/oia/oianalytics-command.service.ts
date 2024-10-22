@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises';
-import { delay, downloadFile, getNetworkSettingsFromRegistration, getOIBusInfo, unzip } from '../utils';
+import { delay, getOIBusInfo, unzip } from '../utils';
 import EncryptionService from '../encryption.service';
 import pino from 'pino';
 import { DateTime } from 'luxon';
@@ -7,7 +7,6 @@ import path from 'node:path';
 import { version } from '../../../package.json';
 import ScanModeService from '../scan-mode.service';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
-import fetch from 'node-fetch';
 import OIAnalyticsCommandRepository from '../../repository/config/oianalytics-command.repository';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 import OIBusService from '../oibus.service';
@@ -26,14 +25,12 @@ import {
   OIBusUpdateSouthConnectorCommand,
   OIBusUpdateVersionCommand
 } from '../../model/oianalytics-command.model';
-import { OIAnalyticsFetchCommandDTO } from './oianalytics.model';
 import { CommandSearchParam, OIBusCommandDTO } from '../../../../shared/model/command.model';
 import { Page } from '../../../../shared/model/types';
 import SouthService from '../south.service';
 import NorthService from '../north.service';
+import OIAnalyticsClient from './oianalytics-client.service';
 
-const DOWNLOAD_TIMEOUT = 600_000;
-const OIANALYTICS_TIMEOUT = 10_000;
 const CHECK_OIANALYTICS_COMMANDS_INTERVAL = 1_000;
 const EXECUTE_OIANALYTICS_COMMANDS_INTERVAL = 1_000;
 
@@ -47,6 +44,7 @@ export default class OIAnalyticsCommandService {
     private oIAnalyticsCommandRepository: OIAnalyticsCommandRepository,
     private oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
     private encryptionService: EncryptionService,
+    private oIAnalyticsClient: OIAnalyticsClient,
     private oIBusService: OIBusService,
     private scanModeService: ScanModeService,
     private southService: SouthService,
@@ -123,30 +121,14 @@ export default class OIAnalyticsCommandService {
       return;
     }
 
-    const endpoint = `/api/oianalytics/oibus/commands/status`;
-    const connectionSettings = await getNetworkSettingsFromRegistration(registration, endpoint, this.encryptionService);
-    let response;
-    const url = `${connectionSettings.host}${endpoint}`;
     try {
-      response = await fetch(url, {
-        method: 'PUT',
-        body: JSON.stringify(commandsToAck),
-        headers: { ...connectionSettings.headers, 'Content-Type': 'application/json' },
-        timeout: OIANALYTICS_TIMEOUT,
-        agent: connectionSettings.agent
-      });
+      await this.oIAnalyticsClient.updateCommandStatus(registration, JSON.stringify(commandsToAck));
       for (const command of commandsToAck) {
         this.oIAnalyticsCommandRepository.markAsAcknowledged(command.id);
       }
-      if (!response.ok) {
-        this.logger.error(
-          `Error ${response.status} while acknowledging ${commandsToAck.length} commands on ${url}: ${response.statusText}`
-        );
-        return;
-      }
       this.logger.trace(`${commandsToAck.length} commands acknowledged`);
-    } catch (fetchError) {
-      this.logger.error(`Error while acknowledging ${commandsToAck.length} commands on ${url}. ${fetchError}`);
+    } catch (error: unknown) {
+      this.logger.error(`Error while acknowledging ${commandsToAck.length} commands: ${(error as Error).message}`);
     }
   }
 
@@ -159,59 +141,26 @@ export default class OIAnalyticsCommandService {
       this.logger.trace('No command retrieved to check');
       return;
     }
-
-    let endpoint = `/api/oianalytics/oibus/commands/list-by-ids?`;
-    for (const command of pendingCommands) {
-      endpoint += `ids=${command.id}&`;
-    }
-    endpoint = endpoint.slice(0, endpoint.length - 1);
-    const connectionSettings = await getNetworkSettingsFromRegistration(registration, endpoint, this.encryptionService);
-    let response;
-    const url = `${connectionSettings.host}${endpoint}`;
     try {
-      response = await fetch(url, {
-        method: 'GET',
-        headers: connectionSettings.headers,
-        timeout: OIANALYTICS_TIMEOUT,
-        agent: connectionSettings.agent
-      });
-      if (!response.ok) {
-        this.logger.error(`Error ${response.status} while checking PENDING commands status on ${url}: ${response.statusText}`);
-        return;
-      }
-      const commandsToCancel: Array<OIAnalyticsFetchCommandDTO> = await response.json();
+      const commandsToCancel = await this.oIAnalyticsClient.retrieveCancelledCommands(registration, pendingCommands);
       this.logger.trace(`${commandsToCancel.length} commands cancelled among the ${pendingCommands.length} pending commands`);
       for (const command of commandsToCancel) {
         this.oIAnalyticsCommandRepository.cancel(command.id);
       }
-    } catch (fetchError) {
-      this.logger.error(`Error while checking PENDING commands status on ${url}: ${fetchError}`);
+    } catch (error: unknown) {
+      this.logger.error(`Error while checking PENDING commands status: ${(error as Error).message}`);
     }
   }
 
   async retrieveCommands(registration: OIAnalyticsRegistration): Promise<void> {
-    const endpoint = `/api/oianalytics/oibus/commands/pending`;
-    const connectionSettings = await getNetworkSettingsFromRegistration(registration, endpoint, this.encryptionService);
-    let response;
-    const url = `${connectionSettings.host}${endpoint}`;
     try {
-      response = await fetch(url, {
-        method: 'GET',
-        headers: connectionSettings.headers,
-        timeout: OIANALYTICS_TIMEOUT,
-        agent: connectionSettings.agent
-      });
-      if (!response.ok) {
-        this.logger.error(`Error ${response.status} while retrieving commands on ${url}: ${response.statusText}`);
-        return;
-      }
-      const newCommands: Array<OIAnalyticsFetchCommandDTO> = await response.json();
+      const newCommands = await this.oIAnalyticsClient.retrievePendingCommands(registration);
       this.logger.trace(`${newCommands.length} commands to add`);
       for (const command of newCommands) {
         this.oIAnalyticsCommandRepository.create(command);
       }
-    } catch (fetchError) {
-      this.logger.error(`Error while retrieving commands on ${url}. ${fetchError}`);
+    } catch (error: unknown) {
+      this.logger.error(`Error while retrieving commands: ${(error as Error).message}`);
     }
   }
 
@@ -241,18 +190,30 @@ export default class OIAnalyticsCommandService {
       this.logger.trace(`No command to execute`);
       return;
     }
+    const engineSettings = this.oIBusService.getEngineSettings();
     const command = commandsToExecute[0];
+
+    if (command.targetVersion !== engineSettings.version) {
+      this.oIAnalyticsCommandRepository.markAsErrored(
+        command.id,
+        `Wrong target version: ${command.targetVersion} for OIBus version ${engineSettings.version}`
+      );
+      return;
+    }
     this.ongoingExecuteCommand = true;
     try {
       switch (command.type) {
         case 'update-version':
-          await this.executeUpdateVersionCommand(command);
+          await this.executeUpdateVersionCommand(command, registration);
           break;
         case 'restart-engine':
           await this.executeRestartCommand(command);
           break;
         case 'update-engine-settings':
-          await this.executeUpdateEngineSettingsCommand(command);
+          {
+            const privateKey = await this.encryptionService.decryptText(registration.privateCipherKey!);
+            await this.executeUpdateEngineSettingsCommand(command, privateKey);
+          }
           break;
         case 'create-scan-mode':
           await this.executeCreateScanModeCommand(command);
@@ -264,19 +225,31 @@ export default class OIAnalyticsCommandService {
           await this.executeDeleteScanModeCommand(command);
           break;
         case 'create-south':
-          await this.executeCreateSouthCommand(command);
+          {
+            const privateKey = await this.encryptionService.decryptText(registration.privateCipherKey!);
+            await this.executeCreateSouthCommand(command, privateKey);
+          }
           break;
         case 'update-south':
-          await this.executeUpdateSouthCommand(command);
+          {
+            const privateKey = await this.encryptionService.decryptText(registration.privateCipherKey!);
+            await this.executeUpdateSouthCommand(command, privateKey);
+          }
           break;
         case 'delete-south':
           await this.executeDeleteSouthCommand(command);
           break;
         case 'create-north':
-          await this.executeCreateNorthCommand(command);
+          {
+            const privateKey = await this.encryptionService.decryptText(registration.privateCipherKey!);
+            await this.executeCreateNorthCommand(command, privateKey);
+          }
           break;
         case 'update-north':
-          await this.executeUpdateNorthCommand(command);
+          {
+            const privateKey = await this.encryptionService.decryptText(registration.privateCipherKey!);
+            await this.executeUpdateNorthCommand(command, privateKey);
+          }
           break;
         case 'delete-north':
           await this.executeDeleteNorthCommand(command);
@@ -315,25 +288,22 @@ export default class OIAnalyticsCommandService {
     this.logger = logger;
   }
 
-  private async executeUpdateVersionCommand(command: OIBusUpdateVersionCommand) {
+  private async executeUpdateVersionCommand(command: OIBusUpdateVersionCommand, registration: OIAnalyticsRegistration) {
     const runStart = DateTime.now();
     const engineSettings = this.oIBusService.getEngineSettings()!;
     const oibusInfo = getOIBusInfo(engineSettings);
-    const endpoint = `/api/oianalytics/oibus/upgrade/asset?assetId=${command.assetId}`;
 
     this.logger.info(
       `Upgrading OIBus from ${oibusInfo.version} to ${command.version} for platform ${oibusInfo.platform} and architecture ${oibusInfo.architecture}...`
     );
-    const registrationSettings = this.oIAnalyticsRegistrationRepository.get()!;
-    const connectionSettings = await getNetworkSettingsFromRegistration(registrationSettings, endpoint, this.encryptionService);
     const filename = `oibus-${oibusInfo.platform}_${oibusInfo.architecture}.zip`;
-    await downloadFile(connectionSettings, endpoint, filename, DOWNLOAD_TIMEOUT);
+
+    await this.oIAnalyticsClient.downloadFile(registration, command.assetId, filename);
     this.logger.trace(`File ${filename} downloaded`);
     unzip(filename, path.resolve(this.binaryFolder, '..', 'update'));
     this.logger.trace(`File ${filename} unzipped`);
     await fs.unlink(filename);
     this.logger.trace(`File ${filename} removed`);
-
     const duration = DateTime.now().toMillis() - runStart.toMillis();
     this.logger.info(`OIBus version ${command.version} downloaded after ${duration} ms of execution. Restarting OIBus to upgrade...`);
     await delay(1500);
@@ -347,7 +317,10 @@ export default class OIAnalyticsCommandService {
     process.exit();
   }
 
-  private async executeUpdateEngineSettingsCommand(command: OIBusUpdateEngineSettingsCommand) {
+  private async executeUpdateEngineSettingsCommand(command: OIBusUpdateEngineSettingsCommand, privateKey: string) {
+    command.commandContent.logParameters.loki.password = command.commandContent.logParameters.loki.password
+      ? await this.encryptionService.decryptTextWithPrivateKey(command.commandContent.logParameters.loki.password, privateKey)
+      : '';
     await this.oIBusService.updateEngineSettings(command.commandContent);
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Engine settings updated successfully');
   }
@@ -367,13 +340,34 @@ export default class OIAnalyticsCommandService {
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Scan mode deleted successfully');
   }
 
-  private async executeCreateSouthCommand(command: OIBusCreateSouthConnectorCommand) {
-    await this.southService.createSouth(command.commandContent); // TODO check
+  private async decryptSouthSettings(command: OIBusCreateSouthConnectorCommand | OIBusUpdateSouthConnectorCommand, privateKey: string) {
+    const manifest = this.southService.getInstalledSouthManifests().find(element => element.id === command.commandContent.type)!;
+    command.commandContent.settings = await this.encryptionService.decryptSecretsWithPrivateKey(
+      command.commandContent.settings,
+      manifest.settings,
+      privateKey
+    );
+    command.commandContent.items = await Promise.all(
+      command.commandContent.items.map(async item => ({
+        id: item.id,
+        enabled: item.enabled,
+        name: item.name,
+        settings: await this.encryptionService.decryptSecretsWithPrivateKey(item.settings, manifest.items.settings, privateKey),
+        scanModeId: item.scanModeId,
+        scanModeName: item.scanModeName
+      }))
+    );
+  }
+
+  private async executeCreateSouthCommand(command: OIBusCreateSouthConnectorCommand, privateKey: string) {
+    await this.decryptSouthSettings(command, privateKey);
+    await this.southService.createSouth(command.commandContent);
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'South connector created successfully');
   }
 
-  private async executeUpdateSouthCommand(command: OIBusUpdateSouthConnectorCommand) {
-    await this.southService.updateSouth(command.southConnectorId, command.commandContent); // TODO check
+  private async executeUpdateSouthCommand(command: OIBusUpdateSouthConnectorCommand, privateKey: string) {
+    await this.decryptSouthSettings(command, privateKey);
+    await this.southService.updateSouth(command.southConnectorId, command.commandContent);
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'South connector updated successfully');
   }
 
@@ -382,13 +376,24 @@ export default class OIAnalyticsCommandService {
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'South connector deleted successfully');
   }
 
-  private async executeCreateNorthCommand(command: OIBusCreateNorthConnectorCommand) {
-    await this.northService.createNorth(command.commandContent); // TODO: check
+  private async decryptNorthSettings(command: OIBusCreateNorthConnectorCommand | OIBusUpdateNorthConnectorCommand, privateKey: string) {
+    const manifest = this.northService.getInstalledNorthManifests().find(element => element.id === command.commandContent.type)!;
+    command.commandContent.settings = await this.encryptionService.decryptSecretsWithPrivateKey(
+      command.commandContent.settings,
+      manifest.settings,
+      privateKey
+    );
+  }
+
+  private async executeCreateNorthCommand(command: OIBusCreateNorthConnectorCommand, privateKey: string) {
+    await this.decryptNorthSettings(command, privateKey);
+    await this.northService.createNorth(command.commandContent);
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'North connector created successfully');
   }
 
-  private async executeUpdateNorthCommand(command: OIBusUpdateNorthConnectorCommand) {
-    await this.northService.updateNorth(command.northConnectorId, command.commandContent); // TODO: check
+  private async executeUpdateNorthCommand(command: OIBusUpdateNorthConnectorCommand, privateKey: string) {
+    await this.decryptNorthSettings(command, privateKey);
+    await this.northService.updateNorth(command.northConnectorId, command.commandContent);
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'North connector updated successfully');
   }
 

@@ -27,6 +27,14 @@ export default class UserRepository {
     this.createDefault();
   }
 
+  findAll(): Array<User> {
+    const query = `SELECT id, login, first_name, last_name, email, language, timezone FROM ${USERS_TABLE}`;
+    return this.database
+      .prepare(query)
+      .all()
+      .map(result => this.toUser(result as Record<string, string>));
+  }
+
   search(searchParams: UserSearchParam): Page<User> {
     const queryParams = [];
     let whereClause = '';

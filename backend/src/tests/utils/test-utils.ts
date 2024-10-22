@@ -296,7 +296,7 @@ const createEngineSettings = async (database: knex.Knex, engineSettings: EngineS
       log_oia_interval: engineSettings.logParameters.oia.interval,
       proxy_enabled: engineSettings.proxyEnabled,
       proxy_port: engineSettings.proxyPort,
-      oibus_version: '3.5.0'
+      oibus_version: 'v3.5.0'
     })
     .into('engines');
 };
@@ -316,7 +316,9 @@ const createOIAnalyticsRegistration = async (database: knex.Knex, registration: 
       proxy_url: registration.proxyUrl,
       proxy_username: registration.proxyUsername,
       proxy_password: registration.proxyPassword,
-      accept_unauthorized: registration.acceptUnauthorized
+      accept_unauthorized: registration.acceptUnauthorized,
+      public_key: registration.publicCipherKey,
+      private_key: registration.privateCipherKey
     })
     .into('registrations');
 };
@@ -328,6 +330,7 @@ const createOIAnalyticsCommand = async (database: knex.Knex, command: OIBusComma
       type: command.type,
       status: command.status,
       ack: command.ack,
+      target_version: command.targetVersion,
       retrieved_date: command.retrievedDate,
       completed_date: command.completedDate,
       result: command.result,
@@ -343,20 +346,6 @@ const createOIAnalyticsCommand = async (database: knex.Knex, command: OIBusComma
         'update-north'
       ].includes(command.type)
         ? (command as OIBusUpdateEngineSettingsCommand).commandContent
-        : null,
-      target_version: [
-        'update-engine-settings',
-        'create-scan-mode',
-        'update-scan-mode',
-        'delete-scan-mode',
-        'create-south',
-        'update-south',
-        'delete-south',
-        'create-north',
-        'update-north',
-        'delete-north'
-      ].includes(command.type)
-        ? (command as OIBusUpdateEngineSettingsCommand).targetVersion
         : null,
       scan_mode_id: ['update-scan-mode', 'delete-scan-mode'].includes(command.type)
         ? (command as OIBusUpdateScanModeCommand).scanModeId
