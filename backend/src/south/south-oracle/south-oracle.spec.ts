@@ -59,7 +59,6 @@ describe('SouthOracle with authentication', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       thickMode: true,
       host: 'localhost',
@@ -383,7 +382,6 @@ describe('SouthOracle without authentication but with thick mode', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       host: 'localhost',
       port: 1521,
@@ -545,7 +543,6 @@ describe('SouthOracle test connection', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       host: 'localhost',
       port: 1521,

@@ -27,7 +27,6 @@ export interface SouthConnectorDTO<T extends SouthSettings, I extends SouthItemS
   type: string;
   description: string;
   enabled: boolean;
-  sharedConnection: boolean;
   settings: T;
   history: {
     maxInstantPerItem: boolean;
@@ -43,7 +42,6 @@ export interface SouthConnectorCommandDTO<T extends SouthSettings, I extends Sou
   type: string;
   description: string;
   enabled: boolean;
-  sharedConnection: boolean;
   history: {
     maxInstantPerItem: boolean;
     maxReadInterval: number;
@@ -114,7 +112,6 @@ export interface SouthConnectorManifest {
     lastFile: boolean;
     history: boolean;
     forceMaxInstantPerItem: boolean;
-    sharedConnection: boolean;
   };
   settings: Array<OibFormControl>;
   items: SouthConnectorItemManifest;

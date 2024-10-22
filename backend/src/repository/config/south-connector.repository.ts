@@ -25,7 +25,7 @@ export default class SouthConnectorRepository {
 
   findSouthById<S extends SouthSettings, I extends SouthItemSettings>(id: string): SouthConnectorEntity<S, I> | null {
     const query = `
-        SELECT id, name, type, description, enabled, shared_connection,
+        SELECT id, name, type, description, enabled,
         history_max_instant_per_item, history_max_read_interval,
         history_read_delay, history_read_overlap, settings
         FROM ${SOUTH_CONNECTORS_TABLE}
@@ -44,8 +44,8 @@ export default class SouthConnectorRepository {
         south.id = generateRandomId(6);
         const insertQuery =
           `INSERT INTO ${SOUTH_CONNECTORS_TABLE} (id, name, type, description, enabled, history_max_instant_per_item, ` +
-          `history_max_read_interval, history_read_delay, history_read_overlap, settings, shared_connection) ` +
-          `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+          `history_max_read_interval, history_read_delay, history_read_overlap, settings) ` +
+          `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
         this.database
           .prepare(insertQuery)
           .run(
@@ -58,13 +58,12 @@ export default class SouthConnectorRepository {
             south.history.maxReadInterval,
             south.history.readDelay,
             south.history.overlap,
-            JSON.stringify(south.settings),
-            +south.sharedConnection
+            JSON.stringify(south.settings)
           );
       } else {
         const query =
           `UPDATE ${SOUTH_CONNECTORS_TABLE} SET name = ?, description = ?, ` +
-          `history_max_instant_per_item = ?, history_max_read_interval = ?, history_read_delay = ?, history_read_overlap = ?, settings = ?, shared_connection = ? WHERE id = ?;`;
+          `history_max_instant_per_item = ?, history_max_read_interval = ?, history_read_delay = ?, history_read_overlap = ?, settings = ? WHERE id = ?;`;
         this.database
           .prepare(query)
           .run(
@@ -75,7 +74,6 @@ export default class SouthConnectorRepository {
             south.history.readDelay,
             south.history.overlap,
             JSON.stringify(south.settings),
-            +south.sharedConnection,
             south.id
           );
       }
@@ -272,7 +270,6 @@ export default class SouthConnectorRepository {
       type: result.type as string,
       description: result.description as string,
       enabled: Boolean(result.enabled),
-      sharedConnection: Boolean(result.shared_connection),
       history: {
         maxInstantPerItem: Boolean(result.history_max_instant_per_item),
         maxReadInterval: result.history_max_read_interval as number,

@@ -314,7 +314,7 @@ describe('SouthConnector with history and max instant per item', () => {
 
     configuration = JSON.parse(JSON.stringify(testData.south.list[2]));
     configuration.history.maxInstantPerItem = true;
-    configuration.sharedConnection = true;
+    configuration.settings.sharedConnection = true;
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
     (southConnectorRepository.findAllItemsForSouth as jest.Mock).mockReturnValue(configuration.items);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));

@@ -58,7 +58,6 @@ describe('SouthMySQL with authentication', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       host: 'localhost',
       port: 3306,
@@ -376,7 +375,6 @@ describe('SouthMySQL without authentication', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       host: 'localhost',
       port: 3306,
@@ -539,7 +537,6 @@ describe('SouthMySQL test connection', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       host: 'localhost',
       port: 3306,
