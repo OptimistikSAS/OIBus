@@ -99,8 +99,8 @@ describe('SouthOPCUA', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
+      sharedConnection: false,
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
       retryInterval: 10000,
       readTimeout: 15000,
@@ -944,8 +944,8 @@ describe('SouthOPCUA with basic auth', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
+      sharedConnection: false,
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
       retryInterval: 10000,
       readTimeout: 15000,
@@ -1102,8 +1102,8 @@ describe('SouthOPCUA with certificate', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
+      sharedConnection: false,
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
       retryInterval: 10000,
       readTimeout: 15000,
@@ -1355,8 +1355,8 @@ describe('SouthOPCUA test connection', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
+      sharedConnection: false,
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
       retryInterval: 10000,
       readTimeout: 15000,
@@ -1637,8 +1637,8 @@ describe('SouthOPCUA with shared connection', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: true,
     settings: {
+      sharedConnection: true,
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
       retryInterval: 10000,
       readTimeout: 15000,

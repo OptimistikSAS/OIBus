@@ -22,7 +22,6 @@ export interface HistoryQueryEntity<S extends SouthSettings, N extends NorthSett
   southType: string;
   northType: string;
   southSettings: S;
-  southSharedConnection: boolean;
   northSettings: N;
   history: {
     maxInstantPerItem: boolean;

@@ -17,18 +17,6 @@ import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/sou
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
 
-jest.mock('../../service/utils');
-jest.mock(
-  'odbc',
-  () => {
-    throw new Error('bad');
-  },
-  { virtual: true }
-);
-jest.mock('node-fetch');
-jest.mock('node:fs/promises');
-jest.mock('../../service/utils');
-
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
@@ -51,6 +39,18 @@ jest.spyOn(global.console, 'info').mockImplementation(() => null);
 jest.spyOn(global.console, 'error').mockImplementation(() => null);
 
 describe('SouthODBC without ODBC Library', () => {
+  jest.mock('../../service/utils');
+  jest.mock(
+    'odbc',
+    () => {
+      throw new Error('bad');
+    },
+    { virtual: true }
+  );
+  jest.mock('node-fetch');
+  jest.mock('node:fs/promises');
+  jest.mock('../../service/utils');
+
   let south: SouthODBC;
   const configuration: SouthConnectorEntity<SouthODBCSettings, SouthODBCItemSettings> = {
     id: 'southId',
@@ -64,7 +64,6 @@ describe('SouthODBC without ODBC Library', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       remoteAgent: false,
       connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',

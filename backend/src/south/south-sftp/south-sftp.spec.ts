@@ -64,7 +64,6 @@ describe('SouthSFTP', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       host: '127.0.0.1',
       port: 2222,
@@ -293,7 +292,6 @@ describe('SouthFTP with preserve file and compression', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       host: '127.0.0.1',
       port: 2222,
@@ -447,7 +445,6 @@ describe('SouthSFTP test connection with private key', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       host: '127.0.0.1',
       port: 2222,

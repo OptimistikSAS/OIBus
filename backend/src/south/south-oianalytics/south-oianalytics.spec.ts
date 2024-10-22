@@ -82,7 +82,6 @@ describe('SouthOIAnalytics with Basic auth', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       useOiaModule: false,
       timeout: 30,
@@ -301,7 +300,6 @@ describe('SouthOIAnalytics without proxy but with accept self signed', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       useOiaModule: false,
       timeout: 30,
@@ -534,7 +532,6 @@ describe('SouthOIAnalytics with proxy', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       useOiaModule: false,
       timeout: 30,
@@ -685,7 +682,6 @@ describe('SouthOIAnalytics with proxy but without proxy password', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       useOiaModule: false,
       timeout: 30,
@@ -847,7 +843,6 @@ describe('SouthOIAnalytics without proxy but with acceptUnauthorized', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       useOiaModule: false,
       timeout: 30,
@@ -967,7 +962,6 @@ describe('SouthOIAnalytics with aad-certificate', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       useOiaModule: false,
       timeout: 30,
@@ -1094,7 +1088,6 @@ describe('SouthOIAnalytics with OIA module', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       useOiaModule: true,
       timeout: 30

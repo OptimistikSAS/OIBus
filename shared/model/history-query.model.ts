@@ -24,7 +24,6 @@ export interface HistoryQueryDTO<S extends SouthSettings, N extends NorthSetting
   southType: string;
   northType: string;
   southSettings: S;
-  southSharedConnection: boolean;
   northSettings: N;
   history: {
     maxInstantPerItem: boolean;
@@ -56,7 +55,6 @@ export interface HistoryQueryCommandDTO<S extends SouthSettings, N extends North
   southType: string;
   northType: string;
   southSettings: S;
-  southSharedConnection: boolean;
   northSettings: N;
   history: {
     maxInstantPerItem: boolean;

@@ -28,7 +28,7 @@ export default class HistoryQueryRepository {
     const query =
       `SELECT id, name, description, status, history_max_instant_per_item, ` +
       `history_max_read_interval, history_read_delay, start_time, end_time, ` +
-      `south_type, north_type, south_settings, south_shared_connection, north_settings, ` +
+      `south_type, north_type, south_settings, north_settings, ` +
       `caching_scan_mode_id, caching_group_count, caching_retry_interval, ` +
       `caching_retry_count, caching_max_send_count, ` +
       `caching_send_file_immediately, caching_max_size, archive_enabled, ` +
@@ -48,9 +48,9 @@ export default class HistoryQueryRepository {
         historyQuery.id = generateRandomId(6);
         const insertQuery =
           `INSERT INTO ${HISTORY_QUERIES_TABLE} (id, name, description, status, history_max_instant_per_item, history_max_read_interval, ` +
-          `history_read_delay, start_time, end_time, south_type, north_type, south_settings, south_shared_connection, north_settings, caching_scan_mode_id, caching_group_count, ` +
+          `history_read_delay, start_time, end_time, south_type, north_type, south_settings, north_settings, caching_scan_mode_id, caching_group_count, ` +
           `caching_retry_interval, caching_retry_count, caching_max_send_count, caching_send_file_immediately, caching_max_size, archive_enabled, ` +
-          `archive_retention_duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+          `archive_retention_duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
         this.database.prepare(insertQuery).run(
           historyQuery.id,
           historyQuery.name,
@@ -64,7 +64,6 @@ export default class HistoryQueryRepository {
           historyQuery.southType,
           historyQuery.northType,
           JSON.stringify(historyQuery.southSettings),
-          +historyQuery.southSharedConnection,
           JSON.stringify(historyQuery.northSettings),
           historyQuery.caching.scanModeId,
           historyQuery.caching.oibusTimeValues.groupCount,
@@ -80,7 +79,7 @@ export default class HistoryQueryRepository {
         const query =
           `UPDATE ${HISTORY_QUERIES_TABLE} SET name = ?, description = ?, history_max_instant_per_item = ?, ` +
           `history_max_read_interval = ?, history_read_delay = ?, start_time = ?, ` +
-          `end_time = ?, south_type = ?, north_type = ?, south_settings = ?, south_shared_connection = ?, north_settings = ?,` +
+          `end_time = ?, south_type = ?, north_type = ?, south_settings = ?, north_settings = ?,` +
           `caching_scan_mode_id = ?, caching_group_count = ?, caching_retry_interval = ?, caching_retry_count = ?, ` +
           `caching_max_send_count = ?, caching_send_file_immediately = ?, caching_max_size = ?, archive_enabled = ?, archive_retention_duration = ? ` +
           `WHERE id = ?;`;
@@ -97,7 +96,6 @@ export default class HistoryQueryRepository {
             historyQuery.southType,
             historyQuery.northType,
             JSON.stringify(historyQuery.southSettings),
-            +historyQuery.southSharedConnection,
             JSON.stringify(historyQuery.northSettings),
             historyQuery.caching.scanModeId,
             historyQuery.caching.oibusTimeValues.groupCount,
@@ -302,7 +300,6 @@ export default class HistoryQueryRepository {
       southType: result.south_type as string,
       northType: result.north_type as string,
       southSettings: JSON.parse(result.south_settings as string) as S,
-      southSharedConnection: Boolean(result.south_shared_connection),
       northSettings: JSON.parse(result.north_settings as string) as N,
       caching: {
         scanModeId: result.caching_scan_mode_id as string,
