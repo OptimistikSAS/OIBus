@@ -84,7 +84,6 @@ describe('South Modbus', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       port: 502,
       host: '127.0.0.1',
@@ -284,9 +283,7 @@ describe('South Modbus', () => {
   });
 
   it('should query last point', async () => {
-    const setTimeoutSpy = jest.spyOn(global, 'setTimeout').mockImplementation((callback: any) => {
-      return callback();
-    });
+    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
 
     south.disconnect = jest.fn();
     south.connect = jest.fn();
@@ -443,7 +440,6 @@ describe('SouthModbus test connection', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       port: 502,
       host: '127.0.0.1',

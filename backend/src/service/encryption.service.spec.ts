@@ -297,7 +297,6 @@ describe('Encryption service with crypto settings', () => {
         readDelay: 0,
         overlap: 0
       },
-      sharedConnection: false,
       items: [],
       settings: {
         field1: 'not a secret',
@@ -350,7 +349,6 @@ describe('Encryption service with crypto settings', () => {
         readDelay: 0,
         overlap: 0
       },
-      sharedConnection: false,
       items: [],
       settings: {
         field1: 'not a secret',
@@ -459,7 +457,6 @@ describe('Encryption service with crypto settings', () => {
         readDelay: 0,
         overlap: 0
       },
-      sharedConnection: false,
       items: [],
       settings: {
         field1: 'not a secret',

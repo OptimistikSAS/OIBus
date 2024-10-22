@@ -74,7 +74,6 @@ describe('SouthMQTT without authentication', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       url: 'mqtt://localhost:1883',
       qos: '1',
@@ -265,7 +264,6 @@ describe('SouthMQTT with Basic Auth', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       url: 'mqtt://localhost:1883',
       qos: '0',
@@ -807,7 +805,6 @@ describe('SouthMQTT with Cert', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       url: 'mqtt://localhost:1883',
       qos: '0',
@@ -990,7 +987,6 @@ describe('SouthMQTT without Cert', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       url: 'mqtt://localhost:1883',
       qos: '0',

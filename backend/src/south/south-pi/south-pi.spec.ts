@@ -49,7 +49,6 @@ describe('South PI', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       agentUrl: 'http://localhost:2224',
       retryInterval: 1000
