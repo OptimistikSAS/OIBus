@@ -14,7 +14,6 @@ export interface SouthConnectorEntity<T extends SouthSettings, I extends SouthIt
   description: string;
   enabled: boolean;
   settings: T;
-  sharedConnection: boolean;
   history: {
     maxInstantPerItem: boolean;
     maxReadInterval: number;

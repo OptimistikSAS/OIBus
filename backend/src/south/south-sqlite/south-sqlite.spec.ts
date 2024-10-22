@@ -74,7 +74,6 @@ describe('SouthSQLite', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       databasePath: './database.db'
     },
@@ -323,7 +322,6 @@ describe('SouthSQLite test connection', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       databasePath: './database.db'
     },

@@ -10,10 +10,18 @@ const manifest: SouthConnectorManifest = {
     lastPoint: true,
     lastFile: false,
     history: true,
-    forceMaxInstantPerItem: false,
-    sharedConnection: true
+    forceMaxInstantPerItem: false
   },
   settings: [
+    {
+      key: 'sharedConnection',
+      type: 'OibCheckbox',
+      label: 'Share the session with other connectors?',
+      defaultValue: false,
+      newRow: true,
+      validators: [{ key: 'required' }],
+      displayInViewMode: true
+    },
     {
       key: 'url',
       type: 'OibText',

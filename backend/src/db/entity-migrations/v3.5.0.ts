@@ -2,6 +2,11 @@ import { Knex } from 'knex';
 import path from 'node:path';
 import { filesExists } from '../../service/utils';
 import fs from 'node:fs/promises';
+import {
+  SouthOPCUASettingsAuthentication,
+  SouthOPCUASettingsSecurityMode,
+  SouthOPCUASettingsSecurityPolicy
+} from '../../../../shared/model/south-settings.model';
 
 const NORTH_CONNECTORS_TABLE = 'north_connectors';
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
@@ -13,12 +18,33 @@ const OIANALYTICS_MESSAGE_TABLE = 'oianalytics_messages';
 const REGISTRATIONS_TABLE = 'registrations';
 const COMMANDS_TABLE = 'commands';
 
+export interface OldSouthOPCUASettings {
+  url: string;
+  keepSessionAlive: boolean;
+  retryInterval: number;
+  readTimeout: number;
+  securityMode: SouthOPCUASettingsSecurityMode;
+  securityPolicy?: SouthOPCUASettingsSecurityPolicy | null;
+  authentication: SouthOPCUASettingsAuthentication;
+}
+
+export interface NewSouthOPCUASettings {
+  sharedConnection: boolean;
+  url: string;
+  keepSessionAlive: boolean;
+  retryInterval: number;
+  readTimeout: number;
+  securityMode: SouthOPCUASettingsSecurityMode;
+  securityPolicy?: SouthOPCUASettingsSecurityPolicy | null;
+  authentication: SouthOPCUASettingsAuthentication;
+}
+
 export async function up(knex: Knex): Promise<void> {
   await removeNorthOIBusConnectors(knex);
   await removeNorthOIBusHistoryQueries(knex);
   await removeExternalSubscriptions(knex);
-  await updateSouthConnectorsTable(knex);
-  await updateHistoryQueriesTable(knex);
+  await updateOPCUASouthConnectorsTable(knex);
+  await updateOPCUAHistoryQueriesTable(knex);
   await updateOIAMessageTable(knex);
   await recreateCommandTable(knex);
   await updateRegistrationSettings(knex);
@@ -57,16 +83,36 @@ async function removeExternalSubscriptions(knex: Knex): Promise<void> {
   await knex.schema.dropTableIfExists(EXTERNAL_SOURCES_TABLE);
 }
 
-async function updateSouthConnectorsTable(knex: Knex): Promise<void> {
-  await knex.schema.alterTable(SOUTH_CONNECTORS_TABLE, table => {
-    table.boolean('shared_connection').defaultTo(false);
-  });
+async function updateOPCUASouthConnectorsTable(knex: Knex): Promise<void> {
+  const oldSouthSettings: Array<{ id: string; settings: string }> = await knex(SOUTH_CONNECTORS_TABLE)
+    .select('id', 'settings')
+    .where('type', 'opcua');
+
+  for (const { id, settings } of oldSouthSettings) {
+    const newSettings: NewSouthOPCUASettings = {
+      ...(JSON.parse(settings) as OldSouthOPCUASettings),
+      sharedConnection: false
+    };
+    await knex(SOUTH_CONNECTORS_TABLE)
+      .update({ settings: JSON.stringify(newSettings) })
+      .where('id', id);
+  }
 }
 
-async function updateHistoryQueriesTable(knex: Knex): Promise<void> {
-  await knex.schema.alterTable(HISTORY_QUERIES_TABLE, table => {
-    table.boolean('south_shared_connection').defaultTo(false);
-  });
+async function updateOPCUAHistoryQueriesTable(knex: Knex): Promise<void> {
+  const oldSouthSettings: Array<{ id: string; settings: string }> = await knex(HISTORY_QUERIES_TABLE)
+    .select('id', 'south_settings as settings')
+    .where('south_type', 'opcua');
+
+  for (const { id, settings } of oldSouthSettings) {
+    const newSettings: NewSouthOPCUASettings = {
+      ...(JSON.parse(settings) as OldSouthOPCUASettings),
+      sharedConnection: false
+    };
+    await knex(HISTORY_QUERIES_TABLE)
+      .update({ south_settings: JSON.stringify(newSettings) })
+      .where('id', id);
+  }
 }
 
 async function updateOIAMessageTable(knex: Knex): Promise<void> {

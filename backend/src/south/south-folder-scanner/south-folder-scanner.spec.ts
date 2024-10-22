@@ -53,7 +53,6 @@ describe('SouthFolderScanner', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       inputFolder: 'inputFolder',
       compression: false
@@ -249,7 +248,6 @@ describe('SouthFolderScanner with compression', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       inputFolder: 'inputFolder',
       compression: true

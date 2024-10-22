@@ -66,7 +66,6 @@ describe('SouthMSSQL with authentication', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       host: 'localhost',
       port: 1433,
@@ -326,7 +325,6 @@ describe('SouthMSSQL without authentication', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       host: 'localhost',
       port: 1433,
@@ -493,7 +491,6 @@ describe('SouthMSSQL test connection', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       host: 'localhost',
       port: 1433,

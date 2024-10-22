@@ -170,8 +170,7 @@ const southTestManifest: SouthConnectorManifest = {
     lastPoint: true,
     lastFile: true,
     history: true,
-    forceMaxInstantPerItem: true,
-    sharedConnection: false
+    forceMaxInstantPerItem: true
   },
   settings: [],
   items: {
@@ -207,7 +206,6 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
     type: 'folder-scanner',
     description: 'my folder scanner',
     enabled: true,
-    sharedConnection: false,
     settings: {
       inputFolder: 'input',
       compression: true
@@ -241,7 +239,6 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
     type: 'mssql',
     description: 'my MSSQL south connector',
     enabled: false,
-    sharedConnection: false,
     settings: {
       host: 'host',
       port: 1433,
@@ -276,8 +273,8 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
     type: 'opcua',
     description: 'my OPCUA south connector',
     enabled: true,
-    sharedConnection: false,
     settings: {
+      sharedConnection: false,
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
       retryInterval: 10000,
       readTimeout: 15000,
@@ -339,7 +336,6 @@ const southConnectorCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSe
   type: 'folder-scanner',
   description: 'my folder scanner',
   enabled: true,
-  sharedConnection: false,
   settings: {
     inputFolder: 'input',
     compression: true
@@ -516,7 +512,6 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
       inputFolder: 'input',
       compression: true
     },
-    southSharedConnection: false,
     northSettings: {
       useOiaModule: true,
       timeout: 5_000,
@@ -580,7 +575,6 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
       trustServerCertificate: true,
       requestTimeout: 5_000
     },
-    southSharedConnection: false,
     northSettings: {
       outputFolder: 'output-folder',
       prefix: 'prefix-',
@@ -626,7 +620,6 @@ const historyQueryCommand: HistoryQueryCommandDTO<SouthSettings, NorthSettings, 
   southType: 'south-test',
   northType: 'north-test',
   southSettings: {} as SouthSettings,
-  southSharedConnection: false,
   northSettings: {} as NorthSettings,
   caching: {
     scanModeId: scanModes[0].id,
