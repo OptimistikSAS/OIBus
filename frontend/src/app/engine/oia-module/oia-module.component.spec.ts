@@ -35,7 +35,10 @@ describe('OiaModuleComponent', () => {
     status: 'NOT_REGISTERED',
     activationCode: '',
     activationDate: '',
-    activationExpirationDate: ''
+    activationExpirationDate: '',
+    checkUrl: null,
+    proxyUrl: null,
+    proxyUsername: null
   };
 
   const route = stubRoute({

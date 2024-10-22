@@ -4,22 +4,17 @@ import { Instant } from '../../../../shared/model/types';
 import { OIAnalyticsRegistration, OIAnalyticsRegistrationEditCommand } from '../../model/oianalytics-registration.model';
 import { RegistrationStatus } from '../../../../shared/model/engine.model';
 
-export const REGISTRATIONS_TABLE = 'registrations';
+const REGISTRATIONS_TABLE = 'registrations';
 
-/**
- * Repository used for OIAnalytics registration settings
- */
 export default class OIAnalyticsRegistrationRepository {
   constructor(private readonly database: Database) {
-    this.createDefault({ host: '', useProxy: false, acceptUnauthorized: false });
+    this.createDefault({ host: '', useProxy: false, acceptUnauthorized: false, proxyUrl: null, proxyUsername: null, proxyPassword: null });
   }
 
   get(): OIAnalyticsRegistration | null {
     const query =
-      `SELECT id, host, token, activation_code AS activationCode, status, activation_date AS activationDate, ` +
-      `check_url AS checkUrl, activation_expiration_date AS activationExpirationDate, use_proxy AS useProxy, ` +
-      `proxy_url AS proxyUrl, proxy_username AS proxyUsername, proxy_password AS proxyPassword, ` +
-      `accept_unauthorized AS acceptUnauthorized FROM ${REGISTRATIONS_TABLE};`;
+      `SELECT id, host, token, public_key, private_key, activation_code, status, activation_date, check_url, ` +
+      `activation_expiration_date, use_proxy, proxy_url, proxy_username, proxy_password, accept_unauthorized FROM ${REGISTRATIONS_TABLE};`;
     const results = this.database.prepare(query).all();
 
     if (results.length > 0) {
@@ -36,11 +31,18 @@ export default class OIAnalyticsRegistrationRepository {
    * OIBus regularly checks if the activation code has been entered
    * Once the activation code entered in OIAnalytics, it goes into the activate method
    */
-  register(command: OIAnalyticsRegistrationEditCommand, activationCode: string, checkUrl: string, expirationDate: Instant): void {
+  register(
+    command: OIAnalyticsRegistrationEditCommand,
+    activationCode: string,
+    checkUrl: string,
+    expirationDate: Instant,
+    publicKey: string,
+    privateKey: string
+  ): void {
     const query =
       `UPDATE ${REGISTRATIONS_TABLE} SET host = ?, status = 'PENDING', token = '', activation_code = ?, ` +
       `check_url = ?, activation_expiration_date = ?, use_proxy = ?, proxy_url = ?, proxy_username = ?, proxy_password = ?, ` +
-      `accept_unauthorized = ? WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
+      `accept_unauthorized = ?, public_key = ?, private_key = ? WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
     this.database
       .prepare(query)
       .run(
@@ -52,7 +54,9 @@ export default class OIAnalyticsRegistrationRepository {
         command.proxyUrl,
         command.proxyUsername,
         command.proxyPassword,
-        +command.acceptUnauthorized
+        +command.acceptUnauthorized,
+        publicKey,
+        privateKey
       );
   }
 
@@ -93,17 +97,19 @@ export default class OIAnalyticsRegistrationRepository {
     return {
       id: result.id,
       host: result.host,
-      activationCode: result.activationCode,
+      activationCode: result.activation_code,
       token: result.token,
+      publicCipherKey: result.public_key,
+      privateCipherKey: result.private_key,
       status: result.status as RegistrationStatus,
-      activationDate: result.activationDate,
-      activationExpirationDate: result.activationExpirationDate,
-      checkUrl: result.checkUrl,
-      useProxy: Boolean(result.useProxy),
-      proxyUrl: result.proxyUrl,
-      proxyUsername: result.proxyUsername,
-      proxyPassword: result.proxyPassword,
-      acceptUnauthorized: Boolean(result.acceptUnauthorized)
+      activationDate: result.activation_date,
+      activationExpirationDate: result.activation_expiration_date,
+      checkUrl: result.check_url,
+      useProxy: Boolean(result.use_proxy),
+      proxyUrl: result.proxy_url,
+      proxyUsername: result.proxy_username,
+      proxyPassword: result.proxy_password,
+      acceptUnauthorized: Boolean(result.accept_unauthorized)
     };
   }
 }

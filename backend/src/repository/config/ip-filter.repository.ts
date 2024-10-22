@@ -2,7 +2,7 @@ import { generateRandomId } from '../../service/utils';
 import { Database } from 'better-sqlite3';
 import { IPFilter } from '../../model/ip-filter.model';
 
-export const IP_FILTERS_TABLE = 'ip_filters';
+const IP_FILTERS_TABLE = 'ip_filters';
 
 /**
  * Repository used for ip filters (allow connection to OIBus from these IP addresses)

@@ -5,7 +5,6 @@ import path from 'node:path';
 
 import minimist from 'minimist';
 import { DateTime } from 'luxon';
-import fetch, { HeadersInit } from 'node-fetch';
 import AdmZip from 'adm-zip';
 
 import { CsvCharacter, DateTimeType, Instant, Interval, SerializationSettings, Timezone } from '../../../shared/model/types';
@@ -16,16 +15,14 @@ import http from 'node:http';
 import { EngineSettingsDTO, OIBusContent, OIBusInfo, OIBusTimeValue } from '../../../shared/model/engine.model';
 import os from 'node:os';
 import { NorthCacheFiles } from '../../../shared/model/north-connector.model';
-import EncryptionService from './encryption.service';
-import { createProxyAgent } from './proxy-agent';
 import cronstrue from 'cronstrue';
 import cronparser from 'cron-parser';
 import { ValidatedCronExpression } from '../../../shared/model/scan-mode.model';
-import { OIAnalyticsRegistration } from '../model/oianalytics-registration.model';
 import { SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
 import { ScanMode } from '../model/scan-mode.model';
 import { HistoryQueryItemDTO } from '../../../shared/model/history-query.model';
 import { SouthItemSettings } from '../../../shared/model/south-settings.model';
+import { EventEmitter } from 'node:events';
 
 const COMPRESSION_LEVEL = 9;
 
@@ -221,7 +218,7 @@ export const convertDelimiter = (delimiter: CsvCharacter): string => {
 };
 
 export const persistResults = async (
-  data: Array<any>,
+  data: Array<unknown> | string,
   serializationSettings: SerializationSettings,
   connectorName: string,
   itemName: string,
@@ -231,11 +228,11 @@ export const persistResults = async (
 ): Promise<void> => {
   switch (serializationSettings.type) {
     case 'json':
-      return addContentFn({ type: 'time-values', content: data });
+      return addContentFn({ type: 'time-values', content: data as Array<OIBusTimeValue> });
     case 'file':
       const filePath = generateFilenameForSerialization(baseFolder, serializationSettings.filename, connectorName, itemName);
       logger.debug(`Writing ${data.length} bytes into file at "${filePath}"`);
-      await fs.writeFile(filePath, data);
+      await fs.writeFile(filePath, data as string);
 
       if (serializationSettings.compression) {
         // Compress and send the compressed file
@@ -270,7 +267,7 @@ export const persistResults = async (
       break;
     case 'csv':
       const csvPath = generateFilenameForSerialization(baseFolder, serializationSettings.filename, connectorName, itemName);
-      const csvContent = generateCsvContent(data, serializationSettings.delimiter);
+      const csvContent = generateCsvContent(data as Array<Record<string, string>>, serializationSettings.delimiter);
 
       logger.debug(`Writing ${csvContent.length} bytes into CSV file at "${csvPath}"`);
       await fs.writeFile(csvPath, csvContent);
@@ -321,7 +318,7 @@ export const generateFilenameForSerialization = (baseFolder: string, filename: s
   );
 };
 
-export const generateCsvContent = (data: Array<any>, delimiter: CsvCharacter): string => {
+export const generateCsvContent = (data: Array<Record<string, string | number>>, delimiter: CsvCharacter): string => {
   const options = {
     header: true,
     delimiter: convertDelimiter(delimiter)
@@ -378,7 +375,7 @@ export const formatInstant = (
 };
 
 export const convertDateTimeToInstant = (
-  dateTime: any,
+  dateTime: string | number | Date,
   options: { type: DateTimeType; timezone?: Timezone; format?: string; locale?: string }
 ): Instant => {
   if (!options.type) {
@@ -423,8 +420,8 @@ export const convertDateTimeToInstant = (
 };
 
 export const formatQueryParams = (
-  startTime: any,
-  endTime: any,
+  startTime: string | number,
+  endTime: string | number,
   queryParams: Array<{
     key: string;
     value: string;
@@ -457,9 +454,9 @@ export const formatQueryParams = (
 /**
  * Some API such as SLIMS uses a body with GET. It's not standard and requires a specific implementation
  */
-export const httpGetWithBody = (body: string, options: any): Promise<any> =>
+export const httpGetWithBody = (body: string, options: Record<string, string | number | unknown>): Promise<unknown> =>
   new Promise((resolve, reject) => {
-    const callback = (response: any) => {
+    const callback = (response: EventEmitter) => {
       let str = '';
       response.on('data', (chunk: string) => {
         str += chunk;
@@ -481,33 +478,6 @@ export const httpGetWithBody = (body: string, options: any): Promise<any> =>
     req.write(body);
     req.end();
   });
-
-export const downloadFile = async (
-  connectionSettings: { host: string; headers: HeadersInit; agent: any },
-  endpoint: string,
-  filePath: string,
-  timeout: number
-): Promise<void> => {
-  let response;
-
-  try {
-    response = await fetch(`${connectionSettings.host}${endpoint}`, {
-      method: 'GET',
-      timeout,
-      agent: connectionSettings.agent,
-      headers: connectionSettings.headers
-    });
-  } catch (fetchError) {
-    throw new Error(`Download failed: ${fetchError}`);
-  }
-
-  if (!response.ok) {
-    throw new Error(`Download failed with status code ${response.status} and message: ${response.statusText}`);
-  }
-
-  const buffer = await response.buffer();
-  await fs.writeFile(filePath, buffer);
-};
 
 export const getOIBusInfo = (oibusSettings: EngineSettingsDTO): OIBusInfo => {
   return {
@@ -569,40 +539,6 @@ export const getFilesFiltered = async (
     }
   }
   return filteredFilenames;
-};
-
-export const getNetworkSettingsFromRegistration = async (
-  registrationSettings: Omit<OIAnalyticsRegistration, 'id' | 'status' | 'activationDate'>,
-  endpoint: string,
-  encryptionService: EncryptionService
-): Promise<{ host: string; headers: HeadersInit; agent: any }> => {
-  if (registrationSettings.host.endsWith('/')) {
-    registrationSettings.host = registrationSettings.host.slice(0, registrationSettings.host.length - 1);
-  }
-
-  const headers: HeadersInit = {};
-
-  const token = await encryptionService.decryptText(registrationSettings.token!);
-  headers.authorization = `Bearer ${token}`;
-
-  const agent = createProxyAgent(
-    registrationSettings.useProxy,
-    `${registrationSettings.host}${endpoint}`,
-    registrationSettings.useProxy
-      ? {
-          url: registrationSettings.proxyUrl!,
-          username: registrationSettings.proxyUsername!,
-          password: registrationSettings.proxyPassword ? await encryptionService.decryptText(registrationSettings.proxyPassword) : null
-        }
-      : null,
-    registrationSettings.acceptUnauthorized
-  );
-
-  return {
-    host: registrationSettings.host,
-    headers,
-    agent
-  };
 };
 
 /**
@@ -672,7 +608,7 @@ export const checkScanMode = (scanModes: Array<ScanMode>, scanModeId: string | n
   }
   const scanMode = scanModes.find(element => element.name === scanModeName);
   if (!scanMode) {
-    throw new Error(`Scan mode ${scanModeName} not found`);
+    throw new Error(`Scan mode "${scanModeName}" not found`);
   }
   return scanMode.id;
 };
