@@ -60,7 +60,6 @@ describe('SouthPostgreSQL with authentication', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       host: 'localhost',
       port: 5432,
@@ -371,7 +370,6 @@ describe('SouthPostgreSQL without authentication', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       host: 'localhost',
       port: 1521,
@@ -526,7 +524,6 @@ describe('SouthPostgreSQL test connection', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       host: 'localhost',
       port: 5432,

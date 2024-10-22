@@ -84,7 +84,6 @@ describe('SouthODBC odbc driver with authentication', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       remoteAgent: false,
       connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
@@ -393,7 +392,6 @@ describe('SouthODBC odbc driver without authentication', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       remoteAgent: false,
       connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
@@ -579,7 +577,6 @@ describe('SouthODBC odbc driver test connection', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       remoteAgent: false,
       connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
@@ -835,7 +832,6 @@ describe('SouthODBC odbc remote with authentication', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       remoteAgent: true,
       agentUrl: 'http://localhost:2224',
@@ -1233,7 +1229,6 @@ describe('SouthODBC odbc remote test connection', () => {
       readDelay: 0,
       overlap: 0
     },
-    sharedConnection: false,
     settings: {
       remoteAgent: true,
       agentUrl: 'http://localhost:2224',

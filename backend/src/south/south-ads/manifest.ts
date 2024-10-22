@@ -10,8 +10,7 @@ const manifest: SouthConnectorManifest = {
     lastPoint: true,
     lastFile: false,
     history: false,
-    forceMaxInstantPerItem: false,
-    sharedConnection: false
+    forceMaxInstantPerItem: false
   },
   settings: [
     {

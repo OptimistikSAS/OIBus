@@ -51,7 +51,6 @@ describe('South ADS', () => {
     type: 'test',
     description: 'my test connector',
     enabled: true,
-    sharedConnection: false,
     history: {
       maxInstantPerItem: true,
       maxReadInterval: 3600,

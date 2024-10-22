@@ -188,9 +188,7 @@ export default class HistoryQueryService {
 
     await createFolder(this.getDefaultBaseFolder(historyQuery.id));
 
-    await this.historyQueryEngine.createHistoryQuery(
-      this.runHistoryQuery(historyQuery)
-    );
+    await this.historyQueryEngine.createHistoryQuery(this.runHistoryQuery(historyQuery));
     return historyQuery;
   }
 
@@ -512,7 +510,6 @@ export const toHistoryQueryDTO = <S extends SouthSettings, N extends NorthSettin
     southType: historyQuery.southType,
     northType: historyQuery.northType,
     southSettings: encryptionService.filterSecrets<S>(historyQuery.southSettings, southManifest.settings),
-    southSharedConnection: historyQuery.southSharedConnection,
     northSettings: encryptionService.filterSecrets<N>(historyQuery.northSettings, northManifest.settings),
     history: {
       maxInstantPerItem: historyQuery.history.maxInstantPerItem,
@@ -579,7 +576,6 @@ const copyHistoryQueryCommandToHistoryQueryEntity = async <S extends SouthSettin
     currentSettings?.southSettings || null,
     southManifest.settings
   );
-  historyQueryEntity.southSharedConnection = command.southSharedConnection;
   historyQueryEntity.history = {
     maxInstantPerItem: southManifest.modes.forceMaxInstantPerItem ? true : command.history.maxInstantPerItem,
     maxReadInterval: command.history.maxReadInterval,

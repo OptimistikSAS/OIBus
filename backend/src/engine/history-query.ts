@@ -45,7 +45,6 @@ export default class HistoryQuery {
       history: { ...this.historyConfiguration.history, overlap: 0 },
       type: this.historyConfiguration.southType,
       settings: this.historyConfiguration.southSettings,
-      sharedConnection: this.historyConfiguration.southSharedConnection,
       items: []
     };
     const southFolder = path.resolve(this.baseFolder, 'south');
