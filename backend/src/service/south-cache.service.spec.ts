@@ -3,16 +3,15 @@ import SouthCacheService from './south-cache.service';
 import SouthCacheRepositoryMock from '../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import { SouthCache } from '../../../shared/model/south-connector.model';
+import testData from '../tests/utils/test-data';
 
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
 
-const nowDateString = '2020-02-02T02:02:02.222Z';
 let service: SouthCacheService;
-
 describe('South cache service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
     service = new SouthCacheService(southCacheRepository);
   });
@@ -36,14 +35,14 @@ describe('South cache service', () => {
       maxInstant: ''
     };
     (southCacheRepository.getSouthCache as jest.Mock).mockReturnValueOnce(scanMode).mockReturnValue(null);
-    const result = service.getSouthCache('southId', 'id1', 'itemId', nowDateString);
+    const result = service.getSouthCache('southId', 'id1', 'itemId', testData.constants.dates.FAKE_NOW);
     expect(result).toEqual(scanMode);
 
-    const defaultResult = service.getSouthCache('southId', 'id1', 'itemId', nowDateString);
+    const defaultResult = service.getSouthCache('southId', 'id1', 'itemId', testData.constants.dates.FAKE_NOW);
     expect(defaultResult).toEqual({
       scanModeId: 'id1',
       itemId: 'itemId',
-      maxInstant: nowDateString,
+      maxInstant: testData.constants.dates.FAKE_NOW,
       southId: 'southId'
     });
   });
@@ -56,5 +55,23 @@ describe('South cache service', () => {
   it('should reset cache', () => {
     service.resetSouthCache('id');
     expect(southCacheRepository.deleteAllBySouthConnector).toHaveBeenCalledTimes(1);
+  });
+
+  it('should create custom table', () => {
+    service.createCustomTable('table name', 'fields');
+    expect(southCacheRepository.createCustomTable).toHaveBeenCalledTimes(1);
+    expect(southCacheRepository.createCustomTable).toHaveBeenCalledWith('table name', 'fields');
+  });
+
+  it('should get query on custom table', () => {
+    service.getQueryOnCustomTable('query', []);
+    expect(southCacheRepository.getQueryOnCustomTable).toHaveBeenCalledTimes(1);
+    expect(southCacheRepository.getQueryOnCustomTable).toHaveBeenCalledWith('query', []);
+  });
+
+  it('should run query on custom table', () => {
+    service.runQueryOnCustomTable('query', []);
+    expect(southCacheRepository.runQueryOnCustomTable).toHaveBeenCalledTimes(1);
+    expect(southCacheRepository.runQueryOnCustomTable).toHaveBeenCalledWith('query', []);
   });
 });

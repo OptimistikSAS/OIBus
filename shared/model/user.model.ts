@@ -23,9 +23,9 @@ export interface User extends BaseEntity {
 
 export interface UserCommandDTO {
   login: string;
-  firstName: string;
-  lastName: string;
-  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
   language: Language;
   timezone: Timezone;
 }

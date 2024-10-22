@@ -148,7 +148,10 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
           this.connector.name,
           item.name
         );
-        const content = generateCsvContent(formattedResult, item.settings.serialization.delimiter);
+        const content = generateCsvContent(
+          formattedResult as unknown as Array<Record<string, string | number>>,
+          item.settings.serialization.delimiter
+        );
         oibusContent = { type: 'raw', filePath, content };
         break;
       }
@@ -219,7 +222,7 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
         host = this.connector.settings.url.substring(8);
         protocol = 'https:';
       }
-      const requestOptions: Record<string, unknown> = {
+      const requestOptions: Record<string, string | number | unknown> = {
         method: 'GET',
         agent: createProxyAgent(
           this.connector.settings.useProxy,
@@ -247,7 +250,7 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
         `Requesting data with GET method and body "${bodyToSend}" on: "${requestOptions.host}:${requestOptions.port}${requestOptions.path}"`
       );
 
-      return httpGetWithBody(bodyToSend, requestOptions);
+      return (await httpGetWithBody(bodyToSend, requestOptions)) as SlimsResults;
     }
 
     const fetchOptions: RequestInit = {
@@ -330,14 +333,14 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
       if (!samplingDatetimeField) {
         throw new Error('Bad config: expect rslt_cf_samplingDateAndTime to have an associated date time fields (see item)');
       }
-      const resultInstant = convertDateTimeToInstant(rsltCfSamplingDateAndTime.value, samplingDatetimeField);
+      const resultInstant = convertDateTimeToInstant(rsltCfSamplingDateAndTime.value as string, samplingDatetimeField);
       const referenceDatetimeField = item.settings.dateTimeFields!.find(
         dateTimeField => dateTimeField.fieldName === 'rslt_modifiedOn' && dateTimeField.useAsReference
       );
       if (!referenceDatetimeField) {
         throw new Error('Bad config: expect to have a reference field (rslt_modifiedOn) in date time fields (see item)');
       }
-      const referenceInstant = convertDateTimeToInstant(rsltModifiedOn.value, referenceDatetimeField);
+      const referenceInstant = convertDateTimeToInstant(rsltModifiedOn.value as string, referenceDatetimeField);
 
       formattedData.push({
         pointId: `${rsltCfPid.value}-${testName.value}`,

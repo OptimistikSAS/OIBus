@@ -7,13 +7,13 @@ import minimist from 'minimist';
 
 import { DateTime } from 'luxon';
 import {
+  checkScanMode,
   compress,
   convertDateTimeToInstant,
   convertDelimiter,
   createFolder,
   delay,
   dirSize,
-  downloadFile,
   filesExists,
   formatInstant,
   formatQueryParams,
@@ -22,10 +22,10 @@ import {
   generateReplacementParameters,
   getCommandLineArguments,
   getFilesFiltered,
-  getNetworkSettingsFromRegistration,
   getOIBusInfo,
   getPlatformFromOsType,
   httpGetWithBody,
+  itemToFlattenedCSV,
   logQuery,
   persistResults,
   unzip,
@@ -34,7 +34,6 @@ import {
 import csv from 'papaparse';
 import pino from 'pino';
 import AdmZip from 'adm-zip';
-import fetch from 'node-fetch';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import { DateTimeType } from '../../../shared/model/types';
 import Stream from 'node:stream';
@@ -42,11 +41,8 @@ import http from 'node:http';
 import https from 'node:https';
 import os from 'node:os';
 import { EngineSettingsDTO, OIBusInfo } from '../../../shared/model/engine.model';
-import { createProxyAgent } from './proxy-agent';
-import EncryptionService from './encryption.service';
-import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 import cronstrue from 'cronstrue';
-import { OIAnalyticsRegistration } from '../model/oianalytics-registration.model';
+import testData from '../tests/utils/test-data';
 
 jest.mock('node:zlib');
 jest.mock('node:fs/promises');
@@ -54,94 +50,11 @@ jest.mock('node:fs');
 jest.mock('minimist');
 jest.mock('papaparse');
 jest.mock('adm-zip');
-jest.mock('node-fetch');
-const { Response } = jest.requireActual('node-fetch');
 jest.mock('node:http', () => ({ request: jest.fn() }));
 jest.mock('node:https', () => ({ request: jest.fn() }));
 jest.mock('./proxy-agent');
 
-const nowDateString = '2020-02-02T02:02:02.222Z';
 describe('Service utils', () => {
-  describe('getNetworkSettings', () => {
-    const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
-
-    it('should get network settings', async () => {
-      const settings: OIAnalyticsRegistration = {
-        id: 'registrationId1',
-        activationDate: '',
-        status: 'REGISTERED',
-        host: 'http://localhost:4200/',
-        token: 'my token',
-        useProxy: false,
-        acceptUnauthorized: false
-      };
-
-      const result = await getNetworkSettingsFromRegistration(settings, '/endpoint', encryptionService);
-      expect(result).toEqual({
-        host: 'http://localhost:4200',
-        headers: { authorization: 'Bearer my token' },
-        agent: undefined
-      });
-      expect(createProxyAgent).toHaveBeenCalledWith(false, 'http://localhost:4200/endpoint', null, false);
-    });
-
-    it('should get network settings and proxy', async () => {
-      const settings: OIAnalyticsRegistration = {
-        id: 'registrationId1',
-        activationDate: '',
-        status: 'REGISTERED',
-        host: 'http://localhost:4200/',
-        token: 'my token',
-        useProxy: true,
-        proxyUrl: 'https://proxy.url',
-        proxyUsername: 'user',
-        proxyPassword: 'pass',
-        acceptUnauthorized: false
-      };
-
-      const result = await getNetworkSettingsFromRegistration(settings, '/endpoint', encryptionService);
-      expect(result).toEqual({
-        host: 'http://localhost:4200',
-        headers: { authorization: 'Bearer my token' },
-        agent: undefined
-      });
-      expect(createProxyAgent).toHaveBeenCalledWith(
-        true,
-        'http://localhost:4200/endpoint',
-        { url: 'https://proxy.url', username: 'user', password: 'pass' },
-        false
-      );
-    });
-
-    it('should get network settings and proxy without pass', async () => {
-      const settings: OIAnalyticsRegistration = {
-        id: 'registrationId1',
-        activationDate: '',
-        status: 'REGISTERED',
-        host: 'http://localhost:4200/',
-        token: 'my token',
-        useProxy: true,
-        proxyUrl: 'https://proxy.url',
-        proxyUsername: 'user',
-        proxyPassword: '',
-        acceptUnauthorized: false
-      };
-
-      const result = await getNetworkSettingsFromRegistration(settings, '/endpoint', encryptionService);
-      expect(result).toEqual({
-        host: 'http://localhost:4200',
-        headers: { authorization: 'Bearer my token' },
-        agent: undefined
-      });
-      expect(createProxyAgent).toHaveBeenCalledWith(
-        true,
-        'http://localhost:4200/endpoint',
-        { url: 'https://proxy.url', username: 'user', password: null },
-        false
-      );
-    });
-  });
-
   describe('getCommandLineArguments', () => {
     beforeEach(() => {
       jest.clearAllMocks();
@@ -180,16 +93,14 @@ describe('Service utils', () => {
 
   describe('delay', () => {
     beforeEach(() => {
-      jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
       jest.clearAllMocks();
     });
 
     it('should delay', async () => {
-      const setTimeoutSpy = jest.spyOn(global, 'setTimeout').mockImplementation((callback: any) => {
-        return callback();
-      });
+      const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
 
-      await delay(1000);
+      delay(1000);
       jest.advanceTimersToNextTimer();
       expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 1000);
     });
@@ -971,7 +882,7 @@ describe('Service utils', () => {
   describe('httpGetWithBody', () => {
     beforeEach(() => {
       jest.resetAllMocks();
-      jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     });
 
     it('should correctly create a body with GET HTTP', async () => {
@@ -1065,79 +976,6 @@ describe('Service utils', () => {
     });
   });
 
-  describe('downloadFile', () => {
-    const connectionSettings = {
-      host: 'http://localhost:4200',
-      agent: undefined,
-      headers: { authorization: `Bearer token` }
-    };
-
-    beforeEach(() => {
-      jest.resetAllMocks();
-    });
-
-    it('should download file', async () => {
-      const filePath = 'oibus.zip';
-      const timeout = 1000;
-
-      const response = new Response('content');
-      (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(response));
-
-      await downloadFile(connectionSettings, '/endpoint', filePath, timeout);
-
-      expect(fetch).toHaveBeenCalledWith(`${connectionSettings.host}/endpoint`, {
-        method: 'GET',
-        timeout,
-        headers: connectionSettings.headers,
-        agent: connectionSettings.agent
-      });
-      expect(fs.writeFile).toHaveBeenCalledWith(filePath, Buffer.from('content'));
-    });
-
-    it('should handle fetch error during download', async () => {
-      const filePath = 'oibus.zip';
-      const timeout = 1000;
-
-      (fetch as unknown as jest.Mock).mockImplementationOnce(() => {
-        throw new Error('error');
-      });
-
-      try {
-        await downloadFile(connectionSettings, '/endpoint', filePath, timeout);
-      } catch (error) {
-        expect(error).toEqual(new Error('Download failed: Error: error'));
-      }
-      expect(fetch).toHaveBeenCalledWith(`${connectionSettings.host}/endpoint`, {
-        method: 'GET',
-        timeout,
-        headers: connectionSettings.headers,
-        agent: connectionSettings.agent
-      });
-      expect(fs.writeFile).not.toHaveBeenCalled();
-    });
-
-    it('should handle invalid fetch response during download', async () => {
-      const filePath = 'oibus.zip';
-      const timeout = 1000;
-      (fetch as unknown as jest.Mock).mockReturnValueOnce(
-        Promise.resolve(new Response('invalid', { status: 404, statusText: 'Not Found' }))
-      );
-
-      try {
-        await downloadFile(connectionSettings, '/endpoint', filePath, timeout);
-      } catch (error) {
-        expect(error).toEqual(new Error('Download failed with status code 404 and message: Not Found'));
-      }
-      expect(fetch).toHaveBeenCalledWith(`${connectionSettings.host}/endpoint`, {
-        method: 'GET',
-        timeout,
-        headers: connectionSettings.headers,
-        agent: connectionSettings.agent
-      });
-      expect(fs.writeFile).not.toHaveBeenCalled();
-    });
-  });
-
   it('should get OIBus info', () => {
     const expectedResult: OIBusInfo = {
       architecture: process.arch,
@@ -1167,7 +1005,7 @@ describe('Service utils', () => {
 
     beforeEach(() => {
       jest.resetAllMocks();
-      jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     });
 
     it('should properly get files', async () => {
@@ -1225,14 +1063,14 @@ describe('Service utils', () => {
   describe('validateCronExpression', () => {
     beforeEach(() => {
       jest.resetAllMocks();
-      jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     });
 
     it('should properly validate a cron expression', () => {
       const result = validateCronExpression('* * * * * *');
       const expectedResult = {
         humanReadableForm: 'Every second, every minute, every hour, every day',
-        nextExecutions: ['2020-02-02T02:02:03.000Z', '2020-02-02T02:02:04.000Z', '2020-02-02T02:02:05.000Z']
+        nextExecutions: ['2021-01-02T00:00:01.000Z', '2021-01-02T00:00:02.000Z', '2021-01-02T00:00:03.000Z']
       };
       expect(result).toEqual(expectedResult);
     });
@@ -1241,7 +1079,7 @@ describe('Service utils', () => {
       const result = validateCronExpression('0 */10 * * * *');
       const expectedResult = {
         humanReadableForm: 'Every 10 minutes, every hour, every day',
-        nextExecutions: ['2020-02-02T02:10:00.000Z', '2020-02-02T02:20:00.000Z', '2020-02-02T02:30:00.000Z']
+        nextExecutions: ['2021-01-02T00:10:00.000Z', '2021-01-02T00:20:00.000Z', '2021-01-02T00:30:00.000Z']
       };
       expect(result).toEqual(expectedResult);
     });
@@ -1278,6 +1116,45 @@ describe('Service utils', () => {
         throw null;
       });
       expect(() => validateCronExpression('* * * * * *')).toThrow('Invalid cron expression');
+    });
+  });
+
+  describe('checkScanMode', () => {
+    beforeEach(() => {
+      jest.resetAllMocks();
+      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    });
+
+    it('should properly check scan mode', () => {
+      expect(checkScanMode(testData.scanMode.list, 'scanModeId', null)).toEqual('scanModeId');
+      expect(() => checkScanMode(testData.scanMode.list, null, null)).toThrow('Scan mode not specified');
+      expect(() => checkScanMode(testData.scanMode.list, null, 'bad scan mode name')).toThrow('Scan mode "bad scan mode name" not found');
+      expect(checkScanMode(testData.scanMode.list, null, testData.scanMode.list[0].name)).toEqual(testData.scanMode.list[0].id);
+    });
+  });
+
+  describe('itemToFlattenedCSV', () => {
+    beforeEach(() => {
+      jest.resetAllMocks();
+      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    });
+
+    it('should properly concert items into csv', () => {
+      (csv.unparse as jest.Mock).mockReturnValue('csv content');
+
+      expect(
+        itemToFlattenedCSV(
+          [
+            ...testData.south.list[2].items.map(item => ({ ...item, settings: { ...item.settings, objectSettings: {} } })),
+            {
+              ...testData.south.list[2].items[0],
+              scanModeId: 'bad id'
+            }
+          ],
+          ',',
+          testData.scanMode.list
+        )
+      ).toEqual('csv content');
     });
   });
 });

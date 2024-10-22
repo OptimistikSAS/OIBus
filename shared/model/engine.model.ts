@@ -53,23 +53,23 @@ export type RegistrationStatus = (typeof REGISTRATION_STATUS)[number];
  */
 export interface RegistrationSettingsDTO extends BaseEntity {
   host: string;
-  activationCode?: string;
+  activationCode: string | null;
   status: RegistrationStatus;
   activationDate: Instant;
   activationExpirationDate?: Instant;
-  checkUrl?: string;
+  checkUrl: string | null;
   useProxy: boolean;
-  proxyUrl?: string;
-  proxyUsername?: string | null;
+  proxyUrl: string | null;
+  proxyUsername: string | null;
   acceptUnauthorized: boolean;
 }
 
 export interface RegistrationSettingsCommandDTO {
   host: string;
   useProxy: boolean;
-  proxyUrl?: string;
-  proxyUsername?: string | null;
-  proxyPassword?: string | null;
+  proxyUrl: string | null;
+  proxyUsername: string | null;
+  proxyPassword: string | null;
   acceptUnauthorized: boolean;
 }
 

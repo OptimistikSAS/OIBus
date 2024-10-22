@@ -71,7 +71,11 @@ export default class NorthService {
     private readonly dataStreamEngine: DataStreamEngine
   ) {}
 
-  runNorth(settings: NorthConnectorEntity<NorthSettings>, logger: pino.Logger, baseFolder: string | undefined = undefined): NorthConnector<NorthSettings> {
+  runNorth(
+    settings: NorthConnectorEntity<NorthSettings>,
+    logger: pino.Logger,
+    baseFolder: string | undefined = undefined
+  ): NorthConnector<NorthSettings> {
     const northBaseFolder = baseFolder ?? this.getDefaultBaseFolder(settings.id);
 
     switch (settings.type) {

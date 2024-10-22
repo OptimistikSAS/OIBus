@@ -8,7 +8,7 @@ import {
 } from '../../../../shared/model/oianalytics-message.model';
 import { OIAnalyticsMessage } from '../../model/oianalytics-message.model';
 
-export const OIANALYTICS_MESSAGE_TABLE = 'oianalytics_messages';
+const OIANALYTICS_MESSAGE_TABLE = 'oianalytics_messages';
 const PAGE_SIZE = 50;
 
 /**
