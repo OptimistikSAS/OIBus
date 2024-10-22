@@ -1,5 +1,11 @@
 import { BaseEntity, Instant } from './types';
 import { OIBusCommandStatus, OIBusCommandType } from '../../../shared/model/command.model';
+import { EngineSettingsCommandDTO } from '../../../shared/model/engine.model';
+import { ScanModeCommandDTO } from '../../../shared/model/scan-mode.model';
+import { SouthConnectorCommandDTO } from '../../../shared/model/south-connector.model';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
+import { NorthConnectorCommandDTO } from '../../../shared/model/north-connector.model';
+import { NorthSettings } from '../../../shared/model/north-settings.model';
 
 export interface BaseOIBusCommand extends BaseEntity {
   type: OIBusCommandType;
@@ -8,6 +14,7 @@ export interface BaseOIBusCommand extends BaseEntity {
   retrievedDate: Instant | null;
   status: OIBusCommandStatus;
   result: string | null;
+  targetVersion: string;
 }
 
 export interface OIBusUpdateVersionCommand extends BaseOIBusCommand {
@@ -22,64 +29,54 @@ export interface OIBusRestartEngineCommand extends BaseOIBusCommand {
 
 export interface OIBusUpdateEngineSettingsCommand extends BaseOIBusCommand {
   type: 'update-engine-settings';
-  targetVersion: string;
-  commandContent: any;
+  commandContent: EngineSettingsCommandDTO;
 }
 
 export interface OIBusCreateScanModeCommand extends BaseOIBusCommand {
   type: 'create-scan-mode';
-  targetVersion: string;
-  commandContent: any;
+  commandContent: ScanModeCommandDTO;
 }
 
 export interface OIBusUpdateScanModeCommand extends BaseOIBusCommand {
   type: 'update-scan-mode';
-  targetVersion: string;
   scanModeId: string;
-  commandContent: any;
+  commandContent: ScanModeCommandDTO;
 }
 
 export interface OIBusDeleteScanModeCommand extends BaseOIBusCommand {
   type: 'delete-scan-mode';
-  targetVersion: string;
   scanModeId: string;
 }
 
 export interface OIBusCreateSouthConnectorCommand extends BaseOIBusCommand {
   type: 'create-south';
-  targetVersion: string;
-  commandContent: any;
+  commandContent: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
 }
 
 export interface OIBusUpdateSouthConnectorCommand extends BaseOIBusCommand {
   type: 'update-south';
-  targetVersion: string;
   southConnectorId: string;
-  commandContent: any;
+  commandContent: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
 }
 
 export interface OIBusDeleteSouthConnectorCommand extends BaseOIBusCommand {
   type: 'delete-south';
-  targetVersion: string;
   southConnectorId: string;
 }
 
 export interface OIBusCreateNorthConnectorCommand extends BaseOIBusCommand {
   type: 'create-north';
-  targetVersion: string;
-  commandContent: any;
+  commandContent: NorthConnectorCommandDTO<NorthSettings>;
 }
 
 export interface OIBusUpdateNorthConnectorCommand extends BaseOIBusCommand {
   type: 'update-north';
-  targetVersion: string;
   northConnectorId: string;
-  commandContent: any;
+  commandContent: NorthConnectorCommandDTO<NorthSettings>;
 }
 
 export interface OIBusDeleteNorthConnectorCommand extends BaseOIBusCommand {
   type: 'delete-north';
-  targetVersion: string;
   northConnectorId: string;
 }
 

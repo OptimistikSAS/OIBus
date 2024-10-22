@@ -20,9 +20,13 @@ export default class OIAnalyticsCommandController extends AbstractController {
       status
     };
 
-    // TODO: filter out secrets in DTO
-    const commands = ctx.app.oIAnalyticsCommandService.search(searchParams, ctx.query.page ? parseInt(ctx.query.page as string, 10) : 0);
-    commands.content = commands.content.map(command => toOIBusCommandDTO(command));
-    ctx.ok(commands);
+    const page = ctx.app.oIAnalyticsCommandService.search(searchParams, ctx.query.page ? parseInt(ctx.query.page as string, 10) : 0);
+    ctx.ok({
+      content: page.content.map(command => toOIBusCommandDTO(command)),
+      totalElements: page.totalElements,
+      size: page.size,
+      number: page.number,
+      totalPages: page.totalPages
+    });
   }
 }

@@ -29,6 +29,8 @@ export default jest.fn().mockImplementation(logger => {
     getNorthConnectorMetrics: jest.fn(),
     getSouthConnectorMetrics: jest.fn(),
     getNorthDataStream: jest.fn(),
-    getSouthDataStream: jest.fn()
+    getSouthDataStream: jest.fn(),
+    resetNorthConnectorMetrics: jest.fn(),
+    resetSouthConnectorMetrics: jest.fn()
   };
 });
