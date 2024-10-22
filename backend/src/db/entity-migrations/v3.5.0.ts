@@ -10,6 +10,7 @@ const HISTORY_ITEMS_TABLE = 'history_items';
 const EXTERNAL_SOURCES_TABLE = 'external_sources';
 const EXTERNAL_SUBSCRIPTION_TABLE = 'external_subscription';
 const OIANALYTICS_MESSAGE_TABLE = 'oianalytics_messages';
+const REGISTRATIONS_TABLE = 'registrations';
 const COMMANDS_TABLE = 'commands';
 
 export async function up(knex: Knex): Promise<void> {
@@ -20,6 +21,7 @@ export async function up(knex: Knex): Promise<void> {
   await updateHistoryQueriesTable(knex);
   await updateOIAMessageTable(knex);
   await recreateCommandTable(knex);
+  await updateRegistrationSettings(knex);
 }
 
 async function removeNorthOIBusConnectors(knex: Knex): Promise<void> {
@@ -90,12 +92,13 @@ async function recreateCommandTable(knex: Knex): Promise<void> {
        result           varchar(255),
        upgrade_version  varchar(255),
        upgrade_asset_id varchar(255),
-       command_content  text
+       command_content  text,
+       target_version   text                               not null
      );
     `
   );
   await knex.schema.raw(`INSERT INTO temporary_table
-                         SELECT *, ''
+                         SELECT *, '', 'v3.5.0'
                          FROM ${COMMANDS_TABLE}`);
   await knex.schema.raw(`DROP TABLE ${COMMANDS_TABLE}`);
   await knex.schema.raw(`ALTER TABLE temporary_table
@@ -104,7 +107,13 @@ async function recreateCommandTable(knex: Knex): Promise<void> {
     table.string('south_connector_id', 255);
     table.string('north_connector_id', 255);
     table.string('scan_mode_id', 255);
-    table.string('target_version', 255);
+  });
+}
+
+async function updateRegistrationSettings(knex: Knex): Promise<void> {
+  await knex.schema.alterTable(REGISTRATIONS_TABLE, table => {
+    table.string('public_key');
+    table.string('private_key');
   });
 }
 

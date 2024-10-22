@@ -20,6 +20,7 @@ import JoiValidator from './web-server/controllers/validators/joi.validator';
 import ScanModeService from './service/scan-mode.service';
 import IPFilterService from './service/ip-filter.service';
 import HomeMetricsService from './service/metrics/home-metrics.service';
+import OIAnalyticsClient from './service/oia/oianalytics-client.service';
 
 const CONFIG_DATABASE = 'oibus.db';
 const CRYPTO_DATABASE = 'crypto.db';
@@ -91,14 +92,19 @@ const LOG_DB_NAME = 'logs.db';
   );
   const historyQueryEngine = new HistoryQueryEngine(repositoryService.historyQueryMetricsRepository, loggerService.logger!);
 
+  const oIAnalyticsClient = new OIAnalyticsClient(encryptionService);
+
   const oIAnalyticsMessageService = new OIAnalyticsMessageService(
     repositoryService.oianalyticsMessageRepository,
     repositoryService.oianalyticsRegistrationRepository,
     repositoryService.engineRepository,
-    repositoryService.cryptoRepository,
     repositoryService.scanModeRepository,
+    repositoryService.ipFilterRepository,
+    repositoryService.certificateRepository,
+    repositoryService.userRepository,
     repositoryService.southConnectorRepository,
     repositoryService.northConnectorRepository,
+    oIAnalyticsClient,
     encryptionService,
     loggerService.logger!
   );
@@ -182,6 +188,7 @@ const LOG_DB_NAME = 'logs.db';
     repositoryService.oianalyticsCommandRepository,
     repositoryService.oianalyticsRegistrationRepository,
     encryptionService,
+    oIAnalyticsClient,
     oIBusService,
     scanModeService,
     southService,
@@ -195,6 +202,7 @@ const LOG_DB_NAME = 'logs.db';
 
   const oIAnalyticsRegistrationService = new OianalyticsRegistrationService(
     new JoiValidator(),
+    oIAnalyticsClient,
     repositoryService.oianalyticsRegistrationRepository,
     repositoryService.engineRepository,
     encryptionService,

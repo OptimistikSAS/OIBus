@@ -6,9 +6,11 @@ export default jest.fn().mockImplementation((keyFolder: string, certsFolder: str
     keyFolder,
     certsFolder,
     generateSelfSignedCertificate: jest.fn(),
-    decryptText: jest.fn(pass => pass),
-    encryptText: jest.fn(pass => pass),
+    encryptConnectorSecrets: jest.fn(secrets => secrets),
     filterSecrets: jest.fn(secrets => secrets),
-    encryptConnectorSecrets: jest.fn(secrets => secrets)
+    encryptText: jest.fn(pass => pass),
+    decryptText: jest.fn(pass => pass),
+    decryptTextWithPrivateKey: jest.fn(pass => pass),
+    decryptSecretsWithPrivateKey: jest.fn(secrets => secrets)
   };
 });

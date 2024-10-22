@@ -666,7 +666,7 @@ const engineSettings: EngineSettings = {
   id: 'oibusId1',
   name: 'OIBus',
   port: 2223,
-  version: '3.5.0',
+  version: 'v3.5.0',
   proxyEnabled: true,
   proxyPort: 9000,
   logParameters: {
@@ -854,21 +854,25 @@ const oIAnalyticsRegistrationRegistered: OIAnalyticsRegistration = {
   host: 'http://localhost:4200',
   activationCode: '123ABC',
   token: 'token',
+  publicCipherKey: 'public key',
+  privateCipherKey: 'private key',
   status: 'REGISTERED',
   checkUrl: '',
   activationExpirationDate: constants.dates.DATE_1,
   activationDate: constants.dates.DATE_2,
   acceptUnauthorized: false,
   useProxy: false,
-  proxyUrl: '',
-  proxyUsername: '',
-  proxyPassword: ''
+  proxyUrl: null,
+  proxyUsername: null,
+  proxyPassword: null
 };
 const oIAnalyticsRegistrationPending: OIAnalyticsRegistration = {
   id: 'registrationId1',
   host: 'http://localhost:4200',
   activationCode: '123ABC',
   token: '',
+  publicCipherKey: '',
+  privateCipherKey: '',
   status: 'PENDING',
   checkUrl: '/check/url',
   activationExpirationDate: constants.dates.DATE_1,
@@ -883,9 +887,9 @@ const oIAnalyticsRegistrationCommand: OIAnalyticsRegistrationEditCommand = {
   host: 'http://localhost:4200',
   acceptUnauthorized: false,
   useProxy: false,
-  proxyUrl: '',
-  proxyUsername: '',
-  proxyPassword: ''
+  proxyUrl: null,
+  proxyUsername: null,
+  proxyPassword: null
 };
 
 const oIBusCommands: Array<OIBusCommand> = [
@@ -893,6 +897,7 @@ const oIBusCommands: Array<OIBusCommand> = [
     id: 'commandId1',
     type: 'update-version',
     status: 'RUNNING',
+    targetVersion: 'v3.5.0',
     ack: false,
     retrievedDate: constants.dates.DATE_1,
     completedDate: '',
@@ -909,12 +914,13 @@ const oIBusCommands: Array<OIBusCommand> = [
     completedDate: '',
     result: 'ok',
     targetVersion: 'v3.5.0',
-    commandContent: {}
+    commandContent: engineSettingsCommand
   },
   {
     id: 'commandId3',
     type: 'restart-engine',
     status: 'RETRIEVED',
+    targetVersion: 'v3.5.0',
     ack: false,
     retrievedDate: constants.dates.DATE_1,
     completedDate: '',
@@ -930,7 +936,7 @@ const oIBusCommands: Array<OIBusCommand> = [
     result: 'ok',
     scanModeId: 'scanModeId1',
     targetVersion: 'v3.5.0',
-    commandContent: {}
+    commandContent: scanModeCommandDTO
   },
   {
     id: 'commandId5',
@@ -942,7 +948,7 @@ const oIBusCommands: Array<OIBusCommand> = [
     result: 'ok',
     southConnectorId: 'southId1',
     targetVersion: 'v3.5.0',
-    commandContent: {}
+    commandContent: southConnectorCommand
   },
   {
     id: 'commandId6',
@@ -954,7 +960,7 @@ const oIBusCommands: Array<OIBusCommand> = [
     result: 'ok',
     northConnectorId: 'northId1',
     targetVersion: 'v3.5.0',
-    commandContent: {}
+    commandContent: northConnectorCommand
   },
   {
     id: 'commandId7',
@@ -998,7 +1004,7 @@ const oIBusCommands: Array<OIBusCommand> = [
     completedDate: '',
     result: 'ok',
     targetVersion: 'v3.5.0',
-    commandContent: {}
+    commandContent: scanModeCommandDTO
   },
   {
     id: 'commandId11',
@@ -1009,7 +1015,7 @@ const oIBusCommands: Array<OIBusCommand> = [
     completedDate: '',
     result: 'ok',
     targetVersion: 'v3.5.0',
-    commandContent: {}
+    commandContent: southConnectorCommand
   },
   {
     id: 'commandId12',
@@ -1020,13 +1026,14 @@ const oIBusCommands: Array<OIBusCommand> = [
     completedDate: '',
     result: 'ok',
     targetVersion: 'v3.5.0',
-    commandContent: {}
+    commandContent: northConnectorCommand
   }
 ];
 const oIAnalyticsCommands: Array<OIAnalyticsFetchCommandDTO> = [
   {
     id: 'newCommandId1',
     type: 'update-version',
+    targetVersion: 'v3.5.0',
     version: '3.5.0',
     assetId: 'assetId'
   },
@@ -1034,32 +1041,33 @@ const oIAnalyticsCommands: Array<OIAnalyticsFetchCommandDTO> = [
     id: 'newCommandId2',
     type: 'update-engine-settings',
     targetVersion: 'v3.5.0',
-    commandContent: {}
+    commandContent: engineSettingsCommand
   },
   {
     id: 'newCommandId3',
-    type: 'restart-engine'
+    type: 'restart-engine',
+    targetVersion: 'v3.5.0'
   },
   {
     id: 'newCommandId4',
     type: 'update-scan-mode',
     scanModeId: 'scanModeId1',
     targetVersion: 'v3.5.0',
-    commandContent: {}
+    commandContent: scanModeCommandDTO
   },
   {
     id: 'newCommandId5',
     type: 'update-south',
     southConnectorId: 'southId1',
     targetVersion: 'v3.5.0',
-    commandContent: {}
+    commandContent: southConnectorCommand
   },
   {
     id: 'newCommandId6',
     type: 'update-north',
     northConnectorId: 'northId1',
     targetVersion: 'v3.5.0',
-    commandContent: {}
+    commandContent: northConnectorCommand
   },
   {
     id: 'newCommandId7',

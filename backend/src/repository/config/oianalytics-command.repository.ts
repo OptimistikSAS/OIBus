@@ -5,7 +5,7 @@ import { DateTime } from 'luxon';
 import { OIBusCommand, OIBusRestartEngineCommand } from '../../model/oianalytics-command.model';
 import { OIAnalyticsFetchCommandDTO } from '../../service/oia/oianalytics.model';
 
-export const COMMANDS_TABLE = 'commands';
+const COMMANDS_TABLE = 'commands';
 
 const PAGE_SIZE = 50;
 
@@ -98,57 +98,50 @@ export default class OIAnalyticsCommandRepository {
 
   create(command: OIAnalyticsFetchCommandDTO): void {
     // retrieved_date, type, status, ack
-    const queryParams = [command.id, DateTime.now().toUTC().toISO(), command.type, 'RETRIEVED', 0];
+    const queryParams = [command.id, DateTime.now().toUTC().toISO(), command.type, 'RETRIEVED', 0, command.targetVersion];
     let insertQuery = `INSERT INTO ${COMMANDS_TABLE} `;
     switch (command.type) {
       case 'update-engine-settings':
       case 'create-south':
       case 'create-north':
       case 'create-scan-mode':
-        queryParams.push(command.targetVersion);
         queryParams.push(JSON.stringify(command.commandContent));
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, command_content) VALUES (?, ?, ?, ?, ?, ?, ?);`;
         break;
       case 'update-scan-mode':
-        queryParams.push(command.targetVersion);
         queryParams.push(command.scanModeId);
         queryParams.push(JSON.stringify(command.commandContent));
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, scan_mode_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
         break;
       case 'update-south':
-        queryParams.push(command.targetVersion);
         queryParams.push(command.southConnectorId);
         queryParams.push(JSON.stringify(command.commandContent));
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, south_connector_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
         break;
       case 'update-north':
-        queryParams.push(command.targetVersion);
         queryParams.push(command.northConnectorId);
         queryParams.push(JSON.stringify(command.commandContent));
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, north_connector_id, command_content) VALUES (?, ?, ?, ?, ?, ?,?, ?);`;
         break;
       case 'delete-scan-mode':
-        queryParams.push(command.targetVersion);
         queryParams.push(command.scanModeId);
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, scan_mode_id) VALUES (?, ?, ?, ?, ?, ?, ?);`;
         break;
       case 'delete-south':
-        queryParams.push(command.targetVersion);
         queryParams.push(command.southConnectorId);
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, south_connector_id) VALUES (?, ?, ?, ?, ?, ?, ?);`;
         break;
       case 'delete-north':
-        queryParams.push(command.targetVersion);
         queryParams.push(command.northConnectorId);
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, north_connector_id) VALUES (?, ?, ?, ?, ?, ?, ?);`;
         break;
       case 'restart-engine':
-        insertQuery += `(id, retrieved_date, type, status, ack) VALUES (?, ?, ?, ?, ?);`;
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version) VALUES (?, ?, ?, ?, ?, ?);`;
         break;
       case 'update-version':
         queryParams.push(command.version);
         queryParams.push(command.assetId);
-        insertQuery += `(id, retrieved_date, type, status, ack, upgrade_version, upgrade_asset_id) VALUES (?, ?, ?, ?, ?, ?, ?);`;
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, upgrade_version, upgrade_asset_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
         break;
     }
     this.database.prepare(insertQuery).run(...queryParams);
@@ -212,6 +205,7 @@ export default class OIAnalyticsCommandRepository {
           type: 'update-version',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
           retrievedDate: command.retrieved_date as Instant,
           completedDate: command.completed_date as Instant,
           result: command.result as string,
@@ -224,6 +218,7 @@ export default class OIAnalyticsCommandRepository {
           type: command.type as OIBusCommandType,
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
           retrievedDate: command.retrieved_date as Instant,
           completedDate: command.completed_date as Instant,
           result: command.result as string
@@ -234,10 +229,10 @@ export default class OIAnalyticsCommandRepository {
           type: 'update-engine-settings',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
           retrievedDate: command.retrieved_date as Instant,
           completedDate: command.completed_date as Instant,
           result: command.result as string,
-          targetVersion: command.target_version as string,
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'create-north':
@@ -246,10 +241,10 @@ export default class OIAnalyticsCommandRepository {
           type: 'create-north',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
           retrievedDate: command.retrieved_date as Instant,
           completedDate: command.completed_date as Instant,
           result: command.result as string,
-          targetVersion: command.target_version as string,
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'create-south':
@@ -258,10 +253,10 @@ export default class OIAnalyticsCommandRepository {
           type: 'create-south',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
           retrievedDate: command.retrieved_date as Instant,
           completedDate: command.completed_date as Instant,
           result: command.result as string,
-          targetVersion: command.target_version as string,
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'create-scan-mode':
@@ -270,10 +265,10 @@ export default class OIAnalyticsCommandRepository {
           type: 'create-scan-mode',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
           retrievedDate: command.retrieved_date as Instant,
           completedDate: command.completed_date as Instant,
           result: command.result as string,
-          targetVersion: command.target_version as string,
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'update-scan-mode':
@@ -282,10 +277,10 @@ export default class OIAnalyticsCommandRepository {
           type: 'update-scan-mode',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
           retrievedDate: command.retrieved_date as Instant,
           completedDate: command.completed_date as Instant,
           result: command.result as string,
-          targetVersion: command.target_version as string,
           scanModeId: command.scan_mode_id as string,
           commandContent: JSON.parse(command.command_content as string)
         };
@@ -295,10 +290,10 @@ export default class OIAnalyticsCommandRepository {
           type: 'update-north',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
           retrievedDate: command.retrieved_date as Instant,
           completedDate: command.completed_date as Instant,
           result: command.result as string,
-          targetVersion: command.target_version as string,
           northConnectorId: command.north_connector_id as string,
           commandContent: JSON.parse(command.command_content as string)
         };
@@ -308,10 +303,10 @@ export default class OIAnalyticsCommandRepository {
           type: 'update-south',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
           retrievedDate: command.retrieved_date as Instant,
           completedDate: command.completed_date as Instant,
           result: command.result as string,
-          targetVersion: command.target_version as string,
           southConnectorId: command.south_connector_id as string,
           commandContent: JSON.parse(command.command_content as string)
         };
@@ -321,10 +316,10 @@ export default class OIAnalyticsCommandRepository {
           type: 'delete-scan-mode',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
           retrievedDate: command.retrieved_date as Instant,
           completedDate: command.completed_date as Instant,
           result: command.result as string,
-          targetVersion: command.target_version as string,
           scanModeId: command.scan_mode_id as string
         };
       case 'delete-south':
@@ -333,10 +328,10 @@ export default class OIAnalyticsCommandRepository {
           type: 'delete-south',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
           retrievedDate: command.retrieved_date as Instant,
           completedDate: command.completed_date as Instant,
           result: command.result as string,
-          targetVersion: command.target_version as string,
           southConnectorId: command.south_connector_id as string
         };
       case 'delete-north':
@@ -345,10 +340,10 @@ export default class OIAnalyticsCommandRepository {
           type: 'delete-north',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
           retrievedDate: command.retrieved_date as Instant,
           completedDate: command.completed_date as Instant,
           result: command.result as string,
-          targetVersion: command.target_version as string,
           northConnectorId: command.north_connector_id as string
         };
     }
