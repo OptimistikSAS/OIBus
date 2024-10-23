@@ -1,4 +1,4 @@
-import { OIBusContent } from '../../../../shared/model/engine.model';
+import { OIBusContent } from '../../../shared/model/engine.model';
 import { KoaContext } from '../koa';
 import AbstractController from './abstract.controller';
 

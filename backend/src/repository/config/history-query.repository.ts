@@ -1,10 +1,10 @@
-import { HistoryQueryItemSearchParam, HistoryQueryStatus } from '../../../../shared/model/history-query.model';
+import { HistoryQueryItemSearchParam, HistoryQueryStatus } from '../../../shared/model/history-query.model';
 import { generateRandomId } from '../../service/utils';
 import { Database } from 'better-sqlite3';
 import { HistoryQueryEntity, HistoryQueryEntityLight, HistoryQueryItemEntity } from '../../model/histor-query.model';
-import { Page } from '../../../../shared/model/types';
-import { SouthItemSettings, SouthSettings } from '../../../../shared/model/south-settings.model';
-import { NorthSettings } from '../../../../shared/model/north-settings.model';
+import { Page } from '../../../shared/model/types';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
+import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { Instant } from '../../model/types';
 
 const HISTORY_QUERIES_TABLE = 'history_queries';

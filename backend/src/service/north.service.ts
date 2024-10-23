@@ -8,7 +8,7 @@ import {
   NorthConnectorLightDTO,
   NorthConnectorManifest,
   NorthConnectorWithoutSubscriptionsCommandDTO
-} from '../../../shared/model/north-connector.model';
+} from '../../shared/model/north-connector.model';
 import azureManifest from '../north/north-azure-blob/manifest';
 import oianalyticsManifest from '../north/north-oianalytics/manifest';
 import fileWriterManifest from '../north/north-file-writer/manifest';
@@ -24,7 +24,7 @@ import LogRepository from '../repository/logs/log.repository';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { checkScanMode, createFolder } from './utils';
 import { ScanMode } from '../model/scan-mode.model';
-import { SouthConnectorLightDTO } from '../../../shared/model/south-connector.model';
+import { SouthConnectorLightDTO } from '../../shared/model/south-connector.model';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
 import {
   NorthAmazonS3Settings,
@@ -34,7 +34,7 @@ import {
   NorthOIAnalyticsSettings,
   NorthSettings,
   NorthSFTPSettings
-} from '../../../shared/model/north-settings.model';
+} from '../../shared/model/north-settings.model';
 import CertificateRepository from '../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import NorthAmazonS3 from '../north/north-amazon-s3/north-amazon-s3';
@@ -224,7 +224,7 @@ export default class NorthService {
     return this.dataStreamEngine.getNorthDataStream(northConnectorId);
   }
 
-  async updateNorthWithoutSubscriptions(northConnectorId: string, command: NorthConnectorWithoutSubscriptionsCommandDTO) {
+  async updateNorthWithoutSubscriptions(northConnectorId: string, command: NorthConnectorWithoutSubscriptionsCommandDTO<NorthSettings>) {
     const previousSettings = this.northConnectorRepository.findNorthById(northConnectorId);
     if (!previousSettings) {
       throw new Error(`North connector ${northConnectorId} does not exist`);

@@ -1,7 +1,7 @@
-import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { BaseEntity } from './types';
-import { HistoryQueryStatus } from '../../../shared/model/history-query.model';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { HistoryQueryStatus } from '../../shared/model/history-query.model';
+import { NorthSettings } from '../../shared/model/north-settings.model';
 
 export interface HistoryQueryEntityLight extends BaseEntity {
   name: string;

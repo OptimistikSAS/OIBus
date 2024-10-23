@@ -5,14 +5,14 @@ import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 import { TranslateModule } from '@ngx-translate/core';
 import { NorthConnectorService } from '../../services/north-connector.service';
-import { NorthConnectorDTO } from '../../../../../shared/model/north-connector.model';
-import { SouthConnectorLightDTO } from '../../../../../shared/model/south-connector.model';
+import { NorthConnectorDTO } from '../../../../../backend/shared/model/north-connector.model';
+import { SouthConnectorLightDTO } from '../../../../../backend/shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { CreateNorthSubscriptionModalComponent } from '../create-north-subscription-modal/create-north-subscription-modal.component';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
-import { NorthSettings } from '../../../../../shared/model/north-settings.model';
+import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
 @Component({
   selector: 'oib-north-subscriptions',

@@ -9,7 +9,7 @@ import { createFolder } from '../utils';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 
-import { NorthArchiveSettings } from '../../../../shared/model/north-connector.model';
+import { NorthArchiveSettings } from '../../../shared/model/north-connector.model';
 
 jest.mock('../../service/utils');
 jest.mock('node:fs/promises');

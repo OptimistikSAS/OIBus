@@ -1,7 +1,7 @@
-import { SouthConnectorCommandDTO } from '../../../shared/model/south-connector.model';
-import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
+import { SouthConnectorCommandDTO } from '../../shared/model/south-connector.model';
+import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { HistoryQueryEntity, HistoryQueryEntityLight, HistoryQueryItemEntity } from '../model/histor-query.model';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { NorthSettings } from '../../shared/model/north-settings.model';
 import {
   HistoryQueryCommandDTO,
   HistoryQueryDTO,
@@ -9,8 +9,8 @@ import {
   HistoryQueryItemDTO,
   HistoryQueryItemSearchParam,
   HistoryQueryLightDTO
-} from '../../../shared/model/history-query.model';
-import { NorthConnectorCommandDTO } from '../../../shared/model/north-connector.model';
+} from '../../shared/model/history-query.model';
+import { NorthConnectorCommandDTO } from '../../shared/model/north-connector.model';
 import EncryptionService from './encryption.service';
 import HistoryQueryRepository from '../repository/config/history-query.repository';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
@@ -19,9 +19,9 @@ import { checkScanMode, createFolder } from './utils';
 import SouthService, { southManifestList } from './south.service';
 import NorthService, { northManifestList } from './north.service';
 import LogRepository from '../repository/logs/log.repository';
-import { Page } from '../../../shared/model/types';
+import { Page } from '../../shared/model/types';
 import pino from 'pino';
-import { OIBusContent } from '../../../shared/model/engine.model';
+import { OIBusContent } from '../../shared/model/engine.model';
 import { ScanMode } from '../model/scan-mode.model';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import multer from '@koa/multer';

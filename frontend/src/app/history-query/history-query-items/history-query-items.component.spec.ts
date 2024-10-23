@@ -1,6 +1,6 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ComponentTester, createMock, TestInput } from 'ngx-speculoos';
-import { SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
+import { SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
 import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
@@ -8,10 +8,10 @@ import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 import { Component } from '@angular/core';
 import { HistoryQueryItemsComponent } from './history-query-items.component';
-import { HistoryQueryDTO } from '../../../../../shared/model/history-query.model';
+import { HistoryQueryDTO } from '../../../../../backend/shared/model/history-query.model';
 import { HistoryQueryService } from '../../services/history-query.service';
-import { SouthItemSettings, SouthSettings } from '../../../../../shared/model/south-settings.model';
-import { NorthSettings } from '../../../../../shared/model/north-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
+import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
 const historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
   id: 'historyId',
@@ -30,7 +30,6 @@ const historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSetti
   southSettings: {
     database: 'my database'
   } as SouthSettings,
-  southSharedConnection: false,
   northSettings: {
     host: 'localhost'
   } as NorthSettings,
@@ -111,8 +110,7 @@ class TestComponent {
       history: true,
       lastFile: true,
       lastPoint: false,
-      forceMaxInstantPerItem: false,
-      sharedConnection: false
+      forceMaxInstantPerItem: false
     }
   };
 }

@@ -1,4 +1,4 @@
-import { EngineMetrics, HomeMetrics } from '../../../../shared/model/engine.model';
+import { EngineMetrics, HomeMetrics } from '../../../shared/model/engine.model';
 import { PassThrough } from 'node:stream';
 import OIBusService from '../oibus.service';
 import DataStreamEngine from '../../engine/data-stream-engine';

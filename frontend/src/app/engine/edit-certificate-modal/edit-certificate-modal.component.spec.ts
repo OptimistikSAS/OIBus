@@ -5,7 +5,7 @@ import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { CertificateService } from '../../services/certificate.service';
-import { CertificateCommandDTO, CertificateDTO } from '../../../../../shared/model/certificate.model';
+import { CertificateCommandDTO, CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
 class EditCertificateModalComponentTester extends ComponentTester<EditCertificateModalComponent> {

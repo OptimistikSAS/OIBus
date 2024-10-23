@@ -5,10 +5,10 @@ import { ComponentTester, createMock } from 'ngx-speculoos';
 import { provideI18nTesting } from '../i18n/mock-i18n';
 import { WindowService } from './shared/window.service';
 import { CurrentUserService } from './shared/current-user.service';
-import { User } from '../../../shared/model/user.model';
+import { User } from '../../../backend/shared/model/user.model';
 import { of } from 'rxjs';
 import { EngineService } from './services/engine.service';
-import { OIBusInfo } from '../../../shared/model/engine.model';
+import { OIBusInfo } from '../../../backend/shared/model/engine.model';
 
 class AppComponentTester extends ComponentTester<AppComponent> {
   constructor() {

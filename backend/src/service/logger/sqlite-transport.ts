@@ -1,7 +1,7 @@
 import build from 'pino-abstract-transport';
 import LogRepository from '../../repository/logs/log.repository';
 import db from 'better-sqlite3';
-import { PinoLog } from '../../../../shared/model/logs.model';
+import { PinoLog } from '../../../shared/model/logs.model';
 
 const DEFAULT_MAX_NUMBER_OF_LOGS = 2000000;
 const CLEAN_UP_INTERVAL = 24 * 3600 * 1000; // One day

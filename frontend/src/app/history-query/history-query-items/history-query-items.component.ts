@@ -8,15 +8,15 @@ import { Modal, ModalService } from '../../shared/modal.service';
 import { FormControlValidationDirective } from '../../shared/form-control-validation.directive';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { LoadingSpinnerComponent } from '../../shared/loading-spinner/loading-spinner.component';
-import { SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
+import { SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
 import { debounceTime, distinctUntilChanged, of, switchMap, tap } from 'rxjs';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { DurationPipe } from '../../shared/duration.pipe';
-import { OibFormControl } from '../../../../../shared/model/form.model';
-import { createPageFromArray, Page } from '../../../../../shared/model/types';
+import { OibFormControl } from '../../../../../backend/shared/model/form.model';
+import { createPageFromArray, Page } from '../../../../../backend/shared/model/types';
 import { emptyPage } from '../../shared/test-utils';
-import { HistoryQueryDTO, HistoryQueryItemCommandDTO, HistoryQueryItemDTO } from '../../../../../shared/model/history-query.model';
+import { HistoryQueryDTO, HistoryQueryItemCommandDTO, HistoryQueryItemDTO } from '../../../../../backend/shared/model/history-query.model';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
@@ -26,8 +26,8 @@ import { EditHistoryQueryItemModalComponent } from '../edit-history-query-item-m
 import { ImportHistoryQueryItemsModalComponent } from '../import-history-query-items-modal/import-history-query-items-modal.component';
 import { HistoryQueryItemTestModalComponent } from '../history-query-item-test-modal/history-query-item-test-modal.component';
 import { PipeProviderService } from '../../shared/form/pipe-provider.service';
-import { SouthItemSettings, SouthSettings } from '../../../../../shared/model/south-settings.model';
-import { NorthSettings } from '../../../../../shared/model/north-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
+import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
 const PAGE_SIZE = 20;
 const enum ColumnSortState {

@@ -5,7 +5,7 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { ComponentTester, createMock, TestButton } from 'ngx-speculoos';
 import { of } from 'rxjs';
 import { IpFilterService } from '../../services/ip-filter.service';
-import { IPFilterDTO } from '../../../../../shared/model/ip-filter.model';
+import { IPFilterDTO } from '../../../../../backend/shared/model/ip-filter.model';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 

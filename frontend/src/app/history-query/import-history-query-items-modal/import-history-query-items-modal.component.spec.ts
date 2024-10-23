@@ -2,10 +2,10 @@ import { ImportHistoryQueryItemsModalComponent } from './import-history-query-it
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { fakeAsync, TestBed } from '@angular/core/testing';
-import { SouthConnectorItemManifest } from '../../../../../shared/model/south-connector.model';
+import { SouthConnectorItemManifest } from '../../../../../backend/shared/model/south-connector.model';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
-import { HistoryQueryItemDTO } from '../../../../../shared/model/history-query.model';
-import { SouthItemSettings } from '../../../../../shared/model/south-settings.model';
+import { HistoryQueryItemDTO } from '../../../../../backend/shared/model/history-query.model';
+import { SouthItemSettings } from '../../../../../backend/shared/model/south-settings.model';
 
 class ImportSouthItemsModalComponentTester extends ComponentTester<ImportHistoryQueryItemsModalComponent> {
   constructor() {

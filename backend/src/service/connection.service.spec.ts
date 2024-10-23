@@ -1,7 +1,7 @@
 import ConnectionService, { ManagedConnectionDTO, ManagedConnection } from './connection.service';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import pino from 'pino';
-import { SouthSettings } from '../../../shared/model/south-settings.model';
+import { SouthSettings } from '../../shared/model/south-settings.model';
 
 const promiseReject = jest.fn();
 const promiseResolve = jest.fn();

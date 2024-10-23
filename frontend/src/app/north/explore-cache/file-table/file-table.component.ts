@@ -3,13 +3,13 @@ import { SaveButtonComponent } from '../../../shared/save-button/save-button.com
 import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../../shared/form-directives';
 
-import { NorthCacheFiles } from '../../../../../../shared/model/north-connector.model';
+import { NorthCacheFiles } from '../../../../../../backend/shared/model/north-connector.model';
 import { RouterLink } from '@angular/router';
 import { DatetimePipe } from '../../../shared/datetime.pipe';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
 import { FileSizePipe } from '../../../shared/file-size.pipe';
 import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
-import { createPageFromArray, Instant, Page } from '../../../../../../shared/model/types';
+import { createPageFromArray, Instant, Page } from '../../../../../../backend/shared/model/types';
 import { emptyPage } from '../../../shared/test-utils';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 

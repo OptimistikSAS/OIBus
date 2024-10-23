@@ -3,7 +3,7 @@ import { ComponentTester, createMock } from 'ngx-speculoos';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { fakeAsync, TestBed } from '@angular/core/testing';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
-import { SouthConnectorLightDTO } from '../../../../../shared/model/south-connector.model';
+import { SouthConnectorLightDTO } from '../../../../../backend/shared/model/south-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { of } from 'rxjs';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';

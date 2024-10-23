@@ -1,7 +1,7 @@
 import { KoaContext } from '../koa';
-import { Page } from '../../../../shared/model/types';
+import { Page } from '../../../shared/model/types';
 import AbstractController from './abstract.controller';
-import { CommandSearchParam, OIBusCommandDTO } from '../../../../shared/model/command.model';
+import { CommandSearchParam, OIBusCommandDTO } from '../../../shared/model/command.model';
 import { toOIBusCommandDTO } from '../../service/oia/oianalytics-command.service';
 
 export default class OIAnalyticsCommandController extends AbstractController {

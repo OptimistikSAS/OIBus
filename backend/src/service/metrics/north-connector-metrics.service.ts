@@ -1,10 +1,10 @@
-import { Instant } from '../../../../shared/model/types';
+import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { PassThrough } from 'node:stream';
-import { NorthConnectorMetrics, OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { NorthConnectorMetrics, OIBusTimeValue } from '../../../shared/model/engine.model';
 import NorthConnectorMetricsRepository from '../../repository/logs/north-connector-metrics.repository';
 import NorthConnector from '../../north/north-connector';
-import { NorthSettings } from '../../../../shared/model/north-settings.model';
+import { NorthSettings } from '../../../shared/model/north-settings.model';
 
 export default class NorthConnectorMetricsService {
   private _stream: PassThrough | null = null;

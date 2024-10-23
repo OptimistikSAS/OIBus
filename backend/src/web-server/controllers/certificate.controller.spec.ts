@@ -2,7 +2,7 @@ import Joi from 'joi';
 import JoiValidator from './validators/joi.validator';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
 import CertificateController from './certificate.controller';
-import { CertificateCommandDTO, CertificateDTO } from '../../../../shared/model/certificate.model';
+import { CertificateCommandDTO, CertificateDTO } from '../../../shared/model/certificate.model';
 
 jest.mock('./validators/joi.validator');
 

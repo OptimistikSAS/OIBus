@@ -14,15 +14,15 @@ import {
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
   SouthConnectorManifest
-} from '../../../../../shared/model/south-connector.model';
+} from '../../../../../backend/shared/model/south-connector.model';
 import { EditSouthItemModalComponent } from '../edit-south-item-modal/edit-south-item-modal.component';
 import { debounceTime, distinctUntilChanged, of, switchMap, tap } from 'rxjs';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
-import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
+import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { DurationPipe } from '../../shared/duration.pipe';
-import { OibFormControl } from '../../../../../shared/model/form.model';
-import { createPageFromArray, Page } from '../../../../../shared/model/types';
+import { OibFormControl } from '../../../../../backend/shared/model/form.model';
+import { createPageFromArray, Page } from '../../../../../backend/shared/model/types';
 import { emptyPage } from '../../shared/test-utils';
 import { PipeProviderService } from '../../shared/form/pipe-provider.service';
 import { ImportSouthItemsModalComponent } from '../import-south-items-modal/import-south-items-modal.component';
@@ -31,7 +31,7 @@ import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
 import { ImportItemModalComponent } from '../../shared/import-item-modal/import-item-modal.component';
 import { SouthItemTestModalComponent } from '../south-item-test-modal/south-item-test-modal.component';
-import { SouthItemSettings, SouthSettings } from '../../../../../shared/model/south-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 
 const PAGE_SIZE = 20;
 const enum ColumnSortState {

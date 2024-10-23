@@ -10,15 +10,15 @@ import { createFolder } from '../service/utils';
 
 import pino from 'pino';
 import path from 'node:path';
-import { OIBusTimeValue } from '../../../shared/model/engine.model';
+import { OIBusTimeValue } from '../../shared/model/engine.model';
 import testData from '../tests/utils/test-data';
 import HistoryQueryRepository from '../repository/config/history-query.repository';
 import HistoryQueryRepositoryMock from '../tests/__mocks__/repository/config/history-query-repository.mock';
 import NorthConnector from '../north/north-connector';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { NorthSettings } from '../../shared/model/north-settings.model';
 import NorthConnectorMock from '../tests/__mocks__/north-connector.mock';
 import SouthConnector from '../south/south-connector';
-import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import SouthConnectorMock from '../tests/__mocks__/south-connector.mock';
 import { flushPromises } from '../tests/utils/test-utils';
 import HistoryQueryMetricsServiceMock from '../tests/__mocks__/service/metrics/history-query-metrics-service.mock';

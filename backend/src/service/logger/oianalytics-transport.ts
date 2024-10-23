@@ -1,13 +1,13 @@
 import build from 'pino-abstract-transport';
 
-import { LogDTO, PinoLog } from '../../../../shared/model/logs.model';
-import { LogLevel, ScopeType } from '../../../../shared/model/engine.model';
+import { LogDTO, PinoLog } from '../../../shared/model/logs.model';
+import { LogLevel, ScopeType } from '../../../shared/model/engine.model';
 import { createProxyAgent } from '../proxy-agent';
 import fetch, { HeadersInit } from 'node-fetch';
 
 const MAX_BATCH_LOG = 500;
 const MAX_BATCH_INTERVAL_S = 60;
-const LEVEL_FORMAT: { [key: string]: LogLevel } = {
+const LEVEL_FORMAT: Record<string, LogLevel> = {
   '10': 'TRACE',
   '20': 'DEBUG',
   '30': 'INFO',
@@ -15,7 +15,7 @@ const LEVEL_FORMAT: { [key: string]: LogLevel } = {
   '50': 'ERROR'
 };
 
-const SCOPE_TYPE_FORMAT: { [key: ScopeType]: LogLevel } = {
+const SCOPE_TYPE_FORMAT: Record<ScopeType, LogLevel> = {
   south: 'SOUTH',
   north: 'NORTH',
   'history-query': 'HISTORY_QUERY',

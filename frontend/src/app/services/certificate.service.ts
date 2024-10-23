@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Injectable, inject } from '@angular/core';
-import { CertificateCommandDTO, CertificateDTO } from '../../../../shared/model/certificate.model';
+import { CertificateCommandDTO, CertificateDTO } from '../../../../backend/shared/model/certificate.model';
 
 const ENDPOINT = '/api/certificates';
 

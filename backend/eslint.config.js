@@ -12,7 +12,7 @@ import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
 // Export our config array, which is composed together thanks to the typed utility function from typescript-eslint
 export default [
   ...tseslint.config({
-    // Everything in this config object targets our TypeScript files (Components, Directives, Pipes etc)
+    // Everything in this config object targets our TypeScript files
     files: ['**/*.ts'],
     extends: [
       // Apply the recommended core rules

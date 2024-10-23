@@ -9,7 +9,7 @@ import {
   SouthModbusItemSettings,
   SouthModbusItemSettingsModbusType,
   SouthModbusSettings
-} from '../../../../shared/model/south-settings.model';
+} from '../../../shared/model/south-settings.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';

@@ -2,9 +2,9 @@ import { TestBed } from '@angular/core/testing';
 
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { EngineService } from './engine.service';
-import { EngineSettingsCommandDTO, EngineSettingsDTO, OIBusInfo } from '../../../../shared/model/engine.model';
+import { EngineSettingsCommandDTO, EngineSettingsDTO, OIBusInfo } from '../../../../backend/shared/model/engine.model';
 import { provideHttpClient } from '@angular/common/http';
-import { RegistrationSettingsCommandDTO } from '../../../../shared/model/engine.model';
+import { RegistrationSettingsCommandDTO } from '../../../../backend/shared/model/engine.model';
 
 describe('EngineService', () => {
   let http: HttpTestingController;
