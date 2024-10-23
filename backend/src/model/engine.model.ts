@@ -1,5 +1,5 @@
 import { BaseEntity } from './types';
-import { LogLevel } from '../../../shared/model/engine.model';
+import { LogLevel } from '../../shared/model/engine.model';
 
 export interface EngineSettings extends BaseEntity {
   name: string;

@@ -1,7 +1,11 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ComponentTester, createMock, TestInput } from 'ngx-speculoos';
 import { SouthConnectorService } from '../../services/south-connector.service';
-import { SouthConnectorDTO, SouthConnectorItemDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
+import {
+  SouthConnectorDTO,
+  SouthConnectorItemDTO,
+  SouthConnectorManifest
+} from '../../../../../backend/shared/model/south-connector.model';
 import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
@@ -9,8 +13,8 @@ import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 import { SouthItemsComponent } from './south-items.component';
 import { Component } from '@angular/core';
-import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
-import { SouthItemSettings, SouthSettings } from '../../../../../shared/model/south-settings.model';
+import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
+import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 
 const items: Array<SouthConnectorItemDTO<SouthItemSettings>> = [
   {
@@ -86,8 +90,7 @@ class TestComponent {
       history: true,
       lastFile: true,
       lastPoint: false,
-      forceMaxInstantPerItem: false,
-      sharedConnection: false
+      forceMaxInstantPerItem: false
     }
   };
 }

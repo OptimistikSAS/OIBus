@@ -4,12 +4,12 @@ import path from 'node:path';
 import { createFolder, generateRandomId, getFilesFiltered } from '../utils';
 import pino from 'pino';
 
-import { NorthCacheFiles, NorthValueFiles } from '../../../../shared/model/north-connector.model';
+import { NorthCacheFiles, NorthValueFiles } from '../../../shared/model/north-connector.model';
 import { EventEmitter } from 'node:events';
-import { OIBusTimeValue } from '../../../../shared/model/engine.model';
-import { Instant } from '../../../../shared/model/types';
+import { OIBusTimeValue } from '../../../shared/model/engine.model';
+import { Instant } from '../../../shared/model/types';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import { NorthSettings } from '../../../../shared/model/north-settings.model';
+import { NorthSettings } from '../../../shared/model/north-settings.model';
 
 const BUFFER_MAX = 250;
 const BUFFER_TIMEOUT = 300;

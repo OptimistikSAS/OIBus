@@ -1,7 +1,7 @@
 import { Database } from 'better-sqlite3';
 import { emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
 import SouthCacheRepository from './south-cache.repository';
-import { SouthCache } from '../../../../shared/model/south-connector.model';
+import { SouthCache } from '../../../shared/model/south-connector.model';
 import testData from '../../tests/utils/test-data';
 
 jest.mock('node:crypto');

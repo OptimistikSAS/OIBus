@@ -18,7 +18,7 @@ import NorthConnectorMetricsRepository from '../repository/logs/north-connector-
 import NorthMetricsRepositoryMock from '../tests/__mocks__/repository/log/north-metrics-repository.mock';
 import testData from '../tests/utils/test-data';
 import { NorthConnectorEntity } from '../model/north-connector.model';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { NorthSettings } from '../../shared/model/north-settings.model';
 import CertificateRepository from '../repository/config/certificate.repository';
 import CertificateRepositoryMock from '../tests/__mocks__/repository/config/certificate-repository.mock';
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';

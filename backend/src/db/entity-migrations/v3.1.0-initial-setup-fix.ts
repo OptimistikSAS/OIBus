@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-import { HISTORY_QUERY_STATUS } from '../../../../shared/model/history-query.model';
+import { HISTORY_QUERY_STATUS } from '../../../shared/model/history-query.model';
 
 const HISTORY_QUERIES_TABLE = 'history_queries';
 const HISTORY_ITEMS_TABLE = 'history_items';

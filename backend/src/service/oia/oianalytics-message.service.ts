@@ -22,8 +22,8 @@ import NorthConnectorRepository from '../../repository/config/north-connector.re
 import OIAnalyticsMessageRepository from '../../repository/config/oianalytics-message.repository';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import { HistoryQueryEntity } from '../../model/histor-query.model';
-import { SouthItemSettings, SouthSettings } from '../../../../shared/model/south-settings.model';
-import { NorthSettings } from '../../../../shared/model/north-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
+import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { southManifestList } from '../south.service';
 import { northManifestList } from '../north.service';
 import IpFilterRepository from '../../repository/config/ip-filter.repository';

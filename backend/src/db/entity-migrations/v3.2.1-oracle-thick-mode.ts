@@ -2,8 +2,6 @@ import { Knex } from 'knex';
 
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
 const HISTORY_QUERIES_TABLE = 'history_queries';
-const REGISTRATIONS_TABLE = 'registrations';
-const COMMANDS_TABLE = 'commands';
 
 export interface OldSouthOracleSettings {
   host: string;

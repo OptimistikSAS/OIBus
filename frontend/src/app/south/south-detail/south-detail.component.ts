@@ -6,13 +6,13 @@ import {
   SouthConnectorDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorManifest
-} from '../../../../../shared/model/south-connector.model';
+} from '../../../../../backend/shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { combineLatest, of, switchMap, tap } from 'rxjs';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { PageLoader } from '../../shared/page-loader.service';
-import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
+import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { SouthMetricsComponent } from '../south-metrics/south-metrics.component';
 import { NorthMetricsComponent } from '../../north/north-metrics/north-metrics.component';
@@ -21,14 +21,14 @@ import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
 import { SouthItemsComponent } from '../south-items/south-items.component';
 import { NotificationService } from '../../shared/notification.service';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
-import { OIBusInfo, SouthConnectorMetrics } from '../../../../../shared/model/engine.model';
+import { OIBusInfo, SouthConnectorMetrics } from '../../../../../backend/shared/model/engine.model';
 import { WindowService } from '../../shared/window.service';
 import { ModalService } from '../../shared/modal.service';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { EngineService } from '../../services/engine.service';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { LogsComponent } from '../../logs/logs.component';
-import { SouthItemSettings, SouthSettings } from '../../../../../shared/model/south-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 
 @Component({
   selector: 'oib-south-detail',
@@ -130,7 +130,6 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
       type: this.southConnector!.type,
       description: this.southConnector!.description,
       enabled: this.southConnector!.enabled,
-      sharedConnection: this.southConnector!.sharedConnection,
       history: {
         maxInstantPerItem: this.southConnector!.history!.maxInstantPerItem,
         maxReadInterval: this.southConnector!.history!.maxReadInterval,

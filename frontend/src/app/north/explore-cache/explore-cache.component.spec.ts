@@ -3,7 +3,7 @@ import { ComponentTester, createMock, stubRoute } from 'ngx-speculoos';
 import { TestBed } from '@angular/core/testing';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { of } from 'rxjs';
-import { NorthConnectorDTO } from '../../../../../shared/model/north-connector.model';
+import { NorthConnectorDTO } from '../../../../../backend/shared/model/north-connector.model';
 import { By } from '@angular/platform-browser';
 import { ErrorFilesComponent } from './error-files/error-files.component';
 import { ArchiveFilesComponent } from './archive-files/archive-files.component';
@@ -13,7 +13,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { CacheFilesComponent } from './cache-files/cache-files.component';
 import { CacheValuesComponent } from './cache-values/cache-values.component';
 import { ErrorValuesComponent } from './error-values/error-values.component';
-import { NorthSettings } from '../../../../../shared/model/north-settings.model';
+import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
 class ExploreCacheComponentTester extends ComponentTester<ExploreCacheComponent> {
   constructor() {

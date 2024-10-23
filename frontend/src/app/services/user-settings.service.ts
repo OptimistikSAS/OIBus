@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ChangePasswordCommand, User, UserCommandDTO } from '../../../../shared/model/user.model';
+import { ChangePasswordCommand, User, UserCommandDTO } from '../../../../backend/shared/model/user.model';
 
 @Injectable({
   providedIn: 'root'

@@ -1,8 +1,8 @@
 import { generateRandomId } from '../../service/utils';
 import { Database } from 'better-sqlite3';
-import { Instant } from '../../../../shared/model/types';
+import { Instant } from '../../../shared/model/types';
 import { OIAnalyticsRegistration, OIAnalyticsRegistrationEditCommand } from '../../model/oianalytics-registration.model';
-import { RegistrationStatus } from '../../../../shared/model/engine.model';
+import { RegistrationStatus } from '../../../shared/model/engine.model';
 
 const REGISTRATIONS_TABLE = 'registrations';
 

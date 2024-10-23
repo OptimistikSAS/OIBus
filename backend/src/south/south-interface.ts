@@ -1,6 +1,6 @@
 import { ManagedConnection, ManagedConnectionSettings } from '../service/connection.service';
-import { Instant } from '../../../shared/model/types';
-import { SouthItemSettings } from '../../../shared/model/south-settings.model';
+import { Instant } from '../../shared/model/types';
+import { SouthItemSettings } from '../../shared/model/south-settings.model';
 import { SouthConnectorItemEntity } from '../model/south-connector.model';
 
 export interface QueriesFile {

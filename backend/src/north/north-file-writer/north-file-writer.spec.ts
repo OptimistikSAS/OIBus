@@ -9,14 +9,14 @@ import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-serv
 import ValueCacheServiceMock from '../../tests/__mocks__/service/cache/value-cache-service.mock';
 import FileCacheServiceMock from '../../tests/__mocks__/service/cache/file-cache-service.mock';
 import ArchiveServiceMock from '../../tests/__mocks__/service/cache/archive-service.mock';
-import { OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { OIBusTimeValue } from '../../../shared/model/engine.model';
 import csv from 'papaparse';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import { NorthFileWriterSettings } from '../../../../shared/model/north-settings.model';
+import { NorthFileWriterSettings } from '../../../shared/model/north-settings.model';
 import testData from '../../tests/utils/test-data';
 
 jest.mock('node:fs/promises');

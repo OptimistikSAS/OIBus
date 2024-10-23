@@ -25,8 +25,8 @@ import {
   OIBusUpdateSouthConnectorCommand,
   OIBusUpdateVersionCommand
 } from '../../model/oianalytics-command.model';
-import { CommandSearchParam, OIBusCommandDTO } from '../../../../shared/model/command.model';
-import { Page } from '../../../../shared/model/types';
+import { CommandSearchParam, OIBusCommandDTO } from '../../../shared/model/command.model';
+import { Page } from '../../../shared/model/types';
 import SouthService from '../south.service';
 import NorthService from '../north.service';
 import OIAnalyticsClient from './oianalytics-client.service';

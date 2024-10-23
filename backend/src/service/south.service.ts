@@ -11,7 +11,7 @@ import {
   SouthConnectorLightDTO,
   SouthConnectorManifest,
   SouthConnectorWithoutItemsCommandDTO
-} from '../../../shared/model/south-connector.model';
+} from '../../shared/model/south-connector.model';
 import SouthConnector from '../south/south-connector';
 
 import oianalyticsManifest from '../south/south-oianalytics/manifest';
@@ -32,13 +32,13 @@ import oledbManifest from '../south/south-oledb/manifest';
 import piManifest from '../south/south-pi/manifest';
 import sftpManifest from '../south/south-sftp/manifest';
 import ConnectionService from './connection.service';
-import { OIBusContent } from '../../../shared/model/engine.model';
+import { OIBusContent } from '../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorEntityLight, SouthConnectorItemEntity } from '../model/south-connector.model';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import LogRepository from '../repository/logs/log.repository';
 import SouthConnectorMetricsRepository from '../repository/logs/south-connector-metrics.repository';
-import { Page } from '../../../shared/model/types';
+import { Page } from '../../shared/model/types';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
 import { checkScanMode, createFolder } from './utils';
@@ -85,7 +85,7 @@ import {
   SouthSlimsSettings,
   SouthSQLiteItemSettings,
   SouthSQLiteSettings
-} from '../../../shared/model/south-settings.model';
+} from '../../shared/model/south-settings.model';
 import SouthADS from '../south/south-ads/south-ads';
 import SouthFolderScanner from '../south/south-folder-scanner/south-folder-scanner';
 import SouthModbus from '../south/south-modbus/south-modbus';

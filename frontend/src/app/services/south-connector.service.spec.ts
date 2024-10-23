@@ -10,12 +10,12 @@ import {
   SouthConnectorManifest,
   SouthType,
   SouthConnectorLightDTO
-} from '../../../../shared/model/south-connector.model';
-import { Page } from '../../../../shared/model/types';
+} from '../../../../backend/shared/model/south-connector.model';
+import { Page } from '../../../../backend/shared/model/types';
 import { toPage } from '../shared/test-utils';
 import { DownloadService } from './download.service';
 import { provideHttpClient } from '@angular/common/http';
-import { SouthItemSettings, SouthSettings } from '../../../../shared/model/south-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../../../backend/shared/model/south-settings.model';
 
 describe('SouthConnectorService', () => {
   let http: HttpTestingController;
@@ -89,7 +89,6 @@ describe('SouthConnectorService', () => {
       name: 'mySouthConnector',
       description: 'a test south connector',
       enabled: true,
-      sharedConnection: false,
       history: {
         maxInstantPerItem: false,
         maxReadInterval: 0,
@@ -114,7 +113,6 @@ describe('SouthConnectorService', () => {
       name: 'mySouthConnector',
       description: 'a test south connector',
       enabled: true,
-      sharedConnection: true,
       history: {
         maxInstantPerItem: false,
         maxReadInterval: 0,
@@ -315,7 +313,6 @@ describe('SouthConnectorService', () => {
       name: 'mySouthConnector',
       description: 'a test south connector',
       enabled: true,
-      sharedConnection: false,
       history: {
         maxInstantPerItem: false,
         maxReadInterval: 0,

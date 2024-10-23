@@ -1,4 +1,4 @@
-import { BaseEntity, Language, Timezone } from '../../../shared/model/types';
+import { BaseEntity, Language, Timezone } from '../../shared/model/types';
 
 export interface User extends BaseEntity {
   login: string;

@@ -5,7 +5,7 @@ import { ComponentTester, createMock } from 'ngx-speculoos';
 import { of } from 'rxjs';
 import { MockModalService, provideModalTesting } from '../../shared/mock-modal.service.spec';
 import { ChangePasswordModalComponent } from '../change-password-modal/change-password-modal.component';
-import { User, UserCommandDTO } from '../../../../../shared/model/user.model';
+import { User, UserCommandDTO } from '../../../../../backend/shared/model/user.model';
 import { TestTypeahead } from '../../shared/typeahead.test-utils';
 import { UserSettingsService } from '../../services/user-settings.service';
 import { WindowService } from '../../shared/window.service';

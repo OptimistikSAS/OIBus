@@ -1,7 +1,7 @@
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 
-import { SouthCache } from '../../../shared/model/south-connector.model';
-import { Instant } from '../../../shared/model/types';
+import { SouthCache } from '../../shared/model/south-connector.model';
+import { Instant } from '../../shared/model/types';
 
 export default class SouthCacheService {
   constructor(private readonly cacheRepository: SouthCacheRepository) {}

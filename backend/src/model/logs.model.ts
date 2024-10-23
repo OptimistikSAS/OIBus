@@ -1,4 +1,4 @@
-import { LogLevel, ScopeType } from '../../../shared/model/engine.model';
+import { LogLevel, ScopeType } from '../../shared/model/engine.model';
 
 export interface OIBusLog {
   timestamp: string;

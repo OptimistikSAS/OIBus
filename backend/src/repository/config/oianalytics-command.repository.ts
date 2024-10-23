@@ -1,6 +1,6 @@
 import { Database } from 'better-sqlite3';
-import { CommandSearchParam, OIBusCommandStatus, OIBusCommandType } from '../../../../shared/model/command.model';
-import { Instant, Page } from '../../../../shared/model/types';
+import { CommandSearchParam, OIBusCommandStatus, OIBusCommandType } from '../../../shared/model/command.model';
+import { Instant, Page } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { OIBusCommand, OIBusRestartEngineCommand } from '../../model/oianalytics-command.model';
 import { OIAnalyticsFetchCommandDTO } from '../../service/oia/oianalytics.model';

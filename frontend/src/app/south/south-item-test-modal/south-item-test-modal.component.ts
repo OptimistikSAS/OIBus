@@ -1,11 +1,11 @@
 import { AfterViewInit, Component, inject, ViewChild } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { OibCodeBlockComponent } from '../../shared/form/oib-code-block/oib-code-block.component';
-import { OIBusContent } from '../../../../../shared/model/engine.model';
-import { SouthConnectorItemCommandDTO, SouthConnectorItemDTO } from '../../../../../shared/model/south-connector.model';
+import { OIBusContent } from '../../../../../backend/shared/model/engine.model';
+import { SouthConnectorItemCommandDTO, SouthConnectorItemDTO } from '../../../../../backend/shared/model/south-connector.model';
 import { TranslateModule } from '@ngx-translate/core';
 import { LoadingSpinnerComponent } from '../../shared/loading-spinner/loading-spinner.component';
-import { SouthItemSettings } from '../../../../../shared/model/south-settings.model';
+import { SouthItemSettings } from '../../../../../backend/shared/model/south-settings.model';
 
 @Component({
   selector: 'oib-south-item-test-modal',

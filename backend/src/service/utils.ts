@@ -7,21 +7,21 @@ import minimist from 'minimist';
 import { DateTime } from 'luxon';
 import AdmZip from 'adm-zip';
 
-import { CsvCharacter, DateTimeType, Instant, Interval, SerializationSettings, Timezone } from '../../../shared/model/types';
+import { CsvCharacter, DateTimeType, Instant, Interval, SerializationSettings, Timezone } from '../../shared/model/types';
 import pino from 'pino';
 import csv from 'papaparse';
 import https from 'node:https';
 import http from 'node:http';
-import { EngineSettingsDTO, OIBusContent, OIBusInfo, OIBusTimeValue } from '../../../shared/model/engine.model';
+import { EngineSettingsDTO, OIBusContent, OIBusInfo, OIBusTimeValue } from '../../shared/model/engine.model';
 import os from 'node:os';
-import { NorthCacheFiles } from '../../../shared/model/north-connector.model';
+import { NorthCacheFiles } from '../../shared/model/north-connector.model';
 import cronstrue from 'cronstrue';
 import cronparser from 'cron-parser';
-import { ValidatedCronExpression } from '../../../shared/model/scan-mode.model';
-import { SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
+import { ValidatedCronExpression } from '../../shared/model/scan-mode.model';
+import { SouthConnectorItemDTO } from '../../shared/model/south-connector.model';
 import { ScanMode } from '../model/scan-mode.model';
-import { HistoryQueryItemDTO } from '../../../shared/model/history-query.model';
-import { SouthItemSettings } from '../../../shared/model/south-settings.model';
+import { HistoryQueryItemDTO } from '../../shared/model/history-query.model';
+import { SouthItemSettings } from '../../shared/model/south-settings.model';
 import { EventEmitter } from 'node:events';
 
 const COMPRESSION_LEVEL = 9;

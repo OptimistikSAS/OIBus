@@ -13,10 +13,10 @@ import EncryptionService, {
 } from './encryption.service';
 
 import * as utils from './utils';
-import { OibFormControl } from '../../../shared/model/form.model';
+import { OibFormControl } from '../../shared/model/form.model';
 
-import { SouthConnectorCommandDTO, SouthConnectorDTO } from '../../../shared/model/south-connector.model';
-import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
+import { SouthConnectorCommandDTO, SouthConnectorDTO } from '../../shared/model/south-connector.model';
+import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 
 jest.mock('./utils');
 jest.mock('node:fs/promises');

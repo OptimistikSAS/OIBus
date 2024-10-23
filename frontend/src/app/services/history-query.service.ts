@@ -8,14 +8,14 @@ import {
   HistoryQueryItemDTO,
   HistoryQueryItemSearchParam,
   HistoryQueryLightDTO
-} from '../../../../shared/model/history-query.model';
-import { Page } from '../../../../shared/model/types';
-import { SouthConnectorCommandDTO } from '../../../../shared/model/south-connector.model';
+} from '../../../../backend/shared/model/history-query.model';
+import { Page } from '../../../../backend/shared/model/types';
+import { SouthConnectorCommandDTO } from '../../../../backend/shared/model/south-connector.model';
 import { DownloadService } from './download.service';
-import { NorthConnectorCommandDTO } from '../../../../shared/model/north-connector.model';
-import { OIBusContent } from '../../../../shared/model/engine.model';
-import { SouthItemSettings, SouthSettings } from '../../../../shared/model/south-settings.model';
-import { NorthSettings } from '../../../../shared/model/north-settings.model';
+import { NorthConnectorCommandDTO } from '../../../../backend/shared/model/north-connector.model';
+import { OIBusContent } from '../../../../backend/shared/model/engine.model';
+import { SouthItemSettings, SouthSettings } from '../../../../backend/shared/model/south-settings.model';
+import { NorthSettings } from '../../../../backend/shared/model/north-settings.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on History queries

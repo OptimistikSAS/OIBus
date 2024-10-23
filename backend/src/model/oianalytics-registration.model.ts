@@ -1,5 +1,5 @@
 import { BaseEntity, Instant } from './types';
-import { RegistrationStatus } from '../../../shared/model/engine.model';
+import { RegistrationStatus } from '../../shared/model/engine.model';
 
 export interface OIAnalyticsRegistration extends BaseEntity {
   host: string;

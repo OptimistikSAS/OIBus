@@ -16,7 +16,7 @@ import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import { randomUUID } from 'crypto';
 import path from 'node:path';
-import { SouthOPCUAItemSettings, SouthOPCUASettings } from '../../../../shared/model/south-settings.model';
+import { SouthOPCUAItemSettings, SouthOPCUASettings } from '../../../shared/model/south-settings.model';
 import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
 import Stream from 'node:stream';
 import { createFolder } from '../../service/utils';

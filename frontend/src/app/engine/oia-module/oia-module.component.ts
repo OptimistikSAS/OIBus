@@ -3,7 +3,7 @@ import { TranslateModule } from '@ngx-translate/core';
 
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { EngineService } from '../../services/engine.service';
-import { RegistrationSettingsDTO } from '../../../../../shared/model/engine.model';
+import { RegistrationSettingsDTO } from '../../../../../backend/shared/model/engine.model';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { ModalService } from '../../shared/modal.service';
@@ -22,8 +22,8 @@ import {
   OIBusCommandDTO,
   OIBusCommandStatus,
   OIBusCommandType
-} from '../../../../../shared/model/command.model';
-import { Page } from '../../../../../shared/model/types';
+} from '../../../../../backend/shared/model/command.model';
+import { Page } from '../../../../../backend/shared/model/types';
 import { PageLoader } from '../../shared/page-loader.service';
 import { NonNullableFormBuilder } from '@angular/forms';
 import { OibusCommandService } from '../../services/oibus-command.service';
@@ -130,7 +130,7 @@ export class OiaModuleComponent implements OnInit, OnDestroy {
         )
         .subscribe(registration => {
           this.registration = registration;
-          if (this.registration.status !== 'PENDING') {
+          if (this.registration!.status !== 'PENDING') {
             this.registrationSubscription.unsubscribe();
           }
         })

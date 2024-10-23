@@ -35,12 +35,12 @@ import csv from 'papaparse';
 import pino from 'pino';
 import AdmZip from 'adm-zip';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
-import { DateTimeType } from '../../../shared/model/types';
+import { DateTimeType } from '../../shared/model/types';
 import Stream from 'node:stream';
 import http from 'node:http';
 import https from 'node:https';
 import os from 'node:os';
-import { EngineSettingsDTO, OIBusInfo } from '../../../shared/model/engine.model';
+import { EngineSettingsDTO, OIBusInfo } from '../../shared/model/engine.model';
 import cronstrue from 'cronstrue';
 import testData from '../tests/utils/test-data';
 
