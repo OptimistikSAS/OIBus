@@ -11,10 +11,10 @@ import { compress, filesExists } from '../../service/utils';
 
 import ValueCacheServiceMock from '../../tests/__mocks__/service/cache/value-cache-service.mock';
 import FileCacheServiceMock from '../../tests/__mocks__/service/cache/file-cache-service.mock';
-import { NorthOIAnalyticsSettings } from '../../../../shared/model/north-settings.model';
+import { NorthOIAnalyticsSettings } from '../../../shared/model/north-settings.model';
 import ArchiveServiceMock from '../../tests/__mocks__/service/cache/archive-service.mock';
 import { createProxyAgent } from '../../service/proxy-agent';
-import { OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { OIBusTimeValue } from '../../../shared/model/engine.model';
 import zlib from 'node:zlib';
 import fs from 'node:fs/promises';
 import path from 'node:path';

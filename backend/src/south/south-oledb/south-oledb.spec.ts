@@ -9,7 +9,7 @@ import {
   SouthOLEDBItemSettings,
   SouthOLEDBItemSettingsDateTimeFields,
   SouthOLEDBSettings
-} from '../../../../shared/model/south-settings.model';
+} from '../../../shared/model/south-settings.model';
 import SouthOLEDB from './south-oledb';
 import fetch from 'node-fetch';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';

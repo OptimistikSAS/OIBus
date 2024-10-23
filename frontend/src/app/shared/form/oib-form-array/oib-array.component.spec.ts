@@ -6,7 +6,7 @@ import { TestBed } from '@angular/core/testing';
 import { EditElementComponent } from './edit-element/edit-element.component';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { formDirectives } from '../../form-directives';
-import { buildDateTimeFieldsFormControl } from '../../../../../../shared/model/manifest-factory';
+import { buildDateTimeFieldsFormControl } from '../../../../../../backend/shared/model/manifest-factory';
 
 @Component({
   template: '<oib-array [formDescription]="formDescription" [formControl]="control" />',

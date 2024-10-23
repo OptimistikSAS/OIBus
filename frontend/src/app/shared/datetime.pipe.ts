@@ -1,6 +1,6 @@
 import { LOCALE_ID, Pipe, PipeTransform, inject } from '@angular/core';
 import { DateTime } from 'luxon';
-import { Timezone } from '../../../../shared/model/types';
+import { Timezone } from '../../../../backend/shared/model/types';
 import { CurrentUserService } from './current-user.service';
 
 const FRIENDLY_FORMATS = {

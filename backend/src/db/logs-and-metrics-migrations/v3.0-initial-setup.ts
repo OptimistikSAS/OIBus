@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-import { LOG_LEVELS } from '../../../../shared/model/engine.model';
+import { LOG_LEVELS } from '../../../shared/model/engine.model';
 
 const LOG_TABLE = 'logs';
 const NORTH_METRICS_TABLE = 'north_metrics';

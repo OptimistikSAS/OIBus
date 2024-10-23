@@ -1,7 +1,7 @@
 import { Component, Input, NgZone, OnInit, inject } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
-import { SouthConnectorLightDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
-import { SouthConnectorMetrics } from '../../../../../shared/model/engine.model';
+import { SouthConnectorLightDTO, SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
+import { SouthConnectorMetrics } from '../../../../../backend/shared/model/engine.model';
 import { JsonPipe } from '@angular/common';
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { DurationPipe } from '../../shared/duration.pipe';

@@ -7,19 +7,19 @@ import {
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
   SouthConnectorItemManifest
-} from '../../../../../shared/model/south-connector.model';
-import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
+} from '../../../../../backend/shared/model/south-connector.model';
+import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 
 import { OibCodeBlockComponent } from '../../shared/form/oib-code-block/oib-code-block.component';
 import { groupFormControlsByRow } from '../../shared/form-utils';
 import { OibScanModeComponent } from '../../shared/form/oib-scan-mode/oib-scan-mode.component';
-import { OibFormControl } from '../../../../../shared/model/form.model';
+import { OibFormControl } from '../../../../../backend/shared/model/form.model';
 import { FormComponent } from '../../shared/form/form.component';
 import { PipeProviderService } from '../../shared/form/pipe-provider.service';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
-import { createPageFromArray, Page } from '../../../../../shared/model/types';
+import { createPageFromArray, Page } from '../../../../../backend/shared/model/types';
 import { emptyPage } from '../../shared/test-utils';
-import { SouthItemSettings } from '../../../../../shared/model/south-settings.model';
+import { SouthItemSettings } from '../../../../../backend/shared/model/south-settings.model';
 
 const PAGE_SIZE = 20;
 

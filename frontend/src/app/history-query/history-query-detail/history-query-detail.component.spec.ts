@@ -7,17 +7,17 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { HistoryQueryService } from '../../services/history-query.service';
-import { HistoryQueryDTO } from '../../../../../shared/model/history-query.model';
-import { SouthConnectorCommandDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
+import { HistoryQueryDTO } from '../../../../../backend/shared/model/history-query.model';
+import { SouthConnectorCommandDTO, SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { NorthConnectorService } from '../../services/north-connector.service';
-import { NorthConnectorCommandDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
+import { NorthConnectorCommandDTO, NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
 import { ScanModeService } from '../../services/scan-mode.service';
-import { OIBusInfo } from '../../../../../shared/model/engine.model';
+import { OIBusInfo } from '../../../../../backend/shared/model/engine.model';
 import { EngineService } from '../../services/engine.service';
 import { Modal, ModalService } from '../../shared/modal.service';
-import { SouthItemSettings, SouthSettings } from '../../../../../shared/model/south-settings.model';
-import { NorthSettings } from '../../../../../shared/model/north-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
+import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
 class HistoryQueryDisplayComponentTester extends ComponentTester<HistoryQueryDetailComponent> {
   constructor() {
@@ -87,8 +87,7 @@ describe('HistoryQueryDisplayComponent', () => {
       history: true,
       lastFile: true,
       lastPoint: false,
-      forceMaxInstantPerItem: false,
-      sharedConnection: false
+      forceMaxInstantPerItem: false
     }
   };
   const northManifest: NorthConnectorManifest = {
@@ -133,7 +132,6 @@ describe('HistoryQueryDisplayComponent', () => {
     southSettings: {
       database: 'my database'
     } as SouthSettings,
-    southSharedConnection: false,
     northSettings: {
       host: 'localhost'
     } as NorthSettings,

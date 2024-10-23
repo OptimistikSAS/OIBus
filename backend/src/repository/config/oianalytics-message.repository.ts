@@ -1,11 +1,11 @@
 import { generateRandomId } from '../../service/utils';
 import { Database } from 'better-sqlite3';
-import { Instant, Page } from '../../../../shared/model/types';
+import { Instant, Page } from '../../../shared/model/types';
 import {
   OIAnalyticsMessageSearchParam,
   OIAnalyticsMessageStatus,
   OIAnalyticsMessageType
-} from '../../../../shared/model/oianalytics-message.model';
+} from '../../../shared/model/oianalytics-message.model';
 import { OIAnalyticsMessage } from '../../model/oianalytics-message.model';
 
 const OIANALYTICS_MESSAGE_TABLE = 'oianalytics_messages';

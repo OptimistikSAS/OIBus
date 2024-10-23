@@ -4,7 +4,7 @@ import { NonNullableFormBuilder, Validators } from '@angular/forms';
 import { Observable, switchMap } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
-import { IPFilterCommandDTO, IPFilterDTO } from '../../../../../shared/model/ip-filter.model';
+import { IPFilterCommandDTO, IPFilterDTO } from '../../../../../backend/shared/model/ip-filter.model';
 import { IpFilterService } from '../../services/ip-filter.service';
 import { formDirectives } from '../../shared/form-directives';
 

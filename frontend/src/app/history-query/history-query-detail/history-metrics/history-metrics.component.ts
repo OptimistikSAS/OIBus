@@ -1,16 +1,16 @@
 import { Component, Input } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
-import { HistoryQueryMetrics } from '../../../../../../shared/model/engine.model';
+import { HistoryQueryMetrics } from '../../../../../../backend/shared/model/engine.model';
 import { JsonPipe } from '@angular/common';
 import { DatetimePipe } from '../../../shared/datetime.pipe';
 import { DurationPipe } from '../../../shared/duration.pipe';
 import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
-import { HistoryQueryDTO } from '../../../../../../shared/model/history-query.model';
-import { NorthConnectorManifest } from '../../../../../../shared/model/north-connector.model';
-import { SouthConnectorManifest } from '../../../../../../shared/model/south-connector.model';
+import { HistoryQueryDTO } from '../../../../../../backend/shared/model/history-query.model';
+import { NorthConnectorManifest } from '../../../../../../backend/shared/model/north-connector.model';
+import { SouthConnectorManifest } from '../../../../../../backend/shared/model/south-connector.model';
 import { ProgressbarComponent } from './progressbar/progressbar.component';
-import { SouthItemSettings, SouthSettings } from '../../../../../../shared/model/south-settings.model';
-import { NorthSettings } from '../../../../../../shared/model/north-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../../../../../backend/shared/model/south-settings.model';
+import { NorthSettings } from '../../../../../../backend/shared/model/north-settings.model';
 
 @Component({
   selector: 'oib-history-metrics',

@@ -1,5 +1,5 @@
 import { KoaContext } from '../koa';
-import { SouthConnectorLightDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorLightDTO } from '../../../shared/model/south-connector.model';
 import { toSouthConnectorLightDTO } from '../../service/south.service';
 
 export default class SubscriptionController {

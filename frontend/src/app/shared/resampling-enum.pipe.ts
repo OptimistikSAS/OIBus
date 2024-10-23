@@ -1,6 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { BaseEnumPipe } from './base-enum-pipe';
-import { Resampling } from '../../../../shared/model/types';
+import { Resampling } from '../../../../backend/shared/model/types';
 
 @Pipe({
   name: 'resamplingEnum',

@@ -1,8 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { CommandSearchParam, OIBusCommandDTO } from '../../../../shared/model/command.model';
-import { Page } from '../../../../shared/model/types';
+import { CommandSearchParam, OIBusCommandDTO } from '../../../../backend/shared/model/command.model';
+import { Page } from '../../../../backend/shared/model/types';
 
 @Injectable({
   providedIn: 'root'

@@ -16,7 +16,7 @@ import {
   Variant
 } from 'node-opcua-client';
 
-import { Aggregate, Instant, Resampling } from '../../../../shared/model/types';
+import { Aggregate, Instant, Resampling } from '../../../shared/model/types';
 import SouthConnector from '../south-connector';
 import EncryptionService, { CERT_FILE_NAME, CERT_FOLDER, CERT_PRIVATE_KEY_FILE_NAME } from '../../service/encryption.service';
 import pino from 'pino';
@@ -27,12 +27,12 @@ import { DateTime } from 'luxon';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { DelegatesConnection, QueriesHistory, QueriesLastPoint, QueriesSubscription } from '../south-interface';
-import { SouthOPCUAItemSettings, SouthOPCUASettings } from '../../../../shared/model/south-settings.model';
+import { SouthOPCUAItemSettings, SouthOPCUASettings } from '../../../shared/model/south-settings.model';
 import { randomUUID } from 'crypto';
 import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
 import { createFolder } from '../../service/utils';
 import { OPCUACertificateManager } from 'node-opcua-certificate-manager';
-import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import ConnectionService, { ManagedConnection, ManagedConnectionSettings } from '../../service/connection.service';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';

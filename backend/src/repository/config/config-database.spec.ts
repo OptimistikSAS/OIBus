@@ -10,7 +10,7 @@ import { version } from '../../../package.json';
 import OianalyticsRegistrationRepository from './oianalytics-registration.repository';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 import OIAnalyticsCommandRepository from './oianalytics-command.repository';
-import { createPageFromArray } from '../../../../shared/model/types';
+import { createPageFromArray } from '../../../shared/model/types';
 import {
   OIAnalyticsFetchDeleteNorthConnectorCommandDTO,
   OIAnalyticsFetchDeleteScanModeCommandDTO,
@@ -27,8 +27,8 @@ import SouthConnectorRepository from './south-connector.repository';
 import NorthConnectorRepository from './north-connector.repository';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import { SouthItemSettings, SouthSettings } from '../../../../shared/model/south-settings.model';
-import { NorthSettings } from '../../../../shared/model/north-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
+import { NorthSettings } from '../../../shared/model/north-settings.model';
 import CertificateRepository from './certificate.repository';
 import { Certificate } from '../../model/certificate.model';
 import UserRepository from './user.repository';

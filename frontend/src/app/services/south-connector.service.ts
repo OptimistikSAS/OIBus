@@ -10,11 +10,11 @@ import {
   SouthConnectorItemSearchParam,
   SouthType,
   SouthConnectorLightDTO
-} from '../../../../shared/model/south-connector.model';
-import { Page } from '../../../../shared/model/types';
+} from '../../../../backend/shared/model/south-connector.model';
+import { Page } from '../../../../backend/shared/model/types';
 import { DownloadService } from './download.service';
-import { OIBusContent } from '../../../../shared/model/engine.model';
-import { SouthItemSettings, SouthSettings } from '../../../../shared/model/south-settings.model';
+import { OIBusContent } from '../../../../backend/shared/model/engine.model';
+import { SouthItemSettings, SouthSettings } from '../../../../backend/shared/model/south-settings.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on South connectors

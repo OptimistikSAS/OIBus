@@ -1,5 +1,5 @@
 import { AbstractControl, ValidationErrors } from '@angular/forms';
-import { Instant } from '../../../../shared/model/types';
+import { Instant } from '../../../../backend/shared/model/types';
 
 export interface RangeFormValue {
   start: Instant;

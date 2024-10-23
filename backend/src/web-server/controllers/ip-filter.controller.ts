@@ -1,5 +1,5 @@
 import { KoaContext } from '../koa';
-import { IPFilterCommandDTO, IPFilterDTO } from '../../../../shared/model/ip-filter.model';
+import { IPFilterCommandDTO, IPFilterDTO } from '../../../shared/model/ip-filter.model';
 import AbstractController from './abstract.controller';
 import { toIPFilterDTO } from '../../service/ip-filter.service';
 

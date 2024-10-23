@@ -5,7 +5,7 @@ import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
 import { CronJob } from 'cron';
 import { delay, generateIntervals, validateCronExpression } from '../service/utils';
-import { OIBusTimeValue } from '../../../shared/model/engine.model';
+import { OIBusTimeValue } from '../../shared/model/engine.model';
 import testData from '../tests/utils/test-data';
 import SouthFolderScanner from './south-folder-scanner/south-folder-scanner';
 import {
@@ -15,7 +15,7 @@ import {
   SouthMSSQLSettings,
   SouthOPCUAItemSettings,
   SouthOPCUASettings
-} from '../../../shared/model/south-settings.model';
+} from '../../shared/model/south-settings.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../model/south-connector.model';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
 import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';

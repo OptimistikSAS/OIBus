@@ -6,7 +6,7 @@ import {
   SouthOPCUASettingsAuthentication,
   SouthOPCUASettingsSecurityMode,
   SouthOPCUASettingsSecurityPolicy
-} from '../../../../shared/model/south-settings.model';
+} from '../../../shared/model/south-settings.model';
 
 const NORTH_CONNECTORS_TABLE = 'north_connectors';
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
