@@ -11,7 +11,7 @@ import DataStreamEngine from './engine/data-stream-engine';
 import HistoryQueryEngine from './engine/history-query-engine';
 import HistoryQueryService from './service/history-query.service';
 import OIBusService from './service/oibus.service';
-import { migrateCrypto, migrateEntities, migrateLogsAndMetrics, migrateSouthCache } from './db/migration-service';
+import { migrateCrypto, migrateEntities, migrateFolderStructure, migrateLogsAndMetrics, migrateSouthCache } from './db/migration-service';
 import OIAnalyticsCommandService from './service/oia/oianalytics-command.service';
 import OianalyticsRegistrationService from './service/oia/oianalytics-registration.service';
 import ConnectionService from './service/connection.service';
@@ -45,6 +45,7 @@ const LOG_DB_NAME = 'logs.db';
   await createFolder(LOG_FOLDER_NAME);
 
   // run migrations
+  await migrateFolderStructure(path.resolve(CONFIG_DATABASE));
   await migrateEntities(path.resolve(CONFIG_DATABASE));
   await migrateLogsAndMetrics(path.resolve(LOG_FOLDER_NAME, LOG_DB_NAME));
   await migrateCrypto(path.resolve(CRYPTO_DATABASE));

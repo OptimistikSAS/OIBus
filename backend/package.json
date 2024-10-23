@@ -20,7 +20,7 @@
     "build:macos-arm64": "npm run internal:build:lib-macos-arm64 && rimraf ../build/bin/macos-arm64/binaries && npm run build && pkg ./dist/backend/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/macos-arm64/binaries/oibus --target node22-macos-arm64",
     "build:linux": "npm run internal:build:lib-linux && rimraf ../build/bin/linux/binaries && npm run build && pkg ./dist/backend/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/linux/binaries/oibus --target node22-linux-x64 && ncp ../build/deps/linux ../build/bin/linux",
     "build:linux-arm64": "npm run internal:build:lib-linux-arm64 && rimraf ../build/bin/linux-arm64/binaries && npm run build && pkg ./dist/backend/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/linux-arm64/binaries/oibus --target node22-linux-arm64 && ncp ../build/deps/linux-arm64 ../build/bin/linux-arm64",
-    "start": "tsc --sourceMap --project tsconfig.app.json && npm run start:backend",
+    "start": "rimraf ./dist/backend/src/db && tsc --sourceMap --project tsconfig.app.json && npm run start:backend",
     "start:backend": "node ./dist/backend/src/index.js --config ../data-folder",
     "generate-settings-interface": "tsc -p tsconfig.generator.json && node dist/interface-generator/src/settings-interface.generator.js && npm run lint:fix",
     "migrate": "tsc -p tsconfig.generator.json && node dist/backend/src/settings-interface.generator.js",
