@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import pino from 'pino';
 
-import { ScopeType } from '../../../../shared/model/engine.model';
+import { ScopeType } from '../../../shared/model/engine.model';
 
 import FileCleanupService from './file-cleanup.service';
 import EncryptionService from '../encryption.service';

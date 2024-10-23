@@ -6,7 +6,7 @@ import { provideI18nTesting } from '../../../../../i18n/mock-i18n';
 import { formDirectives } from '../../../form-directives';
 import { EditElementComponent } from './edit-element.component';
 import { DefaultValidationErrorsComponent } from '../../../default-validation-errors/default-validation-errors.component';
-import { buildDateTimeFieldsFormControl } from '../../../../../../../shared/model/manifest-factory';
+import { buildDateTimeFieldsFormControl } from '../../../../../../../backend/shared/model/manifest-factory';
 
 @Component({
   template: ` <form [formGroup]="form">

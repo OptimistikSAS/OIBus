@@ -22,7 +22,7 @@ import IpFilterRepository from '../repository/config/ip-filter.repository';
 import IpFilterRepositoryMock from '../tests/__mocks__/repository/config/ip-filter-repository.mock';
 import testData from '../tests/utils/test-data';
 import { EngineSettings } from '../model/engine.model';
-import { EngineSettingsCommandDTO } from '../../../shared/model/engine.model';
+import { EngineSettingsCommandDTO } from '../../shared/model/engine.model';
 import { getOIBusInfo } from './utils';
 import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
 import HistoryQueryRepository from '../repository/config/history-query.repository';

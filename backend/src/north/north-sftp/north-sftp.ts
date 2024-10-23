@@ -4,9 +4,9 @@ import NorthConnector from '../north-connector';
 import EncryptionService from '../../service/encryption.service';
 import pino from 'pino';
 import { DateTime } from 'luxon';
-import { NorthSFTPSettings } from '../../../../shared/model/north-settings.model';
+import { NorthSFTPSettings } from '../../../shared/model/north-settings.model';
 import csv from 'papaparse';
-import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 
 import sftpClient, { ConnectOptions } from 'ssh2-sftp-client';
 import fs from 'node:fs/promises';

@@ -6,10 +6,10 @@ import ValueCache from './value-cache.service';
 import { createFolder, dirSize, generateRandomId, getFilesFiltered } from '../utils';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import { OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { OIBusTimeValue } from '../../../shared/model/engine.model';
 import testData from '../../tests/utils/test-data';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import { NorthSettings } from '../../../../shared/model/north-settings.model';
+import { NorthSettings } from '../../../shared/model/north-settings.model';
 
 jest.mock('../utils', () => ({
   generateRandomId: jest.fn(() => 'generated-uuid'),

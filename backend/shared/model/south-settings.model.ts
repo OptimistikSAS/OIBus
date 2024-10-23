@@ -4,151 +4,305 @@
 
 import { Timezone } from './types';
 
-const SOUTH_A_D_S_SETTINGS_ENUM_AS_TEXTS = ['Text', 'Integer'] as const
+export const SOUTH_A_D_S_SETTINGS_ENUM_AS_TEXTS = ['Text', 'Integer'] as const;
 export type SouthADSSettingsEnumAsText = (typeof SOUTH_A_D_S_SETTINGS_ENUM_AS_TEXTS)[number];
 
-const SOUTH_A_D_S_SETTINGS_BOOL_AS_TEXTS = ['Text', 'Integer'] as const
+export const SOUTH_A_D_S_SETTINGS_BOOL_AS_TEXTS = ['Text', 'Integer'] as const;
 export type SouthADSSettingsBoolAsText = (typeof SOUTH_A_D_S_SETTINGS_BOOL_AS_TEXTS)[number];
 
-const SOUTH_MODBUS_SETTINGS_ADDRESS_OFFSETS = ['Modbus', 'JBus'] as const
+export const SOUTH_MODBUS_SETTINGS_ADDRESS_OFFSETS = ['Modbus', 'JBus'] as const;
 export type SouthModbusSettingsAddressOffset = (typeof SOUTH_MODBUS_SETTINGS_ADDRESS_OFFSETS)[number];
 
-const SOUTH_MODBUS_SETTINGS_ENDIANNESSS = ['Big Endian', 'Little Endian'] as const
+export const SOUTH_MODBUS_SETTINGS_ENDIANNESSS = ['Big Endian', 'Little Endian'] as const;
 export type SouthModbusSettingsEndianness = (typeof SOUTH_MODBUS_SETTINGS_ENDIANNESSS)[number];
 
-const SOUTH_MODBUS_ITEM_SETTINGS_DATA_DATA_TYPES = ['UInt16', 'Int16', 'UInt32', 'Int32', 'BigUInt64', 'BigInt64', 'Float', 'Double', 'Bit'] as const
+export const SOUTH_MODBUS_ITEM_SETTINGS_DATA_DATA_TYPES = [
+  'UInt16',
+  'Int16',
+  'UInt32',
+  'Int32',
+  'BigUInt64',
+  'BigInt64',
+  'Float',
+  'Double',
+  'Bit'
+] as const;
 export type SouthModbusItemSettingsDataDataType = (typeof SOUTH_MODBUS_ITEM_SETTINGS_DATA_DATA_TYPES)[number];
 
-const SOUTH_MODBUS_ITEM_SETTINGS_MODBUS_TYPES = ['coil', 'discreteInput', 'inputRegister', 'holdingRegister'] as const
+export const SOUTH_MODBUS_ITEM_SETTINGS_MODBUS_TYPES = ['coil', 'discreteInput', 'inputRegister', 'holdingRegister'] as const;
 export type SouthModbusItemSettingsModbusType = (typeof SOUTH_MODBUS_ITEM_SETTINGS_MODBUS_TYPES)[number];
 
-const SOUTH_M_Q_T_T_SETTINGS_AUTHENTICATION_TYPES = ['none', 'basic', 'cert'] as const
+export const SOUTH_M_Q_T_T_SETTINGS_AUTHENTICATION_TYPES = ['none', 'basic', 'cert'] as const;
 export type SouthMQTTSettingsAuthenticationType = (typeof SOUTH_M_Q_T_T_SETTINGS_AUTHENTICATION_TYPES)[number];
 
-const SOUTH_M_Q_T_T_SETTINGS_QOSS = ['0', '1', '2'] as const
+export const SOUTH_M_Q_T_T_SETTINGS_QOSS = ['0', '1', '2'] as const;
 export type SouthMQTTSettingsQos = (typeof SOUTH_M_Q_T_T_SETTINGS_QOSS)[number];
 
-const SOUTH_M_Q_T_T_ITEM_SETTINGS_JSON_PAYLOAD_TIMESTAMP_PAYLOAD_TIMESTAMP_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const
-export type SouthMQTTItemSettingsJsonPayloadTimestampPayloadTimestampType = (typeof SOUTH_M_Q_T_T_ITEM_SETTINGS_JSON_PAYLOAD_TIMESTAMP_PAYLOAD_TIMESTAMP_TYPES)[number];
+export const SOUTH_M_Q_T_T_ITEM_SETTINGS_JSON_PAYLOAD_TIMESTAMP_PAYLOAD_TIMESTAMP_TYPES = [
+  'string',
+  'iso-string',
+  'unix-epoch',
+  'unix-epoch-ms'
+] as const;
+export type SouthMQTTItemSettingsJsonPayloadTimestampPayloadTimestampType =
+  (typeof SOUTH_M_Q_T_T_ITEM_SETTINGS_JSON_PAYLOAD_TIMESTAMP_PAYLOAD_TIMESTAMP_TYPES)[number];
 
-const SOUTH_M_Q_T_T_ITEM_SETTINGS_JSON_PAYLOAD_POINT_ID_ORIGINS = ['oibus', 'payload'] as const
+export const SOUTH_M_Q_T_T_ITEM_SETTINGS_JSON_PAYLOAD_POINT_ID_ORIGINS = ['oibus', 'payload'] as const;
 export type SouthMQTTItemSettingsJsonPayloadPointIdOrigin = (typeof SOUTH_M_Q_T_T_ITEM_SETTINGS_JSON_PAYLOAD_POINT_ID_ORIGINS)[number];
 
-const SOUTH_M_Q_T_T_ITEM_SETTINGS_JSON_PAYLOAD_TIMESTAMP_ORIGINS = ['oibus', 'payload'] as const
+export const SOUTH_M_Q_T_T_ITEM_SETTINGS_JSON_PAYLOAD_TIMESTAMP_ORIGINS = ['oibus', 'payload'] as const;
 export type SouthMQTTItemSettingsJsonPayloadTimestampOrigin = (typeof SOUTH_M_Q_T_T_ITEM_SETTINGS_JSON_PAYLOAD_TIMESTAMP_ORIGINS)[number];
 
-const SOUTH_M_Q_T_T_ITEM_SETTINGS_VALUE_TYPES = ['number', 'string', 'json'] as const
+export const SOUTH_M_Q_T_T_ITEM_SETTINGS_VALUE_TYPES = ['number', 'string', 'json'] as const;
 export type SouthMQTTItemSettingsValueType = (typeof SOUTH_M_Q_T_T_ITEM_SETTINGS_VALUE_TYPES)[number];
 
-const SOUTH_M_S_S_Q_L_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'Date', 'DateTime', 'DateTime2', 'DateTimeOffset', 'SmallDateTime', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const
+export const SOUTH_M_S_S_Q_L_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = [
+  'string',
+  'Date',
+  'DateTime',
+  'DateTime2',
+  'DateTimeOffset',
+  'SmallDateTime',
+  'iso-string',
+  'unix-epoch',
+  'unix-epoch-ms'
+] as const;
 export type SouthMSSQLItemSettingsDateTimeFieldsType = (typeof SOUTH_M_S_S_Q_L_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
 
-const SOUTH_M_S_S_Q_L_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const
+export const SOUTH_M_S_S_Q_L_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const;
 export type SouthMSSQLItemSettingsSerializationType = (typeof SOUTH_M_S_S_Q_L_ITEM_SETTINGS_SERIALIZATION_TYPES)[number];
 
-const SOUTH_M_S_S_Q_L_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const
+export const SOUTH_M_S_S_Q_L_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = [
+  'DOT',
+  'SEMI_COLON',
+  'COLON',
+  'COMMA',
+  'NON_BREAKING_SPACE',
+  'SLASH',
+  'TAB',
+  'PIPE'
+] as const;
 export type SouthMSSQLItemSettingsSerializationDelimiter = (typeof SOUTH_M_S_S_Q_L_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
 
-const SOUTH_MY_S_Q_L_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const
+export const SOUTH_MY_S_Q_L_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const;
 export type SouthMySQLItemSettingsDateTimeFieldsType = (typeof SOUTH_MY_S_Q_L_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
 
-const SOUTH_MY_S_Q_L_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const
+export const SOUTH_MY_S_Q_L_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const;
 export type SouthMySQLItemSettingsSerializationType = (typeof SOUTH_MY_S_Q_L_ITEM_SETTINGS_SERIALIZATION_TYPES)[number];
 
-const SOUTH_MY_S_Q_L_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const
+export const SOUTH_MY_S_Q_L_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = [
+  'DOT',
+  'SEMI_COLON',
+  'COLON',
+  'COMMA',
+  'NON_BREAKING_SPACE',
+  'SLASH',
+  'TAB',
+  'PIPE'
+] as const;
 export type SouthMySQLItemSettingsSerializationDelimiter = (typeof SOUTH_MY_S_Q_L_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
 
-const SOUTH_O_D_B_C_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const
+export const SOUTH_O_D_B_C_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const;
 export type SouthODBCItemSettingsDateTimeFieldsType = (typeof SOUTH_O_D_B_C_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
 
-const SOUTH_O_D_B_C_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const
+export const SOUTH_O_D_B_C_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const;
 export type SouthODBCItemSettingsSerializationType = (typeof SOUTH_O_D_B_C_ITEM_SETTINGS_SERIALIZATION_TYPES)[number];
 
-const SOUTH_O_D_B_C_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const
+export const SOUTH_O_D_B_C_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = [
+  'DOT',
+  'SEMI_COLON',
+  'COLON',
+  'COMMA',
+  'NON_BREAKING_SPACE',
+  'SLASH',
+  'TAB',
+  'PIPE'
+] as const;
 export type SouthODBCItemSettingsSerializationDelimiter = (typeof SOUTH_O_D_B_C_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
 
-const SOUTH_O_I_ANALYTICS_SETTINGS_SPECIFIC_SETTINGS_AUTHENTICATIONS = ['basic', 'aad-client-secret', 'aad-certificate'] as const
-export type SouthOIAnalyticsSettingsSpecificSettingsAuthentication = (typeof SOUTH_O_I_ANALYTICS_SETTINGS_SPECIFIC_SETTINGS_AUTHENTICATIONS)[number];
+export const SOUTH_O_I_ANALYTICS_SETTINGS_SPECIFIC_SETTINGS_AUTHENTICATIONS = ['basic', 'aad-client-secret', 'aad-certificate'] as const;
+export type SouthOIAnalyticsSettingsSpecificSettingsAuthentication =
+  (typeof SOUTH_O_I_ANALYTICS_SETTINGS_SPECIFIC_SETTINGS_AUTHENTICATIONS)[number];
 
-const SOUTH_O_I_ANALYTICS_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const
+export const SOUTH_O_I_ANALYTICS_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const;
 export type SouthOIAnalyticsItemSettingsSerializationType = (typeof SOUTH_O_I_ANALYTICS_ITEM_SETTINGS_SERIALIZATION_TYPES)[number];
 
-const SOUTH_O_I_ANALYTICS_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const
-export type SouthOIAnalyticsItemSettingsSerializationDelimiter = (typeof SOUTH_O_I_ANALYTICS_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
+export const SOUTH_O_I_ANALYTICS_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = [
+  'DOT',
+  'SEMI_COLON',
+  'COLON',
+  'COMMA',
+  'NON_BREAKING_SPACE',
+  'SLASH',
+  'TAB',
+  'PIPE'
+] as const;
+export type SouthOIAnalyticsItemSettingsSerializationDelimiter =
+  (typeof SOUTH_O_I_ANALYTICS_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
 
-const SOUTH_O_L_E_D_B_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const
+export const SOUTH_O_L_E_D_B_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const;
 export type SouthOLEDBItemSettingsDateTimeFieldsType = (typeof SOUTH_O_L_E_D_B_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
 
-const SOUTH_O_L_E_D_B_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const
+export const SOUTH_O_L_E_D_B_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const;
 export type SouthOLEDBItemSettingsSerializationType = (typeof SOUTH_O_L_E_D_B_ITEM_SETTINGS_SERIALIZATION_TYPES)[number];
 
-const SOUTH_O_L_E_D_B_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const
+export const SOUTH_O_L_E_D_B_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = [
+  'DOT',
+  'SEMI_COLON',
+  'COLON',
+  'COMMA',
+  'NON_BREAKING_SPACE',
+  'SLASH',
+  'TAB',
+  'PIPE'
+] as const;
 export type SouthOLEDBItemSettingsSerializationDelimiter = (typeof SOUTH_O_L_E_D_B_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
 
-const SOUTH_O_P_C_H_D_A_ITEM_SETTINGS_AGGREGATES = ['raw', 'interpolative', 'total', 'average', 'time-average', 'count', 'stdev', 'minimum-actual-time', 'minimum', 'maximum-actual-time', 'maximum', 'start', 'end', 'delta', 'reg-slope', 'reg-const', 'reg-dev', 'variance', 'range', 'duration-good', 'duration-bad', 'percent-good', 'percent-bad', 'worst-quality', 'annotations'] as const
+export const SOUTH_O_P_C_H_D_A_ITEM_SETTINGS_AGGREGATES = [
+  'raw',
+  'interpolative',
+  'total',
+  'average',
+  'time-average',
+  'count',
+  'stdev',
+  'minimum-actual-time',
+  'minimum',
+  'maximum-actual-time',
+  'maximum',
+  'start',
+  'end',
+  'delta',
+  'reg-slope',
+  'reg-const',
+  'reg-dev',
+  'variance',
+  'range',
+  'duration-good',
+  'duration-bad',
+  'percent-good',
+  'percent-bad',
+  'worst-quality',
+  'annotations'
+] as const;
 export type SouthOPCHDAItemSettingsAggregate = (typeof SOUTH_O_P_C_H_D_A_ITEM_SETTINGS_AGGREGATES)[number];
 
-const SOUTH_O_P_C_H_D_A_ITEM_SETTINGS_RESAMPLINGS = ['none', '1s', '10s', '30s', '1min', '1h', '1d'] as const
+export const SOUTH_O_P_C_H_D_A_ITEM_SETTINGS_RESAMPLINGS = ['none', '1s', '10s', '30s', '1min', '1h', '1d'] as const;
 export type SouthOPCHDAItemSettingsResampling = (typeof SOUTH_O_P_C_H_D_A_ITEM_SETTINGS_RESAMPLINGS)[number];
 
-const SOUTH_O_P_C_U_A_SETTINGS_AUTHENTICATION_TYPES = ['none', 'basic', 'cert'] as const
+export const SOUTH_O_P_C_U_A_SETTINGS_AUTHENTICATION_TYPES = ['none', 'basic', 'cert'] as const;
 export type SouthOPCUASettingsAuthenticationType = (typeof SOUTH_O_P_C_U_A_SETTINGS_AUTHENTICATION_TYPES)[number];
 
-const SOUTH_O_P_C_U_A_SETTINGS_SECURITY_MODES = ['None', 'Sign', 'SignAndEncrypt'] as const
+export const SOUTH_O_P_C_U_A_SETTINGS_SECURITY_MODES = ['None', 'Sign', 'SignAndEncrypt'] as const;
 export type SouthOPCUASettingsSecurityMode = (typeof SOUTH_O_P_C_U_A_SETTINGS_SECURITY_MODES)[number];
 
-const SOUTH_O_P_C_U_A_SETTINGS_SECURITY_POLICYS = ['None', 'Basic128', 'Basic192', 'Basic256', 'Basic128Rsa15', 'Basic192Rsa15', 'Basic256Rsa15', 'Basic256Sha256', 'Aes128_Sha256_RsaOaep', 'PubSub_Aes128_CTR', 'PubSub_Aes256_CTR'] as const
+export const SOUTH_O_P_C_U_A_SETTINGS_SECURITY_POLICYS = [
+  'None',
+  'Basic128',
+  'Basic192',
+  'Basic256',
+  'Basic128Rsa15',
+  'Basic192Rsa15',
+  'Basic256Rsa15',
+  'Basic256Sha256',
+  'Aes128_Sha256_RsaOaep',
+  'PubSub_Aes128_CTR',
+  'PubSub_Aes256_CTR'
+] as const;
 export type SouthOPCUASettingsSecurityPolicy = (typeof SOUTH_O_P_C_U_A_SETTINGS_SECURITY_POLICYS)[number];
 
-const SOUTH_O_P_C_U_A_ITEM_SETTINGS_HA_MODE_AGGREGATES = ['raw', 'average', 'minimum', 'maximum', 'count'] as const
+export const SOUTH_O_P_C_U_A_ITEM_SETTINGS_HA_MODE_AGGREGATES = ['raw', 'average', 'minimum', 'maximum', 'count'] as const;
 export type SouthOPCUAItemSettingsHaModeAggregate = (typeof SOUTH_O_P_C_U_A_ITEM_SETTINGS_HA_MODE_AGGREGATES)[number];
 
-const SOUTH_O_P_C_U_A_ITEM_SETTINGS_HA_MODE_RESAMPLINGS = ['none', '1s', '10s', '30s', '1min', '1h', '1d'] as const
+export const SOUTH_O_P_C_U_A_ITEM_SETTINGS_HA_MODE_RESAMPLINGS = ['none', '1s', '10s', '30s', '1min', '1h', '1d'] as const;
 export type SouthOPCUAItemSettingsHaModeResampling = (typeof SOUTH_O_P_C_U_A_ITEM_SETTINGS_HA_MODE_RESAMPLINGS)[number];
 
-const SOUTH_O_P_C_U_A_ITEM_SETTINGS_MODES = ['HA', 'DA'] as const
+export const SOUTH_O_P_C_U_A_ITEM_SETTINGS_MODES = ['HA', 'DA'] as const;
 export type SouthOPCUAItemSettingsMode = (typeof SOUTH_O_P_C_U_A_ITEM_SETTINGS_MODES)[number];
 
-const SOUTH_ORACLE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const
+export const SOUTH_ORACLE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const;
 export type SouthOracleItemSettingsDateTimeFieldsType = (typeof SOUTH_ORACLE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
 
-const SOUTH_ORACLE_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const
+export const SOUTH_ORACLE_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const;
 export type SouthOracleItemSettingsSerializationType = (typeof SOUTH_ORACLE_ITEM_SETTINGS_SERIALIZATION_TYPES)[number];
 
-const SOUTH_ORACLE_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const
+export const SOUTH_ORACLE_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = [
+  'DOT',
+  'SEMI_COLON',
+  'COLON',
+  'COMMA',
+  'NON_BREAKING_SPACE',
+  'SLASH',
+  'TAB',
+  'PIPE'
+] as const;
 export type SouthOracleItemSettingsSerializationDelimiter = (typeof SOUTH_ORACLE_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
 
-const SOUTH_P_I_ITEM_SETTINGS_TYPES = ['pointId', 'pointQuery'] as const
+export const SOUTH_P_I_ITEM_SETTINGS_TYPES = ['pointId', 'pointQuery'] as const;
 export type SouthPIItemSettingsType = (typeof SOUTH_P_I_ITEM_SETTINGS_TYPES)[number];
 
-const SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms', 'timestamp', 'timestamptz'] as const
+export const SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = [
+  'string',
+  'iso-string',
+  'unix-epoch',
+  'unix-epoch-ms',
+  'timestamp',
+  'timestamptz'
+] as const;
 export type SouthPostgreSQLItemSettingsDateTimeFieldsType = (typeof SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
 
-const SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const
+export const SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const;
 export type SouthPostgreSQLItemSettingsSerializationType = (typeof SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_SERIALIZATION_TYPES)[number];
 
-const SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const
+export const SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = [
+  'DOT',
+  'SEMI_COLON',
+  'COLON',
+  'COMMA',
+  'NON_BREAKING_SPACE',
+  'SLASH',
+  'TAB',
+  'PIPE'
+] as const;
 export type SouthPostgreSQLItemSettingsSerializationDelimiter = (typeof SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
 
-const SOUTH_S_F_T_P_SETTINGS_AUTHENTICATIONS = ['password', 'private-key'] as const
+export const SOUTH_S_F_T_P_SETTINGS_AUTHENTICATIONS = ['password', 'private-key'] as const;
 export type SouthSFTPSettingsAuthentication = (typeof SOUTH_S_F_T_P_SETTINGS_AUTHENTICATIONS)[number];
 
-const SOUTH_SLIMS_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const
+export const SOUTH_SLIMS_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const;
 export type SouthSlimsItemSettingsDateTimeFieldsType = (typeof SOUTH_SLIMS_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
 
-const SOUTH_SLIMS_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const
+export const SOUTH_SLIMS_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const;
 export type SouthSlimsItemSettingsSerializationType = (typeof SOUTH_SLIMS_ITEM_SETTINGS_SERIALIZATION_TYPES)[number];
 
-const SOUTH_SLIMS_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const
+export const SOUTH_SLIMS_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = [
+  'DOT',
+  'SEMI_COLON',
+  'COLON',
+  'COMMA',
+  'NON_BREAKING_SPACE',
+  'SLASH',
+  'TAB',
+  'PIPE'
+] as const;
 export type SouthSlimsItemSettingsSerializationDelimiter = (typeof SOUTH_SLIMS_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
 
-const SOUTH_S_Q_LITE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const
+export const SOUTH_S_Q_LITE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const;
 export type SouthSQLiteItemSettingsDateTimeFieldsType = (typeof SOUTH_S_Q_LITE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
 
-const SOUTH_S_Q_LITE_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const
+export const SOUTH_S_Q_LITE_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const;
 export type SouthSQLiteItemSettingsSerializationType = (typeof SOUTH_S_Q_LITE_ITEM_SETTINGS_SERIALIZATION_TYPES)[number];
 
-const SOUTH_S_Q_LITE_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const
+export const SOUTH_S_Q_LITE_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = [
+  'DOT',
+  'SEMI_COLON',
+  'COLON',
+  'COMMA',
+  'NON_BREAKING_SPACE',
+  'SLASH',
+  'TAB',
+  'PIPE'
+] as const;
 export type SouthSQLiteItemSettingsSerializationDelimiter = (typeof SOUTH_S_Q_LITE_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
 
 export interface SouthADSSettingsStructureFiltering {
@@ -190,9 +344,7 @@ export interface SouthOPCUASettingsAuthentication {
   keyFilePath?: string | null;
 }
 
-interface BaseSouthSettings {}
-
-export interface SouthADSSettings extends BaseSouthSettings {
+export interface SouthADSSettings {
   netId: string;
   port: number;
   routerAddress: string | null;
@@ -206,12 +358,12 @@ export interface SouthADSSettings extends BaseSouthSettings {
   structureFiltering: Array<SouthADSSettingsStructureFiltering> | null;
 }
 
-export interface SouthFolderScannerSettings extends BaseSouthSettings {
+export interface SouthFolderScannerSettings {
   inputFolder: string;
   compression: boolean;
 }
 
-export interface SouthModbusSettings extends BaseSouthSettings {
+export interface SouthModbusSettings {
   host: string;
   port: number;
   retryInterval: number;
@@ -222,7 +374,7 @@ export interface SouthModbusSettings extends BaseSouthSettings {
   swapWordsInDWords: boolean;
 }
 
-export interface SouthMQTTSettings extends BaseSouthSettings {
+export interface SouthMQTTSettings {
   url: string;
   qos: SouthMQTTSettingsQos;
   persistent?: boolean;
@@ -232,7 +384,7 @@ export interface SouthMQTTSettings extends BaseSouthSettings {
   connectTimeout: number;
 }
 
-export interface SouthMSSQLSettings extends BaseSouthSettings {
+export interface SouthMSSQLSettings {
   host: string;
   port: number;
   connectionTimeout: number;
@@ -245,7 +397,7 @@ export interface SouthMSSQLSettings extends BaseSouthSettings {
   requestTimeout: number;
 }
 
-export interface SouthMySQLSettings extends BaseSouthSettings {
+export interface SouthMySQLSettings {
   host: string;
   port: number;
   connectionTimeout: number;
@@ -254,7 +406,7 @@ export interface SouthMySQLSettings extends BaseSouthSettings {
   password: string | null;
 }
 
-export interface SouthODBCSettings extends BaseSouthSettings {
+export interface SouthODBCSettings {
   remoteAgent: boolean;
   agentUrl?: string;
   connectionTimeout: number;
@@ -264,13 +416,13 @@ export interface SouthODBCSettings extends BaseSouthSettings {
   requestTimeout?: number;
 }
 
-export interface SouthOIAnalyticsSettings extends BaseSouthSettings {
+export interface SouthOIAnalyticsSettings {
   useOiaModule: boolean;
   timeout: number;
   specificSettings?: SouthOIAnalyticsSettingsSpecificSettings | null;
 }
 
-export interface SouthOLEDBSettings extends BaseSouthSettings {
+export interface SouthOLEDBSettings {
   agentUrl: string;
   connectionTimeout: number;
   retryInterval: number;
@@ -278,14 +430,14 @@ export interface SouthOLEDBSettings extends BaseSouthSettings {
   requestTimeout: number;
 }
 
-export interface SouthOPCHDASettings extends BaseSouthSettings {
+export interface SouthOPCHDASettings {
   agentUrl: string;
   retryInterval: number;
   host: string;
   serverName: string;
 }
 
-export interface SouthOPCUASettings extends BaseSouthSettings {
+export interface SouthOPCUASettings {
   sharedConnection: boolean;
   url: string;
   keepSessionAlive: boolean;
@@ -296,7 +448,7 @@ export interface SouthOPCUASettings extends BaseSouthSettings {
   authentication: SouthOPCUASettingsAuthentication;
 }
 
-export interface SouthOracleSettings extends BaseSouthSettings {
+export interface SouthOracleSettings {
   thickMode: boolean;
   oracleClient?: string;
   host: string;
@@ -307,12 +459,12 @@ export interface SouthOracleSettings extends BaseSouthSettings {
   password: string | null;
 }
 
-export interface SouthPISettings extends BaseSouthSettings {
+export interface SouthPISettings {
   agentUrl: string;
   retryInterval: number;
 }
 
-export interface SouthPostgreSQLSettings extends BaseSouthSettings {
+export interface SouthPostgreSQLSettings {
   host: string;
   port: number;
   connectionTimeout: number;
@@ -322,7 +474,7 @@ export interface SouthPostgreSQLSettings extends BaseSouthSettings {
   requestTimeout: number;
 }
 
-export interface SouthSFTPSettings extends BaseSouthSettings {
+export interface SouthSFTPSettings {
   host: string;
   port: number;
   authentication: SouthSFTPSettingsAuthentication;
@@ -333,7 +485,7 @@ export interface SouthSFTPSettings extends BaseSouthSettings {
   compression: boolean;
 }
 
-export interface SouthSlimsSettings extends BaseSouthSettings {
+export interface SouthSlimsSettings {
   url: string;
   port: number;
   acceptUnauthorized: boolean;
@@ -346,7 +498,7 @@ export interface SouthSlimsSettings extends BaseSouthSettings {
   proxyPassword?: string | null;
 }
 
-export interface SouthSQLiteSettings extends BaseSouthSettings {
+export interface SouthSQLiteSettings {
   databasePath: string;
 }
 
@@ -367,7 +519,7 @@ export type SouthSettings =
   | SouthPostgreSQLSettings
   | SouthSFTPSettings
   | SouthSlimsSettings
-  | SouthSQLiteSettings
+  | SouthSQLiteSettings;
 
 export interface SouthModbusItemSettingsData {
   dataType: SouthModbusItemSettingsDataDataType;
@@ -566,94 +718,92 @@ export interface SouthSQLiteItemSettingsSerialization {
   outputTimezone: Timezone;
 }
 
-interface BaseSouthItemSettings {}
-
-export interface SouthADSItemSettings extends BaseSouthItemSettings {
+export interface SouthADSItemSettings {
   address: string;
 }
 
-export interface SouthFolderScannerItemSettings extends BaseSouthItemSettings {
+export interface SouthFolderScannerItemSettings {
   regex: string;
   minAge: number;
   preserveFiles: boolean;
   ignoreModifiedDate?: boolean;
 }
 
-export interface SouthModbusItemSettings extends BaseSouthItemSettings {
+export interface SouthModbusItemSettings {
   address: string;
   modbusType: SouthModbusItemSettingsModbusType;
   data?: SouthModbusItemSettingsData;
 }
 
-export interface SouthMQTTItemSettings extends BaseSouthItemSettings {
+export interface SouthMQTTItemSettings {
   topic: string;
   valueType: SouthMQTTItemSettingsValueType;
   jsonPayload?: SouthMQTTItemSettingsJsonPayload | null;
 }
 
-export interface SouthMSSQLItemSettings extends BaseSouthItemSettings {
+export interface SouthMSSQLItemSettings {
   query: string;
   dateTimeFields: Array<SouthMSSQLItemSettingsDateTimeFields> | null;
   serialization: SouthMSSQLItemSettingsSerialization;
 }
 
-export interface SouthMySQLItemSettings extends BaseSouthItemSettings {
+export interface SouthMySQLItemSettings {
   query: string;
   requestTimeout: number;
   dateTimeFields: Array<SouthMySQLItemSettingsDateTimeFields> | null;
   serialization: SouthMySQLItemSettingsSerialization;
 }
 
-export interface SouthODBCItemSettings extends BaseSouthItemSettings {
+export interface SouthODBCItemSettings {
   query: string;
   dateTimeFields: Array<SouthODBCItemSettingsDateTimeFields> | null;
   serialization: SouthODBCItemSettingsSerialization;
 }
 
-export interface SouthOIAnalyticsItemSettings extends BaseSouthItemSettings {
+export interface SouthOIAnalyticsItemSettings {
   endpoint: string;
   queryParams: Array<SouthOIAnalyticsItemSettingsQueryParams> | null;
   serialization: SouthOIAnalyticsItemSettingsSerialization;
 }
 
-export interface SouthOLEDBItemSettings extends BaseSouthItemSettings {
+export interface SouthOLEDBItemSettings {
   query: string;
   dateTimeFields: Array<SouthOLEDBItemSettingsDateTimeFields> | null;
   serialization: SouthOLEDBItemSettingsSerialization;
 }
 
-export interface SouthOPCHDAItemSettings extends BaseSouthItemSettings {
+export interface SouthOPCHDAItemSettings {
   nodeId: string;
   aggregate: SouthOPCHDAItemSettingsAggregate;
   resampling?: SouthOPCHDAItemSettingsResampling;
 }
 
-export interface SouthOPCUAItemSettings extends BaseSouthItemSettings {
+export interface SouthOPCUAItemSettings {
   nodeId: string;
   mode: SouthOPCUAItemSettingsMode;
   haMode?: SouthOPCUAItemSettingsHaMode | null;
 }
 
-export interface SouthOracleItemSettings extends BaseSouthItemSettings {
+export interface SouthOracleItemSettings {
   query: string;
   requestTimeout: number;
   dateTimeFields: Array<SouthOracleItemSettingsDateTimeFields> | null;
   serialization: SouthOracleItemSettingsSerialization;
 }
 
-export interface SouthPIItemSettings extends BaseSouthItemSettings {
+export interface SouthPIItemSettings {
   type: SouthPIItemSettingsType;
   piPoint?: string;
   piQuery?: string;
 }
 
-export interface SouthPostgreSQLItemSettings extends BaseSouthItemSettings {
+export interface SouthPostgreSQLItemSettings {
   query: string;
   dateTimeFields: Array<SouthPostgreSQLItemSettingsDateTimeFields> | null;
   serialization: SouthPostgreSQLItemSettingsSerialization;
 }
 
-export interface SouthSFTPItemSettings extends BaseSouthItemSettings {
+export interface SouthSFTPItemSettings {
   remoteFolder: string;
   regex: string;
   minAge: number;
@@ -661,7 +811,7 @@ export interface SouthSFTPItemSettings extends BaseSouthItemSettings {
   ignoreModifiedDate?: boolean;
 }
 
-export interface SouthSlimsItemSettings extends BaseSouthItemSettings {
+export interface SouthSlimsItemSettings {
   endpoint: string;
   body: string | null;
   queryParams: Array<SouthSlimsItemSettingsQueryParams> | null;
@@ -669,7 +819,7 @@ export interface SouthSlimsItemSettings extends BaseSouthItemSettings {
   serialization: SouthSlimsItemSettingsSerialization;
 }
 
-export interface SouthSQLiteItemSettings extends BaseSouthItemSettings {
+export interface SouthSQLiteItemSettings {
   query: string;
   dateTimeFields: Array<SouthSQLiteItemSettingsDateTimeFields> | null;
   serialization: SouthSQLiteItemSettingsSerialization;
@@ -692,4 +842,4 @@ export type SouthItemSettings =
   | SouthPostgreSQLItemSettings
   | SouthSFTPItemSettings
   | SouthSlimsItemSettings
-  | SouthSQLiteItemSettings
+  | SouthSQLiteItemSettings;

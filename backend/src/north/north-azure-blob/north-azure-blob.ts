@@ -5,9 +5,9 @@ import { BlobServiceClient, StorageSharedKeyCredential } from '@azure/storage-bl
 import { ClientSecretCredential, DefaultAzureCredential } from '@azure/identity';
 import NorthConnector from '../north-connector';
 import EncryptionService from '../../service/encryption.service';
-import { NorthAzureBlobSettings } from '../../../../shared/model/north-settings.model';
+import { NorthAzureBlobSettings } from '../../../shared/model/north-settings.model';
 import { ProxyOptions } from '@azure/core-http';
-import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
 import csv from 'papaparse';
 import { NorthConnectorEntity } from '../../model/north-connector.model';

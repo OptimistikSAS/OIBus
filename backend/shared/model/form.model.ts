@@ -133,7 +133,7 @@ export interface OibTimezoneFormControl extends BaseOibFormControl<string> {
   type: 'OibTimezone';
 }
 
-export interface OibArrayFormControl extends BaseOibFormControl<Array<any>> {
+export interface OibArrayFormControl extends BaseOibFormControl<Array<OibFormControl>> {
   type: 'OibArray';
   content: Array<OibFormControl>;
 }

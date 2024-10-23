@@ -7,9 +7,9 @@ import ValueCacheServiceMock from '../../tests/__mocks__/service/cache/value-cac
 import FileCacheServiceMock from '../../tests/__mocks__/service/cache/file-cache-service.mock';
 import ArchiveServiceMock from '../../tests/__mocks__/service/cache/archive-service.mock';
 import csv from 'papaparse';
-import { NorthSFTPSettings } from '../../../../shared/model/north-settings.model';
+import { NorthSFTPSettings } from '../../../shared/model/north-settings.model';
 import sftpClient from 'ssh2-sftp-client';
-import { OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { OIBusTimeValue } from '../../../shared/model/engine.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';

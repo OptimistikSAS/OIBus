@@ -1,11 +1,11 @@
 import { Component, inject } from '@angular/core';
 import { NonNullableFormBuilder, Validators } from '@angular/forms';
-import { Language, LANGUAGES, Timezone } from '../../../../../shared/model/types';
+import { Language, LANGUAGES, Timezone } from '../../../../../backend/shared/model/types';
 import { Observable, of, switchMap, tap, timer } from 'rxjs';
 import { inMemoryTypeahead } from '../../shared/typeahead';
 import { CurrentUserService } from '../../shared/current-user.service';
 import { ChangePasswordModalComponent } from '../change-password-modal/change-password-modal.component';
-import { User, UserCommandDTO } from '../../../../../shared/model/user.model';
+import { User, UserCommandDTO } from '../../../../../backend/shared/model/user.model';
 import { ModalService } from '../../shared/modal.service';
 import { UserSettingsService } from '../../services/user-settings.service';
 import { NotificationService } from '../../shared/notification.service';

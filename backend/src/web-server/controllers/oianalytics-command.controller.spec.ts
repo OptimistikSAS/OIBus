@@ -1,9 +1,9 @@
 import Joi from 'joi';
 import JoiValidator from './validators/joi.validator';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
-import { CommandSearchParam } from '../../../../shared/model/command.model';
+import { CommandSearchParam } from '../../../shared/model/command.model';
 import OianalyticsCommandController from './oianalytics-command.controller';
-import { createPageFromArray } from '../../../../shared/model/types';
+import { createPageFromArray } from '../../../shared/model/types';
 import testData from '../../tests/utils/test-data';
 
 jest.mock('./validators/joi.validator');

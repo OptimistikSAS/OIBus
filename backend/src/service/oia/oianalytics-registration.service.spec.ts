@@ -1,4 +1,4 @@
-import { RegistrationSettingsCommandDTO } from '../../../../shared/model/engine.model';
+import { RegistrationSettingsCommandDTO } from '../../../shared/model/engine.model';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import EncryptionService from '../encryption.service';
 import pino from 'pino';

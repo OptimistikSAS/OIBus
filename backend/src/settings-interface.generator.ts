@@ -1,10 +1,11 @@
 import { appendFileSync, openSync, readdirSync } from 'node:fs';
-import { OibFormControl } from '../../shared/model/form.model';
-import { ConnectorManifest } from '../../shared/model/types';
-import { SouthConnectorManifest } from '../../shared/model/south-connector.model';
+import { OibFormControl } from '../shared/model/form.model';
+import { ConnectorManifest } from '../shared/model/types';
+import { SouthConnectorManifest } from '../shared/model/south-connector.model';
+import path from 'node:path';
 
-const SOUTH_SETTINGS_DESTINATION_PATH = '../shared/model/south-settings.model.ts';
-const NORTH_SETTINGS_DESTINATION_PATH = '../shared/model/north-settings.model.ts';
+const SOUTH_SETTINGS_DESTINATION_PATH = 'shared/model/south-settings.model.ts';
+const NORTH_SETTINGS_DESTINATION_PATH = 'shared/model/north-settings.model.ts';
 
 const SCAN_MODE_IMPORT = 'import { ScanModeDTO } from "./scan-mode.model";';
 const TIMEZONE_IMPORT = "import { Timezone } from './types';\n";
@@ -16,9 +17,9 @@ type ConnectorType = 'South' | 'North';
 })();
 async function generateSettingsInterfaces() {
   // create the destination file
-  openSync(SOUTH_SETTINGS_DESTINATION_PATH, 'w');
+  openSync(path.resolve(SOUTH_SETTINGS_DESTINATION_PATH), 'w');
   await generateSettingsInterfacesForConnectorType('South');
-  openSync(NORTH_SETTINGS_DESTINATION_PATH, 'w');
+  openSync(path.resolve(NORTH_SETTINGS_DESTINATION_PATH), 'w');
   await generateSettingsInterfacesForConnectorType('North');
 }
 
@@ -68,7 +69,7 @@ function buildTypescriptFile(typesToGenerate: TypeGenerationDescription, connect
 
   typesToGenerate.enums.forEach(enumToWrite => {
     const listName = toSnakeCase(enumToWrite.name).toUpperCase() + 'S';
-    appendFileSync(path, `const ${listName} = [${enumToWrite.values.map(v => `'${v}'`).join(', ')}] as const\n`);
+    appendFileSync(path, `export const ${listName} = [${enumToWrite.values.map(v => `'${v}'`).join(', ')}] as const\n`);
     appendFileSync(path, `export type ${enumToWrite.name} = (typeof ${listName})[number];\n\n`);
   });
 
@@ -80,10 +81,8 @@ function buildTypescriptFile(typesToGenerate: TypeGenerationDescription, connect
     appendFileSync(path, '}\n\n');
   });
 
-  appendFileSync(path, `interface Base${connectorType}Settings {}\n\n`);
-
   typesToGenerate.settingsInterfaces.forEach(interfaceToWrite => {
-    appendFileSync(path, `export interface ${interfaceToWrite.name} extends Base${connectorType}Settings {\n`);
+    appendFileSync(path, `export interface ${interfaceToWrite.name} {\n`);
     interfaceToWrite.attributes.forEach(attribute => {
       writeAttribute(path, attribute);
     });
@@ -105,10 +104,8 @@ function buildTypescriptFile(typesToGenerate: TypeGenerationDescription, connect
       appendFileSync(path, '}\n\n');
     });
 
-    appendFileSync(path, `interface Base${connectorType}ItemSettings {}\n\n`);
-
     typesToGenerate.itemSettingsInterfaces.forEach(interfaceToWrite => {
-      appendFileSync(path, `export interface ${interfaceToWrite.name} extends Base${connectorType}ItemSettings {\n`);
+      appendFileSync(path, `export interface ${interfaceToWrite.name} {\n`);
       interfaceToWrite.attributes.forEach(attribute => {
         writeAttribute(path, attribute);
       });

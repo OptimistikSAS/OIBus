@@ -7,7 +7,7 @@ import pino from 'pino';
 import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import path from 'node:path';
-import { SouthSlimsItemSettings, SouthSlimsSettings } from '../../../../shared/model/south-settings.model';
+import { SouthSlimsItemSettings, SouthSlimsSettings } from '../../../shared/model/south-settings.model';
 import { DateTime } from 'luxon';
 import { createProxyAgent } from '../../service/proxy-agent';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';

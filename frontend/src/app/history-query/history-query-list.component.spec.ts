@@ -6,7 +6,7 @@ import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
-import { HistoryQueryLightDTO } from '../../../../shared/model/history-query.model';
+import { HistoryQueryLightDTO } from '../../../../backend/shared/model/history-query.model';
 import { HistoryQueryService } from '../services/history-query.service';
 import { NotificationService } from '../shared/notification.service';
 

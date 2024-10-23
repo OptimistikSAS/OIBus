@@ -13,11 +13,11 @@ import {
 } from '../../service/utils';
 import EncryptionService from '../../service/encryption.service';
 import pino from 'pino';
-import { Instant } from '../../../../shared/model/types';
+import { Instant } from '../../../shared/model/types';
 import { QueriesHistory } from '../south-interface';
 import { DateTime } from 'luxon';
-import { SouthOracleItemSettings, SouthOracleSettings } from '../../../../shared/model/south-settings.model';
-import { OIBusContent } from '../../../../shared/model/engine.model';
+import { SouthOracleItemSettings, SouthOracleSettings } from '../../../shared/model/south-settings.model';
+import { OIBusContent } from '../../../shared/model/engine.model';
 
 import oracledb, { ConnectionAttributes } from 'oracledb';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';

@@ -2,7 +2,7 @@ import SouthCacheService from './south-cache.service';
 
 import SouthCacheRepositoryMock from '../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
-import { SouthCache } from '../../../shared/model/south-connector.model';
+import { SouthCache } from '../../shared/model/south-connector.model';
 import testData from '../tests/utils/test-data';
 
 const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();

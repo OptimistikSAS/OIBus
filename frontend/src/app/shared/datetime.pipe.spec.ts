@@ -1,6 +1,6 @@
 import { DatetimePipe } from './datetime.pipe';
 import { DateTime } from 'luxon';
-import { DEFAULT_TZ, Instant } from '../../../../shared/model/types';
+import { DEFAULT_TZ, Instant } from '../../../../backend/shared/model/types';
 import { CurrentUserService } from './current-user.service';
 import { createMock } from 'ngx-speculoos';
 import { TestBed } from '@angular/core/testing';

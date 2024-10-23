@@ -6,10 +6,10 @@ import {
   NorthConnectorManifest,
   NorthConnectorWithoutSubscriptionsCommandDTO,
   NorthType
-} from '../../../../shared/model/north-connector.model';
+} from '../../../shared/model/north-connector.model';
 import JoiValidator from './validators/joi.validator';
 import { toNorthConnectorDTO, toNorthConnectorLightDTO } from '../../service/north.service';
-import { NorthSettings } from '../../../../shared/model/north-settings.model';
+import { NorthSettings } from '../../../shared/model/north-settings.model';
 
 export default class NorthConnectorController {
   constructor(protected readonly validator: JoiValidator) {}
@@ -66,7 +66,7 @@ export default class NorthConnectorController {
     }
   }
 
-  async updateNorthWithoutSubscriptions(ctx: KoaContext<NorthConnectorWithoutSubscriptionsCommandDTO, void>): Promise<void> {
+  async updateNorthWithoutSubscriptions(ctx: KoaContext<NorthConnectorWithoutSubscriptionsCommandDTO<NorthSettings>, void>): Promise<void> {
     try {
       await ctx.app.northService.updateNorthWithoutSubscriptions(ctx.params.id!, ctx.request.body!);
       ctx.noContent();

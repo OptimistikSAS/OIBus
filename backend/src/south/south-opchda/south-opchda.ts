@@ -1,12 +1,12 @@
 import SouthConnector from '../south-connector';
 import EncryptionService from '../../service/encryption.service';
 import pino from 'pino';
-import { Aggregate, Instant, Resampling } from '../../../../shared/model/types';
+import { Aggregate, Instant, Resampling } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
-import { SouthOPCHDAItemSettings, SouthOPCHDASettings } from '../../../../shared/model/south-settings.model';
+import { SouthOPCHDAItemSettings, SouthOPCHDASettings } from '../../../shared/model/south-settings.model';
 import fetch from 'node-fetch';
-import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';

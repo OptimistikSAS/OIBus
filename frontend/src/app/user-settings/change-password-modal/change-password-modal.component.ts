@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { NgbActiveModal, NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { AbstractControl, NonNullableFormBuilder, ValidationErrors, Validators } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
-import { ChangePasswordCommand } from '../../../../../shared/model/user.model';
+import { ChangePasswordCommand } from '../../../../../backend/shared/model/user.model';
 import { UserSettingsService } from '../../services/user-settings.service';
 import { formDirectives } from '../../shared/form-directives';
 

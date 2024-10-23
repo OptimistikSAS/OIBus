@@ -8,18 +8,30 @@ import { NotificationService } from '../../shared/notification.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { combineLatest, Observable, of, switchMap, tap } from 'rxjs';
 import { FormComponent } from '../../shared/form/form.component';
-import { OibFormControl } from '../../../../../shared/model/form.model';
-import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
+import { OibFormControl } from '../../../../../backend/shared/model/form.model';
+import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
-import { NorthConnectorCommandDTO, NorthConnectorDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
+import {
+  NorthConnectorCommandDTO,
+  NorthConnectorDTO,
+  NorthConnectorManifest
+} from '../../../../../backend/shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { OibScanModeComponent } from '../../shared/form/oib-scan-mode/oib-scan-mode.component';
 import { createFormGroup, groupFormControlsByRow } from '../../shared/form-utils';
-import { HistoryQueryCommandDTO, HistoryQueryDTO, HistoryQueryItemCommandDTO } from '../../../../../shared/model/history-query.model';
-import { SouthConnectorCommandDTO, SouthConnectorDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
+import {
+  HistoryQueryCommandDTO,
+  HistoryQueryDTO,
+  HistoryQueryItemCommandDTO
+} from '../../../../../backend/shared/model/history-query.model';
+import {
+  SouthConnectorCommandDTO,
+  SouthConnectorDTO,
+  SouthConnectorManifest
+} from '../../../../../backend/shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { HistoryQueryService } from '../../services/history-query.service';
-import { Instant } from '../../../../../shared/model/types';
+import { Instant } from '../../../../../backend/shared/model/types';
 import { DatetimepickerComponent } from '../../shared/datetimepicker/datetimepicker.component';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
@@ -30,8 +42,8 @@ import { ModalService } from '../../shared/modal.service';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { ResetCacheHistoryQueryModalComponent } from '../reset-cache-history-query-modal/reset-cache-history-query-modal.component';
-import { SouthItemSettings, SouthSettings } from '../../../../../shared/model/south-settings.model';
-import { NorthSettings } from '../../../../../shared/model/north-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
+import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
 @Component({
   selector: 'oib-edit-history-query',
@@ -104,7 +116,6 @@ export class EditHistoryQueryComponent implements OnInit {
       }>;
     }>;
     northSettings: FormGroup;
-    southSharedConnection: FormControl<boolean>;
     southSettings: FormGroup;
   }> | null = null;
 
@@ -210,8 +221,7 @@ export class EditHistoryQueryComponent implements OnInit {
             })
           }),
           northSettings: createFormGroup(northManifest.settings, this.fb),
-          southSettings: createFormGroup(southManifest.settings, this.fb),
-          southSharedConnection: this.fb.control(false)
+          southSettings: createFormGroup(southManifest.settings, this.fb)
         });
 
         if (this.historyQuery) {
@@ -254,7 +264,6 @@ export class EditHistoryQueryComponent implements OnInit {
       northType: this.northType,
       southType: this.southType,
       southSettings: formValue.southSettings,
-      southSharedConnection: formValue.southSharedConnection!,
       northSettings: formValue.northSettings,
       history: {
         maxInstantPerItem: formValue.history!.maxInstantPerItem!,

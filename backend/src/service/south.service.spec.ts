@@ -20,7 +20,7 @@ import SouthCacheRepositoryMock from '../tests/__mocks__/repository/cache/south-
 import ConnectionServiceMock from '../tests/__mocks__/service/connection-service.mock';
 import testData from '../tests/utils/test-data';
 import { SouthConnectorEntity } from '../model/south-connector.model';
-import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import CertificateRepository from '../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import OIAnalyticsRegistrationRepositoryMock from '../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';

@@ -1,5 +1,5 @@
-import { SouthConnectorManifest } from '../../../../shared/model/south-connector.model';
-import { buildDateTimeFieldsFormControl, buildSerializationFormControl, proxy } from '../../../../shared/model/manifest-factory';
+import { SouthConnectorManifest } from '../../../shared/model/south-connector.model';
+import { buildDateTimeFieldsFormControl, buildSerializationFormControl, proxy } from '../../../shared/model/manifest-factory';
 
 const manifest: SouthConnectorManifest = {
   id: 'slims',

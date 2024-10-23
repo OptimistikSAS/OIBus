@@ -1,4 +1,4 @@
-import { EngineSettingsCommandDTO, EngineSettingsDTO, OIBusInfo } from '../../../../shared/model/engine.model';
+import { EngineSettingsCommandDTO, EngineSettingsDTO, OIBusInfo } from '../../../shared/model/engine.model';
 import { KoaContext } from '../koa';
 import AbstractController from './abstract.controller';
 import { toEngineSettingsDTO } from '../../service/oibus.service';

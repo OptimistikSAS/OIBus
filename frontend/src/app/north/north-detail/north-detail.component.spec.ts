@@ -7,12 +7,12 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { NorthConnectorService } from '../../services/north-connector.service';
-import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
+import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { NotificationService } from '../../shared/notification.service';
 import { EngineService } from '../../services/engine.service';
-import { OIBusInfo } from '../../../../../shared/model/engine.model';
-import { NorthSettings } from '../../../../../shared/model/north-settings.model';
+import { OIBusInfo } from '../../../../../backend/shared/model/engine.model';
+import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
 class NorthDetailComponentTester extends ComponentTester<NorthDetailComponent> {
   constructor() {

@@ -10,7 +10,7 @@ import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-serv
 import ValueCacheServiceMock from '../../tests/__mocks__/service/cache/value-cache-service.mock';
 import FileCacheServiceMock from '../../tests/__mocks__/service/cache/file-cache-service.mock';
 import ArchiveServiceMock from '../../tests/__mocks__/service/cache/archive-service.mock';
-import { NorthAmazonS3Settings } from '../../../../shared/model/north-settings.model';
+import { NorthAmazonS3Settings } from '../../../shared/model/north-settings.model';
 import csv from 'papaparse';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';

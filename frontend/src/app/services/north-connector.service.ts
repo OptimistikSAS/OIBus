@@ -9,9 +9,9 @@ import {
   NorthConnectorManifest,
   NorthType,
   NorthValueFiles
-} from '../../../../shared/model/north-connector.model';
-import { SouthConnectorLightDTO } from '../../../../shared/model/south-connector.model';
-import { NorthSettings } from '../../../../shared/model/north-settings.model';
+} from '../../../../backend/shared/model/north-connector.model';
+import { SouthConnectorLightDTO } from '../../../../backend/shared/model/south-connector.model';
+import { NorthSettings } from '../../../../backend/shared/model/north-settings.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on North connectors

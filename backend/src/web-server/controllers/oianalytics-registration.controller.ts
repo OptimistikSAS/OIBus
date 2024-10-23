@@ -1,4 +1,4 @@
-import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../../shared/model/engine.model';
+import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../shared/model/engine.model';
 import { KoaContext } from '../koa';
 import AbstractController from './abstract.controller';
 import { toOIAnalyticsRegistrationDTO } from '../../service/oia/oianalytics-registration.service';
