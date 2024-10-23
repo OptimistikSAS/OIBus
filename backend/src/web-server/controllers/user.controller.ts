@@ -1,6 +1,6 @@
 import { KoaContext } from '../koa';
-import { ChangePasswordCommand, User, UserCommandDTO, UserLight, UserSearchParam } from '../../../../shared/model/user.model';
-import { Page } from '../../../../shared/model/types';
+import { ChangePasswordCommand, User, UserCommandDTO, UserLight, UserSearchParam } from '../../../shared/model/user.model';
+import { Page } from '../../../shared/model/types';
 import AbstractController from './abstract.controller';
 
 export default class UserController extends AbstractController {

@@ -3,12 +3,12 @@
 import ads from 'ads-client';
 import SouthConnector from '../south-connector';
 import { DateTime } from 'luxon';
-import { Instant } from '../../../../shared/model/types';
+import { Instant } from '../../../shared/model/types';
 import EncryptionService from '../../service/encryption.service';
 import pino from 'pino';
 import { QueriesLastPoint } from '../south-interface';
-import { SouthADSItemSettings, SouthADSSettings } from '../../../../shared/model/south-settings.model';
-import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { SouthADSItemSettings, SouthADSSettings } from '../../../shared/model/south-settings.model';
+import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';

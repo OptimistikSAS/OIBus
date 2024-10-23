@@ -1,5 +1,5 @@
 import { BaseEntity } from './types';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { NorthSettings } from '../../shared/model/north-settings.model';
 import { SouthConnectorEntityLight } from './south-connector.model';
 
 export interface NorthConnectorEntityLight extends BaseEntity {

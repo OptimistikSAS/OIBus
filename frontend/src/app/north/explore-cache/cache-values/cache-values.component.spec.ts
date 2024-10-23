@@ -3,10 +3,10 @@ import { ComponentTester, createMock } from 'ngx-speculoos';
 import { TestBed } from '@angular/core/testing';
 import { NorthConnectorService } from '../../../services/north-connector.service';
 import { of } from 'rxjs';
-import { NorthConnectorDTO } from '../../../../../../shared/model/north-connector.model';
+import { NorthConnectorDTO } from '../../../../../../backend/shared/model/north-connector.model';
 import { Component } from '@angular/core';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
-import { NorthSettings } from '../../../../../../shared/model/north-settings.model';
+import { NorthSettings } from '../../../../../../backend/shared/model/north-settings.model';
 
 @Component({
   template: `<oib-cache-values [northConnector]="northConnector" />`,

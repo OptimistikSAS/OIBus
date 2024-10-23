@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { EngineService } from '../services/engine.service';
-import { EngineMetrics, EngineSettingsDTO } from '../../../../shared/model/engine.model';
+import { EngineMetrics, EngineSettingsDTO } from '../../../../backend/shared/model/engine.model';
 import { AsyncPipe } from '@angular/common';
 import { ScanModeListComponent } from './scan-mode-list/scan-mode-list.component';
 import { IpFilterListComponent } from './ip-filter-list/ip-filter-list.component';

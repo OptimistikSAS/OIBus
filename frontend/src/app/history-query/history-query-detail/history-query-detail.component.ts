@@ -4,16 +4,16 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { combineLatest, of, switchMap } from 'rxjs';
 import { PageLoader } from '../../shared/page-loader.service';
-import { NorthConnectorCommandDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
+import { NorthConnectorCommandDTO, NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
-import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
+import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
-import { HistoryQueryDTO, HistoryQueryStatus } from '../../../../../shared/model/history-query.model';
+import { HistoryQueryDTO, HistoryQueryStatus } from '../../../../../backend/shared/model/history-query.model';
 import {
   SouthConnectorCommandDTO,
   SouthConnectorItemSearchParam,
   SouthConnectorManifest
-} from '../../../../../shared/model/south-connector.model';
+} from '../../../../../backend/shared/model/south-connector.model';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
@@ -25,7 +25,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { HistoryMetricsComponent } from './history-metrics/history-metrics.component';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 import { SouthMetricsComponent } from '../../south/south-metrics/south-metrics.component';
-import { HistoryQueryMetrics, OIBusInfo } from '../../../../../shared/model/engine.model';
+import { HistoryQueryMetrics, OIBusInfo } from '../../../../../backend/shared/model/engine.model';
 import { WindowService } from '../../shared/window.service';
 import { NotificationService } from '../../shared/notification.service';
 import { ObservableState } from '../../shared/save-button/save-button.component';
@@ -34,8 +34,8 @@ import { ClipboardModule } from '@angular/cdk/clipboard';
 import { ModalService } from '../../shared/modal.service';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { LogsComponent } from '../../logs/logs.component';
-import { SouthItemSettings, SouthSettings } from '../../../../../shared/model/south-settings.model';
-import { NorthSettings } from '../../../../../shared/model/north-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
+import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
 @Component({
   selector: 'oib-history-query-detail',

@@ -7,7 +7,7 @@ import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { SouthConnectorService } from '../services/south-connector.service';
 import { of } from 'rxjs';
-import { SouthConnectorLightDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorLightDTO } from '../../../../backend/shared/model/south-connector.model';
 import { NotificationService } from '../shared/notification.service';
 
 class SouthListComponentTester extends ComponentTester<SouthListComponent> {

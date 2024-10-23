@@ -1,11 +1,11 @@
 import { BaseEntity, Instant } from './types';
-import { OIBusCommandStatus, OIBusCommandType } from '../../../shared/model/command.model';
-import { EngineSettingsCommandDTO } from '../../../shared/model/engine.model';
-import { ScanModeCommandDTO } from '../../../shared/model/scan-mode.model';
-import { SouthConnectorCommandDTO } from '../../../shared/model/south-connector.model';
-import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import { NorthConnectorCommandDTO } from '../../../shared/model/north-connector.model';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { OIBusCommandStatus, OIBusCommandType } from '../../shared/model/command.model';
+import { EngineSettingsCommandDTO } from '../../shared/model/engine.model';
+import { ScanModeCommandDTO } from '../../shared/model/scan-mode.model';
+import { SouthConnectorCommandDTO } from '../../shared/model/south-connector.model';
+import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
+import { NorthConnectorCommandDTO } from '../../shared/model/north-connector.model';
+import { NorthSettings } from '../../shared/model/north-settings.model';
 
 export interface BaseOIBusCommand extends BaseEntity {
   type: OIBusCommandType;

@@ -3,7 +3,7 @@ import SouthMetricsRepositoryMock from '../../tests/__mocks__/repository/log/sou
 import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
 import testData from '../../tests/utils/test-data';
 import SouthConnector from '../../south/south-connector';
-import { SouthItemSettings, SouthSettings } from '../../../../shared/model/south-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import SouthConnectorMock from '../../tests/__mocks__/south-connector.mock';
 
 const southConnectorMetricsRepository: SouthConnectorMetricsRepository = new SouthMetricsRepositoryMock();

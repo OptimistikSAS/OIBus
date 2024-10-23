@@ -1,9 +1,9 @@
 import { generateRandomId } from '../../service/utils';
 import { Database } from 'better-sqlite3';
 import { SouthConnectorEntity, SouthConnectorEntityLight, SouthConnectorItemEntity } from '../../model/south-connector.model';
-import { SouthItemSettings, SouthSettings } from '../../../../shared/model/south-settings.model';
-import { SouthConnectorItemSearchParam } from '../../../../shared/model/south-connector.model';
-import { Page } from '../../../../shared/model/types';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
+import { SouthConnectorItemSearchParam } from '../../../shared/model/south-connector.model';
+import { Page } from '../../../shared/model/types';
 
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
 const SOUTH_ITEMS_TABLE = 'south_items';

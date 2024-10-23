@@ -28,7 +28,7 @@ import {
   OIBusUpdateScanModeCommand,
   OIBusUpdateSouthConnectorCommand
 } from '../../model/oianalytics-command.model';
-import { createPageFromArray } from '../../../../shared/model/types';
+import { createPageFromArray } from '../../../shared/model/types';
 import SouthService from '../south.service';
 import NorthService from '../north.service';
 import SouthServiceMock from '../../tests/__mocks__/service/south-service.mock';

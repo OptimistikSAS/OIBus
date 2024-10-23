@@ -3,7 +3,7 @@ import Joi from 'joi';
 import ContentController from './content.controller';
 import JoiValidator from './validators/joi.validator';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
-import { OIBusContent } from '../../../../shared/model/engine.model';
+import { OIBusContent } from '../../../shared/model/engine.model';
 
 jest.mock('./validators/joi.validator');
 jest.mock('../../service/utils');

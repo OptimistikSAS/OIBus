@@ -2,10 +2,10 @@ import { ImportSouthItemsModalComponent } from './import-south-items-modal.compo
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { fakeAsync, TestBed } from '@angular/core/testing';
-import { SouthConnectorItemDTO, SouthConnectorItemManifest } from '../../../../../shared/model/south-connector.model';
-import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
+import { SouthConnectorItemDTO, SouthConnectorItemManifest } from '../../../../../backend/shared/model/south-connector.model';
+import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
-import { SouthItemSettings } from '../../../../../shared/model/south-settings.model';
+import { SouthItemSettings } from '../../../../../backend/shared/model/south-settings.model';
 
 class ImportSouthItemsModalComponentTester extends ComponentTester<ImportSouthItemsModalComponent> {
   constructor() {

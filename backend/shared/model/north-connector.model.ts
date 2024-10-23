@@ -97,7 +97,7 @@ export interface NorthConnectorCommandDTO<T extends NorthSettings> {
   subscriptions: Array<string>;
 }
 
-export interface NorthConnectorWithoutSubscriptionsCommandDTO<T extends NorthSettings = any> {
+export interface NorthConnectorWithoutSubscriptionsCommandDTO<T extends NorthSettings> {
   name: string;
   type: string;
   description: string;

@@ -5,7 +5,7 @@ import { ComponentTester, createMock } from 'ngx-speculoos';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
-import { EngineSettingsDTO } from '../../../../../shared/model/engine.model';
+import { EngineSettingsDTO } from '../../../../../backend/shared/model/engine.model';
 import { EngineService } from '../../services/engine.service';
 import { of } from 'rxjs';
 import { NotificationService } from '../../shared/notification.service';

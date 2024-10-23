@@ -1,6 +1,6 @@
 import Joi from 'joi';
 import JoiValidator from './joi.validator';
-import { OibFormControl } from '../../../../../shared/model/form.model';
+import { OibFormControl } from '../../../../shared/model/form.model';
 
 const validator = new JoiValidator();
 

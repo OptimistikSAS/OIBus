@@ -10,8 +10,8 @@ const ARCHIVE_TIMEOUT = 3600000; // one hour
 const ARCHIVE_TIMEOUT_INIT = 10000; // Wait a little at North start up
 const ARCHIVE_FOLDER = 'archive';
 
-import { NorthArchiveSettings, NorthArchiveFiles } from '../../../../shared/model/north-connector.model';
-import { Instant } from '../../../../shared/model/types';
+import { NorthArchiveSettings, NorthArchiveFiles } from '../../../shared/model/north-connector.model';
+import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { EventEmitter } from 'node:events';
 

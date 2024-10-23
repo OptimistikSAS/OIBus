@@ -1,6 +1,6 @@
 import { Database } from 'better-sqlite3';
-import { SouthCache } from '../../../../shared/model/south-connector.model';
-import { Instant } from '../../../../shared/model/types';
+import { SouthCache } from '../../../shared/model/south-connector.model';
+import { Instant } from '../../../shared/model/types';
 
 export const SOUTH_CACHE_TABLE = 'cache_history';
 

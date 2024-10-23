@@ -1,6 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { BaseEnumPipe } from './base-enum-pipe';
-import { ScopeType } from '../../../../shared/model/engine.model';
+import { ScopeType } from '../../../../backend/shared/model/engine.model';
 
 @Pipe({
   name: 'scopeTypesEnum',

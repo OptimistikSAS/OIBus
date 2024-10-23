@@ -9,10 +9,10 @@ import FileCacheServiceMock from '../tests/__mocks__/service/cache/file-cache-se
 import ArchiveServiceMock from '../tests/__mocks__/service/cache/archive-service.mock';
 import fs from 'node:fs/promises';
 import { dirSize, validateCronExpression } from '../service/utils';
-import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
+import { OIBusContent, OIBusTimeValue } from '../../shared/model/engine.model';
 import path from 'node:path';
 import testData from '../tests/utils/test-data';
-import { NorthFileWriterSettings, NorthOIAnalyticsSettings, NorthSettings } from '../../../shared/model/north-settings.model';
+import { NorthFileWriterSettings, NorthOIAnalyticsSettings, NorthSettings } from '../../shared/model/north-settings.model';
 import NorthFileWriter from './north-file-writer/north-file-writer';
 import { NorthConnectorEntity } from '../model/north-connector.model';
 import { flushPromises } from '../tests/utils/test-utils';

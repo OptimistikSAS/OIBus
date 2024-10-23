@@ -1,7 +1,7 @@
 import { generateRandomId } from '../../service/utils';
 import { Database } from 'better-sqlite3';
 import { NorthConnectorEntity, NorthConnectorEntityLight } from '../../model/north-connector.model';
-import { NorthSettings } from '../../../../shared/model/north-settings.model';
+import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { toSouthConnectorLight } from './south-connector.repository';
 import { SouthConnectorEntityLight } from '../../model/south-connector.model';
 

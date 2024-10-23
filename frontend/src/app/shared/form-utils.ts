@@ -1,4 +1,4 @@
-import { FormComponentValidator, OibFormControl } from '../../../../shared/model/form.model';
+import { FormComponentValidator, OibFormControl } from '../../../../backend/shared/model/form.model';
 import { FormControl, FormGroup, NonNullableFormBuilder, ValidatorFn, Validators } from '@angular/forms';
 
 /**

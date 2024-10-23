@@ -1,4 +1,4 @@
-import { HistoryQueryMetrics, OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { HistoryQueryMetrics, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { PassThrough } from 'node:stream';
 import HistoryQuery from '../../engine/history-query';
 import HistoryQueryMetricsRepository from '../../repository/logs/history-query-metrics.repository';

@@ -1,10 +1,10 @@
-import { Instant } from '../../../../shared/model/types';
+import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { PassThrough } from 'node:stream';
 import SouthConnectorMetricsRepository from '../../repository/logs/south-connector-metrics.repository';
-import { OIBusTimeValue, SouthConnectorMetrics } from '../../../../shared/model/engine.model';
+import { OIBusTimeValue, SouthConnectorMetrics } from '../../../shared/model/engine.model';
 import SouthConnector from '../../south/south-connector';
-import { SouthItemSettings, SouthSettings } from '../../../../shared/model/south-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 
 export default class SouthConnectorMetricsService {
   private _stream: PassThrough | null = null;
