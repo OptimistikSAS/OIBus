@@ -5,7 +5,7 @@ import { fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { ScanModeService } from '../../services/scan-mode.service';
-import { ScanModeCommandDTO, ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
+import { ScanModeCommandDTO, ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
 class EditScanModeModalComponentTester extends ComponentTester<EditScanModeModalComponent> {

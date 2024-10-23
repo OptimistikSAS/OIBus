@@ -3,8 +3,8 @@ import { ComponentTester, createMock } from 'ngx-speculoos';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TestBed } from '@angular/core/testing';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
-import { SouthConnectorItemDTO } from '../../../../../shared/model/south-connector.model';
-import { SouthItemSettings } from '../../../../../shared/model/south-settings.model';
+import { SouthConnectorItemDTO } from '../../../../../backend/shared/model/south-connector.model';
+import { SouthItemSettings } from '../../../../../backend/shared/model/south-settings.model';
 
 class TestSouthModalComponentTester extends ComponentTester<HistoryQueryItemTestModalComponent> {
   constructor() {

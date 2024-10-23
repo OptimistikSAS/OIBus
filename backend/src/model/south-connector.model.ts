@@ -1,4 +1,4 @@
-import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { BaseEntity } from './types';
 
 export interface SouthConnectorEntityLight extends BaseEntity {

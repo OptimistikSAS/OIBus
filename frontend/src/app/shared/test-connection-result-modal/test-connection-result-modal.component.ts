@@ -2,15 +2,15 @@ import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { SaveButtonComponent } from '../save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
-import { SouthConnectorCommandDTO, SouthConnectorDTO } from '../../../../../shared/model/south-connector.model';
+import { SouthConnectorCommandDTO, SouthConnectorDTO } from '../../../../../backend/shared/model/south-connector.model';
 
 import { FormComponent } from '../form/form.component';
 import { SouthConnectorService } from '../../services/south-connector.service';
-import { NorthConnectorCommandDTO, NorthConnectorDTO } from '../../../../../shared/model/north-connector.model';
+import { NorthConnectorCommandDTO, NorthConnectorDTO } from '../../../../../backend/shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { HistoryQueryService } from '../../services/history-query.service';
-import { SouthItemSettings, SouthSettings } from '../../../../../shared/model/south-settings.model';
-import { NorthSettings } from '../../../../../shared/model/north-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
+import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
 @Component({
   selector: 'oib-test-connection-result-modal',

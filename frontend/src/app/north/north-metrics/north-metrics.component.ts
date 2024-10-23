@@ -1,10 +1,10 @@
 import { Component, Input, NgZone, OnInit, inject } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
-import { NorthConnectorMetrics } from '../../../../../shared/model/engine.model';
+import { NorthConnectorMetrics } from '../../../../../backend/shared/model/engine.model';
 import { JsonPipe } from '@angular/common';
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { DurationPipe } from '../../shared/duration.pipe';
-import { NorthConnectorLightDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
+import { NorthConnectorLightDTO, NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { NotificationService } from '../../shared/notification.service';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';

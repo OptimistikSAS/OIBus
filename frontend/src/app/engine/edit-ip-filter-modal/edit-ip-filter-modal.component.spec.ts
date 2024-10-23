@@ -5,7 +5,7 @@ import { fakeAsync, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { IpFilterService } from '../../services/ip-filter.service';
-import { IPFilterCommandDTO, IPFilterDTO } from '../../../../../shared/model/ip-filter.model';
+import { IPFilterCommandDTO, IPFilterDTO } from '../../../../../backend/shared/model/ip-filter.model';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
 class EditIpFilterModalComponentTester extends ComponentTester<EditIpFilterModalComponent> {

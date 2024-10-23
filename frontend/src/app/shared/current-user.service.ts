@@ -1,8 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { catchError, Observable, of, shareReplay, switchMap } from 'rxjs';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Timezone } from '../../../../shared/model/types';
-import { User } from '../../../../shared/model/user.model';
+import { Timezone } from '../../../../backend/shared/model/types';
+import { User } from '../../../../backend/shared/model/user.model';
 import { WindowService } from './window.service';
 
 interface Token {

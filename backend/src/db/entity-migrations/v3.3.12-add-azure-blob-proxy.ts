@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-import { NorthAzureBlobSettingsAuthentication } from '../../../../shared/model/north-settings.model';
+import { NorthAzureBlobSettingsAuthentication } from '../../../shared/model/north-settings.model';
 
 const NORTH_CONNECTORS_TABLE = 'north_connectors';
 

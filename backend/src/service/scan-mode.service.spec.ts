@@ -10,7 +10,7 @@ import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import testData from '../tests/utils/test-data';
 import { scanModeSchema } from '../web-server/controllers/validators/oibus-validation-schema';
 import { validateCronExpression } from './utils';
-import { ValidatedCronExpression } from '../../../shared/model/scan-mode.model';
+import { ValidatedCronExpression } from '../../shared/model/scan-mode.model';
 import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
 
 jest.mock('./utils');

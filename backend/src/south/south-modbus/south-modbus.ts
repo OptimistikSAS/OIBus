@@ -12,8 +12,8 @@ import {
   SouthModbusItemSettings,
   SouthModbusItemSettingsDataDataType,
   SouthModbusSettings
-} from '../../../../shared/model/south-settings.model';
-import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
+} from '../../../shared/model/south-settings.model';
+import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';

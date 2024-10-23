@@ -1,7 +1,7 @@
 import DataStreamEngine from '../engine/data-stream-engine';
 import HistoryQueryEngine from '../engine/history-query-engine';
 import pino from 'pino';
-import { EngineMetrics, EngineSettingsDTO, OIBusContent, OIBusInfo } from '../../../shared/model/engine.model';
+import { EngineMetrics, EngineSettingsDTO, OIBusContent, OIBusInfo } from '../../shared/model/engine.model';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import EngineRepository from '../repository/config/engine.repository';
 import { EngineSettings } from '../model/engine.model';

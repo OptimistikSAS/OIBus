@@ -1,4 +1,4 @@
-import { NorthConnectorManifest } from '../../../../shared/model/north-connector.model';
+import { NorthConnectorManifest } from '../../../shared/model/north-connector.model';
 
 const manifest: NorthConnectorManifest = {
   id: 'sftp',

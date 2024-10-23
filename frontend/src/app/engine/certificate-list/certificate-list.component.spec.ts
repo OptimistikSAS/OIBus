@@ -5,7 +5,7 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { ComponentTester, createMock, TestButton } from 'ngx-speculoos';
 import { of } from 'rxjs';
 import { CertificateService } from '../../services/certificate.service';
-import { CertificateDTO } from '../../../../../shared/model/certificate.model';
+import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 import { provideHttpClient } from '@angular/common/http';

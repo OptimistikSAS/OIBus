@@ -19,8 +19,8 @@ import { OIAnalyticsMessage } from '../../model/oianalytics-message.model';
 import { Certificate } from '../../model/certificate.model';
 import { User } from '../../model/user.model';
 import { HistoryQueryEntity, HistoryQueryItemEntity } from '../../model/histor-query.model';
-import { SouthItemSettings, SouthSettings } from '../../../../shared/model/south-settings.model';
-import { NorthSettings } from '../../../../shared/model/north-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
+import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import {
@@ -29,7 +29,7 @@ import {
   HistoryQueryMetrics,
   NorthConnectorMetrics,
   SouthConnectorMetrics
-} from '../../../../shared/model/engine.model';
+} from '../../../shared/model/engine.model';
 
 const CONFIG_TEST_DATABASE = path.resolve('src', 'tests', 'test-config.db');
 const CRYPTO_TEST_DATABASE = path.resolve('src', 'tests', 'test-crypto.db');

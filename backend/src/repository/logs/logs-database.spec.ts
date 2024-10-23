@@ -5,8 +5,8 @@ import testData from '../../tests/utils/test-data';
 import EngineMetricsRepository from './engine-metrics.repository';
 import NorthConnectorMetricsRepository from './north-connector-metrics.repository';
 import SouthConnectorMetricsRepository from './south-connector-metrics.repository';
-import { createPageFromArray } from '../../../../shared/model/types';
-import { EngineMetrics, HistoryQueryMetrics, NorthConnectorMetrics, SouthConnectorMetrics } from '../../../../shared/model/engine.model';
+import { createPageFromArray } from '../../../shared/model/types';
+import { EngineMetrics, HistoryQueryMetrics, NorthConnectorMetrics, SouthConnectorMetrics } from '../../../shared/model/engine.model';
 import HistoryQueryMetricsRepository from './history-query-metrics.repository';
 
 let database: Database;

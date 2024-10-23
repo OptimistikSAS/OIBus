@@ -9,12 +9,12 @@ import {
   SouthConnectorManifest,
   SouthConnectorWithoutItemsCommandDTO,
   SouthType
-} from '../../../../shared/model/south-connector.model';
-import { Page } from '../../../../shared/model/types';
+} from '../../../shared/model/south-connector.model';
+import { Page } from '../../../shared/model/types';
 import JoiValidator from './validators/joi.validator';
 import { toSouthConnectorDTO, toSouthConnectorItemDTO, toSouthConnectorLightDTO } from '../../service/south.service';
 import { itemToFlattenedCSV } from '../../service/utils';
-import { SouthItemSettings, SouthSettings } from '../../../../shared/model/south-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 
 export default class SouthConnectorController {
   constructor(protected readonly validator: JoiValidator) {}

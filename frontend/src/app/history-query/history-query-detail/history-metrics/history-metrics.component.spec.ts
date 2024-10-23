@@ -3,14 +3,14 @@ import { TestBed } from '@angular/core/testing';
 import { ComponentTester } from 'ngx-speculoos';
 import { HistoryMetricsComponent } from './history-metrics.component';
 import { Component } from '@angular/core';
-import { NorthConnectorManifest } from '../../../../../../shared/model/north-connector.model';
+import { NorthConnectorManifest } from '../../../../../../backend/shared/model/north-connector.model';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
-import { SouthConnectorManifest } from '../../../../../../shared/model/south-connector.model';
-import { HistoryQueryDTO } from '../../../../../../shared/model/history-query.model';
-import { HistoryQueryMetrics } from '../../../../../../shared/model/engine.model';
+import { SouthConnectorManifest } from '../../../../../../backend/shared/model/south-connector.model';
+import { HistoryQueryDTO } from '../../../../../../backend/shared/model/history-query.model';
+import { HistoryQueryMetrics } from '../../../../../../backend/shared/model/engine.model';
 import { provideHttpClient } from '@angular/common/http';
-import { SouthItemSettings, SouthSettings } from '../../../../../../shared/model/south-settings.model';
-import { NorthSettings } from '../../../../../../shared/model/north-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../../../../../backend/shared/model/south-settings.model';
+import { NorthSettings } from '../../../../../../backend/shared/model/north-settings.model';
 
 @Component({
   template: `<oib-history-metrics
@@ -56,8 +56,7 @@ class TestComponent {
       history: true,
       lastFile: true,
       lastPoint: false,
-      forceMaxInstantPerItem: false,
-      sharedConnection: false
+      forceMaxInstantPerItem: false
     }
   };
   northManifest: NorthConnectorManifest = {
@@ -103,7 +102,6 @@ class TestComponent {
     southSettings: {
       database: 'my database'
     } as SouthSettings,
-    southSharedConnection: false,
     northSettings: {
       host: 'localhost'
     } as NorthSettings,

@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Injectable, inject } from '@angular/core';
-import { IPFilterCommandDTO, IPFilterDTO } from '../../../../shared/model/ip-filter.model';
+import { IPFilterCommandDTO, IPFilterDTO } from '../../../../backend/shared/model/ip-filter.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on IP filters

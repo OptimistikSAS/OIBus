@@ -6,18 +6,18 @@ import {
   HistoryQueryItemDTO,
   HistoryQueryItemSearchParam,
   HistoryQueryLightDTO
-} from '../../../../shared/model/history-query.model';
+} from '../../../shared/model/history-query.model';
 import JoiValidator from './validators/joi.validator';
 
-import { SouthConnectorCommandDTO } from '../../../../shared/model/south-connector.model';
-import { Page } from '../../../../shared/model/types';
+import { SouthConnectorCommandDTO } from '../../../shared/model/south-connector.model';
+import { Page } from '../../../shared/model/types';
 import AbstractController from './abstract.controller';
 import Joi from 'joi';
-import { NorthConnectorCommandDTO } from '../../../../shared/model/north-connector.model';
+import { NorthConnectorCommandDTO } from '../../../shared/model/north-connector.model';
 import { toHistoryQueryDTO, toHistoryQueryItemDTO, toHistoryQueryLightDTO } from '../../service/history-query.service';
 import { itemToFlattenedCSV } from '../../service/utils';
-import { SouthItemSettings, SouthSettings } from '../../../../shared/model/south-settings.model';
-import { NorthSettings } from '../../../../shared/model/north-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
+import { NorthSettings } from '../../../shared/model/north-settings.model';
 
 export default class HistoryQueryController extends AbstractController {
   constructor(

@@ -1,6 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
-import { SouthConnectorLightDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorLightDTO } from '../../../../backend/shared/model/south-connector.model';
 import { SouthConnectorService } from '../services/south-connector.service';
 import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
 import { ConfirmationService } from '../shared/confirmation.service';
@@ -13,7 +13,7 @@ import { EnabledEnumPipe } from '../shared/enabled-enum.pipe';
 import { FormControlValidationDirective } from '../shared/form-control-validation.directive';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
-import { createPageFromArray, Page } from '../../../../shared/model/types';
+import { createPageFromArray, Page } from '../../../../backend/shared/model/types';
 import { emptyPage } from '../shared/test-utils';
 import { PaginationComponent } from '../shared/pagination/pagination.component';
 import { ObservableState } from '../shared/save-button/save-button.component';

@@ -1,4 +1,4 @@
-import { SouthSettings } from '../../../shared/model/south-settings.model';
+import { SouthSettings } from '../../shared/model/south-settings.model';
 import { isDeepStrictEqual } from 'util';
 import DeferredPromise from './deferred-promise';
 import pino from 'pino';

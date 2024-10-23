@@ -1,8 +1,8 @@
-import { Page } from '../../../../shared/model/types';
-import { LEVEL_FORMAT, LogSearchParam, PinoLog, Scope } from '../../../../shared/model/logs.model';
+import { Page } from '../../../shared/model/types';
+import { LEVEL_FORMAT, LogSearchParam, PinoLog, Scope } from '../../../shared/model/logs.model';
 import { Database } from 'better-sqlite3';
 import { DateTime } from 'luxon';
-import { ScopeType } from '../../../../shared/model/engine.model';
+import { ScopeType } from '../../../shared/model/engine.model';
 import { OIBusLog } from '../../model/logs.model';
 
 export const LOG_TABLE = 'logs';

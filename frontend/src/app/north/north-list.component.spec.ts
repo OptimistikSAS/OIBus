@@ -7,7 +7,7 @@ import { NorthConnectorService } from '../services/north-connector.service';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
-import { NorthConnectorLightDTO } from '../../../../shared/model/north-connector.model';
+import { NorthConnectorLightDTO } from '../../../../backend/shared/model/north-connector.model';
 import { NotificationService } from '../shared/notification.service';
 
 class NorthListComponentTester extends ComponentTester<NorthListComponent> {

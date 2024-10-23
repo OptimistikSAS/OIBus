@@ -1,11 +1,11 @@
 import { AfterViewInit, Component, inject, ViewChild } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { OibCodeBlockComponent } from '../../shared/form/oib-code-block/oib-code-block.component';
-import { OIBusContent } from '../../../../../shared/model/engine.model';
+import { OIBusContent } from '../../../../../backend/shared/model/engine.model';
 import { TranslateModule } from '@ngx-translate/core';
 import { LoadingSpinnerComponent } from '../../shared/loading-spinner/loading-spinner.component';
-import { HistoryQueryItemCommandDTO, HistoryQueryItemDTO } from '../../../../../shared/model/history-query.model';
-import { SouthItemSettings } from '../../../../../shared/model/south-settings.model';
+import { HistoryQueryItemCommandDTO, HistoryQueryItemDTO } from '../../../../../backend/shared/model/history-query.model';
+import { SouthItemSettings } from '../../../../../backend/shared/model/south-settings.model';
 
 @Component({
   selector: 'oib-history-query-item-test-modal',

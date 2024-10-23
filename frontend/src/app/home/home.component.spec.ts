@@ -7,8 +7,8 @@ import { provideRouter } from '@angular/router';
 import { SouthConnectorService } from '../services/south-connector.service';
 import { NorthConnectorService } from '../services/north-connector.service';
 import { of } from 'rxjs';
-import { SouthConnectorLightDTO, SouthConnectorManifest } from '../../../../shared/model/south-connector.model';
-import { NorthConnectorLightDTO, NorthConnectorManifest } from '../../../../shared/model/north-connector.model';
+import { SouthConnectorLightDTO, SouthConnectorManifest } from '../../../../backend/shared/model/south-connector.model';
+import { NorthConnectorLightDTO, NorthConnectorManifest } from '../../../../backend/shared/model/north-connector.model';
 import { EngineService } from '../services/engine.service';
 
 class HomeComponentTester extends ComponentTester<HomeComponent> {

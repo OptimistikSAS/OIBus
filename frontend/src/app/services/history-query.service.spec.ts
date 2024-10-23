@@ -9,15 +9,15 @@ import {
   HistoryQueryItemCommandDTO,
   HistoryQueryItemDTO,
   HistoryQueryLightDTO
-} from '../../../../shared/model/history-query.model';
+} from '../../../../backend/shared/model/history-query.model';
 import { toPage } from '../shared/test-utils';
-import { Page } from '../../../../shared/model/types';
-import { SouthConnectorCommandDTO } from '../../../../shared/model/south-connector.model';
+import { Page } from '../../../../backend/shared/model/types';
+import { SouthConnectorCommandDTO } from '../../../../backend/shared/model/south-connector.model';
 import { DownloadService } from './download.service';
 import { provideHttpClient } from '@angular/common/http';
-import { NorthConnectorCommandDTO } from '../../../../shared/model/north-connector.model';
-import { SouthItemSettings, SouthSettings } from '../../../../shared/model/south-settings.model';
-import { NorthSettings } from '../../../../shared/model/north-settings.model';
+import { NorthConnectorCommandDTO } from '../../../../backend/shared/model/north-connector.model';
+import { SouthItemSettings, SouthSettings } from '../../../../backend/shared/model/south-settings.model';
+import { NorthSettings } from '../../../../backend/shared/model/north-settings.model';
 
 describe('HistoryQueryService', () => {
   let http: HttpTestingController;
@@ -85,7 +85,6 @@ describe('HistoryQueryService', () => {
       southType: 'SQL',
       northType: 'OIConnect',
       southSettings: {} as SouthSettings,
-      southSharedConnection: false,
       northSettings: {} as NorthSettings,
       caching: {
         scanModeId: 'scanModeId1',

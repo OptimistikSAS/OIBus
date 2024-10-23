@@ -9,17 +9,17 @@ import {
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
   SouthConnectorItemManifest
-} from '../../../../../shared/model/south-connector.model';
-import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
+} from '../../../../../backend/shared/model/south-connector.model';
+import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 
 import { OibCodeBlockComponent } from '../../shared/form/oib-code-block/oib-code-block.component';
 import { createFormGroup, groupFormControlsByRow } from '../../shared/form-utils';
 import { OibScanModeComponent } from '../../shared/form/oib-scan-mode/oib-scan-mode.component';
-import { Timezone } from '../../../../../shared/model/types';
+import { Timezone } from '../../../../../backend/shared/model/types';
 import { inMemoryTypeahead } from '../../shared/typeahead';
-import { OibFormControl } from '../../../../../shared/model/form.model';
+import { OibFormControl } from '../../../../../backend/shared/model/form.model';
 import { FormComponent } from '../../shared/form/form.component';
-import { SouthItemSettings } from '../../../../../shared/model/south-settings.model';
+import { SouthItemSettings } from '../../../../../backend/shared/model/south-settings.model';
 
 // TypeScript issue with Intl: https://github.com/microsoft/TypeScript/issues/49231
 // eslint-disable-next-line @typescript-eslint/no-namespace

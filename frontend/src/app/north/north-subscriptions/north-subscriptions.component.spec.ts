@@ -6,10 +6,10 @@ import { ComponentTester, createMock } from 'ngx-speculoos';
 import { of } from 'rxjs';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
-import { SouthConnectorLightDTO } from '../../../../../shared/model/south-connector.model';
+import { SouthConnectorLightDTO } from '../../../../../backend/shared/model/south-connector.model';
 import { Component } from '@angular/core';
-import { NorthConnectorDTO } from '../../../../../shared/model/north-connector.model';
-import { NorthSettings } from '../../../../../shared/model/north-settings.model';
+import { NorthConnectorDTO } from '../../../../../backend/shared/model/north-connector.model';
+import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
 @Component({
   template: `<oib-north-subscriptions [northConnector]="northConnector" />`,

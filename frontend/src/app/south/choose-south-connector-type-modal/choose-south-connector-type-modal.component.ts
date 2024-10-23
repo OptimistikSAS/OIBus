@@ -3,7 +3,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { SouthConnectorService } from '../../services/south-connector.service';
-import { SouthType } from '../../../../../shared/model/south-connector.model';
+import { SouthType } from '../../../../../backend/shared/model/south-connector.model';
 import { formDirectives } from '../../shared/form-directives';
 
 @Component({
