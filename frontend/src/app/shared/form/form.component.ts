@@ -2,10 +2,10 @@ import { Component, Input, OnInit, inject } from '@angular/core';
 
 import { ControlContainer, FormGroup, FormGroupName } from '@angular/forms';
 import { formDirectives } from '../form-directives';
-import { OibFormControl, OibFormGroup, OibSelectFormControl } from '../../../../../shared/model/form.model';
-import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
+import { OibFormControl, OibFormGroup, OibSelectFormControl } from '../../../../../backend/shared/model/form.model';
+import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { OibCodeBlockComponent } from './oib-code-block/oib-code-block.component';
-import { Timezone } from '../../../../../shared/model/types';
+import { Timezone } from '../../../../../backend/shared/model/types';
 import { Observable } from 'rxjs';
 import { inMemoryTypeahead } from '../typeahead';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
@@ -13,7 +13,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { OibArrayComponent } from './oib-form-array/oib-array.component';
 import { groupFormControlsByRow } from '../form-utils';
 import { PipeProviderService } from './pipe-provider.service';
-import { CertificateDTO } from '../../../../../shared/model/certificate.model';
+import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
 
 // TypeScript issue with Intl: https://github.com/microsoft/TypeScript/issues/49231
 // eslint-disable-next-line @typescript-eslint/no-namespace

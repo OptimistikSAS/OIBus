@@ -3,7 +3,7 @@ import {
   SouthOPCUASettingsAuthentication,
   SouthOPCUASettingsSecurityMode,
   SouthOPCUASettingsSecurityPolicy
-} from '../../../../shared/model/south-settings.model';
+} from '../../../shared/model/south-settings.model';
 
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
 const HISTORY_QUERIES_TABLE = 'history_queries';

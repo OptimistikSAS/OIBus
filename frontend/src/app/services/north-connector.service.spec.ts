@@ -12,10 +12,10 @@ import {
   NorthType,
   NorthValueFiles,
   NorthConnectorLightDTO
-} from '../../../../shared/model/north-connector.model';
+} from '../../../../backend/shared/model/north-connector.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { SouthConnectorLightDTO } from '../../../../shared/model/south-connector.model';
-import { NorthSettings } from '../../../../shared/model/north-settings.model';
+import { SouthConnectorLightDTO } from '../../../../backend/shared/model/south-connector.model';
+import { NorthSettings } from '../../../../backend/shared/model/north-settings.model';
 
 describe('NorthConnectorService', () => {
   let http: HttpTestingController;

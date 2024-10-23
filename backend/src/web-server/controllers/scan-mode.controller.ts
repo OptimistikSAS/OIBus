@@ -1,5 +1,5 @@
 import { KoaContext } from '../koa';
-import { ScanModeCommandDTO, ScanModeDTO } from '../../../../shared/model/scan-mode.model';
+import { ScanModeCommandDTO, ScanModeDTO } from '../../../shared/model/scan-mode.model';
 import AbstractController from './abstract.controller';
 import { toScanModeDTO } from '../../service/scan-mode.service';
 

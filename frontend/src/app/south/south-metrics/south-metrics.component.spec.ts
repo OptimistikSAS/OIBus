@@ -3,11 +3,11 @@ import { TestBed } from '@angular/core/testing';
 import { ComponentTester } from 'ngx-speculoos';
 import { SouthMetricsComponent } from './south-metrics.component';
 import { Component } from '@angular/core';
-import { SouthConnectorLightDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
+import { SouthConnectorLightDTO, SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
 import { NotificationService } from '../../shared/notification.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
-import { SouthConnectorMetrics } from '../../../../../shared/model/engine.model';
+import { SouthConnectorMetrics } from '../../../../../backend/shared/model/engine.model';
 import { provideHttpClient } from '@angular/common/http';
 
 @Component({
@@ -56,8 +56,7 @@ class TestComponent {
       history: true,
       lastFile: true,
       lastPoint: false,
-      forceMaxInstantPerItem: false,
-      sharedConnection: false
+      forceMaxInstantPerItem: false
     }
   };
 }

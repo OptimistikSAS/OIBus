@@ -1,4 +1,4 @@
-import { OIAnalyticsMessageStatus, OIAnalyticsMessageType } from '../../../shared/model/oianalytics-message.model';
+import { OIAnalyticsMessageStatus, OIAnalyticsMessageType } from '../../shared/model/oianalytics-message.model';
 import { BaseEntity, Instant } from './types';
 
 interface BaseOIAnalyticsMessage extends BaseEntity {

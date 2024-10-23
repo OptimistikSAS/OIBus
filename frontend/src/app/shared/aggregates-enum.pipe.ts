@@ -1,6 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { BaseEnumPipe } from './base-enum-pipe';
-import { Aggregate } from '../../../../shared/model/types';
+import { Aggregate } from '../../../../backend/shared/model/types';
 
 @Pipe({
   name: 'aggregatesEnum',

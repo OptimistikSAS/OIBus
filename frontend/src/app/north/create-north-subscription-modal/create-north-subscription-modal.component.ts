@@ -4,7 +4,7 @@ import { NonNullableFormBuilder, Validators } from '@angular/forms';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
-import { SouthConnectorLightDTO } from '../../../../../shared/model/south-connector.model';
+import { SouthConnectorLightDTO } from '../../../../../backend/shared/model/south-connector.model';
 
 @Component({
   selector: 'oib-create-north-subscription-modal',

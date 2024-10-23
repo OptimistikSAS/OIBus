@@ -3,9 +3,9 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
 
-import { NorthConnectorLightDTO, NorthType } from '../../../../../shared/model/north-connector.model';
+import { NorthConnectorLightDTO, NorthType } from '../../../../../backend/shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
-import { SouthConnectorLightDTO, SouthType } from '../../../../../shared/model/south-connector.model';
+import { SouthConnectorLightDTO, SouthType } from '../../../../../backend/shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { combineLatest } from 'rxjs';
 import { NonNullableFormBuilder, Validators } from '@angular/forms';

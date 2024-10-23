@@ -7,7 +7,7 @@ import pino from 'pino';
 import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import path from 'node:path';
-import { SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../../../shared/model/south-settings.model';
+import { SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../../shared/model/south-settings.model';
 import { createProxyAgent } from '../../service/proxy-agent';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
@@ -23,7 +23,7 @@ import OIAnalyticsRegistrationRepository from '../../repository/config/oianalyti
 import OIAnalyticsRegistrationRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
 import CertificateRepository from '../../repository/config/certificate.repository';
 import CertificateRepositoryMock from '../../tests/__mocks__/repository/config/certificate-repository.mock';
-import { OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { OIBusTimeValue } from '../../../shared/model/engine.model';
 
 jest.mock('../../service/proxy-agent');
 jest.mock('../../service/utils', () => ({

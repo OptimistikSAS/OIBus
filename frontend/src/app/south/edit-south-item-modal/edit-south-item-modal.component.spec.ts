@@ -7,10 +7,10 @@ import {
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
   SouthConnectorItemManifest
-} from '../../../../../shared/model/south-connector.model';
-import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
+} from '../../../../../backend/shared/model/south-connector.model';
+import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
-import { SouthItemSettings } from '../../../../../shared/model/south-settings.model';
+import { SouthItemSettings } from '../../../../../backend/shared/model/south-settings.model';
 
 class EditSouthItemModalComponentTester extends ComponentTester<EditSouthItemModalComponent> {
   constructor() {

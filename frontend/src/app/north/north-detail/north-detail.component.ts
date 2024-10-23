@@ -5,9 +5,13 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { combineLatest, of, switchMap, tap } from 'rxjs';
 import { PageLoader } from '../../shared/page-loader.service';
-import { NorthConnectorCommandDTO, NorthConnectorDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
+import {
+  NorthConnectorCommandDTO,
+  NorthConnectorDTO,
+  NorthConnectorManifest
+} from '../../../../../backend/shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
-import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
+import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { NorthSubscriptionsComponent } from '../north-subscriptions/north-subscriptions.component';
 import { NorthMetricsComponent } from '../north-metrics/north-metrics.component';
@@ -17,15 +21,15 @@ import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
 import { NotificationService } from '../../shared/notification.service';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 import { WindowService } from '../../shared/window.service';
-import { NorthConnectorMetrics, OIBusInfo } from '../../../../../shared/model/engine.model';
+import { NorthConnectorMetrics, OIBusInfo } from '../../../../../backend/shared/model/engine.model';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { ModalService } from '../../shared/modal.service';
 import { BooleanEnumPipe } from '../../shared/boolean-enum.pipe';
 import { PipeProviderService } from '../../shared/form/pipe-provider.service';
 import { EngineService } from '../../services/engine.service';
 import { LogsComponent } from '../../logs/logs.component';
-import { SouthConnectorLightDTO } from '../../../../../shared/model/south-connector.model';
-import { NorthSettings } from '../../../../../shared/model/north-settings.model';
+import { SouthConnectorLightDTO } from '../../../../../backend/shared/model/south-connector.model';
+import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
 @Component({
   selector: 'oib-north-detail',

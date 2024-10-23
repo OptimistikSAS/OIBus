@@ -1,6 +1,6 @@
 import { Knex } from 'knex';
-import { LOG_LEVELS, REGISTRATION_STATUS } from '../../../../shared/model/engine.model';
-import { OIBUS_COMMAND_STATUS, OIBUS_COMMAND_TYPES } from '../../../../shared/model/command.model';
+import { LOG_LEVELS, REGISTRATION_STATUS } from '../../../shared/model/engine.model';
+import { OIBUS_COMMAND_STATUS, OIBUS_COMMAND_TYPES } from '../../../shared/model/command.model';
 import CreateTableBuilder = Knex.CreateTableBuilder;
 
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';

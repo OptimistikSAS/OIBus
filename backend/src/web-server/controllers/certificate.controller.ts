@@ -1,6 +1,6 @@
 import { KoaContext } from '../koa';
 import AbstractController from './abstract.controller';
-import { CertificateCommandDTO, CertificateDTO } from '../../../../shared/model/certificate.model';
+import { CertificateCommandDTO, CertificateDTO } from '../../../shared/model/certificate.model';
 import { generateRandomId } from '../../service/utils';
 import { DateTime, Duration } from 'luxon';
 import { Certificate } from '../../model/certificate.model';

@@ -4,7 +4,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../../shared/form-directives';
 import { NorthConnectorService } from '../../../services/north-connector.service';
 
-import { NorthCacheFiles, NorthConnectorDTO } from '../../../../../../shared/model/north-connector.model';
+import { NorthCacheFiles, NorthConnectorDTO } from '../../../../../../backend/shared/model/north-connector.model';
 import { RouterLink } from '@angular/router';
 import { DatetimePipe } from '../../../shared/datetime.pipe';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
@@ -14,7 +14,7 @@ import { emptyPage } from '../../../shared/test-utils';
 import { FileTableComponent, FileTableData, ItemActionEvent } from '../file-table/file-table.component';
 import { ModalService } from '../../../shared/modal.service';
 import { FileContentModalComponent } from '../file-content-modal/file-content-modal.component';
-import { NorthSettings } from '../../../../../../shared/model/north-settings.model';
+import { NorthSettings } from '../../../../../../backend/shared/model/north-settings.model';
 
 @Component({
   selector: 'oib-archive-files',

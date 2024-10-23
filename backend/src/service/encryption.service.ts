@@ -6,9 +6,9 @@ import path from 'node:path';
 import selfSigned, { GenerateResult } from 'selfsigned';
 
 import { createFolder, filesExists } from './utils';
-import { OibFormControl } from '../../../shared/model/form.model';
-import { CryptoSettings } from '../../../shared/model/engine.model';
-import { CertificateOptions } from '../../../shared/model/certificate.model';
+import { OibFormControl } from '../../shared/model/form.model';
+import { CryptoSettings } from '../../shared/model/engine.model';
+import { CertificateOptions } from '../../shared/model/certificate.model';
 
 export const CERT_FOLDER = 'certs';
 export const CERT_PRIVATE_KEY_FILE_NAME = 'private.pem';

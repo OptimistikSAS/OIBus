@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { EngineDetailComponent } from './engine-detail.component';
 import { ComponentTester, createMock } from 'ngx-speculoos';
-import { EngineSettingsDTO } from '../../../../shared/model/engine.model';
+import { EngineSettingsDTO } from '../../../../backend/shared/model/engine.model';
 import { of, Subject } from 'rxjs';
 import { EngineService } from '../services/engine.service';
 import { provideI18nTesting } from '../../i18n/mock-i18n';

@@ -3,7 +3,7 @@ import Joi from 'joi';
 import LogController from './log.controller';
 import JoiValidator from './validators/joi.validator';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
-import { LogSearchParam, Scope } from '../../../../shared/model/logs.model';
+import { LogSearchParam, Scope } from '../../../shared/model/logs.model';
 import testData from '../../tests/utils/test-data';
 
 jest.mock('./validators/joi.validator');

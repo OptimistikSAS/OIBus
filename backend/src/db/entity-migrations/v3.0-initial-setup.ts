@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-import { LOG_LEVELS } from '../../../../shared/model/engine.model';
+import { LOG_LEVELS } from '../../../shared/model/engine.model';
 import CreateTableBuilder = Knex.CreateTableBuilder;
 
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';

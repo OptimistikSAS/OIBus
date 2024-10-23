@@ -1,12 +1,12 @@
 import { ScanMode } from '../../model/scan-mode.model';
-import { ScanModeCommandDTO } from '../../../../shared/model/scan-mode.model';
-import { NorthConnectorCommandDTO, NorthConnectorManifest } from '../../../../shared/model/north-connector.model';
+import { ScanModeCommandDTO } from '../../../shared/model/scan-mode.model';
+import { NorthConnectorCommandDTO, NorthConnectorManifest } from '../../../shared/model/north-connector.model';
 import {
   SouthConnectorCommandDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorManifest
-} from '../../../../shared/model/south-connector.model';
-import { IPFilterCommandDTO } from '../../../../shared/model/ip-filter.model';
+} from '../../../shared/model/south-connector.model';
+import { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
 import { IPFilter } from '../../model/ip-filter.model';
 import { EngineSettings } from '../../model/engine.model';
 import {
@@ -17,17 +17,17 @@ import {
   OIBusContent,
   OIBusInfo,
   SouthConnectorMetrics
-} from '../../../../shared/model/engine.model';
+} from '../../../shared/model/engine.model';
 import { OIAnalyticsRegistration, OIAnalyticsRegistrationEditCommand } from '../../model/oianalytics-registration.model';
 import { OIBusCommand } from '../../model/oianalytics-command.model';
 import { OIAnalyticsFetchCommandDTO } from '../../service/oia/oianalytics.model';
 import { OIAnalyticsMessage } from '../../model/oianalytics-message.model';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
-import { SouthItemSettings, SouthSettings } from '../../../../shared/model/south-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import { NorthSettings } from '../../../../shared/model/north-settings.model';
+import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { HistoryQueryEntity } from '../../model/histor-query.model';
-import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO } from '../../../../shared/model/history-query.model';
+import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO } from '../../../shared/model/history-query.model';
 import { User } from '../../model/user.model';
 import { Certificate } from '../../model/certificate.model';
 import { OIBusLog } from '../../model/logs.model';

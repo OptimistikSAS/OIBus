@@ -2,16 +2,16 @@ import { TestConnectionResultModalComponent } from './test-connection-result-mod
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { fakeAsync, TestBed } from '@angular/core/testing';
-import { SouthConnectorCommandDTO, SouthConnectorDTO } from '../../../../../shared/model/south-connector.model';
+import { SouthConnectorCommandDTO, SouthConnectorDTO } from '../../../../../backend/shared/model/south-connector.model';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
-import { NorthConnectorCommandDTO, NorthConnectorDTO } from '../../../../../shared/model/north-connector.model';
+import { NorthConnectorCommandDTO, NorthConnectorDTO } from '../../../../../backend/shared/model/north-connector.model';
 import { HistoryQueryService } from '../../services/history-query.service';
-import { SouthItemSettings, SouthSettings } from '../../../../../shared/model/south-settings.model';
-import { NorthSettings } from '../../../../../shared/model/north-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
+import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
 class TestConnectionResultModalComponentTester extends ComponentTester<TestConnectionResultModalComponent> {
   constructor() {
@@ -68,7 +68,6 @@ describe('TestConnectionResultModalComponent', () => {
       name: 'My South Connector 1',
       description: 'My South connector description',
       enabled: true,
-      sharedConnection: false,
       history: {
         maxInstantPerItem: false,
         maxReadInterval: 0,

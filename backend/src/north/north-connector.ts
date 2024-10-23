@@ -1,6 +1,6 @@
 import ArchiveService from '../service/cache/archive.service';
 
-import { NorthArchiveFiles, NorthCacheFiles, NorthValueFiles } from '../../../shared/model/north-connector.model';
+import { NorthArchiveFiles, NorthCacheFiles, NorthValueFiles } from '../../shared/model/north-connector.model';
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
 import ValueCacheService from '../service/cache/value-cache.service';
@@ -8,11 +8,11 @@ import FileCacheService from '../service/cache/file-cache.service';
 import { CronJob } from 'cron';
 import { EventEmitter } from 'node:events';
 import DeferredPromise from '../service/deferred-promise';
-import { OIBusContent, OIBusRawContent, OIBusTimeValue, OIBusTimeValueContent } from '../../../shared/model/engine.model';
+import { OIBusContent, OIBusRawContent, OIBusTimeValue, OIBusTimeValueContent } from '../../shared/model/engine.model';
 import { DateTime } from 'luxon';
 import { ReadStream } from 'node:fs';
 import path from 'node:path';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { NorthSettings } from '../../shared/model/north-settings.model';
 import { dirSize, validateCronExpression } from '../service/utils';
 import { NorthConnectorEntity } from '../model/north-connector.model';
 import { SouthConnectorEntityLight } from '../model/south-connector.model';

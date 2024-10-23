@@ -5,7 +5,7 @@ import { DateTime } from 'luxon';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import EngineRepository from '../../repository/config/engine.repository';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
-import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../../shared/model/engine.model';
+import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../shared/model/engine.model';
 import JoiValidator from '../../web-server/controllers/validators/joi.validator';
 import { registrationSchema } from '../../web-server/controllers/validators/oibus-validation-schema';
 import crypto from 'node:crypto';

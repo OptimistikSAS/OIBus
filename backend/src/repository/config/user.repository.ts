@@ -2,9 +2,9 @@ import argon2 from 'argon2';
 import { Database } from 'better-sqlite3';
 
 import { generateRandomId } from '../../service/utils';
-import { Page } from '../../../../shared/model/types';
+import { Page } from '../../../shared/model/types';
 import { User } from '../../model/user.model';
-import { UserSearchParam } from '../../../../shared/model/user.model';
+import { UserSearchParam } from '../../../shared/model/user.model';
 
 const USERS_TABLE = 'users';
 const PAGE_SIZE = 50;

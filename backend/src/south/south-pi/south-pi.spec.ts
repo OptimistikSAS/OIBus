@@ -3,7 +3,7 @@ import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-import { SouthPIItemSettings, SouthPISettings } from '../../../../shared/model/south-settings.model';
+import { SouthPIItemSettings, SouthPISettings } from '../../../shared/model/south-settings.model';
 import fetch from 'node-fetch';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';

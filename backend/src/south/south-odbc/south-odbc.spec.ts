@@ -9,11 +9,7 @@ import fetch from 'node-fetch';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-import {
-  SouthODBCItemSettings,
-  SouthODBCItemSettingsDateTimeFields,
-  SouthODBCSettings
-} from '../../../../shared/model/south-settings.model';
+import { SouthODBCItemSettings, SouthODBCItemSettingsDateTimeFields, SouthODBCSettings } from '../../../shared/model/south-settings.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
@@ -22,7 +18,7 @@ import SouthCacheRepository from '../../repository/cache/south-cache.repository'
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import testData from '../../tests/utils/test-data';
-import { OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { OIBusTimeValue } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
 
 jest.mock(

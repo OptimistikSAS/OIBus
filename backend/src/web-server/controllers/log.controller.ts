@@ -1,6 +1,6 @@
 import { KoaContext } from '../koa';
-import { Page } from '../../../../shared/model/types';
-import { LogDTO, LogSearchParam, LogStreamCommandDTO, Scope } from '../../../../shared/model/logs.model';
+import { Page } from '../../../shared/model/types';
+import { LogDTO, LogSearchParam, LogStreamCommandDTO, Scope } from '../../../shared/model/logs.model';
 import { DateTime } from 'luxon';
 import AbstractController from './abstract.controller';
 

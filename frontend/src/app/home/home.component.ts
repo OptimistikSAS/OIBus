@@ -1,15 +1,15 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 
-import { NorthConnectorLightDTO } from '../../../../shared/model/north-connector.model';
-import { SouthConnectorLightDTO } from '../../../../shared/model/south-connector.model';
+import { NorthConnectorLightDTO } from '../../../../backend/shared/model/north-connector.model';
+import { SouthConnectorLightDTO } from '../../../../backend/shared/model/south-connector.model';
 import { SouthConnectorService } from '../services/south-connector.service';
 import { NorthConnectorService } from '../services/north-connector.service';
 import { combineLatest } from 'rxjs';
 import { EngineMetricsComponent } from '../engine/engine-metrics/engine-metrics.component';
 import { NorthMetricsComponent } from '../north/north-metrics/north-metrics.component';
 import { SouthMetricsComponent } from '../south/south-metrics/south-metrics.component';
-import { HomeMetrics } from '../../../../shared/model/engine.model';
+import { HomeMetrics } from '../../../../backend/shared/model/engine.model';
 import { RouterLink } from '@angular/router';
 import { WindowService } from '../shared/window.service';
 

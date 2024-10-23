@@ -9,8 +9,8 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { FormComponent } from '../../shared/form/form.component';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { provideHttpClient } from '@angular/common/http';
-import { SouthConnectorDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
-import { SouthItemSettings, SouthSettings } from '../../../../../shared/model/south-settings.model';
+import { SouthConnectorDTO, SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
+import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 
 class EditSouthComponentTester extends ComponentTester<EditSouthComponent> {
   constructor() {
@@ -116,7 +116,6 @@ describe('EditSouthComponent', () => {
       name: 'My South Connector 1',
       description: 'My South connector description',
       enabled: true,
-      sharedConnection: false,
       history: {
         maxInstantPerItem: false,
         maxReadInterval: 0,

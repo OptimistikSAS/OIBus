@@ -224,7 +224,7 @@ export interface OIBusTimeValue {
   timestamp: Instant;
   data: {
     value: string | number;
-    [key: string]: any;
+    [key: string]: string | number;
   };
 }
 

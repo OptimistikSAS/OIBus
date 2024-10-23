@@ -28,10 +28,10 @@ import {
 } from '../controllers/validators/oibus-validation-schema';
 import OianalyticsCommandController from '../controllers/oianalytics-command.controller';
 import ContentController from '../controllers/content.controller';
-import { Page } from '../../../../shared/model/types';
-import { ChangePasswordCommand, User, UserCommandDTO, UserLight } from '../../../../shared/model/user.model';
-import { ScanModeCommandDTO, ScanModeDTO } from '../../../../shared/model/scan-mode.model';
-import { CertificateCommandDTO, CertificateDTO } from '../../../../shared/model/certificate.model';
+import { Page } from '../../../shared/model/types';
+import { ChangePasswordCommand, User, UserCommandDTO, UserLight } from '../../../shared/model/user.model';
+import { ScanModeCommandDTO, ScanModeDTO } from '../../../shared/model/scan-mode.model';
+import { CertificateCommandDTO, CertificateDTO } from '../../../shared/model/certificate.model';
 import {
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
@@ -40,15 +40,15 @@ import {
   SouthConnectorLightDTO,
   SouthConnectorManifest,
   SouthType
-} from '../../../../shared/model/south-connector.model';
+} from '../../../shared/model/south-connector.model';
 import {
   NorthConnectorCommandDTO,
   NorthConnectorDTO,
   NorthConnectorLightDTO,
   NorthConnectorManifest,
   NorthType
-} from '../../../../shared/model/north-connector.model';
-import { IPFilterCommandDTO, IPFilterDTO } from '../../../../shared/model/ip-filter.model';
+} from '../../../shared/model/north-connector.model';
+import { IPFilterCommandDTO, IPFilterDTO } from '../../../shared/model/ip-filter.model';
 import {
   EngineSettingsCommandDTO,
   EngineSettingsDTO,
@@ -56,18 +56,18 @@ import {
   OIBusInfo,
   RegistrationSettingsCommandDTO,
   RegistrationSettingsDTO
-} from '../../../../shared/model/engine.model';
+} from '../../../shared/model/engine.model';
 import {
   HistoryQueryCommandDTO,
   HistoryQueryDTO,
   HistoryQueryItemCommandDTO,
   HistoryQueryItemDTO,
   HistoryQueryLightDTO
-} from '../../../../shared/model/history-query.model';
-import { LogDTO, LogStreamCommandDTO, Scope } from '../../../../shared/model/logs.model';
-import { OIBusCommandDTO } from '../../../../shared/model/command.model';
-import { NorthSettings } from '../../../../shared/model/north-settings.model';
-import { SouthItemSettings, SouthSettings } from '../../../../shared/model/south-settings.model';
+} from '../../../shared/model/history-query.model';
+import { LogDTO, LogStreamCommandDTO, Scope } from '../../../shared/model/logs.model';
+import { OIBusCommandDTO } from '../../../shared/model/command.model';
+import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 
 const joiValidator = new JoiValidator();
 const scanModeController = new ScanModeController(joiValidator, scanModeSchema);

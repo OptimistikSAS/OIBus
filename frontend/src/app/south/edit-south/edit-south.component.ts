@@ -6,7 +6,7 @@ import {
   SouthConnectorDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorManifest
-} from '../../../../../shared/model/south-connector.model';
+} from '../../../../../backend/shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { formDirectives } from '../../shared/form-directives';
@@ -15,8 +15,8 @@ import { NotificationService } from '../../shared/notification.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { combineLatest, Observable, of, switchMap, tap } from 'rxjs';
 import { FormComponent } from '../../shared/form/form.component';
-import { OibFormControl } from '../../../../../shared/model/form.model';
-import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
+import { OibFormControl } from '../../../../../backend/shared/model/form.model';
+import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { createFormGroup, groupFormControlsByRow } from '../../shared/form-utils';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
@@ -26,7 +26,7 @@ import { EditElementComponent } from '../../shared/form/oib-form-array/edit-elem
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { ModalService } from '../../shared/modal.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
-import { SouthItemSettings, SouthSettings } from '../../../../../shared/model/south-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 
 @Component({
   selector: 'oib-edit-south',
@@ -69,7 +69,6 @@ export class EditSouthComponent implements OnInit {
     name: FormControl<string>;
     description: FormControl<string>;
     enabled: FormControl<boolean>;
-    sharedConnection: FormControl<boolean>;
     history: FormGroup<{
       maxInstantPerItem: FormControl<boolean>;
       maxReadInterval: FormControl<number>;
@@ -126,7 +125,6 @@ export class EditSouthComponent implements OnInit {
           name: ['', Validators.required],
           description: '',
           enabled: true as boolean,
-          sharedConnection: false as boolean,
           history: this.fb.group({
             maxInstantPerItem: manifest.modes.forceMaxInstantPerItem,
             maxReadInterval: 0,
@@ -176,7 +174,6 @@ export class EditSouthComponent implements OnInit {
       type: this.southType,
       description: formValue.description!,
       enabled: formValue.enabled!,
-      sharedConnection: formValue.sharedConnection!,
       history: {
         maxInstantPerItem: formValue.history!.maxInstantPerItem!,
         maxReadInterval: formValue.history!.maxReadInterval!,

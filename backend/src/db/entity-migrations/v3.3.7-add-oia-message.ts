@@ -1,6 +1,6 @@
 import { Knex } from 'knex';
 import { version } from '../../../package.json';
-import { OIANALYTICS_MESSAGE_STATUS } from '../../../../shared/model/oianalytics-message.model';
+import { OIANALYTICS_MESSAGE_STATUS } from '../../../shared/model/oianalytics-message.model';
 import CreateTableBuilder = Knex.CreateTableBuilder;
 
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
