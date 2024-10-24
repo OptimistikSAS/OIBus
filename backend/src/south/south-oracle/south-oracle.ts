@@ -16,11 +16,11 @@ import pino from 'pino';
 import { Instant } from '../../../shared/model/types';
 import { QueriesHistory } from '../south-interface';
 import { DateTime } from 'luxon';
-import { SouthOracleItemSettings, SouthOracleSettings } from '../../../shared/model/south-settings.model';
+import { SouthOPCUASettings, SouthOracleItemSettings, SouthOracleSettings } from '../../../shared/model/south-settings.model';
 import { OIBusContent } from '../../../shared/model/engine.model';
 
 import oracledb, { ConnectionAttributes } from 'oracledb';
-import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
@@ -226,6 +226,21 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
       this.logger.debug(`Next start time updated from ${startTime} to ${updatedStartTime}`);
     }
     return updatedStartTime;
+  }
+
+  getThrottlingSettings(settings: SouthOracleSettings): SouthThrottlingSettings {
+    return {
+      maxReadInterval: settings.throttling.maxReadInterval,
+      readDelay: settings.throttling.readDelay
+    };
+  }
+
+  getMaxInstantPerItem(_settings: SouthOracleSettings): boolean {
+    return false;
+  }
+
+  getOverlap(settings: SouthOracleSettings): number {
+    return settings.throttling.overlap;
   }
 
   /**

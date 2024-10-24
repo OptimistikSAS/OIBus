@@ -14,7 +14,7 @@ import { SouthItemSettings, SouthSettings } from '../../shared/model/south-setti
 import { OIBusContent, OIBusRawContent, OIBusTimeValueContent } from '../../shared/model/engine.model';
 import path from 'node:path';
 import ConnectionService, { ManagedConnectionDTO } from '../service/connection.service';
-import { SouthConnectorEntity, SouthConnectorItemEntity } from '../model/south-connector.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../model/south-connector.model';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
@@ -128,11 +128,49 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     this.connectedEvent.emit('connected');
   }
 
+  async manageSouthCacheOnChange(
+    oldSettings: SouthConnectorEntity<SouthSettings, SouthItemSettings>,
+    newSettings: SouthConnectorEntity<SouthSettings, SouthItemSettings>,
+    previousMaxInstantPerItem: boolean
+  ) {
+    const newMaxInstantPerItem = (this as unknown as QueriesHistory).getMaxInstantPerItem(newSettings.settings);
+    if (previousMaxInstantPerItem !== newMaxInstantPerItem) {
+      // Handle all cases regarding cache changes when max instant per item changes
+      this.onSouthMaxInstantPerItemChange(newSettings.id, oldSettings.items, newMaxInstantPerItem);
+    }
+
+    const deletedItems = oldSettings.items.filter(item => !newSettings.items.find(element => element.id === item.id));
+    for (const item of deletedItems) {
+      this.safeDeleteSouthCacheEntry(newSettings, item.id, item.scanModeId, newMaxInstantPerItem);
+    }
+
+    const oldScanModeChangedItems = oldSettings.items.filter(item =>
+      newSettings.items.find(element => element.id === item.id && element.scanModeId !== item.scanModeId)
+    );
+    for (const previousItem of oldScanModeChangedItems) {
+      this.onSouthItemScanModeChange(
+        newSettings,
+        newMaxInstantPerItem ? previousItem.id : 'all',
+        previousItem.scanModeId,
+        newSettings.items.find(element => element.id === previousItem.id)!.scanModeId,
+        newMaxInstantPerItem
+      );
+    }
+  }
+
   /**
    * Reset the cron and subscriptions if necessary on item changes
    */
   async onItemChange(): Promise<void> {
+    if (this.queriesHistory()) {
+      await this.manageSouthCacheOnChange(
+        this.connector,
+        this.southConnectorRepository.findSouthById(this.connector.id)!,
+        this.getMaxInstantPerItem(this.connector.settings)
+      );
+    }
     this.connector.items = this.southConnectorRepository.findAllItemsForSouth(this.connector.id);
+
     const scanModes = new Map<string, ScanMode>();
     this.connector.items
       .filter(item => item.scanModeId && item.scanModeId !== 'subscription' && item.enabled)
@@ -284,7 +322,10 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
             .toUTC()
             .toISO() as Instant,
           DateTime.now().toUTC().toISO() as Instant,
-          scanModeId
+          scanModeId,
+          this.getThrottlingSettings(this.connector.settings),
+          this.getMaxInstantPerItem(this.connector.settings),
+          this.getOverlap(this.connector.settings)
         );
       } catch (error) {
         this.historyIsRunning = false;
@@ -327,7 +368,10 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     items: Array<SouthConnectorItemEntity<I>>,
     startTime: Instant,
     endTime: Instant,
-    scanModeId: string
+    scanModeId: string,
+    throttling: SouthThrottlingSettings,
+    maxInstantPerItem: boolean,
+    overlap: number
   ): Promise<void> {
     const itemsToRead = this.filterHistoryItems(items);
     if (!itemsToRead.length) {
@@ -338,7 +382,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     this.logger.trace(`Querying history for ${itemsToRead.length} items`);
 
     this.historyIsRunning = true;
-    if (this.connector.history.maxInstantPerItem) {
+    if (maxInstantPerItem) {
       for (const [index, item] of itemsToRead.entries()) {
         if (this.stopping) {
           this.logger.debug(`Connector is stopping. Exiting history query at item ${item.name}`);
@@ -352,29 +396,23 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
         const southCache = this.cacheService!.getSouthCache(this.connector.id, scanModeId, item.id, startTime);
         // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
         // requests. For example only one hour if maxReadInterval is 3600 (in s)
-        const startTimeFromCache = DateTime.fromISO(southCache.maxInstant)
-          .minus({ milliseconds: this.connector.history.overlap })
-          .toUTC()
-          .toISO()!;
-        const intervals = generateIntervals(startTimeFromCache, endTime, this.connector.history.maxReadInterval);
+        const startTimeFromCache = DateTime.fromISO(southCache.maxInstant).minus({ milliseconds: overlap }).toUTC().toISO()!;
+        const intervals = generateIntervals(startTimeFromCache, endTime, throttling.maxReadInterval);
         this.logIntervals(intervals);
-        await this.queryIntervals(intervals, [item], southCache, startTimeFromCache);
+        await this.queryIntervals(intervals, [item], southCache, startTimeFromCache, throttling.readDelay);
         if (index !== itemsToRead.length - 1) {
-          await delay(this.connector.history.readDelay);
+          await delay(throttling.readDelay);
         }
       }
     } else {
       const southCache = this.cacheService!.getSouthCache(this.connector.id, scanModeId, 'all', startTime);
-      const startTimeFromCache = DateTime.fromISO(southCache.maxInstant)
-        .minus({ milliseconds: this.connector.history.overlap })
-        .toUTC()
-        .toISO()!;
+      const startTimeFromCache = DateTime.fromISO(southCache.maxInstant).minus({ milliseconds: overlap }).toUTC().toISO()!;
       // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
       // requests. For example only one hour if maxReadInterval is 3600 (in s)
-      const intervals = generateIntervals(startTimeFromCache, endTime, this.connector.history.maxReadInterval);
+      const intervals = generateIntervals(startTimeFromCache, endTime, throttling.maxReadInterval);
       this.logIntervals(intervals);
 
-      await this.queryIntervals(intervals, itemsToRead, southCache, startTimeFromCache);
+      await this.queryIntervals(intervals, itemsToRead, southCache, startTimeFromCache, throttling.readDelay);
     }
     this.metricsEvent.emit('history-query-stop', {
       running: false
@@ -386,7 +424,8 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     intervals: Array<Interval>,
     items: Array<SouthConnectorItemEntity<I>>,
     southCache: SouthCache,
-    startTimeFromCache: Instant
+    startTimeFromCache: Instant,
+    readDelay: number
   ) {
     this.metricsEvent.emit('history-query-start', {
       running: true,
@@ -423,7 +462,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       }
 
       if (index !== intervals.length - 1) {
-        await delay(this.connector.history.readDelay);
+        await delay(readDelay);
       }
     }
   }
@@ -562,7 +601,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   }
 
   queriesHistory(): this is QueriesHistory {
-    return 'historyQuery' in this;
+    return 'historyQuery' in this && 'getThrottlingSettings' in this && 'getMaxInstantPerItem' in this && 'getOverlap' in this;
   }
 
   queriesSubscription(): this is QueriesSubscription {
@@ -580,4 +619,113 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   abstract testConnection(): Promise<void>;
 
   abstract testItem(item: SouthConnectorItemEntity<I>, _callback: (data: OIBusContent) => void): Promise<void>;
+
+  /**
+   * Safely delete the cache entries of a south item, when the south item is deleted
+   */
+  private safeDeleteSouthCacheEntry(
+    southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings>,
+    southItemId: string,
+    scanModeId: string,
+    maxInstantPerItem: boolean
+  ) {
+    if (maxInstantPerItem) {
+      this.southCacheRepository.deleteAllBySouthItem(southItemId);
+    } else {
+      const isOldScanModeUnused = !southConnector.items.some(item => item.scanModeId === scanModeId);
+      if (isOldScanModeUnused) {
+        this.southCacheRepository.delete(southItemId, scanModeId, 'all');
+      }
+    }
+  }
+
+  /**
+   * Handle the change of a south item's scan mode
+   */
+  private onSouthItemScanModeChange(
+    southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings>,
+    southItemId: string,
+    previousScanModeId: string,
+    newScanModeId: string,
+    maxInstantPerItem: boolean
+  ) {
+    const previousCacheEntry = this.southCacheRepository.getSouthCache(southConnector.id, previousScanModeId, southItemId);
+
+    // If the south hasn't been started yet, the previous cache entry won't exist
+    if (!previousCacheEntry) {
+      return;
+    }
+
+    // 1. Remove the previous cache entry
+    this.safeDeleteSouthCacheEntry(southConnector, southItemId, previousScanModeId, maxInstantPerItem);
+
+    // Max instant per item is enabled
+    if (maxInstantPerItem) {
+      // 2. Create the new cache entry, with the previous max instant
+      this.southCacheRepository.save({
+        southId: southConnector.id,
+        itemId: southItemId,
+        scanModeId: newScanModeId,
+        maxInstant: previousCacheEntry.maxInstant
+      });
+    }
+
+    // Max instant per item is disabled
+    if (!maxInstantPerItem) {
+      const newCacheEntry = this.southCacheRepository.getSouthCache(southConnector.id, newScanModeId, southItemId);
+      // 2. Create the new cache entry, with the previous max instant, if it's not already created
+      if (!newCacheEntry) {
+        this.southCacheRepository.save({
+          southId: southConnector.id,
+          itemId: 'all',
+          scanModeId: newScanModeId,
+          maxInstant: previousCacheEntry.maxInstant
+        });
+      }
+    }
+  }
+
+  /**
+   * Handle the change of the max instant per item setting of a south connector
+   */
+  private onSouthMaxInstantPerItemChange(
+    southConnectorId: string,
+    previousItems: Array<SouthConnectorItemEntity<SouthItemSettings>>,
+    maxInstantPerItem: boolean
+  ) {
+    const maxInstantsByScanMode = this.southCacheRepository.getLatestMaxInstants(southConnectorId);
+    // If the south hasn't been started yet, the cache entries won't exist
+    if (!maxInstantsByScanMode) {
+      return;
+    }
+
+    // 1. Remove all previous cache entries
+    this.southCacheRepository.deleteAllBySouthConnector(southConnectorId);
+
+    // Max instant per item is being enabled
+    if (maxInstantPerItem) {
+      // 2. Create new cache entries for each item
+      // The max instant of these new entries, will be the max instant of the previously removed ones, based on scan mode
+      for (const item of previousItems) {
+        const maxInstant = maxInstantsByScanMode.get(item.scanModeId);
+        if (maxInstant) {
+          this.southCacheRepository.save({
+            southId: southConnectorId,
+            itemId: item.id,
+            scanModeId: item.scanModeId,
+            maxInstant
+          });
+        }
+      }
+    }
+
+    // Max instant per item is being disabled
+    if (!maxInstantPerItem) {
+      // 2. Create a single cache entry for all scan modes
+      // The max instant of these new entries, will be the *latest* max instant of the previously removed ones
+      for (const [scanModeId, maxInstant] of maxInstantsByScanMode) {
+        this.southCacheRepository.save({ southId: southConnectorId, itemId: 'all', scanModeId, maxInstant });
+      }
+    }
+  }
 }
