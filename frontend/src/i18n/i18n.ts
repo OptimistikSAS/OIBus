@@ -2,7 +2,7 @@ import { ENVIRONMENT_INITIALIZER, importProvidersFrom, inject, LOCALE_ID } from 
 import { TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ModuleTranslateLoader } from './module-translate-loader';
 
-import { DEFAULT_TZ, Language, Timezone } from '../../../shared/model/types';
+import { DEFAULT_TZ, Language, Timezone } from '../../../backend/shared/model/types';
 
 const languageKey = 'oibus-language';
 const timezoneKey = 'oibus-timezone';

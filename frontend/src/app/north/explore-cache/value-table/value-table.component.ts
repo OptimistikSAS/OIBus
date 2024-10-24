@@ -8,7 +8,7 @@ import { DatetimePipe } from '../../../shared/datetime.pipe';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
 import { FileSizePipe } from '../../../shared/file-size.pipe';
 import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
-import { createPageFromArray, Page } from '../../../../../../shared/model/types';
+import { createPageFromArray, Page } from '../../../../../../backend/shared/model/types';
 import { emptyPage } from '../../../shared/test-utils';
 
 const PAGE_SIZE = 15;

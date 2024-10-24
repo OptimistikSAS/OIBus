@@ -6,7 +6,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ValErrorDelayDirective } from '../shared/val-error-delay.directive';
 import { ValidationErrorsComponent } from 'ngx-valdemort';
 import { EngineService } from '../services/engine.service';
-import { OIBusInfo } from '../../../../shared/model/engine.model';
+import { OIBusInfo } from '../../../../backend/shared/model/engine.model';
 
 @Component({
   selector: 'oib-about',

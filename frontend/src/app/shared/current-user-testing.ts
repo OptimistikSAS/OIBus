@@ -1,8 +1,8 @@
 import { CurrentUserService } from './current-user.service';
 import { of } from 'rxjs';
 import { createMock } from 'ngx-speculoos';
-import { User } from '../../../../shared/model/user.model';
-import { DEFAULT_TZ } from '../../../../shared/model/types';
+import { User } from '../../../../backend/shared/model/user.model';
+import { DEFAULT_TZ } from '../../../../backend/shared/model/types';
 
 const defaultCurrentUser = {
   timezone: DEFAULT_TZ

@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { UserSettingsService } from './user-settings.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ChangePasswordCommand, User, UserCommandDTO } from '../../../../shared/model/user.model';
+import { ChangePasswordCommand, User, UserCommandDTO } from '../../../../backend/shared/model/user.model';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('UserSettingsService', () => {

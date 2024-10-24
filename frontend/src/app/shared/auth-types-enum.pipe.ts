@@ -1,6 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { BaseEnumPipe } from './base-enum-pipe';
-import { AuthenticationType } from '../../../../shared/model/engine.model';
+import { AuthenticationType } from '../../../../backend/shared/model/engine.model';
 
 @Pipe({
   name: 'authTypesEnum',

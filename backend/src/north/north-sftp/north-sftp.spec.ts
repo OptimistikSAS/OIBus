@@ -1,67 +1,53 @@
 import NorthSftp from './north-sftp';
 import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/logger.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
-import RepositoryService from '../../service/repository.service';
-import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
-import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
-import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.mock';
-import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
-import ArchiveServiceMock from '../../tests/__mocks__/archive-service.mock';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
+import ValueCacheServiceMock from '../../tests/__mocks__/service/cache/value-cache-service.mock';
+import FileCacheServiceMock from '../../tests/__mocks__/service/cache/file-cache-service.mock';
+import ArchiveServiceMock from '../../tests/__mocks__/service/cache/archive-service.mock';
 import csv from 'papaparse';
-import { NorthSFTPSettings } from '../../../../shared/model/north-settings.model';
+import { NorthSFTPSettings } from '../../../shared/model/north-settings.model';
 import sftpClient from 'ssh2-sftp-client';
-import { OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { OIBusTimeValue } from '../../../shared/model/engine.model';
+import NorthConnectorRepository from '../../repository/config/north-connector.repository';
+import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
+import testData from '../../tests/utils/test-data';
 
 jest.mock('node:fs/promises');
 
 const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
-const repositoryService: RepositoryService = new RepositoryServiceMock();
+const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
+const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
+const valueCacheService = new ValueCacheServiceMock();
+const fileCacheService = new FileCacheServiceMock();
+const archiveService = new ArchiveServiceMock();
 
-jest.mock(
-  '../../service/cache/archive.service',
-  () =>
-    function () {
-      return new ArchiveServiceMock();
-    }
-);
 jest.mock(
   '../../service/cache/value-cache.service',
   () =>
     function () {
-      return new ValueCacheServiceMock();
+      return valueCacheService;
     }
 );
 jest.mock(
   '../../service/cache/file-cache.service',
   () =>
     function () {
-      return new FileCacheServiceMock();
+      return fileCacheService;
     }
 );
-const resetMetrics = jest.fn();
 jest.mock(
-  '../../service/north-connector-metrics.service',
+  '../../service/cache/archive.service',
   () =>
     function () {
-      return {
-        initMetrics: jest.fn(),
-        updateMetrics: jest.fn(),
-        get stream() {
-          return { stream: 'myStream' };
-        },
-        resetMetrics,
-        metrics: {
-          numberOfValuesSent: 1,
-          numberOfFilesSent: 1
-        }
-      };
+      return archiveService;
     }
 );
-jest.mock('../../service/utils');
-jest.mock('papaparse');
 
 const mockSftpClient = {
   connect: jest.fn(),
@@ -72,19 +58,18 @@ const mockSftpClient = {
   exists: jest.fn()
 };
 jest.mock('ssh2-sftp-client');
+jest.mock('../../service/utils');
+jest.mock('papaparse');
 
-const nowDateString = '2020-02-02T02:02:02.222Z';
-
+let configuration: NorthConnectorEntity<NorthSFTPSettings>;
 let north: NorthSftp;
 
 describe('NorthSFTP', () => {
-  const configuration: NorthConnectorDTO<NorthSFTPSettings> = {
-    id: 'id',
-    name: 'north',
-    type: 'test',
-    description: 'my test connector',
-    enabled: true,
-    settings: {
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
+    configuration.settings = {
       host: '127.0.0.1',
       port: 2222,
       remoteFolder: 'remoteFolder',
@@ -93,34 +78,14 @@ describe('NorthSFTP', () => {
       password: 'pass',
       prefix: '',
       suffix: ''
-    },
-    caching: {
-      scanModeId: 'id1',
-      retryInterval: 5000,
-      retryCount: 2,
-      maxSize: 1000,
-      oibusTimeValues: {
-        groupCount: 10000,
-        maxSendCount: 10000
-      },
-      rawFiles: {
-        sendFileImmediately: true,
-        archive: {
-          enabled: true,
-          retentionDuration: 720
-        }
-      }
-    }
-  };
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
-    (sftpClient as jest.Mock).mockImplementation(() => mockSftpClient);
+    };
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
+    (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
 
+    (sftpClient as jest.Mock).mockImplementation(() => mockSftpClient);
     (csv.unparse as jest.Mock).mockReturnValue('csv content');
 
-    north = new NorthSftp(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+    north = new NorthSftp(configuration, encryptionService, northConnectorRepository, scanModeRepository, logger, 'baseFolder');
     await north.start();
   });
 
@@ -194,13 +159,11 @@ describe('NorthSFTP', () => {
 });
 
 describe('NorthSFTP without suffix or prefix', () => {
-  const configuration: NorthConnectorDTO<NorthSFTPSettings> = {
-    id: 'id',
-    name: 'north',
-    type: 'test',
-    description: 'my test connector',
-    enabled: true,
-    settings: {
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
+    configuration.settings = {
       host: '127.0.0.1',
       port: 2222,
       remoteFolder: 'remoteFolder',
@@ -210,33 +173,13 @@ describe('NorthSFTP without suffix or prefix', () => {
       passphrase: 'myPassphrase',
       prefix: '',
       suffix: ''
-    },
-    caching: {
-      scanModeId: 'id1',
-      retryInterval: 5000,
-      retryCount: 2,
-      maxSize: 1000,
-      oibusTimeValues: {
-        groupCount: 10000,
-        maxSendCount: 10000
-      },
-      rawFiles: {
-        sendFileImmediately: true,
-        archive: {
-          enabled: true,
-          retentionDuration: 720
-        }
-      }
-    }
-  };
+    };
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
+    (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
 
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
     (sftpClient as jest.Mock).mockImplementation(() => mockSftpClient);
 
-    north = new NorthSftp(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+    north = new NorthSftp(configuration, encryptionService, northConnectorRepository, scanModeRepository, logger, 'baseFolder');
   });
 
   it('should properly handle values', async () => {

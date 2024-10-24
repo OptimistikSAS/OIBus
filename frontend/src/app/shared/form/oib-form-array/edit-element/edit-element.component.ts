@@ -3,7 +3,7 @@ import { FormGroup, NonNullableFormBuilder } from '@angular/forms';
 import { formDirectives } from '../../../form-directives';
 
 import { TranslateModule } from '@ngx-translate/core';
-import { OibFormControl } from '../../../../../../../shared/model/form.model';
+import { OibFormControl } from '../../../../../../../backend/shared/model/form.model';
 import { createFormGroup, groupFormControlsByRow } from '../../../form-utils';
 import { FormComponent } from '../../form.component';
 

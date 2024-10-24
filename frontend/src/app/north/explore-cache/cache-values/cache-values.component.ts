@@ -4,7 +4,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../../shared/form-directives';
 import { NorthConnectorService } from '../../../services/north-connector.service';
 
-import { NorthConnectorDTO, NorthValueFiles } from '../../../../../../shared/model/north-connector.model';
+import { NorthConnectorDTO, NorthValueFiles } from '../../../../../../backend/shared/model/north-connector.model';
 import { RouterLink } from '@angular/router';
 import { DatetimePipe } from '../../../shared/datetime.pipe';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
@@ -12,6 +12,7 @@ import { FileSizePipe } from '../../../shared/file-size.pipe';
 import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
 import { emptyPage } from '../../../shared/test-utils';
 import { ValueTableComponent, ValueTableData } from '../value-table/value-table.component';
+import { NorthSettings } from '../../../../../../backend/shared/model/north-settings.model';
 
 @Component({
   selector: 'oib-cache-values',
@@ -34,7 +35,7 @@ import { ValueTableComponent, ValueTableData } from '../value-table/value-table.
 export class CacheValuesComponent implements OnInit {
   private northConnectorService = inject(NorthConnectorService);
 
-  @Input() northConnector: NorthConnectorDTO | null = null;
+  @Input() northConnector: NorthConnectorDTO<NorthSettings> | null = null;
   cacheValues: Array<NorthValueFiles> = [];
   @ViewChild('valueTable') valueTable!: ValueTableComponent;
   valueTablePages = emptyPage<ValueTableData>();

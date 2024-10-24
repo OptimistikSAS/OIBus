@@ -3,9 +3,9 @@ import { TestBed } from '@angular/core/testing';
 import { FormComponent } from './form.component';
 import { ComponentTester } from 'ngx-speculoos';
 import { Component } from '@angular/core';
-import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
+import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { FormControl, FormGroup, FormRecord } from '@angular/forms';
-import { OibFormControl } from '../../../../../shared/model/form.model';
+import { OibFormControl } from '../../../../../backend/shared/model/form.model';
 import { formDirectives } from '../form-directives';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 

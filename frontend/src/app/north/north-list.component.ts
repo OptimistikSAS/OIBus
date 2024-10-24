@@ -4,7 +4,7 @@ import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
 import { ConfirmationService } from '../shared/confirmation.service';
 import { NotificationService } from '../shared/notification.service';
 import { ModalService } from '../shared/modal.service';
-import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
+import { NorthConnectorLightDTO } from '../../../../backend/shared/model/north-connector.model';
 import { NorthConnectorService } from '../services/north-connector.service';
 import { ChooseNorthConnectorTypeModalComponent } from './choose-north-connector-type-modal/choose-north-connector-type-modal.component';
 import { RouterLink } from '@angular/router';
@@ -13,7 +13,7 @@ import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinn
 import { NonNullableFormBuilder } from '@angular/forms';
 import { formDirectives } from '../shared/form-directives';
 import { EnabledEnumPipe } from '../shared/enabled-enum.pipe';
-import { createPageFromArray, Page } from '../../../../shared/model/types';
+import { createPageFromArray, Page } from '../../../../backend/shared/model/types';
 import { emptyPage } from '../shared/test-utils';
 import { PaginationComponent } from '../shared/pagination/pagination.component';
 import { ObservableState } from '../shared/save-button/save-button.component';
@@ -43,9 +43,9 @@ export class NorthListComponent implements OnInit {
   private modalService = inject(ModalService);
   private northConnectorService = inject(NorthConnectorService);
 
-  allNorths: Array<NorthConnectorDTO> | null = null;
-  private filteredNorths: Array<NorthConnectorDTO> = [];
-  displayedNorths: Page<NorthConnectorDTO> = emptyPage();
+  allNorths: Array<NorthConnectorLightDTO> | null = null;
+  private filteredNorths: Array<NorthConnectorLightDTO> = [];
+  displayedNorths: Page<NorthConnectorLightDTO> = emptyPage();
   states = new Map<string, ObservableState>();
 
   searchForm = inject(NonNullableFormBuilder).group({
@@ -79,7 +79,7 @@ export class NorthListComponent implements OnInit {
   /**
    * Delete a North connector by its ID
    */
-  deleteNorth(north: NorthConnectorDTO) {
+  deleteNorth(north: NorthConnectorLightDTO) {
     this.confirmationService
       .confirm({
         messageKey: 'north.confirm-deletion',
@@ -121,11 +121,11 @@ export class NorthListComponent implements OnInit {
     this.displayedNorths = this.createPage(pageNumber);
   }
 
-  private createPage(pageNumber: number): Page<NorthConnectorDTO> {
+  private createPage(pageNumber: number): Page<NorthConnectorLightDTO> {
     return createPageFromArray(this.filteredNorths, PAGE_SIZE, pageNumber);
   }
 
-  filter(norths: Array<NorthConnectorDTO>): Array<NorthConnectorDTO> {
+  filter(norths: Array<NorthConnectorLightDTO>): Array<NorthConnectorLightDTO> {
     const formValue = this.searchForm.value;
     let filteredItems = norths;
 

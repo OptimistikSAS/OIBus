@@ -4,9 +4,9 @@ import { TranslateModule } from '@ngx-translate/core';
 import {
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
-  SouthConnectorItemDTO,
+  SouthConnectorItemCommandDTO,
   SouthConnectorManifest
-} from '../../../../../shared/model/south-connector.model';
+} from '../../../../../backend/shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { formDirectives } from '../../shared/form-directives';
@@ -15,8 +15,8 @@ import { NotificationService } from '../../shared/notification.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { combineLatest, Observable, of, switchMap, tap } from 'rxjs';
 import { FormComponent } from '../../shared/form/form.component';
-import { OibFormControl } from '../../../../../shared/model/form.model';
-import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
+import { OibFormControl } from '../../../../../backend/shared/model/form.model';
+import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { createFormGroup, groupFormControlsByRow } from '../../shared/form-utils';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
@@ -26,6 +26,7 @@ import { EditElementComponent } from '../../shared/form/oib-form-array/edit-elem
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { ModalService } from '../../shared/modal.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
+import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 
 @Component({
   selector: 'oib-edit-south',
@@ -56,7 +57,7 @@ export class EditSouthComponent implements OnInit {
   private route = inject(ActivatedRoute);
 
   mode: 'create' | 'edit' = 'create';
-  southConnector: SouthConnectorDTO | null = null;
+  southConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> | null = null;
   southType = '';
   duplicateId = '';
   state = new ObservableState();
@@ -68,21 +69,10 @@ export class EditSouthComponent implements OnInit {
     name: FormControl<string>;
     description: FormControl<string>;
     enabled: FormControl<boolean>;
-    sharedConnection: FormControl<boolean>;
-    history: FormGroup<{
-      maxInstantPerItem: FormControl<boolean>;
-      maxReadInterval: FormControl<number>;
-      readDelay: FormControl<number>;
-      overlap: FormControl<number>;
-    }>;
     settings: FormGroup;
   }> | null = null;
 
-  inMemoryItems: Array<SouthConnectorItemDTO> = [];
-  inMemoryItemIdsToDelete: Array<string> = [];
-
-  initialMaxInstantPerItem: boolean | null = null;
-  showMaxInstantPerItemWarning = false;
+  inMemoryItems: Array<SouthConnectorItemCommandDTO<SouthItemSettings>> = [];
 
   ngOnInit() {
     combineLatest([this.scanModeService.list(), this.route.paramMap, this.route.queryParamMap])
@@ -126,13 +116,6 @@ export class EditSouthComponent implements OnInit {
           name: ['', Validators.required],
           description: '',
           enabled: true as boolean,
-          sharedConnection: false as boolean,
-          history: this.fb.group({
-            maxInstantPerItem: manifest.modes.forceMaxInstantPerItem,
-            maxReadInterval: 0,
-            readDelay: 200,
-            overlap: 0
-          }),
           settings: createFormGroup(manifest.settings, this.fb)
         });
 
@@ -143,24 +126,19 @@ export class EditSouthComponent implements OnInit {
           // we should provoke all value changes to make sure fields are properly hidden and disabled
           this.southForm.setValue(this.southForm.getRawValue());
         }
-
-        this.initialMaxInstantPerItem = Boolean(this.southForm!.get('history.maxInstantPerItem')!.value);
       });
   }
 
-  createOrUpdateSouthConnector(command: SouthConnectorCommandDTO): void {
-    let createOrUpdate: Observable<SouthConnectorDTO>;
-    // if we are editing
+  createOrUpdateSouthConnector(command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>): void {
+    let createOrUpdate: Observable<SouthConnectorDTO<SouthSettings, SouthItemSettings>>;
     if (this.mode === 'edit') {
-      createOrUpdate = this.southConnectorService
-        .update(this.southConnector!.id, command, this.inMemoryItems, this.inMemoryItemIdsToDelete)
-        .pipe(
-          tap(() => this.notificationService.success('south.updated', { name: command.name })),
-          switchMap(() => this.southConnectorService.get(this.southConnector!.id))
-        );
+      createOrUpdate = this.southConnectorService.update(this.southConnector!.id, command).pipe(
+        tap(() => this.notificationService.success('south.updated', { name: command.name })),
+        switchMap(() => this.southConnectorService.get(this.southConnector!.id))
+      );
     } else {
       createOrUpdate = this.southConnectorService
-        .create(command, this.inMemoryItems, this.duplicateId)
+        .create(command, this.duplicateId)
         .pipe(tap(() => this.notificationService.success('south.created', { name: command.name })));
     }
     createOrUpdate.pipe(this.state.pendingUntilFinalization()).subscribe(southConnector => {
@@ -174,19 +152,22 @@ export class EditSouthComponent implements OnInit {
     }
 
     const formValue = this.southForm!.value;
-    const command: SouthConnectorCommandDTO = {
+    const command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
       name: formValue.name!,
       type: this.southType,
       description: formValue.description!,
       enabled: formValue.enabled!,
-      sharedConnection: formValue.sharedConnection!,
-      history: {
-        maxInstantPerItem: formValue.history!.maxInstantPerItem!,
-        maxReadInterval: formValue.history!.maxReadInterval!,
-        readDelay: formValue.history!.readDelay!,
-        overlap: formValue.history!.overlap!
-      },
-      settings: formValue.settings!
+      settings: formValue.settings!,
+      items: this.southConnector
+        ? this.southConnector.items.map(item => ({
+            id: item.id,
+            name: item.name,
+            enabled: item.enabled,
+            scanModeId: item.scanModeId,
+            scanModeName: null,
+            settings: item.settings
+          }))
+        : this.inMemoryItems
     };
     if (value === 'save') {
       this.createOrUpdateSouthConnector(command);
@@ -197,36 +178,14 @@ export class EditSouthComponent implements OnInit {
     }
   }
 
-  updateInMemoryItems({ items, itemIdsToDelete }: { items: Array<SouthConnectorItemDTO>; itemIdsToDelete: Array<string> }) {
-    this.inMemoryItems = items;
-    this.inMemoryItemIdsToDelete = itemIdsToDelete;
-  }
-
-  onMaxInstantPerItemChange() {
-    if (!this.initialMaxInstantPerItem) {
-      this.showMaxInstantPerItemWarning = false;
-      return;
+  updateInMemoryItems(items: Array<SouthConnectorItemCommandDTO<SouthItemSettings>> | null) {
+    if (items) {
+      this.inMemoryItems = items;
+    } else {
+      this.southConnectorService.get(this.southConnector!.id).subscribe(southConnector => {
+        this.southConnector!.items = southConnector.items;
+        this.southConnector = JSON.parse(JSON.stringify(this.southConnector)); // Used to force a refresh in south item list
+      });
     }
-
-    const currentMaxInstantPerItem = Boolean(this.southForm!.get('history.maxInstantPerItem')!.value);
-    if (this.initialMaxInstantPerItem === currentMaxInstantPerItem) {
-      this.showMaxInstantPerItemWarning = false;
-      return;
-    }
-
-    // enabled -> disabled
-    if (this.initialMaxInstantPerItem && !currentMaxInstantPerItem) {
-      this.showMaxInstantPerItemWarning = true;
-    }
-  }
-
-  get maxInstantPerItem() {
-    if (this.mode === 'create') {
-      // When we are creating a new South connector,
-      // we don't pass down the max instant per item value
-      // because item changes are not persisted until the South connector is created
-      return null;
-    }
-    return Boolean(this.southForm!.get('history.maxInstantPerItem')?.value);
   }
 }

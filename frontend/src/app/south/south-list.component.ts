@@ -1,6 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
-import { SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorLightDTO } from '../../../../backend/shared/model/south-connector.model';
 import { SouthConnectorService } from '../services/south-connector.service';
 import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
 import { ConfirmationService } from '../shared/confirmation.service';
@@ -13,7 +13,7 @@ import { EnabledEnumPipe } from '../shared/enabled-enum.pipe';
 import { FormControlValidationDirective } from '../shared/form-control-validation.directive';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
-import { createPageFromArray, Page } from '../../../../shared/model/types';
+import { createPageFromArray, Page } from '../../../../backend/shared/model/types';
 import { emptyPage } from '../shared/test-utils';
 import { PaginationComponent } from '../shared/pagination/pagination.component';
 import { ObservableState } from '../shared/save-button/save-button.component';
@@ -45,9 +45,9 @@ export class SouthListComponent implements OnInit {
   private modalService = inject(ModalService);
   private southConnectorService = inject(SouthConnectorService);
 
-  allSouths: Array<SouthConnectorDTO> | null = null;
-  private filteredSouths: Array<SouthConnectorDTO> = [];
-  displayedSouths: Page<SouthConnectorDTO> = emptyPage();
+  allSouths: Array<SouthConnectorLightDTO> | null = null;
+  private filteredSouths: Array<SouthConnectorLightDTO> = [];
+  displayedSouths: Page<SouthConnectorLightDTO> = emptyPage();
   states = new Map<string, ObservableState>();
 
   searchForm = inject(NonNullableFormBuilder).group({
@@ -81,7 +81,7 @@ export class SouthListComponent implements OnInit {
   /**
    * Delete a South connector by its ID
    */
-  deleteSouth(south: SouthConnectorDTO) {
+  deleteSouth(south: SouthConnectorLightDTO) {
     this.confirmationService
       .confirm({
         messageKey: 'south.confirm-deletion',
@@ -123,11 +123,11 @@ export class SouthListComponent implements OnInit {
     this.displayedSouths = this.createPage(pageNumber);
   }
 
-  private createPage(pageNumber: number): Page<SouthConnectorDTO> {
+  private createPage(pageNumber: number): Page<SouthConnectorLightDTO> {
     return createPageFromArray(this.filteredSouths, PAGE_SIZE, pageNumber);
   }
 
-  filter(souths: Array<SouthConnectorDTO>): Array<SouthConnectorDTO> {
+  filter(souths: Array<SouthConnectorLightDTO>): Array<SouthConnectorLightDTO> {
     const formValue = this.searchForm.value;
     let filteredItems = souths;
 

@@ -5,32 +5,32 @@ import { HeadBucketCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s
 import { NodeHttpHandler } from '@aws-sdk/node-http-handler';
 
 import NorthConnector from '../north-connector';
-import manifest from './manifest';
-import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import EncryptionService from '../../service/encryption.service';
-import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
-import { NorthAmazonS3Settings } from '../../../../shared/model/north-settings.model';
+import { NorthAmazonS3Settings } from '../../../shared/model/north-settings.model';
 import { createProxyAgent } from '../../service/proxy-agent';
-import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
 import csv from 'papaparse';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
+import NorthConnectorRepository from '../../repository/config/north-connector.repository';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
 
 /**
  * Class NorthAmazonS3 - sends files to Amazon AWS S3
  */
 export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings> {
-  static type = manifest.id;
   private s3: S3Client | undefined;
 
   constructor(
-    connector: NorthConnectorDTO<NorthAmazonS3Settings>,
+    connector: NorthConnectorEntity<NorthAmazonS3Settings>,
     encryptionService: EncryptionService,
-    repositoryService: RepositoryService,
+    northConnectorRepository: NorthConnectorRepository,
+    scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, encryptionService, repositoryService, logger, baseFolder);
+    super(connector, encryptionService, northConnectorRepository, scanModeRepository, logger, baseFolder);
   }
 
   /**
@@ -66,10 +66,10 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
           : ''
       },
       requestHandler: proxy
-        ? (new NodeHttpHandler({
+        ? new NodeHttpHandler({
             httpAgent: proxy,
             httpsAgent: proxy
-          }) as any)
+          })
         : undefined
     });
   }

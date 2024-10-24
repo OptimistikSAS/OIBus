@@ -42,12 +42,6 @@
       @if (southItemRows.length > 0) {
         <oib-form formGroupName="settings" [form]="form.controls.settings" [settingsSchema]="southItemRows" [scanModes]="scanModes" />
       }
-      @if (maxInstantPerItem !== null && !maxInstantPerItem) {
-        <div>
-          <span class="fa fa-warning mx-1" style="color: orange"></span>
-          <span translate="south.items.scan-mode-change-warning"></span>
-        </div>
-      }
     </form>
   </div>
 }

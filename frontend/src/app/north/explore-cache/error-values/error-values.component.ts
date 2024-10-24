@@ -4,7 +4,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../../shared/form-directives';
 import { NorthConnectorService } from '../../../services/north-connector.service';
 
-import { NorthCacheFiles, NorthConnectorDTO } from '../../../../../../shared/model/north-connector.model';
+import { NorthCacheFiles, NorthConnectorDTO } from '../../../../../../backend/shared/model/north-connector.model';
 import { RouterLink } from '@angular/router';
 import { DatetimePipe } from '../../../shared/datetime.pipe';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
@@ -12,6 +12,7 @@ import { FileSizePipe } from '../../../shared/file-size.pipe';
 import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
 import { FileTableComponent, FileTableData } from '../file-table/file-table.component';
 import { emptyPage } from '../../../shared/test-utils';
+import { NorthSettings } from '../../../../../../backend/shared/model/north-settings.model';
 
 @Component({
   selector: 'oib-error-values',
@@ -34,7 +35,7 @@ import { emptyPage } from '../../../shared/test-utils';
 export class ErrorValuesComponent implements OnInit {
   private northConnectorService = inject(NorthConnectorService);
 
-  @Input() northConnector: NorthConnectorDTO | null = null;
+  @Input() northConnector: NorthConnectorDTO<NorthSettings> | null = null;
   errorValues: Array<NorthCacheFiles> = [];
   @ViewChild('fileTable') fileTable!: FileTableComponent;
   fileTablePages = emptyPage<FileTableData>();

@@ -5,8 +5,8 @@ import path from 'node:path';
 import { createFolder, getFilesFiltered } from '../utils';
 import pino from 'pino';
 
-import { Instant } from '../../../../shared/model/types';
-import { NorthCacheFiles, NorthCacheSettingsDTO } from '../../../../shared/model/north-connector.model';
+import { Instant } from '../../../shared/model/types';
+import { NorthCacheFiles, NorthCacheSettingsDTO } from '../../../shared/model/north-connector.model';
 import { EventEmitter } from 'node:events';
 
 const FILE_FOLDER = 'files';

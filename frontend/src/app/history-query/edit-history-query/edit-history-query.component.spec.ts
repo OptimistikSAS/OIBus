@@ -11,10 +11,12 @@ import { provideHttpClient } from '@angular/common/http';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { HistoryQueryService } from '../../services/history-query.service';
-import { HistoryQueryDTO } from '../../../../../shared/model/history-query.model';
-import { NorthConnectorCommandDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
-import { SouthConnectorCommandDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
+import { HistoryQueryDTO } from '../../../../../backend/shared/model/history-query.model';
+import { NorthConnectorCommandDTO, NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
+import { SouthConnectorCommandDTO, SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
 import { Modal, ModalService } from '../../shared/modal.service';
+import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
+import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
 class EditHistoryQueryComponentTester extends ComponentTester<EditHistoryQueryComponent> {
   constructor() {
@@ -70,24 +72,17 @@ describe('EditHistoryQueryComponent', () => {
   let scanModeService: jasmine.SpyObj<ScanModeService>;
   let modalService: jasmine.SpyObj<ModalService>;
 
-  const historyQuery: HistoryQueryDTO = {
+  const historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
     id: 'id1',
     name: 'Test',
     description: 'My History query description',
     status: 'PENDING',
-    history: {
-      maxInstantPerItem: false,
-      maxReadInterval: 0,
-      readDelay: 200,
-      overlap: 0
-    },
     startTime: '2023-01-01T00:00:00.000Z',
     endTime: '2023-02-01T00:00:00.000Z',
     northType: 'Console',
     southType: 'SQL',
-    northSettings: {},
-    southSettings: {},
-    southSharedConnection: false,
+    northSettings: {} as NorthSettings,
+    southSettings: {} as SouthSettings,
     caching: {
       scanModeId: 'scanModeId1',
       retryInterval: 1000,
@@ -104,7 +99,17 @@ describe('EditHistoryQueryComponent', () => {
           retentionDuration: 0
         }
       }
-    }
+    },
+    items: [
+      {
+        id: 'id1',
+        name: 'item1',
+        enabled: true,
+        settings: {
+          query: 'sql'
+        } as SouthItemSettings
+      }
+    ]
   };
 
   beforeEach(() => {
@@ -163,7 +168,8 @@ describe('EditHistoryQueryComponent', () => {
           lastFile: false,
           lastPoint: false,
           subscription: false,
-          forceMaxInstantPerItem: false
+          forceMaxInstantPerItem: false,
+          sharedConnection: false
         },
         settings: [],
         items: {
@@ -177,20 +183,7 @@ describe('EditHistoryQueryComponent', () => {
         schema: {} as unknown
       } as SouthConnectorManifest)
     );
-    historyQueryService.listItems.and.returnValue(
-      of([
-        {
-          id: 'id1',
-          name: 'item1',
-          enabled: true,
-          connectorId: 'southId',
-          scanModeId: 'history',
-          settings: {
-            query: 'sql'
-          }
-        }
-      ])
-    );
+
     tester = new EditHistoryQueryComponentTester();
     tester.detectChanges();
   });
@@ -244,7 +237,7 @@ describe('EditHistoryQueryComponent', () => {
     const command = {
       type: 'northId1',
       settings: historyQuery.northSettings
-    } as NorthConnectorCommandDTO;
+    } as NorthConnectorCommandDTO<NorthSettings>;
 
     const spy = jasmine.createSpy();
     modalService.open.and.returnValue({
@@ -265,7 +258,7 @@ describe('EditHistoryQueryComponent', () => {
     const command = {
       type: 'southId1',
       settings: historyQuery.southSettings
-    } as SouthConnectorCommandDTO;
+    } as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
 
     const spy = jasmine.createSpy();
     modalService.open.and.returnValue({

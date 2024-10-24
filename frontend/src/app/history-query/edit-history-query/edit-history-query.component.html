@@ -48,38 +48,6 @@
                   </div>
                 </div>
               </div>
-              <div class="row" formGroupName="history">
-                <div class="col-4">
-                  <div class="form-group">
-                    <label class="form-label" for="south-max-read-interval" translate="south.history.max-read-interval"></label>
-                    <div class="input-group">
-                      <input formControlName="maxReadInterval" id="south-max-read-interval" type="number" class="form-control" />
-                      <span class="input-group-text" translate="common.unit.s"></span>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-4">
-                  <div class="form-group">
-                    <label class="form-label" for="south-read-delay" translate="south.history.read-delay"></label>
-                    <div class="input-group">
-                      <input formControlName="readDelay" id="south-read-delay" type="number" class="form-control" />
-                      <span class="input-group-text" translate="common.unit.ms"></span>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-4">
-                  <div class="form-group">
-                    <div class="form-check form-switch padded">
-                      <input formControlName="maxInstantPerItem" id="south-max-instant-per-item" type="checkbox" class="form-check-input" />
-                      <label
-                        class="form-check-label"
-                        for="south-max-instant-per-item"
-                        translate="south.history.max-instant-per-item"
-                      ></label>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </oib-box>
             <!-- Cache settings -->
             <oib-box formGroupName="caching" helpUrl="https://oibus.optimistik.com/docs/guide/north-connectors/common-settings#caching">
@@ -227,22 +195,6 @@
             </oib-box>
             <!-- South settings -->
             <oib-box>
-              @if (southManifest.modes.sharedConnection) {
-                <div class="col">
-                  <!-- Shared connection -->
-                  <div class="form-group">
-                    <div class="form-check form-switch pt-2">
-                      <input
-                        formControlName="southSharedConnection"
-                        id="south-shared-connection"
-                        type="checkbox"
-                        class="form-check-input"
-                      />
-                      <label class="form-check-label" for="south-shared-connection" translate="south.shared-connection"></label>
-                    </div>
-                  </div>
-                </div>
-              }
               <ng-template oibBoxTitle>
                 <div class="d-flex justify-content-between align-items-center">
                   <span
@@ -278,23 +230,18 @@
                 <oib-save-button [insideOfGroup]="false" form="history-query-form" [state]="state" />
               </div>
             </div>
-          }
-          <!-- items -->
-          @if (mode === 'edit' && historyQuery) {
             <oib-history-query-items
+              (inMemoryItems)="updateInMemoryItems($event)"
               [historyQuery]="historyQuery"
               [southManifest]="southManifest"
-              [initItems]="inMemoryItems"
-              [inMemory]="false"
             />
           }
           @if (mode === 'create') {
             <oib-history-query-items
               (inMemoryItems)="updateInMemoryItems($event)"
+              [creationItems]="inMemoryItems"
               [historyQuery]="historyQuery"
               [southManifest]="southManifest"
-              [initItems]="inMemoryItems"
-              [inMemory]="true"
             />
           }
         </form>

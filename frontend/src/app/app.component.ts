@@ -5,7 +5,7 @@ import { NotificationComponent } from './shared/notification/notification.compon
 import { DefaultValidationErrorsComponent } from './shared/default-validation-errors/default-validation-errors.component';
 import { WindowService } from './shared/window.service';
 import { CurrentUserService } from './shared/current-user.service';
-import { User } from '../../../shared/model/user.model';
+import { User } from '../../../backend/shared/model/user.model';
 import { NavigationService } from './shared/navigation.service';
 
 @Component({

@@ -1,13 +1,18 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 
 import { TranslateModule } from '@ngx-translate/core';
-import { SouthConnectorCommandDTO, SouthConnectorDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
+import {
+  SouthConnectorCommandDTO,
+  SouthConnectorDTO,
+  SouthConnectorItemCommandDTO,
+  SouthConnectorManifest
+} from '../../../../../backend/shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { combineLatest, of, switchMap, tap } from 'rxjs';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { PageLoader } from '../../shared/page-loader.service';
-import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
+import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { SouthMetricsComponent } from '../south-metrics/south-metrics.component';
 import { NorthMetricsComponent } from '../../north/north-metrics/north-metrics.component';
@@ -16,13 +21,14 @@ import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
 import { SouthItemsComponent } from '../south-items/south-items.component';
 import { NotificationService } from '../../shared/notification.service';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
-import { OIBusInfo, SouthConnectorMetrics } from '../../../../../shared/model/engine.model';
+import { OIBusInfo, SouthConnectorMetrics } from '../../../../../backend/shared/model/engine.model';
 import { WindowService } from '../../shared/window.service';
 import { ModalService } from '../../shared/modal.service';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { EngineService } from '../../services/engine.service';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { LogsComponent } from '../../logs/logs.component';
+import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 
 @Component({
   selector: 'oib-south-detail',
@@ -56,7 +62,7 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private cd = inject(ChangeDetectorRef);
 
-  southConnector: SouthConnectorDTO | null = null;
+  southConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> | null = null;
   displayedSettings: Array<{ key: string; value: string }> = [];
   scanModes: Array<ScanModeDTO> = [];
   manifest: SouthConnectorManifest | null = null;
@@ -96,15 +102,22 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
         this.manifest = manifest;
         this.connectToEventSource();
 
+        const southSettings: Record<string, string> = JSON.parse(JSON.stringify(this.southConnector!.settings));
         this.displayedSettings = manifest.settings
           .filter(setting => setting.displayInViewMode)
           .map(setting => {
             return {
               key: setting.label,
-              value: this.southConnector!.settings[setting.key]
+              value: southSettings[setting.key]
             };
           });
       });
+  }
+
+  updateInMemoryItems(_items: Array<SouthConnectorItemCommandDTO<SouthItemSettings>> | null) {
+    this.southConnectorService.get(this.southConnector!.id).subscribe(southConnector => {
+      this.southConnector = southConnector;
+    });
   }
 
   getScanMode(scanModeId: string | undefined) {
@@ -112,19 +125,13 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
   }
 
   testConnection() {
-    const command: SouthConnectorCommandDTO = {
+    const command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
       name: this.southConnector!.name,
       type: this.southConnector!.type,
       description: this.southConnector!.description,
       enabled: this.southConnector!.enabled,
-      sharedConnection: this.southConnector!.sharedConnection,
-      history: {
-        maxInstantPerItem: this.southConnector!.history!.maxInstantPerItem,
-        maxReadInterval: this.southConnector!.history!.maxReadInterval,
-        readDelay: this.southConnector!.history!.readDelay,
-        overlap: this.southConnector!.history!.overlap
-      },
-      settings: this.southConnector!.settings
+      settings: this.southConnector!.settings,
+      items: []
     };
 
     const modalRef = this.modalService.open(TestConnectionResultModalComponent);

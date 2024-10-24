@@ -8,10 +8,14 @@ import { NotificationService } from '../../shared/notification.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { combineLatest, Observable, of, switchMap, tap } from 'rxjs';
 import { FormComponent } from '../../shared/form/form.component';
-import { OibFormControl } from '../../../../../shared/model/form.model';
-import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
+import { OibFormControl } from '../../../../../backend/shared/model/form.model';
+import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
-import { NorthConnectorCommandDTO, NorthConnectorDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
+import {
+  NorthConnectorCommandDTO,
+  NorthConnectorDTO,
+  NorthConnectorManifest
+} from '../../../../../backend/shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { OibScanModeComponent } from '../../shared/form/oib-scan-mode/oib-scan-mode.component';
 import { createFormGroup, groupFormControlsByRow } from '../../shared/form-utils';
@@ -19,11 +23,12 @@ import { BackNavigationDirective } from '../../shared/back-navigation.directives
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { ModalService } from '../../shared/modal.service';
-import { CertificateDTO } from '../../../../../shared/model/certificate.model';
+import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
 import { CertificateService } from '../../services/certificate.service';
 import { NorthSubscriptionsComponent } from '../north-subscriptions/north-subscriptions.component';
-import { OIBusSubscription } from '../../../../../shared/model/subscription.model';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
+import { SouthConnectorLightDTO } from '../../../../../backend/shared/model/south-connector.model';
+import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
 @Component({
   selector: 'oib-edit-north',
@@ -55,7 +60,7 @@ export class EditNorthComponent implements OnInit {
   private route = inject(ActivatedRoute);
 
   mode: 'create' | 'edit' = 'create';
-  northConnector: NorthConnectorDTO | null = null;
+  northConnector: NorthConnectorDTO<NorthSettings> | null = null;
   northType = '';
   duplicateId = '';
   state = new ObservableState();
@@ -86,8 +91,8 @@ export class EditNorthComponent implements OnInit {
     settings: FormGroup;
   }> | null = null;
 
-  inMemorySubscriptions: Array<OIBusSubscription> = [];
-  inMemorySubscriptionsToDelete: Array<OIBusSubscription> = [];
+  inMemorySubscriptions: Array<SouthConnectorLightDTO> = [];
+  inMemorySubscriptionsToDelete: Array<string> = [];
 
   ngOnInit() {
     combineLatest([this.scanModeService.list(), this.certificateService.list(), this.route.paramMap, this.route.queryParamMap])
@@ -165,19 +170,16 @@ export class EditNorthComponent implements OnInit {
       });
   }
 
-  createOrUpdateNorthConnector(command: NorthConnectorCommandDTO): void {
-    let createOrUpdate: Observable<NorthConnectorDTO>;
-    // if we are editing
+  createOrUpdateNorthConnector(command: NorthConnectorCommandDTO<NorthSettings>): void {
+    let createOrUpdate: Observable<NorthConnectorDTO<NorthSettings>>;
     if (this.mode === 'edit') {
-      createOrUpdate = this.northConnectorService
-        .update(this.northConnector!.id, command, this.inMemorySubscriptions, this.inMemorySubscriptionsToDelete)
-        .pipe(
-          tap(() => this.notificationService.success('north.updated', { name: command.name })),
-          switchMap(() => this.northConnectorService.get(this.northConnector!.id))
-        );
+      createOrUpdate = this.northConnectorService.update(this.northConnector!.id, command).pipe(
+        tap(() => this.notificationService.success('north.updated', { name: command.name })),
+        switchMap(() => this.northConnectorService.get(this.northConnector!.id))
+      );
     } else {
       createOrUpdate = this.northConnectorService
-        .create(command, this.inMemorySubscriptions, this.duplicateId)
+        .create(command, this.duplicateId)
         .pipe(tap(() => this.notificationService.success('north.created', { name: command.name })));
     }
     createOrUpdate.pipe(this.state.pendingUntilFinalization()).subscribe(northConnector => {
@@ -192,7 +194,7 @@ export class EditNorthComponent implements OnInit {
 
     const formValue = this.northForm!.value;
 
-    const command: NorthConnectorCommandDTO = {
+    const command: NorthConnectorCommandDTO<NorthSettings> = {
       name: formValue.name!,
       type: this.northType,
       description: formValue.description!,
@@ -200,6 +202,7 @@ export class EditNorthComponent implements OnInit {
       settings: formValue.settings!,
       caching: {
         scanModeId: formValue.caching!.scanModeId!,
+        scanModeName: null,
         retryInterval: formValue.caching!.retryInterval!,
         retryCount: formValue.caching!.retryCount!,
         maxSize: formValue.caching!.maxSize!,
@@ -214,7 +217,10 @@ export class EditNorthComponent implements OnInit {
             retentionDuration: formValue.caching!.rawFiles!.archive!.retentionDuration!
           }
         }
-      }
+      },
+      subscriptions: this.northConnector
+        ? this.northConnector.subscriptions.map(subscription => subscription.id)
+        : this.inMemorySubscriptions.map(subscription => subscription.id)
     };
     if (value === 'save') {
       this.createOrUpdateNorthConnector(command);
@@ -225,14 +231,14 @@ export class EditNorthComponent implements OnInit {
     }
   }
 
-  updateInMemorySubscriptions({
-    subscriptions,
-    subscriptionsToDelete
-  }: {
-    subscriptions: Array<OIBusSubscription>;
-    subscriptionsToDelete: Array<OIBusSubscription>;
-  }) {
-    this.inMemorySubscriptions = subscriptions;
-    this.inMemorySubscriptionsToDelete = subscriptionsToDelete;
+  updateInMemorySubscriptions(subscriptions: Array<SouthConnectorLightDTO> | null) {
+    if (subscriptions) {
+      this.inMemorySubscriptions = subscriptions;
+    } else {
+      this.northConnectorService.get(this.northConnector!.id).subscribe(northConnector => {
+        this.northConnector!.subscriptions = northConnector.subscriptions;
+        this.northConnector = JSON.parse(JSON.stringify(this.northConnector));
+      });
+    }
   }
 }

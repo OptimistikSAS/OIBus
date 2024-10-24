@@ -2,7 +2,7 @@ import { ActivatedRoute, convertToParamMap, Params, Router } from '@angular/rout
 import { Subject } from 'rxjs';
 import { PageLoader } from './page-loader.service';
 import { createMock } from 'ngx-speculoos';
-import { Page } from '../../../../shared/model/types';
+import { Page } from '../../../../backend/shared/model/types';
 import { TestBed } from '@angular/core/testing';
 
 describe('PageLoader', () => {

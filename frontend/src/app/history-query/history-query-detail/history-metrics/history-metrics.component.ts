@@ -1,14 +1,16 @@
 import { Component, Input } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
-import { HistoryMetrics } from '../../../../../../shared/model/engine.model';
+import { HistoryQueryMetrics } from '../../../../../../backend/shared/model/engine.model';
 import { JsonPipe } from '@angular/common';
 import { DatetimePipe } from '../../../shared/datetime.pipe';
 import { DurationPipe } from '../../../shared/duration.pipe';
 import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
-import { HistoryQueryDTO } from '../../../../../../shared/model/history-query.model';
-import { NorthConnectorManifest } from '../../../../../../shared/model/north-connector.model';
-import { SouthConnectorManifest } from '../../../../../../shared/model/south-connector.model';
+import { HistoryQueryDTO } from '../../../../../../backend/shared/model/history-query.model';
+import { NorthConnectorManifest } from '../../../../../../backend/shared/model/north-connector.model';
+import { SouthConnectorManifest } from '../../../../../../backend/shared/model/south-connector.model';
 import { ProgressbarComponent } from './progressbar/progressbar.component';
+import { SouthItemSettings, SouthSettings } from '../../../../../../backend/shared/model/south-settings.model';
+import { NorthSettings } from '../../../../../../backend/shared/model/north-settings.model';
 
 @Component({
   selector: 'oib-history-metrics',
@@ -18,18 +20,15 @@ import { ProgressbarComponent } from './progressbar/progressbar.component';
   standalone: true
 })
 export class HistoryMetricsComponent {
-  @Input({ required: true }) historyQuery!: HistoryQueryDTO;
+  @Input({ required: true }) historyQuery!: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>;
   @Input({ required: true }) northManifest!: NorthConnectorManifest;
   @Input({ required: true }) southManifest!: SouthConnectorManifest;
-  @Input({ required: true }) historyMetrics!: HistoryMetrics;
+  @Input({ required: true }) historyMetrics!: HistoryQueryMetrics;
 
   constructor() {}
 
   get southProgressbarAnimated(): boolean {
-    if (this.historyQuery.status === 'RUNNING' && this.historyMetrics.south.historyMetrics.intervalProgress !== 1) {
-      return true;
-    }
-    return false;
+    return this.historyQuery.status === 'RUNNING' && this.historyMetrics.historyMetrics.intervalProgress !== 1;
   }
 
   get northProgress() {
@@ -40,9 +39,6 @@ export class HistoryMetricsComponent {
   }
 
   get northProgressbarAnimated(): boolean {
-    if (this.historyQuery.status === 'RUNNING' && this.northProgress !== 1) {
-      return true;
-    }
-    return false;
+    return this.historyQuery.status === 'RUNNING' && this.northProgress < 1;
   }
 }

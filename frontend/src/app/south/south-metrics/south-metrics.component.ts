@@ -1,7 +1,7 @@
 import { Component, Input, NgZone, OnInit, inject } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
-import { SouthConnectorDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
-import { SouthConnectorMetrics } from '../../../../../shared/model/engine.model';
+import { SouthConnectorLightDTO, SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
+import { SouthConnectorMetrics } from '../../../../../backend/shared/model/engine.model';
 import { JsonPipe } from '@angular/common';
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { DurationPipe } from '../../shared/duration.pipe';
@@ -23,7 +23,7 @@ export class SouthMetricsComponent implements OnInit {
   private southService = inject(SouthConnectorService);
   private notificationService = inject(NotificationService);
 
-  @Input({ required: true }) southConnector!: SouthConnectorDTO;
+  @Input({ required: true }) southConnector!: SouthConnectorLightDTO;
   @Input() manifest: SouthConnectorManifest | null = null;
   @Input() displayButton = false;
   @Input({ required: true }) connectorMetrics!: SouthConnectorMetrics;

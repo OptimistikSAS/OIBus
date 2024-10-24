@@ -5,7 +5,7 @@ import { Observable, switchMap } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
-import { CertificateCommandDTO, CertificateDTO } from '../../../../../shared/model/certificate.model';
+import { CertificateCommandDTO, CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
 import { CertificateService } from '../../services/certificate.service';
 
 @Component({

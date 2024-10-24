@@ -1,5 +1,5 @@
 import { byIdComparisonFn, getValidators, groupFormControlsByRow } from './form-utils';
-import { FormComponentValidator, OibFormControl } from '../../../../shared/model/form.model';
+import { FormComponentValidator, OibFormControl } from '../../../../backend/shared/model/form.model';
 import { Validators } from '@angular/forms';
 
 describe('form-utils', () => {

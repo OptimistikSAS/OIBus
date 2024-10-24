@@ -2,30 +2,29 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import NorthConnector from '../north-connector';
-import manifest from './manifest';
-import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import EncryptionService from '../../service/encryption.service';
-import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { DateTime } from 'luxon';
-import { NorthFileWriterSettings } from '../../../../shared/model/north-settings.model';
-import { OIBusContent, OIBusTimeValue } from '../../../../shared/model/engine.model';
+import { NorthFileWriterSettings } from '../../../shared/model/north-settings.model';
+import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import csv from 'papaparse';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
+import NorthConnectorRepository from '../../repository/config/north-connector.repository';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
 
 /**
  * Class NorthFileWriter - Write files in an output folder
  */
 export default class NorthFileWriter extends NorthConnector<NorthFileWriterSettings> {
-  static type = manifest.id;
-
   constructor(
-    configuration: NorthConnectorDTO<NorthFileWriterSettings>,
+    configuration: NorthConnectorEntity<NorthFileWriterSettings>,
     encryptionService: EncryptionService,
-    repositoryService: RepositoryService,
+    northConnectorRepository: NorthConnectorRepository,
+    scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(configuration, encryptionService, repositoryService, logger, baseFolder);
+    super(configuration, encryptionService, northConnectorRepository, scanModeRepository, logger, baseFolder);
   }
 
   async handleContent(data: OIBusContent): Promise<void> {
@@ -84,14 +83,14 @@ export default class NorthFileWriter extends NorthConnector<NorthFileWriterSetti
 
     try {
       await fs.access(outputFolder, fs.constants.F_OK);
-    } catch (error: any) {
-      throw new Error(`Access error on "${outputFolder}": ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`Access error on "${outputFolder}": ${(error as Error).message}`);
     }
 
     try {
       await fs.access(outputFolder, fs.constants.W_OK);
-    } catch (error: any) {
-      throw new Error(`Access error on "${outputFolder}": ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`Access error on "${outputFolder}": ${(error as Error).message}`);
     }
   }
 }

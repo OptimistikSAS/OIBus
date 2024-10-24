@@ -1,8 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { OibusCommandService } from './oibus-command.service';
-import { OIBusCommandDTO } from '../../../../shared/model/command.model';
-import { Page } from '../../../../shared/model/types';
+import { OIBusCommandDTO } from '../../../../backend/shared/model/command.model';
+import { Page } from '../../../../backend/shared/model/types';
 import { toPage } from '../shared/test-utils';
 import { provideHttpClient } from '@angular/common/http';
 

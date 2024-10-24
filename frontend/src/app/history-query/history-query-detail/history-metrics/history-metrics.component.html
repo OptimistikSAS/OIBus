@@ -14,8 +14,8 @@
         </tr>
       </thead>
       <tbody>
-        <!-- north interval progressbar -->
-        @if (historyMetrics.south.historyMetrics.intervalProgress === 1) {
+        <!-- interval progressbar  -->
+        @if (historyMetrics.historyMetrics.intervalProgress >= 1) {
           <tr>
             <td translate="history-query.monitoring.north.data-sent"></td>
             <td>
@@ -92,22 +92,22 @@
       </thead>
       <tbody>
         <!-- south interval progressbar -->
-        @if (historyMetrics.south.historyMetrics.intervalProgress) {
+        @if (historyMetrics.historyMetrics.intervalProgress) {
           <tr>
             <td translate="history-query.monitoring.south.data-retrieved"></td>
             <td>
-              <oib-progressbar [value]="historyMetrics.south.historyMetrics.intervalProgress" [animated]="southProgressbarAnimated" />
+              <oib-progressbar [value]="historyMetrics.historyMetrics.intervalProgress" [animated]="southProgressbarAnimated" />
             </td>
           </tr>
         }
         <!-- south interval progress -->
-        @if (historyMetrics.south.historyMetrics.currentIntervalNumber && historyMetrics.south.historyMetrics.numberOfIntervals) {
+        @if (historyMetrics.historyMetrics.currentIntervalNumber && historyMetrics.historyMetrics.numberOfIntervals) {
           <tr>
             <td translate="history-query.monitoring.south.interval-progress"></td>
             <td>
-              {{ historyMetrics.south.historyMetrics.currentIntervalNumber }} /
-              {{ historyMetrics.south.historyMetrics.numberOfIntervals }} : [{{ historyMetrics.south.historyMetrics.currentIntervalStart }},
-              {{ historyMetrics.south.historyMetrics.currentIntervalEnd }}]
+              {{ historyMetrics.historyMetrics.currentIntervalNumber }} / {{ historyMetrics.historyMetrics.numberOfIntervals }} : [{{
+                historyMetrics.historyMetrics.currentIntervalStart
+              }}, {{ historyMetrics.historyMetrics.currentIntervalEnd }}]
             </td>
           </tr>
         }

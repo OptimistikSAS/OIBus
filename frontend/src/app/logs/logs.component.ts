@@ -3,11 +3,11 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PageLoader } from '../shared/page-loader.service';
 import { NonNullableFormBuilder } from '@angular/forms';
-import { LogDTO, LogSearchParam, Scope } from '../../../../shared/model/logs.model';
+import { LogDTO, LogSearchParam, Scope } from '../../../../backend/shared/model/logs.model';
 import { DateTime } from 'luxon';
-import { Instant, Page } from '../../../../shared/model/types';
+import { Instant, Page } from '../../../../backend/shared/model/types';
 import { ascendingDates } from '../shared/validators';
-import { LOG_LEVELS, LogLevel, SCOPE_TYPES, ScopeType } from '../../../../shared/model/engine.model';
+import { LOG_LEVELS, LogLevel, SCOPE_TYPES, ScopeType } from '../../../../backend/shared/model/engine.model';
 import {
   catchError,
   combineLatest,

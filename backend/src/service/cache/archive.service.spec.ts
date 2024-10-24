@@ -7,9 +7,9 @@ import ArchiveService from './archive.service';
 import { DateTime } from 'luxon';
 import { createFolder } from '../utils';
 import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/logger.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 
-import { NorthArchiveSettings } from '../../../../shared/model/north-connector.model';
+import { NorthArchiveSettings } from '../../../shared/model/north-connector.model';
 
 jest.mock('../../service/utils');
 jest.mock('node:fs/promises');
@@ -62,7 +62,7 @@ describe('ArchiveService', () => {
 
     it('should properly move file from cache to archive folder', async () => {
       (fs.rename as jest.Mock)
-        .mockImplementationOnce(() => {})
+        .mockImplementationOnce(() => Promise.resolve())
         .mockImplementationOnce(() => {
           throw new Error('rename error');
         });
@@ -252,7 +252,7 @@ describe('ArchiveService', () => {
 
     it('should properly get archived file content', async () => {
       const filename = 'myFile.csv';
-      (createReadStream as jest.Mock).mockImplementation(() => {});
+      (createReadStream as jest.Mock).mockImplementation(() => Promise.resolve());
       await archiveService.getArchiveFileContent(filename);
 
       expect(createReadStream).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'archive', filename));
@@ -292,7 +292,7 @@ describe('ArchiveService', () => {
 
     it('should properly remove file from cache', async () => {
       (fs.unlink as jest.Mock)
-        .mockImplementationOnce(() => {})
+        .mockImplementationOnce(() => Promise.resolve())
         .mockImplementationOnce(() => {
           throw new Error('unlink error');
         });

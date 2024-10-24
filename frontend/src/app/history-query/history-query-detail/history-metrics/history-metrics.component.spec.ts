@@ -3,12 +3,14 @@ import { TestBed } from '@angular/core/testing';
 import { ComponentTester } from 'ngx-speculoos';
 import { HistoryMetricsComponent } from './history-metrics.component';
 import { Component } from '@angular/core';
-import { NorthConnectorManifest } from '../../../../../../shared/model/north-connector.model';
+import { NorthConnectorManifest } from '../../../../../../backend/shared/model/north-connector.model';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
-import { SouthConnectorManifest } from '../../../../../../shared/model/south-connector.model';
-import { HistoryQueryDTO } from '../../../../../../shared/model/history-query.model';
-import { HistoryMetrics } from '../../../../../../shared/model/engine.model';
+import { SouthConnectorManifest } from '../../../../../../backend/shared/model/south-connector.model';
+import { HistoryQueryDTO } from '../../../../../../backend/shared/model/history-query.model';
+import { HistoryQueryMetrics } from '../../../../../../backend/shared/model/engine.model';
 import { provideHttpClient } from '@angular/common/http';
+import { SouthItemSettings, SouthSettings } from '../../../../../../backend/shared/model/south-settings.model';
+import { NorthSettings } from '../../../../../../backend/shared/model/north-settings.model';
 
 @Component({
   template: `<oib-history-metrics
@@ -53,8 +55,7 @@ class TestComponent {
       subscription: false,
       history: true,
       lastFile: true,
-      lastPoint: false,
-      forceMaxInstantPerItem: false
+      lastPoint: false
     }
   };
   northManifest: NorthConnectorManifest = {
@@ -83,28 +84,21 @@ class TestComponent {
     ]
   };
 
-  historyQuery: HistoryQueryDTO = {
+  historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
     id: 'id1',
     name: 'History query',
     description: 'My History query description',
     status: 'RUNNING',
-    history: {
-      maxInstantPerItem: false,
-      maxReadInterval: 0,
-      readDelay: 200,
-      overlap: 0
-    },
     southType: 'OPCUA_HA',
     northType: 'OIConnect',
     startTime: '2023-01-01T00:00:00.000Z',
     endTime: '2023-01-01T00:00:00.000Z',
     southSettings: {
       database: 'my database'
-    },
-    southSharedConnection: false,
+    } as SouthSettings,
     northSettings: {
       host: 'localhost'
-    },
+    } as NorthSettings,
     caching: {
       scanModeId: 'scanModeId1',
       retryInterval: 1000,
@@ -121,30 +115,39 @@ class TestComponent {
           retentionDuration: 0
         }
       }
-    }
+    },
+    items: []
   };
-  historyMetrics: HistoryMetrics = {
-    north: {
-      numberOfValuesSent: 10,
-      numberOfFilesSent: 0,
-      lastValueSent: null,
-      lastFileSent: null,
-      cacheSize: 0,
-      metricsStart: '2023-01-01T00:00:00.000Z',
+  historyMetrics: HistoryQueryMetrics = {
+    metricsStart: '2020-01-01T00:00:00.000Z',
+    south: {
       lastConnection: null,
       lastRunStart: null,
-      lastRunDuration: null
-    },
-    south: {
-      numberOfValuesRetrieved: 20,
-      numberOfFilesRetrieved: 0,
+      lastRunDuration: null,
+      numberOfValuesRetrieved: 11,
+      numberOfFilesRetrieved: 11,
       lastValueRetrieved: null,
-      lastFileRetrieved: null,
-      historyMetrics: {
-        intervalProgress: 1
-      }
+      lastFileRetrieved: null
+    },
+    north: {
+      lastConnection: null,
+      lastRunStart: null,
+      lastRunDuration: null,
+      numberOfValuesSent: 11,
+      numberOfFilesSent: 11,
+      lastValueSent: null,
+      lastFileSent: null,
+      cacheSize: 10
+    },
+    historyMetrics: {
+      running: false,
+      intervalProgress: 0,
+      currentIntervalStart: null,
+      currentIntervalEnd: null,
+      currentIntervalNumber: 0,
+      numberOfIntervals: 0
     }
-  } as HistoryMetrics;
+  };
 }
 
 class HistoryMetricsComponentTester extends ComponentTester<TestComponent> {

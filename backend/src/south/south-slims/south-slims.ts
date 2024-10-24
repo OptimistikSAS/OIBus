@@ -1,8 +1,6 @@
 import path from 'node:path';
 
 import fetch, { HeadersInit, RequestInit } from 'node-fetch';
-
-import manifest from './manifest';
 import SouthConnector from '../south-connector';
 import {
   convertDateTimeToInstant,
@@ -14,20 +12,22 @@ import {
   httpGetWithBody,
   persistResults
 } from '../../service/utils';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
-import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
-import { Instant } from '../../../../shared/model/types';
+import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
-import { SouthSlimsItemSettings, SouthSlimsSettings } from '../../../../shared/model/south-settings.model';
+import { SouthSlimsItemSettings, SouthSlimsSettings } from '../../../shared/model/south-settings.model';
 import { createProxyAgent } from '../../service/proxy-agent';
-import { OIBusContent } from '../../../../shared/model/engine.model';
+import { OIBusContent } from '../../../shared/model/engine.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
+import SouthConnectorRepository from '../../repository/config/south-connector.repository';
+import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
 
 export interface SlimsColumn {
   name: string;
-  value: any;
+  value: unknown;
   unit?: string;
 }
 
@@ -50,19 +50,28 @@ interface SlimsDataValue {
  * Class SouthSlims - Retrieve data from SLIMS REST API
  */
 export default class SouthSlims extends SouthConnector<SouthSlimsSettings, SouthSlimsItemSettings> implements QueriesHistory {
-  static type = manifest.id;
-
   private readonly tmpFolder: string;
 
   constructor(
-    connector: SouthConnectorDTO<SouthSlimsSettings>,
+    connector: SouthConnectorEntity<SouthSlimsSettings, SouthSlimsItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
-    repositoryService: RepositoryService,
+    southConnectorRepository: SouthConnectorRepository,
+    southCacheRepository: SouthCacheRepository,
+    scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, engineAddContentCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(
+      connector,
+      engineAddContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      baseFolder
+    );
     this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
     if (this.connector.settings.url.endsWith('/')) {
       this.connector.settings.url = this.connector.settings.url.slice(0, this.connector.settings.url.length - 1);
@@ -121,7 +130,7 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
     }
   }
 
-  override async testItem(item: SouthConnectorItemDTO<SouthSlimsItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
+  override async testItem(item: SouthConnectorItemEntity<SouthSlimsItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
     const startTime = DateTime.now()
       .minus(600 * 1000)
       .toUTC()
@@ -139,7 +148,10 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
           this.connector.name,
           item.name
         );
-        const content = generateCsvContent(formattedResult, item.settings.serialization.delimiter);
+        const content = generateCsvContent(
+          formattedResult as unknown as Array<Record<string, string | number>>,
+          item.settings.serialization.delimiter
+        );
         oibusContent = { type: 'raw', filePath, content };
         break;
       }
@@ -150,7 +162,11 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
   /**
    * Retrieve result from a REST API write them into a CSV file and send it to the Engine.
    */
-  async historyQuery(items: Array<SouthConnectorItemDTO<SouthSlimsItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
+  async historyQuery(
+    items: Array<SouthConnectorItemEntity<SouthSlimsItemSettings>>,
+    startTime: Instant,
+    endTime: Instant
+  ): Promise<Instant> {
     let updatedStartTime = startTime;
 
     for (const item of items) {
@@ -182,7 +198,22 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
     return updatedStartTime;
   }
 
-  async queryData(item: SouthConnectorItemDTO<SouthSlimsItemSettings>, startTime: Instant, endTime: Instant): Promise<SlimsResults> {
+  getThrottlingSettings(settings: SouthSlimsSettings): SouthThrottlingSettings {
+    return {
+      maxReadInterval: settings.throttling.maxReadInterval,
+      readDelay: settings.throttling.readDelay
+    };
+  }
+
+  getMaxInstantPerItem(_settings: SouthSlimsSettings): boolean {
+    return false;
+  }
+
+  getOverlap(settings: SouthSlimsSettings): number {
+    return settings.throttling.overlap;
+  }
+
+  async queryData(item: SouthConnectorItemEntity<SouthSlimsItemSettings>, startTime: Instant, endTime: Instant): Promise<SlimsResults> {
     const headers: HeadersInit = {};
     const basic = Buffer.from(
       `${this.connector.settings.username}:${await this.encryptionService.decryptText(this.connector.settings.password!)}`
@@ -206,7 +237,7 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
         host = this.connector.settings.url.substring(8);
         protocol = 'https:';
       }
-      const requestOptions: Record<string, any> = {
+      const requestOptions: Record<string, string | number | unknown> = {
         method: 'GET',
         agent: createProxyAgent(
           this.connector.settings.useProxy,
@@ -234,7 +265,7 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
         `Requesting data with GET method and body "${bodyToSend}" on: "${requestOptions.host}:${requestOptions.port}${requestOptions.path}"`
       );
 
-      return httpGetWithBody(bodyToSend, requestOptions);
+      return (await httpGetWithBody(bodyToSend, requestOptions)) as SlimsResults;
     }
 
     const fetchOptions: RequestInit = {
@@ -277,7 +308,7 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
    * (into csv files for example) and the latestDateRetrieved in ISO String format
    */
   parseData(
-    item: SouthConnectorItemDTO<SouthSlimsItemSettings>,
+    item: SouthConnectorItemEntity<SouthSlimsItemSettings>,
     httpResult: SlimsResults
   ): {
     formattedResult: Array<SlimsDataValue>;
@@ -317,19 +348,19 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
       if (!samplingDatetimeField) {
         throw new Error('Bad config: expect rslt_cf_samplingDateAndTime to have an associated date time fields (see item)');
       }
-      const resultInstant = convertDateTimeToInstant(rsltCfSamplingDateAndTime.value, samplingDatetimeField);
+      const resultInstant = convertDateTimeToInstant(rsltCfSamplingDateAndTime.value as string, samplingDatetimeField);
       const referenceDatetimeField = item.settings.dateTimeFields!.find(
         dateTimeField => dateTimeField.fieldName === 'rslt_modifiedOn' && dateTimeField.useAsReference
       );
       if (!referenceDatetimeField) {
         throw new Error('Bad config: expect to have a reference field (rslt_modifiedOn) in date time fields (see item)');
       }
-      const referenceInstant = convertDateTimeToInstant(rsltModifiedOn.value, referenceDatetimeField);
+      const referenceInstant = convertDateTimeToInstant(rsltModifiedOn.value as string, referenceDatetimeField);
 
       formattedData.push({
         pointId: `${rsltCfPid.value}-${testName.value}`,
         timestamp: formatInstant(resultInstant, { type: 'iso-string' }) as Instant,
-        value: rsltValue.value,
+        value: rsltValue.value as string,
         unit: rsltValue.unit || 'Ø'
       });
       if (referenceInstant > maxInstant) {

@@ -1,4 +1,4 @@
-import { SouthConnectorManifest } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorManifest } from '../../../shared/model/south-connector.model';
 
 const manifest: SouthConnectorManifest = {
   id: 'modbus',
@@ -9,8 +9,7 @@ const manifest: SouthConnectorManifest = {
     subscription: false,
     lastPoint: true,
     lastFile: false,
-    history: false,
-    forceMaxInstantPerItem: false
+    history: false
   },
   settings: [
     {

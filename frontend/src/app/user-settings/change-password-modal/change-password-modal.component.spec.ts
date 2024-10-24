@@ -7,7 +7,7 @@ import { of } from 'rxjs';
 import { UserSettingsService } from '../../services/user-settings.service';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
-import { User } from '../../../../../shared/model/user.model';
+import { User } from '../../../../../backend/shared/model/user.model';
 
 class ChangePasswordModalComponentTester extends ComponentTester<ChangePasswordModalComponent> {
   constructor() {

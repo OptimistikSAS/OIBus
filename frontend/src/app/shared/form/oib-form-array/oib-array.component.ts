@@ -4,7 +4,7 @@ import { formDirectives } from '../../form-directives';
 
 import { TranslateModule } from '@ngx-translate/core';
 import { EditElementComponent } from './edit-element/edit-element.component';
-import { OibFormControl } from '../../../../../../shared/model/form.model';
+import { OibFormControl } from '../../../../../../backend/shared/model/form.model';
 import { PipeProviderService } from '../pipe-provider.service';
 
 @Component({

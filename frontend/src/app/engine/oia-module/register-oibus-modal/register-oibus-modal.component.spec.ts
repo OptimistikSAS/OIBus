@@ -6,7 +6,7 @@ import { of } from 'rxjs';
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { EngineService } from '../../../services/engine.service';
-import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../../../../shared/model/engine.model';
+import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../../../../backend/shared/model/engine.model';
 
 class RegisterOibusModalComponentTester extends ComponentTester<RegisterOibusModalComponent> {
   constructor() {

@@ -1,6 +1,6 @@
 import { Knex } from 'knex';
-import { LOG_TABLE } from '../../repository/log.repository';
-import { LOG_LEVELS } from '../../../../shared/model/engine.model';
+import { LOG_LEVELS } from '../../../shared/model/engine.model';
+const LOG_TABLE = 'logs';
 
 const NEW_SCOPE_TYPES = ['south', 'north', 'history-query', 'internal', 'web-server'];
 
@@ -54,4 +54,6 @@ async function createLogsTable(knex: Knex): Promise<void> {
   await knex.schema.raw(`drop table ${LOG_TABLE}_dg_tmp;`);
 }
 
-export async function down(): Promise<void> {}
+export async function down(): Promise<void> {
+  return;
+}

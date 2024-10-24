@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
 import { CsvCharacterEnumPipe } from '../csv-character-enum.pipe';
-import { CsvCharacter, ALL_CSV_CHARACTERS } from '../../../../../shared/model/types';
+import { CsvCharacter, ALL_CSV_CHARACTERS } from '../../../../../backend/shared/model/types';
 import { NonNullableFormBuilder, Validators } from '@angular/forms';
 import { inject, OnInit } from '@angular/core';
 import { formDirectives } from '../../shared/form-directives';

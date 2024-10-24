@@ -9,8 +9,9 @@ import { FormComponent } from '../../shared/form/form.component';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { provideHttpClient } from '@angular/common/http';
 import { NorthConnectorService } from '../../services/north-connector.service';
-import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
+import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
 import { CertificateService } from '../../services/certificate.service';
+import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
 class EditNorthComponentTester extends ComponentTester<EditNorthComponent> {
   constructor() {
@@ -101,13 +102,13 @@ describe('EditNorthComponent', () => {
   });
 
   describe('edit mode', () => {
-    const northConnector: NorthConnectorDTO = {
+    const northConnector: NorthConnectorDTO<NorthSettings> = {
       id: 'id1',
       type: 'Console',
       name: 'North Connector',
       description: 'My North connector description',
       enabled: true,
-      settings: {},
+      settings: {} as NorthSettings,
       caching: {
         scanModeId: 'scanModeId1',
         retryInterval: 1000,
@@ -124,7 +125,8 @@ describe('EditNorthComponent', () => {
             retentionDuration: 0
           }
         }
-      }
+      },
+      subscriptions: []
     };
 
     beforeEach(() => {

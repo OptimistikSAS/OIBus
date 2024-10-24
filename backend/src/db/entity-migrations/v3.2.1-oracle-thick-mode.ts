@@ -1,8 +1,7 @@
 import { Knex } from 'knex';
-import { REGISTRATIONS_TABLE } from '../../repository/registration.repository';
-import { COMMANDS_TABLE } from '../../repository/command.repository';
-import { SOUTH_CONNECTORS_TABLE } from '../../repository/south-connector.repository';
-import { HISTORY_QUERIES_TABLE } from '../../repository/history-query.repository';
+
+const SOUTH_CONNECTORS_TABLE = 'south_connectors';
+const HISTORY_QUERIES_TABLE = 'history_queries';
 
 export interface OldSouthOracleSettings {
   host: string;
@@ -63,7 +62,6 @@ async function updateOracleHistoryQueries(knex: Knex): Promise<void> {
   }
 }
 
-export async function down(knex: Knex): Promise<void> {
-  await knex.schema.dropTable(REGISTRATIONS_TABLE);
-  await knex.schema.dropTable(COMMANDS_TABLE);
+export async function down(_knex: Knex): Promise<void> {
+  return;
 }

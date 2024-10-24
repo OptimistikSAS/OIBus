@@ -5,7 +5,7 @@ import { firstValueFrom, Observable, switchMap } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { ScanModeService } from '../../services/scan-mode.service';
-import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '../../../../../shared/model/scan-mode.model';
+import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '../../../../../backend/shared/model/scan-mode.model';
 import { formDirectives } from '../../shared/form-directives';
 
 import { DatetimePipe } from '../../shared/datetime.pipe';

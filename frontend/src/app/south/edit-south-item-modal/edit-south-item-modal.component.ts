@@ -9,16 +9,17 @@ import {
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
   SouthConnectorItemManifest
-} from '../../../../../shared/model/south-connector.model';
-import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
+} from '../../../../../backend/shared/model/south-connector.model';
+import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 
 import { OibCodeBlockComponent } from '../../shared/form/oib-code-block/oib-code-block.component';
 import { createFormGroup, groupFormControlsByRow } from '../../shared/form-utils';
 import { OibScanModeComponent } from '../../shared/form/oib-scan-mode/oib-scan-mode.component';
-import { Timezone } from '../../../../../shared/model/types';
+import { Timezone } from '../../../../../backend/shared/model/types';
 import { inMemoryTypeahead } from '../../shared/typeahead';
-import { OibFormControl } from '../../../../../shared/model/form.model';
+import { OibFormControl } from '../../../../../backend/shared/model/form.model';
 import { FormComponent } from '../../shared/form/form.component';
+import { SouthItemSettings } from '../../../../../backend/shared/model/south-settings.model';
 
 // TypeScript issue with Intl: https://github.com/microsoft/TypeScript/issues/49231
 // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -56,8 +57,8 @@ export class EditSouthItemModalComponent {
   southItemSchema: SouthConnectorItemManifest | null = null;
   southItemRows: Array<Array<OibFormControl>> = [];
 
-  item: SouthConnectorItemDTO | null = null;
-  itemList: Array<SouthConnectorItemDTO> = [];
+  item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings> | null = null;
+  itemList: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>> = [];
 
   form: FormGroup<{
     name: FormControl<string>;
@@ -65,8 +66,6 @@ export class EditSouthItemModalComponent {
     enabled: FormControl<boolean>;
     settings: FormGroup;
   }> | null = null;
-
-  maxInstantPerItem: boolean | null = null;
 
   private timezones: ReadonlyArray<Timezone> = Intl.supportedValuesOf('timeZone');
   timezoneTypeahead: (text$: Observable<string>) => Observable<Array<Timezone>> = inMemoryTypeahead(
@@ -85,7 +84,7 @@ export class EditSouthItemModalComponent {
     };
   }
 
-  private createForm(item: SouthConnectorItemDTO | null) {
+  private createForm(item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings> | null) {
     this.form = this.fb.group({
       name: ['', [Validators.required, this.checkUniqueness()]],
       enabled: [true, Validators.required],
@@ -110,7 +109,11 @@ export class EditSouthItemModalComponent {
   /**
    * Prepares the component for creation.
    */
-  prepareForCreation(southItemSchema: SouthConnectorItemManifest, itemList: Array<SouthConnectorItemDTO>, scanModes: Array<ScanModeDTO>) {
+  prepareForCreation(
+    southItemSchema: SouthConnectorItemManifest,
+    itemList: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>>,
+    scanModes: Array<ScanModeDTO>
+  ) {
     this.mode = 'create';
     this.itemList = itemList;
     this.subscriptionOnly = southItemSchema.scanMode.subscriptionOnly;
@@ -126,10 +129,9 @@ export class EditSouthItemModalComponent {
    */
   prepareForEdition(
     southItemSchema: SouthConnectorItemManifest,
-    itemList: Array<SouthConnectorItemDTO>,
+    itemList: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>>,
     scanModes: Array<ScanModeDTO>,
-    southItem: SouthConnectorItemDTO,
-    maxInstantPerItem: boolean | null = null
+    southItem: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>
   ) {
     this.mode = 'edit';
     this.itemList = itemList;
@@ -139,15 +141,18 @@ export class EditSouthItemModalComponent {
     this.southItemRows = groupFormControlsByRow(southItemSchema.settings);
     this.southItemSchema = southItemSchema;
     this.scanModes = scanModes;
-    this.maxInstantPerItem = maxInstantPerItem;
     this.createForm(southItem);
   }
 
   /**
    * Prepares the component for edition.
    */
-  prepareForCopy(southItemSchema: SouthConnectorItemManifest, scanModes: Array<ScanModeDTO>, southItem: SouthConnectorItemDTO) {
-    this.item = JSON.parse(JSON.stringify(southItem)) as SouthConnectorItemDTO;
+  prepareForCopy(
+    southItemSchema: SouthConnectorItemManifest,
+    scanModes: Array<ScanModeDTO>,
+    southItem: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>
+  ) {
+    this.item = JSON.parse(JSON.stringify(southItem)) as SouthConnectorItemDTO<SouthItemSettings>;
     this.item.name = `${southItem.name}-copy`;
     this.mode = 'copy';
     this.subscriptionOnly = southItemSchema.scanMode.subscriptionOnly;
@@ -168,24 +173,17 @@ export class EditSouthItemModalComponent {
     }
 
     const formValue = this.form!.value;
-    let id;
-    switch (this.mode) {
-      case 'create':
-        id = '';
-        break;
-      case 'edit':
-        id = this.item ? this.item.id : '';
-        break;
-      case 'copy':
-        id = '';
-        break;
+    let id: string | null = null;
+    if (this.mode === 'edit') {
+      id = this.item?.id || null;
     }
 
-    const command: SouthConnectorItemCommandDTO = {
+    const command: SouthConnectorItemCommandDTO<SouthItemSettings> = {
       id,
       enabled: formValue.enabled!,
       name: formValue.name!,
       scanModeId: this.subscriptionOnly ? 'subscription' : formValue.scanModeId!,
+      scanModeName: null,
       settings: formValue.settings!
     };
 

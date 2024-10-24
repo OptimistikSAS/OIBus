@@ -2,11 +2,11 @@ import { Component, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { CurrentUserService } from '../shared/current-user.service';
-import { User } from '../../../../shared/model/user.model';
+import { User } from '../../../../backend/shared/model/user.model';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 
 import { EngineService } from '../services/engine.service';
-import { OIBusInfo } from '../../../../shared/model/engine.model';
+import { OIBusInfo } from '../../../../backend/shared/model/engine.model';
 import { of, switchMap } from 'rxjs';
 import { PageTitleDirective } from '../services/page-title.directive';
 

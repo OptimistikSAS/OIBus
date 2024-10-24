@@ -1,0 +1,36 @@
+<div class="modal-header">
+  <h4 class="modal-title" [translate]="'south.edit-item-modal.' + mode + '-title'"></h4>
+</div>
+@if (southItemRows && form) {
+  <div class="modal-body">
+    <form [formGroup]="form" (ngSubmit)="save()" id="form">
+      <div class="row">
+        <div class="col-3">
+          <!-- Name -->
+          <div class="form-group">
+            <label class="form-label" for="name" translate="south.items.name"></label>
+            <input formControlName="name" id="name" class="form-control" />
+            <val-errors controlName="name" />
+          </div>
+        </div>
+        <div class="col-3">
+          <div class="form-group">
+            <div class="form-check form-switch padded">
+              <input formControlName="enabled" id="item-enabled" type="checkbox" class="form-check-input" />
+              <label class="form-check-label" for="item-enabled" translate="south.items.enable"></label>
+            </div>
+          </div>
+        </div>
+      </div>
+      @if (southItemRows.length > 0) {
+        <oib-form formGroupName="settings" [form]="form.controls.settings" [settingsSchema]="southItemRows" />
+      }
+    </form>
+  </div>
+}
+<div class="modal-footer">
+  <div class="btn-group">
+    <oib-save-button form="form" [state]="state" />
+    <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
+  </div>
+</div>

@@ -1,6 +1,6 @@
 import { Component, Input, NgZone, inject } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
-import { EngineMetrics } from '../../../../../shared/model/engine.model';
+import { EngineMetrics } from '../../../../../backend/shared/model/engine.model';
 import { PercentPipe } from '@angular/common';
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { DurationPipe } from '../../shared/duration.pipe';

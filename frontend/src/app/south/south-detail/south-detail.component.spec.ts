@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { SouthDetailComponent } from './south-detail.component';
 import { ComponentTester, createMock, stubRoute } from 'ngx-speculoos';
 import { SouthConnectorService } from '../../services/south-connector.service';
-import { SouthConnectorDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
 import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
@@ -11,8 +11,9 @@ import { ActivatedRoute, provideRouter } from '@angular/router';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 import { ScanModeService } from '../../services/scan-mode.service';
-import { OIBusInfo } from '../../../../../shared/model/engine.model';
+import { OIBusInfo } from '../../../../../backend/shared/model/engine.model';
 import { EngineService } from '../../services/engine.service';
+import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 
 class SouthDisplayComponentTester extends ComponentTester<SouthDetailComponent> {
   constructor() {
@@ -72,23 +73,27 @@ describe('SouthDetailComponent', () => {
       subscription: false,
       history: true,
       lastFile: true,
-      lastPoint: false,
-      forceMaxInstantPerItem: false
+      lastPoint: false
     }
   };
-  const southConnector: SouthConnectorDTO = {
+  const southConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> = {
     id: 'id1',
     type: 'Generic',
     name: 'South Connector',
     description: 'My South connector description',
     enabled: true,
-    history: {
-      maxInstantPerItem: false,
-      maxReadInterval: 0,
-      readDelay: 200,
-      overlap: 0
-    },
-    settings: {}
+    settings: {} as SouthSettings,
+    items: [
+      {
+        id: 'id1',
+        name: 'item1',
+        enabled: true,
+        settings: {
+          query: 'sql'
+        } as SouthItemSettings,
+        scanModeId: 'scanModeId1'
+      }
+    ]
   };
   const engineInfo: OIBusInfo = {
     version: '3.0',
@@ -146,20 +151,6 @@ describe('SouthDetailComponent', () => {
     southConnectorService.getSouthConnectorTypeManifest.and.returnValue(of(manifest));
     southConnectorService.startSouth.and.returnValue(of(undefined));
     southConnectorService.stopSouth.and.returnValue(of(undefined));
-    southConnectorService.listItems.and.returnValue(
-      of([
-        {
-          id: 'id1',
-          name: 'item1',
-          enabled: true,
-          connectorId: 'southId',
-          settings: {
-            query: 'sql'
-          },
-          scanModeId: 'scanModeId1'
-        }
-      ])
-    );
 
     tester = new SouthDisplayComponentTester();
   });

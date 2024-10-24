@@ -1,5 +1,5 @@
-import { NorthConnectorManifest } from '../../../../shared/model/north-connector.model';
-import { proxy } from '../../../../shared/model/manifest-factory';
+import { NorthConnectorManifest } from '../../../shared/model/north-connector.model';
+import { proxy } from '../../../shared/model/manifest-factory';
 
 const manifest: NorthConnectorManifest = {
   id: 'azure-blob',
