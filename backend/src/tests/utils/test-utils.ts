@@ -406,11 +406,7 @@ const createSouth = async (database: knex.Knex, south: SouthConnectorEntity<Sout
       type: south.type,
       description: south.description,
       enabled: south.enabled,
-      settings: JSON.stringify(south.settings),
-      history_max_instant_per_item: south.history.maxInstantPerItem,
-      history_max_read_interval: south.history.maxReadInterval,
-      history_read_delay: south.history.readDelay,
-      history_read_overlap: south.history.overlap
+      settings: JSON.stringify(south.settings)
     })
     .into('south_connectors');
 
@@ -506,9 +502,6 @@ const createHistoryQuery = async (
       north_type: historyQuery.northType,
       south_settings: JSON.stringify(historyQuery.southSettings),
       north_settings: JSON.stringify(historyQuery.northSettings),
-      history_max_instant_per_item: historyQuery.history.maxInstantPerItem,
-      history_max_read_interval: historyQuery.history.maxReadInterval,
-      history_read_delay: historyQuery.history.readDelay,
       caching_scan_mode_id: historyQuery.caching.scanModeId,
       caching_group_count: historyQuery.caching.oibusTimeValues.groupCount,
       caching_retry_interval: historyQuery.caching.retryInterval,

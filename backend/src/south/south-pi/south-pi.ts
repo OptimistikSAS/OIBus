@@ -4,10 +4,10 @@ import pino from 'pino';
 import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
-import { SouthPIItemSettings, SouthPISettings } from '../../../shared/model/south-settings.model';
+import { SouthOracleSettings, SouthPIItemSettings, SouthPISettings } from '../../../shared/model/south-settings.model';
 import fetch from 'node-fetch';
 import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
-import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
@@ -197,6 +197,21 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
       throw new Error(`Error occurred when querying remote agent with status ${response.status}`);
     }
     return updatedStartTime;
+  }
+
+  getThrottlingSettings(settings: SouthPISettings): SouthThrottlingSettings {
+    return {
+      maxReadInterval: settings.throttling.maxReadInterval,
+      readDelay: settings.throttling.readDelay
+    };
+  }
+
+  getMaxInstantPerItem(settings: SouthPISettings): boolean {
+    return settings.throttling.maxInstantPerItem;
+  }
+
+  getOverlap(settings: SouthPISettings): number {
+    return settings.throttling.overlap;
   }
 
   async disconnect(): Promise<void> {

@@ -95,7 +95,10 @@ describe('HistoryQuery enabled', () => {
       testData.historyQueries.list[0].items.map(item => ({ ...item, scanModeId: 'history' })),
       testData.historyQueries.list[0].startTime,
       testData.historyQueries.list[0].endTime,
-      'history'
+      'history',
+      { maxReadInterval: 3600, overlap: 0 },
+      false,
+      0
     );
     expect(clearIntervalSpy).not.toHaveBeenCalled();
     mockedSouth1.connectedEvent.emit('connected');
@@ -131,7 +134,10 @@ describe('HistoryQuery enabled', () => {
       testData.historyQueries.list[0].items.map(item => ({ ...item, scanModeId: 'history' })),
       testData.historyQueries.list[0].startTime,
       testData.historyQueries.list[0].endTime,
-      'history'
+      'history',
+      { maxReadInterval: 3600, overlap: 0 },
+      false,
+      0
     );
 
     expect(mockedSouth1.start).toHaveBeenCalledTimes(2);

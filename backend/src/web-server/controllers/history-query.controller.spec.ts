@@ -287,7 +287,7 @@ describe('History query controller', () => {
   });
 
   it('historySouthItemsToCsv() should download a csv file', async () => {
-    ctx.params.southType = testData.south.list[0].type;
+    ctx.params.southType = testData.historyQueries.list[0].southType;
     ctx.request.body = {
       items: testData.historyQueries.list[0].items,
       delimiter: ';'

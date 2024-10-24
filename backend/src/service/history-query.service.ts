@@ -511,11 +511,6 @@ export const toHistoryQueryDTO = <S extends SouthSettings, N extends NorthSettin
     northType: historyQuery.northType,
     southSettings: encryptionService.filterSecrets<S>(historyQuery.southSettings, southManifest.settings),
     northSettings: encryptionService.filterSecrets<N>(historyQuery.northSettings, northManifest.settings),
-    history: {
-      maxInstantPerItem: historyQuery.history.maxInstantPerItem,
-      maxReadInterval: historyQuery.history.maxReadInterval,
-      readDelay: historyQuery.history.readDelay
-    },
     caching: {
       scanModeId: historyQuery.caching.scanModeId,
       retryInterval: historyQuery.caching.retryInterval,
@@ -576,11 +571,6 @@ const copyHistoryQueryCommandToHistoryQueryEntity = async <S extends SouthSettin
     currentSettings?.southSettings || null,
     southManifest.settings
   );
-  historyQueryEntity.history = {
-    maxInstantPerItem: southManifest.modes.forceMaxInstantPerItem ? true : command.history.maxInstantPerItem,
-    maxReadInterval: command.history.maxReadInterval,
-    readDelay: command.history.readDelay
-  };
   historyQueryEntity.caching = {
     scanModeId: checkScanMode(scanModes, command.caching.scanModeId, command.caching.scanModeName),
     retryInterval: command.caching.retryInterval,

@@ -43,13 +43,13 @@ describe('South PI', () => {
     type: 'test',
     description: 'my test connector',
     enabled: true,
-    history: {
-      maxInstantPerItem: true,
-      maxReadInterval: 3600,
-      readDelay: 0,
-      overlap: 0
-    },
     settings: {
+      throttling: {
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0,
+        maxInstantPerItem: true
+      },
       agentUrl: 'http://localhost:2224',
       retryInterval: 1000
     },
@@ -92,6 +92,15 @@ describe('South PI', () => {
       logger,
       'baseFolder'
     );
+  });
+
+  it('should get throttling settings', () => {
+    expect(south.getThrottlingSettings(configuration.settings)).toEqual({
+      maxReadInterval: configuration.settings.throttling.maxReadInterval,
+      readDelay: configuration.settings.throttling.readDelay
+    });
+    expect(south.getMaxInstantPerItem(configuration.settings)).toEqual(configuration.settings.throttling.maxInstantPerItem);
+    expect(south.getOverlap(configuration.settings)).toEqual(configuration.settings.throttling.overlap);
   });
 
   it('should properly connect to remote agent and disconnect ', async () => {

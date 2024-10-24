@@ -7,7 +7,7 @@ import { QueriesHistory } from '../south-interface';
 import { SouthOPCHDAItemSettings, SouthOPCHDASettings } from '../../../shared/model/south-settings.model';
 import fetch from 'node-fetch';
 import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
-import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
@@ -263,6 +263,21 @@ export default class SouthOPCHDA extends SouthConnector<SouthOPCHDASettings, Sou
       }
       throw error;
     }
+  }
+
+  getThrottlingSettings(settings: SouthOPCHDASettings): SouthThrottlingSettings {
+    return {
+      maxReadInterval: settings.throttling.maxReadInterval,
+      readDelay: settings.throttling.readDelay
+    };
+  }
+
+  getMaxInstantPerItem(settings: SouthOPCHDASettings): boolean {
+    return settings.throttling.maxInstantPerItem;
+  }
+
+  getOverlap(settings: SouthOPCHDASettings): number {
+    return settings.throttling.overlap;
   }
 
   async disconnect(): Promise<void> {

@@ -1,7 +1,7 @@
 import { ManagedConnection, ManagedConnectionSettings } from '../service/connection.service';
 import { Instant } from '../../shared/model/types';
-import { SouthItemSettings } from '../../shared/model/south-settings.model';
-import { SouthConnectorItemEntity } from '../model/south-connector.model';
+import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
+import { SouthConnectorItemEntity, SouthThrottlingSettings } from '../model/south-connector.model';
 
 export interface QueriesFile {
   fileQuery(items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void>;
@@ -13,7 +13,6 @@ export interface QueriesLastPoint {
 
 export interface QueriesHistory {
   /**
-   *
    * @param items
    * @param startTime - the start of the current interval being requested (when the original interval is split)
    * @param endTime - the end of the current interval
@@ -26,6 +25,12 @@ export interface QueriesHistory {
     endTime: Instant,
     startTimeFromCache: Instant
   ): Promise<Instant>;
+
+  getThrottlingSettings(settings: SouthSettings): SouthThrottlingSettings;
+
+  getMaxInstantPerItem(settings: SouthSettings): boolean;
+
+  getOverlap(settings: SouthSettings): number;
 }
 
 export interface QueriesSubscription {

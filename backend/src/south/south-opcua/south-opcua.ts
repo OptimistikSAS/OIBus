@@ -34,7 +34,7 @@ import { createFolder } from '../../service/utils';
 import { OPCUACertificateManager } from 'node-opcua-certificate-manager';
 import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import ConnectionService, { ManagedConnection, ManagedConnectionSettings } from '../../service/connection.service';
-import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
@@ -230,6 +230,21 @@ export default class SouthOPCUA
       return startTime;
     }
     return (await this.getHAValues(items, startTime, endTime, session)) as Instant;
+  }
+
+  getThrottlingSettings(settings: SouthOPCUASettings): SouthThrottlingSettings {
+    return {
+      maxReadInterval: settings.throttling.maxReadInterval,
+      readDelay: settings.throttling.readDelay
+    };
+  }
+
+  getMaxInstantPerItem(settings: SouthOPCUASettings): boolean {
+    return settings.throttling.maxInstantPerItem;
+  }
+
+  getOverlap(settings: SouthOPCUASettings): number {
+    return settings.throttling.overlap;
   }
 
   async getHAValues(

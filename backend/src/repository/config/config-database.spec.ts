@@ -756,7 +756,6 @@ describe('Repository with populated database', () => {
       (generateRandomId as jest.Mock).mockReturnValueOnce('newItemId');
 
       const newSouthConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(testData.south.list[1]));
-      newSouthConnector.history.maxReadInterval = 3600;
       newSouthConnector.items = [
         ...testData.south.list[1].items,
         {
@@ -771,7 +770,6 @@ describe('Repository with populated database', () => {
 
       const updatedConnector = repository.findSouthById(newSouthConnector.id)!;
 
-      expect(updatedConnector.history.maxReadInterval).toEqual(newSouthConnector.history.maxReadInterval);
       expect(updatedConnector.items.length).toEqual(2);
     });
 
@@ -1016,7 +1014,6 @@ describe('Repository with populated database', () => {
       const newHistoryQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> = JSON.parse(
         JSON.stringify(testData.historyQueries.list[0])
       );
-      newHistoryQuery.history.maxReadInterval = 3600;
       newHistoryQuery.items = [
         ...testData.historyQueries.list[0].items,
         {
@@ -1030,7 +1027,6 @@ describe('Repository with populated database', () => {
 
       const updatedHistoryQuery = repository.findHistoryQueryById(newHistoryQuery.id)!;
 
-      expect(updatedHistoryQuery.history.maxReadInterval).toEqual(newHistoryQuery.history.maxReadInterval);
       expect(updatedHistoryQuery.items.length).toEqual(3);
     });
 

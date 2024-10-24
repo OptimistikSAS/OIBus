@@ -51,13 +51,12 @@ describe('SouthOLEDB', () => {
     type: 'oledb',
     description: 'my test connector',
     enabled: true,
-    history: {
-      maxInstantPerItem: true,
-      maxReadInterval: 3600,
-      readDelay: 0,
-      overlap: 0
-    },
     settings: {
+      throttling: {
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
+      },
       agentUrl: 'http://localhost:2224',
       connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
       connectionTimeout: 1000,
@@ -175,6 +174,15 @@ describe('SouthOLEDB', () => {
       logger,
       'baseFolder'
     );
+  });
+
+  it('should get throttling settings', () => {
+    expect(south.getThrottlingSettings(configuration.settings)).toEqual({
+      maxReadInterval: configuration.settings.throttling.maxReadInterval,
+      readDelay: configuration.settings.throttling.readDelay
+    });
+    expect(south.getMaxInstantPerItem(configuration.settings)).toEqual(false);
+    expect(south.getOverlap(configuration.settings)).toEqual(configuration.settings.throttling.overlap);
   });
 
   it('should create temp folder', async () => {
