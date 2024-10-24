@@ -4,7 +4,7 @@ import pino from 'pino';
 import { Aggregate, Instant, Resampling } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
-import { SouthOPCHDAItemSettings, SouthOPCHDASettings } from '../../../shared/model/south-settings.model';
+import { SouthOPCItemSettings, SouthOPCSettings } from '../../../shared/model/south-settings.model';
 import fetch from 'node-fetch';
 import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
@@ -13,16 +13,16 @@ import SouthCacheRepository from '../../repository/cache/south-cache.repository'
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 
 /**
- * Class SouthOPCHDA - Run a HDA agent to connect to an OPCHDA server.
- * This connector communicates with the Agent through a HTTP connection
+ * Class SouthOPC - Run an OPC agent to connect to an OPC server.
+ * This connector communicates with the Agent through an HTTP connection
  */
-export default class SouthOPCHDA extends SouthConnector<SouthOPCHDASettings, SouthOPCHDAItemSettings> implements QueriesHistory {
+export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCItemSettings> implements QueriesHistory {
   private connected = false;
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private disconnecting = false;
 
   constructor(
-    connector: SouthConnectorEntity<SouthOPCHDASettings, SouthOPCHDAItemSettings>,
+    connector: SouthConnectorEntity<SouthOPCSettings, SouthOPCItemSettings>,
     engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
     southConnectorRepository: SouthConnectorRepository,
@@ -103,7 +103,7 @@ export default class SouthOPCHDA extends SouthConnector<SouthOPCHDASettings, Sou
     }
   }
 
-  override async testItem(item: SouthConnectorItemEntity<SouthOPCHDAItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
+  override async testItem(item: SouthConnectorItemEntity<SouthOPCItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
     await this.connect();
     const content: OIBusContent = { type: 'time-values', content: [] };
 
@@ -152,11 +152,7 @@ export default class SouthOPCHDA extends SouthConnector<SouthOPCHDASettings, Sou
    * Get entries from the database between startTime and endTime (if used in the SQL query)
    * and write them into the cache and send it to the engine.
    */
-  async historyQuery(
-    items: Array<SouthConnectorItemEntity<SouthOPCHDAItemSettings>>,
-    startTime: Instant,
-    endTime: Instant
-  ): Promise<Instant> {
+  async historyQuery(items: Array<SouthConnectorItemEntity<SouthOPCItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
     try {
       let updatedStartTime = startTime;
       const itemsByAggregates = new Map<
@@ -265,18 +261,18 @@ export default class SouthOPCHDA extends SouthConnector<SouthOPCHDASettings, Sou
     }
   }
 
-  getThrottlingSettings(settings: SouthOPCHDASettings): SouthThrottlingSettings {
+  getThrottlingSettings(settings: SouthOPCSettings): SouthThrottlingSettings {
     return {
       maxReadInterval: settings.throttling.maxReadInterval,
       readDelay: settings.throttling.readDelay
     };
   }
 
-  getMaxInstantPerItem(settings: SouthOPCHDASettings): boolean {
+  getMaxInstantPerItem(settings: SouthOPCSettings): boolean {
     return settings.throttling.maxInstantPerItem;
   }
 
-  getOverlap(settings: SouthOPCHDASettings): number {
+  getOverlap(settings: SouthOPCSettings): number {
     return settings.throttling.overlap;
   }
 
