@@ -60,3 +60,18 @@ export async function migrateSouthCache(dbPath: string): Promise<void> {
   await knexConfig.migrate.latest({ directory: path.resolve(__dirname, 'south-cache-migrations') });
   await knexConfig.destroy();
 }
+
+export async function migrateFolderStructure(dbPath: string): Promise<void> {
+  const knexConfig = knex({
+    client: 'better-sqlite3',
+    connection: {
+      filename: dbPath
+    },
+    useNullAsDefault: true,
+    migrations: {
+      tableName: 'data-folder-migrations'
+    }
+  });
+
+  await knexConfig.migrate.latest({ directory: path.resolve(__dirname, 'data-folder-migrations') });
+}
