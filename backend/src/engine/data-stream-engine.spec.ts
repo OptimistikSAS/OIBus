@@ -21,6 +21,7 @@ import NorthConnectorMetricsService from '../service/metrics/north-connector-met
 import NorthConnectorMetricsServiceMock from '../tests/__mocks__/service/metrics/north-connector-metrics-service.mock';
 import SouthConnectorMetricsService from '../service/metrics/south-connector-metrics.service';
 import SouthConnectorMetricsServiceMock from '../tests/__mocks__/service/metrics/south-connector-metrics-service.mock';
+import { QueriesHistory } from '../south/south-interface';
 
 jest.mock('../south/south-mqtt/south-mqtt');
 jest.mock('../service/south.service');
@@ -470,6 +471,11 @@ describe('DataStreamEngine', () => {
     expect(logger.child).toHaveBeenCalledTimes(2);
     await engine.reloadSouth({ ...testData.south.list[0], id: 'bad id' });
     expect(logger.child).toHaveBeenCalledTimes(2);
+    expect(mockedSouth1.manageSouthCacheOnChange).not.toHaveBeenCalled();
+
+    (mockedSouth1.queriesHistory as jest.Mock).mockReturnValueOnce(true);
+    await engine.reloadSouth(testData.south.list[0]);
+    expect(mockedSouth1.manageSouthCacheOnChange).toHaveBeenCalledTimes(1);
   });
 
   it('should properly get stream', async () => {

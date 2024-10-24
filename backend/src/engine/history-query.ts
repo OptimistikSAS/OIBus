@@ -15,6 +15,7 @@ import { HistoryQueryEntity } from '../model/histor-query.model';
 import HistoryQueryRepository from '../repository/config/history-query.repository';
 import { EventEmitter } from 'node:events';
 import { Instant } from '../model/types';
+import { QueriesHistory } from '../south/south-interface';
 
 const FINISH_INTERVAL = 5000;
 
@@ -42,7 +43,6 @@ export default class HistoryQuery {
       name: this.historyConfiguration.name,
       description: '',
       enabled: true,
-      history: { ...this.historyConfiguration.history, overlap: 0 },
       type: this.historyConfiguration.southType,
       settings: this.historyConfiguration.southSettings,
       items: []
@@ -96,7 +96,10 @@ export default class HistoryQuery {
         this.historyConfiguration.items.map(item => ({ ...item, scanModeId: 'history' })),
         this.historyConfiguration.startTime,
         this.historyConfiguration.endTime,
-        'history'
+        'history',
+        (this.south as unknown as QueriesHistory).getThrottlingSettings(this.historyConfiguration.southSettings),
+        (this.south as unknown as QueriesHistory).getMaxInstantPerItem(this.historyConfiguration.southSettings),
+        0
       )
         .then(() => {
           this.south!.resolveDeferredPromise();

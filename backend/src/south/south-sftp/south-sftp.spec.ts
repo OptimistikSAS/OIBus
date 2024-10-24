@@ -58,12 +58,6 @@ describe('SouthSFTP', () => {
     type: 'test',
     description: 'my test connector',
     enabled: true,
-    history: {
-      maxInstantPerItem: true,
-      maxReadInterval: 3600,
-      readDelay: 0,
-      overlap: 0
-    },
     settings: {
       host: '127.0.0.1',
       port: 2222,
@@ -286,12 +280,6 @@ describe('SouthFTP with preserve file and compression', () => {
     type: 'test',
     description: 'my test connector',
     enabled: true,
-    history: {
-      maxInstantPerItem: true,
-      maxReadInterval: 3600,
-      readDelay: 0,
-      overlap: 0
-    },
     settings: {
       host: '127.0.0.1',
       port: 2222,
@@ -439,12 +427,6 @@ describe('SouthSFTP test connection with private key', () => {
     type: 'test',
     description: 'my test connector',
     enabled: true,
-    history: {
-      maxInstantPerItem: true,
-      maxReadInterval: 3600,
-      readDelay: 0,
-      overlap: 0
-    },
     settings: {
       host: '127.0.0.1',
       port: 2222,

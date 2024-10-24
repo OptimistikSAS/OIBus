@@ -133,13 +133,7 @@ export class SouthItemsComponent implements OnInit, OnChanges {
   editItem(southItem: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>) {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl' });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
-    component.prepareForEdition(
-      this.southManifest.items,
-      this.allItems,
-      this.scanModes,
-      southItem,
-      this.southConnector?.history.maxInstantPerItem
-    );
+    component.prepareForEdition(this.southManifest.items, this.allItems, this.scanModes, southItem);
     this.refreshAfterEditionModalClosed(modalRef, southItem);
   }
 

@@ -75,9 +75,7 @@ describe('EditSouthComponent', () => {
           subscription: false,
           lastPoint: false,
           lastFile: false,
-          history: true,
-          forceMaxInstantPerItem: false,
-          sharedConnection: false
+          history: true
         },
         items: {
           scanMode: { subscriptionOnly: false, acceptSubscription: true },
@@ -101,7 +99,6 @@ describe('EditSouthComponent', () => {
     it('should display general settings', () => {
       expect(tester.title).toContainText('Create SQL south connector');
       expect(tester.enabled).toBeChecked();
-      expect(tester.maxInstant).not.toBeChecked();
       expect(tester.description).toHaveValue('');
       expect(tester.specificForm).toBeDefined();
 
@@ -116,12 +113,6 @@ describe('EditSouthComponent', () => {
       name: 'My South Connector 1',
       description: 'My South connector description',
       enabled: true,
-      history: {
-        maxInstantPerItem: false,
-        maxReadInterval: 0,
-        readDelay: 200,
-        overlap: 0
-      },
       settings: {} as SouthSettings,
       items: []
     };
@@ -135,12 +126,9 @@ describe('EditSouthComponent', () => {
     });
 
     it('should display general settings', () => {
-      tester.maxInstant.check();
       expect(southConnectorService.get).toHaveBeenCalledWith('id1');
       expect(tester.title).toContainText('Edit My South Connector 1');
       expect(tester.enabled).toBeChecked();
-      expect(tester.maxInstant).toBeChecked();
-
       expect(tester.description).toHaveValue('My South connector description');
       expect(tester.specificForm).toBeDefined();
       expect(tester.specificTitle).toContainText('SQL settings');

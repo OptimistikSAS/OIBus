@@ -93,13 +93,13 @@ describe('SouthOPCUA', () => {
     type: 'test',
     description: 'my test connector',
     enabled: true,
-    history: {
-      maxInstantPerItem: true,
-      maxReadInterval: 3600,
-      readDelay: 0,
-      overlap: 0
-    },
     settings: {
+      throttling: {
+        maxInstantPerItem: true,
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
+      },
       sharedConnection: false,
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
       retryInterval: 10000,
@@ -206,6 +206,15 @@ describe('SouthOPCUA', () => {
       'baseFolder',
       connectionService
     );
+  });
+
+  it('should get throttling settings', () => {
+    expect(south.getThrottlingSettings(configuration.settings)).toEqual({
+      maxReadInterval: configuration.settings.throttling.maxReadInterval,
+      readDelay: configuration.settings.throttling.readDelay
+    });
+    expect(south.getMaxInstantPerItem(configuration.settings)).toEqual(configuration.settings.throttling.maxInstantPerItem);
+    expect(south.getOverlap(configuration.settings)).toEqual(configuration.settings.throttling.overlap);
   });
 
   it('should be properly initialized', async () => {
@@ -938,13 +947,13 @@ describe('SouthOPCUA with basic auth', () => {
     type: 'test',
     description: 'my test connector',
     enabled: true,
-    history: {
-      maxInstantPerItem: true,
-      maxReadInterval: 3600,
-      readDelay: 0,
-      overlap: 0
-    },
     settings: {
+      throttling: {
+        maxInstantPerItem: true,
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
+      },
       sharedConnection: false,
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
       retryInterval: 10000,
@@ -1096,13 +1105,13 @@ describe('SouthOPCUA with certificate', () => {
     type: 'test',
     description: 'my test connector',
     enabled: true,
-    history: {
-      maxInstantPerItem: true,
-      maxReadInterval: 3600,
-      readDelay: 0,
-      overlap: 0
-    },
     settings: {
+      throttling: {
+        maxInstantPerItem: true,
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
+      },
       sharedConnection: false,
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
       retryInterval: 10000,
@@ -1349,13 +1358,13 @@ describe('SouthOPCUA test connection', () => {
     type: 'test',
     description: 'my test connector',
     enabled: true,
-    history: {
-      maxInstantPerItem: true,
-      maxReadInterval: 3600,
-      readDelay: 0,
-      overlap: 0
-    },
     settings: {
+      throttling: {
+        maxInstantPerItem: true,
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
+      },
       sharedConnection: false,
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
       retryInterval: 10000,
@@ -1631,14 +1640,14 @@ describe('SouthOPCUA with shared connection', () => {
     type: 'test',
     description: 'my test connector',
     enabled: true,
-    history: {
-      maxInstantPerItem: true,
-      maxReadInterval: 3600,
-      readDelay: 0,
-      overlap: 0
-    },
     settings: {
       sharedConnection: true,
+      throttling: {
+        maxInstantPerItem: true,
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
+      },
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
       retryInterval: 10000,
       readTimeout: 15000,

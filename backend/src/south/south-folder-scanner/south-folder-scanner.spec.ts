@@ -47,12 +47,6 @@ describe('SouthFolderScanner', () => {
     type: 'test',
     description: 'my test connector',
     enabled: true,
-    history: {
-      maxInstantPerItem: true,
-      maxReadInterval: 3600,
-      readDelay: 0,
-      overlap: 0
-    },
     settings: {
       inputFolder: 'inputFolder',
       compression: false
@@ -242,12 +236,6 @@ describe('SouthFolderScanner with compression', () => {
     type: 'test',
     description: 'my test connector',
     enabled: true,
-    history: {
-      maxInstantPerItem: true,
-      maxReadInterval: 3600,
-      readDelay: 0,
-      overlap: 0
-    },
     settings: {
       inputFolder: 'inputFolder',
       compression: true

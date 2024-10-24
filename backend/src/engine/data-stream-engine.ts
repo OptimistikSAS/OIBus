@@ -383,10 +383,18 @@ export default class DataStreamEngine {
     await this.southConnectors.get(southId)?.onItemChange();
   }
 
-  async reloadSouth(south: SouthConnectorEntity<SouthSettings, SouthItemSettings>) {
-    await this.stopSouth(south.id);
-    this.southConnectors.get(south.id)?.setLogger(this.logger.child({ scopeType: 'south', scopeId: south.id, scopeName: south.name }));
-    await this.startSouth(south.id);
+  async reloadSouth(southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings>) {
+    await this.stopSouth(southConnector.id);
+    const south = this.southConnectors.get(southConnector.id);
+    if (south && south.queriesHistory()) {
+      await south.manageSouthCacheOnChange(south.settings, southConnector, south.getMaxInstantPerItem(south.settings.settings));
+    }
+    this.southConnectors
+      .get(southConnector.id)
+      ?.setLogger(this.logger.child({ scopeType: 'south', scopeId: southConnector.id, scopeName: southConnector.name }));
+    if (southConnector.enabled) {
+      await this.startSouth(southConnector.id);
+    }
   }
 
   async reloadNorth(north: NorthConnectorEntity<NorthSettings>) {

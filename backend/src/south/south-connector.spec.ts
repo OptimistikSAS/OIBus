@@ -30,6 +30,7 @@ import ConnectionService from '../service/connection.service';
 import ConnectionServiceMock from '../tests/__mocks__/service/connection-service.mock';
 import SouthMSSQL from './south-mssql/south-mssql';
 import { DateTime } from 'luxon';
+import { Instant } from '../model/types';
 
 // Mock fs
 jest.mock('node:fs/promises');
@@ -284,7 +285,18 @@ describe('SouthConnector disabled', () => {
   });
 
   it('should ignore history query when not history items', async () => {
-    await south.historyQueryHandler([], '2020-02-02T02:02:02.222Z', '2020-02-02T02:02:02.222Z', testData.scanMode.list[0].id);
+    await south.historyQueryHandler(
+      [],
+      '2020-02-02T02:02:02.222Z',
+      '2020-02-02T02:02:02.222Z',
+      testData.scanMode.list[0].id,
+      {
+        maxReadInterval: 3600,
+        readDelay: 200
+      },
+      false,
+      0
+    );
     expect(logger.trace).toHaveBeenCalledWith('No history items to read. Ignoring historyQuery');
   });
 
@@ -313,7 +325,7 @@ describe('SouthConnector with history and max instant per item', () => {
     }));
 
     configuration = JSON.parse(JSON.stringify(testData.south.list[2]));
-    configuration.history.maxInstantPerItem = true;
+    configuration.settings.throttling.maxInstantPerItem = true;
     configuration.settings.sharedConnection = true;
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
     (southConnectorRepository.findAllItemsForSouth as jest.Mock).mockReturnValue(configuration.items);
@@ -355,12 +367,21 @@ describe('SouthConnector with history and max instant per item', () => {
       configuration.items as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>,
       '2020-02-02T02:02:02.222Z',
       '2023-02-02T02:02:02.222Z',
-      testData.scanMode.list[0].id
+      testData.scanMode.list[0].id,
+      {
+        readDelay: south.settings.settings.throttling.readDelay,
+        maxReadInterval: south.settings.settings.throttling.maxReadInterval
+      },
+      south.settings.settings.throttling.maxInstantPerItem,
+      south.settings.settings.throttling.overlap
     );
     expect(generateIntervals).toHaveBeenCalledWith(
-      DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ milliseconds: configuration.history.overlap }).toUTC().toISO(),
+      DateTime.fromISO(testData.constants.dates.FAKE_NOW)
+        .minus({ milliseconds: configuration.settings.throttling.overlap })
+        .toUTC()
+        .toISO(),
       '2023-02-02T02:02:02.222Z',
-      testData.south.list[0].history.maxReadInterval
+      south.settings.settings.throttling.maxReadInterval
     );
     expect(generateIntervals).toHaveBeenCalledTimes(2);
     expect(south.historyQuery).toHaveBeenCalledTimes(6);
@@ -398,12 +419,21 @@ describe('SouthConnector with history and max instant per item', () => {
       configuration.items,
       '2020-02-02T02:02:02.222Z',
       '2023-02-02T02:02:02.222Z',
-      testData.scanMode.list[0].id
+      testData.scanMode.list[0].id,
+      {
+        readDelay: south.settings.settings.throttling.readDelay,
+        maxReadInterval: south.settings.settings.throttling.maxReadInterval
+      },
+      south.settings.settings.throttling.maxInstantPerItem,
+      south.settings.settings.throttling.overlap
     );
     expect(generateIntervals).toHaveBeenCalledWith(
-      DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ milliseconds: configuration.history.overlap }).toUTC().toISO(),
+      DateTime.fromISO(testData.constants.dates.FAKE_NOW)
+        .minus({ milliseconds: south.settings.settings.throttling.overlap })
+        .toUTC()
+        .toISO(),
       '2023-02-02T02:02:02.222Z',
-      configuration.history.maxReadInterval
+      south.settings.settings.throttling.maxReadInterval
     );
     expect(logger.trace).toHaveBeenCalledWith(
       `Interval split in ${intervals.length} sub-intervals: \r\n` +
@@ -437,12 +467,21 @@ describe('SouthConnector with history and max instant per item', () => {
       configuration.items,
       '2020-02-02T02:02:02.222Z',
       '2023-02-02T02:02:02.222Z',
-      testData.scanMode.list[0].id
+      testData.scanMode.list[0].id,
+      {
+        readDelay: south.settings.settings.throttling.readDelay,
+        maxReadInterval: south.settings.settings.throttling.maxReadInterval
+      },
+      south.settings.settings.throttling.maxInstantPerItem,
+      south.settings.settings.throttling.overlap
     );
     expect(generateIntervals).toHaveBeenCalledWith(
-      DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ milliseconds: configuration.history.overlap }).toUTC().toISO(),
+      DateTime.fromISO(testData.constants.dates.FAKE_NOW)
+        .minus({ milliseconds: south.settings.settings.throttling.overlap })
+        .toUTC()
+        .toISO(),
       '2023-02-02T02:02:02.222Z',
-      configuration.history.maxReadInterval
+      south.settings.settings.throttling.maxReadInterval
     );
     expect(logger.trace).toHaveBeenCalledWith(`Querying interval: ${JSON.stringify(intervals[0], null, 2)}`);
     expect(south.historyQuery).toHaveBeenCalledTimes(2);
@@ -465,12 +504,21 @@ describe('SouthConnector with history and max instant per item', () => {
       [configuration.items[0]],
       '2020-02-02T02:02:02.222Z',
       '2023-02-02T02:02:02.222Z',
-      testData.scanMode.list[0].id
+      testData.scanMode.list[0].id,
+      {
+        readDelay: south.settings.settings.throttling.readDelay,
+        maxReadInterval: south.settings.settings.throttling.maxReadInterval
+      },
+      south.settings.settings.throttling.maxInstantPerItem,
+      south.settings.settings.throttling.overlap
     );
     expect(generateIntervals).toHaveBeenCalledWith(
-      DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ milliseconds: configuration.history.overlap }).toUTC().toISO(),
+      DateTime.fromISO(testData.constants.dates.FAKE_NOW)
+        .minus({ milliseconds: south.settings.settings.throttling.overlap })
+        .toUTC()
+        .toISO(),
       '2023-02-02T02:02:02.222Z',
-      configuration.history.maxReadInterval
+      south.settings.settings.throttling.maxReadInterval
     );
     expect(logger.trace).toHaveBeenCalledWith(`Querying interval: ${JSON.stringify(intervals[0], null, 2)}`);
     expect(south.historyQuery).toHaveBeenCalledTimes(1);
@@ -503,7 +551,18 @@ describe('SouthConnector with history and max instant per item', () => {
 
     south.createDeferredPromise();
     south
-      .historyQueryHandler(configuration.items, '2020-02-02T02:02:02.222Z', '2023-02-02T02:02:02.222Z', testData.scanMode.list[0].id)
+      .historyQueryHandler(
+        configuration.items,
+        '2020-02-02T02:02:02.222Z',
+        '2023-02-02T02:02:02.222Z',
+        testData.scanMode.list[0].id,
+        {
+          readDelay: south.settings.settings.throttling.readDelay,
+          maxReadInterval: south.settings.settings.throttling.maxReadInterval
+        },
+        south.settings.settings.throttling.maxInstantPerItem,
+        south.settings.settings.throttling.overlap
+      )
       .then(() => {
         south.resolveDeferredPromise();
       });
@@ -573,7 +632,10 @@ describe('SouthConnector with history and subscription', () => {
         .toUTC()
         .toISO()!,
       testData.constants.dates.FAKE_NOW,
-      testData.scanMode.list[0].id
+      testData.scanMode.list[0].id,
+      { maxReadInterval: south.settings.settings.throttling.maxReadInterval, readDelay: south.settings.settings.throttling.readDelay },
+      false,
+      south.settings.settings.throttling.overlap
     );
     expect(south.lastPointQuery).toHaveBeenCalledTimes(1);
     expect(logger.error).toHaveBeenCalledWith(`Error when calling historyQuery. ${new Error('history query error')}`);
@@ -652,12 +714,21 @@ describe('SouthConnector with history and subscription', () => {
       testData.south.list[2].items as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>,
       '2020-02-02T02:02:02.222Z',
       '2023-02-02T02:02:02.222Z',
-      testData.scanMode.list[0].id
+      testData.scanMode.list[0].id,
+      {
+        readDelay: south.settings.settings.throttling.readDelay,
+        maxReadInterval: south.settings.settings.throttling.maxReadInterval
+      },
+      south.settings.settings.throttling.maxInstantPerItem,
+      south.settings.settings.throttling.overlap
     );
     expect(generateIntervals).toHaveBeenCalledWith(
-      DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ milliseconds: testData.south.list[2].history.overlap }).toUTC().toISO(),
+      DateTime.fromISO(testData.constants.dates.FAKE_NOW)
+        .minus({ milliseconds: south.settings.settings.throttling.overlap })
+        .toUTC()
+        .toISO(),
       '2023-02-02T02:02:02.222Z',
-      testData.south.list[2].history.maxReadInterval
+      south.settings.settings.throttling.maxReadInterval
     );
     expect(logger.trace).toHaveBeenCalledWith(
       `Interval split in ${intervals.length} sub-intervals: \r\n` +
@@ -703,12 +774,21 @@ describe('SouthConnector with history and subscription', () => {
       testData.south.list[2].items as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>,
       '2020-02-02T02:02:02.222Z',
       '2023-02-02T02:02:02.222Z',
-      'scanModeId1'
+      'scanModeId1',
+      {
+        readDelay: south.settings.settings.throttling.readDelay,
+        maxReadInterval: south.settings.settings.throttling.maxReadInterval
+      },
+      south.settings.settings.throttling.maxInstantPerItem,
+      south.settings.settings.throttling.overlap
     );
     expect(generateIntervals).toHaveBeenCalledWith(
-      DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ milliseconds: testData.south.list[2].history.overlap }).toUTC().toISO(),
+      DateTime.fromISO(testData.constants.dates.FAKE_NOW)
+        .minus({ milliseconds: south.settings.settings.throttling.overlap })
+        .toUTC()
+        .toISO(),
       '2023-02-02T02:02:02.222Z',
-      testData.south.list[2].history.maxReadInterval
+      south.settings.settings.throttling.maxReadInterval
     );
     expect(logger.trace).toHaveBeenCalledWith(
       `Interval split in ${intervals.length} sub-intervals: \r\n` +
@@ -744,12 +824,21 @@ describe('SouthConnector with history and subscription', () => {
       testData.south.list[2].items as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>,
       '2020-02-02T02:02:02.222Z',
       '2023-02-02T02:02:02.222Z',
-      testData.scanMode.list[0].id
+      testData.scanMode.list[0].id,
+      {
+        readDelay: south.settings.settings.throttling.readDelay,
+        maxReadInterval: south.settings.settings.throttling.maxReadInterval
+      },
+      south.settings.settings.throttling.maxInstantPerItem,
+      south.settings.settings.throttling.overlap
     );
     expect(generateIntervals).toHaveBeenCalledWith(
-      DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ milliseconds: testData.south.list[2].history.overlap }).toUTC().toISO(),
+      DateTime.fromISO(testData.constants.dates.FAKE_NOW)
+        .minus({ milliseconds: south.settings.settings.throttling.overlap })
+        .toUTC()
+        .toISO(),
       '2023-02-02T02:02:02.222Z',
-      testData.south.list[2].history.maxReadInterval
+      south.settings.settings.throttling.maxReadInterval
     );
     expect(logger.trace).toHaveBeenCalledWith(`Querying interval: ${JSON.stringify(intervals[0], null, 2)}`);
     expect(south.historyQuery).toHaveBeenCalledTimes(1);
@@ -785,7 +874,13 @@ describe('SouthConnector with history and subscription', () => {
         testData.south.list[2].items as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>,
         '2020-02-02T02:02:02.222Z',
         '2023-02-02T02:02:02.222Z',
-        testData.scanMode.list[0].id
+        testData.scanMode.list[0].id,
+        {
+          readDelay: south.settings.settings.throttling.readDelay,
+          maxReadInterval: south.settings.settings.throttling.maxReadInterval
+        },
+        south.settings.settings.throttling.maxInstantPerItem,
+        south.settings.settings.throttling.overlap
       )
       .then(() => {
         south.resolveDeferredPromise();
@@ -801,6 +896,164 @@ describe('SouthConnector with history and subscription', () => {
     );
     expect(south.historyQuery).toHaveBeenCalledTimes(1);
   });
+
+  it('should manage south cache on max item change from true to false', async () => {
+    const config = JSON.parse(JSON.stringify(testData.south.list[2]));
+    const maxInstants = new Map<string, Instant>();
+    maxInstants.set(config.items[0].scanModeId, testData.constants.dates.DATE_2);
+    (southCacheRepository.getLatestMaxInstants as jest.Mock).mockReturnValueOnce(maxInstants);
+    south.getMaxInstantPerItem = jest.fn().mockReturnValue(true);
+    await south.manageSouthCacheOnChange(testData.south.list[2], config, false);
+
+    expect(southCacheRepository.getLatestMaxInstants).toHaveBeenCalledTimes(1);
+    expect(southCacheRepository.deleteAllBySouthConnector).toHaveBeenCalledWith(config.id);
+
+    expect(southCacheRepository.save).toHaveBeenCalledTimes(2);
+    expect(southCacheRepository.save).toHaveBeenCalledWith({
+      southId: config.id,
+      itemId: config.items[0].id,
+      scanModeId: config.items[0].scanModeId,
+      maxInstant: testData.constants.dates.DATE_2
+    });
+  });
+
+  it('should manage south cache on max item change from false to true', async () => {
+    const config = JSON.parse(JSON.stringify(testData.south.list[2]));
+    const maxInstants = new Map<string, Instant>();
+    maxInstants.set(config.items[0].scanModeId, testData.constants.dates.DATE_2);
+    (southCacheRepository.getLatestMaxInstants as jest.Mock).mockReturnValueOnce(maxInstants);
+    south.getMaxInstantPerItem = jest.fn().mockReturnValue(false);
+    await south.manageSouthCacheOnChange(testData.south.list[2], config, true);
+
+    expect(southCacheRepository.getLatestMaxInstants).toHaveBeenCalledTimes(1);
+    expect(southCacheRepository.deleteAllBySouthConnector).toHaveBeenCalledWith(config.id);
+
+    expect(southCacheRepository.save).toHaveBeenCalledTimes(1);
+    expect(southCacheRepository.save).toHaveBeenCalledWith({
+      southId: config.id,
+      itemId: 'all',
+      scanModeId: config.items[0].scanModeId,
+      maxInstant: testData.constants.dates.DATE_2
+    });
+  });
+
+  it('should manage south cache on max item change and do nothing if no max instants', async () => {
+    const config = JSON.parse(JSON.stringify(testData.south.list[2]));
+    (southCacheRepository.getLatestMaxInstants as jest.Mock).mockReturnValueOnce(null);
+    south.getMaxInstantPerItem = jest.fn().mockReturnValue(false);
+    await south.manageSouthCacheOnChange(testData.south.list[2], config, true);
+
+    expect(southCacheRepository.getLatestMaxInstants).toHaveBeenCalledTimes(1);
+    expect(southCacheRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('should manage south cache on item deletion with max instant per item', async () => {
+    const config = JSON.parse(JSON.stringify(testData.south.list[2]));
+    config.items.pop();
+    south.getMaxInstantPerItem = jest.fn().mockReturnValue(true);
+    await south.manageSouthCacheOnChange(testData.south.list[2], config, true);
+    expect(southCacheRepository.deleteAllBySouthItem).toHaveBeenCalledTimes(1);
+    expect(southCacheRepository.delete).not.toHaveBeenCalled();
+  });
+
+  it('should manage south cache on item deletion without max instant per item', async () => {
+    const config = JSON.parse(JSON.stringify(testData.south.list[2]));
+    config.items = [];
+    south.getMaxInstantPerItem = jest.fn().mockReturnValue(false);
+    await south.manageSouthCacheOnChange(testData.south.list[2], config, false);
+    expect(southCacheRepository.delete).toHaveBeenCalledTimes(4); // We removed the four items of the south connector
+    expect(southCacheRepository.deleteAllBySouthItem).not.toHaveBeenCalled();
+  });
+
+  it('should manage south cache on item scan mode change without cache entry', async () => {
+    const config = JSON.parse(JSON.stringify(testData.south.list[2]));
+    config.items[0].scanModeId = testData.scanMode.list[1].id;
+    (southCacheRepository.getSouthCache as jest.Mock).mockReturnValue(null);
+    south.getMaxInstantPerItem = jest.fn().mockReturnValue(false);
+    await south.manageSouthCacheOnChange(testData.south.list[2], config, false);
+    expect(southCacheRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('should manage south cache on item scan mode change without max instant per item and create new entry', async () => {
+    const config = JSON.parse(JSON.stringify(testData.south.list[2]));
+    config.items[0].scanModeId = testData.scanMode.list[1].id;
+    (southCacheRepository.getSouthCache as jest.Mock)
+      .mockReturnValueOnce({
+        scanModeId: testData.scanMode.list[0].id,
+        maxInstant: testData.constants.dates.DATE_1,
+        southId: testData.south.list[2].id
+      })
+      .mockReturnValueOnce(null);
+    south.getMaxInstantPerItem = jest.fn().mockReturnValue(false);
+    await south.manageSouthCacheOnChange(testData.south.list[2], config, false);
+    expect(southCacheRepository.save).toHaveBeenCalledWith({
+      southId: testData.south.list[2].id,
+      itemId: 'all',
+      scanModeId: testData.scanMode.list[1].id,
+      maxInstant: testData.constants.dates.DATE_1
+    });
+  });
+
+  it('should manage south cache on item scan mode change without max instant per item and not create new entry', async () => {
+    const config = JSON.parse(JSON.stringify(testData.south.list[2]));
+    config.items[0].scanModeId = testData.scanMode.list[1].id;
+    (southCacheRepository.getSouthCache as jest.Mock)
+      .mockReturnValueOnce({
+        scanModeId: testData.scanMode.list[0].id,
+        maxInstant: testData.constants.dates.DATE_1,
+        southId: testData.south.list[2].id
+      })
+      .mockReturnValueOnce({
+        scanModeId: testData.scanMode.list[1].id,
+        maxInstant: testData.constants.dates.DATE_2,
+        southId: testData.south.list[2].id
+      });
+    south.getMaxInstantPerItem = jest.fn().mockReturnValue(false);
+    await south.manageSouthCacheOnChange(testData.south.list[2], config, false);
+    expect(southCacheRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('should manage south cache on item scan mode change without max instant per item and create new entry', async () => {
+    const config = JSON.parse(JSON.stringify(testData.south.list[2]));
+    config.items[0].scanModeId = testData.scanMode.list[1].id;
+    (southCacheRepository.getSouthCache as jest.Mock).mockReturnValueOnce({
+      scanModeId: testData.scanMode.list[0].id,
+      maxInstant: testData.constants.dates.DATE_1,
+      southId: testData.south.list[2].id
+    });
+    south.getMaxInstantPerItem = jest.fn().mockReturnValue(true);
+    await south.manageSouthCacheOnChange(testData.south.list[2], config, true);
+    expect(southCacheRepository.save).toHaveBeenCalledWith({
+      southId: testData.south.list[2].id,
+      itemId: config.items[0].id,
+      scanModeId: testData.scanMode.list[1].id,
+      maxInstant: testData.constants.dates.DATE_1
+    });
+  });
+
+  // it('should manage south cache on item scan mode change with max instant per item', async () => {
+  //   const config = JSON.parse(JSON.stringify(testData.south.list[2]));
+  //   config.items[0].scanModeId = testData.scanMode.list[1].id;
+  //   southCacheService.getSouthCache
+  //     .mockReturnValueOnce({
+  //       scanModeId: testData.scanMode.list[0].id,
+  //       maxInstant: testData.constants.dates.DATE_1,
+  //       southId: testData.south.list[2].id
+  //     })
+  //     .mockReturnValueOnce({
+  //       scanModeId: testData.scanMode.list[1].id,
+  //       maxInstant: testData.constants.dates.DATE_2,
+  //       southId: testData.south.list[2].id
+  //     });
+  //   south.getMaxInstantPerItem = jest.fn().mockReturnValue(true);
+  //   await south.manageSouthCacheOnChange(testData.south.list[2], config, true);
+  //   expect(southCacheRepository.save).toHaveBeenCalledWith({
+  //     southId: testData.south.list[2].id,
+  //     itemId: config.items[0].id,
+  //     scanModeId: testData.scanMode.list[1].id,
+  //     maxInstant: testData.constants.dates.DATE_1
+  //   });
+  // });
 
   it('should create subscriptions and cron jobs', async () => {
     const subscriptionItem = JSON.parse(JSON.stringify(testData.south.list[2].items[1]));

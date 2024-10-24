@@ -25,11 +25,6 @@ export interface HistoryQueryDTO<S extends SouthSettings, N extends NorthSetting
   northType: string;
   southSettings: S;
   northSettings: N;
-  history: {
-    maxInstantPerItem: boolean;
-    maxReadInterval: number;
-    readDelay: number;
-  };
   caching: {
     scanModeId: string;
     retryInterval: number;
@@ -56,11 +51,6 @@ export interface HistoryQueryCommandDTO<S extends SouthSettings, N extends North
   northType: string;
   southSettings: S;
   northSettings: N;
-  history: {
-    maxInstantPerItem: boolean;
-    maxReadInterval: number;
-    readDelay: number;
-  };
   caching: {
     scanModeId: string | null;
     scanModeName: string | null;
