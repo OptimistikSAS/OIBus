@@ -25,9 +25,7 @@ export default class SouthConnectorRepository {
 
   findSouthById<S extends SouthSettings, I extends SouthItemSettings>(id: string): SouthConnectorEntity<S, I> | null {
     const query = `
-        SELECT id, name, type, description, enabled,
-        history_max_instant_per_item, history_max_read_interval,
-        history_read_delay, history_read_overlap, settings
+        SELECT id, name, type, description, enabled, settings
         FROM ${SOUTH_CONNECTORS_TABLE}
         WHERE id = ?;`;
 
@@ -42,40 +40,13 @@ export default class SouthConnectorRepository {
     const transaction = this.database.transaction(() => {
       if (!south.id) {
         south.id = generateRandomId(6);
-        const insertQuery =
-          `INSERT INTO ${SOUTH_CONNECTORS_TABLE} (id, name, type, description, enabled, history_max_instant_per_item, ` +
-          `history_max_read_interval, history_read_delay, history_read_overlap, settings) ` +
-          `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+        const insertQuery = `INSERT INTO ${SOUTH_CONNECTORS_TABLE} (id, name, type, description, enabled, settings) VALUES (?, ?, ?, ?, ?, ?);`;
         this.database
           .prepare(insertQuery)
-          .run(
-            south.id,
-            south.name,
-            south.type,
-            south.description,
-            +south.enabled,
-            +south.history.maxInstantPerItem,
-            south.history.maxReadInterval,
-            south.history.readDelay,
-            south.history.overlap,
-            JSON.stringify(south.settings)
-          );
+          .run(south.id, south.name, south.type, south.description, +south.enabled, JSON.stringify(south.settings));
       } else {
-        const query =
-          `UPDATE ${SOUTH_CONNECTORS_TABLE} SET name = ?, description = ?, ` +
-          `history_max_instant_per_item = ?, history_max_read_interval = ?, history_read_delay = ?, history_read_overlap = ?, settings = ? WHERE id = ?;`;
-        this.database
-          .prepare(query)
-          .run(
-            south.name,
-            south.description,
-            +south.history.maxInstantPerItem,
-            south.history.maxReadInterval,
-            south.history.readDelay,
-            south.history.overlap,
-            JSON.stringify(south.settings),
-            south.id
-          );
+        const query = `UPDATE ${SOUTH_CONNECTORS_TABLE} SET name = ?, description = ?, settings = ? WHERE id = ?;`;
+        this.database.prepare(query).run(south.name, south.description, JSON.stringify(south.settings), south.id);
       }
 
       if (south.items.length > 0) {
@@ -270,12 +241,6 @@ export default class SouthConnectorRepository {
       type: result.type as string,
       description: result.description as string,
       enabled: Boolean(result.enabled),
-      history: {
-        maxInstantPerItem: Boolean(result.history_max_instant_per_item),
-        maxReadInterval: result.history_max_read_interval as number,
-        readDelay: result.history_read_delay as number,
-        overlap: result.history_read_overlap as number
-      },
       settings: JSON.parse(result.settings as string) as S,
       items: this.findAllItemsForSouth<I>(result.id as string)
     };

@@ -78,12 +78,6 @@ describe('South Modbus', () => {
     type: 'test',
     description: 'my test connector',
     enabled: true,
-    history: {
-      maxInstantPerItem: true,
-      maxReadInterval: 3600,
-      readDelay: 0,
-      overlap: 0
-    },
     settings: {
       port: 502,
       host: '127.0.0.1',
@@ -434,12 +428,6 @@ describe('SouthModbus test connection', () => {
     type: 'test',
     description: 'my test connector',
     enabled: true,
-    history: {
-      maxInstantPerItem: true,
-      maxReadInterval: 3600,
-      readDelay: 0,
-      overlap: 0
-    },
     settings: {
       port: 502,
       host: '127.0.0.1',

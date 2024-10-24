@@ -273,7 +273,6 @@ export default class OIAnalyticsMessageService {
         description: south.description,
         enabled: south.enabled,
         settings: this.encryptionService.filterSecrets(south.settings, manifest.settings),
-        history: south.history,
         items: south.items.map(item => ({
           id: item.id,
           name: item.name,
