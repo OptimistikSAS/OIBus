@@ -20,7 +20,7 @@ import { QueriesHistory } from '../south-interface';
 import { DateTime } from 'luxon';
 import { SouthPostgreSQLItemSettings, SouthPostgreSQLSettings } from '../../../shared/model/south-settings.model';
 import { OIBusContent } from '../../../shared/model/engine.model';
-import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
@@ -229,6 +229,21 @@ export default class SouthPostgreSQL
       }
     }
     return updatedStartTime;
+  }
+
+  getThrottlingSettings(settings: SouthPostgreSQLSettings): SouthThrottlingSettings {
+    return {
+      maxReadInterval: settings.throttling.maxReadInterval,
+      readDelay: settings.throttling.readDelay
+    };
+  }
+
+  getMaxInstantPerItem(_settings: SouthPostgreSQLSettings): boolean {
+    return false;
+  }
+
+  getOverlap(settings: SouthPostgreSQLSettings): number {
+    return settings.throttling.overlap;
   }
 
   /**

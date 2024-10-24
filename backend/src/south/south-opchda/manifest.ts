@@ -9,10 +9,55 @@ const manifest: SouthConnectorManifest = {
     subscription: false,
     lastPoint: false,
     lastFile: false,
-    history: true,
-    forceMaxInstantPerItem: false
+    history: true
   },
   settings: [
+    {
+      key: 'throttling',
+      type: 'OibFormGroup',
+      label: 'Throttling',
+      class: 'col',
+      newRow: true,
+      displayInViewMode: true,
+      validators: [{ key: 'required' }],
+      content: [
+        {
+          key: 'maxReadInterval',
+          type: 'OibNumber',
+          label: 'Max read interval',
+          validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }],
+          defaultValue: 3600,
+          unitLabel: 's',
+          displayInViewMode: true
+        },
+        {
+          key: 'readDelay',
+          type: 'OibNumber',
+          label: 'Read delay',
+          validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }],
+          defaultValue: 200,
+          unitLabel: 'ms',
+          displayInViewMode: true
+        },
+        {
+          key: 'overlap',
+          type: 'OibNumber',
+          label: 'Overlap',
+          validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }],
+          defaultValue: 0,
+          unitLabel: 'ms',
+          displayInViewMode: true
+        },
+        {
+          key: 'maxInstantPerItem',
+          type: 'OibCheckbox',
+          label: 'Max instant per item',
+          defaultValue: false,
+          validators: [{ key: 'required' }],
+          displayInViewMode: true
+        }
+      ]
+    },
     {
       key: 'agentUrl',
       type: 'OibText',

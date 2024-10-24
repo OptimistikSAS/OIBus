@@ -68,12 +68,6 @@ describe('TestConnectionResultModalComponent', () => {
       name: 'My South Connector 1',
       description: 'My South connector description',
       enabled: true,
-      history: {
-        maxInstantPerItem: false,
-        maxReadInterval: 0,
-        readDelay: 200,
-        overlap: 0
-      },
       settings: {} as SouthSettings,
       items: []
     };

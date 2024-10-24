@@ -96,11 +96,6 @@ export class EditHistoryQueryComponent implements OnInit {
     description: FormControl<string>;
     startTime: FormControl<Instant>;
     endTime: FormControl<Instant>;
-    history: FormGroup<{
-      maxInstantPerItem: FormControl<boolean>;
-      maxReadInterval: FormControl<number>;
-      readDelay: FormControl<number>;
-    }>;
     caching: FormGroup<{
       scanModeId: FormControl<string | null>;
       retryInterval: FormControl<number>;
@@ -198,11 +193,6 @@ export class EditHistoryQueryComponent implements OnInit {
           description: '',
           startTime: [DateTime.now().minus({ days: 1 }).toUTC().toISO()!, [this.dateRangeValidator('start')]],
           endTime: [DateTime.now().toUTC().toISO()!, [this.dateRangeValidator('end')]],
-          history: this.fb.group({
-            maxInstantPerItem: false,
-            maxReadInterval: 0,
-            readDelay: 200
-          }),
           caching: this.fb.group({
             scanModeId: this.fb.control<string | null>(null, Validators.required),
             retryInterval: [5000, Validators.required],
@@ -229,7 +219,6 @@ export class EditHistoryQueryComponent implements OnInit {
         } else {
           if (southConnector) {
             this.historyQueryForm.controls.southSettings.patchValue(southConnector.settings);
-            this.historyQueryForm.controls.history.patchValue(southConnector.history);
           }
           if (northConnector) {
             this.historyQueryForm.controls.northSettings.patchValue(northConnector.settings);
@@ -265,11 +254,6 @@ export class EditHistoryQueryComponent implements OnInit {
       southType: this.southType,
       southSettings: formValue.southSettings,
       northSettings: formValue.northSettings,
-      history: {
-        maxInstantPerItem: formValue.history!.maxInstantPerItem!,
-        maxReadInterval: formValue.history!.maxReadInterval!,
-        readDelay: formValue.history!.readDelay!
-      },
       caching: {
         scanModeId: formValue.caching!.scanModeId!,
         scanModeName: null,

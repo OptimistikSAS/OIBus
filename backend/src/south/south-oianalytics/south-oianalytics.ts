@@ -8,11 +8,11 @@ import pino from 'pino';
 import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
-import { SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../../shared/model/south-settings.model';
+import { SouthODBCSettings, SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../../shared/model/south-settings.model';
 import { createProxyAgent } from '../../service/proxy-agent';
 import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { ClientCertificateCredential, ClientSecretCredential } from '@azure/identity';
-import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
@@ -152,6 +152,21 @@ export default class SouthOIAnalytics
       }
     }
     return updatedStartTime;
+  }
+
+  getThrottlingSettings(settings: SouthOIAnalyticsSettings): SouthThrottlingSettings {
+    return {
+      maxReadInterval: settings.throttling.maxReadInterval,
+      readDelay: settings.throttling.readDelay
+    };
+  }
+
+  getMaxInstantPerItem(_settings: SouthOIAnalyticsSettings): boolean {
+    return false;
+  }
+
+  getOverlap(settings: SouthOIAnalyticsSettings): number {
+    return settings.throttling.overlap;
   }
 
   async queryData(
