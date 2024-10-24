@@ -55,8 +55,7 @@ class TestComponent {
       subscription: false,
       history: true,
       lastFile: true,
-      lastPoint: false,
-      forceMaxInstantPerItem: false
+      lastPoint: false
     }
   };
 }

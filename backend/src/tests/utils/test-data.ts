@@ -169,8 +169,7 @@ const southTestManifest: SouthConnectorManifest = {
     subscription: true,
     lastPoint: true,
     lastFile: true,
-    history: true,
-    forceMaxInstantPerItem: true
+    history: true
   },
   settings: [],
   items: {
@@ -210,12 +209,6 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
       inputFolder: 'input',
       compression: true
     },
-    history: {
-      maxInstantPerItem: false,
-      maxReadInterval: 3600,
-      readDelay: 200,
-      overlap: 0
-    },
     items: [
       {
         id: 'southItemId1',
@@ -240,6 +233,12 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
     description: 'my MSSQL south connector',
     enabled: false,
     settings: {
+      throttling: {
+        maxInstantPerItem: false,
+        maxReadInterval: 3600,
+        readDelay: 200,
+        overlap: 0
+      },
       host: 'host',
       port: 1433,
       connectionTimeout: 1_000,
@@ -250,12 +249,6 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
       encryption: true,
       trustServerCertificate: true,
       requestTimeout: 5_000
-    },
-    history: {
-      maxInstantPerItem: false,
-      maxReadInterval: 3600,
-      readDelay: 200,
-      overlap: 0
     },
     items: [
       {
@@ -274,6 +267,12 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
     description: 'my OPCUA south connector',
     enabled: true,
     settings: {
+      throttling: {
+        maxInstantPerItem: false,
+        maxReadInterval: 3600,
+        readDelay: 200,
+        overlap: 10
+      },
       sharedConnection: false,
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
       retryInterval: 10000,
@@ -284,12 +283,6 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
       securityMode: 'None',
       securityPolicy: 'None',
       keepSessionAlive: false
-    },
-    history: {
-      maxInstantPerItem: false,
-      maxReadInterval: 3600,
-      readDelay: 200,
-      overlap: 10
     },
     items: [
       {
@@ -339,12 +332,6 @@ const southConnectorCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSe
   settings: {
     inputFolder: 'input',
     compression: true
-  },
-  history: {
-    maxInstantPerItem: false,
-    maxReadInterval: 3600,
-    readDelay: 200,
-    overlap: 0
   },
   items: [
     {
@@ -499,18 +486,26 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
     name: 'my first History Query',
     description: 'description',
     status: 'RUNNING',
-    history: {
-      maxInstantPerItem: true,
-      maxReadInterval: 3600,
-      readDelay: 0
-    },
     startTime: '2020-02-01T02:02:59.999Z',
     endTime: '2020-02-02T02:02:59.999Z',
-    southType: 'folder-scanner',
+    southType: 'mssql',
     northType: 'oianalytics',
     southSettings: {
-      inputFolder: 'input',
-      compression: true
+      throttling: {
+        maxReadInterval: 3600,
+        readDelay: 200,
+        overlap: 0
+      },
+      host: 'host',
+      port: 1433,
+      connectionTimeout: 1_000,
+      database: 'database',
+      username: 'oibus',
+      password: 'pass',
+      domain: 'domain',
+      encryption: true,
+      trustServerCertificate: true,
+      requestTimeout: 5_000
     },
     northSettings: {
       useOiaModule: true,
@@ -554,16 +549,16 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
     name: 'My second History Query',
     description: 'description',
     status: 'PENDING',
-    history: {
-      maxInstantPerItem: true,
-      maxReadInterval: 3600,
-      readDelay: 0
-    },
     startTime: '2020-02-01T02:02:59.999Z',
     endTime: '2020-02-02T02:02:59.999Z',
     southType: 'mssql',
     northType: 'file-writer',
     southSettings: {
+      throttling: {
+        maxReadInterval: 3600,
+        readDelay: 200,
+        overlap: 10
+      },
       host: 'host',
       port: 1433,
       connectionTimeout: 1_000,
@@ -610,11 +605,6 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
 const historyQueryCommand: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
   name: 'name',
   description: 'description',
-  history: {
-    maxInstantPerItem: true,
-    maxReadInterval: 3600,
-    readDelay: 0
-  },
   startTime: '2020-02-01T02:02:59.999Z',
   endTime: '2020-02-02T02:02:59.999Z',
   southType: 'south-test',

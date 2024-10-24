@@ -511,15 +511,9 @@ export default class SouthService {
     );
     this.southConnectorRepository.saveSouthConnector(southEntity);
 
-    // Handle all cases regarding cache changes when max instant per item changes
-    this.onSouthMaxInstantPerItemChange(previousSettings, southEntity);
-
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    if (southEntity.enabled) {
-      await this.dataStreamEngine.reloadSouth(southEntity);
-    } else {
-      await this.dataStreamEngine.stopSouth(southEntity.id);
-    }
+
+    await this.dataStreamEngine.reloadSouth(southEntity);
   }
 
   async updateSouth<S extends SouthSettings, I extends SouthItemSettings>(
@@ -545,17 +539,8 @@ export default class SouthService {
       this.scanModeRepository.findAll()
     );
     this.southConnectorRepository.saveSouthConnector(southEntity);
-
-    if (previousSettings.history.maxInstantPerItem !== southEntity.history.maxInstantPerItem) {
-      // Handle all cases regarding cache changes when max instant per item changes
-      this.onSouthMaxInstantPerItemChange(previousSettings, southEntity);
-    }
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    if (southEntity.enabled) {
-      await this.dataStreamEngine.reloadSouth(southEntity);
-    } else {
-      await this.dataStreamEngine.stopSouth(southEntity.id);
-    }
+    await this.dataStreamEngine.reloadSouth(southEntity);
   }
 
   async deleteSouth(southConnectorId: string): Promise<void> {
@@ -668,10 +653,7 @@ export default class SouthService {
       this.scanModeRepository.findAll()
     );
     this.southConnectorRepository.saveItem<I>(southConnectorId, southItemEntity);
-
-    this.onSouthItemScanModeChange(southConnector, previousSettings, southItemEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-
     await this.dataStreamEngine.reloadItems(southConnector.id);
   }
 
@@ -683,9 +665,7 @@ export default class SouthService {
     const southItem = this.southConnectorRepository.findItemById(southConnectorId, itemId);
     if (!southItem) throw new Error('South item not found');
     this.southConnectorRepository.deleteItem(southItem.id);
-    this.safeDeleteSouthCacheEntry(southConnector, southItem);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-
     await this.dataStreamEngine.reloadItems(southConnector.id);
   }
 
@@ -834,125 +814,6 @@ export default class SouthService {
     await this.dataStreamEngine.reloadItems(southConnectorId);
   }
 
-  /**
-   * Safely delete the cache entries of a south item, when the south item is deleted
-   */
-  private safeDeleteSouthCacheEntry(
-    southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings>,
-    southItem: SouthConnectorItemEntity<SouthItemSettings>
-  ) {
-    if (southConnector.history.maxInstantPerItem) {
-      this.southCacheRepository.deleteAllBySouthItem(southItem.id);
-    } else {
-      const isOldScanModeUnused = !southConnector.items.some(item => item.scanModeId === southItem.scanModeId);
-      if (isOldScanModeUnused) {
-        this.southCacheRepository.delete(southItem.id, southItem.scanModeId, 'all');
-      }
-    }
-  }
-
-  /**
-   * Handle the change of a south item's scan mode
-   */
-  private onSouthItemScanModeChange(
-    southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings>,
-    previousItem: SouthConnectorItemEntity<SouthItemSettings>,
-    newItem: Omit<SouthConnectorItemEntity<SouthItemSettings>, 'id'>
-  ) {
-    const oldScanModeId = previousItem.scanModeId;
-    const newScanModeId = newItem.scanModeId!;
-
-    if (oldScanModeId === newScanModeId) {
-      return;
-    }
-
-    const southItemId = southConnector.history.maxInstantPerItem ? previousItem.id : 'all';
-    const previousCacheEntry = this.southCacheRepository.getSouthCache(southConnector.id, oldScanModeId, southItemId);
-    const newCacheEntry = this.southCacheRepository.getSouthCache(southConnector.id, newScanModeId, southItemId);
-
-    // If the south hasn't been started yet, the previous cache entry won't exist
-    if (!previousCacheEntry) {
-      return;
-    }
-
-    // Max instant per item is enabled
-    if (southConnector.history.maxInstantPerItem) {
-      // 1. Remove the previous cache entry
-      this.safeDeleteSouthCacheEntry(southConnector, previousItem);
-
-      // 2. Create the new cache entry, with the previous max instant
-      this.southCacheRepository.save({
-        southId: southConnector.id,
-        itemId: previousItem.id,
-        scanModeId: newScanModeId,
-        maxInstant: previousCacheEntry.maxInstant
-      });
-    }
-
-    // Max instant per item is disabled
-    if (!southConnector.history.maxInstantPerItem) {
-      // 1. Remove the previous cache entry, if it's not used anymore
-      this.safeDeleteSouthCacheEntry(southConnector, previousItem);
-
-      // 2. Create the new cache entry, with the previous max instant, if it's not already created
-      if (!newCacheEntry) {
-        this.southCacheRepository.save({
-          southId: southConnector.id,
-          itemId: 'all',
-          scanModeId: newScanModeId,
-          maxInstant: previousCacheEntry.maxInstant
-        });
-      }
-    }
-  }
-
-  /**
-   * Handle the change of the max instant per item setting of a south connector
-   */
-  private onSouthMaxInstantPerItemChange(
-    previousSettings: SouthConnectorEntity<SouthSettings, SouthItemSettings>,
-    newSettings: SouthConnectorEntity<SouthSettings, SouthItemSettings>
-  ) {
-    if (previousSettings.history.maxInstantPerItem == newSettings.history.maxInstantPerItem) {
-      return;
-    }
-
-    const maxInstantsByScanMode = this.southCacheRepository.getLatestMaxInstants(newSettings.id);
-    // If the south hasn't been started yet, the cache entries won't exist
-    if (!maxInstantsByScanMode) {
-      return;
-    }
-
-    // 1. Remove all previous cache entries
-    this.southCacheRepository.deleteAllBySouthConnector(newSettings.id);
-
-    // Max instant per item is being enabled
-    if (newSettings.history.maxInstantPerItem) {
-      // 2. Create new cache entries for each item
-      // The max instant of these new entries, will be the max instant of the previously removed ones, based on scan mode
-      for (const item of previousSettings.items) {
-        const maxInstant = maxInstantsByScanMode.get(item.scanModeId);
-        if (maxInstant) {
-          this.southCacheRepository.save({
-            southId: newSettings.id,
-            itemId: item.id,
-            scanModeId: item.scanModeId,
-            maxInstant
-          });
-        }
-      }
-    }
-
-    // Max instant per item is being disabled
-    if (!newSettings.history.maxInstantPerItem) {
-      // 2. Create a single cache entry for all scan modes
-      // The max instant of these new entries, will be the *latest* max instant of the previously removed ones
-      for (const [scanModeId, maxInstant] of maxInstantsByScanMode) {
-        this.southCacheRepository.save({ southId: newSettings.id, itemId: 'all', scanModeId, maxInstant });
-      }
-    }
-  }
-
   private getDefaultBaseFolder(southId: string) {
     return path.resolve(this.dataStreamEngine.baseFolder, `south-${southId}`);
   }
@@ -985,12 +846,6 @@ const copySouthConnectorCommandToSouthEntity = async <S extends SouthSettings, I
     currentSettings?.settings || null,
     manifest.settings
   );
-  southEntity.history = {
-    maxInstantPerItem: manifest.modes.forceMaxInstantPerItem ? true : command.history.maxInstantPerItem,
-    maxReadInterval: command.history.maxReadInterval,
-    readDelay: command.history.readDelay,
-    overlap: command.history.overlap
-  };
   southEntity.items = await Promise.all(
     command.items.map(async itemCommand => {
       const itemEntity = {} as SouthConnectorItemEntity<I>;
@@ -1039,12 +894,6 @@ export const toSouthConnectorDTO = <S extends SouthSettings, I extends SouthItem
     description: southEntity.description,
     enabled: southEntity.enabled,
     settings: encryptionService.filterSecrets<S>(southEntity.settings, manifest.settings),
-    history: {
-      maxInstantPerItem: southEntity.history.maxInstantPerItem,
-      maxReadInterval: southEntity.history.maxReadInterval,
-      readDelay: southEntity.history.readDelay,
-      overlap: southEntity.history.overlap
-    },
     items: southEntity.items.map(item => toSouthConnectorItemDTO<I>(item, southEntity.type, encryptionService))
   };
 };

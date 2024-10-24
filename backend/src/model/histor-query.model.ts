@@ -23,11 +23,6 @@ export interface HistoryQueryEntity<S extends SouthSettings, N extends NorthSett
   northType: string;
   southSettings: S;
   northSettings: N;
-  history: {
-    maxInstantPerItem: boolean;
-    maxReadInterval: number;
-    readDelay: number;
-  };
   caching: {
     scanModeId: string;
     retryInterval: number;

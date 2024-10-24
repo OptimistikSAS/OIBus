@@ -20,7 +20,7 @@ import { QueriesHistory } from '../south-interface';
 import { SouthSlimsItemSettings, SouthSlimsSettings } from '../../../shared/model/south-settings.model';
 import { createProxyAgent } from '../../service/proxy-agent';
 import { OIBusContent } from '../../../shared/model/engine.model';
-import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
@@ -196,6 +196,21 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
       }
     }
     return updatedStartTime;
+  }
+
+  getThrottlingSettings(settings: SouthSlimsSettings): SouthThrottlingSettings {
+    return {
+      maxReadInterval: settings.throttling.maxReadInterval,
+      readDelay: settings.throttling.readDelay
+    };
+  }
+
+  getMaxInstantPerItem(_settings: SouthSlimsSettings): boolean {
+    return false;
+  }
+
+  getOverlap(settings: SouthSlimsSettings): number {
+    return settings.throttling.overlap;
   }
 
   async queryData(item: SouthConnectorItemEntity<SouthSlimsItemSettings>, startTime: Instant, endTime: Instant): Promise<SlimsResults> {

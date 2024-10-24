@@ -67,8 +67,6 @@ export class EditSouthItemModalComponent {
     settings: FormGroup;
   }> | null = null;
 
-  maxInstantPerItem: boolean | null = null;
-
   private timezones: ReadonlyArray<Timezone> = Intl.supportedValuesOf('timeZone');
   timezoneTypeahead: (text$: Observable<string>) => Observable<Array<Timezone>> = inMemoryTypeahead(
     () => ['UTC', ...this.timezones],
@@ -133,8 +131,7 @@ export class EditSouthItemModalComponent {
     southItemSchema: SouthConnectorItemManifest,
     itemList: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>>,
     scanModes: Array<ScanModeDTO>,
-    southItem: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>,
-    maxInstantPerItem: boolean | null = null
+    southItem: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>
   ) {
     this.mode = 'edit';
     this.itemList = itemList;
@@ -144,7 +141,6 @@ export class EditSouthItemModalComponent {
     this.southItemRows = groupFormControlsByRow(southItemSchema.settings);
     this.southItemSchema = southItemSchema;
     this.scanModes = scanModes;
-    this.maxInstantPerItem = maxInstantPerItem;
     this.createForm(southItem);
   }
 

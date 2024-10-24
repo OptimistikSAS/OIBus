@@ -28,12 +28,6 @@ export interface SouthConnectorDTO<T extends SouthSettings, I extends SouthItemS
   description: string;
   enabled: boolean;
   settings: T;
-  history: {
-    maxInstantPerItem: boolean;
-    maxReadInterval: number;
-    readDelay: number;
-    overlap: number;
-  };
   items: Array<SouthConnectorItemDTO<I>>;
 }
 
@@ -42,12 +36,6 @@ export interface SouthConnectorCommandDTO<T extends SouthSettings, I extends Sou
   type: string;
   description: string;
   enabled: boolean;
-  history: {
-    maxInstantPerItem: boolean;
-    maxReadInterval: number;
-    readDelay: number;
-    overlap: number;
-  };
   settings: T;
   items: Array<SouthConnectorItemCommandDTO<I>>;
 }
@@ -58,12 +46,6 @@ export interface SouthConnectorWithoutItemsCommandDTO<T extends SouthSettings> {
   description: string;
   enabled: boolean;
   sharedConnection: boolean;
-  history: {
-    maxInstantPerItem: boolean;
-    maxReadInterval: number;
-    readDelay: number;
-    overlap: number;
-  };
   settings: T;
 }
 
@@ -111,7 +93,6 @@ export interface SouthConnectorManifest {
     lastPoint: boolean;
     lastFile: boolean;
     history: boolean;
-    forceMaxInstantPerItem: boolean;
   };
   settings: Array<OibFormControl>;
   items: SouthConnectorItemManifest;

@@ -291,12 +291,6 @@ describe('Encryption service with crypto settings', () => {
       type: 'any',
       description: 'my connector',
       enabled: true,
-      history: {
-        maxInstantPerItem: true,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0
-      },
       items: [],
       settings: {
         field1: 'not a secret',
@@ -343,12 +337,6 @@ describe('Encryption service with crypto settings', () => {
       type: 'any',
       description: 'my connector',
       enabled: true,
-      history: {
-        maxInstantPerItem: true,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0
-      },
       items: [],
       settings: {
         field1: 'not a secret',
@@ -451,12 +439,6 @@ describe('Encryption service with crypto settings', () => {
       type: 'any',
       description: 'my connector',
       enabled: true,
-      history: {
-        maxInstantPerItem: true,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0
-      },
       items: [],
       settings: {
         field1: 'not a secret',

@@ -60,13 +60,12 @@ describe('SouthMSSQL with authentication', () => {
     type: 'mssql',
     description: 'my test connector',
     enabled: true,
-    history: {
-      maxInstantPerItem: true,
-      maxReadInterval: 3600,
-      readDelay: 0,
-      overlap: 0
-    },
     settings: {
+      throttling: {
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
+      },
       host: 'localhost',
       port: 1433,
       database: 'db',
@@ -186,6 +185,15 @@ describe('SouthMSSQL with authentication', () => {
       logger,
       'baseFolder'
     );
+  });
+
+  it('should get throttling settings', () => {
+    expect(south.getThrottlingSettings(configuration.settings)).toEqual({
+      maxReadInterval: configuration.settings.throttling.maxReadInterval,
+      readDelay: configuration.settings.throttling.readDelay
+    });
+    expect(south.getMaxInstantPerItem(configuration.settings)).toEqual(false);
+    expect(south.getOverlap(configuration.settings)).toEqual(configuration.settings.throttling.overlap);
   });
 
   it('should create temp folder', async () => {
@@ -319,13 +327,13 @@ describe('SouthMSSQL without authentication', () => {
     type: 'mssql',
     description: 'my test connector',
     enabled: true,
-    history: {
-      maxInstantPerItem: true,
-      maxReadInterval: 3600,
-      readDelay: 0,
-      overlap: 0
-    },
+
     settings: {
+      throttling: {
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
+      },
       host: 'localhost',
       port: 1433,
       database: 'db',
@@ -485,13 +493,12 @@ describe('SouthMSSQL test connection', () => {
     type: 'mssql',
     description: 'my test connector',
     enabled: true,
-    history: {
-      maxInstantPerItem: true,
-      maxReadInterval: 3600,
-      readDelay: 0,
-      overlap: 0
-    },
     settings: {
+      throttling: {
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
+      },
       host: 'localhost',
       port: 1433,
       database: 'db',

@@ -14,12 +14,6 @@ export interface SouthConnectorEntity<T extends SouthSettings, I extends SouthIt
   description: string;
   enabled: boolean;
   settings: T;
-  history: {
-    maxInstantPerItem: boolean;
-    maxReadInterval: number;
-    readDelay: number;
-    overlap: number;
-  };
   items: Array<SouthConnectorItemEntity<I>>;
 }
 
@@ -28,4 +22,9 @@ export interface SouthConnectorItemEntity<T extends SouthItemSettings> extends B
   enabled: boolean;
   scanModeId: string;
   settings: T;
+}
+
+export interface SouthThrottlingSettings {
+  maxReadInterval: number;
+  readDelay: number;
 }

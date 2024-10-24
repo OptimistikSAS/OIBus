@@ -18,7 +18,7 @@ import { QueriesHistory } from '../south-interface';
 import { DateTime } from 'luxon';
 import { SouthMSSQLItemSettings, SouthMSSQLSettings } from '../../../shared/model/south-settings.model';
 import { OIBusContent } from '../../../shared/model/engine.model';
-import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
@@ -224,6 +224,21 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
       }
     }
     return updatedStartTime;
+  }
+
+  getThrottlingSettings(settings: SouthMSSQLSettings): SouthThrottlingSettings {
+    return {
+      maxReadInterval: settings.throttling.maxReadInterval,
+      readDelay: settings.throttling.readDelay
+    };
+  }
+
+  getMaxInstantPerItem(_settings: SouthMSSQLSettings): boolean {
+    return false;
+  }
+
+  getOverlap(settings: SouthMSSQLSettings): number {
+    return settings.throttling.overlap;
   }
 
   /**

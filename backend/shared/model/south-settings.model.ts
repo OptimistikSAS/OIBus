@@ -319,6 +319,30 @@ export interface SouthMQTTSettingsAuthentication {
   caFilePath?: string | null;
 }
 
+export interface SouthMSSQLSettingsThrottling {
+  maxReadInterval: number;
+  readDelay: number;
+  overlap: number;
+}
+
+export interface SouthMySQLSettingsThrottling {
+  maxReadInterval: number;
+  readDelay: number;
+  overlap: number;
+}
+
+export interface SouthODBCSettingsThrottling {
+  maxReadInterval: number;
+  readDelay: number;
+  overlap: number;
+}
+
+export interface SouthOIAnalyticsSettingsThrottling {
+  maxReadInterval: number;
+  readDelay: number;
+  overlap: number;
+}
+
 export interface SouthOIAnalyticsSettingsSpecificSettings {
   host: string;
   acceptUnauthorized: boolean;
@@ -336,12 +360,63 @@ export interface SouthOIAnalyticsSettingsSpecificSettings {
   proxyPassword?: string | null;
 }
 
+export interface SouthOLEDBSettingsThrottling {
+  maxReadInterval: number;
+  readDelay: number;
+  overlap: number;
+}
+
+export interface SouthOPCHDASettingsThrottling {
+  maxReadInterval: number;
+  readDelay: number;
+  overlap: number;
+  maxInstantPerItem: boolean;
+}
+
+export interface SouthOPCUASettingsThrottling {
+  maxReadInterval: number;
+  readDelay: number;
+  overlap: number;
+  maxInstantPerItem: boolean;
+}
+
 export interface SouthOPCUASettingsAuthentication {
   type: SouthOPCUASettingsAuthenticationType;
   username?: string;
   password?: string | null;
   certFilePath?: string;
   keyFilePath?: string | null;
+}
+
+export interface SouthOracleSettingsThrottling {
+  maxReadInterval: number;
+  readDelay: number;
+  overlap: number;
+}
+
+export interface SouthPISettingsThrottling {
+  maxReadInterval: number;
+  readDelay: number;
+  overlap: number;
+  maxInstantPerItem: boolean;
+}
+
+export interface SouthPostgreSQLSettingsThrottling {
+  maxReadInterval: number;
+  readDelay: number;
+  overlap: number;
+}
+
+export interface SouthSlimsSettingsThrottling {
+  maxReadInterval: number;
+  readDelay: number;
+  overlap: number;
+}
+
+export interface SouthSQLiteSettingsThrottling {
+  maxReadInterval: number;
+  readDelay: number;
+  overlap: number;
 }
 
 export interface SouthADSSettings {
@@ -385,6 +460,7 @@ export interface SouthMQTTSettings {
 }
 
 export interface SouthMSSQLSettings {
+  throttling: SouthMSSQLSettingsThrottling;
   host: string;
   port: number;
   connectionTimeout: number;
@@ -398,6 +474,7 @@ export interface SouthMSSQLSettings {
 }
 
 export interface SouthMySQLSettings {
+  throttling: SouthMySQLSettingsThrottling;
   host: string;
   port: number;
   connectionTimeout: number;
@@ -407,6 +484,7 @@ export interface SouthMySQLSettings {
 }
 
 export interface SouthODBCSettings {
+  throttling: SouthODBCSettingsThrottling;
   remoteAgent: boolean;
   agentUrl?: string;
   connectionTimeout: number;
@@ -417,12 +495,14 @@ export interface SouthODBCSettings {
 }
 
 export interface SouthOIAnalyticsSettings {
+  throttling: SouthOIAnalyticsSettingsThrottling;
   useOiaModule: boolean;
   timeout: number;
   specificSettings?: SouthOIAnalyticsSettingsSpecificSettings | null;
 }
 
 export interface SouthOLEDBSettings {
+  throttling: SouthOLEDBSettingsThrottling;
   agentUrl: string;
   connectionTimeout: number;
   retryInterval: number;
@@ -431,6 +511,7 @@ export interface SouthOLEDBSettings {
 }
 
 export interface SouthOPCHDASettings {
+  throttling: SouthOPCHDASettingsThrottling;
   agentUrl: string;
   retryInterval: number;
   host: string;
@@ -438,6 +519,7 @@ export interface SouthOPCHDASettings {
 }
 
 export interface SouthOPCUASettings {
+  throttling: SouthOPCUASettingsThrottling;
   sharedConnection: boolean;
   url: string;
   keepSessionAlive: boolean;
@@ -449,6 +531,7 @@ export interface SouthOPCUASettings {
 }
 
 export interface SouthOracleSettings {
+  throttling: SouthOracleSettingsThrottling;
   thickMode: boolean;
   oracleClient?: string;
   host: string;
@@ -460,11 +543,13 @@ export interface SouthOracleSettings {
 }
 
 export interface SouthPISettings {
+  throttling: SouthPISettingsThrottling;
   agentUrl: string;
   retryInterval: number;
 }
 
 export interface SouthPostgreSQLSettings {
+  throttling: SouthPostgreSQLSettingsThrottling;
   host: string;
   port: number;
   connectionTimeout: number;
@@ -486,6 +571,7 @@ export interface SouthSFTPSettings {
 }
 
 export interface SouthSlimsSettings {
+  throttling: SouthSlimsSettingsThrottling;
   url: string;
   port: number;
   acceptUnauthorized: boolean;
@@ -499,6 +585,7 @@ export interface SouthSlimsSettings {
 }
 
 export interface SouthSQLiteSettings {
+  throttling: SouthSQLiteSettingsThrottling;
   databasePath: string;
 }
 

@@ -51,12 +51,6 @@ describe('South ADS', () => {
     type: 'test',
     description: 'my test connector',
     enabled: true,
-    history: {
-      maxInstantPerItem: true,
-      maxReadInterval: 3600,
-      readDelay: 0,
-      overlap: 0
-    },
     settings: {
       port: 851,
       netId: '10.211.55.3.1.1',
