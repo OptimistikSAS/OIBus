@@ -27,7 +27,7 @@ import postgresqlManifest from '../south/south-postgresql/manifest';
 import oracleManifest from '../south/south-oracle/manifest';
 import odbcManifest from '../south/south-odbc/manifest';
 import sqliteManifest from '../south/south-sqlite/manifest';
-import opchdaManifest from '../south/south-opchda/manifest';
+import opcManifest from '../south/south-opc/manifest';
 import oledbManifest from '../south/south-oledb/manifest';
 import piManifest from '../south/south-pi/manifest';
 import sftpManifest from '../south/south-sftp/manifest';
@@ -68,8 +68,8 @@ import {
   SouthOIAnalyticsSettings,
   SouthOLEDBItemSettings,
   SouthOLEDBSettings,
-  SouthOPCHDAItemSettings,
-  SouthOPCHDASettings,
+  SouthOPCItemSettings,
+  SouthOPCSettings,
   SouthOPCUAItemSettings,
   SouthOPCUASettings,
   SouthOracleItemSettings,
@@ -95,7 +95,7 @@ import SouthMySQL from '../south/south-mysql/south-mysql';
 import SouthODBC from '../south/south-odbc/south-odbc';
 import SouthOIAnalytics from '../south/south-oianalytics/south-oianalytics';
 import SouthOLEDB from '../south/south-oledb/south-oledb';
-import SouthOPCHDA from '../south/south-opchda/south-opchda';
+import SouthOPC from '../south/south-opc/south-opc';
 import SouthOPCUA from '../south/south-opcua/south-opcua';
 import SouthOracle from '../south/south-oracle/south-oracle';
 import SouthPI from '../south/south-pi/south-pi';
@@ -112,7 +112,7 @@ export const southManifestList: Array<SouthConnectorManifest> = [
   folderScannerManifest,
   mqttManifest,
   opcuaManifest,
-  opchdaManifest,
+  opcManifest,
   mssqlManifest,
   mysqlManifest,
   odbcManifest,
@@ -254,9 +254,9 @@ export default class SouthService {
           logger,
           southBaseFolder
         );
-      case 'opchda':
-        return new SouthOPCHDA(
-          settings as SouthConnectorEntity<SouthOPCHDASettings, SouthOPCHDAItemSettings>,
+      case 'opc':
+        return new SouthOPC(
+          settings as SouthConnectorEntity<SouthOPCSettings, SouthOPCItemSettings>,
           addContent,
           this.encryptionService,
           this.southConnectorRepository,

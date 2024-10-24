@@ -1,10 +1,10 @@
 import { SouthConnectorManifest } from '../../../shared/model/south-connector.model';
 
 const manifest: SouthConnectorManifest = {
-  id: 'opc-hda',
-  name: 'OPC HDA',
+  id: 'opc',
+  name: 'OPC',
   category: 'iot',
-  description: 'Connect to OIBus agent to retrieve data from OPC HDA server through COM/DCOM communication ports',
+  description: 'Connect to OIBus agent to retrieve data from OPC (HDA/DA) server through COM/DCOM communication ports',
   modes: {
     subscription: false,
     lastPoint: false,
