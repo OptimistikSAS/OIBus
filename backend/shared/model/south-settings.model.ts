@@ -158,7 +158,7 @@ export const SOUTH_O_L_E_D_B_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = [
 ] as const;
 export type SouthOLEDBItemSettingsSerializationDelimiter = (typeof SOUTH_O_L_E_D_B_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
 
-export const SOUTH_O_P_C_H_D_A_ITEM_SETTINGS_AGGREGATES = [
+export const SOUTH_O_P_C_ITEM_SETTINGS_AGGREGATES = [
   'raw',
   'interpolative',
   'total',
@@ -185,10 +185,10 @@ export const SOUTH_O_P_C_H_D_A_ITEM_SETTINGS_AGGREGATES = [
   'worst-quality',
   'annotations'
 ] as const;
-export type SouthOPCHDAItemSettingsAggregate = (typeof SOUTH_O_P_C_H_D_A_ITEM_SETTINGS_AGGREGATES)[number];
+export type SouthOPCItemSettingsAggregate = (typeof SOUTH_O_P_C_ITEM_SETTINGS_AGGREGATES)[number];
 
-export const SOUTH_O_P_C_H_D_A_ITEM_SETTINGS_RESAMPLINGS = ['none', '1s', '10s', '30s', '1min', '1h', '1d'] as const;
-export type SouthOPCHDAItemSettingsResampling = (typeof SOUTH_O_P_C_H_D_A_ITEM_SETTINGS_RESAMPLINGS)[number];
+export const SOUTH_O_P_C_ITEM_SETTINGS_RESAMPLINGS = ['none', '1s', '10s', '30s', '1min', '1h', '1d'] as const;
+export type SouthOPCItemSettingsResampling = (typeof SOUTH_O_P_C_ITEM_SETTINGS_RESAMPLINGS)[number];
 
 export const SOUTH_O_P_C_U_A_SETTINGS_AUTHENTICATION_TYPES = ['none', 'basic', 'cert'] as const;
 export type SouthOPCUASettingsAuthenticationType = (typeof SOUTH_O_P_C_U_A_SETTINGS_AUTHENTICATION_TYPES)[number];
@@ -366,7 +366,7 @@ export interface SouthOLEDBSettingsThrottling {
   overlap: number;
 }
 
-export interface SouthOPCHDASettingsThrottling {
+export interface SouthOPCSettingsThrottling {
   maxReadInterval: number;
   readDelay: number;
   overlap: number;
@@ -510,8 +510,8 @@ export interface SouthOLEDBSettings {
   requestTimeout: number;
 }
 
-export interface SouthOPCHDASettings {
-  throttling: SouthOPCHDASettingsThrottling;
+export interface SouthOPCSettings {
+  throttling: SouthOPCSettingsThrottling;
   agentUrl: string;
   retryInterval: number;
   host: string;
@@ -599,7 +599,7 @@ export type SouthSettings =
   | SouthODBCSettings
   | SouthOIAnalyticsSettings
   | SouthOLEDBSettings
-  | SouthOPCHDASettings
+  | SouthOPCSettings
   | SouthOPCUASettings
   | SouthOracleSettings
   | SouthPISettings
@@ -859,10 +859,10 @@ export interface SouthOLEDBItemSettings {
   serialization: SouthOLEDBItemSettingsSerialization;
 }
 
-export interface SouthOPCHDAItemSettings {
+export interface SouthOPCItemSettings {
   nodeId: string;
-  aggregate: SouthOPCHDAItemSettingsAggregate;
-  resampling?: SouthOPCHDAItemSettingsResampling;
+  aggregate: SouthOPCItemSettingsAggregate;
+  resampling?: SouthOPCItemSettingsResampling;
 }
 
 export interface SouthOPCUAItemSettings {
@@ -922,7 +922,7 @@ export type SouthItemSettings =
   | SouthODBCItemSettings
   | SouthOIAnalyticsItemSettings
   | SouthOLEDBItemSettings
-  | SouthOPCHDAItemSettings
+  | SouthOPCItemSettings
   | SouthOPCUAItemSettings
   | SouthOracleItemSettings
   | SouthPIItemSettings

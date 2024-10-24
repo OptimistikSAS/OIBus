@@ -332,8 +332,8 @@ function buildSouthInterfaceName(connectorId: string, itemInterface: boolean): s
       return `SouthOLEDB${prefix}Settings`;
     case 'oianalytics':
       return `SouthOIAnalytics${prefix}Settings`;
-    case 'opc-hda':
-      return `SouthOPCHDA${prefix}Settings`;
+    case 'opc':
+      return `SouthOPC${prefix}Settings`;
     case 'osisoft-pi':
       return `SouthPI${prefix}Settings`;
     case 'opcua':
