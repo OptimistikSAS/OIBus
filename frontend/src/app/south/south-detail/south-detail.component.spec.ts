@@ -73,8 +73,7 @@ describe('SouthDetailComponent', () => {
       subscription: false,
       history: true,
       lastFile: true,
-      lastPoint: false,
-      forceMaxInstantPerItem: false
+      lastPoint: false
     }
   };
   const southConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> = {
@@ -83,12 +82,6 @@ describe('SouthDetailComponent', () => {
     name: 'South Connector',
     description: 'My South connector description',
     enabled: true,
-    history: {
-      maxInstantPerItem: false,
-      maxReadInterval: 0,
-      readDelay: 200,
-      overlap: 0
-    },
     settings: {} as SouthSettings,
     items: [
       {

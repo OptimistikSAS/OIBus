@@ -19,7 +19,7 @@ import { QueriesHistory } from '../south-interface';
 import { SouthOLEDBItemSettings, SouthOLEDBSettings } from '../../../shared/model/south-settings.model';
 import fetch, { HeadersInit, RequestInit } from 'node-fetch';
 import { OIBusContent } from '../../../shared/model/engine.model';
-import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
@@ -197,6 +197,21 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
       updatedStartTime = (await this.queryRemoteAgentData(item, updatedStartTime, endTime)) as string;
     }
     return updatedStartTime;
+  }
+
+  getThrottlingSettings(settings: SouthOLEDBSettings): SouthThrottlingSettings {
+    return {
+      maxReadInterval: settings.throttling.maxReadInterval,
+      readDelay: settings.throttling.readDelay
+    };
+  }
+
+  getMaxInstantPerItem(_settings: SouthOLEDBSettings): boolean {
+    return false;
+  }
+
+  getOverlap(settings: SouthOLEDBSettings): number {
+    return settings.throttling.overlap;
   }
 
   async queryRemoteAgentData(

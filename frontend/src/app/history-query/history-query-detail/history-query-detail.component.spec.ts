@@ -86,8 +86,7 @@ describe('HistoryQueryDisplayComponent', () => {
       subscription: false,
       history: true,
       lastFile: true,
-      lastPoint: false,
-      forceMaxInstantPerItem: false
+      lastPoint: false
     }
   };
   const northManifest: NorthConnectorManifest = {
@@ -120,11 +119,6 @@ describe('HistoryQueryDisplayComponent', () => {
     name: 'History query',
     description: 'My History query description',
     status: 'PENDING',
-    history: {
-      maxInstantPerItem: false,
-      maxReadInterval: 0,
-      readDelay: 200
-    },
     southType: 'OPCUA_HA',
     northType: 'OIConnect',
     startTime: '2023-01-01T00:00:00.000Z',

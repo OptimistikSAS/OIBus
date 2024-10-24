@@ -26,8 +26,7 @@ export default class HistoryQueryRepository {
     id: string
   ): HistoryQueryEntity<S, N, I> | null {
     const query =
-      `SELECT id, name, description, status, history_max_instant_per_item, ` +
-      `history_max_read_interval, history_read_delay, start_time, end_time, ` +
+      `SELECT id, name, description, status, start_time, end_time, ` +
       `south_type, north_type, south_settings, north_settings, ` +
       `caching_scan_mode_id, caching_group_count, caching_retry_interval, ` +
       `caching_retry_count, caching_max_send_count, ` +
@@ -47,18 +46,15 @@ export default class HistoryQueryRepository {
       if (!historyQuery.id) {
         historyQuery.id = generateRandomId(6);
         const insertQuery =
-          `INSERT INTO ${HISTORY_QUERIES_TABLE} (id, name, description, status, history_max_instant_per_item, history_max_read_interval, ` +
-          `history_read_delay, start_time, end_time, south_type, north_type, south_settings, north_settings, caching_scan_mode_id, caching_group_count, ` +
+          `INSERT INTO ${HISTORY_QUERIES_TABLE} (id, name, description, status, ` +
+          `start_time, end_time, south_type, north_type, south_settings, north_settings, caching_scan_mode_id, caching_group_count, ` +
           `caching_retry_interval, caching_retry_count, caching_max_send_count, caching_send_file_immediately, caching_max_size, archive_enabled, ` +
-          `archive_retention_duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+          `archive_retention_duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
         this.database.prepare(insertQuery).run(
           historyQuery.id,
           historyQuery.name,
           historyQuery.description,
           'PENDING', // disabled by default at creation
-          +historyQuery.history.maxInstantPerItem,
-          historyQuery.history.maxReadInterval,
-          historyQuery.history.readDelay,
           historyQuery.startTime,
           historyQuery.endTime,
           historyQuery.southType,
@@ -77,8 +73,7 @@ export default class HistoryQueryRepository {
         );
       } else {
         const query =
-          `UPDATE ${HISTORY_QUERIES_TABLE} SET name = ?, description = ?, history_max_instant_per_item = ?, ` +
-          `history_max_read_interval = ?, history_read_delay = ?, start_time = ?, ` +
+          `UPDATE ${HISTORY_QUERIES_TABLE} SET name = ?, description = ?, start_time = ?, ` +
           `end_time = ?, south_type = ?, north_type = ?, south_settings = ?, north_settings = ?,` +
           `caching_scan_mode_id = ?, caching_group_count = ?, caching_retry_interval = ?, caching_retry_count = ?, ` +
           `caching_max_send_count = ?, caching_send_file_immediately = ?, caching_max_size = ?, archive_enabled = ?, archive_retention_duration = ? ` +
@@ -88,9 +83,6 @@ export default class HistoryQueryRepository {
           .run(
             historyQuery.name,
             historyQuery.description,
-            +historyQuery.history.maxInstantPerItem,
-            historyQuery.history.maxReadInterval,
-            historyQuery.history.readDelay,
             historyQuery.startTime,
             historyQuery.endTime,
             historyQuery.southType,
@@ -290,11 +282,6 @@ export default class HistoryQueryRepository {
       name: result.name as string,
       description: result.description as string,
       status: result.status as HistoryQueryStatus,
-      history: {
-        maxInstantPerItem: Boolean(result.history_max_instant_per_item),
-        readDelay: result.history_read_delay as number,
-        maxReadInterval: result.history_max_read_interval as number
-      },
       startTime: result.start_time as Instant,
       endTime: result.end_time as Instant,
       southType: result.south_type as string,

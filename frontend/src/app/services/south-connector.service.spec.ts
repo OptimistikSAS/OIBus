@@ -89,12 +89,6 @@ describe('SouthConnectorService', () => {
       name: 'mySouthConnector',
       description: 'a test south connector',
       enabled: true,
-      history: {
-        maxInstantPerItem: false,
-        maxReadInterval: 0,
-        readDelay: 200,
-        overlap: 0
-      },
       type: 'Test',
       settings: {} as SouthSettings,
       items: []
@@ -113,12 +107,6 @@ describe('SouthConnectorService', () => {
       name: 'mySouthConnector',
       description: 'a test south connector',
       enabled: true,
-      history: {
-        maxInstantPerItem: false,
-        maxReadInterval: 0,
-        readDelay: 200,
-        overlap: 0
-      },
       type: 'Test',
       settings: {} as SouthSettings,
       items: []
@@ -313,12 +301,6 @@ describe('SouthConnectorService', () => {
       name: 'mySouthConnector',
       description: 'a test south connector',
       enabled: true,
-      history: {
-        maxInstantPerItem: false,
-        maxReadInterval: 0,
-        readDelay: 200,
-        overlap: 0
-      },
       type: 'Test',
       settings: {} as SouthSettings,
       items: []

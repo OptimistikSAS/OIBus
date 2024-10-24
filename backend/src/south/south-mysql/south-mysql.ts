@@ -19,7 +19,7 @@ import { QueriesHistory } from '../south-interface';
 import { DateTime } from 'luxon';
 import { SouthMySQLItemSettings, SouthMySQLSettings } from '../../../shared/model/south-settings.model';
 import { OIBusContent } from '../../../shared/model/engine.model';
-import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
@@ -233,6 +233,21 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
       this.logger.debug(`Next start time updated from ${startTime} to ${updatedStartTime}`);
     }
     return updatedStartTime;
+  }
+
+  getThrottlingSettings(settings: SouthMySQLSettings): SouthThrottlingSettings {
+    return {
+      maxReadInterval: settings.throttling.maxReadInterval,
+      readDelay: settings.throttling.readDelay
+    };
+  }
+
+  getMaxInstantPerItem(_settings: SouthMySQLSettings): boolean {
+    return false;
+  }
+
+  getOverlap(settings: SouthMySQLSettings): number {
+    return settings.throttling.overlap;
   }
 
   /**

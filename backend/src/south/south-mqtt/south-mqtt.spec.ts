@@ -68,12 +68,6 @@ describe('SouthMQTT without authentication', () => {
     type: 'test',
     description: 'my test connector',
     enabled: true,
-    history: {
-      maxInstantPerItem: true,
-      maxReadInterval: 3600,
-      readDelay: 0,
-      overlap: 0
-    },
     settings: {
       url: 'mqtt://localhost:1883',
       qos: '1',
@@ -258,12 +252,6 @@ describe('SouthMQTT with Basic Auth', () => {
     type: 'test',
     description: 'my test connector',
     enabled: true,
-    history: {
-      maxInstantPerItem: true,
-      maxReadInterval: 3600,
-      readDelay: 0,
-      overlap: 0
-    },
     settings: {
       url: 'mqtt://localhost:1883',
       qos: '0',
@@ -799,12 +787,6 @@ describe('SouthMQTT with Cert', () => {
     type: 'test',
     description: 'my test connector',
     enabled: true,
-    history: {
-      maxInstantPerItem: true,
-      maxReadInterval: 3600,
-      readDelay: 0,
-      overlap: 0
-    },
     settings: {
       url: 'mqtt://localhost:1883',
       qos: '0',
@@ -981,12 +963,6 @@ describe('SouthMQTT without Cert', () => {
     type: 'test',
     description: 'my test connector',
     enabled: true,
-    history: {
-      maxInstantPerItem: true,
-      maxReadInterval: 3600,
-      readDelay: 0,
-      overlap: 0
-    },
     settings: {
       url: 'mqtt://localhost:1883',
       qos: '0',
