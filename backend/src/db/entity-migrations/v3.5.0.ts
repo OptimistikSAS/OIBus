@@ -192,9 +192,22 @@ async function updateSouthConnectors(knex: Knex): Promise<void> {
     history_max_instant_per_item
   } of oldSouthSettings) {
     let newSettings;
+    let southType = type;
     switch (type) {
-      case 'opcua':
       case 'opc-hda':
+        southType = 'opc';
+        newSettings = {
+          ...JSON.parse(settings),
+          sharedConnection: false,
+          throttling: {
+            maxReadInterval: history_max_read_interval,
+            readDelay: history_read_delay,
+            overlap: history_read_overlap,
+            maxInstantPerItem: history_max_instant_per_item
+          }
+        };
+        break;
+      case 'opcua':
       case 'osisoft-pi':
         newSettings = {
           ...JSON.parse(settings),
@@ -219,7 +232,7 @@ async function updateSouthConnectors(knex: Knex): Promise<void> {
         break;
     }
     await knex(SOUTH_CONNECTORS_TABLE)
-      .update({ settings: JSON.stringify(newSettings) })
+      .update({ settings: JSON.stringify(newSettings), type: southType })
       .where('id', id);
   }
 }
@@ -360,9 +373,22 @@ async function updateHistoryQueries(knex: Knex): Promise<void> {
     history_max_instant_per_item
   } of oldSouthSettings) {
     let newSettings;
+    let type = south_type;
     switch (south_type) {
-      case 'opcua':
       case 'opc-hda':
+        type = 'opc';
+        newSettings = {
+          ...JSON.parse(south_settings),
+          sharedConnection: false,
+          throttling: {
+            maxReadInterval: history_max_read_interval,
+            readDelay: history_read_delay,
+            overlap: 0,
+            maxInstantPerItem: history_max_instant_per_item
+          }
+        };
+        break;
+      case 'opcua':
       case 'osisoft-pi':
         newSettings = {
           ...JSON.parse(south_settings),
@@ -387,7 +413,7 @@ async function updateHistoryQueries(knex: Knex): Promise<void> {
         break;
     }
     await knex(HISTORY_QUERIES_TABLE)
-      .update({ south_settings: JSON.stringify(newSettings) })
+      .update({ south_settings: JSON.stringify(newSettings), south_type: type })
       .where('id', id);
   }
 }
