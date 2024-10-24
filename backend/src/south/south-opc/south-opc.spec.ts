@@ -1,9 +1,8 @@
-import SouthOPCHDA from './south-opchda';
+import SouthOpc from './south-opc';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-import { SouthOPCHDAItemSettings, SouthOPCHDASettings } from '../../../shared/model/south-settings.model';
 import fetch from 'node-fetch';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
@@ -13,6 +12,7 @@ import SouthCacheRepository from '../../repository/cache/south-cache.repository'
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
+import { SouthOPCItemSettings, SouthOPCSettings } from '../../../shared/model/south-settings.model';
 
 jest.mock('node-fetch');
 jest.mock('node:fs/promises');
@@ -35,9 +35,9 @@ jest.mock(
 const logger: pino.Logger = new PinoLogger();
 const addContentCallback = jest.fn();
 
-describe('South OPCHDA', () => {
-  let south: SouthOPCHDA;
-  const configuration: SouthConnectorEntity<SouthOPCHDASettings, SouthOPCHDAItemSettings> = {
+describe('South OPC', () => {
+  let south: SouthOpc;
+  const configuration: SouthConnectorEntity<SouthOPCSettings, SouthOPCItemSettings> = {
     id: 'southId',
     name: 'south',
     type: 'test',
@@ -96,7 +96,7 @@ describe('South OPCHDA', () => {
     jest.useFakeTimers();
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
-    south = new SouthOPCHDA(
+    south = new SouthOpc(
       configuration,
       addContentCallback,
       encryptionService,
