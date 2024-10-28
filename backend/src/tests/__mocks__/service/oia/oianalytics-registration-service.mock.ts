@@ -1,3 +1,5 @@
+import { EventEmitter } from 'node:events';
+
 /**
  * Create a mock object for OIAnalytics Registration Service
  */
@@ -9,6 +11,7 @@ export default jest.fn().mockImplementation(() => {
     checkRegistration: jest.fn(),
     editConnectionSettings: jest.fn(),
     unregister: jest.fn(),
-    stop: jest.fn()
+    stop: jest.fn(),
+    registrationEvent: new EventEmitter()
   };
 });

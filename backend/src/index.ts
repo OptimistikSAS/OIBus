@@ -94,9 +94,19 @@ const LOG_DB_NAME = 'logs.db';
 
   const oIAnalyticsClient = new OIAnalyticsClient(encryptionService);
 
+  const oIAnalyticsRegistrationService = new OianalyticsRegistrationService(
+    new JoiValidator(),
+    oIAnalyticsClient,
+    repositoryService.oianalyticsRegistrationRepository,
+    repositoryService.engineRepository,
+    encryptionService,
+    loggerService.logger!
+  );
+  oIAnalyticsRegistrationService.start();
+
   const oIAnalyticsMessageService = new OIAnalyticsMessageService(
     repositoryService.oianalyticsMessageRepository,
-    repositoryService.oianalyticsRegistrationRepository,
+    oIAnalyticsRegistrationService,
     repositoryService.engineRepository,
     repositoryService.scanModeRepository,
     repositoryService.ipFilterRepository,
@@ -155,8 +165,7 @@ const LOG_DB_NAME = 'logs.db';
     repositoryService.engineRepository,
     repositoryService.engineMetricsRepository,
     repositoryService.ipFilterRepository,
-    repositoryService.oianalyticsRegistrationRepository,
-    repositoryService.historyQueryRepository,
+    oIAnalyticsRegistrationService,
     encryptionService,
     loggerService,
     oIAnalyticsMessageService,
@@ -187,6 +196,7 @@ const LOG_DB_NAME = 'logs.db';
   const oIAnalyticsCommandService = new OIAnalyticsCommandService(
     repositoryService.oianalyticsCommandRepository,
     repositoryService.oianalyticsRegistrationRepository,
+    oIAnalyticsMessageService,
     encryptionService,
     oIAnalyticsClient,
     oIBusService,
@@ -200,15 +210,6 @@ const LOG_DB_NAME = 'logs.db';
   oIAnalyticsCommandService.start();
   oIAnalyticsMessageService.start(); // Start after command to send the full config with new version after an update
 
-  const oIAnalyticsRegistrationService = new OianalyticsRegistrationService(
-    new JoiValidator(),
-    oIAnalyticsClient,
-    repositoryService.oianalyticsRegistrationRepository,
-    repositoryService.engineRepository,
-    encryptionService,
-    loggerService.logger!
-  );
-  oIAnalyticsRegistrationService.start();
   const server = new WebServer(
     oibusSettings.id,
     oibusSettings.port,
