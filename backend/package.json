@@ -104,7 +104,7 @@
     "odbc": "2.4.9"
   },
   "devDependencies": {
-    "@types/adm-zip": "0.5.5",
+    "@types/adm-zip": "0.5.6",
     "@types/basic-auth": "1.1.8",
     "@types/better-sqlite3": "7.6.11",
     "@types/http-proxy": "1.17.15",
