@@ -2,7 +2,7 @@ import { Database } from 'better-sqlite3';
 import { CommandSearchParam, OIBusCommandStatus, OIBusCommandType } from '../../../shared/model/command.model';
 import { Instant, Page } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
-import { OIBusCommand, OIBusRestartEngineCommand } from '../../model/oianalytics-command.model';
+import { OIBusCommand, OIBusReloadKeysCommand, OIBusRestartEngineCommand } from '../../model/oianalytics-command.model';
 import { OIAnalyticsFetchCommandDTO } from '../../service/oia/oianalytics.model';
 
 const COMMANDS_TABLE = 'commands';
@@ -139,7 +139,14 @@ export default class OIAnalyticsCommandRepository {
         insertQuery += `(id, retrieved_date, type, status, ack, target_version) VALUES (?, ?, ?, ?, ?, ?);`;
         break;
       case 'update-version':
-        queryParams.push(JSON.stringify(command.commandContent));
+        queryParams.push(
+          JSON.stringify({
+            version: command.version,
+            assetId: command.assetId,
+            updateLauncher: command.updateLauncher,
+            backupFolders: command.backupFolders
+          })
+        );
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, command_content) VALUES (?, ?, ?, ?, ?, ?, ?);`;
         break;
     }
@@ -221,6 +228,17 @@ export default class OIAnalyticsCommandRepository {
           completedDate: command.completed_date as Instant,
           result: command.result as string
         } as OIBusRestartEngineCommand;
+      case 'reload-keys':
+        return {
+          id: command.id as string,
+          type: command.type as OIBusCommandType,
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string
+        } as OIBusReloadKeysCommand;
       case 'update-engine-settings':
         return {
           id: command.id as string,
