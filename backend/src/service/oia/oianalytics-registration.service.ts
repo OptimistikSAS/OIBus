@@ -10,11 +10,13 @@ import JoiValidator from '../../web-server/controllers/validators/joi.validator'
 import { registrationSchema } from '../../web-server/controllers/validators/oibus-validation-schema';
 import crypto from 'node:crypto';
 import OIAnalyticsClient from './oianalytics-client.service';
+import { EventEmitter } from 'node:events';
 
 const CHECK_REGISTRATION_INTERVAL = 10_000;
 export default class OIAnalyticsRegistrationService {
   private intervalCheckRegistration: NodeJS.Timeout | null = null;
   private ongoingCheckRegistration = false;
+  public registrationEvent: EventEmitter = new EventEmitter(); // Used to trigger logger on (un)registration
 
   constructor(
     protected readonly validator: JoiValidator,
@@ -106,11 +108,8 @@ export default class OIAnalyticsRegistrationService {
           this.intervalCheckRegistration = null;
         }
         this.logger.info(`OIBus registered on ${registrationSettings.host}`);
-        // TODO:
-        // const engineSettings = this.engineRepository.get()!;
-        // if (engineSettings.logParameters.oia.level !== 'silent') {
-        //   await this.oibusService.resetLogger(engineSettings);
-        // }
+        this.registrationEvent.emit('updated'); // used to update logger
+        this.registrationEvent.emit('completed'); // used to generate a full-config message
       }
     } catch (error: unknown) {
       this.logger.error(`Error while checking registration: ${(error as Error).message}`);
@@ -129,11 +128,7 @@ export default class OIAnalyticsRegistrationService {
       command.proxyPassword = await this.encryptionService.encryptText(command.proxyPassword);
     }
     this.oIAnalyticsRegistrationRepository.update(command);
-
-    // TODO:
-    // if (engineSettings.logParameters.oia.level !== 'silent') {
-    //   await this.oibusService.resetLogger(engineSettings);
-    // }
+    this.registrationEvent.emit('updated');
   }
 
   unregister() {
@@ -142,10 +137,7 @@ export default class OIAnalyticsRegistrationService {
       clearInterval(this.intervalCheckRegistration);
       this.intervalCheckRegistration = null;
     }
-    // TODO:
-    // if (engineSettings.logParameters.oia.level !== 'silent') {
-    //   await this.oibusService.resetLogger(engineSettings);
-    // }
+    this.registrationEvent.emit('updated');
   }
 
   stop() {
@@ -153,6 +145,8 @@ export default class OIAnalyticsRegistrationService {
       clearInterval(this.intervalCheckRegistration);
       this.intervalCheckRegistration = null;
     }
+
+    this.registrationEvent.removeAllListeners();
   }
 }
 
