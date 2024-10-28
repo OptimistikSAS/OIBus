@@ -885,8 +885,12 @@ const oIBusCommands: Array<OIBusCommand> = [
     retrievedDate: constants.dates.DATE_1,
     completedDate: '',
     result: 'ok',
-    version: '3.5.0',
-    assetId: 'assetId'
+    commandContent: {
+      version: 'v3.5.0-beta',
+      assetId: 'assetId',
+      backupFolders: 'cache/*',
+      updateLauncher: false
+    }
   },
   {
     id: 'commandId2',
@@ -1017,8 +1021,12 @@ const oIAnalyticsCommands: Array<OIAnalyticsFetchCommandDTO> = [
     id: 'newCommandId1',
     type: 'update-version',
     targetVersion: 'v3.5.0',
-    version: '3.5.0',
-    assetId: 'assetId'
+    commandContent: {
+      version: 'v3.5.0-beta',
+      assetId: 'assetId',
+      backupFolders: 'cache/*',
+      updateLauncher: false
+    }
   },
   {
     id: 'newCommandId2',
