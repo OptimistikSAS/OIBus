@@ -139,9 +139,8 @@ export default class OIAnalyticsCommandRepository {
         insertQuery += `(id, retrieved_date, type, status, ack, target_version) VALUES (?, ?, ?, ?, ?, ?);`;
         break;
       case 'update-version':
-        queryParams.push(command.version);
-        queryParams.push(command.assetId);
-        insertQuery += `(id, retrieved_date, type, status, ack, target_version, upgrade_version, upgrade_asset_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
+        queryParams.push(JSON.stringify(command.commandContent));
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, command_content) VALUES (?, ?, ?, ?, ?, ?, ?);`;
         break;
     }
     this.database.prepare(insertQuery).run(...queryParams);
@@ -209,8 +208,7 @@ export default class OIAnalyticsCommandRepository {
           retrievedDate: command.retrieved_date as Instant,
           completedDate: command.completed_date as Instant,
           result: command.result as string,
-          version: command.upgrade_version as string,
-          assetId: command.upgrade_asset_id as string
+          commandContent: JSON.parse(command.command_content as string)
         };
       case 'restart-engine':
         return {

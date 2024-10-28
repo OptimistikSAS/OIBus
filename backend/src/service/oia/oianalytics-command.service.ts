@@ -30,9 +30,11 @@ import { Page } from '../../../shared/model/types';
 import SouthService from '../south.service';
 import NorthService from '../north.service';
 import OIAnalyticsClient from './oianalytics-client.service';
+import os from 'node:os';
 
 const CHECK_OIANALYTICS_COMMANDS_INTERVAL = 1_000;
 const EXECUTE_OIANALYTICS_COMMANDS_INTERVAL = 1_000;
+const UPDATE_SETTINGS_FILE = 'update.json';
 
 export default class OIAnalyticsCommandService {
   private retrieveCommandsInterval: NodeJS.Timeout | null = null;
@@ -59,12 +61,13 @@ export default class OIAnalyticsCommandService {
       types: ['UPGRADE', 'update-version']
     });
     if (currentUpgradeCommand.length > 0) {
-      if (engineSettings.version !== version) {
-        this.oIBusService.updateOIBusVersion(version);
+      const updateVersion = (currentUpgradeCommand[0] as OIBusUpdateVersionCommand).commandContent.version;
+      if (engineSettings.version !== updateVersion) {
+        this.oIBusService.updateOIBusVersion(updateVersion);
         this.oIAnalyticsCommandRepository.markAsCompleted(
           currentUpgradeCommand[0].id,
           DateTime.now().toUTC().toISO(),
-          `OIBus updated to version ${version}`
+          `OIBus updated to version ${updateVersion}`
         );
       } else {
         this.oIAnalyticsCommandRepository.markAsErrored(
@@ -294,20 +297,35 @@ export default class OIAnalyticsCommandService {
     const oibusInfo = getOIBusInfo(engineSettings);
 
     this.logger.info(
-      `Upgrading OIBus from ${oibusInfo.version} to ${command.version} for platform ${oibusInfo.platform} and architecture ${oibusInfo.architecture}...`
+      `Upgrading OIBus from ${oibusInfo.version} to ${command.commandContent.version} for platform ${oibusInfo.platform} and architecture ${oibusInfo.architecture}...`
     );
     const filename = `oibus-${oibusInfo.platform}_${oibusInfo.architecture}.zip`;
 
-    await this.oIAnalyticsClient.downloadFile(registration, command.assetId, filename);
+    await this.oIAnalyticsClient.downloadFile(registration, command.commandContent.assetId, filename);
     this.logger.trace(`File ${filename} downloaded`);
     unzip(filename, path.resolve(this.binaryFolder, '..', 'update'));
     this.logger.trace(`File ${filename} unzipped`);
     await fs.unlink(filename);
     this.logger.trace(`File ${filename} removed`);
     const duration = DateTime.now().toMillis() - runStart.toMillis();
-    this.logger.info(`OIBus version ${command.version} downloaded after ${duration} ms of execution. Restarting OIBus to upgrade...`);
+    if (command.commandContent.updateLauncher) {
+      const extension = os.type() === 'Windows_NT' ? '.exe' : '';
+      await fs.rename(`../oibus-launcher${extension}`, `../oibus-launcher_backup${extension}`);
+      await fs.rename(
+        path.resolve(this.binaryFolder, '..', 'update', `oibus-launcher${extension}`),
+        path.resolve(this.binaryFolder, `oibus-launcher${extension}`)
+      );
+    }
+    await fs.writeFile(`../${UPDATE_SETTINGS_FILE}`, JSON.stringify(command.commandContent));
+    this.logger.info(
+      `OIBus version ${command.commandContent.version} downloaded after ${duration} ms of execution. Restarting OIBus to upgrade...`
+    );
     await delay(1500);
-    process.exit();
+    if (command.commandContent.updateLauncher) {
+      process.kill(process.ppid, 'SIGTERM'); // or 'SIGKILL' for forceful termination
+    } else {
+      process.exit();
+    }
   }
 
   private async executeRestartCommand(command: OIBusRestartEngineCommand) {

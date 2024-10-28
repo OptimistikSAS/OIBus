@@ -6,6 +6,7 @@ import * as os from 'os';
 import { createFolder, filesExists, replaceConfigArgumentWithAbsolutePath } from './utils';
 
 const STARTED_DELAY = 30000;
+const UPDATE_SETTINGS_FILE = 'update.json';
 
 export default class Launcher {
   private updated = false;
@@ -108,20 +109,28 @@ export default class Launcher {
   }
 
   async update(): Promise<void> {
+    let backupFolders = RegExp('cache/*');
+    try {
+      const settings = JSON.parse(await fs.readFile(path.resolve('./', UPDATE_SETTINGS_FILE), 'utf8'));
+      backupFolders = RegExp(settings?.backupFolders || 'cache/*');
+    } catch (error: unknown) {
+      console.error((error as Error).message);
+    }
     const oibusUpdatePath = this.getOibusUpdatePath();
-    const oibusPath = this.getOibusPath();
-    const oibusBackupPath = this.getOibusBackupPath();
+    const oibusBinaryPath = this.getOibusPath();
+    const oibusBinaryBackupPath = this.getOibusBackupPath();
 
     await fs.rm(path.resolve(this.backupDir, 'data-folder'), { recursive: true, force: true });
 
     await createFolder(this.backupDir);
-    console.log(`Backup OIBus: ${oibusPath} -> ${oibusBackupPath}`);
-    await fs.rename(oibusPath, oibusBackupPath);
+    console.log(`Backup OIBus: ${oibusBinaryPath} -> ${oibusBinaryBackupPath}`);
+    await fs.rename(oibusBinaryPath, oibusBinaryBackupPath);
     console.log(`Backup OIBus data folder: ${this.config} -> ${path.resolve(this.backupDir, 'data-folder')}`);
-    await fs.cp(this.config, path.resolve(this.backupDir, 'data-folder'), { force: true, recursive: true });
 
-    console.log(`Updating OIBus: ${oibusUpdatePath} -> ${oibusPath}`);
-    await fs.rename(oibusUpdatePath, oibusPath);
+    await this.backupDataFolder(backupFolders);
+
+    console.log(`Updating OIBus: ${oibusUpdatePath} -> ${oibusBinaryPath}`);
+    await fs.rename(oibusUpdatePath, oibusBinaryPath);
 
     for (const file of await fs.readdir(this.updateDir)) {
       try {
@@ -146,12 +155,38 @@ export default class Launcher {
     await fs.rm(path.resolve(this.backupDir, 'data-folder'), { recursive: true, force: true });
   }
 
-  handleOibusStarted(): void {
+  async handleOibusStarted(): Promise<void> {
     if (this.startedTimeout) {
       clearTimeout(this.startedTimeout);
       this.startedTimeout = null;
     }
 
     this.updated = false;
+    await fs.rm(path.resolve(this.backupDir, 'data-folder'), { recursive: true, force: true });
+  }
+
+  async backupDataFolder(backupsFolders: RegExp): Promise<void> {
+    await fs.rm(path.resolve(this.backupDir, 'data-folder'), { recursive: true, force: true });
+    await createFolder(path.resolve(this.backupDir, 'data-folder'));
+    await this.copyFilesAndDirectoriesRecursively(this.config, path.resolve(this.backupDir, 'data-folder'), backupsFolders);
+  }
+
+  async copyFilesAndDirectoriesRecursively(srcDir: string, destDir: string, pattern: RegExp): Promise<void> {
+    const entries = await fs.readdir(srcDir, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const srcPath = path.join(srcDir, entry.name);
+      const destPath = path.join(destDir, entry.name);
+
+      if (entry.isDirectory() && pattern.test(entry.name)) {
+        // Only create and recurse if the directory name matches the pattern
+        await fs.mkdir(destPath, { recursive: true });
+        await this.copyFilesAndDirectoriesRecursively(srcPath, destPath, pattern);
+      } else if (entry.isFile() && pattern.test(entry.name)) {
+        // Copy the file if it matches the pattern
+        await fs.copyFile(srcPath, destPath);
+        console.info(`Copied file: ${srcPath} to ${destPath}`);
+      }
+    }
   }
 }

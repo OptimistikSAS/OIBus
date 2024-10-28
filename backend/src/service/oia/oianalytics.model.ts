@@ -80,8 +80,12 @@ export interface BaseOIAnalyticsFetchCommandDTO {
 
 export interface OIAnalyticsFetchUpdateVersionCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
   type: 'update-version';
-  assetId: string;
-  version: string;
+  commandContent: {
+    version: string;
+    assetId: string;
+    updateLauncher: boolean;
+    backupFolders: string;
+  };
 }
 
 export interface OIAnalyticsFetchRestartEngineCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
