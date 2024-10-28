@@ -10,7 +10,6 @@ import EncryptionService from './encryption.service';
 import LoggerService from './logger/logger.service';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import ProxyServer from '../web-server/proxy-server';
-import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import { DateTime } from 'luxon';
 import process from 'node:process';
 import os from 'node:os';
@@ -21,15 +20,13 @@ import { getOIBusInfo } from './utils';
 import SouthService from './south.service';
 import NorthService from './north.service';
 import HistoryQueryService from './history-query.service';
-import HistoryQueryRepository from '../repository/config/history-query.repository';
+import OIAnalyticsRegistrationService from './oia/oianalytics-registration.service';
+import { EventEmitter } from 'node:events';
 
 const HEALTH_SIGNAL_INTERVAL = 60_000_000; // 10 minutes
 const UPDATE_ENGINE_METRICS_INTERVAL = 1000; // every second
 
 export default class OIBusService {
-  private webServerChangeLoggerCallback: (logger: pino.Logger) => void = () => null;
-  private webServerChangePortCallback: (port: number) => Promise<void> = () => Promise.resolve();
-
   private _stream: PassThrough | null = null;
 
   private settings: EngineSettings;
@@ -43,13 +40,15 @@ export default class OIBusService {
   private readonly proxyServer: ProxyServer;
   private logger: pino.Logger;
 
+  public loggerEvent: EventEmitter = new EventEmitter(); // Used to trigger logger update for Web server
+  public portChangeEvent: EventEmitter = new EventEmitter(); // Used to trigger port update for Web server
+
   constructor(
     protected readonly validator: JoiValidator,
     private engineRepository: EngineRepository,
     private engineMetricsRepository: EngineMetricsRepository,
     private ipFilterRepository: IpFilterRepository,
-    private oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
-    private historyQueryRepository: HistoryQueryRepository,
+    private oIAnalyticsRegistrationService: OIAnalyticsRegistrationService,
     private encryptionService: EncryptionService,
     private loggerService: LoggerService,
     private oIAnalyticsMessageService: OIAnalyticsMessageService,
@@ -65,6 +64,13 @@ export default class OIBusService {
     this.logger = this.loggerService.createChildLogger('internal');
     this.proxyServer = new ProxyServer(this.logger);
     this.setLogger(this.logger);
+
+    this.oIAnalyticsRegistrationService.registrationEvent.on('updated', async () => {
+      const engineSettings = this.getEngineSettings();
+      if (engineSettings.logParameters.oia.level !== 'silent') {
+        await this.resetLogger(engineSettings);
+      }
+    });
   }
 
   async startOIBus(): Promise<void> {
@@ -147,7 +153,9 @@ export default class OIBusService {
       await this.resetLogger(this.settings);
     }
 
-    await this.webServerChangePortCallback(this.settings.port);
+    if (command.port !== oldEngineSettings.port) {
+      this.portChangeEvent.emit('updated', this.settings.port);
+    }
     await this.proxyServer.stop();
     if (this.settings.proxyEnabled) {
       await this.proxyServer.start(this.settings.proxyPort!);
@@ -161,18 +169,11 @@ export default class OIBusService {
 
   async resetLogger(settings: EngineSettings) {
     this.loggerService.stop();
-    const registration = this.oIAnalyticsRegistrationRepository.get()!;
+    const registration = this.oIAnalyticsRegistrationService.getRegistrationSettings();
     await this.loggerService.start(settings, registration);
     this.setLogger(this.loggerService.createChildLogger('internal'));
-    this.webServerChangeLoggerCallback(this.loggerService.createChildLogger('web-server'));
-  }
 
-  setWebServerChangeLogger(callback: (logger: pino.Logger) => void): void {
-    this.webServerChangeLoggerCallback = callback;
-  }
-
-  setWebServerChangePort(callback: (port: number) => Promise<void>): void {
-    this.webServerChangePortCallback = callback;
+    this.loggerEvent.emit('updated', this.loggerService.createChildLogger('web-server'));
   }
 
   async restartOIBus(): Promise<void> {
@@ -193,6 +194,8 @@ export default class OIBusService {
       clearInterval(this.updateEngineMetricsInterval);
       this.updateEngineMetricsInterval = null;
     }
+    this.loggerEvent.removeAllListeners();
+    this.portChangeEvent.removeAllListeners();
     const startDuration = DateTime.now().toMillis() - start;
     this.logger.info(`OIBus stopped in ${startDuration} ms`);
   }

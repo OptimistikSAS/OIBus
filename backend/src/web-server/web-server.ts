@@ -32,7 +32,7 @@ import HomeMetricsService from '../service/metrics/home-metrics.service';
  */
 export default class WebServer {
   private _logger: pino.Logger;
-  private _id: string;
+  private readonly _id: string;
   private _port: number;
   private app: KoaApplication | null = null;
   private webServer: Http.Server | null = null;
@@ -61,12 +61,6 @@ export default class WebServer {
 
   get logger(): pino.Logger {
     return this._logger;
-  }
-
-  async setLogger(value: pino.Logger): Promise<void> {
-    this._logger = value;
-    await this.stop();
-    await this.init();
   }
 
   get port(): number {
@@ -148,11 +142,17 @@ export default class WebServer {
     this.app.use(router.allowedMethods());
 
     await this.start();
-    this.oIBusService.setWebServerChangeLogger(this.setLogger.bind(this));
-    this.oIBusService.setWebServerChangePort(this.setPort.bind(this));
   }
 
   async start(): Promise<void> {
+    this.oIBusService.loggerEvent.on('updated', (logger: pino.Logger) => {
+      this._logger = logger;
+    });
+    this.oIBusService.portChangeEvent.on('updated', async (value: number) => {
+      this._port = value;
+      await this.stop();
+      await this.start();
+    });
     if (!this.app) return;
     this.webServer = this.app.listen(this.port, () => {
       this.logger.info(`OIBus web server started on ${this.port}`);
