@@ -70,13 +70,13 @@ describe('OIAnalytics Client', () => {
         })
       );
 
-    const result = await service.retrieveCancelledCommands(
-      testData.oIAnalytics.registration.completed,
-      testData.oIAnalytics.commands.oIBusList
-    );
+    const result = await service.retrieveCancelledCommands(testData.oIAnalytics.registration.completed, [
+      testData.oIAnalytics.commands.oIBusList[0],
+      testData.oIAnalytics.commands.oIBusList[1]
+    ]);
     expect(result).toEqual([]);
     expect(fetch).toHaveBeenCalledWith(
-      `${testData.oIAnalytics.registration.completed.host}/api/oianalytics/oibus/commands/list-by-ids?ids=commandId1&ids=commandId2&ids=commandId3&ids=commandId4&ids=commandId5&ids=commandId6&ids=commandId7&ids=commandId8&ids=commandId9&ids=commandId10&ids=commandId11&ids=commandId12`,
+      `${testData.oIAnalytics.registration.completed.host}/api/oianalytics/oibus/commands/list-by-ids?ids=commandId1&ids=commandId2`,
       {
         method: 'GET',
         headers: {
@@ -151,11 +151,11 @@ describe('OIAnalytics Client', () => {
       },
       body: JSON.stringify({
         activationCode: '123ABC',
-        oibusVersion: testData.engine.oIBusInfo.version,
-        oibusArch: testData.engine.oIBusInfo.architecture,
-        oibusOs: testData.engine.oIBusInfo.operatingSystem,
         oibusId: testData.engine.oIBusInfo.oibusId,
         oibusName: testData.engine.oIBusInfo.oibusName,
+        oibusVersion: testData.engine.oIBusInfo.version,
+        oibusOs: testData.engine.oIBusInfo.operatingSystem,
+        oibusArch: testData.engine.oIBusInfo.architecture,
         publicKey: 'public key'
       }),
       timeout: 10_000,
@@ -187,11 +187,14 @@ describe('OIAnalytics Client', () => {
 
     const result = await service.checkRegistration(testData.oIAnalytics.registration.completed);
     expect(result).toEqual({ status: 'REGISTERED', expired: true, accessToken: 'access token' });
-    expect(fetch).toHaveBeenCalledWith(`${testData.oIAnalytics.registration.completed.host}/api/oianalytics/oibus/registration`, {
-      method: 'GET',
-      timeout: 10_000,
-      agent: null
-    });
+    expect(fetch).toHaveBeenCalledWith(
+      `${testData.oIAnalytics.registration.completed.host}${testData.oIAnalytics.registration.completed.checkUrl}`,
+      {
+        method: 'GET',
+        timeout: 10_000,
+        agent: null
+      }
+    );
     await expect(service.checkRegistration(testData.oIAnalytics.registration.completed)).rejects.toThrow('400 - error');
   });
 

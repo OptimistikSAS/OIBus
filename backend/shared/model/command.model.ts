@@ -10,6 +10,7 @@ export const OIBUS_COMMAND_TYPES = [
   'UPGRADE',
   'update-version',
   'restart-engine',
+  'reload-keys',
   'update-engine-settings',
   'create-scan-mode',
   'update-scan-mode',
@@ -48,6 +49,10 @@ export interface OIBusUpdateVersionCommandDTO extends BaseOIBusCommandDTO {
 
 export interface OIBusRestartEngineCommandDTO extends BaseOIBusCommandDTO {
   type: 'restart-engine';
+}
+
+export interface OIBusReloadKeysCommandDTO extends BaseOIBusCommandDTO {
+  type: 'reload-keys';
 }
 
 export interface OIBusUpdateEngineSettingsCommandDTO extends BaseOIBusCommandDTO {
@@ -115,6 +120,7 @@ export interface OIBusDeleteNorthConnectorCommandDTO extends BaseOIBusCommandDTO
 
 export type OIBusCommandDTO =
   | OIBusUpdateVersionCommandDTO
+  | OIBusReloadKeysCommandDTO
   | OIBusRestartEngineCommandDTO
   | OIBusUpdateEngineSettingsCommandDTO
   | OIBusCreateScanModeCommandDTO

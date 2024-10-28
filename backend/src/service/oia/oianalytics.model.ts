@@ -11,41 +11,58 @@ import { UserCommandDTO } from '../../../shared/model/user.model';
 import { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
 import { ScanModeCommandDTO } from '../../../shared/model/scan-mode.model';
 
-export interface OIBusScanModeCommandDTO extends ScanModeCommandDTO {
+export interface OIAnalyticsScanModeCommandDTO {
   oIBusInternalId: string | null;
+  name: string;
+  settings: Omit<ScanModeCommandDTO, 'name'>;
 }
 
-export interface OIBusIPFilterCommandDTO extends IPFilterCommandDTO {
+export interface OIAnalyticsIPFilterCommandDTO {
   oIBusInternalId: string | null;
+  description: string;
+  settings: Omit<IPFilterCommandDTO, 'description'>;
 }
 
-export interface OIAnalyticsCertificateCommandDTO extends Omit<CertificateDTO, 'id'> {
+export interface OIAnalyticsCertificateCommandDTO {
   oIBusInternalId: string | null;
+  name: string;
+  settings: Omit<CertificateDTO, 'id' | 'name'>;
 }
 
-export interface OIAnalyticsUserCommandDTO extends UserCommandDTO {
+export interface OIAnalyticsUserCommandDTO {
   oIBusInternalId: string;
+  login: string;
+  settings: Omit<UserCommandDTO, 'login'>;
 }
 
-export interface OIAnalyticsEngineCommandDTO extends EngineSettingsCommandDTO {
+export interface OIAnalyticsEngineCommandDTO {
   oIBusInternalId: string;
+  name: string;
   softwareVersion: string;
   architecture: string;
   operatingSystem: string;
+  publicKey: string;
+  settings: Omit<EngineSettingsCommandDTO, 'name'>;
 }
 
-export interface OIAnalyticsSouthCommandDTO extends SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> {
+export interface OIAnalyticsSouthCommandDTO {
   oIBusInternalId: string | null;
+  type: string;
+  name: string;
+  settings: Omit<SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>, 'name' | 'type'>;
 }
 
-export interface OIAnalyticsNorthCommandDTO extends NorthConnectorCommandDTO<NorthSettings> {
+export interface OIAnalyticsNorthCommandDTO {
   oIBusInternalId: string | null;
+  type: string;
+  name: string;
+  settings: Omit<NorthConnectorCommandDTO<NorthSettings>, 'name' | 'type'>;
 }
 
 export interface OIBusFullConfigurationCommandDTO {
-  engine: OIAnalyticsEngineCommandDTO | null;
-  scanModes: Array<OIBusScanModeCommandDTO>;
-  ipFilters: Array<OIBusIPFilterCommandDTO>;
+  engine: OIAnalyticsEngineCommandDTO;
+  scanModes: Array<OIAnalyticsScanModeCommandDTO>;
+  ipFilters: Array<OIAnalyticsIPFilterCommandDTO>;
   certificates: Array<OIAnalyticsCertificateCommandDTO>;
   southConnectors: Array<OIAnalyticsSouthCommandDTO>;
   northConnectors: Array<OIAnalyticsNorthCommandDTO>;
@@ -80,12 +97,10 @@ export interface BaseOIAnalyticsFetchCommandDTO {
 
 export interface OIAnalyticsFetchUpdateVersionCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
   type: 'update-version';
-  commandContent: {
-    version: string;
-    assetId: string;
-    updateLauncher: boolean;
-    backupFolders: string;
-  };
+  version: string;
+  assetId: string;
+  updateLauncher: boolean;
+  backupFolders: string;
 }
 
 export interface OIAnalyticsFetchRestartEngineCommandDTO extends BaseOIAnalyticsFetchCommandDTO {

@@ -6,6 +6,7 @@ export default jest.fn().mockImplementation(() => {
     get: jest.fn(),
     register: jest.fn(),
     update: jest.fn(),
+    updateKeys: jest.fn(),
     activate: jest.fn(),
     unregister: jest.fn()
   };

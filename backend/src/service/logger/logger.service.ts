@@ -33,7 +33,7 @@ class LoggerService {
   /**
    * Run the appropriate pino log transports according to the configuration
    */
-  async start(engineSettings: EngineSettings, registration: OIAnalyticsRegistration): Promise<void> {
+  async start(engineSettings: EngineSettings, registration: OIAnalyticsRegistration | null): Promise<void> {
     const targets = [];
     targets.push({
       target: 'pino-pretty',
@@ -86,7 +86,7 @@ class LoggerService {
       }
     }
 
-    if (registration.status === 'REGISTERED' && engineSettings.logParameters.oia.level !== 'silent') {
+    if (registration && registration.status === 'REGISTERED' && engineSettings.logParameters.oia.level !== 'silent') {
       try {
         targets.push({
           target: path.join(__dirname, './oianalytics-transport.js'),

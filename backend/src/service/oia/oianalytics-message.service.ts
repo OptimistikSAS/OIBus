@@ -8,19 +8,18 @@ import { OIAnalyticsMessage } from '../../model/oianalytics-message.model';
 import {
   OIAnalyticsCertificateCommandDTO,
   OIAnalyticsEngineCommandDTO,
+  OIAnalyticsIPFilterCommandDTO,
   OIAnalyticsNorthCommandDTO,
+  OIAnalyticsScanModeCommandDTO,
   OIAnalyticsSouthCommandDTO,
   OIAnalyticsUserCommandDTO,
-  OIBusFullConfigurationCommandDTO,
-  OIBusIPFilterCommandDTO,
-  OIBusScanModeCommandDTO
+  OIBusFullConfigurationCommandDTO
 } from './oianalytics.model';
 import EngineRepository from '../../repository/config/engine.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import OIAnalyticsMessageRepository from '../../repository/config/oianalytics-message.repository';
-import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import { HistoryQueryEntity } from '../../model/histor-query.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
@@ -30,6 +29,8 @@ import IpFilterRepository from '../../repository/config/ip-filter.repository';
 import CertificateRepository from '../../repository/config/certificate.repository';
 import UserRepository from '../../repository/config/user.repository';
 import OIAnalyticsClient from './oianalytics-client.service';
+import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
+import OIAnalyticsRegistrationService from './oianalytics-registration.service';
 
 const STOP_TIMEOUT = 30_000;
 
@@ -41,7 +42,7 @@ export default class OIAnalyticsMessageService {
 
   constructor(
     private oIAnalyticsMessageRepository: OIAnalyticsMessageRepository,
-    private oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
+    private oIAnalyticsRegistrationService: OIAnalyticsRegistrationService,
     private engineRepository: EngineRepository,
     private scanModeRepository: ScanModeRepository,
     private ipFilterRepository: IpFilterRepository,
@@ -66,10 +67,14 @@ export default class OIAnalyticsMessageService {
       }
     });
     this.triggerRun.emit('next');
+
+    this.oIAnalyticsRegistrationService.registrationEvent.on('completed', () => {
+      this.createFullConfigMessageIfNotPending();
+    });
   }
 
   async run(): Promise<void> {
-    const registration = this.oIAnalyticsRegistrationRepository.get()!;
+    const registration = this.oIAnalyticsRegistrationService.getRegistrationSettings()!;
     if (registration.status !== 'REGISTERED') {
       this.logger.trace(`OIBus is not registered to OIAnalytics. Messages won't be sent`);
       return;
@@ -81,7 +86,7 @@ export default class OIAnalyticsMessageService {
     try {
       switch (message.type) {
         case 'full-config':
-          await this.sendFullConfiguration(this.createFullConfigurationCommand());
+          await this.sendFullConfiguration(this.createFullConfigurationCommand(registration));
           this.oIAnalyticsMessageRepository.markAsCompleted(message.id, DateTime.now().toUTC().toISO());
           break;
       }
@@ -124,7 +129,7 @@ export default class OIAnalyticsMessageService {
    * Create a FULL_CONFIG message if there is no pending message of this type. It will trigger at startup
    */
   createFullConfigMessageIfNotPending() {
-    const registration = this.oIAnalyticsRegistrationRepository.get()!;
+    const registration = this.oIAnalyticsRegistrationService.getRegistrationSettings()!;
     if (registration.status !== 'REGISTERED') {
       this.logger.debug(`OIBus is not registered to OIAnalytics. Messages won't be created`);
       return;
@@ -157,7 +162,7 @@ export default class OIAnalyticsMessageService {
   }
 
   private async sendFullConfiguration(configuration: OIBusFullConfigurationCommandDTO): Promise<void> {
-    const registrationSettings = this.oIAnalyticsRegistrationRepository.get()!;
+    const registrationSettings = this.oIAnalyticsRegistrationService.getRegistrationSettings()!;
     await this.oIAnalyticsClient.sendConfiguration(registrationSettings, JSON.stringify(configuration));
     this.logger.debug('Full OIBus configuration sent to OIAnalytics');
   }
@@ -165,9 +170,9 @@ export default class OIAnalyticsMessageService {
   //
   // Class utility method to generate each OIAnalytics message DTO
   //
-  private createFullConfigurationCommand(): OIBusFullConfigurationCommandDTO {
+  private createFullConfigurationCommand(registration: OIAnalyticsRegistration): OIBusFullConfigurationCommandDTO {
     return {
-      engine: this.createEngineCommand(),
+      engine: this.createEngineCommand(registration),
       scanModes: this.createScanModesCommand(),
       ipFilters: this.createIPFiltersCommand(),
       certificates: this.createCertificatesCommand(),
@@ -177,62 +182,69 @@ export default class OIAnalyticsMessageService {
     };
   }
 
-  private createEngineCommand(): OIAnalyticsEngineCommandDTO {
+  private createEngineCommand(registration: OIAnalyticsRegistration): OIAnalyticsEngineCommandDTO {
     const engine = this.engineRepository.get()!;
     const info = getOIBusInfo(engine);
     return {
       oIBusInternalId: engine.id,
+      name: engine.name,
       softwareVersion: engine.version,
       architecture: info.architecture,
       operatingSystem: info.operatingSystem,
-      name: engine.name,
-      port: engine.port,
-      proxyEnabled: engine.proxyEnabled,
-      proxyPort: engine.proxyPort,
-      logParameters: {
-        console: {
-          level: engine.logParameters.console.level
-        },
-        file: {
-          level: engine.logParameters.file.level,
-          maxFileSize: engine.logParameters.file.maxFileSize,
-          numberOfFiles: engine.logParameters.file.numberOfFiles
-        },
-        database: {
-          level: engine.logParameters.database.level,
-          maxNumberOfLogs: engine.logParameters.database.maxNumberOfLogs
-        },
-        loki: {
-          level: engine.logParameters.loki.level,
-          interval: engine.logParameters.loki.interval,
-          address: engine.logParameters.loki.address,
-          username: engine.logParameters.loki.username,
-          password: ''
-        },
-        oia: {
-          level: engine.logParameters.oia.level,
-          interval: engine.logParameters.oia.interval
+      publicKey: registration.publicCipherKey || '',
+      settings: {
+        port: engine.port,
+        proxyEnabled: engine.proxyEnabled,
+        proxyPort: engine.proxyPort,
+        logParameters: {
+          console: {
+            level: engine.logParameters.console.level
+          },
+          file: {
+            level: engine.logParameters.file.level,
+            maxFileSize: engine.logParameters.file.maxFileSize,
+            numberOfFiles: engine.logParameters.file.numberOfFiles
+          },
+          database: {
+            level: engine.logParameters.database.level,
+            maxNumberOfLogs: engine.logParameters.database.maxNumberOfLogs
+          },
+          loki: {
+            level: engine.logParameters.loki.level,
+            interval: engine.logParameters.loki.interval,
+            address: engine.logParameters.loki.address,
+            username: engine.logParameters.loki.username,
+            password: ''
+          },
+          oia: {
+            level: engine.logParameters.oia.level,
+            interval: engine.logParameters.oia.interval
+          }
         }
       }
     };
   }
 
-  private createScanModesCommand(): Array<OIBusScanModeCommandDTO> {
+  private createScanModesCommand(): Array<OIAnalyticsScanModeCommandDTO> {
     const scanModes = this.scanModeRepository.findAll();
     return scanModes.map(scanMode => ({
       oIBusInternalId: scanMode.id,
       name: scanMode.name,
-      description: scanMode.description,
-      cron: scanMode.cron
+      settings: {
+        description: scanMode.description,
+        cron: scanMode.cron
+      }
     }));
   }
 
-  private createIPFiltersCommand(): Array<OIBusIPFilterCommandDTO> {
+  private createIPFiltersCommand(): Array<OIAnalyticsIPFilterCommandDTO> {
     const ipFilters = this.ipFilterRepository.findAll();
     return ipFilters.map(ipFilter => ({
       oIBusInternalId: ipFilter.id,
       description: ipFilter.description,
-      address: ipFilter.address
+      settings: {
+        address: ipFilter.address
+      }
     }));
   }
 
@@ -241,10 +253,12 @@ export default class OIAnalyticsMessageService {
     return certificates.map(certificate => ({
       oIBusInternalId: certificate.id,
       name: certificate.name,
-      description: certificate.description,
-      publicKey: certificate.publicKey,
-      certificate: certificate.certificate,
-      expiry: certificate.expiry
+      settings: {
+        description: certificate.description,
+        publicKey: certificate.publicKey,
+        certificate: certificate.certificate,
+        expiry: certificate.expiry
+      }
     }));
   }
 
@@ -253,11 +267,13 @@ export default class OIAnalyticsMessageService {
     return users.map(user => ({
       oIBusInternalId: user.id,
       login: user.login,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      language: user.language,
-      timezone: user.timezone
+      settings: {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        language: user.language,
+        timezone: user.timezone
+      }
     }));
   }
 
@@ -270,17 +286,19 @@ export default class OIAnalyticsMessageService {
         oIBusInternalId: south.id,
         type: south.type,
         name: south.name,
-        description: south.description,
-        enabled: south.enabled,
-        settings: this.encryptionService.filterSecrets(south.settings, manifest.settings),
-        items: south.items.map(item => ({
-          id: item.id,
-          name: item.name,
-          enabled: item.enabled,
-          scanModeId: item.scanModeId,
-          scanModeName: null,
-          settings: this.encryptionService.filterSecrets(item.settings, manifest.items.settings)
-        }))
+        settings: {
+          description: south.description,
+          enabled: south.enabled,
+          settings: this.encryptionService.filterSecrets(south.settings, manifest.settings),
+          items: south.items.map(item => ({
+            id: item.id,
+            name: item.name,
+            enabled: item.enabled,
+            scanModeId: item.scanModeId,
+            scanModeName: null,
+            settings: this.encryptionService.filterSecrets(item.settings, manifest.items.settings)
+          }))
+        }
       };
     });
   }
@@ -294,28 +312,30 @@ export default class OIAnalyticsMessageService {
         oIBusInternalId: north.id,
         type: north.type,
         name: north.name,
-        description: north.description,
-        enabled: north.enabled,
-        settings: this.encryptionService.filterSecrets(north.settings, manifest.settings),
-        caching: {
-          scanModeId: north.caching.scanModeId,
-          scanModeName: null,
-          retryInterval: north.caching.retryInterval,
-          retryCount: north.caching.retryCount,
-          maxSize: north.caching.maxSize,
-          oibusTimeValues: {
-            groupCount: north.caching.oibusTimeValues.groupCount,
-            maxSendCount: north.caching.oibusTimeValues.maxSendCount
-          },
-          rawFiles: {
-            sendFileImmediately: north.caching.rawFiles.sendFileImmediately,
-            archive: {
-              enabled: north.caching.rawFiles.archive.enabled,
-              retentionDuration: north.caching.rawFiles.archive.retentionDuration
+        settings: {
+          description: north.description,
+          enabled: north.enabled,
+          settings: this.encryptionService.filterSecrets(north.settings, manifest.settings),
+          caching: {
+            scanModeId: north.caching.scanModeId,
+            scanModeName: null,
+            retryInterval: north.caching.retryInterval,
+            retryCount: north.caching.retryCount,
+            maxSize: north.caching.maxSize,
+            oibusTimeValues: {
+              groupCount: north.caching.oibusTimeValues.groupCount,
+              maxSendCount: north.caching.oibusTimeValues.maxSendCount
+            },
+            rawFiles: {
+              sendFileImmediately: north.caching.rawFiles.sendFileImmediately,
+              archive: {
+                enabled: north.caching.rawFiles.archive.enabled,
+                retentionDuration: north.caching.rawFiles.archive.retentionDuration
+              }
             }
-          }
-        },
-        subscriptions: north.subscriptions.map(south => south.id)
+          },
+          subscriptions: north.subscriptions.map(south => south.id)
+        }
       };
     });
   }
