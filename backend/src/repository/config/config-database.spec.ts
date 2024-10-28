@@ -347,8 +347,7 @@ describe('Repository with populated database', () => {
         retrievedDate: testData.constants.dates.FAKE_NOW,
         completedDate: null,
         result: null,
-        version: command.version,
-        assetId: command.assetId
+        commandContent: command.commandContent
       });
     });
 

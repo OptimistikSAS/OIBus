@@ -19,8 +19,12 @@ export interface BaseOIBusCommand extends BaseEntity {
 
 export interface OIBusUpdateVersionCommand extends BaseOIBusCommand {
   type: 'update-version';
-  version: string;
-  assetId: string;
+  commandContent: {
+    version: string;
+    assetId: string;
+    updateLauncher: boolean;
+    backupFolders: string;
+  };
 }
 
 export interface OIBusRestartEngineCommand extends BaseOIBusCommand {

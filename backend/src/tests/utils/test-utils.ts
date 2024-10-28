@@ -12,8 +12,7 @@ import {
   OIBusUpdateEngineSettingsCommand,
   OIBusUpdateNorthConnectorCommand,
   OIBusUpdateScanModeCommand,
-  OIBusUpdateSouthConnectorCommand,
-  OIBusUpdateVersionCommand
+  OIBusUpdateSouthConnectorCommand
 } from '../../model/oianalytics-command.model';
 import { OIAnalyticsMessage } from '../../model/oianalytics-message.model';
 import { Certificate } from '../../model/certificate.model';
@@ -334,9 +333,8 @@ const createOIAnalyticsCommand = async (database: knex.Knex, command: OIBusComma
       retrieved_date: command.retrievedDate,
       completed_date: command.completedDate,
       result: command.result,
-      upgrade_version: ['update-version'].includes(command.type) ? (command as OIBusUpdateVersionCommand).version : null,
-      upgrade_asset_id: ['update-version'].includes(command.type) ? (command as OIBusUpdateVersionCommand).assetId : null,
       command_content: [
+        'update-version',
         'update-engine-settings',
         'create-scan-mode',
         'update-scan-mode',
