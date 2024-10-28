@@ -427,6 +427,12 @@ async function updateOIAMessageTable(knex: Knex): Promise<void> {
 }
 
 async function recreateCommandTable(knex: Knex): Promise<void> {
+  const oldUpdateCommands: Array<{ id: string; type: string; upgrade_version: string; upgrade_asset_id: string }> = await knex(
+    COMMANDS_TABLE
+  )
+    .select('id', 'type', 'upgrade_version', 'upgrade_asset_id')
+    .whereIn('type', ['update-version', 'UPGRADE']);
+
   await knex.schema.raw(
     `create table temporary_table
      (
@@ -439,15 +445,13 @@ async function recreateCommandTable(knex: Knex): Promise<void> {
        retrieved_date   varchar(255),
        completed_date   varchar(255),
        result           varchar(255),
-       upgrade_version  varchar(255),
-       upgrade_asset_id varchar(255),
        command_content  text,
        target_version   text                               not null
      );
     `
   );
   await knex.schema.raw(`INSERT INTO temporary_table
-                         SELECT *, '', 'v3.5.0'
+                         SELECT id, created_at, updated_at, type, status, ack, retrieved_date, completed_date, result, '', 'v3.5.0'
                          FROM ${COMMANDS_TABLE}`);
   await knex.schema.raw(`DROP TABLE ${COMMANDS_TABLE}`);
   await knex.schema.raw(`ALTER TABLE temporary_table
@@ -457,6 +461,18 @@ async function recreateCommandTable(knex: Knex): Promise<void> {
     table.string('north_connector_id', 255);
     table.string('scan_mode_id', 255);
   });
+  for (const { id, upgrade_version, upgrade_asset_id } of oldUpdateCommands) {
+    const newCommandContent = {
+      version: upgrade_version,
+      assetId: upgrade_asset_id,
+      updateLauncher: false,
+      backupFolders: '*'
+    };
+
+    await knex(COMMANDS_TABLE)
+      .update({ command_content: JSON.stringify(newCommandContent), type: 'update-version' })
+      .where('id', id);
+  }
 }
 
 async function updateRegistrationSettings(knex: Knex): Promise<void> {

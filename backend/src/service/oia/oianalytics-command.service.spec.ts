@@ -26,7 +26,8 @@ import {
   OIBusUpdateEngineSettingsCommand,
   OIBusUpdateNorthConnectorCommand,
   OIBusUpdateScanModeCommand,
-  OIBusUpdateSouthConnectorCommand
+  OIBusUpdateSouthConnectorCommand,
+  OIBusUpdateVersionCommand
 } from '../../model/oianalytics-command.model';
 import { createPageFromArray } from '../../../shared/model/types';
 import SouthService from '../south.service';
@@ -35,6 +36,7 @@ import SouthServiceMock from '../../tests/__mocks__/service/south-service.mock';
 import NorthServiceMock from '../../tests/__mocks__/service/north-service.mock';
 import OIAnalyticsClient from './oianalytics-client.service';
 import OianalyticsClientMock from '../../tests/__mocks__/service/oia/oianalytics-client.mock';
+import os from 'node:os';
 
 jest.mock('node:fs/promises');
 jest.mock('node-fetch');
@@ -85,11 +87,13 @@ describe('OIAnalytics Command Service', () => {
 
   it('should properly start and stop service', async () => {
     expect(oIBusService.getEngineSettings).toHaveBeenCalledTimes(1);
-    expect(oIBusService.updateOIBusVersion).toHaveBeenCalledWith(version);
+    expect(oIBusService.updateOIBusVersion).toHaveBeenCalledWith(
+      (testData.oIAnalytics.commands.oIBusList[0] as OIBusUpdateVersionCommand).commandContent.version
+    );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       testData.oIAnalytics.commands.oIBusList[0].id,
       testData.constants.dates.FAKE_NOW,
-      `OIBus updated to version ${version}`
+      `OIBus updated to version ${(testData.oIAnalytics.commands.oIBusList[0] as OIBusUpdateVersionCommand).commandContent.version}`
     );
 
     const setIntervalSpy = jest.spyOn(global, 'setInterval');
@@ -191,7 +195,7 @@ describe('OIAnalytics Command Service', () => {
     expect(logger.error).toHaveBeenCalledWith(expect.stringMatching(`Error while retrieving commands: error`));
   });
 
-  it('should execute update-version command', async () => {
+  it('should execute update-version command without updating launcher', async () => {
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([testData.oIAnalytics.commands.oIBusList[0]]); // update-version
     const processExitSpy = jest.spyOn(process, 'exit');
 
@@ -203,8 +207,75 @@ describe('OIAnalytics Command Service', () => {
     expect(oIAnalyticsClient.downloadFile).toHaveBeenCalledTimes(1);
     expect(unzip).toHaveBeenCalledTimes(1);
     expect(fs.unlink).toHaveBeenCalledTimes(1);
+    expect(fs.rename).not.toHaveBeenCalled();
+    expect(fs.writeFile).toHaveBeenCalledTimes(1);
+    expect(fs.writeFile).toHaveBeenCalledWith(
+      '../update.json',
+      JSON.stringify({
+        version: 'v3.5.0-beta',
+        assetId: 'assetId',
+        backupFolders: 'cache/*',
+        updateLauncher: false
+      })
+    );
     expect(delay).toHaveBeenCalledTimes(1);
     expect(processExitSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('should execute update-version command with launcher update', async () => {
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([
+      {
+        ...testData.oIAnalytics.commands.oIBusList[0],
+        commandContent: {
+          version: 'v3.5.0-beta',
+          assetId: 'assetId',
+          backupFolders: 'cache/*',
+          updateLauncher: true
+        }
+      }
+    ]); // update-version
+    const processKillSpy = jest.spyOn(process, 'kill').mockImplementation(() => {
+      return true;
+    });
+    const osTypeSpy = jest.spyOn(os, 'type').mockReturnValueOnce('linux').mockReturnValueOnce('Windows_NT');
+
+    await service.executeCommand();
+
+    expect(oIAnalyticsRegistrationRepository.get).toHaveBeenCalledTimes(1);
+    expect(oIAnalyticsCommandRepository.list).toHaveBeenCalled();
+    expect(oIBusService.getEngineSettings).toHaveBeenCalled();
+    expect(oIAnalyticsClient.downloadFile).toHaveBeenCalledTimes(1);
+    expect(unzip).toHaveBeenCalledTimes(1);
+    expect(fs.unlink).toHaveBeenCalledTimes(1);
+    expect(fs.rename).toHaveBeenCalledTimes(2);
+    expect(fs.rename).toHaveBeenCalledWith(`../oibus-launcher`, `../oibus-launcher_backup`);
+    expect(osTypeSpy).toHaveBeenCalledTimes(1);
+    expect(fs.writeFile).toHaveBeenCalledTimes(1);
+    expect(fs.writeFile).toHaveBeenCalledWith(
+      '../update.json',
+      JSON.stringify({
+        version: 'v3.5.0-beta',
+        assetId: 'assetId',
+        backupFolders: 'cache/*',
+        updateLauncher: true
+      })
+    );
+    expect(delay).toHaveBeenCalledTimes(1);
+    expect(processKillSpy).toHaveBeenCalledTimes(1);
+
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([
+      {
+        ...testData.oIAnalytics.commands.oIBusList[0],
+        commandContent: {
+          version: 'v3.5.0-beta',
+          assetId: 'assetId',
+          backupFolders: 'cache/*',
+          updateLauncher: true
+        }
+      }
+    ]); // update-version
+    await service.executeCommand();
+    expect(fs.rename).toHaveBeenCalledWith(`../oibus-launcher.exe`, `../oibus-launcher_backup.exe`);
   });
 
   it('should not execute update-version command if a command is already being executed', async () => {
@@ -494,7 +565,10 @@ describe('OIAnalytics Command service with update error', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
-    (oIBusService.getEngineSettings as jest.Mock).mockReturnValue({ ...JSON.parse(JSON.stringify(testData.engine.settings)), version });
+    (oIBusService.getEngineSettings as jest.Mock).mockReturnValue({
+      ...JSON.parse(JSON.stringify(testData.engine.settings)),
+      version: (testData.oIAnalytics.commands.oIBusList[0] as OIBusUpdateVersionCommand).commandContent.version
+    });
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValue(testData.oIAnalytics.commands.oIBusList);
 
     service = new OIAnalyticsCommandService(
