@@ -18,6 +18,7 @@ import {
   OIBusDeleteNorthConnectorCommand,
   OIBusDeleteScanModeCommand,
   OIBusDeleteSouthConnectorCommand,
+  OIBusReloadKeysCommand,
   OIBusRestartEngineCommand,
   OIBusUpdateEngineSettingsCommand,
   OIBusUpdateNorthConnectorCommand,
@@ -31,6 +32,8 @@ import SouthService from '../south.service';
 import NorthService from '../north.service';
 import OIAnalyticsClient from './oianalytics-client.service';
 import os from 'node:os';
+import crypto from 'node:crypto';
+import OIAnalyticsMessageService from './oianalytics-message.service';
 
 const CHECK_OIANALYTICS_COMMANDS_INTERVAL = 1_000;
 const EXECUTE_OIANALYTICS_COMMANDS_INTERVAL = 1_000;
@@ -45,6 +48,7 @@ export default class OIAnalyticsCommandService {
   constructor(
     private oIAnalyticsCommandRepository: OIAnalyticsCommandRepository,
     private oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
+    private oIAnalyticsMessageService: OIAnalyticsMessageService,
     private encryptionService: EncryptionService,
     private oIAnalyticsClient: OIAnalyticsClient,
     private oIBusService: OIBusService,
@@ -212,6 +216,9 @@ export default class OIAnalyticsCommandService {
         case 'restart-engine':
           await this.executeRestartCommand(command);
           break;
+        case 'reload-keys':
+          await this.executeReloadKeysCommand(command);
+          break;
         case 'update-engine-settings':
           {
             const privateKey = await this.encryptionService.decryptText(registration.privateCipherKey!);
@@ -328,6 +335,26 @@ export default class OIAnalyticsCommandService {
     }
   }
 
+  private async executeReloadKeysCommand(command: OIBusReloadKeysCommand) {
+    this.logger.info(`Reloading OIAnalytics keys...`);
+
+    // Generate RSA key pair
+    const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
+      modulusLength: 2048, // Length of the key in bits (2048 is standard for RSA)
+      publicKeyEncoding: {
+        type: 'spki', // Recommended format for public key
+        format: 'pem' // Output format for the key
+      },
+      privateKeyEncoding: {
+        type: 'pkcs8', // Recommended format for private key
+        format: 'pem' // Output format for the key
+      }
+    });
+    this.oIAnalyticsRegistrationRepository.updateKeys(await this.encryptionService.encryptText(privateKey), publicKey);
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'OIAnalytics keys reloaded');
+  }
+
   private async executeRestartCommand(command: OIBusRestartEngineCommand) {
     this.logger.info(`Restarting OIBus...`);
     await delay(1500);
@@ -425,6 +452,7 @@ export const toOIBusCommandDTO = (command: OIBusCommand): OIBusCommandDTO => {
   switch (command.type) {
     case 'update-version':
     case 'restart-engine':
+    case 'reload-keys':
     case 'update-engine-settings':
     case 'create-north':
     case 'create-south':

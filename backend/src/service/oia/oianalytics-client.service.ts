@@ -90,11 +90,11 @@ export default class OIAnalyticsClient {
     const activationCode = generateRandomId(6);
     const body = {
       activationCode,
-      oibusVersion: oibusInfo.version,
-      oibusArch: oibusInfo.architecture,
-      oibusOs: oibusInfo.operatingSystem,
       oibusId: oibusInfo.oibusId,
       oibusName: oibusInfo.oibusName,
+      oibusVersion: oibusInfo.version,
+      oibusOs: oibusInfo.operatingSystem,
+      oibusArch: oibusInfo.architecture,
       publicKey
     };
 
@@ -114,12 +114,12 @@ export default class OIAnalyticsClient {
       throw new Error(`${response.status} - ${response.statusText}`);
     }
 
-    return (await response.json()) as { redirectUrl: string; expirationDate: Instant; activationCode: string };
+    return { ...(await response.json()), activationCode } as { redirectUrl: string; expirationDate: Instant; activationCode: string };
   }
 
   async checkRegistration(registration: OIAnalyticsRegistration): Promise<{ status: string; expired: boolean; accessToken: string }> {
-    const connectionSettings = await this.getNetworkSettingsFromRegistration(registration, REGISTRATION_OIANALYTICS_ENDPOINT);
-    const url = `${connectionSettings.host}${REGISTRATION_OIANALYTICS_ENDPOINT}`;
+    const connectionSettings = await this.getNetworkSettingsFromRegistration(registration, registration.checkUrl!);
+    const url = `${connectionSettings.host}${registration.checkUrl}`;
 
     const response = await fetch(url, {
       method: 'GET',

@@ -1014,6 +1014,16 @@ const oIBusCommands: Array<OIBusCommand> = [
     result: 'ok',
     targetVersion: 'v3.5.0',
     commandContent: northConnectorCommand
+  },
+  {
+    id: 'commandId13',
+    type: 'reload-keys',
+    status: 'RETRIEVED',
+    ack: false,
+    retrievedDate: constants.dates.DATE_1,
+    completedDate: '',
+    result: 'ok',
+    targetVersion: 'v3.5.0'
   }
 ];
 const oIAnalyticsCommands: Array<OIAnalyticsFetchCommandDTO> = [
@@ -1021,12 +1031,10 @@ const oIAnalyticsCommands: Array<OIAnalyticsFetchCommandDTO> = [
     id: 'newCommandId1',
     type: 'update-version',
     targetVersion: 'v3.5.0',
-    commandContent: {
-      version: 'v3.5.0-beta',
-      assetId: 'assetId',
-      backupFolders: 'cache/*',
-      updateLauncher: false
-    }
+    version: 'v3.5.0-beta',
+    assetId: 'assetId',
+    backupFolders: 'cache/*',
+    updateLauncher: false
   },
   {
     id: 'newCommandId2',

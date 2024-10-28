@@ -69,7 +69,7 @@ class SqliteTransport {
     clearInterval(this.removeOldLogsTimeout);
     clearInterval(this.storeLogsInterval);
 
-    await this.addLogs();
+    this.addLogs();
   };
 }
 

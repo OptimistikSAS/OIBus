@@ -9,8 +9,6 @@ import { flushPromises } from '../../tests/utils/test-utils';
 import { DateTime } from 'luxon';
 import OIAnalyticsMessageRepository from '../../repository/config/oianalytics-message.repository';
 import OIAnalyticsMessageRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-message-repository.mock';
-import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
-import OIAnalyticsRegistrationRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
 import EngineRepository from '../../repository/config/engine.repository';
 import EngineRepositoryMock from '../../tests/__mocks__/repository/config/engine-repository.mock';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
@@ -27,12 +25,14 @@ import CertificateRepository from '../../repository/config/certificate.repositor
 import CertificateRepositoryMock from '../../tests/__mocks__/repository/config/certificate-repository.mock';
 import UserRepository from '../../repository/config/user.repository';
 import UserRepositoryMock from '../../tests/__mocks__/repository/config/user-repository.mock';
+import OIAnalyticsRegistrationService from './oianalytics-registration.service';
+import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
 
 jest.mock('node:fs/promises');
 jest.mock('../utils');
 
 const oIAnalyticsMessageRepository: OIAnalyticsMessageRepository = new OIAnalyticsMessageRepositoryMock();
-const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OIAnalyticsRegistrationRepositoryMock();
+const oIAnalyticsRegistrationService: OIAnalyticsRegistrationService = new OIAnalyticsRegistrationServiceMock();
 const engineRepository: EngineRepository = new EngineRepositoryMock();
 const ipFilterRepository: IpFilterRepository = new IpFilterRepositoryMock();
 const certificateRepository: CertificateRepository = new CertificateRepositoryMock();
@@ -54,7 +54,7 @@ describe('OIAnalytics Message Service', () => {
     (getOIBusInfo as jest.Mock).mockReturnValue(testData.engine.oIBusInfo);
     (oIAnalyticsMessageRepository.list as jest.Mock).mockReturnValue(testData.oIAnalytics.messages.oIBusList);
     (oIAnalyticsMessageRepository.create as jest.Mock).mockReturnValue(testData.oIAnalytics.messages.oIBusList[0]);
-    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(testData.oIAnalytics.registration.completed);
+    (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValue(testData.oIAnalytics.registration.completed);
     (engineRepository.get as jest.Mock).mockReturnValue(testData.engine.settings);
     (scanModeRepository.findAll as jest.Mock).mockReturnValue(testData.scanMode.list);
     (ipFilterRepository.findAll as jest.Mock).mockReturnValue(testData.ipFilters.list);
@@ -67,7 +67,7 @@ describe('OIAnalytics Message Service', () => {
 
     service = new OIAnalyticsMessageService(
       oIAnalyticsMessageRepository,
-      oIAnalyticsRegistrationRepository,
+      oIAnalyticsRegistrationService,
       engineRepository,
       scanModeRepository,
       ipFilterRepository,
@@ -149,6 +149,16 @@ describe('OIAnalytics Message Service', () => {
     expect(logger.debug).toHaveBeenCalledWith('Full OIBus configuration sent to OIAnalytics');
   });
 
+  it('should properly send message', async () => {
+    (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValue({
+      ...testData.oIAnalytics.registration.completed,
+      publicCipherKey: null
+    });
+    (oIAnalyticsClient.sendConfiguration as jest.Mock).mockImplementationOnce(() => Promise.resolve());
+    service.start(); // trigger a runProgress
+    expect(oIAnalyticsClient.sendConfiguration).toHaveBeenCalledTimes(1);
+  });
+
   it('should properly send message and trigger timeout', async () => {
     (oIAnalyticsClient.sendConfiguration as jest.Mock).mockImplementationOnce(() => {
       return new Promise<void>(resolve => {
@@ -180,7 +190,7 @@ describe('OIAnalytics message service without message', () => {
 
     service = new OIAnalyticsMessageService(
       oIAnalyticsMessageRepository,
-      oIAnalyticsRegistrationRepository,
+      oIAnalyticsRegistrationService,
       engineRepository,
       scanModeRepository,
       ipFilterRepository,
@@ -210,12 +220,12 @@ describe('OIAnalytics message service without message', () => {
 describe('OIAnalytics message service without completed registration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(testData.oIAnalytics.registration.pending);
+    (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValue(testData.oIAnalytics.registration.pending);
     (oIAnalyticsMessageRepository.list as jest.Mock).mockReturnValue(testData.oIAnalytics.messages.oIBusList);
 
     service = new OIAnalyticsMessageService(
       oIAnalyticsMessageRepository,
-      oIAnalyticsRegistrationRepository,
+      oIAnalyticsRegistrationService,
       engineRepository,
       scanModeRepository,
       ipFilterRepository,

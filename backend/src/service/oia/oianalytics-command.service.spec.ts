@@ -37,7 +37,11 @@ import NorthServiceMock from '../../tests/__mocks__/service/north-service.mock';
 import OIAnalyticsClient from './oianalytics-client.service';
 import OianalyticsClientMock from '../../tests/__mocks__/service/oia/oianalytics-client.mock';
 import os from 'node:os';
+import OIAnalyticsMessageService from './oianalytics-message.service';
+import OIAnalyticsMessageServiceMock from '../../tests/__mocks__/service/oia/oianalytics-message-service.mock';
+import crypto from 'node:crypto';
 
+jest.mock('node:crypto');
 jest.mock('node:fs/promises');
 jest.mock('node-fetch');
 jest.mock('../../web-server/controllers/validators/joi.validator');
@@ -49,6 +53,7 @@ jest.spyOn(process, 'exit').mockImplementation(() => Promise.resolve());
 
 const oIAnalyticsCommandRepository: OIAnalyticsCommandRepository = new OIAnalyticsCommandRepositoryMock();
 const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OIAnalyticsRegistrationRepositoryMock();
+const oIAnalyticsMessageService: OIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const oIBusService: OIBusService = new OibusServiceMock();
 const scanModeService: ScanModeService = new ScanModeServiceMock();
@@ -73,6 +78,7 @@ describe('OIAnalytics Command Service', () => {
     service = new OIAnalyticsCommandService(
       oIAnalyticsCommandRepository,
       oIAnalyticsRegistrationRepository,
+      oIAnalyticsMessageService,
       encryptionService,
       oIAnalyticsClient,
       oIBusService,
@@ -558,6 +564,21 @@ describe('OIAnalytics Command Service', () => {
       `Wrong target version: ${command.targetVersion} for OIBus version bad version`
     );
   });
+
+  it('should execute reload-keys command', async () => {
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([testData.oIAnalytics.commands.oIBusList[12]]); // reload-keys
+    (crypto.generateKeyPairSync as jest.Mock).mockReturnValueOnce({ publicKey: 'public key', privateKey: 'private key' });
+
+    await service.executeCommand();
+
+    expect(oIAnalyticsRegistrationRepository.updateKeys).toHaveBeenCalledWith('private key', 'public key');
+    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      testData.oIAnalytics.commands.oIBusList[12].id,
+      testData.constants.dates.FAKE_NOW,
+      'OIAnalytics keys reloaded'
+    );
+  });
 });
 
 describe('OIAnalytics Command service with update error', () => {
@@ -574,6 +595,7 @@ describe('OIAnalytics Command service with update error', () => {
     service = new OIAnalyticsCommandService(
       oIAnalyticsCommandRepository,
       oIAnalyticsRegistrationRepository,
+      oIAnalyticsMessageService,
       encryptionService,
       oIAnalyticsClient,
       oIBusService,
@@ -606,6 +628,7 @@ describe('OIAnalytics Command service with no commands', () => {
     service = new OIAnalyticsCommandService(
       oIAnalyticsCommandRepository,
       oIAnalyticsRegistrationRepository,
+      oIAnalyticsMessageService,
       encryptionService,
       oIAnalyticsClient,
       oIBusService,

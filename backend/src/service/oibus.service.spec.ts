@@ -14,8 +14,6 @@ import EncryptionService from './encryption.service';
 import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 import LoggerService from './logger/logger.service';
 import LoggerServiceMock from '../tests/__mocks__/service/logger/logger-service.mock';
-import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
-import OIAnalyticsRegistrationRepositoryMock from '../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
 import EngineMetricsRepository from '../repository/logs/engine-metrics.repository';
 import os from 'node:os';
 import IpFilterRepository from '../repository/config/ip-filter.repository';
@@ -25,14 +23,14 @@ import { EngineSettings } from '../model/engine.model';
 import { EngineSettingsCommandDTO } from '../../shared/model/engine.model';
 import { getOIBusInfo } from './utils';
 import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
-import HistoryQueryRepository from '../repository/config/history-query.repository';
-import HistoryQueryRepositoryMock from '../tests/__mocks__/repository/config/history-query-repository.mock';
 import SouthService from './south.service';
 import NorthService from './north.service';
 import HistoryQueryService from './history-query.service';
 import SouthServiceMock from '../tests/__mocks__/service/south-service.mock';
 import NorthServiceMock from '../tests/__mocks__/service/north-service.mock';
 import HistoryQueryServiceMock from '../tests/__mocks__/service/history-query-service.mock';
+import OIAnalyticsRegistrationService from './oia/oianalytics-registration.service';
+import OIAnalyticsRegistrationServiceMock from '../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
 
 jest.mock('./utils');
 jest.mock('../web-server/proxy-server');
@@ -41,8 +39,7 @@ const validator = new JoiValidator();
 const engineRepository: EngineRepository = new EngineRepositoryMock();
 const engineMetricsRepository: EngineMetricsRepository = new EngineMetricsRepositoryMock();
 const ipFilterRepository: IpFilterRepository = new IpFilterRepositoryMock();
-const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OIAnalyticsRegistrationRepositoryMock();
-const historyQueryRepository: HistoryQueryRepository = new HistoryQueryRepositoryMock();
+const oIAnalyticsRegistrationService: OIAnalyticsRegistrationService = new OIAnalyticsRegistrationServiceMock();
 const encryptionService: EncryptionService = new EncryptionServiceMock();
 const loggerService: LoggerService = new LoggerServiceMock();
 const oIAnalyticsMessageService: OIAnalyticsMessageService = new OianalyticsMessageServiceMock();
@@ -70,8 +67,7 @@ describe('OIBus Service', () => {
       engineRepository,
       engineMetricsRepository,
       ipFilterRepository,
-      oIAnalyticsRegistrationRepository,
-      historyQueryRepository,
+      oIAnalyticsRegistrationService,
       encryptionService,
       loggerService,
       oIAnalyticsMessageService,
@@ -131,11 +127,7 @@ describe('OIBus Service', () => {
     const specificCommand: EngineSettingsCommandDTO = JSON.parse(JSON.stringify(testData.engine.command));
     specificCommand.logParameters.loki.password = 'updated password';
     (engineRepository.get as jest.Mock).mockReturnValueOnce(testData.engine.settings).mockReturnValueOnce(newEngineSettings);
-    const webServerChangePortCallbackMock = jest.fn();
-    const webServerChangeLoggerCallbackMock = jest.fn();
 
-    service.setWebServerChangeLogger(webServerChangeLoggerCallbackMock);
-    service.setWebServerChangePort(webServerChangePortCallbackMock);
     await service.updateEngineSettings(specificCommand);
 
     expect(engineRepository.get).toHaveBeenCalledTimes(3);
@@ -145,8 +137,6 @@ describe('OIBus Service', () => {
     expect(loggerService.start).toHaveBeenCalled();
     expect(loggerService.createChildLogger).toHaveBeenCalledTimes(3); // in constructor and 2x at update
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
-    expect(webServerChangeLoggerCallbackMock).toHaveBeenCalled();
-    expect(webServerChangePortCallbackMock).toHaveBeenCalled();
   });
 
   it('should throw error if bad port configuration', async () => {

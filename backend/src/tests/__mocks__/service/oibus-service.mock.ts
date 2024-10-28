@@ -21,5 +21,7 @@ export default jest.fn().mockImplementation(() => ({
   resetMetrics: jest.fn(),
   resetNorthConnectorMetrics: jest.fn(),
   resetSouthConnectorMetrics: jest.fn(),
-  stream: new EventEmitter()
+  stream: new EventEmitter(),
+  loggerEvent: new EventEmitter(),
+  portChangeEvent: new EventEmitter()
 }));
