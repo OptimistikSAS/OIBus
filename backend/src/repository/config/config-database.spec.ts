@@ -277,6 +277,14 @@ describe('Repository with populated database', () => {
       expect(result.proxyUsername).toEqual(specificCommand.proxyUsername);
       expect(result.proxyPassword).toEqual(specificCommand.proxyPassword);
     });
+
+    it('should update keys', () => {
+      repository.updateKeys('private key', 'public key');
+
+      const result = repository.get()!;
+      expect(result.privateCipherKey).toEqual('private key');
+      expect(result.publicCipherKey).toEqual('public key');
+    });
   });
 
   describe('OIAnalytics Command', () => {
@@ -347,7 +355,7 @@ describe('Repository with populated database', () => {
         retrievedDate: testData.constants.dates.FAKE_NOW,
         completedDate: null,
         result: null,
-        commandContent: command.commandContent
+        commandContent: { version: 'v3.5.0-beta', assetId: 'assetId', backupFolders: 'cache/*', updateLauncher: false }
       });
     });
 

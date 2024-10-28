@@ -84,6 +84,11 @@ export default class OIAnalyticsRegistrationRepository {
       .run(+command.useProxy, command.proxyUrl, command.proxyUsername, command.proxyPassword, +command.acceptUnauthorized);
   }
 
+  updateKeys(privateKey: string, publicKey: string): void {
+    const query = `UPDATE ${REGISTRATIONS_TABLE} SET private_key = ?, public_key = ? WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
+    this.database.prepare(query).run(privateKey, publicKey);
+  }
+
   private createDefault(command: OIAnalyticsRegistrationEditCommand): void {
     if (this.get()) {
       return;
