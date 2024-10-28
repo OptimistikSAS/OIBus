@@ -38,8 +38,12 @@ export interface BaseOIBusCommandDTO {
 
 export interface OIBusUpdateVersionCommandDTO extends BaseOIBusCommandDTO {
   type: 'update-version';
-  assetId: string;
-  version: string;
+  commandContent: {
+    version: string;
+    assetId: string;
+    updateLauncher: boolean;
+    backupFolders: string;
+  };
 }
 
 export interface OIBusRestartEngineCommandDTO extends BaseOIBusCommandDTO {
