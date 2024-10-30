@@ -94,9 +94,7 @@ class OianalyticsTransport {
       const response = await fetch(logUrl, fetchOptions);
       if (response.status !== 200 && response.status !== 201 && response.status !== 204) {
         if (response.status === 401) {
-          console.error(
-            `OIAnalytics authentication error on ${logUrl}: ${response.status} - ${response.statusText} with options ${this.options}`
-          );
+          console.error(`OIAnalytics authentication error on ${logUrl}: ${response.status} - ${response.statusText}`);
         } else {
           console.error(`OIAnalytics fetch error on ${logUrl}: ${response.status} - ${response.statusText} with payload ${dataBuffer}`);
         }

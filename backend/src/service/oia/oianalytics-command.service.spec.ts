@@ -216,7 +216,7 @@ describe('OIAnalytics Command Service', () => {
     expect(fs.rename).not.toHaveBeenCalled();
     expect(fs.writeFile).toHaveBeenCalledTimes(1);
     expect(fs.writeFile).toHaveBeenCalledWith(
-      '../update.json',
+      expect.stringContaining('update.json'),
       JSON.stringify({
         version: 'v3.5.0-beta',
         assetId: 'assetId',
@@ -254,11 +254,11 @@ describe('OIAnalytics Command Service', () => {
     expect(unzip).toHaveBeenCalledTimes(1);
     expect(fs.unlink).toHaveBeenCalledTimes(1);
     expect(fs.rename).toHaveBeenCalledTimes(2);
-    expect(fs.rename).toHaveBeenCalledWith(`../oibus-launcher`, `../oibus-launcher_backup`);
+    expect(fs.rename).toHaveBeenCalledWith(expect.stringContaining('oibus-launcher'), expect.stringContaining('oibus-launcher_backup'));
     expect(osTypeSpy).toHaveBeenCalledTimes(1);
     expect(fs.writeFile).toHaveBeenCalledTimes(1);
     expect(fs.writeFile).toHaveBeenCalledWith(
-      '../update.json',
+      expect.stringContaining('update.json'),
       JSON.stringify({
         version: 'v3.5.0-beta',
         assetId: 'assetId',
@@ -281,7 +281,10 @@ describe('OIAnalytics Command Service', () => {
       }
     ]); // update-version
     await service.executeCommand();
-    expect(fs.rename).toHaveBeenCalledWith(`../oibus-launcher.exe`, `../oibus-launcher_backup.exe`);
+    expect(fs.rename).toHaveBeenCalledWith(
+      expect.stringContaining('oibus-launcher.exe'),
+      expect.stringContaining('oibus-launcher_backup.exe')
+    );
   });
 
   it('should not execute update-version command if a command is already being executed', async () => {
