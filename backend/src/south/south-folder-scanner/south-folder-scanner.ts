@@ -13,6 +13,7 @@ import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/sout
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import { BaseFolders } from '../../model/types';
 
 /**
  * Class SouthFolderScanner - Retrieve file from a local or remote folder
@@ -34,7 +35,7 @@ export default class SouthFolderScanner
     southCacheRepository: SouthCacheRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
-    baseFolder: string
+    baseFolders: BaseFolders
   ) {
     super(
       connector,
@@ -44,9 +45,9 @@ export default class SouthFolderScanner
       southCacheRepository,
       scanModeRepository,
       logger,
-      baseFolder
+      baseFolders
     );
-    this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
+    this.tmpFolder = path.resolve(this.baseFolders.cache, 'tmp');
   }
 
   override async testConnection(): Promise<void> {

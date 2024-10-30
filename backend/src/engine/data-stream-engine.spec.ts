@@ -88,7 +88,7 @@ describe('DataStreamEngine', () => {
     await engine.start([mockedNorth1, mockedNorth2], [mockedSouth1, mockedSouth2]);
 
     expect(engine.logger).toBeDefined();
-    expect(engine.baseFolder).toBeDefined();
+    expect(engine.baseFolders).toBeDefined();
     expect(logger.info).toHaveBeenCalledWith(`OIBus engine started`);
     expect(logger.error).toHaveBeenCalledTimes(2);
     expect(logger.error).toHaveBeenCalledWith(

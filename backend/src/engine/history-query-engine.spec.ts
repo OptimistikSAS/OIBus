@@ -66,7 +66,7 @@ describe('HistoryQueryEngine', () => {
     await engine.start([mockedHistoryQuery1, mockedHistoryQuery2]);
 
     expect(engine.logger).toBeDefined();
-    expect(engine.baseFolder).toBeDefined();
+    expect(engine.baseFolders).toBeDefined();
 
     (mockedHistoryQuery1.start as jest.Mock).mockImplementationOnce(() => Promise.reject(new Error('start fail')));
     await engine.startHistoryQuery(testData.historyQueries.list[0].id);

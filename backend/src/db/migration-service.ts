@@ -61,7 +61,7 @@ export async function migrateSouthCache(dbPath: string): Promise<void> {
   await knexConfig.destroy();
 }
 
-export async function migrateFolderStructure(dbPath: string): Promise<void> {
+export async function migrateDataFolder(dbPath: string): Promise<void> {
   const knexConfig = knex({
     client: 'better-sqlite3',
     connection: {

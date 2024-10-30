@@ -41,7 +41,7 @@ import SouthConnectorMetricsRepository from '../repository/logs/south-connector-
 import { Page } from '../../shared/model/types';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
-import { checkScanMode, createFolder } from './utils';
+import { checkScanMode, createBaseFolders, createFolder, filesExists } from './utils';
 import { ScanMode } from '../model/scan-mode.model';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
 import fs from 'node:fs/promises';
@@ -107,6 +107,7 @@ import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-
 import CertificateRepository from '../repository/config/certificate.repository';
 import DataStreamEngine from '../engine/data-stream-engine';
 import { PassThrough } from 'node:stream';
+import { BaseFolders } from '../model/types';
 
 export const southManifestList: Array<SouthConnectorManifest> = [
   folderScannerManifest,
@@ -148,9 +149,9 @@ export default class SouthService {
     settings: SouthConnectorEntity<S, I>,
     addContent: (southId: string, data: OIBusContent) => Promise<void>,
     logger: pino.Logger,
-    baseFolder: string | undefined = undefined
+    baseFolders: BaseFolders | undefined = undefined
   ): SouthConnector<SouthSettings, SouthItemSettings> {
-    const southBaseFolder = baseFolder ?? this.getDefaultBaseFolder(settings.id);
+    const southBaseFolders = baseFolders ?? this.getDefaultBaseFolders(settings.id);
 
     switch (settings.type) {
       case 'ads':
@@ -162,7 +163,7 @@ export default class SouthService {
           this.southCacheRepository,
           this.scanModeRepository,
           logger,
-          southBaseFolder
+          southBaseFolders
         );
       case 'folder-scanner':
         return new SouthFolderScanner(
@@ -173,7 +174,7 @@ export default class SouthService {
           this.southCacheRepository,
           this.scanModeRepository,
           logger,
-          southBaseFolder
+          southBaseFolders
         );
       case 'modbus':
         return new SouthModbus(
@@ -184,7 +185,7 @@ export default class SouthService {
           this.southCacheRepository,
           this.scanModeRepository,
           logger,
-          southBaseFolder
+          southBaseFolders
         );
       case 'mqtt':
         return new SouthMQTT(
@@ -195,7 +196,7 @@ export default class SouthService {
           this.southCacheRepository,
           this.scanModeRepository,
           logger,
-          southBaseFolder
+          southBaseFolders
         );
       case 'mssql':
         return new SouthMSSQL(
@@ -206,7 +207,7 @@ export default class SouthService {
           this.southCacheRepository,
           this.scanModeRepository,
           logger,
-          southBaseFolder
+          southBaseFolders
         );
       case 'mysql':
         return new SouthMySQL(
@@ -217,7 +218,7 @@ export default class SouthService {
           this.southCacheRepository,
           this.scanModeRepository,
           logger,
-          southBaseFolder
+          southBaseFolders
         );
       case 'odbc':
         return new SouthODBC(
@@ -228,7 +229,7 @@ export default class SouthService {
           this.southCacheRepository,
           this.scanModeRepository,
           logger,
-          southBaseFolder
+          southBaseFolders
         );
       case 'oianalytics':
         return new SouthOIAnalytics(
@@ -241,7 +242,7 @@ export default class SouthService {
           this.oIAnalyticsRegistrationRepository,
           this.certificateRepository,
           logger,
-          southBaseFolder
+          southBaseFolders
         );
       case 'oledb':
         return new SouthOLEDB(
@@ -252,7 +253,7 @@ export default class SouthService {
           this.southCacheRepository,
           this.scanModeRepository,
           logger,
-          southBaseFolder
+          southBaseFolders
         );
       case 'opc':
         return new SouthOPC(
@@ -263,7 +264,7 @@ export default class SouthService {
           this.southCacheRepository,
           this.scanModeRepository,
           logger,
-          southBaseFolder
+          southBaseFolders
         );
       case 'opcua':
         return new SouthOPCUA(
@@ -274,7 +275,7 @@ export default class SouthService {
           this.southCacheRepository,
           this.scanModeRepository,
           logger,
-          southBaseFolder,
+          southBaseFolders,
           this._connectionService
         );
       case 'oracle':
@@ -286,7 +287,7 @@ export default class SouthService {
           this.southCacheRepository,
           this.scanModeRepository,
           logger,
-          southBaseFolder
+          southBaseFolders
         );
       case 'osisoft-pi':
         return new SouthPI(
@@ -297,7 +298,7 @@ export default class SouthService {
           this.southCacheRepository,
           this.scanModeRepository,
           logger,
-          southBaseFolder
+          southBaseFolders
         );
       case 'postgresql':
         return new SouthPostgreSQL(
@@ -308,7 +309,7 @@ export default class SouthService {
           this.southCacheRepository,
           this.scanModeRepository,
           logger,
-          southBaseFolder
+          southBaseFolders
         );
       case 'sftp':
         return new SouthSFTP(
@@ -319,7 +320,7 @@ export default class SouthService {
           this.southCacheRepository,
           this.scanModeRepository,
           logger,
-          southBaseFolder
+          southBaseFolders
         );
       case 'slims':
         return new SouthSlims(
@@ -330,7 +331,7 @@ export default class SouthService {
           this.southCacheRepository,
           this.scanModeRepository,
           logger,
-          southBaseFolder
+          southBaseFolders
         );
       case 'sqlite':
         return new SouthSQLite(
@@ -341,7 +342,7 @@ export default class SouthService {
           this.southCacheRepository,
           this.scanModeRepository,
           logger,
-          southBaseFolder
+          southBaseFolders
         );
       default:
         throw Error(`South connector of type ${settings.type} not installed`);
@@ -382,7 +383,7 @@ export default class SouthService {
       testToRun,
       async (_southId: string, _content: OIBusContent): Promise<void> => Promise.resolve(),
       logger,
-      'baseFolder'
+      { cache: 'baseCacheFolder', archive: 'baseArchiveFolder', error: 'baseErrorFolder' }
     );
     return await south.testConnection();
   }
@@ -431,7 +432,7 @@ export default class SouthService {
       testConnectorToRun,
       async (_southId: string, _content: OIBusContent): Promise<void> => Promise.resolve(),
       logger,
-      'baseFolder'
+      { cache: 'baseCacheFolder', archive: 'baseArchiveFolder', error: 'baseErrorFolder' }
     );
     return await south.testItem(testItemToRun, callback);
   }
@@ -467,7 +468,8 @@ export default class SouthService {
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
 
     if (southEntity.id !== 'test') {
-      await createFolder(this.getDefaultBaseFolder(southEntity.id));
+      const baseFolders = this.getDefaultBaseFolders(southEntity.id);
+      await createBaseFolders(baseFolders);
     }
 
     await this.dataStreamEngine.createSouth(
@@ -550,12 +552,15 @@ export default class SouthService {
     }
 
     await this.dataStreamEngine.deleteSouth(southConnector);
+    await this.deleteBaseFolders(southConnector);
     this.southConnectorRepository.deleteSouth(southConnector.id);
     this.dataStreamEngine.updateSubscriptions();
     this.logRepository.deleteLogsByScopeId('south', southConnector.id);
     this.southMetricsRepository.removeMetrics(southConnector.id);
     this.southCacheRepository.deleteAllBySouthConnector(southConnector.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+
+    this.dataStreamEngine.logger.info(`Deleted South connector "${southConnector.name}" (${southConnector.id})`);
   }
 
   async startSouth(southConnectorId: string): Promise<void> {
@@ -814,8 +819,32 @@ export default class SouthService {
     await this.dataStreamEngine.reloadItems(southConnectorId);
   }
 
-  private getDefaultBaseFolder(southId: string) {
-    return path.resolve(this.dataStreamEngine.baseFolder, `south-${southId}`);
+  private async deleteBaseFolders(south: SouthConnectorEntity<SouthSettings, SouthItemSettings>) {
+    const folders = this.getDefaultBaseFolders(south.id);
+
+    for (const type of Object.keys(folders) as Array<keyof BaseFolders>) {
+      const baseFolder = folders[type];
+
+      try {
+        this.dataStreamEngine.logger.trace(`Deleting "${type}" base folder "${baseFolder}" of South connector "${south.name}" (${south.id})`);
+
+        if (await filesExists(baseFolder)) {
+          await fs.rm(baseFolder, { recursive: true });
+        }
+      } catch (error) {
+        this.dataStreamEngine.logger.error(`Unable to delete South connector "${south.name}" (${south.id}) "${type}" base folder: ${error}`);
+      }
+    }
+  }
+
+  private getDefaultBaseFolders(southId: string) {
+    const folders = structuredClone(this.dataStreamEngine.baseFolders);
+
+    for (const type of Object.keys(this.dataStreamEngine.baseFolders) as Array<keyof BaseFolders>) {
+      folders[type] = path.resolve(folders[type], `south-${southId}`);
+    }
+
+    return folders;
   }
 }
 

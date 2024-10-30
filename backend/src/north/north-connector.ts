@@ -20,6 +20,7 @@ import NorthConnectorRepository from '../repository/config/north-connector.repos
 import ScanModeRepository from '../repository/config/scan-mode.repository';
 import { ScanMode } from '../model/scan-mode.model';
 import { OIBusError } from '../model/engine.model';
+import { BaseFolders } from '../model/types';
 
 /**
  * Class NorthConnector : provides general attributes and methods for north connectors.
@@ -66,11 +67,11 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     protected readonly northConnectorRepository: NorthConnectorRepository,
     protected readonly scanModeRepository: ScanModeRepository,
     protected logger: pino.Logger,
-    protected readonly baseFolder: string
+    protected readonly baseFolders: BaseFolders
   ) {
-    this.archiveService = new ArchiveService(this.logger, this.baseFolder, this.connector.caching.rawFiles.archive);
-    this.valueCacheService = new ValueCacheService<T>(this.logger, this.baseFolder, this.connector);
-    this.fileCacheService = new FileCacheService(this.logger, this.baseFolder, this.connector.caching);
+    this.archiveService = new ArchiveService(this.logger, this.baseFolders.archive, this.connector.caching.rawFiles.archive);
+    this.valueCacheService = new ValueCacheService<T>(this.logger, this.baseFolders.cache, this.baseFolders.error, this.connector);
+    this.fileCacheService = new FileCacheService(this.logger, this.baseFolders.cache, this.baseFolders.error, this.connector.caching);
 
     if (this.connector.id === 'test') {
       return;
@@ -132,7 +133,8 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     }
     this.logger.debug(`North connector "${this.connector.name}" enabled. Starting services...`);
     if (this.connector.id !== 'test') {
-      this.cacheSize = await dirSize(this.baseFolder);
+      // TODO: have only the cache folder? or the sum of all folders?
+      // this.cacheSize = await dirSize(this.baseFolders);
       this.metricsEvent.emit('cache-size', {
         cacheSize: this.cacheSize
       });
@@ -539,7 +541,8 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   async removeArchiveFiles(filenames: Array<string>): Promise<void> {
     this.logger.trace(`Removing ${filenames.length} archive files from North connector "${this.connector.name}"...`);
     await this.archiveService.removeFiles(filenames);
-    this.cacheSize = await dirSize(this.baseFolder);
+    // TODO: have only the cache folder? or the sum of all folders?
+    // this.cacheSize = await dirSize(this.baseFolders);
   }
 
   /**
