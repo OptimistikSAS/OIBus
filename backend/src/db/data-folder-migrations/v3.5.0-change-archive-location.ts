@@ -5,26 +5,27 @@ import { createFolder, getCommandLineArguments } from '../../../src/service/util
 
 const { configFile } = getCommandLineArguments();
 
-const DATA_FOLDER = path.resolve(configFile);
-const CACHE_FOLDER = `${DATA_FOLDER}/cache`;
-const ARCHIVE_FOLDER = `${DATA_FOLDER}/archive`;
-const ERROR_FOLDER = `${DATA_FOLDER}/error`;
+const DATA_FOLDER_PATH = path.resolve(configFile);
+const CACHE_FOLDER_PATH = path.resolve(DATA_FOLDER_PATH, 'cache');
+const ARCHIVE_FOLDER_PATH = path.resolve(DATA_FOLDER_PATH, 'archive');
+const ERROR_FOLDER_PATH = path.resolve(DATA_FOLDER_PATH, 'error');
 
 export async function up(_knex: Knex): Promise<void> {
-  log('Started migrating archive location');
+  console.log('\n[FolderStructureMigration]', 'Started migrating archive location');
 
-  // Create new folders
-  await createFolder(ARCHIVE_FOLDER);
-  log('Created archive folder');
+  await createFolder(ARCHIVE_FOLDER_PATH);
+  console.log('[FolderStructureMigration]', 'Created archive folder');
 
-  await createFolder(ERROR_FOLDER);
-  log('Created error folder');
+  await createFolder(ERROR_FOLDER_PATH);
+  console.log('[FolderStructureMigration]', 'Created error folder');
 
+  console.log('[FolderStructureMigration]', 'Refactoring data stream');
   await refactorDataStream();
+
+  console.log('[FolderStructureMigration]', 'Refactoring history query');
   await refactorHistoryQuery();
 
-  log('Finished migrating archive location');
-  process.exit();
+  console.log('[FolderStructureMigration]', 'Finished migrating archive location\n');
 }
 
 export async function down(): Promise<void> {
@@ -32,146 +33,108 @@ export async function down(): Promise<void> {
 }
 
 async function refactorDataStream() {
-  const baseFolder = path.join(CACHE_FOLDER, 'data-stream');
-  const exists = await folderExists(baseFolder);
+  const dataStreamFolderPath = path.join(CACHE_FOLDER_PATH, 'data-stream');
+  const exists = await folderExists(dataStreamFolderPath);
 
-  log(`Folder cache/data-stream ${exists ? 'exists' : 'does not exist, skipping'}`);
+  console.log(`Folder /cache/data-stream ${exists ? 'exists' : 'does not exist, skipping'}`);
   if (!exists) {
     return;
   }
 
-  // 1. Refactor cache folder
-  const northFolders = await getNorthFolders(baseFolder);
+  // 1. Move North folders
+  const northFolderNames = await getNorthFolderNames(dataStreamFolderPath);
 
-  // Move values to new location
-  for (const northFolderName of northFolders) {
-    const northFolder = path.join(baseFolder, northFolderName);
-    log(`Processing "values" folder for: ${northFolderName}`);
+  for (const northFolderName of northFolderNames) {
+    let sourceNorthFolderPath = path.join(dataStreamFolderPath, northFolderName);
 
-    const sourcePath = path.join(northFolder, 'values');
-    const destPath = path.join(northFolder, 'time-values');
+    // a. handling /cache/data-stream/north-id -> /cache/north-id
+    console.log(`\nMoving folder /cache/data-stream/${northFolderName} -> /cache/${northFolderName}`);
+    const destNorthFolderPath = path.join(CACHE_FOLDER_PATH, northFolderName);
+    await moveFolder(sourceNorthFolderPath, destNorthFolderPath);
+    sourceNorthFolderPath = destNorthFolderPath;
 
-    try {
-      await moveFolder(sourcePath, destPath);
-    } catch (error) {
-      log(`Error removing folder ${northFolderName}/values:`, error);
-    }
+    // b. handling /cache/north-id/values        -> /cache/north-id/time-values
+    //             /cache/north-id/values-errors -> /errors/north-id/time-values
+    console.log(`\nMoving folder /cache/${northFolderName}/values -> /cache/${northFolderName}/time-values`);
+    await moveFolder(path.join(sourceNorthFolderPath, 'values'), path.join(sourceNorthFolderPath, 'time-values'));
 
-    log(`Finished processing "values" folders for: ${northFolderName}`);
+    console.log(`\nMoving folder /cache/${northFolderName}/values-errors -> /errors/${northFolderName}/time-values`);
+    await moveFolder(path.join(sourceNorthFolderPath, 'values-errors'), path.join(ERROR_FOLDER_PATH, northFolderName, 'time-values'));
+
+    // c. handling /cache/north-id/files-errors -> /errors/north-id/files
+    console.log(`\nMoving folder /cache/${northFolderName}/files-errors -> /errors/${northFolderName}/files`);
+    await moveFolder(path.join(sourceNorthFolderPath, 'files-errors'), path.join(ERROR_FOLDER_PATH, northFolderName, 'files'));
+
+    // d. handling /cache/north-id/archive -> /archive/north-id/files
+    console.log(`\nMoving folder /cache/${northFolderName}/archive -> /archive/${northFolderName}/files`);
+    await moveFolder(path.join(sourceNorthFolderPath, 'archive'), path.join(ARCHIVE_FOLDER_PATH, northFolderName, 'files'));
   }
 
-  // 2. Refactor error folder
-  for (const northFolderName of northFolders) {
-    const northFolder = path.join(baseFolder, northFolderName);
-    log(`Processing "values-error" and "files-error" folders for: ${northFolderName}`);
+  // 2. Move South folders
+  const southFolderNames = await getSouthFolderNames(dataStreamFolderPath);
 
-    // Move north folders
-    for (const [oldName, newName] of [
-      ['values-errors', 'values'],
-      ['files-errors', 'files']
-    ]) {
-      const sourcePath = path.join(northFolder, oldName);
-      const destPath = path.join(ERROR_FOLDER, 'data-stream', northFolderName, newName);
+  for (const southFolderName of southFolderNames) {
+    let sourceSouthFolderPath = path.join(dataStreamFolderPath, southFolderName);
 
-      try {
-        await moveFolder(sourcePath, destPath);
-      } catch (error) {
-        log(`Error moving folder ${northFolderName}/${oldName}:`, error);
-      }
-    }
+    // a. handling /cache/data-stream/south-id -> /cache/south-id
+    console.log(`\nMoving folder /cache/data-stream/${southFolderName} -> /cache/${southFolderName}`);
+    const destSouthFolderPath = path.join(CACHE_FOLDER_PATH, southFolderName);
+    await moveFolder(sourceSouthFolderPath, destSouthFolderPath);
   }
 
-  // 3. Refactor archive folder
-  for (const northFolderName of northFolders) {
-    log(`Processing "archive" folder for: ${northFolderName}`);
-
-    const sourcePath = path.join(baseFolder, northFolderName, 'archive');
-    const destPath = path.join(ARCHIVE_FOLDER, 'data-stream', northFolderName, 'files');
-
-    try {
-      await moveFolder(sourcePath, destPath);
-    } catch (error) {
-      log(`Error moving folder ${northFolderName}/archive:`, error);
-    }
-
-    log(`Finished processing archive folder for: ${northFolderName}`);
-  }
+  // 3. Remove data-stream folder
+  console.log('\nRemoving /cache/data-stream\n');
+  await fs.rmdir(dataStreamFolderPath);
 }
 
 async function refactorHistoryQuery() {
-  const baseFolder = path.join(CACHE_FOLDER, 'history-query');
-  const exists = await folderExists(baseFolder);
+  const historyQueryFolderPath = path.join(CACHE_FOLDER_PATH, 'history-query');
+  const exists = await folderExists(historyQueryFolderPath);
 
-  log(`Folder cache/history-query ${exists ? 'exists' : 'does not exist, skipping'}`);
+  console.log(`Folder /cache/history-query ${exists ? 'exists' : 'does not exist, skipping'}`);
   if (!exists) {
     return;
   }
 
-  // 1. Refactor cache folder
-  const historyFolders = await getHistoryFolders(baseFolder);
+  const historyFolderNames = await getHistoryFolders(historyQueryFolderPath);
 
-  // Move values to new location
-  for (const historyFolderName of historyFolders) {
-    const historyFolder = path.join(baseFolder, historyFolderName, 'north');
-    log(`Processing "values" folder for: ${historyFolderName}`);
+  // 1. Move History Query North folders
+  // South folders remain unchanged
+  for (const historyFolderName of historyFolderNames) {
+    let sourceHistoryFolderPath = path.join(historyQueryFolderPath, historyFolderName);
 
-    const sourcePath = path.join(historyFolder, 'values');
-    const destPath = path.join(historyFolder, 'time-values');
+    // a. handling /cache/history-query/history-id -> /cache/history-id
+    console.log(`\nMoving folder /cache/history-query/${historyFolderName} -> /cache/${historyFolderName}`);
+    const destHistoryFolderPath = path.join(CACHE_FOLDER_PATH, historyFolderName);
+    await moveFolder(sourceHistoryFolderPath, destHistoryFolderPath);
+    sourceHistoryFolderPath = destHistoryFolderPath;
 
-    try {
-      await moveFolder(sourcePath, destPath);
-    } catch (error) {
-      log(`Error removing folder ${historyFolderName}/north/values:`, error);
-    }
+    // b. handling /cache/history-id/north/values        -> /cache/history-id/north/time-values
+    //             /cache/history-id/north/values-errors -> /errors/history-id/north/time-values
+    console.log(`\nMoving folder /cache/${historyFolderName}/north/values -> /cache/${historyFolderName}/north/time-values`);
+    await moveFolder(path.join(sourceHistoryFolderPath, 'north', 'values'), path.join(sourceHistoryFolderPath, 'north','time-values'));
 
-    log(`Finished processing "values" folders for: ${historyFolderName}`);
+    console.log(`\nMoving folder /cache/${historyFolderName}/north/values-errors -> /errors/${historyFolderName}/north/time-values`);
+    await moveFolder(path.join(sourceHistoryFolderPath, 'north', 'values-errors'), path.join(ERROR_FOLDER_PATH, historyFolderName, 'north', 'time-values'));
+
+    // c. handling /cache/history-id/north/files-errors -> /errors/history-id/north/files
+    console.log(`\nMoving folder /cache/${historyFolderName}/north/files-errors -> /errors/${historyFolderName}/north/files`);
+    await moveFolder(path.join(sourceHistoryFolderPath, 'north', 'files-errors'), path.join(ERROR_FOLDER_PATH, historyFolderName, 'north', 'files'));
+
+    // d. handling /cache/history-id/north/archive -> /archive/history-id/north/files
+    console.log(`\nMoving folder /cache/${historyFolderName}/north/archive -> /archive/${historyFolderName}/north/files`);
+    await moveFolder(path.join(sourceHistoryFolderPath, 'north', 'archive'), path.join(ARCHIVE_FOLDER_PATH, historyFolderName, 'north', 'files'));
   }
 
-  // 2. Refactor error folder
-  for (const historyFolderName of historyFolders) {
-    const historyFolder = path.join(baseFolder, historyFolderName, 'north');
-    log(`Processing "values-error" and "files-error" folders for: ${historyFolderName}`);
-
-    // Move north folders
-    for (const [oldName, newName] of [
-      ['values-errors', 'values'],
-      ['files-errors', 'files']
-    ]) {
-      const sourcePath = path.join(historyFolder, oldName);
-      const destPath = path.join(ERROR_FOLDER, 'history-query', historyFolderName, 'north', newName);
-
-      try {
-        await moveFolder(sourcePath, destPath);
-      } catch (error) {
-        log(`Error moving folder ${historyFolderName}/north/${oldName}:`, error);
-      }
-    }
-  }
-
-  // 3. Refactor archive folder
-  for (const historyFolderName of historyFolders) {
-    log(`Processing "archive" folder for: ${historyFolderName}`);
-
-    const sourcePath = path.join(baseFolder, historyFolderName, 'north', 'archive');
-    const destPath = path.join(ARCHIVE_FOLDER, 'history-query', historyFolderName, 'north', 'files');
-
-    try {
-      await moveFolder(sourcePath, destPath);
-    } catch (error) {
-      log(`Error moving folder ${historyFolderName}/north/archive:`, error);
-    }
-
-    log(`Finished processing archive folder for: ${historyFolderName}`);
-  }
+  // 3. Remove history-query folder
+  console.log('\nRemoving /cache/history-query\n');
+  await fs.rmdir(historyQueryFolderPath);
 }
 
 // Helpers
 
-function log(...message: any[]) {
-  console.log('[FolderStructureMigration] ', ...message);
-}
-
 /**
+ * Moves the contents from sourcePath to destPath, then deletes sourcePath
  * @throws {Error}
  */
 async function moveFolder(sourcePath: string, destPath: string) {
@@ -190,9 +153,14 @@ async function folderExists(folderPath: string): Promise<boolean> {
   }
 }
 
-async function getNorthFolders(baseFolder: string): Promise<string[]> {
+async function getNorthFolderNames(baseFolder: string): Promise<string[]> {
   const entries = await fs.readdir(baseFolder);
   return entries.filter(entry => entry.startsWith('north-'));
+}
+
+async function getSouthFolderNames(baseFolder: string): Promise<string[]> {
+  const entries = await fs.readdir(baseFolder);
+  return entries.filter(entry => entry.startsWith('south-'));
 }
 
 async function getHistoryFolders(baseFolder: string): Promise<string[]> {
@@ -204,7 +172,7 @@ async function moveContents(sourcePath: string, destPath: string, depth = 1): Pr
   const entries = await fs.readdir(sourcePath, { withFileTypes: true });
   await createFolder(destPath);
 
-  console.log(`${'\t'.repeat(depth - 1)}Moving contents (${sourcePath} -> ${destPath})`);
+  console.log(`${'\t'.repeat(depth - 1)}Moving contents ${shortenPath(sourcePath)} -> ${shortenPath(destPath)}`);
 
   for (const entry of entries) {
     const sourceItemPath = path.join(sourcePath, entry.name);
@@ -216,7 +184,11 @@ async function moveContents(sourcePath: string, destPath: string, depth = 1): Pr
       await fs.rmdir(sourceItemPath);
     } else {
       await fs.rename(sourceItemPath, destItemPath);
-      console.log(`${'\t'.repeat(depth)}Moved ${sourceItemPath} -> ${destItemPath}`);
+      console.log(`${'\t'.repeat(depth)}Moved ${shortenPath(sourceItemPath)} -> ${shortenPath(destItemPath)}`);
     }
   }
+}
+
+function shortenPath(path: string) {
+  return path.startsWith(DATA_FOLDER_PATH) ? path.slice(DATA_FOLDER_PATH.length) : path;
 }

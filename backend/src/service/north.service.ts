@@ -22,7 +22,7 @@ import ScanModeRepository from '../repository/config/scan-mode.repository';
 import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
 import LogRepository from '../repository/logs/log.repository';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
-import { checkScanMode, createFolder } from './utils';
+import { checkScanMode, createBaseFolders, createFolder, filesExists } from './utils';
 import { ScanMode } from '../model/scan-mode.model';
 import { SouthConnectorLightDTO } from '../../shared/model/south-connector.model';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
@@ -46,6 +46,8 @@ import DataStreamEngine from '../engine/data-stream-engine';
 import { SouthConnectorEntityLight } from '../model/south-connector.model';
 import { PassThrough } from 'node:stream';
 import path from 'node:path';
+import fs from 'node:fs/promises';
+import { BaseFolders } from '../model/types';
 
 export const northManifestList: Array<NorthConnectorManifest> = [
   consoleManifest,
@@ -74,9 +76,9 @@ export default class NorthService {
   runNorth(
     settings: NorthConnectorEntity<NorthSettings>,
     logger: pino.Logger,
-    baseFolder: string | undefined = undefined
+    baseFolders: BaseFolders | undefined = undefined
   ): NorthConnector<NorthSettings> {
-    const northBaseFolder = baseFolder ?? this.getDefaultBaseFolder(settings.id);
+    const northBaseFolders = baseFolders ?? this.getDefaultBaseFolders(settings.id);
 
     switch (settings.type) {
       case 'aws-s3':
@@ -86,7 +88,7 @@ export default class NorthService {
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
-          northBaseFolder
+          northBaseFolders
         );
       case 'azure-blob':
         return new NorthAzureBlob(
@@ -95,7 +97,7 @@ export default class NorthService {
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
-          northBaseFolder
+          northBaseFolders
         );
       case 'console':
         return new NorthConsole(
@@ -104,7 +106,7 @@ export default class NorthService {
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
-          northBaseFolder
+          northBaseFolders
         );
       case 'file-writer':
         return new NorthFileWriter(
@@ -113,7 +115,7 @@ export default class NorthService {
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
-          northBaseFolder
+          northBaseFolders
         );
       case 'oianalytics':
         return new NorthOIAnalytics(
@@ -124,7 +126,7 @@ export default class NorthService {
           this.certificateRepository,
           this.oIAnalyticsRegistrationRepository,
           logger,
-          northBaseFolder
+          northBaseFolders
         );
       case 'sftp':
         return new NorthSFTP(
@@ -133,7 +135,7 @@ export default class NorthService {
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
-          northBaseFolder
+          northBaseFolders
         );
       default:
         throw Error(`North connector of type ${settings.type} not installed`);
@@ -169,7 +171,7 @@ export default class NorthService {
       subscriptions: []
     };
 
-    const north = this.runNorth(testToRun, logger, 'baseFolder');
+    const north = this.runNorth(testToRun, logger, { cache: 'baseCacheFolder', archive: 'baseArchiveFolder', error: 'baseErrorFolder' });
     return await north.testConnection();
   }
 
@@ -205,7 +207,8 @@ export default class NorthService {
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
 
     if (northEntity.id !== 'test') {
-      await createFolder(this.getDefaultBaseFolder(northEntity.id));
+      const baseFolders = this.getDefaultBaseFolders(northEntity.id);
+      await createBaseFolders(baseFolders);
     }
 
     await this.dataStreamEngine.createNorth(
@@ -289,10 +292,13 @@ export default class NorthService {
       throw new Error(`North connector ${northConnectorId} does not exist`);
     }
     await this.dataStreamEngine.deleteNorth(northConnector);
+    await this.deleteBaseFolders(northConnector);
     this.northConnectorRepository.deleteNorth(northConnectorId);
     this.logRepository.deleteLogsByScopeId('north', northConnector.id);
     this.northMetricsRepository.removeMetrics(northConnector.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+
+    this.dataStreamEngine.logger.info(`Deleted North connector "${northConnector.name}" (${northConnector.id})`);
   }
 
   async startNorth(northConnectorId: string) {
@@ -377,8 +383,31 @@ export default class NorthService {
     this.dataStreamEngine.updateSubscription(northId);
   }
 
-  private getDefaultBaseFolder(northId: string) {
-    return path.resolve(this.dataStreamEngine.baseFolder, `north-${northId}`);
+  private async deleteBaseFolders(north: NorthConnectorEntity<NorthSettings>) {
+    const folders = this.getDefaultBaseFolders(north.id);
+
+    for (const type of Object.keys(folders) as Array<keyof BaseFolders>) {
+      try {
+        const baseFolder = folders[type];
+        this.dataStreamEngine.logger.trace(`Deleting base folder "${baseFolder}" of North connector "${north.name}" (${north.id})`);
+
+        if (await filesExists(baseFolder)) {
+          await fs.rm(baseFolder, { recursive: true });
+        }
+      } catch (error) {
+        this.dataStreamEngine.logger.error(`Unable to delete North connector "${north.name}" (${north.id}) base folder: ${error}`);
+      }
+    }
+  }
+
+  private getDefaultBaseFolders(northId: string): BaseFolders {
+    const folders = structuredClone(this.dataStreamEngine.baseFolders);
+
+    for (const type of Object.keys(this.dataStreamEngine.baseFolders) as Array<keyof BaseFolders>) {
+      folders[type] = path.resolve(folders[type], `north-${northId}`);
+    }
+
+    return folders;
   }
 }
 

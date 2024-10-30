@@ -8,6 +8,7 @@ import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import { BaseFolders } from '../../model/types';
 
 /**
  * Class Console - display values and file path into the console
@@ -19,9 +20,9 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
-    baseFolder: string
+    baseFolders: BaseFolders
   ) {
-    super(configuration, encryptionService, northConnectorRepository, scanModeRepository, logger, baseFolder);
+    super(configuration, encryptionService, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   async handleContent(data: OIBusContent): Promise<void> {

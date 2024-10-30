@@ -21,6 +21,7 @@ import CertificateRepository from '../../repository/config/certificate.repositor
 import https from 'node:https';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { HttpProxyAgent } from 'http-proxy-agent';
+import { BaseFolders } from '../../model/types';
 
 interface OIATimeValues {
   type: string;
@@ -57,7 +58,7 @@ export default class SouthOIAnalytics
     private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
     private readonly certificateRepository: CertificateRepository,
     logger: pino.Logger,
-    baseFolder: string
+    baseFolders: BaseFolders
   ) {
     super(
       connector,
@@ -67,9 +68,9 @@ export default class SouthOIAnalytics
       southCacheRepository,
       scanModeRepository,
       logger,
-      baseFolder
+      baseFolders
     );
-    this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
+    this.tmpFolder = path.resolve(this.baseFolders.cache, 'tmp');
   }
 
   /**

@@ -22,6 +22,7 @@ import { OIBusError } from '../../model/engine.model';
 import https from 'node:https';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { HttpProxyAgent } from 'http-proxy-agent';
+import { BaseFolders } from '../../model/types';
 
 /**
  * Class NorthOIAnalytics - Send files to a POST Multipart HTTP request and values as JSON payload
@@ -36,9 +37,9 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     private readonly certificateRepository: CertificateRepository,
     private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
     logger: pino.Logger,
-    baseFolder: string
+    baseFolders: BaseFolders
   ) {
-    super(connector, encryptionService, northConnectorRepository, scanModeRepository, logger, baseFolder);
+    super(connector, encryptionService, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   override async testConnection(): Promise<void> {

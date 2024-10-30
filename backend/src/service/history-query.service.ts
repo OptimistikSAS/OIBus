@@ -15,7 +15,7 @@ import EncryptionService from './encryption.service';
 import HistoryQueryRepository from '../repository/config/history-query.repository';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
-import { checkScanMode, createFolder } from './utils';
+import { checkScanMode, createBaseFolders, createFolder, filesExists } from './utils';
 import SouthService, { southManifestList } from './south.service';
 import NorthService, { northManifestList } from './north.service';
 import LogRepository from '../repository/logs/log.repository';
@@ -32,6 +32,7 @@ import HistoryQueryEngine from '../engine/history-query-engine';
 import HistoryQuery from '../engine/history-query';
 import HistoryQueryMetricsRepository from '../repository/logs/history-query-metrics.repository';
 import { PassThrough } from 'node:stream';
+import { BaseFolders } from '../model/types';
 
 export default class HistoryQueryService {
   constructor(
@@ -47,15 +48,15 @@ export default class HistoryQueryService {
     private readonly historyQueryEngine: HistoryQueryEngine
   ) {}
 
-  runHistoryQuery(settings: HistoryQueryEntityLight, baseFolder: string | undefined = undefined) {
-    const historyQueryBaseFolder = baseFolder ?? this.getDefaultBaseFolder(settings.id);
+  runHistoryQuery(settings: HistoryQueryEntityLight, baseFolders: BaseFolders | undefined = undefined) {
+    const historyQueryBaseFolders = baseFolders ?? this.getDefaultBaseFolders(settings.id);
 
     return new HistoryQuery(
       this.findById(settings.id)!,
       this.southService,
       this.northService,
       this.historyQueryRepository,
-      historyQueryBaseFolder,
+      historyQueryBaseFolders,
       this.historyQueryEngine.logger.child({ scopeType: 'history-query', scopeId: settings.id, scopeName: settings.name })
     );
   }
@@ -186,7 +187,8 @@ export default class HistoryQueryService {
     this.historyQueryRepository.saveHistoryQuery<S, N, I>(historyQuery);
     this.oIAnalyticsMessageService.createHistoryQueryMessage(historyQuery);
 
-    await createFolder(this.getDefaultBaseFolder(historyQuery.id));
+    const baseFolders = this.getDefaultBaseFolders(historyQuery.id);
+    await createBaseFolders(baseFolders);
 
     await this.historyQueryEngine.createHistoryQuery(this.runHistoryQuery(historyQuery));
     return historyQuery;
@@ -240,10 +242,13 @@ export default class HistoryQueryService {
     }
 
     await this.historyQueryEngine.deleteHistoryQuery(historyQuery);
+    await this.deleteBaseFolders(historyQuery);
     this.historyQueryRepository.deleteHistoryQuery(historyQuery.id);
     this.historyQueryMetricsRepository.removeMetrics(historyQuery.id);
     this.logRepository.deleteLogsByScopeId('history-query', historyQuery.id);
     this.oIAnalyticsMessageService.createHistoryQueryMessage(historyQuery);
+
+    this.historyQueryEngine.logger.info(`Deleted History query "${historyQuery.name}" (${historyQuery.id})`);
   }
 
   async startHistoryQuery(historyQueryId: string): Promise<void> {
@@ -489,8 +494,31 @@ export default class HistoryQueryService {
     await this.historyQueryEngine.reloadHistoryQuery(historyQuery, false);
   }
 
-  private getDefaultBaseFolder(historyId: string) {
-    return path.resolve(this.historyQueryEngine.baseFolder, `history-${historyId}`);
+  private async deleteBaseFolders(historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>) {
+    const folders = this.getDefaultBaseFolders(historyQuery.id);
+
+    for (const type of Object.keys(folders) as Array<keyof BaseFolders>) {
+      const baseFolder = folders[type];
+
+      try {
+        this.historyQueryEngine.logger.trace(`Deleting "${type}" base folder "${baseFolder}" of History query "${historyQuery.name}" (${historyQuery.id})`);
+        if (await filesExists(baseFolder)) {
+          await fs.rm(baseFolder, { recursive: true });
+        }
+      } catch (error) {
+        this.historyQueryEngine.logger.error(`Unable to delete History query "${historyQuery.name}" (${historyQuery.id}) "${type}" base folder: ${error}`);
+      }
+    }
+  }
+
+  private getDefaultBaseFolders(historyId: string) {
+    const folders = structuredClone(this.historyQueryEngine.baseFolders);
+
+    for (const type of Object.keys(this.historyQueryEngine.baseFolders) as Array<keyof BaseFolders>) {
+      folders[type] = path.resolve(folders[type], `history-${historyId}`);
+    }
+
+    return folders;
   }
 }
 

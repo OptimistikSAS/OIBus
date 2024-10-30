@@ -8,7 +8,7 @@ import pino from 'pino';
 // Time between two checks of the Archive Folder
 const ARCHIVE_TIMEOUT = 3600000; // one hour
 const ARCHIVE_TIMEOUT_INIT = 10000; // Wait a little at North start up
-const ARCHIVE_FOLDER = 'archive';
+const ARCHIVE_FILES_FOLDER = 'files';
 
 import { NorthArchiveSettings, NorthArchiveFiles } from '../../../shared/model/north-connector.model';
 import { Instant } from '../../../shared/model/types';
@@ -33,7 +33,7 @@ export default class ArchiveService {
     this._logger = logger;
     this.enabled = settings.enabled;
     this.retentionDuration = settings.retentionDuration * 3600000;
-    this.archiveFolder = path.resolve(baseFolder, ARCHIVE_FOLDER);
+    this.archiveFolder = path.resolve(baseFolder, ARCHIVE_FILES_FOLDER);
   }
 
   /**
