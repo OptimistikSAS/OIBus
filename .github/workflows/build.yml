@@ -23,6 +23,11 @@ jobs:
         with:
           ref: ${{ github.ref }}
 
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.10
+
       - name: Setup launcher environment
         uses: ./.github/actions/setup_launcher_environment
         with:

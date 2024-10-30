@@ -33,6 +33,11 @@ jobs:
         with:
           ref: ${{ github.ref }}
 
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.10
+
       - name: Build documentation
         if: ${{ steps.release.outputs.release_created }}
         shell: bash
