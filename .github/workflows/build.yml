@@ -147,7 +147,7 @@ jobs:
             apt update && apt -y install curl build-essential
             curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
             apt-get install -y nodejs
-            npm install -g pkg
+            npm install -g @yao-pkg/pkg
           run: |
             cd ./backend/
             pkg \
