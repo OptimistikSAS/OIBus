@@ -11,6 +11,7 @@ import csv from 'papaparse';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import { BaseFolders } from '../../model/types';
 
 /**
  * Class NorthFileWriter - Write files in an output folder
@@ -22,9 +23,9 @@ export default class NorthFileWriter extends NorthConnector<NorthFileWriterSetti
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
-    baseFolder: string
+    baseFolders: BaseFolders
   ) {
-    super(configuration, encryptionService, northConnectorRepository, scanModeRepository, logger, baseFolder);
+    super(configuration, encryptionService, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   async handleContent(data: OIBusContent): Promise<void> {

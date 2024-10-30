@@ -5,6 +5,7 @@ import { filesExists } from '../service/utils';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { Instant } from '../../shared/model/types';
+import { BaseFolders } from '../model/types';
 import { NorthConnectorMetrics, OIBusContent, SouthConnectorMetrics } from '../../shared/model/engine.model';
 import { ScanMode } from '../model/scan-mode.model';
 import { NorthSettings } from '../../shared/model/north-settings.model';
@@ -17,7 +18,9 @@ import NorthConnectorMetricsRepository from '../repository/logs/north-connector-
 import NorthConnectorMetricsService from '../service/metrics/north-connector-metrics.service';
 import { PassThrough } from 'node:stream';
 
-const CACHE_FOLDER = './cache/data-stream';
+const CACHE_FOLDER = './cache';
+const ARCHIVE_FOLDER = './archive';
+const ERROR_FOLDER = './error';
 
 export default class DataStreamEngine {
   private northConnectors = new Map<string, NorthConnector<NorthSettings>>();
@@ -25,22 +28,26 @@ export default class DataStreamEngine {
   private southConnectors = new Map<string, SouthConnector<SouthSettings, SouthItemSettings>>();
   private southConnectorMetrics: Map<string, SouthConnectorMetricsService> = new Map<string, SouthConnectorMetricsService>();
 
-  private readonly cacheFolder: string;
+  private readonly cacheFolders: BaseFolders;
 
   constructor(
     private northConnectorMetricsRepository: NorthConnectorMetricsRepository,
     private southConnectorMetricsRepository: SouthConnectorMetricsRepository,
     private _logger: pino.Logger
   ) {
-    this.cacheFolder = path.resolve(CACHE_FOLDER);
+    this.cacheFolders = {
+      cache: path.resolve(CACHE_FOLDER),
+      archive: path.resolve(ARCHIVE_FOLDER),
+      error: path.resolve(ERROR_FOLDER)
+    };
   }
 
   get logger() {
     return this._logger;
   }
 
-  get baseFolder() {
-    return this.cacheFolder;
+  get baseFolders() {
+    return this.cacheFolders;
   }
 
   getSouthDataStream(southConnectorId: string): PassThrough | null {
@@ -223,19 +230,6 @@ export default class DataStreamEngine {
     await this.stopSouth(south.id);
     // this.homeMetricsService.removeSouth(southId);
     this.southConnectors.delete(south.id);
-    const baseFolder = path.resolve(this.cacheFolder, `south-${south.id}`);
-
-    try {
-      this._logger.trace(`Deleting base folder "${baseFolder}" of South connector "${south.name}" (${south.id})`);
-
-      if (await filesExists(baseFolder)) {
-        await fs.rm(baseFolder, { recursive: true });
-      }
-
-      this._logger.info(`Deleted South connector "${south.name}" (${south.id})`);
-    } catch (error) {
-      this._logger.error(`Unable to delete South connector "${south.name}" (${south.id} base folder: ${error}`);
-    }
   }
 
   /**
@@ -245,20 +239,6 @@ export default class DataStreamEngine {
     await this.stopNorth(north.id);
     // this.homeMetricsService.removeNorth(northId);
     this.northConnectors.delete(north.id);
-
-    const baseFolder = path.resolve(this.cacheFolder, `north-${north.id}`);
-
-    try {
-      this._logger.trace(`Deleting base folder "${baseFolder}" of North connector "${north.name}" (${north.id})`);
-
-      if (await filesExists(baseFolder)) {
-        await fs.rm(baseFolder, { recursive: true });
-      }
-
-      this._logger.info(`Deleted North connector "${north.name}" (${north.id})`);
-    } catch (error) {
-      this._logger.error(`Unable to delete North connector "${north.name}" (${north.id}) base folder: ${error}`);
-    }
   }
 
   setLogger(value: pino.Logger) {

@@ -11,6 +11,7 @@ import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import { BaseFolders } from '../../model/types';
 
 /**
  * Class SouthPI - Run a PI Agent to connect to a PI server.
@@ -29,7 +30,7 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
     southCacheRepository: SouthCacheRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
-    baseFolder: string
+    baseFolders: BaseFolders
   ) {
     super(
       connector,
@@ -39,7 +40,7 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
       southCacheRepository,
       scanModeRepository,
       logger,
-      baseFolder
+      baseFolders
     );
   }
 

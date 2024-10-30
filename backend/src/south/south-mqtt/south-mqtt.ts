@@ -22,6 +22,7 @@ import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/sout
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import { BaseFolders } from '../../model/types';
 
 /**
  * Class SouthMQTT - Subscribe to data topic from a MQTT broker
@@ -37,7 +38,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     southCacheRepository: SouthCacheRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
-    baseFolder: string
+    baseFolders: BaseFolders
   ) {
     super(
       connector,
@@ -47,7 +48,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
       southCacheRepository,
       scanModeRepository,
       logger,
-      baseFolder
+      baseFolders
     );
   }
 

@@ -23,6 +23,7 @@ import { ScanMode } from '../model/scan-mode.model';
 import { HistoryQueryItemDTO } from '../../shared/model/history-query.model';
 import { SouthItemSettings } from '../../shared/model/south-settings.model';
 import { EventEmitter } from 'node:events';
+import { BaseFolders } from '../model/types';
 
 const COMPRESSION_LEVEL = 9;
 
@@ -96,6 +97,15 @@ export const createFolder = async (folder: string): Promise<void> => {
     await fs.mkdir(folderPath, { recursive: true });
   }
 };
+
+/**
+ * Create folders defined by the BaseFolders type
+ */
+export const createBaseFolders = async (baseFoldes: BaseFolders) => {
+  for (const type of Object.keys(baseFoldes) as Array<keyof BaseFolders>) {
+    await createFolder(baseFoldes[type]);
+  }
+}
 
 /**
  * Compress the specified file

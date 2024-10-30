@@ -15,6 +15,7 @@ import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/sout
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import { BaseFolders } from '../../model/types';
 
 /**
  * Class SouthSFTP - Retrieve files from remote SFTP instance
@@ -33,7 +34,7 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
     southCacheRepository: SouthCacheRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
-    baseFolder: string
+    baseFolders: BaseFolders
   ) {
     super(
       connector,
@@ -43,9 +44,9 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
       southCacheRepository,
       scanModeRepository,
       logger,
-      baseFolder
+      baseFolders
     );
-    this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
+    this.tmpFolder = path.resolve(this.baseFolders.cache, 'tmp');
   }
 
   override async testConnection(): Promise<void> {

@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import { createFolder, delay } from '../service/utils';
+import { createBaseFolders, createFolder, delay } from '../service/utils';
 import pino from 'pino';
 import SouthService from '../service/south.service';
 import NorthService from '../service/north.service';
@@ -14,7 +14,7 @@ import { NorthConnectorEntity } from '../model/north-connector.model';
 import { HistoryQueryEntity } from '../model/histor-query.model';
 import HistoryQueryRepository from '../repository/config/history-query.repository';
 import { EventEmitter } from 'node:events';
-import { Instant } from '../model/types';
+import { BaseFolders, Instant } from '../model/types';
 import { QueriesHistory } from '../south/south-interface';
 
 const FINISH_INTERVAL = 5000;
@@ -32,12 +32,14 @@ export default class HistoryQuery {
     private readonly southService: SouthService,
     private readonly northService: NorthService,
     private readonly historyQueryRepository: HistoryQueryRepository,
-    private readonly baseFolder: string,
+    private readonly baseFolders: BaseFolders,
     private logger: pino.Logger
   ) {}
 
   async start(): Promise<void> {
     this.historyConfiguration = this.historyQueryRepository.findHistoryQueryById(this.historyConfiguration.id)!;
+
+    // South
     const southConfiguration: SouthConnectorEntity<SouthSettings, SouthItemSettings> = {
       id: this.historyConfiguration.id,
       name: this.historyConfiguration.name,
@@ -47,9 +49,15 @@ export default class HistoryQuery {
       settings: this.historyConfiguration.southSettings,
       items: []
     };
-    const southFolder = path.resolve(this.baseFolder, 'south');
-    await createFolder(southFolder);
-    this.south = this.southService.runSouth(southConfiguration, this.addContent.bind(this), this.logger, southFolder);
+    const southFolders: BaseFolders = {
+      cache: path.resolve(this.baseFolders.cache, 'south'),
+      archive: path.resolve(this.baseFolders.archive, 'south'),
+      error: path.resolve(this.baseFolders.error, 'south')
+    };
+    await createBaseFolders(southFolders);
+    this.south = this.southService.runSouth(southConfiguration, this.addContent.bind(this), this.logger, southFolders);
+
+    // North
     const northConfiguration: NorthConnectorEntity<NorthSettings> = {
       id: this.historyConfiguration.id,
       name: this.historyConfiguration.name,
@@ -60,9 +68,13 @@ export default class HistoryQuery {
       caching: this.historyConfiguration.caching,
       subscriptions: []
     };
-    const northFolder = path.resolve(this.baseFolder, 'north');
-    await createFolder(northFolder);
-    this.north = this.northService.runNorth(northConfiguration, this.logger, northFolder);
+    const northFolders: BaseFolders = {
+      cache: path.resolve(this.baseFolders.cache, 'north'),
+      archive: path.resolve(this.baseFolders.archive, 'north'),
+      error: path.resolve(this.baseFolders.error, 'north')
+    };
+    await createBaseFolders(northFolders);
+    this.north = this.northService.runNorth(northConfiguration, this.logger, northFolders);
 
     if (this.historyConfiguration.status !== 'RUNNING') {
       this.logger.trace(`History Query "${this.historyConfiguration.name}" not enabled`);

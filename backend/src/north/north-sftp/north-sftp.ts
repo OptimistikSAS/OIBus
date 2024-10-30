@@ -13,6 +13,7 @@ import fs from 'node:fs/promises';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import { BaseFolders } from '../../model/types';
 
 /**
  * Class NorthSFTP - Write files in an output folder
@@ -24,9 +25,9 @@ export default class NorthSFTP extends NorthConnector<NorthSFTPSettings> {
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
-    baseFolder: string
+    baseFolders: BaseFolders
   ) {
-    super(configuration, encryptionService, northConnectorRepository, scanModeRepository, logger, baseFolder);
+    super(configuration, encryptionService, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   async handleContent(data: OIBusContent): Promise<void> {
