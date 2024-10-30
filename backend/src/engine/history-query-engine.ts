@@ -9,8 +9,11 @@ import { NorthSettings } from '../../shared/model/north-settings.model';
 import HistoryQueryMetricsService from '../service/metrics/history-query-metrics.service';
 import HistoryQueryMetricsRepository from '../repository/logs/history-query-metrics.repository';
 import { PassThrough } from 'node:stream';
+import { BaseFolders } from '../model/types';
 
-const CACHE_FOLDER = './cache/history-query';
+const CACHE_FOLDER = './cache';
+const ARCHIVE_FOLDER = './archive';
+const ERROR_FOLDER = './error';
 
 /**
  * Manage history queries by running {@link HistoryQuery} one after another
@@ -19,21 +22,25 @@ const CACHE_FOLDER = './cache/history-query';
 export default class HistoryQueryEngine {
   private historyQueries: Map<string, HistoryQuery> = new Map<string, HistoryQuery>();
   private historyQueryMetrics: Map<string, HistoryQueryMetricsService> = new Map<string, HistoryQueryMetricsService>();
-  private readonly cacheFolder: string;
+  private readonly cacheFolders: BaseFolders;
 
   constructor(
     private historyQueryMetricsRepository: HistoryQueryMetricsRepository,
     private _logger: pino.Logger
   ) {
-    this.cacheFolder = path.resolve(CACHE_FOLDER);
+    this.cacheFolders = {
+      cache: path.resolve(CACHE_FOLDER),
+      archive: path.resolve(ARCHIVE_FOLDER),
+      error: path.resolve(ERROR_FOLDER)
+    };
   }
 
   get logger() {
     return this._logger;
   }
 
-  get baseFolder() {
-    return this.cacheFolder;
+  get baseFolders() {
+    return this.cacheFolders;
   }
 
   getHistoryQueryDataStream(historyQueryId: string): PassThrough | null {
@@ -114,15 +121,5 @@ export default class HistoryQueryEngine {
   async deleteHistoryQuery(historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>): Promise<void> {
     await this.stopHistoryQuery(historyQuery.id);
     await this.resetCache(historyQuery.id);
-    const baseFolder = path.resolve(this.cacheFolder, `history-${historyQuery.id}`);
-    try {
-      this._logger.trace(`Deleting base folder "${baseFolder}" of History query "${historyQuery.name}" (${historyQuery.id})`);
-      if (await filesExists(baseFolder)) {
-        await fs.rm(baseFolder, { recursive: true });
-      }
-      this._logger.info(`Deleted History query "${historyQuery.name}" (${historyQuery.id})`);
-    } catch (error) {
-      this._logger.error(`Unable to delete History query "${historyQuery.name}" (${historyQuery.id}) base folder: ${error}`);
-    }
   }
 }
