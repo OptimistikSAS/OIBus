@@ -10,7 +10,6 @@ import { NorthCacheFiles, NorthCacheSettingsDTO } from '../../../shared/model/no
 import { EventEmitter } from 'node:events';
 
 const FILE_FOLDER = 'files';
-const ERROR_FOLDER = 'files-errors';
 
 /**
  * Local cache implementation to group events and store them when the communication with the North is down.
@@ -26,12 +25,13 @@ export default class FileCacheService {
 
   constructor(
     logger: pino.Logger,
-    baseFolder: string,
+    baseCacheFolder: string,
+    baseErrorFolder: string,
     private _settings: NorthCacheSettingsDTO
   ) {
     this._logger = logger;
-    this._fileFolder = path.resolve(baseFolder, FILE_FOLDER);
-    this._errorFolder = path.resolve(baseFolder, ERROR_FOLDER);
+    this._fileFolder = path.resolve(baseCacheFolder, FILE_FOLDER);
+    this._errorFolder = path.resolve(baseErrorFolder, FILE_FOLDER);
   }
 
   setLogger(value: pino.Logger) {

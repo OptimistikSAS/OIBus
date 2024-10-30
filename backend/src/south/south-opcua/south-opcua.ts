@@ -38,6 +38,7 @@ import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import { BaseFolders } from '../../model/types';
 
 export const MAX_NUMBER_OF_NODE_TO_LOG = 10;
 export const NUM_VALUES_PER_NODE = 1000;
@@ -64,7 +65,7 @@ export default class SouthOPCUA
     southCacheRepository: SouthCacheRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
-    baseFolder: string,
+    baseFolders: BaseFolders,
     connectionService: ConnectionService
   ) {
     super(
@@ -75,7 +76,7 @@ export default class SouthOPCUA
       southCacheRepository,
       scanModeRepository,
       logger,
-      baseFolder,
+      baseFolders,
       connectionService
     );
 
@@ -86,10 +87,10 @@ export default class SouthOPCUA
   }
 
   override async start(dataStream = true): Promise<void> {
-    await this.initOpcuaCertificateFolders(this.baseFolder);
+    await this.initOpcuaCertificateFolders(this.baseFolders.cache);
     if (!this.clientCertificateManager) {
       this.clientCertificateManager = new OPCUACertificateManager({
-        rootFolder: `${this.baseFolder}/opcua`,
+        rootFolder: path.resolve(this.baseFolders.cache, 'opcua'),
         automaticallyAcceptUnknownCertificate: true
       });
       // Set the state to the CertificateManager to 2 (Initialized) to avoid a call to openssl
@@ -103,7 +104,7 @@ export default class SouthOPCUA
     const tempCertFolder = `opcua-test-${randomUUID()}`;
     await this.initOpcuaCertificateFolders(tempCertFolder);
     const clientCertificateManager = new OPCUACertificateManager({
-      rootFolder: `${tempCertFolder}/opcua`,
+      rootFolder: path.resolve(tempCertFolder, 'opcua'),
       automaticallyAcceptUnknownCertificate: true
     });
     // Set the state to the CertificateManager to 2 (Initialized) to avoid a call to openssl

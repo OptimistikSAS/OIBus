@@ -14,8 +14,7 @@ import { NorthSettings } from '../../../shared/model/north-settings.model';
 const BUFFER_MAX = 250;
 const BUFFER_TIMEOUT = 300;
 
-const VALUE_FOLDER = 'values';
-const ERROR_FOLDER = 'values-errors';
+const VALUE_FOLDER = 'time-values';
 
 /**
  * Local cache implementation to group events and store them when the communication with the North is down.
@@ -36,13 +35,14 @@ export default class ValueCacheService<N extends NorthSettings> {
 
   constructor(
     logger: pino.Logger,
-    baseFolder: string,
+    baseCacheFolder: string,
+    baseErrorFolder: string,
     private configuration: NorthConnectorEntity<N>
   ) {
     this._logger = logger;
-    this.baseFolder = path.resolve(baseFolder);
-    this.valueFolder = path.resolve(baseFolder, VALUE_FOLDER);
-    this.errorFolder = path.resolve(baseFolder, ERROR_FOLDER);
+    this.baseFolder = path.resolve(baseCacheFolder);
+    this.valueFolder = path.resolve(baseCacheFolder, VALUE_FOLDER);
+    this.errorFolder = path.resolve(baseErrorFolder, VALUE_FOLDER);
   }
 
   /**

@@ -24,6 +24,7 @@ import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import { BaseFolders } from '../../model/types';
 
 export interface SlimsColumn {
   name: string;
@@ -60,7 +61,7 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
     southCacheRepository: SouthCacheRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
-    baseFolder: string
+    baseFolders: BaseFolders
   ) {
     super(
       connector,
@@ -70,9 +71,9 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
       southCacheRepository,
       scanModeRepository,
       logger,
-      baseFolder
+      baseFolders
     );
-    this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
+    this.tmpFolder = path.resolve(this.baseFolders.cache, 'tmp');
     if (this.connector.settings.url.endsWith('/')) {
       this.connector.settings.url = this.connector.settings.url.slice(0, this.connector.settings.url.length - 1);
     }

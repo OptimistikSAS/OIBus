@@ -19,6 +19,7 @@ import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
 import { ScanMode } from '../model/scan-mode.model';
+import { BaseFolders } from '../model/types';
 
 /**
  * Class SouthConnector : provides general attributes and methods for south connectors.
@@ -66,7 +67,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     private readonly southCacheRepository: SouthCacheRepository,
     private readonly scanModeRepository: ScanModeRepository,
     protected logger: pino.Logger,
-    protected readonly baseFolder: string,
+    protected readonly baseFolders: BaseFolders,
     // The value is null in order to incrementally refactor connectors to use the ConnectionService
     private readonly connectionService: ConnectionService | null = null
   ) {

@@ -23,6 +23,7 @@ import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import { BaseFolders } from '../../model/types';
 
 /**
  * Class SouthOLEDB - Retrieve data from SQL databases with OLEDB driver and send them to the cache as CSV files.
@@ -41,7 +42,7 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
     southCacheRepository: SouthCacheRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
-    baseFolder: string
+    baseFolders: BaseFolders
   ) {
     super(
       connector,
@@ -51,9 +52,9 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
       southCacheRepository,
       scanModeRepository,
       logger,
-      baseFolder
+      baseFolders
     );
-    this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
+    this.tmpFolder = path.resolve(this.baseFolders.cache, 'tmp');
   }
 
   /**
