@@ -306,7 +306,7 @@ export default class OIAnalyticsCommandService {
     this.logger.info(
       `Upgrading OIBus from ${oibusInfo.version} to ${command.commandContent.version} for platform ${oibusInfo.platform} and architecture ${oibusInfo.architecture}...`
     );
-    const filename = `oibus-${oibusInfo.platform}_${oibusInfo.architecture}.zip`;
+    const filename = path.resolve(this.binaryFolder, '..', `oibus-${oibusInfo.platform}_${oibusInfo.architecture}.zip`);
 
     await this.oIAnalyticsClient.downloadFile(registration, command.commandContent.assetId, filename);
     this.logger.trace(`File ${filename} downloaded`);
@@ -317,13 +317,16 @@ export default class OIAnalyticsCommandService {
     const duration = DateTime.now().toMillis() - runStart.toMillis();
     if (command.commandContent.updateLauncher) {
       const extension = os.type() === 'Windows_NT' ? '.exe' : '';
-      await fs.rename(`../oibus-launcher${extension}`, `../oibus-launcher_backup${extension}`);
+      await fs.rename(
+        path.resolve(this.binaryFolder, '..', `oibus-launcher${extension}`),
+        path.resolve(this.binaryFolder, '..', `oibus-launcher_backup${extension}`)
+      );
       await fs.rename(
         path.resolve(this.binaryFolder, '..', 'update', `oibus-launcher${extension}`),
         path.resolve(this.binaryFolder, `oibus-launcher${extension}`)
       );
     }
-    await fs.writeFile(`../${UPDATE_SETTINGS_FILE}`, JSON.stringify(command.commandContent));
+    await fs.writeFile(path.resolve(this.binaryFolder, '..', UPDATE_SETTINGS_FILE), JSON.stringify(command.commandContent));
     this.logger.info(
       `OIBus version ${command.commandContent.version} downloaded after ${duration} ms of execution. Restarting OIBus to upgrade...`
     );
