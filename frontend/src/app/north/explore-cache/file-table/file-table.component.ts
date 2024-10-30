@@ -53,7 +53,7 @@ export class FileTableComponent implements OnInit {
   @Output() itemAction = new EventEmitter<ItemActionEvent>();
 
   @Input() actions: Array<ItemActionEvent['type']> = [];
-  actionButtonData: { [key in ItemActionEvent['type']]: { icon: string; text: string } } = {
+  actionButtonData: Record<ItemActionEvent['type'], { icon: string; text: string }> = {
     remove: { icon: 'fa-trash', text: 'north.cache-settings.remove-file' },
     retry: { icon: 'fa-refresh', text: 'north.cache-settings.retry-file' },
     view: { icon: 'fa-search', text: 'north.cache-settings.view-file' },
