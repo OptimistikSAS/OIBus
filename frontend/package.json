@@ -6,7 +6,7 @@
   "license": "EUPL",
   "description": "OIBus frontend",
   "engines": {
-    "node": ">=v22.9",
+    "node": ">=v22.10",
     "npm": ">=10"
   },
   "scripts": {
