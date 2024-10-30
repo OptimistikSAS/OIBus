@@ -5,7 +5,7 @@
   "author": "Optimistik SAS",
   "license": "EUPL",
   "engines": {
-    "node": ">=v22.9",
+    "node": ">=v22.10",
     "npm": ">=10"
   },
   "scripts": {
@@ -30,11 +30,11 @@
     "lint": "eslint src/*.ts shared/model/*.ts",
     "lint:fix": "npm run lint -- --fix",
     "build": "tsc --project tsconfig.app.json",
-    "internal:build:lib-win": "npm run --prefix node_modules/better-sqlite3 install -- --target=v22.9.0 --arch=x64 && npm run --prefix node_modules/argon2 install --update-binary -- --target_platform=win --target_arch=x64",
-    "internal:build:lib-macos": "npm run --prefix node_modules/better-sqlite3 install -- --target=v22.9.0 --arch=x64 && npm run --prefix node_modules/argon2 install --update-binary -- --target_platform=darwin --target_arch=x64",
-    "internal:build:lib-macos-arm64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v22.9.0 --arch=arm64 && npm run --prefix node_modules/argon2 install -- --target_arch=arm64 --target_platform=darwin",
-    "internal:build:lib-linux": "npm run --prefix node_modules/better-sqlite3 install -- --target=v22.9.0 --arch=x64 && npm run --prefix node_modules/argon2 install --update-binary -- --target_arch=x64 --target_platform=linux",
-    "internal:build:lib-linux-arm64": "npm run --prefix node_modules/better-sqlite3 install --update-binary -- --target=v22.9.0 --arch=arm64 && npm run --prefix node_modules/argon2 install --update-binary -- --target_arch=arm64 --target_platform=linux"
+    "internal:build:lib-win": "npm run --prefix node_modules/better-sqlite3 install -- --target=v22.10.0 --arch=x64 && npm run --prefix node_modules/argon2 install --update-binary -- --target_platform=win --target_arch=x64",
+    "internal:build:lib-macos": "npm run --prefix node_modules/better-sqlite3 install -- --target=v22.10.0 --arch=x64 && npm run --prefix node_modules/argon2 install --update-binary -- --target_platform=darwin --target_arch=x64",
+    "internal:build:lib-macos-arm64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v22.10.0 --arch=arm64 && npm run --prefix node_modules/argon2 install -- --target_arch=arm64 --target_platform=darwin",
+    "internal:build:lib-linux": "npm run --prefix node_modules/better-sqlite3 install -- --target=v22.10.0 --arch=x64 && npm run --prefix node_modules/argon2 install --update-binary -- --target_arch=x64 --target_platform=linux",
+    "internal:build:lib-linux-arm64": "npm run --prefix node_modules/better-sqlite3 install --update-binary -- --target=v22.10.0 --arch=arm64 && npm run --prefix node_modules/argon2 install --update-binary -- --target_arch=arm64 --target_platform=linux"
   },
   "keywords": [
     "Optimistik"
@@ -111,9 +111,9 @@
     "@types/jest": "29.5.13",
     "@types/jsonwebtoken": "9.0.7",
     "@types/koa": "2.15.0",
-    "@types/koa__cors": "^5.0.0",
+    "@types/koa__cors": "5.0.0",
     "@types/koa__multer": "2.0.7",
-    "@types/koa__router": "^12.0.4",
+    "@types/koa__router": "12.0.4",
     "@types/koa-bodyparser": "4.3.12",
     "@types/koa-send": "4.1.6",
     "@types/luxon": "3.4.2",
@@ -129,7 +129,7 @@
     "@types/sprintf-js": "1.1.4",
     "@types/ssh2-sftp-client": "9.0.4",
     "@types/ws": "8.5.12",
-    "@yao-pkg/pkg": "5.15.0",
+    "@yao-pkg/pkg": "6.0.0",
     "dotenv": "16.4.5",
     "eslint": "9.12.0",
     "eslint-config-prettier": "9.1.0",
@@ -155,7 +155,7 @@
       "dist/backend/src/service/logger/sqlite-transport.js",
       "dist/backend/src/service/logger/oianalytics-transport.js",
       "dist/backend/src/db/**/*.js",
-      "dist/shared/**/*.js",
+      "dist/backend/shared/**/*.js",
       "node_modules/sqlite3/**/*.node",
       "node_modules/argon2/**/*.node",
       "node_modules/oracledb/**/*.node",
