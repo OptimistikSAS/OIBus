@@ -30,13 +30,13 @@ const LOG_FOLDER_NAME = 'logs';
 const LOG_DB_NAME = 'logs.db';
 
 (async () => {
-  const { configFile, check, ignoreIpFilters, ignoreRemoteUpdate } = getCommandLineArguments();
+  const { configFile, check, ignoreIpFilters, ignoreRemoteUpdate, launcherVersion } = getCommandLineArguments();
 
   const binaryFolder = process.cwd();
 
   const baseDir = path.resolve(configFile);
   console.info(
-    `Starting OIBus with ignoreIpFilters = ${ignoreIpFilters}, ignoreRemoteUpdate = ${ignoreRemoteUpdate} and data folder directory ${baseDir}...`
+    `Starting OIBus with launcherVersion = ${launcherVersion}, ignoreIpFilters = ${ignoreIpFilters}, ignoreRemoteUpdate = ${ignoreRemoteUpdate} and data folder directory ${baseDir}...`
   );
   process.chdir(baseDir);
 
@@ -54,7 +54,8 @@ const LOG_DB_NAME = 'logs.db';
     path.resolve(CONFIG_DATABASE),
     path.resolve(LOG_FOLDER_NAME, LOG_DB_NAME),
     path.resolve(CRYPTO_DATABASE),
-    path.resolve(CACHE_FOLDER, CACHE_DATABASE)
+    path.resolve(CACHE_FOLDER, CACHE_DATABASE),
+    launcherVersion
   );
 
   const oibusSettings = repositoryService.engineRepository.get();
@@ -205,7 +206,8 @@ const LOG_DB_NAME = 'logs.db';
     northService,
     loggerService.logger!,
     binaryFolder,
-    ignoreRemoteUpdate
+    ignoreRemoteUpdate,
+    launcherVersion
   );
   oIAnalyticsCommandService.start();
   oIAnalyticsMessageService.start(); // Start after command to send the full config with new version after an update

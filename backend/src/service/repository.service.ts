@@ -39,7 +39,13 @@ export default class RepositoryService {
   private readonly _oianalyticsCommandRepository: OIAnalyticsCommandRepository;
   private readonly _oianalyticsMessageRepository: OIAnalyticsMessageRepository;
 
-  constructor(oibusDatabasePath: string, logsDatabasePath: string, cryptoDatabasePath: string, cacheDatabasePath: string) {
+  constructor(
+    oibusDatabasePath: string,
+    logsDatabasePath: string,
+    cryptoDatabasePath: string,
+    cacheDatabasePath: string,
+    launcherVersion: string
+  ) {
     const oibusDatabase = Database(oibusDatabasePath);
     const logsDatabase = Database(logsDatabasePath);
     const cryptoDatabase = Database(cryptoDatabasePath);
@@ -48,7 +54,7 @@ export default class RepositoryService {
     this._ipFilterRepository = new IpFilterRepository(oibusDatabase);
     this._scanModeRepository = new ScanModeRepository(oibusDatabase);
     this._certificateRepository = new CertificateRepository(oibusDatabase);
-    this._engineRepository = new EngineRepository(oibusDatabase);
+    this._engineRepository = new EngineRepository(oibusDatabase, launcherVersion);
     this._northConnectorRepository = new NorthConnectorRepository(oibusDatabase);
     this._southConnectorRepository = new SouthConnectorRepository(oibusDatabase);
     this._historyQueryRepository = new HistoryQueryRepository(oibusDatabase);

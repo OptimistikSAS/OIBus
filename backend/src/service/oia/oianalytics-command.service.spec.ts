@@ -87,19 +87,21 @@ describe('OIAnalytics Command Service', () => {
       northService,
       logger,
       'binaryFolder',
-      false
+      false,
+      testData.engine.settings.launcherVersion
     );
   });
 
   it('should properly start and stop service', async () => {
     expect(oIBusService.getEngineSettings).toHaveBeenCalledTimes(1);
+    expect(oIBusService.updateOIBusLauncherVersion).not.toHaveBeenCalled();
     expect(oIBusService.updateOIBusVersion).toHaveBeenCalledWith(
-      (testData.oIAnalytics.commands.oIBusList[0] as OIBusUpdateVersionCommand).commandContent.version
+      (testData.oIAnalytics.commands.oIBusList[0] as OIBusUpdateVersionCommand).commandContent.version.slice(1)
     );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       testData.oIAnalytics.commands.oIBusList[0].id,
       testData.constants.dates.FAKE_NOW,
-      `OIBus updated to version ${(testData.oIAnalytics.commands.oIBusList[0] as OIBusUpdateVersionCommand).commandContent.version}`
+      `OIBus updated to version ${(testData.oIAnalytics.commands.oIBusList[0] as OIBusUpdateVersionCommand).commandContent.version.slice(1)}`
     );
 
     const setIntervalSpy = jest.spyOn(global, 'setInterval');
@@ -591,9 +593,17 @@ describe('OIAnalytics Command service with update error', () => {
 
     (oIBusService.getEngineSettings as jest.Mock).mockReturnValue({
       ...JSON.parse(JSON.stringify(testData.engine.settings)),
-      version: (testData.oIAnalytics.commands.oIBusList[0] as OIBusUpdateVersionCommand).commandContent.version
+      version: (testData.oIAnalytics.commands.oIBusList[0] as OIBusUpdateVersionCommand).commandContent.version.slice(1)
     });
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValue(testData.oIAnalytics.commands.oIBusList);
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValue([
+      {
+        ...testData.oIAnalytics.commands.oIBusList[0],
+        commandContent: {
+          ...(testData.oIAnalytics.commands.oIBusList[0] as OIBusUpdateVersionCommand).commandContent,
+          version: (testData.oIAnalytics.commands.oIBusList[0] as OIBusUpdateVersionCommand).commandContent.version.slice(1)
+        }
+      }
+    ]);
 
     service = new OIAnalyticsCommandService(
       oIAnalyticsCommandRepository,
@@ -607,13 +617,15 @@ describe('OIAnalytics Command service with update error', () => {
       northService,
       logger,
       'binaryFolder',
-      false
+      false,
+      testData.engine.settings.launcherVersion
     );
   });
 
   it('should properly start and stop service', async () => {
     expect(oIBusService.getEngineSettings).toHaveBeenCalledTimes(1);
     expect(oIBusService.updateOIBusVersion).not.toHaveBeenCalled();
+    expect(oIBusService.updateOIBusLauncherVersion).not.toHaveBeenCalled();
     expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(
       testData.oIAnalytics.commands.oIBusList[0].id,
       `OIBus has not been updated. Rollback to version ${version}`
@@ -640,7 +652,8 @@ describe('OIAnalytics Command service with no commands', () => {
       northService,
       logger,
       'binaryFolder',
-      true
+      true,
+      '3.4.0'
     );
   });
 
