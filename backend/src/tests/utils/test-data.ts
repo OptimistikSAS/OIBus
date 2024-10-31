@@ -1025,6 +1025,16 @@ const oIBusCommands: Array<OIBusCommand> = [
     completedDate: '',
     result: 'ok',
     targetVersion: engineSettings.version
+  },
+  {
+    id: 'commandId14',
+    type: 'reload-keys',
+    status: 'RETRIEVED',
+    targetVersion: engineSettings.version,
+    ack: false,
+    retrievedDate: constants.dates.DATE_1,
+    completedDate: '',
+    result: 'ok'
   }
 ];
 const oIAnalyticsCommands: Array<OIAnalyticsFetchCommandDTO> = [
@@ -1085,6 +1095,11 @@ const oIAnalyticsCommands: Array<OIAnalyticsFetchCommandDTO> = [
     id: 'newCommandId9',
     type: 'delete-north',
     northConnectorId: 'northId1',
+    targetVersion: engineSettings.version
+  },
+  {
+    id: 'newCommandId10',
+    type: 'reload-keys',
     targetVersion: engineSettings.version
   }
 ];
