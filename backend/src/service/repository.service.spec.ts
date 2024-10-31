@@ -43,12 +43,12 @@ jest.mock('../repository/config/oianalytics-message.repository');
 
 describe('Repository service', () => {
   it('should properly initialize service', () => {
-    const repositoryService = new RepositoryService('myConfigDatabase', 'myLogDatabase', 'myCryptoDatabase', 'myCacheDatabase');
+    const repositoryService = new RepositoryService('myConfigDatabase', 'myLogDatabase', 'myCryptoDatabase', 'myCacheDatabase', '3.5.0');
     expect(db).toHaveBeenCalledWith('myConfigDatabase');
     expect(db).toHaveBeenCalledWith('myLogDatabase');
     expect(db).toHaveBeenCalledWith('myCryptoDatabase');
     expect(db).toHaveBeenCalledWith('myCacheDatabase');
-    expect(EngineRepository).toHaveBeenCalledWith('sqlite database');
+    expect(EngineRepository).toHaveBeenCalledWith('sqlite database', '3.5.0');
     expect(CryptoRepository).toHaveBeenCalledWith('sqlite database');
     expect(IpFilterRepository).toHaveBeenCalledWith('sqlite database');
     expect(ScanModeRepository).toHaveBeenCalledWith('sqlite database');

@@ -54,7 +54,7 @@ describe('Repository with populated database', () => {
     let repository: EngineRepository;
     beforeEach(() => {
       jest.clearAllMocks();
-      repository = new EngineRepository(database);
+      repository = new EngineRepository(database, '3.5.0');
     });
 
     it('should properly get the engine settings', () => {
@@ -67,13 +67,19 @@ describe('Repository with populated database', () => {
         ...testData.engine.command,
         id: testData.engine.settings.id,
         version: testData.engine.settings.version,
+        launcherVersion: testData.engine.settings.launcherVersion,
         name: 'updated engine'
       });
     });
 
     it('should update version', () => {
-      repository.updateVersion('3.4.0');
-      expect(repository.get()!.version).toEqual('3.4.0');
+      repository.updateVersion('9.9.99');
+      expect(repository.get()!.version).toEqual('9.9.99');
+    });
+
+    it('should update launcher version', () => {
+      repository.updateLauncherVersion('9.9.999');
+      expect(repository.get()!.launcherVersion).toEqual('9.9.999');
     });
   });
 
@@ -1151,11 +1157,12 @@ describe('Repository with empty database', () => {
 
     it('should properly init engine settings table', () => {
       (generateRandomId as jest.Mock).mockReturnValueOnce('engineId1');
-      repository = new EngineRepository(database);
+      repository = new EngineRepository(database, '3.5.0');
 
       const expectedResult: EngineSettings = {
         id: 'engineId1',
         version,
+        launcherVersion: '3.5.0',
         name: 'OIBus',
         port: 2223,
         proxyEnabled: false,

@@ -33,13 +33,21 @@ const COMPRESSION_LEVEL = 9;
 export const getCommandLineArguments = () => {
   const args = minimist(process.argv.slice(2));
   console.info(`OIBus starting with the following arguments: ${JSON.stringify(args)}`);
-  const { config = './', check = false, ignoreIpFilters = false, ignoreRemoteUpdate = false, ignoreRemoteConfig = false } = args;
+  const {
+    config = './',
+    check = false,
+    ignoreIpFilters = false,
+    ignoreRemoteUpdate = false,
+    ignoreRemoteConfig = false,
+    launcherVersion = '3.4.0'
+  } = args;
   return {
     configFile: path.resolve(config),
     check,
     ignoreIpFilters: Boolean(ignoreIpFilters),
     ignoreRemoteUpdate: Boolean(ignoreRemoteUpdate),
-    ignoreRemoteConfig: Boolean(ignoreRemoteConfig)
+    ignoreRemoteConfig: Boolean(ignoreRemoteConfig),
+    launcherVersion
   };
 };
 

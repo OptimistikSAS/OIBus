@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { version } from '../package.json';
 
 export const replaceConfigArgumentWithAbsolutePath = (args: Array<string>, absoluteConfigPath: string): Array<string> => {
   const foundIndex = args.findIndex(element => element === '--config');
@@ -10,6 +11,8 @@ export const replaceConfigArgumentWithAbsolutePath = (args: Array<string>, absol
     // Insert the new element after the target element
     args[foundIndex + 1] = absoluteConfigPath;
   }
+  args.push('--launcherVersion');
+  args.push(version);
   return args;
 };
 

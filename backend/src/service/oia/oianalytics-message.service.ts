@@ -189,6 +189,7 @@ export default class OIAnalyticsMessageService {
       oIBusInternalId: engine.id,
       name: engine.name,
       softwareVersion: engine.version,
+      launcherVersion: engine.launcherVersion,
       architecture: info.architecture,
       operatingSystem: info.operatingSystem,
       publicKey: registration.publicCipherKey || '',
