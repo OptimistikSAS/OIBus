@@ -4,6 +4,12 @@ inputs:
   cache_version:
     description: 'Value gets appended to the cache key and will therefore invalidate the cache if it changes'
     required: true
+  prerelease:
+    description: 'Is it a prerelease or not'
+    required: true
+  tag_name:
+    description: 'If it is a prerelease, this option is used to update the package version'
+    required: true
 
 runs:
   using: "composite"
@@ -37,6 +43,16 @@ runs:
       working-directory: frontend
       shell: bash
       run: rm cache_version
+
+    - name: Update package.json if pre-release
+      if: ${{ inputs.prerelease }}
+      shell: bash
+      working-directory: frontend
+      run: |
+        TAG_NAME=${{ inputs.tag_name }}
+        echo "Updating package.json version to $TAG_NAME for pre-release"
+        # Use jq to modify package.json
+        jq --arg version "$TAG_NAME" '.version = $version' package.json > tmp.json && mv tmp.json package.json
 
     - name: Install dependencies
       if: ${{ steps.cached-node-modules-dependencies.outputs.cache-hit != 'true' }}
