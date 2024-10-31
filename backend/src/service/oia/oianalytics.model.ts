@@ -39,6 +39,7 @@ export interface OIAnalyticsEngineCommandDTO {
   oIBusInternalId: string;
   name: string;
   softwareVersion: string;
+  launcherVersion: string;
   architecture: string;
   operatingSystem: string;
   publicKey: string;
