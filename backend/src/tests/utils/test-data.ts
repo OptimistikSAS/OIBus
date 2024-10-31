@@ -649,7 +649,8 @@ const engineSettings: EngineSettings = {
   id: 'oibusId1',
   name: 'OIBus',
   port: 2223,
-  version: 'v3.5.0',
+  version: '3.5.0',
+  launcherVersion: '3.5.0',
   proxyEnabled: true,
   proxyPort: 9000,
   logParameters: {
@@ -880,7 +881,7 @@ const oIBusCommands: Array<OIBusCommand> = [
     id: 'commandId1',
     type: 'update-version',
     status: 'RUNNING',
-    targetVersion: 'v3.5.0',
+    targetVersion: engineSettings.version,
     ack: false,
     retrievedDate: constants.dates.DATE_1,
     completedDate: '',
@@ -900,14 +901,14 @@ const oIBusCommands: Array<OIBusCommand> = [
     retrievedDate: constants.dates.DATE_1,
     completedDate: '',
     result: 'ok',
-    targetVersion: 'v3.5.0',
+    targetVersion: engineSettings.version,
     commandContent: engineSettingsCommand
   },
   {
     id: 'commandId3',
     type: 'restart-engine',
     status: 'RETRIEVED',
-    targetVersion: 'v3.5.0',
+    targetVersion: engineSettings.version,
     ack: false,
     retrievedDate: constants.dates.DATE_1,
     completedDate: '',
@@ -922,7 +923,7 @@ const oIBusCommands: Array<OIBusCommand> = [
     completedDate: '',
     result: 'ok',
     scanModeId: 'scanModeId1',
-    targetVersion: 'v3.5.0',
+    targetVersion: engineSettings.version,
     commandContent: scanModeCommandDTO
   },
   {
@@ -934,7 +935,7 @@ const oIBusCommands: Array<OIBusCommand> = [
     completedDate: '',
     result: 'ok',
     southConnectorId: 'southId1',
-    targetVersion: 'v3.5.0',
+    targetVersion: engineSettings.version,
     commandContent: southConnectorCommand
   },
   {
@@ -946,7 +947,7 @@ const oIBusCommands: Array<OIBusCommand> = [
     completedDate: '',
     result: 'ok',
     northConnectorId: 'northId1',
-    targetVersion: 'v3.5.0',
+    targetVersion: engineSettings.version,
     commandContent: northConnectorCommand
   },
   {
@@ -958,7 +959,7 @@ const oIBusCommands: Array<OIBusCommand> = [
     completedDate: '',
     result: 'ok',
     scanModeId: 'scanModeId1',
-    targetVersion: 'v3.5.0'
+    targetVersion: engineSettings.version
   },
   {
     id: 'commandId8',
@@ -969,7 +970,7 @@ const oIBusCommands: Array<OIBusCommand> = [
     completedDate: '',
     result: 'ok',
     southConnectorId: 'southId1',
-    targetVersion: 'v3.5.0'
+    targetVersion: engineSettings.version
   },
   {
     id: 'commandId9',
@@ -980,7 +981,7 @@ const oIBusCommands: Array<OIBusCommand> = [
     completedDate: '',
     result: 'ok',
     northConnectorId: 'northId1',
-    targetVersion: 'v3.5.0'
+    targetVersion: engineSettings.version
   },
   {
     id: 'commandId10',
@@ -990,7 +991,7 @@ const oIBusCommands: Array<OIBusCommand> = [
     retrievedDate: constants.dates.DATE_1,
     completedDate: '',
     result: 'ok',
-    targetVersion: 'v3.5.0',
+    targetVersion: engineSettings.version,
     commandContent: scanModeCommandDTO
   },
   {
@@ -1001,7 +1002,7 @@ const oIBusCommands: Array<OIBusCommand> = [
     retrievedDate: constants.dates.DATE_1,
     completedDate: '',
     result: 'ok',
-    targetVersion: 'v3.5.0',
+    targetVersion: engineSettings.version,
     commandContent: southConnectorCommand
   },
   {
@@ -1012,7 +1013,7 @@ const oIBusCommands: Array<OIBusCommand> = [
     retrievedDate: constants.dates.DATE_1,
     completedDate: '',
     result: 'ok',
-    targetVersion: 'v3.5.0',
+    targetVersion: engineSettings.version,
     commandContent: northConnectorCommand
   },
   {
@@ -1023,14 +1024,14 @@ const oIBusCommands: Array<OIBusCommand> = [
     retrievedDate: constants.dates.DATE_1,
     completedDate: '',
     result: 'ok',
-    targetVersion: 'v3.5.0'
+    targetVersion: engineSettings.version
   }
 ];
 const oIAnalyticsCommands: Array<OIAnalyticsFetchCommandDTO> = [
   {
     id: 'newCommandId1',
     type: 'update-version',
-    targetVersion: 'v3.5.0',
+    targetVersion: engineSettings.version,
     version: 'v3.5.0-beta',
     assetId: 'assetId',
     backupFolders: 'cache/*',
@@ -1039,52 +1040,52 @@ const oIAnalyticsCommands: Array<OIAnalyticsFetchCommandDTO> = [
   {
     id: 'newCommandId2',
     type: 'update-engine-settings',
-    targetVersion: 'v3.5.0',
+    targetVersion: engineSettings.version,
     commandContent: engineSettingsCommand
   },
   {
     id: 'newCommandId3',
     type: 'restart-engine',
-    targetVersion: 'v3.5.0'
+    targetVersion: engineSettings.version
   },
   {
     id: 'newCommandId4',
     type: 'update-scan-mode',
     scanModeId: 'scanModeId1',
-    targetVersion: 'v3.5.0',
+    targetVersion: engineSettings.version,
     commandContent: scanModeCommandDTO
   },
   {
     id: 'newCommandId5',
     type: 'update-south',
     southConnectorId: 'southId1',
-    targetVersion: 'v3.5.0',
+    targetVersion: engineSettings.version,
     commandContent: southConnectorCommand
   },
   {
     id: 'newCommandId6',
     type: 'update-north',
     northConnectorId: 'northId1',
-    targetVersion: 'v3.5.0',
+    targetVersion: engineSettings.version,
     commandContent: northConnectorCommand
   },
   {
     id: 'newCommandId7',
     type: 'delete-scan-mode',
     scanModeId: 'scanModeId1',
-    targetVersion: 'v3.5.0'
+    targetVersion: engineSettings.version
   },
   {
     id: 'newCommandId8',
     type: 'delete-south',
     southConnectorId: 'southId1',
-    targetVersion: 'v3.5.0'
+    targetVersion: engineSettings.version
   },
   {
     id: 'newCommandId9',
     type: 'delete-north',
     northConnectorId: 'northId1',
-    targetVersion: 'v3.5.0'
+    targetVersion: engineSettings.version
   }
 ];
 const oIBusMessages: Array<OIAnalyticsMessage> = [

@@ -125,7 +125,6 @@ export default class Launcher {
     await createFolder(this.backupDir);
     console.log(`Backup OIBus: ${oibusBinaryPath} -> ${oibusBinaryBackupPath}`);
     await fs.rename(oibusBinaryPath, oibusBinaryBackupPath);
-    console.log(`Backup OIBus data folder: ${this.config} -> ${path.resolve(this.backupDir, 'data-folder')}`);
 
     await this.backupDataFolder(backupFolders);
 
@@ -168,6 +167,7 @@ export default class Launcher {
   async backupDataFolder(backupsFolders: RegExp): Promise<void> {
     await fs.rm(path.resolve(this.backupDir, 'data-folder'), { recursive: true, force: true });
     await createFolder(path.resolve(this.backupDir, 'data-folder'));
+    console.log(`Back up data folder with regex ${backupsFolders}`);
     await this.copyFilesAndDirectoriesRecursively(this.config, path.resolve(this.backupDir, 'data-folder'), backupsFolders);
   }
 
@@ -178,14 +178,15 @@ export default class Launcher {
       const srcPath = path.join(srcDir, entry.name);
       const destPath = path.join(destDir, entry.name);
 
-      if (entry.isDirectory() && pattern.test(entry.name)) {
+      // Test the full path from the based directory. For example, cache/* back up recursively all files and directory under
+      // the cache folder
+      if (entry.isDirectory() && pattern.test(path.resolve(entry.parentPath, entry.name).split(this.config)[1])) {
         // Only create and recurse if the directory name matches the pattern
         await fs.mkdir(destPath, { recursive: true });
         await this.copyFilesAndDirectoriesRecursively(srcPath, destPath, pattern);
-      } else if (entry.isFile() && pattern.test(entry.name)) {
+      } else if (entry.isFile() && pattern.test(path.resolve(entry.parentPath, entry.name).split(this.config)[1])) {
         // Copy the file if it matches the pattern
         await fs.copyFile(srcPath, destPath);
-        console.info(`Copied file: ${srcPath} to ${destPath}`);
       }
     }
   }
