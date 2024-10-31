@@ -295,7 +295,8 @@ const createEngineSettings = async (database: knex.Knex, engineSettings: EngineS
       log_oia_interval: engineSettings.logParameters.oia.interval,
       proxy_enabled: engineSettings.proxyEnabled,
       proxy_port: engineSettings.proxyPort,
-      oibus_version: 'v3.5.0'
+      oibus_version: engineSettings.version,
+      oibus_launcher_version: engineSettings.launcherVersion
     })
     .into('engines');
 };

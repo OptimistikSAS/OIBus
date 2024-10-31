@@ -15,6 +15,7 @@ const COMMANDS_TABLE = 'commands';
 const SOUTH_ITEMS_TABLE = 'south_items';
 const SUBSCRIPTION_TABLE = 'subscription';
 const SCAN_MODES_TABLE = 'scan_modes';
+const ENGINES_TABLE = 'engines';
 
 export async function up(knex: Knex): Promise<void> {
   await removeNorthOIBusConnectors(knex);
@@ -25,6 +26,7 @@ export async function up(knex: Knex): Promise<void> {
   await updateOIAMessageTable(knex);
   await recreateCommandTable(knex);
   await updateRegistrationSettings(knex);
+  await updateEngineTable(knex);
 }
 
 async function removeNorthOIBusConnectors(knex: Knex): Promise<void> {
@@ -424,6 +426,13 @@ async function updateOIAMessageTable(knex: Knex): Promise<void> {
   await knex.schema.alterTable(OIANALYTICS_MESSAGE_TABLE, table => {
     table.dropColumn('content');
   });
+}
+
+async function updateEngineTable(knex: Knex): Promise<void> {
+  await knex.schema.alterTable(ENGINES_TABLE, table => {
+    table.string('oibus_launcher_version');
+  });
+  await knex(ENGINES_TABLE).update({ oibus_launcher_version: '3.4.0' });
 }
 
 async function recreateCommandTable(knex: Knex): Promise<void> {
