@@ -30,7 +30,7 @@ jobs:
 
       - name: Get release info
         id: release_info
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
             const release = await github.rest.repos.getRelease({
@@ -144,7 +144,7 @@ jobs:
 
       - name: Get release info
         id: release_info
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
             const release = await github.rest.repos.getRelease({
