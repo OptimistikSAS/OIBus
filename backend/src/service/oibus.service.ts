@@ -128,7 +128,7 @@ export default class OIBusService {
     return this.proxyServer;
   }
 
-  async updateEngineSettings(command: Omit<EngineSettings, 'id' | 'version'>): Promise<void> {
+  async updateEngineSettings(command: Omit<EngineSettings, 'id' | 'version' | 'launcherVersion'>): Promise<void> {
     await this.validator.validate(engineSchema, command);
 
     if (command.port === command.proxyPort) {
@@ -165,6 +165,10 @@ export default class OIBusService {
 
   updateOIBusVersion(version: string): void {
     this.engineRepository.updateVersion(version);
+  }
+
+  updateOIBusLauncherVersion(version: string): void {
+    this.engineRepository.updateLauncherVersion(version);
   }
 
   async resetLogger(settings: EngineSettings) {

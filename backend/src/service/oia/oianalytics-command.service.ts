@@ -57,15 +57,21 @@ export default class OIAnalyticsCommandService {
     private northService: NorthService,
     private logger: pino.Logger,
     private binaryFolder: string,
-    private ignoreRemoteUpdate: boolean
+    private ignoreRemoteUpdate: boolean,
+    launcherVersion: string
   ) {
     const engineSettings = this.oIBusService.getEngineSettings();
+    if (launcherVersion !== engineSettings.launcherVersion) {
+      this.oIBusService.updateOIBusLauncherVersion(launcherVersion);
+    }
     const currentUpgradeCommand = this.oIAnalyticsCommandRepository.list({
       status: ['RUNNING'],
       types: ['UPGRADE', 'update-version']
     });
     if (currentUpgradeCommand.length > 0) {
-      const updateVersion = (currentUpgradeCommand[0] as OIBusUpdateVersionCommand).commandContent.version;
+      const updateVersion = (currentUpgradeCommand[0] as OIBusUpdateVersionCommand).commandContent.version.startsWith('v')
+        ? (currentUpgradeCommand[0] as OIBusUpdateVersionCommand).commandContent.version.slice(1)
+        : (currentUpgradeCommand[0] as OIBusUpdateVersionCommand).commandContent.version;
       if (engineSettings.version !== updateVersion) {
         this.oIBusService.updateOIBusVersion(updateVersion);
         this.oIAnalyticsCommandRepository.markAsCompleted(

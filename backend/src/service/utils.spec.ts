@@ -68,7 +68,8 @@ describe('Service utils', () => {
         configFile: path.resolve('./'),
         ignoreIpFilters: false,
         ignoreRemoteUpdate: false,
-        ignoreRemoteConfig: false
+        ignoreRemoteConfig: false,
+        launcherVersion: '3.4.0'
       });
     });
 
@@ -78,7 +79,8 @@ describe('Service utils', () => {
         config: 'myConfig.json',
         ignoreIpFilters: true,
         ignoreRemoteUpdate: true,
-        ignoreRemoteConfig: true
+        ignoreRemoteConfig: true,
+        launcherVersion: '3.5.0'
       });
       const result = getCommandLineArguments();
       expect(result).toEqual({
@@ -86,7 +88,8 @@ describe('Service utils', () => {
         configFile: path.resolve('myConfig.json'),
         ignoreIpFilters: true,
         ignoreRemoteUpdate: true,
-        ignoreRemoteConfig: true
+        ignoreRemoteConfig: true,
+        launcherVersion: '3.5.0'
       });
     });
   });

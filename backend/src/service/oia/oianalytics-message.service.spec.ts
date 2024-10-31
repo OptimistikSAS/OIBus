@@ -99,6 +99,14 @@ describe('OIAnalytics Message Service', () => {
     expect(logger.debug).toHaveBeenCalledWith(`OIAnalytics message service stopped`);
   });
 
+  it('should properly create full config message on registration', () => {
+    service.createFullConfigMessageIfNotPending = jest.fn();
+    service.start();
+    expect(service.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
+    oIAnalyticsRegistrationService.registrationEvent.emit('completed');
+    expect(service.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(2);
+  });
+
   it('should properly catch command exception', async () => {
     (oIAnalyticsClient.sendConfiguration as jest.Mock).mockImplementationOnce(() => {
       throw new Error('error');

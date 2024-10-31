@@ -5,6 +5,7 @@ export interface EngineSettings extends BaseEntity {
   name: string;
   port: number;
   version: string;
+  launcherVersion: string;
   proxyEnabled: boolean;
   proxyPort: number | null;
   logParameters: {
