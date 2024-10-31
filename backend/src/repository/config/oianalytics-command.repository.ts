@@ -136,6 +136,7 @@ export default class OIAnalyticsCommandRepository {
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, north_connector_id) VALUES (?, ?, ?, ?, ?, ?, ?);`;
         break;
       case 'restart-engine':
+      case 'reload-keys':
         insertQuery += `(id, retrieved_date, type, status, ack, target_version) VALUES (?, ?, ?, ?, ?, ?);`;
         break;
       case 'update-version':
