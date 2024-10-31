@@ -137,20 +137,50 @@ jobs:
         with:
           ref: ${{ github.ref }}
 
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.10
+
+      - name: Get release info
+        id: release_info
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const release = await github.rest.repos.getRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: context.payload.release.id
+            });
+            const tagName = release.data.tag_name.startsWith('v') ? release.data.tag_name.slice(1) : release.data.tag_name;
+            core.setOutput("prerelease", release.data.prerelease);
+            core.setOutput("tag_name", tagName);
+
+      - name: Print release details
+        run: |
+          echo "Pre-release: ${{ steps.release_info.outputs.prerelease }}"
+          echo "Tag name: ${{ steps.release_info.outputs.tag_name }}"
+
       - name: Setup launcher environment
         uses: ./.github/actions/setup_launcher_environment
         with:
           cache_version: ${{ secrets.GH_ACTIONS_CACHE_KEY }}
+          prerelease: ${{ steps.release_info.outputs.prerelease }}
+          tag_name: ${{ steps.release_info.outputs.tag_name }}
 
       - name: Setup backend environment
         uses: ./.github/actions/setup_backend_environment
         with:
           cache_version: ${{ secrets.GH_ACTIONS_CACHE_KEY }}
+          prerelease: ${{ steps.release_info.outputs.prerelease }}
+          tag_name: ${{ steps.release_info.outputs.tag_name }}
 
       - name: Setup frontend environment
         uses: ./.github/actions/setup_frontend_environment
         with:
           cache_version: ${{ secrets.GH_ACTIONS_CACHE_KEY }}
+          prerelease: ${{ steps.release_info.outputs.prerelease }}
+          tag_name: ${{ steps.release_info.outputs.tag_name }}
 
       - name: Bundle OIBus frontend for ${{ matrix.config['friendlyName'] }}
         working-directory: ./frontend
@@ -192,7 +222,7 @@ jobs:
             --target=node22-${{ matrix.config['platform'] }} \
             --output ../build/bin/${{ matrix.config['platform'] }}/oibus-launcher \
             --public --compress GZip \
-            ./dist/index.js
+            ./dist/src/index.js
 
       - name: Post build OIBus library for ${{ matrix.config['friendlyName'] }}
         if: ${{ matrix.config['platform'] == 'linux-arm64' }}
