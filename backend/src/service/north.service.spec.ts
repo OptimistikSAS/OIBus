@@ -17,6 +17,7 @@ import NorthConnectorRepositoryMock from '../tests/__mocks__/repository/config/n
 import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
 import NorthMetricsRepositoryMock from '../tests/__mocks__/repository/log/north-metrics-repository.mock';
 import testData from '../tests/utils/test-data';
+import { mockBaseFolders } from '../tests/utils/test-utils';
 import { NorthConnectorEntity } from '../model/north-connector.model';
 import { NorthSettings } from '../../shared/model/north-settings.model';
 import CertificateRepository from '../repository/config/certificate.repository';
@@ -73,7 +74,7 @@ describe('north service', () => {
   });
 
   it('should create North connector', () => {
-    const connector = service.runNorth(testData.north.list[0], logger, 'myBaseFolder');
+    const connector = service.runNorth(testData.north.list[0], logger, mockBaseFolders(testData.north.list[0].id));
     expect(connector).toBeDefined();
   });
 
@@ -89,7 +90,7 @@ describe('north service', () => {
           type: 'another'
         } as NorthConnectorEntity<NorthSettings>,
         logger,
-        'myBaseFolder'
+        mockBaseFolders(testData.north.list[0].id)
       );
     } catch (err) {
       error = err;

@@ -11,6 +11,8 @@ import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 
 import { NorthArchiveSettings } from '../../../shared/model/north-connector.model';
 
+import { mockBaseFolders } from '../../tests/utils/test-utils';
+
 jest.mock('../../service/utils');
 jest.mock('node:fs/promises');
 jest.mock('node:fs');
@@ -35,14 +37,14 @@ describe('ArchiveService', () => {
       retentionDuration: 1
     };
     beforeEach(() => {
-      archiveService = new ArchiveService(logger, 'myCacheFolder', settings);
+      archiveService = new ArchiveService(logger, mockBaseFolders('northId').archive, settings);
     });
 
     it('should be properly initialized with archive enabled', async () => {
       archiveService.refreshArchiveFolder = jest.fn();
       await archiveService.start();
-      expect(archiveService.archiveFolder).toEqual(path.resolve('myCacheFolder', 'archive'));
-      expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'archive'));
+      expect(archiveService.archiveFolder).toEqual(path.resolve(mockBaseFolders('northId').archive, 'files'));
+      expect(createFolder).toHaveBeenCalledWith(path.resolve(mockBaseFolders('northId').archive, 'files'));
       expect(archiveService.refreshArchiveFolder).not.toHaveBeenCalled();
 
       jest.advanceTimersByTime(10000);
@@ -86,7 +88,7 @@ describe('ArchiveService', () => {
       expect(clearTimeoutSpy).not.toHaveBeenCalled();
       expect(logger.debug).toHaveBeenCalledWith('Parse archive folder to remove old files');
       expect(logger.debug).toHaveBeenCalledWith(
-        `The archive folder "${path.resolve('myCacheFolder', 'archive')}" is empty. Nothing to delete`
+        `The archive folder "${path.resolve(mockBaseFolders('northId').archive, 'files')}" is empty. Nothing to delete`
       );
 
       jest.advanceTimersByTime(3600000);
@@ -104,7 +106,7 @@ describe('ArchiveService', () => {
       await archiveService.refreshArchiveFolder();
       expect(archiveService.removeFileIfTooOld).not.toHaveBeenCalled();
       expect(logger.error).toHaveBeenCalledWith(
-        `Error reading archive folder "${path.resolve('myCacheFolder', 'archive')}": ${new Error('readdir error')}`
+        `Error reading archive folder "${path.resolve(mockBaseFolders('northId').archive, 'files')}": ${new Error('readdir error')}`
       );
     });
 
@@ -173,7 +175,7 @@ describe('ArchiveService', () => {
         { filename: 'file2', modificationDate: '2020-02-02T06:02:02.222Z', size: 2 }
       ]);
       expect(logger.error).toHaveBeenCalledWith(
-        `Error while reading in archive folder file stats "${path.resolve('myCacheFolder', 'archive', 'errorFile')}": ${fileError}`
+        `Error while reading in archive folder file stats "${path.resolve(mockBaseFolders('northId').archive, 'files', 'errorFile')}": ${fileError}`
       );
     });
 
@@ -197,7 +199,7 @@ describe('ArchiveService', () => {
 
     it('should remove files from archive folder with error handling', async () => {
       const filenames = ['file1', 'file2', 'errorFile'];
-      const resolvedFiles = filenames.map(file => [path.resolve('myCacheFolder', 'archive', file)]);
+      const resolvedFiles = filenames.map(file => [path.resolve(mockBaseFolders('northId').archive, 'files', file)]);
       const logs = resolvedFiles.map(file => [`Removing archived file "${file}`]);
 
       (fs.stat as jest.Mock).mockReturnValue({ size: 123 });
@@ -213,7 +215,7 @@ describe('ArchiveService', () => {
 
       expect((logger.debug as jest.Mock).mock.calls).toEqual(logs);
       expect(logger.error).toHaveBeenCalledWith(
-        `Unable to remove archived file "${path.resolve('myCacheFolder', 'archive', filenames[2])}"`
+        `Unable to remove archived file "${path.resolve(mockBaseFolders('northId').archive, 'files', filenames[2])}"`
       );
       expect(logger.error).toHaveBeenCalledTimes(1);
     });
@@ -229,7 +231,7 @@ describe('ArchiveService', () => {
       expect(archiveService.removeFiles).toHaveBeenCalledTimes(1);
 
       expect(logger.debug).toHaveBeenLastCalledWith(
-        `Removing ${filenames.length} files from "${path.resolve('myCacheFolder', 'archive')}"`
+        `Removing ${filenames.length} files from "${path.resolve(mockBaseFolders('northId').archive, 'files')}"`
       );
       expect(logger.debug).toHaveBeenCalledTimes(1);
     });
@@ -243,7 +245,7 @@ describe('ArchiveService', () => {
       expect(removeFilesSpy).toHaveBeenCalledTimes(0);
 
       expect(logger.debug).toHaveBeenLastCalledWith(
-        `The archive folder "${path.resolve('myCacheFolder', 'archive')}" is empty. Nothing to delete`
+        `The archive folder "${path.resolve(mockBaseFolders('northId').archive, 'files')}" is empty. Nothing to delete`
       );
       expect(logger.debug).toHaveBeenCalledTimes(1);
 
@@ -255,7 +257,7 @@ describe('ArchiveService', () => {
       (createReadStream as jest.Mock).mockImplementation(() => Promise.resolve());
       await archiveService.getArchiveFileContent(filename);
 
-      expect(createReadStream).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'archive', filename));
+      expect(createReadStream).toHaveBeenCalledWith(path.resolve(mockBaseFolders('northId').archive, 'files', filename));
     });
 
     it('should handle error while getting archived file content', async () => {
@@ -268,7 +270,7 @@ describe('ArchiveService', () => {
 
       expect(readStream).toBeNull();
       expect(logger.error).toHaveBeenCalledWith(
-        `Error while reading file "${path.resolve('myCacheFolder', 'archive', filename)}": ${error}`
+        `Error while reading file "${path.resolve(mockBaseFolders('northId').archive, 'files', filename)}": ${error}`
       );
     });
   });

@@ -13,6 +13,7 @@ import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/sou
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
 import { SouthOPCItemSettings, SouthOPCSettings } from '../../../shared/model/south-settings.model';
+import { mockBaseFolders } from '../../tests/utils/test-utils';
 
 jest.mock('node-fetch');
 jest.mock('node:fs/promises');
@@ -104,7 +105,7 @@ describe('South OPC', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(configuration.id)
     );
   });
 

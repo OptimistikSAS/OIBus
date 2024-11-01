@@ -18,6 +18,7 @@ import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/sou
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
 import testData from '../../tests/utils/test-data';
+import { mockBaseFolders } from '../../tests/utils/test-utils';
 
 jest.mock('node:fs/promises');
 jest.mock('../../service/utils');
@@ -104,7 +105,7 @@ describe('SouthFolderScanner', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(configuration.id)
     );
     await south.start();
   });
@@ -293,7 +294,7 @@ describe('SouthFolderScanner with compression', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(configuration.id)
     );
   });
 
@@ -313,16 +314,19 @@ describe('SouthFolderScanner with compression', () => {
     expect(logger.info).toHaveBeenCalledWith(`Sending file "${path.resolve(configuration.settings.inputFolder, 'myFile1')}" to the engine`);
     expect(compress).toHaveBeenCalledWith(
       path.resolve(configuration.settings.inputFolder, 'myFile1'),
-      `${path.resolve('baseFolder', 'tmp', 'myFile1')}.gz`
+      `${path.resolve(mockBaseFolders(configuration.id).cache, 'tmp', 'myFile1')}.gz`
     );
-    expect(south.addContent).toHaveBeenCalledWith({ type: 'raw', filePath: `${path.resolve('baseFolder', 'tmp', 'myFile1')}.gz` });
-    expect(fs.unlink).toHaveBeenCalledWith(`${path.resolve('baseFolder', 'tmp', 'myFile1')}.gz`);
+    expect(south.addContent).toHaveBeenCalledWith({
+      type: 'raw',
+      filePath: `${path.resolve(mockBaseFolders(configuration.id).cache, 'tmp', 'myFile1')}.gz`
+    });
+    expect(fs.unlink).toHaveBeenCalledWith(`${path.resolve(mockBaseFolders(configuration.id).cache, 'tmp', 'myFile1')}.gz`);
     expect(logger.error).not.toHaveBeenCalled();
     expect(south.updateModifiedTime).toHaveBeenCalledWith('myFile1', mtimeMs);
 
     await south.sendFile(configuration.items[1], 'myFile2');
     expect(logger.error).toHaveBeenCalledWith(
-      `Error while removing compressed file "${path.resolve('baseFolder', 'tmp', 'myFile2')}.gz": ${new Error('error')}`
+      `Error while removing compressed file "${path.resolve(mockBaseFolders(configuration.id).cache, 'tmp', 'myFile2')}.gz": ${new Error('error')}`
     );
 
     (compress as jest.Mock).mockImplementationOnce(() => {

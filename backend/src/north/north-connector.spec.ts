@@ -15,7 +15,7 @@ import testData from '../tests/utils/test-data';
 import { NorthFileWriterSettings, NorthOIAnalyticsSettings, NorthSettings } from '../../shared/model/north-settings.model';
 import NorthFileWriter from './north-file-writer/north-file-writer';
 import { NorthConnectorEntity } from '../model/north-connector.model';
-import { flushPromises } from '../tests/utils/test-utils';
+import { flushPromises, mockBaseFolders } from '../tests/utils/test-utils';
 import NorthOIAnalytics from './north-oianalytics/north-oianalytics';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
@@ -84,7 +84,7 @@ describe('NorthConnector', () => {
       northConnectorRepository,
       scanModeRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(testData.north.list[0].id)
     );
     await north.start();
   });
@@ -540,7 +540,7 @@ describe('NorthConnector disabled', () => {
       certificateRepository,
       oIAnalyticsRegistrationRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(testData.north.list[1].id)
     );
   });
 
@@ -680,7 +680,7 @@ describe('NorthConnector test', () => {
       certificateRepository,
       oIAnalyticsRegistrationRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(testData.north.list[1].id)
     );
   });
 

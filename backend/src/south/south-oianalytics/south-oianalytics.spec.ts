@@ -19,6 +19,7 @@ import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/sou
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
 import testData from '../../tests/utils/test-data';
+import { mockBaseFolders } from '../../tests/utils/test-utils';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import OIAnalyticsRegistrationRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
 import CertificateRepository from '../../repository/config/certificate.repository';
@@ -170,7 +171,7 @@ describe('SouthOIAnalytics with Basic auth', () => {
       oIAnalyticsRegistrationRepository,
       certificateRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(configuration.id)
     );
   });
 
@@ -205,7 +206,7 @@ describe('SouthOIAnalytics with Basic auth', () => {
 
   it('should log error if temp folder creation fails', async () => {
     await south.start();
-    expect(utils.createFolder).toHaveBeenCalledWith(path.resolve('baseFolder', 'tmp'));
+    expect(utils.createFolder).toHaveBeenCalledWith(path.resolve(mockBaseFolders(configuration.id).cache, 'tmp'));
   });
 
   it('should properly run historyQuery', async () => {
@@ -396,7 +397,7 @@ describe('SouthOIAnalytics without proxy but with accept self signed', () => {
       oIAnalyticsRegistrationRepository,
       certificateRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(configuration.id)
     );
   });
 
@@ -633,7 +634,7 @@ describe('SouthOIAnalytics with proxy', () => {
       oIAnalyticsRegistrationRepository,
       certificateRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(configuration.id)
     );
   });
 
@@ -782,7 +783,7 @@ describe('SouthOIAnalytics with proxy but without proxy password', () => {
       oIAnalyticsRegistrationRepository,
       certificateRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(configuration.id)
     );
   });
 
@@ -939,7 +940,7 @@ describe('SouthOIAnalytics without proxy but with acceptUnauthorized', () => {
       oIAnalyticsRegistrationRepository,
       certificateRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(configuration.id)
     );
     await south.start();
   });
@@ -1050,7 +1051,7 @@ describe('SouthOIAnalytics with aad-certificate', () => {
       oIAnalyticsRegistrationRepository,
       certificateRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(configuration.id)
     );
     await south.start();
   });
@@ -1186,7 +1187,7 @@ describe('SouthOIAnalytics with OIA module', () => {
       oIAnalyticsRegistrationRepository,
       certificateRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(configuration.id)
     );
     await south.start();
   });
