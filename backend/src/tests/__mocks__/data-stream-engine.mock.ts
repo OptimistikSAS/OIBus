@@ -1,10 +1,12 @@
+import { mockBaseFolders } from '../utils/test-utils';
+
 /**
  * Create a mock object for Data Stream engine
  */
 export default jest.fn().mockImplementation(logger => {
   return {
     logger,
-    baseFolder: 'base-folder',
+    baseFolders: mockBaseFolders(''),
     start: jest.fn(),
     stop: jest.fn(),
     setLogger: jest.fn(),
