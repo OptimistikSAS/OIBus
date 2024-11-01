@@ -19,6 +19,7 @@ import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/sou
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import testData from '../../tests/utils/test-data';
+import { mockBaseFolders } from '../../tests/utils/test-utils';
 
 jest.mock('../../service/proxy-agent');
 // Mock node-fetch
@@ -177,7 +178,7 @@ describe('SouthSlims with body', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(configuration.id)
     );
   });
 
@@ -212,7 +213,7 @@ describe('SouthSlims with body', () => {
 
   it('should log error if temp folder creation fails', async () => {
     await south.start();
-    expect(utils.createFolder).toHaveBeenCalledWith(path.resolve('baseFolder', 'tmp'));
+    expect(utils.createFolder).toHaveBeenCalledWith(path.resolve(mockBaseFolders(configuration.id).cache, 'tmp'));
   });
 
   it('should properly run historyQuery', async () => {
@@ -432,7 +433,7 @@ describe('SouthSlims with body and accept self signed', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(configuration.id)
     );
   });
 
@@ -609,7 +610,7 @@ describe('SouthSlims with query params', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(configuration.id)
     );
   });
 
@@ -1334,7 +1335,7 @@ describe('SouthSlims with query params and accept self signed', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(configuration.id)
     );
   });
 

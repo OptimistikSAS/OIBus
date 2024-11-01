@@ -18,6 +18,7 @@ import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
 import testData from '../../tests/utils/test-data';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
+import { mockBaseFolders } from '../../tests/utils/test-utils';
 
 const sendMock = jest.fn();
 jest.mock('@aws-sdk/client-s3');
@@ -85,7 +86,14 @@ describe('NorthAmazonS3', () => {
         send: sendMock
       }));
 
-      north = new NorthAmazonS3(configuration, encryptionService, northConnectorRepository, scanModeRepository, logger, 'baseFolder');
+      north = new NorthAmazonS3(
+        configuration,
+        encryptionService,
+        northConnectorRepository,
+        scanModeRepository,
+        logger,
+        mockBaseFolders(testData.north.list[0].id)
+      );
     });
 
     it('should properly start', async () => {
@@ -155,7 +163,14 @@ describe('NorthAmazonS3', () => {
         send: sendMock
       }));
 
-      north = new NorthAmazonS3(configuration, encryptionService, northConnectorRepository, scanModeRepository, logger, 'baseFolder');
+      north = new NorthAmazonS3(
+        configuration,
+        encryptionService,
+        northConnectorRepository,
+        scanModeRepository,
+        logger,
+        mockBaseFolders(testData.north.list[0].id)
+      );
     });
 
     it('should properly start', async () => {
@@ -215,7 +230,14 @@ describe('NorthAmazonS3', () => {
         send: sendMock
       }));
 
-      north = new NorthAmazonS3(configuration, encryptionService, northConnectorRepository, scanModeRepository, logger, 'baseFolder');
+      north = new NorthAmazonS3(
+        configuration,
+        encryptionService,
+        northConnectorRepository,
+        scanModeRepository,
+        logger,
+        mockBaseFolders(testData.north.list[0].id)
+      );
     });
 
     it('should properly start', async () => {

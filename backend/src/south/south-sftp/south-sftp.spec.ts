@@ -20,6 +20,7 @@ import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/sou
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
 import testData from '../../tests/utils/test-data';
+import { mockBaseFolders } from '../../tests/utils/test-utils';
 
 jest.mock('node:fs/promises');
 
@@ -122,7 +123,7 @@ describe('SouthSFTP', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(configuration.id)
     );
   });
 
@@ -202,7 +203,10 @@ describe('SouthSFTP', () => {
     expect(mockSftpClient.fastGet as jest.Mock).toHaveBeenCalledTimes(1);
     expect(mockSftpClient.delete as jest.Mock).toHaveBeenCalledTimes(1);
     expect(mockSftpClient.end as jest.Mock).toHaveBeenCalledTimes(1);
-    expect(south.addContent).toHaveBeenCalledWith({ type: 'raw', filePath: path.resolve('baseFolder', 'tmp', fileInfo.name) });
+    expect(south.addContent).toHaveBeenCalledWith({
+      type: 'raw',
+      filePath: path.resolve(mockBaseFolders(configuration.id).cache, 'tmp', fileInfo.name)
+    });
     expect(fs.unlink).not.toHaveBeenCalled();
     expect(logger.error).not.toHaveBeenCalled();
     expect(south.updateModifiedTime).not.toHaveBeenCalled();
@@ -345,7 +349,7 @@ describe('SouthFTP with preserve file and compression', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(configuration.id)
     );
     await south.start();
   });
@@ -391,30 +395,39 @@ describe('SouthFTP with preserve file and compression', () => {
     expect(mockSftpClient.fastGet as jest.Mock).toHaveBeenCalledTimes(1);
     expect(south.updateModifiedTime as jest.Mock).toHaveBeenCalledTimes(1);
     expect(compress).toHaveBeenCalledWith(
-      path.resolve('baseFolder', 'tmp', fileInfo.name),
-      `${path.resolve('baseFolder', 'tmp', 'myFile1')}.gz`
+      path.resolve(mockBaseFolders(configuration.id).cache, 'tmp', fileInfo.name),
+      `${path.resolve(mockBaseFolders(configuration.id).cache, 'tmp', 'myFile1')}.gz`
     );
-    expect(south.addContent).toHaveBeenCalledWith({ type: 'raw', filePath: path.resolve('baseFolder', 'tmp', `${fileInfo.name}.gz`) });
+    expect(south.addContent).toHaveBeenCalledWith({
+      type: 'raw',
+      filePath: path.resolve(mockBaseFolders(configuration.id).cache, 'tmp', `${fileInfo.name}.gz`)
+    });
     expect(logger.error).not.toHaveBeenCalled();
-    expect(fs.unlink).toHaveBeenCalledWith(`${path.resolve('baseFolder', 'tmp', 'myFile1')}.gz`);
-    expect(fs.unlink).toHaveBeenCalledWith(path.resolve('baseFolder', 'tmp', fileInfo.name));
+    expect(fs.unlink).toHaveBeenCalledWith(`${path.resolve(mockBaseFolders(configuration.id).cache, 'tmp', 'myFile1')}.gz`);
+    expect(fs.unlink).toHaveBeenCalledWith(path.resolve(mockBaseFolders(configuration.id).cache, 'tmp', fileInfo.name));
     expect(mockSftpClient.end as jest.Mock).toHaveBeenCalledTimes(1);
 
     fileInfo.name = 'myFile2';
     await south.getFile(fileInfo, configuration.items[1]);
-    expect(south.addContent).toHaveBeenCalledWith({ type: 'raw', filePath: `${path.resolve('baseFolder', 'tmp', 'myFile2')}.gz` });
+    expect(south.addContent).toHaveBeenCalledWith({
+      type: 'raw',
+      filePath: `${path.resolve(mockBaseFolders(configuration.id).cache, 'tmp', 'myFile2')}.gz`
+    });
     expect(logger.error).toHaveBeenCalledWith(
-      `Error while removing compressed file "${path.resolve('baseFolder', 'tmp', 'myFile2')}.gz": ${new Error('error')}`
+      `Error while removing compressed file "${path.resolve(mockBaseFolders(configuration.id).cache, 'tmp', 'myFile2')}.gz": ${new Error('error')}`
     );
 
     (compress as jest.Mock).mockImplementationOnce(() => {
       throw new Error('compression error');
     });
     await south.getFile(fileInfo, configuration.items[1]);
-    expect(south.addContent).toHaveBeenCalledWith({ type: 'raw', filePath: path.resolve('baseFolder', 'tmp', 'myFile2') });
+    expect(south.addContent).toHaveBeenCalledWith({
+      type: 'raw',
+      filePath: path.resolve(mockBaseFolders(configuration.id).cache, 'tmp', 'myFile2')
+    });
 
     expect(logger.error).toHaveBeenCalledWith(
-      `Error compressing file "${path.resolve('baseFolder', 'tmp', fileInfo.name)}". Sending it raw instead`
+      `Error compressing file "${path.resolve(mockBaseFolders(configuration.id).cache, 'tmp', fileInfo.name)}". Sending it raw instead`
     );
   });
 });
@@ -493,7 +506,7 @@ describe('SouthSFTP test connection with private key', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(configuration.id)
     );
   });
 

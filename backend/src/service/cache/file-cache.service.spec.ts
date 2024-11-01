@@ -8,6 +8,8 @@ import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { NorthCacheSettingsDTO } from '../../../shared/model/north-connector.model';
 
+import { mockBaseFolders } from '../../tests/utils/test-utils';
+
 jest.mock('node:fs/promises');
 jest.mock('node:fs');
 jest.mock('../../service/utils');
@@ -36,7 +38,7 @@ describe('FileCache without sendFileImmediately', () => {
       }
     } as NorthCacheSettingsDTO;
 
-    cache = new FileCache(logger, 'myCacheFolder', settings);
+    cache = new FileCache(logger, mockBaseFolders('northId').cache, mockBaseFolders('northId').error, settings);
   });
 
   it('should be properly initialized with files in cache', async () => {
@@ -44,8 +46,8 @@ describe('FileCache without sendFileImmediately', () => {
     (fs.stat as jest.Mock).mockImplementationOnce(() => ({ ctimeMs: 2 })).mockImplementationOnce(() => ({ ctimeMs: 1 }));
 
     await cache.start();
-    expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'files'));
-    expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'files-errors'));
+    expect(createFolder).toHaveBeenCalledWith(path.resolve(mockBaseFolders('northId').cache, 'files'));
+    expect(createFolder).toHaveBeenCalledWith(path.resolve(mockBaseFolders('northId').error, 'files'));
 
     expect(logger.debug).toHaveBeenCalledWith('2 files in cache');
     expect(logger.warn).toHaveBeenCalledWith('2 files in error cache');
@@ -64,12 +66,13 @@ describe('FileCache without sendFileImmediately', () => {
       .mockImplementationOnce(() => ({ ctimeMs: 1 }));
 
     await cache.start();
-    expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'files'));
-    expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'files-errors'));
+    expect(createFolder).toHaveBeenCalledWith(path.resolve(mockBaseFolders('northId').cache, 'files'));
+    expect(createFolder).toHaveBeenCalledWith(path.resolve(mockBaseFolders('northId').error, 'files'));
 
     expect(logger.debug).toHaveBeenCalledWith('1 files in cache');
     expect(logger.error).toHaveBeenCalledWith(
-      'Error while reading queue file ' + `"${path.resolve('myCacheFolder', 'files', 'file1')}": ${new Error('stat error')}`
+      'Error while reading queue file ' +
+        `"${path.resolve(mockBaseFolders('northId').cache, 'files', 'file1')}": ${new Error('stat error')}`
     );
     expect(logger.error).toHaveBeenCalledWith(new Error('readdir error'));
   });
@@ -77,8 +80,8 @@ describe('FileCache without sendFileImmediately', () => {
   it('should be properly initialized without files in cache', async () => {
     (fs.readdir as jest.Mock).mockImplementation(() => []);
     await cache.start();
-    expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'files'));
-    expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'files-errors'));
+    expect(createFolder).toHaveBeenCalledWith(path.resolve(mockBaseFolders('northId').cache, 'files'));
+    expect(createFolder).toHaveBeenCalledWith(path.resolve(mockBaseFolders('northId').error, 'files'));
 
     expect(logger.debug).toHaveBeenCalledWith('No files in cache');
     expect(logger.debug).toHaveBeenCalledWith('No error files in cache');
@@ -89,9 +92,12 @@ describe('FileCache without sendFileImmediately', () => {
 
     await cache.cacheFile('myFile.csv');
 
-    expect(fs.copyFile).toHaveBeenCalledWith('myFile.csv', path.resolve('myCacheFolder', 'files', 'myFile-1580608922222.csv'));
+    expect(fs.copyFile).toHaveBeenCalledWith(
+      'myFile.csv',
+      path.resolve(mockBaseFolders('northId').cache, 'files', 'myFile-1580608922222.csv')
+    );
     expect(logger.debug).toHaveBeenCalledWith(
-      `File "myFile.csv" cached in "${path.resolve('myCacheFolder', 'files', 'myFile-1580608922222.csv')}"`
+      `File "myFile.csv" cached in "${path.resolve(mockBaseFolders('northId').cache, 'files', 'myFile-1580608922222.csv')}"`
     );
   });
 
@@ -100,7 +106,7 @@ describe('FileCache without sendFileImmediately', () => {
 
     // When retrying an archived file, it will already have a timestamp, so we skip adding another
     await cache.cacheFile('myFile-1580608922222.csv', false);
-    const cacheFilePath = path.resolve('myCacheFolder', 'files', 'myFile-1580608922222.csv');
+    const cacheFilePath = path.resolve(mockBaseFolders('northId').cache, 'files', 'myFile-1580608922222.csv');
 
     expect(fs.copyFile).toHaveBeenCalledWith('myFile-1580608922222.csv', cacheFilePath);
     expect(logger.debug).toHaveBeenCalledWith(`File "myFile-1580608922222.csv" cached in "${cacheFilePath}"`);
@@ -149,14 +155,14 @@ describe('FileCache without sendFileImmediately', () => {
 
     await cache.manageErroredFiles('myFile.csv', 1);
     expect(logger.warn).toHaveBeenCalledWith(
-      `File "myFile.csv" moved to "${path.resolve('myCacheFolder', 'files-errors', 'myFile.csv')}" after 1 errors`
+      `File "myFile.csv" moved to "${path.resolve(mockBaseFolders('northId').error, 'files', 'myFile.csv')}" after 1 errors`
     );
     expect(cache.removeFileFromQueue).toHaveBeenCalledWith('myFile.csv');
     expect(cache.removeFileFromQueue).toHaveBeenCalledTimes(1);
 
     await cache.manageErroredFiles('myFile.csv', 1);
     expect(logger.error).toHaveBeenCalledWith(
-      `Error while moving file "myFile.csv" to "${path.resolve('myCacheFolder', 'files-errors', 'myFile.csv')}": ${new Error(
+      `Error while moving file "myFile.csv" to "${path.resolve(mockBaseFolders('northId').error, 'files', 'myFile.csv')}": ${new Error(
         'rename error'
       )}`
     );
@@ -166,11 +172,11 @@ describe('FileCache without sendFileImmediately', () => {
   it('should retry files from folder', async () => {
     // Used to retry files from error and archive folders
     const filenames = ['file1.name', 'file2.name', 'file3.name'];
-    const cacheFileArgs = filenames.map(filename => [path.resolve('myCacheFolder', 'files-errors', filename), false]);
+    const cacheFileArgs = filenames.map(filename => [path.resolve(mockBaseFolders('northId').error, 'files', filename), false]);
     const removeFilesArgs = filenames.map(filename => [cache.errorFolder, [filename]]);
     const loggerArgs = filenames.map(filename => {
-      const fromFilePath = path.resolve('myCacheFolder', 'files-errors', filename);
-      const cacheFilePath = path.resolve('myCacheFolder', 'files', filename);
+      const fromFilePath = path.resolve(mockBaseFolders('northId').error, 'files', filename);
+      const cacheFilePath = path.resolve(mockBaseFolders('northId').cache, 'files', filename);
       return [`Moving file "${fromFilePath}" back to cache "${cacheFilePath}"`];
     });
 
@@ -235,9 +241,9 @@ describe('FileCache without sendFileImmediately', () => {
 
     await cache.removeFiles(cache.errorFolder, filenames);
 
-    expect(fs.unlink).toHaveBeenNthCalledWith(1, path.join(path.resolve('myCacheFolder', 'files-errors'), filenames[0]));
-    expect(fs.unlink).toHaveBeenNthCalledWith(2, path.join(path.resolve('myCacheFolder', 'files-errors'), filenames[1]));
-    expect(fs.unlink).toHaveBeenNthCalledWith(3, path.join(path.resolve('myCacheFolder', 'files-errors'), filenames[2]));
+    expect(fs.unlink).toHaveBeenNthCalledWith(1, path.join(path.resolve(mockBaseFolders('northId').error, 'files'), filenames[0]));
+    expect(fs.unlink).toHaveBeenNthCalledWith(2, path.join(path.resolve(mockBaseFolders('northId').error, 'files'), filenames[1]));
+    expect(fs.unlink).toHaveBeenNthCalledWith(3, path.join(path.resolve(mockBaseFolders('northId').error, 'files'), filenames[2]));
   });
 
   it('should remove all error files when the error folder is not empty', async () => {
@@ -292,7 +298,7 @@ describe('FileCache without sendFileImmediately', () => {
     await cache.cacheFile('myFile.csv');
     const file = cache.getFileToSend();
 
-    expect(file).toEqual(path.resolve('myCacheFolder', 'files', 'myFile-1580608922222.csv'));
+    expect(file).toEqual(path.resolve(mockBaseFolders('northId').cache, 'files', 'myFile-1580608922222.csv'));
 
     cache.removeFileFromQueue();
     const noMoreFile = cache.getFileToSend();
@@ -311,11 +317,11 @@ describe('FileCache without sendFileImmediately', () => {
     await cache.cacheFile('myFile3.csv');
     await cache.cacheFile('myFile4.csv');
 
-    cache.removeFileFromQueue(path.resolve('myCacheFolder', 'files', 'myFile3-1580608922222.csv'));
+    cache.removeFileFromQueue(path.resolve(mockBaseFolders('northId').cache, 'files', 'myFile3-1580608922222.csv'));
     expect(cache['filesQueue']).toEqual([
-      path.resolve('myCacheFolder', 'files', 'myFile1-1580608922222.csv'),
-      path.resolve('myCacheFolder', 'files', 'myFile2-1580608922222.csv'),
-      path.resolve('myCacheFolder', 'files', 'myFile4-1580608922222.csv')
+      path.resolve(mockBaseFolders('northId').cache, 'files', 'myFile1-1580608922222.csv'),
+      path.resolve(mockBaseFolders('northId').cache, 'files', 'myFile2-1580608922222.csv'),
+      path.resolve(mockBaseFolders('northId').cache, 'files', 'myFile4-1580608922222.csv')
     ]);
   });
 
@@ -362,7 +368,7 @@ describe('FileCache without sendFileImmediately', () => {
     (createReadStream as jest.Mock).mockImplementation(() => Promise.resolve());
     await cache.getErrorFileContent(filename);
 
-    expect(createReadStream).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'files-errors', filename));
+    expect(createReadStream).toHaveBeenCalledWith(path.resolve(mockBaseFolders('northId').error, 'files', filename));
   });
 
   it('should handle error when getting error file content', async () => {
@@ -374,7 +380,7 @@ describe('FileCache without sendFileImmediately', () => {
     await cache.getErrorFileContent(filename);
 
     expect(logger.error).toHaveBeenCalledWith(
-      `Error while reading file "${path.resolve('myCacheFolder', 'files-errors', filename)}": ${error}`
+      `Error while reading file "${path.resolve(mockBaseFolders('northId').error, 'files', filename)}": ${error}`
     );
   });
 
@@ -383,7 +389,7 @@ describe('FileCache without sendFileImmediately', () => {
     (createReadStream as jest.Mock).mockImplementation(() => Promise.resolve());
     await cache.getCacheFileContent(filename);
 
-    expect(createReadStream).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'files', filename));
+    expect(createReadStream).toHaveBeenCalledWith(path.resolve(mockBaseFolders('northId').cache, 'files', filename));
   });
 
   it('should handle error when getting cache file content', async () => {
@@ -394,7 +400,9 @@ describe('FileCache without sendFileImmediately', () => {
     });
     await cache.getCacheFileContent(filename);
 
-    expect(logger.error).toHaveBeenCalledWith(`Error while reading file "${path.resolve('myCacheFolder', 'files', filename)}": ${error}`);
+    expect(logger.error).toHaveBeenCalledWith(
+      `Error while reading file "${path.resolve(mockBaseFolders('northId').cache, 'files', filename)}": ${error}`
+    );
   });
 });
 
@@ -416,7 +424,7 @@ describe('FileCache with sendFileImmediately', () => {
       }
     } as NorthCacheSettingsDTO;
 
-    cache = new FileCache(logger, 'myCacheFolder', settings);
+    cache = new FileCache(logger, mockBaseFolders('northId').cache, mockBaseFolders('northId').error, settings);
   });
 
   it('should be properly initialized with files in cache', async () => {
@@ -424,8 +432,8 @@ describe('FileCache with sendFileImmediately', () => {
     (fs.stat as jest.Mock).mockImplementationOnce(() => ({ ctimeMs: 2 })).mockImplementationOnce(() => ({ ctimeMs: 1 }));
 
     await cache.start();
-    expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'files'));
-    expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'files-errors'));
+    expect(createFolder).toHaveBeenCalledWith(path.resolve(mockBaseFolders('northId').cache, 'files'));
+    expect(createFolder).toHaveBeenCalledWith(path.resolve(mockBaseFolders('northId').error, 'files'));
 
     expect(logger.debug).toHaveBeenCalledWith('2 files in cache');
     expect(logger.warn).toHaveBeenCalledWith('2 files in error cache');

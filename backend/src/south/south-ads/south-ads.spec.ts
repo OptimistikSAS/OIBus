@@ -16,6 +16,7 @@ import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/sou
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
 import testData from '../../tests/utils/test-data';
+import { mockBaseFolders } from '../../tests/utils/test-utils';
 
 // End of global variables
 
@@ -121,7 +122,7 @@ describe('South ADS', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(configuration.id)
     );
   });
 
