@@ -22,7 +22,7 @@ import ScanModeRepository from '../repository/config/scan-mode.repository';
 import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
 import LogRepository from '../repository/logs/log.repository';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
-import { checkScanMode, createBaseFolders, createFolder, filesExists } from './utils';
+import { checkScanMode, createBaseFolders, filesExists } from './utils';
 import { ScanMode } from '../model/scan-mode.model';
 import { SouthConnectorLightDTO } from '../../shared/model/south-connector.model';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
@@ -389,13 +389,17 @@ export default class NorthService {
     for (const type of Object.keys(folders) as Array<keyof BaseFolders>) {
       try {
         const baseFolder = folders[type];
-        this.dataStreamEngine.logger.trace(`Deleting base folder "${baseFolder}" of North connector "${north.name}" (${north.id})`);
+        this.dataStreamEngine.logger.trace(
+          `Deleting "${type}" base folder "${baseFolder}" of North connector "${north.name}" (${north.id})`
+        );
 
         if (await filesExists(baseFolder)) {
           await fs.rm(baseFolder, { recursive: true });
         }
       } catch (error) {
-        this.dataStreamEngine.logger.error(`Unable to delete North connector "${north.name}" (${north.id}) base folder: ${error}`);
+        this.dataStreamEngine.logger.error(
+          `Unable to delete North connector "${north.name}" (${north.id}) "${type}" base folder: ${error}`
+        );
       }
     }
   }

@@ -19,6 +19,8 @@ import { SouthItemSettings, SouthSettings } from '../../shared/model/south-setti
 import SouthConnectorMock from '../tests/__mocks__/south-connector.mock';
 import { flushPromises, mockBaseFolders } from '../tests/utils/test-utils';
 import HistoryQueryMetricsServiceMock from '../tests/__mocks__/service/metrics/history-query-metrics-service.mock';
+import { createBaseFolders } from '../service/utils';
+import path from 'node:path';
 
 jest.mock('../service/south.service');
 jest.mock('../service/north.service');
@@ -72,7 +74,8 @@ describe('HistoryQuery enabled', () => {
     await historyQuery.start();
 
     expect(historyQuery.settings).toBeDefined();
-    // TODO: change with createBaseFolders call
+    expect(createBaseFolders).toHaveBeenCalledWith(mockBaseFolders(path.join(testData.historyQueries.list[0].id, 'south')));
+    expect(createBaseFolders).toHaveBeenCalledWith(mockBaseFolders(path.join(testData.historyQueries.list[0].id, 'north')));
     expect(mockedNorth1.start).toHaveBeenCalledTimes(1);
   });
 
