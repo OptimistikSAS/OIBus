@@ -1,9 +1,7 @@
 import pino from 'pino';
 import NorthConnector from '../north/north-connector';
 import SouthConnector from '../south/south-connector';
-import { filesExists } from '../service/utils';
 import path from 'node:path';
-import fs from 'node:fs/promises';
 import { Instant } from '../../shared/model/types';
 import { BaseFolders } from '../model/types';
 import { NorthConnectorMetrics, OIBusContent, SouthConnectorMetrics } from '../../shared/model/engine.model';

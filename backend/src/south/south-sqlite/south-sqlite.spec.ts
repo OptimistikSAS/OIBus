@@ -23,6 +23,7 @@ import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/sou
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
 import testData from '../../tests/utils/test-data';
+import { mockBaseFolders } from '../../tests/utils/test-utils';
 
 jest.mock('node:fs/promises');
 jest.mock('../../service/utils');
@@ -186,7 +187,7 @@ describe('SouthSQLite', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(configuration.id)
     );
   });
 
@@ -201,7 +202,7 @@ describe('SouthSQLite', () => {
 
   it('should create temp folder', async () => {
     await south.start();
-    expect(utils.createFolder).toHaveBeenCalledWith(path.resolve('baseFolder', 'tmp'));
+    expect(utils.createFolder).toHaveBeenCalledWith(path.resolve(mockBaseFolders(configuration.id).cache, 'tmp'));
   });
 
   it('should properly run historyQuery', async () => {
@@ -436,7 +437,7 @@ describe('SouthSQLite test connection', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(configuration.id)
     );
   });
 

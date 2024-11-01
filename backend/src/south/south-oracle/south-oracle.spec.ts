@@ -24,6 +24,7 @@ import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/sou
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
 import testData from '../../tests/utils/test-data';
+import { mockBaseFolders } from '../../tests/utils/test-utils';
 
 jest.mock('oracledb');
 jest.mock('../../service/utils');
@@ -180,7 +181,7 @@ describe('SouthOracle with authentication', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(configuration.id)
     );
   });
 
@@ -195,7 +196,7 @@ describe('SouthOracle with authentication', () => {
 
   it('should create temp folder', async () => {
     await south.start();
-    expect(utils.createFolder).toHaveBeenCalledWith(path.resolve('baseFolder', 'tmp'));
+    expect(utils.createFolder).toHaveBeenCalledWith(path.resolve(mockBaseFolders(configuration.id).cache, 'tmp'));
   });
 
   it('should properly run historyQuery', async () => {
@@ -509,7 +510,7 @@ describe('SouthOracle without authentication but with thick mode', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(configuration.id)
     );
   });
 
@@ -689,7 +690,7 @@ describe('SouthOracle test connection', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(configuration.id)
     );
   });
 
