@@ -15,7 +15,7 @@ import EncryptionService from './encryption.service';
 import HistoryQueryRepository from '../repository/config/history-query.repository';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
-import { checkScanMode, createBaseFolders, createFolder, filesExists } from './utils';
+import { checkScanMode, createBaseFolders, filesExists } from './utils';
 import SouthService, { southManifestList } from './south.service';
 import NorthService, { northManifestList } from './north.service';
 import LogRepository from '../repository/logs/log.repository';
@@ -501,12 +501,16 @@ export default class HistoryQueryService {
       const baseFolder = folders[type];
 
       try {
-        this.historyQueryEngine.logger.trace(`Deleting "${type}" base folder "${baseFolder}" of History query "${historyQuery.name}" (${historyQuery.id})`);
+        this.historyQueryEngine.logger.trace(
+          `Deleting "${type}" base folder "${baseFolder}" of History query "${historyQuery.name}" (${historyQuery.id})`
+        );
         if (await filesExists(baseFolder)) {
           await fs.rm(baseFolder, { recursive: true });
         }
       } catch (error) {
-        this.historyQueryEngine.logger.error(`Unable to delete History query "${historyQuery.name}" (${historyQuery.id}) "${type}" base folder: ${error}`);
+        this.historyQueryEngine.logger.error(
+          `Unable to delete History query "${historyQuery.name}" (${historyQuery.id}) "${type}" base folder: ${error}`
+        );
       }
     }
   }
