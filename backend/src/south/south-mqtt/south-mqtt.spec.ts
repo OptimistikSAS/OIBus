@@ -20,6 +20,7 @@ import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/sou
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import testData from '../../tests/utils/test-data';
 import { flushPromises } from '../../tests/utils/test-utils';
+import { mockBaseFolders } from '../../tests/utils/test-utils';
 
 jest.mock('mqtt');
 jest.mock('node:fs/promises');
@@ -211,7 +212,7 @@ describe('SouthMQTT without authentication', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(configuration.id)
     );
   });
 
@@ -392,7 +393,7 @@ describe('SouthMQTT with Basic Auth', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(configuration.id)
     );
   });
 
@@ -930,7 +931,7 @@ describe('SouthMQTT with Cert', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(configuration.id)
     );
   });
 
@@ -1107,7 +1108,7 @@ describe('SouthMQTT without Cert', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(configuration.id)
     );
   });
 

@@ -18,6 +18,7 @@ import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { NorthFileWriterSettings } from '../../../shared/model/north-settings.model';
 import testData from '../../tests/utils/test-data';
+import { mockBaseFolders } from '../../tests/utils/test-utils';
 
 jest.mock('node:fs/promises');
 
@@ -71,7 +72,14 @@ describe('NorthFileWriter', () => {
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
     (csv.unparse as jest.Mock).mockReturnValue('csv content');
 
-    north = new NorthFileWriter(configuration, encryptionService, northConnectorRepository, scanModeRepository, logger, 'baseFolder');
+    north = new NorthFileWriter(
+      configuration,
+      encryptionService,
+      northConnectorRepository,
+      scanModeRepository,
+      logger,
+      mockBaseFolders(testData.north.list[0].id)
+    );
     await north.start();
   });
 
@@ -137,7 +145,14 @@ describe('NorthFileWriter without suffix or prefix', () => {
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
 
-    north = new NorthFileWriter(configuration, encryptionService, northConnectorRepository, scanModeRepository, logger, 'baseFolder');
+    north = new NorthFileWriter(
+      configuration,
+      encryptionService,
+      northConnectorRepository,
+      scanModeRepository,
+      logger,
+      mockBaseFolders(testData.north.list[0].id)
+    );
   });
 
   it('should properly handle values', async () => {

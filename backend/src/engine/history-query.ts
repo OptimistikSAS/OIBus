@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import { createBaseFolders, createFolder, delay } from '../service/utils';
+import { createBaseFolders, delay } from '../service/utils';
 import pino from 'pino';
 import SouthService from '../service/south.service';
 import NorthService from '../service/north.service';

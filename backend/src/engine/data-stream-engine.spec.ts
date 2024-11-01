@@ -2,9 +2,6 @@ import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 
 import pino from 'pino';
 import DataStreamEngine from './data-stream-engine';
-import fs from 'node:fs/promises';
-import path from 'node:path';
-import { filesExists } from '../service/utils';
 import testData from '../tests/utils/test-data';
 import { OIBusRawContent, OIBusTimeValueContent } from '../../shared/model/engine.model';
 import NorthConnector from '../north/north-connector';
@@ -21,7 +18,6 @@ import NorthConnectorMetricsService from '../service/metrics/north-connector-met
 import NorthConnectorMetricsServiceMock from '../tests/__mocks__/service/metrics/north-connector-metrics-service.mock';
 import SouthConnectorMetricsService from '../service/metrics/south-connector-metrics.service';
 import SouthConnectorMetricsServiceMock from '../tests/__mocks__/service/metrics/south-connector-metrics-service.mock';
-import { QueriesHistory } from '../south/south-interface';
 
 jest.mock('../south/south-mqtt/south-mqtt');
 jest.mock('../service/south.service');
@@ -87,6 +83,8 @@ describe('DataStreamEngine', () => {
     mockedSouth2['settings']['enabled'] = true;
     await engine.start([mockedNorth1, mockedNorth2], [mockedSouth1, mockedSouth2]);
 
+    expect(engine.baseFolders).toBeDefined();
+    expect(Object.keys(engine.baseFolders).sort()).toEqual(['archive', 'cache', 'error'].sort());
     expect(engine.logger).toBeDefined();
     expect(engine.baseFolders).toBeDefined();
     expect(logger.info).toHaveBeenCalledWith(`OIBus engine started`);
@@ -192,86 +190,21 @@ describe('DataStreamEngine', () => {
   });
 
   it('should delete south connector', async () => {
-    (filesExists as jest.Mock).mockImplementationOnce(() => Promise.resolve(true)).mockImplementationOnce(() => Promise.resolve(false));
     const stopSouthSpy = jest.spyOn(engine, 'stopSouth');
 
     await engine.start([], [mockedSouth1, mockedSouth2]);
-
-    const baseFolder = path.resolve('./cache/data-stream', `south-${mockedSouth1.settings.id}`);
     await engine.deleteSouth(testData.south.list[0]);
 
     expect(stopSouthSpy).toHaveBeenCalled();
-    expect(filesExists).toHaveBeenCalledWith(baseFolder);
-    expect(fs.rm).toHaveBeenCalledWith(baseFolder, { recursive: true });
-    expect(logger.trace).toHaveBeenCalledWith(
-      `Deleting base folder "${baseFolder}" of South connector "${mockedSouth1.settings.name}" (${mockedSouth1.settings.id})`
-    );
-    expect(logger.info).toHaveBeenCalledWith(`Deleted South connector "${mockedSouth1.settings.name}" (${mockedSouth1.settings.id})`);
-
-    // Removing again should not call rm, meaning that it's actually removed
-    await engine.deleteSouth(testData.south.list[0]);
-    expect(fs.rm).toHaveBeenCalledTimes(1);
   });
 
   it('should delete north connector', async () => {
-    (filesExists as jest.Mock).mockImplementationOnce(() => Promise.resolve(true)).mockImplementationOnce(() => Promise.resolve(false));
     const stopNorthSpy = jest.spyOn(engine, 'stopNorth');
 
     await engine.start([mockedNorth1, mockedNorth2], []);
-
-    const baseFolder = path.resolve('./cache/data-stream', `north-${testData.north.list[0].id}`);
     await engine.deleteNorth(testData.north.list[0]);
 
     expect(stopNorthSpy).toHaveBeenCalled();
-    expect(filesExists).toHaveBeenCalledWith(baseFolder);
-    expect(fs.rm).toHaveBeenCalledWith(baseFolder, { recursive: true });
-    expect(logger.trace).toHaveBeenCalledWith(
-      `Deleting base folder "${baseFolder}" of North connector "${testData.north.list[0].name}" (${testData.north.list[0].id})`
-    );
-    expect(logger.info).toHaveBeenCalledWith(`Deleted North connector "${testData.north.list[0].name}" (${testData.north.list[0].id})`);
-
-    // Removing again should not call rm, meaning that it's actually removed
-    await engine.deleteNorth(testData.north.list[0]);
-    expect(fs.rm).toHaveBeenCalledTimes(1);
-  });
-
-  it('should handle connector deletion errors', async () => {
-    (filesExists as jest.Mock).mockImplementation(() => Promise.resolve(true));
-    const stopSouthSpy = jest.spyOn(engine, 'stopSouth');
-    const stopNorthSpy = jest.spyOn(engine, 'stopNorth');
-
-    await engine.start([mockedNorth1, mockedNorth2], [mockedSouth1, mockedSouth2]);
-
-    const error = new Error(`Can't remove folder`);
-    (fs.rm as jest.Mock).mockImplementation(() => {
-      throw error;
-    });
-
-    // South Connector error
-    const southBaseFolder = path.resolve('./cache/data-stream', `south-${testData.south.list[0].id}`);
-    await engine.deleteSouth(testData.south.list[0]);
-
-    expect(stopSouthSpy).toHaveBeenCalled();
-    expect(filesExists).toHaveBeenCalled();
-    expect(logger.trace).toHaveBeenCalledWith(
-      `Deleting base folder "${southBaseFolder}" of South connector "${testData.south.list[0].name}" (${testData.south.list[0].id})`
-    );
-    expect(logger.error).toHaveBeenCalledWith(
-      `Unable to delete South connector "${testData.south.list[0].name}" (${testData.south.list[0].id} base folder: ${error}`
-    );
-
-    // North Connector error
-    const northBaseFolder = path.resolve('./cache/data-stream', `north-${testData.north.list[0].id}`);
-    await engine.deleteNorth(testData.north.list[0]);
-
-    expect(stopNorthSpy).toHaveBeenCalled();
-    expect(filesExists).toHaveBeenCalled();
-    expect(logger.trace).toHaveBeenCalledWith(
-      `Deleting base folder "${northBaseFolder}" of North connector "${testData.north.list[0].name}" (${testData.north.list[0].id})`
-    );
-    expect(logger.error).toHaveBeenCalledWith(
-      `Unable to delete North connector "${testData.north.list[0].name}" (${testData.north.list[0].id}) base folder: ${error}`
-    );
   });
 
   it('should manage error files', async () => {
@@ -473,7 +406,7 @@ describe('DataStreamEngine', () => {
     expect(logger.child).toHaveBeenCalledTimes(2);
     expect(mockedSouth1.manageSouthCacheOnChange).not.toHaveBeenCalled();
 
-    (mockedSouth1.queriesHistory as jest.Mock).mockReturnValueOnce(true);
+    (mockedSouth1.queriesHistory as unknown as jest.Mock).mockReturnValueOnce(true);
     await engine.reloadSouth(testData.south.list[0]);
     expect(mockedSouth1.manageSouthCacheOnChange).toHaveBeenCalledTimes(1);
   });

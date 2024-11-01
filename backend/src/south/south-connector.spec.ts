@@ -31,6 +31,7 @@ import ConnectionServiceMock from '../tests/__mocks__/service/connection-service
 import SouthMSSQL from './south-mssql/south-mssql';
 import { DateTime } from 'luxon';
 import { Instant } from '../model/types';
+import { mockBaseFolders } from '../tests/utils/test-utils';
 
 // Mock fs
 jest.mock('node:fs/promises');
@@ -104,7 +105,7 @@ describe('SouthConnector with file query', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(testData.south.list[0].id)
     );
     await south.start();
   });
@@ -271,7 +272,7 @@ describe('SouthConnector disabled', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(testData.south.list[1].id)
     );
     await south.start();
   });
@@ -301,7 +302,7 @@ describe('SouthConnector disabled', () => {
   });
 
   it('should not subscribe if queriesSubscription not supported history query when not history items', async () => {
-    south.queriesSubscription = jest.fn().mockReturnValueOnce(false);
+    (south.queriesSubscription as unknown as jest.Mock) = jest.fn().mockReturnValueOnce(false);
 
     await south.onItemChange();
 
@@ -339,7 +340,7 @@ describe('SouthConnector with history and max instant per item', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder',
+      mockBaseFolders(testData.south.list[2].id),
       connectionService
     );
 
@@ -605,7 +606,7 @@ describe('SouthConnector with history and subscription', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder',
+      mockBaseFolders(testData.scanMode.list[0].id),
       connectionService
     );
 

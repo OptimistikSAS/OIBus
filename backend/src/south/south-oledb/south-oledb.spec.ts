@@ -20,6 +20,7 @@ import SouthCacheRepository from '../../repository/cache/south-cache.repository'
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import testData from '../../tests/utils/test-data';
+import { mockBaseFolders } from '../../tests/utils/test-utils';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
 
 jest.mock('node:fs/promises');
@@ -172,7 +173,7 @@ describe('SouthOLEDB', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(configuration.id)
     );
   });
 
@@ -187,7 +188,7 @@ describe('SouthOLEDB', () => {
 
   it('should create temp folder', async () => {
     await south.start();
-    expect(utils.createFolder).toHaveBeenCalledWith(path.resolve('baseFolder', 'tmp'));
+    expect(utils.createFolder).toHaveBeenCalledWith(path.resolve(mockBaseFolders(configuration.id).cache, 'tmp'));
   });
 
   it('should properly connect to remote agent and disconnect ', async () => {
@@ -341,7 +342,7 @@ describe('SouthOLEDB', () => {
       },
       configuration.name,
       configuration.items[0].name,
-      path.resolve('baseFolder', 'tmp'),
+      path.resolve(mockBaseFolders(configuration.id).cache, 'tmp'),
       expect.any(Function),
       logger
     );

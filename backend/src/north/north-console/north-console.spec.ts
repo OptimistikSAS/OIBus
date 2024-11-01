@@ -16,10 +16,11 @@ import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import testData from '../../tests/utils/test-data';
+import { mockBaseFolders } from '../../tests/utils/test-utils';
 
 jest.mock('node:fs/promises');
 // Spy on console table and info
-jest.spyOn(global.console, 'table').mockImplementation(() => {});
+jest.spyOn(global.console, 'table').mockImplementation(() => ({}));
 jest.spyOn(process.stdout, 'write').mockImplementation(() => true);
 
 const logger: pino.Logger = new PinoLogger();
@@ -66,7 +67,14 @@ describe('NorthConsole with verbose mode', () => {
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
 
-    north = new NorthConsole(configuration, encryptionService, northConnectorRepository, scanModeRepository, logger, 'baseFolder');
+    north = new NorthConsole(
+      configuration,
+      encryptionService,
+      northConnectorRepository,
+      scanModeRepository,
+      logger,
+      mockBaseFolders(testData.north.list[0].id)
+    );
   });
 
   it('should properly handle values in verbose mode', async () => {
@@ -105,7 +113,14 @@ describe('NorthConsole without verbose mode', () => {
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
 
-    north = new NorthConsole(configuration, encryptionService, northConnectorRepository, scanModeRepository, logger, 'baseFolder');
+    north = new NorthConsole(
+      configuration,
+      encryptionService,
+      northConnectorRepository,
+      scanModeRepository,
+      logger,
+      mockBaseFolders(testData.north.list[0].id)
+    );
   });
 
   it('should properly handle values in non verbose mode', async () => {

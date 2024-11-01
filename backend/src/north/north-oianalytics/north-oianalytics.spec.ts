@@ -29,6 +29,7 @@ import CertificateRepository from '../../repository/config/certificate.repositor
 import CertificateRepositoryMock from '../../tests/__mocks__/repository/config/certificate-repository.mock';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import OianalyticsRegistrationRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
+import { mockBaseFolders } from '../../tests/utils/test-utils';
 
 jest.mock('node:fs/promises');
 jest.mock('node:fs');
@@ -122,7 +123,7 @@ describe('NorthOIAnalytics without proxy', () => {
       certificateRepository,
       oIAnalyticsRegistrationRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(testData.north.list[0].id)
     );
     await north.start();
   });
@@ -389,7 +390,7 @@ describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
       certificateRepository,
       oIAnalyticsRegistrationRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(testData.north.list[0].id)
     );
     await north.start();
   });
@@ -500,7 +501,7 @@ describe('NorthOIAnalytics with proxy', () => {
       certificateRepository,
       oIAnalyticsRegistrationRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(testData.north.list[0].id)
     );
     await north.start();
   });
@@ -617,7 +618,7 @@ describe('NorthOIAnalytics with proxy but without proxy password', () => {
       certificateRepository,
       oIAnalyticsRegistrationRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(testData.north.list[0].id)
     );
     await north.start();
   });
@@ -748,7 +749,7 @@ describe('NorthOIAnalytics with aad-certificate', () => {
       certificateRepository,
       oIAnalyticsRegistrationRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(testData.north.list[0].id)
     );
     await north.start();
   });
@@ -815,7 +816,7 @@ describe('NorthOIAnalytics with OIA module', () => {
       certificateRepository,
       oIAnalyticsRegistrationRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(testData.north.list[0].id)
     );
     await north.start();
   });
