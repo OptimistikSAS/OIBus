@@ -28,11 +28,15 @@ import OIAnalyticsRegistrationRepositoryMock from '../tests/__mocks__/repository
 import CertificateRepositoryMock from '../tests/__mocks__/repository/config/certificate-repository.mock';
 import DataStreamEngine from '../engine/data-stream-engine';
 import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
+import { BaseFolders } from '../model/types';
+import fs from 'node:fs/promises';
 
 jest.mock('../south/south-opcua/south-opcua');
 jest.mock('./metrics/south-connector-metrics.service');
+jest.mock('node:fs/promises');
 
 const validator = new JoiValidator();
+const logger: pino.Logger = new PinoLogger();
 const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
 const logRepository: LogRepository = new LogRepositoryMock();
 const southMetricsRepository: SouthConnectorMetricsRepository = new SouthMetricsRepositoryMock();
@@ -43,9 +47,8 @@ const certificateRepository: CertificateRepository = new CertificateRepositoryMo
 const oIAnalyticsMessageService: OIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const connectionService: ConnectionService = new ConnectionServiceMock();
-const dataStreamEngine: DataStreamEngine = new DataStreamEngineMock();
+const dataStreamEngine: DataStreamEngine = new DataStreamEngineMock(logger);
 
-const logger: pino.Logger = new PinoLogger();
 let service: SouthService;
 describe('south service', () => {
   beforeEach(() => {
@@ -84,8 +87,14 @@ describe('south service', () => {
   });
 
   it('should create South connector', () => {
-    const connector = service.runSouth(testData.south.list[0], jest.fn(), logger, mockBaseFolders(testData.north.list[0].id));
+    const connector = service.runSouth(testData.south.list[0], jest.fn(), logger, mockBaseFolders(testData.south.list[0].id));
     expect(connector).toBeDefined();
+  });
+
+  it('should create South connector with default base folders', () => {
+    const connector = service.runSouth(testData.south.list[0], jest.fn(), logger);
+    expect(connector).toBeDefined();
+    expect(connector['baseFolders']).toEqual(mockBaseFolders(`south-${testData.south.list[0].id}`));
   });
 
   it('should not create South connector not installed', () => {
@@ -101,7 +110,7 @@ describe('south service', () => {
         } as SouthConnectorEntity<SouthSettings, SouthItemSettings>,
         jest.fn(),
         logger,
-        mockBaseFolders(testData.north.list[0].id)
+        mockBaseFolders(testData.south.list[0].id)
       );
     } catch (err) {
       error = err;
@@ -113,5 +122,59 @@ describe('south service', () => {
   it('should retrieve a list of south manifest', () => {
     const list = service.getInstalledSouthManifests();
     expect(list).toBeDefined();
+  });
+
+  it('should delete base folders', async () => {
+    const connector = service.runSouth(testData.south.list[0], jest.fn(), logger);
+    expect(connector).toBeDefined();
+
+    (fs.stat as jest.Mock).mockImplementation(() => ({}));
+
+    const baseFolders = structuredClone(service['getDefaultBaseFolders'](testData.south.list[0].id));
+    await service['deleteBaseFolders'](testData.south.list[0]);
+
+    for (const type of Object.keys(baseFolders) as Array<keyof BaseFolders>) {
+      expect(fs.stat).toHaveBeenCalledWith(baseFolders[type]);
+      expect(fs.rm).toHaveBeenCalledWith(baseFolders[type], { recursive: true });
+    }
+  });
+
+  it('should delete base folders if exists', async () => {
+    const connector = service.runSouth(testData.south.list[0], jest.fn(), logger);
+    expect(connector).toBeDefined();
+
+    (fs.stat as jest.Mock).mockImplementation(() => {
+      throw new Error('stat error');
+    });
+
+    const baseFolders = structuredClone(service['getDefaultBaseFolders'](testData.south.list[0].id));
+    await service['deleteBaseFolders'](testData.south.list[0]);
+
+    for (const type of Object.keys(baseFolders) as Array<keyof BaseFolders>) {
+      expect(fs.stat).toHaveBeenCalledWith(baseFolders[type]);
+      expect(fs.rm).not.toHaveBeenCalled();
+    }
+  });
+
+  it('should delete base folders and handle errors', async () => {
+    const connector = service.runSouth(testData.south.list[0], jest.fn(), logger);
+    expect(connector).toBeDefined();
+
+    const error = new Error('rm error');
+    (fs.stat as jest.Mock).mockImplementation(() => ({}));
+    (fs.rm as jest.Mock).mockImplementation(() => {
+      throw error;
+    });
+
+    const baseFolders = structuredClone(service['getDefaultBaseFolders'](testData.south.list[0].id));
+    await service['deleteBaseFolders'](testData.south.list[0]);
+
+    for (const type of Object.keys(baseFolders) as Array<keyof BaseFolders>) {
+      expect(fs.stat).toHaveBeenCalledWith(baseFolders[type]);
+      expect(fs.rm).toHaveBeenCalledWith(baseFolders[type], { recursive: true });
+      expect(dataStreamEngine.logger.error).toHaveBeenCalledWith(
+        `Unable to delete South connector "${connector.settings.name}" (${connector.settings.id}) "${type}" base folder: ${error}`
+      );
+    }
   });
 });
