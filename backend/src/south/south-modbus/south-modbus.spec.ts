@@ -20,6 +20,7 @@ import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-ser
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import testData from '../../tests/utils/test-data';
 import { flushPromises } from '../../tests/utils/test-utils';
+import { mockBaseFolders } from '../../tests/utils/test-utils';
 
 jest.mock('node:fs/promises');
 jest.mock('node:net');
@@ -192,7 +193,7 @@ describe('South Modbus', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(configuration.id)
     );
   });
 
@@ -555,7 +556,7 @@ describe('SouthModbus test connection', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(configuration.id)
     );
 
     // Mock node:net Socket constructor and the used function
@@ -600,7 +601,7 @@ describe('SouthModbus test connection', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(configuration.id)
     );
 
     const mockedEmitter = new CustomStream();
@@ -627,7 +628,7 @@ describe('SouthModbus test connection', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(configuration.id)
     );
     const callback = jest.fn();
 
@@ -674,7 +675,7 @@ describe('SouthModbus test connection', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(configuration.id)
     );
     const callback = jest.fn();
 

@@ -16,6 +16,7 @@ import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import testData from '../../tests/utils/test-data';
+import { mockBaseFolders } from '../../tests/utils/test-utils';
 
 jest.mock('node:fs/promises');
 
@@ -85,7 +86,14 @@ describe('NorthSFTP', () => {
     (sftpClient as jest.Mock).mockImplementation(() => mockSftpClient);
     (csv.unparse as jest.Mock).mockReturnValue('csv content');
 
-    north = new NorthSftp(configuration, encryptionService, northConnectorRepository, scanModeRepository, logger, 'baseFolder');
+    north = new NorthSftp(
+      configuration,
+      encryptionService,
+      northConnectorRepository,
+      scanModeRepository,
+      logger,
+      mockBaseFolders(testData.north.list[0].id)
+    );
     await north.start();
   });
 
@@ -179,7 +187,14 @@ describe('NorthSFTP without suffix or prefix', () => {
 
     (sftpClient as jest.Mock).mockImplementation(() => mockSftpClient);
 
-    north = new NorthSftp(configuration, encryptionService, northConnectorRepository, scanModeRepository, logger, 'baseFolder');
+    north = new NorthSftp(
+      configuration,
+      encryptionService,
+      northConnectorRepository,
+      scanModeRepository,
+      logger,
+      mockBaseFolders(testData.north.list[0].id)
+    );
   });
 
   it('should properly handle values', async () => {

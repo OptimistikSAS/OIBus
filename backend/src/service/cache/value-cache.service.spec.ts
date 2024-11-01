@@ -11,6 +11,8 @@ import testData from '../../tests/utils/test-data';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 
+import { mockBaseFolders } from '../../tests/utils/test-utils';
+
 jest.mock('../utils', () => ({
   generateRandomId: jest.fn(() => 'generated-uuid'),
   createFolder: jest.fn(() => Promise.resolve()),
@@ -32,7 +34,7 @@ describe('ValueCache', () => {
     configuration = testData.north.list[0];
     (dirSize as jest.Mock).mockImplementation(() => 1000);
 
-    cache = new ValueCache(logger, 'myCacheFolder', configuration);
+    cache = new ValueCache(logger, mockBaseFolders('northId').cache, mockBaseFolders('northId').error, configuration);
   });
 
   it('should be properly initialized with values in cache', async () => {
@@ -68,22 +70,22 @@ describe('ValueCache', () => {
     await cache.start();
 
     expect(createFolder).toHaveBeenCalledTimes(2);
-    expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values'));
-    expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values-errors'));
+    expect(createFolder).toHaveBeenCalledWith(path.resolve(mockBaseFolders('northId').cache, 'time-values'));
+    expect(createFolder).toHaveBeenCalledWith(path.resolve(mockBaseFolders('northId').error, 'time-values'));
 
     expect(logger.debug).toHaveBeenCalledWith('4 values in queue and 2 compacted files in cache');
     expect(logger.error).toHaveBeenCalledWith(
       `Error while reading buffer file "${path.resolve(
-        'myCacheFolder',
-        'values',
+        mockBaseFolders('northId').cache,
+        'time-values',
         'error.buffer.tmp'
       )}": SyntaxError: Unexpected token 'm', "malformed "... is not valid JSON`
     );
     expect(logger.error).toHaveBeenCalledWith(
-      `Error while reading queue file "${path.resolve('myCacheFolder', 'values', 'error.queue.tmp')}": Error: queue error`
+      `Error while reading queue file "${path.resolve(mockBaseFolders('northId').cache, 'time-values', 'error.queue.tmp')}": Error: queue error`
     );
     expect(logger.error).toHaveBeenCalledWith(
-      `Error while reading compact file "${path.resolve('myCacheFolder', 'values', 'error.compact.tmp')}": Error: compact error`
+      `Error while reading compact file "${path.resolve(mockBaseFolders('northId').cache, 'time-values', 'error.compact.tmp')}": Error: compact error`
     );
   });
 
@@ -114,8 +116,8 @@ describe('ValueCache', () => {
     await cache.start();
 
     expect(createFolder).toHaveBeenCalledTimes(2);
-    expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values'));
-    expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values-errors'));
+    expect(createFolder).toHaveBeenCalledWith(path.resolve(mockBaseFolders('northId').cache, 'time-values'));
+    expect(createFolder).toHaveBeenCalledWith(path.resolve(mockBaseFolders('northId').error, 'time-values'));
 
     expect(logger.debug).toHaveBeenCalledWith('4 values in queue and 2 compacted files in cache');
   });
@@ -130,13 +132,13 @@ describe('ValueCache', () => {
       });
     const empty = await cache.isEmpty();
     expect(empty).toBeTruthy();
-    expect(fs.readdir).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values'));
+    expect(fs.readdir).toHaveBeenCalledWith(path.resolve(mockBaseFolders('northId').cache, 'time-values'));
     const notEmpty = await cache.isEmpty();
     expect(notEmpty).toBeFalsy();
-    expect(fs.readdir).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values'));
+    expect(fs.readdir).toHaveBeenCalledWith(path.resolve(mockBaseFolders('northId').cache, 'time-values'));
     const notEmptyBecauseOfError = await cache.isEmpty();
     expect(notEmptyBecauseOfError).toBeTruthy();
-    expect(fs.readdir).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values'));
+    expect(fs.readdir).toHaveBeenCalledWith(path.resolve(mockBaseFolders('northId').cache, 'time-values'));
     expect(logger.error).toHaveBeenCalledWith(new Error('readdir error'));
   });
 
@@ -154,18 +156,18 @@ describe('ValueCache', () => {
     await cache.removeAllValues();
     expect(cache.removeSentValues).toHaveBeenCalledWith(
       new Map([
-        [path.resolve('myCacheFolder', 'values', '1.queue.tmp'), [{ data: 'myFlushBuffer1' }]],
-        [path.resolve('myCacheFolder', 'values', '2.queue.tmp'), [{ data: 'myFlushBuffer2' }]],
-        [path.resolve('myCacheFolder', 'values', '3.queue.tmp'), [{ data: 'myFlushBuffer3' }]],
-        [path.resolve('myCacheFolder', 'values', '4.queue.tmp'), [{ data: 'myFlushBuffer4' }]]
+        [path.resolve(mockBaseFolders('northId').cache, 'time-values', '1.queue.tmp'), [{ data: 'myFlushBuffer1' }]],
+        [path.resolve(mockBaseFolders('northId').cache, 'time-values', '2.queue.tmp'), [{ data: 'myFlushBuffer2' }]],
+        [path.resolve(mockBaseFolders('northId').cache, 'time-values', '3.queue.tmp'), [{ data: 'myFlushBuffer3' }]],
+        [path.resolve(mockBaseFolders('northId').cache, 'time-values', '4.queue.tmp'), [{ data: 'myFlushBuffer4' }]]
       ])
     );
   });
 
   it('should manage error values', async () => {
     const valuesToRemove = new Map<string, Array<OIBusTimeValue>>();
-    valuesToRemove.set(path.resolve('myCacheFolder', 'values', '1.queue.tmp'), []);
-    valuesToRemove.set(path.resolve('myCacheFolder', 'values', '1.compact.tmp'), []);
+    valuesToRemove.set(path.resolve(mockBaseFolders('northId').cache, 'time-values', '1.queue.tmp'), []);
+    valuesToRemove.set(path.resolve(mockBaseFolders('northId').cache, 'time-values', '1.compact.tmp'), []);
     fs.rename = jest
       .fn()
       .mockImplementationOnce(() => '')
@@ -177,20 +179,20 @@ describe('ValueCache', () => {
     const expectedMap = new Map();
     expectedMap.set('2.queue.tmp', []);
     expect(logger.warn).toHaveBeenCalledWith(
-      `Values file "${path.resolve('myCacheFolder', 'values', '1.queue.tmp')}" ` +
-        `moved to "${path.resolve('myCacheFolder', 'values-errors', '1.queue.tmp')}" after 1 errors`
+      `Values file "${path.resolve(mockBaseFolders('northId').cache, 'time-values', '1.queue.tmp')}" ` +
+        `moved to "${path.resolve(mockBaseFolders('northId').error, 'time-values', '1.queue.tmp')}" after 1 errors`
     );
     expect(fs.rename).toHaveBeenCalledWith(
-      path.resolve('myCacheFolder', 'values', '1.queue.tmp'),
-      path.resolve('myCacheFolder', 'values-errors', '1.queue.tmp')
+      path.resolve(mockBaseFolders('northId').cache, 'time-values', '1.queue.tmp'),
+      path.resolve(mockBaseFolders('northId').error, 'time-values', '1.queue.tmp')
     );
     expect(fs.rename).toHaveBeenCalledWith(
-      path.resolve('myCacheFolder', 'values', '1.compact.tmp'),
-      path.resolve('myCacheFolder', 'values-errors', '1.compact.tmp')
+      path.resolve(mockBaseFolders('northId').cache, 'time-values', '1.compact.tmp'),
+      path.resolve(mockBaseFolders('northId').error, 'time-values', '1.compact.tmp')
     );
     expect(logger.error).toHaveBeenCalledWith(
-      `Error while moving values file "${path.resolve('myCacheFolder', 'values', '1.compact.tmp')}" ` +
-        `into cache error "${path.resolve('myCacheFolder', 'values-errors', '1.compact.tmp')}": ${new Error('unlink error')}`
+      `Error while moving values file "${path.resolve(mockBaseFolders('northId').cache, 'time-values', '1.compact.tmp')}" ` +
+        `into cache error "${path.resolve(mockBaseFolders('northId').error, 'time-values', '1.compact.tmp')}": ${new Error('unlink error')}`
     );
   });
 
@@ -238,7 +240,7 @@ describe('ValueCache', () => {
 
     await cache.removeAllErrorValues();
     expect(removeErrorValuesSpy).toHaveBeenCalledWith(['1.queue.tmp', '2.queue.tmp', '3.queue.tmp', '4.queue.tmp']);
-    expect(logger.debug).toHaveBeenCalledWith(`Removing 4 files from "${path.resolve('myCacheFolder', 'values-errors')}"`);
+    expect(logger.debug).toHaveBeenCalledWith(`Removing 4 files from "${path.resolve(mockBaseFolders('northId').error, 'time-values')}"`);
   });
 
   it('should remove all error value files when there are none', async () => {
@@ -248,7 +250,7 @@ describe('ValueCache', () => {
     await cache.removeAllErrorValues();
     expect(removeErrorValuesSpy).not.toHaveBeenCalled();
     expect(logger.debug).toHaveBeenCalledWith(
-      `The error value folder "${path.resolve('myCacheFolder', 'values-errors')}" is empty. Nothing to delete`
+      `The error value folder "${path.resolve(mockBaseFolders('northId').error, 'time-values')}" is empty. Nothing to delete`
     );
   });
 
@@ -258,7 +260,7 @@ describe('ValueCache', () => {
 
     await cache.retryAllErrorValues();
     expect(retryErrorValuesSpy).toHaveBeenCalledWith(['1.queue.tmp', '2.queue.tmp', '3.queue.tmp', '4.queue.tmp']);
-    expect(logger.debug).toHaveBeenCalledWith(`Retrying 4 files from "${path.resolve('myCacheFolder', 'values-errors')}"`);
+    expect(logger.debug).toHaveBeenCalledWith(`Retrying 4 files from "${path.resolve(mockBaseFolders('northId').error, 'time-values')}"`);
   });
 
   it('should retry all error value files when there are none', async () => {
@@ -268,7 +270,7 @@ describe('ValueCache', () => {
     await cache.retryAllErrorValues();
     expect(retryErrorValuesSpy).not.toHaveBeenCalled();
     expect(logger.debug).toHaveBeenCalledWith(
-      `The error value folder "${path.resolve('myCacheFolder', 'values-errors')}" is empty. Nothing to retry`
+      `The error value folder "${path.resolve(mockBaseFolders('northId').error, 'time-values')}" is empty. Nothing to retry`
     );
   });
 
@@ -292,7 +294,7 @@ describe('ValueCache', () => {
         .mockReturnValueOnce('generated-uuid9');
       (fs.stat as jest.Mock).mockReturnValue({ size: 123 });
 
-      cache = new ValueCache(logger, 'myCacheFolder', configuration);
+      cache = new ValueCache(logger, mockBaseFolders('northId').cache, mockBaseFolders('northId').error, configuration);
 
       await cache.cacheValues(valuesToCache);
       await cache.cacheValues(valuesToCache);
@@ -301,9 +303,9 @@ describe('ValueCache', () => {
 
     it('should properly get values to send from queue', async () => {
       const expectedValues = new Map<string, Array<OIBusTimeValue>>();
-      expectedValues.set(path.resolve('myCacheFolder', 'values', 'generated-uuid2.queue.tmp'), valuesToCache);
-      expectedValues.set(path.resolve('myCacheFolder', 'values', 'generated-uuid4.queue.tmp'), valuesToCache);
-      expectedValues.set(path.resolve('myCacheFolder', 'values', 'generated-uuid6.queue.tmp'), valuesToCache);
+      expectedValues.set(path.resolve(mockBaseFolders('northId').cache, 'time-values', 'generated-uuid2.queue.tmp'), valuesToCache);
+      expectedValues.set(path.resolve(mockBaseFolders('northId').cache, 'time-values', 'generated-uuid4.queue.tmp'), valuesToCache);
+      expectedValues.set(path.resolve(mockBaseFolders('northId').cache, 'time-values', 'generated-uuid6.queue.tmp'), valuesToCache);
       const valuesToSend = await cache.getValuesToSend();
 
       expect(valuesToSend).toEqual(expectedValues);

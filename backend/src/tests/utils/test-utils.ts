@@ -29,6 +29,7 @@ import {
   NorthConnectorMetrics,
   SouthConnectorMetrics
 } from '../../../shared/model/engine.model';
+import { BaseFolders } from 'src/model/types';
 
 const CONFIG_TEST_DATABASE = path.resolve('src', 'tests', 'test-config.db');
 const CRYPTO_TEST_DATABASE = path.resolve('src', 'tests', 'test-crypto.db');
@@ -102,6 +103,12 @@ export const emptyDatabase = async (database: 'config' | 'crypto' | 'cache' | 'l
   // Destroy the connection
   await testDatabase.destroy();
 };
+
+export const mockBaseFolders = (id: string): BaseFolders => ({
+  archive: path.resolve('archiveBaseFolder', id),
+  cache: path.resolve('cacheBaseFolder', id),
+  error: path.resolve('errorBaseFolder', id)
+});
 
 const populateLogsAndMetricsDatabase = async () => {
   const testDatabase = knex({

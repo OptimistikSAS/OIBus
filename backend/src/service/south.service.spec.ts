@@ -19,6 +19,7 @@ import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import SouthCacheRepositoryMock from '../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import ConnectionServiceMock from '../tests/__mocks__/service/connection-service.mock';
 import testData from '../tests/utils/test-data';
+import { mockBaseFolders } from '../tests/utils/test-utils';
 import { SouthConnectorEntity } from '../model/south-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import CertificateRepository from '../repository/config/certificate.repository';
@@ -83,7 +84,7 @@ describe('south service', () => {
   });
 
   it('should create South connector', () => {
-    const connector = service.runSouth(testData.south.list[0], jest.fn(), logger, 'myBaseFolder');
+    const connector = service.runSouth(testData.south.list[0], jest.fn(), logger, mockBaseFolders(testData.north.list[0].id));
     expect(connector).toBeDefined();
   });
 
@@ -100,7 +101,7 @@ describe('south service', () => {
         } as SouthConnectorEntity<SouthSettings, SouthItemSettings>,
         jest.fn(),
         logger,
-        'myBaseFolder'
+        mockBaseFolders(testData.north.list[0].id)
       );
     } catch (err) {
       error = err;

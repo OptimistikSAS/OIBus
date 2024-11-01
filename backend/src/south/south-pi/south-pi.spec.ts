@@ -13,6 +13,7 @@ import SouthCacheRepository from '../../repository/cache/south-cache.repository'
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
+import { mockBaseFolders } from '../../tests/utils/test-utils';
 
 jest.mock('node-fetch');
 jest.mock('node:fs/promises');
@@ -90,7 +91,7 @@ describe('South PI', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder'
+      mockBaseFolders(configuration.id)
     );
   });
 

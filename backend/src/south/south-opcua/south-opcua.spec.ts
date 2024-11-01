@@ -30,6 +30,7 @@ import SouthCacheRepository from '../../repository/cache/south-cache.repository'
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import testData from '../../tests/utils/test-data';
+import { mockBaseFolders } from '../../tests/utils/test-utils';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
 
 class CustomStream extends Stream {
@@ -203,7 +204,7 @@ describe('SouthOPCUA', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder',
+      mockBaseFolders(configuration.id),
       connectionService
     );
   });
@@ -1059,7 +1060,7 @@ describe('SouthOPCUA with basic auth', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder',
+      mockBaseFolders(configuration.id),
       connectionService
     );
   });
@@ -1217,7 +1218,7 @@ describe('SouthOPCUA with certificate', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder',
+      mockBaseFolders(configuration.id),
       connectionService
     );
   });
@@ -1499,7 +1500,7 @@ describe('SouthOPCUA test connection', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder',
+      mockBaseFolders(configuration.id),
       connectionService
     );
   });
@@ -1749,7 +1750,7 @@ describe('SouthOPCUA with shared connection', () => {
       southCacheRepository,
       scanModeRepository,
       logger,
-      'baseFolder',
+      mockBaseFolders(configuration.id),
       connectionService
     );
   });

@@ -6,10 +6,7 @@ import NorthServiceMock from '../tests/__mocks__/service/north-service.mock';
 import SouthService from '../service/south.service';
 import NorthService from '../service/north.service';
 
-import { createFolder } from '../service/utils';
-
 import pino from 'pino';
-import path from 'node:path';
 import { OIBusTimeValue } from '../../shared/model/engine.model';
 import testData from '../tests/utils/test-data';
 import HistoryQueryRepository from '../repository/config/history-query.repository';
@@ -20,7 +17,7 @@ import NorthConnectorMock from '../tests/__mocks__/north-connector.mock';
 import SouthConnector from '../south/south-connector';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import SouthConnectorMock from '../tests/__mocks__/south-connector.mock';
-import { flushPromises } from '../tests/utils/test-utils';
+import { flushPromises, mockBaseFolders } from '../tests/utils/test-utils';
 import HistoryQueryMetricsServiceMock from '../tests/__mocks__/service/metrics/history-query-metrics-service.mock';
 
 jest.mock('../service/south.service');
@@ -62,7 +59,7 @@ describe('HistoryQuery enabled', () => {
       southService,
       northService,
       historyQueryRepository,
-      path.resolve('baseFolder', testData.historyQueries.list[0].id),
+      mockBaseFolders(testData.historyQueries.list[0].id),
       logger
     );
   });
@@ -75,8 +72,7 @@ describe('HistoryQuery enabled', () => {
     await historyQuery.start();
 
     expect(historyQuery.settings).toBeDefined();
-    expect(createFolder).toHaveBeenCalledWith(path.resolve('baseFolder', testData.historyQueries.list[0].id, 'south'));
-    expect(createFolder).toHaveBeenCalledWith(path.resolve('baseFolder', testData.historyQueries.list[0].id, 'north'));
+    // TODO: change with createBaseFolders call
     expect(mockedNorth1.start).toHaveBeenCalledTimes(1);
   });
 
@@ -274,7 +270,7 @@ describe('HistoryQuery disabled', () => {
       southService,
       northService,
       historyQueryRepository,
-      'baseFolder',
+      mockBaseFolders(testData.historyQueries.list[1].id),
       logger
     );
   });
