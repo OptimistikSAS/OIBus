@@ -41,7 +41,7 @@ import SouthConnectorMetricsRepository from '../repository/logs/south-connector-
 import { Page } from '../../shared/model/types';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
-import { checkScanMode, createBaseFolders, createFolder, filesExists } from './utils';
+import { checkScanMode, createBaseFolders, filesExists } from './utils';
 import { ScanMode } from '../model/scan-mode.model';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
 import fs from 'node:fs/promises';
@@ -379,12 +379,11 @@ export default class SouthService {
       items: []
     };
 
-    const south = this.runSouth(
-      testToRun,
-      async (_southId: string, _content: OIBusContent): Promise<void> => Promise.resolve(),
-      logger,
-      { cache: 'baseCacheFolder', archive: 'baseArchiveFolder', error: 'baseErrorFolder' }
-    );
+    const south = this.runSouth(testToRun, async (_southId: string, _content: OIBusContent): Promise<void> => Promise.resolve(), logger, {
+      cache: 'baseCacheFolder',
+      archive: 'baseArchiveFolder',
+      error: 'baseErrorFolder'
+    });
     return await south.testConnection();
   }
 
@@ -826,13 +825,17 @@ export default class SouthService {
       const baseFolder = folders[type];
 
       try {
-        this.dataStreamEngine.logger.trace(`Deleting "${type}" base folder "${baseFolder}" of South connector "${south.name}" (${south.id})`);
+        this.dataStreamEngine.logger.trace(
+          `Deleting "${type}" base folder "${baseFolder}" of South connector "${south.name}" (${south.id})`
+        );
 
         if (await filesExists(baseFolder)) {
           await fs.rm(baseFolder, { recursive: true });
         }
       } catch (error) {
-        this.dataStreamEngine.logger.error(`Unable to delete South connector "${south.name}" (${south.id}) "${type}" base folder: ${error}`);
+        this.dataStreamEngine.logger.error(
+          `Unable to delete South connector "${south.name}" (${south.id}) "${type}" base folder: ${error}`
+        );
       }
     }
   }

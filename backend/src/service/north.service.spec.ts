@@ -26,11 +26,15 @@ import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-
 import OianalyticsRegistrationRepositoryMock from '../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
 import DataStreamEngine from '../engine/data-stream-engine';
 import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
+import { BaseFolders } from '../model/types';
+import fs from 'node:fs/promises';
 
 jest.mock('./encryption.service');
 jest.mock('./metrics/north-connector-metrics.service');
+jest.mock('node:fs/promises');
 
 const validator = new JoiValidator();
+const logger: pino.Logger = new PinoLogger();
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
 const northMetricsRepository: NorthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
@@ -40,9 +44,8 @@ const certificateRepository: CertificateRepository = new CertificateRepositoryMo
 const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OianalyticsRegistrationRepositoryMock();
 const oIAnalyticsMessageService: OIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
-const dataStreamEngine: DataStreamEngine = new DataStreamEngineMock();
+const dataStreamEngine: DataStreamEngine = new DataStreamEngineMock(logger);
 
-const logger: pino.Logger = new PinoLogger();
 let service: NorthService;
 describe('north service', () => {
   beforeEach(() => {
@@ -76,6 +79,13 @@ describe('north service', () => {
   it('should create North connector', () => {
     const connector = service.runNorth(testData.north.list[0], logger, mockBaseFolders(testData.north.list[0].id));
     expect(connector).toBeDefined();
+    expect(connector['baseFolders']).toEqual(mockBaseFolders(testData.north.list[0].id));
+  });
+
+  it('shold create North connector with default base folders', () => {
+    const connector = service.runNorth(testData.north.list[0], logger);
+    expect(connector).toBeDefined();
+    expect(connector['baseFolders']).toEqual(mockBaseFolders(`north-${testData.north.list[0].id}`));
   });
 
   it('should not create North connector not installed', () => {
@@ -237,5 +247,59 @@ describe('north service', () => {
 
     expect(northConnectorRepository.deleteAllSubscriptionsByNorth).not.toHaveBeenCalled();
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).not.toHaveBeenCalled();
+  });
+
+  it('should delete base folders', async () => {
+    const connector = service.runNorth(testData.north.list[0], logger);
+    expect(connector).toBeDefined();
+
+    (fs.stat as jest.Mock).mockImplementation(() => ({}));
+
+    const baseFolders = structuredClone(service['getDefaultBaseFolders'](testData.north.list[0].id));
+    await service['deleteBaseFolders'](testData.north.list[0]);
+
+    for (const type of Object.keys(baseFolders) as Array<keyof BaseFolders>) {
+      expect(fs.stat).toHaveBeenCalledWith(baseFolders[type]);
+      expect(fs.rm).toHaveBeenCalledWith(baseFolders[type], { recursive: true });
+    }
+  });
+
+  it('should delete base folders if exists', async () => {
+    const connector = service.runNorth(testData.north.list[0], logger);
+    expect(connector).toBeDefined();
+
+    (fs.stat as jest.Mock).mockImplementation(() => {
+      throw new Error('stat error');
+    });
+
+    const baseFolders = structuredClone(service['getDefaultBaseFolders'](testData.north.list[0].id));
+    await service['deleteBaseFolders'](testData.north.list[0]);
+
+    for (const type of Object.keys(baseFolders) as Array<keyof BaseFolders>) {
+      expect(fs.stat).toHaveBeenCalledWith(baseFolders[type]);
+      expect(fs.rm).not.toHaveBeenCalled();
+    }
+  });
+
+  it('should delete base folders and handle errors', async () => {
+    const connector = service.runNorth(testData.north.list[0], logger);
+    expect(connector).toBeDefined();
+
+    const error = new Error('rm error');
+    (fs.stat as jest.Mock).mockImplementation(() => ({}));
+    (fs.rm as jest.Mock).mockImplementation(() => {
+      throw error;
+    });
+
+    const baseFolders = structuredClone(service['getDefaultBaseFolders'](testData.north.list[0].id));
+    await service['deleteBaseFolders'](testData.north.list[0]);
+
+    for (const type of Object.keys(baseFolders) as Array<keyof BaseFolders>) {
+      expect(fs.stat).toHaveBeenCalledWith(baseFolders[type]);
+      expect(fs.rm).toHaveBeenCalledWith(baseFolders[type], { recursive: true });
+      expect(dataStreamEngine.logger.error).toHaveBeenCalledWith(
+        `Unable to delete North connector "${connector.settings.name}" (${connector.settings.id}) "${type}" base folder: ${error}`
+      );
+    }
   });
 });
