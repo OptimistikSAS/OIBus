@@ -15,16 +15,16 @@ export default class NorthConnectorMetricsRepository {
     const foundMetrics = this.getMetrics(northId);
     if (!foundMetrics) {
       const insertQuery =
-        `INSERT INTO ${NORTH_METRICS_TABLE} (north_id, metrics_start, nb_values, nb_files, ` +
-        `last_value, last_file, last_connection, last_run_start, last_run_duration, cache_size) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
-      this._database.prepare(insertQuery).run(northId, DateTime.now().toUTC().toISO(), 0, 0, null, null, null, null, null, 0);
+        `INSERT INTO ${NORTH_METRICS_TABLE} (north_id, metrics_start, nb_values, nb_files, last_value, last_file, ` +
+        `last_connection, last_run_start, last_run_duration, cache_size, error_size, archive_size) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+      this._database.prepare(insertQuery).run(northId, DateTime.now().toUTC().toISO(), 0, 0, null, null, null, null, null, 0, 0, 0);
     }
   }
 
   getMetrics(northId: string): NorthConnectorMetrics | null {
     const query =
       `SELECT metrics_start, nb_values, nb_files, last_value, last_file, last_connection, last_run_start, ` +
-      `last_run_duration, cache_size FROM ${NORTH_METRICS_TABLE} WHERE north_id = ?;`;
+      `last_run_duration, cache_size, error_size, archive_size FROM ${NORTH_METRICS_TABLE} WHERE north_id = ?;`;
     const result = this._database.prepare(query).get(northId);
     if (!result) return null;
     return this.toNorthConnectorMetrics(result as Record<string, string | number>);
@@ -33,7 +33,7 @@ export default class NorthConnectorMetricsRepository {
   updateMetrics(northId: string, metrics: NorthConnectorMetrics): void {
     const updateQuery =
       `UPDATE ${NORTH_METRICS_TABLE} SET metrics_start = ?, nb_values = ?, nb_files = ?, last_value = ?, last_file = ?, ` +
-      'last_connection = ?, last_run_start = ?, last_run_duration = ?, cache_size = ? WHERE north_id = ?;';
+      'last_connection = ?, last_run_start = ?, last_run_duration = ?, cache_size = ?, error_size = ?, archive_size = ? WHERE north_id = ?;';
     this._database
       .prepare(updateQuery)
       .run(
@@ -46,6 +46,8 @@ export default class NorthConnectorMetricsRepository {
         metrics.lastRunStart,
         metrics.lastRunDuration,
         metrics.cacheSize,
+        metrics.errorSize,
+        metrics.archiveSize,
         northId
       );
   }
@@ -65,7 +67,9 @@ export default class NorthConnectorMetricsRepository {
       lastConnection: result.last_connection as Instant | null,
       lastRunStart: result.last_run_start as Instant | null,
       lastRunDuration: result.last_run_duration as number,
-      cacheSize: result.cache_size as number
+      cacheSize: result.cache_size as number,
+      errorSize: result.error_size as number,
+      archiveSize: result.archive_size as number
     };
   }
 }

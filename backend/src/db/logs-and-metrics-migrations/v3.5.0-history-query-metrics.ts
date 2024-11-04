@@ -28,12 +28,18 @@ async function createHistoryQueryMetricsTable(knex: Knex): Promise<void> {
     table.datetime('last_north_run_start');
     table.integer('last_north_run_duration');
     table.integer('north_cache_size');
+    table.integer('north_error_size');
+    table.integer('north_archive_size');
   });
 }
 
 async function removeConnectorMetrics(knex: Knex): Promise<void> {
   await knex.table(NORTH_METRICS_TABLE).delete();
   await knex.table(SOUTH_METRICS_TABLE).delete();
+  await knex.schema.alterTable(NORTH_METRICS_TABLE, table => {
+    table.integer('error_size');
+    table.integer('archive_size');
+  });
 }
 
 export async function down(): Promise<void> {

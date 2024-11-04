@@ -6,7 +6,6 @@ import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
 import ValueCacheServiceMock from '../tests/__mocks__/service/cache/value-cache-service.mock';
 import FileCacheServiceMock from '../tests/__mocks__/service/cache/file-cache-service.mock';
-import ArchiveServiceMock from '../tests/__mocks__/service/cache/archive-service.mock';
 import fs from 'node:fs/promises';
 import { dirSize, validateCronExpression } from '../service/utils';
 import { OIBusContent, OIBusTimeValue } from '../../shared/model/engine.model';
@@ -41,7 +40,6 @@ const certificateRepository: CertificateRepository = new CertificateRepositoryMo
 const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OianalyticsRegistrationRepositoryMock();
 const valueCacheService = new ValueCacheServiceMock();
 const fileCacheService = new FileCacheServiceMock();
-const archiveService = new ArchiveServiceMock();
 
 jest.mock(
   '../service/cache/value-cache.service',
@@ -55,13 +53,6 @@ jest.mock(
   () =>
     function () {
       return fileCacheService;
-    }
-);
-jest.mock(
-  '../service/cache/archive.service',
-  () =>
-    function () {
-      return archiveService;
     }
 );
 
@@ -92,7 +83,6 @@ describe('NorthConnector', () => {
   afterEach(() => {
     valueCacheService.triggerRun.removeAllListeners();
     fileCacheService.triggerRun.removeAllListeners();
-    archiveService.triggerRun.removeAllListeners();
   });
 
   it('should be properly initialized', async () => {
@@ -231,7 +221,6 @@ describe('NorthConnector', () => {
     valueCacheService.triggerRun.emit('cache-size', 123);
     valueCacheService.triggerRun.emit('next');
     valueCacheService.triggerRun.emit('cache-size', 123);
-    archiveService.triggerRun.emit('cache-size', 123);
 
     expect(north.handleFilesWrapper).not.toHaveBeenCalled();
     jest.advanceTimersByTime(1000);
@@ -358,7 +347,7 @@ describe('NorthConnector', () => {
       { filename: 'file2.name', modificationDate: '', size: 2 },
       { filename: 'file3.name', modificationDate: '', size: 3 }
     ];
-    archiveService.getArchiveFiles.mockReturnValueOnce(expectedResult);
+    fileCacheService.getArchiveFiles.mockReturnValueOnce(expectedResult);
     const result = await north.getArchiveFiles('2022-11-11T11:11:11.111Z', '2022-11-12T11:11:11.111Z', 'file');
     expect(result).toEqual(expectedResult);
   });
@@ -511,7 +500,7 @@ describe('NorthConnector', () => {
 
   it('should get archive file content', async () => {
     await north.getArchiveFileContent('file1.queue.tmp');
-    expect(archiveService.getArchiveFileContent).toHaveBeenCalledWith('file1.queue.tmp');
+    expect(fileCacheService.getArchiveFileContent).toHaveBeenCalledWith('file1.queue.tmp');
   });
 });
 
@@ -547,7 +536,6 @@ describe('NorthConnector disabled', () => {
   afterEach(() => {
     valueCacheService.triggerRun.removeAllListeners();
     fileCacheService.triggerRun.removeAllListeners();
-    archiveService.triggerRun.removeAllListeners();
   });
 
   it('should not call handle values if no values in queue', async () => {
@@ -687,7 +675,6 @@ describe('NorthConnector test', () => {
   afterEach(() => {
     valueCacheService.triggerRun.removeAllListeners();
     fileCacheService.triggerRun.removeAllListeners();
-    archiveService.triggerRun.removeAllListeners();
   });
 
   it('should check if North caches are empty', async () => {

@@ -698,7 +698,9 @@
       "last-value-content": "{{ pointId }} at {{ timestamp }} with content {{ data }}",
       "last-run-start": "Last run",
       "last-run-duration": "Last run duration",
-      "cache-size": "Cache size"
+      "cache-size": "Cache folder size",
+      "error-size": "Error folder size",
+      "archive-size": "Archive folder size"
     },
     "cache": {
       "title": "Cache content for connector {{ name }}"

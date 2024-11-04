@@ -18,7 +18,9 @@ export default class NorthConnectorMetricsService {
     lastConnection: null,
     lastRunStart: null,
     lastRunDuration: null,
-    cacheSize: 0
+    cacheSize: 0,
+    errorSize: 0,
+    archiveSize: 0
   };
 
   constructor(
@@ -26,8 +28,10 @@ export default class NorthConnectorMetricsService {
     private readonly northConnectorMetricsRepository: NorthConnectorMetricsRepository
   ) {
     this.initMetrics();
-    this.northConnector.metricsEvent.on('cache-size', (data: { cacheSize: number }) => {
+    this.northConnector.metricsEvent.on('cache-size', (data: { cacheSize: number; errorSize: number; archiveSize: number }) => {
       this._metrics.cacheSize = data.cacheSize;
+      this._metrics.errorSize = data.errorSize;
+      this._metrics.archiveSize = data.archiveSize;
       this.updateMetrics();
     });
     this.northConnector.metricsEvent.on('connect', (data: { lastConnection: Instant }) => {

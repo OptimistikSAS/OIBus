@@ -26,16 +26,20 @@ describe('NorthConnectorMetricsService', () => {
   });
 
   it('should update metrics', () => {
-    northMock.metricsEvent.emit('cache-size', { cacheSize: 999 });
+    northMock.metricsEvent.emit('cache-size', { cacheSize: 999, errorSize: 888, archiveSize: 777 });
     expect(northConnectorMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.north.list[0].id, {
       ...testData.north.metrics,
-      cacheSize: 999
+      cacheSize: 999,
+      errorSize: 888,
+      archiveSize: 777
     });
 
     northMock.metricsEvent.emit('connect', { lastConnection: testData.constants.dates.DATE_1 });
     expect(northConnectorMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.north.list[0].id, {
       ...testData.north.metrics,
       cacheSize: 999,
+      errorSize: 888,
+      archiveSize: 777,
       lastConnection: testData.constants.dates.DATE_1
     });
 
@@ -43,6 +47,8 @@ describe('NorthConnectorMetricsService', () => {
     expect(northConnectorMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.north.list[0].id, {
       ...testData.north.metrics,
       cacheSize: 999,
+      errorSize: 888,
+      archiveSize: 777,
       lastConnection: testData.constants.dates.DATE_1,
       lastRunStart: testData.constants.dates.DATE_2
     });
@@ -51,6 +57,8 @@ describe('NorthConnectorMetricsService', () => {
     expect(northConnectorMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.north.list[0].id, {
       ...testData.north.metrics,
       cacheSize: 999,
+      errorSize: 888,
+      archiveSize: 777,
       lastConnection: testData.constants.dates.DATE_1,
       lastRunStart: testData.constants.dates.DATE_2,
       lastRunDuration: 888
@@ -60,6 +68,8 @@ describe('NorthConnectorMetricsService', () => {
     expect(northConnectorMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.north.list[0].id, {
       ...testData.north.metrics,
       cacheSize: 999,
+      errorSize: 888,
+      archiveSize: 777,
       lastConnection: testData.constants.dates.DATE_1,
       lastRunStart: testData.constants.dates.DATE_2,
       lastRunDuration: 888,
@@ -71,6 +81,8 @@ describe('NorthConnectorMetricsService', () => {
     expect(northConnectorMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.north.list[0].id, {
       ...testData.north.metrics,
       cacheSize: 999,
+      errorSize: 888,
+      archiveSize: 777,
       lastConnection: testData.constants.dates.DATE_1,
       lastRunStart: testData.constants.dates.DATE_2,
       lastRunDuration: 888,
