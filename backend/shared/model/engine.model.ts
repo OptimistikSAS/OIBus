@@ -140,6 +140,8 @@ export interface NorthConnectorMetrics extends BaseConnectorMetrics {
   lastValueSent: OIBusTimeValue | null;
   lastFileSent: string | null;
   cacheSize: number;
+  errorSize: number;
+  archiveSize: number;
 }
 
 export interface SouthConnectorMetrics extends BaseConnectorMetrics {
@@ -160,6 +162,8 @@ export interface HistoryQueryMetrics {
     lastValueSent: OIBusTimeValue | null;
     lastFileSent: string | null;
     cacheSize: number;
+    errorSize: number;
+    archiveSize: number;
   };
   south: {
     lastConnection: Instant | null;

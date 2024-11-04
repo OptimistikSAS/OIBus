@@ -85,10 +85,20 @@
               <td class="last-column-body">{{ connectorMetrics.lastRunDuration | duration: 'short' }}</td>
             </tr>
           }
-          <!-- last duration -->
+          <!-- cache size -->
           <tr>
             <td translate="north.monitoring.cache-size"></td>
             <td class="last-column-body">{{ connectorMetrics.cacheSize | fileSize }}</td>
+          </tr>
+          <!-- error size -->
+          <tr>
+            <td translate="north.monitoring.error-size"></td>
+            <td class="last-column-body">{{ connectorMetrics.errorSize | fileSize }}</td>
+          </tr>
+          <!-- archive size -->
+          <tr>
+            <td translate="north.monitoring.archive-size"></td>
+            <td class="last-column-body">{{ connectorMetrics.archiveSize | fileSize }}</td>
           </tr>
         </tbody>
       </table>

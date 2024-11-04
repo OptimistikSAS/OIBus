@@ -8,7 +8,6 @@ import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-serv
 import ValueCacheServiceMock from '../../tests/__mocks__/service/cache/value-cache-service.mock';
 import FileCacheServiceMock from '../../tests/__mocks__/service/cache/file-cache-service.mock';
 import { NorthConsoleSettings } from '../../../shared/model/north-settings.model';
-import ArchiveServiceMock from '../../tests/__mocks__/service/cache/archive-service.mock';
 import { OIBusTimeValue } from '../../../shared/model/engine.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
@@ -29,7 +28,6 @@ const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRep
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const valueCacheService = new ValueCacheServiceMock();
 const fileCacheService = new FileCacheServiceMock();
-const archiveService = new ArchiveServiceMock();
 
 jest.mock(
   '../../service/cache/value-cache.service',
@@ -43,13 +41,6 @@ jest.mock(
   () =>
     function () {
       return fileCacheService;
-    }
-);
-jest.mock(
-  '../../service/cache/archive.service',
-  () =>
-    function () {
-      return archiveService;
     }
 );
 
