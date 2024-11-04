@@ -1,6 +1,4 @@
-import ArchiveService from '../service/cache/archive.service';
-
-import { NorthArchiveFiles, NorthCacheFiles, NorthValueFiles } from '../../shared/model/north-connector.model';
+import { NorthCacheFiles, NorthValueFiles } from '../../shared/model/north-connector.model';
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
 import ValueCacheService from '../service/cache/value-cache.service';
@@ -40,12 +38,13 @@ import { BaseFolders } from '../model/types';
  * - **logger**: to log an event with different levels (error,warning,info,debug,trace)
  */
 export default abstract class NorthConnector<T extends NorthSettings> {
-  private archiveService: ArchiveService;
-  private valueCacheService: ValueCacheService<T>;
+  private valueCacheService: ValueCacheService;
   private fileCacheService: FileCacheService;
   private subscribedTo: Array<SouthConnectorEntityLight> = [];
 
   private cacheSize = 0;
+  private errorSize = 0;
+  private archiveSize = 0;
 
   private fileBeingSent: string | null = null;
   private fileErrorCount = 0;
@@ -69,9 +68,14 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     protected logger: pino.Logger,
     protected readonly baseFolders: BaseFolders
   ) {
-    this.archiveService = new ArchiveService(this.logger, this.baseFolders.archive, this.connector.caching.rawFiles.archive);
-    this.valueCacheService = new ValueCacheService<T>(this.logger, this.baseFolders.cache, this.baseFolders.error, this.connector);
-    this.fileCacheService = new FileCacheService(this.logger, this.baseFolders.cache, this.baseFolders.error, this.connector.caching);
+    this.valueCacheService = new ValueCacheService(this.logger, this.baseFolders.cache, this.baseFolders.error, this.connector);
+    this.fileCacheService = new FileCacheService(
+      this.logger,
+      this.baseFolders.cache,
+      this.baseFolders.error,
+      this.baseFolders.archive,
+      this.connector
+    );
 
     if (this.connector.id === 'test') {
       return;
@@ -96,13 +100,6 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       }
     });
 
-    this.valueCacheService.triggerRun.on('cache-size', async (sizeToAdd: number) => {
-      this.cacheSize += sizeToAdd;
-      this.metricsEvent.emit('cache-size', {
-        cacheSize: this.cacheSize
-      });
-    });
-
     this.fileCacheService.triggerRun.on('next', async () => {
       this.taskJobQueue.push({ id: 'file-trigger', cron: '', name: '', description: '' });
       this.logger.trace(`File cache trigger immediately: ${!this.runProgress$}`);
@@ -111,37 +108,56 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       }
     });
 
-    this.fileCacheService.triggerRun.on('cache-size', async (sizeToAdd: number) => {
-      this.cacheSize += sizeToAdd;
-      this.metricsEvent.emit('cache-size', {
-        cacheSize: this.cacheSize
-      });
-    });
+    this.valueCacheService.triggerRun.on(
+      'cache-size',
+      async (sizeToAdd: { cacheSizeToAdd: number; errorSizeToAdd: number; archiveSizeToAdd: number }) => {
+        this.cacheSize += sizeToAdd.cacheSizeToAdd;
+        this.errorSize += sizeToAdd.errorSizeToAdd;
+        this.archiveSize += sizeToAdd.archiveSizeToAdd;
+        this.metricsEvent.emit('cache-size', {
+          cacheSize: this.cacheSize,
+          errorSize: this.errorSize,
+          archiveSize: this.archiveSize
+        });
+      }
+    );
 
-    this.archiveService.triggerRun.on('cache-size', async (sizeToAdd: number) => {
-      this.cacheSize += sizeToAdd;
-      this.metricsEvent.emit('cache-size', {
-        cacheSize: this.cacheSize
-      });
-    });
+    this.fileCacheService.triggerRun.on(
+      'cache-size',
+      async (sizeToAdd: { cacheSizeToAdd: number; errorSizeToAdd: number; archiveSizeToAdd: number }) => {
+        this.cacheSize += sizeToAdd.cacheSizeToAdd;
+        this.errorSize += sizeToAdd.errorSizeToAdd;
+        this.archiveSize += sizeToAdd.archiveSizeToAdd;
+        this.metricsEvent.emit('cache-size', {
+          cacheSize: this.cacheSize,
+          errorSize: this.errorSize,
+          archiveSize: this.archiveSize
+        });
+      }
+    );
   }
 
   async start(dataStream = true): Promise<void> {
     if (dataStream) {
       // Reload the settings only on data stream case, otherwise let the history query manage the settings
       this.connector = this.northConnectorRepository.findNorthById(this.connector.id)!;
+      this.fileCacheService.settings = this.connector;
+      this.valueCacheService.settings = this.connector;
     }
     this.logger.debug(`North connector "${this.connector.name}" enabled. Starting services...`);
     if (this.connector.id !== 'test') {
       this.cacheSize = await dirSize(this.baseFolders.cache);
+      this.errorSize = await dirSize(this.baseFolders.error);
+      this.archiveSize = await dirSize(this.baseFolders.archive);
       this.metricsEvent.emit('cache-size', {
-        cacheSize: this.cacheSize
+        cacheSize: this.cacheSize,
+        errorSize: this.errorSize,
+        archiveSize: this.archiveSize
       });
       this.updateConnectorSubscription();
     }
     await this.valueCacheService.start();
     await this.fileCacheService.start();
-    await this.archiveService.start();
     await this.connect();
   }
 
@@ -318,8 +334,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
         this.metricsEvent.emit('send-file', {
           lastFileSent: path.parse(this.fileBeingSent).base
         });
-        this.fileCacheService.removeFileFromQueue();
-        await this.archiveService.archiveOrRemoveFile(this.fileBeingSent);
+        await this.fileCacheService.archiveOrRemoveFile(this.fileBeingSent);
         this.fileBeingSent = null;
       } catch (error) {
         const oibusError = this.createOIBusError(error);
@@ -354,7 +369,10 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    * and send them to a third party application.
    */
   async cacheValues(values: Array<OIBusTimeValue>): Promise<void> {
-    if (this.connector.caching.maxSize !== 0 && this.cacheSize >= this.connector.caching.maxSize * 1024 * 1024) {
+    if (
+      this.connector.caching.maxSize !== 0 &&
+      this.cacheSize + this.errorSize + this.archiveSize >= this.connector.caching.maxSize * 1024 * 1024
+    ) {
       this.logger.debug(
         `North cache is exceeding the maximum allowed size ` +
           `(${Math.floor((this.cacheSize / 1024 / 1024) * 100) / 100} MB >= ${this.connector.caching.maxSize} MB). ` +
@@ -375,7 +393,10 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    * Method called by the Engine to cache a file and send them to a third party application.
    */
   async cacheFile(filePath: string): Promise<void> {
-    if (this.connector.caching.maxSize !== 0 && this.cacheSize >= this.connector.caching.maxSize * 1024 * 1024) {
+    if (
+      this.connector.caching.maxSize !== 0 &&
+      this.cacheSize + this.errorSize + this.archiveSize >= this.connector.caching.maxSize * 1024 * 1024
+    ) {
       this.logger.debug(
         `North cache is exceeding the maximum allowed size ` +
           `(${Math.floor((this.cacheSize / 1024 / 1024) * 100) / 100} MB >= ${this.connector.caching.maxSize} MB). ` +
@@ -433,7 +454,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     this.cronByScanModeIds.clear();
     this.taskJobQueue = [];
 
-    await this.archiveService.stop();
+    await this.fileCacheService.stop();
     await this.valueCacheService.stop();
     await this.disconnect();
 
@@ -460,7 +481,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    */
   async removeErrorFiles(filenames: Array<string>): Promise<void> {
     this.logger.trace(`Removing ${filenames.length} error files from North connector "${this.connector.name}"...`);
-    await this.fileCacheService.removeFiles(this.fileCacheService.errorFolder, filenames);
+    await this.fileCacheService.removeErrorFiles(filenames);
   }
 
   /**
@@ -506,7 +527,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    */
   async removeCacheFiles(filenames: Array<string>): Promise<void> {
     this.logger.trace(`Removing ${filenames.length} cache files from North connector "${this.connector.name}"...`);
-    await this.fileCacheService.removeFiles(this.fileCacheService.fileFolder, filenames);
+    await this.fileCacheService.removeCacheFiles(filenames);
   }
 
   /**
@@ -515,23 +536,22 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   async archiveCacheFiles(filenames: Array<string>): Promise<void> {
     this.logger.trace(`Moving ${filenames.length} cache files into archive from North connector "${this.connector.name}"...`);
     for (const filename of filenames) {
-      await this.archiveService.archiveOrRemoveFile(path.join(this.fileCacheService.fileFolder, filename));
-      this.fileCacheService.removeFileFromQueue(path.join(this.fileCacheService.fileFolder, filename));
+      await this.fileCacheService.archiveOrRemoveFile(path.join(this.fileCacheService.cacheFolder, filename));
     }
   }
 
   /**
    * Get list of archive files from file cache. Dates are in ISO format
    */
-  async getArchiveFiles(fromDate: string, toDate: string, fileNameContains: string): Promise<Array<NorthArchiveFiles>> {
-    return await this.archiveService.getArchiveFiles(fromDate, toDate, fileNameContains);
+  async getArchiveFiles(fromDate: string, toDate: string, fileNameContains: string): Promise<Array<NorthCacheFiles>> {
+    return await this.fileCacheService.getArchiveFiles(fromDate, toDate, fileNameContains);
   }
 
   /**
    * Get archive file content as a read stream.
    */
   async getArchiveFileContent(filename: string): Promise<ReadStream | null> {
-    return await this.archiveService.getArchiveFileContent(filename);
+    return await this.fileCacheService.getArchiveFileContent(filename);
   }
 
   /**
@@ -539,8 +559,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    */
   async removeArchiveFiles(filenames: Array<string>): Promise<void> {
     this.logger.trace(`Removing ${filenames.length} archive files from North connector "${this.connector.name}"...`);
-    await this.archiveService.removeFiles(filenames);
-    this.cacheSize = await dirSize(this.baseFolders.cache);
+    await this.fileCacheService.removeArchiveFiles(filenames);
   }
 
   /**
@@ -548,7 +567,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    */
   async retryArchiveFiles(filenames: Array<string>): Promise<void> {
     this.logger.trace(`Retrying ${filenames.length} archive files in North connector "${this.connector.name}"...`);
-    await this.fileCacheService.retryFiles(this.archiveService.archiveFolder, filenames);
+    await this.fileCacheService.retryArchiveFiles(filenames);
   }
 
   /**
@@ -556,7 +575,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    */
   async removeAllArchiveFiles(): Promise<void> {
     this.logger.trace(`Removing all archive files from North connector "${this.connector.name}"...`);
-    await this.archiveService.removeAllArchiveFiles();
+    await this.fileCacheService.removeAllArchiveFiles();
   }
 
   /**
@@ -564,14 +583,13 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    */
   async retryAllArchiveFiles(): Promise<void> {
     this.logger.trace(`Retrying all archive files in North connector "${this.connector.name}"...`);
-    await this.fileCacheService.retryAllFiles(this.archiveService.archiveFolder);
+    await this.fileCacheService.retryAllArchiveFiles();
   }
 
   setLogger(value: pino.Logger) {
     this.logger = value;
     this.fileCacheService.setLogger(value);
     this.valueCacheService.setLogger(value);
-    this.archiveService.setLogger(value);
   }
 
   async resetCache(): Promise<void> {
@@ -602,7 +620,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     await this.valueCacheService.removeAllValues();
   }
 
-  async getValueErrors(fromDate: string, toDate: string, fileNameContains: string): Promise<Array<NorthArchiveFiles>> {
+  async getValueErrors(fromDate: string, toDate: string, fileNameContains: string): Promise<Array<NorthCacheFiles>> {
     return await this.valueCacheService.getErrorValueFiles(fromDate, toDate, fileNameContains);
   }
 

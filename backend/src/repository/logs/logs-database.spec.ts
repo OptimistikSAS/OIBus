@@ -393,7 +393,9 @@ describe('Repository with empty database', () => {
         numberOfFilesSent: 0,
         lastValueSent: null,
         lastFileSent: null,
-        cacheSize: 0
+        cacheSize: 0,
+        errorSize: 0,
+        archiveSize: 0
       });
     });
   });
@@ -421,7 +423,9 @@ describe('Repository with empty database', () => {
           numberOfFilesSent: 0,
           lastValueSent: null,
           lastFileSent: null,
-          cacheSize: 0
+          cacheSize: 0,
+          errorSize: 0,
+          archiveSize: 0
         },
         south: {
           lastConnection: null,

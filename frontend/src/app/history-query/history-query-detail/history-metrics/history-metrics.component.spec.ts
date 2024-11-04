@@ -137,7 +137,9 @@ class TestComponent {
       numberOfFilesSent: 11,
       lastValueSent: null,
       lastFileSent: null,
-      cacheSize: 10
+      cacheSize: 10,
+      errorSize: 9,
+      archiveSize: 8
     },
     historyMetrics: {
       running: false,

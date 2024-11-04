@@ -90,7 +90,7 @@ export default class HistoryQuery {
     this.north.metricsEvent.on('run-end', (data: { lastRunDuration: number }) => {
       this.metricsEvent.emit('north-run-end', data);
     });
-    this.north.metricsEvent.on('cache-size', (data: { cacheSize: number }) => {
+    this.north.metricsEvent.on('cache-size', (data: { cacheSize: number; errorSize: number; archiveSize: number }) => {
       this.metricsEvent.emit('north-cache-size', data);
     });
     this.north.metricsEvent.on('send-values', (data: { numberOfValuesSent: number; lastValueSent: OIBusTimeValue }) => {

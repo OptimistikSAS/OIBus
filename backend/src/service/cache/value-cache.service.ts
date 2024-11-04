@@ -19,9 +19,8 @@ const VALUE_FOLDER = 'time-values';
 /**
  * Local cache implementation to group events and store them when the communication with the North is down.
  */
-export default class ValueCacheService<N extends NorthSettings> {
+export default class ValueCacheService {
   private _logger: pino.Logger;
-  private readonly baseFolder: string;
   readonly valueFolder: string;
   private readonly errorFolder: string;
   private flushInProgress = false;
@@ -37,10 +36,9 @@ export default class ValueCacheService<N extends NorthSettings> {
     logger: pino.Logger,
     baseCacheFolder: string,
     baseErrorFolder: string,
-    private configuration: NorthConnectorEntity<N>
+    private _settings: NorthConnectorEntity<NorthSettings>
   ) {
     this._logger = logger;
-    this.baseFolder = path.resolve(baseCacheFolder);
     this.valueFolder = path.resolve(baseCacheFolder, VALUE_FOLDER);
     this.errorFolder = path.resolve(baseErrorFolder, VALUE_FOLDER);
   }
@@ -64,10 +62,10 @@ export default class ValueCacheService<N extends NorthSettings> {
         const fileContent = await fs.readFile(path.resolve(this.valueFolder, filename), { encoding: 'utf8' });
         const values = JSON.parse(fileContent);
         this.bufferFiles.set(path.resolve(this.valueFolder, filename), values);
-      } catch (error) {
+      } catch (error: unknown) {
         // If a file is being written or corrupted, the readFile method can fail
         // An error is logged and the cache goes through the other files
-        this._logger.error(`Error while reading buffer file "${path.resolve(this.valueFolder, filename)}": ${error}`);
+        this._logger.error(`Error while reading buffer file "${path.resolve(this.valueFolder, filename)}": ${(error as Error).message}`);
       }
     }
 
@@ -80,10 +78,10 @@ export default class ValueCacheService<N extends NorthSettings> {
         const values = JSON.parse(fileContent);
         this.queue.set(path.resolve(this.valueFolder, filename), values);
         numberOfValuesInCache += values.length;
-      } catch (error) {
+      } catch (error: unknown) {
         // If a file is being written or corrupted, the readFile method can fail
         // An error is logged and the cache goes through the other files
-        this._logger.error(`Error while reading queue file "${path.resolve(this.valueFolder, filename)}": ${error}`);
+        this._logger.error(`Error while reading queue file "${path.resolve(this.valueFolder, filename)}": ${(error as Error).message}`);
       }
     }
 
@@ -97,10 +95,10 @@ export default class ValueCacheService<N extends NorthSettings> {
           filename: path.resolve(this.valueFolder, filename),
           createdAt: fileStat.ctimeMs
         });
-      } catch (error) {
+      } catch (error: unknown) {
         // If a file is being written or corrupted, the stat method can fail
         // An error is logged and the cache goes through the other files
-        this._logger.error(`Error while reading compact file "${path.resolve(this.valueFolder, filename)}": ${error}`);
+        this._logger.error(`Error while reading compact file "${path.resolve(this.valueFolder, filename)}": ${(error as Error).message}`);
       }
     }
 
@@ -148,21 +146,21 @@ export default class ValueCacheService<N extends NorthSettings> {
     try {
       await fs.writeFile(path.resolve(this.valueFolder, tmpFileName), JSON.stringify(valuesToFlush), { encoding: 'utf8', flag: 'w' });
       const fileStat = await fs.stat(path.resolve(this.valueFolder, tmpFileName));
-      this.triggerRun.emit('cache-size', fileStat.size);
+      this.triggerRun.emit('cache-size', { cacheSizeToAdd: fileStat.size, errorSizeToAdd: 0, archiveSizeToAdd: 0 });
       this.queue.set(path.resolve(this.valueFolder, tmpFileName), valuesToFlush);
-    } catch (error) {
-      this._logger.error(`Error while writing queue file "${path.resolve(this.valueFolder, tmpFileName)}". ${error}`);
+    } catch (error: unknown) {
+      this._logger.error(`Error while writing queue file "${path.resolve(this.valueFolder, tmpFileName)}". ${(error as Error).message}`);
       this.flushInProgress = false;
       return; // Do not empty the buffer if the file could not be written
     }
 
-    // Once compacted, remove values from queue.
+    // Once values in *.buffer.tmp files compacted into *queue.tmp file, remove values from queue.
     for (const key of fileInBuffer) {
       this.bufferFiles.delete(key);
       try {
         await fs.unlink(path.resolve(key));
-      } catch (error) {
-        this._logger.error(`Error while removing buffer file "${path.resolve(this.valueFolder, key)}". ${error}`);
+      } catch (error: unknown) {
+        this._logger.error(`Error while removing buffer file "${path.resolve(this.valueFolder, key)}": ${(error as Error).message}`);
       }
     }
 
@@ -174,11 +172,11 @@ export default class ValueCacheService<N extends NorthSettings> {
       `Flush ${valuesToFlush.length} values (${flag}) into "${path.resolve(this.valueFolder, tmpFileName)}". ${groupCount} values in queue`
     );
 
-    if (groupCount >= this.configuration.caching.oibusTimeValues.maxSendCount) {
+    if (groupCount >= this._settings.caching.oibusTimeValues.maxSendCount) {
       const copiedQueue = this.queue;
       await this.compactQueueCache(copiedQueue);
     }
-    if (groupCount >= this.configuration.caching.oibusTimeValues.groupCount) {
+    if (groupCount >= this._settings.caching.oibusTimeValues.groupCount) {
       this.triggerRun.emit('next');
     }
     this.flushInProgress = false;
@@ -206,14 +204,14 @@ export default class ValueCacheService<N extends NorthSettings> {
         createdAt: new Date().getTime()
       });
 
-      this.triggerRun.emit('cache-size', fileStat.size);
+      this.triggerRun.emit('cache-size', { cacheSizeToAdd: fileStat.size, errorSizeToAdd: 0, archiveSizeToAdd: 0 });
 
       // Once compacted, remove values from queue.
       for (const key of fileInBuffer) {
         await this.deleteKeyFromCache(key);
       }
-    } catch (error) {
-      this._logger.error(error);
+    } catch (error: unknown) {
+      this._logger.error(`Error while compacting queue files into ${compactFilename}: ${(error as Error).message}`);
     }
   }
 
@@ -238,8 +236,8 @@ export default class ValueCacheService<N extends NorthSettings> {
       this._logger.trace(`Retrieving values from ${path.resolve(queueFile.filename)}.`);
       const fileContent = await fs.readFile(path.resolve(queueFile.filename), { encoding: 'utf8' });
       valuesInQueue.set(queueFile.filename, JSON.parse(fileContent));
-    } catch (err) {
-      this._logger.error(`Error while reading compacted file "${queueFile.filename}". ${err}`);
+    } catch (error: unknown) {
+      this._logger.error(`Error while reading compacted file "${queueFile.filename}". ${(error as Error).message}`);
     }
     return valuesInQueue;
   }
@@ -279,10 +277,10 @@ export default class ValueCacheService<N extends NorthSettings> {
       this._logger.trace(`Removing "${path.resolve(key)}" from cache`);
       const fileStat = await fs.stat(path.resolve(key));
       await fs.unlink(path.resolve(key));
-      this.triggerRun.emit('cache-size', -fileStat.size);
-    } catch (err) {
+      this.triggerRun.emit('cache-size', { cacheSizeToAdd: -fileStat.size, errorSizeToAdd: 0, archiveSizeToAdd: 0 });
+    } catch (error: unknown) {
       // Catch error locally to not block the removal of other files
-      this._logger.error(`Error while removing file "${path.resolve(key)}" from cache: ${err}`);
+      this._logger.error(`Error while removing file "${path.resolve(key)}" from cache: ${(error as Error).message}`);
     }
   }
 
@@ -300,15 +298,17 @@ export default class ValueCacheService<N extends NorthSettings> {
 
       const filePath = path.parse(key);
       try {
+        const fileStat = await fs.stat(path.resolve(key));
         await fs.rename(path.resolve(key), path.resolve(this.errorFolder, filePath.base));
+        this.triggerRun.emit('cache-size', { cacheSizeToAdd: -fileStat.size, errorSizeToAdd: fileStat.size, archiveSizeToAdd: 0 });
         this._logger.warn(
           `Values file "${path.resolve(key)}" moved to "${path.resolve(this.errorFolder, filePath.base)}" after ${errorCount} errors`
         );
-      } catch (renameError) {
+      } catch (renameError: unknown) {
         // Catch error locally to let OIBus moving the other files.
         this._logger.error(
           `Error while moving values file "${path.resolve(key)}" into cache error ` +
-            `"${path.resolve(this.errorFolder, filePath.base)}": ${renameError}`
+            `"${path.resolve(this.errorFolder, filePath.base)}": ${(renameError as Error).message}`
         );
       }
     }
@@ -327,7 +327,7 @@ export default class ValueCacheService<N extends NorthSettings> {
     for (const valuesInFile of this.bufferFiles.values()) {
       numberOfValuesInBufferFiles += valuesInFile.length;
     }
-    if (numberOfValuesInBufferFiles > BUFFER_MAX || numberOfValuesInBufferFiles > this.configuration.caching.oibusTimeValues.groupCount) {
+    if (numberOfValuesInBufferFiles > BUFFER_MAX || numberOfValuesInBufferFiles > this._settings.caching.oibusTimeValues.groupCount) {
       await this.flush('max-flush');
     } else if (!this.bufferTimeout) {
       this.bufferTimeout = setTimeout(this.flush.bind(this), BUFFER_TIMEOUT);
@@ -373,7 +373,16 @@ export default class ValueCacheService<N extends NorthSettings> {
   async removeErrorValues(filenames: Array<string>): Promise<void> {
     for (const filename of filenames) {
       const filePath = path.join(this.errorFolder, filename);
-      await this.deleteKeyFromCache(filePath);
+      // Remove file from disk
+      try {
+        this._logger.trace(`Removing "${path.resolve(filePath)}" from error cache`);
+        const fileStat = await fs.stat(path.resolve(filePath));
+        await fs.unlink(path.resolve(filePath));
+        this.triggerRun.emit('cache-size', { cacheSizeToAdd: 0, errorSizeToAdd: -fileStat.size, archiveSizeToAdd: 0 });
+      } catch (error: unknown) {
+        // Catch error locally to not block the removal of other files
+        this._logger.error(`Error while removing file "${path.resolve(filePath)}" from error cache: ${(error as Error).message}`);
+      }
     }
   }
 
@@ -401,7 +410,16 @@ export default class ValueCacheService<N extends NorthSettings> {
         const fileContent = await fs.readFile(filePath, { encoding: 'utf8' });
         const values = JSON.parse(fileContent);
         await this.cacheValues(values);
-        await this.deleteKeyFromCache(filePath);
+        // Remove file from disk
+        try {
+          this._logger.trace(`Removing "${path.resolve(filePath)}" from error cache`);
+          const fileStat = await fs.stat(path.resolve(filePath));
+          await fs.unlink(path.resolve(filePath));
+          this.triggerRun.emit('cache-size', { cacheSizeToAdd: 0, errorSizeToAdd: -fileStat.size, archiveSizeToAdd: 0 });
+        } catch (error: unknown) {
+          // Catch error locally to not block the removal of other files
+          this._logger.error(`Error while removing file "${path.resolve(filePath)}" from error cache: ${(error as Error).message}`);
+        }
       } catch (error) {
         this._logger.error(`Error while reading error value file "${filePath}": ${error}`);
       }
@@ -435,5 +453,9 @@ export default class ValueCacheService<N extends NorthSettings> {
 
   get triggerRun(): EventEmitter {
     return this._triggerRun;
+  }
+
+  set settings(value: NorthConnectorEntity<NorthSettings>) {
+    this._settings = value;
   }
 }
