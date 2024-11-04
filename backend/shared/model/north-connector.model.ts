@@ -141,8 +141,6 @@ export interface NorthCacheFiles {
   size: number;
 }
 
-export type NorthArchiveFiles = NorthCacheFiles;
-
 export interface NorthValueFiles {
   filename: string;
   valuesCount: number;

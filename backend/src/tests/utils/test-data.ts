@@ -386,9 +386,9 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
         maxSendCount: 10_000
       },
       rawFiles: {
-        sendFileImmediately: true,
+        sendFileImmediately: false,
         archive: {
-          enabled: true,
+          enabled: false,
           retentionDuration: 72
         }
       }
@@ -765,7 +765,9 @@ const northMetrics: NorthConnectorMetrics = {
   numberOfFilesSent: 11,
   lastValueSent: null,
   lastFileSent: null,
-  cacheSize: 10
+  cacheSize: 10,
+  errorSize: 20,
+  archiveSize: 30
 };
 const historyQueryMetrics: HistoryQueryMetrics = {
   metricsStart: constants.dates.DATE_1,
@@ -786,7 +788,9 @@ const historyQueryMetrics: HistoryQueryMetrics = {
     numberOfFilesSent: 11,
     lastValueSent: null,
     lastFileSent: null,
-    cacheSize: 10
+    cacheSize: 10,
+    errorSize: 20,
+    archiveSize: 30
   },
   historyMetrics: {
     running: false,

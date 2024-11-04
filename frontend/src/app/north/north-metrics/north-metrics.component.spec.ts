@@ -26,7 +26,9 @@ class TestComponent {
     numberOfFilesSent: 12,
     lastValueSent: { pointId: 'pointId', timestamp: '2020-02-02T00:00:00.000Z', data: { value: '13' } },
     lastFileSent: 'file',
-    cacheSize: 14
+    cacheSize: 14,
+    errorSize: 15,
+    archiveSize: 16
   };
   northConnector: NorthConnectorDTO<NorthSettings> = {
     id: 'northId',

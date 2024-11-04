@@ -5,7 +5,6 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { NorthConnectorService } from './north-connector.service';
 import {
   NorthCacheFiles,
-  NorthArchiveFiles,
   NorthConnectorCommandDTO,
   NorthConnectorDTO,
   NorthConnectorManifest,
@@ -274,8 +273,8 @@ describe('NorthConnectorService', () => {
   });
 
   it('should get archive files', () => {
-    let expectedNorthArchiveFiles: Array<NorthArchiveFiles> | null = null;
-    const northArchiveFiles: Array<NorthArchiveFiles> = [];
+    let expectedNorthArchiveFiles: Array<NorthCacheFiles> | null = null;
+    const northArchiveFiles: Array<NorthCacheFiles> = [];
 
     service.getCacheArchiveFiles('id1').subscribe(c => (expectedNorthArchiveFiles = c));
 

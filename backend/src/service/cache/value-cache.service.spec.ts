@@ -1,7 +1,7 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
 
-import ValueCache from './value-cache.service';
+import ValueCacheService from './value-cache.service';
 
 import { createFolder, dirSize, generateRandomId, getFilesFiltered } from '../utils';
 import pino from 'pino';
@@ -24,9 +24,9 @@ jest.mock('node:fs/promises');
 const logger: pino.Logger = new PinoLogger();
 const anotherLogger: pino.Logger = new PinoLogger();
 
-describe('ValueCache', () => {
+describe('ValueCacheService', () => {
   let configuration: NorthConnectorEntity<NorthSettings>;
-  let cache: ValueCache<NorthSettings>;
+  let cache: ValueCacheService;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -34,7 +34,7 @@ describe('ValueCache', () => {
     configuration = testData.north.list[0];
     (dirSize as jest.Mock).mockImplementation(() => 1000);
 
-    cache = new ValueCache(logger, mockBaseFolders('northId').cache, mockBaseFolders('northId').error, configuration);
+    cache = new ValueCacheService(logger, mockBaseFolders('northId').cache, mockBaseFolders('northId').error, configuration);
   });
 
   it('should be properly initialized with values in cache', async () => {
@@ -79,13 +79,13 @@ describe('ValueCache', () => {
         mockBaseFolders('northId').cache,
         'time-values',
         'error.buffer.tmp'
-      )}": SyntaxError: Unexpected token 'm', "malformed "... is not valid JSON`
+      )}": Unexpected token 'm', "malformed "... is not valid JSON`
     );
     expect(logger.error).toHaveBeenCalledWith(
-      `Error while reading queue file "${path.resolve(mockBaseFolders('northId').cache, 'time-values', 'error.queue.tmp')}": Error: queue error`
+      `Error while reading queue file "${path.resolve(mockBaseFolders('northId').cache, 'time-values', 'error.queue.tmp')}": queue error`
     );
     expect(logger.error).toHaveBeenCalledWith(
-      `Error while reading compact file "${path.resolve(mockBaseFolders('northId').cache, 'time-values', 'error.compact.tmp')}": Error: compact error`
+      `Error while reading compact file "${path.resolve(mockBaseFolders('northId').cache, 'time-values', 'error.compact.tmp')}": compact error`
     );
   });
 
@@ -165,6 +165,8 @@ describe('ValueCache', () => {
   });
 
   it('should manage error values', async () => {
+    (fs.stat as jest.Mock).mockReturnValue({ size: 123 });
+
     const valuesToRemove = new Map<string, Array<OIBusTimeValue>>();
     valuesToRemove.set(path.resolve(mockBaseFolders('northId').cache, 'time-values', '1.queue.tmp'), []);
     valuesToRemove.set(path.resolve(mockBaseFolders('northId').cache, 'time-values', '1.compact.tmp'), []);
@@ -192,7 +194,7 @@ describe('ValueCache', () => {
     );
     expect(logger.error).toHaveBeenCalledWith(
       `Error while moving values file "${path.resolve(mockBaseFolders('northId').cache, 'time-values', '1.compact.tmp')}" ` +
-        `into cache error "${path.resolve(mockBaseFolders('northId').error, 'time-values', '1.compact.tmp')}": ${new Error('unlink error')}`
+        `into cache error "${path.resolve(mockBaseFolders('northId').error, 'time-values', '1.compact.tmp')}": unlink error`
     );
   });
 
@@ -273,50 +275,55 @@ describe('ValueCache', () => {
       `The error value folder "${path.resolve(mockBaseFolders('northId').error, 'time-values')}" is empty. Nothing to retry`
     );
   });
+});
 
-  describe('with values loaded', () => {
-    const valuesToCache: Array<OIBusTimeValue> = [];
-    for (let i = 0; i < 251; i += 1) {
-      valuesToCache.push({} as OIBusTimeValue);
-    }
+describe('ValueCacheService with values loaded', () => {
+  let configuration: NorthConnectorEntity<NorthSettings>;
+  let cache: ValueCacheService;
+  const valuesToCache: Array<OIBusTimeValue> = [];
+  for (let i = 0; i < 251; i += 1) {
+    valuesToCache.push({} as OIBusTimeValue);
+  }
 
-    beforeEach(async () => {
-      jest.resetAllMocks();
-      (generateRandomId as jest.Mock)
-        .mockReturnValueOnce('generated-uuid1')
-        .mockReturnValueOnce('generated-uuid2')
-        .mockReturnValueOnce('generated-uuid3')
-        .mockReturnValueOnce('generated-uuid4')
-        .mockReturnValueOnce('generated-uuid5')
-        .mockReturnValueOnce('generated-uuid6')
-        .mockReturnValueOnce('generated-uuid7')
-        .mockReturnValueOnce('generated-uuid8')
-        .mockReturnValueOnce('generated-uuid9');
-      (fs.stat as jest.Mock).mockReturnValue({ size: 123 });
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
 
-      cache = new ValueCache(logger, mockBaseFolders('northId').cache, mockBaseFolders('northId').error, configuration);
+    (generateRandomId as jest.Mock)
+      .mockReturnValueOnce('generated-uuid1')
+      .mockReturnValueOnce('generated-uuid2')
+      .mockReturnValueOnce('generated-uuid3')
+      .mockReturnValueOnce('generated-uuid4')
+      .mockReturnValueOnce('generated-uuid5')
+      .mockReturnValueOnce('generated-uuid6')
+      .mockReturnValueOnce('generated-uuid7')
+      .mockReturnValueOnce('generated-uuid8')
+      .mockReturnValueOnce('generated-uuid9');
+    (fs.stat as jest.Mock).mockReturnValue({ size: 123 });
 
-      await cache.cacheValues(valuesToCache);
-      await cache.cacheValues(valuesToCache);
-      await cache.cacheValues(valuesToCache);
-    });
+    cache = new ValueCacheService(logger, mockBaseFolders('northId').cache, mockBaseFolders('northId').error, configuration);
 
-    it('should properly get values to send from queue', async () => {
-      const expectedValues = new Map<string, Array<OIBusTimeValue>>();
-      expectedValues.set(path.resolve(mockBaseFolders('northId').cache, 'time-values', 'generated-uuid2.queue.tmp'), valuesToCache);
-      expectedValues.set(path.resolve(mockBaseFolders('northId').cache, 'time-values', 'generated-uuid4.queue.tmp'), valuesToCache);
-      expectedValues.set(path.resolve(mockBaseFolders('northId').cache, 'time-values', 'generated-uuid6.queue.tmp'), valuesToCache);
-      const valuesToSend = await cache.getValuesToSend();
+    await cache.cacheValues(valuesToCache);
+    await cache.cacheValues(valuesToCache);
+    await cache.cacheValues(valuesToCache);
+  });
 
-      expect(valuesToSend).toEqual(expectedValues);
-    });
+  it('should properly get values to send from queue', async () => {
+    const expectedValues = new Map<string, Array<OIBusTimeValue>>();
+    expectedValues.set(path.resolve(mockBaseFolders('northId').cache, 'time-values', 'generated-uuid2.queue.tmp'), valuesToCache);
+    expectedValues.set(path.resolve(mockBaseFolders('northId').cache, 'time-values', 'generated-uuid4.queue.tmp'), valuesToCache);
+    expectedValues.set(path.resolve(mockBaseFolders('northId').cache, 'time-values', 'generated-uuid6.queue.tmp'), valuesToCache);
+    const valuesToSend = await cache.getValuesToSend();
 
-    it('should properly stop and clear timeout', async () => {
-      const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+    expect(valuesToSend).toEqual(expectedValues);
+  });
 
-      await cache.stop();
+  it('should properly stop and clear timeout', async () => {
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
 
-      expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
-    });
+    await cache.stop();
+
+    expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
   });
 });

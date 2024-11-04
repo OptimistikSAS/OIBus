@@ -169,7 +169,9 @@ const createNorthMetrics = async (database: knex.Knex, northId: string, northMet
       last_run_duration: northMetrics.lastRunDuration,
       last_value: northMetrics.lastValueSent,
       last_file: northMetrics.lastFileSent,
-      cache_size: northMetrics.cacheSize
+      cache_size: northMetrics.cacheSize,
+      error_size: northMetrics.errorSize,
+      archive_size: northMetrics.archiveSize
     })
     .into('north_metrics');
 };
@@ -209,7 +211,9 @@ const createHistoryQueryMetrics = async (database: knex.Knex, historyQueryId: st
       last_north_connection: historyQueryMetrics.north.lastConnection,
       last_north_run_start: historyQueryMetrics.north.lastRunStart,
       last_north_run_duration: historyQueryMetrics.north.lastRunDuration,
-      north_cache_size: historyQueryMetrics.north.cacheSize
+      north_cache_size: historyQueryMetrics.north.cacheSize,
+      north_error_size: historyQueryMetrics.north.errorSize,
+      north_archive_size: historyQueryMetrics.north.archiveSize
     })
     .into('history_query_metrics');
 };
