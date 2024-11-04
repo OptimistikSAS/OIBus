@@ -17,7 +17,9 @@ export default class HistoryQueryMetricsService {
       lastConnection: null,
       lastRunStart: null,
       lastRunDuration: null,
-      cacheSize: 0
+      cacheSize: 0,
+      errorSize: 0,
+      archiveSize: 0
     },
     south: {
       numberOfValuesRetrieved: 0,
@@ -55,8 +57,10 @@ export default class HistoryQueryMetricsService {
       this._metrics.north.lastRunDuration = data.lastRunDuration;
       this.updateMetrics();
     });
-    this.historyQuery.metricsEvent.on('north-cache-size', (data: { cacheSize: number }) => {
+    this.historyQuery.metricsEvent.on('north-cache-size', (data: { cacheSize: number; errorSize: number; archiveSize: number }) => {
       this._metrics.north.cacheSize = data.cacheSize;
+      this._metrics.north.errorSize = data.errorSize;
+      this._metrics.north.archiveSize = data.archiveSize;
       this.updateMetrics();
     });
     this.historyQuery.metricsEvent.on('north-send-values', (data: { numberOfValuesSent: number; lastValueSent: OIBusTimeValue }) => {

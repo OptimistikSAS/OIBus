@@ -25,12 +25,14 @@ describe('HistoryMetricsService', () => {
   });
 
   it('should update metrics', () => {
-    historyQueryMock.metricsEvent.emit('north-cache-size', { cacheSize: 999 });
+    historyQueryMock.metricsEvent.emit('north-cache-size', { cacheSize: 999, errorSize: 888, archiveSize: 777 });
     expect(historyQueryMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.historyQueries.list[0].id, {
       ...testData.historyQueries.metrics,
       north: {
         ...testData.historyQueries.metrics.north,
-        cacheSize: 999
+        cacheSize: 999,
+        errorSize: 888,
+        archiveSize: 777
       }
     });
 
@@ -40,6 +42,8 @@ describe('HistoryMetricsService', () => {
       north: {
         ...testData.historyQueries.metrics.north,
         cacheSize: 999,
+        errorSize: 888,
+        archiveSize: 777,
         lastConnection: testData.constants.dates.DATE_1
       }
     });
@@ -50,6 +54,8 @@ describe('HistoryMetricsService', () => {
       north: {
         ...testData.historyQueries.metrics.north,
         cacheSize: 999,
+        errorSize: 888,
+        archiveSize: 777,
         lastConnection: testData.constants.dates.DATE_1,
         lastRunStart: testData.constants.dates.DATE_2
       }
@@ -61,6 +67,8 @@ describe('HistoryMetricsService', () => {
       north: {
         ...testData.historyQueries.metrics.north,
         cacheSize: 999,
+        errorSize: 888,
+        archiveSize: 777,
         lastConnection: testData.constants.dates.DATE_1,
         lastRunStart: testData.constants.dates.DATE_2,
         lastRunDuration: 888
@@ -73,6 +81,8 @@ describe('HistoryMetricsService', () => {
       north: {
         ...testData.historyQueries.metrics.north,
         cacheSize: 999,
+        errorSize: 888,
+        archiveSize: 777,
         lastConnection: testData.constants.dates.DATE_1,
         lastRunStart: testData.constants.dates.DATE_2,
         lastRunDuration: 888,
@@ -87,6 +97,8 @@ describe('HistoryMetricsService', () => {
       north: {
         ...testData.historyQueries.metrics.north,
         cacheSize: 999,
+        errorSize: 888,
+        archiveSize: 777,
         lastConnection: testData.constants.dates.DATE_1,
         lastRunStart: testData.constants.dates.DATE_2,
         lastRunDuration: 888,
@@ -103,6 +115,8 @@ describe('HistoryMetricsService', () => {
       north: {
         ...testData.historyQueries.metrics.north,
         cacheSize: 999,
+        errorSize: 888,
+        archiveSize: 777,
         lastConnection: testData.constants.dates.DATE_1,
         lastRunStart: testData.constants.dates.DATE_2,
         lastRunDuration: 888,
@@ -123,6 +137,8 @@ describe('HistoryMetricsService', () => {
       north: {
         ...testData.historyQueries.metrics.north,
         cacheSize: 999,
+        errorSize: 888,
+        archiveSize: 777,
         lastConnection: testData.constants.dates.DATE_1,
         lastRunStart: testData.constants.dates.DATE_2,
         lastRunDuration: 888,
@@ -144,6 +160,8 @@ describe('HistoryMetricsService', () => {
       north: {
         ...testData.historyQueries.metrics.north,
         cacheSize: 999,
+        errorSize: 888,
+        archiveSize: 777,
         lastConnection: testData.constants.dates.DATE_1,
         lastRunStart: testData.constants.dates.DATE_2,
         lastRunDuration: 888,
@@ -166,6 +184,8 @@ describe('HistoryMetricsService', () => {
       north: {
         ...testData.historyQueries.metrics.north,
         cacheSize: 999,
+        errorSize: 888,
+        archiveSize: 777,
         lastConnection: testData.constants.dates.DATE_1,
         lastRunStart: testData.constants.dates.DATE_2,
         lastRunDuration: 888,
@@ -190,6 +210,8 @@ describe('HistoryMetricsService', () => {
       north: {
         ...testData.historyQueries.metrics.north,
         cacheSize: 999,
+        errorSize: 888,
+        archiveSize: 777,
         lastConnection: testData.constants.dates.DATE_1,
         lastRunStart: testData.constants.dates.DATE_2,
         lastRunDuration: 888,
@@ -216,6 +238,8 @@ describe('HistoryMetricsService', () => {
       north: {
         ...testData.historyQueries.metrics.north,
         cacheSize: 999,
+        errorSize: 888,
+        archiveSize: 777,
         lastConnection: testData.constants.dates.DATE_1,
         lastRunStart: testData.constants.dates.DATE_2,
         lastRunDuration: 888,
@@ -254,6 +278,8 @@ describe('HistoryMetricsService', () => {
       north: {
         ...testData.historyQueries.metrics.north,
         cacheSize: 999,
+        errorSize: 888,
+        archiveSize: 777,
         lastConnection: testData.constants.dates.DATE_1,
         lastRunStart: testData.constants.dates.DATE_2,
         lastRunDuration: 888,
@@ -291,6 +317,8 @@ describe('HistoryMetricsService', () => {
       north: {
         ...testData.historyQueries.metrics.north,
         cacheSize: 999,
+        errorSize: 888,
+        archiveSize: 777,
         lastConnection: testData.constants.dates.DATE_1,
         lastRunStart: testData.constants.dates.DATE_2,
         lastRunDuration: 888,

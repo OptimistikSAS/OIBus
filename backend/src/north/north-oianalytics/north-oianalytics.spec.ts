@@ -12,7 +12,6 @@ import { compress, filesExists } from '../../service/utils';
 import ValueCacheServiceMock from '../../tests/__mocks__/service/cache/value-cache-service.mock';
 import FileCacheServiceMock from '../../tests/__mocks__/service/cache/file-cache-service.mock';
 import { NorthOIAnalyticsSettings } from '../../../shared/model/north-settings.model';
-import ArchiveServiceMock from '../../tests/__mocks__/service/cache/archive-service.mock';
 import { createProxyAgent } from '../../service/proxy-agent';
 import { OIBusTimeValue } from '../../../shared/model/engine.model';
 import zlib from 'node:zlib';
@@ -55,7 +54,6 @@ const certificateRepository: CertificateRepository = new CertificateRepositoryMo
 const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OianalyticsRegistrationRepositoryMock();
 const valueCacheService = new ValueCacheServiceMock();
 const fileCacheService = new FileCacheServiceMock();
-const archiveService = new ArchiveServiceMock();
 
 jest.mock(
   '../../service/cache/value-cache.service',
@@ -69,13 +67,6 @@ jest.mock(
   () =>
     function () {
       return fileCacheService;
-    }
-);
-jest.mock(
-  '../../service/cache/archive.service',
-  () =>
-    function () {
-      return archiveService;
     }
 );
 
