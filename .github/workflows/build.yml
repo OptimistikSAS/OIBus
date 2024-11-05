@@ -26,7 +26,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22.10
+          node-version-file: backend/package.json
 
       - name: Get release info
         id: release_info
