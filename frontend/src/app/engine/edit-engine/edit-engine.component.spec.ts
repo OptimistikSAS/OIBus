@@ -102,6 +102,7 @@ describe('EditEngineComponent', () => {
     name: 'OIBus Test',
     port: 2223,
     version: '3.3.3',
+    launcherVersion: '3.5.0',
     proxyEnabled: true,
     proxyPort: 9000,
     logParameters: {

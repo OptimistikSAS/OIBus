@@ -735,6 +735,7 @@ const engineMetrics: EngineMetrics = {
 };
 const oIBusInfo: OIBusInfo = {
   version: engineSettings.version,
+  launcherVersion: engineSettings.launcherVersion,
   oibusName: engineSettings.name,
   oibusId: engineSettings.id,
   dataDirectory: 'data-directory',
