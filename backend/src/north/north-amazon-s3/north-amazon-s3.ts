@@ -37,8 +37,8 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
   /**
    * Initialize services (logger, certificate, status data) at startup
    */
-  async start(): Promise<void> {
-    await super.start();
+  async start(dataStream = true): Promise<void> {
+    await super.start(dataStream);
     await this.prepareConnection();
   }
 
