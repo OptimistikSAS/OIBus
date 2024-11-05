@@ -214,6 +214,7 @@ export default class OIAnalyticsCommandService {
       return;
     }
     this.ongoingExecuteCommand = true;
+    this.oIAnalyticsCommandRepository.markAsRunning(command.id);
     try {
       switch (command.type) {
         case 'update-version':

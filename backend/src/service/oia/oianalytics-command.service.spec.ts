@@ -211,6 +211,7 @@ describe('OIAnalytics Command Service', () => {
 
     expect(oIAnalyticsRegistrationRepository.get).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsCommandRepository.list).toHaveBeenCalled();
+    expect(oIAnalyticsCommandRepository.markAsRunning).toHaveBeenCalledTimes(1);
     expect(oIBusService.getEngineSettings).toHaveBeenCalled();
     expect(oIAnalyticsClient.downloadFile).toHaveBeenCalledTimes(1);
     expect(unzip).toHaveBeenCalledTimes(1);
