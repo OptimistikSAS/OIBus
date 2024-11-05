@@ -93,6 +93,10 @@ export default class Launcher {
     return os.type() === 'Windows_NT' ? 'oibus.exe' : 'oibus';
   }
 
+  getOibusLauncherExecutable(): string {
+    return os.type() === 'Windows_NT' ? 'oibus-launcher_backup.exe' : 'oibus-launcher_backup';
+  }
+
   getOibusPath(): string {
     return path.resolve(this.workDir, this.getOibusExecutable());
   }
@@ -103,6 +107,10 @@ export default class Launcher {
 
   getOibusBackupPath(): string {
     return path.resolve(this.backupDir, this.getOibusExecutable());
+  }
+
+  getOibusLauncherBackupPath(): string {
+    return path.resolve(process.cwd(), this.getOibusLauncherExecutable());
   }
 
   async checkForUpdate(): Promise<boolean> {
@@ -165,6 +173,9 @@ export default class Launcher {
 
     this.updated = false;
     await fs.rm(path.resolve(this.backupDir, 'data-folder'), { recursive: true, force: true });
+    await fs.rm(this.getOibusBackupPath(), { force: true });
+    await fs.rm(this.getOibusLauncherBackupPath(), { force: true });
+    await fs.rm(path.resolve(process.cwd(), UPDATE_SETTINGS_FILE), { force: true });
   }
 
   async backupDataFolder(backupsFolders: RegExp): Promise<void> {
