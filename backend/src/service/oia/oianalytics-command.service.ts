@@ -329,7 +329,7 @@ export default class OIAnalyticsCommandService {
       );
       await fs.rename(
         path.resolve(this.binaryFolder, '..', 'update', `oibus-launcher${extension}`),
-        path.resolve(this.binaryFolder, `oibus-launcher${extension}`)
+        path.resolve(this.binaryFolder, '..', `oibus-launcher${extension}`)
       );
     }
     await fs.writeFile(path.resolve(this.binaryFolder, '..', UPDATE_SETTINGS_FILE), JSON.stringify(command.commandContent));
