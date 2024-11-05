@@ -6,10 +6,11 @@ inputs:
     required: true
   prerelease:
     description: 'Is it a prerelease or not'
-    required: true
+    required: false
   tag_name:
     description: 'If it is a prerelease, this option is used to update the package version'
-    required: true
+    required: false
+    default: ''
 
 runs:
   using: "composite"
