@@ -29,8 +29,6 @@ const UPDATE_ENGINE_METRICS_INTERVAL = 1000; // every second
 export default class OIBusService {
   private _stream: PassThrough | null = null;
 
-  private settings: EngineSettings;
-
   private healthSignalInterval: NodeJS.Timeout | null = null;
   private updateEngineMetricsInterval: NodeJS.Timeout | null = null;
   private metrics: EngineMetrics;
@@ -58,8 +56,7 @@ export default class OIBusService {
     private dataStreamEngine: DataStreamEngine,
     private historyQueryEngine: HistoryQueryEngine
   ) {
-    this.settings = this.getEngineSettings();
-    this.metrics = this.engineMetricsRepository.getMetrics(this.settings.id)!;
+    this.metrics = this.engineMetricsRepository.getMetrics(this.getEngineSettings().id)!;
 
     this.logger = this.loggerService.createChildLogger('internal');
     this.proxyServer = new ProxyServer(this.logger);
@@ -98,19 +95,20 @@ export default class OIBusService {
       })
     );
 
+    const settings = this.getEngineSettings();
     this.cpuUsageRefInstant = DateTime.now().toMillis(); // Reference between two dates for cpu usage calculation
     this.cpuUsageRef = process.cpuUsage();
-    this.engineMetricsRepository.initMetrics(this.settings.id);
-    this.metrics = this.engineMetricsRepository.getMetrics(this.settings.id)!;
+    this.engineMetricsRepository.initMetrics(settings.id);
+    this.metrics = this.engineMetricsRepository.getMetrics(settings.id)!;
 
     this.updateEngineMetricsInterval = setInterval(this.updateMetrics.bind(this), UPDATE_ENGINE_METRICS_INTERVAL);
     this.healthSignalInterval = setInterval(this.logHealthSignal.bind(this), HEALTH_SIGNAL_INTERVAL);
     this.logHealthSignal();
 
-    if (this.settings.proxyEnabled) {
+    if (settings.proxyEnabled) {
       const ipFilters = ['127.0.0.1', '::1', '::ffff:127.0.0.1', ...this.ipFilterRepository.findAll().map(filter => filter.address)];
       this.proxyServer.refreshIpFilters(ipFilters);
-      await this.proxyServer.start(this.settings.proxyPort!);
+      await this.proxyServer.start(settings.proxyPort!);
     }
     const startDuration = DateTime.now().toMillis() - start;
     this.logger.info(`OIBus started in ${startDuration} ms`);
@@ -121,7 +119,7 @@ export default class OIBusService {
   }
 
   getOIBusInfo(): OIBusInfo {
-    return getOIBusInfo(this.settings);
+    return getOIBusInfo(this.getEngineSettings());
   }
 
   getProxyServer(): ProxyServer {
@@ -143,22 +141,22 @@ export default class OIBusService {
       command.logParameters.loki.password = await this.encryptionService.encryptText(command.logParameters.loki.password);
     }
     this.engineRepository.update(command);
-    this.settings = this.getEngineSettings();
+    const settings = this.getEngineSettings();
 
     if (
       !oldEngineSettings ||
-      JSON.stringify(oldEngineSettings.logParameters) !== JSON.stringify(this.settings.logParameters) ||
-      oldEngineSettings.name !== this.settings.name
+      JSON.stringify(oldEngineSettings.logParameters) !== JSON.stringify(settings.logParameters) ||
+      oldEngineSettings.name !== settings.name
     ) {
-      await this.resetLogger(this.settings);
+      await this.resetLogger(settings);
     }
 
     if (command.port !== oldEngineSettings.port) {
-      this.portChangeEvent.emit('updated', this.settings.port);
+      this.portChangeEvent.emit('updated', settings.port);
     }
     await this.proxyServer.stop();
-    if (this.settings.proxyEnabled) {
-      await this.proxyServer.start(this.settings.proxyPort!);
+    if (settings.proxyEnabled) {
+      await this.proxyServer.start(settings.proxyPort!);
     }
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
@@ -261,13 +259,15 @@ export default class OIBusService {
       currentArrayBuffers: memoryUsage.arrayBuffers,
       maxArrayBuffers: this.metrics.maxArrayBuffers < memoryUsage.arrayBuffers ? memoryUsage.arrayBuffers : this.metrics.maxArrayBuffers
     };
-    this.engineMetricsRepository.updateMetrics(this.settings.id, this.metrics);
+
+    this.engineMetricsRepository.updateMetrics(this.getEngineSettings().id, this.metrics);
     this._stream?.write(`data: ${JSON.stringify(this.metrics)}\n\n`);
   }
 
   resetMetrics(): void {
-    this.engineMetricsRepository.removeMetrics(this.settings.id);
-    this.engineMetricsRepository.initMetrics(this.settings.id);
+    const settings = this.getEngineSettings();
+    this.engineMetricsRepository.removeMetrics(settings.id);
+    this.engineMetricsRepository.initMetrics(settings.id);
     this.updateMetrics();
   }
 
