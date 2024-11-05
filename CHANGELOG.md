@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.4.7](https://github.com/OptimistikSAS/OIBus/compare/v3.4.6...v3.4.7) (2024-11-05)
+
+
+### Bug Fixes
+
+* **north:** pass dataStream parameter in north start method ([c0a7e07](https://github.com/OptimistikSAS/OIBus/commit/c0a7e077b3a4fe06ea98d82261df553166cbb40e))
+* **opcua:** manage null terminated string with fix size ([23282db](https://github.com/OptimistikSAS/OIBus/commit/23282db9197563db4565c64baa7f4ee88602e772))
+
 ## [3.4.6](https://github.com/OptimistikSAS/OIBus/compare/v3.4.5...v3.4.6) (2024-10-02)
 
 
