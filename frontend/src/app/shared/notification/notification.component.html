@@ -11,7 +11,7 @@
       @if (notification.message) {
         <span class="notification-content">{{ notification.message }}</span>
       } @else {
-        <span class="notification-content" [translate]="notification.i18nKey!" [translateParams]="notification.i18nArgs"></span>
+        <span class="notification-content" [translate]="notification.i18nKey!" [translateParams]="notification.i18nArgs ?? {}"></span>
       }
     </ngb-toast>
   }
