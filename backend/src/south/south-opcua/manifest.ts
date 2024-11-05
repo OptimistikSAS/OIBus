@@ -18,7 +18,7 @@ const manifest: SouthConnectorManifest = {
       label: 'Throttling',
       class: 'col',
       newRow: true,
-      displayInViewMode: true,
+      displayInViewMode: false,
       validators: [{ key: 'required' }],
       content: [
         {
@@ -65,7 +65,7 @@ const manifest: SouthConnectorManifest = {
       defaultValue: false,
       newRow: true,
       validators: [{ key: 'required' }],
-      displayInViewMode: true
+      displayInViewMode: false
     },
     {
       key: 'url',
