@@ -31,8 +31,8 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
     super(connector, encryptionService, repositoryService, logger, baseFolder);
   }
 
-  async start(): Promise<void> {
-    await super.start();
+  async start(dataStream = true): Promise<void> {
+    await super.start(dataStream);
     await this.prepareConnection();
   }
 
