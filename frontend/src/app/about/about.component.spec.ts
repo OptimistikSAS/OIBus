@@ -75,7 +75,8 @@ describe('AboutComponent', () => {
   it('should have dynamic info', () => {
     engineService.getInfo.and.returnValue(
       of({
-        version: '3.0',
+        version: '3.0.0',
+        launcherVersion: '3.5.0',
         dataDirectory: 'data-folder',
         processId: '1234',
         architecture: 'x64',

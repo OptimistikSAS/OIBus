@@ -62,6 +62,7 @@ export default class OIAnalyticsCommandService {
   ) {
     const engineSettings = this.oIBusService.getEngineSettings();
     if (launcherVersion !== engineSettings.launcherVersion) {
+      this.logger.info(`OIBus launcher updated to ${launcherVersion}`);
       this.oIBusService.updateOIBusLauncherVersion(launcherVersion);
     }
     const currentUpgradeCommand = this.oIAnalyticsCommandRepository.list({

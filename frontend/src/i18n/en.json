@@ -318,6 +318,7 @@
   "about": {
     "official-site": "Official site",
     "version": "Version",
+    "launcher-version": "Launcher version",
     "license": "License",
     "executable": "Executable",
     "hostname": "Hostname",
