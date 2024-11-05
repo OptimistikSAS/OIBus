@@ -322,6 +322,7 @@ export default class OIAnalyticsCommandService {
     this.logger.trace(`File ${filename} removed`);
     const duration = DateTime.now().toMillis() - runStart.toMillis();
     if (command.commandContent.updateLauncher) {
+      this.logger.info(`Updating OIBus launcher`);
       const extension = os.type() === 'Windows_NT' ? '.exe' : '';
       await fs.rename(
         path.resolve(this.binaryFolder, '..', `oibus-launcher${extension}`),
