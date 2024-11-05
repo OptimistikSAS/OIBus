@@ -13,6 +13,7 @@ export default class Launcher {
   private startedTimeout: NodeJS.Timeout | null = null;
   private child: ChildProcessWithoutNullStreams | null = null;
   private stopping = false;
+  private readonly args: Array<string> = [];
 
   constructor(
     private workDir: string,
@@ -20,7 +21,9 @@ export default class Launcher {
     private backupDir: string,
     private config: string,
     private check: boolean
-  ) {}
+  ) {
+    this.args = replaceConfigArgumentWithAbsolutePath(process.argv, this.config);
+  }
 
   async start(): Promise<void> {
     const oibusPath = this.getOibusPath();
@@ -29,10 +32,9 @@ export default class Launcher {
       await this.update();
     }
 
-    const args = replaceConfigArgumentWithAbsolutePath(process.argv, this.config);
-    console.log(`Starting OIBus launcher: ${oibusPath} ${args}`);
+    console.log(`Starting OIBus launcher: ${oibusPath} ${this.args}`);
     try {
-      this.child = spawn(oibusPath, args, { cwd: this.workDir });
+      this.child = spawn(oibusPath, this.args, { cwd: this.workDir });
 
       this.child.stdout.on('data', data => {
         console.info(`OIBus stdout: ${data.toString()}`);
