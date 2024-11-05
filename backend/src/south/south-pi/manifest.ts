@@ -18,7 +18,7 @@ const manifest: SouthConnectorManifest = {
       label: 'Throttling',
       class: 'col',
       newRow: true,
-      displayInViewMode: true,
+      displayInViewMode: false,
       validators: [{ key: 'required' }],
       content: [
         {
@@ -64,6 +64,7 @@ const manifest: SouthConnectorManifest = {
       label: 'Remote agent URL',
       defaultValue: 'http://ip-adress-or-host:2224',
       validators: [{ key: 'required' }],
+      newRow: true,
       displayInViewMode: true
     },
     {

@@ -19,7 +19,7 @@ const manifest: SouthConnectorManifest = {
       label: 'Throttling',
       class: 'col',
       newRow: true,
-      displayInViewMode: true,
+      displayInViewMode: false,
       validators: [{ key: 'required' }],
       content: [
         {
@@ -57,6 +57,7 @@ const manifest: SouthConnectorManifest = {
       label: 'Host',
       defaultValue: 'localhost',
       validators: [{ key: 'required' }],
+      newRow: true,
       displayInViewMode: true
     },
     {
