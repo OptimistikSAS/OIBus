@@ -22,7 +22,8 @@ export default class Launcher {
     private config: string,
     private check: boolean
   ) {
-    this.args = replaceConfigArgumentWithAbsolutePath(process.argv, this.config);
+    // The first argument is the binary being used. We must remove it since it's not used by the OIBus binary
+    this.args = replaceConfigArgumentWithAbsolutePath(process.argv.slice(1), this.config);
   }
 
   async start(): Promise<void> {
