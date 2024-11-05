@@ -16,6 +16,7 @@ export interface EngineSettingsDTO extends BaseEntity {
   name: string;
   port: number;
   version: string;
+  launcherVersion: string;
   proxyEnabled: boolean;
   proxyPort: number | null;
   logParameters: {
@@ -116,6 +117,7 @@ export interface EngineSettingsCommandDTO {
 
 export interface OIBusInfo {
   version: string;
+  launcherVersion: string;
   oibusName: string;
   oibusId: string;
   dataDirectory: string;

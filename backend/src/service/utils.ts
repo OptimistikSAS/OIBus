@@ -105,7 +105,7 @@ export const createBaseFolders = async (baseFoldes: BaseFolders) => {
   for (const type of Object.keys(baseFoldes) as Array<keyof BaseFolders>) {
     await createFolder(baseFoldes[type]);
   }
-}
+};
 
 /**
  * Compress the specified file
@@ -506,6 +506,7 @@ export const getOIBusInfo = (oibusSettings: EngineSettingsDTO): OIBusInfo => {
     operatingSystem: `${os.type()} ${os.release()}`,
     architecture: process.arch,
     version: oibusSettings.version,
+    launcherVersion: oibusSettings.launcherVersion,
     oibusId: oibusSettings.id,
     oibusName: oibusSettings.name,
     platform: getPlatformFromOsType(os.type())
