@@ -19,6 +19,15 @@
               <span id="version-spinner" class="fa fa-spinner fa-spin"></span>
             }
           </div>
+          <div id="launcher-version">
+            <strong translate="about.launcher-version"></strong>
+            <span translate="common.colon-separator"></span>
+            @if (oibusInfo) {
+              <span>{{ oibusInfo.launcherVersion }}</span>
+            } @else {
+              <span id="launcher-version-spinner" class="fa fa-spinner fa-spin"></span>
+            }
+          </div>
 
           <div id="executable">
             <strong translate="about.executable"></strong>
