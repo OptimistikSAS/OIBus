@@ -988,11 +988,12 @@ describe('Service utils', () => {
       operatingSystem: `${os.type()} ${os.release()}`,
       processId: process.pid.toString(),
       version: '3.3.3',
+      launcherVersion: '3.5.0',
       oibusId: 'id',
       oibusName: 'name',
       platform: getPlatformFromOsType(os.type())
     };
-    const result = getOIBusInfo({ id: 'id', name: 'name', version: '3.3.3' } as EngineSettingsDTO);
+    const result = getOIBusInfo({ id: 'id', name: 'name', version: '3.3.3', launcherVersion: '3.5.0' } as EngineSettingsDTO);
     expect(result).toEqual(expectedResult);
   });
 

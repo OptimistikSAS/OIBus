@@ -299,6 +299,7 @@ export const toEngineSettingsDTO = (engineSettings: EngineSettings): EngineSetti
     name: engineSettings.name,
     port: engineSettings.port,
     version: engineSettings.version,
+    launcherVersion: engineSettings.launcherVersion,
     proxyEnabled: engineSettings.proxyEnabled,
     proxyPort: engineSettings.proxyPort,
     logParameters: {
