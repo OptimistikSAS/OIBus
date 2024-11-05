@@ -19,7 +19,7 @@ const manifest: SouthConnectorManifest = {
       label: 'Throttling',
       class: 'col',
       newRow: true,
-      displayInViewMode: true,
+      displayInViewMode: false,
       validators: [{ key: 'required' }],
       content: [
         {
@@ -56,6 +56,7 @@ const manifest: SouthConnectorManifest = {
       type: 'OibCheckbox',
       label: 'Use OIAnalytics Module',
       validators: [{ key: 'required' }],
+      newRow: true,
       defaultValue: true,
       displayInViewMode: true,
       class: 'col-3'

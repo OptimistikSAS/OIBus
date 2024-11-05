@@ -19,7 +19,7 @@ const manifest: SouthConnectorManifest = {
       label: 'Throttling',
       class: 'col',
       newRow: true,
-      displayInViewMode: true,
+      displayInViewMode: false,
       validators: [{ key: 'required' }],
       content: [
         {
@@ -55,6 +55,7 @@ const manifest: SouthConnectorManifest = {
       key: 'thickMode',
       type: 'OibCheckbox',
       label: 'Thick mode',
+      newRow: true,
       defaultValue: false,
       class: 'col-3',
       validators: [{ key: 'required' }],
