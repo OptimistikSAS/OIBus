@@ -78,7 +78,7 @@ describe('ScanModeService', () => {
 
   it('should verify a cron expression', () => {
     let expectedValidatedCronExpression: ValidatedCronExpression | null = null;
-    const validatedCronExpression: ValidatedCronExpression = { nextExecutions: [], humanReadableForm: '' };
+    const validatedCronExpression: ValidatedCronExpression = { isValid: true, errorMessage: '', nextExecutions: [], humanReadableForm: '' };
 
     service.verifyCron('* * * * * *').subscribe(c => (expectedValidatedCronExpression = c));
 
