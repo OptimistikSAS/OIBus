@@ -56,7 +56,7 @@ export class ScanModeService {
    * Verify the cron expression
    * @param cron - the cron expression to verify
    */
-  verifyCron(cron: string) {
+  verifyCron(cron: string): Observable<ValidatedCronExpression> {
     return this.http.post<ValidatedCronExpression>(`/api/scan-modes/verify`, { cron });
   }
 }

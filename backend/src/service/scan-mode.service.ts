@@ -57,11 +57,14 @@ export default class ScanModeService {
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 
-  async verifyCron(command: ScanModeCommandDTO): Promise<ValidatedCronExpression> {
-    await this.validator.validate(scanModeSchema, command);
-
-    if (!command.cron) {
-      throw new Error('Cron expression is required');
+  async verifyCron(command: { cron: string }): Promise<ValidatedCronExpression> {
+    if (!command?.cron) {
+      return {
+        isValid: false,
+        errorMessage: 'Cron expression is required',
+        nextExecutions: [],
+        humanReadableForm: ''
+      };
     }
     return validateCronExpression(command.cron);
   }

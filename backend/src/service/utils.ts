@@ -538,7 +538,6 @@ export const getFilesFiltered = async (
 ): Promise<Array<NorthCacheFiles>> => {
   const filenames = await fs.readdir(folder);
   const filteredFilenames: Array<NorthCacheFiles> = [];
-  console.log('folder', folder, filenames);
   for (const filename of filenames) {
     try {
       const stats = await fs.stat(path.join(folder, filename));
@@ -569,8 +568,10 @@ export const getFilesFiltered = async (
  */
 export const validateCronExpression = (cron: string): ValidatedCronExpression => {
   const response: ValidatedCronExpression = {
+    isValid: true,
     nextExecutions: [],
-    humanReadableForm: ''
+    humanReadableForm: '',
+    errorMessage: ''
   };
 
   // source for non-standard characters: https://en.wikipedia.org/wiki/Cron#Non-standard_characters
@@ -579,12 +580,22 @@ export const validateCronExpression = (cron: string): ValidatedCronExpression =>
   // we limit the number of fields to 6 because the
   // backend does not support quartz cron (7th part would be years), so we show an error
   if (cron.split(' ').filter(Boolean).length >= 7) {
-    throw new Error('Too many fields. Only seconds, minutes, hours, day of month, month and day of week are supported.');
+    return {
+      isValid: false,
+      errorMessage: 'Too many fields. Only seconds, minutes, hours, day of month, month and day of week are supported.',
+      nextExecutions: [],
+      humanReadableForm: ''
+    };
   }
   // backend does not support these characters
   const badCharacters = nonStandardCharacters.filter(c => cron.includes(c));
   if (badCharacters.length > 0) {
-    throw new Error(`Expression contains non-standard characters: ${badCharacters.join(', ')}`);
+    return {
+      isValid: false,
+      errorMessage: `Expression contains non-standard characters: ${badCharacters.join(', ')}`,
+      nextExecutions: [],
+      humanReadableForm: ''
+    };
   }
 
   try {
@@ -604,7 +615,12 @@ export const validateCronExpression = (cron: string): ValidatedCronExpression =>
   } catch (error: unknown) {
     // cronparser throws an error
     if (error instanceof Error) {
-      throw error;
+      return {
+        isValid: false,
+        errorMessage: error.message,
+        nextExecutions: [],
+        humanReadableForm: ''
+      };
     }
 
     // cronstrue throws a string
@@ -612,10 +628,20 @@ export const validateCronExpression = (cron: string): ValidatedCronExpression =>
       // remove the "Error: " prefix
       const string = error.replace(/^Error: /, '');
       const errorMessage = string.charAt(0).toUpperCase() + string.slice(1);
-      throw new Error(errorMessage);
+      return {
+        isValid: false,
+        errorMessage,
+        nextExecutions: [],
+        humanReadableForm: ''
+      };
     }
 
-    throw new Error('Invalid cron expression');
+    return {
+      isValid: false,
+      errorMessage: 'Invalid cron expression',
+      nextExecutions: [],
+      humanReadableForm: ''
+    };
   }
 
   return response;

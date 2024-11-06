@@ -1086,9 +1086,11 @@ describe('Service utils', () => {
       jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     });
 
-    it('should properly validate a cron expression', () => {
+    it('should properly validate a cron expression (every second)', () => {
       const result = validateCronExpression('* * * * * *');
       const expectedResult = {
+        isValid: true,
+        errorMessage: '',
         humanReadableForm: 'Every second, every minute, every hour, every day',
         nextExecutions: ['2021-01-02T00:00:01.000Z', '2021-01-02T00:00:02.000Z', '2021-01-02T00:00:03.000Z']
       };
@@ -1098,6 +1100,8 @@ describe('Service utils', () => {
     it('should properly validate a cron expression', () => {
       const result = validateCronExpression('0 */10 * * * *');
       const expectedResult = {
+        isValid: true,
+        errorMessage: '',
         humanReadableForm: 'Every 10 minutes, every hour, every day',
         nextExecutions: ['2021-01-02T00:10:00.000Z', '2021-01-02T00:20:00.000Z', '2021-01-02T00:30:00.000Z']
       };
@@ -1105,37 +1109,103 @@ describe('Service utils', () => {
     });
 
     it('should throw an error for too many fields', () => {
-      expect(() => validateCronExpression('* * * * * * 2024')).toThrow(
-        'Too many fields. Only seconds, minutes, hours, day of month, month and day of week are supported.'
-      );
+      expect(validateCronExpression('* * * * * * 2024')).toEqual({
+        isValid: false,
+        errorMessage: 'Too many fields. Only seconds, minutes, hours, day of month, month and day of week are supported.',
+        humanReadableForm: '',
+        nextExecutions: []
+      });
     });
 
     it('should throw an error for non standard characters', () => {
-      expect(() => validateCronExpression('* * * * 5L')).toThrow('Expression contains non-standard characters: L');
-      expect(() => validateCronExpression('* * * W * *')).toThrow('Expression contains non-standard characters: W');
-      expect(() => validateCronExpression('* * * * * 5#3')).toThrow('Expression contains non-standard characters: #');
-      expect(() => validateCronExpression('? ? * * * *')).toThrow('Expression contains non-standard characters: ?');
-      expect(() => validateCronExpression('H * * * *')).toThrow('Expression contains non-standard characters: H');
+      expect(validateCronExpression('* * * * 5L')).toEqual({
+        isValid: false,
+        errorMessage: 'Expression contains non-standard characters: L',
+        humanReadableForm: '',
+        nextExecutions: []
+      });
+
+      expect(validateCronExpression('* * * W * *')).toEqual({
+        isValid: false,
+        errorMessage: 'Expression contains non-standard characters: W',
+        humanReadableForm: '',
+        nextExecutions: []
+      });
+
+      expect(validateCronExpression('* * * * * 5#3')).toEqual({
+        isValid: false,
+        errorMessage: 'Expression contains non-standard characters: #',
+        humanReadableForm: '',
+        nextExecutions: []
+      });
+
+      expect(validateCronExpression('? ? * * * *')).toEqual({
+        isValid: false,
+        errorMessage: 'Expression contains non-standard characters: ?',
+        humanReadableForm: '',
+        nextExecutions: []
+      });
+
+      expect(validateCronExpression('H * * * *')).toEqual({
+        isValid: false,
+        errorMessage: 'Expression contains non-standard characters: H',
+        humanReadableForm: '',
+        nextExecutions: []
+      });
     });
 
     it('should throw an error for invalid cron expression caught by cronstrue', () => {
-      expect(() => validateCronExpression('0 35 10 19 01')).toThrow('Hours part must be >= 0 and <= 23');
-      expect(() => validateCronExpression('0 23 10 19 01')).toThrow('Month part must be >= 1 and <= 12');
-      expect(() => validateCronExpression('0 23 10 12 8')).toThrow('DOW part must be >= 0 and <= 6');
+      expect(validateCronExpression('0 35 10 19 01')).toEqual({
+        isValid: false,
+        errorMessage: 'Hours part must be >= 0 and <= 23',
+        humanReadableForm: '',
+        nextExecutions: []
+      });
+      expect(validateCronExpression('0 23 10 19 01')).toEqual({
+        isValid: false,
+        errorMessage: 'Month part must be >= 1 and <= 12',
+        humanReadableForm: '',
+        nextExecutions: []
+      });
+      expect(validateCronExpression('0 23 10 12 8')).toEqual({
+        isValid: false,
+        errorMessage: 'DOW part must be >= 0 and <= 6',
+        humanReadableForm: '',
+        nextExecutions: []
+      });
     });
 
     it('should throw an error for invalid cron expression caught by cron-parser', () => {
-      expect(() => validateCronExpression('0 23 10 12 6/')).toThrow('Constraint error, cannot repeat at every 0 time.');
-      expect(() => validateCronExpression('0 23 10 12 6/-')).toThrow('Constraint error, cannot repeat at every NaN time.');
-      expect(() => validateCronExpression('0 23 10 12 6/-')).toThrow('Constraint error, cannot repeat at every NaN time.');
-      expect(() => validateCronExpression('0 23 10-1 12 6/1')).toThrow('Invalid range: 10-1');
+      expect(validateCronExpression('0 23 10 12 6/')).toEqual({
+        isValid: false,
+        errorMessage: 'Constraint error, cannot repeat at every 0 time.',
+        humanReadableForm: '',
+        nextExecutions: []
+      });
+      expect(validateCronExpression('0 23 10 12 6/-')).toEqual({
+        isValid: false,
+        errorMessage: 'Constraint error, cannot repeat at every NaN time.',
+        humanReadableForm: '',
+        nextExecutions: []
+      });
+      expect(validateCronExpression('0 23 10-1 12 6/1')).toEqual({
+        isValid: false,
+        errorMessage: 'Invalid range: 10-1',
+        humanReadableForm: '',
+        nextExecutions: []
+      });
     });
 
     it('should catch unexpected errors', () => {
       jest.spyOn(cronstrue, 'toString').mockImplementation(() => {
         throw null;
       });
-      expect(() => validateCronExpression('* * * * * *')).toThrow('Invalid cron expression');
+      expect(validateCronExpression('* * * * * *')).toEqual({
+        isValid: false,
+        errorMessage: 'Invalid cron expression',
+        humanReadableForm: '',
+        nextExecutions: []
+      });
     });
   });
 
