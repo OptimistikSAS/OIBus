@@ -1,5 +1,5 @@
 import { KoaContext } from '../koa';
-import { ScanModeCommandDTO, ScanModeDTO } from '../../../shared/model/scan-mode.model';
+import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '../../../shared/model/scan-mode.model';
 import AbstractController from './abstract.controller';
 import { toScanModeDTO } from '../../service/scan-mode.service';
 
@@ -45,12 +45,8 @@ export default class ScanModeController extends AbstractController {
     }
   }
 
-  async verifyCron(ctx: KoaContext<ScanModeCommandDTO, void>): Promise<void> {
-    try {
-      const expression = await ctx.app.scanModeService.verifyCron(ctx.request.body!);
-      ctx.ok(expression);
-    } catch (error: unknown) {
-      ctx.badRequest((error as Error).message);
-    }
+  async verifyCron(ctx: KoaContext<{ cron: string }, ValidatedCronExpression>): Promise<void> {
+    const invalidCron = await ctx.app.scanModeService.verifyCron(ctx.request.body!);
+    ctx.ok(invalidCron);
   }
 }
