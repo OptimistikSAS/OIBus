@@ -53,8 +53,8 @@ const anotherLogger: pino.Logger = new PinoLogger();
 
 describe('DataStreamEngine', () => {
   let engine: DataStreamEngine;
-  const mockedNorth1: NorthConnector<NorthSettings> = new NorthConnectorMock(testData.north.list[0]);
-  const mockedNorth2: NorthConnector<NorthSettings> = new NorthConnectorMock(testData.north.list[1]);
+  const mockedNorth1 = new NorthConnectorMock(testData.north.list[0]) as unknown as NorthConnector<NorthSettings>;
+  const mockedNorth2 = new NorthConnectorMock(testData.north.list[1]) as unknown as NorthConnector<NorthSettings>;
   const mockedSouth1: SouthConnector<SouthSettings, SouthItemSettings> = new SouthConnectorMock(testData.south.list[0]);
   const mockedSouth2: SouthConnector<SouthSettings, SouthItemSettings> = new SouthConnectorMock(testData.south.list[1]);
 
@@ -259,6 +259,11 @@ describe('DataStreamEngine', () => {
     await engine.removeCacheFiles(testData.north.list[0].id, ['file']);
     expect(mockedNorth1.removeCacheFiles).toHaveBeenCalledWith(['file']);
 
+    await engine.removeAllCacheFiles('bad id');
+    expect(mockedNorth1.removeAllCacheFiles).not.toHaveBeenCalled();
+    await engine.removeAllCacheFiles(testData.north.list[0].id);
+    expect(mockedNorth1.removeAllCacheFiles).toHaveBeenCalledWith();
+
     await engine.archiveCacheFiles('bad id', ['file']);
     expect(mockedNorth1.archiveCacheFiles).not.toHaveBeenCalled();
     await engine.archiveCacheFiles(testData.north.list[0].id, ['file']);
@@ -321,30 +326,30 @@ describe('DataStreamEngine', () => {
   it('should manage error cache time-values', async () => {
     await engine.start([mockedNorth1], []);
 
-    await engine.getValueErrors('bad id', testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'file');
-    expect(mockedNorth1.getValueErrors).not.toHaveBeenCalled();
-    await engine.getValueErrors(testData.north.list[0].id, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'file');
-    expect(mockedNorth1.getValueErrors).toHaveBeenCalledWith(testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'file');
+    await engine.getErrorValues('bad id', testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'file');
+    expect(mockedNorth1.getErrorValues).not.toHaveBeenCalled();
+    await engine.getErrorValues(testData.north.list[0].id, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'file');
+    expect(mockedNorth1.getErrorValues).toHaveBeenCalledWith(testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'file');
 
-    await engine.removeValueErrors('bad id', ['file']);
-    expect(mockedNorth1.removeValueErrors).not.toHaveBeenCalled();
-    await engine.removeValueErrors(testData.north.list[0].id, ['file']);
-    expect(mockedNorth1.removeValueErrors).toHaveBeenCalledWith(['file']);
+    await engine.removeErrorValues('bad id', ['file']);
+    expect(mockedNorth1.removeErrorValues).not.toHaveBeenCalled();
+    await engine.removeErrorValues(testData.north.list[0].id, ['file']);
+    expect(mockedNorth1.removeErrorValues).toHaveBeenCalledWith(['file']);
 
-    await engine.removeAllValueErrors('bad id');
-    expect(mockedNorth1.removeAllValueErrors).not.toHaveBeenCalled();
-    await engine.removeAllValueErrors(testData.north.list[0].id);
-    expect(mockedNorth1.removeAllValueErrors).toHaveBeenCalledWith();
+    await engine.removeAllErrorValues('bad id');
+    expect(mockedNorth1.removeAllErrorValues).not.toHaveBeenCalled();
+    await engine.removeAllErrorValues(testData.north.list[0].id);
+    expect(mockedNorth1.removeAllErrorValues).toHaveBeenCalledWith();
 
-    await engine.retryValueErrors('bad id', ['file']);
-    expect(mockedNorth1.retryValueErrors).not.toHaveBeenCalled();
-    await engine.retryValueErrors(testData.north.list[0].id, ['file']);
-    expect(mockedNorth1.retryValueErrors).toHaveBeenCalledWith(['file']);
+    await engine.retryErrorValues('bad id', ['file']);
+    expect(mockedNorth1.retryErrorValues).not.toHaveBeenCalled();
+    await engine.retryErrorValues(testData.north.list[0].id, ['file']);
+    expect(mockedNorth1.retryErrorValues).toHaveBeenCalledWith(['file']);
 
-    await engine.retryAllValueErrors('bad id');
-    expect(mockedNorth1.retryAllValueErrors).not.toHaveBeenCalled();
-    await engine.retryAllValueErrors(testData.north.list[0].id);
-    expect(mockedNorth1.retryAllValueErrors).toHaveBeenCalledWith();
+    await engine.retryAllErrorValues('bad id');
+    expect(mockedNorth1.retryAllErrorValues).not.toHaveBeenCalled();
+    await engine.retryAllErrorValues(testData.north.list[0].id);
+    expect(mockedNorth1.retryAllErrorValues).toHaveBeenCalledWith();
   });
 
   it('should manage item change', async () => {

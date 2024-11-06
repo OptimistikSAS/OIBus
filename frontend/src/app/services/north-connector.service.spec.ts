@@ -9,7 +9,6 @@ import {
   NorthConnectorDTO,
   NorthConnectorManifest,
   NorthType,
-  NorthValueFiles,
   NorthConnectorLightDTO
 } from '../../../../backend/shared/model/north-connector.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -324,8 +323,8 @@ describe('NorthConnectorService', () => {
   });
 
   it('should get cache values', () => {
-    let expectedNorthValues: Array<NorthValueFiles> | null = null;
-    const northValueFiles: Array<NorthValueFiles> = [];
+    let expectedNorthValues: Array<NorthCacheFiles> | null = null;
+    const northValueFiles: Array<NorthCacheFiles> = [];
 
     service.getCacheValues('id1').subscribe(c => (expectedNorthValues = c));
 
