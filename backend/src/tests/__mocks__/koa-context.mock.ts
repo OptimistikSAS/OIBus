@@ -42,6 +42,7 @@ export default jest.fn().mockImplementation(() => ({
   params: {},
   query: {},
   ok: jest.fn(),
+  attachment: jest.fn(),
   created: jest.fn(),
   noContent: jest.fn(),
   badRequest: jest.fn(),

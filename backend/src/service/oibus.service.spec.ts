@@ -96,6 +96,17 @@ describe('OIBus Service', () => {
     expect(logger.info).toHaveBeenCalled();
     expect(service.getProxyServer()).toBeDefined();
 
+    const settingsWithoutOIAlog = JSON.parse(JSON.stringify(testData.engine.settings));
+    settingsWithoutOIAlog.logParameters.oia.level = 'silent';
+    (engineRepository.get as jest.Mock).mockReturnValueOnce(settingsWithoutOIAlog).mockReturnValueOnce(testData.engine.settings);
+    service.resetLogger = jest.fn();
+
+    oIAnalyticsRegistrationService.registrationEvent.emit('updated');
+    expect(service.resetLogger).not.toHaveBeenCalled();
+
+    oIAnalyticsRegistrationService.registrationEvent.emit('updated');
+    expect(service.resetLogger).toHaveBeenCalledWith(testData.engine.settings);
+
     await service.stopOIBus();
 
     expect(dataStreamEngine.stop).toHaveBeenCalled();
@@ -126,6 +137,7 @@ describe('OIBus Service', () => {
     newEngineSettings.proxyEnabled = true;
     const specificCommand: EngineSettingsCommandDTO = JSON.parse(JSON.stringify(testData.engine.command));
     specificCommand.logParameters.loki.password = 'updated password';
+    specificCommand.port = 999;
     (engineRepository.get as jest.Mock).mockReturnValueOnce(testData.engine.settings).mockReturnValueOnce(newEngineSettings);
 
     await service.updateEngineSettings(specificCommand);
@@ -285,6 +297,11 @@ describe('OIBus Service', () => {
   it('should update OIBus version', () => {
     service.updateOIBusVersion('3.4.0');
     expect(engineRepository.updateVersion).toHaveBeenCalledWith('3.4.0');
+  });
+
+  it('should update OIBus launcher version', () => {
+    service.updateOIBusLauncherVersion('3.4.0');
+    expect(engineRepository.updateLauncherVersion).toHaveBeenCalledWith('3.4.0');
   });
 
   it('should reset North Connector Metrics', () => {

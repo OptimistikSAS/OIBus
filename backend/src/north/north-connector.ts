@@ -1,4 +1,4 @@
-import { NorthCacheFiles, NorthValueFiles } from '../../shared/model/north-connector.model';
+import { NorthCacheFiles } from '../../shared/model/north-connector.model';
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
 import ValueCacheService from '../service/cache/value-cache.service';
@@ -18,7 +18,7 @@ import NorthConnectorRepository from '../repository/config/north-connector.repos
 import ScanModeRepository from '../repository/config/scan-mode.repository';
 import { ScanMode } from '../model/scan-mode.model';
 import { OIBusError } from '../model/engine.model';
-import { BaseFolders } from '../model/types';
+import { BaseFolders, Instant } from '../model/types';
 
 /**
  * Class NorthConnector : provides general attributes and methods for north connectors.
@@ -465,8 +465,8 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   /**
    * Get list of error files from file cache. Dates are in ISO format
    */
-  async getErrorFiles(fromDate: string, toDate: string, fileNameContains: string): Promise<Array<NorthCacheFiles>> {
-    return await this.fileCacheService.getErrorFiles(fromDate, toDate, fileNameContains);
+  async getErrorFiles(fromDate: Instant | null, toDate: Instant | null, filenameContains: string | null): Promise<Array<NorthCacheFiles>> {
+    return await this.fileCacheService.getErrorFiles(fromDate, toDate, filenameContains);
   }
 
   /**
@@ -511,8 +511,8 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   /**
    * Get list of cache files. Dates are in ISO format
    */
-  async getCacheFiles(fromDate: string, toDate: string, fileNameContains: string): Promise<Array<NorthCacheFiles>> {
-    return await this.fileCacheService.getCacheFiles(fromDate, toDate, fileNameContains);
+  async getCacheFiles(fromDate: string | null, toDate: string | null, filenameContains: string | null): Promise<Array<NorthCacheFiles>> {
+    return await this.fileCacheService.getCacheFiles(fromDate, toDate, filenameContains);
   }
 
   /**
@@ -543,8 +543,8 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   /**
    * Get list of archive files from file cache. Dates are in ISO format
    */
-  async getArchiveFiles(fromDate: string, toDate: string, fileNameContains: string): Promise<Array<NorthCacheFiles>> {
-    return await this.fileCacheService.getArchiveFiles(fromDate, toDate, fileNameContains);
+  async getArchiveFiles(fromDate: string | null, toDate: string | null, filenameContains: string | null): Promise<Array<NorthCacheFiles>> {
+    return await this.fileCacheService.getArchiveFiles(fromDate, toDate, filenameContains);
   }
 
   /**
@@ -605,8 +605,8 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     }
   }
 
-  getCacheValues(fileNameContains: string): Array<NorthValueFiles> {
-    return this.valueCacheService.getQueuedFilesMetadata(fileNameContains);
+  getCacheValues(filenameContains: string): Array<NorthCacheFiles> {
+    return this.valueCacheService.getQueuedFilesMetadata(filenameContains);
   }
 
   async removeCacheValues(filenames: Array<string>): Promise<void> {
@@ -620,26 +620,30 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     await this.valueCacheService.removeAllValues();
   }
 
-  async getValueErrors(fromDate: string, toDate: string, fileNameContains: string): Promise<Array<NorthCacheFiles>> {
-    return await this.valueCacheService.getErrorValueFiles(fromDate, toDate, fileNameContains);
+  async removeAllCacheFiles(): Promise<void> {
+    await this.fileCacheService.removeAllCacheFiles();
   }
 
-  async removeValueErrors(filenames: Array<string>): Promise<void> {
+  async getErrorValues(fromDate: string | null, toDate: string | null, filenameContains: string | null): Promise<Array<NorthCacheFiles>> {
+    return await this.valueCacheService.getErrorValues(fromDate, toDate, filenameContains);
+  }
+
+  async removeErrorValues(filenames: Array<string>): Promise<void> {
     this.logger.trace(`Removing ${filenames.length} value error files from North connector "${this.connector.name}"...`);
     await this.valueCacheService.removeErrorValues(filenames);
   }
 
-  async removeAllValueErrors(): Promise<void> {
+  async removeAllErrorValues(): Promise<void> {
     this.logger.trace(`Removing all value error files from North connector "${this.connector.name}"...`);
     await this.valueCacheService.removeAllErrorValues();
   }
 
-  async retryValueErrors(filenames: Array<string>): Promise<void> {
+  async retryErrorValues(filenames: Array<string>): Promise<void> {
     this.logger.trace(`Retrying ${filenames.length} value error files in North connector "${this.connector.name}"...`);
     await this.valueCacheService.retryErrorValues(filenames);
   }
 
-  async retryAllValueErrors(): Promise<void> {
+  async retryAllErrorValues(): Promise<void> {
     this.logger.trace(`Retrying all value error files in North connector "${this.connector.name}"...`);
     await this.valueCacheService.retryAllErrorValues();
   }

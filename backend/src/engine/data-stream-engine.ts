@@ -15,6 +15,8 @@ import SouthConnectorMetricsRepository from '../repository/logs/south-connector-
 import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
 import NorthConnectorMetricsService from '../service/metrics/north-connector-metrics.service';
 import { PassThrough } from 'node:stream';
+import { NorthCacheFiles } from '../../shared/model/north-connector.model';
+import { ReadStream } from 'node:fs';
 
 const CACHE_FOLDER = './cache';
 const ARCHIVE_FOLDER = './archive';
@@ -251,11 +253,16 @@ export default class DataStreamEngine {
     }
   }
 
-  async getErrorFiles(northId: string, start: Instant, end: Instant, fileNameContains: string) {
-    return (await this.northConnectors.get(northId)?.getErrorFiles(start, end, fileNameContains)) || [];
+  async getErrorFiles(
+    northId: string,
+    start: Instant | null,
+    end: Instant | null,
+    filenameContains: string | null
+  ): Promise<Array<NorthCacheFiles>> {
+    return (await this.northConnectors.get(northId)?.getErrorFiles(start, end, filenameContains)) || [];
   }
 
-  async getErrorFileContent(northId: string, filename: string) {
+  async getErrorFileContent(northId: string, filename: string): Promise<ReadStream | null> {
     return (await this.northConnectors.get(northId)?.getErrorFileContent(filename)) || null;
   }
 
@@ -275,8 +282,8 @@ export default class DataStreamEngine {
     await this.northConnectors.get(northId)?.retryAllErrorFiles();
   }
 
-  async getCacheFiles(northId: string, start: Instant, end: Instant, fileNameContains: string) {
-    return (await this.northConnectors.get(northId)?.getCacheFiles(start, end, fileNameContains)) || [];
+  async getCacheFiles(northId: string, start: Instant | null, end: Instant | null, filenameContains: string | null) {
+    return (await this.northConnectors.get(northId)?.getCacheFiles(start, end, filenameContains)) || [];
   }
 
   async getCacheFileContent(northId: string, filename: string) {
@@ -287,12 +294,16 @@ export default class DataStreamEngine {
     await this.northConnectors.get(northId)?.removeCacheFiles(filenames);
   }
 
+  async removeAllCacheFiles(northId: string) {
+    await this.northConnectors.get(northId)?.removeAllCacheFiles();
+  }
+
   async archiveCacheFiles(northId: string, filenames: Array<string>): Promise<void> {
     await this.northConnectors.get(northId)?.archiveCacheFiles(filenames);
   }
 
-  async getArchiveFiles(northId: string, start: Instant, end: Instant, fileNameContains: string) {
-    return (await this.northConnectors.get(northId)?.getArchiveFiles(start, end, fileNameContains)) || [];
+  async getArchiveFiles(northId: string, start: Instant | null, end: Instant | null, filenameContains: string | null) {
+    return (await this.northConnectors.get(northId)?.getArchiveFiles(start, end, filenameContains)) || [];
   }
 
   async getArchiveFileContent(northId: string, filename: string) {
@@ -315,7 +326,7 @@ export default class DataStreamEngine {
     await this.northConnectors.get(northId)?.retryAllArchiveFiles();
   }
 
-  async getCacheValues(northId: string, fileNameContains: string) {
+  async getCacheValues(northId: string, fileNameContains: string): Promise<Array<NorthCacheFiles>> {
     return this.northConnectors.get(northId)?.getCacheValues(fileNameContains) || [];
   }
 
@@ -327,24 +338,29 @@ export default class DataStreamEngine {
     await this.northConnectors.get(northId)?.removeAllCacheValues();
   }
 
-  async getValueErrors(northId: string, start: Instant, end: Instant, fileNameContains: string) {
-    return (await this.northConnectors.get(northId)?.getValueErrors(start, end, fileNameContains)) || [];
+  async getErrorValues(
+    northId: string,
+    start: Instant | null,
+    end: Instant | null,
+    filenameContains: string | null
+  ): Promise<Array<NorthCacheFiles>> {
+    return (await this.northConnectors.get(northId)?.getErrorValues(start, end, filenameContains)) || [];
   }
 
-  async removeValueErrors(northId: string, filenames: Array<string>) {
-    await this.northConnectors.get(northId)?.removeValueErrors(filenames);
+  async removeErrorValues(northId: string, filenames: Array<string>) {
+    await this.northConnectors.get(northId)?.removeErrorValues(filenames);
   }
 
-  async removeAllValueErrors(northId: string) {
-    await this.northConnectors.get(northId)?.removeAllValueErrors();
+  async retryErrorValues(northId: string, filenames: Array<string>) {
+    await this.northConnectors.get(northId)?.retryErrorValues(filenames);
   }
 
-  async retryValueErrors(northId: string, filenames: Array<string>) {
-    await this.northConnectors.get(northId)?.retryValueErrors(filenames);
+  async removeAllErrorValues(northId: string) {
+    await this.northConnectors.get(northId)?.removeAllErrorValues();
   }
 
-  async retryAllValueErrors(northId: string) {
-    await this.northConnectors.get(northId)?.retryAllValueErrors();
+  async retryAllErrorValues(northId: string) {
+    await this.northConnectors.get(northId)?.retryAllErrorValues();
   }
 
   async updateScanMode(scanMode: ScanMode): Promise<void> {

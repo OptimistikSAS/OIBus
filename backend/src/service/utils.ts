@@ -531,13 +531,14 @@ export const getPlatformFromOsType = (osType: string): string => {
  */
 export const getFilesFiltered = async (
   folder: string,
-  fromDate: Instant,
-  toDate: Instant,
-  nameFilter: string,
+  fromDate: Instant | null,
+  toDate: Instant | null,
+  nameFilter: string | null,
   logger: pino.Logger
 ): Promise<Array<NorthCacheFiles>> => {
   const filenames = await fs.readdir(folder);
   const filteredFilenames: Array<NorthCacheFiles> = [];
+  console.log('folder', folder, filenames);
   for (const filename of filenames) {
     try {
       const stats = await fs.stat(path.join(folder, filename));

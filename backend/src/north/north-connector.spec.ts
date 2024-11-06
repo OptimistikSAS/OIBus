@@ -442,6 +442,11 @@ describe('NorthConnector', () => {
     expect(valueCacheService.removeAllValues).toHaveBeenCalled();
   });
 
+  it('should remove all cache files', async () => {
+    await north.removeAllCacheFiles();
+    expect(fileCacheService.removeAllCacheFiles).toHaveBeenCalled();
+  });
+
   it('should remove cache values by filename', async () => {
     const filenames = ['file1.queue.tmp', 'file2.queue.tmp'];
     path.join = jest.fn().mockImplementation((...args) => args.join('/'));
@@ -457,33 +462,33 @@ describe('NorthConnector', () => {
   });
 
   it('should get cache values errors', async () => {
-    north.getValueErrors('', '', '');
-    expect(valueCacheService.getErrorValueFiles).toHaveBeenCalledWith('', '', '');
+    north.getErrorValues('', '', '');
+    expect(valueCacheService.getErrorValues).toHaveBeenCalledWith('', '', '');
 
-    north.getValueErrors('', '', 'file');
-    expect(valueCacheService.getErrorValueFiles).toHaveBeenCalledWith('', '', 'file');
+    north.getErrorValues('', '', 'file');
+    expect(valueCacheService.getErrorValues).toHaveBeenCalledWith('', '', 'file');
   });
 
   it('should remove cache value errors', async () => {
-    await north.removeValueErrors(['file1.queue.tmp', 'file2.queue.tmp']);
+    await north.removeErrorValues(['file1.queue.tmp', 'file2.queue.tmp']);
     expect(valueCacheService.removeErrorValues).toHaveBeenCalledWith(['file1.queue.tmp', 'file2.queue.tmp']);
     expect(logger.trace).toHaveBeenCalledWith(`Removing 2 value error files from North connector "${testData.north.list[0].name}"...`);
   });
 
   it('should remove all cache value errors', async () => {
-    await north.removeAllValueErrors();
+    await north.removeAllErrorValues();
     expect(valueCacheService.removeAllErrorValues).toHaveBeenCalled();
     expect(logger.trace).toHaveBeenCalledWith(`Removing all value error files from North connector "${testData.north.list[0].name}"...`);
   });
 
   it('should retry cache value errors', async () => {
-    await north.retryValueErrors(['file1.queue.tmp', 'file2.queue.tmp']);
+    await north.retryErrorValues(['file1.queue.tmp', 'file2.queue.tmp']);
     expect(valueCacheService.retryErrorValues).toHaveBeenCalledWith(['file1.queue.tmp', 'file2.queue.tmp']);
     expect(logger.trace).toHaveBeenCalledWith(`Retrying 2 value error files in North connector "${testData.north.list[0].name}"...`);
   });
 
   it('should retry all cache value errors', async () => {
-    await north.retryAllValueErrors();
+    await north.retryAllErrorValues();
     expect(valueCacheService.retryAllErrorValues).toHaveBeenCalled();
     expect(logger.trace).toHaveBeenCalledWith(`Retrying all value error files in North connector "${testData.north.list[0].name}"...`);
   });
