@@ -4,12 +4,13 @@ import path from 'node:path';
 import { createFolder, generateRandomId, getFilesFiltered } from '../utils';
 import pino from 'pino';
 
-import { NorthCacheFiles, NorthValueFiles } from '../../../shared/model/north-connector.model';
+import { NorthCacheFiles } from '../../../shared/model/north-connector.model';
 import { EventEmitter } from 'node:events';
 import { OIBusTimeValue } from '../../../shared/model/engine.model';
 import { Instant } from '../../../shared/model/types';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { DateTime } from 'luxon';
 
 const BUFFER_MAX = 250;
 const BUFFER_TIMEOUT = 300;
@@ -351,11 +352,12 @@ export default class ValueCacheService {
   /**
    * Returns metadata about files in the current queue.
    */
-  getQueuedFilesMetadata(fileNameContains: string): Array<NorthValueFiles> {
+  getQueuedFilesMetadata(fileNameContains: string): Array<NorthCacheFiles> {
     return [...this.queue.entries()]
       .map(([filepath, value]) => ({
         filename: path.basename(filepath),
-        valuesCount: value.length
+        size: JSON.stringify(value).length,
+        modificationDate: DateTime.now().toUTC().toISO()
       }))
       .filter(file => file.filename.toUpperCase().includes(fileNameContains.toUpperCase()));
   }
@@ -363,8 +365,8 @@ export default class ValueCacheService {
   /**
    * Returns metadata about error value files.
    */
-  async getErrorValueFiles(fromDate: Instant, toDate: Instant, nameFilter: string): Promise<Array<NorthCacheFiles>> {
-    return getFilesFiltered(this.errorFolder, fromDate, toDate, nameFilter, this._logger);
+  async getErrorValues(fromDate: Instant | null, toDate: Instant | null, nameFilter: string | null): Promise<Array<NorthCacheFiles>> {
+    return await getFilesFiltered(this.errorFolder, fromDate, toDate, nameFilter, this._logger);
   }
 
   /**

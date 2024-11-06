@@ -25,7 +25,7 @@
   </ng-template>
 
   @if (cacheValues.length !== 0) {
-    <oib-value-table #valueTable [files]="cacheValues" />
+    <oib-file-table #valueTable [actions]="[]" [files]="cacheValues" />
   } @else {
     <div class="mb-3 oib-grey-container" translate="north.cache-settings.cache-values-none"></div>
   }

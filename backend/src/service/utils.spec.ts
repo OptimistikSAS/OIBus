@@ -11,6 +11,7 @@ import {
   compress,
   convertDateTimeToInstant,
   convertDelimiter,
+  createBaseFolders,
   createFolder,
   delay,
   dirSize,
@@ -43,6 +44,7 @@ import os from 'node:os';
 import { EngineSettingsDTO, OIBusInfo } from '../../shared/model/engine.model';
 import cronstrue from 'cronstrue';
 import testData from '../tests/utils/test-data';
+import { mockBaseFolders } from '../tests/utils/test-utils';
 
 jest.mock('node:zlib');
 jest.mock('node:fs/promises');
@@ -170,6 +172,20 @@ describe('Service utils', () => {
 
       expect(fs.mkdir).toHaveBeenCalledTimes(1);
       expect(fs.mkdir).toHaveBeenCalledWith(path.resolve(folderToCreate), { recursive: true });
+    });
+  });
+
+  describe('createBaseFolders', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should properly create base folders', async () => {
+      (fs.stat as jest.Mock).mockImplementation(() => null);
+
+      await createBaseFolders(mockBaseFolders(testData.north.list[0].id));
+      expect(fs.mkdir).not.toHaveBeenCalled();
+      expect(fs.stat).toHaveBeenCalledTimes(3);
     });
   });
 

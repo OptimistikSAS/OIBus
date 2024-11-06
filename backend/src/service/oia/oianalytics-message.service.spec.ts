@@ -253,4 +253,8 @@ describe('OIAnalytics message service without completed registration', () => {
     expect(logger.debug).toHaveBeenCalledWith("OIBus is not registered to OIAnalytics. Messages won't be created");
     expect(logger.trace).toHaveBeenCalledWith("OIBus is not registered to OIAnalytics. Messages won't be sent");
   });
+
+  it('should create history query message', async () => {
+    service.createHistoryQueryMessage(testData.historyQueries.list[0]);
+  });
 });
