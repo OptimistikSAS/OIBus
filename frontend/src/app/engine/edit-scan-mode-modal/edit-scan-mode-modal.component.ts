@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { AbstractControl, NonNullableFormBuilder, ValidationErrors, Validators } from '@angular/forms';
-import { firstValueFrom, Observable, switchMap } from 'rxjs';
+import { AsyncValidatorFn, NonNullableFormBuilder, Validators } from '@angular/forms';
+import { map, Observable, of, switchMap } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { ScanModeService } from '../../services/scan-mode.service';
@@ -20,16 +20,44 @@ import { DatetimePipe } from '../../shared/datetime.pipe';
 export class EditScanModeModalComponent {
   private modal = inject(NgbActiveModal);
   private scanModeService = inject(ScanModeService);
+  private fb = inject(NonNullableFormBuilder);
 
   mode: 'create' | 'edit' = 'create';
   state = new ObservableState();
   scanMode: ScanModeDTO | null = null;
+
+  /**
+   * Custom validator for the cron field.
+   */
+  private cronValidator: AsyncValidatorFn = control => {
+    const cron: string = control.value;
+    if (!cron) {
+      return of(null);
+    } else {
+      return this.scanModeService.verifyCron(control.value).pipe(
+        map(validatedCronExpression => {
+          if (validatedCronExpression.isValid) {
+            this.cronValidationResponse = validatedCronExpression;
+            return null;
+          } else {
+            this.cronValidationResponse = null;
+            return { cronErrorMessage: validatedCronExpression.errorMessage };
+          }
+        })
+      );
+    }
+  };
+
   form = inject(NonNullableFormBuilder).group({
     name: ['', Validators.required],
     description: '',
-    cron: ['', Validators.required, this.cronValidator()]
+    cron: this.fb.control('', {
+      validators: Validators.required,
+      asyncValidators: this.cronValidator,
+      updateOn: 'change'
+    })
   });
-  cronValidationResponse: ValidatedCronExpression | undefined;
+  cronValidationResponse: ValidatedCronExpression | null = null;
 
   /**
    * Prepares the component for creation.
@@ -92,20 +120,5 @@ export class EditScanModeModalComponent {
    */
   get nextCronExecutions() {
     return this.cronValidationResponse?.nextExecutions ?? [];
-  }
-
-  /**
-   * Custom validator for the cron field.
-   */
-  cronValidator() {
-    return async (control: AbstractControl): Promise<ValidationErrors | null> => {
-      try {
-        this.cronValidationResponse = await firstValueFrom(this.scanModeService.verifyCron(control.value));
-        return null;
-      } catch (error: any) {
-        this.cronValidationResponse = undefined;
-        return { cronErrorMessage: error.error.message };
-      }
-    };
   }
 }

@@ -122,24 +122,12 @@ describe('Scan Mode Controller', () => {
 
   it('verifyCron() should return validated cron expression', async () => {
     ctx.request.body = testData.scanMode.command;
-    const validatedCronExpression: ValidatedCronExpression = { nextExecutions: [], humanReadableForm: '' };
+    const validatedCronExpression: ValidatedCronExpression = { isValid: true, errorMessage: '', nextExecutions: [], humanReadableForm: '' };
     ctx.app.scanModeService.verifyCron.mockReturnValueOnce(validatedCronExpression);
 
     await scanModeController.verifyCron(ctx);
 
     expect(ctx.app.scanModeService.verifyCron).toHaveBeenCalledWith(testData.scanMode.command);
     expect(ctx.ok).toHaveBeenCalledWith(validatedCronExpression);
-  });
-
-  it('verifyCron() should return bad request when validation fails', async () => {
-    ctx.request.body = null;
-    ctx.app.scanModeService.verifyCron.mockImplementationOnce(() => {
-      throw new Error('invalid cron');
-    });
-
-    await scanModeController.verifyCron(ctx);
-
-    expect(ctx.app.scanModeService.verifyCron).toHaveBeenCalledWith(null);
-    expect(ctx.badRequest).toHaveBeenCalledWith('invalid cron');
   });
 });

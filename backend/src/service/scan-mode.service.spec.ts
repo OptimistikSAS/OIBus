@@ -133,7 +133,12 @@ describe('Scan Mode Service', () => {
   });
 
   it('verifyCron() should verify cron expression of a scan mode', async () => {
-    const validatedCronExpression: ValidatedCronExpression = { nextExecutions: [], humanReadableForm: '' };
+    const validatedCronExpression: ValidatedCronExpression = {
+      isValid: true,
+      errorMessage: '',
+      nextExecutions: [],
+      humanReadableForm: ''
+    };
     (validateCronExpression as jest.Mock).mockReturnValueOnce(validatedCronExpression);
 
     const result = await service.verifyCron(testData.scanMode.command);
@@ -143,6 +148,12 @@ describe('Scan Mode Service', () => {
   });
 
   it('verifyCron() should throw an error if cron is empty', async () => {
-    await expect(service.verifyCron({ ...testData.scanMode.command, cron: '' })).rejects.toThrow(new Error('Cron expression is required'));
+    const result = await service.verifyCron({ ...testData.scanMode.command, cron: '' });
+    expect(result).toEqual({
+      isValid: false,
+      errorMessage: 'Cron expression is required',
+      nextExecutions: [],
+      humanReadableForm: ''
+    });
   });
 });
