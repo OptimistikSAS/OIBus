@@ -7,7 +7,7 @@ import { NorthSettings } from '../../../shared/model/north-settings.model';
 import NorthConnectorMock from '../../tests/__mocks__/north-connector.mock';
 
 const northConnectorMetricsRepository: NorthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
-const northMock: NorthConnector<NorthSettings> = new NorthConnectorMock(testData.north.list[0]);
+const northMock = new NorthConnectorMock(testData.north.list[0]) as unknown as NorthConnector<NorthSettings>;
 
 describe('NorthConnectorMetricsService', () => {
   let service: NorthConnectorMetricsService;

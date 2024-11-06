@@ -3,29 +3,6 @@ import { BaseEntity, Instant } from './types';
 import { NorthSettings } from './north-settings.model';
 import { SouthConnectorLightDTO } from './south-connector.model';
 
-export interface NorthCacheSettingsDTO {
-  scanModeId: string;
-  retryInterval: number;
-  retryCount: number;
-  maxSize: number;
-  oibusTimeValues: {
-    groupCount: number;
-    maxSendCount: number;
-  };
-  rawFiles: {
-    sendFileImmediately: boolean;
-    archive: {
-      enabled: boolean;
-      retentionDuration: number;
-    };
-  };
-}
-
-export interface NorthArchiveSettings {
-  enabled: boolean;
-  retentionDuration: number;
-}
-
 export interface NorthType {
   id: string;
   category: string;
@@ -97,32 +74,6 @@ export interface NorthConnectorCommandDTO<T extends NorthSettings> {
   subscriptions: Array<string>;
 }
 
-export interface NorthConnectorWithoutSubscriptionsCommandDTO<T extends NorthSettings> {
-  name: string;
-  type: string;
-  description: string;
-  enabled: boolean;
-  settings: T;
-  caching: {
-    scanModeId: string | null;
-    scanModeName: string | null;
-    retryInterval: number;
-    retryCount: number;
-    maxSize: number;
-    oibusTimeValues: {
-      groupCount: number;
-      maxSendCount: number;
-    };
-    rawFiles: {
-      sendFileImmediately: boolean;
-      archive: {
-        enabled: boolean;
-        retentionDuration: number;
-      };
-    };
-  };
-}
-
 export interface NorthConnectorManifest {
   id: string;
   category: string;
@@ -139,9 +90,4 @@ export interface NorthCacheFiles {
   filename: string;
   modificationDate: Instant;
   size: number;
-}
-
-export interface NorthValueFiles {
-  filename: string;
-  valuesCount: number;
 }

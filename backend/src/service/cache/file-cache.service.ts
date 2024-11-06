@@ -228,8 +228,8 @@ export default class FileCacheService {
   /**
    * Get list of error files.
    */
-  async getErrorFiles(fromDate: Instant, toDate: Instant, nameFilter: string): Promise<Array<NorthCacheFiles>> {
-    return getFilesFiltered(this._errorFolder, fromDate, toDate, nameFilter, this._logger);
+  async getErrorFiles(fromDate: Instant | null, toDate: Instant | null, nameFilter: string | null): Promise<Array<NorthCacheFiles>> {
+    return await getFilesFiltered(this._errorFolder, fromDate, toDate, nameFilter, this._logger);
   }
 
   /**
@@ -245,8 +245,8 @@ export default class FileCacheService {
     return createReadStream(path.resolve(this._errorFolder, filename));
   }
 
-  async getArchiveFiles(fromDate: Instant, toDate: Instant, nameFilter: string): Promise<Array<NorthCacheFiles>> {
-    return getFilesFiltered(this._archiveFolder, fromDate, toDate, nameFilter, this._logger);
+  async getArchiveFiles(fromDate: Instant | null, toDate: Instant | null, nameFilter: string | null): Promise<Array<NorthCacheFiles>> {
+    return await getFilesFiltered(this._archiveFolder, fromDate, toDate, nameFilter, this._logger);
   }
 
   async getArchiveFileContent(filename: string): Promise<ReadStream | null> {
@@ -428,8 +428,8 @@ export default class FileCacheService {
   /**
    * Get list of cache files.
    */
-  async getCacheFiles(fromDate: Instant, toDate: Instant, nameFilter: string): Promise<Array<NorthCacheFiles>> {
-    return getFilesFiltered(this._cacheFolder, fromDate, toDate, nameFilter, this._logger);
+  async getCacheFiles(fromDate: Instant | null, toDate: Instant | null, nameFilter: string | null): Promise<Array<NorthCacheFiles>> {
+    return await getFilesFiltered(this._cacheFolder, fromDate, toDate, nameFilter, this._logger);
   }
 
   /**
