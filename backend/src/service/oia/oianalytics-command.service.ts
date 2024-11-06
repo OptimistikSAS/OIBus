@@ -18,7 +18,7 @@ import {
   OIBusDeleteNorthConnectorCommand,
   OIBusDeleteScanModeCommand,
   OIBusDeleteSouthConnectorCommand,
-  OIBusReloadKeysCommand,
+  OIBusRegenerateCipherKeysCommand,
   OIBusRestartEngineCommand,
   OIBusUpdateEngineSettingsCommand,
   OIBusUpdateNorthConnectorCommand,
@@ -224,8 +224,8 @@ export default class OIAnalyticsCommandService {
         case 'restart-engine':
           await this.executeRestartCommand(command);
           break;
-        case 'reload-keys':
-          await this.executeReloadKeysCommand(command);
+        case 'regenerate-cipher-keys':
+          await this.executeRegenerateCipherKeysCommand(command);
           break;
         case 'update-engine-settings':
           {
@@ -347,7 +347,7 @@ export default class OIAnalyticsCommandService {
     }
   }
 
-  private async executeReloadKeysCommand(command: OIBusReloadKeysCommand) {
+  private async executeRegenerateCipherKeysCommand(command: OIBusRegenerateCipherKeysCommand) {
     this.logger.info(`Reloading OIAnalytics keys...`);
 
     // Generate RSA key pair
@@ -464,7 +464,7 @@ export const toOIBusCommandDTO = (command: OIBusCommand): OIBusCommandDTO => {
   switch (command.type) {
     case 'update-version':
     case 'restart-engine':
-    case 'reload-keys':
+    case 'regenerate-cipher-keys':
     case 'update-engine-settings':
     case 'create-north':
     case 'create-south':

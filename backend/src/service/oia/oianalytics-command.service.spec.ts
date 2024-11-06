@@ -571,8 +571,8 @@ describe('OIAnalytics Command Service', () => {
     );
   });
 
-  it('should execute reload-keys command', async () => {
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([testData.oIAnalytics.commands.oIBusList[12]]); // reload-keys
+  it('should execute regenerate-cipher-keys command', async () => {
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([testData.oIAnalytics.commands.oIBusList[12]]); // regenerate-cipher-keys
     (crypto.generateKeyPairSync as jest.Mock).mockReturnValueOnce({ publicKey: 'public key', privateKey: 'private key' });
 
     await service.executeCommand();

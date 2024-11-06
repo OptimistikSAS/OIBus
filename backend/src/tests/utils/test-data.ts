@@ -1023,7 +1023,7 @@ const oIBusCommands: Array<OIBusCommand> = [
   },
   {
     id: 'commandId13',
-    type: 'reload-keys',
+    type: 'regenerate-cipher-keys',
     status: 'RETRIEVED',
     ack: false,
     retrievedDate: constants.dates.DATE_1,
@@ -1033,7 +1033,7 @@ const oIBusCommands: Array<OIBusCommand> = [
   },
   {
     id: 'commandId14',
-    type: 'reload-keys',
+    type: 'regenerate-cipher-keys',
     status: 'RETRIEVED',
     targetVersion: engineSettings.version,
     ack: false,
@@ -1104,7 +1104,7 @@ const oIAnalyticsCommands: Array<OIAnalyticsFetchCommandDTO> = [
   },
   {
     id: 'newCommandId10',
-    type: 'reload-keys',
+    type: 'regenerate-cipher-keys',
     targetVersion: engineSettings.version
   }
 ];

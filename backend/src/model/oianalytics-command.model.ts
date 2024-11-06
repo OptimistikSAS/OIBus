@@ -31,8 +31,8 @@ export interface OIBusRestartEngineCommand extends BaseOIBusCommand {
   type: 'restart-engine';
 }
 
-export interface OIBusReloadKeysCommand extends BaseOIBusCommand {
-  type: 'reload-keys';
+export interface OIBusRegenerateCipherKeysCommand extends BaseOIBusCommand {
+  type: 'regenerate-cipher-keys';
 }
 
 export interface OIBusUpdateEngineSettingsCommand extends BaseOIBusCommand {
@@ -91,7 +91,7 @@ export interface OIBusDeleteNorthConnectorCommand extends BaseOIBusCommand {
 export type OIBusCommand =
   | OIBusUpdateVersionCommand
   | OIBusRestartEngineCommand
-  | OIBusReloadKeysCommand
+  | OIBusRegenerateCipherKeysCommand
   | OIBusUpdateEngineSettingsCommand
   | OIBusCreateScanModeCommand
   | OIBusUpdateScanModeCommand
