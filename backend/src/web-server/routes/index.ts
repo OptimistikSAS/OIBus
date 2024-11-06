@@ -30,7 +30,7 @@ import OianalyticsCommandController from '../controllers/oianalytics-command.con
 import ContentController from '../controllers/content.controller';
 import { Page } from '../../../shared/model/types';
 import { ChangePasswordCommand, User, UserCommandDTO, UserLight } from '../../../shared/model/user.model';
-import { ScanModeCommandDTO, ScanModeDTO } from '../../../shared/model/scan-mode.model';
+import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '../../../shared/model/scan-mode.model';
 import { CertificateCommandDTO, CertificateDTO } from '../../../shared/model/certificate.model';
 import {
   SouthConnectorCommandDTO,
@@ -102,7 +102,7 @@ router.put('/api/users/:id/change-password', (ctx: KoaContext<ChangePasswordComm
 router.delete('/api/users/:id', (ctx: KoaContext<void, void>) => userController.delete(ctx));
 
 router.get('/api/scan-modes', (ctx: KoaContext<void, Array<ScanModeDTO>>) => scanModeController.findAll(ctx));
-router.post('/api/scan-modes/verify', (ctx: KoaContext<ScanModeCommandDTO, void>) => scanModeController.verifyCron(ctx));
+router.post('/api/scan-modes/verify', (ctx: KoaContext<{ cron: string }, ValidatedCronExpression>) => scanModeController.verifyCron(ctx));
 router.get('/api/scan-modes/:id', (ctx: KoaContext<void, ScanModeDTO>) => scanModeController.findById(ctx));
 router.post('/api/scan-modes', (ctx: KoaContext<ScanModeCommandDTO, void>) => scanModeController.create(ctx));
 router.put('/api/scan-modes/:id', (ctx: KoaContext<ScanModeCommandDTO, void>) => scanModeController.update(ctx));

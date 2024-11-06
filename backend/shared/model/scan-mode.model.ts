@@ -19,6 +19,8 @@ export interface ScanModeCommandDTO {
 }
 
 export interface ValidatedCronExpression {
+  isValid: boolean;
+  errorMessage: string;
   nextExecutions: Array<Instant>;
   humanReadableForm: string;
 }

@@ -2,7 +2,7 @@ import { EditScanModeModalComponent } from './edit-scan-mode-modal.component';
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { fakeAsync, flush, TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { ScanModeCommandDTO, ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
@@ -62,7 +62,7 @@ describe('EditScanModeModalComponent', () => {
 
   describe('create mode', () => {
     beforeEach(() => {
-      scanModeService.verifyCron.and.returnValue(of({ nextExecutions: [], humanReadableForm: '' }));
+      scanModeService.verifyCron.and.returnValue(of({ isValid: true, errorMessage: '', nextExecutions: [], humanReadableForm: '' }));
       tester.componentInstance.prepareForCreation();
       tester.detectChanges();
     });
@@ -84,7 +84,9 @@ describe('EditScanModeModalComponent', () => {
       expect(fakeActiveModal.close).not.toHaveBeenCalled();
 
       // bad cron
-      scanModeService.verifyCron.and.returnValue(throwError(() => ({ error: { message: 'bad cron' } })));
+      scanModeService.verifyCron.and.returnValue(
+        of({ isValid: false, errorMessage: 'bad cron', nextExecutions: [], humanReadableForm: '' })
+      );
       tester.name.fillWith('test');
       tester.cron.fillWith('* * *');
       flush();
@@ -136,7 +138,7 @@ describe('EditScanModeModalComponent', () => {
     };
 
     beforeEach(() => {
-      scanModeService.verifyCron.and.returnValue(of({ nextExecutions: [], humanReadableForm: '' }));
+      scanModeService.verifyCron.and.returnValue(of({ isValid: true, errorMessage: '', nextExecutions: [], humanReadableForm: '' }));
       scanModeService.get.and.returnValue(of(scanModeToUpdate));
 
       tester.componentInstance.prepareForEdition(scanModeToUpdate);
@@ -160,7 +162,9 @@ describe('EditScanModeModalComponent', () => {
       expect(fakeActiveModal.close).not.toHaveBeenCalled();
 
       // bad cron
-      scanModeService.verifyCron.and.returnValue(throwError(() => ({ error: { message: 'bad cron' } })));
+      scanModeService.verifyCron.and.returnValue(
+        of({ isValid: false, errorMessage: 'bad cron', nextExecutions: [], humanReadableForm: '' })
+      );
       tester.name.fillWith('test');
       tester.cron.fillWith('* * *');
       flush();
