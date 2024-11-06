@@ -77,7 +77,7 @@ export const OIANALYTICS_FETCH_COMMAND_TYPES = [
   'UPGRADE',
   'update-version',
   'restart-engine',
-  'reload-keys',
+  'regenerate-cipher-keys',
   'update-engine-settings',
   'create-scan-mode',
   'update-scan-mode',
@@ -109,8 +109,8 @@ export interface OIAnalyticsFetchRestartEngineCommandDTO extends BaseOIAnalytics
   type: 'restart-engine';
 }
 
-export interface OIAnalyticsFetchReloadKeysCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
-  type: 'reload-keys';
+export interface OIAnalyticsFetchRegenerateCipherKeysCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'regenerate-cipher-keys';
 }
 
 export interface OIAnalyticsFetchUpdateEngineSettingsCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
@@ -169,7 +169,7 @@ export interface OIAnalyticsFetchDeleteNorthConnectorCommandDTO extends BaseOIAn
 export type OIAnalyticsFetchCommandDTO =
   | OIAnalyticsFetchUpdateVersionCommandDTO
   | OIAnalyticsFetchRestartEngineCommandDTO
-  | OIAnalyticsFetchReloadKeysCommandDTO
+  | OIAnalyticsFetchRegenerateCipherKeysCommandDTO
   | OIAnalyticsFetchUpdateEngineSettingsCommandDTO
   | OIAnalyticsFetchCreateScanModeCommandDTO
   | OIAnalyticsFetchUpdateScanModeCommandDTO

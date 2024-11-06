@@ -2,7 +2,7 @@ import { Database } from 'better-sqlite3';
 import { CommandSearchParam, OIBusCommandStatus, OIBusCommandType } from '../../../shared/model/command.model';
 import { Instant, Page } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
-import { OIBusCommand, OIBusReloadKeysCommand, OIBusRestartEngineCommand } from '../../model/oianalytics-command.model';
+import { OIBusCommand, OIBusRegenerateCipherKeysCommand, OIBusRestartEngineCommand } from '../../model/oianalytics-command.model';
 import { OIAnalyticsFetchCommandDTO } from '../../service/oia/oianalytics.model';
 
 const COMMANDS_TABLE = 'commands';
@@ -136,7 +136,7 @@ export default class OIAnalyticsCommandRepository {
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, north_connector_id) VALUES (?, ?, ?, ?, ?, ?, ?);`;
         break;
       case 'restart-engine':
-      case 'reload-keys':
+      case 'regenerate-cipher-keys':
         insertQuery += `(id, retrieved_date, type, status, ack, target_version) VALUES (?, ?, ?, ?, ?, ?);`;
         break;
       case 'update-version':
@@ -229,7 +229,7 @@ export default class OIAnalyticsCommandRepository {
           completedDate: command.completed_date as Instant,
           result: command.result as string
         } as OIBusRestartEngineCommand;
-      case 'reload-keys':
+      case 'regenerate-cipher-keys':
         return {
           id: command.id as string,
           type: command.type as OIBusCommandType,
@@ -239,7 +239,7 @@ export default class OIAnalyticsCommandRepository {
           retrievedDate: command.retrieved_date as Instant,
           completedDate: command.completed_date as Instant,
           result: command.result as string
-        } as OIBusReloadKeysCommand;
+        } as OIBusRegenerateCipherKeysCommand;
       case 'update-engine-settings':
         return {
           id: command.id as string,
