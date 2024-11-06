@@ -44,7 +44,7 @@ const historyQueryRepository: HistoryQueryRepository = new HistoryQueryRepositor
 
 describe('HistoryQuery enabled', () => {
   let historyQuery: HistoryQuery;
-  const mockedNorth1: NorthConnector<NorthSettings> = new NorthConnectorMock(testData.north.list[0]);
+  const mockedNorth1 = new NorthConnectorMock(testData.north.list[0]) as unknown as NorthConnector<NorthSettings>;
   const mockedSouth1: SouthConnector<SouthSettings, SouthItemSettings> = new SouthConnectorMock(testData.south.list[0]);
 
   beforeEach(async () => {
@@ -256,7 +256,7 @@ describe('HistoryQuery enabled', () => {
 
 describe('HistoryQuery disabled', () => {
   let historyQuery: HistoryQuery;
-  const mockedNorth1: NorthConnector<NorthSettings> = new NorthConnectorMock(testData.north.list[0]);
+  const mockedNorth1 = new NorthConnectorMock(testData.north.list[0]) as unknown as NorthConnector<NorthSettings>;
   const mockedSouth1: SouthConnector<SouthSettings, SouthItemSettings> = new SouthConnectorMock(testData.south.list[0]);
 
   beforeEach(async () => {

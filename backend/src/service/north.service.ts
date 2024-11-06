@@ -3,11 +3,11 @@ import pino from 'pino';
 import NorthConnector from '../north/north-connector';
 import NorthConsole from '../north/north-console/north-console';
 import {
+  NorthCacheFiles,
   NorthConnectorCommandDTO,
   NorthConnectorDTO,
   NorthConnectorLightDTO,
-  NorthConnectorManifest,
-  NorthConnectorWithoutSubscriptionsCommandDTO
+  NorthConnectorManifest
 } from '../../shared/model/north-connector.model';
 import azureManifest from '../north/north-azure-blob/manifest';
 import oianalyticsManifest from '../north/north-oianalytics/manifest';
@@ -48,6 +48,8 @@ import { PassThrough } from 'node:stream';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { BaseFolders } from '../model/types';
+import { Instant } from '../../shared/model/types';
+import { ReadStream } from 'node:fs';
 
 export const northManifestList: Array<NorthConnectorManifest> = [
   consoleManifest,
@@ -190,7 +192,7 @@ export default class NorthService {
   async createNorth<N extends NorthSettings>(command: NorthConnectorCommandDTO<N>): Promise<NorthConnectorEntity<N>> {
     const manifest = this.getInstalledNorthManifests().find(northManifest => northManifest.id === command.type);
     if (!manifest) {
-      throw new Error('North manifest does not exist');
+      throw new Error(`North manifest does not exist for type ${command.type}`);
     }
     await this.validator.validateSettings(manifest.settings, command.settings);
 
@@ -205,11 +207,8 @@ export default class NorthService {
     );
     this.northConnectorRepository.saveNorthConnector(northEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-
-    if (northEntity.id !== 'test') {
-      const baseFolders = this.getDefaultBaseFolders(northEntity.id);
-      await createBaseFolders(baseFolders);
-    }
+    const baseFolders = this.getDefaultBaseFolders(northEntity.id);
+    await createBaseFolders(baseFolders);
 
     await this.dataStreamEngine.createNorth(
       this.runNorth(
@@ -227,34 +226,124 @@ export default class NorthService {
     return this.dataStreamEngine.getNorthDataStream(northConnectorId);
   }
 
-  async updateNorthWithoutSubscriptions(northConnectorId: string, command: NorthConnectorWithoutSubscriptionsCommandDTO<NorthSettings>) {
-    const previousSettings = this.northConnectorRepository.findNorthById(northConnectorId);
-    if (!previousSettings) {
-      throw new Error(`North connector ${northConnectorId} does not exist`);
-    }
-    const manifest = this.getInstalledNorthManifests().find(northManifest => northManifest.id === command.type);
-    if (!manifest) {
-      throw new Error('North manifest does not exist');
-    }
-    await this.validator.validateSettings(manifest.settings, command.settings);
+  async getErrorFiles(
+    northConnectorId: string,
+    start: Instant | null,
+    end: Instant | null,
+    filenameContains: string | null
+  ): Promise<Array<NorthCacheFiles>> {
+    return await this.dataStreamEngine.getErrorFiles(northConnectorId, start, end, filenameContains);
+  }
 
-    const northEntity = { id: previousSettings.id } as NorthConnectorEntity<NorthSettings>;
-    await copyNorthConnectorCommandToNorthEntity(
-      northEntity,
-      { ...command, subscriptions: previousSettings.subscriptions.map(subscription => subscription.id) },
-      previousSettings,
-      this.encryptionService,
-      this.scanModeRepository.findAll(),
-      this.southConnectorRepository.findAllSouth()
-    );
-    this.northConnectorRepository.saveNorthConnector(northEntity);
+  async getErrorFileContent(northConnectorId: string, filename: string): Promise<ReadStream | null> {
+    return await this.dataStreamEngine.getErrorFileContent(northConnectorId, filename);
+  }
 
-    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    if (northEntity.enabled) {
-      await this.dataStreamEngine.reloadNorth(northEntity);
-    } else {
-      await this.dataStreamEngine.stopNorth(northEntity.id);
-    }
+  async removeErrorFiles(northConnectorId: string, filenames: Array<string>): Promise<void> {
+    return await this.dataStreamEngine.removeErrorFiles(northConnectorId, filenames);
+  }
+
+  async retryErrorFiles(northConnectorId: string, filenames: Array<string>): Promise<void> {
+    return await this.dataStreamEngine.retryErrorFiles(northConnectorId, filenames);
+  }
+
+  async removeAllErrorFiles(northConnectorId: string): Promise<void> {
+    return await this.dataStreamEngine.removeAllErrorFiles(northConnectorId);
+  }
+
+  async retryAllErrorFiles(northConnectorId: string): Promise<void> {
+    return await this.dataStreamEngine.retryAllErrorFiles(northConnectorId);
+  }
+
+  async getCacheFiles(
+    northConnectorId: string,
+    start: Instant | null,
+    end: Instant | null,
+    filenameContains: string | null
+  ): Promise<Array<NorthCacheFiles>> {
+    return await this.dataStreamEngine.getCacheFiles(northConnectorId, start, end, filenameContains);
+  }
+
+  async getCacheFileContent(northConnectorId: string, filename: string): Promise<ReadStream | null> {
+    return await this.dataStreamEngine.getCacheFileContent(northConnectorId, filename);
+  }
+
+  async removeCacheFiles(northConnectorId: string, filenames: Array<string>): Promise<void> {
+    return await this.dataStreamEngine.removeCacheFiles(northConnectorId, filenames);
+  }
+
+  async archiveCacheFiles(northConnectorId: string, filenames: Array<string>): Promise<void> {
+    return await this.dataStreamEngine.archiveCacheFiles(northConnectorId, filenames);
+  }
+
+  async removeAllCacheFiles(northConnectorId: string): Promise<void> {
+    return await this.dataStreamEngine.removeAllCacheFiles(northConnectorId);
+  }
+
+  async getArchiveFiles(
+    northConnectorId: string,
+    start: Instant | null,
+    end: Instant | null,
+    filenameContains: string | null
+  ): Promise<Array<NorthCacheFiles>> {
+    return await this.dataStreamEngine.getArchiveFiles(northConnectorId, start, end, filenameContains);
+  }
+
+  async getArchiveFileContent(northConnectorId: string, filename: string): Promise<ReadStream | null> {
+    return await this.dataStreamEngine.getArchiveFileContent(northConnectorId, filename);
+  }
+
+  async removeArchiveFiles(northConnectorId: string, filenames: Array<string>): Promise<void> {
+    return await this.dataStreamEngine.removeArchiveFiles(northConnectorId, filenames);
+  }
+
+  async retryArchiveFiles(northConnectorId: string, filenames: Array<string>): Promise<void> {
+    return await this.dataStreamEngine.retryArchiveFiles(northConnectorId, filenames);
+  }
+
+  async removeAllArchiveFiles(northConnectorId: string): Promise<void> {
+    return await this.dataStreamEngine.removeAllArchiveFiles(northConnectorId);
+  }
+
+  async retryAllArchiveFiles(northConnectorId: string): Promise<void> {
+    return await this.dataStreamEngine.retryAllArchiveFiles(northConnectorId);
+  }
+
+  async getCacheValues(northConnectorId: string, filenameContains: string): Promise<Array<NorthCacheFiles>> {
+    return await this.dataStreamEngine.getCacheValues(northConnectorId, filenameContains);
+  }
+
+  async removeCacheValues(northConnectorId: string, filenames: Array<string>): Promise<void> {
+    return await this.dataStreamEngine.removeCacheValues(northConnectorId, filenames);
+  }
+
+  async removeAllCacheValues(northConnectorId: string): Promise<void> {
+    return await this.dataStreamEngine.removeAllCacheValues(northConnectorId);
+  }
+
+  async getErrorValues(
+    northConnectorId: string,
+    start: Instant | null,
+    end: Instant | null,
+    filenameContains: string | null
+  ): Promise<Array<NorthCacheFiles>> {
+    return await this.dataStreamEngine.getErrorValues(northConnectorId, start, end, filenameContains);
+  }
+
+  async removeErrorValues(northConnectorId: string, filenames: Array<string>): Promise<void> {
+    return await this.dataStreamEngine.removeErrorValues(northConnectorId, filenames);
+  }
+
+  async retryErrorValues(northConnectorId: string, filenames: Array<string>): Promise<void> {
+    return await this.dataStreamEngine.retryErrorValues(northConnectorId, filenames);
+  }
+
+  async removeAllErrorValues(northConnectorId: string): Promise<void> {
+    return await this.dataStreamEngine.removeAllErrorValues(northConnectorId);
+  }
+
+  async retryAllErrorValues(northConnectorId: string): Promise<void> {
+    return await this.dataStreamEngine.retryAllErrorValues(northConnectorId);
   }
 
   async updateNorth<N extends NorthSettings>(northConnectorId: string, command: NorthConnectorCommandDTO<N>) {
@@ -264,7 +353,7 @@ export default class NorthService {
     }
     const manifest = this.getInstalledNorthManifests().find(northManifest => northManifest.id === command.type);
     if (!manifest) {
-      throw new Error('North manifest does not exist');
+      throw new Error(`North manifest does not exist for type ${command.type}`);
     }
     await this.validator.validateSettings(manifest.settings, command.settings);
 
@@ -396,9 +485,9 @@ export default class NorthService {
         if (await filesExists(baseFolder)) {
           await fs.rm(baseFolder, { recursive: true });
         }
-      } catch (error) {
+      } catch (error: unknown) {
         this.dataStreamEngine.logger.error(
-          `Unable to delete North connector "${north.name}" (${north.id}) "${type}" base folder: ${error}`
+          `Unable to delete North connector "${north.name}" (${north.id}) "${type}" base folder: ${(error as Error).message}`
         );
       }
     }

@@ -7,8 +7,7 @@ import {
   NorthConnectorDTO,
   NorthConnectorLightDTO,
   NorthConnectorManifest,
-  NorthType,
-  NorthValueFiles
+  NorthType
 } from '../../../../backend/shared/model/north-connector.model';
 import { SouthConnectorLightDTO } from '../../../../backend/shared/model/south-connector.model';
 import { NorthSettings } from '../../../../backend/shared/model/north-settings.model';
@@ -183,8 +182,8 @@ export class NorthConnectorService {
     return this.http.delete<void>(`/api/north/${northId}/cache/archive-files/remove-all`);
   }
 
-  getCacheValues(northId: string): Observable<Array<NorthValueFiles>> {
-    return this.http.get<Array<NorthValueFiles>>(`/api/north/${northId}/cache/values`);
+  getCacheValues(northId: string): Observable<Array<NorthCacheFiles>> {
+    return this.http.get<Array<NorthCacheFiles>>(`/api/north/${northId}/cache/values`);
   }
 
   removeCacheValues(northId: string, filenames: Array<string>): Observable<void> {

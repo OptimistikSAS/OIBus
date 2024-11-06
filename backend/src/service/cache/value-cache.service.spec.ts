@@ -219,20 +219,49 @@ describe('ValueCacheService', () => {
 
     await cache.start();
     expect(cache.getQueuedFilesMetadata('')).toEqual([
-      { filename: '1test.queue.tmp', valuesCount: 1 },
-      { filename: '2test.queue.tmp', valuesCount: 2 },
-      { filename: '3.queue.tmp', valuesCount: 3 },
-      { filename: '4.queue.tmp', valuesCount: 4 }
+      {
+        filename: '1test.queue.tmp',
+        size: JSON.stringify([{ data: 'myFlushBuffer1' }]).length,
+        modificationDate: testData.constants.dates.FAKE_NOW
+      },
+      {
+        filename: '2test.queue.tmp',
+        size: JSON.stringify([{ data: 'myFlushBuffer2' }, { data: 'myFlushBuffer2' }]).length,
+        modificationDate: testData.constants.dates.FAKE_NOW
+      },
+      {
+        filename: '3.queue.tmp',
+        size: JSON.stringify([{ data: 'myFlushBuffer3' }, { data: 'myFlushBuffer3' }, { data: 'myFlushBuffer3' }]).length,
+        modificationDate: testData.constants.dates.FAKE_NOW
+      },
+      {
+        filename: '4.queue.tmp',
+        size: JSON.stringify([
+          { data: 'myFlushBuffer4' },
+          { data: 'myFlushBuffer4' },
+          { data: 'myFlushBuffer4' },
+          { data: 'myFlushBuffer4' }
+        ]).length,
+        modificationDate: testData.constants.dates.FAKE_NOW
+      }
     ]);
 
     expect(cache.getQueuedFilesMetadata('test')).toEqual([
-      { filename: '1test.queue.tmp', valuesCount: 1 },
-      { filename: '2test.queue.tmp', valuesCount: 2 }
+      {
+        filename: '1test.queue.tmp',
+        size: JSON.stringify([{ data: 'myFlushBuffer1' }]).length,
+        modificationDate: testData.constants.dates.FAKE_NOW
+      },
+      {
+        filename: '2test.queue.tmp',
+        size: JSON.stringify([{ data: 'myFlushBuffer2' }, { data: 'myFlushBuffer2' }]).length,
+        modificationDate: testData.constants.dates.FAKE_NOW
+      }
     ]);
   });
 
   it('should return metadata about error value files', async () => {
-    await cache.getErrorValueFiles('2020-02-02T02:02:02.222Z', '2020-02-03T02:02:02.222Z', 'file');
+    await cache.getErrorValues('2020-02-02T02:02:02.222Z', '2020-02-03T02:02:02.222Z', 'file');
     expect(getFilesFiltered).toHaveBeenCalled();
   });
 
