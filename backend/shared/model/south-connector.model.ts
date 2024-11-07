@@ -1,6 +1,6 @@
 import { OibFormControl } from './form.model';
 import { BaseEntity, Instant } from './types';
-import { SouthSettings, SouthItemSettings } from './south-settings.model';
+import { SouthItemSettings, SouthSettings } from './south-settings.model';
 
 export interface SouthType {
   id: string;
@@ -38,15 +38,6 @@ export interface SouthConnectorCommandDTO<T extends SouthSettings, I extends Sou
   enabled: boolean;
   settings: T;
   items: Array<SouthConnectorItemCommandDTO<I>>;
-}
-
-export interface SouthConnectorWithoutItemsCommandDTO<T extends SouthSettings> {
-  name: string;
-  type: string;
-  description: string;
-  enabled: boolean;
-  sharedConnection: boolean;
-  settings: T;
 }
 
 /**

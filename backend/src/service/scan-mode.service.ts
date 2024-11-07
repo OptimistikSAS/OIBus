@@ -58,7 +58,7 @@ export default class ScanModeService {
   }
 
   async verifyCron(command: { cron: string }): Promise<ValidatedCronExpression> {
-    if (!command?.cron) {
+    if (!command.cron) {
       return {
         isValid: false,
         errorMessage: 'Cron expression is required',

@@ -212,6 +212,14 @@ describe('South connector controller', () => {
     expect(ctx.ok).toHaveBeenCalledWith(testData.south.list[0].items);
   });
 
+  it('listSouthItems() should return not found', async () => {
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.app.southService.findById.mockReturnValueOnce(null);
+
+    await southConnectorController.listSouthItems(ctx);
+    expect(ctx.notFound).toHaveBeenCalled();
+  });
+
   it('searchSouthItems() should return South items', async () => {
     ctx.params.southId = testData.south.list[0].id;
     ctx.query = {
@@ -248,6 +256,49 @@ describe('South connector controller', () => {
     });
   });
 
+  it('searchSouthItems() without page should return South items', async () => {
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.query = {
+      name: 'name'
+    };
+    const searchParams = {
+      page: 0,
+      name: 'name'
+    };
+    ctx.app.southService.findById.mockReturnValueOnce(testData.south.list[0]);
+    ctx.app.southService.searchSouthItems.mockReturnValue({
+      content: testData.south.list[0].items.map(item =>
+        toSouthConnectorItemDTO(item, testData.south.list[0].type, ctx.app.encryptionService)
+      ),
+      totalElements: testData.south.list[0].items.length,
+      size: 25,
+      number: 0,
+      totalPages: 1
+    });
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValueOnce([{ ...testData.south.manifest, id: testData.south.list[0].type }]);
+
+    await southConnectorController.searchSouthItems(ctx);
+
+    expect(ctx.app.southService.searchSouthItems).toHaveBeenCalledWith(testData.south.list[0].id, searchParams);
+    expect(ctx.ok).toHaveBeenCalledWith({
+      content: testData.south.list[0].items.map(item =>
+        toSouthConnectorItemDTO(item, testData.south.list[0].type, ctx.app.encryptionService)
+      ),
+      totalElements: testData.south.list[0].items.length,
+      size: 25,
+      number: 0,
+      totalPages: 1
+    });
+  });
+
+  it('searchSouthItems() should return not found', async () => {
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.app.southService.findById.mockReturnValueOnce(null);
+
+    await southConnectorController.searchSouthItems(ctx);
+    expect(ctx.notFound).toHaveBeenCalled();
+  });
+
   it('getSouthItem() should return South item', async () => {
     ctx.params.id = testData.south.list[0].items[0].id;
     ctx.params.souhtId = testData.south.list[0].id;
@@ -280,6 +331,14 @@ describe('South connector controller', () => {
     expect(ctx.notFound).toHaveBeenCalled();
   });
 
+  it('getSouthItem() should return not found', async () => {
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.app.southService.findById.mockReturnValueOnce(null);
+
+    await southConnectorController.getSouthItem(ctx);
+    expect(ctx.notFound).toHaveBeenCalled();
+  });
+
   it('createSouthItem() should create South item', async () => {
     ctx.params.southId = testData.south.list[0].id;
     ctx.request.body = testData.south.itemCommand;
@@ -291,6 +350,24 @@ describe('South connector controller', () => {
 
     expect(ctx.app.southService.createItem).toHaveBeenCalledWith(testData.south.list[0].id, testData.south.itemCommand);
     expect(ctx.created).toHaveBeenCalledWith(testData.south.list[0].items[0]);
+  });
+
+  it('createSouthItem() should return bad request', async () => {
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.app.southService.findById.mockReturnValueOnce(testData.south.list[0]);
+    ctx.app.southService.createItem.mockImplementationOnce(() => {
+      throw new Error('create error');
+    });
+    await southConnectorController.createSouthItem(ctx);
+    expect(ctx.badRequest).toHaveBeenCalledWith('create error');
+  });
+
+  it('createSouthItem() should return not found', async () => {
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.app.southService.findById.mockReturnValueOnce(null);
+
+    await southConnectorController.createSouthItem(ctx);
+    expect(ctx.notFound).toHaveBeenCalled();
   });
 
   it('updateSouthItem() should update South item', async () => {
@@ -308,6 +385,18 @@ describe('South connector controller', () => {
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
+  it('updateSouthItem() should return bad request', async () => {
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.params.id = testData.south.list[0].items[0].id;
+    ctx.request.body = testData.south.itemCommand;
+    ctx.app.southService.updateItem.mockImplementationOnce(() => {
+      throw new Error('update error');
+    });
+
+    await southConnectorController.updateSouthItem(ctx);
+    expect(ctx.badRequest).toHaveBeenCalledWith('update error');
+  });
+
   it('deleteSouthItem() should delete South item', async () => {
     ctx.params.southId = testData.south.list[0].id;
     ctx.params.id = testData.south.list[0].items[0].id;
@@ -316,6 +405,17 @@ describe('South connector controller', () => {
 
     expect(ctx.app.southService.deleteItem).toHaveBeenCalledWith(testData.south.list[0].id, testData.south.list[0].items[0].id);
     expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('deleteSouthItem() should return bad request', async () => {
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.params.id = testData.south.list[0].items[0].id;
+    ctx.app.southService.deleteItem.mockImplementationOnce(() => {
+      throw new Error('delete error');
+    });
+
+    await southConnectorController.deleteSouthItem(ctx);
+    expect(ctx.badRequest).toHaveBeenCalledWith('delete error');
   });
 
   it('enableSouthItem() should enable South item', async () => {
@@ -328,6 +428,17 @@ describe('South connector controller', () => {
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
+  it('enableSouthItem() should return bad request', async () => {
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.params.id = testData.south.list[0].items[0].id;
+    ctx.app.southService.enableItem.mockImplementationOnce(() => {
+      throw new Error('enable error');
+    });
+
+    await southConnectorController.enableSouthItem(ctx);
+    expect(ctx.badRequest).toHaveBeenCalledWith('enable error');
+  });
+
   it('disableSouthItem() should disable South item', async () => {
     ctx.params.id = testData.south.list[0].items[0].id;
     ctx.params.southId = testData.south.list[0].id;
@@ -338,6 +449,17 @@ describe('South connector controller', () => {
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
+  it('disableSouthItem() should return bad request', async () => {
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.params.id = testData.south.list[0].items[0].id;
+    ctx.app.southService.disableItem.mockImplementationOnce(() => {
+      throw new Error('disable error');
+    });
+
+    await southConnectorController.disableSouthItem(ctx);
+    expect(ctx.badRequest).toHaveBeenCalledWith('disable error');
+  });
+
   it('deleteAllSouthItem() should delete all South items', async () => {
     ctx.params.southId = testData.south.list[0].id;
 
@@ -345,6 +467,16 @@ describe('South connector controller', () => {
 
     expect(ctx.app.southService.deleteAllItemsForSouthConnector).toHaveBeenCalledWith(testData.south.list[0].id);
     expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('deleteAllSouthItem() should return bad request', async () => {
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.app.southService.deleteAllItemsForSouthConnector.mockImplementationOnce(() => {
+      throw new Error('delete all error');
+    });
+
+    await southConnectorController.deleteAllSouthItem(ctx);
+    expect(ctx.badRequest).toHaveBeenCalledWith('delete all error');
   });
 
   it('resetSouthMetrics() should reset South metrics', async () => {
@@ -371,7 +503,21 @@ describe('South connector controller', () => {
     expect(ctx.body).toEqual('csv content');
   });
 
+  it('southItemsToCsv() should throw not found a csv file', async () => {
+    ctx.params.southType = 'bad';
+    ctx.request.body = {
+      items: testData.south.list[0].items,
+      delimiter: ';'
+    };
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValueOnce([{ ...testData.south.manifest, id: testData.south.list[0].type }]);
+
+    await southConnectorController.southConnectorItemsToCsv(ctx);
+
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'South manifest not found');
+  });
+
   it('exportSouthItems() should download a csv file', async () => {
+    ctx.params.southType = testData.south.list[0].type;
     ctx.params.southId = testData.south.list[0].id;
     (itemToFlattenedCSV as jest.Mock).mockReturnValueOnce('csv content');
     ctx.app.southService.findById.mockReturnValueOnce(testData.south.list[0]);
@@ -383,8 +529,19 @@ describe('South connector controller', () => {
     expect(ctx.body).toEqual('csv content');
   });
 
+  it('exportSouthItems() should return not found', async () => {
+    ctx.params.southType = testData.south.list[0].type;
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.request.body = { delimiter: ';' };
+    ctx.app.southService.findById.mockReturnValueOnce(null);
+
+    await southConnectorController.exportSouthItems(ctx);
+
+    expect(ctx.notFound).toHaveBeenCalledWith();
+  });
+
   it('checkImportSouthItems() should check import of items in a csv file with new south', async () => {
-    ctx.params.type = testData.south.list[0].type;
+    ctx.params.southType = testData.south.list[0].type;
     ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
     ctx.request.body = { currentItems: '[]', delimiter: ',' };
     ctx.app.scanModeService.findAll.mockReturnValueOnce(testData.scanMode.list);
@@ -392,7 +549,7 @@ describe('South connector controller', () => {
 
     await southConnectorController.checkImportSouthItems(ctx);
     expect(ctx.app.southService.checkCsvImport).toHaveBeenCalledWith(
-      ctx.params.type,
+      testData.south.list[0].type,
       ctx.request.file,
       ctx.request.body.delimiter,
       JSON.parse(ctx.request.body.currentItems)
@@ -400,11 +557,35 @@ describe('South connector controller', () => {
     expect(ctx.ok).toHaveBeenCalled();
   });
 
+  it('checkImportSouthItems() should return bad request', async () => {
+    ctx.params.southType = testData.south.list[0].type;
+    ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
+    ctx.request.body = { currentItems: '[]', delimiter: ',' };
+    ctx.app.southService.checkCsvImport.mockImplementationOnce(() => {
+      throw new Error('bad items');
+    });
+
+    await southConnectorController.checkImportSouthItems(ctx);
+    expect(ctx.badRequest).toHaveBeenCalledWith('bad items');
+  });
+
   it('importSouthItems() should import south items', async () => {
     ctx.params.southId = testData.south.list[0].id;
     ctx.request.body = { items: testData.south.list[0].items };
     await southConnectorController.importSouthItems(ctx);
     expect(ctx.app.southService.importItems).toHaveBeenCalledWith(testData.south.list[0].id, testData.south.list[0].items);
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('importSouthItems() should return bad request', async () => {
+    ctx.params.southId = testData.south.list[0].id;
+    ctx.request.body = { items: testData.south.list[0].items };
+    ctx.app.southService.importItems.mockImplementationOnce(() => {
+      throw new Error('bad import');
+    });
+    await southConnectorController.importSouthItems(ctx);
+    expect(ctx.app.southService.importItems).toHaveBeenCalledWith(testData.south.list[0].id, testData.south.list[0].items);
+    expect(ctx.badRequest).toHaveBeenCalledWith('bad import');
   });
 
   it('testSouthConnection() should test South connector settings on connector update', async () => {
@@ -416,5 +597,55 @@ describe('South connector controller', () => {
 
     expect(ctx.app.southService.testSouth).toHaveBeenCalledWith(testData.south.list[0].id, testData.south.command, logger);
     expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('testSouthConnection() should throw bad request if test fails', async () => {
+    ctx.params.id = testData.south.list[0].id;
+    ctx.request.body = testData.south.command;
+    ctx.app.logger.child = jest.fn().mockImplementation(() => logger);
+    (ctx.app.southService.testSouth as jest.Mock).mockImplementation(() => {
+      throw new Error('test error');
+    });
+    await southConnectorController.testSouthConnection(ctx);
+
+    expect(ctx.app.southService.testSouth).toHaveBeenCalledWith(testData.south.list[0].id, testData.south.command, logger);
+    expect(ctx.noContent).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('test error');
+  });
+
+  it('testSouthItem() should test South connector settings on connector update', async () => {
+    ctx.params.id = testData.south.list[0].id;
+    ctx.request.body = { south: testData.south.command, item: testData.south.itemCommand };
+    ctx.app.logger.child = jest.fn().mockImplementation(() => logger);
+
+    await southConnectorController.testSouthItem(ctx);
+
+    expect(ctx.app.southService.testSouthItem).toHaveBeenCalledWith(
+      testData.south.list[0].id,
+      testData.south.command,
+      testData.south.itemCommand,
+      ctx.ok,
+      logger
+    );
+  });
+
+  it('testSouthItem() should throw bad request if test fails', async () => {
+    ctx.params.id = testData.south.list[0].id;
+    ctx.request.body = { south: testData.south.command, item: testData.south.itemCommand };
+    ctx.app.logger.child = jest.fn().mockImplementation(() => logger);
+    (ctx.app.southService.testSouthItem as jest.Mock).mockImplementation(() => {
+      throw new Error('test error');
+    });
+    await southConnectorController.testSouthItem(ctx);
+
+    expect(ctx.app.southService.testSouthItem).toHaveBeenCalledWith(
+      testData.south.list[0].id,
+      testData.south.command,
+      testData.south.itemCommand,
+      ctx.ok,
+      logger
+    );
+    expect(ctx.noContent).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('test error');
   });
 });
