@@ -95,9 +95,10 @@ export default class OIAnalyticsMessageService {
       this.oIAnalyticsMessageRepository.markAsErrored(message.id, DateTime.now().toUTC().toISO(), (error as Error).message);
     }
     this.removeMessageFromQueue(message.id);
-
-    this.runProgress$.resolve();
-    this.runProgress$ = null;
+    this.resolveDeferredPromise();
+    if (this.messagesQueue.length > 0) {
+      this.triggerRun.emit('next');
+    }
   }
 
   async stop(): Promise<void> {
@@ -107,7 +108,7 @@ export default class OIAnalyticsMessageService {
     if (this.runProgress$) {
       if (!this.stopTimeout) {
         this.stopTimeout = setTimeout(() => {
-          this.runProgress$!.resolve();
+          this.resolveDeferredPromise();
         }, STOP_TIMEOUT);
       }
       this.logger.debug('Waiting for OIAnalytics message to finish');
@@ -115,6 +116,13 @@ export default class OIAnalyticsMessageService {
       clearTimeout(this.stopTimeout);
     }
     this.logger.debug(`OIAnalytics message service stopped`);
+  }
+
+  resolveDeferredPromise(): void {
+    if (this.runProgress$) {
+      this.runProgress$.resolve();
+      this.runProgress$ = null;
+    }
   }
 
   setLogger(logger: pino.Logger) {
@@ -149,7 +157,7 @@ export default class OIAnalyticsMessageService {
   }
 
   private removeMessageFromQueue(messageId: string): void {
-    this.messagesQueue = this.messagesQueue.filter(message => message.id === messageId);
+    this.messagesQueue = this.messagesQueue.filter(message => message.id !== messageId);
   }
 
   /**
@@ -194,6 +202,7 @@ export default class OIAnalyticsMessageService {
       operatingSystem: info.operatingSystem,
       publicKey: registration.publicCipherKey || '',
       settings: {
+        name: engine.name,
         port: engine.port,
         proxyEnabled: engine.proxyEnabled,
         proxyPort: engine.proxyPort,
@@ -230,8 +239,8 @@ export default class OIAnalyticsMessageService {
     const scanModes = this.scanModeRepository.findAll();
     return scanModes.map(scanMode => ({
       oIBusInternalId: scanMode.id,
-      name: scanMode.name,
       settings: {
+        name: scanMode.name,
         description: scanMode.description,
         cron: scanMode.cron
       }
@@ -242,8 +251,8 @@ export default class OIAnalyticsMessageService {
     const ipFilters = this.ipFilterRepository.findAll();
     return ipFilters.map(ipFilter => ({
       oIBusInternalId: ipFilter.id,
-      description: ipFilter.description,
       settings: {
+        description: ipFilter.description,
         address: ipFilter.address
       }
     }));
@@ -253,8 +262,8 @@ export default class OIAnalyticsMessageService {
     const certificates = this.certificateRepository.findAll();
     return certificates.map(certificate => ({
       oIBusInternalId: certificate.id,
-      name: certificate.name,
       settings: {
+        name: certificate.name,
         description: certificate.description,
         publicKey: certificate.publicKey,
         certificate: certificate.certificate,
@@ -267,8 +276,8 @@ export default class OIAnalyticsMessageService {
     const users = this.userRepository.findAll();
     return users.map(user => ({
       oIBusInternalId: user.id,
-      login: user.login,
       settings: {
+        login: user.login,
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
@@ -286,8 +295,9 @@ export default class OIAnalyticsMessageService {
       return {
         oIBusInternalId: south.id,
         type: south.type,
-        name: south.name,
         settings: {
+          type: south.type,
+          name: south.name,
           description: south.description,
           enabled: south.enabled,
           settings: this.encryptionService.filterSecrets(south.settings, manifest.settings),
@@ -312,8 +322,9 @@ export default class OIAnalyticsMessageService {
       return {
         oIBusInternalId: north.id,
         type: north.type,
-        name: north.name,
         settings: {
+          type: north.type,
+          name: north.name,
           description: north.description,
           enabled: north.enabled,
           settings: this.encryptionService.filterSecrets(north.settings, manifest.settings),
