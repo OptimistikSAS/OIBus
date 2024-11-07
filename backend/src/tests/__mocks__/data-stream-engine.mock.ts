@@ -13,6 +13,7 @@ export default jest.fn().mockImplementation(logger => {
     createSouth: jest.fn(),
     startSouth: jest.fn(),
     reloadSouth: jest.fn(),
+    reloadItems: jest.fn(),
     stopSouth: jest.fn(),
     createNorth: jest.fn(),
     startNorth: jest.fn(),

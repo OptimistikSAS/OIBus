@@ -54,6 +54,15 @@ const dataProviders: Array<DataProvider> = [
     },
     isValid: true,
     errorMessage: null
+  },
+  {
+    dto: {
+      name: 'valid',
+      description: 'valid',
+      cron: '* * * * * *L'
+    },
+    isValid: false,
+    errorMessage: 'Expression contains non-standard characters: L'
   }
 ];
 
