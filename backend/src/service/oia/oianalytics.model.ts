@@ -13,26 +13,22 @@ import { ScanModeCommandDTO } from '../../../shared/model/scan-mode.model';
 
 export interface OIAnalyticsScanModeCommandDTO {
   oIBusInternalId: string | null;
-  name: string;
-  settings: Omit<ScanModeCommandDTO, 'name'>;
+  settings: ScanModeCommandDTO;
 }
 
 export interface OIAnalyticsIPFilterCommandDTO {
   oIBusInternalId: string | null;
-  description: string;
-  settings: Omit<IPFilterCommandDTO, 'description'>;
+  settings: IPFilterCommandDTO;
 }
 
 export interface OIAnalyticsCertificateCommandDTO {
   oIBusInternalId: string | null;
-  name: string;
-  settings: Omit<CertificateDTO, 'id' | 'name'>;
+  settings: Omit<CertificateDTO, 'id'>;
 }
 
 export interface OIAnalyticsUserCommandDTO {
   oIBusInternalId: string;
-  login: string;
-  settings: Omit<UserCommandDTO, 'login'>;
+  settings: UserCommandDTO;
 }
 
 export interface OIAnalyticsEngineCommandDTO {
@@ -43,21 +39,19 @@ export interface OIAnalyticsEngineCommandDTO {
   architecture: string;
   operatingSystem: string;
   publicKey: string;
-  settings: Omit<EngineSettingsCommandDTO, 'name'>;
+  settings: EngineSettingsCommandDTO;
 }
 
 export interface OIAnalyticsSouthCommandDTO {
   oIBusInternalId: string | null;
   type: string;
-  name: string;
-  settings: Omit<SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>, 'name' | 'type'>;
+  settings: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
 }
 
 export interface OIAnalyticsNorthCommandDTO {
   oIBusInternalId: string | null;
   type: string;
-  name: string;
-  settings: Omit<NorthConnectorCommandDTO<NorthSettings>, 'name' | 'type'>;
+  settings: NorthConnectorCommandDTO<NorthSettings>;
 }
 
 export interface OIBusFullConfigurationCommandDTO {
