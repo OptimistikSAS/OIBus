@@ -1115,6 +1115,13 @@ const oIBusMessages: Array<OIAnalyticsMessage> = [
     error: null,
     completedDate: null,
     type: 'full-config'
+  },
+  {
+    id: 'messageId2',
+    status: 'PENDING',
+    error: null,
+    completedDate: null,
+    type: 'full-config'
   }
 ];
 
