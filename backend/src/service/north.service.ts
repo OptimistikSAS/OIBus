@@ -368,11 +368,7 @@ export default class NorthService {
     );
     this.northConnectorRepository.saveNorthConnector(northEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-    if (northEntity.enabled) {
-      await this.dataStreamEngine.reloadNorth(northEntity);
-    } else {
-      await this.dataStreamEngine.stopNorth(northEntity.id);
-    }
+    await this.dataStreamEngine.reloadNorth(northEntity);
   }
 
   async deleteNorth(northConnectorId: string) {

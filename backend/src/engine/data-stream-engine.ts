@@ -380,21 +380,26 @@ export default class DataStreamEngine {
   async reloadSouth(southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings>) {
     await this.stopSouth(southConnector.id);
     const south = this.southConnectors.get(southConnector.id);
-    if (south && south.queriesHistory()) {
-      await south.manageSouthCacheOnChange(south.settings, southConnector, south.getMaxInstantPerItem(south.settings.settings));
-    }
-    this.southConnectors
-      .get(southConnector.id)
-      ?.setLogger(this.logger.child({ scopeType: 'south', scopeId: southConnector.id, scopeName: southConnector.name }));
-    if (southConnector.enabled) {
-      await this.startSouth(southConnector.id);
+    if (south) {
+      if (south.queriesHistory()) {
+        await south.manageSouthCacheOnChange(south.settings, southConnector, south.getMaxInstantPerItem(south.settings.settings));
+      }
+      south.setLogger(this.logger.child({ scopeType: 'south', scopeId: southConnector.id, scopeName: southConnector.name }));
+      if (southConnector.enabled) {
+        await this.startSouth(southConnector.id);
+      }
     }
   }
 
-  async reloadNorth(north: NorthConnectorEntity<NorthSettings>) {
-    await this.stopNorth(north.id);
-    this.northConnectors.get(north.id)?.setLogger(this.logger.child({ scopeType: 'north', scopeId: north.id, scopeName: north.name }));
-    await this.startNorth(north.id);
+  async reloadNorth(northConnector: NorthConnectorEntity<NorthSettings>) {
+    await this.stopNorth(northConnector.id);
+    const north = this.northConnectors.get(northConnector.id);
+    if (north) {
+      north.setLogger(this.logger.child({ scopeType: 'north', scopeId: northConnector.id, scopeName: northConnector.name }));
+      if (northConnector.enabled) {
+        await this.startNorth(northConnector.id);
+      }
+    }
   }
 
   updateSubscriptions() {

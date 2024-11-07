@@ -7,7 +7,7 @@ import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-se
 import SouthConnectorMock from '../../tests/__mocks__/south-connector.mock';
 
 const southConnectorMetricsRepository: SouthConnectorMetricsRepository = new SouthMetricsRepositoryMock();
-const southMock: SouthConnector<SouthSettings, SouthItemSettings> = new SouthConnectorMock(testData.south.list[0]);
+const southMock = new SouthConnectorMock(testData.south.list[0]) as unknown as SouthConnector<SouthSettings, SouthItemSettings>;
 
 describe('SouthConnectorMetricsService', () => {
   let service: SouthConnectorMetricsService;
