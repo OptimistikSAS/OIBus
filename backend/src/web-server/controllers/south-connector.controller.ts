@@ -7,7 +7,6 @@ import {
   SouthConnectorItemSearchParam,
   SouthConnectorLightDTO,
   SouthConnectorManifest,
-  SouthConnectorWithoutItemsCommandDTO,
   SouthType
 } from '../../../shared/model/south-connector.model';
 import { Page } from '../../../shared/model/types';
@@ -58,15 +57,6 @@ export default class SouthConnectorController {
     try {
       const southConnector = toSouthConnectorDTO(await ctx.app.southService.createSouth(ctx.request.body!), ctx.app.encryptionService);
       ctx.created(southConnector);
-    } catch (error: unknown) {
-      ctx.badRequest((error as Error).message);
-    }
-  }
-
-  async updateSouthWithoutItems(ctx: KoaContext<SouthConnectorWithoutItemsCommandDTO<SouthSettings>, void>): Promise<void> {
-    try {
-      await ctx.app.southService.updateSouthWithoutItems(ctx.params.id!, ctx.request.body!);
-      ctx.noContent();
     } catch (error: unknown) {
       ctx.badRequest((error as Error).message);
     }

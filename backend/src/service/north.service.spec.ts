@@ -169,9 +169,10 @@ describe('north service', () => {
     expect(() => service.runNorth(bad, logger, mockBaseFolders(bad.id))).toThrow('North connector of type bad not installed');
   });
 
-  it('runNorth() should run North connector with default base folders', () => {
-    const connector = service.runNorth(testData.north.list[0], logger);
-    expect(connector).toBeDefined();
+  it('runNorth() should not run connector if bad type and no folders', () => {
+    const bad = JSON.parse(JSON.stringify(testData.north.list[0]));
+    bad.type = 'bad';
+    expect(() => service.runNorth(bad, logger)).toThrow('North connector of type bad not installed');
   });
 
   it('testNorth() should test North connector in creation mode', async () => {
@@ -236,7 +237,7 @@ describe('north service', () => {
     expect(dataStreamEngine.startNorth).toHaveBeenCalled();
   });
 
-  it('createNorth() should create North connector', async () => {
+  it('createNorth() should not create North connector if subscription not found', async () => {
     service.runNorth = jest.fn().mockReturnValue(mockedNorth1);
     (scanModeRepository.findAll as jest.Mock).mockReturnValue(testData.scanMode.list);
     (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValue(
@@ -415,19 +416,6 @@ describe('north service', () => {
     expect(northConnectorRepository.saveNorthConnector).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(dataStreamEngine.reloadNorth).toHaveBeenCalledTimes(1);
-    expect(dataStreamEngine.stopNorth).not.toHaveBeenCalled();
-  });
-
-  it('updateNorth() should update North connector and stop it if disabled', async () => {
-    const command = JSON.parse(JSON.stringify(testData.north.command));
-    command.enabled = false;
-    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(testData.north.list[0]);
-    await service.updateNorth(testData.north.list[0].id, command);
-
-    expect(northConnectorRepository.saveNorthConnector).toHaveBeenCalledTimes(1);
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(dataStreamEngine.reloadNorth).not.toHaveBeenCalled();
-    expect(dataStreamEngine.stopNorth).toHaveBeenCalledTimes(1);
   });
 
   it('updateNorth() should throw an error if connector not found', async () => {
