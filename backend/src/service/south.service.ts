@@ -9,8 +9,7 @@ import {
   SouthConnectorItemDTO,
   SouthConnectorItemSearchParam,
   SouthConnectorLightDTO,
-  SouthConnectorManifest,
-  SouthConnectorWithoutItemsCommandDTO
+  SouthConnectorManifest
 } from '../../shared/model/south-connector.model';
 import SouthConnector from '../south/south-connector';
 
@@ -427,12 +426,12 @@ export default class SouthService {
       items: [testItemToRun]
     };
 
-    const south = this.runSouth(
-      testConnectorToRun,
-      async (_southId: string, _content: OIBusContent): Promise<void> => Promise.resolve(),
-      logger,
-      { cache: 'baseCacheFolder', archive: 'baseArchiveFolder', error: 'baseErrorFolder' }
-    );
+    const mockedAddContent = async (_southId: string, _content: OIBusContent): Promise<void> => Promise.resolve();
+    const south = this.runSouth(testConnectorToRun, mockedAddContent, logger, {
+      cache: 'baseCacheFolder',
+      archive: 'baseArchiveFolder',
+      error: 'baseErrorFolder'
+    });
     return await south.testItem(testItemToRun, callback);
   }
 
@@ -453,7 +452,7 @@ export default class SouthService {
   ): Promise<SouthConnectorEntity<S, I>> {
     const manifest = this.getInstalledSouthManifests().find(southManifest => southManifest.id === command.type);
     if (!manifest) {
-      throw new Error('South manifest does not exist');
+      throw new Error(`South manifest does not exist for type ${command.type}`);
     }
     await this.validator.validateSettings(manifest.settings, command.settings);
     // Check if item settings match the item schema, throw an error otherwise
@@ -465,11 +464,8 @@ export default class SouthService {
     await copySouthConnectorCommandToSouthEntity(southEntity, command, null, this.encryptionService, this.scanModeRepository.findAll());
     this.southConnectorRepository.saveSouthConnector(southEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-
-    if (southEntity.id !== 'test') {
-      const baseFolders = this.getDefaultBaseFolders(southEntity.id);
-      await createBaseFolders(baseFolders);
-    }
+    const baseFolders = this.getDefaultBaseFolders(southEntity.id);
+    await createBaseFolders(baseFolders);
 
     await this.dataStreamEngine.createSouth(
       this.runSouth(
@@ -488,35 +484,6 @@ export default class SouthService {
     return this.dataStreamEngine.getSouthDataStream(southConnectorId);
   }
 
-  async updateSouthWithoutItems<S extends SouthSettings, I extends SouthItemSettings>(
-    southConnectorId: string,
-    command: SouthConnectorWithoutItemsCommandDTO<S>
-  ) {
-    const previousSettings = this.southConnectorRepository.findSouthById<S, I>(southConnectorId);
-    if (!previousSettings) {
-      throw new Error(`South connector ${southConnectorId} does not exist`);
-    }
-    const manifest = this.getInstalledSouthManifests().find(southManifest => southManifest.id === command.type);
-    if (!manifest) {
-      throw new Error('South manifest does not exist');
-    }
-    await this.validator.validateSettings(manifest.settings, command.settings);
-
-    const southEntity = { id: previousSettings.id } as SouthConnectorEntity<S, SouthItemSettings>;
-    await copySouthConnectorCommandToSouthEntity(
-      southEntity,
-      { ...command, items: previousSettings.items.map(item => ({ ...item, scanModeName: null })) },
-      previousSettings,
-      this.encryptionService,
-      this.scanModeRepository.findAll()
-    );
-    this.southConnectorRepository.saveSouthConnector(southEntity);
-
-    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-
-    await this.dataStreamEngine.reloadSouth(southEntity);
-  }
-
   async updateSouth<S extends SouthSettings, I extends SouthItemSettings>(
     southConnectorId: string,
     command: SouthConnectorCommandDTO<S, I>
@@ -527,7 +494,7 @@ export default class SouthService {
     }
     const manifest = this.getInstalledSouthManifests().find(southManifest => southManifest.id === command.type);
     if (!manifest) {
-      throw new Error('South manifest does not exist');
+      throw new Error(`South manifest does not exist for type ${command.type}`);
     }
     await this.validator.validateSettings(manifest.settings, command.settings);
 
@@ -609,7 +576,7 @@ export default class SouthService {
     }
     const manifest = this.getInstalledSouthManifests().find(southManifest => southManifest.id === southConnector.type);
     if (!manifest) {
-      throw new Error('South manifest does not exist');
+      throw new Error(`South manifest does not exist for type ${southConnector.type}`);
     }
     await this.validator.validateSettings(manifest.items.settings, command.settings);
 
@@ -623,9 +590,7 @@ export default class SouthService {
       this.scanModeRepository.findAll()
     );
     this.southConnectorRepository.saveItem<I>(southConnector.id, southItemEntity);
-
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
-
     await this.dataStreamEngine.reloadItems(southConnector.id);
     return southItemEntity;
   }
@@ -637,12 +602,12 @@ export default class SouthService {
   ): Promise<void> {
     const previousSettings = this.southConnectorRepository.findItemById<I>(southConnectorId, itemId);
     if (!previousSettings) {
-      throw new Error(`South item with Id ${itemId} doesn't exist`);
+      throw new Error(`South item with ID ${itemId} does not exist`);
     }
     const southConnector = this.southConnectorRepository.findSouthById(southConnectorId)!;
     const manifest = this.getInstalledSouthManifests().find(southManifest => southManifest.id === southConnector.type);
     if (!manifest) {
-      throw new Error('South manifest does not exist');
+      throw new Error(`South manifest does not exist for type ${southConnector.type}`);
     }
 
     await this.validator.validateSettings(manifest.items.settings, command.settings);
@@ -667,7 +632,7 @@ export default class SouthService {
       throw new Error(`South connector ${southConnectorId} does not exist`);
     }
     const southItem = this.southConnectorRepository.findItemById(southConnectorId, itemId);
-    if (!southItem) throw new Error('South item not found');
+    if (!southItem) throw new Error(`South item ${itemId} not found`);
     this.southConnectorRepository.deleteItem(southItem.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.dataStreamEngine.reloadItems(southConnector.id);
@@ -687,8 +652,8 @@ export default class SouthService {
 
   async enableItem(southConnectorId: string, itemId: string): Promise<void> {
     const southItem = this.southConnectorRepository.findItemById(southConnectorId, itemId);
-    if (!southItem) throw new Error('South item not found');
-    this.southConnectorRepository.enableItem(itemId);
+    if (!southItem) throw new Error(`South item ${itemId} not found`);
+    this.southConnectorRepository.enableItem(southItem.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
 
     await this.dataStreamEngine.reloadItems(southConnectorId);
@@ -696,8 +661,8 @@ export default class SouthService {
 
   async disableItem(southConnectorId: string, itemId: string): Promise<void> {
     const southItem = this.southConnectorRepository.findItemById(southConnectorId, itemId);
-    if (!southItem) throw new Error('South item not found');
-    this.southConnectorRepository.disableItem(itemId);
+    if (!southItem) throw new Error(`South item ${itemId} not found`);
+    this.southConnectorRepository.disableItem(southItem.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
 
     await this.dataStreamEngine.reloadItems(southConnectorId);
@@ -714,14 +679,14 @@ export default class SouthService {
   }> {
     const manifest = this.getInstalledSouthManifests().find(southManifest => southManifest.id === southType);
     if (!manifest) {
-      throw new Error('South manifest not found');
+      throw new Error(`South manifest does not exist for type ${southType}`);
     }
 
     const fileContent = await fs.readFile(file.path);
     const csvContent = csv.parse(fileContent.toString('utf8'), { header: true, delimiter });
 
     if (csvContent.meta.delimiter !== delimiter) {
-      throw new Error('The entered delimiter does not correspond to the file delimiter');
+      throw new Error(`The entered delimiter "${delimiter}" does not correspond to the file delimiter "${csvContent.meta.delimiter}"`);
     }
     const scanModes = this.scanModeRepository.findAll();
 
@@ -832,9 +797,9 @@ export default class SouthService {
         if (await filesExists(baseFolder)) {
           await fs.rm(baseFolder, { recursive: true });
         }
-      } catch (error) {
+      } catch (error: unknown) {
         this.dataStreamEngine.logger.error(
-          `Unable to delete South connector "${south.name}" (${south.id}) "${type}" base folder: ${error}`
+          `Unable to delete South connector "${south.name}" (${south.id}) "${type}" base folder: ${(error as Error).message}`
         );
       }
     }
@@ -884,7 +849,7 @@ const copySouthConnectorCommandToSouthEntity = async <S extends SouthSettings, I
       await copySouthItemCommandToSouthItemEntity(
         itemEntity,
         itemCommand,
-        southEntity.items?.find(element => element.id === itemCommand.id) || null,
+        currentSettings?.items.find(element => element.id === itemCommand.id) || null,
         southEntity.type,
         encryptionService,
         scanModes

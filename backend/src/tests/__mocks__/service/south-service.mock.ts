@@ -9,7 +9,6 @@ export default jest.fn().mockImplementation(() => ({
   findAll: jest.fn(),
   getInstalledSouthManifests: jest.fn(),
   createSouth: jest.fn(),
-  updateSouthWithoutItems: jest.fn(),
   updateSouth: jest.fn(),
   deleteSouth: jest.fn(),
   startSouth: jest.fn(),

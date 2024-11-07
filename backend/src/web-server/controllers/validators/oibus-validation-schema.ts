@@ -120,12 +120,8 @@ const logSchema: Joi.ObjectSchema = Joi.object({
 });
 
 function cronValidator(value: string, helper: Joi.CustomHelpers) {
-  try {
-    validateCronExpression(value);
-    return true;
-  } catch (error: unknown) {
-    return helper.message({ custom: (error as Error).message });
-  }
+  const cronValidation = validateCronExpression(value);
+  return cronValidation.isValid ? true : helper.message({ custom: cronValidation.errorMessage });
 }
 
 export {
