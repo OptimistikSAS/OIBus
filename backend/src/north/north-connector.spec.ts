@@ -638,7 +638,7 @@ describe('NorthConnector disabled', () => {
     await north.cacheFile('filePath');
     expect(logger.debug).toHaveBeenCalledWith(
       `North cache is exceeding the maximum allowed size ` +
-        `(${Math.floor((cacheSize / 1024 / 1024) * 100) / 100} MB >= ${testData.north.list[1].caching.maxSize} MB). ` +
+        `(${Math.floor(((cacheSize * 3) / 1024 / 1024) * 100) / 100} MB >= ${testData.north.list[1].caching.maxSize} MB). ` +
         'Files will be discarded until the cache is emptied (by sending files/values or manual removal)'
     );
   });
@@ -648,7 +648,7 @@ describe('NorthConnector disabled', () => {
     await north.cacheValues([]);
     expect(logger.debug).toHaveBeenCalledWith(
       `North cache is exceeding the maximum allowed size ` +
-        `(${Math.floor((cacheSize / 1024 / 1024) * 100) / 100} MB >= ${testData.north.list[1].caching.maxSize} MB). ` +
+        `(${Math.floor(((cacheSize * 3) / 1024 / 1024) * 100) / 100} MB >= ${testData.north.list[1].caching.maxSize} MB). ` +
         'Values will be discarded until the cache is emptied (by sending files/values or manual removal)'
     );
   });
