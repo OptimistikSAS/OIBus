@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import SouthConnector from '../south-connector';
-import { compress } from '../../service/utils';
+import { compress, createFolder } from '../../service/utils';
 import pino from 'pino';
 import EncryptionService from '../../service/encryption.service';
 import { QueriesFile } from '../south-interface';
@@ -94,6 +94,7 @@ export default class SouthFolderScanner
   }
 
   async start(dataStream = true): Promise<void> {
+    await createFolder(this.tmpFolder);
     await super.start(dataStream);
     // Create a custom table in the south cache database to manage file already sent when preserve file is set to true
     this.cacheService!.createCustomTable(`folder_scanner_${this.connector.id}`, 'filename TEXT PRIMARY KEY, mtime_ms INTEGER');
@@ -208,8 +209,8 @@ export default class SouthFolderScanner
         } catch (unlinkError) {
           this.logger.error(`Error while removing compressed file "${gzipPath}": ${unlinkError}`);
         }
-      } catch {
-        this.logger.error(`Error compressing file "${filePath}". Sending it raw instead.`);
+      } catch (error: unknown) {
+        this.logger.error(`Error compressing file "${filePath}": ${(error as Error).message}. Sending it raw instead.`);
         await this.addContent({ type: 'raw', filePath });
       }
     } else {
