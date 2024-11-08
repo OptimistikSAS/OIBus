@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import SouthFolderScanner from './south-folder-scanner';
 
-import { compress } from '../../service/utils';
+import { compress, createFolder } from '../../service/utils';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from '../../service/encryption.service';
@@ -111,6 +111,7 @@ describe('SouthFolderScanner', () => {
   });
 
   it('fileQuery should manage file query', async () => {
+    expect(createFolder).toHaveBeenCalledTimes(1);
     (fs.readdir as jest.Mock)
       .mockImplementationOnce(() => Promise.resolve([]))
       .mockImplementationOnce(() => Promise.resolve(['file.txt', 'file2.txt', 'file3.txt', 'file.log']));
@@ -334,7 +335,7 @@ describe('SouthFolderScanner with compression', () => {
     });
     await south.sendFile(configuration.items[1], 'myFile2');
     expect(logger.error).toHaveBeenCalledWith(
-      `Error compressing file "${path.resolve(configuration.settings.inputFolder, 'myFile2')}". Sending it raw instead.`
+      `Error compressing file "${path.resolve(configuration.settings.inputFolder, 'myFile2')}": compression error. Sending it raw instead.`
     );
   });
 
