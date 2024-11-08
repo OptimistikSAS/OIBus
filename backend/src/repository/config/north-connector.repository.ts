@@ -65,7 +65,7 @@ export default class NorthConnectorRepository {
           );
       } else {
         const query =
-          `UPDATE ${NORTH_CONNECTORS_TABLE} SET name = ?, description = ?, settings = ?, ` +
+          `UPDATE ${NORTH_CONNECTORS_TABLE} SET name = ?, description = ?, enabled = ?, settings = ?, ` +
           `caching_scan_mode_id = ?, caching_group_count = ?, caching_retry_interval = ?, caching_retry_count = ?, ` +
           `caching_max_send_count = ?, caching_send_file_immediately = ?, caching_max_size = ?, archive_enabled = ?, archive_retention_duration = ? ` +
           `WHERE id = ?;`;
@@ -74,6 +74,7 @@ export default class NorthConnectorRepository {
           .run(
             north.name,
             north.description,
+            +north.enabled,
             JSON.stringify(north.settings),
             north.caching.scanModeId,
             north.caching.oibusTimeValues.groupCount,
