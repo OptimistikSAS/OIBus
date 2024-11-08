@@ -45,8 +45,8 @@ export default class SouthConnectorRepository {
           .prepare(insertQuery)
           .run(south.id, south.name, south.type, south.description, +south.enabled, JSON.stringify(south.settings));
       } else {
-        const query = `UPDATE ${SOUTH_CONNECTORS_TABLE} SET name = ?, description = ?, settings = ? WHERE id = ?;`;
-        this.database.prepare(query).run(south.name, south.description, JSON.stringify(south.settings), south.id);
+        const query = `UPDATE ${SOUTH_CONNECTORS_TABLE} SET name = ?, description = ?, enabled = ?, settings = ? WHERE id = ?;`;
+        this.database.prepare(query).run(south.name, south.description, +south.enabled, JSON.stringify(south.settings), south.id);
       }
 
       if (south.items.length > 0) {
