@@ -189,8 +189,8 @@ export default class HistoryQuery {
     }
     if (this.south) {
       this.south.connectedEvent.removeAllListeners();
-      this.south.metricsEvent.removeAllListeners();
       await this.south.stop(false);
+      this.south.metricsEvent.removeAllListeners();
     }
     if (this.north) {
       await this.north.stop(false);
