@@ -56,7 +56,7 @@ const constants = {
     DATE_2: '2020-03-20T00:00:00.000Z',
     DATE_3: '2020-03-25T00:00:00.000Z'
   }
-};
+} as const;
 
 const ipFilterCommandDTO: IPFilterCommandDTO = {
   address: '1.1.1.1',
