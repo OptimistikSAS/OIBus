@@ -49,7 +49,7 @@ describe('HistoryQuery enabled', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    jest.useFakeTimers({ doNotFake: ['performance'] }).setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
     (southService.runSouth as jest.Mock).mockReturnValue(mockedSouth1);
     (northService.runNorth as jest.Mock).mockReturnValue(mockedNorth1);
@@ -177,9 +177,55 @@ describe('HistoryQuery enabled', () => {
   it('should properly stop', async () => {
     const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
 
+    let southConnectedEventRemoved!: number;
+    let southStopCalled!: number;
+    let southMetricsEventRemoved!: number;
+
+    let northStopCalled!: number;
+    let northMetricsEventRemoved!: number;
+
+    // hook into south calls
+    // @ts-expect-error overriding method
+    mockedSouth1.connectedEvent.removeAllListeners = () => {
+      southConnectedEventRemoved = performance.now();
+    };
+    (mockedSouth1.stop as jest.Mock).mockImplementationOnce(async () => {
+      southStopCalled = performance.now();
+    });
+    // @ts-expect-error overriding method
+    mockedSouth1.metricsEvent.removeAllListeners = () => {
+      southMetricsEventRemoved = performance.now();
+    };
+
+    // hook into north calls
+    (mockedNorth1.stop as jest.Mock).mockImplementationOnce(async () => {
+      northStopCalled = performance.now();
+    });
+    // @ts-expect-error overriding method
+    mockedNorth1.metricsEvent.removeAllListeners = () => {
+      northMetricsEventRemoved = performance.now();
+    };
+
     await historyQuery.start();
     mockedSouth1.connectedEvent.emit('connected');
     await historyQuery.stop();
+
+    // make sure function are called in a specific order
+    const expectedOrder = [
+      southConnectedEventRemoved,
+      southStopCalled,
+      southMetricsEventRemoved,
+
+      northStopCalled,
+      northMetricsEventRemoved
+    ];
+    // if the order above is correct, it will equal to the sorted array
+    expect(expectedOrder).toEqual(expectedOrder.slice().sort((a, b) => a - b));
+
+    // safety check for mocking time
+    // if sometimes in the future we mess with how we mock time, and accidentally mock `performance.now`
+    // all calls to `now` will result in '0', and this will throw an error
+    expect(expectedOrder.reduce((val, sum) => val + sum, 0)).not.toEqual(0);
 
     expect(clearIntervalSpy).toHaveBeenCalledTimes(1);
     expect(mockedSouth1.stop).toHaveBeenCalledTimes(1);
