@@ -352,12 +352,29 @@ describe('SouthConnector with history and max instant per item', () => {
   });
 
   it('should manage history query with several intervals with max instant per item', async () => {
+    const historyStartTime = '2019-02-02T02:02:02.222Z';
+    const historyEndTime = '2023-02-02T02:02:02.222Z';
     const intervals = [
       { start: '2020-02-02T02:02:02.222Z', end: '2021-02-02T02:02:02.222Z' },
       { start: '2021-02-02T02:02:02.222Z', end: '2022-02-02T02:02:02.222Z' },
       { start: '2022-02-02T02:02:02.222Z', end: '2023-02-02T02:02:02.222Z' }
     ];
-    (generateIntervals as jest.Mock).mockReturnValue(intervals);
+    const startTimeFromCache = DateTime.fromISO(testData.constants.dates.FAKE_NOW)
+      .minus({ milliseconds: configuration.settings.throttling.overlap })
+      .toUTC()
+      .toISO();
+    (generateIntervals as jest.Mock).mockImplementation(
+      function (this: { generateIntervals: jest.Mock }) {
+        // first return intervals between: startTimeFromCache - historyEndTime (intervals needed to be done)
+        if (this.generateIntervals.mock.calls.length % 2 != 0) {
+          return intervals;
+        }
+        // then return the intervals between: historyStartTime - startTimeFromCache (intervals already done)
+        else {
+          return [{ start: '2019-02-02T02:02:02.222Z', end: '2020-02-02T02:02:02.222Z' }];
+        }
+      }.bind({ generateIntervals: generateIntervals as jest.Mock })
+    );
     south.historyQuery = jest
       .fn()
       .mockReturnValueOnce('2021-02-02T02:02:02.222Z')
@@ -366,8 +383,8 @@ describe('SouthConnector with history and max instant per item', () => {
 
     await south.historyQueryHandler(
       configuration.items as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>,
-      '2020-02-02T02:02:02.222Z',
-      '2023-02-02T02:02:02.222Z',
+      historyStartTime,
+      historyEndTime,
       testData.scanMode.list[0].id,
       {
         readDelay: south.settings.settings.throttling.readDelay,
@@ -376,15 +393,14 @@ describe('SouthConnector with history and max instant per item', () => {
       south.settings.settings.throttling.maxInstantPerItem,
       south.settings.settings.throttling.overlap
     );
+
+    expect(generateIntervals).toHaveBeenCalledWith(startTimeFromCache, historyEndTime, south.settings.settings.throttling.maxReadInterval);
     expect(generateIntervals).toHaveBeenCalledWith(
-      DateTime.fromISO(testData.constants.dates.FAKE_NOW)
-        .minus({ milliseconds: configuration.settings.throttling.overlap })
-        .toUTC()
-        .toISO(),
-      '2023-02-02T02:02:02.222Z',
+      historyStartTime,
+      startTimeFromCache,
       south.settings.settings.throttling.maxReadInterval
     );
-    expect(generateIntervals).toHaveBeenCalledTimes(2);
+    expect(generateIntervals).toHaveBeenCalledTimes(4);
     expect(south.historyQuery).toHaveBeenCalledTimes(6);
     expect(delay).toHaveBeenCalledTimes(5);
     expect(southCacheService.saveSouthCache).toHaveBeenCalledTimes(3);
@@ -441,7 +457,7 @@ describe('SouthConnector with history and max instant per item', () => {
         `[${JSON.stringify(intervals[0], null, 2)}\r\n` +
         `${JSON.stringify(intervals[1], null, 2)}]`
     );
-    expect(generateIntervals).toHaveBeenCalledTimes(2);
+    expect(generateIntervals).toHaveBeenCalledTimes(4);
     expect(south.historyQuery).toHaveBeenCalledTimes(4);
     expect(delay).toHaveBeenCalledTimes(3);
     expect(southCacheService.saveSouthCache).toHaveBeenCalledTimes(2);

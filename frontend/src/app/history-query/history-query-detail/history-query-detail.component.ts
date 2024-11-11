@@ -168,6 +168,10 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
       if (event && event.data) {
         this.historyMetrics = JSON.parse(event.data);
         this.cd.detectChanges();
+
+        if (this.historyQuery && this.historyQueryFinishedByMetrics) {
+          this.historyQuery.status = 'FINISHED';
+        }
       }
     });
   }
@@ -233,5 +237,17 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
     const modalRef = this.modalService.open(TestConnectionResultModalComponent);
     const component: TestConnectionResultModalComponent = modalRef.componentInstance;
     component.runHistoryQueryTest(type, command, this.historyQuery!.id);
+  }
+
+  get historyQueryFinishedByMetrics() {
+    if (!this.historyMetrics || this.historyMetrics.historyMetrics.intervalProgress !== 1) {
+      return false;
+    }
+
+    const valueProgress = this.historyMetrics.north.numberOfValuesSent / this.historyMetrics.south.numberOfValuesRetrieved;
+    const fileProgress = this.historyMetrics.north.numberOfFilesSent / this.historyMetrics.south.numberOfFilesRetrieved;
+
+    const percentage = valueProgress > 0 ? valueProgress : fileProgress;
+    return percentage === 1;
   }
 }

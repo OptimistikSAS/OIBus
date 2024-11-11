@@ -399,8 +399,12 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
         // requests. For example only one hour if maxReadInterval is 3600 (in s)
         const startTimeFromCache = DateTime.fromISO(southCache.maxInstant).minus({ milliseconds: overlap }).toUTC().toISO()!;
         const intervals = generateIntervals(startTimeFromCache, endTime, throttling.maxReadInterval);
+        let numberOfIntervalsDone = 0;
+        if (startTime !== startTimeFromCache) {
+          numberOfIntervalsDone = generateIntervals(startTime, startTimeFromCache, throttling.maxReadInterval).length;
+        }
         this.logIntervals(intervals);
-        await this.queryIntervals(intervals, [item], southCache, startTimeFromCache, throttling.readDelay);
+        await this.queryIntervals(intervals, [item], southCache, startTimeFromCache, throttling.readDelay, numberOfIntervalsDone);
         if (index !== itemsToRead.length - 1) {
           await delay(throttling.readDelay);
         }
@@ -411,9 +415,13 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
       // requests. For example only one hour if maxReadInterval is 3600 (in s)
       const intervals = generateIntervals(startTimeFromCache, endTime, throttling.maxReadInterval);
+      let numberOfIntervalsDone = 0;
+      if (startTime !== startTimeFromCache) {
+        numberOfIntervalsDone = generateIntervals(startTime, startTimeFromCache, throttling.maxReadInterval).length;
+      }
       this.logIntervals(intervals);
 
-      await this.queryIntervals(intervals, itemsToRead, southCache, startTimeFromCache, throttling.readDelay);
+      await this.queryIntervals(intervals, itemsToRead, southCache, startTime, throttling.readDelay, numberOfIntervalsDone);
     }
     this.metricsEvent.emit('history-query-stop', {
       running: false
@@ -425,12 +433,13 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     intervals: Array<Interval>,
     items: Array<SouthConnectorItemEntity<I>>,
     southCache: SouthCache,
-    startTimeFromCache: Instant,
-    readDelay: number
+    startTime: Instant,
+    readDelay: number,
+    numberOfIntervalsDone: number
   ) {
     this.metricsEvent.emit('history-query-start', {
       running: true,
-      intervalProgress: this.calculateIntervalProgress(intervals, 0, startTimeFromCache)
+      intervalProgress: this.calculateIntervalProgress(intervals, 0, startTime)
     });
 
     for (const [index, interval] of intervals.entries()) {
@@ -451,11 +460,11 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
 
       this.metricsEvent.emit('history-query-interval', {
         running: true,
-        intervalProgress: this.calculateIntervalProgress(intervals, index, startTimeFromCache),
+        intervalProgress: this.calculateIntervalProgress(intervals, index, startTime),
         currentIntervalStart: interval.start,
         currentIntervalEnd: interval.end,
-        currentIntervalNumber: index + 1,
-        numberOfIntervals: intervals.length
+        currentIntervalNumber: numberOfIntervalsDone + index + 1,
+        numberOfIntervals: numberOfIntervalsDone + intervals.length
       });
 
       if (this.stopping) {
