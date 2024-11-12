@@ -11,6 +11,7 @@ import { buildDateTimeFieldsFormControl } from '../../../../../../../backend/sha
 @Component({
   template: ` <form [formGroup]="form">
     <oib-edit-element
+      [parentForm]="form"
       [element]="element"
       [formDescription]="formDescription"
       [existingElements]="existingElements"

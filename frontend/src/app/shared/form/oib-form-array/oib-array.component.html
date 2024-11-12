@@ -26,6 +26,7 @@
         @if (isEdited(element)) {
           <oib-edit-element
             class="my-1 oib-editing-element"
+            [parentForm]="parentForm"
             [formDescription]="formDescription"
             [element]="element"
             [existingElements]="elements"
