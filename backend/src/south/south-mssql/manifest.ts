@@ -5,7 +5,7 @@ const manifest: SouthConnectorManifest = {
   id: 'mssql',
   name: 'MSSQL',
   category: 'database',
-  description: 'Request Microsoft SQL Server databases with SQL queries',
+  description: 'Query Microsoft SQL Server™ databases',
   modes: {
     subscription: false,
     lastPoint: false,

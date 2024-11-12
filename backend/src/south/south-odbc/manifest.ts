@@ -5,7 +5,7 @@ const manifest: SouthConnectorManifest = {
   id: 'odbc',
   name: 'ODBC',
   category: 'database',
-  description: 'Request SQL databases with an ODBC driver and SQL queries',
+  description: 'Query SQL databases with an ODBC driver',
   modes: {
     subscription: false,
     lastPoint: false,

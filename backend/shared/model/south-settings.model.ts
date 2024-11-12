@@ -617,8 +617,8 @@ export interface SouthModbusItemSettingsData {
 export interface SouthMQTTItemSettingsJsonPayloadTimestampPayload {
   timestampPath: string;
   timestampType: SouthMQTTItemSettingsJsonPayloadTimestampPayloadTimestampType;
-  timezone?: Timezone;
   timestampFormat?: string;
+  timezone?: Timezone;
 }
 
 export interface SouthMQTTItemSettingsJsonPayloadOtherFields {
@@ -629,10 +629,10 @@ export interface SouthMQTTItemSettingsJsonPayloadOtherFields {
 export interface SouthMQTTItemSettingsJsonPayload {
   useArray: boolean;
   dataArrayPath?: string | null;
-  pointIdOrigin: SouthMQTTItemSettingsJsonPayloadPointIdOrigin;
-  timestampOrigin: SouthMQTTItemSettingsJsonPayloadTimestampOrigin;
   valuePath: string;
+  pointIdOrigin: SouthMQTTItemSettingsJsonPayloadPointIdOrigin;
   pointIdPath?: string | null;
+  timestampOrigin: SouthMQTTItemSettingsJsonPayloadTimestampOrigin;
   timestampPayload?: SouthMQTTItemSettingsJsonPayloadTimestampPayload | null;
   otherFields: Array<SouthMQTTItemSettingsJsonPayloadOtherFields> | null;
 }

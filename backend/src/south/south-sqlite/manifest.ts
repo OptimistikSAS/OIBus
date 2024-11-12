@@ -5,7 +5,7 @@ const manifest: SouthConnectorManifest = {
   id: 'sqlite',
   name: 'SQLite',
   category: 'database',
-  description: 'Request SQLite databases with SQL queries',
+  description: 'Query  SQLite™ databases',
   modes: {
     subscription: false,
     lastPoint: false,

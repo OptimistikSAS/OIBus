@@ -2,9 +2,9 @@ import { SouthConnectorManifest } from '../../../shared/model/south-connector.mo
 
 const manifest: SouthConnectorManifest = {
   id: 'osisoft-pi',
-  name: 'OSIsoft PI',
+  name: 'OSIsoft PI System',
   category: 'database',
-  description: 'Connect to OIBus agent to retrieve data from OSIsoft PI server',
+  description: 'Establish a connection with an OIBus Agent to access data from a PI System™',
   modes: {
     subscription: false,
     lastPoint: false,

@@ -5,7 +5,7 @@ const manifest: SouthConnectorManifest = {
   id: 'slims',
   name: 'SLIMS',
   category: 'api',
-  description: 'Connect to SLIMS application',
+  description: 'Connect to SLIMS™ application',
   modes: {
     subscription: false,
     lastPoint: false,

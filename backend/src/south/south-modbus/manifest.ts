@@ -53,7 +53,7 @@ const manifest: SouthConnectorManifest = {
       key: 'addressOffset',
       type: 'OibSelect',
       options: ['Modbus', 'JBus'],
-      label: 'Address Offset',
+      label: 'Address offset',
       defaultValue: 'Modbus',
       class: 'col-4',
       validators: [{ key: 'required' }],
@@ -108,7 +108,7 @@ const manifest: SouthConnectorManifest = {
         key: 'modbusType',
         type: 'OibSelect',
         options: ['coil', 'discreteInput', 'inputRegister', 'holdingRegister'],
-        label: 'Modbus Type',
+        label: 'Modbus type',
         defaultValue: 'holdingRegister',
         validators: [{ key: 'required' }],
         displayInViewMode: true
@@ -126,7 +126,7 @@ const manifest: SouthConnectorManifest = {
             key: 'dataType',
             type: 'OibSelect',
             options: ['UInt16', 'Int16', 'UInt32', 'Int32', 'BigUInt64', 'BigInt64', 'Float', 'Double', 'Bit'],
-            label: 'Data Type',
+            label: 'Data type',
             defaultValue: 'UInt16',
             validators: [{ key: 'required' }],
             displayInViewMode: false
@@ -134,7 +134,7 @@ const manifest: SouthConnectorManifest = {
           {
             key: 'bitIndex',
             type: 'OibNumber',
-            label: 'Bit Index',
+            label: 'Bit index',
             defaultValue: 1,
             validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }, { key: 'max', params: { max: 15 } }],
             conditionalDisplay: { field: 'dataType', values: ['Bit'] },
@@ -143,7 +143,7 @@ const manifest: SouthConnectorManifest = {
           {
             key: 'multiplierCoefficient',
             type: 'OibNumber',
-            label: 'Multiplier Coefficient',
+            label: 'Multiplier coefficient',
             defaultValue: 1,
             validators: [{ key: 'required' }],
             displayInViewMode: false
