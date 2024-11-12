@@ -10,27 +10,53 @@
                   <label class="form-label" [for]="setting.type + '-' + setting.key">{{ setting.label }} </label>
                 }
                 @if (setting.type === 'OibText') {
-                  <input [formControlName]="setting.key" [id]="setting.type + '-' + setting.key" class="form-control" />
+                  <input
+                    [formControl]="asFormControl(form.controls[setting.key])"
+                    [id]="setting.type + '-' + setting.key"
+                    class="form-control"
+                  />
                 }
                 @if (setting.type === 'OibTextArea') {
-                  <textarea [formControlName]="setting.key" [id]="setting.type + '-' + setting.key" class="form-control"></textarea>
+                  <textarea
+                    [formControl]="asFormControl(form.controls[setting.key])"
+                    [id]="setting.type + '-' + setting.key"
+                    class="form-control"
+                  ></textarea>
                 }
                 @if (setting.type === 'OibCodeBlock') {
-                  <oib-code-block [key]="setting.key" [formControlName]="setting.key" [contentType]="setting.contentType" />
+                  <oib-code-block
+                    [key]="setting.key"
+                    [formControl]="asFormControl(form.controls[setting.key])"
+                    [contentType]="setting.contentType"
+                  />
                 }
                 <!-- Input of type number with unit -->
                 @if (setting.unitLabel && setting.type === 'OibNumber') {
                   <div class="input-group">
-                    <input type="number" [formControlName]="setting.key" [id]="setting.type + '-' + setting.key" class="form-control" />
+                    <input
+                      type="number"
+                      [formControl]="asFormControl(form.controls[setting.key])"
+                      [id]="setting.type + '-' + setting.key"
+                      class="form-control"
+                    />
                     <span class="input-group-text" [translate]="'common.unit.' + setting.unitLabel"></span>
                   </div>
                 }
                 <!-- Input of type number without unit -->
                 @if (setting.type === 'OibNumber' && !setting.unitLabel) {
-                  <input type="number" [formControlName]="setting.key" [id]="setting.type + '-' + setting.key" class="form-control" />
+                  <input
+                    type="number"
+                    [formControl]="asFormControl(form.controls[setting.key])"
+                    [id]="setting.type + '-' + setting.key"
+                    class="form-control"
+                  />
                 }
                 @if (setting.type === 'OibSelect') {
-                  <select [formControlName]="setting.key" [id]="setting.type + '-' + setting.key" class="form-select mb-2 mr-sm-2">
+                  <select
+                    [formControl]="asFormControl(form.controls[setting.key])"
+                    [id]="setting.type + '-' + setting.key"
+                    class="form-select mb-2 mr-sm-2"
+                  >
                     @if (!checkIfRequired(setting)) {
                       <option [ngValue]="null"></option>
                     }
@@ -40,7 +66,11 @@
                   </select>
                 }
                 @if (setting.type === 'OibCertificate') {
-                  <select [formControlName]="setting.key" [id]="setting.type + '-' + setting.key" class="form-select mb-2 mr-sm-2">
+                  <select
+                    [formControl]="asFormControl(form.controls[setting.key])"
+                    [id]="setting.type + '-' + setting.key"
+                    class="form-select mb-2 mr-sm-2"
+                  >
                     <option [ngValue]="null"></option>
                     @for (certificate of certificates; track certificate) {
                       <option [ngValue]="certificate.id">{{ certificate.name }}</option>
@@ -50,7 +80,7 @@
                 @if (setting.type === 'OibCheckbox') {
                   <div class="form-check form-switch padded">
                     <input
-                      [formControlName]="setting.key"
+                      [formControl]="asFormControl(form.controls[setting.key])"
                       [id]="setting.type + '-' + setting.key"
                       type="checkbox"
                       class="form-check-input"
@@ -61,34 +91,40 @@
                   </div>
                 }
                 @if (setting.type === 'OibSecret') {
-                  <input type="password" [formControlName]="setting.key" [id]="setting.type + '-' + setting.key" class="form-control" />
+                  <input
+                    type="password"
+                    [formControl]="asFormControl(form.controls[setting.key])"
+                    [id]="setting.type + '-' + setting.key"
+                    class="form-control"
+                  />
                 }
                 @if (setting.type === 'OibTimezone') {
                   <input
                     [id]="setting.type + '-' + setting.key"
                     class="form-control"
-                    [formControlName]="setting.key"
+                    [formControl]="asFormControl(form.controls[setting.key])"
                     [ngbTypeahead]="timezoneTypeahead"
                     [editable]="false"
                   />
                 }
                 @if (setting.type === 'OibArray') {
                   <oib-array
+                    [parentForm]="parentForm"
                     [formDescription]="setting.content"
                     [label]="setting.label"
                     [key]="setting.key"
-                    [formControlName]="setting.key"
+                    [formControl]="asFormControl(form.controls[setting.key])"
                   />
                 }
-                <val-errors [controlName]="setting.key" />
+                <val-errors [control]="asFormControl(form.controls[setting.key])" />
               </div>
             }
             @if (setting.type === 'OibFormGroup' && setting.content.length > 0) {
               <div class="form-group">
                 <label class="form-label" [for]="setting.type + '-' + setting.key">{{ setting.label }}</label>
                 <oib-form
-                  [formGroupName]="setting.key"
-                  [form]="getFormGroup(setting)"
+                  [parentForm]="parentForm"
+                  [form]="asFormGroup(form.controls[setting.key])"
                   [settingsSchema]="settingsGroupedByRowByFormGroup.get(setting.key)!"
                   [scanModes]="scanModes"
                   [certificates]="certificates"
