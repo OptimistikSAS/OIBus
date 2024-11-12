@@ -1,5 +1,13 @@
 import { AfterViewChecked, Component, forwardRef, Input, OnInit, inject } from '@angular/core';
-import { AbstractControl, ControlValueAccessor, NG_VALIDATORS, NG_VALUE_ACCESSOR, ValidationErrors, Validator } from '@angular/forms';
+import {
+  AbstractControl,
+  ControlValueAccessor,
+  FormGroup,
+  NG_VALIDATORS,
+  NG_VALUE_ACCESSOR,
+  ValidationErrors,
+  Validator
+} from '@angular/forms';
 import { formDirectives } from '../../form-directives';
 
 import { TranslateModule } from '@ngx-translate/core';
@@ -32,6 +40,7 @@ export class OibArrayComponent implements OnInit, AfterViewChecked, ControlValue
   @Input() label = '';
   @Input() key = '';
   @Input({ required: true }) formDescription!: Array<OibFormControl>;
+  @Input({ required: true }) parentForm!: FormGroup;
 
   elements: Array<any> = [];
   elementsIncludingNew: Array<any> = [];
