@@ -4,7 +4,7 @@ const manifest: SouthConnectorManifest = {
   id: 'opcua',
   name: 'OPC UA',
   category: 'iot',
-  description: 'Request data from OPC UA server',
+  description: 'Query data from OPC UA™ server',
   modes: {
     subscription: true,
     lastPoint: true,

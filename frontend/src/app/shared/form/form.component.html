@@ -83,7 +83,7 @@
                 <val-errors [controlName]="setting.key" />
               </div>
             }
-            @if (setting.type === 'OibFormGroup' && setting.content.length > 0 && getFormGroup(setting).enabled) {
+            @if (setting.type === 'OibFormGroup' && setting.content.length > 0) {
               <div class="form-group">
                 <label class="form-label" [for]="setting.type + '-' + setting.key">{{ setting.label }}</label>
                 <oib-form

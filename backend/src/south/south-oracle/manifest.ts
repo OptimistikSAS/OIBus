@@ -3,9 +3,9 @@ import { buildDateTimeFieldsFormControl, buildSerializationFormControl } from '.
 
 const manifest: SouthConnectorManifest = {
   id: 'oracle',
-  name: 'Oracle',
+  name: 'Oracle Database',
   category: 'database',
-  description: 'Request Oracle databases with SQL queries',
+  description: 'Query data from an Oracle Database™',
   modes: {
     subscription: false,
     lastPoint: false,
