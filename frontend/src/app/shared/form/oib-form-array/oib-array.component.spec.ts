@@ -1,6 +1,6 @@
 import { ComponentTester } from 'ngx-speculoos';
 import { Component } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { FormControl, FormGroup } from '@angular/forms';
 import { OibArrayComponent } from './oib-array.component';
 import { TestBed } from '@angular/core/testing';
 import { EditElementComponent } from './edit-element/edit-element.component';
@@ -9,13 +9,13 @@ import { formDirectives } from '../../form-directives';
 import { buildDateTimeFieldsFormControl } from '../../../../../../backend/shared/model/manifest-factory';
 
 @Component({
-  template: '<oib-array [formDescription]="formDescription" [formControl]="control" />',
+  template: '<oib-array [parentForm]="parentForm" [formDescription]="formDescription" [formControl]="control" />',
   standalone: true,
   imports: [OibArrayComponent, ...formDirectives]
 })
 class TestComponent {
   formDescription = buildDateTimeFieldsFormControl([]).content;
-
+  parentForm = new FormGroup({});
   control = new FormControl<Array<any>>([
     {
       fieldName: 'field1',

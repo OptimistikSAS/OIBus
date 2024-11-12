@@ -23,7 +23,7 @@
         </div>
       </div>
       @if (southItemRows.length > 0) {
-        <oib-form formGroupName="settings" [form]="form.controls.settings" [settingsSchema]="southItemRows" />
+        <oib-form [parentForm]="form" [form]="form.controls.settings" [settingsSchema]="southItemRows" />
       }
     </form>
   </div>

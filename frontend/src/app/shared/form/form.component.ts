@@ -1,12 +1,12 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, inject, Input, OnInit } from '@angular/core';
 
-import { ControlContainer, FormGroup, FormGroupName } from '@angular/forms';
+import { AbstractControl, FormControl, FormGroup, FormSubmittedEvent } from '@angular/forms';
 import { formDirectives } from '../form-directives';
-import { OibFormControl, OibFormGroup, OibSelectFormControl } from '../../../../../backend/shared/model/form.model';
+import { OibFormControl, OibSelectFormControl } from '../../../../../backend/shared/model/form.model';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { OibCodeBlockComponent } from './oib-code-block/oib-code-block.component';
 import { Timezone } from '../../../../../backend/shared/model/types';
-import { Observable } from 'rxjs';
+import { filter, Observable } from 'rxjs';
 import { inMemoryTypeahead } from '../typeahead';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
@@ -28,13 +28,7 @@ declare namespace Intl {
   standalone: true,
   imports: [...formDirectives, OibCodeBlockComponent, NgbTypeahead, TranslateModule, OibArrayComponent],
   templateUrl: './form.component.html',
-  styleUrl: './form.component.scss',
-  viewProviders: [
-    {
-      provide: ControlContainer,
-      useExisting: FormGroupName
-    }
-  ]
+  styleUrl: './form.component.scss'
 })
 export class FormComponent implements OnInit {
   private pipeProviderService = inject(PipeProviderService);
@@ -43,6 +37,7 @@ export class FormComponent implements OnInit {
   @Input() scanModes: Array<ScanModeDTO> = [];
   @Input() certificates: Array<CertificateDTO> = [];
   @Input({ required: true }) form!: FormGroup;
+  @Input({ required: true }) parentForm!: FormGroup;
 
   private timezones: ReadonlyArray<Timezone> = Intl.supportedValuesOf('timeZone');
   timezoneTypeahead: (text$: Observable<string>) => Observable<Array<Timezone>> = inMemoryTypeahead(
@@ -62,10 +57,15 @@ export class FormComponent implements OnInit {
       });
     });
     this.form.setValue(this.form.getRawValue());
+    this.parentForm.events.pipe(filter(event => event instanceof FormSubmittedEvent)).subscribe(() => this.form.markAllAsTouched());
   }
 
-  getFormGroup(setting: OibFormGroup): FormGroup {
-    return this.form.controls[setting.key] as FormGroup;
+  asFormGroup(abstractControl: AbstractControl): FormGroup {
+    return abstractControl as FormGroup;
+  }
+
+  asFormControl(abstractControl: AbstractControl): FormControl {
+    return abstractControl as FormControl;
   }
 
   transform(value: string, pipeIdentifier: string | undefined): string {

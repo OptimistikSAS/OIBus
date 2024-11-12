@@ -40,7 +40,7 @@
         </div>
       </div>
       @if (southItemRows.length > 0) {
-        <oib-form formGroupName="settings" [form]="form.controls.settings" [settingsSchema]="southItemRows" [scanModes]="scanModes" />
+        <oib-form [parentForm]="form" [form]="form.controls.settings" [settingsSchema]="southItemRows" [scanModes]="scanModes" />
       }
     </form>
   </div>

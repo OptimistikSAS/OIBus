@@ -67,7 +67,7 @@
               </ng-template>
               @if (northSettingsControls.length > 0) {
                 <oib-form
-                  formGroupName="settings"
+                  [parentForm]="northForm"
                   [form]="northForm.controls.settings"
                   [settingsSchema]="northSettingsControls"
                   [certificates]="certificates"

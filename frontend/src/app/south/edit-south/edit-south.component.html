@@ -67,7 +67,7 @@
               </ng-template>
               @if (southSettingsControls.length > 0) {
                 <oib-form
-                  formGroupName="settings"
+                  [parentForm]="southForm"
                   [form]="southForm.controls.settings"
                   [settingsSchema]="southSettingsControls"
                   [scanModes]="scanModes"

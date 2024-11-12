@@ -186,7 +186,7 @@
               </ng-template>
               @if (northSettingsControls.length > 0) {
                 <oib-form
-                  formGroupName="northSettings"
+                  [parentForm]="historyQueryForm"
                   [form]="historyQueryForm.controls.northSettings"
                   [settingsSchema]="northSettingsControls"
                   [scanModes]="scanModes"
@@ -216,7 +216,7 @@
               </ng-template>
               @if (southSettingsControls.length > 0) {
                 <oib-form
-                  formGroupName="southSettings"
+                  [parentForm]="historyQueryForm"
                   [form]="historyQueryForm.controls.southSettings"
                   [settingsSchema]="southSettingsControls"
                   [scanModes]="scanModes"
