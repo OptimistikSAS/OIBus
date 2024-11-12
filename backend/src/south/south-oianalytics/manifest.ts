@@ -5,7 +5,7 @@ const manifest: SouthConnectorManifest = {
   id: 'oianalytics',
   name: 'OIAnalytics',
   category: 'api',
-  description: 'Request time values from OIAnalytics',
+  description: 'Query time values from OIAnalytics®',
   modes: {
     subscription: false,
     lastPoint: false,

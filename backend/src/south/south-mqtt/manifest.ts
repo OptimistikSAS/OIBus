@@ -152,7 +152,8 @@ const manifest: SouthConnectorManifest = {
         type: 'OibText',
         label: 'Topic',
         validators: [{ key: 'required' }],
-        displayInViewMode: true
+        displayInViewMode: true,
+        class: 'col-8'
       },
       {
         key: 'valueType',
@@ -162,7 +163,8 @@ const manifest: SouthConnectorManifest = {
         defaultValue: 'number',
         validators: [{ key: 'required' }],
         newRow: false,
-        displayInViewMode: true
+        displayInViewMode: true,
+        class: 'col-4'
       },
       {
         key: 'jsonPayload',
@@ -190,29 +192,20 @@ const manifest: SouthConnectorManifest = {
             conditionalDisplay: { field: 'useArray', values: [true] }
           },
           {
-            key: 'pointIdOrigin',
-            type: 'OibSelect',
-            label: 'Point ID origin',
-            options: ['oibus', 'payload'],
-            defaultValue: 'oibus',
+            key: 'valuePath',
+            type: 'OibText',
+            label: 'Value path',
+            defaultValue: 'value',
             class: 'col-4',
             newRow: true,
             validators: [{ key: 'required' }]
           },
           {
-            key: 'timestampOrigin',
+            key: 'pointIdOrigin',
             type: 'OibSelect',
-            label: 'Timestamp origin',
+            label: 'Point ID origin',
             options: ['oibus', 'payload'],
             defaultValue: 'oibus',
-            class: 'col-4',
-            validators: [{ key: 'required' }]
-          },
-          {
-            key: 'valuePath',
-            type: 'OibText',
-            label: 'Value path',
-            defaultValue: 'value',
             class: 'col-4',
             newRow: true,
             validators: [{ key: 'required' }]
@@ -224,6 +217,16 @@ const manifest: SouthConnectorManifest = {
             defaultValue: 'name',
             class: 'col-4',
             conditionalDisplay: { field: 'pointIdOrigin', values: ['payload'] }
+          },
+          {
+            key: 'timestampOrigin',
+            type: 'OibSelect',
+            label: 'Timestamp origin',
+            options: ['oibus', 'payload'],
+            defaultValue: 'oibus',
+            newRow: true,
+            class: 'col-4',
+            validators: [{ key: 'required' }]
           },
           {
             key: 'timestampPayload',
@@ -250,20 +253,20 @@ const manifest: SouthConnectorManifest = {
                 pipe: 'dateTimeType'
               },
               {
+                key: 'timestampFormat',
+                label: 'Timestamp format',
+                type: 'OibText',
+                defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
+                conditionalDisplay: { field: 'timestampType', values: ['string'] },
+                validators: [{ key: 'required' }]
+              },
+              {
                 key: 'timezone',
                 label: 'Timezone',
                 type: 'OibTimezone',
                 defaultValue: 'UTC',
                 validators: [{ key: 'required' }],
                 conditionalDisplay: { field: 'timestampType', values: ['string'] }
-              },
-              {
-                key: 'timestampFormat',
-                label: 'Timestamp format',
-                type: 'OibText',
-                defaultValue: 'yyyy-MM-dd HH:mm:ss',
-                conditionalDisplay: { field: 'timestampType', values: ['string'] },
-                validators: [{ key: 'required' }]
               }
             ]
           },

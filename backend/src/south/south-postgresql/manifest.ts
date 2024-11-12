@@ -5,7 +5,7 @@ const manifest: SouthConnectorManifest = {
   id: 'postgresql',
   name: 'PostgreSQL',
   category: 'database',
-  description: 'Request PostgreSQL databases with SQL queries',
+  description: 'Query PostgreSQL databases',
   modes: {
     subscription: false,
     lastPoint: false,
