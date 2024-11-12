@@ -23,6 +23,7 @@ export class EditElementComponent implements OnInit {
   @Input({ required: true }) formDescription!: Array<OibFormControl>;
   @Input({ required: true }) element!: any;
   @Input({ required: true }) existingElements!: Array<any>;
+  @Input({ required: true }) parentForm!: FormGroup;
 
   @Output() readonly saved = new EventEmitter<any>();
   @Output() readonly cancelled = new EventEmitter<void>();
