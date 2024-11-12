@@ -5,7 +5,7 @@ const manifest: SouthConnectorManifest = {
   id: 'mysql',
   name: 'MySQL',
   category: 'database',
-  description: 'Request MySQL / MariaDB databases with SQL queries',
+  description: 'Query MySQL® or MariaDB™ databases',
   modes: {
     subscription: false,
     lastPoint: false,
