@@ -5,7 +5,7 @@ const manifest: SouthConnectorManifest = {
   id: 'oledb',
   name: 'OLEDB',
   category: 'database',
-  description: 'Request SQL databases with an OLEDB driver and SQL queries',
+  description: 'Query SQL databases with OLEDB',
   modes: {
     subscription: false,
     lastPoint: false,
