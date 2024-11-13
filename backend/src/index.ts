@@ -11,7 +11,7 @@ import DataStreamEngine from './engine/data-stream-engine';
 import HistoryQueryEngine from './engine/history-query-engine';
 import HistoryQueryService from './service/history-query.service';
 import OIBusService from './service/oibus.service';
-import { migrateCrypto, migrateEntities, migrateDataFolder, migrateLogsAndMetrics, migrateSouthCache } from './db/migration-service';
+import { migrateCrypto, migrateEntities, migrateDataFolder, migrateLogsAndMetrics, migrateSouthCache } from './migration/migration-service';
 import OIAnalyticsCommandService from './service/oia/oianalytics-command.service';
 import OianalyticsRegistrationService from './service/oia/oianalytics-registration.service';
 import ConnectionService from './service/connection.service';
