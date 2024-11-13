@@ -9,7 +9,7 @@
     "src/service/logger/oianalytics-transport.ts",
   ],
   "include": [
-    "src/db/**/*.ts",
+    "src/migration/**/*.ts",
     "src/**/manifest.ts"
   ],
   "exclude": [
