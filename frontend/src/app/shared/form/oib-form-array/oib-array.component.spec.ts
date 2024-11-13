@@ -121,7 +121,7 @@ describe('ArrayComponent', () => {
       useAsReference: false,
       type: 'string',
       timezone: 'UTC',
-      format: 'yyyy-MM-dd HH:mm:ss',
+      format: 'yyyy-MM-dd HH:mm:ss.SSS',
       locale: 'en-En'
     });
 
@@ -153,7 +153,7 @@ describe('ArrayComponent', () => {
       useAsReference: false,
       type: 'string',
       timezone: 'UTC',
-      format: 'yyyy-MM-dd HH:mm:ss',
+      format: 'yyyy-MM-dd HH:mm:ss.SSS',
       locale: 'en-En'
     });
 
