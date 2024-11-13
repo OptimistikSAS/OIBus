@@ -86,7 +86,7 @@ const manifest: SouthConnectorManifest = {
       {
         key: 'type',
         type: 'OibSelect',
-        options: ['pointId', 'pointQuery'],
+        options: ['point-id', 'point-query'],
         label: 'Type',
         defaultValue: 'pointId',
         class: 'col-4',

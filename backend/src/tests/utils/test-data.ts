@@ -280,8 +280,8 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
       authentication: {
         type: 'none'
       },
-      securityMode: 'None',
-      securityPolicy: 'None',
+      securityMode: 'none',
+      securityPolicy: 'none',
       keepSessionAlive: false
     },
     items: [
@@ -290,7 +290,7 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         name: 'opcua ha',
         enabled: true,
         settings: {
-          mode: 'HA'
+          mode: 'ha'
         } as SouthItemSettings,
         scanModeId: scanModes[0].id
       },
@@ -299,7 +299,7 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         name: 'opcua sub',
         enabled: true,
         settings: {
-          mode: 'DA'
+          mode: 'da'
         } as SouthItemSettings,
         scanModeId: 'subscription'
       },
@@ -308,7 +308,7 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         name: 'opcua da',
         enabled: true,
         settings: {
-          mode: 'DA'
+          mode: 'da'
         } as SouthItemSettings,
         scanModeId: scanModes[1].id
       },
@@ -317,7 +317,7 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         name: 'opcua ha 2',
         enabled: true,
         settings: {
-          mode: 'HA'
+          mode: 'ha'
         } as SouthItemSettings,
         scanModeId: scanModes[0].id
       }

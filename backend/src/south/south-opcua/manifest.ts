@@ -73,15 +73,17 @@ const manifest: SouthConnectorManifest = {
       label: 'URL',
       defaultValue: 'opc.tcp://servername:port/endpoint',
       newRow: true,
+      class: 'col-8',
       validators: [{ key: 'required' }, { key: 'pattern', params: { pattern: '^(http:\\/\\/|opc.tcp:\\/\\/).*' } }],
       displayInViewMode: true
     },
     {
       key: 'keepSessionAlive',
       type: 'OibCheckbox',
-      label: 'Keep Session Alive',
+      label: 'Keep session alive',
       defaultValue: false,
       newRow: false,
+      class: 'col-4',
       validators: [{ key: 'required' }],
       displayInViewMode: true
     },
@@ -91,7 +93,8 @@ const manifest: SouthConnectorManifest = {
       label: 'Read timeout',
       unitLabel: 'ms',
       defaultValue: 15_000,
-      newRow: false,
+      newRow: true,
+      class: 'col-4',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
       displayInViewMode: false
     },
@@ -102,15 +105,16 @@ const manifest: SouthConnectorManifest = {
       unitLabel: 'ms',
       defaultValue: 5_000,
       newRow: false,
+      class: 'col-4',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
       displayInViewMode: false
     },
     {
       key: 'securityMode',
       type: 'OibSelect',
-      label: 'Security Mode',
-      options: ['None', 'Sign', 'SignAndEncrypt'],
-      defaultValue: 'None',
+      label: 'Security mode',
+      options: ['none', 'sign', 'sign-and-encrypt'],
+      defaultValue: 'none',
       validators: [{ key: 'required' }],
       newRow: true,
       displayInViewMode: true
@@ -118,22 +122,21 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'securityPolicy',
       type: 'OibSelect',
-      label: 'Security Policy',
+      label: 'Security policy',
       options: [
-        'None',
-        'Basic128',
-        'Basic192',
-        'Basic256',
-        'Basic128Rsa15',
-        'Basic192Rsa15',
-        'Basic256Rsa15',
-        'Basic256Sha256',
-        'Aes128_Sha256_RsaOaep',
-        'PubSub_Aes128_CTR',
-        'PubSub_Aes256_CTR'
+        'none',
+        'basic128',
+        'basic192',
+        'basic192-rsa15',
+        'basic256-rsa15',
+        'basic256-sha256',
+        'aes128-sha256-rsa-oaep',
+        'aes256-sha256-rsa-pss',
+        'pub-sub-aes-128-ctr',
+        'pub-sub-aes-256-ctr'
       ],
-      defaultValue: 'None',
-      conditionalDisplay: { field: 'securityMode', values: ['Sign', 'SignAndEncrypt'] },
+      defaultValue: 'none',
+      conditionalDisplay: { field: 'securityMode', values: ['sign', 'sign-and-encrypt'] },
       newRow: false,
       displayInViewMode: true
     },
@@ -209,13 +212,12 @@ const manifest: SouthConnectorManifest = {
         validators: [{ key: 'required' }],
         displayInViewMode: true
       },
-
       {
         key: 'mode',
         type: 'OibSelect',
         label: 'Mode',
-        options: ['HA', 'DA'],
-        defaultValue: 'HA',
+        options: ['ha', 'da'],
+        defaultValue: 'ha',
         validators: [{ key: 'required' }],
         displayInViewMode: true
       },
@@ -225,7 +227,7 @@ const manifest: SouthConnectorManifest = {
         label: '',
         newRow: true,
         displayInViewMode: false,
-        conditionalDisplay: { field: 'mode', values: ['HA'] },
+        conditionalDisplay: { field: 'mode', values: ['ha'] },
         content: [
           {
             key: 'aggregate',

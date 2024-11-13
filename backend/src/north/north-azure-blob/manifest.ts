@@ -5,7 +5,7 @@ const manifest: NorthConnectorManifest = {
   id: 'azure-blob',
   name: 'Azure Blob',
   category: 'file',
-  description: 'Store files in Azure Blob',
+  description: 'Store files in Microsoft Azure Blob Storage™',
   modes: {
     files: true,
     points: true
@@ -14,7 +14,7 @@ const manifest: NorthConnectorManifest = {
     {
       key: 'useCustomUrl',
       type: 'OibCheckbox',
-      label: 'Use Custom URL',
+      label: 'Use custom URL',
       validators: [{ key: 'required' }],
       defaultValue: false,
       displayInViewMode: true,
@@ -61,10 +61,10 @@ const manifest: NorthConnectorManifest = {
     {
       key: 'authentication',
       type: 'OibSelect',
-      options: ['accessKey', 'sasToken', 'aad', 'external'],
+      options: ['access-key', 'sas-token', 'aad', 'external'],
       label: 'Authentication',
       pipe: 'authentication',
-      defaultValue: 'accessKey',
+      defaultValue: 'access-key',
       newRow: true,
       validators: [{ key: 'required' }],
       displayInViewMode: true
@@ -73,13 +73,13 @@ const manifest: NorthConnectorManifest = {
       key: 'sasToken',
       type: 'OibSecret',
       label: 'Shared Access Signature token',
-      conditionalDisplay: { field: 'authentication', values: ['sasToken'] }
+      conditionalDisplay: { field: 'authentication', values: ['sas-token'] }
     },
     {
       key: 'accessKey',
       type: 'OibSecret',
       label: 'Access key',
-      conditionalDisplay: { field: 'authentication', values: ['accessKey'] }
+      conditionalDisplay: { field: 'authentication', values: ['access-key'] }
     },
     {
       key: 'tenantId',

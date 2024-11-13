@@ -52,9 +52,9 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'addressOffset',
       type: 'OibSelect',
-      options: ['Modbus', 'JBus'],
+      options: ['modbus', 'jbus'],
       label: 'Address offset',
-      defaultValue: 'Modbus',
+      defaultValue: 'modbus',
       class: 'col-4',
       validators: [{ key: 'required' }],
       displayInViewMode: true
@@ -62,9 +62,9 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'endianness',
       type: 'OibSelect',
-      options: ['Big Endian', 'Little Endian'],
+      options: ['big-endian', 'little-endian'],
       label: 'Endianness',
-      defaultValue: 'Big Endian',
+      defaultValue: 'big-endian',
       class: 'col-4',
       validators: [{ key: 'required' }],
       displayInViewMode: true
@@ -107,9 +107,9 @@ const manifest: SouthConnectorManifest = {
       {
         key: 'modbusType',
         type: 'OibSelect',
-        options: ['coil', 'discreteInput', 'inputRegister', 'holdingRegister'],
+        options: ['coil', 'discrete-input', 'input-register', 'holding-register'],
         label: 'Modbus type',
-        defaultValue: 'holdingRegister',
+        defaultValue: 'holding-register',
         validators: [{ key: 'required' }],
         displayInViewMode: true
       },
@@ -120,14 +120,14 @@ const manifest: SouthConnectorManifest = {
         newRow: true,
         displayInViewMode: false,
         validators: [{ key: 'required' }],
-        conditionalDisplay: { field: 'modbusType', values: ['inputRegister', 'holdingRegister'] },
+        conditionalDisplay: { field: 'modbusType', values: ['input-register', 'holding-register'] },
         content: [
           {
             key: 'dataType',
             type: 'OibSelect',
-            options: ['UInt16', 'Int16', 'UInt32', 'Int32', 'BigUInt64', 'BigInt64', 'Float', 'Double', 'Bit'],
+            options: ['uint16', 'int16', 'uint32', 'int32', 'big-uint64', 'big-int64', 'float', 'double', 'bit'],
             label: 'Data type',
-            defaultValue: 'UInt16',
+            defaultValue: 'uint16',
             validators: [{ key: 'required' }],
             displayInViewMode: false
           },
@@ -137,7 +137,7 @@ const manifest: SouthConnectorManifest = {
             label: 'Bit index',
             defaultValue: 1,
             validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }, { key: 'max', params: { max: 15 } }],
-            conditionalDisplay: { field: 'dataType', values: ['Bit'] },
+            conditionalDisplay: { field: 'dataType', values: ['bit'] },
             displayInViewMode: false
           },
           {

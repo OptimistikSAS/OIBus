@@ -5,7 +5,7 @@ const manifest: NorthConnectorManifest = {
   id: 'aws-s3',
   name: 'AWS S3',
   category: 'file',
-  description: 'Store files into AWS S3 bucket',
+  description: 'Store files in Amazon S3™ (Simple Storage Service)',
   modes: {
     files: true,
     points: true
@@ -23,6 +23,7 @@ const manifest: NorthConnectorManifest = {
       key: 'region',
       type: 'OibText',
       label: 'Region',
+      defaultValue: 'eu-west-3',
       newRow: false,
       validators: [{ key: 'required' }],
       displayInViewMode: true
