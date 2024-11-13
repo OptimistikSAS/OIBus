@@ -72,7 +72,7 @@ const manifest: SouthConnectorManifest = {
       key: 'connectionTimeout',
       type: 'OibNumber',
       label: 'Connection timeout',
-      defaultValue: 1000,
+      defaultValue: 15_000,
       unitLabel: 'ms',
       class: 'col-3',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30_000 } }]
@@ -85,6 +85,16 @@ const manifest: SouthConnectorManifest = {
       unitLabel: 'ms',
       class: 'col-3',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30_000 } }]
+    },
+    {
+      key: 'requestTimeout',
+      type: 'OibNumber',
+      label: 'Request timeout',
+      defaultValue: 15_000,
+      unitLabel: 'ms',
+      class: 'col-3',
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
+      conditionalDisplay: { field: 'remoteAgent', values: [true] }
     },
     {
       key: 'connectionString',
@@ -101,16 +111,6 @@ const manifest: SouthConnectorManifest = {
       label: 'Password',
       newRow: false,
       displayInViewMode: false
-    },
-    {
-      key: 'requestTimeout',
-      type: 'OibNumber',
-      label: 'Request timeout',
-      defaultValue: 15_000,
-      unitLabel: 'ms',
-      class: 'col-4',
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
-      conditionalDisplay: { field: 'remoteAgent', values: [true] }
     }
   ],
   items: {

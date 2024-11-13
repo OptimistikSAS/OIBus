@@ -4,7 +4,7 @@ import pino from 'pino';
 import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
-import { SouthOracleSettings, SouthPIItemSettings, SouthPISettings } from '../../../shared/model/south-settings.model';
+import { SouthPIItemSettings, SouthPISettings } from '../../../shared/model/south-settings.model';
 import fetch from 'node-fetch';
 import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
@@ -110,7 +110,7 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
         items: [
           {
             name: item.name,
-            type: item.settings.type,
+            type: item.settings.type === 'point-id' ? 'pointId' : 'pointQuery',
             piPoint: item.settings.piPoint,
             piQuery: item.settings.piQuery
           }
@@ -155,7 +155,7 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
         endTime,
         items: items.map(item => ({
           name: item.name,
-          type: item.settings.type,
+          type: item.settings.type === 'point-id' ? 'pointId' : 'pointQuery',
           piPoint: item.settings.piPoint,
           piQuery: item.settings.piQuery
         }))

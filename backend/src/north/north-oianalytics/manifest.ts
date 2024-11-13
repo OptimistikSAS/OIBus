@@ -5,7 +5,7 @@ const manifest: NorthConnectorManifest = {
   id: 'oianalytics',
   name: 'OIAnalytics',
   category: 'api',
-  description: 'Send files and values to OIAnalytics application',
+  description: 'Send files and values to OIAnalytics®',
   modes: {
     files: true,
     points: true
