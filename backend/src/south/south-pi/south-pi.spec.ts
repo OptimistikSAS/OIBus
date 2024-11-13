@@ -60,7 +60,7 @@ describe('South PI', () => {
         name: 'item1',
         enabled: true,
         settings: {
-          type: 'pointId',
+          type: 'point-id',
           piPoint: 'FACTORY.WORKSHOP.POINT.ID1'
         },
         scanModeId: 'scanModeId1'
@@ -70,7 +70,7 @@ describe('South PI', () => {
         name: 'item2',
         enabled: true,
         settings: {
-          type: 'pointQuery',
+          type: 'point-query',
           piQuery: '*'
         },
         scanModeId: 'scanModeId1'
@@ -314,16 +314,27 @@ describe('South PI', () => {
   });
 
   it('should test item', async () => {
-    (fetch as unknown as jest.Mock).mockReturnValueOnce(
-      Promise.resolve({
-        status: 200,
-        json: () => ({
-          recordCount: 2,
-          content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
-          maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
+    (fetch as unknown as jest.Mock)
+      .mockReturnValueOnce(
+        Promise.resolve({
+          status: 200,
+          json: () => ({
+            recordCount: 2,
+            content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
+            maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
+          })
         })
-      })
-    );
+      )
+      .mockReturnValueOnce(
+        Promise.resolve({
+          status: 200,
+          json: () => ({
+            recordCount: 2,
+            content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
+            maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
+          })
+        })
+      );
 
     const callback = jest.fn();
     south.connect = jest.fn();
@@ -332,6 +343,11 @@ describe('South PI', () => {
     expect(south.connect).toHaveBeenCalledTimes(1);
     expect(south.disconnect).toHaveBeenCalledTimes(1);
     expect(callback).toHaveBeenCalledTimes(1);
+
+    await south.testItem(configuration.items[1], callback);
+    expect(south.connect).toHaveBeenCalledTimes(2);
+    expect(south.disconnect).toHaveBeenCalledTimes(2);
+    expect(callback).toHaveBeenCalledTimes(2);
   });
 
   it('should test item and throw error if bad status', async () => {

@@ -54,7 +54,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'useOiaModule',
       type: 'OibCheckbox',
-      label: 'Use OIAnalytics Module',
+      label: 'Use OIAnalytics registration',
       validators: [{ key: 'required' }],
       newRow: true,
       defaultValue: true,
@@ -165,7 +165,7 @@ const manifest: SouthConnectorManifest = {
           type: 'OibText',
           label: 'Scope',
           newRow: false,
-          conditionalDisplay: { field: 'authentication', values: ['aad', 'aad-certificate'] }
+          conditionalDisplay: { field: 'authentication', values: ['aad-certificate'] }
         },
         ...proxy
       ]

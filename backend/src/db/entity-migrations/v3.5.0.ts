@@ -21,8 +21,11 @@ export async function up(knex: Knex): Promise<void> {
   await removeNorthOIBusConnectors(knex);
   await removeNorthOIBusHistoryQueries(knex);
   await removeExternalSubscriptions(knex);
+  await updateNorthConnectors(knex);
   await updateSouthConnectors(knex);
+  await updateSouthConnectorItems(knex);
   await updateHistoryQueries(knex);
+  await updateHistoryQueryItems(knex);
   await updateOIAMessageTable(knex);
   await recreateCommandTable(knex);
   await updateRegistrationSettings(knex);
@@ -62,6 +65,128 @@ async function removeExternalSubscriptions(knex: Knex): Promise<void> {
   await knex.schema.dropTableIfExists(EXTERNAL_SOURCES_TABLE);
 }
 
+function toNewOPCUASecurityMode(securityMode: 'None' | 'Sign' | 'SignAndEncrypt'): 'none' | 'sign' | 'sign-and-encrypt' {
+  switch (securityMode) {
+    case 'None':
+      return 'none';
+    case 'Sign':
+      return 'sign';
+    case 'SignAndEncrypt':
+      return 'sign-and-encrypt';
+  }
+}
+
+function toNewOPCUASecurityPolicy(
+  securityPolicy:
+    | 'None'
+    | 'Basic128'
+    | 'Basic192'
+    | 'Basic256'
+    | 'Basic128Rsa15'
+    | 'Basic192Rsa15'
+    | 'Basic256Rsa15'
+    | 'Basic256Sha256'
+    | 'Aes128_Sha256_RsaOaep'
+    | 'PubSub_Aes128_CTR'
+    | 'PubSub_Aes256_CTR'
+):
+  | 'none'
+  | 'basic128'
+  | 'basic192'
+  | 'basic256'
+  | 'basic192-rsa15'
+  | 'basic256-rsa15'
+  | 'basic256-sha256'
+  | 'aes128-sha256-rsa-oaep'
+  | 'pub-sub-aes-128-ctr'
+  | 'pub-sub-aes-256-ctr' {
+  switch (securityPolicy) {
+    case 'None':
+      return 'none';
+    case 'Basic128':
+      return 'basic128';
+    case 'Basic192':
+      return 'basic192';
+    case 'Basic256': // obsolete
+      return 'basic128';
+    case 'Basic128Rsa15': // obsolete
+      return 'basic128';
+    case 'Basic192Rsa15':
+      return 'basic192-rsa15';
+    case 'Basic256Rsa15':
+      return 'basic256-rsa15';
+    case 'Basic256Sha256':
+      return 'basic256-sha256';
+    case 'Aes128_Sha256_RsaOaep':
+      return 'aes128-sha256-rsa-oaep';
+    case 'PubSub_Aes128_CTR':
+      return 'pub-sub-aes-128-ctr';
+    case 'PubSub_Aes256_CTR':
+      return 'pub-sub-aes-256-ctr';
+  }
+}
+
+function toNewModbusEndianness(endianness: 'Big Endian' | 'Little Endian'): 'big-endian' | 'little-endian' {
+  switch (endianness) {
+    case 'Big Endian':
+      return 'big-endian';
+    case 'Little Endian':
+      return 'little-endian';
+  }
+}
+
+function toNewModbusAddressOffset(addressOffset: 'Modbus' | 'JBus'): 'modbus' | 'jbus' {
+  switch (addressOffset) {
+    case 'Modbus':
+      return 'modbus';
+    case 'JBus':
+      return 'jbus';
+  }
+}
+
+function toNewADSAsText(value: 'Text' | 'Integer'): 'text' | 'integer' {
+  switch (value) {
+    case 'Text':
+      return 'text';
+    case 'Integer':
+      return 'integer';
+  }
+}
+
+function toNewAzureBlobAuthentication(
+  authentication: 'accessKey' | 'sasToken' | 'aad' | 'external'
+): 'access-key' | 'sas-token' | 'aad' | 'external' {
+  switch (authentication) {
+    case 'external':
+      return 'external';
+    case 'aad':
+      return 'aad';
+    case 'accessKey':
+      return 'access-key';
+    case 'sasToken':
+      return 'sas-token';
+  }
+}
+
+async function updateNorthConnectors(knex: Knex): Promise<void> {
+  const oldNorthSettings: Array<{
+    id: string;
+    type: string;
+    settings: string;
+  }> = await knex(NORTH_CONNECTORS_TABLE).select('id', 'type', 'settings');
+  for (const { id, type, settings } of oldNorthSettings) {
+    const newSettings = JSON.parse(settings);
+    switch (type) {
+      case 'azure-blob':
+        newSettings.authentication = toNewAzureBlobAuthentication(newSettings.authentication);
+        break;
+    }
+    await knex(SOUTH_CONNECTORS_TABLE)
+      .update({ settings: JSON.stringify(newSettings) })
+      .where('id', id);
+  }
+}
+
 async function updateSouthConnectors(knex: Knex): Promise<void> {
   const oldSouthSettings: Array<{
     id: string;
@@ -71,30 +196,15 @@ async function updateSouthConnectors(knex: Knex): Promise<void> {
     history_read_delay: number;
     history_read_overlap: number;
     history_max_instant_per_item: boolean;
-  }> = await knex(SOUTH_CONNECTORS_TABLE)
-    .select(
-      'id',
-      'type',
-      'settings',
-      'history_max_read_interval',
-      'history_read_delay',
-      'history_read_overlap',
-      'history_max_instant_per_item'
-    )
-    .whereIn('type', [
-      'mssql',
-      'mysql',
-      'odbc',
-      'oianalytics',
-      'oledb',
-      'opc-hda',
-      'opcua',
-      'oracle',
-      'osisoft-pi',
-      'postgresql',
-      'slims',
-      'sqlite'
-    ]);
+  }> = await knex(SOUTH_CONNECTORS_TABLE).select(
+    'id',
+    'type',
+    'settings',
+    'history_max_read_interval',
+    'history_read_delay',
+    'history_read_overlap',
+    'history_max_instant_per_item'
+  );
 
   await knex.transaction(async trx => {
     await trx.raw('PRAGMA foreign_keys = OFF;');
@@ -193,43 +303,107 @@ async function updateSouthConnectors(knex: Knex): Promise<void> {
     history_read_overlap,
     history_max_instant_per_item
   } of oldSouthSettings) {
-    let newSettings;
+    const newSettings = JSON.parse(settings);
     let southType = type;
     switch (type) {
+      case 'ads':
+        newSettings.enumAsText = toNewADSAsText(newSettings.enumAsText);
+        newSettings.boolAsText = toNewADSAsText(newSettings.boolAsText);
+        break;
+      case 'modbus':
+        newSettings.endianness = toNewModbusEndianness(newSettings.endianness);
+        newSettings.addressOffset = toNewModbusAddressOffset(newSettings.addressOffset);
+        break;
+      case 'mssql':
+        newSettings.throttling = {
+          maxReadInterval: history_max_read_interval,
+          readDelay: history_read_delay,
+          overlap: history_read_overlap
+        };
+        break;
+      case 'mysql':
+        newSettings.throttling = {
+          maxReadInterval: history_max_read_interval,
+          readDelay: history_read_delay,
+          overlap: history_read_overlap
+        };
+        break;
+      case 'odbc':
+        newSettings.throttling = {
+          maxReadInterval: history_max_read_interval,
+          readDelay: history_read_delay,
+          overlap: history_read_overlap
+        };
+        break;
+      case 'oianalytics':
+        newSettings.throttling = {
+          maxReadInterval: history_max_read_interval,
+          readDelay: history_read_delay,
+          overlap: history_read_overlap
+        };
+        break;
+      case 'oledb':
+        newSettings.throttling = {
+          maxReadInterval: history_max_read_interval,
+          readDelay: history_read_delay,
+          overlap: history_read_overlap
+        };
+        break;
       case 'opc-hda':
         southType = 'opc';
-        newSettings = {
-          ...JSON.parse(settings),
-          sharedConnection: false,
-          throttling: {
-            maxReadInterval: history_max_read_interval,
-            readDelay: history_read_delay,
-            overlap: history_read_overlap,
-            maxInstantPerItem: history_max_instant_per_item
-          }
+        newSettings.throttling = {
+          maxReadInterval: history_max_read_interval,
+          readDelay: history_read_delay,
+          overlap: history_read_overlap,
+          maxInstantPerItem: history_max_instant_per_item
         };
         break;
       case 'opcua':
-      case 'osisoft-pi':
-        newSettings = {
-          ...JSON.parse(settings),
-          sharedConnection: false,
-          throttling: {
-            maxReadInterval: history_max_read_interval,
-            readDelay: history_read_delay,
-            overlap: history_read_overlap,
-            maxInstantPerItem: history_max_instant_per_item
-          }
+        newSettings.sharedConnection = false;
+        newSettings.throttling = {
+          maxReadInterval: history_max_read_interval,
+          readDelay: history_read_delay,
+          overlap: history_read_overlap,
+          maxInstantPerItem: history_max_instant_per_item
+        };
+        newSettings.securityMode = toNewOPCUASecurityMode(newSettings.securityMode);
+        newSettings.securityPolicy = toNewOPCUASecurityPolicy(newSettings.securityPolicy);
+        break;
+      case 'oracle':
+        newSettings.throttling = {
+          maxReadInterval: history_max_read_interval,
+          readDelay: history_read_delay,
+          overlap: history_read_overlap
         };
         break;
-      default:
-        newSettings = {
-          ...JSON.parse(settings),
-          throttling: {
-            maxReadInterval: history_max_read_interval,
-            readDelay: history_read_delay,
-            overlap: history_read_overlap
-          }
+      case 'osisoft-pi':
+        newSettings.throttling = {
+          maxReadInterval: history_max_read_interval,
+          readDelay: history_read_delay,
+          overlap: history_read_overlap,
+          maxInstantPerItem: history_max_instant_per_item
+        };
+        break;
+      case 'postgresql':
+        newSettings.throttling = {
+          maxReadInterval: history_max_read_interval,
+          readDelay: history_read_delay,
+          overlap: history_read_overlap
+        };
+        break;
+
+      case 'slims':
+        newSettings.throttling = {
+          maxReadInterval: history_max_read_interval,
+          readDelay: history_read_delay,
+          overlap: history_read_overlap
+        };
+        break;
+      case 'sqlite':
+        newSettings.throttling = {
+          maxReadInterval: history_max_read_interval,
+          readDelay: history_read_delay,
+          overlap: history_read_overlap
         };
         break;
     }
@@ -239,30 +413,110 @@ async function updateSouthConnectors(knex: Knex): Promise<void> {
   }
 }
 
+function toNewOPUAItemMode(mode: 'HA' | 'DA'): 'ha' | 'da' {
+  switch (mode) {
+    case 'HA':
+      return 'ha';
+    case 'DA':
+      return 'da';
+  }
+}
+
+function toNewModbusType(
+  modbusType: 'UInt16' | 'Int16' | 'UInt32' | 'Int32' | 'BigUInt64' | 'BigInt64' | 'Float' | 'Double' | 'Bit'
+): 'uint16' | 'int16' | 'uint32' | 'int32' | 'big-uint64' | 'big-int64' | 'float' | 'double' | 'bit' {
+  switch (modbusType) {
+    case 'UInt16':
+      return 'uint16';
+    case 'Int16':
+      return 'int16';
+    case 'UInt32':
+      return 'uint32';
+    case 'Int32':
+      return 'uint32';
+    case 'BigUInt64':
+      return 'big-uint64';
+    case 'BigInt64':
+      return 'big-int64';
+    case 'Float':
+      return 'float';
+    case 'Double':
+      return 'double';
+    case 'Bit':
+      return 'bit';
+  }
+}
+
+function toNewModbusDataType(
+  dataType: 'coil' | 'discreteInput' | 'inputRegister' | 'holdingRegister'
+): 'coil' | 'discrete-input' | 'input-register' | 'holding-register' {
+  switch (dataType) {
+    case 'coil':
+      return 'coil';
+    case 'discreteInput':
+      return 'discrete-input';
+    case 'inputRegister':
+      return 'input-register';
+    case 'holdingRegister':
+      return 'holding-register';
+  }
+}
+
+function toNewOSIsoftPI(type: 'pointId' | 'pointQuery'): 'point-id' | 'point-query' {
+  switch (type) {
+    case 'pointId':
+      return 'point-id';
+    case 'pointQuery':
+      return 'point-query';
+  }
+}
+
+async function updateSouthConnectorItems(knex: Knex): Promise<void> {
+  const oldItems = await knex(SOUTH_ITEMS_TABLE)
+    .join(SOUTH_CONNECTORS_TABLE, `${SOUTH_CONNECTORS_TABLE}.id`, '=', `${SOUTH_ITEMS_TABLE}.connector_id`)
+    .select(`${SOUTH_ITEMS_TABLE}.id as id`, `${SOUTH_CONNECTORS_TABLE}.type as type`, `${SOUTH_ITEMS_TABLE}.settings as settings`)
+    .whereIn(`${SOUTH_CONNECTORS_TABLE}.type`, ['opcua', 'modbus', 'osisoft-pi']);
+
+  for (const { id, type, settings } of oldItems) {
+    const newSettings = JSON.parse(settings);
+    switch (type) {
+      case 'opcua':
+        newSettings.mode = toNewOPUAItemMode(newSettings.mode);
+        break;
+      case 'modbus':
+        newSettings.modbusType = toNewModbusType(newSettings.modbusType);
+        newSettings.dataType = toNewModbusDataType(newSettings.dataType);
+        break;
+      case 'osisoft-pi':
+        newSettings.type = toNewOSIsoftPI(newSettings.type);
+        break;
+    }
+    await knex(SOUTH_ITEMS_TABLE)
+      .update({ settings: JSON.stringify(newSettings) })
+      .where('id', id);
+  }
+}
+
 async function updateHistoryQueries(knex: Knex): Promise<void> {
   const oldSouthSettings: Array<{
     id: string;
     south_type: string;
+    north_type: string;
     south_settings: string;
+    north_settings: string;
     history_max_read_interval: number;
     history_read_delay: number;
     history_max_instant_per_item: boolean;
-  }> = await knex(HISTORY_QUERIES_TABLE)
-    .select('id', 'south_type', 'south_settings', 'history_max_read_interval', 'history_read_delay', 'history_max_instant_per_item')
-    .whereIn('south_type', [
-      'mssql',
-      'mysql',
-      'odbc',
-      'oianalytics',
-      'oledb',
-      'opc-hda',
-      'opcua',
-      'oracle',
-      'osisoft-pi',
-      'postgresql',
-      'slims',
-      'sqlite'
-    ]);
+  }> = await knex(HISTORY_QUERIES_TABLE).select(
+    'id',
+    'south_type',
+    'north_type',
+    'south_settings',
+    'north_settings',
+    'history_max_read_interval',
+    'history_read_delay',
+    'history_max_instant_per_item'
+  );
 
   await knex.transaction(async trx => {
     await trx.raw('PRAGMA foreign_keys = OFF;');
@@ -369,53 +623,145 @@ async function updateHistoryQueries(knex: Knex): Promise<void> {
   for (const {
     id,
     south_type,
+    north_type,
     south_settings,
+    north_settings,
     history_max_read_interval,
     history_read_delay,
     history_max_instant_per_item
   } of oldSouthSettings) {
-    let newSettings;
+    const newSouthSettings = JSON.parse(south_settings);
+    const newNorthSettings = JSON.parse(north_settings);
+
     let type = south_type;
     switch (south_type) {
       case 'opc-hda':
         type = 'opc';
-        newSettings = {
-          ...JSON.parse(south_settings),
-          sharedConnection: false,
-          throttling: {
-            maxReadInterval: history_max_read_interval,
-            readDelay: history_read_delay,
-            overlap: 0,
-            maxInstantPerItem: history_max_instant_per_item
-          }
+        newSouthSettings.throttling = {
+          maxReadInterval: history_max_read_interval,
+          readDelay: history_read_delay,
+          overlap: 0,
+          maxInstantPerItem: history_max_instant_per_item
         };
         break;
       case 'opcua':
+        newSouthSettings.sharedConnection = false;
+        newSouthSettings.throttling = {
+          maxReadInterval: history_max_read_interval,
+          readDelay: history_read_delay,
+          overlap: 0,
+          maxInstantPerItem: history_max_instant_per_item
+        };
+        newSouthSettings.securityMode = toNewOPCUASecurityMode(newSouthSettings.securityMode);
+        newSouthSettings.securityPolicy = toNewOPCUASecurityPolicy(newSouthSettings.securityPolicy);
+        break;
       case 'osisoft-pi':
-        newSettings = {
-          ...JSON.parse(south_settings),
-          sharedConnection: false,
-          throttling: {
-            maxReadInterval: history_max_read_interval,
-            readDelay: history_read_delay,
-            overlap: 0,
-            maxInstantPerItem: history_max_instant_per_item
-          }
+        newSouthSettings.throttling = {
+          maxReadInterval: history_max_read_interval,
+          readDelay: history_read_delay,
+          overlap: 0,
+          maxInstantPerItem: history_max_instant_per_item
         };
         break;
-      default:
-        newSettings = {
-          ...JSON.parse(south_settings),
-          throttling: {
-            maxReadInterval: history_max_read_interval,
-            readDelay: history_read_delay,
-            overlap: 0
-          }
+      case 'mssql':
+        newSouthSettings.throttling = {
+          maxReadInterval: history_max_read_interval,
+          readDelay: history_read_delay,
+          overlap: 0
+        };
+        break;
+      case 'mysql':
+        newSouthSettings.throttling = {
+          maxReadInterval: history_max_read_interval,
+          readDelay: history_read_delay,
+          overlap: 0
+        };
+        break;
+      case 'odbc':
+        newSouthSettings.throttling = {
+          maxReadInterval: history_max_read_interval,
+          readDelay: history_read_delay,
+          overlap: 0
+        };
+        break;
+      case 'oianalytics':
+        newSouthSettings.throttling = {
+          maxReadInterval: history_max_read_interval,
+          readDelay: history_read_delay,
+          overlap: 0
+        };
+        break;
+      case 'oledb':
+        newSouthSettings.throttling = {
+          maxReadInterval: history_max_read_interval,
+          readDelay: history_read_delay,
+          overlap: 0
+        };
+        break;
+      case 'oracle':
+        newSouthSettings.throttling = {
+          maxReadInterval: history_max_read_interval,
+          readDelay: history_read_delay,
+          overlap: 0
+        };
+        break;
+      case 'postgresql':
+        newSouthSettings.throttling = {
+          maxReadInterval: history_max_read_interval,
+          readDelay: history_read_delay,
+          overlap: 0
+        };
+        break;
+      case 'slims':
+        newSouthSettings.throttling = {
+          maxReadInterval: history_max_read_interval,
+          readDelay: history_read_delay,
+          overlap: 0
+        };
+        break;
+      case 'sqlite':
+        newSouthSettings.throttling = {
+          maxReadInterval: history_max_read_interval,
+          readDelay: history_read_delay,
+          overlap: 0
         };
         break;
     }
+
+    switch (north_type) {
+      case 'azure-blob':
+        newNorthSettings.authentication = toNewAzureBlobAuthentication(newNorthSettings.authentication);
+        break;
+    }
+
     await knex(HISTORY_QUERIES_TABLE)
-      .update({ south_settings: JSON.stringify(newSettings), south_type: type })
+      .update({ south_settings: JSON.stringify(newSouthSettings), north_settings: JSON.stringify(newNorthSettings), south_type: type })
+      .where('id', id);
+  }
+}
+
+async function updateHistoryQueryItems(knex: Knex): Promise<void> {
+  const oldItems = await knex(HISTORY_ITEMS_TABLE)
+    .join(HISTORY_QUERIES_TABLE, `${HISTORY_QUERIES_TABLE}.id`, '=', `${HISTORY_ITEMS_TABLE}.history_id`)
+    .select(
+      `${HISTORY_ITEMS_TABLE}.id as id`,
+      `${HISTORY_QUERIES_TABLE}.south_type as south_type`,
+      `${HISTORY_ITEMS_TABLE}.settings as settings`
+    )
+    .whereIn(`${HISTORY_QUERIES_TABLE}.south_type`, ['opcua', 'osisoft-pi']);
+
+  for (const { id, south_type, settings } of oldItems) {
+    const newSettings = JSON.parse(settings);
+    switch (south_type) {
+      case 'opcua':
+        newSettings.mode = toNewOPUAItemMode(newSettings.mode);
+        break;
+      case 'osisoft-pi':
+        newSettings.type = toNewOSIsoftPI(newSettings.type);
+        break;
+    }
+    await knex(HISTORY_ITEMS_TABLE)
+      .update({ settings: JSON.stringify(newSettings) })
       .where('id', id);
   }
 }
