@@ -83,8 +83,8 @@ describe('South Modbus', () => {
       port: 502,
       host: '127.0.0.1',
       slaveId: 1,
-      addressOffset: 'Modbus',
-      endianness: 'Big Endian',
+      addressOffset: 'modbus',
+      endianness: 'big-endian',
       swapBytesInWords: false,
       swapWordsInDWords: false,
       retryInterval: 10000
@@ -96,9 +96,9 @@ describe('South Modbus', () => {
         enabled: true,
         settings: {
           address: '0x4E80',
-          modbusType: 'holdingRegister',
+          modbusType: 'holding-register',
           data: {
-            dataType: 'UInt16',
+            dataType: 'uint16',
             multiplierCoefficient: 1
           }
         },
@@ -110,9 +110,9 @@ describe('South Modbus', () => {
         enabled: true,
         settings: {
           address: '20097',
-          modbusType: 'holdingRegister',
+          modbusType: 'holding-register',
           data: {
-            dataType: 'UInt16',
+            dataType: 'uint16',
             multiplierCoefficient: 1
           }
         },
@@ -124,9 +124,9 @@ describe('South Modbus', () => {
         enabled: true,
         settings: {
           address: '0x3E81',
-          modbusType: 'inputRegister',
+          modbusType: 'input-register',
           data: {
-            dataType: 'UInt16',
+            dataType: 'uint16',
             multiplierCoefficient: 1
           }
         },
@@ -138,7 +138,7 @@ describe('South Modbus', () => {
         enabled: true,
         settings: {
           address: '0x1E82',
-          modbusType: 'discreteInput'
+          modbusType: 'discrete-input'
         },
         scanModeId: 'scanModeId1'
       },
@@ -158,9 +158,9 @@ describe('South Modbus', () => {
         enabled: true,
         settings: {
           address: '0x0E88',
-          modbusType: 'holdingRegister',
+          modbusType: 'holding-register',
           data: {
-            dataType: 'Bit',
+            dataType: 'bit',
             bitIndex: 1,
             multiplierCoefficient: 1
           }
@@ -238,7 +238,7 @@ describe('South Modbus', () => {
     const result = await south.readCoil(1234);
     expect(readCoils).toHaveBeenCalledTimes(1);
     expect(readCoils).toHaveBeenCalledWith(1234, 1);
-    expect(result).toEqual(123);
+    expect(result).toEqual('123');
   });
 
   it('should read discrete input', async () => {
@@ -248,33 +248,33 @@ describe('South Modbus', () => {
     const result = await south.readDiscreteInputRegister(1234);
     expect(readDiscreteInputs).toHaveBeenCalledTimes(1);
     expect(readDiscreteInputs).toHaveBeenCalledWith(1234, 1);
-    expect(result).toEqual(123);
+    expect(result).toEqual('123');
   });
 
   it('should read input', async () => {
-    await expect(south.readInputRegister(1234, 1, 'UInt16', 10)).rejects.toThrow('Read input error: Modbus client not set');
+    await expect(south.readInputRegister(1234, 1, 'uint16', 10)).rejects.toThrow('Read input error: Modbus client not set');
 
     south.getNumberOfWords = jest.fn().mockReturnValue(2);
     south.getValueFromBuffer = jest.fn().mockReturnValue(123);
     await south.start();
-    const result = await south.readInputRegister(1234, 1, 'UInt16', 10);
+    const result = await south.readInputRegister(1234, 1, 'uint16', 10);
     expect(readInputRegisters).toHaveBeenCalledTimes(1);
     expect(readInputRegisters).toHaveBeenCalledWith(1234, 2);
     expect(result).toEqual(123);
-    expect(south.getValueFromBuffer).toHaveBeenCalledWith(Buffer.from([1, 2, 3, 4]), 1, 'UInt16', 10);
+    expect(south.getValueFromBuffer).toHaveBeenCalledWith(Buffer.from([1, 2, 3, 4]), 1, 'uint16', 10);
   });
 
   it('should read holding', async () => {
-    await expect(south.readHoldingRegister(1234, 1, 'UInt16', 10)).rejects.toThrow('Read holding error: Modbus client not set');
+    await expect(south.readHoldingRegister(1234, 1, 'uint16', 10)).rejects.toThrow('Read holding error: Modbus client not set');
 
     south.getNumberOfWords = jest.fn().mockReturnValue(2);
     south.getValueFromBuffer = jest.fn().mockReturnValue(123);
     await south.start();
-    const result = await south.readHoldingRegister(1234, 1, 'UInt16', 10);
+    const result = await south.readHoldingRegister(1234, 1, 'uint16', 10);
     expect(readHoldingRegisters).toHaveBeenCalledTimes(1);
     expect(readHoldingRegisters).toHaveBeenCalledWith(1234, 2);
     expect(result).toEqual(123);
-    expect(south.getValueFromBuffer).toHaveBeenCalledWith(Buffer.from([1, 2, 3, 4]), 1, 'UInt16', 10);
+    expect(south.getValueFromBuffer).toHaveBeenCalledWith(Buffer.from([1, 2, 3, 4]), 1, 'uint16', 10);
   });
 
   it('should query last point', async () => {
@@ -315,60 +315,60 @@ describe('South Modbus', () => {
   });
 
   it('should call read coil method', async () => {
-    south.readCoil = jest.fn().mockReturnValue(123);
+    south.readCoil = jest.fn().mockReturnValue('123');
     const values = await south.modbusFunction(configuration.items[4]);
     expect(south.readCoil).toHaveBeenCalledTimes(1);
     expect(values).toEqual([
       {
         pointId: configuration.items[4].name,
         timestamp: testData.constants.dates.FAKE_NOW,
-        data: { value: JSON.stringify(123) }
+        data: { value: '123' }
       }
     ]);
   });
 
   it('should call readDiscreteInputRegister method', async () => {
-    south.readDiscreteInputRegister = jest.fn().mockReturnValue(123);
+    south.readDiscreteInputRegister = jest.fn().mockReturnValue('123');
     const values = await south.modbusFunction(configuration.items[3]);
     expect(south.readDiscreteInputRegister).toHaveBeenCalledTimes(1);
     expect(values).toEqual([
       {
         pointId: configuration.items[3].name,
         timestamp: testData.constants.dates.FAKE_NOW,
-        data: { value: JSON.stringify(123) }
+        data: { value: '123' }
       }
     ]);
   });
 
   it('should call readInputRegister method', async () => {
-    south.readInputRegister = jest.fn().mockReturnValue(123);
+    south.readInputRegister = jest.fn().mockReturnValue('123');
     const values = await south.modbusFunction(configuration.items[2]);
     expect(south.readInputRegister).toHaveBeenCalledTimes(1);
     expect(values).toEqual([
       {
         pointId: configuration.items[2].name,
         timestamp: testData.constants.dates.FAKE_NOW,
-        data: { value: JSON.stringify(123) }
+        data: { value: '123' }
       }
     ]);
   });
 
   it('should call readHoldingRegister method', async () => {
-    south.readHoldingRegister = jest.fn().mockReturnValue(123);
+    south.readHoldingRegister = jest.fn().mockReturnValue('123');
     const values = await south.modbusFunction(configuration.items[1]);
     expect(south.readHoldingRegister).toHaveBeenCalledTimes(1);
     expect(values).toEqual([
       {
         pointId: configuration.items[1].name,
         timestamp: testData.constants.dates.FAKE_NOW,
-        data: { value: JSON.stringify(123) }
+        data: { value: '123' }
       }
     ]);
   });
 
   it('should call readHoldingRegister method', async () => {
     south.addContent = jest.fn();
-    configuration.settings.addressOffset = 'JBus';
+    configuration.settings.addressOffset = 'jbus';
     const item: SouthConnectorItemEntity<SouthModbusItemSettings> = {
       id: 'bad',
       enabled: true,
@@ -380,19 +380,6 @@ describe('South Modbus', () => {
       }
     };
     await expect(south.modbusFunction(item)).rejects.toThrow(`Wrong Modbus type "${item.settings.modbusType}" for point ${item.name}`);
-  });
-
-  it('should generate buffer function name', () => {
-    const endianness = configuration.settings.endianness === 'Big Endian' ? 'BE' : 'LE';
-    expect(south.getBufferFunctionName('Bit')).toEqual('readUInt16' + endianness);
-    expect(south.getBufferFunctionName('UInt16')).toEqual('readUInt16' + endianness);
-    expect(south.getBufferFunctionName('Int16')).toEqual('readInt16' + endianness);
-    expect(south.getBufferFunctionName('UInt32')).toEqual('readUInt32' + endianness);
-    expect(south.getBufferFunctionName('Int32')).toEqual('readInt32' + endianness);
-    expect(south.getBufferFunctionName('Float')).toEqual('readFloat' + endianness);
-    expect(south.getBufferFunctionName('BigUInt64')).toEqual('readBigUInt64' + endianness);
-    expect(south.getBufferFunctionName('BigInt64')).toEqual('readBigInt64' + endianness);
-    expect(south.getBufferFunctionName('Double')).toEqual('readDouble' + endianness);
   });
 
   it('should retrieve number of words', () => {
@@ -409,15 +396,25 @@ describe('South Modbus', () => {
   });
 
   it('should get value from buffer', () => {
-    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'UInt16', undefined)).toEqual(258);
-    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'UInt32', undefined)).toEqual(50594050);
-    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'Bit', 1)).toEqual(1);
+    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'uint16', undefined)).toEqual('258');
+    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'int16', undefined)).toEqual('258');
+    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'uint32', undefined)).toEqual('50594050');
+    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'int32', undefined)).toEqual('50594050');
+    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4, 5, 6, 7, 8]), 1, 'big-uint64', undefined)).toEqual('217299790240154880');
+    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4, 5, 6, 7, 8]), 1, 'big-int64', undefined)).toEqual('217299790240154880');
+    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'bit', 1)).toEqual('1');
     configuration.settings.swapWordsInDWords = true;
     configuration.settings.swapBytesInWords = true;
-    configuration.settings.endianness = 'Little Endian';
-    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'UInt32', 10)).toEqual(50594050);
-    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'UInt16', 10)).toEqual(258);
-    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'Bit', 1)).toEqual(1);
+    configuration.settings.endianness = 'little-endian';
+    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'uint32', 10)).toEqual('50594050');
+    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'uint16', 10)).toEqual('258');
+    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'bit', 1)).toEqual('1');
+    configuration.settings.swapWordsInDWords = true;
+    configuration.settings.swapBytesInWords = false;
+    expect(south.getValueFromBuffer(Buffer.from([0x00, 0x00, 0x80, 0x3f]), 1, 'float', undefined)).toEqual('1');
+    expect(south.getValueFromBuffer(Buffer.from([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3f]), 1, 'double', undefined)).toEqual(
+      '0.0078125'
+    );
   });
 });
 
@@ -433,8 +430,8 @@ describe('SouthModbus test connection', () => {
       port: 502,
       host: '127.0.0.1',
       slaveId: 1,
-      addressOffset: 'Modbus',
-      endianness: 'Big Endian',
+      addressOffset: 'modbus',
+      endianness: 'big-endian',
       swapBytesInWords: false,
       swapWordsInDWords: false,
       retryInterval: 10000
@@ -446,9 +443,9 @@ describe('SouthModbus test connection', () => {
         enabled: true,
         settings: {
           address: '0x4E80',
-          modbusType: 'holdingRegister',
+          modbusType: 'holding-register',
           data: {
-            dataType: 'UInt16',
+            dataType: 'uint16',
             multiplierCoefficient: 1
           }
         },
@@ -460,9 +457,9 @@ describe('SouthModbus test connection', () => {
         enabled: true,
         settings: {
           address: '20097',
-          modbusType: 'holdingRegister',
+          modbusType: 'holding-register',
           data: {
-            dataType: 'UInt16',
+            dataType: 'uint16',
             multiplierCoefficient: 1
           }
         },
@@ -474,9 +471,9 @@ describe('SouthModbus test connection', () => {
         enabled: true,
         settings: {
           address: '0x3E81',
-          modbusType: 'inputRegister',
+          modbusType: 'input-register',
           data: {
-            dataType: 'UInt16',
+            dataType: 'uint16',
             multiplierCoefficient: 1
           }
         },
@@ -488,7 +485,7 @@ describe('SouthModbus test connection', () => {
         enabled: true,
         settings: {
           address: '0x1E82',
-          modbusType: 'discreteInput'
+          modbusType: 'discrete-input'
         },
         scanModeId: 'scanModeId1'
       },
@@ -508,9 +505,9 @@ describe('SouthModbus test connection', () => {
         enabled: true,
         settings: {
           address: '0x0E88',
-          modbusType: 'holdingRegister',
+          modbusType: 'holding-register',
           data: {
-            dataType: 'Bit',
+            dataType: 'bit',
             bitIndex: 1,
             multiplierCoefficient: 1
           }

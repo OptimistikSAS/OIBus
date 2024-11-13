@@ -79,11 +79,11 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
       ? `${this.connector.settings.customUrl}`
       : `https://${this.connector.settings.account}.blob.core.windows.net`;
     switch (this.connector.settings.authentication) {
-      case 'sasToken':
+      case 'sas-token':
         const decryptedToken = await this.encryptionService.decryptText(this.connector.settings.sasToken!);
         this.blobClient = new BlobServiceClient(`${url}?${decryptedToken}`, undefined, { proxyOptions });
         break;
-      case 'accessKey':
+      case 'access-key':
         const decryptedAccessKey = await this.encryptionService.decryptText(this.connector.settings.accessKey!);
         const sharedKeyCredential = new StorageSharedKeyCredential(this.connector.settings.account!, decryptedAccessKey);
         this.blobClient = new BlobServiceClient(url, sharedKeyCredential, {

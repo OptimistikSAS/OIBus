@@ -63,9 +63,10 @@ const manifest: SouthConnectorManifest = {
       key: 'connectionTimeout',
       type: 'OibNumber',
       label: 'Connection timeout',
-      defaultValue: 1000,
+      defaultValue: 15_000,
       unitLabel: 'ms',
-      class: 'col-3',
+      newRow: true,
+      class: 'col-4',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30_000 } }]
     },
     {
@@ -74,17 +75,8 @@ const manifest: SouthConnectorManifest = {
       label: 'Retry Interval',
       defaultValue: 1000,
       unitLabel: 'ms',
-      class: 'col-3',
+      class: 'col-4',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30_000 } }]
-    },
-    {
-      key: 'connectionString',
-      type: 'OibText',
-      label: 'Connection string',
-      defaultValue: 'localhost',
-      newRow: true,
-      validators: [{ key: 'required' }],
-      displayInViewMode: true
     },
     {
       key: 'requestTimeout',
@@ -94,6 +86,15 @@ const manifest: SouthConnectorManifest = {
       unitLabel: 'ms',
       class: 'col-4',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30000 } }]
+    },
+    {
+      key: 'connectionString',
+      type: 'OibText',
+      label: 'Connection string',
+      defaultValue: 'localhost',
+      newRow: true,
+      validators: [{ key: 'required' }],
+      displayInViewMode: true
     }
   ],
   items: {

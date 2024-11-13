@@ -10,26 +10,26 @@ export type SouthADSSettingsEnumAsText = (typeof SOUTH_A_D_S_SETTINGS_ENUM_AS_TE
 export const SOUTH_A_D_S_SETTINGS_BOOL_AS_TEXTS = ['Text', 'Integer'] as const;
 export type SouthADSSettingsBoolAsText = (typeof SOUTH_A_D_S_SETTINGS_BOOL_AS_TEXTS)[number];
 
-export const SOUTH_MODBUS_SETTINGS_ADDRESS_OFFSETS = ['Modbus', 'JBus'] as const;
+export const SOUTH_MODBUS_SETTINGS_ADDRESS_OFFSETS = ['modbus', 'jbus'] as const;
 export type SouthModbusSettingsAddressOffset = (typeof SOUTH_MODBUS_SETTINGS_ADDRESS_OFFSETS)[number];
 
-export const SOUTH_MODBUS_SETTINGS_ENDIANNESSS = ['Big Endian', 'Little Endian'] as const;
+export const SOUTH_MODBUS_SETTINGS_ENDIANNESSS = ['big-endian', 'little-endian'] as const;
 export type SouthModbusSettingsEndianness = (typeof SOUTH_MODBUS_SETTINGS_ENDIANNESSS)[number];
 
 export const SOUTH_MODBUS_ITEM_SETTINGS_DATA_DATA_TYPES = [
-  'UInt16',
-  'Int16',
-  'UInt32',
-  'Int32',
-  'BigUInt64',
-  'BigInt64',
-  'Float',
-  'Double',
-  'Bit'
+  'uint16',
+  'int16',
+  'uint32',
+  'int32',
+  'big-uint64',
+  'big-int64',
+  'float',
+  'double',
+  'bit'
 ] as const;
 export type SouthModbusItemSettingsDataDataType = (typeof SOUTH_MODBUS_ITEM_SETTINGS_DATA_DATA_TYPES)[number];
 
-export const SOUTH_MODBUS_ITEM_SETTINGS_MODBUS_TYPES = ['coil', 'discreteInput', 'inputRegister', 'holdingRegister'] as const;
+export const SOUTH_MODBUS_ITEM_SETTINGS_MODBUS_TYPES = ['coil', 'discrete-input', 'input-register', 'holding-register'] as const;
 export type SouthModbusItemSettingsModbusType = (typeof SOUTH_MODBUS_ITEM_SETTINGS_MODBUS_TYPES)[number];
 
 export const SOUTH_M_Q_T_T_SETTINGS_AUTHENTICATION_TYPES = ['none', 'basic', 'cert'] as const;
@@ -193,21 +193,20 @@ export type SouthOPCItemSettingsResampling = (typeof SOUTH_O_P_C_ITEM_SETTINGS_R
 export const SOUTH_O_P_C_U_A_SETTINGS_AUTHENTICATION_TYPES = ['none', 'basic', 'cert'] as const;
 export type SouthOPCUASettingsAuthenticationType = (typeof SOUTH_O_P_C_U_A_SETTINGS_AUTHENTICATION_TYPES)[number];
 
-export const SOUTH_O_P_C_U_A_SETTINGS_SECURITY_MODES = ['None', 'Sign', 'SignAndEncrypt'] as const;
+export const SOUTH_O_P_C_U_A_SETTINGS_SECURITY_MODES = ['none', 'sign', 'sign-and-encrypt'] as const;
 export type SouthOPCUASettingsSecurityMode = (typeof SOUTH_O_P_C_U_A_SETTINGS_SECURITY_MODES)[number];
 
 export const SOUTH_O_P_C_U_A_SETTINGS_SECURITY_POLICYS = [
-  'None',
-  'Basic128',
-  'Basic192',
-  'Basic256',
-  'Basic128Rsa15',
-  'Basic192Rsa15',
-  'Basic256Rsa15',
-  'Basic256Sha256',
-  'Aes128_Sha256_RsaOaep',
-  'PubSub_Aes128_CTR',
-  'PubSub_Aes256_CTR'
+  'none',
+  'basic128',
+  'basic192',
+  'basic192-rsa15',
+  'basic256-rsa15',
+  'basic256-sha256',
+  'aes128-sha256-rsa-oaep',
+  'aes256-sha256-rsa-pss',
+  'pub-sub-aes-128-ctr',
+  'pub-sub-aes-256-ctr'
 ] as const;
 export type SouthOPCUASettingsSecurityPolicy = (typeof SOUTH_O_P_C_U_A_SETTINGS_SECURITY_POLICYS)[number];
 
@@ -217,7 +216,7 @@ export type SouthOPCUAItemSettingsHaModeAggregate = (typeof SOUTH_O_P_C_U_A_ITEM
 export const SOUTH_O_P_C_U_A_ITEM_SETTINGS_HA_MODE_RESAMPLINGS = ['none', '1s', '10s', '30s', '1min', '1h', '1d'] as const;
 export type SouthOPCUAItemSettingsHaModeResampling = (typeof SOUTH_O_P_C_U_A_ITEM_SETTINGS_HA_MODE_RESAMPLINGS)[number];
 
-export const SOUTH_O_P_C_U_A_ITEM_SETTINGS_MODES = ['HA', 'DA'] as const;
+export const SOUTH_O_P_C_U_A_ITEM_SETTINGS_MODES = ['ha', 'da'] as const;
 export type SouthOPCUAItemSettingsMode = (typeof SOUTH_O_P_C_U_A_ITEM_SETTINGS_MODES)[number];
 
 export const SOUTH_ORACLE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const;
@@ -238,7 +237,7 @@ export const SOUTH_ORACLE_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = [
 ] as const;
 export type SouthOracleItemSettingsSerializationDelimiter = (typeof SOUTH_ORACLE_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
 
-export const SOUTH_P_I_ITEM_SETTINGS_TYPES = ['pointId', 'pointQuery'] as const;
+export const SOUTH_P_I_ITEM_SETTINGS_TYPES = ['point-id', 'point-query'] as const;
 export type SouthPIItemSettingsType = (typeof SOUTH_P_I_ITEM_SETTINGS_TYPES)[number];
 
 export const SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = [
@@ -489,9 +488,9 @@ export interface SouthODBCSettings {
   agentUrl?: string;
   connectionTimeout: number;
   retryInterval: number;
+  requestTimeout?: number;
   connectionString: string;
   password: string | null;
-  requestTimeout?: number;
 }
 
 export interface SouthOIAnalyticsSettings {
@@ -506,8 +505,8 @@ export interface SouthOLEDBSettings {
   agentUrl: string;
   connectionTimeout: number;
   retryInterval: number;
-  connectionString: string;
   requestTimeout: number;
+  connectionString: string;
 }
 
 export interface SouthOPCSettings {

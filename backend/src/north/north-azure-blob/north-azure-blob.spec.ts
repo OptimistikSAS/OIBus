@@ -79,7 +79,7 @@ describe('NorthAzureBlob without proxy', () => {
       account: 'account',
       container: 'container',
       path: '',
-      authentication: 'sasToken',
+      authentication: 'sas-token',
       sasToken: 'sas',
       accessKey: '',
       tenantId: '',
@@ -96,7 +96,7 @@ describe('NorthAzureBlob without proxy', () => {
     (fs.stat as jest.Mock).mockImplementationOnce(() => Promise.resolve({ size: 666 }));
     (fs.readFile as jest.Mock).mockImplementationOnce(() => Promise.resolve('content'));
 
-    configuration.settings.authentication = 'sasToken';
+    configuration.settings.authentication = 'sas-token';
     configuration.settings.sasToken = 'sas token';
     north = new NorthAzureBlob(
       configuration,
@@ -154,7 +154,7 @@ describe('NorthAzureBlob without proxy', () => {
     const sharedKeyCredential = jest.fn();
     (StorageSharedKeyCredential as jest.Mock).mockImplementationOnce(() => sharedKeyCredential);
 
-    configuration.settings.authentication = 'accessKey';
+    configuration.settings.authentication = 'access-key';
     configuration.settings.accessKey = 'access key';
     north = new NorthAzureBlob(
       configuration,
@@ -408,7 +408,7 @@ describe('NorthAzureBlob with proxy', () => {
       customUrl: 'https://custom.url.blob.core.windows.net',
       container: 'container',
       path: '',
-      authentication: 'sasToken',
+      authentication: 'sas-token',
       sasToken: 'sas',
       accessKey: '',
       tenantId: '',
@@ -428,7 +428,7 @@ describe('NorthAzureBlob with proxy', () => {
     (fs.stat as jest.Mock).mockImplementationOnce(() => Promise.resolve({ size: 666 }));
     (fs.readFile as jest.Mock).mockImplementationOnce(() => Promise.resolve('content'));
 
-    configuration.settings.authentication = 'sasToken';
+    configuration.settings.authentication = 'sas-token';
     configuration.settings.sasToken = 'sas token';
     north = new NorthAzureBlob(
       configuration,

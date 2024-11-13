@@ -278,8 +278,6 @@ export default class OIAnalyticsCommandService {
         `Error while executing command ${command.id} (retrieved ${command.retrievedDate}) of type ${command.type}. Error: ${(error as Error).message}`
       );
       this.oIAnalyticsCommandRepository.markAsErrored(command.id, (error as Error).message);
-      this.ongoingExecuteCommand = false;
-      return;
     }
     this.ongoingExecuteCommand = false;
   }

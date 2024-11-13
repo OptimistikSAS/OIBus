@@ -6,7 +6,6 @@ import {
   DataType,
   DataValue,
   HistoryReadRequest,
-  MessageSecurityMode,
   OPCUAClient,
   ReadProcessedDetails,
   ReadRawModifiedDetails,
@@ -27,7 +26,12 @@ import { DateTime } from 'luxon';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { DelegatesConnection, QueriesHistory, QueriesLastPoint, QueriesSubscription } from '../south-interface';
-import { SouthOPCUAItemSettings, SouthOPCUASettings } from '../../../shared/model/south-settings.model';
+import {
+  SouthOPCUAItemSettings,
+  SouthOPCUASettings,
+  SouthOPCUASettingsSecurityMode,
+  SouthOPCUASettingsSecurityPolicy
+} from '../../../shared/model/south-settings.model';
 import { randomUUID } from 'crypto';
 import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
 import { createFolder } from '../../service/utils';
@@ -42,6 +46,44 @@ import { BaseFolders } from '../../model/types';
 
 export const MAX_NUMBER_OF_NODE_TO_LOG = 10;
 export const NUM_VALUES_PER_NODE = 1000;
+
+function toOPCUASecurityMode(securityMode: SouthOPCUASettingsSecurityMode) {
+  switch (securityMode) {
+    case 'none':
+      return 1;
+    case 'sign':
+      return 2;
+    case 'sign-and-encrypt':
+      return 3;
+  }
+}
+
+function toOPCUASecurityPolicy(securityPolicy: SouthOPCUASettingsSecurityPolicy | null | undefined) {
+  switch (securityPolicy) {
+    case 'none':
+      return 'none';
+    case 'basic128':
+      return 'Basic128';
+    case 'basic192':
+      return 'Basic192';
+    case 'basic192-rsa15':
+      return 'Basic192Rsa15';
+    case 'basic256-rsa15':
+      return 'Basic256Rsa15';
+    case 'basic256-sha256':
+      return 'Basic256Sha256';
+    case 'aes128-sha256-rsa-oaep':
+      return 'Aes128_Sha256_RsaOaep';
+    case 'aes256-sha256-rsa-pss':
+      return 'Aes256_Sha256_RsaPss';
+    case 'pub-sub-aes-128-ctr':
+      return 'PubSub_Aes128_CTR';
+    case 'pub-sub-aes-256-ctr':
+      return 'PubSub_Aes256_CTR';
+    default:
+      return undefined;
+  }
+}
 
 /**
  * Class SouthOPCUA - Connect to an OPCUA server
@@ -131,7 +173,7 @@ export default class SouthOPCUA
       if (/Cannot find an Endpoint matching {1,2}security mode/i.test(message) && this.connector.settings.securityPolicy) {
         throw new Error(`Security Policy "${this.connector.settings.securityPolicy}" is not supported on the server`);
       }
-      if (/The connection may have been rejected by server/i.test(message) && this.connector.settings.securityPolicy !== 'None') {
+      if (/The connection may have been rejected by server/i.test(message) && this.connector.settings.securityPolicy !== 'none') {
         throw new Error('Please check if the OIBus certificate has been trusted by the server');
       }
 
@@ -169,7 +211,7 @@ export default class SouthOPCUA
     try {
       session = await this.connection.getSession();
       let content: OIBusContent;
-      if (item.settings.mode === 'DA') {
+      if (item.settings.mode === 'da') {
         content = await this.getDAValues([item], session);
       } else {
         const startTime = DateTime.now()
@@ -191,7 +233,7 @@ export default class SouthOPCUA
   override filterHistoryItems(
     items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>
   ): Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>> {
-    return items.filter(item => item.settings.mode === 'HA');
+    return items.filter(item => item.settings.mode === 'ha');
   }
 
   async createSession(): Promise<ClientSession | null> {
@@ -432,8 +474,8 @@ export default class SouthOPCUA
         initialDelay: 1000,
         maxRetry: 1
       },
-      securityMode: MessageSecurityMode[settings.securityMode],
-      securityPolicy: settings.securityPolicy || undefined,
+      securityMode: toOPCUASecurityMode(settings.securityMode),
+      securityPolicy: toOPCUASecurityPolicy(settings.securityPolicy),
       endpointMustExist: false,
       keepSessionAlive: settings.keepSessionAlive,
       requestedSessionTimeout: settings.readTimeout,
@@ -557,7 +599,7 @@ export default class SouthOPCUA
       return;
     }
 
-    const itemsToRead = items.filter(item => item.settings.mode === 'DA');
+    const itemsToRead = items.filter(item => item.settings.mode === 'da');
     if (itemsToRead.length === 0) {
       return;
     }

@@ -4,7 +4,7 @@ const manifest: NorthConnectorManifest = {
   id: 'sftp',
   name: 'SFTP',
   category: 'file',
-  description: 'Write files and values into a SFTP server',
+  description: 'Upload files and data to an SFTP server',
   modes: {
     files: true,
     points: true

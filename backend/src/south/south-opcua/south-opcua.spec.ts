@@ -48,7 +48,6 @@ jest.mock('node-opcua-client', () => ({
   OPCUAClient: { createSession: jest.fn(() => ({})) },
   ClientSubscription: { create: jest.fn() },
   ClientMonitoredItem: { create: jest.fn() },
-  MessageSecurityMode: { None: 1 },
   DataType: jest.requireActual('node-opcua-client').DataType,
   StatusCodes: jest.requireActual('node-opcua-client').StatusCodes,
   SecurityPolicy: jest.requireActual('node-opcua-client').SecurityPolicy,
@@ -110,8 +109,8 @@ describe('SouthOPCUA', () => {
         password: null,
         keyFilePath: null
       },
-      securityMode: 'None',
-      securityPolicy: 'None',
+      securityMode: 'none',
+      securityPolicy: 'none',
       keepSessionAlive: false
     },
     items: [
@@ -121,7 +120,7 @@ describe('SouthOPCUA', () => {
         enabled: true,
         settings: {
           nodeId: 'ns=3;s=Random',
-          mode: 'HA',
+          mode: 'ha',
           haMode: {
             aggregate: 'raw',
             resampling: 'none'
@@ -135,7 +134,7 @@ describe('SouthOPCUA', () => {
         enabled: true,
         settings: {
           nodeId: 'ns=3;s=Counter',
-          mode: 'HA',
+          mode: 'ha',
           haMode: {
             aggregate: 'raw',
             resampling: 'none'
@@ -149,7 +148,7 @@ describe('SouthOPCUA', () => {
         enabled: true,
         settings: {
           nodeId: 'ns=3;s=Triangle',
-          mode: 'HA',
+          mode: 'ha',
           haMode: {
             aggregate: 'raw',
             resampling: 'none'
@@ -163,7 +162,7 @@ describe('SouthOPCUA', () => {
         enabled: true,
         settings: {
           nodeId: 'ns=3;s=Random',
-          mode: 'DA'
+          mode: 'da'
         },
         scanModeId: 'scanModeId1'
       },
@@ -173,7 +172,7 @@ describe('SouthOPCUA', () => {
         enabled: true,
         settings: {
           nodeId: 'ns=3;s=Counter',
-          mode: 'DA'
+          mode: 'da'
         },
         scanModeId: 'scanModeId1'
       },
@@ -183,7 +182,7 @@ describe('SouthOPCUA', () => {
         enabled: true,
         settings: {
           nodeId: 'ns=3;s=Triangle',
-          mode: 'DA'
+          mode: 'da'
         },
         scanModeId: 'scanModeId2'
       }
@@ -242,8 +241,8 @@ describe('SouthOPCUA', () => {
         initialDelay: 1000,
         maxRetry: 1
       },
-      securityMode: nodeOPCUAClient.MessageSecurityMode.None,
-      securityPolicy: 'None',
+      securityMode: 1,
+      securityPolicy: 'none',
       endpointMustExist: false,
       keepSessionAlive: false,
       keepPendingSessionsOnDisconnect: false,
@@ -600,7 +599,7 @@ describe('SouthOPCUA', () => {
     south.disconnect();
     await expect(
       south.historyQuery(
-        configuration.items.filter(item => item.settings.mode === 'HA'),
+        configuration.items.filter(item => item.settings.mode === 'ha'),
         testData.constants.dates.FAKE_NOW,
         testData.constants.dates.FAKE_NOW
       )
@@ -614,7 +613,7 @@ describe('SouthOPCUA', () => {
     await south.start();
     await expect(
       south.historyQuery(
-        configuration.items.filter(item => item.settings.mode === 'HA'),
+        configuration.items.filter(item => item.settings.mode === 'ha'),
         testData.constants.dates.FAKE_NOW,
         testData.constants.dates.FAKE_NOW
       )
@@ -625,7 +624,7 @@ describe('SouthOPCUA', () => {
 
   it('should filter HA items', () => {
     const result = south.filterHistoryItems(configuration.items);
-    expect(result).toEqual(configuration.items.filter(item => item.settings.mode === 'HA'));
+    expect(result).toEqual(configuration.items.filter(item => item.settings.mode === 'ha'));
   });
 
   it('should not query items if session is not set', async () => {
@@ -646,7 +645,7 @@ describe('SouthOPCUA', () => {
 
     await south.start();
     await south.lastPointQuery(configuration.items);
-    const expectedItemsToRead = configuration.items.filter(item => item.settings.mode === 'DA');
+    const expectedItemsToRead = configuration.items.filter(item => item.settings.mode === 'da');
 
     expect(logger.debug).toHaveBeenCalledWith(
       `Read ${expectedItemsToRead.length} nodes ` +
@@ -703,7 +702,7 @@ describe('SouthOPCUA', () => {
     await south.connection.getSession();
     south.disconnect();
     await expect(south.lastPointQuery(configuration.items)).rejects.toThrow('opcua read error');
-    const expectedItemsToRead = configuration.items.filter(item => item.settings.mode === 'DA');
+    const expectedItemsToRead = configuration.items.filter(item => item.settings.mode === 'da');
 
     expect(read).toHaveBeenCalledWith(expectedItemsToRead.map(item => ({ nodeId: item.settings.nodeId })));
     expect(south.addContent).not.toHaveBeenCalled();
@@ -751,7 +750,7 @@ describe('SouthOPCUA', () => {
 
     await south.start();
     await south.lastPointQuery(configuration.items);
-    const expectedItemsToRead = configuration.items.filter(item => item.settings.mode === 'DA');
+    const expectedItemsToRead = configuration.items.filter(item => item.settings.mode === 'da');
     expect(logger.error).toHaveBeenCalledWith(
       `Received 2 node results, requested ${expectedItemsToRead.length} nodes. Request done in 0 ms`
     );
@@ -966,7 +965,7 @@ describe('SouthOPCUA with basic auth', () => {
         keyFilePath: '',
         certFilePath: ''
       },
-      securityMode: 'None',
+      securityMode: 'none',
       securityPolicy: null,
       keepSessionAlive: false
     },
@@ -977,7 +976,7 @@ describe('SouthOPCUA with basic auth', () => {
         enabled: true,
         settings: {
           nodeId: 'ns=3;s=Random',
-          mode: 'HA',
+          mode: 'ha',
           haMode: {
             aggregate: 'raw',
             resampling: 'none'
@@ -991,7 +990,7 @@ describe('SouthOPCUA with basic auth', () => {
         enabled: true,
         settings: {
           nodeId: 'ns=3;s=Counter',
-          mode: 'HA',
+          mode: 'ha',
           haMode: {
             aggregate: 'raw',
             resampling: 'none'
@@ -1005,7 +1004,7 @@ describe('SouthOPCUA with basic auth', () => {
         enabled: true,
         settings: {
           nodeId: 'ns=3;s=Triangle',
-          mode: 'HA',
+          mode: 'ha',
           haMode: {
             aggregate: 'raw',
             resampling: 'none'
@@ -1019,7 +1018,7 @@ describe('SouthOPCUA with basic auth', () => {
         enabled: true,
         settings: {
           nodeId: 'ns=3;s=Random',
-          mode: 'DA'
+          mode: 'da'
         },
         scanModeId: 'scanModeId1'
       },
@@ -1029,7 +1028,7 @@ describe('SouthOPCUA with basic auth', () => {
         enabled: true,
         settings: {
           nodeId: 'ns=3;s=Counter',
-          mode: 'DA'
+          mode: 'da'
         },
         scanModeId: 'scanModeId1'
       },
@@ -1039,7 +1038,7 @@ describe('SouthOPCUA with basic auth', () => {
         enabled: true,
         settings: {
           nodeId: 'ns=3;s=Triangle',
-          mode: 'DA'
+          mode: 'da'
         },
         scanModeId: 'scanModeId2'
       }
@@ -1073,7 +1072,7 @@ describe('SouthOPCUA with basic auth', () => {
         initialDelay: 1000,
         maxRetry: 1
       },
-      securityMode: nodeOPCUAClient.MessageSecurityMode.None,
+      securityMode: 1,
       securityPolicy: undefined,
       endpointMustExist: false,
       keepSessionAlive: false,
@@ -1124,8 +1123,8 @@ describe('SouthOPCUA with certificate', () => {
         username: '',
         password: ''
       },
-      securityMode: 'None',
-      securityPolicy: 'None',
+      securityMode: 'sign',
+      securityPolicy: 'none',
       keepSessionAlive: false
     },
     items: [
@@ -1135,7 +1134,7 @@ describe('SouthOPCUA with certificate', () => {
         enabled: true,
         settings: {
           nodeId: 'ns=3;s=Random',
-          mode: 'HA',
+          mode: 'ha',
           haMode: {
             aggregate: 'raw',
             resampling: 'none'
@@ -1149,7 +1148,7 @@ describe('SouthOPCUA with certificate', () => {
         enabled: true,
         settings: {
           nodeId: 'ns=3;s=Counter',
-          mode: 'HA',
+          mode: 'ha',
           haMode: {
             aggregate: 'raw',
             resampling: 'none'
@@ -1163,7 +1162,7 @@ describe('SouthOPCUA with certificate', () => {
         enabled: true,
         settings: {
           nodeId: 'ns=3;s=Triangle',
-          mode: 'HA',
+          mode: 'ha',
           haMode: {
             aggregate: 'raw',
             resampling: 'none'
@@ -1177,7 +1176,7 @@ describe('SouthOPCUA with certificate', () => {
         enabled: true,
         settings: {
           nodeId: 'ns=3;s=Random',
-          mode: 'DA'
+          mode: 'da'
         },
         scanModeId: 'scanModeId1'
       },
@@ -1187,7 +1186,7 @@ describe('SouthOPCUA with certificate', () => {
         enabled: true,
         settings: {
           nodeId: 'ns=3;s=Counter',
-          mode: 'DA'
+          mode: 'da'
         },
         scanModeId: 'scanModeId1'
       },
@@ -1197,7 +1196,7 @@ describe('SouthOPCUA with certificate', () => {
         enabled: true,
         settings: {
           nodeId: 'ns=3;s=Triangle',
-          mode: 'DA'
+          mode: 'da'
         },
         scanModeId: 'scanModeId2'
       }
@@ -1236,8 +1235,8 @@ describe('SouthOPCUA with certificate', () => {
         initialDelay: 1000,
         maxRetry: 1
       },
-      securityMode: nodeOPCUAClient.MessageSecurityMode.None,
-      securityPolicy: 'None',
+      securityMode: 2,
+      securityPolicy: 'none',
       endpointMustExist: false,
       keepSessionAlive: false,
       requestedSessionTimeout: 15000,
@@ -1375,8 +1374,8 @@ describe('SouthOPCUA test connection', () => {
         password: null,
         keyFilePath: null
       },
-      securityMode: 'None',
-      securityPolicy: 'None',
+      securityMode: 'sign-and-encrypt',
+      securityPolicy: 'none',
       keepSessionAlive: false
     },
     items: [
@@ -1386,7 +1385,7 @@ describe('SouthOPCUA test connection', () => {
         enabled: true,
         settings: {
           nodeId: 'ns=3;s=Random',
-          mode: 'HA',
+          mode: 'ha',
           haMode: {
             aggregate: 'raw',
             resampling: 'none'
@@ -1400,7 +1399,7 @@ describe('SouthOPCUA test connection', () => {
         enabled: true,
         settings: {
           nodeId: 'ns=3;s=Counter',
-          mode: 'HA',
+          mode: 'ha',
           haMode: {
             aggregate: 'raw',
             resampling: 'none'
@@ -1414,7 +1413,7 @@ describe('SouthOPCUA test connection', () => {
         enabled: true,
         settings: {
           nodeId: 'ns=3;s=Triangle',
-          mode: 'HA',
+          mode: 'ha',
           haMode: {
             aggregate: 'raw',
             resampling: 'none'
@@ -1428,7 +1427,7 @@ describe('SouthOPCUA test connection', () => {
         enabled: true,
         settings: {
           nodeId: 'ns=3;s=Random',
-          mode: 'DA'
+          mode: 'da'
         },
         scanModeId: 'scanModeId1'
       },
@@ -1438,7 +1437,7 @@ describe('SouthOPCUA test connection', () => {
         enabled: true,
         settings: {
           nodeId: 'ns=3;s=Counter',
-          mode: 'DA'
+          mode: 'da'
         },
         scanModeId: 'scanModeId1'
       },
@@ -1448,7 +1447,7 @@ describe('SouthOPCUA test connection', () => {
         enabled: true,
         settings: {
           nodeId: 'ns=3;s=Triangle',
-          mode: 'DA'
+          mode: 'da'
         },
         scanModeId: 'scanModeId2'
       }
@@ -1473,17 +1472,16 @@ describe('SouthOPCUA test connection', () => {
   }
 
   const securityPolicies: Array<SouthOPCUASettings['securityPolicy']> = [
-    'None',
-    'Basic128',
-    'Basic192',
-    'Basic256',
-    'Basic128Rsa15',
-    'Basic192Rsa15',
-    'Basic256Rsa15',
-    'Basic256Sha256',
-    'Aes128_Sha256_RsaOaep',
-    'PubSub_Aes128_CTR',
-    'PubSub_Aes256_CTR'
+    'none',
+    'basic128',
+    'basic192',
+    'basic192-rsa15',
+    'basic256-rsa15',
+    'basic256-sha256',
+    'aes128-sha256-rsa-oaep',
+    'aes256-sha256-rsa-pss',
+    'pub-sub-aes-128-ctr',
+    'pub-sub-aes-256-ctr'
   ];
 
   beforeEach(async () => {
@@ -1657,8 +1655,8 @@ describe('SouthOPCUA with shared connection', () => {
         password: null,
         keyFilePath: null
       },
-      securityMode: 'None',
-      securityPolicy: 'None',
+      securityMode: 'none',
+      securityPolicy: 'none',
       keepSessionAlive: false
     },
     items: [
@@ -1668,7 +1666,7 @@ describe('SouthOPCUA with shared connection', () => {
         enabled: true,
         settings: {
           nodeId: 'ns=3;s=Random',
-          mode: 'HA',
+          mode: 'ha',
           haMode: {
             aggregate: 'raw',
             resampling: 'none'
@@ -1682,7 +1680,7 @@ describe('SouthOPCUA with shared connection', () => {
         enabled: true,
         settings: {
           nodeId: 'ns=3;s=Counter',
-          mode: 'HA',
+          mode: 'ha',
           haMode: {
             aggregate: 'raw',
             resampling: 'none'
@@ -1696,7 +1694,7 @@ describe('SouthOPCUA with shared connection', () => {
         enabled: true,
         settings: {
           nodeId: 'ns=3;s=Triangle',
-          mode: 'HA',
+          mode: 'ha',
           haMode: {
             aggregate: 'raw',
             resampling: 'none'
@@ -1710,7 +1708,7 @@ describe('SouthOPCUA with shared connection', () => {
         enabled: true,
         settings: {
           nodeId: 'ns=3;s=Random',
-          mode: 'DA'
+          mode: 'da'
         },
         scanModeId: 'scanModeId1'
       },
@@ -1720,7 +1718,7 @@ describe('SouthOPCUA with shared connection', () => {
         enabled: true,
         settings: {
           nodeId: 'ns=3;s=Counter',
-          mode: 'DA'
+          mode: 'da'
         },
         scanModeId: 'scanModeId1'
       },
@@ -1730,7 +1728,7 @@ describe('SouthOPCUA with shared connection', () => {
         enabled: true,
         settings: {
           nodeId: 'ns=3;s=Triangle',
-          mode: 'DA'
+          mode: 'da'
         },
         scanModeId: 'scanModeId2'
       }

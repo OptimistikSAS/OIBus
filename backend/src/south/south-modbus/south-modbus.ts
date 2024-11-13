@@ -11,7 +11,8 @@ import { DateTime } from 'luxon';
 import {
   SouthModbusItemSettings,
   SouthModbusItemSettingsDataDataType,
-  SouthModbusSettings
+  SouthModbusSettings,
+  SouthModbusSettingsEndianness
 } from '../../../shared/model/south-settings.model';
 import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
@@ -85,7 +86,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
    * Dynamically call the right function based on the given point settings
    */
   async modbusFunction(item: SouthConnectorItemEntity<SouthModbusItemSettings>): Promise<Array<OIBusTimeValue>> {
-    const offset = this.connector.settings.addressOffset === 'Modbus' ? 0 : -1;
+    const offset = this.connector.settings.addressOffset === 'modbus' ? 0 : -1;
     const address =
       (item.settings.address.match(/^0x[0-9a-f]+$/i) ? parseInt(item.settings.address, 16) : parseInt(item.settings.address, 10)) + offset;
 
@@ -94,10 +95,10 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
       case 'coil':
         value = await this.readCoil(address);
         break;
-      case 'discreteInput':
+      case 'discrete-input':
         value = await this.readDiscreteInputRegister(address);
         break;
-      case 'inputRegister':
+      case 'input-register':
         value = await this.readInputRegister(
           address,
           item.settings.data!.multiplierCoefficient!,
@@ -105,7 +106,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
           item.settings.data!.bitIndex
         );
         break;
-      case 'holdingRegister':
+      case 'holding-register':
         value = await this.readHoldingRegister(
           address,
           item.settings.data!.multiplierCoefficient!,
@@ -120,7 +121,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
       {
         pointId: item.name,
         timestamp: DateTime.now().toUTC().toISO()!,
-        data: { value: JSON.stringify(value) }
+        data: { value }
       }
     ];
   }
@@ -128,23 +129,23 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
   /**
    * Read a Modbus coil
    */
-  async readCoil(address: number): Promise<number> {
+  async readCoil(address: number): Promise<string> {
     if (!this.client) {
       throw new Error('Read coil error: Modbus client not set');
     }
     const { response } = await this.client.readCoils(address, 1);
-    return parseInt(response.body.valuesAsArray[0].toString());
+    return response.body.valuesAsArray[0].toString();
   }
 
   /**
    * Read a Modbus discrete input register
    */
-  async readDiscreteInputRegister(address: number): Promise<number> {
+  async readDiscreteInputRegister(address: number): Promise<string> {
     if (!this.client) {
       throw new Error('Read discrete input error: Modbus client not set');
     }
     const { response } = await this.client.readDiscreteInputs(address, 1);
-    return parseInt(response.body.valuesAsArray[0].toString());
+    return response.body.valuesAsArray[0].toString();
   }
 
   /**
@@ -155,7 +156,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
     multiplier: number,
     dataType: SouthModbusItemSettingsDataDataType,
     bitIndex: number | undefined
-  ): Promise<number> {
+  ): Promise<string> {
     if (!this.client) {
       throw new Error('Read input error: Modbus client not set');
     }
@@ -172,7 +173,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
     multiplier: number,
     dataType: SouthModbusItemSettingsDataDataType,
     bitIndex: number | undefined
-  ): Promise<number> {
+  ): Promise<string> {
     if (!this.client) {
       throw new Error('Read holding error: Modbus client not set');
     }
@@ -189,9 +190,8 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
     multiplier: number,
     dataType: SouthModbusItemSettingsDataDataType,
     bitIndex: number | undefined
-  ): number {
-    const bufferFunctionName = this.getBufferFunctionName(dataType);
-    if (!['Bit', 'Int16', 'UInt16'].includes(dataType)) {
+  ): string {
+    if (!['bit', 'int16', 'uint16'].includes(dataType)) {
       buffer.swap32().swap16();
       if (this.connector.settings.swapWordsInDWords) {
         buffer.swap16().swap32();
@@ -199,25 +199,17 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
       if (this.connector.settings.swapBytesInWords) {
         buffer.swap16();
       }
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-expect-error
-      const bufferValue = buffer[bufferFunctionName]();
-      return parseFloat((bufferValue * multiplier).toFixed(5));
+
+      const bufferValue = this.readBuffer(buffer, dataType, this.connector.settings.endianness, 0);
+      return (parseFloat(bufferValue) * multiplier).toString();
     }
 
     if (this.connector.settings.swapBytesInWords) {
       buffer.swap16();
     }
 
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
-    const bufferValue = buffer[bufferFunctionName]();
-
-    if (dataType === 'Bit') {
-      return (bufferValue >> bitIndex!) & 1;
-    }
-
-    return parseFloat((bufferValue * multiplier).toFixed(5));
+    const bufferValue = this.readBuffer(buffer, dataType, this.connector.settings.endianness, bitIndex || 0);
+    return (parseFloat(bufferValue) * multiplier).toString();
   }
 
   /**
@@ -316,14 +308,35 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
   /**
    * Retrieve the right buffer function name according to the data type
    */
-  getBufferFunctionName(dataType: string): string {
-    const endianness = this.connector.settings.endianness === 'Big Endian' ? 'BE' : 'LE';
-    if (dataType === 'Bit') {
-      return `readUInt16${endianness}`;
+  readBuffer(
+    buffer: Buffer,
+    dataType: SouthModbusItemSettingsDataDataType,
+    endianness: SouthModbusSettingsEndianness,
+    bitIndex: number
+  ): string {
+    const methodSuffix = endianness === 'little-endian' ? 'LE' : 'BE';
+    switch (dataType) {
+      case 'uint16':
+        return buffer[`readUInt16${methodSuffix}`]().toString();
+      case 'int16':
+        return buffer[`readInt16${methodSuffix}`]().toString();
+      case 'uint32':
+        return buffer[`readUInt32${methodSuffix}`]().toString();
+      case 'int32':
+        return buffer[`readInt32${methodSuffix}`]().toString();
+      case 'big-uint64':
+        return buffer[`readBigUInt64${methodSuffix}`]().toString();
+      case 'big-int64':
+        return buffer[`readBigInt64${methodSuffix}`]().toString();
+      case 'float':
+        return buffer[`readFloat${methodSuffix}`]().toString();
+      case 'double':
+        return buffer[`readDouble${methodSuffix}`]().toString();
+      case 'bit':
+        return `${(buffer[`readUInt16${methodSuffix}`]() >> bitIndex) & 1}`;
     }
-
-    return `read${dataType}${endianness}`;
   }
+
   /**
    * Close the connection
    */

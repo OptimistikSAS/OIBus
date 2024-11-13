@@ -47,7 +47,7 @@ export function buildDateTimeFieldsFormControl(dataTypes: Array<DateTimeType>): 
         key: 'format',
         label: 'Format',
         type: 'OibText',
-        defaultValue: 'yyyy-MM-dd HH:mm:ss',
+        defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
         validators: [{ key: 'required' }],
         conditionalDisplay: { field: 'type', values: ['string'] }
       },
