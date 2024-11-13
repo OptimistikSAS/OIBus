@@ -1,5 +1,5 @@
 import Database from 'better-sqlite3';
-import { migrateCrypto, migrateEntities, migrateLogsAndMetrics, migrateSouthCache } from '../../db/migration-service';
+import { migrateCrypto, migrateEntities, migrateLogsAndMetrics, migrateSouthCache } from '../../migration/migration-service';
 import path from 'node:path';
 import knex from 'knex';
 import testData from './test-data';
