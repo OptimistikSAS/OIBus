@@ -48,9 +48,7 @@ jest.mock('node-fetch');
 jest.mock('../../web-server/controllers/validators/joi.validator');
 jest.mock('../utils');
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-expect-error
-jest.spyOn(process, 'exit').mockImplementation(() => Promise.resolve());
+jest.spyOn(process, 'exit').mockImplementation();
 
 const oIAnalyticsCommandRepository: OIAnalyticsCommandRepository = new OIAnalyticsCommandRepositoryMock();
 const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OIAnalyticsRegistrationRepositoryMock();

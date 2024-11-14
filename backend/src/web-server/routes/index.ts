@@ -118,7 +118,6 @@ router.get('/api/engine', (ctx: KoaContext<void, EngineSettingsDTO>) => engineCo
 router.put('/api/engine', (ctx: KoaContext<EngineSettingsCommandDTO, void>) => engineController.updateEngineSettings(ctx));
 router.put('/api/engine/reset-metrics', (ctx: KoaContext<void, void>) => engineController.resetEngineMetrics(ctx));
 router.put('/api/restart', (ctx: KoaContext<void, void>) => engineController.restart(ctx));
-router.put('/api/shutdown', (ctx: KoaContext<void, void>) => engineController.shutdown(ctx));
 router.post('/api/add-content', upload.single('file'), (ctx: KoaContext<OIBusContent, void>) => contentController.addContent(ctx));
 router.get('/api/info', (ctx: KoaContext<void, OIBusInfo>) => engineController.getOIBusInfo(ctx));
 router.get('/api/status', (ctx: KoaContext<void, void>) => engineController.getStatus(ctx));
