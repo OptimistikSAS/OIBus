@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events';
 import { CronJob } from 'cron';
-import { delay, generateIntervals, validateCronExpression } from '../service/utils';
+import { createBaseFolders, delay, generateIntervals, validateCronExpression } from '../service/utils';
 
 import { SouthCache } from '../../shared/model/south-connector.model';
 import { Instant, Interval } from '../../shared/model/types';
@@ -94,6 +94,9 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   }
 
   async start(dataStream = true): Promise<void> {
+    if (this.connector.id !== 'test') {
+      await createBaseFolders(this.baseFolders);
+    }
     if (dataStream) {
       // Reload the settings only on data stream case, otherwise let the history query manage the settings
       this.connector = this.southConnectorRepository.findSouthById(this.connector.id)!;
