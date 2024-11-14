@@ -74,7 +74,7 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
      */
     switch (dataType) {
       case 'BOOL':
-        if (this.connector.settings.boolAsText === 'Text') {
+        if (this.connector.settings.boolAsText === 'text') {
           valueToAdd = JSON.stringify(valueToParse);
         } else {
           valueToAdd = valueToParse ? '1' : '0';
@@ -152,7 +152,7 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
           );
         } else if (enumInfo.length > 0) {
           // It is an ADS Enum object
-          if (this.connector.settings.enumAsText === 'Text') {
+          if (this.connector.settings.enumAsText === 'text') {
             valueToAdd = (valueToParse as { name: string }).name;
           } else {
             valueToAdd = JSON.stringify((valueToParse as { value: number }).value);
