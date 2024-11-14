@@ -7,7 +7,6 @@ import { NorthConnectorCommandDTO } from './north-connector.model';
 import { NorthSettings } from './north-settings.model';
 
 export const OIBUS_COMMAND_TYPES = [
-  'UPGRADE',
   'update-version',
   'restart-engine',
   'regenerate-cipher-keys',

@@ -217,7 +217,6 @@ export default class OIAnalyticsCommandRepository {
   private toOIBusCommand(command: Record<string, string | number>): OIBusCommand {
     switch (command.type as OIBusCommandType) {
       case 'update-version':
-      case 'UPGRADE':
         return {
           id: command.id as string,
           type: 'update-version',
