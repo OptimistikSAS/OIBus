@@ -636,9 +636,9 @@ describe('SouthOPCUA', () => {
 
   it('should properly query items', async () => {
     const read = jest.fn().mockReturnValue([
-      { value: { value: 1, dataType: DataType.Float }, statusCode: { value: 0 } },
-      { value: { value: 2, dataType: DataType.Double }, statusCode: { value: 0 } },
-      { value: { value: 3, dataType: DataType.UInt16 }, statusCode: { value: 0 } }
+      { value: { value: 1, dataType: DataType.Float }, serverTimestamp: new Date(), statusCode: { value: 0 } },
+      { value: { value: 2, dataType: DataType.Double }, serverTimestamp: new Date(), statusCode: { value: 0 } },
+      { value: { value: 3, dataType: DataType.UInt16 }, serverTimestamp: new Date(), statusCode: { value: 0 } }
     ]);
     (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ read });
     south.addContent = jest.fn();
@@ -742,8 +742,8 @@ describe('SouthOPCUA', () => {
 
   it('should properly query items and log error when not same number of items and values', async () => {
     const read = jest.fn().mockReturnValue([
-      { value: { value: 1, dataType: DataType.Float }, statusCode: { value: 0 } },
-      { value: { value: 2, dataType: DataType.Double }, statusCode: { value: 0 } }
+      { value: { value: 1, dataType: DataType.Float }, sourceTimestamp: new Date(), statusCode: { value: 0 } },
+      { value: { value: 2, dataType: DataType.Double }, serverTimestamp: new Date(), statusCode: { value: 0 } }
     ]);
     (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ read });
     south.addContent = jest.fn();
@@ -807,9 +807,9 @@ describe('SouthOPCUA', () => {
     await south.subscribe([configuration.items[0]]);
     expect(nodeOPCUAClient.ClientSubscription.create).toHaveBeenCalledTimes(1);
     expect(nodeOPCUAClient.ClientMonitoredItem.create).toHaveBeenCalledTimes(1);
-    stream.emit('changed', { value: { value: 1, dataType: DataType.Null }, statusCode: { value: 0 } });
+    stream.emit('changed', { value: { value: 1, dataType: DataType.Null }, sourceTimestamp: new Date(), statusCode: { value: 0 } });
     expect(south.addContent).not.toHaveBeenCalled();
-    stream.emit('changed', { value: { value: 1, dataType: DataType.Float }, statusCode: { value: 0 } });
+    stream.emit('changed', { value: { value: 1, dataType: DataType.Float }, serverTimestamp: new Date(), statusCode: { value: 0 } });
     expect(south.addContent).toHaveBeenCalledWith({
       type: 'time-values',
       content: [
