@@ -21,10 +21,10 @@ describe('OIAnalytics Command controller', () => {
 
   it('search() should return commands', async () => {
     ctx.query.status = ['ERRORED'];
-    ctx.query.types = ['UPGRADE'];
+    ctx.query.types = ['update-version'];
     ctx.query.page = 1;
     const searchParams: CommandSearchParam = {
-      types: ['UPGRADE'],
+      types: ['update-version'],
       status: ['ERRORED']
     };
     ctx.app.oIAnalyticsCommandService.search.mockReturnValue(createPageFromArray(testData.oIAnalytics.commands.oIBusList, 25, 1));
@@ -37,11 +37,11 @@ describe('OIAnalytics Command controller', () => {
 
   it('search() should return commands with default search params', async () => {
     ctx.query = {
-      types: 'UPGRADE',
+      types: 'update-version',
       status: 'ERRORED'
     };
     const searchParams: CommandSearchParam = {
-      types: ['UPGRADE'],
+      types: ['update-version'],
       status: ['ERRORED']
     };
 

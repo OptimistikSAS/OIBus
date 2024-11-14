@@ -68,7 +68,7 @@ export default class OIAnalyticsCommandService {
     }
     const currentUpgradeCommand = this.oIAnalyticsCommandRepository.list({
       status: ['RUNNING'],
-      types: ['UPGRADE', 'update-version']
+      types: ['update-version']
     });
     if (currentUpgradeCommand.length > 0) {
       const updateVersion = (currentUpgradeCommand[0] as OIBusUpdateVersionCommand).commandContent.version.startsWith('v')
