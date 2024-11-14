@@ -327,7 +327,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
       if (test) {
         return result.content;
       } else {
-        if (result.content.length > 0) {
+        if (result.recordCount > 0) {
           await persistResults(
             result.content,
             { type: 'file', filename: item.settings.serialization.filename, compression: item.settings.serialization.compression },
