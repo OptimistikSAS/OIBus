@@ -383,15 +383,15 @@ describe('South Modbus', () => {
   });
 
   it('should retrieve number of words', () => {
-    expect(south.getNumberOfWords('Bit')).toEqual(1);
-    expect(south.getNumberOfWords('UInt16')).toEqual(1);
-    expect(south.getNumberOfWords('Int16')).toEqual(1);
-    expect(south.getNumberOfWords('UInt32')).toEqual(2);
-    expect(south.getNumberOfWords('Int32')).toEqual(2);
-    expect(south.getNumberOfWords('Float')).toEqual(2);
-    expect(south.getNumberOfWords('BigUInt64')).toEqual(4);
-    expect(south.getNumberOfWords('BigInt64')).toEqual(4);
-    expect(south.getNumberOfWords('Double')).toEqual(4);
+    expect(south.getNumberOfWords('bit')).toEqual(1);
+    expect(south.getNumberOfWords('uint16')).toEqual(1);
+    expect(south.getNumberOfWords('int16')).toEqual(1);
+    expect(south.getNumberOfWords('uint32')).toEqual(2);
+    expect(south.getNumberOfWords('int32')).toEqual(2);
+    expect(south.getNumberOfWords('float')).toEqual(2);
+    expect(south.getNumberOfWords('big-uint64')).toEqual(4);
+    expect(south.getNumberOfWords('big-int64')).toEqual(4);
+    expect(south.getNumberOfWords('double')).toEqual(4);
     expect(south.getNumberOfWords('other')).toEqual(1);
   });
 
