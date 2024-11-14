@@ -358,13 +358,13 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
    * Retrieve the number of Words in Modbus associated to each data type
    */
   getNumberOfWords(dataType: string): number {
-    if (['Bit', 'Int16', 'UInt16'].includes(dataType)) {
+    if (['bit', 'int16', 'uint16'].includes(dataType)) {
       return 1;
     }
-    if (['UInt32', 'Int32', 'Float'].includes(dataType)) {
+    if (['uint32', 'int32', 'float'].includes(dataType)) {
       return 2;
     }
-    if (['BigUInt64', 'BigInt64', 'Double'].includes(dataType)) {
+    if (['big-uint64', 'big-int64', 'double'].includes(dataType)) {
       return 4;
     }
     return 1;
