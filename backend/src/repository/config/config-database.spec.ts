@@ -312,7 +312,7 @@ describe('Repository with populated database', () => {
       expect(
         repository.search(
           {
-            types: ['UPGRADE', 'update-version'],
+            types: ['update-version'],
             status: ['RUNNING'],
             ack: false
           },
@@ -321,7 +321,7 @@ describe('Repository with populated database', () => {
       ).toEqual(
         createPageFromArray(
           testData.oIAnalytics.commands.oIBusList.filter(
-            element => ['UPGRADE', 'update-version'].includes(element.type) && ['RUNNING'].includes(element.status)
+            element => ['update-version'].includes(element.type) && ['RUNNING'].includes(element.status)
           ),
           50,
           0
@@ -332,13 +332,13 @@ describe('Repository with populated database', () => {
     it('should properly search commands and list them', () => {
       expect(
         repository.list({
-          types: ['UPGRADE', 'update-version'],
+          types: ['update-version'],
           status: ['RUNNING'],
           ack: false
         })
       ).toEqual(
         testData.oIAnalytics.commands.oIBusList.filter(
-          element => ['UPGRADE', 'update-version'].includes(element.type) && ['RUNNING'].includes(element.status)
+          element => ['update-version'].includes(element.type) && ['RUNNING'].includes(element.status)
         )
       );
     });

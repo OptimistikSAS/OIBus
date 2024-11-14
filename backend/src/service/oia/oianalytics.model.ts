@@ -68,7 +68,6 @@ export interface OIBusFullConfigurationCommandDTO {
 // DTO fetch from OIAnalytics
 //
 export const OIANALYTICS_FETCH_COMMAND_TYPES = [
-  'UPGRADE',
   'update-version',
   'restart-engine',
   'regenerate-cipher-keys',

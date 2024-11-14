@@ -24,12 +24,14 @@ describe('OibusCommandService', () => {
     let expectedCommands: Page<OIBusCommandDTO> | null = null;
     const commands = toPage<OIBusCommandDTO>([{ id: '1' }] as Array<OIBusCommandDTO>);
 
-    service.searchCommands({ page: 0, types: ['UPGRADE'], status: ['COMPLETED', 'CANCELLED'] }).subscribe(c => (expectedCommands = c));
+    service
+      .searchCommands({ page: 0, types: ['update-version'], status: ['COMPLETED', 'CANCELLED'] })
+      .subscribe(c => (expectedCommands = c));
 
     http
       .expectOne({
         method: 'GET',
-        url: '/api/commands?page=0&types=UPGRADE&status=COMPLETED&status=CANCELLED'
+        url: '/api/commands?page=0&types=update-version&status=COMPLETED&status=CANCELLED'
       })
       .flush(commands);
 
