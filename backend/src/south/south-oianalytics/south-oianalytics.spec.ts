@@ -32,7 +32,8 @@ jest.mock('../../service/utils', () => ({
   persistResults: jest.fn(),
   createFolder: jest.fn(),
   formatQueryParams: jest.fn(),
-  getOIBusInfo: jest.fn()
+  getOIBusInfo: jest.fn(),
+  createBaseFolders: jest.fn()
 }));
 jest.mock('@azure/identity', () => ({
   ClientSecretCredential: jest.fn().mockImplementation(() => ({

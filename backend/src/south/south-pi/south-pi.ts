@@ -182,7 +182,7 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
           this.logger.warn(log);
         }
       }
-      if (result.content.length > 0) {
+      if (result.recordCount > 0) {
         this.logger.debug(`Found ${result.recordCount} results for ${items.length} items in ${requestDuration} ms`);
         await this.addContent({ type: 'time-values', content: result.content });
         if (result.maxInstantRetrieved > updatedStartTime) {
