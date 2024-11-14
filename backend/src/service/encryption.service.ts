@@ -233,9 +233,10 @@ export default class EncryptionService {
       .privateDecrypt(
         {
           key: privateKey,
-          padding: crypto.constants.RSA_PKCS1_PADDING // This is commonly used padding
+          padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+          oaepHash: 'sha256'
         },
-        Buffer.from(encryptedText)
+        Buffer.from(encryptedText, 'base64')
       )
       .toString();
   }
