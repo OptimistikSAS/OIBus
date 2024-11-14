@@ -81,7 +81,8 @@ export const OIANALYTICS_FETCH_COMMAND_TYPES = [
   'delete-south',
   'create-north',
   'update-north',
-  'delete-north'
+  'delete-north',
+  'create-or-update-south-items-from-csv'
 ] as const;
 export type OIAnalyticsFetchCommandType = (typeof OIANALYTICS_FETCH_COMMAND_TYPES)[number];
 
@@ -160,6 +161,14 @@ export interface OIAnalyticsFetchDeleteNorthConnectorCommandDTO extends BaseOIAn
   northConnectorId: string;
 }
 
+export interface OIAnalyticsFetchCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'create-or-update-south-items-from-csv';
+  southConnectorId: string;
+  deleteItemsNotPresent: boolean;
+  csvContent: string;
+  delimiter: string;
+}
+
 export type OIAnalyticsFetchCommandDTO =
   | OIAnalyticsFetchUpdateVersionCommandDTO
   | OIAnalyticsFetchRestartEngineCommandDTO
@@ -173,4 +182,5 @@ export type OIAnalyticsFetchCommandDTO =
   | OIAnalyticsFetchDeleteSouthConnectorCommandDTO
   | OIAnalyticsFetchCreateNorthConnectorCommandDTO
   | OIAnalyticsFetchUpdateNorthConnectorCommandDTO
-  | OIAnalyticsFetchDeleteNorthConnectorCommandDTO;
+  | OIAnalyticsFetchDeleteNorthConnectorCommandDTO
+  | OIAnalyticsFetchCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO;

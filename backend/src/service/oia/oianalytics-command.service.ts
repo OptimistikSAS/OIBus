@@ -13,6 +13,7 @@ import OIBusService from '../oibus.service';
 import {
   OIBusCommand,
   OIBusCreateNorthConnectorCommand,
+  OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand,
   OIBusCreateScanModeCommand,
   OIBusCreateSouthConnectorCommand,
   OIBusDeleteNorthConnectorCommand,
@@ -272,6 +273,8 @@ export default class OIAnalyticsCommandService {
         case 'delete-north':
           await this.executeDeleteNorthCommand(command);
           break;
+        case 'create-or-update-south-items-from-csv':
+          await this.executeCreateOrUpdateSouthConnectorItemsFromCSVCommand(command);
       }
     } catch (error: unknown) {
       this.logger.error(
@@ -456,6 +459,34 @@ export default class OIAnalyticsCommandService {
     await this.northService.deleteNorth(command.northConnectorId);
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'North connector deleted successfully');
   }
+
+  private async executeCreateOrUpdateSouthConnectorItemsFromCSVCommand(command: OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand) {
+    const southConnector = this.southService.findById(command.southConnectorId);
+    if (!southConnector) {
+      throw new Error(`South connector ${command.southConnectorId} not found`);
+    }
+
+    const { items, errors } = await this.southService.checkCsvContentImport(
+      southConnector.type,
+      command.commandContent.csvContent,
+      command.commandContent.delimiter,
+      command.commandContent.deleteItemsNotPresent ? [] : southConnector.items
+    );
+
+    if (errors.length > 0) {
+      let stringError = 'Error when checking csv items:';
+      for (const error of errors) {
+        stringError += `\n${error.item.name}: ${error.error}`;
+      }
+      throw new Error(stringError);
+    }
+    await this.southService.importItems(southConnector.id, items, command.commandContent.deleteItemsNotPresent);
+    this.oIAnalyticsCommandRepository.markAsCompleted(
+      command.id,
+      DateTime.now().toUTC().toISO(),
+      `${items.length} items imported on South connector ${southConnector.name}`
+    );
+  }
 }
 
 export const toOIBusCommandDTO = (command: OIBusCommand): OIBusCommandDTO => {
@@ -473,6 +504,7 @@ export const toOIBusCommandDTO = (command: OIBusCommand): OIBusCommandDTO => {
     case 'delete-scan-mode':
     case 'delete-south':
     case 'delete-north':
+    case 'create-or-update-south-items-from-csv':
       return command;
   }
 };

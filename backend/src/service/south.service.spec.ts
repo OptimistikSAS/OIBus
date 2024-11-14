@@ -809,7 +809,7 @@ describe('south service', () => {
       meta: { delimiter: ',' },
       data: csvData
     });
-    const result = await service.checkCsvImport(
+    const result = await service.checkCsvFileImport(
       testData.south.list[0].type,
       { path: 'file/path.csv' } as multer.File,
       ',',
@@ -908,7 +908,7 @@ describe('south service', () => {
       meta: { delimiter: ',' },
       data: csvData
     });
-    const result = await service.checkCsvImport(
+    const result = await service.checkCsvFileImport(
       testData.south.list[1].type,
       { path: 'file/path.csv' } as multer.File,
       ',',
@@ -940,10 +940,10 @@ describe('south service', () => {
     });
   });
 
-  it('checkCsvImport() should throw error if manifest not found', async () => {
-    await expect(
-      service.checkCsvImport('bad', { path: 'file/path.csv' } as multer.File, ',', testData.south.list[0].items)
-    ).rejects.toThrow(`South manifest does not exist for type bad`);
+  it('checkCsvContentImport() should throw error if manifest not found', async () => {
+    await expect(service.checkCsvContentImport('bad', 'fileContent', ',', testData.south.list[0].items)).rejects.toThrow(
+      `South manifest does not exist for type bad`
+    );
   });
 
   it('checkCsvImport() should throw error if delimiter does not match', async () => {
@@ -954,7 +954,7 @@ describe('south service', () => {
     });
 
     await expect(
-      service.checkCsvImport(testData.south.list[0].type, { path: 'file/path.csv' } as multer.File, ',', testData.south.list[0].items)
+      service.checkCsvFileImport(testData.south.list[0].type, { path: 'file/path.csv' } as multer.File, ',', testData.south.list[0].items)
     ).rejects.toThrow(`The entered delimiter "," does not correspond to the file delimiter ";"`);
   });
 
