@@ -422,7 +422,7 @@ function toNewOPUAItemMode(mode: 'HA' | 'DA'): 'ha' | 'da' {
   }
 }
 
-function toNewModbusType(
+function toNewModbusDataType(
   modbusType: 'UInt16' | 'Int16' | 'UInt32' | 'Int32' | 'BigUInt64' | 'BigInt64' | 'Float' | 'Double' | 'Bit'
 ): 'uint16' | 'int16' | 'uint32' | 'int32' | 'big-uint64' | 'big-int64' | 'float' | 'double' | 'bit' {
   switch (modbusType) {
@@ -447,7 +447,7 @@ function toNewModbusType(
   }
 }
 
-function toNewModbusDataType(
+function toNewModbusRegisterType(
   dataType: 'coil' | 'discreteInput' | 'inputRegister' | 'holdingRegister'
 ): 'coil' | 'discrete-input' | 'input-register' | 'holding-register' {
   switch (dataType) {
@@ -484,8 +484,10 @@ async function updateSouthConnectorItems(knex: Knex): Promise<void> {
         newSettings.mode = toNewOPUAItemMode(newSettings.mode);
         break;
       case 'modbus':
-        newSettings.modbusType = toNewModbusType(newSettings.modbusType);
-        newSettings.dataType = toNewModbusDataType(newSettings.dataType);
+        newSettings.modbusType = toNewModbusRegisterType(newSettings.modbusType);
+        if (newSettings.data) {
+          newSettings.data.dataType = toNewModbusDataType(newSettings.data.dataType);
+        }
         break;
       case 'osisoft-pi':
         newSettings.type = toNewOSIsoftPI(newSettings.type);
