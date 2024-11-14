@@ -548,7 +548,7 @@ describe('South connector controller', () => {
     ctx.app.southService.getInstalledSouthManifests.mockReturnValue(testData.south.manifest);
 
     await southConnectorController.checkImportSouthItems(ctx);
-    expect(ctx.app.southService.checkCsvImport).toHaveBeenCalledWith(
+    expect(ctx.app.southService.checkCsvFileImport).toHaveBeenCalledWith(
       testData.south.list[0].type,
       ctx.request.file,
       ctx.request.body.delimiter,
@@ -561,7 +561,7 @@ describe('South connector controller', () => {
     ctx.params.southType = testData.south.list[0].type;
     ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
     ctx.request.body = { currentItems: '[]', delimiter: ',' };
-    ctx.app.southService.checkCsvImport.mockImplementationOnce(() => {
+    ctx.app.southService.checkCsvFileImport.mockImplementationOnce(() => {
       throw new Error('bad items');
     });
 
