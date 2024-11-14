@@ -350,7 +350,7 @@ export default class OIAnalyticsCommandService {
 
     // Generate RSA key pair
     const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
-      modulusLength: 2048, // Length of the key in bits (2048 is standard for RSA)
+      modulusLength: 4096,
       publicKeyEncoding: {
         type: 'spki', // Recommended format for public key
         format: 'pem' // Output format for the key
