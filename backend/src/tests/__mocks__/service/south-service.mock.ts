@@ -23,6 +23,7 @@ export default jest.fn().mockImplementation(() => ({
   deleteAllItemsForSouthConnector: jest.fn(),
   enableItem: jest.fn(),
   disableItem: jest.fn(),
-  checkCsvImport: jest.fn(),
+  checkCsvFileImport: jest.fn(),
+  checkCsvContentImport: jest.fn(),
   importItems: jest.fn()
 }));

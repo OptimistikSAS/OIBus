@@ -12,6 +12,7 @@ import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.mo
 import OIAnalyticsCommandRepository from './oianalytics-command.repository';
 import { createPageFromArray } from '../../../shared/model/types';
 import {
+  OIAnalyticsFetchCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO,
   OIAnalyticsFetchDeleteNorthConnectorCommandDTO,
   OIAnalyticsFetchDeleteScanModeCommandDTO,
   OIAnalyticsFetchDeleteSouthConnectorCommandDTO,
@@ -397,6 +398,29 @@ describe('Repository with populated database', () => {
         retrievedDate: testData.constants.dates.FAKE_NOW,
         completedDate: null,
         result: null
+      });
+    });
+
+    it('should create a create-or-update-south-items-from-csv command', () => {
+      const command: OIAnalyticsFetchCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO = testData.oIAnalytics.commands
+        .oIAnalyticsList[10] as OIAnalyticsFetchCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO;
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        targetVersion: command.targetVersion,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        southConnectorId: command.southConnectorId,
+        commandContent: {
+          csvContent: command.csvContent,
+          deleteItemsNotPresent: command.deleteItemsNotPresent,
+          delimiter: command.delimiter
+        }
       });
     });
 
@@ -856,7 +880,7 @@ describe('Repository with populated database', () => {
       expect(repository.findItemById(testData.south.list[0].id, testData.south.list[0].items[0].id)!.enabled).toEqual(true);
     });
 
-    it('should save all items', () => {
+    it('should save all items without removing existing items', () => {
       (generateRandomId as jest.Mock).mockReturnValueOnce('newItemIdSouth1');
 
       const itemsToSave: Array<SouthConnectorItemEntity<SouthItemSettings>> = JSON.parse(JSON.stringify(testData.south.list[0].items));
@@ -869,13 +893,40 @@ describe('Repository with populated database', () => {
       });
       itemsToSave[0].name = 'updated name';
 
-      repository.saveAllItems(testData.south.list[0].id, itemsToSave);
+      repository.saveAllItems(testData.south.list[0].id, itemsToSave, false);
 
       const results = repository.findAllItemsForSouth(testData.south.list[0].id);
       expect(results.length).toEqual(3);
 
       expect(repository.findItemById(testData.south.list[0].id, testData.south.list[0].items[0].id)!.name).toEqual(itemsToSave[0].name);
       expect(repository.findItemById(testData.south.list[0].id, 'newItemIdSouth1')!.id).toEqual('newItemIdSouth1');
+    });
+
+    it('should save all items and remove existing items', () => {
+      (generateRandomId as jest.Mock)
+        .mockReturnValueOnce('newItemIdSouth1')
+        .mockReturnValueOnce('newItemIdSouth2')
+        .mockReturnValueOnce('newItemIdSouth3');
+
+      const itemsToSave: Array<SouthConnectorItemEntity<SouthItemSettings>> = JSON.parse(JSON.stringify(testData.south.list[0].items)).map(
+        (item: SouthConnectorItemEntity<SouthItemSettings>) => ({ ...item, id: '' })
+      );
+      itemsToSave.push({
+        id: '',
+        name: 'new item',
+        enabled: false,
+        scanModeId: testData.scanMode.list[0].id,
+        settings: {} as SouthItemSettings
+      });
+
+      repository.saveAllItems(testData.south.list[0].id, itemsToSave, true);
+
+      const results = repository.findAllItemsForSouth(testData.south.list[0].id);
+      expect(results.length).toEqual(3);
+
+      expect(repository.findItemById(testData.south.list[0].id, 'newItemIdSouth1')!.id).toEqual('newItemIdSouth1');
+      expect(repository.findItemById(testData.south.list[0].id, 'newItemIdSouth2')!.id).toEqual('newItemIdSouth2');
+      expect(repository.findItemById(testData.south.list[0].id, 'newItemIdSouth3')!.id).toEqual('newItemIdSouth3');
     });
   });
 

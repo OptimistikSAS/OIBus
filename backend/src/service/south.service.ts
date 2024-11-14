@@ -668,9 +668,22 @@ export default class SouthService {
     await this.dataStreamEngine.reloadItems(southConnectorId);
   }
 
-  async checkCsvImport<I extends SouthItemSettings>(
+  async checkCsvFileImport<I extends SouthItemSettings>(
     southType: string,
     file: multer.File,
+    delimiter: string,
+    existingItems: Array<SouthConnectorItemDTO<I> | SouthConnectorItemCommandDTO<I>>
+  ): Promise<{
+    items: Array<SouthConnectorItemCommandDTO<SouthItemSettings>>;
+    errors: Array<{ item: SouthConnectorItemCommandDTO<SouthItemSettings>; error: string }>;
+  }> {
+    const fileContent = await fs.readFile(file.path);
+    return await this.checkCsvContentImport(southType, fileContent.toString('utf8'), delimiter, existingItems);
+  }
+
+  async checkCsvContentImport<I extends SouthItemSettings>(
+    southType: string,
+    fileContent: string,
     delimiter: string,
     existingItems: Array<SouthConnectorItemDTO<I> | SouthConnectorItemCommandDTO<I>>
   ): Promise<{
@@ -682,8 +695,7 @@ export default class SouthService {
       throw new Error(`South manifest does not exist for type ${southType}`);
     }
 
-    const fileContent = await fs.readFile(file.path);
-    const csvContent = csv.parse(fileContent.toString('utf8'), { header: true, delimiter });
+    const csvContent = csv.parse(fileContent, { header: true, delimiter });
 
     if (csvContent.meta.delimiter !== delimiter) {
       throw new Error(`The entered delimiter "${delimiter}" does not correspond to the file delimiter "${csvContent.meta.delimiter}"`);
@@ -754,7 +766,11 @@ export default class SouthService {
     return { items: validItems, errors };
   }
 
-  async importItems<I extends SouthItemSettings>(southConnectorId: string, items: Array<SouthConnectorItemCommandDTO<I>>) {
+  async importItems<I extends SouthItemSettings>(
+    southConnectorId: string,
+    items: Array<SouthConnectorItemCommandDTO<I>>,
+    deleteItemsNotPresent = false
+  ) {
     const southConnector = this.southConnectorRepository.findSouthById(southConnectorId);
     if (!southConnector) {
       throw new Error(`South connector ${southConnectorId} does not exist`);
@@ -777,7 +793,7 @@ export default class SouthService {
       itemsToAdd.push(southItemEntity);
     }
 
-    this.southConnectorRepository.saveAllItems(southConnector.id, itemsToAdd);
+    this.southConnectorRepository.saveAllItems(southConnector.id, itemsToAdd, deleteItemsNotPresent);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
 
     await this.dataStreamEngine.reloadItems(southConnectorId);

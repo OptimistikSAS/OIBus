@@ -8,5 +8,5 @@ export default {
   moduleNameMapper: {
     oracledb: '<rootDir>/tests/__mocks__/oracledb.mock.ts'
   },
-  coveragePathIgnorePatterns: ['src/db/', 'src/tests/utils/']
+  coveragePathIgnorePatterns: ['src/migration/', 'src/tests/utils/']
 };

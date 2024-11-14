@@ -88,6 +88,16 @@ export interface OIBusDeleteNorthConnectorCommand extends BaseOIBusCommand {
   northConnectorId: string;
 }
 
+export interface OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand extends BaseOIBusCommand {
+  type: 'create-or-update-south-items-from-csv';
+  southConnectorId: string;
+  commandContent: {
+    deleteItemsNotPresent: boolean;
+    csvContent: string;
+    delimiter: string;
+  };
+}
+
 export type OIBusCommand =
   | OIBusUpdateVersionCommand
   | OIBusRestartEngineCommand
@@ -101,4 +111,5 @@ export type OIBusCommand =
   | OIBusDeleteSouthConnectorCommand
   | OIBusCreateNorthConnectorCommand
   | OIBusUpdateNorthConnectorCommand
-  | OIBusDeleteNorthConnectorCommand;
+  | OIBusDeleteNorthConnectorCommand
+  | OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand;
