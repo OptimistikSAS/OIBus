@@ -98,7 +98,7 @@ install_path=$(readlink -m "$install_dir")
 {
   printf "[Unit]\nDescription=OIBus Client\nAfter=network-online.target\n\n"
   printf "[Service]\nWorkingDirectory=%s\nEnvironmentFile=%s/oibus-env\n" "$install_path" "$install_path"
-  printf "ExecStart=%s/oibus-launcher %s %s\nRestart=on-failure\n\n" "$install_path" '$ARG1' '$ARG2'
+  printf "ExecStart=%s/oibus-launcher %s %s\nRestart=always\nRestartSec=5s\n\n" "$install_path" '$ARG1' '$ARG2'
   printf "[Install]\nWantedBy=default.target"
 } > /etc/systemd/system/oibus.service
 
