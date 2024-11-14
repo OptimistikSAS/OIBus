@@ -179,8 +179,9 @@ export default class OIBusService {
   }
 
   async restartOIBus(): Promise<void> {
-    await this.stopOIBus();
-    await this.startOIBus();
+    setTimeout(() => {
+      process.exit();
+    }, 100); // wait a bit to let the HTTP answer trigger
   }
 
   async stopOIBus(): Promise<void> {
@@ -268,6 +269,7 @@ export default class OIBusService {
     const settings = this.getEngineSettings();
     this.engineMetricsRepository.removeMetrics(settings.id);
     this.engineMetricsRepository.initMetrics(settings.id);
+    this.metrics = this.engineMetricsRepository.getMetrics(settings.id)!;
     this.updateMetrics();
   }
 

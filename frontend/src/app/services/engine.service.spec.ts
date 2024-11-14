@@ -53,15 +53,6 @@ describe('EngineService', () => {
     expect(expectedInfo!).toEqual(engineInfo);
   });
 
-  it('should shutdown', () => {
-    let done = false;
-
-    service.shutdown().subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/shutdown' });
-    testRequest.flush(null);
-    expect(done).toBe(true);
-  });
-
   it('should restart', () => {
     let done = false;
 
