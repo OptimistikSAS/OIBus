@@ -103,7 +103,7 @@ const manifest: SouthConnectorManifest = {
       type: 'OibNumber',
       label: 'Retry interval',
       unitLabel: 'ms',
-      defaultValue: 5_000,
+      defaultValue: 10_000,
       newRow: false,
       class: 'col-4',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],

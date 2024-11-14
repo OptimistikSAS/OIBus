@@ -71,7 +71,7 @@ const manifest: SouthConnectorManifest = {
       key: 'retryInterval',
       type: 'OibNumber',
       label: 'Retry interval',
-      defaultValue: 1000,
+      defaultValue: 10_000,
       unitLabel: 'ms',
       class: 'col-3',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30_000 } }]
@@ -98,7 +98,7 @@ const manifest: SouthConnectorManifest = {
         type: 'OibText',
         label: 'Point ID',
         validators: [{ key: 'required' }],
-        conditionalDisplay: { field: 'type', values: ['pointId'] },
+        conditionalDisplay: { field: 'type', values: ['point-id'] },
         newRow: true,
         displayInViewMode: true
       },
@@ -108,7 +108,7 @@ const manifest: SouthConnectorManifest = {
         label: 'Point Query',
         defaultValue: '*',
         validators: [{ key: 'required' }],
-        conditionalDisplay: { field: 'type', values: ['pointQuery'] },
+        conditionalDisplay: { field: 'type', values: ['point-query'] },
         newRow: true,
         displayInViewMode: true
       }

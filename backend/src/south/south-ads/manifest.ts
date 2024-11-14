@@ -95,9 +95,9 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'enumAsText',
       type: 'OibSelect',
-      options: ['Text', 'Integer'],
+      options: ['text', 'integer'],
       label: 'Enumeration value',
-      defaultValue: 'Integer',
+      defaultValue: 'integer',
       class: 'col-4',
       validators: [{ key: 'required' }],
       displayInViewMode: true
@@ -106,8 +106,8 @@ const manifest: SouthConnectorManifest = {
       key: 'boolAsText',
       type: 'OibSelect',
       label: 'Boolean value',
-      options: ['Text', 'Integer'],
-      defaultValue: 'Integer',
+      options: ['text', 'integer'],
+      defaultValue: 'integer',
       class: 'col-4',
       validators: [{ key: 'required' }],
       displayInViewMode: true

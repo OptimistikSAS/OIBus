@@ -61,8 +61,8 @@ describe('South ADS', () => {
       routerAddress: '10.211.55.3',
       retryInterval: 10000,
       plcName: 'PLC_TEST.',
-      boolAsText: 'Integer',
-      enumAsText: 'Text',
+      boolAsText: 'integer',
+      enumAsText: 'text',
       structureFiltering: [
         {
           name: 'ST_Example',
@@ -185,7 +185,7 @@ describe('South ADS', () => {
       }
     ]);
 
-    configuration.settings.boolAsText = 'Text';
+    configuration.settings.boolAsText = 'text';
     expect(south.parseValues(configuration.items[1].name, 'BOOL', true, testData.constants.dates.FAKE_NOW, [], [])).toEqual([
       {
         pointId: configuration.items[1].name,
@@ -366,7 +366,7 @@ describe('South ADS', () => {
       }
     ]);
 
-    configuration.settings.enumAsText = 'Integer';
+    configuration.settings.enumAsText = 'integer';
 
     expect(
       south.parseValues(
