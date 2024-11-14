@@ -11,7 +11,7 @@ import { DateTime } from 'luxon';
 import { ReadStream } from 'node:fs';
 import path from 'node:path';
 import { NorthSettings } from '../../shared/model/north-settings.model';
-import { dirSize, validateCronExpression } from '../service/utils';
+import { createBaseFolders, dirSize, validateCronExpression } from '../service/utils';
 import { NorthConnectorEntity } from '../model/north-connector.model';
 import { SouthConnectorEntityLight } from '../model/south-connector.model';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
@@ -138,6 +138,9 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   }
 
   async start(dataStream = true): Promise<void> {
+    if (this.connector.id !== 'test') {
+      await createBaseFolders(this.baseFolders);
+    }
     if (dataStream) {
       // Reload the settings only on data stream case, otherwise let the history query manage the settings
       this.connector = this.northConnectorRepository.findNorthById(this.connector.id)!;
