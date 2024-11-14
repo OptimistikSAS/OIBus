@@ -193,8 +193,15 @@ export default class SouthConnectorRepository {
     }
   }
 
-  saveAllItems<I extends SouthItemSettings>(southConnectorId: string, southItems: Array<SouthConnectorItemEntity<I>>): void {
+  saveAllItems<I extends SouthItemSettings>(
+    southConnectorId: string,
+    southItems: Array<SouthConnectorItemEntity<I>>,
+    deleteItemsNotPresent: boolean
+  ): void {
     const transaction = this.database.transaction(() => {
+      if (deleteItemsNotPresent) {
+        this.deleteAllItemsBySouth(southConnectorId);
+      }
       for (const item of southItems) {
         this.saveItem(southConnectorId, item);
       }

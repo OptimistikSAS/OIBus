@@ -1040,6 +1040,22 @@ const oIBusCommands: Array<OIBusCommand> = [
     retrievedDate: constants.dates.DATE_1,
     completedDate: '',
     result: 'ok'
+  },
+  {
+    id: 'commandId15',
+    type: 'create-or-update-south-items-from-csv',
+    status: 'RETRIEVED',
+    targetVersion: engineSettings.version,
+    ack: false,
+    retrievedDate: constants.dates.DATE_1,
+    completedDate: '',
+    result: 'ok',
+    southConnectorId: 'southId1',
+    commandContent: {
+      deleteItemsNotPresent: false,
+      csvContent: '',
+      delimiter: ','
+    }
   }
 ];
 const oIAnalyticsCommands: Array<OIAnalyticsFetchCommandDTO> = [
@@ -1106,6 +1122,15 @@ const oIAnalyticsCommands: Array<OIAnalyticsFetchCommandDTO> = [
     id: 'newCommandId10',
     type: 'regenerate-cipher-keys',
     targetVersion: engineSettings.version
+  },
+  {
+    id: 'newCommandId11',
+    type: 'create-or-update-south-items-from-csv',
+    targetVersion: engineSettings.version,
+    southConnectorId: southConnectors[0].id,
+    deleteItemsNotPresent: false,
+    csvContent: '',
+    delimiter: ','
   }
 ];
 const oIBusMessages: Array<OIAnalyticsMessage> = [

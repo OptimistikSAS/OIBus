@@ -20,7 +20,8 @@ export const OIBUS_COMMAND_TYPES = [
   'delete-south',
   'create-north',
   'update-north',
-  'delete-north'
+  'delete-north',
+  'create-or-update-south-items-from-csv'
 ] as const;
 export type OIBusCommandType = (typeof OIBUS_COMMAND_TYPES)[number];
 
@@ -118,6 +119,17 @@ export interface OIBusDeleteNorthConnectorCommandDTO extends BaseOIBusCommandDTO
   northConnectorId: string;
 }
 
+export interface OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO extends BaseOIBusCommandDTO {
+  type: 'create-or-update-south-items-from-csv';
+  targetVersion: string;
+  southConnectorId: string;
+  commandContent: {
+    deleteItemsNotPresent: boolean;
+    csvContent: string;
+    delimiter: string;
+  };
+}
+
 export type OIBusCommandDTO =
   | OIBusUpdateVersionCommandDTO
   | OIBusRegenerateCipherKeysCommandDTO
@@ -131,7 +143,8 @@ export type OIBusCommandDTO =
   | OIBusDeleteSouthConnectorCommandDTO
   | OIBusCreateNorthConnectorCommandDTO
   | OIBusUpdateNorthConnectorCommandDTO
-  | OIBusDeleteNorthConnectorCommandDTO;
+  | OIBusDeleteNorthConnectorCommandDTO
+  | OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO;
 
 export interface CommandSearchParam {
   page?: number;

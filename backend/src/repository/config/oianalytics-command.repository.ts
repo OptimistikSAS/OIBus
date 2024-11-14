@@ -150,6 +150,17 @@ export default class OIAnalyticsCommandRepository {
         );
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, command_content) VALUES (?, ?, ?, ?, ?, ?, ?);`;
         break;
+      case 'create-or-update-south-items-from-csv':
+        queryParams.push(command.southConnectorId);
+        queryParams.push(
+          JSON.stringify({
+            deleteItemsNotPresent: command.deleteItemsNotPresent,
+            csvContent: command.csvContent,
+            delimiter: command.delimiter
+          })
+        );
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, south_connector_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
+        break;
     }
     this.database.prepare(insertQuery).run(...queryParams);
   }
@@ -362,6 +373,19 @@ export default class OIAnalyticsCommandRepository {
           completedDate: command.completed_date as Instant,
           result: command.result as string,
           northConnectorId: command.north_connector_id as string
+        };
+      case 'create-or-update-south-items-from-csv':
+        return {
+          id: command.id as string,
+          type: 'create-or-update-south-items-from-csv',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          southConnectorId: command.south_connector_id as string,
+          commandContent: JSON.parse(command.command_content as string)
         };
     }
   }

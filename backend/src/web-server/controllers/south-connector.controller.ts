@@ -293,7 +293,7 @@ export default class SouthConnectorController {
   ): Promise<void> {
     try {
       return ctx.ok(
-        await ctx.app.southService.checkCsvImport(
+        await ctx.app.southService.checkCsvFileImport(
           ctx.params.southType,
           ctx.request.file,
           ctx.request.body!.delimiter,

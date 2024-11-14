@@ -19,6 +19,7 @@ import { delay, getOIBusInfo, unzip } from '../utils';
 import fs from 'node:fs/promises';
 import {
   OIBusCreateNorthConnectorCommand,
+  OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand,
   OIBusCreateScanModeCommand,
   OIBusDeleteNorthConnectorCommand,
   OIBusDeleteScanModeCommand,
@@ -531,6 +532,70 @@ describe('OIAnalytics Command Service', () => {
       testData.oIAnalytics.commands.oIBusList[11].id,
       testData.constants.dates.FAKE_NOW,
       'North connector created successfully'
+    );
+  });
+
+  it('should execute create-or-update-south-items-from-csv command', async () => {
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([testData.oIAnalytics.commands.oIBusList[14]]); // create-or-update-south-items-from-csv
+    (southService.findById as jest.Mock).mockReturnValueOnce(testData.south.list[0]);
+    (southService.checkCsvContentImport as jest.Mock).mockReturnValueOnce({ items: [{}, {}], errors: [] });
+
+    await service.executeCommand();
+
+    expect(southService.findById).toHaveBeenCalledWith(
+      (testData.oIAnalytics.commands.oIBusList[14] as OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand).southConnectorId
+    );
+    expect(southService.checkCsvContentImport).toHaveBeenCalledWith(
+      testData.south.list[0].type,
+      (testData.oIAnalytics.commands.oIBusList[14] as OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand).commandContent.csvContent,
+      (testData.oIAnalytics.commands.oIBusList[14] as OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand).commandContent.delimiter,
+      testData.south.list[0].items
+    );
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      testData.oIAnalytics.commands.oIBusList[14].id,
+      testData.constants.dates.FAKE_NOW,
+      `2 items imported on South connector ${testData.south.list[0].name}`
+    );
+  });
+
+  it('should execute create-or-update-south-items-from-csv command and throw an error if south not found', async () => {
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([testData.oIAnalytics.commands.oIBusList[14]]); // create-or-update-south-items-from-csv
+    (southService.findById as jest.Mock).mockReturnValueOnce(null);
+
+    await service.executeCommand();
+
+    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(
+      testData.oIAnalytics.commands.oIBusList[14].id,
+      `South connector ${(testData.oIAnalytics.commands.oIBusList[14] as OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand).southConnectorId} not found`
+    );
+  });
+
+  it('should execute create-or-update-south-items-from-csv command', async () => {
+    const command: OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand = JSON.parse(
+      JSON.stringify(testData.oIAnalytics.commands.oIBusList[14])
+    ); // create-or-update-south-items-from-csv
+    command.commandContent.deleteItemsNotPresent = true;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (southService.findById as jest.Mock).mockReturnValueOnce(testData.south.list[0]);
+    (southService.checkCsvContentImport as jest.Mock).mockReturnValueOnce({
+      items: [{}, {}],
+      errors: [
+        { item: { name: 'item1' }, error: 'error1' },
+        { item: { name: 'item2' }, error: 'error2' }
+      ]
+    });
+
+    await service.executeCommand();
+
+    expect(southService.checkCsvContentImport).toHaveBeenCalledWith(
+      testData.south.list[0].type,
+      (testData.oIAnalytics.commands.oIBusList[14] as OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand).commandContent.csvContent,
+      (testData.oIAnalytics.commands.oIBusList[14] as OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand).commandContent.delimiter,
+      []
+    );
+    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(
+      testData.oIAnalytics.commands.oIBusList[14].id,
+      `Error when checking csv items:\nitem1: error1\nitem2: error2`
     );
   });
 
