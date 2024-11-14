@@ -100,7 +100,7 @@ const manifest: SouthConnectorManifest = {
         key: 'address',
         type: 'OibText',
         label: 'Address',
-        defaultValue: '',
+        defaultValue: '0x0001',
         validators: [{ key: 'required' }],
         displayInViewMode: true
       },
