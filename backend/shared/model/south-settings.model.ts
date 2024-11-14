@@ -4,10 +4,10 @@
 
 import { Timezone } from './types';
 
-export const SOUTH_A_D_S_SETTINGS_ENUM_AS_TEXTS = ['Text', 'Integer'] as const;
+export const SOUTH_A_D_S_SETTINGS_ENUM_AS_TEXTS = ['text', 'integer'] as const;
 export type SouthADSSettingsEnumAsText = (typeof SOUTH_A_D_S_SETTINGS_ENUM_AS_TEXTS)[number];
 
-export const SOUTH_A_D_S_SETTINGS_BOOL_AS_TEXTS = ['Text', 'Integer'] as const;
+export const SOUTH_A_D_S_SETTINGS_BOOL_AS_TEXTS = ['text', 'integer'] as const;
 export type SouthADSSettingsBoolAsText = (typeof SOUTH_A_D_S_SETTINGS_BOOL_AS_TEXTS)[number];
 
 export const SOUTH_MODBUS_SETTINGS_ADDRESS_OFFSETS = ['modbus', 'jbus'] as const;
