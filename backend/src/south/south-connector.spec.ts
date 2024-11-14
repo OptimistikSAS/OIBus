@@ -306,7 +306,7 @@ describe('SouthConnector disabled', () => {
 
     await south.onItemChange();
 
-    expect(south.queriesSubscription).toHaveBeenCalledTimes(1);
+    expect(south.queriesSubscription).not.toHaveBeenCalled();
   });
 });
 

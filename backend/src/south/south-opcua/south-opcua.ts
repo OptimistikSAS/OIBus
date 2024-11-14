@@ -635,15 +635,17 @@ export default class SouthOPCUA
         );
       }
 
-      const timestamp = DateTime.now().toUTC().toISO()!;
-      const values = dataValues.map((dataValue: DataValue, i) => ({
-        pointId: items[i].name,
-        timestamp,
-        data: {
-          value: this.parseOPCUAValue(items[i].name, dataValue.value),
-          quality: JSON.stringify(dataValue.statusCode)
-        }
-      }));
+      const values = dataValues.map((dataValue: DataValue, i) => {
+        const selectedTimestamp = dataValue.sourceTimestamp ?? dataValue.serverTimestamp;
+        return {
+          pointId: items[i].name,
+          timestamp: selectedTimestamp!.toISOString(),
+          data: {
+            value: this.parseOPCUAValue(items[i].name, dataValue.value),
+            quality: JSON.stringify(dataValue.statusCode)
+          }
+        };
+      });
       return { type: 'time-values', content: values.filter(parsedValue => parsedValue.data.value) };
     } catch (error) {
       await this.disconnect();
@@ -694,6 +696,7 @@ export default class SouthOPCUA
         TimestampsToReturn.Neither
       );
       monitoredItem.on('changed', async (dataValue: DataValue) => {
+        const selectedTimestamp = dataValue.sourceTimestamp ?? dataValue.serverTimestamp;
         const parsedValue = this.parseOPCUAValue(item.name, dataValue.value);
         if (parsedValue) {
           await this.addContent({
@@ -701,7 +704,7 @@ export default class SouthOPCUA
             content: [
               {
                 pointId: item.name,
-                timestamp: DateTime.now().toUTC().toISO()!,
+                timestamp: selectedTimestamp!.toISOString(),
                 data: {
                   value: parsedValue,
                   quality: JSON.stringify(dataValue.statusCode)
@@ -792,7 +795,7 @@ export default class SouthOPCUA
       case DataType.QualifiedName:
       case DataType.Guid:
       case DataType.StatusCode:
-        this.logger.warn(`Item ${itemName} with value ${opcuaVariant.value} of type ${opcuaVariant.dataType} could not be parsed`);
+        this.logger.debug(`Item ${itemName} with value ${opcuaVariant.value} of type ${opcuaVariant.dataType} could not be parsed`);
         return '';
     }
   }
