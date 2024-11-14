@@ -232,7 +232,7 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
             };
             const requestDuration = DateTime.now().toMillis() - startRequest;
 
-            if (result.content.length > 0) {
+            if (result.recordCount > 0) {
               this.logger.debug(`Found ${result.recordCount} results for ${resampledItems.length} items in ${requestDuration} ms`);
               await this.addContent({ type: 'time-values', content: result.content });
               if (result.maxInstantRetrieved > startTime) {
