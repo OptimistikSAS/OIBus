@@ -37,10 +37,6 @@ export class EngineService {
     return this.http.get<OIBusInfo>('/api/info');
   }
 
-  shutdown(): Observable<void> {
-    return this.http.put<void>('/api/shutdown', null);
-  }
-
   restart(): Observable<void> {
     return this.http.put<void>('/api/restart', null);
   }

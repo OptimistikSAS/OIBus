@@ -340,8 +340,6 @@
     "edit": "Edit settings",
     "edit-title": "Edit engine settings",
     "oianalytics": "OIAnalytics",
-    "shutdown": "Shutdown",
-    "confirm-shutdown": "Are you sure you want to shutdown OIBus engine?",
     "shutdown-complete": "OIBus shut down",
     "restart": "Restart",
     "restart-complete": "OIBus restarted",

@@ -24,11 +24,6 @@ export default class EngineController extends AbstractController {
     ctx.noContent();
   }
 
-  async shutdown(ctx: KoaContext<void, void>): Promise<void> {
-    await ctx.app.oIBusService.stopOIBus();
-    ctx.noContent();
-  }
-
   async getOIBusInfo(ctx: KoaContext<void, OIBusInfo>): Promise<void> {
     const oibusInfo = ctx.app.oIBusService.getOIBusInfo();
     ctx.ok(oibusInfo);
