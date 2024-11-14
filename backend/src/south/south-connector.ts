@@ -172,6 +172,9 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     }
     this.connector.items = this.southConnectorRepository.findAllItemsForSouth(this.connector.id);
 
+    if (!this.connector.enabled) {
+      return;
+    }
     const scanModes = new Map<string, ScanMode>();
     this.connector.items
       .filter(item => item.scanModeId && item.scanModeId !== 'subscription' && item.enabled)
