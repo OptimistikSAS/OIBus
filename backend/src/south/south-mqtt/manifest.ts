@@ -125,7 +125,7 @@ const manifest: SouthConnectorManifest = {
       type: 'OibNumber',
       label: 'Reconnect period',
       unitLabel: 'ms',
-      defaultValue: 1000,
+      defaultValue: 10000,
       newRow: false,
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30_000 } }],
       displayInViewMode: false
