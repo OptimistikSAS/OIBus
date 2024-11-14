@@ -18,13 +18,7 @@
               <span class="fa fa-gear me-1" role="status" aria-hidden="true"></span>
               <span translate="engine.oianalytics"></span>
             </a>
-            <button
-              (click)="restart()"
-              type="button"
-              [disabled]="(shuttingDown.isPending | async) || (restarting.isPending | async)"
-              class="btn btn-danger me-2"
-              id="restart"
-            >
+            <button (click)="restart()" type="button" [disabled]="restarting.isPending | async" class="btn btn-danger" id="restart">
               @if (restarting.isPending | async) {
                 <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
               }
@@ -32,21 +26,6 @@
                 <span class="fa fa-rotate-right me-1" role="status" aria-hidden="true"></span>
               }
               <span translate="engine.restart"></span>
-            </button>
-            <button
-              type="button"
-              [disabled]="(shuttingDown.isPending | async) || (restarting.isPending | async)"
-              class="btn btn-danger"
-              id="shutdown"
-              (click)="shutdown()"
-            >
-              @if (shuttingDown.isPending | async) {
-                <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-              }
-              @if ((shuttingDown.isPending | async) === false) {
-                <span class="fa fa-stop me-1" role="status" aria-hidden="true"></span>
-              }
-              <span translate="engine.shutdown"></span>
             </button>
           </div>
         </div>

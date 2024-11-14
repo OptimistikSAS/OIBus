@@ -36,10 +36,6 @@ class EngineComponentTester extends ComponentTester<EngineDetailComponent> {
     return this.element(IpFilterListComponent);
   }
 
-  get shutdownButton() {
-    return this.button('#shutdown')!;
-  }
-
   get restartButton() {
     return this.button('#restart')!;
   }
@@ -125,23 +121,6 @@ describe('EngineDetailComponent', () => {
     expect(tester.ipFilterList).toBeDefined();
   });
 
-  it('should shut down', () => {
-    const shutdownSubject = new Subject<void>();
-    engineService.shutdown.and.returnValue(shutdownSubject);
-    confirmationService.confirm.and.returnValue(of(undefined));
-
-    tester.shutdownButton.click();
-
-    expect(tester.shutdownButton.disabled).toBeTrue();
-    expect(tester.restartButton.disabled).toBeTrue();
-
-    shutdownSubject.next();
-    tester.detectChanges();
-
-    expect(engineService.shutdown).toHaveBeenCalled();
-    expect(notificationService.success).toHaveBeenCalledWith('engine.shutdown-complete');
-  });
-
   it('should restart', () => {
     const restartSubject = new Subject<void>();
     engineService.restart.and.returnValue(restartSubject);
@@ -149,7 +128,6 @@ describe('EngineDetailComponent', () => {
 
     tester.restartButton.click();
 
-    expect(tester.shutdownButton.disabled).toBeTrue();
     expect(tester.restartButton.disabled).toBeTrue();
 
     restartSubject.next();
