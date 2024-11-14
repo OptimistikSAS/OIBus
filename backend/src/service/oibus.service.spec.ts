@@ -181,12 +181,11 @@ describe('OIBus Service', () => {
   });
 
   it('should correctly restart OIBus', async () => {
-    await service.restartOIBus();
+    const processExitSpy = jest.spyOn(process, 'exit').mockImplementation();
 
-    expect(dataStreamEngine.stop).toHaveBeenCalled();
-    expect(historyQueryEngine.stop).toHaveBeenCalled();
-    expect(dataStreamEngine.start).toHaveBeenCalled();
-    expect(historyQueryEngine.start).toHaveBeenCalled();
+    await service.restartOIBus();
+    jest.advanceTimersByTime(100);
+    expect(processExitSpy).toHaveBeenCalledTimes(1);
   });
 
   it('should log health signal', async () => {

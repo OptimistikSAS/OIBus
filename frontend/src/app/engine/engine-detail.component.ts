@@ -41,9 +41,7 @@ export class EngineDetailComponent implements OnInit, OnDestroy {
   engineSettings: EngineSettingsDTO | null = null;
   connectorStream: EventSource | null = null;
   metrics: EngineMetrics | null = null;
-
   restarting = new ObservableState();
-  shuttingDown = new ObservableState();
 
   ngOnInit() {
     this.engineService.getEngineSettings().subscribe(settings => {
@@ -58,21 +56,6 @@ export class EngineDetailComponent implements OnInit, OnDestroy {
         this.cd.detectChanges();
       }
     };
-  }
-
-  shutdown() {
-    this.confirmationService
-      .confirm({
-        messageKey: 'engine.confirm-shutdown'
-      })
-      .pipe(
-        switchMap(() => {
-          return this.engineService.shutdown().pipe(this.shuttingDown.pendingUntilFinalization());
-        })
-      )
-      .subscribe(() => {
-        this.notificationService.success('engine.shutdown-complete');
-      });
   }
 
   restart() {

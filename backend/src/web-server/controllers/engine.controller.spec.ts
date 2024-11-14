@@ -44,13 +44,6 @@ describe('Engine controller', () => {
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
-  it('shutdown() should shutdown oibus', async () => {
-    await engineController.shutdown(ctx);
-
-    expect(ctx.app.oIBusService.stopOIBus).toHaveBeenCalled();
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
   it('getOIBusInfo() should get OIBus info', async () => {
     ctx.app.oIBusService.getOIBusInfo.mockReturnValueOnce(testData.engine.oIBusInfo);
 
