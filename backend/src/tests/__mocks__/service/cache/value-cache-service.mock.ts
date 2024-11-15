@@ -5,7 +5,7 @@ import { EventEmitter } from 'node:events';
  */
 export default class ValueCacheServiceMock {
   triggerRun = new EventEmitter();
-  valueFolder = 'valueFolder';
+  cacheFolder = 'valueFolder';
   start = jest.fn();
   getValuesToSend = jest.fn();
   removeSentValues = jest.fn();

@@ -11,7 +11,7 @@ import testData from '../../tests/utils/test-data';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 
-import { mockBaseFolders } from '../../tests/utils/test-utils';
+import { flushPromises, mockBaseFolders } from '../../tests/utils/test-utils';
 
 jest.mock('../utils', () => ({
   generateRandomId: jest.fn(() => 'generated-uuid'),
@@ -25,16 +25,16 @@ const logger: pino.Logger = new PinoLogger();
 const anotherLogger: pino.Logger = new PinoLogger();
 
 describe('ValueCacheService', () => {
-  let configuration: NorthConnectorEntity<NorthSettings>;
-  let cache: ValueCacheService;
+  let settings: NorthConnectorEntity<NorthSettings>;
+  let service: ValueCacheService;
 
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    configuration = testData.north.list[0];
+    settings = testData.north.list[0];
     (dirSize as jest.Mock).mockImplementation(() => 1000);
 
-    cache = new ValueCacheService(logger, mockBaseFolders('northId').cache, mockBaseFolders('northId').error, configuration);
+    service = new ValueCacheService(logger, mockBaseFolders('northId').cache, mockBaseFolders('northId').error, settings);
   });
 
   it('should be properly initialized with values in cache', async () => {
@@ -67,8 +67,8 @@ describe('ValueCacheService', () => {
       .mockImplementationOnce(() => {
         throw new Error('compact error');
       });
-    await cache.start();
-
+    await service.start();
+    service.settings = settings;
     expect(createFolder).toHaveBeenCalledTimes(2);
     expect(createFolder).toHaveBeenCalledWith(path.resolve(mockBaseFolders('northId').cache, 'time-values'));
     expect(createFolder).toHaveBeenCalledWith(path.resolve(mockBaseFolders('northId').error, 'time-values'));
@@ -95,7 +95,7 @@ describe('ValueCacheService', () => {
 
     fs.readFile = jest.fn().mockImplementationOnce(() => JSON.stringify([{ data: 'myFlushBuffer' }]));
 
-    await cache.start();
+    await service.start();
 
     expect(logger.debug).toHaveBeenCalledWith('No value in cache');
   });
@@ -113,7 +113,7 @@ describe('ValueCacheService', () => {
       .fn()
       .mockImplementationOnce(() => ({ ctimeMs: 2 }))
       .mockImplementationOnce(() => ({ ctimeMs: 1 }));
-    await cache.start();
+    await service.start();
 
     expect(createFolder).toHaveBeenCalledTimes(2);
     expect(createFolder).toHaveBeenCalledWith(path.resolve(mockBaseFolders('northId').cache, 'time-values'));
@@ -130,20 +130,20 @@ describe('ValueCacheService', () => {
       .mockImplementationOnce(() => {
         throw new Error('readdir error');
       });
-    const empty = await cache.isEmpty();
+    const empty = await service.isEmpty();
     expect(empty).toBeTruthy();
     expect(fs.readdir).toHaveBeenCalledWith(path.resolve(mockBaseFolders('northId').cache, 'time-values'));
-    const notEmpty = await cache.isEmpty();
+    const notEmpty = await service.isEmpty();
     expect(notEmpty).toBeFalsy();
     expect(fs.readdir).toHaveBeenCalledWith(path.resolve(mockBaseFolders('northId').cache, 'time-values'));
-    const notEmptyBecauseOfError = await cache.isEmpty();
+    const notEmptyBecauseOfError = await service.isEmpty();
     expect(notEmptyBecauseOfError).toBeTruthy();
     expect(fs.readdir).toHaveBeenCalledWith(path.resolve(mockBaseFolders('northId').cache, 'time-values'));
     expect(logger.error).toHaveBeenCalledWith(new Error('readdir error'));
   });
 
   it('should remove all values', async () => {
-    cache.removeSentValues = jest.fn();
+    service.removeSentValues = jest.fn();
     fs.readdir = jest.fn().mockImplementationOnce(() => ['1.queue.tmp', '2.queue.tmp', '3.queue.tmp', '4.queue.tmp']);
     fs.readFile = jest
       .fn()
@@ -152,9 +152,9 @@ describe('ValueCacheService', () => {
       .mockImplementationOnce(() => JSON.stringify([{ data: 'myFlushBuffer3' }]))
       .mockImplementationOnce(() => JSON.stringify([{ data: 'myFlushBuffer4' }]));
 
-    await cache.start();
-    await cache.removeAllValues();
-    expect(cache.removeSentValues).toHaveBeenCalledWith(
+    await service.start();
+    await service.removeAllValues();
+    expect(service.removeSentValues).toHaveBeenCalledWith(
       new Map([
         [path.resolve(mockBaseFolders('northId').cache, 'time-values', '1.queue.tmp'), [{ data: 'myFlushBuffer1' }]],
         [path.resolve(mockBaseFolders('northId').cache, 'time-values', '2.queue.tmp'), [{ data: 'myFlushBuffer2' }]],
@@ -177,7 +177,7 @@ describe('ValueCacheService', () => {
         throw new Error('unlink error');
       });
 
-    await cache.manageErroredValues(valuesToRemove, 1);
+    await service.manageErroredValues(valuesToRemove, 1);
     const expectedMap = new Map();
     expectedMap.set('2.queue.tmp', []);
     expect(logger.warn).toHaveBeenCalledWith(
@@ -200,8 +200,8 @@ describe('ValueCacheService', () => {
 
   it('should properly change logger', async () => {
     (fs.readdir as jest.Mock).mockReturnValue([]);
-    cache.setLogger(anotherLogger);
-    await cache.start();
+    service.setLogger(anotherLogger);
+    await service.start();
     expect(logger.debug).not.toHaveBeenCalled();
     expect(anotherLogger.debug).toHaveBeenCalledWith(`No value in cache`);
   });
@@ -217,8 +217,8 @@ describe('ValueCacheService', () => {
         JSON.stringify([{ data: 'myFlushBuffer4' }, { data: 'myFlushBuffer4' }, { data: 'myFlushBuffer4' }, { data: 'myFlushBuffer4' }])
       );
 
-    await cache.start();
-    expect(cache.getQueuedFilesMetadata('')).toEqual([
+    await service.start();
+    expect(service.getQueuedFilesMetadata('')).toEqual([
       {
         filename: '1test.queue.tmp',
         size: JSON.stringify([{ data: 'myFlushBuffer1' }]).length,
@@ -246,7 +246,7 @@ describe('ValueCacheService', () => {
       }
     ]);
 
-    expect(cache.getQueuedFilesMetadata('test')).toEqual([
+    expect(service.getQueuedFilesMetadata('test')).toEqual([
       {
         filename: '1test.queue.tmp',
         size: JSON.stringify([{ data: 'myFlushBuffer1' }]).length,
@@ -261,54 +261,107 @@ describe('ValueCacheService', () => {
   });
 
   it('should return metadata about error value files', async () => {
-    await cache.getErrorValues('2020-02-02T02:02:02.222Z', '2020-02-03T02:02:02.222Z', 'file');
+    await service.getErrorValues('2020-02-02T02:02:02.222Z', '2020-02-03T02:02:02.222Z', 'file');
     expect(getFilesFiltered).toHaveBeenCalled();
   });
 
   it('should remove all error value files', async () => {
-    const removeErrorValuesSpy = jest.spyOn(cache, 'removeErrorValues');
+    service.removeErrorValues = jest.fn();
     (fs.readdir as jest.Mock).mockImplementationOnce(() => ['1.queue.tmp', '2.queue.tmp', '3.queue.tmp', '4.queue.tmp']);
 
-    await cache.removeAllErrorValues();
-    expect(removeErrorValuesSpy).toHaveBeenCalledWith(['1.queue.tmp', '2.queue.tmp', '3.queue.tmp', '4.queue.tmp']);
+    await service.removeAllErrorValues();
+    expect(service.removeErrorValues).toHaveBeenCalledWith(['1.queue.tmp', '2.queue.tmp', '3.queue.tmp', '4.queue.tmp']);
     expect(logger.debug).toHaveBeenCalledWith(`Removing 4 files from "${path.resolve(mockBaseFolders('northId').error, 'time-values')}"`);
   });
 
   it('should remove all error value files when there are none', async () => {
-    const removeErrorValuesSpy = jest.spyOn(cache, 'removeErrorValues');
+    service.removeErrorValues = jest.fn();
     (fs.readdir as jest.Mock).mockImplementationOnce(() => []);
 
-    await cache.removeAllErrorValues();
-    expect(removeErrorValuesSpy).not.toHaveBeenCalled();
+    await service.removeAllErrorValues();
+    expect(service.removeErrorValues).not.toHaveBeenCalled();
     expect(logger.debug).toHaveBeenCalledWith(
       `The error value folder "${path.resolve(mockBaseFolders('northId').error, 'time-values')}" is empty. Nothing to delete`
     );
   });
 
+  it('should remove error values', async () => {
+    (fs.unlink as jest.Mock)
+      .mockImplementationOnce(() => Promise.resolve())
+      .mockImplementationOnce(() => {
+        throw new Error('unlink error');
+      });
+    await service.removeErrorValues(['file1', 'file2']);
+    expect(fs.unlink).toHaveBeenNthCalledWith(1, path.resolve(mockBaseFolders('northId').error, 'time-values', 'file1'));
+    expect(fs.unlink).toHaveBeenNthCalledWith(2, path.resolve(mockBaseFolders('northId').error, 'time-values', 'file2'));
+    expect(logger.error).toHaveBeenCalledWith(
+      `Error while removing file "${path.resolve(mockBaseFolders('northId').error, 'time-values', 'file2')}" from error cache: unlink error`
+    );
+  });
+
   it('should retry all error value files', async () => {
-    const retryErrorValuesSpy = jest.spyOn(cache, 'retryErrorValues');
+    service.retryErrorValues = jest.fn();
     (fs.readdir as jest.Mock).mockImplementationOnce(() => ['1.queue.tmp', '2.queue.tmp', '3.queue.tmp', '4.queue.tmp']);
 
-    await cache.retryAllErrorValues();
-    expect(retryErrorValuesSpy).toHaveBeenCalledWith(['1.queue.tmp', '2.queue.tmp', '3.queue.tmp', '4.queue.tmp']);
+    await service.retryAllErrorValues();
+    expect(service.retryErrorValues).toHaveBeenCalledWith(['1.queue.tmp', '2.queue.tmp', '3.queue.tmp', '4.queue.tmp']);
     expect(logger.debug).toHaveBeenCalledWith(`Retrying 4 files from "${path.resolve(mockBaseFolders('northId').error, 'time-values')}"`);
   });
 
   it('should retry all error value files when there are none', async () => {
-    const retryErrorValuesSpy = jest.spyOn(cache, 'retryErrorValues');
+    service.retryErrorValues = jest.fn();
     (fs.readdir as jest.Mock).mockImplementationOnce(() => []);
 
-    await cache.retryAllErrorValues();
-    expect(retryErrorValuesSpy).not.toHaveBeenCalled();
+    await service.retryAllErrorValues();
+    expect(service.retryErrorValues).not.toHaveBeenCalled();
     expect(logger.debug).toHaveBeenCalledWith(
       `The error value folder "${path.resolve(mockBaseFolders('northId').error, 'time-values')}" is empty. Nothing to retry`
+    );
+  });
+
+  it('should retry error value files', async () => {
+    service.removeErrorValues = jest.fn();
+    service.cacheValues = jest.fn();
+    (fs.readFile as jest.Mock).mockReturnValueOnce('{}').mockReturnValueOnce('not a json');
+    await service.retryErrorValues(['file1', 'file2']);
+    expect(service.cacheValues).toHaveBeenNthCalledWith(1, {});
+    expect(service.removeErrorValues).toHaveBeenNthCalledWith(1, ['file1']);
+    expect(logger.error).toHaveBeenCalledWith(
+      `Error while reading error value file "${path.resolve(mockBaseFolders('northId').error, 'time-values', 'file2')}": Unexpected token 'o', "not a json" is not valid JSON`
+    );
+    expect(service.removeErrorValues).toHaveBeenCalledTimes(1);
+  });
+
+  it('should properly cache values', async () => {
+    (generateRandomId as jest.Mock).mockReturnValueOnce('generated-uuid1');
+    const values: Array<OIBusTimeValue> = [
+      {
+        pointId: 'ref1',
+        timestamp: testData.constants.dates.FAKE_NOW,
+        data: {
+          value: 'val1'
+        }
+      },
+      {
+        pointId: 'ref2',
+        timestamp: testData.constants.dates.FAKE_NOW,
+        data: {
+          value: 'val2'
+        }
+      }
+    ];
+    await service.cacheValues(values);
+    expect(fs.writeFile).toHaveBeenCalledWith(
+      path.resolve(mockBaseFolders('northId').cache, 'time-values', 'generated-uuid1.buffer.tmp'),
+      JSON.stringify(values),
+      { encoding: 'utf8' }
     );
   });
 });
 
 describe('ValueCacheService with values loaded', () => {
-  let configuration: NorthConnectorEntity<NorthSettings>;
-  let cache: ValueCacheService;
+  let settings: NorthConnectorEntity<NorthSettings>;
+  let service: ValueCacheService;
   const valuesToCache: Array<OIBusTimeValue> = [];
   for (let i = 0; i < 251; i += 1) {
     valuesToCache.push({} as OIBusTimeValue);
@@ -317,8 +370,12 @@ describe('ValueCacheService with values loaded', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
+    settings = JSON.parse(JSON.stringify(testData.north.list[0]));
 
+    service = new ValueCacheService(logger, mockBaseFolders('northId').cache, mockBaseFolders('northId').error, settings);
+  });
+
+  it('should properly get values to send from queue', async () => {
     (generateRandomId as jest.Mock)
       .mockReturnValueOnce('generated-uuid1')
       .mockReturnValueOnce('generated-uuid2')
@@ -330,20 +387,15 @@ describe('ValueCacheService with values loaded', () => {
       .mockReturnValueOnce('generated-uuid8')
       .mockReturnValueOnce('generated-uuid9');
     (fs.stat as jest.Mock).mockReturnValue({ size: 123 });
+    await service.cacheValues(valuesToCache);
+    await service.cacheValues(valuesToCache);
+    await service.cacheValues(valuesToCache);
 
-    cache = new ValueCacheService(logger, mockBaseFolders('northId').cache, mockBaseFolders('northId').error, configuration);
-
-    await cache.cacheValues(valuesToCache);
-    await cache.cacheValues(valuesToCache);
-    await cache.cacheValues(valuesToCache);
-  });
-
-  it('should properly get values to send from queue', async () => {
     const expectedValues = new Map<string, Array<OIBusTimeValue>>();
     expectedValues.set(path.resolve(mockBaseFolders('northId').cache, 'time-values', 'generated-uuid2.queue.tmp'), valuesToCache);
     expectedValues.set(path.resolve(mockBaseFolders('northId').cache, 'time-values', 'generated-uuid4.queue.tmp'), valuesToCache);
     expectedValues.set(path.resolve(mockBaseFolders('northId').cache, 'time-values', 'generated-uuid6.queue.tmp'), valuesToCache);
-    const valuesToSend = await cache.getValuesToSend();
+    const valuesToSend = await service.getValuesToSend();
 
     expect(valuesToSend).toEqual(expectedValues);
   });
@@ -351,8 +403,183 @@ describe('ValueCacheService with values loaded', () => {
   it('should properly stop and clear timeout', async () => {
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
 
-    await cache.stop();
+    await service.stop();
 
     expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('should properly not flush if already flushing', async () => {
+    service.cacheValues(valuesToCache);
+    jest.advanceTimersByTime(350);
+    await service.cacheValues(valuesToCache);
+    expect(logger.trace).toHaveBeenCalledWith('Flush already in progress');
+    await flushPromises();
+  });
+
+  it('should not write empty file in queue', async () => {
+    (generateRandomId as jest.Mock).mockReturnValue('generated-uuid');
+    await service.cacheValues([]);
+    jest.advanceTimersByTime(350);
+    expect(fs.writeFile).toHaveBeenCalledWith(
+      path.resolve(mockBaseFolders('northId').cache, 'time-values', 'generated-uuid.buffer.tmp'),
+      '[]',
+      { encoding: 'utf8' }
+    );
+    expect(fs.unlink).toHaveBeenCalledWith(path.resolve(mockBaseFolders('northId').cache, 'time-values', 'generated-uuid.buffer.tmp'));
+    expect(fs.unlink).not.toHaveBeenCalledWith(path.resolve(mockBaseFolders('northId').cache, 'time-values', 'generated-uuid.queue.tmp'));
+  });
+
+  it('should not remove buffer files if there is a writing error of queue file', async () => {
+    (generateRandomId as jest.Mock).mockReturnValue('generated-uuid');
+    (fs.writeFile as jest.Mock)
+      .mockImplementationOnce(() => Promise.resolve())
+      .mockImplementationOnce(() => {
+        throw new Error('write error');
+      });
+    await service.cacheValues(valuesToCache);
+
+    expect(fs.writeFile).toHaveBeenCalledWith(
+      path.resolve(mockBaseFolders('northId').cache, 'time-values', 'generated-uuid.buffer.tmp'),
+      JSON.stringify(valuesToCache),
+      { encoding: 'utf8' }
+    );
+    expect(fs.writeFile).toHaveBeenCalledWith(
+      path.resolve(mockBaseFolders('northId').cache, 'time-values', 'generated-uuid.queue.tmp'),
+      JSON.stringify(valuesToCache),
+      { encoding: 'utf8', flag: 'w' }
+    );
+    expect(fs.unlink).not.toHaveBeenCalled();
+    expect(logger.error).toHaveBeenCalledWith(
+      `Error while writing queue file "${path.resolve(mockBaseFolders('northId').cache, 'time-values', 'generated-uuid.queue.tmp')}": write error`
+    );
+  });
+
+  it('should log error in case of unlink error in flush', async () => {
+    (generateRandomId as jest.Mock).mockReturnValue('generated-uuid');
+    (fs.unlink as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('unlink error');
+    });
+    await service.cacheValues(valuesToCache);
+    expect(fs.unlink).toHaveBeenCalledWith(path.resolve(mockBaseFolders('northId').cache, 'time-values', 'generated-uuid.buffer.tmp'));
+    expect(logger.error).toHaveBeenCalledWith(
+      `Error while removing buffer file "${path.resolve(mockBaseFolders('northId').cache, 'time-values', 'generated-uuid.buffer.tmp')}": unlink error`
+    );
+  });
+
+  it('should compact queue if number of values exceed maxGroupCount, retrieve values and remove them', async () => {
+    (generateRandomId as jest.Mock)
+      .mockReturnValueOnce('generated-uuid-buffer1')
+      .mockReturnValueOnce('generated-uuid-queue1')
+      .mockReturnValueOnce('generated-uuid-buffer2')
+      .mockReturnValueOnce('generated-uuid-queue2')
+      .mockReturnValueOnce('generated-uuid-compact1');
+    settings.caching.oibusTimeValues.maxSendCount = 400;
+    await service.cacheValues(valuesToCache);
+    await service.cacheValues(valuesToCache);
+    expect(fs.writeFile).toHaveBeenCalledWith(
+      path.resolve(mockBaseFolders('northId').cache, 'time-values', 'generated-uuid-compact1.compact.tmp'),
+      JSON.stringify([...valuesToCache, ...valuesToCache]),
+      { encoding: 'utf8', flag: 'w' }
+    );
+    expect(logger.trace).toHaveBeenCalledWith(
+      `Max group count reach with 502 values in queue. Compacting queue into "${path.resolve(mockBaseFolders('northId').cache, 'time-values', 'generated-uuid-compact1.compact.tmp')}"`
+    );
+
+    (fs.readFile as jest.Mock).mockReturnValueOnce('[]').mockReturnValueOnce('not a json');
+    const result = await service.getValuesToSend();
+    expect(logger.trace).toHaveBeenCalledWith(
+      `Retrieving values from "${path.resolve(mockBaseFolders('northId').cache, 'time-values', 'generated-uuid-compact1.compact.tmp')}"`
+    );
+    const expectedResult = new Map<string, Array<OIBusTimeValue>>();
+    expectedResult.set(path.resolve(mockBaseFolders('northId').cache, 'time-values', 'generated-uuid-compact1.compact.tmp'), []);
+    expect(result).toEqual(expectedResult);
+
+    const expectedEmptyResult = new Map<string, Array<OIBusTimeValue>>();
+    const emptyResult = await service.getValuesToSend();
+    expect(logger.error).toHaveBeenCalledWith(
+      `Error while reading compacted file "${path.resolve(mockBaseFolders('northId').cache, 'time-values', 'generated-uuid-compact1.compact.tmp')}": Unexpected token 'o', "not a json" is not valid JSON`
+    );
+    expect(emptyResult).toEqual(expectedEmptyResult);
+
+    await service.removeSentValues(result);
+    expect(fs.unlink).toHaveBeenCalledWith(
+      path.resolve(mockBaseFolders('northId').cache, 'time-values', 'generated-uuid-compact1.compact.tmp')
+    );
+  });
+
+  it('should compact queue if number of values exceed maxGroupCount, retrieve values and manage error values', async () => {
+    (generateRandomId as jest.Mock)
+      .mockReturnValueOnce('generated-uuid-buffer1')
+      .mockReturnValueOnce('generated-uuid-queue1')
+      .mockReturnValueOnce('generated-uuid-buffer2')
+      .mockReturnValueOnce('generated-uuid-queue2')
+      .mockReturnValueOnce('generated-uuid-compact1');
+    settings.caching.oibusTimeValues.maxSendCount = 400;
+    (fs.stat as jest.Mock).mockReturnValue({ size: 123 });
+    await service.cacheValues(valuesToCache);
+    await service.cacheValues(valuesToCache);
+
+    (fs.readFile as jest.Mock).mockReturnValue('[]');
+    const result = await service.getValuesToSend();
+
+    await service.manageErroredValues(result, 3);
+    expect(fs.rename).toHaveBeenCalledWith(
+      path.resolve(mockBaseFolders('northId').cache, 'time-values', 'generated-uuid-compact1.compact.tmp'),
+      path.resolve(mockBaseFolders('northId').error, 'time-values', 'generated-uuid-compact1.compact.tmp')
+    );
+  });
+
+  it('should compact queue if number of values exceed maxGroupCount, retrieve values and log error on removal fail', async () => {
+    (generateRandomId as jest.Mock)
+      .mockReturnValueOnce('generated-uuid-buffer1')
+      .mockReturnValueOnce('generated-uuid-queue1')
+      .mockReturnValueOnce('generated-uuid-buffer2')
+      .mockReturnValueOnce('generated-uuid-queue2')
+      .mockReturnValueOnce('generated-uuid-compact1');
+    settings.caching.oibusTimeValues.maxSendCount = 400;
+    await service.cacheValues(valuesToCache);
+    await service.cacheValues(valuesToCache);
+
+    (fs.readFile as jest.Mock).mockReturnValueOnce('[]');
+    const result = await service.getValuesToSend();
+
+    (fs.unlink as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('unlink error');
+    });
+    await service.removeSentValues(result);
+    expect(fs.unlink).toHaveBeenCalledWith(
+      path.resolve(mockBaseFolders('northId').cache, 'time-values', 'generated-uuid-compact1.compact.tmp')
+    );
+    expect(logger.error).toHaveBeenCalledWith(
+      `Error while removing file "${path.resolve(mockBaseFolders('northId').cache, 'time-values', 'generated-uuid-compact1.compact.tmp')}" from cache: unlink error`
+    );
+  });
+
+  it('should log error on compact queue write error', async () => {
+    (generateRandomId as jest.Mock)
+      .mockReturnValueOnce('generated-uuid-buffer1')
+      .mockReturnValueOnce('generated-uuid-queue1')
+      .mockReturnValueOnce('generated-uuid-buffer2')
+      .mockReturnValueOnce('generated-uuid-queue2')
+      .mockReturnValueOnce('generated-uuid-compact1');
+    (fs.writeFile as jest.Mock)
+      .mockImplementationOnce(() => Promise.resolve())
+      .mockImplementationOnce(() => Promise.resolve())
+      .mockImplementationOnce(() => Promise.resolve())
+      .mockImplementationOnce(() => Promise.resolve())
+      .mockImplementationOnce(() => {
+        throw new Error('write error');
+      });
+    settings.caching.oibusTimeValues.maxSendCount = 400;
+    await service.cacheValues(valuesToCache);
+    await service.cacheValues(valuesToCache);
+    expect(logger.error).toHaveBeenCalledWith(
+      `Error while compacting queue files into "${path.resolve(mockBaseFolders('northId').cache, 'time-values', 'generated-uuid-compact1.compact.tmp')}": write error`
+    );
+    expect(fs.writeFile).toHaveBeenCalledWith(
+      path.resolve(mockBaseFolders('northId').cache, 'time-values', 'generated-uuid-compact1.compact.tmp'),
+      JSON.stringify([...valuesToCache, ...valuesToCache]),
+      { encoding: 'utf8', flag: 'w' }
+    );
   });
 });

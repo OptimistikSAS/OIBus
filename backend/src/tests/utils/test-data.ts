@@ -382,7 +382,7 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
       retryCount: 3,
       maxSize: 0,
       oibusTimeValues: {
-        groupCount: 1_000,
+        groupCount: 250,
         maxSendCount: 10_000
       },
       rawFiles: {
