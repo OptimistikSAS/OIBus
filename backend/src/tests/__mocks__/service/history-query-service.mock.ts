@@ -23,6 +23,6 @@ export default jest.fn().mockImplementation(() => ({
   deleteAllItemsForHistoryQuery: jest.fn(),
   enableHistoryQueryItem: jest.fn(),
   disableHistoryQueryItem: jest.fn(),
-  checkCsvImport: jest.fn(),
+  checkCsvFileImport: jest.fn(),
   importItems: jest.fn()
 }));

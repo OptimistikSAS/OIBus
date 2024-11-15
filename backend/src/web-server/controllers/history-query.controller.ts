@@ -291,7 +291,7 @@ export default class HistoryQueryController extends AbstractController {
   ): Promise<void> {
     try {
       return ctx.ok(
-        await ctx.app.historyQueryService.checkCsvImport(
+        await ctx.app.historyQueryService.checkCsvFileImport(
           ctx.params.southType,
           ctx.request.file,
           ctx.request.body!.delimiter,
