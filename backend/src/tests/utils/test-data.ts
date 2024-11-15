@@ -338,7 +338,12 @@ const southConnectorCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSe
       id: 'newSouthItemFromConnectorId',
       name: 'my new item from south connector',
       enabled: true,
-      settings: {} as SouthItemSettings,
+      settings: {
+        regex: '*',
+        minAge: 100,
+        preserveFiles: true,
+        ignoreModifiedDate: false
+      },
       scanModeId: scanModes[1].id,
       scanModeName: null
     }
@@ -350,7 +355,12 @@ const southConnectorItemCommand: SouthConnectorItemCommandDTO<SouthItemSettings>
   scanModeId: 'scanModeId1',
   scanModeName: null,
   enabled: true,
-  settings: {} as SouthItemSettings
+  settings: {
+    regex: '*',
+    minAge: 100,
+    preserveFiles: true,
+    ignoreModifiedDate: false
+  }
 };
 
 const northTestManifest: NorthConnectorManifest = {
@@ -607,10 +617,30 @@ const historyQueryCommand: HistoryQueryCommandDTO<SouthSettings, NorthSettings, 
   description: 'description',
   startTime: '2020-02-01T02:02:59.999Z',
   endTime: '2020-02-02T02:02:59.999Z',
-  southType: 'south-test',
-  northType: 'north-test',
-  southSettings: {} as SouthSettings,
-  northSettings: {} as NorthSettings,
+  southType: 'mssql',
+  northType: 'file-writer',
+  southSettings: {
+    throttling: {
+      maxReadInterval: 3600,
+      readDelay: 200,
+      overlap: 10
+    },
+    host: 'host',
+    port: 1433,
+    connectionTimeout: 1_000,
+    database: 'database',
+    username: 'oibus',
+    password: 'pass',
+    domain: 'domain',
+    encryption: true,
+    trustServerCertificate: true,
+    requestTimeout: 5_000
+  },
+  northSettings: {
+    outputFolder: 'output-folder',
+    prefix: 'prefix-',
+    suffix: '-suffix'
+  },
   caching: {
     scanModeId: scanModes[0].id,
     scanModeName: null,
