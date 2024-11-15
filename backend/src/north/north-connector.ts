@@ -614,7 +614,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
 
   async removeCacheValues(filenames: Array<string>): Promise<void> {
     const sentValues = new Map<string, Array<OIBusTimeValue>>(
-      filenames.map(filename => [path.join(this.valueCacheService.valueFolder, filename), []])
+      filenames.map(filename => [path.join(this.valueCacheService.cacheFolder, filename), []])
     );
     await this.valueCacheService.removeSentValues(sentValues);
   }
