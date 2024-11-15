@@ -12,8 +12,8 @@ import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 
 const FILE_FOLDER = 'files';
-const ARCHIVE_TIMEOUT = 3600000; // one hour
-const ARCHIVE_TIMEOUT_INIT = 10000; // Wait a little at North start up
+const ARCHIVE_TIMEOUT = 600_000; // check if archive must be emptied every 10 minutes
+const ARCHIVE_TIMEOUT_INIT = 10_000; // Wait a little at North start up
 
 /**
  * Local cache implementation to group events and store them when the communication with the North is down.
@@ -28,7 +28,7 @@ export default class FileCacheService {
 
   private _triggerRun: EventEmitter = new EventEmitter();
 
-  private archiveTimeout: NodeJS.Timeout | null = null;
+  private archiveTimeout: NodeJS.Timeout | undefined = undefined;
 
   constructor(
     logger: pino.Logger,
@@ -41,6 +41,12 @@ export default class FileCacheService {
     this._cacheFolder = path.resolve(baseCacheFolder, FILE_FOLDER);
     this._errorFolder = path.resolve(baseErrorFolder, FILE_FOLDER);
     this._archiveFolder = path.resolve(baseArchiveFolder, FILE_FOLDER);
+
+    // Remove old files from archive even if the connector is not enabled
+    if (this._settings.caching.rawFiles.archive.retentionDuration > 0) {
+      // refresh the archiveFolder at the beginning only if retentionDuration is different from 0
+      this.archiveTimeout = setTimeout(this.refreshArchiveFolder.bind(this), ARCHIVE_TIMEOUT_INIT);
+    }
   }
 
   setLogger(value: pino.Logger) {
@@ -96,11 +102,6 @@ export default class FileCacheService {
       this._logger.warn(`${errorFiles.length} files in error cache`);
     } else {
       this._logger.debug('No error file in cache');
-    }
-
-    // refresh the archiveFolder at the beginning only if retentionDuration is different from 0
-    if (this._settings.caching.rawFiles.archive.enabled && this._settings.caching.rawFiles.archive.retentionDuration > 0) {
-      this.archiveTimeout = setTimeout(this.refreshArchiveFolder.bind(this), ARCHIVE_TIMEOUT_INIT);
     }
   }
 
@@ -184,7 +185,7 @@ export default class FileCacheService {
   /**
    * Remove file from North connector cache and place it to archive folder if enabled.
    */
-  async archiveOrRemoveFile(filePathInCache: string) {
+  async archiveOrRemoveFile(filePathInCache: string): Promise<void> {
     this.removeFileFromQueue(filePathInCache);
     if (this._settings.caching.rawFiles.archive.enabled) {
       const filenameInfo = path.parse(filePathInCache);
@@ -283,7 +284,7 @@ export default class FileCacheService {
         await fs.unlink(filePath);
         this.triggerRun.emit('cache-size', { cacheSizeToAdd: 0, errorSizeToAdd: -fileStat.size, archiveSizeToAdd: 0 });
       } catch (error: unknown) {
-        this._logger.error(`Error while removing error file ${filePath}: ${(error as Error).message}`);
+        this._logger.error(`Error while removing error file "${filePath}": ${(error as Error).message}`);
       }
     }
   }
@@ -316,11 +317,12 @@ export default class FileCacheService {
    * Delete files in archiveFolder if they are older thant the retention time.
    */
   async refreshArchiveFolder(): Promise<void> {
-    this._logger.debug('Parse archive folder to remove old files');
+    this._logger.trace('Parse archive folder to remove old files');
     // If a timeout already runs, clear it
-    if (this.archiveTimeout) {
-      clearTimeout(this.archiveTimeout);
-    }
+    clearTimeout(this.archiveTimeout);
+
+    // (Re)create the archive folder here in case it has been manually remove by the user
+    await createFolder(this._archiveFolder);
 
     let files: Array<string> = [];
     try {
@@ -336,7 +338,7 @@ export default class FileCacheService {
         await this.removeFileFromArchiveIfTooOld(file, referenceDate, this._archiveFolder);
       }
     } else {
-      this._logger.debug(`The archive folder "${this._archiveFolder}" is empty. Nothing to delete`);
+      this._logger.trace(`The archive folder "${this._archiveFolder}" is empty. Nothing to delete`);
     }
     this.archiveTimeout = setTimeout(this.refreshArchiveFolder.bind(this), ARCHIVE_TIMEOUT);
   }
@@ -455,8 +457,6 @@ export default class FileCacheService {
   }
 
   async stop(): Promise<void> {
-    if (this.archiveTimeout) {
-      clearTimeout(this.archiveTimeout);
-    }
+    clearTimeout(this.archiveTimeout);
   }
 }
