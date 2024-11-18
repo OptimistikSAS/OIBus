@@ -90,6 +90,7 @@ export default class HistoryQueryEngine {
 
   async resetCache(historyId: string) {
     await this.historyQueries.get(historyId)?.resetCache();
+    this.historyQueryMetrics.get(historyId)?.resetMetrics();
   }
 
   async reloadHistoryQuery(historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>, resetCache: boolean) {
