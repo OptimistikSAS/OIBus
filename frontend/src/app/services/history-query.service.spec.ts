@@ -103,7 +103,7 @@ describe('HistoryQueryService', () => {
     };
 
     service.update('id1', command, true).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1' });
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1?resetCache=true' });
     expect(testRequest.request.body).toEqual(command);
     testRequest.flush(null);
     expect(done).toBe(true);
