@@ -265,13 +265,7 @@ export default class SouthOPCUA
     endTime: Instant
   ): Promise<Instant | null> {
     // Try to get a session
-    let session;
-    try {
-      session = await this.connection.getSession();
-    } catch {
-      this.logger.error('OPCUA session not set. The connector cannot read values');
-      return null;
-    }
+    const session = await this.connection.getSession();
     return (await this.getHAValues(items, startTime, endTime, session)) as Instant;
   }
 
