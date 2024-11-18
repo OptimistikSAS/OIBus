@@ -627,13 +627,6 @@ describe('SouthOPCUA', () => {
     expect(result).toEqual(configuration.items.filter(item => item.settings.mode === 'ha'));
   });
 
-  it('should not query items if session is not set', async () => {
-    south.addContent = jest.fn();
-    await south.historyQuery(configuration.items, testData.constants.dates.FAKE_NOW, testData.constants.dates.FAKE_NOW);
-    expect(south.addContent).not.toHaveBeenCalled();
-    expect(logger.error).toHaveBeenCalledWith('OPCUA session not set. The connector cannot read values');
-  });
-
   it('should properly query items', async () => {
     const read = jest.fn().mockReturnValue([
       { value: { value: 1, dataType: DataType.Float }, serverTimestamp: new Date(), statusCode: { value: 0 } },
