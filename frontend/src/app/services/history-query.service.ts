@@ -79,7 +79,7 @@ export class HistoryQueryService {
     if (resetCache) {
       params['resetCache'] = resetCache.toString();
     }
-    return this.http.put<void>(`/api/history-queries/${historyQueryId}`, command, params);
+    return this.http.put<void>(`/api/history-queries/${historyQueryId}`, command, { params });
   }
 
   /**
