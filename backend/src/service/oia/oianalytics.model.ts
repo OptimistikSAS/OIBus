@@ -96,7 +96,7 @@ export interface OIAnalyticsFetchUpdateVersionCommandDTO extends BaseOIAnalytics
   version: string;
   assetId: string;
   updateLauncher: boolean;
-  backupFolders: string;
+  backupFoldersPattern: string;
 }
 
 export interface OIAnalyticsFetchRestartEngineCommandDTO extends BaseOIAnalyticsFetchCommandDTO {

@@ -1095,7 +1095,7 @@ const oIAnalyticsCommands: Array<OIAnalyticsFetchCommandDTO> = [
     targetVersion: engineSettings.version,
     version: 'v3.5.0-beta',
     assetId: 'assetId',
-    backupFolders: 'cache/*',
+    backupFoldersPattern: 'cache/*',
     updateLauncher: false
   },
   {
