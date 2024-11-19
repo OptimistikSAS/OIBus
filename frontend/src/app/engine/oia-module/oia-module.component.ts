@@ -29,6 +29,8 @@ import { NonNullableFormBuilder } from '@angular/forms';
 import { OibusCommandService } from '../../services/oibus-command.service';
 import { OibusCommandTypeEnumPipe } from '../../shared/oibus-command-type-enum.pipe';
 import { OibusCommandStatusEnumPipe } from '../../shared/oibus-command-status-enum.pipe';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { OiaCommandDetailsModalComponent } from './oibus-command-details-modal/oia-command-details-modal.component';
 
 const REGISTRATION_CHECK_DURATION = 3000;
 
@@ -46,7 +48,8 @@ const REGISTRATION_CHECK_DURATION = 3000;
     MultiSelectComponent,
     MultiSelectOptionDirective,
     PaginationComponent,
-    OibusCommandStatusEnumPipe
+    OibusCommandStatusEnumPipe,
+    NgbTooltip
   ],
   templateUrl: './oia-module.component.html',
   styleUrls: ['./oia-module.component.scss'],
@@ -161,5 +164,10 @@ export class OiaModuleComponent implements OnInit, OnDestroy {
       page: 0
     };
     this.router.navigate(['.'], { queryParams, relativeTo: this.route });
+  }
+
+  openCommandDetails(command: OIBusCommandDTO) {
+    const modal = this.modalService.open(OiaCommandDetailsModalComponent, { size: 'lg' });
+    modal.componentInstance.prepare(command);
   }
 }
