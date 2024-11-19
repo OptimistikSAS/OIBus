@@ -1,0 +1,160 @@
+<div class="modal-header">
+  @if (command) {
+    <h4
+      class="modal-title"
+      translate="oia-module.commands.details-modal.title"
+      [translateParams]="{ type: command.type | oibusCommandTypeEnum }"
+    ></h4>
+  }
+</div>
+<div class="modal-body">
+  @if (command) {
+    <h5
+      [translate]="
+        command.status === 'COMPLETED' ? 'oia-module.commands.details-modal.success-info' : 'oia-module.commands.details-modal.error-info'
+      "
+    ></h5>
+    <div>
+      <label translate="oia-module.commands.details-modal.command-message"></label>
+      <div class="mb-2 command-result">
+        {{ command.result }}
+      </div>
+      <label translate="oia-module.commands.details-modal.command-content.title"></label>
+      <div class="command-content">
+        <ul class="list-unstyled">
+          @if (command.retrievedDate) {
+            <li
+              translate="oia-module.commands.details-modal.command-content.retrieved-date"
+              [translateParams]="{ retrievedDate: command.retrievedDate | datetime: 'mediumWithSeconds' }"
+            ></li>
+          }
+
+          @switch (command.type) {
+            @case ('update-version') {
+              <li
+                translate="oia-module.commands.details-modal.command-content.update-version.version"
+                [translateParams]="{ version: command.commandContent.version }"
+              ></li>
+              <li
+                translate="oia-module.commands.details-modal.command-content.update-version.asset-id"
+                [translateParams]="{ assetId: command.commandContent.assetId }"
+              ></li>
+              <li
+                translate="oia-module.commands.details-modal.command-content.update-version.update-launcher"
+                [translateParams]="{ updateLauncher: command.commandContent.updateLauncher | booleanEnum }"
+              ></li>
+              <li
+                translate="oia-module.commands.details-modal.command-content.update-version.backup-folders-patterns"
+                [translateParams]="{ backupFoldersPattern: command.commandContent.backupFolders }"
+              ></li>
+            }
+            @case ('update-engine-settings') {
+              <li translate="oia-module.commands.details-modal.command-content.update-engine-settings.command-content">
+                <div style="max-height: 300px; overflow-y: auto">
+                  <pre><code>{{ command.commandContent | json }}</code></pre>
+                </div>
+              </li>
+            }
+            @case ('restart-engine') {}
+            @case ('regenerate-cipher-keys') {}
+            @case ('create-scan-mode') {
+              <li translate="oia-module.commands.details-modal.command-content.scan-mode.command-content">
+                <div style="max-height: 300px; overflow-y: auto">
+                  <pre><code>{{ command.commandContent | json }}</code></pre>
+                </div>
+              </li>
+            }
+            @case ('update-scan-mode') {
+              <li
+                translate="oia-module.commands.details-modal.command-content.scan-mode.scan-mode-id"
+                [translateParams]="{ scanModeId: command.scanModeId }"
+              ></li>
+              <li translate="oia-module.commands.details-modal.command-content.scan-mode.command-content">
+                <div style="max-height: 300px; overflow-y: auto">
+                  <pre><code>{{ command.commandContent | json }}</code></pre>
+                </div>
+              </li>
+            }
+            @case ('delete-scan-mode') {
+              <li
+                translate="oia-module.commands.details-modal.command-content.scan-mode.scan-mode-id"
+                [translateParams]="{ scanModeId: command.scanModeId }"
+              ></li>
+            }
+            @case ('create-south') {
+              <li translate="oia-module.commands.details-modal.command-content.south.command-content">
+                <div style="max-height: 300px; overflow-y: auto">
+                  <pre><code>{{ command.commandContent | json }}</code></pre>
+                </div>
+              </li>
+            }
+            @case ('update-south') {
+              <li
+                translate="oia-module.commands.details-modal.command-content.south.south-id"
+                [translateParams]="{ southConnectorId: command.southConnectorId }"
+              ></li>
+              <li translate="oia-module.commands.details-modal.command-content.south.command-content">
+                <div style="max-height: 300px; overflow-y: auto">
+                  <pre><code>{{ command.commandContent | json }}</code></pre>
+                </div>
+              </li>
+            }
+            @case ('delete-south') {
+              <li
+                translate="oia-module.commands.details-modal.command-content.south.south-id"
+                [translateParams]="{ southConnectorId: command.southConnectorId }"
+              ></li>
+            }
+            @case ('create-or-update-south-items-from-csv') {
+              <li
+                translate="oia-module.commands.details-modal.command-content.south.south-id"
+                [translateParams]="{ southConnectorId: command.southConnectorId }"
+              ></li>
+              <li
+                translate="oia-module.commands.details-modal.command-content.south.delete-items-not-present"
+                [translateParams]="{ deleteItemsNotPresent: command.commandContent.deleteItemsNotPresent }"
+              ></li>
+              <li
+                translate="oia-module.commands.details-modal.command-content.south.delimiter"
+                [translateParams]="{ delimiter: command.commandContent.delimiter }"
+              ></li>
+              <li
+                translate="oia-module.commands.details-modal.command-content.south.csv-content"
+                [translateParams]="{ delimiter: command.commandContent.csvContent }"
+              ></li>
+            }
+            @case ('create-north') {
+              <li translate="oia-module.commands.details-modal.command-content.north.command-content">
+                <div style="max-height: 300px; overflow-y: auto">
+                  <pre><code>{{ command.commandContent | json }}</code></pre>
+                </div>
+              </li>
+            }
+            @case ('update-north') {
+              <li
+                translate="oia-module.commands.details-modal.command-content.north.north-id"
+                [translateParams]="{ northConnectorId: command.northConnectorId }"
+              ></li>
+              <li translate="oia-module.commands.details-modal.command-content.north.command-content">
+                <div style="max-height: 300px; overflow-y: auto">
+                  <pre><code>{{ command.commandContent | json }}</code></pre>
+                </div>
+              </li>
+            }
+            @case ('delete-north') {
+              <li
+                translate="oia-module.commands.details-modal.command-content.north.north-id"
+                [translateParams]="{ northConnectorId: command.northConnectorId }"
+              ></li>
+            }
+          }
+        </ul>
+      </div>
+    </div>
+  }
+</div>
+<div class="modal-footer">
+  <div class="btn-group">
+    <button type="button" class="btn btn-primary" (click)="close()" translate="common.close" id="close-button"></button>
+  </div>
+</div>

@@ -99,25 +99,36 @@
           </form>
           <ng-container>
             @if (commands.totalElements !== 0) {
-              <div>
-                <table class="table table-sm table-hover">
-                  <thead class="table-light">
+              <div class="table-container">
+                <table class="table table-sm table-hover oib-table">
+                  <thead>
                     <tr>
+                      <th></th>
                       <th translate="oia-module.commands.creation-date"></th>
                       <th translate="oia-module.commands.type"></th>
                       <th translate="oia-module.commands.status"></th>
                       <th translate="oia-module.commands.completion-date"></th>
+                      <th></th>
                     </tr>
                   </thead>
                   <tbody>
                     @for (command of commands.content; track command.id) {
                       <tr>
+                        <td></td>
                         <td>{{ command.retrievedDate! | datetime: 'mediumWithSeconds' }}</td>
                         <td>{{ command.type | oibusCommandTypeEnum }}</td>
                         <td>{{ command.status | oibusCommandStatusEnum }}</td>
                         <td>
                           @if (command.completedDate) {
                             <span>{{ command.completedDate | datetime: 'mediumWithSeconds' }}</span>
+                          }
+                        </td>
+                        <td class="text-nowrap">
+                          <!-- Details button -->
+                          @if (['COMPLETED', 'ERRORED'].includes(command.status)) {
+                            <button type="button" class="btn btn-link details-button px-1 py-0" (click)="openCommandDetails(command)">
+                              <span class="fa fa-search" [ngbTooltip]="'configuration.oibus.commands.details-tooltip' | translate"></span>
+                            </button>
                           }
                         </td>
                       </tr>
