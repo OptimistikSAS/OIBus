@@ -145,7 +145,7 @@ export default class OIAnalyticsCommandRepository {
             version: command.version,
             assetId: command.assetId,
             updateLauncher: command.updateLauncher,
-            backupFolders: command.backupFolders
+            backupFolders: command.backupFoldersPattern
           })
         );
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, command_content) VALUES (?, ?, ?, ?, ?, ?, ?);`;
