@@ -319,7 +319,41 @@
       "completion-date": "Completion date",
       "status": "Status",
       "type": "Type",
-      "none": "No command"
+      "none": "No command",
+      "details-modal": {
+        "title": "Command {{ type }}",
+        "success-info": "Command completed successfully",
+        "error-info": "Command failed",
+        "command-message": "Command message",
+        "command-content": {
+          "title": "Command content",
+          "retrieved-date": "Retrieved date: {{ retrievedDate }}",
+          "update-version": {
+            "version": "Update to version: {{ version }}",
+            "asset-id": "Asset to download: {{ assetId }}",
+            "update-launcher": "Update launcher: {{ updateLauncher }}",
+            "backup-folders-patterns": "Backup folders according to this pattern: {{ backupFoldersPattern }}"
+          },
+          "update-engine-settings": {
+            "command-content": "JSON content"
+          },
+          "scan-mode": {
+            "command-content": "JSON content",
+            "scan-mode-id": "Scan mode ID: {{ scanModeId }}"
+          },
+          "south": {
+            "command-content": "JSON content",
+            "south-id": "South connector ID: {{ southConnectorId }}",
+            "delete-items-not-present": "Delete items not present: {{ deleteItemsNotPresent }}",
+            "delimiter": "Delimiter: {{ delimiter }}",
+            "csv-content": "CSV content: {{ csvContent }}"
+          },
+          "north": {
+            "command-content": "JSON content",
+            "north-id": "North connector ID: {{ northConnectorId }}"
+          }
+        }
+      }
     }
   },
   "about": {
