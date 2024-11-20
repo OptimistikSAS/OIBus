@@ -50,7 +50,7 @@ export default class NorthConnectorController {
 
   async create(ctx: KoaContext<NorthConnectorCommandDTO<NorthSettings>, NorthConnectorDTO<NorthSettings>>): Promise<void> {
     try {
-      const northConnector = await ctx.app.northService.createNorth(ctx.request.body!);
+      const northConnector = await ctx.app.northService.createNorth(ctx.request.body!, (ctx.query.duplicate as string) || null);
       ctx.created(toNorthConnectorDTO(northConnector, ctx.app.encryptionService));
     } catch (error: unknown) {
       ctx.badRequest((error as Error).message);

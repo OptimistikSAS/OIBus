@@ -55,7 +55,10 @@ export default class SouthConnectorController {
     ctx: KoaContext<SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>, SouthConnectorDTO<SouthSettings, SouthItemSettings>>
   ): Promise<void> {
     try {
-      const southConnector = toSouthConnectorDTO(await ctx.app.southService.createSouth(ctx.request.body!), ctx.app.encryptionService);
+      const southConnector = toSouthConnectorDTO(
+        await ctx.app.southService.createSouth(ctx.request.body!, (ctx.query.duplicate as string) || null),
+        ctx.app.encryptionService
+      );
       ctx.created(southConnector);
     } catch (error: unknown) {
       ctx.badRequest((error as Error).message);
