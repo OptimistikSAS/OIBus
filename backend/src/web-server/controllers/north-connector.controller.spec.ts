@@ -88,18 +88,19 @@ describe('North connector controller', () => {
     ctx.app.northService.createNorth.mockReturnValueOnce(testData.north.list[0]);
 
     await northConnectorController.create(ctx);
-    expect(ctx.app.northService.createNorth).toHaveBeenCalledWith(testData.north.command);
+    expect(ctx.app.northService.createNorth).toHaveBeenCalledWith(testData.north.command, null);
     expect(ctx.created).toHaveBeenCalledWith(toNorthConnectorDTO(testData.north.list[0], ctx.app.encryptionService));
   });
 
   it('create() should throw an error', async () => {
     ctx.request.body = testData.north.command;
+    ctx.query.duplicate = 'northId';
     ctx.app.northService.createNorth.mockImplementationOnce(() => {
       throw new Error('error');
     });
 
     await northConnectorController.create(ctx);
-    expect(ctx.app.northService.createNorth).toHaveBeenCalledWith(testData.north.command);
+    expect(ctx.app.northService.createNorth).toHaveBeenCalledWith(testData.north.command, 'northId');
     expect(ctx.badRequest).toHaveBeenCalledWith('error');
   });
 

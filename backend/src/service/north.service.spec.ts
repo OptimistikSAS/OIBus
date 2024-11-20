@@ -211,7 +211,7 @@ describe('north service', () => {
     service.runNorth = jest.fn();
     const badCommand = JSON.parse(JSON.stringify(testData.north.command));
     badCommand.type = 'bad';
-    await expect(service.createNorth(badCommand)).rejects.toThrow('North manifest does not exist for type bad');
+    await expect(service.createNorth(badCommand, null)).rejects.toThrow('North manifest does not exist for type bad');
     expect(northConnectorRepository.saveNorthConnector).not.toHaveBeenCalled();
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).not.toHaveBeenCalled();
     expect(dataStreamEngine.createNorth).not.toHaveBeenCalled();
@@ -229,7 +229,7 @@ describe('north service', () => {
         enabled: element.enabled
       }))
     );
-    await service.createNorth(testData.north.command);
+    await service.createNorth(testData.north.command, null);
     expect(northConnectorRepository.saveNorthConnector).toHaveBeenCalled();
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
     expect(createBaseFolders).toHaveBeenCalledTimes(1);
@@ -251,7 +251,7 @@ describe('north service', () => {
     );
     const command = JSON.parse(JSON.stringify(testData.north.command));
     command.subscriptions = [testData.south.list[0].id, 'bad'];
-    await expect(service.createNorth(command)).rejects.toThrow(`Could not find South Connector bad`);
+    await expect(service.createNorth(command, null)).rejects.toThrow(`Could not find South Connector bad`);
   });
 
   it('should get North data stream', () => {
@@ -636,5 +636,26 @@ describe('north service', () => {
 
     expect(northConnectorRepository.deleteAllSubscriptionsByNorth).not.toHaveBeenCalled();
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).not.toHaveBeenCalled();
+  });
+
+  it('should retrieve secrets from north', () => {
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(testData.north.list[0]);
+    const manifest = JSON.parse(JSON.stringify(testData.north.manifest));
+    manifest.id = testData.north.list[0].type;
+    expect(service.retrieveSecretsFromNorth('northId', manifest)).toEqual(testData.north.list[0]);
+  });
+
+  it('should throw error if connector not found when retrieving secrets from north', () => {
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(null);
+    expect(() => service.retrieveSecretsFromNorth('northId', testData.north.manifest)).toThrow(
+      `Could not find north connector northId to retrieve secrets from`
+    );
+  });
+
+  it('should throw error if connector not found when retrieving secrets from north', () => {
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(testData.north.list[0]);
+    expect(() => service.retrieveSecretsFromNorth('northId', testData.north.manifest)).toThrow(
+      `North connector northId (type ${testData.north.list[0].type}) must be of the type ${testData.north.manifest.id}`
+    );
   });
 });

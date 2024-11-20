@@ -90,19 +90,20 @@ describe('South connector controller', () => {
 
     await southConnectorController.createSouth(ctx);
 
-    expect(ctx.app.southService.createSouth).toHaveBeenCalledWith(ctx.request.body);
+    expect(ctx.app.southService.createSouth).toHaveBeenCalledWith(ctx.request.body, null);
     expect(ctx.created).toHaveBeenCalledWith(toSouthConnectorDTO(testData.south.list[0], ctx.app.encryptionService));
   });
 
   it('create() should return bad request', async () => {
     ctx.request.body = testData.south.command;
+    ctx.query.duplicate = 'southId';
     ctx.app.southService.createSouth.mockImplementationOnce(() => {
       throw new Error('bad request');
     });
 
     await southConnectorController.createSouth(ctx);
 
-    expect(ctx.app.southService.createSouth).toHaveBeenCalledWith(ctx.request.body);
+    expect(ctx.app.southService.createSouth).toHaveBeenCalledWith(ctx.request.body, 'southId');
     expect(ctx.created).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalledWith('bad request');
   });
