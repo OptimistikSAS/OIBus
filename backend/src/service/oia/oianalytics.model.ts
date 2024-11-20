@@ -130,6 +130,7 @@ export interface OIAnalyticsFetchDeleteScanModeCommandDTO extends BaseOIAnalytic
 
 export interface OIAnalyticsFetchCreateSouthConnectorCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
   type: 'create-south';
+  retrieveSecretsFromSouth: string | null; // used to retrieve passwords in case of duplicate
   commandContent: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
 }
 
@@ -146,6 +147,7 @@ export interface OIAnalyticsFetchDeleteSouthConnectorCommandDTO extends BaseOIAn
 
 export interface OIAnalyticsFetchCreateNorthConnectorCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
   type: 'create-north';
+  retrieveSecretsFromNorth: string | null; // used to retrieve passwords in case of duplicate
   commandContent: NorthConnectorCommandDTO<NorthSettings>;
 }
 

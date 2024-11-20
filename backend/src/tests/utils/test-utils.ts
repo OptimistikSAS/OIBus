@@ -361,10 +361,10 @@ const createOIAnalyticsCommand = async (database: knex.Knex, command: OIBusComma
       scan_mode_id: ['update-scan-mode', 'delete-scan-mode'].includes(command.type)
         ? (command as OIBusUpdateScanModeCommand).scanModeId
         : null,
-      south_connector_id: ['update-south', 'delete-south', 'create-or-update-south-items-from-csv'].includes(command.type)
+      south_connector_id: ['create-south', 'update-south', 'delete-south', 'create-or-update-south-items-from-csv'].includes(command.type)
         ? (command as OIBusUpdateSouthConnectorCommand).southConnectorId
         : null,
-      north_connector_id: ['update-north', 'delete-north'].includes(command.type)
+      north_connector_id: ['create-north', 'update-north', 'delete-north'].includes(command.type)
         ? (command as OIBusUpdateNorthConnectorCommand).northConnectorId
         : null
     })
