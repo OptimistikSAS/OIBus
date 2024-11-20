@@ -102,8 +102,6 @@ export default class OIAnalyticsCommandRepository {
     let insertQuery = `INSERT INTO ${COMMANDS_TABLE} `;
     switch (command.type) {
       case 'update-engine-settings':
-      case 'create-south':
-      case 'create-north':
       case 'create-scan-mode':
         queryParams.push(JSON.stringify(command.commandContent));
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, command_content) VALUES (?, ?, ?, ?, ?, ?, ?);`;
@@ -113,10 +111,20 @@ export default class OIAnalyticsCommandRepository {
         queryParams.push(JSON.stringify(command.commandContent));
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, scan_mode_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
         break;
+      case 'create-south':
+        queryParams.push(command.retrieveSecretsFromSouth || '');
+        queryParams.push(JSON.stringify(command.commandContent));
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, south_connector_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
+        break;
       case 'update-south':
         queryParams.push(command.southConnectorId);
         queryParams.push(JSON.stringify(command.commandContent));
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, south_connector_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
+        break;
+      case 'create-north':
+        queryParams.push(command.retrieveSecretsFromNorth || '');
+        queryParams.push(JSON.stringify(command.commandContent));
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, north_connector_id, command_content) VALUES (?, ?, ?, ?, ?, ?,?, ?);`;
         break;
       case 'update-north':
         queryParams.push(command.northConnectorId);
@@ -272,6 +280,7 @@ export default class OIAnalyticsCommandRepository {
           retrievedDate: command.retrieved_date as Instant,
           completedDate: command.completed_date as Instant,
           result: command.result as string,
+          northConnectorId: command.north_connector_id as string,
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'create-south':
@@ -284,6 +293,7 @@ export default class OIAnalyticsCommandRepository {
           retrievedDate: command.retrieved_date as Instant,
           completedDate: command.completed_date as Instant,
           result: command.result as string,
+          southConnectorId: command.south_connector_id as string,
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'create-scan-mode':
