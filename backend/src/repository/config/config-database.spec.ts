@@ -12,7 +12,9 @@ import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.mo
 import OIAnalyticsCommandRepository from './oianalytics-command.repository';
 import { createPageFromArray } from '../../../shared/model/types';
 import {
+  OIAnalyticsFetchCreateNorthConnectorCommandDTO,
   OIAnalyticsFetchCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO,
+  OIAnalyticsFetchCreateSouthConnectorCommandDTO,
   OIAnalyticsFetchDeleteNorthConnectorCommandDTO,
   OIAnalyticsFetchDeleteScanModeCommandDTO,
   OIAnalyticsFetchDeleteSouthConnectorCommandDTO,
@@ -443,6 +445,47 @@ describe('Repository with populated database', () => {
       });
     });
 
+    it('should create a create south command', () => {
+      const command: OIAnalyticsFetchCreateSouthConnectorCommandDTO = testData.oIAnalytics.commands
+        .oIAnalyticsList[11] as OIAnalyticsFetchCreateSouthConnectorCommandDTO;
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        targetVersion: command.targetVersion,
+        commandContent: command.commandContent,
+        southConnectorId: command.retrieveSecretsFromSouth
+      });
+    });
+
+    it('should create a create south command without retrieve secrets from South', () => {
+      const command: OIAnalyticsFetchCreateSouthConnectorCommandDTO = JSON.parse(
+        JSON.stringify(testData.oIAnalytics.commands.oIAnalyticsList[11])
+      ) as OIAnalyticsFetchCreateSouthConnectorCommandDTO;
+      command.id = 'create-south-without-secrets';
+      command.retrieveSecretsFromSouth = null;
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        targetVersion: command.targetVersion,
+        commandContent: command.commandContent,
+        southConnectorId: ''
+      });
+    });
+
     it('should create an update south command', () => {
       const command: OIAnalyticsFetchUpdateSouthConnectorCommandDTO = testData.oIAnalytics.commands
         .oIAnalyticsList[4] as OIAnalyticsFetchUpdateSouthConnectorCommandDTO;
@@ -459,6 +502,47 @@ describe('Repository with populated database', () => {
         targetVersion: command.targetVersion,
         commandContent: command.commandContent,
         southConnectorId: command.southConnectorId
+      });
+    });
+
+    it('should create a create north command', () => {
+      const command: OIAnalyticsFetchCreateNorthConnectorCommandDTO = testData.oIAnalytics.commands
+        .oIAnalyticsList[12] as OIAnalyticsFetchCreateNorthConnectorCommandDTO;
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        targetVersion: command.targetVersion,
+        commandContent: command.commandContent,
+        northConnectorId: command.retrieveSecretsFromNorth
+      });
+    });
+
+    it('should create a create north command without retrieved secrets from North', () => {
+      const command: OIAnalyticsFetchCreateNorthConnectorCommandDTO = JSON.parse(
+        JSON.stringify(testData.oIAnalytics.commands.oIAnalyticsList[12])
+      ) as OIAnalyticsFetchCreateNorthConnectorCommandDTO;
+      command.id = 'create-north-without-secrets';
+      command.retrieveSecretsFromNorth = null;
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        targetVersion: command.targetVersion,
+        commandContent: command.commandContent,
+        northConnectorId: ''
       });
     });
 
