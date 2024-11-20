@@ -58,6 +58,7 @@ export interface OIBusDeleteScanModeCommand extends BaseOIBusCommand {
 
 export interface OIBusCreateSouthConnectorCommand extends BaseOIBusCommand {
   type: 'create-south';
+  southConnectorId: string | null; // used to retrieve passwords in case of duplicate
   commandContent: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
 }
 
@@ -74,6 +75,7 @@ export interface OIBusDeleteSouthConnectorCommand extends BaseOIBusCommand {
 
 export interface OIBusCreateNorthConnectorCommand extends BaseOIBusCommand {
   type: 'create-north';
+  northConnectorId: string | null; // used to retrieve passwords in case of duplicate
   commandContent: NorthConnectorCommandDTO<NorthSettings>;
 }
 
