@@ -434,7 +434,7 @@ describe('south service', () => {
     service.runSouth = jest.fn();
     const badCommand = JSON.parse(JSON.stringify(testData.south.command));
     badCommand.type = 'bad';
-    await expect(service.createSouth(badCommand)).rejects.toThrow('South manifest does not exist for type bad');
+    await expect(service.createSouth(badCommand, null)).rejects.toThrow('South manifest does not exist for type bad');
     expect(southConnectorRepository.saveSouthConnector).not.toHaveBeenCalled();
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).not.toHaveBeenCalled();
     expect(dataStreamEngine.createSouth).not.toHaveBeenCalled();
@@ -459,12 +459,36 @@ describe('south service', () => {
         scanModeName: null
       }
     ];
-    await service.createSouth(command);
+    await service.createSouth(command, null);
     expect(southConnectorRepository.saveSouthConnector).toHaveBeenCalled();
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
     expect(createBaseFolders).toHaveBeenCalledTimes(1);
     expect(dataStreamEngine.createSouth).toHaveBeenCalledWith(mockedSouth1);
     expect(dataStreamEngine.startSouth).toHaveBeenCalled();
+  });
+
+  it('createSouth() should create South connector and retrieve secrets from another connector', async () => {
+    service.runSouth = jest.fn().mockReturnValue(mockedSouth1);
+    (scanModeRepository.findAll as jest.Mock).mockReturnValue(testData.scanMode.list);
+    service.retrieveSecretsFromSouth = jest.fn();
+    const command = JSON.parse(JSON.stringify(testData.south.command));
+    command.items = [
+      {
+        id: null,
+        enabled: false,
+        name: 'item',
+        settings: {
+          regex: '*',
+          preserveFiles: true,
+          ignoreModifiedDate: false,
+          minAge: 100
+        },
+        scanModeId: 'scanModeId',
+        scanModeName: null
+      }
+    ];
+    await service.createSouth(command, null);
+    expect(service.retrieveSecretsFromSouth).toHaveBeenCalledTimes(1);
   });
 
   it('should get South data stream', () => {
@@ -986,6 +1010,27 @@ describe('south service', () => {
 
     await expect(service.importItems(testData.south.list[0].id, [itemCommand])).rejects.toThrow(
       `South connector ${testData.south.list[0].id} does not exist`
+    );
+  });
+
+  it('should retrieve secrets from south', () => {
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(testData.south.list[0]);
+    const manifest = JSON.parse(JSON.stringify(testData.south.manifest));
+    manifest.id = testData.south.list[0].type;
+    expect(service.retrieveSecretsFromSouth('southId', manifest)).toEqual(testData.south.list[0]);
+  });
+
+  it('should throw error if connector not found when retrieving secrets from south', () => {
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(null);
+    expect(() => service.retrieveSecretsFromSouth('southId', testData.south.manifest)).toThrow(
+      `Could not find south connector southId to retrieve secrets from`
+    );
+  });
+
+  it('should throw error if connector not found when retrieving secrets from south', () => {
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(testData.south.list[0]);
+    expect(() => service.retrieveSecretsFromSouth('southId', testData.south.manifest)).toThrow(
+      `South connector southId (type ${testData.south.list[0].type}) must be of the type ${testData.south.manifest.id}`
     );
   });
 });
