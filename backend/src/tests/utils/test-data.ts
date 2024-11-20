@@ -1038,6 +1038,7 @@ const oIBusCommands: Array<OIBusCommand> = [
     completedDate: '',
     result: 'ok',
     targetVersion: engineSettings.version,
+    southConnectorId: null,
     commandContent: southConnectorCommand
   },
   {
@@ -1049,6 +1050,7 @@ const oIBusCommands: Array<OIBusCommand> = [
     completedDate: '',
     result: 'ok',
     targetVersion: engineSettings.version,
+    northConnectorId: null,
     commandContent: northConnectorCommand
   },
   {
@@ -1161,6 +1163,20 @@ const oIAnalyticsCommands: Array<OIAnalyticsFetchCommandDTO> = [
     deleteItemsNotPresent: false,
     csvContent: '',
     delimiter: ','
+  },
+  {
+    id: 'newCommandId12',
+    type: 'create-south',
+    retrieveSecretsFromSouth: 'southId1',
+    targetVersion: engineSettings.version,
+    commandContent: southConnectorCommand
+  },
+  {
+    id: 'newCommandId13',
+    type: 'create-north',
+    retrieveSecretsFromNorth: 'northId1',
+    targetVersion: engineSettings.version,
+    commandContent: northConnectorCommand
   }
 ];
 const oIBusMessages: Array<OIAnalyticsMessage> = [
