@@ -66,15 +66,15 @@ export class SouthConnectorService {
   /**
    * Create a new South connector
    * @param command - the new South connector
-   * @param duplicateId - The ID of the duplicated South used to retrieved secrets in the backend
+   * @param retrieveSecretsFromSouth - The ID of the duplicated South used to retrieved secrets in the backend
    */
   create(
     command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
-    duplicateId: string
+    retrieveSecretsFromSouth: string
   ): Observable<SouthConnectorDTO<SouthSettings, SouthItemSettings>> {
     const params: Record<string, string | Array<string>> = {};
-    if (duplicateId) {
-      params['duplicateId'] = duplicateId;
+    if (retrieveSecretsFromSouth) {
+      params['duplicate'] = retrieveSecretsFromSouth;
     }
     return this.http.post<SouthConnectorDTO<SouthSettings, SouthItemSettings>>(`/api/south`, command, { params });
   }

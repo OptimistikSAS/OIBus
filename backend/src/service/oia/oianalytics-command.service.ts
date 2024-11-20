@@ -419,7 +419,7 @@ export default class OIAnalyticsCommandService {
 
   private async executeCreateSouthCommand(command: OIBusCreateSouthConnectorCommand, privateKey: string) {
     await this.decryptSouthSettings(command, privateKey);
-    await this.southService.createSouth(command.commandContent);
+    await this.southService.createSouth(command.commandContent, command.southConnectorId);
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'South connector created successfully');
   }
 
@@ -445,7 +445,7 @@ export default class OIAnalyticsCommandService {
 
   private async executeCreateNorthCommand(command: OIBusCreateNorthConnectorCommand, privateKey: string) {
     await this.decryptNorthSettings(command, privateKey);
-    await this.northService.createNorth(command.commandContent);
+    await this.northService.createNorth(command.commandContent, command.northConnectorId);
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'North connector created successfully');
   }
 
