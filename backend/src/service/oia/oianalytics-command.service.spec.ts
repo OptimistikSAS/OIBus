@@ -21,6 +21,7 @@ import {
   OIBusCreateNorthConnectorCommand,
   OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand,
   OIBusCreateScanModeCommand,
+  OIBusCreateSouthConnectorCommand,
   OIBusDeleteNorthConnectorCommand,
   OIBusDeleteScanModeCommand,
   OIBusDeleteSouthConnectorCommand,
@@ -496,14 +497,15 @@ describe('OIAnalytics Command Service', () => {
     (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
       {
         ...testData.south.manifest,
-        id: (testData.oIAnalytics.commands.oIBusList[10] as OIBusUpdateSouthConnectorCommand).commandContent.type
+        id: (testData.oIAnalytics.commands.oIBusList[10] as OIBusCreateSouthConnectorCommand).commandContent.type
       }
     ]);
 
     await service.executeCommand();
 
     expect(southService.createSouth).toHaveBeenCalledWith(
-      (testData.oIAnalytics.commands.oIBusList[10] as OIBusUpdateSouthConnectorCommand).commandContent
+      (testData.oIAnalytics.commands.oIBusList[10] as OIBusCreateSouthConnectorCommand).commandContent,
+      null
     );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       testData.oIAnalytics.commands.oIBusList[10].id,
@@ -524,7 +526,8 @@ describe('OIAnalytics Command Service', () => {
     await service.executeCommand();
 
     expect(northService.createNorth).toHaveBeenCalledWith(
-      (testData.oIAnalytics.commands.oIBusList[11] as OIBusCreateNorthConnectorCommand).commandContent
+      (testData.oIAnalytics.commands.oIBusList[11] as OIBusCreateNorthConnectorCommand).commandContent,
+      null
     );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       testData.oIAnalytics.commands.oIBusList[11].id,

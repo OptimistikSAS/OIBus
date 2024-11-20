@@ -448,7 +448,8 @@ export default class SouthService {
   }
 
   async createSouth<S extends SouthSettings, I extends SouthItemSettings>(
-    command: SouthConnectorCommandDTO<S, I>
+    command: SouthConnectorCommandDTO<S, I>,
+    retrieveSecretsFromSouth: string | null
   ): Promise<SouthConnectorEntity<S, I>> {
     const manifest = this.getInstalledSouthManifests().find(southManifest => southManifest.id === command.type);
     if (!manifest) {
@@ -461,7 +462,14 @@ export default class SouthService {
     }
 
     const southEntity = {} as SouthConnectorEntity<S, I>;
-    await copySouthConnectorCommandToSouthEntity(southEntity, command, null, this.encryptionService, this.scanModeRepository.findAll());
+    await copySouthConnectorCommandToSouthEntity(
+      southEntity,
+      command,
+      this.retrieveSecretsFromSouth(retrieveSecretsFromSouth, manifest),
+      this.encryptionService,
+      this.scanModeRepository.findAll(),
+      !!retrieveSecretsFromSouth
+    );
     this.southConnectorRepository.saveSouthConnector(southEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     const baseFolders = this.getDefaultBaseFolders(southEntity.id);
@@ -830,6 +838,21 @@ export default class SouthService {
 
     return folders;
   }
+
+  retrieveSecretsFromSouth(
+    retrieveSecretsFromSouth: string | null,
+    manifest: SouthConnectorManifest
+  ): SouthConnectorEntity<SouthSettings, SouthItemSettings> | null {
+    if (!retrieveSecretsFromSouth) return null;
+    const source = this.southConnectorRepository.findSouthById(retrieveSecretsFromSouth);
+    if (!source) {
+      throw new Error(`Could not find south connector ${retrieveSecretsFromSouth} to retrieve secrets from`);
+    }
+    if (source.type !== manifest.id) {
+      throw new Error(`South connector ${retrieveSecretsFromSouth} (type ${source.type}) must be of the type ${manifest.id}`);
+    }
+    return source;
+  }
 }
 
 export const toSouthConnectorLightDTO = (entity: SouthConnectorEntityLight): SouthConnectorLightDTO => {
@@ -847,7 +870,8 @@ const copySouthConnectorCommandToSouthEntity = async <S extends SouthSettings, I
   command: SouthConnectorCommandDTO<S, I>,
   currentSettings: SouthConnectorEntity<S, I> | null,
   encryptionService: EncryptionService,
-  scanModes: Array<ScanMode>
+  scanModes: Array<ScanMode>,
+  retrieveSecretsFromSouth = false
 ): Promise<void> => {
   const manifest = southManifestList.find(element => element.id === command.type)!;
   southEntity.name = command.name;
@@ -868,7 +892,8 @@ const copySouthConnectorCommandToSouthEntity = async <S extends SouthSettings, I
         currentSettings?.items.find(element => element.id === itemCommand.id) || null,
         southEntity.type,
         encryptionService,
-        scanModes
+        scanModes,
+        retrieveSecretsFromSouth
       );
       return itemEntity;
     })
@@ -881,10 +906,11 @@ const copySouthItemCommandToSouthItemEntity = async <I extends SouthItemSettings
   currentSettings: SouthConnectorItemEntity<I> | null,
   southType: string,
   encryptionService: EncryptionService,
-  scanModes: Array<ScanMode>
+  scanModes: Array<ScanMode>,
+  retrieveSecretsFromSouth = false
 ): Promise<void> => {
   const manifest = southManifestList.find(element => element.id === southType)!;
-  southItemEntity.id = command.id || '';
+  southItemEntity.id = retrieveSecretsFromSouth ? '' : command.id || ''; // reset id if it is a copy from another connector
   southItemEntity.name = command.name;
   southItemEntity.enabled = command.enabled;
   southItemEntity.scanModeId = checkScanMode(scanModes, command.scanModeId, command.scanModeName);

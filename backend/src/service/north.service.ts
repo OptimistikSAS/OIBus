@@ -189,7 +189,10 @@ export default class NorthService {
     return northManifestList;
   }
 
-  async createNorth<N extends NorthSettings>(command: NorthConnectorCommandDTO<N>): Promise<NorthConnectorEntity<N>> {
+  async createNorth<N extends NorthSettings>(
+    command: NorthConnectorCommandDTO<N>,
+    retrieveSecretsFromNorth: string | null
+  ): Promise<NorthConnectorEntity<N>> {
     const manifest = this.getInstalledNorthManifests().find(northManifest => northManifest.id === command.type);
     if (!manifest) {
       throw new Error(`North manifest does not exist for type ${command.type}`);
@@ -197,10 +200,10 @@ export default class NorthService {
     await this.validator.validateSettings(manifest.settings, command.settings);
 
     const northEntity = {} as NorthConnectorEntity<N>;
-    await copyNorthConnectorCommandToNorthEntity<N>(
+    await copyNorthConnectorCommandToNorthEntity(
       northEntity,
       command,
-      null,
+      this.retrieveSecretsFromNorth(retrieveSecretsFromNorth, manifest),
       this.encryptionService,
       this.scanModeRepository.findAll(),
       this.southConnectorRepository.findAllSouth()
@@ -497,6 +500,21 @@ export default class NorthService {
     }
 
     return folders;
+  }
+
+  retrieveSecretsFromNorth(
+    retrieveSecretsFromNorth: string | null,
+    manifest: NorthConnectorManifest
+  ): NorthConnectorEntity<NorthSettings> | null {
+    if (!retrieveSecretsFromNorth) return null;
+    const source = this.northConnectorRepository.findNorthById(retrieveSecretsFromNorth);
+    if (!source) {
+      throw new Error(`Could not find north connector ${retrieveSecretsFromNorth} to retrieve secrets from`);
+    }
+    if (source.type !== manifest.id) {
+      throw new Error(`North connector ${retrieveSecretsFromNorth} (type ${source.type}) must be of the type ${manifest.id}`);
+    }
+    return source;
   }
 }
 
