@@ -19,7 +19,7 @@ import { Modal, ModalService } from '../../shared/modal.service';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
-class HistoryQueryDisplayComponentTester extends ComponentTester<HistoryQueryDetailComponent> {
+class HistoryQueryDetailComponentTester extends ComponentTester<HistoryQueryDetailComponent> {
   constructor() {
     super(HistoryQueryDetailComponent);
   }
@@ -45,8 +45,8 @@ class HistoryQueryDisplayComponentTester extends ComponentTester<HistoryQueryDet
   }
 }
 
-describe('HistoryQueryDisplayComponent', () => {
-  let tester: HistoryQueryDisplayComponentTester;
+describe('HistoryQueryDetailComponent', () => {
+  let tester: HistoryQueryDetailComponentTester;
   let southConnectorService: jasmine.SpyObj<SouthConnectorService>;
   let northConnectorService: jasmine.SpyObj<NorthConnectorService>;
   let historyQueryService: jasmine.SpyObj<HistoryQueryService>;
@@ -209,7 +209,7 @@ describe('HistoryQueryDisplayComponent', () => {
     scanModeService.list.and.returnValue(of([]));
     engineService.getInfo.and.returnValue(of(engineInfo));
 
-    tester = new HistoryQueryDisplayComponentTester();
+    tester = new HistoryQueryDetailComponentTester();
   });
 
   it('should display History query detail', () => {
@@ -245,7 +245,8 @@ describe('HistoryQueryDisplayComponent', () => {
 
     const command = {
       type: northManifest.id,
-      settings: historyQuery.northSettings
+      settings: historyQuery.northSettings,
+      caching: historyQuery.caching
     } as NorthConnectorCommandDTO<NorthSettings>;
 
     const spy = jasmine.createSpy();

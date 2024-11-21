@@ -1,4 +1,4 @@
-import { SouthConnectorCommandDTO } from '../../shared/model/south-connector.model';
+import { SouthConnectorCommandDTO, SouthConnectorManifest } from '../../shared/model/south-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { HistoryQueryEntity, HistoryQueryEntityLight, HistoryQueryItemEntity } from '../model/histor-query.model';
 import { NorthSettings } from '../../shared/model/north-settings.model';
@@ -10,7 +10,7 @@ import {
   HistoryQueryItemSearchParam,
   HistoryQueryLightDTO
 } from '../../shared/model/history-query.model';
-import { NorthConnectorCommandDTO } from '../../shared/model/north-connector.model';
+import { NorthConnectorCommandDTO, NorthConnectorManifest } from '../../shared/model/north-connector.model';
 import EncryptionService from './encryption.service';
 import HistoryQueryRepository from '../repository/config/history-query.repository';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
@@ -33,11 +33,15 @@ import HistoryQuery from '../engine/history-query';
 import HistoryQueryMetricsRepository from '../repository/logs/history-query-metrics.repository';
 import { PassThrough } from 'node:stream';
 import { BaseFolders } from '../model/types';
+import NorthConnectorRepository from '../repository/config/north-connector.repository';
+import SouthConnectorRepository from '../repository/config/south-connector.repository';
 
 export default class HistoryQueryService {
   constructor(
     private readonly validator: JoiValidator,
     private readonly historyQueryRepository: HistoryQueryRepository,
+    private readonly northConnectorRepository: NorthConnectorRepository,
+    private readonly southConnectorRepository: SouthConnectorRepository,
     private readonly scanModeRepository: ScanModeRepository,
     private readonly logRepository: LogRepository,
     private readonly historyQueryMetricsRepository: HistoryQueryMetricsRepository,
@@ -61,17 +65,25 @@ export default class HistoryQueryService {
     );
   }
 
-  async testNorth<N extends NorthSettings>(
+  async testNorth(
     historyQueryId: string,
-    command: NorthConnectorCommandDTO<N>,
+    retrieveSecretsFromNorth: string | null,
+    command: NorthConnectorCommandDTO<NorthSettings>,
     logger: pino.Logger
   ): Promise<void> {
-    let historyQuery: HistoryQueryEntity<SouthSettings, N, SouthItemSettings> | null = null;
+    let northSettings: NorthSettings | null = null;
     if (historyQueryId !== 'create') {
-      historyQuery = this.historyQueryRepository.findHistoryQueryById(historyQueryId);
+      const historyQuery = this.historyQueryRepository.findHistoryQueryById(historyQueryId);
       if (!historyQuery) {
         throw new Error(`History query ${historyQueryId} not found`);
       }
+      northSettings = historyQuery.northSettings;
+    } else if (retrieveSecretsFromNorth) {
+      const north = this.northConnectorRepository.findNorthById(retrieveSecretsFromNorth);
+      if (!north) {
+        throw new Error(`North connector ${retrieveSecretsFromNorth} not found`);
+      }
+      northSettings = north.settings;
     }
     const manifest = this.northService.getInstalledNorthManifests().find(northManifest => northManifest.id === command.type);
     if (!manifest) {
@@ -79,26 +91,33 @@ export default class HistoryQueryService {
     }
 
     await this.validator.validateSettings(manifest.settings, command.settings);
-    command.settings = await this.encryptionService.encryptConnectorSecrets<N>(
-      command.settings,
-      historyQuery?.northSettings || null,
+    command.settings = await this.encryptionService.decryptConnectorSecrets(
+      await this.encryptionService.encryptConnectorSecrets(command.settings, northSettings, manifest.settings),
       manifest.settings
     );
 
-    return await this.northService.testNorth<N>('create', command, logger);
+    return await this.northService.testNorth('create', command, logger);
   }
 
-  async testSouth<S extends SouthSettings>(
+  async testSouth(
     historyQueryId: string,
-    command: SouthConnectorCommandDTO<S, SouthItemSettings>,
+    retrieveSecretsFromSouth: string | null,
+    command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
     logger: pino.Logger
   ): Promise<void> {
-    let historyQuery: HistoryQueryEntity<S, NorthSettings, SouthItemSettings> | null = null;
+    let southSettings: SouthSettings | null = null;
     if (historyQueryId !== 'create') {
-      historyQuery = this.historyQueryRepository.findHistoryQueryById(historyQueryId);
+      const historyQuery = this.historyQueryRepository.findHistoryQueryById(historyQueryId);
       if (!historyQuery) {
         throw new Error(`History query ${historyQueryId} not found`);
       }
+      southSettings = historyQuery.southSettings;
+    } else if (retrieveSecretsFromSouth) {
+      const south = this.southConnectorRepository.findSouthById(retrieveSecretsFromSouth);
+      if (!south) {
+        throw new Error(`South connector ${retrieveSecretsFromSouth} not found`);
+      }
+      southSettings = south.settings;
     }
     const manifest = this.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === command.type);
     if (!manifest) {
@@ -106,27 +125,34 @@ export default class HistoryQueryService {
     }
 
     await this.validator.validateSettings(manifest.settings, command.settings);
-    command.settings = await this.encryptionService.encryptConnectorSecrets<S>(
-      command.settings,
-      historyQuery?.southSettings || null,
+    command.settings = await this.encryptionService.decryptConnectorSecrets(
+      await this.encryptionService.encryptConnectorSecrets(command.settings, southSettings, manifest.settings),
       manifest.settings
     );
-    return await this.southService.testSouth<S, SouthItemSettings>('create', command, logger);
+    return await this.southService.testSouth('create', command, logger);
   }
 
-  async testSouthItem<S extends SouthSettings, I extends SouthItemSettings>(
+  async testSouthItem(
     historyQueryId: string,
-    command: SouthConnectorCommandDTO<S, I>,
-    itemCommand: HistoryQueryItemCommandDTO<I>,
+    retrieveSecretsFromSouth: string | null,
+    command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
+    itemCommand: HistoryQueryItemCommandDTO<SouthItemSettings>,
     callback: (data: OIBusContent) => void,
     logger: pino.Logger
   ): Promise<void> {
-    let historyQuery: HistoryQueryEntity<S, NorthSettings, I> | null = null;
+    let southSettings: SouthSettings | null = null;
     if (historyQueryId !== 'create') {
-      historyQuery = this.historyQueryRepository.findHistoryQueryById(historyQueryId);
+      const historyQuery = this.historyQueryRepository.findHistoryQueryById(historyQueryId);
       if (!historyQuery) {
         throw new Error(`History query ${historyQueryId} not found`);
       }
+      southSettings = historyQuery.southSettings;
+    } else if (retrieveSecretsFromSouth) {
+      const south = this.southConnectorRepository.findSouthById(retrieveSecretsFromSouth);
+      if (!south) {
+        throw new Error(`South connector ${retrieveSecretsFromSouth} not found`);
+      }
+      southSettings = south.settings;
     }
     const manifest = this.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === command.type);
     if (!manifest) {
@@ -134,12 +160,11 @@ export default class HistoryQueryService {
     }
     await this.validator.validateSettings(manifest.settings, command.settings);
     await this.validator.validateSettings(manifest.items.settings, itemCommand.settings);
-    command.settings = await this.encryptionService.encryptConnectorSecrets<S>(
-      command.settings,
-      historyQuery?.southSettings || null,
+    command.settings = await this.encryptionService.decryptConnectorSecrets(
+      await this.encryptionService.encryptConnectorSecrets(command.settings, southSettings, manifest.settings),
       manifest.settings
     );
-    return await this.southService.testSouthItem<S, I>(
+    return await this.southService.testSouthItem(
       'create',
       command,
       { ...itemCommand, scanModeId: 'history', scanModeName: null },
@@ -159,7 +184,10 @@ export default class HistoryQueryService {
   }
 
   async createHistoryQuery<S extends SouthSettings, N extends NorthSettings, I extends SouthItemSettings>(
-    command: HistoryQueryCommandDTO<S, N, I>
+    command: HistoryQueryCommandDTO<S, N, I>,
+    retrieveSecretsFromSouth: string | null,
+    retrieveSecretsFromNorth: string | null,
+    retrieveSecretsFromHistoryQuery: string | null
   ): Promise<HistoryQueryEntity<S, N, I>> {
     const southManifest = this.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === command.southType);
     if (!southManifest) {
@@ -177,12 +205,19 @@ export default class HistoryQueryService {
     }
 
     const historyQuery = {} as HistoryQueryEntity<S, N, I>;
-    await copyHistoryQueryCommandToHistoryQueryEntity<S, N, I>(
+    await copyHistoryQueryCommandToHistoryQueryEntity(
       historyQuery,
       command,
-      null,
+      this.retrieveSecrets(
+        retrieveSecretsFromSouth,
+        retrieveSecretsFromNorth,
+        retrieveSecretsFromHistoryQuery,
+        southManifest,
+        northManifest
+      ),
       this.encryptionService,
-      this.scanModeRepository.findAll()
+      this.scanModeRepository.findAll(),
+      !!retrieveSecretsFromHistoryQuery || !!retrieveSecretsFromSouth
     );
     this.historyQueryRepository.saveHistoryQuery<S, N, I>(historyQuery);
     this.oIAnalyticsMessageService.createHistoryQueryMessage(historyQuery);
@@ -536,6 +571,60 @@ export default class HistoryQueryService {
 
     return folders;
   }
+
+  retrieveSecrets(
+    retrieveSecretsFromSouth: string | null,
+    retrieveSecretsFromNorth: string | null,
+    retrieveSecretsFromHistoryQuery: string | null,
+    southManifest: SouthConnectorManifest,
+    northManifest: NorthConnectorManifest
+  ): HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> | null {
+    if (retrieveSecretsFromHistoryQuery) {
+      const source = this.historyQueryRepository.findHistoryQueryById(retrieveSecretsFromHistoryQuery);
+      if (!source) {
+        throw new Error(`Could not find history query ${retrieveSecretsFromHistoryQuery} to retrieve secrets from`);
+      }
+      if (source.southType !== southManifest.id) {
+        throw new Error(
+          `History query ${retrieveSecretsFromHistoryQuery} (south type ${source.southType}) must be of the south type ${southManifest.id}`
+        );
+      }
+      if (source.northType !== northManifest.id) {
+        throw new Error(
+          `History query ${retrieveSecretsFromHistoryQuery} (north type ${source.northType}) must be of the north type ${northManifest.id}`
+        );
+      }
+      return source;
+    }
+    if (retrieveSecretsFromSouth || retrieveSecretsFromNorth) {
+      const source = {} as HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>;
+      if (retrieveSecretsFromSouth) {
+        const south = this.southConnectorRepository.findSouthById(retrieveSecretsFromSouth);
+        if (!south) {
+          throw new Error(`Could not find south connector ${retrieveSecretsFromSouth} to retrieve secrets from`);
+        }
+        if (south.type !== southManifest.id) {
+          throw new Error(`South connector ${retrieveSecretsFromSouth} (type ${south.type}) must be of the type ${southManifest.id}`);
+        }
+        source.southType = south.type;
+        source.items = south.items;
+        source.southSettings = south.settings;
+      }
+      if (retrieveSecretsFromNorth) {
+        const north = this.northConnectorRepository.findNorthById(retrieveSecretsFromNorth);
+        if (!north) {
+          throw new Error(`Could not find north connector ${retrieveSecretsFromNorth} to retrieve secrets from`);
+        }
+        if (north.type !== northManifest.id) {
+          throw new Error(`North connector ${retrieveSecretsFromNorth} (type ${north.type}) must be of the type ${northManifest.id}`);
+        }
+        source.northType = north.type;
+        source.northSettings = north.settings;
+      }
+      return source;
+    }
+    return null;
+  }
 }
 
 export const toHistoryQueryDTO = <S extends SouthSettings, N extends NorthSettings, I extends SouthItemSettings>(
@@ -594,7 +683,8 @@ const copyHistoryQueryCommandToHistoryQueryEntity = async <S extends SouthSettin
   command: HistoryQueryCommandDTO<S, N, I>,
   currentSettings: HistoryQueryEntity<S, N, I> | null,
   encryptionService: EncryptionService,
-  scanModes: Array<ScanMode>
+  scanModes: Array<ScanMode>,
+  retrieveSecrets = false
 ): Promise<void> => {
   const southManifest = southManifestList.find(element => element.id === command.southType)!;
   const northManifest = northManifestList.find(element => element.id === command.northType)!;
@@ -641,7 +731,8 @@ const copyHistoryQueryCommandToHistoryQueryEntity = async <S extends SouthSettin
         itemCommand,
         currentSettings?.items.find(element => element.id === itemCommand.id) || null,
         historyQueryEntity.southType,
-        encryptionService
+        encryptionService,
+        retrieveSecrets
       );
       return itemEntity;
     })
@@ -653,10 +744,11 @@ const copyHistoryQueryItemCommandToHistoryQueryItemEntity = async <I extends Sou
   command: HistoryQueryItemCommandDTO<I>,
   currentSettings: HistoryQueryItemEntity<I> | null,
   southType: string,
-  encryptionService: EncryptionService
+  encryptionService: EncryptionService,
+  retrieveSecrets = false
 ): Promise<void> => {
   const southManifest = southManifestList.find(element => element.id === southType)!;
-  historyQueryItemEntity.id = command.id || '';
+  historyQueryItemEntity.id = retrieveSecrets ? '' : command.id || ''; // reset id if it is a copy from another history query
   historyQueryItemEntity.name = command.name;
   historyQueryItemEntity.enabled = command.enabled;
   historyQueryItemEntity.settings = await encryptionService.encryptConnectorSecrets<I>(

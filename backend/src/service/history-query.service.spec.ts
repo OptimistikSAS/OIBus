@@ -26,6 +26,10 @@ import { BaseFolders } from '../model/types';
 import fs from 'node:fs/promises';
 import csv from 'papaparse';
 import multer from '@koa/multer';
+import SouthConnectorRepository from '../repository/config/south-connector.repository';
+import NorthConnectorRepository from '../repository/config/north-connector.repository';
+import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/south-connector-repository.mock';
+import NorthConnectorRepositoryMock from '../tests/__mocks__/repository/config/north-connector-repository.mock';
 jest.mock('papaparse');
 jest.mock('node:fs/promises');
 jest.mock('../web-server/controllers/validators/joi.validator');
@@ -33,6 +37,8 @@ jest.mock('../web-server/controllers/validators/joi.validator');
 const validator = new JoiValidator();
 const logger: pino.Logger = new PinoLogger();
 const historyQueryRepository: HistoryQueryRepository = new HistoryQueryRepositoryMock();
+const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
+const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const logRepository: LogRepository = new LogRepositoryMock();
 const historyQueryMetricsRepository: HistoryQueryMetricsRepository = new HistoryQueryMetricsRepositoryMock();
@@ -49,6 +55,8 @@ describe('History Query service', () => {
     service = new HistoryQueryService(
       validator,
       historyQueryRepository,
+      northConnectorRepository,
+      southConnectorRepository,
       scanModeRepository,
       logRepository,
       historyQueryMetricsRepository,
@@ -66,15 +74,27 @@ describe('History Query service', () => {
         ...northManifestList[4] // file-writer
       }
     ]);
-    await service.testNorth('create', testData.north.command, logger);
+    await service.testNorth('create', null, testData.north.command, logger);
     expect(northService.testNorth).toHaveBeenCalledWith('create', testData.north.command, logger);
   });
 
   it('testNorth() should throw an error if manifest type is bad', async () => {
     (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([]);
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(testData.north.list[0]);
     const badCommand = JSON.parse(JSON.stringify(testData.north.command));
     badCommand.type = 'bad';
-    await expect(service.testNorth('create', badCommand, logger)).rejects.toThrow('North manifest bad not found');
+    await expect(service.testNorth('create', testData.north.list[0].id, badCommand, logger)).rejects.toThrow(
+      'North manifest bad not found'
+    );
+    expect(northService.testNorth).not.toHaveBeenCalled();
+  });
+
+  it('testNorth() should throw an error if north is not found', async () => {
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(null);
+
+    await expect(service.testNorth('create', testData.north.list[0].id, testData.north.command, logger)).rejects.toThrow(
+      `North connector ${testData.north.list[0].id} not found`
+    );
     expect(northService.testNorth).not.toHaveBeenCalled();
   });
 
@@ -85,13 +105,13 @@ describe('History Query service', () => {
       }
     ]);
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
-    await service.testNorth(testData.historyQueries.list[0].id, testData.north.command, logger);
+    await service.testNorth(testData.historyQueries.list[0].id, null, testData.north.command, logger);
     expect(northService.testNorth).toHaveBeenCalled();
   });
 
   it('testNorth() should fail to test North connector in edit mode if north connector not found', async () => {
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(null);
-    await expect(service.testNorth(testData.historyQueries.list[0].id, testData.north.command, logger)).rejects.toThrow(
+    await expect(service.testNorth(testData.historyQueries.list[0].id, null, testData.north.command, logger)).rejects.toThrow(
       `History query ${testData.historyQueries.list[0].id} not found`
     );
     expect(northService.testNorth).not.toHaveBeenCalled();
@@ -103,15 +123,28 @@ describe('History Query service', () => {
         ...southManifestList[0] // folder-scanner
       }
     ]);
-    await service.testSouth('create', testData.south.command, logger);
+    await service.testSouth('create', null, testData.south.command, logger);
     expect(southService.testSouth).toHaveBeenCalledWith('create', testData.south.command, logger);
   });
 
   it('testSouth() should throw an error if manifest type is bad', async () => {
     (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([]);
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(testData.south.list[0]);
+
     const badCommand = JSON.parse(JSON.stringify(testData.south.command));
     badCommand.type = 'bad';
-    await expect(service.testSouth('create', badCommand, logger)).rejects.toThrow('South manifest bad not found');
+    await expect(service.testSouth('create', testData.south.list[0].id, badCommand, logger)).rejects.toThrow(
+      'South manifest bad not found'
+    );
+    expect(southService.testSouth).not.toHaveBeenCalled();
+  });
+
+  it('testSouth() should throw an error if south connector is not found', async () => {
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(null);
+
+    await expect(service.testSouth('create', testData.south.list[0].id, testData.south.command, logger)).rejects.toThrow(
+      `South connector ${testData.south.list[0].id} not found`
+    );
     expect(southService.testSouth).not.toHaveBeenCalled();
   });
 
@@ -122,13 +155,13 @@ describe('History Query service', () => {
       }
     ]);
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
-    await service.testSouth(testData.historyQueries.list[0].id, testData.south.command, logger);
+    await service.testSouth(testData.historyQueries.list[0].id, null, testData.south.command, logger);
     expect(southService.testSouth).toHaveBeenCalled();
   });
 
-  it('testSouth() should fail to test South connector in edit mode if south connector not found', async () => {
+  it('testSouth() should fail to test South connector in edit mode if history query not found', async () => {
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(null);
-    await expect(service.testSouth(testData.historyQueries.list[0].id, testData.south.command, logger)).rejects.toThrow(
+    await expect(service.testSouth(testData.historyQueries.list[0].id, null, testData.south.command, logger)).rejects.toThrow(
       `History query ${testData.historyQueries.list[0].id} not found`
     );
     expect(southService.testSouth).not.toHaveBeenCalled();
@@ -141,7 +174,7 @@ describe('History Query service', () => {
       }
     ]);
     const callback = jest.fn();
-    await service.testSouthItem('create', testData.south.command, testData.south.itemCommand, callback, logger);
+    await service.testSouthItem('create', null, testData.south.command, testData.south.itemCommand, callback, logger);
     expect(southService.testSouthItem).toHaveBeenCalledWith(
       'create',
       testData.south.command,
@@ -153,12 +186,23 @@ describe('History Query service', () => {
 
   it('testSouthItem() should throw an error if manifest type is bad', async () => {
     (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([]);
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(testData.south.list[0]);
     const badCommand = JSON.parse(JSON.stringify(testData.south.command));
     badCommand.type = 'bad';
     const callback = jest.fn();
-    await expect(service.testSouthItem('create', badCommand, testData.south.itemCommand, callback, logger)).rejects.toThrow(
-      'South manifest bad not found'
-    );
+    await expect(
+      service.testSouthItem('create', testData.south.list[0].id, badCommand, testData.south.itemCommand, callback, logger)
+    ).rejects.toThrow('South manifest bad not found');
+
+    expect(southService.testSouthItem).not.toHaveBeenCalled();
+  });
+
+  it('testSouthItem() should throw an error if south connector not found', async () => {
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(null);
+    const callback = jest.fn();
+    await expect(
+      service.testSouthItem('create', testData.south.list[0].id, testData.south.command, testData.south.itemCommand, callback, logger)
+    ).rejects.toThrow(`South connector ${testData.south.list[0].id} not found`);
 
     expect(southService.testSouthItem).not.toHaveBeenCalled();
   });
@@ -171,16 +215,23 @@ describe('History Query service', () => {
     ]);
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
     const callback = jest.fn();
-    await service.testSouthItem(testData.historyQueries.list[0].id, testData.south.command, testData.south.itemCommand, callback, logger);
+    await service.testSouthItem(
+      testData.historyQueries.list[0].id,
+      null,
+      testData.south.command,
+      testData.south.itemCommand,
+      callback,
+      logger
+    );
     expect(southService.testSouthItem).toHaveBeenCalled();
   });
 
-  it('testSouthItem() should fail to test South connector in edit mode if south connector not found', async () => {
+  it('testSouthItem() should fail to test South connector in edit mode if history querynot found', async () => {
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(null);
     const callback = jest.fn();
 
     await expect(
-      service.testSouthItem(testData.historyQueries.list[0].id, testData.south.command, testData.south.itemCommand, callback, logger)
+      service.testSouthItem(testData.historyQueries.list[0].id, null, testData.south.command, testData.south.itemCommand, callback, logger)
     ).rejects.toThrow(`History query ${testData.historyQueries.list[0].id} not found`);
     expect(southService.testSouthItem).not.toHaveBeenCalled();
   });
@@ -262,7 +313,7 @@ describe('History Query service', () => {
     }
   });
 
-  it('createHistoryQuery() should create a history query with items', async () => {
+  it('createHistoryQuery() should create a history query', async () => {
     (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([
       {
         ...northManifestList[4] // file-writer
@@ -273,8 +324,10 @@ describe('History Query service', () => {
         ...southManifestList[4] // mssql
       }
     ]);
+    service.retrieveSecrets = jest.fn();
 
-    await service.createHistoryQuery(testData.historyQueries.command);
+    await service.createHistoryQuery(testData.historyQueries.command, testData.historyQueries.list[0].id, null, null);
+    expect(service.retrieveSecrets).toHaveBeenCalledTimes(1);
     expect(historyQueryRepository.saveHistoryQuery).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createHistoryQueryMessage).toHaveBeenCalledTimes(1);
     expect(historyQueryEngine.createHistoryQuery).toHaveBeenCalledTimes(1);
@@ -288,7 +341,7 @@ describe('History Query service', () => {
       }
     ]);
 
-    await expect(service.createHistoryQuery(testData.historyQueries.command)).rejects.toThrow(
+    await expect(service.createHistoryQuery(testData.historyQueries.command, null, null, null)).rejects.toThrow(
       `South manifest ${testData.historyQueries.command.southType} does not exist`
     );
   });
@@ -306,7 +359,7 @@ describe('History Query service', () => {
       }
     ]);
 
-    await expect(service.createHistoryQuery(testData.historyQueries.command)).rejects.toThrow(
+    await expect(service.createHistoryQuery(testData.historyQueries.command, null, null, null)).rejects.toThrow(
       `North manifest ${testData.historyQueries.command.northType} does not exist`
     );
   });
@@ -316,7 +369,7 @@ describe('History Query service', () => {
     expect(historyQueryEngine.getHistoryQueryDataStream).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
   });
 
-  it('updateHistoryQuery() should create a history query with items', async () => {
+  it('updateHistoryQuery() should create a history query', async () => {
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
     (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([
       {
@@ -894,5 +947,121 @@ describe('History Query service', () => {
     await expect(service.importItems(testData.historyQueries.list[0].id, [itemCommand])).rejects.toThrow(
       `History query ${testData.historyQueries.list[0].id} does not exist`
     );
+  });
+
+  it('retrieveSecrets() should retrieve secrets from history query', () => {
+    const historySource = JSON.parse(JSON.stringify(testData.historyQueries.list[0]));
+    historySource.southType = southManifestList[4].id;
+    historySource.northType = northManifestList[4].id;
+    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(historySource);
+    const result = service.retrieveSecrets(null, null, testData.historyQueries.list[0].id, southManifestList[4], northManifestList[4]);
+    expect(historyQueryRepository.findHistoryQueryById).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+    expect(result).toEqual(historySource);
+  });
+
+  it('retrieveSecrets() should throw an error if history query not found', () => {
+    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(null);
+    expect(() =>
+      service.retrieveSecrets(null, null, testData.historyQueries.list[0].id, southManifestList[4], northManifestList[4])
+    ).toThrow(`Could not find history query ${testData.historyQueries.list[0].id} to retrieve secrets from`);
+    expect(historyQueryRepository.findHistoryQueryById).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+  });
+
+  it('retrieveSecrets() should throw an error if history query south type does not match manifest', () => {
+    const historySource = JSON.parse(JSON.stringify(testData.historyQueries.list[0]));
+    historySource.southType = 'bad';
+    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(historySource);
+
+    expect(() =>
+      service.retrieveSecrets(null, null, testData.historyQueries.list[0].id, southManifestList[4], northManifestList[4])
+    ).toThrow(
+      `History query ${historySource.id} (south type ${historySource.southType}) must be of the south type ${southManifestList[4].id}`
+    );
+    expect(historyQueryRepository.findHistoryQueryById).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+  });
+
+  it('retrieveSecrets() should throw an error if history query north type does not match manifest', () => {
+    const historySource = JSON.parse(JSON.stringify(testData.historyQueries.list[0]));
+    historySource.southType = southManifestList[4].id;
+    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(historySource);
+
+    expect(() =>
+      service.retrieveSecrets(null, null, testData.historyQueries.list[0].id, southManifestList[4], northManifestList[4])
+    ).toThrow(
+      `History query ${historySource.id} (north type ${historySource.northType}) must be of the north type ${northManifestList[4].id}`
+    );
+    expect(historyQueryRepository.findHistoryQueryById).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+  });
+
+  it('retrieveSecrets() should retrieve secrets from south and north connectors', () => {
+    const south = JSON.parse(JSON.stringify(testData.south.list[0]));
+    south.type = southManifestList[4].id;
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(south);
+
+    const north = JSON.parse(JSON.stringify(testData.north.list[0]));
+    north.type = northManifestList[4].id;
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(north);
+
+    const result = service.retrieveSecrets(
+      testData.south.list[0].id,
+      testData.north.list[0].id,
+      null,
+      southManifestList[4],
+      northManifestList[4]
+    );
+
+    expect(result).toEqual({
+      southType: south.type,
+      southSettings: south.settings,
+      items: south.items,
+      northType: north.type,
+      northSettings: north.settings
+    });
+  });
+
+  it('retrieveSecrets() should fail to retrieve secrets from south if does not match type', () => {
+    const south = JSON.parse(JSON.stringify(testData.south.list[0]));
+    south.type = 'bad';
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(south);
+
+    expect(() =>
+      service.retrieveSecrets(testData.south.list[0].id, testData.north.list[0].id, null, southManifestList[4], northManifestList[4])
+    ).toThrow(`South connector ${testData.south.list[0].id} (type ${south.type}) must be of the type ${southManifestList[4].id}`);
+  });
+
+  it('retrieveSecrets() should fail to retrieve secrets from south if not found', () => {
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(null);
+
+    expect(() =>
+      service.retrieveSecrets(testData.south.list[0].id, testData.north.list[0].id, null, southManifestList[4], northManifestList[4])
+    ).toThrow(`Could not find south connector ${testData.south.list[0].id} to retrieve secrets from`);
+  });
+
+  it('retrieveSecrets() should fail to retrieve secrets from north if does not match type', () => {
+    const south = JSON.parse(JSON.stringify(testData.south.list[0]));
+    south.type = southManifestList[4].id;
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(south);
+    const north = JSON.parse(JSON.stringify(testData.north.list[0]));
+    north.type = 'bad';
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(north);
+
+    expect(() =>
+      service.retrieveSecrets(testData.north.list[0].id, testData.north.list[0].id, null, southManifestList[4], northManifestList[4])
+    ).toThrow(`North connector ${testData.north.list[0].id} (type ${north.type}) must be of the type ${northManifestList[4].id}`);
+  });
+
+  it('retrieveSecrets() should fail to retrieve secrets from north if not found', () => {
+    const south = JSON.parse(JSON.stringify(testData.south.list[0]));
+    south.type = southManifestList[4].id;
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(south);
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(null);
+
+    expect(() =>
+      service.retrieveSecrets(testData.north.list[0].id, testData.north.list[0].id, null, southManifestList[4], northManifestList[4])
+    ).toThrow(`Could not find north connector ${testData.north.list[0].id} to retrieve secrets from`);
+  });
+
+  it('retrieveSecrets() should return null', () => {
+    expect(service.retrieveSecrets(null, null, null, southManifestList[4], northManifestList[4])).toEqual(null);
   });
 });

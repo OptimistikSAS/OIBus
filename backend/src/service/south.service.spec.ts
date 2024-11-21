@@ -487,7 +487,7 @@ describe('south service', () => {
         scanModeName: null
       }
     ];
-    await service.createSouth(command, null);
+    await service.createSouth(command, testData.south.list[0].id);
     expect(service.retrieveSecretsFromSouth).toHaveBeenCalledTimes(1);
   });
 

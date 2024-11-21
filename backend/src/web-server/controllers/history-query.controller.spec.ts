@@ -123,13 +123,19 @@ describe('History query controller', () => {
 
     await historyQueryController.testSouthConnection(ctx);
 
-    expect(ctx.app.historyQueryService.testSouth).toHaveBeenCalledWith(testData.historyQueries.list[0].id, testData.south.command, logger);
+    expect(ctx.app.historyQueryService.testSouth).toHaveBeenCalledWith(
+      testData.historyQueries.list[0].id,
+      null,
+      testData.south.command,
+      logger
+    );
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
   it('testSouthConnection() should return bad request', async () => {
     ctx.request.body = testData.south.command;
     ctx.params.id = testData.historyQueries.list[0].id;
+    ctx.query.fromSouth = testData.south.list[0].id;
 
     ctx.app.logger.child.mockReturnValueOnce(logger);
     ctx.app.historyQueryService.testSouth.mockImplementationOnce(() => {
@@ -138,13 +144,19 @@ describe('History query controller', () => {
 
     await historyQueryController.testSouthConnection(ctx);
 
-    expect(ctx.app.historyQueryService.testSouth).toHaveBeenCalledWith(testData.historyQueries.list[0].id, testData.south.command, logger);
+    expect(ctx.app.historyQueryService.testSouth).toHaveBeenCalledWith(
+      testData.historyQueries.list[0].id,
+      testData.south.list[0].id,
+      testData.south.command,
+      logger
+    );
     expect(ctx.badRequest).toHaveBeenCalledWith('test error');
   });
 
   it('testHistoryQueryItem() should test south item', async () => {
     ctx.request.body = { south: testData.south.command, item: testData.south.itemCommand };
     ctx.params.id = testData.historyQueries.list[0].id;
+    ctx.query.fromSouth = null;
 
     ctx.app.logger.child.mockReturnValueOnce(logger);
 
@@ -152,6 +164,7 @@ describe('History query controller', () => {
 
     expect(ctx.app.historyQueryService.testSouthItem).toHaveBeenCalledWith(
       testData.historyQueries.list[0].id,
+      null,
       testData.south.command,
       testData.south.itemCommand,
       ctx.ok,
@@ -162,6 +175,7 @@ describe('History query controller', () => {
   it('testHistoryQueryItem() should return bad request', async () => {
     ctx.request.body = { south: testData.south.command, item: testData.south.itemCommand };
     ctx.params.id = testData.historyQueries.list[0].id;
+    ctx.query.fromSouth = testData.south.list[0].id;
 
     ctx.app.logger.child.mockReturnValueOnce(logger);
     ctx.app.historyQueryService.testSouthItem.mockImplementationOnce(() => {
@@ -172,6 +186,7 @@ describe('History query controller', () => {
 
     expect(ctx.app.historyQueryService.testSouthItem).toHaveBeenCalledWith(
       testData.historyQueries.list[0].id,
+      testData.south.list[0].id,
       testData.south.command,
       testData.south.itemCommand,
       ctx.ok,
@@ -188,13 +203,19 @@ describe('History query controller', () => {
 
     await historyQueryController.testNorthConnection(ctx);
 
-    expect(ctx.app.historyQueryService.testNorth).toHaveBeenCalledWith(testData.historyQueries.list[0].id, testData.north.command, logger);
+    expect(ctx.app.historyQueryService.testNorth).toHaveBeenCalledWith(
+      testData.historyQueries.list[0].id,
+      null,
+      testData.north.command,
+      logger
+    );
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
   it('testNorthConnection() should return bad request', async () => {
     ctx.request.body = testData.north.command;
     ctx.params.id = testData.historyQueries.list[0].id;
+    ctx.query.fromNorth = testData.north.list[0].id;
 
     ctx.app.logger.child.mockReturnValueOnce(logger);
     ctx.app.historyQueryService.testNorth.mockImplementationOnce(() => {
@@ -203,7 +224,12 @@ describe('History query controller', () => {
 
     await historyQueryController.testNorthConnection(ctx);
 
-    expect(ctx.app.historyQueryService.testNorth).toHaveBeenCalledWith(testData.historyQueries.list[0].id, testData.north.command, logger);
+    expect(ctx.app.historyQueryService.testNorth).toHaveBeenCalledWith(
+      testData.historyQueries.list[0].id,
+      testData.north.list[0].id,
+      testData.north.command,
+      logger
+    );
     expect(ctx.badRequest).toHaveBeenCalledWith('test error');
   });
 
@@ -646,27 +672,5 @@ describe('History query controller', () => {
       testData.historyQueries.list[0].items
     );
     expect(ctx.badRequest).toHaveBeenCalledWith('import items error');
-  });
-
-  it('testSouthConnection() should test South connector settings', async () => {
-    ctx.params.id = testData.historyQueries.list[0].id;
-    ctx.request.body = testData.south.command;
-    ctx.app.logger.child = jest.fn().mockImplementation(() => logger);
-
-    await historyQueryController.testSouthConnection(ctx);
-
-    expect(ctx.app.historyQueryService.testSouth).toHaveBeenCalledWith(testData.historyQueries.list[0].id, testData.south.command, logger);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('testNorthConnection() should test North connector settings', async () => {
-    ctx.params.id = testData.historyQueries.list[0].id;
-    ctx.request.body = testData.north.command;
-    ctx.app.logger.child = jest.fn().mockImplementation(() => logger);
-
-    await historyQueryController.testNorthConnection(ctx);
-
-    expect(ctx.app.historyQueryService.testNorth).toHaveBeenCalledWith(testData.historyQueries.list[0].id, testData.north.command, logger);
-    expect(ctx.noContent).toHaveBeenCalled();
   });
 });
