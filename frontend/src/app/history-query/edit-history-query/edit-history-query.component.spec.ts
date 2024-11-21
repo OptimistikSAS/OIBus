@@ -236,7 +236,8 @@ describe('EditHistoryQueryComponent', () => {
 
     const command = {
       type: 'northId1',
-      settings: historyQuery.northSettings
+      settings: historyQuery.northSettings,
+      caching: historyQuery.caching
     } as NorthConnectorCommandDTO<NorthSettings>;
 
     const spy = jasmine.createSpy();

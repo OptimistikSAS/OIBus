@@ -7,6 +7,7 @@ export default jest.fn().mockImplementation((keyFolder: string, certsFolder: str
     certsFolder,
     generateSelfSignedCertificate: jest.fn(),
     encryptConnectorSecrets: jest.fn(secrets => secrets),
+    decryptConnectorSecrets: jest.fn(secrets => secrets),
     filterSecrets: jest.fn(secrets => secrets),
     encryptText: jest.fn(pass => pass),
     decryptText: jest.fn(pass => pass),
