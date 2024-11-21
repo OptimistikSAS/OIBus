@@ -179,6 +179,34 @@ export default class EncryptionService {
     return encryptedSettings as T;
   }
 
+  async decryptConnectorSecrets<T>(newSettings: T, formSettings: Array<OibFormControl>): Promise<T> {
+    const decryptedSettings: Record<string, string | object | Array<object>> = JSON.parse(JSON.stringify(newSettings)) as Record<
+      string,
+      string | object | Array<object>
+    >;
+
+    for (const fieldSettings of formSettings) {
+      if (fieldSettings.type === 'OibSecret') {
+        decryptedSettings[fieldSettings.key] = decryptedSettings[fieldSettings.key]
+          ? await this.decryptText(decryptedSettings[fieldSettings.key] as string)
+          : '';
+      } else if (fieldSettings.type === 'OibArray' && decryptedSettings[fieldSettings.key]) {
+        for (let i = 0; i < (decryptedSettings[fieldSettings.key] as Array<object>).length; i++) {
+          (decryptedSettings[fieldSettings.key] as Array<object>)[i] = await this.decryptConnectorSecrets<object>(
+            (decryptedSettings[fieldSettings.key] as Array<object>)[i],
+            fieldSettings.content
+          );
+        }
+      } else if (fieldSettings.type === 'OibFormGroup' && decryptedSettings[fieldSettings.key]) {
+        decryptedSettings[fieldSettings.key] = await this.decryptConnectorSecrets<object>(
+          decryptedSettings[fieldSettings.key] as object,
+          fieldSettings.content
+        );
+      }
+    }
+    return decryptedSettings as T;
+  }
+
   filterSecrets<T>(connectorSettings: T, formSettings: Array<OibFormControl>): T {
     const previousSettings: Record<string, string | object | Array<object>> | null = JSON.parse(
       JSON.stringify(connectorSettings)

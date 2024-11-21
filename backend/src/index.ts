@@ -152,6 +152,8 @@ const LOG_DB_NAME = 'logs.db';
   const historyQueryService = new HistoryQueryService(
     new JoiValidator(),
     repositoryService.historyQueryRepository,
+    repositoryService.northConnectorRepository,
+    repositoryService.southConnectorRepository,
     repositoryService.scanModeRepository,
     repositoryService.logRepository,
     repositoryService.historyQueryMetricsRepository,

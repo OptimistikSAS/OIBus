@@ -340,14 +340,15 @@ export class EditHistoryQueryComponent implements OnInit {
     } else {
       command = {
         type: this.northManifest!.id,
-        settings: formValue.northSettings
+        settings: formValue.northSettings,
+        caching: formValue.caching
       } as NorthConnectorCommandDTO<NorthSettings>;
       fromConnectorId = this.fromNorthId;
     }
 
     const modalRef = this.modalService.open(TestConnectionResultModalComponent);
     const component: TestConnectionResultModalComponent = modalRef.componentInstance;
-    component.runHistoryQueryTest(type, command, historyQueryId, fromConnectorId.length ? fromConnectorId : null);
+    component.runHistoryQueryTest(type, command, historyQueryId, fromConnectorId ? fromConnectorId : null);
   }
 
   dateRangeValidator(type: 'start' | 'end'): ValidatorFn {
