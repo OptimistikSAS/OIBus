@@ -45,25 +45,25 @@ export class HistoryQueryService {
   /**
    * Create a new History query
    * @param command - the new History query
-   * @param fromSouthId - The source south (used to encrypt password in the backend)
-   * @param fromNorthId - The source north (used to encrypt password in the backend)
-   * @param duplicateId - The ID of the duplicated History Query used to retrieved secrets in the backend
+   * @param retrieveSecretsFromSouth - The source south (used to encrypt password in the backend)
+   * @param retrieveSecretsFromNorth - The source north (used to encrypt password in the backend)
+   * @param retrieveSecretsFromHistory - The ID of the duplicated History Query used to retrieved secrets in the backend
    */
   create(
     command: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>,
-    fromSouthId: string | null,
-    fromNorthId: string | null,
-    duplicateId: string
+    retrieveSecretsFromSouth: string | null,
+    retrieveSecretsFromNorth: string | null,
+    retrieveSecretsFromHistory: string | null
   ): Observable<HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>> {
     const params: Record<string, string | Array<string>> = {};
-    if (duplicateId) {
-      params['duplicateId'] = duplicateId;
+    if (retrieveSecretsFromHistory) {
+      params['duplicate'] = retrieveSecretsFromHistory;
     }
-    if (fromSouthId) {
-      params['fromSouthId'] = fromSouthId;
+    if (retrieveSecretsFromSouth) {
+      params['fromSouth'] = retrieveSecretsFromSouth;
     }
-    if (fromNorthId) {
-      params['fromNorthId'] = fromNorthId;
+    if (retrieveSecretsFromNorth) {
+      params['fromNorth'] = retrieveSecretsFromNorth;
     }
     return this.http.post<HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>>(`/api/history-queries`, command, { params });
   }
@@ -246,20 +246,20 @@ export class HistoryQueryService {
   testSouthConnection(
     historyQueryId: string,
     settings: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
-    fromConnectorId: string | null = null
+    fromSouth: string | null = null
   ): Observable<void> {
     return this.http.put<void>(`/api/history-queries/${historyQueryId}/south/test-connection`, settings, {
-      params: fromConnectorId ? { fromConnectorId } : {}
+      params: fromSouth ? { fromSouth } : {}
     });
   }
 
   testNorthConnection(
     historyQueryId: string,
     settings: NorthConnectorCommandDTO<NorthSettings>,
-    fromConnectorId: string | null = null
+    fromNorth: string | null = null
   ): Observable<void> {
     return this.http.put<void>(`/api/history-queries/${historyQueryId}/north/test-connection`, settings, {
-      params: fromConnectorId ? { fromConnectorId } : {}
+      params: fromNorth ? { fromNorth } : {}
     });
   }
 }

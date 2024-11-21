@@ -48,7 +48,12 @@ export default class HistoryQueryController extends AbstractController {
   ): Promise<void> {
     try {
       const historyQuery = toHistoryQueryDTO(
-        await ctx.app.historyQueryService.createHistoryQuery(ctx.request.body!),
+        await ctx.app.historyQueryService.createHistoryQuery(
+          ctx.request.body!,
+          (ctx.query.fromSouth as string) || null,
+          (ctx.query.fromNorth as string) || null,
+          (ctx.query.duplicate as string) || null
+        ),
         ctx.app.encryptionService
       );
       ctx.created(historyQuery);
@@ -103,7 +108,7 @@ export default class HistoryQueryController extends AbstractController {
         },
         { level: 'silent' }
       );
-      await ctx.app.historyQueryService.testSouth(ctx.params.id, ctx.request.body!, logger);
+      await ctx.app.historyQueryService.testSouth(ctx.params.id, (ctx.query.fromSouth as string) || null, ctx.request.body!, logger);
       ctx.noContent();
     } catch (error: unknown) {
       ctx.badRequest((error as Error).message);
@@ -125,7 +130,14 @@ export default class HistoryQueryController extends AbstractController {
         },
         { level: 'silent' }
       );
-      await ctx.app.historyQueryService.testSouthItem(ctx.params.id, ctx.request.body!.south, ctx.request.body!.item, ctx.ok, logger);
+      await ctx.app.historyQueryService.testSouthItem(
+        ctx.params.id,
+        (ctx.query.fromSouth as string) || null,
+        ctx.request.body!.south,
+        ctx.request.body!.item,
+        ctx.ok,
+        logger
+      );
     } catch (error: unknown) {
       ctx.badRequest((error as Error).message);
     }
@@ -141,7 +153,7 @@ export default class HistoryQueryController extends AbstractController {
         },
         { level: 'silent' }
       );
-      await ctx.app.historyQueryService.testNorth(ctx.params.id, ctx.request.body!, logger);
+      await ctx.app.historyQueryService.testNorth(ctx.params.id, (ctx.query.fromNorth as string) || null, ctx.request.body!, logger);
       ctx.noContent();
     } catch (error: unknown) {
       ctx.badRequest((error as Error).message);

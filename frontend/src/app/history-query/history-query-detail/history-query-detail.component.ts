@@ -230,7 +230,8 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
     } else {
       command = {
         type: this.northManifest!.id,
-        settings: this.historyQuery!.northSettings
+        settings: this.historyQuery!.northSettings,
+        caching: this.historyQuery!.caching
       } as NorthConnectorCommandDTO<NorthSettings>;
     }
 
