@@ -11,6 +11,7 @@ export const OIBUS_COMMAND_TYPES = [
   'restart-engine',
   'regenerate-cipher-keys',
   'update-engine-settings',
+  'update-registration-settings',
   'create-scan-mode',
   'update-scan-mode',
   'delete-scan-mode',
@@ -59,6 +60,16 @@ export interface OIBusUpdateEngineSettingsCommandDTO extends BaseOIBusCommandDTO
   type: 'update-engine-settings';
   targetVersion: string;
   commandContent: EngineSettingsCommandDTO;
+}
+
+export interface OIBusUpdateRegistrationSettingsCommandDTO extends BaseOIBusCommandDTO {
+  type: 'update-registration-settings';
+  targetVersion: string;
+  commandContent: {
+    commandRefreshInterval: number;
+    commandRetryInterval: number;
+    messageRetryInterval: number;
+  };
 }
 
 export interface OIBusCreateScanModeCommandDTO extends BaseOIBusCommandDTO {
@@ -134,6 +145,7 @@ export type OIBusCommandDTO =
   | OIBusRegenerateCipherKeysCommandDTO
   | OIBusRestartEngineCommandDTO
   | OIBusUpdateEngineSettingsCommandDTO
+  | OIBusUpdateRegistrationSettingsCommandDTO
   | OIBusCreateScanModeCommandDTO
   | OIBusUpdateScanModeCommandDTO
   | OIBusDeleteScanModeCommandDTO
