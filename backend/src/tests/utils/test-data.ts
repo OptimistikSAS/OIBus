@@ -883,7 +883,37 @@ const oIAnalyticsRegistrationRegistered: OIAnalyticsRegistration = {
   useProxy: false,
   proxyUrl: null,
   proxyUsername: null,
-  proxyPassword: null
+  proxyPassword: null,
+  commandRefreshInterval: 10,
+  commandRetryInterval: 5,
+  messageRetryInterval: 5,
+  commandPermissions: {
+    updateVersion: true,
+    restartEngine: true,
+    regenerateCipherKeys: true,
+    updateEngineSettings: true,
+    updateRegistrationSettings: true,
+    createScanMode: true,
+    updateScanMode: true,
+    deleteScanMode: true,
+    createIpFilter: true,
+    updateIpFilter: true,
+    deleteIpFilter: true,
+    createCertificate: true,
+    updateCertificate: true,
+    deleteCertificate: true,
+    createHistoryQuery: true,
+    updateHistoryQuery: true,
+    deleteHistoryQuery: true,
+    createOrUpdateHistoryItemsFromCsv: true,
+    createSouth: true,
+    updateSouth: true,
+    deleteSouth: true,
+    createOrUpdateSouthItemsFromCsv: true,
+    createNorth: true,
+    updateNorth: true,
+    deleteNorth: true
+  }
 };
 const oIAnalyticsRegistrationPending: OIAnalyticsRegistration = {
   id: 'registrationId1',
@@ -900,7 +930,37 @@ const oIAnalyticsRegistrationPending: OIAnalyticsRegistration = {
   useProxy: false,
   proxyUrl: '',
   proxyUsername: '',
-  proxyPassword: ''
+  proxyPassword: '',
+  commandRefreshInterval: 10,
+  commandRetryInterval: 5,
+  messageRetryInterval: 5,
+  commandPermissions: {
+    updateVersion: true,
+    restartEngine: true,
+    regenerateCipherKeys: true,
+    updateEngineSettings: true,
+    updateRegistrationSettings: true,
+    createScanMode: true,
+    updateScanMode: true,
+    deleteScanMode: true,
+    createIpFilter: true,
+    updateIpFilter: true,
+    deleteIpFilter: true,
+    createCertificate: true,
+    updateCertificate: true,
+    deleteCertificate: true,
+    createHistoryQuery: true,
+    updateHistoryQuery: true,
+    deleteHistoryQuery: true,
+    createOrUpdateHistoryItemsFromCsv: true,
+    createSouth: true,
+    updateSouth: true,
+    deleteSouth: true,
+    createOrUpdateSouthItemsFromCsv: true,
+    createNorth: true,
+    updateNorth: true,
+    deleteNorth: true
+  }
 };
 const oIAnalyticsRegistrationCommand: OIAnalyticsRegistrationEditCommand = {
   host: 'http://localhost:4200',
@@ -908,7 +968,37 @@ const oIAnalyticsRegistrationCommand: OIAnalyticsRegistrationEditCommand = {
   useProxy: false,
   proxyUrl: null,
   proxyUsername: null,
-  proxyPassword: null
+  proxyPassword: null,
+  commandRefreshInterval: 10,
+  commandRetryInterval: 5,
+  messageRetryInterval: 5,
+  commandPermissions: {
+    updateVersion: true,
+    restartEngine: true,
+    regenerateCipherKeys: true,
+    updateEngineSettings: true,
+    updateRegistrationSettings: true,
+    createScanMode: true,
+    updateScanMode: true,
+    deleteScanMode: true,
+    createIpFilter: true,
+    updateIpFilter: true,
+    deleteIpFilter: true,
+    createCertificate: true,
+    updateCertificate: true,
+    deleteCertificate: true,
+    createHistoryQuery: true,
+    updateHistoryQuery: true,
+    deleteHistoryQuery: true,
+    createOrUpdateHistoryItemsFromCsv: true,
+    createSouth: true,
+    updateSouth: true,
+    deleteSouth: true,
+    createOrUpdateSouthItemsFromCsv: true,
+    createNorth: true,
+    updateNorth: true,
+    deleteNorth: true
+  }
 };
 
 const oIBusCommands: Array<OIBusCommand> = [
@@ -1088,6 +1178,21 @@ const oIBusCommands: Array<OIBusCommand> = [
       csvContent: '',
       delimiter: ','
     }
+  },
+  {
+    id: 'newCommandId16',
+    type: 'update-registration-settings',
+    status: 'RETRIEVED',
+    targetVersion: engineSettings.version,
+    ack: false,
+    retrievedDate: constants.dates.DATE_1,
+    completedDate: '',
+    result: 'ok',
+    commandContent: {
+      commandRefreshInterval: 15,
+      commandRetryInterval: 5,
+      messageRetryInterval: 5
+    }
   }
 ];
 const oIAnalyticsCommands: Array<OIAnalyticsFetchCommandDTO> = [
@@ -1177,6 +1282,16 @@ const oIAnalyticsCommands: Array<OIAnalyticsFetchCommandDTO> = [
     retrieveSecretsFromNorth: 'northId1',
     targetVersion: engineSettings.version,
     commandContent: northConnectorCommand
+  },
+  {
+    id: 'newCommandId14',
+    type: 'update-registration-settings',
+    targetVersion: engineSettings.version,
+    commandContent: {
+      commandRefreshInterval: 15,
+      commandRetryInterval: 5,
+      messageRetryInterval: 5
+    }
   }
 ];
 const oIBusMessages: Array<OIAnalyticsMessage> = [

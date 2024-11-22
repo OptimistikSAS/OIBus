@@ -40,6 +40,15 @@ export interface OIBusUpdateEngineSettingsCommand extends BaseOIBusCommand {
   commandContent: EngineSettingsCommandDTO;
 }
 
+export interface OIBusUpdateRegistrationSettingsCommand extends BaseOIBusCommand {
+  type: 'update-registration-settings';
+  commandContent: {
+    commandRefreshInterval: number;
+    commandRetryInterval: number;
+    messageRetryInterval: number;
+  };
+}
+
 export interface OIBusCreateScanModeCommand extends BaseOIBusCommand {
   type: 'create-scan-mode';
   commandContent: ScanModeCommandDTO;
@@ -105,6 +114,7 @@ export type OIBusCommand =
   | OIBusRestartEngineCommand
   | OIBusRegenerateCipherKeysCommand
   | OIBusUpdateEngineSettingsCommand
+  | OIBusUpdateRegistrationSettingsCommand
   | OIBusCreateScanModeCommand
   | OIBusUpdateScanModeCommand
   | OIBusDeleteScanModeCommand

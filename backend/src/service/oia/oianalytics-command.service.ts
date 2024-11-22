@@ -6,9 +6,8 @@ import { DateTime } from 'luxon';
 import path from 'node:path';
 import { version } from '../../../package.json';
 import ScanModeService from '../scan-mode.service';
-import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import OIAnalyticsCommandRepository from '../../repository/config/oianalytics-command.repository';
-import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
+import { OIAnalyticsRegistration, OIAnalyticsRegistrationEditCommand } from '../../model/oianalytics-registration.model';
 import OIBusService from '../oibus.service';
 import {
   OIBusCommand,
@@ -23,6 +22,7 @@ import {
   OIBusRestartEngineCommand,
   OIBusUpdateEngineSettingsCommand,
   OIBusUpdateNorthConnectorCommand,
+  OIBusUpdateRegistrationSettingsCommand,
   OIBusUpdateScanModeCommand,
   OIBusUpdateSouthConnectorCommand,
   OIBusUpdateVersionCommand
@@ -35,20 +35,20 @@ import OIAnalyticsClient from './oianalytics-client.service';
 import os from 'node:os';
 import crypto from 'node:crypto';
 import OIAnalyticsMessageService from './oianalytics-message.service';
+import OIAnalyticsRegistrationService from './oianalytics-registration.service';
 
-const CHECK_OIANALYTICS_COMMANDS_INTERVAL = 1_000;
 const EXECUTE_OIANALYTICS_COMMANDS_INTERVAL = 1_000;
 const UPDATE_SETTINGS_FILE = 'update.json';
 
 export default class OIAnalyticsCommandService {
-  private retrieveCommandsInterval: NodeJS.Timeout | null = null;
+  private retrieveCommandsInterval: NodeJS.Timeout | undefined = undefined;
   private ongoingRetrieveCommands = false;
-  private executeCommandInterval: NodeJS.Timeout | null = null;
+  private executeCommandInterval: NodeJS.Timeout | undefined = undefined;
   private ongoingExecuteCommand = false;
 
   constructor(
     private oIAnalyticsCommandRepository: OIAnalyticsCommandRepository,
-    private oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
+    private oIAnalyticsRegistrationService: OIAnalyticsRegistrationService,
     private oIAnalyticsMessageService: OIAnalyticsMessageService,
     private encryptionService: EncryptionService,
     private oIAnalyticsClient: OIAnalyticsClient,
@@ -93,8 +93,22 @@ export default class OIAnalyticsCommandService {
   }
 
   start(): void {
-    this.retrieveCommandsInterval = setInterval(this.checkCommands.bind(this), CHECK_OIANALYTICS_COMMANDS_INTERVAL);
+    this.retrieveCommandsInterval = setInterval(
+      this.checkCommands.bind(this),
+      this.oIAnalyticsRegistrationService.getRegistrationSettings()!.commandRefreshInterval * 1000
+    );
     this.executeCommandInterval = setInterval(this.executeCommand.bind(this), EXECUTE_OIANALYTICS_COMMANDS_INTERVAL);
+
+    this.oIAnalyticsRegistrationService.registrationEvent.on('updated', () => {
+      const registrationSettings = this.oIAnalyticsRegistrationService.getRegistrationSettings()!;
+      clearInterval(this.retrieveCommandsInterval);
+      clearInterval(this.executeCommandInterval);
+
+      if (registrationSettings.status === 'REGISTERED') {
+        this.retrieveCommandsInterval = setInterval(this.checkCommands.bind(this), registrationSettings.commandRefreshInterval * 1000);
+        this.executeCommandInterval = setInterval(this.executeCommand.bind(this), EXECUTE_OIANALYTICS_COMMANDS_INTERVAL);
+      }
+    });
   }
 
   search(searchParams: CommandSearchParam, page: number): Page<OIBusCommand> {
@@ -102,7 +116,7 @@ export default class OIAnalyticsCommandService {
   }
 
   async checkCommands(): Promise<void> {
-    const registration = this.oIAnalyticsRegistrationRepository.get()!;
+    const registration = this.oIAnalyticsRegistrationService.getRegistrationSettings()!;
     if (registration.status !== 'REGISTERED') {
       this.logger.trace(`OIAnalytics not registered. OIBus won't retrieve commands`);
       return;
@@ -185,7 +199,7 @@ export default class OIAnalyticsCommandService {
       return;
     }
 
-    const registration = this.oIAnalyticsRegistrationRepository.get()!;
+    const registration = this.oIAnalyticsRegistrationService.getRegistrationSettings()!;
     if (registration.status !== 'REGISTERED') {
       this.logger.trace(`OIAnalytics not registered. OIBus won't retrieve commands`);
       return;
@@ -215,6 +229,10 @@ export default class OIAnalyticsCommandService {
       );
       return;
     }
+    if (!this.checkCommandPermission(command, registration)) {
+      this.oIAnalyticsCommandRepository.markAsErrored(command.id, `Command ${command.id} of type ${command.type} is not authorized`);
+      return;
+    }
     this.ongoingExecuteCommand = true;
     this.oIAnalyticsCommandRepository.markAsRunning(command.id);
     try {
@@ -233,6 +251,9 @@ export default class OIAnalyticsCommandService {
             const privateKey = await this.encryptionService.decryptText(registration.privateCipherKey!);
             await this.executeUpdateEngineSettingsCommand(command, privateKey);
           }
+          break;
+        case 'update-registration-settings':
+          await this.executeUpdateRegistrationSettingsCommand(command, registration);
           break;
         case 'create-scan-mode':
           await this.executeCreateScanModeCommand(command);
@@ -293,12 +314,12 @@ export default class OIAnalyticsCommandService {
 
     if (this.retrieveCommandsInterval) {
       clearInterval(this.retrieveCommandsInterval);
-      this.retrieveCommandsInterval = null;
+      this.retrieveCommandsInterval = undefined;
     }
 
     if (this.executeCommandInterval) {
       clearInterval(this.executeCommandInterval);
-      this.executeCommandInterval = null;
+      this.executeCommandInterval = undefined;
     }
     this.logger.debug(`OIAnalytics command service stopped`);
   }
@@ -363,7 +384,7 @@ export default class OIAnalyticsCommandService {
         format: 'pem' // Output format for the key
       }
     });
-    this.oIAnalyticsRegistrationRepository.updateKeys(await this.encryptionService.encryptText(privateKey), publicKey);
+    await this.oIAnalyticsRegistrationService.updateKeys(privateKey, publicKey);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'OIAnalytics keys reloaded');
   }
@@ -381,6 +402,31 @@ export default class OIAnalyticsCommandService {
       : '';
     await this.oIBusService.updateEngineSettings(command.commandContent);
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Engine settings updated successfully');
+  }
+
+  private async executeUpdateRegistrationSettingsCommand(
+    command: OIBusUpdateRegistrationSettingsCommand,
+    registration: OIAnalyticsRegistration
+  ) {
+    const registrationCommand: OIAnalyticsRegistrationEditCommand = {
+      host: registration.host,
+      useProxy: registration.useProxy,
+      proxyUrl: registration.proxyUrl,
+      proxyUsername: registration.proxyUsername,
+      proxyPassword: '', // Won't update password in editConnectionSettings method
+      acceptUnauthorized: registration.acceptUnauthorized,
+      commandRefreshInterval: command.commandContent.commandRefreshInterval,
+      commandRetryInterval: command.commandContent.commandRetryInterval,
+      messageRetryInterval: command.commandContent.messageRetryInterval,
+      commandPermissions: registration.commandPermissions
+    };
+    await this.oIAnalyticsRegistrationService.editConnectionSettings(registrationCommand);
+
+    this.oIAnalyticsCommandRepository.markAsCompleted(
+      command.id,
+      DateTime.now().toUTC().toISO(),
+      'Registration settings updated successfully'
+    );
   }
 
   private async executeCreateScanModeCommand(command: OIBusCreateScanModeCommand) {
@@ -487,6 +533,41 @@ export default class OIAnalyticsCommandService {
       `${items.length} items imported on South connector ${southConnector.name}`
     );
   }
+
+  private checkCommandPermission(command: OIBusCommand, registration: OIAnalyticsRegistration) {
+    switch (command.type) {
+      case 'update-version':
+        return registration.commandPermissions.updateVersion;
+      case 'restart-engine':
+        return registration.commandPermissions.restartEngine;
+      case 'regenerate-cipher-keys':
+        return registration.commandPermissions.regenerateCipherKeys;
+      case 'update-engine-settings':
+        return registration.commandPermissions.updateEngineSettings;
+      case 'update-registration-settings':
+        return registration.commandPermissions.updateRegistrationSettings;
+      case 'create-north':
+        return registration.commandPermissions.createNorth;
+      case 'create-south':
+        return registration.commandPermissions.createSouth;
+      case 'create-scan-mode':
+        return registration.commandPermissions.createScanMode;
+      case 'update-scan-mode':
+        return registration.commandPermissions.updateScanMode;
+      case 'update-north':
+        return registration.commandPermissions.updateNorth;
+      case 'update-south':
+        return registration.commandPermissions.updateSouth;
+      case 'delete-scan-mode':
+        return registration.commandPermissions.deleteScanMode;
+      case 'delete-south':
+        return registration.commandPermissions.deleteSouth;
+      case 'delete-north':
+        return registration.commandPermissions.deleteNorth;
+      case 'create-or-update-south-items-from-csv':
+        return registration.commandPermissions.createOrUpdateSouthItemsFromCsv;
+    }
+  }
 }
 
 export const toOIBusCommandDTO = (command: OIBusCommand): OIBusCommandDTO => {
@@ -495,6 +576,7 @@ export const toOIBusCommandDTO = (command: OIBusCommand): OIBusCommandDTO => {
     case 'restart-engine':
     case 'regenerate-cipher-keys':
     case 'update-engine-settings':
+    case 'update-registration-settings':
     case 'create-north':
     case 'create-south':
     case 'create-scan-mode':

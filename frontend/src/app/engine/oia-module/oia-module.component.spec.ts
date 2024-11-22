@@ -38,8 +38,12 @@ describe('OiaModuleComponent', () => {
     activationExpirationDate: '',
     checkUrl: null,
     proxyUrl: null,
-    proxyUsername: null
-  };
+    proxyUsername: null,
+    commandRefreshInterval: 10,
+    commandRetryInterval: 5,
+    messageRetryInterval: 5,
+    commandPermissions: {}
+  } as RegistrationSettingsDTO;
 
   const route = stubRoute({
     queryParams: {

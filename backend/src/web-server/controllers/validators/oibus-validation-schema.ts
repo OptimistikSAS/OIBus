@@ -76,7 +76,37 @@ const registrationSchema: Joi.ObjectSchema = Joi.object({
   useProxy: Joi.boolean().required(),
   proxyUrl: Joi.string().optional().allow(''),
   proxyUsername: Joi.string().optional().allow(''),
-  proxyPassword: Joi.string().optional().allow('')
+  proxyPassword: Joi.string().optional().allow(''),
+  commandRefreshInterval: Joi.number().integer().required().min(1),
+  commandRetryInterval: Joi.number().integer().required().min(1),
+  messageRetryInterval: Joi.number().integer().required().min(1),
+  commandPermissions: Joi.object({
+    updateVersion: Joi.boolean().required(),
+    restartEngine: Joi.boolean().required(),
+    regenerateCipherKeys: Joi.boolean().required(),
+    updateEngineSettings: Joi.boolean().required(),
+    updateRegistrationSettings: Joi.boolean().required(),
+    createScanMode: Joi.boolean().required(),
+    updateScanMode: Joi.boolean().required(),
+    deleteScanMode: Joi.boolean().required(),
+    createIpFilter: Joi.boolean().required(),
+    updateIpFilter: Joi.boolean().required(),
+    deleteIpFilter: Joi.boolean().required(),
+    createCertificate: Joi.boolean().required(),
+    updateCertificate: Joi.boolean().required(),
+    deleteCertificate: Joi.boolean().required(),
+    createHistoryQuery: Joi.boolean().required(),
+    updateHistoryQuery: Joi.boolean().required(),
+    deleteHistoryQuery: Joi.boolean().required(),
+    createOrUpdateHistoryItemsFromCsv: Joi.boolean().required(),
+    createSouth: Joi.boolean().required(),
+    updateSouth: Joi.boolean().required(),
+    deleteSouth: Joi.boolean().required(),
+    createOrUpdateSouthItemsFromCsv: Joi.boolean().required(),
+    createNorth: Joi.boolean().required(),
+    updateNorth: Joi.boolean().required(),
+    deleteNorth: Joi.boolean().required()
+  })
 });
 
 const ipFilterSchema: Joi.ObjectSchema = Joi.object({

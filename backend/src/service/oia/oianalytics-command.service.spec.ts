@@ -10,8 +10,6 @@ import ScanModeService from '../scan-mode.service';
 import OIBusService from '../oibus.service';
 import OibusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
 import OIAnalyticsCommandRepository from '../../repository/config/oianalytics-command.repository';
-import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
-import OIAnalyticsRegistrationRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
 import OIAnalyticsCommandRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-command-repository.mock';
 import testData from '../../tests/utils/test-data';
 import { flushPromises } from '../../tests/utils/test-utils';
@@ -27,6 +25,7 @@ import {
   OIBusDeleteSouthConnectorCommand,
   OIBusUpdateEngineSettingsCommand,
   OIBusUpdateNorthConnectorCommand,
+  OIBusUpdateRegistrationSettingsCommand,
   OIBusUpdateScanModeCommand,
   OIBusUpdateSouthConnectorCommand,
   OIBusUpdateVersionCommand
@@ -42,6 +41,8 @@ import os from 'node:os';
 import OIAnalyticsMessageService from './oianalytics-message.service';
 import OIAnalyticsMessageServiceMock from '../../tests/__mocks__/service/oia/oianalytics-message-service.mock';
 import crypto from 'node:crypto';
+import OIAnalyticsRegistrationService from './oianalytics-registration.service';
+import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
 
 jest.mock('node:crypto');
 jest.mock('node:fs/promises');
@@ -52,7 +53,7 @@ jest.mock('../utils');
 jest.spyOn(process, 'exit').mockImplementation();
 
 const oIAnalyticsCommandRepository: OIAnalyticsCommandRepository = new OIAnalyticsCommandRepositoryMock();
-const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OIAnalyticsRegistrationRepositoryMock();
+const oIAnalyticsRegistrationService: OIAnalyticsRegistrationService = new OIAnalyticsRegistrationServiceMock();
 const oIAnalyticsMessageService: OIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const oIBusService: OIBusService = new OibusServiceMock();
@@ -72,12 +73,12 @@ describe('OIAnalytics Command Service', () => {
 
     (oIBusService.getEngineSettings as jest.Mock).mockReturnValue(testData.engine.settings);
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValue(testData.oIAnalytics.commands.oIBusList);
-    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(testData.oIAnalytics.registration.completed);
+    (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValue(testData.oIAnalytics.registration.completed);
     (getOIBusInfo as jest.Mock).mockReturnValue(testData.engine.oIBusInfo);
 
     service = new OIAnalyticsCommandService(
       oIAnalyticsCommandRepository,
-      oIAnalyticsRegistrationRepository,
+      oIAnalyticsRegistrationService,
       oIAnalyticsMessageService,
       encryptionService,
       oIAnalyticsClient,
@@ -112,6 +113,16 @@ describe('OIAnalytics Command Service', () => {
 
     expect(setIntervalSpy).toHaveBeenCalledTimes(2);
     expect(clearIntervalSpy).toHaveBeenCalledTimes(2);
+
+    oIAnalyticsRegistrationService.registrationEvent.emit('updated');
+    expect(setIntervalSpy).toHaveBeenCalledTimes(4);
+    expect(clearIntervalSpy).toHaveBeenCalledTimes(4);
+
+    (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.registration.pending);
+
+    oIAnalyticsRegistrationService.registrationEvent.emit('updated');
+    expect(setIntervalSpy).toHaveBeenCalledTimes(4);
+    expect(clearIntervalSpy).toHaveBeenCalledTimes(6);
   });
 
   it('should search commands', () => {
@@ -125,7 +136,7 @@ describe('OIAnalytics Command Service', () => {
     service.sendAckCommands = jest.fn();
     service.checkRetrievedCommands = jest.fn();
     service.retrieveCommands = jest.fn();
-    (oIAnalyticsRegistrationRepository.get as jest.Mock)
+    (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock)
       .mockReturnValueOnce(testData.oIAnalytics.registration.completed)
       .mockReturnValueOnce(testData.oIAnalytics.registration.completed)
       .mockReturnValueOnce(testData.oIAnalytics.registration.pending);
@@ -209,7 +220,7 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(oIAnalyticsRegistrationRepository.get).toHaveBeenCalledTimes(1);
+    expect(oIAnalyticsRegistrationService.getRegistrationSettings).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsCommandRepository.list).toHaveBeenCalled();
     expect(oIAnalyticsCommandRepository.markAsRunning).toHaveBeenCalledTimes(1);
     expect(oIBusService.getEngineSettings).toHaveBeenCalled();
@@ -250,7 +261,7 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(oIAnalyticsRegistrationRepository.get).toHaveBeenCalledTimes(1);
+    expect(oIAnalyticsRegistrationService.getRegistrationSettings).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsCommandRepository.list).toHaveBeenCalled();
     expect(oIBusService.getEngineSettings).toHaveBeenCalled();
     expect(oIAnalyticsClient.downloadFile).toHaveBeenCalledTimes(1);
@@ -306,7 +317,7 @@ describe('OIAnalytics Command Service', () => {
   });
 
   it('should not execute a command if not registered', async () => {
-    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce({
+    (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValueOnce({
       ...JSON.parse(JSON.stringify(testData.oIAnalytics.registration.completed)),
       status: 'PENDING'
     });
@@ -354,6 +365,34 @@ describe('OIAnalytics Command Service', () => {
       testData.oIAnalytics.commands.oIBusList[1].id,
       testData.constants.dates.FAKE_NOW,
       'Engine settings updated successfully'
+    );
+  });
+
+  it('should execute update-registration-settings command', async () => {
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([testData.oIAnalytics.commands.oIBusList[15]]); // update-engine-settings
+
+    await service.executeCommand();
+
+    expect(oIAnalyticsRegistrationService.editConnectionSettings).toHaveBeenCalledWith({
+      host: testData.oIAnalytics.registration.completed.host,
+      useProxy: testData.oIAnalytics.registration.completed.useProxy,
+      proxyUrl: testData.oIAnalytics.registration.completed.proxyUrl,
+      proxyUsername: testData.oIAnalytics.registration.completed.proxyUsername,
+      proxyPassword: '',
+      acceptUnauthorized: testData.oIAnalytics.registration.completed.acceptUnauthorized,
+      commandRefreshInterval: (testData.oIAnalytics.commands.oIBusList[15] as OIBusUpdateRegistrationSettingsCommand).commandContent
+        .commandRefreshInterval,
+      commandRetryInterval: (testData.oIAnalytics.commands.oIBusList[15] as OIBusUpdateRegistrationSettingsCommand).commandContent
+        .commandRetryInterval,
+      messageRetryInterval: (testData.oIAnalytics.commands.oIBusList[15] as OIBusUpdateRegistrationSettingsCommand).commandContent
+        .messageRetryInterval,
+      commandPermissions: testData.oIAnalytics.registration.completed.commandPermissions
+    });
+    expect(oIAnalyticsRegistrationService.editConnectionSettings).toHaveBeenCalledTimes(1);
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      testData.oIAnalytics.commands.oIBusList[15].id,
+      testData.constants.dates.FAKE_NOW,
+      'Registration settings updated successfully'
     );
   });
 
@@ -637,13 +676,32 @@ describe('OIAnalytics Command Service', () => {
     );
   });
 
+  it('should not execute command if permission is not right', async () => {
+    const command = testData.oIAnalytics.commands.oIBusList[11];
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]); // create-north
+    (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValueOnce({
+      ...testData.oIAnalytics.registration.completed,
+      commandPermissions: {
+        ...testData.oIAnalytics.registration.completed.commandPermissions,
+        createNorth: false
+      }
+    });
+
+    await service.executeCommand();
+
+    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(
+      command.id,
+      `Command ${command.id} of type ${command.type} is not authorized`
+    );
+  });
+
   it('should execute regenerate-cipher-keys command', async () => {
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([testData.oIAnalytics.commands.oIBusList[12]]); // regenerate-cipher-keys
     (crypto.generateKeyPairSync as jest.Mock).mockReturnValueOnce({ publicKey: 'public key', privateKey: 'private key' });
 
     await service.executeCommand();
 
-    expect(oIAnalyticsRegistrationRepository.updateKeys).toHaveBeenCalledWith('private key', 'public key');
+    expect(oIAnalyticsRegistrationService.updateKeys).toHaveBeenCalledWith('private key', 'public key');
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       testData.oIAnalytics.commands.oIBusList[12].id,
@@ -674,7 +732,7 @@ describe('OIAnalytics Command service with update error', () => {
 
     service = new OIAnalyticsCommandService(
       oIAnalyticsCommandRepository,
-      oIAnalyticsRegistrationRepository,
+      oIAnalyticsRegistrationService,
       oIAnalyticsMessageService,
       encryptionService,
       oIAnalyticsClient,
@@ -709,7 +767,7 @@ describe('OIAnalytics Command service with no commands', () => {
     (oIBusService.getEngineSettings as jest.Mock).mockReturnValue(testData.engine.settings);
     service = new OIAnalyticsCommandService(
       oIAnalyticsCommandRepository,
-      oIAnalyticsRegistrationRepository,
+      oIAnalyticsRegistrationService,
       oIAnalyticsMessageService,
       encryptionService,
       oIAnalyticsClient,
