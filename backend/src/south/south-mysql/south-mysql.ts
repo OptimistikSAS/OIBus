@@ -130,17 +130,14 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
 
   override async testItem(
     item: SouthConnectorItemEntity<SouthMySQLItemSettings>,
-    _testingSettings: SouthConnectorItemTestingSettings,
+    testingSettings: SouthConnectorItemTestingSettings,
     callback: (data: OIBusContent) => void
   ): Promise<void> {
     const config = await this.createConnectionOptions();
     const connection = await mysql.createConnection(config);
 
-    const startTime = DateTime.now()
-      .minus(600 * 1000)
-      .toUTC()
-      .toISO() as Instant;
-    const endTime = DateTime.now().toUTC().toISO() as Instant;
+    const startTime = testingSettings.history!.startTime;
+    const endTime = testingSettings.history!.endTime;
     const result: Array<Record<string, string | number>> = await this.queryData(item, startTime, endTime);
     await connection.end();
 

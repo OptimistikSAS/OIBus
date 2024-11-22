@@ -134,14 +134,11 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
 
   override async testItem(
     item: SouthConnectorItemEntity<SouthODBCItemSettings>,
-    _testingSettings: SouthConnectorItemTestingSettings,
+    testingSettings: SouthConnectorItemTestingSettings,
     callback: (data: OIBusContent) => void
   ): Promise<void> {
-    const startTime = DateTime.now()
-      .minus(600 * 1000)
-      .toUTC()
-      .toISO() as Instant;
-    const endTime = DateTime.now().toUTC().toISO() as Instant;
+    const startTime = testingSettings.history!.startTime;
+    const endTime = testingSettings.history!.endTime;
     let result: Array<Record<string, string>>;
     if (this.connector.settings.remoteAgent) {
       result = (await this.queryRemoteAgentData(item, startTime, endTime, true)) as Array<Record<string, string>>;
