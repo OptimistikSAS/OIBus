@@ -10,7 +10,7 @@ import {
   HistoryQueryLightDTO
 } from '../../../../backend/shared/model/history-query.model';
 import { Page } from '../../../../backend/shared/model/types';
-import { SouthConnectorCommandDTO } from '../../../../backend/shared/model/south-connector.model';
+import { SouthConnectorCommandDTO, SouthConnectorItemTestingSettings } from '../../../../backend/shared/model/south-connector.model';
 import { DownloadService } from './download.service';
 import { NorthConnectorCommandDTO } from '../../../../backend/shared/model/north-connector.model';
 import { OIBusContent } from '../../../../backend/shared/model/engine.model';
@@ -168,12 +168,13 @@ export class HistoryQueryService {
     return this.http.delete<void>(`/api/history-queries/${historyId}/south-items/all`);
   }
 
-  testItem(
+  testSouthItem(
     historyId: string,
-    historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> | null,
-    item: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>
+    south: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
+    item: HistoryQueryItemCommandDTO<SouthItemSettings>,
+    testingSettings: SouthConnectorItemTestingSettings
   ): Observable<OIBusContent> {
-    return this.http.put<OIBusContent>(`/api/history-queries/${historyId}/items/test-item`, { historyQuery, item });
+    return this.http.put<OIBusContent>(`/api/history-queries/${historyId}/south/items/test-item`, { south, item, testingSettings });
   }
 
   /**

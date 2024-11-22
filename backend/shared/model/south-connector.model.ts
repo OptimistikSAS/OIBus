@@ -74,6 +74,13 @@ export interface SouthConnectorItemManifest {
   settings: Array<OibFormControl>;
 }
 
+export interface SouthConnectorItemTestingSettings {
+  history?: {
+    startTime: string;
+    endTime: string;
+  };
+}
+
 export interface SouthConnectorManifest {
   id: string;
   category: string;

@@ -1,25 +1,28 @@
 import { Component, inject } from '@angular/core';
-import { NgbActiveModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AbstractControl, FormControl, FormGroup, NonNullableFormBuilder, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
 import {
+  SouthConnectorCommandDTO,
+  SouthConnectorDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
-  SouthConnectorItemManifest
+  SouthConnectorItemManifest,
+  SouthConnectorManifest
 } from '../../../../../backend/shared/model/south-connector.model';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 
-import { OibCodeBlockComponent } from '../../shared/form/oib-code-block/oib-code-block.component';
 import { createFormGroup, groupFormControlsByRow } from '../../shared/form-utils';
 import { OibScanModeComponent } from '../../shared/form/oib-scan-mode/oib-scan-mode.component';
 import { Timezone } from '../../../../../backend/shared/model/types';
 import { inMemoryTypeahead } from '../../shared/typeahead';
 import { OibFormControl } from '../../../../../backend/shared/model/form.model';
 import { FormComponent } from '../../shared/form/form.component';
-import { SouthItemSettings } from '../../../../../backend/shared/model/south-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
+import { SouthItemTestComponent } from '../south-item-test/south-item-test.component';
 
 // TypeScript issue with Intl: https://github.com/microsoft/TypeScript/issues/49231
 // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -33,15 +36,7 @@ declare namespace Intl {
   selector: 'oib-edit-south-item-modal',
   templateUrl: './edit-south-item-modal.component.html',
   styleUrl: './edit-south-item-modal.component.scss',
-  imports: [
-    ...formDirectives,
-    TranslateModule,
-    SaveButtonComponent,
-    OibCodeBlockComponent,
-    OibScanModeComponent,
-    NgbTypeahead,
-    FormComponent
-  ],
+  imports: [...formDirectives, TranslateModule, SaveButtonComponent, OibScanModeComponent, FormComponent, SouthItemTestComponent],
   standalone: true
 })
 export class EditSouthItemModalComponent {
@@ -57,6 +52,8 @@ export class EditSouthItemModalComponent {
   southItemSchema: SouthConnectorItemManifest | null = null;
   southItemRows: Array<Array<OibFormControl>> = [];
 
+  southConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> | null = null;
+  southManifest: SouthConnectorManifest | null = null;
   item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings> | null = null;
   itemList: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>> = [];
 
@@ -112,10 +109,14 @@ export class EditSouthItemModalComponent {
   prepareForCreation(
     southItemSchema: SouthConnectorItemManifest,
     itemList: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>>,
-    scanModes: Array<ScanModeDTO>
+    scanModes: Array<ScanModeDTO>,
+    southConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> | null,
+    southManifest: SouthConnectorManifest | null
   ) {
     this.mode = 'create';
     this.itemList = itemList;
+    this.southConnector = southConnector;
+    this.southManifest = southManifest;
     this.subscriptionOnly = southItemSchema.scanMode.subscriptionOnly;
     this.acceptSubscription = southItemSchema.scanMode.acceptSubscription;
     this.southItemRows = groupFormControlsByRow(southItemSchema.settings);
@@ -131,10 +132,14 @@ export class EditSouthItemModalComponent {
     southItemSchema: SouthConnectorItemManifest,
     itemList: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>>,
     scanModes: Array<ScanModeDTO>,
-    southItem: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>
+    southItem: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>,
+    southConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> | null,
+    southManifest: SouthConnectorManifest | null
   ) {
     this.mode = 'edit';
     this.itemList = itemList;
+    this.southConnector = southConnector;
+    this.southManifest = southManifest;
     this.item = southItem;
     this.subscriptionOnly = southItemSchema.scanMode.subscriptionOnly;
     this.acceptSubscription = southItemSchema.scanMode.acceptSubscription;
@@ -150,8 +155,12 @@ export class EditSouthItemModalComponent {
   prepareForCopy(
     southItemSchema: SouthConnectorItemManifest,
     scanModes: Array<ScanModeDTO>,
-    southItem: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>
+    southItem: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>,
+    southConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> | null,
+    southManifest: SouthConnectorManifest | null
   ) {
+    this.southConnector = southConnector;
+    this.southManifest = southManifest;
     this.item = JSON.parse(JSON.stringify(southItem)) as SouthConnectorItemDTO<SouthItemSettings>;
     this.item.name = `${southItem.name}-copy`;
     this.mode = 'copy';
@@ -172,6 +181,10 @@ export class EditSouthItemModalComponent {
       return;
     }
 
+    this.modal.close(this.formItem);
+  }
+
+  get formItem(): SouthConnectorItemCommandDTO<SouthItemSettings> {
     const formValue = this.form!.value;
     let id: string | null = null;
     if (this.mode === 'edit') {
@@ -187,6 +200,19 @@ export class EditSouthItemModalComponent {
       settings: formValue.settings!
     };
 
-    this.modal.close(command);
+    return command;
+  }
+
+  get southConnectorCommand() {
+    if (!this.southConnector) {
+      return null;
+    }
+
+    const command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
+      ...this.southConnector,
+      items: this.southConnector.items.map(i => ({ ...i, scanModeName: null }))
+    };
+
+    return command;
   }
 }

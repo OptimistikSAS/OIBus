@@ -12,6 +12,7 @@ import SouthConnectorRepository from '../../repository/config/south-connector.re
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
+import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 
 /**
  * Class SouthPI - Run a PI Agent to connect to a PI server.
@@ -90,7 +91,11 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
     }
   }
 
-  override async testItem(item: SouthConnectorItemEntity<SouthPIItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
+  override async testItem(
+    item: SouthConnectorItemEntity<SouthPIItemSettings>,
+    _testingSettings: SouthConnectorItemTestingSettings,
+    callback: (data: OIBusContent) => void
+  ): Promise<void> {
     await this.connect();
     const content: OIBusContent = { type: 'time-values', content: [] };
 

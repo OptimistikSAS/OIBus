@@ -24,6 +24,7 @@ import SouthConnectorRepository from '../../repository/config/south-connector.re
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
+import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let odbc: any | null = null;
@@ -131,7 +132,11 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     }
   }
 
-  override async testItem(item: SouthConnectorItemEntity<SouthODBCItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
+  override async testItem(
+    item: SouthConnectorItemEntity<SouthODBCItemSettings>,
+    _testingSettings: SouthConnectorItemTestingSettings,
+    callback: (data: OIBusContent) => void
+  ): Promise<void> {
     const startTime = DateTime.now()
       .minus(600 * 1000)
       .toUTC()
