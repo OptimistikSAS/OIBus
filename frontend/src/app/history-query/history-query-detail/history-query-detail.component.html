@@ -184,7 +184,11 @@
           </table>
         </oib-box>
         <!-- Items -->
-        <oib-history-query-items [historyQuery]="historyQuery" [southManifest]="southManifest" />
+        <oib-history-query-items
+          (inMemoryItems)="updateInMemoryItems($event)"
+          [historyQuery]="historyQuery"
+          [southManifest]="southManifest"
+        />
         <!-- Logs -->
         <oib-box>
           <ng-template oibBoxTitle>
