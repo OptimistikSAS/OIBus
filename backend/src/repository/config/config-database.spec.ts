@@ -21,6 +21,7 @@ import {
   OIAnalyticsFetchRestartEngineCommandDTO,
   OIAnalyticsFetchUpdateEngineSettingsCommandDTO,
   OIAnalyticsFetchUpdateNorthConnectorCommandDTO,
+  OIAnalyticsFetchUpdateRegistrationSettingsCommandDTO,
   OIAnalyticsFetchUpdateScanModeCommandDTO,
   OIAnalyticsFetchUpdateSouthConnectorCommandDTO,
   OIAnalyticsFetchUpdateVersionCommandDTO
@@ -616,6 +617,24 @@ describe('Repository with populated database', () => {
         result: null,
         targetVersion: command.targetVersion,
         northConnectorId: command.northConnectorId
+      });
+    });
+
+    it('should create an update registration settings command', () => {
+      const command: OIAnalyticsFetchUpdateRegistrationSettingsCommandDTO = testData.oIAnalytics.commands
+        .oIAnalyticsList[13] as OIAnalyticsFetchUpdateRegistrationSettingsCommandDTO;
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        targetVersion: command.targetVersion,
+        commandContent: command.commandContent
       });
     });
 
@@ -1358,7 +1377,37 @@ describe('Repository with empty database', () => {
         publicCipherKey: null,
         proxyUrl: null,
         proxyUsername: null,
-        proxyPassword: null
+        proxyPassword: null,
+        commandRefreshInterval: 10,
+        commandRetryInterval: 5,
+        messageRetryInterval: 5,
+        commandPermissions: {
+          updateVersion: true,
+          restartEngine: true,
+          regenerateCipherKeys: true,
+          updateEngineSettings: true,
+          updateRegistrationSettings: true,
+          createScanMode: true,
+          updateScanMode: true,
+          deleteScanMode: true,
+          createIpFilter: true,
+          updateIpFilter: true,
+          deleteIpFilter: true,
+          createCertificate: true,
+          updateCertificate: true,
+          deleteCertificate: true,
+          createHistoryQuery: true,
+          updateHistoryQuery: true,
+          deleteHistoryQuery: true,
+          createOrUpdateHistoryItemsFromCsv: true,
+          createSouth: true,
+          updateSouth: true,
+          deleteSouth: true,
+          createOrUpdateSouthItemsFromCsv: true,
+          createNorth: true,
+          updateNorth: true,
+          deleteNorth: true
+        }
       });
     });
   });

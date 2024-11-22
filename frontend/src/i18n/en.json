@@ -219,6 +219,7 @@
       "restart-engine": "Restart",
       "regenerate-cipher-keys": "Regenerate cipher keys",
       "update-engine-settings": "Update engine settings",
+      "update-registration-settings": "Update registration settings",
       "create-scan-mode": "Create scan mode",
       "update-scan-mode": "Update scan mode",
       "delete-scan-mode": "Delete scan mode",
@@ -320,6 +321,15 @@
       "status": "Status",
       "type": "Type",
       "none": "No command",
+      "refresh-interval": "Refresh interval",
+      "command-retry-interval": "Command (from OIA) retry interval",
+      "message-retry-interval": "Message (to OIA) retry interval",
+      "permissions": "OIAnalytics commands permissions",
+      "engine": "Engine",
+      "registration": "Registration",
+      "scan-mode": "Scan mode",
+      "north-connector": "North connector",
+      "south-connector": "South connector",
       "details-modal": {
         "title": "Command {{ type }}",
         "success-info": "Command completed successfully",
@@ -335,6 +345,9 @@
             "backup-folders-patterns": "Backup folders according to this pattern: {{ backupFoldersPattern }}"
           },
           "update-engine-settings": {
+            "command-content": "JSON content"
+          },
+          "update-registration-settings": {
             "command-content": "JSON content"
           },
           "scan-mode": {

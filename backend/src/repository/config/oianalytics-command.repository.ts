@@ -101,6 +101,10 @@ export default class OIAnalyticsCommandRepository {
     const queryParams = [command.id, DateTime.now().toUTC().toISO(), command.type, 'RETRIEVED', 0, command.targetVersion];
     let insertQuery = `INSERT INTO ${COMMANDS_TABLE} `;
     switch (command.type) {
+      case 'update-registration-settings':
+        queryParams.push(JSON.stringify(command.commandContent));
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, command_content) VALUES (?, ?, ?, ?, ?, ?, ?);`;
+        break;
       case 'update-engine-settings':
       case 'create-scan-mode':
         queryParams.push(JSON.stringify(command.commandContent));
@@ -262,6 +266,18 @@ export default class OIAnalyticsCommandRepository {
         return {
           id: command.id as string,
           type: 'update-engine-settings',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'update-registration-settings':
+        return {
+          id: command.id as string,
+          type: 'update-registration-settings',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
           targetVersion: command.target_version as string,

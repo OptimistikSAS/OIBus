@@ -10,6 +10,7 @@ export default jest.fn().mockImplementation(() => {
     register: jest.fn(),
     checkRegistration: jest.fn(),
     editConnectionSettings: jest.fn(),
+    updateKeys: jest.fn(),
     unregister: jest.fn(),
     stop: jest.fn(),
     registrationEvent: new EventEmitter()
