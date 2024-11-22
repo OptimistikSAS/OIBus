@@ -5,7 +5,7 @@ import { ObservableState, SaveButtonComponent } from '../../shared/save-button/s
 import { formDirectives } from '../../shared/form-directives';
 import { FormControl, FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest, Observable, of, switchMap, tap } from 'rxjs';
 import { FormComponent } from '../../shared/form/form.component';
 import { OibFormControl } from '../../../../../backend/shared/model/form.model';
@@ -35,7 +35,6 @@ import { Instant } from '../../../../../backend/shared/model/types';
 import { DatetimepickerComponent } from '../../shared/datetimepicker/datetimepicker.component';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
-import { SouthItemsComponent } from '../../south/south-items/south-items.component';
 import { HistoryQueryItemsComponent } from '../history-query-items/history-query-items.component';
 import { DateTime } from 'luxon';
 import { ModalService } from '../../shared/modal.service';
@@ -52,7 +51,6 @@ import { dateTimeRangeValidatorBuilder } from '../../shared/validators';
   imports: [
     TranslateModule,
     ...formDirectives,
-    RouterLink,
     SaveButtonComponent,
     FormComponent,
     OibScanModeComponent,
@@ -60,7 +58,6 @@ import { dateTimeRangeValidatorBuilder } from '../../shared/validators';
     BackNavigationDirective,
     BoxComponent,
     BoxTitleDirective,
-    SouthItemsComponent,
     HistoryQueryItemsComponent,
     OibHelpComponent
   ],
