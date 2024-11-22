@@ -3,7 +3,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { formDirectives } from '../../shared/form-directives';
-import { AbstractControl, FormControl, FormGroup, NonNullableFormBuilder, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
+import { FormControl, FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { combineLatest, Observable, of, switchMap, tap } from 'rxjs';
@@ -44,6 +44,7 @@ import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { ResetCacheHistoryQueryModalComponent } from '../reset-cache-history-query-modal/reset-cache-history-query-modal.component';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { dateTimeRangeValidatorBuilder } from '../../shared/validators';
 
 @Component({
   selector: 'oib-edit-history-query',
@@ -191,8 +192,8 @@ export class EditHistoryQueryComponent implements OnInit {
         this.historyQueryForm = this.fb.group({
           name: ['', Validators.required],
           description: '',
-          startTime: [DateTime.now().minus({ days: 1 }).toUTC().toISO()!, [this.dateRangeValidator('start')]],
-          endTime: [DateTime.now().toUTC().toISO()!, [this.dateRangeValidator('end')]],
+          startTime: [DateTime.now().minus({ days: 1 }).toUTC().toISO()!, [dateTimeRangeValidatorBuilder('start')]],
+          endTime: [DateTime.now().toUTC().toISO()!, [dateTimeRangeValidatorBuilder('end')]],
           caching: this.fb.group({
             scanModeId: this.fb.control<string | null>(null, Validators.required),
             retryInterval: [5000, Validators.required],
@@ -349,25 +350,5 @@ export class EditHistoryQueryComponent implements OnInit {
     const modalRef = this.modalService.open(TestConnectionResultModalComponent);
     const component: TestConnectionResultModalComponent = modalRef.componentInstance;
     component.runHistoryQueryTest(type, command, historyQueryId, fromConnectorId ? fromConnectorId : null);
-  }
-
-  dateRangeValidator(type: 'start' | 'end'): ValidatorFn {
-    return (control: AbstractControl): ValidationErrors | null => {
-      const startTime = control.parent?.get('startTime')?.value as string;
-      const endTime = control.parent?.get('endTime')?.value as string;
-
-      if (!startTime || !endTime) {
-        return null;
-      }
-
-      const startDateTime = DateTime.fromISO(startTime).startOf('minute');
-      const endDateTime = DateTime.fromISO(endTime).startOf('minute');
-
-      if (startDateTime > endDateTime) {
-        return type === 'start' ? { badStartDateRange: true } : { badEndDateRange: true };
-      }
-
-      return null;
-    };
   }
 }

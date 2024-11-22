@@ -1,10 +1,8 @@
 import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { SaveButtonComponent } from '../save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { SouthConnectorCommandDTO, SouthConnectorDTO } from '../../../../../backend/shared/model/south-connector.model';
 
-import { FormComponent } from '../form/form.component';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { NorthConnectorCommandDTO, NorthConnectorDTO } from '../../../../../backend/shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
@@ -16,7 +14,7 @@ import { NorthSettings } from '../../../../../backend/shared/model/north-setting
   selector: 'oib-test-connection-result-modal',
   templateUrl: './test-connection-result-modal.component.html',
   styleUrl: './test-connection-result-modal.component.scss',
-  imports: [TranslateModule, SaveButtonComponent, FormComponent],
+  imports: [TranslateModule],
   standalone: true
 })
 export class TestConnectionResultModalComponent {

@@ -4,11 +4,9 @@ import { SouthConnectorService } from '../../services/south-connector.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 
-import { RouterLink } from '@angular/router';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { FormControlValidationDirective } from '../../shared/form-control-validation.directive';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { LoadingSpinnerComponent } from '../../shared/loading-spinner/loading-spinner.component';
 import {
   SouthConnectorDTO,
   SouthConnectorItemCommandDTO,
@@ -19,8 +17,6 @@ import { EditSouthItemModalComponent } from '../edit-south-item-modal/edit-south
 import { debounceTime, distinctUntilChanged, of, switchMap, tap } from 'rxjs';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
-import { DatetimePipe } from '../../shared/datetime.pipe';
-import { DurationPipe } from '../../shared/duration.pipe';
 import { OibFormControl } from '../../../../../backend/shared/model/form.model';
 import { createPageFromArray, Page } from '../../../../../backend/shared/model/types';
 import { emptyPage } from '../../shared/test-utils';
@@ -30,7 +26,6 @@ import { PaginationComponent } from '../../shared/pagination/pagination.componen
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
 import { ImportItemModalComponent } from '../../shared/import-item-modal/import-item-modal.component';
-import { SouthItemTestModalComponent } from '../south-item-test-modal/south-item-test-modal.component';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 
 const PAGE_SIZE = 20;
@@ -50,15 +45,11 @@ export interface TableData {
   standalone: true,
   imports: [
     TranslateModule,
-    RouterLink,
     FormControlValidationDirective,
     FormsModule,
-    LoadingSpinnerComponent,
     ReactiveFormsModule,
     BoxComponent,
     BoxTitleDirective,
-    DatetimePipe,
-    DurationPipe,
     PaginationComponent,
     OibHelpComponent
   ],
@@ -133,14 +124,21 @@ export class SouthItemsComponent implements OnInit, OnChanges {
   editItem(southItem: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>) {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl' });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
-    component.prepareForEdition(this.southManifest.items, this.allItems, this.scanModes, southItem);
+    component.prepareForEdition(
+      this.southManifest.items,
+      this.allItems,
+      this.scanModes,
+      southItem,
+      this.southConnector,
+      this.southManifest
+    );
     this.refreshAfterEditionModalClosed(modalRef, southItem);
   }
 
   addItem() {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl' });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
-    component.prepareForCreation(this.southManifest.items, this.allItems, this.scanModes);
+    component.prepareForCreation(this.southManifest.items, this.allItems, this.scanModes, this.southConnector, this.southManifest);
     this.refreshAfterCreationModalClosed(modalRef);
   }
 
@@ -236,15 +234,8 @@ export class SouthItemsComponent implements OnInit, OnChanges {
   duplicateItem(item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>) {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl' });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
-    component.prepareForCopy(this.southManifest.items, this.scanModes, item);
+    component.prepareForCopy(this.southManifest.items, this.scanModes, item, this.southConnector, this.southManifest);
     this.refreshAfterCreationModalClosed(modalRef);
-  }
-
-  testItem(item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>) {
-    this.southConnectorService.testItem(this.southConnector!.id, this.southConnector, item).subscribe(result => {
-      const modalRef = this.modalService.open(SouthItemTestModalComponent, { size: 'xl' });
-      modalRef.componentInstance.prepare(result, item);
-    });
   }
 
   exportItems() {

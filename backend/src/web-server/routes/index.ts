@@ -37,6 +37,7 @@ import {
   SouthConnectorDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
+  SouthConnectorItemTestingSettings,
   SouthConnectorLightDTO,
   SouthConnectorManifest,
   SouthType
@@ -260,6 +261,7 @@ router.put(
       {
         south: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
         item: SouthConnectorItemCommandDTO<SouthItemSettings>;
+        testingSettings: SouthConnectorItemTestingSettings;
       },
       void
     >
@@ -397,7 +399,11 @@ router.put(
   '/api/history-queries/:id/south/items/test-item',
   (
     ctx: KoaContext<
-      { south: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>; item: HistoryQueryItemCommandDTO<SouthItemSettings> },
+      {
+        south: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+        item: HistoryQueryItemCommandDTO<SouthItemSettings>;
+        testingSettings: SouthConnectorItemTestingSettings;
+      },
       void
     >
   ) => historyQueryController.testHistoryQueryItem(ctx)
