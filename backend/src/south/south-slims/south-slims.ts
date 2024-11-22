@@ -134,14 +134,11 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
 
   override async testItem(
     item: SouthConnectorItemEntity<SouthSlimsItemSettings>,
-    _testingSettings: SouthConnectorItemTestingSettings,
+    testingSettings: SouthConnectorItemTestingSettings,
     callback: (data: OIBusContent) => void
   ): Promise<void> {
-    const startTime = DateTime.now()
-      .minus(600 * 1000)
-      .toUTC()
-      .toISO() as Instant;
-    const endTime = DateTime.now().toUTC().toISO() as Instant;
+    const startTime = testingSettings.history!.startTime;
+    const endTime = testingSettings.history!.endTime;
     const result: SlimsResults = await this.queryData(item, startTime, endTime);
     const { formattedResult } = this.parseData(item, result);
 
