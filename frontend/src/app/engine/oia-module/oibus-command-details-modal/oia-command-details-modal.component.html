@@ -55,6 +55,13 @@
                 </div>
               </li>
             }
+            @case ('update-registration-settings') {
+              <li translate="oia-module.commands.details-modal.command-content.update-registration-settings.command-content">
+                <div style="max-height: 300px; overflow-y: auto">
+                  <pre><code>{{ command.commandContent | json }}</code></pre>
+                </div>
+              </li>
+            }
             @case ('restart-engine') {}
             @case ('regenerate-cipher-keys') {}
             @case ('create-scan-mode') {

@@ -798,7 +798,7 @@ describe('NorthOIAnalytics with OIA module', () => {
       proxyUrl: null,
       proxyUsername: null,
       proxyPassword: null
-    };
+    } as OIAnalyticsRegistration;
     north = new NorthOIAnalytics(
       configuration,
       encryptionService,

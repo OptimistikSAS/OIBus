@@ -80,7 +80,37 @@ describe('EngineService', () => {
       acceptUnauthorized: false,
       proxyUrl: null,
       proxyUsername: null,
-      proxyPassword: null
+      proxyPassword: null,
+      commandRefreshInterval: 10,
+      commandRetryInterval: 5,
+      messageRetryInterval: 5,
+      commandPermissions: {
+        updateVersion: true,
+        restartEngine: true,
+        regenerateCipherKeys: true,
+        updateEngineSettings: true,
+        updateRegistrationSettings: true,
+        createScanMode: true,
+        updateScanMode: true,
+        deleteScanMode: true,
+        createIpFilter: true,
+        updateIpFilter: true,
+        deleteIpFilter: true,
+        createCertificate: true,
+        updateCertificate: true,
+        deleteCertificate: true,
+        createHistoryQuery: true,
+        updateHistoryQuery: true,
+        deleteHistoryQuery: true,
+        createOrUpdateHistoryItemsFromCsv: true,
+        createSouth: true,
+        updateSouth: true,
+        deleteSouth: true,
+        createOrUpdateSouthItemsFromCsv: true,
+        createNorth: true,
+        updateNorth: true,
+        deleteNorth: true
+      }
     };
     service.editRegistrationSettings(command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/registration/edit' });

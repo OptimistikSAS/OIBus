@@ -16,6 +16,36 @@ export interface OIAnalyticsRegistration extends BaseEntity {
   proxyUsername: string | null;
   proxyPassword: string | null;
   acceptUnauthorized: boolean;
+  commandRefreshInterval: number;
+  commandRetryInterval: number;
+  messageRetryInterval: number;
+  commandPermissions: {
+    updateVersion: boolean;
+    restartEngine: boolean;
+    regenerateCipherKeys: boolean;
+    updateEngineSettings: boolean;
+    updateRegistrationSettings: boolean;
+    createScanMode: boolean;
+    updateScanMode: boolean;
+    deleteScanMode: boolean;
+    createIpFilter: boolean;
+    updateIpFilter: boolean;
+    deleteIpFilter: boolean;
+    createCertificate: boolean;
+    updateCertificate: boolean;
+    deleteCertificate: boolean;
+    createHistoryQuery: boolean;
+    updateHistoryQuery: boolean;
+    deleteHistoryQuery: boolean;
+    createOrUpdateHistoryItemsFromCsv: boolean;
+    createSouth: boolean;
+    updateSouth: boolean;
+    deleteSouth: boolean;
+    createOrUpdateSouthItemsFromCsv: boolean;
+    createNorth: boolean;
+    updateNorth: boolean;
+    deleteNorth: boolean;
+  };
 }
 
 export interface OIAnalyticsRegistrationEditCommand {
@@ -25,4 +55,34 @@ export interface OIAnalyticsRegistrationEditCommand {
   proxyUsername: string | null;
   proxyPassword: string | null;
   acceptUnauthorized: boolean;
+  commandRefreshInterval: number;
+  commandRetryInterval: number;
+  messageRetryInterval: number;
+  commandPermissions: {
+    updateVersion: boolean;
+    restartEngine: boolean;
+    regenerateCipherKeys: boolean;
+    updateEngineSettings: boolean;
+    updateRegistrationSettings: boolean;
+    createScanMode: boolean;
+    updateScanMode: boolean;
+    deleteScanMode: boolean;
+    createIpFilter: boolean;
+    updateIpFilter: boolean;
+    deleteIpFilter: boolean;
+    createCertificate: boolean;
+    updateCertificate: boolean;
+    deleteCertificate: boolean;
+    createHistoryQuery: boolean;
+    updateHistoryQuery: boolean;
+    deleteHistoryQuery: boolean;
+    createOrUpdateHistoryItemsFromCsv: boolean;
+    createSouth: boolean;
+    updateSouth: boolean;
+    deleteSouth: boolean;
+    createOrUpdateSouthItemsFromCsv: boolean;
+    createNorth: boolean;
+    updateNorth: boolean;
+    deleteNorth: boolean;
+  };
 }

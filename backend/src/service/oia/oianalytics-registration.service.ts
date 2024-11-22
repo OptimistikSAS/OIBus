@@ -108,8 +108,7 @@ export default class OIAnalyticsRegistrationService {
           this.intervalCheckRegistration = null;
         }
         this.logger.info(`OIBus registered on ${registrationSettings.host}`);
-        this.registrationEvent.emit('updated'); // used to update logger
-        this.registrationEvent.emit('completed'); // used to generate a full-config message
+        this.registrationEvent.emit('updated'); // used to update logger and other oianalytics services
       }
     } catch (error: unknown) {
       this.logger.error(`Error while checking registration: ${(error as Error).message}`);
@@ -129,6 +128,10 @@ export default class OIAnalyticsRegistrationService {
     }
     this.oIAnalyticsRegistrationRepository.update(command);
     this.registrationEvent.emit('updated');
+  }
+
+  async updateKeys(privateKey: string, publicKey: string): Promise<void> {
+    this.oIAnalyticsRegistrationRepository.updateKeys(await this.encryptionService.encryptText(privateKey), publicKey);
   }
 
   unregister() {
@@ -162,6 +165,10 @@ export const toOIAnalyticsRegistrationDTO = (registration: OIAnalyticsRegistrati
     useProxy: registration.useProxy,
     proxyUrl: registration.proxyUrl,
     proxyUsername: registration.proxyUsername,
-    acceptUnauthorized: registration.acceptUnauthorized
+    acceptUnauthorized: registration.acceptUnauthorized,
+    commandRefreshInterval: registration.commandRefreshInterval,
+    commandRetryInterval: registration.commandRetryInterval,
+    messageRetryInterval: registration.messageRetryInterval,
+    commandPermissions: registration.commandPermissions
   };
 };

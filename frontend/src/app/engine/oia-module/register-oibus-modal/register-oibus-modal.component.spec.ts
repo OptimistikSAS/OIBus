@@ -37,6 +37,18 @@ class RegisterOibusModalComponentTester extends ComponentTester<RegisterOibusMod
     return this.input('#proxy-password')!;
   }
 
+  get commandRefreshInterval() {
+    return this.input('#command-refresh-interval')!;
+  }
+
+  get commandRetryInterval() {
+    return this.input('#command-retry-interval')!;
+  }
+
+  get messageRetryInterval() {
+    return this.input('#message-retry-interval')!;
+  }
+
   get validationErrors() {
     return this.elements('val-errors div');
   }
@@ -87,8 +99,8 @@ describe('RegisterOibusModalComponent', () => {
     tester.detectChanges();
     tester.save.click();
 
-    // host
-    expect(tester.validationErrors.length).toBe(1);
+    // host and the three intervals
+    expect(tester.validationErrors.length).toBe(4);
     expect(fakeActiveModal.close).not.toHaveBeenCalled();
   });
 
@@ -101,6 +113,9 @@ describe('RegisterOibusModalComponent', () => {
     tester.proxyUrl.fillWith('http://localhost:8080');
     tester.proxyUsername.fillWith('user');
     tester.proxyPassword.fillWith('pass');
+    tester.commandRefreshInterval.fillWith('15');
+    tester.commandRetryInterval.fillWith('10');
+    tester.messageRetryInterval.fillWith('5');
     tester.detectChanges();
     tester.save.click();
 
@@ -110,7 +125,37 @@ describe('RegisterOibusModalComponent', () => {
       useProxy: true,
       proxyUrl: 'http://localhost:8080',
       proxyUsername: 'user',
-      proxyPassword: 'pass'
+      proxyPassword: 'pass',
+      commandRefreshInterval: 15,
+      commandRetryInterval: 10,
+      messageRetryInterval: 5,
+      commandPermissions: {
+        updateVersion: true,
+        restartEngine: true,
+        regenerateCipherKeys: true,
+        updateEngineSettings: true,
+        updateRegistrationSettings: true,
+        createScanMode: true,
+        updateScanMode: true,
+        deleteScanMode: true,
+        createIpFilter: true,
+        updateIpFilter: true,
+        deleteIpFilter: true,
+        createCertificate: true,
+        updateCertificate: true,
+        deleteCertificate: true,
+        createHistoryQuery: true,
+        updateHistoryQuery: true,
+        deleteHistoryQuery: true,
+        createOrUpdateHistoryItemsFromCsv: true,
+        createSouth: true,
+        updateSouth: true,
+        deleteSouth: true,
+        createOrUpdateSouthItemsFromCsv: true,
+        createNorth: true,
+        updateNorth: true,
+        deleteNorth: true
+      }
     };
 
     expect(engineService.updateRegistrationSettings).toHaveBeenCalledWith(expectedCommand);
@@ -132,7 +177,42 @@ describe('RegisterOibusModalComponent', () => {
   });
 
   it('should edit registration if valid', fakeAsync(() => {
-    tester.componentInstance.prepare({ host: 'http://localhost:4200' } as RegistrationSettingsDTO, 'edit');
+    tester.componentInstance.prepare(
+      {
+        host: 'http://localhost:4200',
+        commandRefreshInterval: 10,
+        commandRetryInterval: 5,
+        messageRetryInterval: 5,
+        commandPermissions: {
+          updateVersion: true,
+          restartEngine: true,
+          regenerateCipherKeys: true,
+          updateEngineSettings: true,
+          updateRegistrationSettings: true,
+          createScanMode: true,
+          updateScanMode: true,
+          deleteScanMode: true,
+          createIpFilter: true,
+          updateIpFilter: true,
+          deleteIpFilter: true,
+          createCertificate: true,
+          updateCertificate: true,
+          deleteCertificate: true,
+          createHistoryQuery: true,
+          updateHistoryQuery: true,
+          deleteHistoryQuery: true,
+          createOrUpdateHistoryItemsFromCsv: true,
+          createSouth: true,
+          updateSouth: true,
+          deleteSouth: true,
+          createOrUpdateSouthItemsFromCsv: true,
+          createNorth: true,
+          updateNorth: true,
+          deleteNorth: true
+        }
+      } as RegistrationSettingsDTO,
+      'edit'
+    );
     tester.detectChanges();
     tester.acceptUnauthorized.check();
     tester.useProxy.check();
@@ -148,7 +228,37 @@ describe('RegisterOibusModalComponent', () => {
       useProxy: true,
       proxyUrl: 'http://localhost:8080',
       proxyUsername: 'user',
-      proxyPassword: 'pass'
+      proxyPassword: 'pass',
+      commandRefreshInterval: 10,
+      commandRetryInterval: 5,
+      messageRetryInterval: 5,
+      commandPermissions: {
+        updateVersion: true,
+        restartEngine: true,
+        regenerateCipherKeys: true,
+        updateEngineSettings: true,
+        updateRegistrationSettings: true,
+        createScanMode: true,
+        updateScanMode: true,
+        deleteScanMode: true,
+        createIpFilter: true,
+        updateIpFilter: true,
+        deleteIpFilter: true,
+        createCertificate: true,
+        updateCertificate: true,
+        deleteCertificate: true,
+        createHistoryQuery: true,
+        updateHistoryQuery: true,
+        deleteHistoryQuery: true,
+        createOrUpdateHistoryItemsFromCsv: true,
+        createSouth: true,
+        updateSouth: true,
+        deleteSouth: true,
+        createOrUpdateSouthItemsFromCsv: true,
+        createNorth: true,
+        updateNorth: true,
+        deleteNorth: true
+      }
     };
 
     expect(engineService.editRegistrationSettings).toHaveBeenCalledWith(expectedCommand);

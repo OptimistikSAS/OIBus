@@ -64,6 +64,195 @@
         </div>
       </div>
     }
+
+    <div class="row">
+      <!-- Command refresh interval -->
+      <div class="col-4">
+        <div class="form-group">
+          <label class="form-label" for="command-refresh-interval" translate="oia-module.commands.refresh-interval"></label>
+          <div class="input-group">
+            <input type="number" formControlName="commandRefreshInterval" id="command-refresh-interval" class="form-control" />
+            <span class="input-group-text" translate="common.unit.s"></span>
+          </div>
+          <val-errors controlName="commandRefreshInterval" />
+        </div>
+      </div>
+      <!-- Command retry interval -->
+      <div class="col-4">
+        <div class="form-group">
+          <label class="form-label" for="command-retry-interval" translate="oia-module.commands.command-retry-interval"></label>
+          <div class="input-group">
+            <input type="number" formControlName="commandRetryInterval" id="command-retry-interval" class="form-control" />
+            <span class="input-group-text" translate="common.unit.s"></span>
+          </div>
+          <val-errors controlName="commandRetryInterval" />
+        </div>
+      </div>
+      <!-- Message retry interval -->
+      <div class="col-4">
+        <div class="form-group">
+          <label class="form-label" for="message-retry-interval" translate="oia-module.commands.message-retry-interval"></label>
+          <div class="input-group">
+            <input type="number" formControlName="messageRetryInterval" id="message-retry-interval" class="form-control" />
+            <span class="input-group-text" translate="common.unit.s"></span>
+          </div>
+          <val-errors controlName="messageRetryInterval" />
+        </div>
+      </div>
+    </div>
+    <oib-box boxTitle="oia-module.commands.permissions">
+      <div formGroupName="commandPermissions">
+        <div class="row mb-2">
+          <label class="form-label" translate="oia-module.commands.engine"></label>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="updateVersion" id="update-version" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="update-version">{{ 'update-version' | oibusCommandTypeEnum }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="restartEngine" id="restart-engine" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="restart-engine">{{ 'restart-engine' | oibusCommandTypeEnum }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="updateEngineSettings" id="update-engine-settings" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="update-engine-settings">{{ 'update-engine-settings' | oibusCommandTypeEnum }}</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row mb-2">
+          <label class="form-label" translate="oia-module.commands.registration"></label>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="regenerateCipherKeys" id="regenerate-cipher-keys" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="regenerate-cipher-keys">{{ 'regenerate-cipher-keys' | oibusCommandTypeEnum }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input
+                  formControlName="updateRegistrationSettings"
+                  id="update-registration-settings"
+                  type="checkbox"
+                  class="form-check-input"
+                />
+                <label class="form-check-label" for="update-registration-settings">{{
+                  'update-registration-settings' | oibusCommandTypeEnum
+                }}</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row mb-2">
+          <label class="form-label" translate="oia-module.commands.scan-mode"></label>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="createScanMode" id="create-scan-mode" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="create-scan-mode">{{ 'create-scan-mode' | oibusCommandTypeEnum }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="updateScanMode" id="update-scan-mode" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="update-scan-mode">{{ 'update-scan-mode' | oibusCommandTypeEnum }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="deleteScanMode" id="delete-scan-mode" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="delete-scan-mode">{{ 'delete-scan-mode' | oibusCommandTypeEnum }}</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row mb-2">
+          <label class="form-label" translate="oia-module.commands.north-connector"></label>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="createNorth" id="create-north" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="create-north">{{ 'create-north' | oibusCommandTypeEnum }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="updateNorth" id="update-north" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="update-north">{{ 'update-north' | oibusCommandTypeEnum }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="deleteNorth" id="delete-north" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="delete-north">{{ 'delete-north' | oibusCommandTypeEnum }}</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row mb-2">
+          <label class="form-label" translate="oia-module.commands.south-connector"></label>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="createSouth" id="create-south" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="create-south">{{ 'create-south' | oibusCommandTypeEnum }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="updateSouth" id="update-south" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="update-south">{{ 'update-south' | oibusCommandTypeEnum }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input
+                  formControlName="createOrUpdateSouthItemsFromCsv"
+                  id="create-or-update-south-items-from-csv"
+                  type="checkbox"
+                  class="form-check-input"
+                />
+                <label class="form-check-label" for="create-or-update-south-items-from-csv">{{
+                  'create-or-update-south-items-from-csv' | oibusCommandTypeEnum
+                }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="deleteSouth" id="delete-south" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="delete-south">{{ 'delete-south' | oibusCommandTypeEnum }}</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </oib-box>
   </form>
 </div>
 <div class="modal-footer">

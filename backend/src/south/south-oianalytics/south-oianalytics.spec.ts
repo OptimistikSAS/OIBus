@@ -1177,7 +1177,7 @@ describe('SouthOIAnalytics with OIA module', () => {
       proxyUrl: null,
       proxyUsername: null,
       proxyPassword: null
-    };
+    } as OIAnalyticsRegistration;
     south = new SouthOianalytics(
       configuration,
       addContentCallback,
