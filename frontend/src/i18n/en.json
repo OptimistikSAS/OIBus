@@ -566,6 +566,19 @@
       "success": "Connection successfully tested",
       "error": "Error when testing settings"
     },
+    "test-item": {
+      "title": "Testing item",
+      "test-button": "Run test",
+      "cancel-button": "Cancel",
+      "query-start": "Query data from",
+      "query-end": "Query data until",
+      "editor-message": {
+        "initial": "Test results will appear here",
+        "loading": "Running item...",
+        "error": "Error when testing item",
+        "cancel": "Test cancelled"
+      }
+    },
     "type": "Type",
     "general-settings": "General settings",
     "specific-settings": "{{ type }} settings",

@@ -23,6 +23,7 @@ import SouthConnectorRepository from '../../repository/config/south-connector.re
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
+import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 
 /**
  * Class SouthMQTT - Subscribe to data topic from a MQTT broker
@@ -84,7 +85,11 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     await this.testConnectionToBroker(options);
   }
 
-  override async testItem(item: SouthConnectorItemEntity<SouthMQTTItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
+  override async testItem(
+    item: SouthConnectorItemEntity<SouthMQTTItemSettings>,
+    _testingSettings: SouthConnectorItemTestingSettings,
+    callback: (data: OIBusContent) => void
+  ): Promise<void> {
     const options = await this.createConnectionOptions();
     return new Promise((resolve, reject) => {
       this.client = mqtt.connect(this.connector.settings.url, options);

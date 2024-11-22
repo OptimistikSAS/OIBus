@@ -9,7 +9,7 @@ import {
 } from '../../../shared/model/history-query.model';
 import JoiValidator from './validators/joi.validator';
 
-import { SouthConnectorCommandDTO } from '../../../shared/model/south-connector.model';
+import { SouthConnectorCommandDTO, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { Page } from '../../../shared/model/types';
 import AbstractController from './abstract.controller';
 import Joi from 'joi';
@@ -117,7 +117,11 @@ export default class HistoryQueryController extends AbstractController {
 
   async testHistoryQueryItem(
     ctx: KoaContext<
-      { south: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>; item: HistoryQueryItemCommandDTO<SouthItemSettings> },
+      {
+        south: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+        item: HistoryQueryItemCommandDTO<SouthItemSettings>;
+        testingSettings: SouthConnectorItemTestingSettings;
+      },
       void
     >
   ) {
@@ -135,6 +139,7 @@ export default class HistoryQueryController extends AbstractController {
         (ctx.query.fromSouth as string) || null,
         ctx.request.body!.south,
         ctx.request.body!.item,
+        ctx.request.body!.testingSettings,
         ctx.ok,
         logger
       );

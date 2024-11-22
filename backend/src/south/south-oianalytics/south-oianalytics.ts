@@ -22,6 +22,7 @@ import https from 'node:https';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { HttpProxyAgent } from 'http-proxy-agent';
 import { BaseFolders } from '../../model/types';
+import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 
 interface OIATimeValues {
   type: string;
@@ -104,6 +105,7 @@ export default class SouthOIAnalytics
 
   override async testItem(
     item: SouthConnectorItemEntity<SouthOIAnalyticsItemSettings>,
+    _testingSettings: SouthConnectorItemTestingSettings,
     callback: (data: OIBusContent) => void
   ): Promise<void> {
     const startTime = DateTime.now()

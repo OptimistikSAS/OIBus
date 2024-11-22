@@ -16,15 +16,12 @@ import {
 } from '../../../../../backend/shared/model/south-connector.model';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
-import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { HistoryQueryItemsComponent } from '../history-query-items/history-query-items.component';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
-import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
 import { DurationPipe } from '../../shared/duration.pipe';
 import { ReactiveFormsModule } from '@angular/forms';
 import { HistoryMetricsComponent } from './history-metrics/history-metrics.component';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
-import { SouthMetricsComponent } from '../../south/south-metrics/south-metrics.component';
 import { HistoryQueryMetrics, OIBusInfo } from '../../../../../backend/shared/model/engine.model';
 import { WindowService } from '../../shared/window.service';
 import { NotificationService } from '../../shared/notification.service';
@@ -45,15 +42,12 @@ import { NorthSettings } from '../../../../../backend/shared/model/north-setting
     RouterLink,
     DecimalPipe,
     BackNavigationDirective,
-    PaginationComponent,
     HistoryQueryItemsComponent,
     BoxComponent,
     BoxTitleDirective,
-    EnabledEnumPipe,
     DurationPipe,
     ReactiveFormsModule,
     HistoryMetricsComponent,
-    SouthMetricsComponent,
     AsyncPipe,
     ClipboardModule,
     LogsComponent

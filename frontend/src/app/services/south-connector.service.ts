@@ -9,7 +9,8 @@ import {
   SouthConnectorItemDTO,
   SouthConnectorItemSearchParam,
   SouthType,
-  SouthConnectorLightDTO
+  SouthConnectorLightDTO,
+  SouthConnectorItemTestingSettings
 } from '../../../../backend/shared/model/south-connector.model';
 import { Page } from '../../../../backend/shared/model/types';
 import { DownloadService } from './download.service';
@@ -184,10 +185,11 @@ export class SouthConnectorService {
 
   testItem(
     southId: string,
-    south: SouthConnectorDTO<SouthSettings, SouthItemSettings> | null,
-    item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>
+    south: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> | null,
+    item: SouthConnectorItemCommandDTO<SouthItemSettings>,
+    testingSettings: SouthConnectorItemTestingSettings
   ): Observable<OIBusContent> {
-    return this.http.put<OIBusContent>(`/api/south/${southId}/items/test-item`, { south: south, item: item });
+    return this.http.put<OIBusContent>(`/api/south/${southId}/items/test-item`, { south, item, testingSettings });
   }
 
   /**

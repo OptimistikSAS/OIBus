@@ -28,6 +28,7 @@ export class OibCodeBlockComponent implements AfterViewInit, ControlValueAccesso
   @Input() key = '';
   @Input() contentType = '';
   @Input() height = '12rem';
+  @Input() readOnly = false;
   disabled = false;
 
   onChange: (value: string) => void = () => {};
@@ -60,7 +61,8 @@ export class OibCodeBlockComponent implements AfterViewInit, ControlValueAccesso
         theme: 'vs-light',
         selectOnLineNumbers: true,
         wordWrap: 'on',
-        minimap: { enabled: false }
+        minimap: { enabled: false },
+        readOnly: this.readOnly
       });
 
       // we listen on changes
@@ -81,6 +83,12 @@ export class OibCodeBlockComponent implements AfterViewInit, ControlValueAccesso
       // if the editor is not yet loaded, we store the value to write,
       // and it'll be set once the loading is complete
       this.pendingValueToWrite = value;
+    }
+  }
+
+  changeLanguage(language: string) {
+    if (this.codeEditorInstance) {
+      monaco.editor.setModelLanguage(this.codeEditorInstance.getModel()!, language);
     }
   }
 }

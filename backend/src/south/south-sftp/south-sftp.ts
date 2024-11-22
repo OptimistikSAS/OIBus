@@ -16,6 +16,7 @@ import SouthConnectorRepository from '../../repository/config/south-connector.re
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
+import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 
 /**
  * Class SouthSFTP - Retrieve files from remote SFTP instance
@@ -61,7 +62,11 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
     }
   }
 
-  override async testItem(item: SouthConnectorItemEntity<SouthSFTPItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
+  override async testItem(
+    item: SouthConnectorItemEntity<SouthSFTPItemSettings>,
+    _testingSettings: SouthConnectorItemTestingSettings,
+    callback: (data: OIBusContent) => void
+  ): Promise<void> {
     const filesInFolder = await this.listFiles(item);
 
     const values: Array<OIBusTimeValue> = filesInFolder.map(file => ({

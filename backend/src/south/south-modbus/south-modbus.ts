@@ -20,6 +20,7 @@ import SouthConnectorRepository from '../../repository/config/south-connector.re
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
+import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 
 /**
  * Class SouthModbus - Provides instruction for Modbus client connection
@@ -270,7 +271,11 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
     }
   }
 
-  override async testItem(item: SouthConnectorItemEntity<SouthModbusItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
+  override async testItem(
+    item: SouthConnectorItemEntity<SouthModbusItemSettings>,
+    _testingSettings: SouthConnectorItemTestingSettings,
+    callback: (data: OIBusContent) => void
+  ): Promise<void> {
     try {
       await new Promise<void>((resolve, reject) => {
         this.socket = new net.Socket();

@@ -1,5 +1,6 @@
-import { AbstractControl, ValidationErrors } from '@angular/forms';
+import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { Instant } from '../../../../backend/shared/model/types';
+import { DateTime } from 'luxon';
 
 export interface RangeFormValue {
   start: Instant;
@@ -58,4 +59,24 @@ export function validJson(control: AbstractControl): { invalidJson: true } | nul
 export function ascendingDates(group: AbstractControl): ValidationErrors | null {
   const value: RangeFormValue = group.value;
   return value.start && value.end && value.start > value.end ? { ascendingDates: true } : null;
+}
+
+export function dateTimeRangeValidatorBuilder(type: 'start' | 'end'): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const startTime = control.parent?.get('startTime')?.value as string;
+    const endTime = control.parent?.get('endTime')?.value as string;
+
+    if (!startTime || !endTime) {
+      return null;
+    }
+
+    const startDateTime = DateTime.fromISO(startTime).startOf('minute');
+    const endDateTime = DateTime.fromISO(endTime).startOf('minute');
+
+    if (startDateTime > endDateTime) {
+      return type === 'start' ? { badStartDateRange: true } : { badEndDateRange: true };
+    }
+
+    return null;
+  };
 }
