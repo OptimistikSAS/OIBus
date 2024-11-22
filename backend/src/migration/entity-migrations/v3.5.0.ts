@@ -836,6 +836,64 @@ async function updateRegistrationSettings(knex: Knex): Promise<void> {
   await knex.schema.alterTable(REGISTRATIONS_TABLE, table => {
     table.string('public_key');
     table.string('private_key');
+    table.integer('command_retry_interval');
+    table.integer('message_retry_interval');
+    table.integer('command_refresh_interval');
+    table.boolean('command_update_version');
+    table.boolean('command_restart_engine');
+    table.boolean('command_regenerate_cipher_keys');
+    table.boolean('command_update_engine_settings');
+    table.boolean('command_update_registration_settings');
+    table.boolean('command_create_scan_mode');
+    table.boolean('command_update_scan_mode');
+    table.boolean('command_delete_scan_mode');
+    table.boolean('command_create_ip_filter');
+    table.boolean('command_update_ip_filter');
+    table.boolean('command_delete_ip_filter');
+    table.boolean('command_create_certificate');
+    table.boolean('command_update_certificate');
+    table.boolean('command_delete_certificate');
+    table.boolean('command_create_history_query');
+    table.boolean('command_update_history_query');
+    table.boolean('command_delete_history_query');
+    table.boolean('command_create_or_update_history_items_from_csv');
+    table.boolean('command_create_south');
+    table.boolean('command_update_south');
+    table.boolean('command_delete_south');
+    table.boolean('command_create_or_update_south_items_from_csv');
+    table.boolean('command_create_north');
+    table.boolean('command_update_north');
+    table.boolean('command_delete_north');
+  });
+  await knex(REGISTRATIONS_TABLE).update({
+    command_retry_interval: 10,
+    message_retry_interval: 5,
+    command_refresh_interval: 5,
+    command_update_version: true,
+    command_restart_engine: true,
+    command_regenerate_cipher_keys: true,
+    command_update_engine_settings: true,
+    command_update_registration_settings: true,
+    command_create_scan_mode: true,
+    command_update_scan_mode: true,
+    command_delete_scan_mode: true,
+    command_create_ip_filter: true,
+    command_update_ip_filter: true,
+    command_delete_ip_filter: true,
+    command_create_certificate: true,
+    command_update_certificate: true,
+    command_delete_certificate: true,
+    command_create_history_query: true,
+    command_update_history_query: true,
+    command_delete_history_query: true,
+    command_create_or_update_history_items_from_csv: true,
+    command_create_south: true,
+    command_update_south: true,
+    command_delete_south: true,
+    command_create_or_update_south_items_from_csv: true,
+    command_create_north: true,
+    command_update_north: true,
+    command_delete_north: true
   });
 }
 

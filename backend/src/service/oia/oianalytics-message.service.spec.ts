@@ -103,7 +103,7 @@ describe('OIAnalytics Message Service', () => {
     service.createFullConfigMessageIfNotPending = jest.fn();
     service.start();
     expect(service.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    oIAnalyticsRegistrationService.registrationEvent.emit('completed');
+    oIAnalyticsRegistrationService.registrationEvent.emit('updated');
     expect(service.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(2);
   });
 

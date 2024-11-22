@@ -199,7 +199,7 @@ const LOG_DB_NAME = 'logs.db';
 
   const oIAnalyticsCommandService = new OIAnalyticsCommandService(
     repositoryService.oianalyticsCommandRepository,
-    repositoryService.oianalyticsRegistrationRepository,
+    oIAnalyticsRegistrationService,
     oIAnalyticsMessageService,
     encryptionService,
     oIAnalyticsClient,

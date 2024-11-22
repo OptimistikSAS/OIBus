@@ -10,6 +10,7 @@ import {
   OIAnalyticsEngineCommandDTO,
   OIAnalyticsIPFilterCommandDTO,
   OIAnalyticsNorthCommandDTO,
+  OIAnalyticsRegistrationCommandDTO,
   OIAnalyticsScanModeCommandDTO,
   OIAnalyticsSouthCommandDTO,
   OIAnalyticsUserCommandDTO,
@@ -68,8 +69,11 @@ export default class OIAnalyticsMessageService {
     });
     this.triggerRun.emit('next');
 
-    this.oIAnalyticsRegistrationService.registrationEvent.on('completed', () => {
-      this.createFullConfigMessageIfNotPending();
+    this.oIAnalyticsRegistrationService.registrationEvent.on('updated', () => {
+      const registrationSettings = this.oIAnalyticsRegistrationService.getRegistrationSettings()!;
+      if (registrationSettings.status === 'REGISTERED') {
+        this.createFullConfigMessageIfNotPending();
+      }
     });
   }
 
@@ -180,7 +184,8 @@ export default class OIAnalyticsMessageService {
   //
   private createFullConfigurationCommand(registration: OIAnalyticsRegistration): OIBusFullConfigurationCommandDTO {
     return {
-      engine: this.createEngineCommand(registration),
+      engine: this.createEngineCommand(),
+      registration: this.createRegistrationCommand(registration),
       scanModes: this.createScanModesCommand(),
       ipFilters: this.createIPFiltersCommand(),
       certificates: this.createCertificatesCommand(),
@@ -190,7 +195,7 @@ export default class OIAnalyticsMessageService {
     };
   }
 
-  private createEngineCommand(registration: OIAnalyticsRegistration): OIAnalyticsEngineCommandDTO {
+  private createEngineCommand(): OIAnalyticsEngineCommandDTO {
     const engine = this.engineRepository.get()!;
     const info = getOIBusInfo(engine);
     return {
@@ -200,7 +205,6 @@ export default class OIAnalyticsMessageService {
       launcherVersion: engine.launcherVersion,
       architecture: info.architecture,
       operatingSystem: info.operatingSystem,
-      publicKey: registration.publicCipherKey || '',
       settings: {
         name: engine.name,
         port: engine.port,
@@ -231,6 +235,18 @@ export default class OIAnalyticsMessageService {
             interval: engine.logParameters.oia.interval
           }
         }
+      }
+    };
+  }
+
+  private createRegistrationCommand(registration: OIAnalyticsRegistration): OIAnalyticsRegistrationCommandDTO {
+    return {
+      publicKey: registration.publicCipherKey || '',
+      settings: {
+        commandRefreshInterval: registration.commandRefreshInterval,
+        commandRetryInterval: registration.commandRetryInterval,
+        messageRetryInterval: registration.messageRetryInterval,
+        commandPermissions: registration.commandPermissions
       }
     };
   }

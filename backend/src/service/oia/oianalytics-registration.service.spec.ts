@@ -111,7 +111,37 @@ describe('OIAnalytics Registration Service', () => {
       token: null,
       publicCipherKey: null,
       privateCipherKey: null,
-      checkUrl: null
+      checkUrl: null,
+      commandRefreshInterval: 10,
+      commandRetryInterval: 5,
+      messageRetryInterval: 5,
+      commandPermissions: {
+        updateVersion: true,
+        restartEngine: true,
+        regenerateCipherKeys: true,
+        updateEngineSettings: true,
+        updateRegistrationSettings: true,
+        createScanMode: true,
+        updateScanMode: true,
+        deleteScanMode: true,
+        createIpFilter: true,
+        updateIpFilter: true,
+        deleteIpFilter: true,
+        createCertificate: true,
+        updateCertificate: true,
+        deleteCertificate: true,
+        createHistoryQuery: true,
+        updateHistoryQuery: true,
+        deleteHistoryQuery: true,
+        createOrUpdateHistoryItemsFromCsv: true,
+        createSouth: true,
+        updateSouth: true,
+        deleteSouth: true,
+        createOrUpdateSouthItemsFromCsv: true,
+        createNorth: true,
+        updateNorth: true,
+        deleteNorth: true
+      }
     };
     const result = {
       redirectUrl: 'http://localhost:4200/api/oianalytics/oibus/check-registration?id=id',
@@ -142,6 +172,14 @@ describe('OIAnalytics Registration Service', () => {
     expect(oIAnalyticsRegistrationRepository.update).toHaveBeenCalledWith(testData.oIAnalytics.registration.command);
   });
 
+  it('should update keys', async () => {
+    await service.updateKeys('private key', 'public key');
+
+    expect(encryptionService.encryptText).toHaveBeenCalledTimes(1);
+    expect(encryptionService.encryptText).toHaveBeenCalledWith('private key');
+    expect(oIAnalyticsRegistrationRepository.updateKeys).toHaveBeenCalledWith('private key', 'public key');
+  });
+
   it('should edit registration with proxy', async () => {
     const command: RegistrationSettingsCommandDTO = {
       host: 'http://localhost:4200/',
@@ -149,7 +187,37 @@ describe('OIAnalytics Registration Service', () => {
       useProxy: true,
       proxyUrl: 'http://localhost:3128',
       proxyUsername: 'user',
-      proxyPassword: 'pass'
+      proxyPassword: 'pass',
+      commandRefreshInterval: 10,
+      commandRetryInterval: 5,
+      messageRetryInterval: 5,
+      commandPermissions: {
+        updateVersion: true,
+        restartEngine: true,
+        regenerateCipherKeys: true,
+        updateEngineSettings: true,
+        updateRegistrationSettings: true,
+        createScanMode: true,
+        updateScanMode: true,
+        deleteScanMode: true,
+        createIpFilter: true,
+        updateIpFilter: true,
+        deleteIpFilter: true,
+        createCertificate: true,
+        updateCertificate: true,
+        deleteCertificate: true,
+        createHistoryQuery: true,
+        updateHistoryQuery: true,
+        deleteHistoryQuery: true,
+        createOrUpdateHistoryItemsFromCsv: true,
+        createSouth: true,
+        updateSouth: true,
+        deleteSouth: true,
+        createOrUpdateSouthItemsFromCsv: true,
+        createNorth: true,
+        updateNorth: true,
+        deleteNorth: true
+      }
     };
     (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.registration.completed);
 

@@ -31,6 +31,42 @@ export interface OIAnalyticsUserCommandDTO {
   settings: UserCommandDTO;
 }
 
+export interface OIAnalyticsRegistrationCommandDTO {
+  publicKey: string;
+  settings: {
+    commandRefreshInterval: number;
+    commandRetryInterval: number;
+    messageRetryInterval: number;
+    commandPermissions: {
+      updateVersion: boolean;
+      restartEngine: boolean;
+      regenerateCipherKeys: boolean;
+      updateEngineSettings: boolean;
+      updateRegistrationSettings: boolean;
+      createScanMode: boolean;
+      updateScanMode: boolean;
+      deleteScanMode: boolean;
+      createIpFilter: boolean;
+      updateIpFilter: boolean;
+      deleteIpFilter: boolean;
+      createCertificate: boolean;
+      updateCertificate: boolean;
+      deleteCertificate: boolean;
+      createHistoryQuery: boolean;
+      updateHistoryQuery: boolean;
+      deleteHistoryQuery: boolean;
+      createOrUpdateHistoryItemsFromCsv: boolean;
+      createSouth: boolean;
+      updateSouth: boolean;
+      deleteSouth: boolean;
+      createOrUpdateSouthItemsFromCsv: boolean;
+      createNorth: boolean;
+      updateNorth: boolean;
+      deleteNorth: boolean;
+    };
+  };
+}
+
 export interface OIAnalyticsEngineCommandDTO {
   oIBusInternalId: string;
   name: string;
@@ -38,7 +74,6 @@ export interface OIAnalyticsEngineCommandDTO {
   launcherVersion: string;
   architecture: string;
   operatingSystem: string;
-  publicKey: string;
   settings: EngineSettingsCommandDTO;
 }
 
@@ -56,6 +91,7 @@ export interface OIAnalyticsNorthCommandDTO {
 
 export interface OIBusFullConfigurationCommandDTO {
   engine: OIAnalyticsEngineCommandDTO;
+  registration: OIAnalyticsRegistrationCommandDTO;
   scanModes: Array<OIAnalyticsScanModeCommandDTO>;
   ipFilters: Array<OIAnalyticsIPFilterCommandDTO>;
   certificates: Array<OIAnalyticsCertificateCommandDTO>;
@@ -72,16 +108,17 @@ export const OIANALYTICS_FETCH_COMMAND_TYPES = [
   'restart-engine',
   'regenerate-cipher-keys',
   'update-engine-settings',
+  'update-registration-settings',
   'create-scan-mode',
   'update-scan-mode',
   'delete-scan-mode',
   'create-south',
   'update-south',
   'delete-south',
+  'create-or-update-south-items-from-csv',
   'create-north',
   'update-north',
-  'delete-north',
-  'create-or-update-south-items-from-csv'
+  'delete-north'
 ] as const;
 export type OIAnalyticsFetchCommandType = (typeof OIANALYTICS_FETCH_COMMAND_TYPES)[number];
 
@@ -110,6 +147,15 @@ export interface OIAnalyticsFetchRegenerateCipherKeysCommandDTO extends BaseOIAn
 export interface OIAnalyticsFetchUpdateEngineSettingsCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
   type: 'update-engine-settings';
   commandContent: EngineSettingsCommandDTO;
+}
+
+export interface OIAnalyticsFetchUpdateRegistrationSettingsCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'update-registration-settings';
+  commandContent: {
+    commandRefreshInterval: number;
+    commandRetryInterval: number;
+    messageRetryInterval: number;
+  };
 }
 
 export interface OIAnalyticsFetchCreateScanModeCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
@@ -175,6 +221,7 @@ export type OIAnalyticsFetchCommandDTO =
   | OIAnalyticsFetchRestartEngineCommandDTO
   | OIAnalyticsFetchRegenerateCipherKeysCommandDTO
   | OIAnalyticsFetchUpdateEngineSettingsCommandDTO
+  | OIAnalyticsFetchUpdateRegistrationSettingsCommandDTO
   | OIAnalyticsFetchCreateScanModeCommandDTO
   | OIAnalyticsFetchUpdateScanModeCommandDTO
   | OIAnalyticsFetchDeleteScanModeCommandDTO
