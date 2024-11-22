@@ -105,14 +105,11 @@ export default class SouthOIAnalytics
 
   override async testItem(
     item: SouthConnectorItemEntity<SouthOIAnalyticsItemSettings>,
-    _testingSettings: SouthConnectorItemTestingSettings,
+    testingSettings: SouthConnectorItemTestingSettings,
     callback: (data: OIBusContent) => void
   ): Promise<void> {
-    const startTime = DateTime.now()
-      .minus(600 * 1000)
-      .toUTC()
-      .toISO() as Instant;
-    const endTime = DateTime.now().toUTC().toISO() as Instant;
+    const startTime = testingSettings.history!.startTime;
+    const endTime = testingSettings.history!.endTime;
     const result: Array<OIATimeValues> = await this.queryData(item, startTime, endTime);
     const { formattedResult } = this.parseData(result);
     callback({ type: 'time-values', content: formattedResult });
