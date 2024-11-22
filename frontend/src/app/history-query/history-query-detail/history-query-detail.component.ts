@@ -8,7 +8,7 @@ import { NorthConnectorCommandDTO, NorthConnectorManifest } from '../../../../..
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
-import { HistoryQueryDTO, HistoryQueryStatus } from '../../../../../backend/shared/model/history-query.model';
+import { HistoryQueryDTO, HistoryQueryItemCommandDTO, HistoryQueryStatus } from '../../../../../backend/shared/model/history-query.model';
 import {
   SouthConnectorCommandDTO,
   SouthConnectorItemSearchParam,
@@ -141,6 +141,13 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
             };
           });
       });
+  }
+
+  updateInMemoryItems(_items: Array<HistoryQueryItemCommandDTO<SouthItemSettings>> | null) {
+    this.historyQueryService.get(this.historyQuery!.id).subscribe(historyQuery => {
+      this.historyQuery!.items = historyQuery.items;
+      this.historyQuery = JSON.parse(JSON.stringify(this.historyQuery)); // Used to force a refresh in history query item list
+    });
   }
 
   getScanMode(scanModeId: string) {
