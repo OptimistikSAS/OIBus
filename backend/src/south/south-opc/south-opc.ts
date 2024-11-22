@@ -107,17 +107,14 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
 
   override async testItem(
     item: SouthConnectorItemEntity<SouthOPCItemSettings>,
-    _testingSettings: SouthConnectorItemTestingSettings,
+    testingSettings: SouthConnectorItemTestingSettings,
     callback: (data: OIBusContent) => void
   ): Promise<void> {
     await this.connect();
     const content: OIBusContent = { type: 'time-values', content: [] };
 
-    const startTime = DateTime.now()
-      .minus(600 * 1000)
-      .toUTC()
-      .toISO() as Instant;
-    const endTime = DateTime.now().toUTC().toISO() as Instant;
+    const startTime = testingSettings.history!.startTime;
+    const endTime = testingSettings.history!.endTime;
 
     const headers: Record<string, string> = {};
     headers['Content-Type'] = 'application/json';
