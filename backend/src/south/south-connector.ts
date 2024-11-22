@@ -2,7 +2,7 @@ import { EventEmitter } from 'node:events';
 import { CronJob } from 'cron';
 import { createBaseFolders, delay, generateIntervals, validateCronExpression } from '../service/utils';
 
-import { SouthCache } from '../../shared/model/south-connector.model';
+import { SouthCache, SouthConnectorItemTestingSettings } from '../../shared/model/south-connector.model';
 import { Instant, Interval } from '../../shared/model/types';
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
@@ -635,7 +635,11 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
 
   abstract testConnection(): Promise<void>;
 
-  abstract testItem(item: SouthConnectorItemEntity<I>, _callback: (data: OIBusContent) => void): Promise<void>;
+  abstract testItem(
+    item: SouthConnectorItemEntity<I>,
+    testingSettings: SouthConnectorItemTestingSettings,
+    _callback: (data: OIBusContent) => void
+  ): Promise<void>;
 
   /**
    * Safely delete the cache entries of a south item, when the south item is deleted
