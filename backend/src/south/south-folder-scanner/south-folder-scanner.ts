@@ -14,6 +14,7 @@ import SouthConnectorRepository from '../../repository/config/south-connector.re
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
+import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 
 /**
  * Class SouthFolderScanner - Retrieve file from a local or remote folder
@@ -73,6 +74,7 @@ export default class SouthFolderScanner
 
   override async testItem(
     item: SouthConnectorItemEntity<SouthFolderScannerItemSettings>,
+    _testingSettings: SouthConnectorItemTestingSettings,
     callback: (data: OIBusContent) => void
   ): Promise<void> {
     const inputFolder = path.resolve(this.connector.settings.inputFolder);

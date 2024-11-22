@@ -43,6 +43,7 @@ import SouthConnectorRepository from '../../repository/config/south-connector.re
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
+import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 
 export const MAX_NUMBER_OF_NODE_TO_LOG = 10;
 export const NUM_VALUES_PER_NODE = 1000;
@@ -205,7 +206,11 @@ export default class SouthOPCUA
     }
   }
 
-  override async testItem(item: SouthConnectorItemEntity<SouthOPCUAItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
+  override async testItem(
+    item: SouthConnectorItemEntity<SouthOPCUAItemSettings>,
+    testingSettings: SouthConnectorItemTestingSettings,
+    callback: (data: OIBusContent) => void
+  ): Promise<void> {
     await this.connect();
     let session;
     try {
@@ -214,12 +219,13 @@ export default class SouthOPCUA
       if (item.settings.mode === 'da') {
         content = await this.getDAValues([item], session);
       } else {
-        const startTime = DateTime.now()
-          .minus(600 * 1000)
-          .toUTC()
-          .toISO() as Instant;
-        const endTime = DateTime.now().toUTC().toISO() as Instant;
-        content = (await this.getHAValues([item], startTime, endTime, session, true)) as OIBusContent;
+        content = (await this.getHAValues(
+          [item],
+          testingSettings.history!.startTime,
+          testingSettings.history!.endTime,
+          session,
+          true
+        )) as OIBusContent;
       }
       callback(content);
     } catch (error: unknown) {

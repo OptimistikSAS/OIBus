@@ -23,6 +23,7 @@ import SouthConnectorRepository from '../../repository/config/south-connector.re
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
+import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 
 /**
  * Class SouthMSSQL - Retrieve data from MSSQL databases and send them to the cache as CSV files.
@@ -125,7 +126,11 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
     }
   }
 
-  override async testItem(item: SouthConnectorItemEntity<SouthMSSQLItemSettings>, callback: (data: OIBusContent) => void): Promise<void> {
+  override async testItem(
+    item: SouthConnectorItemEntity<SouthMSSQLItemSettings>,
+    _testingSettings: SouthConnectorItemTestingSettings,
+    callback: (data: OIBusContent) => void
+  ): Promise<void> {
     const startTime = DateTime.now()
       .minus(600 * 1000)
       .toUTC()

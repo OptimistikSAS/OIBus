@@ -3,16 +3,12 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 
-import { RouterLink } from '@angular/router';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { FormControlValidationDirective } from '../../shared/form-control-validation.directive';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { LoadingSpinnerComponent } from '../../shared/loading-spinner/loading-spinner.component';
 import { SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
 import { debounceTime, distinctUntilChanged, of, switchMap, tap } from 'rxjs';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
-import { DatetimePipe } from '../../shared/datetime.pipe';
-import { DurationPipe } from '../../shared/duration.pipe';
 import { OibFormControl } from '../../../../../backend/shared/model/form.model';
 import { createPageFromArray, Page } from '../../../../../backend/shared/model/types';
 import { emptyPage } from '../../shared/test-utils';
@@ -24,7 +20,6 @@ import { ExportItemModalComponent } from '../../shared/export-item-modal/export-
 import { ImportItemModalComponent } from '../../shared/import-item-modal/import-item-modal.component';
 import { EditHistoryQueryItemModalComponent } from '../edit-history-query-item-modal/edit-history-query-item-modal.component';
 import { ImportHistoryQueryItemsModalComponent } from '../import-history-query-items-modal/import-history-query-items-modal.component';
-import { HistoryQueryItemTestModalComponent } from '../history-query-item-test-modal/history-query-item-test-modal.component';
 import { PipeProviderService } from '../../shared/form/pipe-provider.service';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
@@ -45,16 +40,12 @@ export interface TableData {
   standalone: true,
   imports: [
     TranslateModule,
-    RouterLink,
     PaginationComponent,
     FormControlValidationDirective,
     FormsModule,
-    LoadingSpinnerComponent,
     ReactiveFormsModule,
     BoxComponent,
     BoxTitleDirective,
-    DatetimePipe,
-    DurationPipe,
     OibHelpComponent
   ],
   templateUrl: './history-query-items.component.html',
@@ -128,14 +119,14 @@ export class HistoryQueryItemsComponent implements OnInit, OnChanges {
   editItem(historyQueryItem: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>) {
     const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent, { size: 'xl' });
     const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
-    component.prepareForEdition(this.southManifest.items, this.allItems, historyQueryItem);
+    component.prepareForEdition(this.southManifest.items, this.allItems, historyQueryItem, this.historyQuery, this.southManifest);
     this.refreshAfterEditionModalClosed(modalRef, historyQueryItem);
   }
 
   addItem() {
     const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent, { size: 'xl' });
     const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
-    component.prepareForCreation(this.southManifest.items, this.allItems);
+    component.prepareForCreation(this.southManifest.items, this.allItems, this.historyQuery, this.southManifest);
     this.refreshAfterCreationModalClosed(modalRef);
   }
 
@@ -229,15 +220,8 @@ export class HistoryQueryItemsComponent implements OnInit, OnChanges {
   duplicateItem(item: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>) {
     const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent, { size: 'xl' });
     const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
-    component.prepareForCopy(this.southManifest.items, item);
+    component.prepareForCopy(this.southManifest.items, item, this.historyQuery, this.southManifest);
     this.refreshAfterCreationModalClosed(modalRef);
-  }
-
-  testItem(item: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>) {
-    this.historyQueryService.testItem(this.historyQuery!.id, this.historyQuery, item).subscribe(result => {
-      const modalRef = this.modalService.open(HistoryQueryItemTestModalComponent, { size: 'xl' });
-      modalRef.componentInstance.prepare(result, item);
-    });
   }
 
   exportItems() {

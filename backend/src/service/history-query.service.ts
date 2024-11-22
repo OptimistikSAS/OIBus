@@ -1,4 +1,8 @@
-import { SouthConnectorCommandDTO, SouthConnectorManifest } from '../../shared/model/south-connector.model';
+import {
+  SouthConnectorCommandDTO,
+  SouthConnectorManifest,
+  SouthConnectorItemTestingSettings
+} from '../../shared/model/south-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { HistoryQueryEntity, HistoryQueryEntityLight, HistoryQueryItemEntity } from '../model/histor-query.model';
 import { NorthSettings } from '../../shared/model/north-settings.model';
@@ -137,6 +141,7 @@ export default class HistoryQueryService {
     retrieveSecretsFromSouth: string | null,
     command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
     itemCommand: HistoryQueryItemCommandDTO<SouthItemSettings>,
+    testingSettings: SouthConnectorItemTestingSettings,
     callback: (data: OIBusContent) => void,
     logger: pino.Logger
   ): Promise<void> {
@@ -168,6 +173,7 @@ export default class HistoryQueryService {
       'create',
       command,
       { ...itemCommand, scanModeId: 'history', scanModeName: null },
+      testingSettings,
       callback,
       logger
     );

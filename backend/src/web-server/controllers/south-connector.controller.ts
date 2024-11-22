@@ -5,6 +5,7 @@ import {
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
   SouthConnectorItemSearchParam,
+  SouthConnectorItemTestingSettings,
   SouthConnectorLightDTO,
   SouthConnectorManifest,
   SouthType
@@ -125,7 +126,11 @@ export default class SouthConnectorController {
 
   async testSouthItem(
     ctx: KoaContext<
-      { south: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>; item: SouthConnectorItemCommandDTO<SouthItemSettings> },
+      {
+        south: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+        item: SouthConnectorItemCommandDTO<SouthItemSettings>;
+        testingSettings: SouthConnectorItemTestingSettings;
+      },
       void
     >
   ): Promise<void> {
@@ -138,7 +143,14 @@ export default class SouthConnectorController {
         },
         { level: 'silent' }
       );
-      await ctx.app.southService.testSouthItem(ctx.params.id, ctx.request.body!.south, ctx.request.body!.item, ctx.ok, logger);
+      await ctx.app.southService.testSouthItem(
+        ctx.params.id,
+        ctx.request.body!.south,
+        ctx.request.body!.item,
+        ctx.request.body!.testingSettings,
+        ctx.ok,
+        logger
+      );
     } catch (error: unknown) {
       ctx.badRequest((error as Error).message);
     }

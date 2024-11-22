@@ -8,6 +8,7 @@ import {
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
   SouthConnectorItemSearchParam,
+  SouthConnectorItemTestingSettings,
   SouthConnectorLightDTO,
   SouthConnectorManifest
 } from '../../shared/model/south-connector.model';
@@ -390,6 +391,7 @@ export default class SouthService {
     id: string,
     command: SouthConnectorCommandDTO<S, I>,
     itemCommand: SouthConnectorItemCommandDTO<I>,
+    testingSettings: SouthConnectorItemTestingSettings,
     callback: (data: OIBusContent) => void,
     logger: pino.Logger
   ): Promise<void> {
@@ -432,7 +434,7 @@ export default class SouthService {
       archive: 'baseArchiveFolder',
       error: 'baseErrorFolder'
     });
-    return await south.testItem(testItemToRun, callback);
+    return await south.testItem(testItemToRun, testingSettings, callback);
   }
 
   findById<S extends SouthSettings, I extends SouthItemSettings>(southId: string): SouthConnectorEntity<S, I> | null {
