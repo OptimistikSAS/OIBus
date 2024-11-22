@@ -10,12 +10,10 @@ import {
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { combineLatest, of, switchMap, tap } from 'rxjs';
-import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { PageLoader } from '../../shared/page-loader.service';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { SouthMetricsComponent } from '../south-metrics/south-metrics.component';
-import { NorthMetricsComponent } from '../../north/north-metrics/north-metrics.component';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
 import { SouthItemsComponent } from '../south-items/south-items.component';
@@ -36,10 +34,8 @@ import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/
   imports: [
     TranslateModule,
     RouterLink,
-    PaginationComponent,
     BackNavigationDirective,
     SouthMetricsComponent,
-    NorthMetricsComponent,
     BoxComponent,
     BoxTitleDirective,
     EnabledEnumPipe,

@@ -12,7 +12,7 @@ import { ObservableState, SaveButtonComponent } from '../../shared/save-button/s
 import { formDirectives } from '../../shared/form-directives';
 import { FormControl, FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest, Observable, of, switchMap, tap } from 'rxjs';
 import { FormComponent } from '../../shared/form/form.component';
 import { OibFormControl } from '../../../../../backend/shared/model/form.model';
@@ -22,7 +22,6 @@ import { createFormGroup, groupFormControlsByRow } from '../../shared/form-utils
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { SouthItemsComponent } from '../south-items/south-items.component';
-import { EditElementComponent } from '../../shared/form/oib-form-array/edit-element/edit-element.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { ModalService } from '../../shared/modal.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
@@ -34,14 +33,12 @@ import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/
   imports: [
     TranslateModule,
     ...formDirectives,
-    RouterLink,
     SaveButtonComponent,
     FormComponent,
     BackNavigationDirective,
     BoxComponent,
     BoxTitleDirective,
     SouthItemsComponent,
-    EditElementComponent,
     OibHelpComponent
   ],
   templateUrl: './edit-south.component.html',
