@@ -1426,8 +1426,9 @@ describe('SouthSlims with query params and accept self signed', () => {
     const callback = jest.fn();
     south.queryData = jest.fn().mockReturnValueOnce([]);
     south.parseData = jest.fn().mockImplementationOnce(results => ({ formattedResult: results }));
-    await south.testItem(configuration.items[0], callback);
-    expect(south.queryData).toHaveBeenCalledTimes(1);
+    await south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback);
+    const { startTime, endTime } = testData.south.itemTestingSettings.history!;
+    expect(south.queryData).toHaveBeenCalledWith(configuration.items[0], startTime, endTime);
     expect(callback).toHaveBeenCalledTimes(1);
   });
 });

@@ -706,7 +706,7 @@ describe('SouthMQTT with Basic Auth', () => {
       }
     ]);
 
-    south.testItem(configuration.items[0], callback);
+    south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback);
     await flushPromises();
     expect(mqtt.connect).toHaveBeenCalled();
     expect(south.subscribe).not.toHaveBeenCalled();
@@ -729,7 +729,7 @@ describe('SouthMQTT with Basic Auth', () => {
     south.disconnect = jest.fn();
     const callback = jest.fn();
 
-    south.testItem(configuration.items[0], callback);
+    south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback);
     mqttStream.emit('error', 'connect error');
   });
 
