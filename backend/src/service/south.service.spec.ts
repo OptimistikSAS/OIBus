@@ -383,7 +383,7 @@ describe('south service', () => {
       ignoreModifiedDate: false,
       minAge: 100
     };
-    await service.testSouthItem('create', testData.south.command, itemCommand, callback, logger);
+    await service.testSouthItem('create', testData.south.command, itemCommand, testData.south.itemTestingSettings, callback, logger);
     expect(service.runSouth).toHaveBeenCalled();
     expect(mockedSouth1.testItem).toHaveBeenCalled();
   });
@@ -393,9 +393,9 @@ describe('south service', () => {
     service.runSouth = jest.fn();
     const badCommand = JSON.parse(JSON.stringify(testData.south.command));
     badCommand.type = 'bad';
-    await expect(service.testSouthItem('create', badCommand, testData.south.itemCommand, callback, logger)).rejects.toThrow(
-      'South manifest bad not found'
-    );
+    await expect(
+      service.testSouthItem('create', badCommand, testData.south.itemCommand, testData.south.itemTestingSettings, callback, logger)
+    ).rejects.toThrow('South manifest bad not found');
     expect(service.runSouth).not.toHaveBeenCalled();
   });
 
@@ -410,7 +410,14 @@ describe('south service', () => {
       ignoreModifiedDate: false,
       minAge: 100
     };
-    await service.testSouthItem(testData.south.list[0].id, testData.south.command, itemCommand, callback, logger);
+    await service.testSouthItem(
+      testData.south.list[0].id,
+      testData.south.command,
+      itemCommand,
+      testData.south.itemTestingSettings,
+      callback,
+      logger
+    );
     expect(service.runSouth).toHaveBeenCalled();
     expect(mockedSouth1.testItem).toHaveBeenCalled();
   });
@@ -420,7 +427,14 @@ describe('south service', () => {
     service.runSouth = jest.fn().mockReturnValue(mockedSouth1);
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(null);
     await expect(
-      service.testSouthItem(testData.south.list[0].id, testData.south.command, testData.south.itemCommand, callback, logger)
+      service.testSouthItem(
+        testData.south.list[0].id,
+        testData.south.command,
+        testData.south.itemCommand,
+        testData.south.itemTestingSettings,
+        callback,
+        logger
+      )
     ).rejects.toThrow(`South connector ${testData.south.list[0].id} not found`);
     expect(service.runSouth).not.toHaveBeenCalled();
   });

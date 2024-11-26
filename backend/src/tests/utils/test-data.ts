@@ -4,6 +4,7 @@ import { NorthConnectorCommandDTO, NorthConnectorManifest } from '../../../share
 import {
   SouthConnectorCommandDTO,
   SouthConnectorItemCommandDTO,
+  SouthConnectorItemTestingSettings,
   SouthConnectorManifest
 } from '../../../shared/model/south-connector.model';
 import { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
@@ -360,6 +361,12 @@ const southConnectorItemCommand: SouthConnectorItemCommandDTO<SouthItemSettings>
     minAge: 100,
     preserveFiles: true,
     ignoreModifiedDate: false
+  }
+};
+const itemTestingSettings: SouthConnectorItemTestingSettings = {
+  history: {
+    startTime: constants.dates.DATE_1,
+    endTime: constants.dates.DATE_2
   }
 };
 
@@ -1395,6 +1402,7 @@ export default Object.freeze({
     list: southConnectors,
     command: southConnectorCommand,
     itemCommand: southConnectorItemCommand,
+    itemTestingSettings,
     manifest: southTestManifest,
     metrics: southMetrics
   },

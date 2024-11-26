@@ -838,7 +838,8 @@ describe('SouthOPCUA', () => {
   it('should test DA item', async () => {
     const read = jest.fn();
     const close = jest.fn();
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ read, close });
+    const session = { read, close };
+    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue(session);
 
     south.getDAValues = jest.fn().mockReturnValue({
       type: 'time-values',
@@ -853,14 +854,15 @@ describe('SouthOPCUA', () => {
     });
 
     const callback = jest.fn();
-    await south.testItem(configuration.items[3], callback);
-    expect(south.getDAValues).toHaveBeenCalled();
+    await south.testItem(configuration.items[3], testData.south.itemTestingSettings, callback);
+    expect(south.getDAValues).toHaveBeenCalledWith([configuration.items[3]], session);
   });
 
   it('should test HA item', async () => {
     const read = jest.fn();
     const close = jest.fn();
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ read, close });
+    const session = { read, close };
+    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue(session);
 
     south.disconnect = jest.fn();
     south.getHAValues = jest.fn().mockReturnValue([
@@ -874,16 +876,18 @@ describe('SouthOPCUA', () => {
     ]);
 
     const callback = jest.fn();
-    await south.testItem(configuration.items[1], callback);
+    await south.testItem(configuration.items[1], testData.south.itemTestingSettings, callback);
 
-    expect(south.getHAValues).toHaveBeenCalled();
+    const { startTime, endTime } = testData.south.itemTestingSettings.history!;
+    expect(south.getHAValues).toHaveBeenCalledWith([configuration.items[1]], startTime, endTime, session, true);
     expect(south.disconnect).toHaveBeenCalled();
   });
 
   it('should test HA item and manage error', async () => {
     const read = jest.fn();
     const close = jest.fn();
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ read, close });
+    const session = { read, close };
+    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue(session);
 
     south.disconnect = jest.fn();
     south.getHAValues = jest.fn().mockImplementationOnce(() => {
@@ -891,9 +895,10 @@ describe('SouthOPCUA', () => {
     });
 
     const callback = jest.fn();
-    await expect(south.testItem(configuration.items[1], callback)).rejects.toThrow('ha error');
+    await expect(south.testItem(configuration.items[1], testData.south.itemTestingSettings, callback)).rejects.toThrow('ha error');
 
-    expect(south.getHAValues).toHaveBeenCalled();
+    const { startTime, endTime } = testData.south.itemTestingSettings.history!;
+    expect(south.getHAValues).toHaveBeenCalledWith([configuration.items[1]], startTime, endTime, session, true);
     expect(south.disconnect).toHaveBeenCalled();
   });
 

@@ -1255,8 +1255,21 @@ describe('SouthOIAnalytics with OIA module', () => {
   it('should test item', async () => {
     const callback = jest.fn();
     south.queryData = jest.fn().mockReturnValueOnce([]);
-    await south.testItem(configuration.items[0], callback);
-    expect(south.queryData).toHaveBeenCalledTimes(1);
+    await south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback);
+    const { startTime, endTime } = testData.south.itemTestingSettings.history!;
+    expect(south.queryData).toHaveBeenCalledWith(configuration.items[0], startTime, endTime);
     expect(callback).toHaveBeenCalledTimes(1);
+  });
+
+  it('should test item and throw an error', async () => {
+    const callback = jest.fn();
+    const error = new Error('Unable to query data');
+    south.queryData = jest.fn().mockRejectedValue(error);
+
+    await expect(south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback)).rejects.toThrow(error);
+
+    const { startTime, endTime } = testData.south.itemTestingSettings.history!;
+    expect(south.queryData).toHaveBeenCalledWith(configuration.items[0], startTime, endTime);
+    expect(callback).not.toHaveBeenCalled();
   });
 });

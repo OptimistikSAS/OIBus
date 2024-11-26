@@ -326,21 +326,22 @@ describe('SouthMySQL with authentication', () => {
     };
     (mysql.createConnection as jest.Mock).mockReturnValue(mysqlConnection);
 
-    const startTime = '2020-01-01T00:00:00.000Z';
+    const formattedInstant = '2020-01-01T00:00:00.000Z';
     south.queryData = jest.fn().mockReturnValueOnce([
       { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
       { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
     ]);
-    (utils.formatInstant as jest.Mock).mockReturnValue(startTime);
+    (utils.formatInstant as jest.Mock).mockReturnValue(formattedInstant);
     (utils.convertDateTimeToInstant as jest.Mock).mockImplementation(instant => instant);
 
     south.createConnectionOptions = jest.fn();
 
     const callback = jest.fn();
-    await south.testItem(configuration.items[0], callback);
+    await south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback);
     expect(south.createConnectionOptions).toHaveBeenCalled();
     expect(mysql.createConnection).toHaveBeenCalled();
-    expect(south.queryData).toHaveBeenCalled();
+    const { startTime, endTime } = testData.south.itemTestingSettings.history!;
+    expect(south.queryData).toHaveBeenCalledWith(configuration.items[0], startTime, endTime);
   });
 
   it('should test item without datetimeFields', async () => {
@@ -352,21 +353,22 @@ describe('SouthMySQL with authentication', () => {
     };
     (mysql.createConnection as jest.Mock).mockReturnValue(mysqlConnection);
 
-    const startTime = '2020-01-01T00:00:00.000Z';
+    const formattedInstant = '2020-01-01T00:00:00.000Z';
     south.queryData = jest.fn().mockReturnValueOnce([
       { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
       { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
     ]);
-    (utils.formatInstant as jest.Mock).mockReturnValue(startTime);
+    (utils.formatInstant as jest.Mock).mockReturnValue(formattedInstant);
     (utils.convertDateTimeToInstant as jest.Mock).mockImplementation(instant => instant);
 
     south.createConnectionOptions = jest.fn();
 
     const callback = jest.fn();
-    await south.testItem(configuration.items[1], callback);
+    await south.testItem(configuration.items[1], testData.south.itemTestingSettings, callback);
     expect(south.createConnectionOptions).toHaveBeenCalled();
     expect(mysql.createConnection).toHaveBeenCalled();
-    expect(south.queryData).toHaveBeenCalled();
+    const { startTime, endTime } = testData.south.itemTestingSettings.history!;
+    expect(south.queryData).toHaveBeenCalledWith(configuration.items[1], startTime, endTime);
   });
 });
 

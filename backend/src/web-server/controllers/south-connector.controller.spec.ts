@@ -616,7 +616,11 @@ describe('South connector controller', () => {
 
   it('testSouthItem() should test South connector settings on connector update', async () => {
     ctx.params.id = testData.south.list[0].id;
-    ctx.request.body = { south: testData.south.command, item: testData.south.itemCommand };
+    ctx.request.body = {
+      south: testData.south.command,
+      item: testData.south.itemCommand,
+      testingSettings: testData.south.itemTestingSettings
+    };
     ctx.app.logger.child = jest.fn().mockImplementation(() => logger);
 
     await southConnectorController.testSouthItem(ctx);
@@ -625,6 +629,7 @@ describe('South connector controller', () => {
       testData.south.list[0].id,
       testData.south.command,
       testData.south.itemCommand,
+      testData.south.itemTestingSettings,
       ctx.ok,
       logger
     );
@@ -632,7 +637,11 @@ describe('South connector controller', () => {
 
   it('testSouthItem() should throw bad request if test fails', async () => {
     ctx.params.id = testData.south.list[0].id;
-    ctx.request.body = { south: testData.south.command, item: testData.south.itemCommand };
+    ctx.request.body = {
+      south: testData.south.command,
+      item: testData.south.itemCommand,
+      testingSettings: testData.south.itemTestingSettings
+    };
     ctx.app.logger.child = jest.fn().mockImplementation(() => logger);
     (ctx.app.southService.testSouthItem as jest.Mock).mockImplementation(() => {
       throw new Error('test error');
@@ -643,6 +652,7 @@ describe('South connector controller', () => {
       testData.south.list[0].id,
       testData.south.command,
       testData.south.itemCommand,
+      testData.south.itemTestingSettings,
       ctx.ok,
       logger
     );
