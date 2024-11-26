@@ -154,7 +154,11 @@ describe('History query controller', () => {
   });
 
   it('testHistoryQueryItem() should test south item', async () => {
-    ctx.request.body = { south: testData.south.command, item: testData.south.itemCommand };
+    ctx.request.body = {
+      south: testData.south.command,
+      item: testData.south.itemCommand,
+      testingSettings: testData.south.itemTestingSettings
+    };
     ctx.params.id = testData.historyQueries.list[0].id;
     ctx.query.fromSouth = null;
 
@@ -167,13 +171,18 @@ describe('History query controller', () => {
       null,
       testData.south.command,
       testData.south.itemCommand,
+      testData.south.itemTestingSettings,
       ctx.ok,
       logger
     );
   });
 
   it('testHistoryQueryItem() should return bad request', async () => {
-    ctx.request.body = { south: testData.south.command, item: testData.south.itemCommand };
+    ctx.request.body = {
+      south: testData.south.command,
+      item: testData.south.itemCommand,
+      testingSettings: testData.south.itemTestingSettings
+    };
     ctx.params.id = testData.historyQueries.list[0].id;
     ctx.query.fromSouth = testData.south.list[0].id;
 
@@ -189,6 +198,7 @@ describe('History query controller', () => {
       testData.south.list[0].id,
       testData.south.command,
       testData.south.itemCommand,
+      testData.south.itemTestingSettings,
       ctx.ok,
       logger
     );

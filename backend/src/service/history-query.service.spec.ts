@@ -174,11 +174,20 @@ describe('History Query service', () => {
       }
     ]);
     const callback = jest.fn();
-    await service.testSouthItem('create', null, testData.south.command, testData.south.itemCommand, callback, logger);
+    await service.testSouthItem(
+      'create',
+      null,
+      testData.south.command,
+      testData.south.itemCommand,
+      testData.south.itemTestingSettings,
+      callback,
+      logger
+    );
     expect(southService.testSouthItem).toHaveBeenCalledWith(
       'create',
       testData.south.command,
       { ...testData.south.itemCommand, scanModeId: 'history', scanModeName: null },
+      testData.south.itemTestingSettings,
       callback,
       logger
     );
@@ -191,7 +200,15 @@ describe('History Query service', () => {
     badCommand.type = 'bad';
     const callback = jest.fn();
     await expect(
-      service.testSouthItem('create', testData.south.list[0].id, badCommand, testData.south.itemCommand, callback, logger)
+      service.testSouthItem(
+        'create',
+        testData.south.list[0].id,
+        badCommand,
+        testData.south.itemCommand,
+        testData.south.itemTestingSettings,
+        callback,
+        logger
+      )
     ).rejects.toThrow('South manifest bad not found');
 
     expect(southService.testSouthItem).not.toHaveBeenCalled();
@@ -201,7 +218,15 @@ describe('History Query service', () => {
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(null);
     const callback = jest.fn();
     await expect(
-      service.testSouthItem('create', testData.south.list[0].id, testData.south.command, testData.south.itemCommand, callback, logger)
+      service.testSouthItem(
+        'create',
+        testData.south.list[0].id,
+        testData.south.command,
+        testData.south.itemCommand,
+        testData.south.itemTestingSettings,
+        callback,
+        logger
+      )
     ).rejects.toThrow(`South connector ${testData.south.list[0].id} not found`);
 
     expect(southService.testSouthItem).not.toHaveBeenCalled();
@@ -220,6 +245,7 @@ describe('History Query service', () => {
       null,
       testData.south.command,
       testData.south.itemCommand,
+      testData.south.itemTestingSettings,
       callback,
       logger
     );
@@ -231,7 +257,15 @@ describe('History Query service', () => {
     const callback = jest.fn();
 
     await expect(
-      service.testSouthItem(testData.historyQueries.list[0].id, null, testData.south.command, testData.south.itemCommand, callback, logger)
+      service.testSouthItem(
+        testData.historyQueries.list[0].id,
+        null,
+        testData.south.command,
+        testData.south.itemCommand,
+        testData.south.itemTestingSettings,
+        callback,
+        logger
+      )
     ).rejects.toThrow(`History query ${testData.historyQueries.list[0].id} not found`);
     expect(southService.testSouthItem).not.toHaveBeenCalled();
   });

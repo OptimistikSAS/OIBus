@@ -96,7 +96,7 @@ describe('EditSouthItemModalComponent', () => {
 
   describe('create mode', () => {
     beforeEach(() => {
-      tester.componentInstance.prepareForCreation(southItemSchema, allItems, scanModes);
+      tester.componentInstance.prepareForCreation(southItemSchema, allItems, scanModes, null, null);
       tester.detectChanges();
     });
 
@@ -147,7 +147,7 @@ describe('EditSouthItemModalComponent', () => {
     };
 
     it('should duplicate item', () => {
-      tester.componentInstance.prepareForCopy(southItemSchema, scanModes, southItem);
+      tester.componentInstance.prepareForCopy(southItemSchema, scanModes, southItem, null, null);
       tester.detectChanges();
       expect(tester.name).toHaveValue('myName-copy');
 
@@ -179,7 +179,7 @@ describe('EditSouthItemModalComponent', () => {
     };
 
     beforeEach(() => {
-      tester.componentInstance.prepareForEdition(southItemSchema, allItems, scanModes, southItem);
+      tester.componentInstance.prepareForEdition(southItemSchema, allItems, scanModes, southItem, null, null);
       tester.detectChanges();
     });
 

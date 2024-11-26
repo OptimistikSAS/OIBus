@@ -545,7 +545,7 @@ describe('South ADS', () => {
     ]);
     await south.start();
     const callback = jest.fn();
-    await south.testItem(configuration.items[0], callback);
+    await south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback);
     expect(south.disconnect).toHaveBeenCalledTimes(1);
   });
 
@@ -563,6 +563,8 @@ describe('South ADS', () => {
       }
     ]);
     const callback = jest.fn();
-    await expect(south.testItem(configuration.items[0], callback)).rejects.toThrow(new Error(`Unable to connect. undefined`));
+    await expect(south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback)).rejects.toThrow(
+      new Error(`Unable to connect. undefined`)
+    );
   });
 });

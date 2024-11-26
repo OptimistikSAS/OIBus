@@ -416,31 +416,33 @@ describe('SouthOLEDB', () => {
   });
 
   it('should test item', async () => {
-    const startTime = '2020-01-01T00:00:00.000Z';
+    const formattedInstant = '2020-01-01T00:00:00.000Z';
     south.queryRemoteAgentData = jest.fn().mockReturnValueOnce([
       { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
       { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
     ]);
-    (utils.formatInstant as jest.Mock).mockReturnValue(startTime);
+    (utils.formatInstant as jest.Mock).mockReturnValue(formattedInstant);
     (utils.convertDateTimeToInstant as jest.Mock).mockImplementation(instant => instant);
 
     const callback = jest.fn();
-    await south.testItem(configuration.items[0], callback);
-    expect(south.queryRemoteAgentData).toHaveBeenCalledTimes(1);
+    await south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback);
+    const { startTime, endTime } = testData.south.itemTestingSettings.history!;
+    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(configuration.items[0], startTime, endTime, true);
   });
 
   it('should test item without datetimeFields', async () => {
-    const startTime = '2020-01-01T00:00:00.000Z';
+    const formattedInstant = '2020-01-01T00:00:00.000Z';
     south.queryRemoteAgentData = jest.fn().mockReturnValueOnce([
       { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
       { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
     ]);
-    (utils.formatInstant as jest.Mock).mockReturnValue(startTime);
+    (utils.formatInstant as jest.Mock).mockReturnValue(formattedInstant);
     (utils.convertDateTimeToInstant as jest.Mock).mockImplementation(instant => instant);
 
     const callback = jest.fn();
-    await south.testItem(configuration.items[1], callback);
-    expect(south.queryRemoteAgentData).toHaveBeenCalledTimes(1);
+    await south.testItem(configuration.items[1], testData.south.itemTestingSettings, callback);
+    const { startTime, endTime } = testData.south.itemTestingSettings.history!;
+    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(configuration.items[1], startTime, endTime, true);
   });
 
   it('QueryRemoteAgentData in case of item test', async () => {

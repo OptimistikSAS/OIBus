@@ -638,7 +638,7 @@ describe('SouthModbus test connection', () => {
       end: jest.fn()
     });
 
-    await expect(south.testItem(configuration.items[0], callback)).resolves.not.toThrow();
+    await expect(south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback)).resolves.not.toThrow();
   });
 
   it('Unable to create connection to socket when testing configuration.items', async () => {
@@ -659,7 +659,9 @@ describe('SouthModbus test connection', () => {
         end: jest.fn()
       });
 
-      await expect(south.testItem(configuration.items[0], callback)).rejects.toThrow(new Error(`${ERROR_CODES[code]} ${errorMessage}`));
+      await expect(south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback)).rejects.toThrow(
+        new Error(`${ERROR_CODES[code]} ${errorMessage}`)
+      );
     }
   });
 
@@ -684,7 +686,7 @@ describe('SouthModbus test connection', () => {
     // Mock node:net Socket constructor and the used function
     (net.Socket as unknown as jest.Mock).mockImplementation(() => mockedEmitter);
 
-    south.testItem(configuration.items[0], callback).catch(() => null);
+    south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback).catch(() => null);
 
     expect(net.Socket).toHaveBeenCalledTimes(1);
     mockedEmitter.emit('error', 'connect error');

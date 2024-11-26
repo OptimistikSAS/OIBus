@@ -385,7 +385,7 @@ describe('SouthFolderScanner with compression', () => {
     fs.stat = jest.fn();
     fs.readdir = jest.fn().mockReturnValue(['file1.txt', 'file2.csv', 'file3.csv']);
 
-    await south.testItem(configuration.items[0], callback);
+    await south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback);
     expect(fs.readdir).toHaveBeenCalledTimes(1);
     expect(south.checkAge).toHaveBeenCalledTimes(2);
     expect(callback).toHaveBeenCalledWith({
@@ -398,5 +398,19 @@ describe('SouthFolderScanner with compression', () => {
         }
       ]
     });
+  });
+
+  it('should test item and throw an error', async () => {
+    const callback = jest.fn();
+    south.checkAge = jest.fn().mockReturnValueOnce(true).mockReturnValueOnce(false);
+    fs.stat = jest.fn();
+    const error = new Error('Cannot read directory');
+    fs.readdir = jest.fn().mockRejectedValue(error);
+
+    await expect(south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback)).rejects.toThrow(error);
+
+    expect(fs.readdir).toHaveBeenCalledTimes(1);
+    expect(south.checkAge).not.toHaveBeenCalled();
+    expect(callback).not.toHaveBeenCalled();
   });
 });
