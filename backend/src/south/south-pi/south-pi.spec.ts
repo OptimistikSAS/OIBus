@@ -14,6 +14,7 @@ import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/sou
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
 import { mockBaseFolders } from '../../tests/utils/test-utils';
+import testData from '../../tests/utils/test-data';
 
 jest.mock('node-fetch');
 jest.mock('node:fs/promises');
@@ -339,15 +340,35 @@ describe('South PI', () => {
     const callback = jest.fn();
     south.connect = jest.fn();
     south.disconnect = jest.fn();
-    await south.testItem(configuration.items[0], callback);
+    const { startTime, endTime } = testData.south.itemTestingSettings.history!;
+    const fetchOptions = {
+      method: 'PUT',
+      body: JSON.stringify({
+        startTime,
+        endTime,
+        items: [
+          {
+            name: configuration.items[0].name,
+            type: configuration.items[0].settings.type === 'point-id' ? 'pointId' : 'pointQuery',
+            piPoint: configuration.items[0].settings.piPoint,
+            piQuery: configuration.items[0].settings.piQuery
+          }
+        ]
+      }),
+      headers: { 'Content-Type': 'application/json' }
+    };
+
+    await south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback);
     expect(south.connect).toHaveBeenCalledTimes(1);
     expect(south.disconnect).toHaveBeenCalledTimes(1);
     expect(callback).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/pi/${configuration.id}/read`, fetchOptions);
 
-    await south.testItem(configuration.items[1], callback);
+    await south.testItem(configuration.items[1], testData.south.itemTestingSettings, callback);
     expect(south.connect).toHaveBeenCalledTimes(2);
     expect(south.disconnect).toHaveBeenCalledTimes(2);
     expect(callback).toHaveBeenCalledTimes(2);
+    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/pi/${configuration.id}/read`, fetchOptions);
   });
 
   it('should test item and throw error if bad status', async () => {
@@ -360,11 +381,30 @@ describe('South PI', () => {
     const callback = jest.fn();
     south.connect = jest.fn();
     south.disconnect = jest.fn();
-    await expect(south.testItem(configuration.items[0], callback)).rejects.toThrow(
+    await expect(south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback)).rejects.toThrow(
       `Error occurred when sending connect command to remote agent. 400`
     );
     expect(south.connect).toHaveBeenCalledTimes(1);
     expect(south.disconnect).toHaveBeenCalledTimes(1);
     expect(callback).not.toHaveBeenCalled();
+
+    const { startTime, endTime } = testData.south.itemTestingSettings.history!;
+    const fetchOptions = {
+      method: 'PUT',
+      body: JSON.stringify({
+        startTime,
+        endTime,
+        items: [
+          {
+            name: configuration.items[0].name,
+            type: configuration.items[0].settings.type === 'point-id' ? 'pointId' : 'pointQuery',
+            piPoint: configuration.items[0].settings.piPoint,
+            piQuery: configuration.items[0].settings.piQuery
+          }
+        ]
+      }),
+      headers: { 'Content-Type': 'application/json' }
+    };
+    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/pi/${configuration.id}/read`, fetchOptions);
   });
 });

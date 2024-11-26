@@ -541,7 +541,7 @@ describe('SouthSFTP test connection with private key', () => {
     const callback = jest.fn();
     south.listFiles = jest.fn().mockReturnValueOnce([{ name: 'file.csv' }]);
 
-    await south.testItem(configuration.items[0], callback);
+    await south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback);
     expect(south.listFiles).toHaveBeenCalledTimes(1);
     expect(callback).toHaveBeenCalledWith({
       type: 'time-values',
@@ -553,5 +553,15 @@ describe('SouthSFTP test connection with private key', () => {
         }
       ]
     });
+  });
+
+  it('should test item and throw error', async () => {
+    const callback = jest.fn();
+    const error = new Error('Could not list files');
+    south.listFiles = jest.fn().mockRejectedValue(error);
+
+    await expect(south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback)).rejects.toThrow(error);
+    expect(south.listFiles).toHaveBeenCalledTimes(1);
+    expect(callback).not.toHaveBeenCalled();
   });
 });

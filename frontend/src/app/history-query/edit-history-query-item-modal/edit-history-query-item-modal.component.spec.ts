@@ -72,7 +72,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
 
   describe('create mode', () => {
     beforeEach(() => {
-      tester.componentInstance.prepareForCreation(southItemSchema, allItems);
+      tester.componentInstance.prepareForCreation(southItemSchema, allItems, null, null);
       tester.detectChanges();
     });
 
@@ -117,7 +117,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
     };
 
     it('should duplicate item', () => {
-      tester.componentInstance.prepareForCopy(southItemSchema, southItem);
+      tester.componentInstance.prepareForCopy(southItemSchema, southItem, null, null);
       tester.detectChanges();
       expect(tester.name).toHaveValue('myName-copy');
 
@@ -145,7 +145,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
     };
 
     beforeEach(() => {
-      tester.componentInstance.prepareForEdition(southItemSchema, allItems, southItem);
+      tester.componentInstance.prepareForEdition(southItemSchema, allItems, southItem, null, null);
       tester.detectChanges();
     });
 
