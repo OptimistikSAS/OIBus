@@ -32,6 +32,7 @@ import UserRepository from '../../repository/config/user.repository';
 import OIAnalyticsClient from './oianalytics-client.service';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 import OIAnalyticsRegistrationService from './oianalytics-registration.service';
+import { FetchError } from 'node-fetch';
 
 const STOP_TIMEOUT = 30_000;
 
@@ -40,6 +41,7 @@ export default class OIAnalyticsMessageService {
   private triggerRun: EventEmitter = new EventEmitter();
   private runProgress$: DeferredPromise | null = null;
   private stopTimeout: NodeJS.Timeout | null = null;
+  private retryMessageInterval: NodeJS.Timeout | undefined = undefined;
 
   constructor(
     private oIAnalyticsMessageRepository: OIAnalyticsMessageRepository,
@@ -78,6 +80,7 @@ export default class OIAnalyticsMessageService {
   }
 
   async run(): Promise<void> {
+    clearTimeout(this.retryMessageInterval);
     const registration = this.oIAnalyticsRegistrationService.getRegistrationSettings()!;
     if (registration.status !== 'REGISTERED') {
       this.logger.trace(`OIBus is not registered to OIAnalytics. Messages won't be sent`);
@@ -91,12 +94,23 @@ export default class OIAnalyticsMessageService {
       switch (message.type) {
         case 'full-config':
           await this.sendFullConfiguration(this.createFullConfigurationCommand(registration));
-          this.oIAnalyticsMessageRepository.markAsCompleted(message.id, DateTime.now().toUTC().toISO());
           break;
       }
+      this.oIAnalyticsMessageRepository.markAsCompleted(message.id, DateTime.now().toUTC().toISO());
     } catch (error: unknown) {
-      this.logger.error(`Error while sending message ${message.id} of type ${message.type}. ${(error as Error).message}`);
-      this.oIAnalyticsMessageRepository.markAsErrored(message.id, DateTime.now().toUTC().toISO(), (error as Error).message);
+      if (error instanceof FetchError) {
+        this.logger.error(`Error while sending message ${message.id} of type ${message.type}. ${error.message}${error.code}`);
+        if (!['ECONNREFUSED', 'ECONNRESET', 'ETIMEDOUT'].includes(error.code!)) {
+          this.oIAnalyticsMessageRepository.markAsErrored(message.id, DateTime.now().toUTC().toISO(), `${error.message}${error.code}`);
+        } else {
+          this.retryMessageInterval = setTimeout(this.run.bind(this), registration.messageRetryInterval * 1000);
+          this.resolveDeferredPromise();
+          return;
+        }
+      } else {
+        this.logger.error(`Error while sending message ${message.id} of type ${message.type}. ${(error as Error).message}`);
+        this.oIAnalyticsMessageRepository.markAsErrored(message.id, DateTime.now().toUTC().toISO(), (error as Error).message);
+      }
     }
     this.removeMessageFromQueue(message.id);
     this.resolveDeferredPromise();
@@ -119,6 +133,7 @@ export default class OIAnalyticsMessageService {
       await this.runProgress$.promise;
       clearTimeout(this.stopTimeout);
     }
+    clearTimeout(this.retryMessageInterval);
     this.logger.debug(`OIAnalytics message service stopped`);
   }
 

@@ -27,6 +27,7 @@ import UserRepository from '../../repository/config/user.repository';
 import UserRepositoryMock from '../../tests/__mocks__/repository/config/user-repository.mock';
 import OIAnalyticsRegistrationService from './oianalytics-registration.service';
 import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
+import { FetchError } from 'node-fetch';
 
 jest.mock('node:fs/promises');
 jest.mock('../utils');
@@ -178,13 +179,45 @@ describe('OIAnalytics Message Service', () => {
     service.stop();
     jest.advanceTimersByTime(10_000);
 
-    // service.stop();
-
     expect(logger.debug).toHaveBeenCalledWith('Waiting for OIAnalytics message to finish');
     jest.advanceTimersByTime(20_000);
 
     await service.stop();
     expect(logger.debug).toHaveBeenCalledWith(`OIAnalytics message service stopped`);
+  });
+
+  it('should properly resend message if fetch fails', async () => {
+    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+
+    (oIAnalyticsClient.sendConfiguration as jest.Mock) = jest.fn().mockImplementationOnce(() => {
+      throw new FetchError('fetch error - ', 'system', { code: 'ECONNREFUSED', name: '', message: '' });
+    });
+
+    service.start();
+    await flushPromises();
+    expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
+    expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
+    expect(logger.error).toHaveBeenCalledTimes(1);
+    expect(logger.error).toHaveBeenCalledWith(
+      `Error while sending message ${testData.oIAnalytics.messages.oIBusList[0].id} of type ${testData.oIAnalytics.messages.oIBusList[0].type}. fetch error - ECONNREFUSED`
+    );
+  });
+
+  it('should not resend message if fetch fails', async () => {
+    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
+
+    (oIAnalyticsClient.sendConfiguration as jest.Mock) = jest.fn().mockImplementationOnce(() => {
+      throw new FetchError('fetch error - ', 'system', { code: 'ERROR', name: '', message: '' });
+    });
+
+    service.start();
+    await flushPromises();
+    expect(setTimeoutSpy).toHaveBeenCalledTimes(0);
+    expect(logger.error).toHaveBeenCalledTimes(1);
+    expect(logger.error).toHaveBeenCalledWith(
+      `Error while sending message ${testData.oIAnalytics.messages.oIBusList[0].id} of type ${testData.oIAnalytics.messages.oIBusList[0].type}. fetch error - ERROR`
+    );
   });
 });
 
