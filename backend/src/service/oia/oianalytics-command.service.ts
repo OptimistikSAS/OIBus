@@ -93,20 +93,20 @@ export default class OIAnalyticsCommandService {
   }
 
   start(): void {
-    this.retrieveCommandsInterval = setInterval(
+    this.retrieveCommandsInterval = setTimeout(
       this.checkCommands.bind(this),
       this.oIAnalyticsRegistrationService.getRegistrationSettings()!.commandRefreshInterval * 1000
     );
-    this.executeCommandInterval = setInterval(this.executeCommand.bind(this), EXECUTE_OIANALYTICS_COMMANDS_INTERVAL);
+    this.executeCommandInterval = setTimeout(this.executeCommand.bind(this), EXECUTE_OIANALYTICS_COMMANDS_INTERVAL);
 
     this.oIAnalyticsRegistrationService.registrationEvent.on('updated', () => {
       const registrationSettings = this.oIAnalyticsRegistrationService.getRegistrationSettings()!;
-      clearInterval(this.retrieveCommandsInterval);
-      clearInterval(this.executeCommandInterval);
+      clearTimeout(this.retrieveCommandsInterval);
+      clearTimeout(this.executeCommandInterval);
 
       if (registrationSettings.status === 'REGISTERED') {
-        this.retrieveCommandsInterval = setInterval(this.checkCommands.bind(this), registrationSettings.commandRefreshInterval * 1000);
-        this.executeCommandInterval = setInterval(this.executeCommand.bind(this), EXECUTE_OIANALYTICS_COMMANDS_INTERVAL);
+        this.retrieveCommandsInterval = setTimeout(this.checkCommands.bind(this), registrationSettings.commandRefreshInterval * 1000);
+        this.executeCommandInterval = setTimeout(this.executeCommand.bind(this), EXECUTE_OIANALYTICS_COMMANDS_INTERVAL);
       }
     });
   }
@@ -124,19 +124,28 @@ export default class OIAnalyticsCommandService {
 
     if (this.ongoingRetrieveCommands) {
       this.logger.trace(`OIBus is already retrieving commands from OIAnalytics`);
+      this.retrieveCommandsInterval = setTimeout(this.checkCommands.bind(this), registration.commandRefreshInterval * 1000);
       return;
     }
     this.ongoingRetrieveCommands = true;
 
-    // First, send ack first to update OIAnalytics command before retrieving them
-    await this.sendAckCommands(registration);
-    // Second, check if the commands already retrieved have been cancelled
-    await this.checkRetrievedCommands(registration);
-    // Third, retrieve commands from OIAnalytics
-    await this.retrieveCommands(registration);
-    // Last, update commands to OIAnalytics to declare we have retrieved them
-    await this.sendAckCommands(registration);
+    try {
+      // First, send ack first to update OIAnalytics command before retrieving them
+      await this.sendAckCommands(registration);
+      // Second, check if the commands already retrieved have been cancelled
+      await this.checkRetrievedCommands(registration);
+      // Third, retrieve commands from OIAnalytics
+      await this.retrieveCommands(registration);
+      // Last, update commands to OIAnalytics to declare we have retrieved them
+      await this.sendAckCommands(registration);
+    } catch (error: unknown) {
+      this.ongoingRetrieveCommands = false;
+      this.logger.error((error as Error).message);
+      this.retrieveCommandsInterval = setTimeout(this.checkCommands.bind(this), registration.commandRetryInterval * 1000);
+      return;
+    }
     this.ongoingRetrieveCommands = false;
+    this.retrieveCommandsInterval = setTimeout(this.checkCommands.bind(this), registration.commandRefreshInterval * 1000);
   }
 
   async sendAckCommands(registration: OIAnalyticsRegistration): Promise<void> {
@@ -157,7 +166,7 @@ export default class OIAnalyticsCommandService {
       }
       this.logger.trace(`${commandsToAck.length} commands acknowledged`);
     } catch (error: unknown) {
-      this.logger.error(`Error while acknowledging ${commandsToAck.length} commands: ${(error as Error).message}`);
+      throw new Error(`Error while acknowledging ${commandsToAck.length} commands: ${(error as Error).message}`);
     }
   }
 
@@ -177,7 +186,7 @@ export default class OIAnalyticsCommandService {
         this.oIAnalyticsCommandRepository.cancel(command.id);
       }
     } catch (error: unknown) {
-      this.logger.error(`Error while checking PENDING commands status: ${(error as Error).message}`);
+      throw new Error(`Error while checking PENDING commands status: ${(error as Error).message}`);
     }
   }
 
@@ -189,7 +198,7 @@ export default class OIAnalyticsCommandService {
         this.oIAnalyticsCommandRepository.create(command);
       }
     } catch (error: unknown) {
-      this.logger.error(`Error while retrieving commands: ${(error as Error).message}`);
+      throw new Error(`Error while retrieving commands: ${(error as Error).message}`);
     }
   }
 
@@ -207,6 +216,7 @@ export default class OIAnalyticsCommandService {
 
     if (this.ongoingExecuteCommand) {
       this.logger.trace(`A command is already being executed`);
+      this.executeCommandInterval = setTimeout(this.executeCommand.bind(this), EXECUTE_OIANALYTICS_COMMANDS_INTERVAL);
       return;
     }
 
@@ -217,6 +227,7 @@ export default class OIAnalyticsCommandService {
     });
     if (commandsToExecute.length === 0) {
       this.logger.trace(`No command to execute`);
+      this.executeCommandInterval = setTimeout(this.executeCommand.bind(this), EXECUTE_OIANALYTICS_COMMANDS_INTERVAL);
       return;
     }
     const engineSettings = this.oIBusService.getEngineSettings();
@@ -227,10 +238,12 @@ export default class OIAnalyticsCommandService {
         command.id,
         `Wrong target version: ${command.targetVersion} for OIBus version ${engineSettings.version}`
       );
+      this.executeCommandInterval = setTimeout(this.executeCommand.bind(this), EXECUTE_OIANALYTICS_COMMANDS_INTERVAL);
       return;
     }
     if (!this.checkCommandPermission(command, registration)) {
       this.oIAnalyticsCommandRepository.markAsErrored(command.id, `Command ${command.id} of type ${command.type} is not authorized`);
+      this.executeCommandInterval = setTimeout(this.executeCommand.bind(this), EXECUTE_OIANALYTICS_COMMANDS_INTERVAL);
       return;
     }
     this.ongoingExecuteCommand = true;
@@ -298,12 +311,16 @@ export default class OIAnalyticsCommandService {
           await this.executeCreateOrUpdateSouthConnectorItemsFromCSVCommand(command);
       }
     } catch (error: unknown) {
+      this.ongoingExecuteCommand = false;
       this.logger.error(
         `Error while executing command ${command.id} (retrieved ${command.retrievedDate}) of type ${command.type}. Error: ${(error as Error).message}`
       );
       this.oIAnalyticsCommandRepository.markAsErrored(command.id, (error as Error).message);
+      this.executeCommandInterval = setTimeout(this.executeCommand.bind(this), EXECUTE_OIANALYTICS_COMMANDS_INTERVAL);
+      return;
     }
     this.ongoingExecuteCommand = false;
+    this.executeCommandInterval = setTimeout(this.executeCommand.bind(this), EXECUTE_OIANALYTICS_COMMANDS_INTERVAL);
   }
 
   /**
@@ -311,16 +328,10 @@ export default class OIAnalyticsCommandService {
    */
   async stop(): Promise<void> {
     this.logger.debug(`Stopping OIAnalytics command service...`);
-
-    if (this.retrieveCommandsInterval) {
-      clearInterval(this.retrieveCommandsInterval);
-      this.retrieveCommandsInterval = undefined;
-    }
-
-    if (this.executeCommandInterval) {
-      clearInterval(this.executeCommandInterval);
-      this.executeCommandInterval = undefined;
-    }
+    clearTimeout(this.retrieveCommandsInterval);
+    this.retrieveCommandsInterval = undefined;
+    clearTimeout(this.executeCommandInterval);
+    this.executeCommandInterval = undefined;
     this.logger.debug(`OIAnalytics command service stopped`);
   }
 
