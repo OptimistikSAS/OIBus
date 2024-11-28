@@ -123,7 +123,7 @@
     "@types/oracledb": "6.5.2",
     "@types/papaparse": "5.3.15",
     "@types/pg": "8.11.10",
-    "@types/serialport": "8.0.5",
+    "@types/serialport": "10.2.0",
     "@types/sprintf-js": "1.1.4",
     "@types/ssh2-sftp-client": "9.0.4",
     "@types/ws": "8.5.12",
