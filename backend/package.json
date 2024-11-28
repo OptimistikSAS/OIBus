@@ -70,7 +70,7 @@
     "knex": "3.1.0",
     "koa": "2.15.3",
     "koa-bodyparser": "4.4.1",
-    "koa-helmet": "7.0.2",
+    "koa-helmet": "8.0.1",
     "koa-respond": "2.1.0",
     "koa-send": "5.0.1",
     "ltx": "3.0.0",
