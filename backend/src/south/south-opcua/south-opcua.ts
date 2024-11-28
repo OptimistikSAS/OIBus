@@ -696,7 +696,6 @@ export default class SouthOPCUA
         TimestampsToReturn.Neither
       );
       monitoredItem.on('changed', async (dataValue: DataValue) => {
-        const selectedTimestamp = dataValue.sourceTimestamp ?? dataValue.serverTimestamp;
         const parsedValue = this.parseOPCUAValue(item.name, dataValue.value);
         if (parsedValue) {
           await this.addContent({
@@ -704,7 +703,7 @@ export default class SouthOPCUA
             content: [
               {
                 pointId: item.name,
-                timestamp: selectedTimestamp!.toISOString(),
+                timestamp: DateTime.now().toUTC().toISO()!,
                 data: {
                   value: parsedValue,
                   quality: JSON.stringify(dataValue.statusCode)
