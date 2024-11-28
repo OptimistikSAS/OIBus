@@ -866,9 +866,9 @@ async function updateRegistrationSettings(knex: Knex): Promise<void> {
     table.boolean('command_delete_north');
   });
   await knex(REGISTRATIONS_TABLE).update({
-    command_retry_interval: 10,
+    command_refresh_interval: 10,
+    command_retry_interval: 5,
     message_retry_interval: 5,
-    command_refresh_interval: 5,
     command_update_version: true,
     command_restart_engine: true,
     command_regenerate_cipher_keys: true,
