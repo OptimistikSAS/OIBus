@@ -1,27 +1,7 @@
-import {
-  AggregateFunction,
-  AttributeIds,
-  ClientMonitoredItem,
-  ClientSubscription,
-  DataType,
-  DataValue,
-  HistoryReadRequest,
-  OPCUAClient,
-  ReadProcessedDetails,
-  ReadRawModifiedDetails,
-  StatusCodes,
-  TimestampsToReturn,
-  UserTokenType,
-  Variant
-} from 'node-opcua-client';
-
 import { Aggregate, Instant, Resampling } from '../../../shared/model/types';
 import SouthConnector from '../south-connector';
 import EncryptionService, { CERT_FILE_NAME, CERT_FOLDER, CERT_PRIVATE_KEY_FILE_NAME } from '../../service/encryption.service';
 import pino from 'pino';
-import { ClientSession } from 'node-opcua-client/source/client_session';
-import { UserIdentityInfo } from 'node-opcua-client/source/user_identity_info';
-import { OPCUAClientOptions } from 'node-opcua-client/source/opcua_client';
 import { DateTime } from 'luxon';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -33,9 +13,7 @@ import {
   SouthOPCUASettingsSecurityPolicy
 } from '../../../shared/model/south-settings.model';
 import { randomUUID } from 'crypto';
-import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
 import { createFolder } from '../../service/utils';
-import { OPCUACertificateManager } from 'node-opcua-certificate-manager';
 import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import ConnectionService, { ManagedConnection, ManagedConnectionSettings } from '../../service/connection.service';
 import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
@@ -44,6 +22,27 @@ import SouthCacheRepository from '../../repository/cache/south-cache.repository'
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import {
+  AttributeIds,
+  ClientMonitoredItem,
+  ClientSubscription,
+  DataValue,
+  OPCUAClient,
+  OPCUAClientOptions,
+  UserIdentityInfo,
+  UserTokenType,
+  Variant,
+  AggregateFunction,
+  DataType,
+  HistoryReadRequest,
+  ReadProcessedDetails,
+  ReadRawModifiedDetails,
+  StatusCodes,
+  TimestampsToReturn,
+  ClientSession,
+  OPCUACertificateManager
+} from 'node-opcua';
+import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
 
 export const MAX_NUMBER_OF_NODE_TO_LOG = 10;
 export const NUM_VALUES_PER_NODE = 1000;
