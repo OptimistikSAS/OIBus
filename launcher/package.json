@@ -9,7 +9,6 @@
     "node": ">=v22.10",
     "npm": ">=10"
   },
-  "type": "module",
   "scripts": {
     "lint": "eslint src/",
     "lint:fix": "npm run lint -- --fix",
