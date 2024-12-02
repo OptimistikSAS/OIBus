@@ -321,9 +321,9 @@
       "status": "Status",
       "type": "Type",
       "none": "No command",
-      "refresh-interval": "Refresh interval",
-      "command-retry-interval": "Command (from OIA) retry interval",
-      "message-retry-interval": "Message (to OIA) retry interval",
+      "refresh-interval": "Command retrieve interval (from OIAnalytics)",
+      "command-retry-interval": "Command (from OIAnalytics) retry interval",
+      "message-retry-interval": "Message (to OIAnalytics) retry interval",
       "permissions": "OIAnalytics commands permissions",
       "engine": "Engine",
       "registration": "Registration",
@@ -366,7 +366,8 @@
             "north-id": "North connector ID: {{ northConnectorId }}"
           }
         }
-      }
+      },
+      "details-tooltip": "Command details"
     }
   },
   "about": {
