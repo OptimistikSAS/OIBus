@@ -212,7 +212,7 @@ const LOG_DB_NAME = 'logs.db';
     ignoreRemoteUpdate,
     launcherVersion
   );
-  oIAnalyticsCommandService.start();
+  await oIAnalyticsCommandService.start();
   oIAnalyticsMessageService.start(); // Start after command to send the full config with new version after an update
 
   const server = new WebServer(
