@@ -72,7 +72,7 @@ describe('OIAnalytics Command Service', () => {
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
     (oIBusService.getEngineSettings as jest.Mock).mockReturnValue(testData.engine.settings);
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValue(testData.oIAnalytics.commands.oIBusList);
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.commands.oIBusList).mockReturnValue([]);
     (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValue(testData.oIAnalytics.registration.completed);
     (getOIBusInfo as jest.Mock).mockReturnValue(testData.engine.oIBusInfo);
 
@@ -108,21 +108,21 @@ describe('OIAnalytics Command Service', () => {
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
 
-    service.start();
+    await service.start();
     await service.stop();
 
-    expect(setTimeoutSpy).toHaveBeenCalledTimes(2);
-    expect(clearTimeoutSpy).toHaveBeenCalledTimes(2);
+    expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
+    expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
 
     oIAnalyticsRegistrationService.registrationEvent.emit('updated');
-    expect(setTimeoutSpy).toHaveBeenCalledTimes(4);
-    expect(clearTimeoutSpy).toHaveBeenCalledTimes(4);
+    expect(setTimeoutSpy).toHaveBeenCalledTimes(2);
+    expect(clearTimeoutSpy).toHaveBeenCalledTimes(2);
 
     (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.registration.pending);
 
     oIAnalyticsRegistrationService.registrationEvent.emit('updated');
-    expect(setTimeoutSpy).toHaveBeenCalledTimes(4);
-    expect(clearTimeoutSpy).toHaveBeenCalledTimes(6);
+    expect(setTimeoutSpy).toHaveBeenCalledTimes(2);
+    expect(clearTimeoutSpy).toHaveBeenCalledTimes(3);
   });
 
   it('should search commands', () => {
@@ -151,23 +151,27 @@ describe('OIAnalytics Command Service', () => {
   });
 
   it('should fail to check commands and retry', async () => {
+    service.retrieveCommands = jest.fn().mockImplementationOnce(() => {
+      throw new Error('retrieve command error');
+    });
+    service.checkRetrievedCommands = jest.fn();
     service.sendAckCommands = jest.fn().mockImplementationOnce(() => {
       throw new Error('ack command error');
     });
-    service.checkRetrievedCommands = jest.fn();
-    service.retrieveCommands = jest.fn();
     (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock)
       .mockReturnValueOnce(testData.oIAnalytics.registration.completed)
       .mockReturnValueOnce(testData.oIAnalytics.registration.completed);
 
     await service.checkCommands();
-    expect(service.sendAckCommands).toHaveBeenCalledTimes(1);
-    expect(logger.error).toHaveBeenCalledWith('ack command error');
+    expect(service.sendAckCommands).not.toHaveBeenCalled();
+    expect(logger.error).toHaveBeenCalledWith('retrieve command error');
 
     jest.advanceTimersByTime(testData.oIAnalytics.registration.completed.commandRetryInterval * 1000);
     await flushPromises();
-    expect(logger.error).toHaveBeenCalledTimes(1);
-    expect(service.sendAckCommands).toHaveBeenCalledTimes(3);
+    expect(service.sendAckCommands).toHaveBeenCalledTimes(1);
+    expect(logger.error).toHaveBeenCalledTimes(2);
+    expect(logger.error).toHaveBeenCalledWith('ack command error');
+    expect(service.sendAckCommands).toHaveBeenCalledTimes(1);
   });
 
   it('should send ack', async () => {
