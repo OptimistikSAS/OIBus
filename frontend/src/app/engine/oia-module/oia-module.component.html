@@ -127,7 +127,7 @@
                           <!-- Details button -->
                           @if (['COMPLETED', 'ERRORED'].includes(command.status)) {
                             <button type="button" class="btn btn-link details-button px-1 py-0" (click)="openCommandDetails(command)">
-                              <span class="fa fa-search" [ngbTooltip]="'configuration.oibus.commands.details-tooltip' | translate"></span>
+                              <span class="fa fa-search" [ngbTooltip]="'oia-module.commands.details-tooltip' | translate"></span>
                             </button>
                           }
                         </td>
