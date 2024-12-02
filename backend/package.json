@@ -37,13 +37,6 @@
   "keywords": [
     "Optimistik"
   ],
-  "browserslist": [
-    "last 2 chrome versions",
-    "last 2 safari versions",
-    "last 2 edge versions",
-    "last 2 firefox versions",
-    "firefox esr"
-  ],
   "dependencies": {
     "@aws-sdk/client-s3": "3.703.0",
     "@aws-sdk/node-http-handler": "3.374.0",
@@ -82,8 +75,7 @@
     "multer": "1.4.5-lts.1",
     "mysql2": "3.11.5",
     "node-fetch": "2.7.0",
-    "node-opcua-certificate-manager": "2.134.0",
-    "node-opcua-client": "2.138.1",
+    "node-opcua": "2.138.1",
     "object-path": "0.11.8",
     "oracledb": "6.7.0",
     "papaparse": "5.4.1",
@@ -154,6 +146,7 @@
       "dist/backend/src/service/logger/oianalytics-transport.js",
       "dist/backend/src/migration/**/*.js",
       "dist/backend/shared/**/*.js",
+      "node_modules/node-opcua-crypto/dist/source/index_web.js",
       "node_modules/sqlite3/**/*.node",
       "node_modules/argon2/**/*.node",
       "node_modules/oracledb/**/*.node",

@@ -1,13 +1,3 @@
-import nodeOPCUAClient, {
-  AggregateFunction,
-  DataType,
-  HistoryReadRequest,
-  ReadProcessedDetails,
-  ReadRawModifiedDetails,
-  StatusCodes,
-  TimestampsToReturn
-} from 'node-opcua-client';
-
 import fs from 'node:fs/promises';
 import SouthOPCUA, { MAX_NUMBER_OF_NODE_TO_LOG } from './south-opcua';
 import pino from 'pino';
@@ -17,11 +7,21 @@ import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-serv
 import { randomUUID } from 'crypto';
 import path from 'node:path';
 import { SouthOPCUAItemSettings, SouthOPCUASettings } from '../../../shared/model/south-settings.model';
-import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
 import Stream from 'node:stream';
 import { createFolder } from '../../service/utils';
 import ConnectionService from '../../service/connection.service';
-import { ClientSession } from 'node-opcua-client/source/client_session';
+import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
+import nodeOPCUAClient, {
+  AggregateFunction,
+  DataType,
+  HistoryReadRequest,
+  ReadProcessedDetails,
+  ReadRawModifiedDetails,
+  StatusCodes,
+  TimestampsToReturn,
+  ClientSession
+} from 'node-opcua';
+
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
@@ -44,22 +44,22 @@ class CustomStream extends Stream {
 }
 
 // Mock node-opcua-client
-jest.mock('node-opcua-client', () => ({
+jest.mock('node-opcua', () => ({
   OPCUAClient: { createSession: jest.fn(() => ({})) },
   ClientSubscription: { create: jest.fn() },
   ClientMonitoredItem: { create: jest.fn() },
-  DataType: jest.requireActual('node-opcua-client').DataType,
-  StatusCodes: jest.requireActual('node-opcua-client').StatusCodes,
-  SecurityPolicy: jest.requireActual('node-opcua-client').SecurityPolicy,
-  AttributeIds: jest.requireActual('node-opcua-client').AttributeIds,
-  UserTokenType: jest.requireActual('node-opcua-client').UserTokenType,
-  TimestampsToReturn: jest.requireActual('node-opcua-client').TimestampsToReturn,
-  AggregateFunction: jest.requireActual('node-opcua-client').AggregateFunction,
+  DataType: jest.requireActual('node-opcua').DataType,
+  StatusCodes: jest.requireActual('node-opcua').StatusCodes,
+  SecurityPolicy: jest.requireActual('node-opcua').SecurityPolicy,
+  AttributeIds: jest.requireActual('node-opcua').AttributeIds,
+  UserTokenType: jest.requireActual('node-opcua').UserTokenType,
+  TimestampsToReturn: jest.requireActual('node-opcua').TimestampsToReturn,
+  AggregateFunction: jest.requireActual('node-opcua').AggregateFunction,
   ReadRawModifiedDetails: jest.fn(() => ({})),
-  HistoryReadRequest: jest.requireActual('node-opcua-client').HistoryReadRequest,
-  ReadProcessedDetails: jest.fn(() => ({}))
+  HistoryReadRequest: jest.requireActual('node-opcua').HistoryReadRequest,
+  ReadProcessedDetails: jest.fn(() => ({})),
+  OPCUACertificateManager: jest.fn(() => ({}))
 }));
-jest.mock('node-opcua-certificate-manager', () => ({ OPCUACertificateManager: jest.fn(() => ({})) }));
 // Mock only the randomUUID function because other functions are used by OPCUA
 jest.mock('crypto', () => ({
   ...jest.requireActual('crypto'),
