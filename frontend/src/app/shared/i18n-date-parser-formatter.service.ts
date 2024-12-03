@@ -9,9 +9,8 @@ export class I18nDateParserFormatterService extends NgbDateParserFormatter {
   private formatPattern = 'yyyy-MM-dd';
 
   constructor() {
-    const translateService = inject(TranslateService);
-
     super();
+    const translateService = inject(TranslateService);
     translateService.get('datepicker.parse-pattern').subscribe(pattern => (this.parsePattern = pattern));
     translateService.get('datepicker.format-pattern').subscribe(pattern => (this.formatPattern = pattern));
   }

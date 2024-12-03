@@ -26,14 +26,12 @@ export class CurrentUserService {
   private timezone: Timezone;
 
   constructor() {
-    const windowService = this.windowService;
-
-    const storedToken = windowService.getStorageItem('oibus-token');
+    const storedToken = this.windowService.getStorageItem('oibus-token');
     this.currentUser$ = of(storedToken !== null).pipe(
       switchMap(authenticated => (authenticated ? this.retrieveConnection() : of(null))),
       shareReplay(1)
     );
-    this.timezone = windowService.timezoneToUse();
+    this.timezone = this.windowService.timezoneToUse();
   }
 
   /**

@@ -24,8 +24,6 @@ export class HistoryMetricsComponent {
   @Input({ required: true }) southManifest!: SouthConnectorManifest;
   @Input({ required: true }) historyMetrics!: HistoryQueryMetrics;
 
-  constructor() {}
-
   get southProgressbarAnimated(): boolean {
     return this.historyQuery.status === 'RUNNING' && this.historyMetrics.historyMetrics.intervalProgress !== 1;
   }

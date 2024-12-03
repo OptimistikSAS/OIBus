@@ -58,8 +58,6 @@ export class MultiSelectComponent implements ControlValueAccessor, AfterContentI
   private onChange: (selectedValues: Array<any>) => void = () => {};
   private onTouched = () => {};
 
-  constructor() {}
-
   ngAfterContentInit() {
     this.updateSelectedLabels();
     this.options!.changes.subscribe(() => this.updateSelectedLabels());
