@@ -1,11 +1,10 @@
-import { Component, Input, OnInit, output } from '@angular/core';
+import { Component, output, input, computed, signal, linkedSignal } from '@angular/core';
 import { TranslateDirective } from '@ngx-translate/core';
 import { formDirectives } from '../../../shared/form-directives';
 import { NorthCacheFiles } from '../../../../../../backend/shared/model/north-connector.model';
 import { DatetimePipe } from '../../../shared/datetime.pipe';
 import { FileSizePipe } from '../../../shared/file-size.pipe';
-import { createPageFromArray, Instant, Page } from '../../../../../../backend/shared/model/types';
-import { emptyPage } from '../../../shared/test-utils';
+import { createPageFromArray, Instant } from '../../../../../../backend/shared/model/types';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 const PAGE_SIZE = 15;
@@ -33,59 +32,54 @@ export interface ItemActionEvent {
   styleUrl: './file-table.component.scss',
   imports: [...formDirectives, TranslateDirective, DatetimePipe, FileSizePipe, NgbTooltipModule]
 })
-export class FileTableComponent implements OnInit {
+export class FileTableComponent {
   readonly itemAction = output<ItemActionEvent>();
-
-  // TODO: Skipped for migration because:
-  //  Your application code writes to the input. This prevents migration.
-  @Input() actions: Array<ItemActionEvent['type']> = [];
+  readonly actions = input<Array<ItemActionEvent['type']>>([]);
+  readonly selectedFiles = output<Array<FileTableData>>();
+  // remove possible duplicates
+  readonly uniqueActions = computed(() => [...new Set(this.actions())]);
   actionButtonData: Record<ItemActionEvent['type'], { icon: string; text: string }> = {
     remove: { icon: 'fa-trash', text: 'north.cache-settings.remove-file' },
     retry: { icon: 'fa-refresh', text: 'north.cache-settings.retry-file' },
     view: { icon: 'fa-search', text: 'north.cache-settings.view-file' },
     archive: { icon: 'fa-archive', text: 'north.cache-settings.archive-file' }
   };
-  // TODO: Skipped for migration because:
-  //  Your application code writes to the input. This prevents migration.
-  @Input() files: Array<FileTableData> = [];
-  pages: Page<FileTableData> = emptyPage();
-  checkboxByFiles: Map<string, boolean> = new Map<string, boolean>();
+  readonly pageNumber = input(0);
+  readonly files = input<Array<FileTableData>>([]);
+  readonly sortedFiles = computed(() => this.sortTable());
+  readonly pages = computed(() => createPageFromArray(this.sortedFiles(), PAGE_SIZE, this.pageNumber()));
+  protected readonly checkboxByFiles = linkedSignal({
+    source: () => this.files(),
+    computation: () => new Map<string, boolean>()
+  });
 
-  columnSortStates: { [key in keyof FileTableData]: ColumnSortState } = {
-    modificationDate: ColumnSortState.DESCENDING,
-    filename: ColumnSortState.INDETERMINATE,
-    size: ColumnSortState.INDETERMINATE
-  };
-  currentColumnSort: keyof FileTableData | null = 'modificationDate';
-
-  // the checkbox states for the input parameters
-  mainFilesCheckboxState: 'CHECKED' | 'UNCHECKED' | 'INDETERMINATE' = 'UNCHECKED';
-
-  ngOnInit() {
-    this.actions = [...new Set(this.actions)]; // remove possible duplicates
-    this.clearCheckBoxes();
-    this.sortTable();
-  }
+  readonly currentColumnSort = signal<keyof FileTableData>('modificationDate');
+  readonly currentColumnOrder = signal<ColumnSortState>(ColumnSortState.DESCENDING);
+  readonly mainFilesCheckboxState = linkedSignal({
+    source: () => this.files(),
+    computation: () => 'UNCHECKED' as 'CHECKED' | 'UNCHECKED' | 'INDETERMINATE'
+  });
 
   /**
    * Called when the user check or uncheck the main checkbox
    */
   onFileMainCheckBoxClick(isChecked: boolean) {
-    this.files.forEach(errorFile => {
-      this.checkboxByFiles.set(errorFile.filename, isChecked);
+    this.files().forEach(errorFile => {
+      this.checkboxByFiles().set(errorFile.filename, isChecked);
     });
     if (isChecked) {
-      this.mainFilesCheckboxState = 'CHECKED';
+      this.mainFilesCheckboxState.set('CHECKED');
     } else {
-      this.mainFilesCheckboxState = 'UNCHECKED';
+      this.mainFilesCheckboxState.set('UNCHECKED');
     }
+    this.selectedFiles.emit(this.files().filter(file => this.checkboxByFiles().get(file.filename)));
   }
 
   onFileCheckboxClick(isChecked: boolean, errorFile: NorthCacheFiles) {
-    this.checkboxByFiles.set(errorFile.filename, isChecked);
+    this.checkboxByFiles().set(errorFile.filename, isChecked);
     let everythingIsChecked = true;
     let everythingIsUnChecked = true;
-    for (const isSelected of this.checkboxByFiles.values()) {
+    for (const isSelected of this.checkboxByFiles().values()) {
       if (!isSelected) {
         everythingIsChecked = false;
       } else {
@@ -93,69 +87,46 @@ export class FileTableComponent implements OnInit {
       }
     }
     if (everythingIsChecked && !everythingIsUnChecked) {
-      this.mainFilesCheckboxState = 'CHECKED';
+      this.mainFilesCheckboxState.set('CHECKED');
     } else if (!everythingIsChecked && everythingIsUnChecked) {
-      this.mainFilesCheckboxState = 'UNCHECKED';
+      this.mainFilesCheckboxState.set('UNCHECKED');
     } else {
-      this.mainFilesCheckboxState = 'INDETERMINATE';
+      this.mainFilesCheckboxState.set('INDETERMINATE');
     }
-  }
-
-  changePage(pageNumber: number) {
-    this.pages = createPageFromArray(this.files, PAGE_SIZE, pageNumber);
+    this.selectedFiles.emit(this.files().filter(file => this.checkboxByFiles().get(file.filename)));
   }
 
   toggleColumnSort(columnName: keyof FileTableData) {
-    this.currentColumnSort = columnName;
-    // Toggle state
-    this.columnSortStates[this.currentColumnSort] = (this.columnSortStates[this.currentColumnSort] + 1) % 3;
-
-    // Reset state for every other column
-    Object.keys(this.columnSortStates).forEach(key => {
-      if (this.currentColumnSort !== key) {
-        this.columnSortStates[key as keyof typeof this.columnSortStates] = 0;
-      }
-    });
-
+    if (columnName === this.currentColumnSort()) {
+      this.currentColumnOrder.update(order => (order + 1) % 3);
+    } else {
+      this.currentColumnSort.set(columnName);
+      this.currentColumnOrder.set(ColumnSortState.DESCENDING);
+    }
     this.sortTable();
-  }
-
-  refreshTable(newFiles: Array<FileTableData>) {
-    this.files = newFiles;
-    this.sortTable();
-    this.clearCheckBoxes();
   }
 
   private sortTable() {
-    if (this.currentColumnSort && this.columnSortStates[this.currentColumnSort] !== ColumnSortState.INDETERMINATE) {
-      const ascending = this.columnSortStates[this.currentColumnSort] === ColumnSortState.ASCENDING;
-
-      switch (this.currentColumnSort) {
+    const fileTableData = [...this.files()];
+    if (this.currentColumnOrder() !== ColumnSortState.INDETERMINATE) {
+      const ascending = this.currentColumnOrder() === ColumnSortState.ASCENDING;
+      switch (this.currentColumnSort()) {
         case 'modificationDate':
-          this.files.sort((a, b) => {
+          fileTableData.sort((a, b) => {
             const aDate = new Date(a.modificationDate);
             const bDate = new Date(b.modificationDate);
             return ascending ? aDate.getTime() - bDate.getTime() : bDate.getTime() - aDate.getTime();
           });
           break;
         case 'filename':
-          this.files.sort((a, b) => (ascending ? a.filename.localeCompare(b.filename) : b.filename.localeCompare(a.filename)));
+          fileTableData.sort((a, b) => (ascending ? a.filename.localeCompare(b.filename) : b.filename.localeCompare(a.filename)));
           break;
         case 'size':
-          this.files.sort((a, b) => (ascending ? a.size - b.size : b.size - a.size));
+          fileTableData.sort((a, b) => (ascending ? a.size - b.size : b.size - a.size));
           break;
       }
     }
-
-    this.changePage(0);
-  }
-
-  private clearCheckBoxes() {
-    this.checkboxByFiles.clear();
-    this.files.forEach(file => {
-      this.checkboxByFiles.set(file.filename, false);
-    });
-    this.mainFilesCheckboxState = 'UNCHECKED';
+    return fileTableData;
   }
 
   onItemActionClick(action: ItemActionEvent['type'], file: FileTableData) {

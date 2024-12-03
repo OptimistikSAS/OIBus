@@ -4,9 +4,9 @@
       <tr>
         <th>
           <input
-            [checked]="mainFilesCheckboxState === 'CHECKED'"
-            [indeterminate]="mainFilesCheckboxState === 'INDETERMINATE'"
-            (click)="onFileMainCheckBoxClick(checkbox.checked)"
+            [checked]="mainFilesCheckboxState() === 'CHECKED'"
+            [indeterminate]="mainFilesCheckboxState() === 'INDETERMINATE'"
+            (change)="onFileMainCheckBoxClick(checkbox.checked)"
             type="checkbox"
             #checkbox
             id="toggle-all-parameters"
@@ -14,47 +14,70 @@
         </th>
         <th>
           <button
-            class="py-1 px-0"
+            class="py-1 px-0 sort-by-modification-date"
             style="background: none; border: none; font-weight: bold"
             (click)="toggleColumnSort('modificationDate')"
           >
             <span translate="north.cache-settings.file-date" class="me-2"></span>
-            <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.modificationDate] }}"></span>
+            <span
+              class="fa"
+              [class.fa-sort]="currentColumnSort() === 'modificationDate' && currentColumnOrder() === 0"
+              [class.fa-sort-asc]="currentColumnSort() === 'modificationDate' && currentColumnOrder() === 1"
+              [class.fa-sort-desc]="currentColumnSort() === 'modificationDate' && currentColumnOrder() === 2"
+            ></span>
           </button>
         </th>
         <th>
-          <button class="py-1 px-0" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('filename')">
+          <button
+            class="py-1 px-0 sort-by-filename"
+            style="background: none; border: none; font-weight: bold"
+            (click)="toggleColumnSort('filename')"
+          >
             <span translate="north.cache-settings.filename" class="me-2"></span>
-            <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.filename] }}"></span>
+            <span
+              class="fa"
+              [class.fa-sort]="currentColumnSort() === 'filename' && currentColumnOrder() === 0"
+              [class.fa-sort-asc]="currentColumnSort() === 'filename' && currentColumnOrder() === 1"
+              [class.fa-sort-desc]="currentColumnSort() === 'filename' && currentColumnOrder() === 2"
+            ></span>
           </button>
         </th>
         <th>
-          <button class="py-1 px-0" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('size')">
+          <button
+            class="py-1 px-0 sort-by-size"
+            style="background: none; border: none; font-weight: bold"
+            (click)="toggleColumnSort('size')"
+          >
             <span translate="north.cache-settings.file-size" class="me-2"></span>
-            <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.size] }}"></span>
+            <span
+              class="fa"
+              [class.fa-sort]="currentColumnSort() === 'size' && currentColumnOrder() === 0"
+              [class.fa-sort-asc]="currentColumnSort() === 'size' && currentColumnOrder() === 1"
+              [class.fa-sort-desc]="currentColumnSort() === 'size' && currentColumnOrder() === 2"
+            ></span>
           </button>
         </th>
       </tr>
     </thead>
     <tbody>
-      @for (file of pages.content; track file) {
+      @for (file of pages().content; track file) {
         <tr class="data">
           <td>
             <input
               type="checkbox"
-              (click)="onFileCheckboxClick(checkbox.checked, file)"
+              (change)="onFileCheckboxClick(checkbox.checked, file)"
               #checkbox
-              [checked]="checkboxByFiles.get(file.filename)"
+              [checked]="checkboxByFiles().get(file.filename)"
               class="toggle-parameter"
               [id]="'error-file-' + file.filename"
             /><label></label>
           </td>
-          <td>{{ file.modificationDate | datetime: 'mediumWithSeconds' }}</td>
-          <td>{{ file.filename }}</td>
+          <td class="modification-date">{{ file.modificationDate | datetime: 'mediumWithSeconds' }}</td>
+          <td class="filename">{{ file.filename }}</td>
           <td>{{ file.size | fileSize }}</td>
           <td class="text-nowrap action-buttons">
             <div class="pull-right">
-              @for (action of actions; track action) {
+              @for (action of uniqueActions(); track action) {
                 <button
                   type="button"
                   class="btn btn-link px-1 py-0"
