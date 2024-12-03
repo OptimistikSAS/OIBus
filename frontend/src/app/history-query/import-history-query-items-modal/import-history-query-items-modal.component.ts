@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ObservableState } from '../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
@@ -22,6 +22,9 @@ const PAGE_SIZE = 20;
   imports: [...formDirectives, TranslateModule, PaginationComponent]
 })
 export class ImportHistoryQueryItemsModalComponent {
+  private modal = inject(NgbActiveModal);
+  private pipeProviderService = inject(PipeProviderService);
+
   state = new ObservableState();
   southItemSchema: SouthConnectorItemManifest | null = null;
   southItemRows: Array<Array<OibFormControl>> = [];
@@ -37,11 +40,6 @@ export class ImportHistoryQueryItemsModalComponent {
     item: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>;
     error: string;
   }> = emptyPage();
-
-  constructor(
-    private modal: NgbActiveModal,
-    private pipeProviderService: PipeProviderService
-  ) {}
 
   prepare(
     southItemSchema: SouthConnectorItemManifest,
