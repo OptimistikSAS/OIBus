@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, inject } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { NorthConnectorDTO } from '../../../../../backend/shared/model/north-connector.model';
@@ -19,7 +19,7 @@ import { NorthSettings } from '../../../../../backend/shared/model/north-setting
   styleUrl: './explore-cache.component.scss',
   imports: [
     ...formDirectives,
-    TranslateModule,
+    TranslateDirective,
     BackNavigationDirective,
     ErrorFilesComponent,
     ArchiveFilesComponent,

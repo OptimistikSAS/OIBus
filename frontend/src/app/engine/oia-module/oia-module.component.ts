@@ -1,5 +1,5 @@
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EngineService } from '../../services/engine.service';
 import { RegistrationSettingsDTO } from '../../../../../backend/shared/model/engine.model';
@@ -35,7 +35,7 @@ const REGISTRATION_CHECK_DURATION = 3000;
 @Component({
   selector: 'oib-oia-module',
   imports: [
-    TranslateModule,
+    TranslateDirective,
     ...formDirectives,
     DatetimePipe,
     OibusCommandTypeEnumPipe,
@@ -43,7 +43,8 @@ const REGISTRATION_CHECK_DURATION = 3000;
     MultiSelectOptionDirective,
     PaginationComponent,
     OibusCommandStatusEnumPipe,
-    NgbTooltip
+    NgbTooltip,
+    TranslatePipe
   ],
   templateUrl: './oia-module.component.html',
   styleUrl: './oia-module.component.scss',

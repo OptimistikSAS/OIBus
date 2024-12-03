@@ -9,7 +9,7 @@ import { User, UserCommandDTO } from '../../../../../backend/shared/model/user.m
 import { ModalService } from '../../shared/modal.service';
 import { UserSettingsService } from '../../services/user-settings.service';
 import { NotificationService } from '../../shared/notification.service';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateDirective, TranslateService } from '@ngx-translate/core';
 import { WindowService } from '../../shared/window.service';
 import { formDirectives } from '../../shared/form-directives';
 
@@ -28,7 +28,7 @@ declare namespace Intl {
   selector: 'oib-edit-user-settings',
   templateUrl: './edit-user-settings.component.html',
   styleUrl: './edit-user-settings.component.scss',
-  imports: [...formDirectives, TranslateModule, NgbTypeahead, SaveButtonComponent]
+  imports: [...formDirectives, TranslateDirective, NgbTypeahead, SaveButtonComponent]
 })
 export class EditUserSettingsComponent {
   private modalService = inject(ModalService);

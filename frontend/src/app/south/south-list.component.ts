@@ -1,5 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { SouthConnectorLightDTO } from '../../../../backend/shared/model/south-connector.model';
 import { SouthConnectorService } from '../services/south-connector.service';
 import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
@@ -23,7 +23,7 @@ const PAGE_SIZE = 15;
 @Component({
   selector: 'oib-south-list',
   imports: [
-    TranslateModule,
+    TranslateDirective,
     RouterLink,
     FormControlValidationDirective,
     FormsModule,

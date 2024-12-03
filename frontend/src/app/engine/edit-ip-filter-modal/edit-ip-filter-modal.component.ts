@@ -3,7 +3,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { NonNullableFormBuilder, Validators } from '@angular/forms';
 import { Observable, switchMap } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { IPFilterCommandDTO, IPFilterDTO } from '../../../../../backend/shared/model/ip-filter.model';
 import { IpFilterService } from '../../services/ip-filter.service';
 import { formDirectives } from '../../shared/form-directives';
@@ -12,7 +12,7 @@ import { formDirectives } from '../../shared/form-directives';
   selector: 'oib-edit-ip-filter-modal',
   templateUrl: './edit-ip-filter-modal.component.html',
   styleUrl: './edit-ip-filter-modal.component.scss',
-  imports: [...formDirectives, TranslateModule, SaveButtonComponent]
+  imports: [...formDirectives, TranslateDirective, SaveButtonComponent]
 })
 export class EditIpFilterModalComponent {
   private modal = inject(NgbActiveModal);

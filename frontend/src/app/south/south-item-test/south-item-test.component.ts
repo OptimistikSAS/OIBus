@@ -7,7 +7,7 @@ import {
 } from '../../../../../backend/shared/model/south-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { OibCodeBlockComponent } from '../../shared/form/oib-code-block/oib-code-block.component';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateDirective, TranslateService } from '@ngx-translate/core';
 import { DatetimepickerComponent } from '../../shared/datetimepicker/datetimepicker.component';
 import { ValErrorDelayDirective } from '../../shared/val-error-delay.directive';
 import { SouthConnectorService } from '../../services/south-connector.service';
@@ -26,7 +26,7 @@ import { HistoryQueryItemCommandDTO } from '../../../../../backend/shared/model/
   selector: 'oib-south-item-test',
   templateUrl: './south-item-test.component.html',
   styleUrl: './south-item-test.component.scss',
-  imports: [...formDirectives, OibCodeBlockComponent, TranslateModule, DatetimepickerComponent, ValErrorDelayDirective]
+  imports: [...formDirectives, OibCodeBlockComponent, TranslateDirective, DatetimepickerComponent, ValErrorDelayDirective]
 })
 export class SouthItemTestComponent<TItemType extends 'south' | 'history-south'> implements AfterViewInit, OnInit {
   private translate = inject(TranslateService);

@@ -5,7 +5,7 @@
   <div class="row">
     @for (group of groupedSouthTypes; track group) {
       <div class="col-lg-12 col-md-12">
-        <h1 class="mt-2">{{ 'enums.categories.' + group.category | translate }}</h1>
+        <h1 class="mt-2" [translate]="'enums.categories.' + group.category"></h1>
       </div>
       @for (southType of group.types; track southType.id) {
         <div class="col-lg-4 col-md-4 oib-modal-container-list">

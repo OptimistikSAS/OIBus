@@ -3,7 +3,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AbstractControl, FormControl, FormGroup, NonNullableFormBuilder, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
 import {
   SouthConnectorCommandDTO,
@@ -36,7 +36,15 @@ declare namespace Intl {
   selector: 'oib-edit-south-item-modal',
   templateUrl: './edit-south-item-modal.component.html',
   styleUrl: './edit-south-item-modal.component.scss',
-  imports: [...formDirectives, TranslateModule, SaveButtonComponent, OibScanModeComponent, FormComponent, SouthItemTestComponent]
+  imports: [
+    ...formDirectives,
+    TranslateDirective,
+    SaveButtonComponent,
+    OibScanModeComponent,
+    FormComponent,
+    SouthItemTestComponent,
+    TranslatePipe
+  ]
 })
 export class EditSouthItemModalComponent {
   private modal = inject(NgbActiveModal);

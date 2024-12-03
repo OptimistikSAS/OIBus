@@ -1,5 +1,5 @@
 import { Component, Input, OnInit, output } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { formDirectives } from '../../../shared/form-directives';
 import { NorthCacheFiles } from '../../../../../../backend/shared/model/north-connector.model';
 import { DatetimePipe } from '../../../shared/datetime.pipe';
@@ -31,7 +31,7 @@ export interface ItemActionEvent {
   selector: 'oib-file-table',
   templateUrl: './file-table.component.html',
   styleUrl: './file-table.component.scss',
-  imports: [...formDirectives, TranslateModule, DatetimePipe, FileSizePipe, NgbTooltipModule]
+  imports: [...formDirectives, TranslateDirective, DatetimePipe, FileSizePipe, NgbTooltipModule]
 })
 export class FileTableComponent implements OnInit {
   readonly itemAction = output<ItemActionEvent>();

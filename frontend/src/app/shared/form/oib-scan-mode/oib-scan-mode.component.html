@@ -2,7 +2,7 @@
 <select [formControl]="scanModeInputCtrl" [id]="'OibScanMode-' + key" class="form-select mb-2 mr-sm-2">
   <option [ngValue]="null"></option>
   @if (acceptSubscription) {
-    <option ngValue="subscription">{{ 'scan-mode.subscription' | translate }}</option>
+    <option ngValue="subscription" translate="scan-mode.subscription"></option>
   }
   @for (scanMode of scanModes; track scanMode.id) {
     <option [ngValue]="scanMode.id">{{ scanMode.name }}</option>

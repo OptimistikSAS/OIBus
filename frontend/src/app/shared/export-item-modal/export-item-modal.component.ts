@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { CsvCharacter, ALL_CSV_CHARACTERS } from '../../../../../backend/shared/model/types';
 import { NonNullableFormBuilder, Validators } from '@angular/forms';
 import { inject, OnInit } from '@angular/core';
@@ -11,7 +11,7 @@ import { DateTime } from 'luxon';
   selector: 'oib-export-item-modal',
   templateUrl: './export-item-modal.component.html',
   styleUrl: './export-item-modal.component.scss',
-  imports: [TranslateModule, ...formDirectives]
+  imports: [TranslateDirective, ...formDirectives]
 })
 export class ExportItemModalComponent implements OnInit {
   private modal = inject(NgbActiveModal);

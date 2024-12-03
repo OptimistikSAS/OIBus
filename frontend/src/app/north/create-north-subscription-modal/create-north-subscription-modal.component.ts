@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { NonNullableFormBuilder, Validators } from '@angular/forms';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
 import { SouthConnectorLightDTO } from '../../../../../backend/shared/model/south-connector.model';
 
@@ -10,7 +10,7 @@ import { SouthConnectorLightDTO } from '../../../../../backend/shared/model/sout
   selector: 'oib-create-north-subscription-modal',
   templateUrl: './create-north-subscription-modal.component.html',
   styleUrl: './create-north-subscription-modal.component.scss',
-  imports: [...formDirectives, TranslateModule, SaveButtonComponent]
+  imports: [...formDirectives, TranslateDirective, SaveButtonComponent]
 })
 export class CreateNorthSubscriptionModalComponent {
   private modal = inject(NgbActiveModal);

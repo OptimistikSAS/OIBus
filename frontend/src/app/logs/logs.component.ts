@@ -1,5 +1,5 @@
 import { Component, inject, OnDestroy, OnInit, Input } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PageLoader } from '../shared/page-loader.service';
 import { NonNullableFormBuilder } from '@angular/forms';
@@ -42,7 +42,7 @@ import { NgClass } from '@angular/common';
 @Component({
   selector: 'oib-logs',
   imports: [
-    TranslateModule,
+    TranslateDirective,
     ...formDirectives,
     PaginationComponent,
     MultiSelectComponent,
@@ -165,8 +165,8 @@ export class LogsComponent implements OnInit, OnDestroy {
     const now = DateTime.now().endOf('minute');
     const queryParamMap = route.snapshot.queryParamMap;
     const messageContent = queryParamMap.get('messageContent');
-    let scopeTypes = null;
-    let scopeIds = null;
+    let scopeTypes: Array<string>;
+    let scopeIds: Array<string>;
     if (this.scopeId !== null && this.scopeType !== null) {
       scopeTypes = [this.scopeType];
       scopeIds = [this.scopeId];

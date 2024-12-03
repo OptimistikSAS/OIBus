@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { formDirectives } from '../../shared/form-directives';
 import { FormControl, FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
@@ -48,7 +48,7 @@ import { dateTimeRangeValidatorBuilder } from '../../shared/validators';
 @Component({
   selector: 'oib-edit-history-query',
   imports: [
-    TranslateModule,
+    TranslateDirective,
     ...formDirectives,
     SaveButtonComponent,
     FormComponent,
@@ -58,7 +58,8 @@ import { dateTimeRangeValidatorBuilder } from '../../shared/validators';
     BoxComponent,
     BoxTitleDirective,
     HistoryQueryItemsComponent,
-    OibHelpComponent
+    OibHelpComponent,
+    TranslatePipe
   ],
   templateUrl: './edit-history-query.component.html',
   styleUrl: './edit-history-query.component.scss'

@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { CurrentUserService } from '../shared/current-user.service';
 import { User } from '../../../../backend/shared/model/user.model';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
@@ -12,7 +12,7 @@ import { PageTitleDirective } from '../services/page-title.directive';
 
 @Component({
   selector: 'oib-navbar',
-  imports: [RouterLink, TranslateModule, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, PageTitleDirective],
+  imports: [RouterLink, TranslateDirective, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, PageTitleDirective],
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.scss'
 })

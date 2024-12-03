@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { BehaviorSubject, defer, finalize, Observable } from 'rxjs';
 import { AsyncPipe, NgClass } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 
 /**
  * A class that holds the state of an observable,
@@ -33,7 +33,7 @@ export class ObservableState {
   templateUrl: './save-button.component.html',
   styleUrl: './save-button.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [AsyncPipe, NgClass, TranslateModule]
+  imports: [AsyncPipe, NgClass, TranslateDirective]
 })
 export class SaveButtonComponent {
   @Input() form = 'form';

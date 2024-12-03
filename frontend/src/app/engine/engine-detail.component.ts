@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { EngineService } from '../services/engine.service';
 import { EngineMetrics, EngineSettingsDTO } from '../../../../backend/shared/model/engine.model';
 import { AsyncPipe } from '@angular/common';
@@ -18,7 +18,7 @@ import { CertificateListComponent } from './certificate-list/certificate-list.co
 @Component({
   selector: 'oib-engine-detail',
   imports: [
-    TranslateModule,
+    TranslateDirective,
     ScanModeListComponent,
     CertificateListComponent,
     IpFilterListComponent,

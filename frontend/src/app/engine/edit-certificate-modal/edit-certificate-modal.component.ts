@@ -3,7 +3,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { NonNullableFormBuilder, Validators } from '@angular/forms';
 import { Observable, switchMap } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
 import { CertificateCommandDTO, CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
 import { CertificateService } from '../../services/certificate.service';
@@ -12,7 +12,7 @@ import { CertificateService } from '../../services/certificate.service';
   selector: 'oib-edit-certificate-modal',
   templateUrl: './edit-certificate-modal.component.html',
   styleUrl: './edit-certificate-modal.component.scss',
-  imports: [...formDirectives, TranslateModule, SaveButtonComponent]
+  imports: [...formDirectives, TranslateDirective, SaveButtonComponent]
 })
 export class EditCertificateModalComponent {
   private modal = inject(NgbActiveModal);

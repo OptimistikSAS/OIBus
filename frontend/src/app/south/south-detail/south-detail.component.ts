@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import {
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
@@ -31,7 +31,7 @@ import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/
 @Component({
   selector: 'oib-south-detail',
   imports: [
-    TranslateModule,
+    TranslateDirective,
     RouterLink,
     BackNavigationDirective,
     SouthMetricsComponent,

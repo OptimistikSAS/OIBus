@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { SouthType } from '../../../../../backend/shared/model/south-connector.model';
@@ -10,7 +10,7 @@ import { formDirectives } from '../../shared/form-directives';
   selector: 'oib-choose-south-connector-type-modal',
   templateUrl: './choose-south-connector-type-modal.component.html',
   styleUrl: './choose-south-connector-type-modal.component.scss',
-  imports: [...formDirectives, TranslateModule]
+  imports: [...formDirectives, TranslateDirective, TranslatePipe]
 })
 export class ChooseSouthConnectorTypeModalComponent implements OnInit {
   private modal = inject(NgbActiveModal);

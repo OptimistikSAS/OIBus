@@ -11,7 +11,7 @@ import {
   inject
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { OibHelpComponent } from '../oib-help/oib-help.component';
 
 @Directive({
@@ -30,7 +30,7 @@ export class BoxTitleDirective {
   selector: 'oib-box',
   templateUrl: './box.component.html',
   styleUrl: './box.component.scss',
-  imports: [NgTemplateOutlet, TranslateModule, OibHelpComponent],
+  imports: [NgTemplateOutlet, TranslateDirective, OibHelpComponent],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BoxComponent implements AfterContentInit {
