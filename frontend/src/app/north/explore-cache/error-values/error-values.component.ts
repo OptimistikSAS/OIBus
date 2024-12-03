@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject, viewChild } from '@angular/core';
+import { Component, OnInit, inject, viewChild, input } from '@angular/core';
 import { TranslateDirective } from '@ngx-translate/core';
 import { formDirectives } from '../../../shared/form-directives';
 import { NorthConnectorService } from '../../../services/north-connector.service';
@@ -19,13 +19,13 @@ import { NorthSettings } from '../../../../../../backend/shared/model/north-sett
 export class ErrorValuesComponent implements OnInit {
   private northConnectorService = inject(NorthConnectorService);
 
-  @Input() northConnector: NorthConnectorDTO<NorthSettings> | null = null;
+  readonly northConnector = input<NorthConnectorDTO<NorthSettings> | null>(null);
   errorValues: Array<NorthCacheFiles> = [];
   readonly fileTable = viewChild.required<FileTableComponent>('fileTable');
   fileTablePages = emptyPage<FileTableData>();
 
   ngOnInit() {
-    this.northConnectorService.getCacheErrorValues(this.northConnector!.id).subscribe(errorValues => {
+    this.northConnectorService.getCacheErrorValues(this.northConnector()!.id).subscribe(errorValues => {
       this.errorValues = errorValues;
       this.refreshErrorValues();
     });
@@ -33,20 +33,20 @@ export class ErrorValuesComponent implements OnInit {
 
   retryErrorValues() {
     const files = this.errorValues.filter(file => this.fileTable().checkboxByFiles.get(file.filename)).map(file => file.filename);
-    this.northConnectorService.retryCacheErrorValues(this.northConnector!.id, files).subscribe(() => {
+    this.northConnectorService.retryCacheErrorValues(this.northConnector()!.id, files).subscribe(() => {
       this.refreshErrorValues();
     });
   }
 
   removeErrorValues() {
     const files = this.errorValues.filter(file => this.fileTable().checkboxByFiles.get(file.filename)).map(file => file.filename);
-    this.northConnectorService.removeCacheErrorValues(this.northConnector!.id, files).subscribe(() => {
+    this.northConnectorService.removeCacheErrorValues(this.northConnector()!.id, files).subscribe(() => {
       this.refreshErrorValues();
     });
   }
 
   refreshErrorValues() {
-    this.northConnectorService.getCacheErrorValues(this.northConnector!.id).subscribe(errorValues => {
+    this.northConnectorService.getCacheErrorValues(this.northConnector()!.id).subscribe(errorValues => {
       this.errorValues = errorValues;
       const fileTable = this.fileTable();
       if (fileTable) {

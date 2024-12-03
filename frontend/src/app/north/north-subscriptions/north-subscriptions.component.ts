@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject, output } from '@angular/core';
+import { Component, OnInit, inject, output, input } from '@angular/core';
 
 import { of, switchMap, tap } from 'rxjs';
 import { ConfirmationService } from '../../shared/confirmation.service';
@@ -27,7 +27,10 @@ export class NorthSubscriptionsComponent implements OnInit {
   private northConnectorService = inject(NorthConnectorService);
   private southConnectorService = inject(SouthConnectorService);
 
-  @Input() northConnector: NorthConnectorDTO<NorthSettings> | null = null;
+  // TODO: Skipped for migration because:
+  //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+  //  and migrating would break narrowing currently.
+  readonly northConnector = input<NorthConnectorDTO<NorthSettings> | null>(null);
 
   readonly inMemorySubscriptions = output<Array<SouthConnectorLightDTO> | null>();
 
@@ -45,9 +48,9 @@ export class NorthSubscriptionsComponent implements OnInit {
     const modalRef = this.modalService.open(CreateNorthSubscriptionModalComponent);
     const component: CreateNorthSubscriptionModalComponent = modalRef.componentInstance;
 
-    if (this.northConnector) {
+    if (this.northConnector()) {
       component.prepareForCreation(
-        this.southConnectors.filter(south => !this.northConnector!.subscriptions.some(subscription => subscription.id === south.id))
+        this.southConnectors.filter(south => !this.northConnector()!.subscriptions.some(subscription => subscription.id === south.id))
       );
     } else {
       component.prepareForCreation(
@@ -65,8 +68,9 @@ export class NorthSubscriptionsComponent implements OnInit {
     modalRef.result
       .pipe(
         switchMap((southConnector: SouthConnectorLightDTO) => {
-          if (this.northConnector) {
-            return this.northConnectorService.createSubscription(this.northConnector.id, southConnector.id).pipe(
+          const northConnector = this.northConnector();
+          if (northConnector) {
+            return this.northConnectorService.createSubscription(northConnector.id, southConnector.id).pipe(
               tap(() =>
                 this.notificationService.success(`north.subscriptions.created`, {
                   name: southConnector.name
@@ -80,7 +84,7 @@ export class NorthSubscriptionsComponent implements OnInit {
         })
       )
       .subscribe(() => {
-        if (this.northConnector) {
+        if (this.northConnector()) {
           this.inMemorySubscriptions.emit(null);
         } else {
           this.inMemorySubscriptions.emit(this.subscriptions);
@@ -98,8 +102,9 @@ export class NorthSubscriptionsComponent implements OnInit {
       })
       .pipe(
         switchMap(() => {
-          if (this.northConnector) {
-            return this.northConnectorService.deleteSubscription(this.northConnector!.id, subscription!.id);
+          const northConnector = this.northConnector();
+          if (northConnector) {
+            return this.northConnectorService.deleteSubscription(northConnector!.id, subscription!.id);
           } else {
             this.subscriptions = this.subscriptions.filter(element => element.id !== subscription.id);
             return of(null);
@@ -107,7 +112,7 @@ export class NorthSubscriptionsComponent implements OnInit {
         })
       )
       .subscribe(() => {
-        if (this.northConnector) {
+        if (this.northConnector()) {
           this.notificationService.success(`north.subscriptions.deleted`, {
             name: subscription.name
           });

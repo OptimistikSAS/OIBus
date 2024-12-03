@@ -1,4 +1,4 @@
-@if (northConnector) {
+@if (northConnector()) {
   <div class="my-2">
     <span class="fa fa-warning mx-1" style="color: orange"></span>
     <span translate="north.subscriptions.edit-mode-info"></span>
@@ -14,13 +14,15 @@
     <div class="d-flex justify-content-between align-items-center">
       <div>
         <span translate="north.subscriptions.title" id="title"></span>
-        @if (northConnector ? northConnector.subscriptions.length : subscriptions.length) {
-          <span class="mx-1">({{ northConnector ? northConnector.subscriptions.length : subscriptions.length }})</span>
+        @if (northConnector() ? northConnector()!.subscriptions.length : subscriptions.length) {
+          <span class="mx-1">({{ northConnector() ? northConnector()!.subscriptions.length : subscriptions.length }} )</span>
         }
       </div>
       <div>
         @if (
-          northConnector ? southConnectors.length !== northConnector.subscriptions.length : southConnectors.length !== subscriptions.length
+          northConnector()
+            ? southConnectors.length !== northConnector()!.subscriptions.length
+            : southConnectors.length !== subscriptions.length
         ) {
           <button class="btn btn-primary btn-sm oib-box-btn" (click)="addSubscription($event)" translate="north.subscriptions.add"></button>
         }
@@ -29,7 +31,7 @@
     </div>
   </ng-template>
 
-  @if (northConnector ? northConnector.subscriptions.length : subscriptions.length) {
+  @if (northConnector() ? northConnector()!.subscriptions.length : subscriptions.length) {
     <div class="mb-3">
       <table class="table table-sm table-hover oib-table">
         <thead class="light">
@@ -39,7 +41,7 @@
           </tr>
         </thead>
         <tbody>
-          @if (northConnector) {
+          @if (northConnector(); as northConnector) {
             @for (subscription of northConnector.subscriptions; track subscription.id) {
               <tr>
                 <td>{{ subscription.name }} ({{ subscription.type }})</td>
