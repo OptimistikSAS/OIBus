@@ -9,8 +9,7 @@ import { Directive, ElementRef, NgZone, OnDestroy, inject } from '@angular/core'
  */
 @Directive({
   // eslint-disable-next-line @angular-eslint/directive-selector
-  selector: 'val-errors',
-  standalone: true
+  selector: 'val-errors'
 })
 export class ValErrorDelayDirective implements OnDestroy {
   observer: MutationObserver | null = null;

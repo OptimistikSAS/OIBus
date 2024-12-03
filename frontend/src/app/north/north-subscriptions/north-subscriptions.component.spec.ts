@@ -13,7 +13,6 @@ import { NorthSettings } from '../../../../../backend/shared/model/north-setting
 
 @Component({
   template: `<oib-north-subscriptions [northConnector]="northConnector" />`,
-  standalone: true,
   imports: [NorthSubscriptionsComponent]
 })
 class TestComponent {

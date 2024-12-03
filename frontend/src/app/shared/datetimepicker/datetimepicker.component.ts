@@ -55,8 +55,7 @@ import { CurrentUserService } from '../current-user.service';
     { provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => DatetimepickerComponent), multi: true },
     { provide: NG_VALIDATORS, useExisting: forwardRef(() => DatetimepickerComponent), multi: true }
   ],
-  imports: [...formDirectives, NgTemplateOutlet, NgbTimepicker, DatepickerContainerComponent, NgbInputDatepicker],
-  standalone: true
+  imports: [...formDirectives, NgTemplateOutlet, NgbTimepicker, DatepickerContainerComponent, NgbInputDatepicker]
 })
 export class DatetimepickerComponent implements OnInit, AfterViewInit, ControlValueAccessor, Validator {
   private element = inject<ElementRef<HTMLElement>>(ElementRef);

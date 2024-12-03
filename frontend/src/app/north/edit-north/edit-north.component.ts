@@ -32,7 +32,6 @@ import { NorthSettings } from '../../../../../backend/shared/model/north-setting
 
 @Component({
   selector: 'oib-edit-north',
-  standalone: true,
   imports: [
     TranslateModule,
     ...formDirectives,

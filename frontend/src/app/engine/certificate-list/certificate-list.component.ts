@@ -17,7 +17,6 @@ import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 
 @Component({
   selector: 'oib-certificate-list',
-  standalone: true,
   imports: [
     TranslateModule,
     BoxComponent,

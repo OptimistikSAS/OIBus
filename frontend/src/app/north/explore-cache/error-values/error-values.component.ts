@@ -29,8 +29,7 @@ import { NorthSettings } from '../../../../../../backend/shared/model/north-sett
     BoxComponent,
     BoxTitleDirective,
     FileTableComponent
-  ],
-  standalone: true
+  ]
 })
 export class ErrorValuesComponent implements OnInit {
   private northConnectorService = inject(NorthConnectorService);

@@ -10,7 +10,6 @@ import { NorthSettings } from '../../../../../../backend/shared/model/north-sett
 
 @Component({
   template: `<oib-cache-values [northConnector]="northConnector" />`,
-  standalone: true,
   imports: [CacheValuesComponent]
 })
 class TestComponent {

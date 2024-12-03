@@ -33,8 +33,7 @@ export class ObservableState {
   templateUrl: './save-button.component.html',
   styleUrl: './save-button.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [AsyncPipe, NgClass, TranslateModule],
-  standalone: true
+  imports: [AsyncPipe, NgClass, TranslateModule]
 })
 export class SaveButtonComponent {
   @Input() form = 'form';

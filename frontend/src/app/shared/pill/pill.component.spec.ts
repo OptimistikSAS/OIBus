@@ -5,8 +5,7 @@ import { PillComponent } from './pill.component';
 
 @Component({
   template: ` <oib-pill [type]="type" [removable]="removable" (removed)="removed = true">Pill content</oib-pill>`,
-  imports: [PillComponent],
-  standalone: true
+  imports: [PillComponent]
 })
 class TestComponent {
   type = 'primary' as const;

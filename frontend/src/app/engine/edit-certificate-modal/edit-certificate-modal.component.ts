@@ -12,8 +12,7 @@ import { CertificateService } from '../../services/certificate.service';
   selector: 'oib-edit-certificate-modal',
   templateUrl: './edit-certificate-modal.component.html',
   styleUrl: './edit-certificate-modal.component.scss',
-  imports: [...formDirectives, TranslateModule, SaveButtonComponent],
-  standalone: true
+  imports: [...formDirectives, TranslateModule, SaveButtonComponent]
 })
 export class EditCertificateModalComponent {
   private modal = inject(NgbActiveModal);

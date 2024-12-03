@@ -11,8 +11,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
       useExisting: forwardRef(() => OibCodeBlockStubComponent),
       multi: true
     }
-  ],
-  standalone: true
+  ]
 })
 export class OibCodeBlockStubComponent implements ControlValueAccessor {
   onChange: any = () => {};

@@ -42,7 +42,6 @@ export interface TableData {
 
 @Component({
   selector: 'oib-south-items',
-  standalone: true,
   imports: [
     TranslateModule,
     FormControlValidationDirective,

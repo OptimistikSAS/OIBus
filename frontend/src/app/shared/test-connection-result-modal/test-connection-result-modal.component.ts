@@ -14,8 +14,7 @@ import { NorthSettings } from '../../../../../backend/shared/model/north-setting
   selector: 'oib-test-connection-result-modal',
   templateUrl: './test-connection-result-modal.component.html',
   styleUrl: './test-connection-result-modal.component.scss',
-  imports: [TranslateModule],
-  standalone: true
+  imports: [TranslateModule]
 })
 export class TestConnectionResultModalComponent {
   private modal = inject(NgbActiveModal);

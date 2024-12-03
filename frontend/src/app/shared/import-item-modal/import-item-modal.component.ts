@@ -11,8 +11,7 @@ import { formDirectives } from '../../shared/form-directives';
   selector: 'oib-import-item-modal',
   templateUrl: './import-item-modal.component.html',
   styleUrl: './import-item-modal.component.scss',
-  imports: [TranslateModule, ...formDirectives, CsvCharacterEnumPipe],
-  standalone: true
+  imports: [TranslateModule, ...formDirectives, CsvCharacterEnumPipe]
 })
 export class ImportItemModalComponent implements OnInit {
   private modal = inject(NgbActiveModal);

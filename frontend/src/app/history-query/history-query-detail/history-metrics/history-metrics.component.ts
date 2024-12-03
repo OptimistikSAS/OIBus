@@ -16,8 +16,7 @@ import { NorthSettings } from '../../../../../../backend/shared/model/north-sett
   selector: 'oib-history-metrics',
   templateUrl: './history-metrics.component.html',
   styleUrl: './history-metrics.component.scss',
-  imports: [TranslateModule, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe, ProgressbarComponent],
-  standalone: true
+  imports: [TranslateModule, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe, ProgressbarComponent]
 })
 export class HistoryMetricsComponent {
   @Input({ required: true }) historyQuery!: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>;

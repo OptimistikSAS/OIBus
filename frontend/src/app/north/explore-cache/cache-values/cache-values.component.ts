@@ -29,8 +29,7 @@ import { FileTableComponent, FileTableData } from '../file-table/file-table.comp
     BoxComponent,
     BoxTitleDirective,
     FileTableComponent
-  ],
-  standalone: true
+  ]
 })
 export class CacheValuesComponent implements OnInit {
   private northConnectorService = inject(NorthConnectorService);

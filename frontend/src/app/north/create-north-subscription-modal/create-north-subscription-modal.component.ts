@@ -10,8 +10,7 @@ import { SouthConnectorLightDTO } from '../../../../../backend/shared/model/sout
   selector: 'oib-create-north-subscription-modal',
   templateUrl: './create-north-subscription-modal.component.html',
   styleUrl: './create-north-subscription-modal.component.scss',
-  imports: [...formDirectives, TranslateModule, SaveButtonComponent],
-  standalone: true
+  imports: [...formDirectives, TranslateModule, SaveButtonComponent]
 })
 export class CreateNorthSubscriptionModalComponent {
   private modal = inject(NgbActiveModal);

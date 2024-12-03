@@ -43,8 +43,7 @@ class ModalComponentTester {
  * A test component just to be able to create a fixture to detect changes
  */
 @Component({
-  template: '',
-  standalone: true
+  template: ''
 })
 class TestComponent {}
 

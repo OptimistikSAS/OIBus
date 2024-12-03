@@ -13,8 +13,7 @@ import { OibusCommandTypeEnumPipe } from '../../../shared/oibus-command-type-enu
   selector: 'oib-register-oibus-modal',
   templateUrl: './register-oibus-modal.component.html',
   styleUrl: './register-oibus-modal.component.scss',
-  imports: [...formDirectives, TranslateModule, SaveButtonComponent, OibusCommandTypeEnumPipe, BoxComponent],
-  standalone: true
+  imports: [...formDirectives, TranslateModule, SaveButtonComponent, OibusCommandTypeEnumPipe, BoxComponent]
 })
 export class RegisterOibusModalComponent {
   private modal = inject(NgbActiveModal);

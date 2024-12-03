@@ -15,8 +15,7 @@ import { Router } from '@angular/router';
   selector: 'oib-north-metrics',
   templateUrl: './north-metrics.component.html',
   styleUrl: './north-metrics.component.scss',
-  imports: [TranslateModule, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe, FileSizePipe],
-  standalone: true
+  imports: [TranslateModule, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe, FileSizePipe]
 })
 export class NorthMetricsComponent implements OnInit {
   private zone = inject(NgZone);

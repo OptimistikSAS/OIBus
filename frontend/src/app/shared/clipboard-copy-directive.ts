@@ -2,8 +2,7 @@ import { Directive, HostListener, Input, inject } from '@angular/core';
 import { Clipboard } from '@angular/cdk/clipboard';
 
 @Directive({
-  selector: '[oibClipboardCopy]',
-  standalone: true
+  selector: '[oibClipboardCopy]'
 })
 export class ClipboardCopyDirective {
   private clipboard = inject(Clipboard);

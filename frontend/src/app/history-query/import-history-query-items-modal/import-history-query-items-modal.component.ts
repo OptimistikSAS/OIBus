@@ -32,8 +32,7 @@ const PAGE_SIZE = 20;
     NgbTypeahead,
     FormComponent,
     PaginationComponent
-  ],
-  standalone: true
+  ]
 })
 export class ImportHistoryQueryItemsModalComponent {
   state = new ObservableState();

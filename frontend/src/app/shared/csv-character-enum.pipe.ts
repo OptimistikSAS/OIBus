@@ -4,8 +4,7 @@ import { BaseEnumPipe } from './base-enum-pipe';
 
 @Pipe({
   name: 'csvCharacterEnum',
-  pure: false,
-  standalone: true
+  pure: false
 })
 export class CsvCharacterEnumPipe extends BaseEnumPipe<CsvCharacter> implements PipeTransform {
   constructor() {

@@ -46,8 +46,7 @@ export interface ItemActionEvent {
     BoxComponent,
     BoxTitleDirective,
     NgbTooltipModule
-  ],
-  standalone: true
+  ]
 })
 export class FileTableComponent implements OnInit {
   @Output() itemAction = new EventEmitter<ItemActionEvent>();

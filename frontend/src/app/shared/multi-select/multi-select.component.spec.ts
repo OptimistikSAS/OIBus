@@ -26,7 +26,6 @@ interface User {
       </oib-multi-select>
     </form>
   `,
-  standalone: true,
   imports: [...formDirectives, MultiSelectComponent, MultiSelectOptionDirective]
 })
 class TestComponent {

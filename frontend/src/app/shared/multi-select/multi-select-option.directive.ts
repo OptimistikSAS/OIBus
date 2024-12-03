@@ -5,8 +5,7 @@ import { Directive, Input } from '@angular/core';
  */
 @Directive({
   // eslint-disable-next-line @angular-eslint/directive-selector
-  selector: 'oib-multi-select-option',
-  standalone: true
+  selector: 'oib-multi-select-option'
 })
 export class MultiSelectOptionDirective {
   @Input()

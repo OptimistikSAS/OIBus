@@ -10,7 +10,6 @@ import { OIBusInfo } from '../../../../backend/shared/model/engine.model';
 
 @Component({
   selector: 'oib-about',
-  standalone: true,
   imports: [FormControlValidationDirective, ReactiveFormsModule, TranslateModule, ValErrorDelayDirective, ValidationErrorsComponent],
   templateUrl: './about.component.html',
   styleUrl: './about.component.scss'

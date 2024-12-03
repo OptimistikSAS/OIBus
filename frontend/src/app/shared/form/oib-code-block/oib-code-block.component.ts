@@ -18,8 +18,7 @@ import { formDirectives } from '../../form-directives';
       useExisting: forwardRef(() => OibCodeBlockComponent),
       multi: true
     }
-  ],
-  standalone: true
+  ]
 })
 export class OibCodeBlockComponent implements AfterViewInit, ControlValueAccessor {
   private monacoEditorLoader = inject(MonacoEditorLoaderService);

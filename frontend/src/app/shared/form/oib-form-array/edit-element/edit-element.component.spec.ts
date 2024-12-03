@@ -19,7 +19,6 @@ import { buildDateTimeFieldsFormControl } from '../../../../../../../backend/sha
       (cancelled)="cancelled = true"
     />
   </form>`,
-  standalone: true,
   imports: [EditElementComponent, ...formDirectives]
 })
 class TestComponent {

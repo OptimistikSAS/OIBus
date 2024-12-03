@@ -6,7 +6,6 @@ import { TruncatedStringComponent } from './truncated-string.component';
 
 @Component({
   template: `<oib-truncated-string [string]="text" maxLength="10" />`,
-  standalone: true,
   imports: [TruncatedStringComponent]
 })
 class TestComponent {
