@@ -1,4 +1,4 @@
-import { Component, forwardRef, inject, Input } from '@angular/core';
+import { Component, forwardRef, inject, input } from '@angular/core';
 import { formDirectives } from '../../form-directives';
 
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, NonNullableFormBuilder } from '@angular/forms';
@@ -13,11 +13,11 @@ import { TranslateDirective } from '@ngx-translate/core';
   providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => OibScanModeComponent), multi: true }]
 })
 export class OibScanModeComponent implements ControlValueAccessor {
-  @Input() label = '';
-  @Input() key = '';
-  @Input() scanModes: Array<ScanModeDTO> = [];
-  @Input() acceptSubscription = false;
-  @Input() subscriptionOnly = false;
+  readonly label = input('');
+  readonly key = input('');
+  readonly scanModes = input<Array<ScanModeDTO>>([]);
+  readonly acceptSubscription = input(false);
+  readonly subscriptionOnly = input(false);
   scanModeInputCtrl = inject(NonNullableFormBuilder).control(null as string | null);
   disabled = false;
   onChange: (value: string) => void = () => {};

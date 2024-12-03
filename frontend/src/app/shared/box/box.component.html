@@ -1,20 +1,20 @@
 <div class="box">
   <div class="oib-box-title d-flex">
     <div class="flex-grow-1 title-container">
-      @if (titleTemplateRef) {
+      @if (titleTemplateRef(); as titleTemplateRef) {
         <ng-container *ngTemplateOutlet="titleTemplateRef" />
       } @else {
-        @if (imagePath) {
+        @if (imagePath(); as imagePath) {
           <img class="oib-image-header" [src]="imagePath" alt="Image" />
         }
-        <span [translate]="boxTitle"></span>
+        <span [translate]="boxTitle()"></span>
       }
-      @if (helpUrl) {
+      @if (helpUrl(); as helpUrl) {
         <oib-help class="pull-right" [url]="helpUrl" />
       }
     </div>
   </div>
-  <div [class]="removePadding ? 'p-0 box-content' : 'mb-3 px-3 py-1 box-content'" #boxContent>
+  <div [class]="removePadding() ? 'p-0 box-content' : 'mb-3 px-3 py-1 box-content'" #boxContent>
     <ng-content />
   </div>
 </div>

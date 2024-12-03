@@ -1,32 +1,27 @@
-import { ChangeDetectionStrategy, Component, Input, OnChanges } from '@angular/core';
-
+import { ChangeDetectionStrategy, Component, input, computed, numberAttribute } from '@angular/core';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   selector: 'oib-truncated-string',
   templateUrl: './truncated-string.component.html',
   styleUrl: './truncated-string.component.scss',
-  imports: [NgbPopover],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [NgbPopover]
 })
-export class TruncatedStringComponent implements OnChanges {
-  @Input({ required: true }) string: string | null | undefined;
-  @Input() maxLength = 40;
-  displayedString = '';
-  truncated = false;
-
-  ngOnChanges() {
-    if (this.string) {
-      if (this.string.length > this.maxLength) {
-        this.displayedString = this.string.substring(0, this.maxLength);
-        this.truncated = true;
-      } else {
-        this.displayedString = this.string;
-        this.truncated = false;
-      }
+export class TruncatedStringComponent {
+  readonly string = input.required<string | null | undefined>();
+  readonly maxLength = input(40, {
+    transform: numberAttribute
+  });
+  readonly truncated = computed(() => {
+    const string = this.string();
+    return string && string.length > this.maxLength();
+  });
+  readonly displayedString = computed(() => {
+    if (this.truncated()) {
+      return this.string()!.substring(0, this.maxLength());
     } else {
-      this.displayedString = '';
-      this.truncated = false;
+      return this.string() ?? '';
     }
-  }
+  });
 }
