@@ -1,12 +1,11 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import { NgClass } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'oib-legend',
   templateUrl: './legend.component.html',
   styleUrl: './legend.component.scss',
-  imports: [NgClass, TranslateModule],
+  imports: [TranslateModule],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LegendComponent {

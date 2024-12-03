@@ -1,19 +1,15 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../../shared/form-directives';
-
 import { NorthCacheFiles } from '../../../../../../backend/shared/model/north-connector.model';
-import { RouterLink } from '@angular/router';
 import { DatetimePipe } from '../../../shared/datetime.pipe';
-import { PaginationComponent } from '../../../shared/pagination/pagination.component';
 import { FileSizePipe } from '../../../shared/file-size.pipe';
-import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
 import { createPageFromArray, Instant, Page } from '../../../../../../backend/shared/model/types';
 import { emptyPage } from '../../../shared/test-utils';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 const PAGE_SIZE = 15;
+
 const enum ColumnSortState {
   INDETERMINATE = 0,
   ASCENDING = 1,
@@ -35,18 +31,7 @@ export interface ItemActionEvent {
   selector: 'oib-file-table',
   templateUrl: './file-table.component.html',
   styleUrl: './file-table.component.scss',
-  imports: [
-    ...formDirectives,
-    TranslateModule,
-    SaveButtonComponent,
-    DatetimePipe,
-    PaginationComponent,
-    FileSizePipe,
-    RouterLink,
-    BoxComponent,
-    BoxTitleDirective,
-    NgbTooltipModule
-  ]
+  imports: [...formDirectives, TranslateModule, DatetimePipe, FileSizePipe, NgbTooltipModule]
 })
 export class FileTableComponent implements OnInit {
   @Output() itemAction = new EventEmitter<ItemActionEvent>();
