@@ -1,4 +1,4 @@
-import { Component, Input, NgZone, OnInit, inject } from '@angular/core';
+import { Component, NgZone, OnInit, inject, input, linkedSignal } from '@angular/core';
 import { TranslateDirective } from '@ngx-translate/core';
 import { NorthConnectorMetrics } from '../../../../../backend/shared/model/engine.model';
 import { JsonPipe } from '@angular/common';
@@ -23,22 +23,23 @@ export class NorthMetricsComponent implements OnInit {
   private northConnectorService = inject(NorthConnectorService);
   private notificationService = inject(NotificationService);
 
-  @Input({ required: true }) northConnector!: NorthConnectorLightDTO;
-  @Input() manifest: NorthConnectorManifest | null = null;
-  @Input() displayButton = false;
-  @Input({ required: true }) connectorMetrics!: NorthConnectorMetrics;
+  readonly northConnector = input.required<NorthConnectorLightDTO>();
+  readonly manifest = input<NorthConnectorManifest | null>(null);
+  readonly manifestOrNorthConnectorTypeManifest = linkedSignal(() => this.manifest());
+  readonly displayButton = input(false);
+  readonly connectorMetrics = input.required<NorthConnectorMetrics>();
 
   ngOnInit(): void {
-    if (!this.manifest) {
-      this.northConnectorService.getNorthConnectorTypeManifest(this.northConnector.type).subscribe(manifest => {
-        this.manifest = manifest;
+    if (!this.manifest()) {
+      this.northConnectorService.getNorthConnectorTypeManifest(this.northConnector().type).subscribe(manifest => {
+        this.manifestOrNorthConnectorTypeManifest.set(manifest);
       });
     }
   }
 
   resetMetrics() {
     this.zone.run(() => {
-      this.northConnectorService.resetMetrics(this.northConnector.id).subscribe(() => {
+      this.northConnectorService.resetMetrics(this.northConnector().id).subscribe(() => {
         this.notificationService.success('north.monitoring.metrics-reset');
       });
     });
@@ -46,7 +47,7 @@ export class NorthMetricsComponent implements OnInit {
 
   navigateToDisplay() {
     this.zone.run(() => {
-      this.router.navigate(['/north', this.northConnector.id]);
+      this.router.navigate(['/north', this.northConnector().id]);
     });
   }
 }
