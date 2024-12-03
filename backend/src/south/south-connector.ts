@@ -384,8 +384,9 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
       // @ts-ignore
       const lastInstantRetrieved = await this.historyQuery(items, interval.start, interval.end);
 
-      if (lastInstantRetrieved > southCache.maxInstant) {
-        // With overlap, it may return a lastInstantRetrieved inferior
+      // We update the max instant only if the start interval is lower than the lastInstantRetrieved (i.e. we found a data)
+      // With overlap, it may return a lastInstantRetrieved inferior to the max instant so we also check this condition
+      if (lastInstantRetrieved && lastInstantRetrieved > southCache.maxInstant) {
         this.cacheService!.createOrUpdateCacheScanMode({
           southId: this.connector.id,
           scanModeId: southCache.scanModeId,

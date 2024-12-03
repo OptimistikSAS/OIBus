@@ -84,8 +84,12 @@ export default class SouthPI extends SouthConnector implements QueriesHistory {
    * Get entries from the database between startTime and endTime (if used in the SQL query)
    * and write them into the cache and send it to the engine.
    */
-  async historyQuery(items: Array<SouthConnectorItemDTO<SouthPIItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
-    let updatedStartTime = startTime;
+  async historyQuery(
+    items: Array<SouthConnectorItemDTO<SouthPIItemSettings>>,
+    startTime: Instant,
+    endTime: Instant
+  ): Promise<Instant | null> {
+    let updatedStartTime: Instant | null = null;
     this.logger.debug(`Requesting ${items.length} items between ${startTime} and ${endTime}`);
     const startRequest = DateTime.now().toMillis();
     const headers: Record<string, string> = {};
@@ -127,7 +131,7 @@ export default class SouthPI extends SouthConnector implements QueriesHistory {
       if (result.content.length > 0) {
         this.logger.debug(`Found ${result.recordCount} results for ${items.length} items in ${requestDuration} ms`);
         await this.addValues(result.content);
-        if (result.maxInstantRetrieved > updatedStartTime) {
+        if (result.maxInstantRetrieved > startTime) {
           updatedStartTime = result.maxInstantRetrieved;
         }
       } else {

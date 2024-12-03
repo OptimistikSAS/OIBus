@@ -195,21 +195,29 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
    * Get entries from the database between startTime and endTime (if used in the SQL query)
    * and write them into a CSV file and send it to the engine.
    */
-  async historyQuery(items: Array<SouthConnectorItemDTO<SouthODBCItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
-    let updatedStartTime = startTime;
+  async historyQuery(
+    items: Array<SouthConnectorItemDTO<SouthODBCItemSettings>>,
+    startTime: Instant,
+    endTime: Instant
+  ): Promise<Instant | null> {
+    let updatedStartTime: Instant | null = null;
 
     for (const item of items) {
       if (this.connector.settings.remoteAgent) {
-        updatedStartTime = await this.queryRemoteAgentData(item, updatedStartTime, endTime);
+        updatedStartTime = await this.queryRemoteAgentData(item, startTime, endTime);
       } else {
-        updatedStartTime = await this.queryOdbcData(item, updatedStartTime, endTime);
+        updatedStartTime = await this.queryOdbcData(item, startTime, endTime);
       }
     }
     return updatedStartTime;
   }
 
-  async queryRemoteAgentData(item: SouthConnectorItemDTO<SouthODBCItemSettings>, startTime: Instant, endTime: Instant): Promise<Instant> {
-    let updatedStartTime = startTime;
+  async queryRemoteAgentData(
+    item: SouthConnectorItemDTO<SouthODBCItemSettings>,
+    startTime: Instant,
+    endTime: Instant
+  ): Promise<Instant | null> {
+    let updatedStartTime: Instant | null = null;
     const startRequest = DateTime.now().toMillis();
 
     const headers: HeadersInit = {};
@@ -257,7 +265,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
           this.addValues.bind(this),
           this.logger
         );
-        if (result.maxInstantRetrieved > updatedStartTime) {
+        if (result.maxInstantRetrieved > startTime) {
           updatedStartTime = result.maxInstantRetrieved;
         }
       } else {
@@ -275,12 +283,12 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     return updatedStartTime;
   }
 
-  async queryOdbcData(item: SouthConnectorItemDTO<SouthODBCItemSettings>, startTime: Instant, endTime: Instant): Promise<Instant> {
+  async queryOdbcData(item: SouthConnectorItemDTO<SouthODBCItemSettings>, startTime: Instant, endTime: Instant): Promise<Instant | null> {
     if (!odbc) {
       throw new Error('odbc library not loaded');
     }
 
-    let updatedStartTime = startTime;
+    let updatedStartTime: Instant | null = null;
     const startRequest = DateTime.now().toMillis();
     let result: Array<any> = [];
     let connection;
@@ -318,7 +326,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
           } else {
             const entryDate = convertDateTimeToInstant(value, datetimeField);
             if (datetimeField.useAsReference) {
-              if (entryDate > updatedStartTime) {
+              if (!updatedStartTime || entryDate > updatedStartTime) {
                 updatedStartTime = entryDate;
               }
             }

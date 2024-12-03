@@ -93,17 +93,17 @@ export default class SouthOIAnalytics
     items: Array<SouthConnectorItemDTO<SouthOIAnalyticsItemSettings>>,
     startTime: Instant,
     endTime: Instant
-  ): Promise<Instant> {
-    let updatedStartTime = startTime;
+  ): Promise<Instant | null> {
+    let updatedStartTime: Instant | null = null;
 
     for (const item of items) {
       const startRequest = DateTime.now().toMillis();
-      const result: Array<any> = await this.queryData(item, updatedStartTime, endTime);
+      const result: Array<any> = await this.queryData(item, startTime, endTime);
       const requestDuration = DateTime.now().toMillis() - startRequest;
 
       const { formattedResult, maxInstant } = this.parseData(result);
 
-      if (maxInstant > updatedStartTime) {
+      if (!updatedStartTime || maxInstant > updatedStartTime) {
         updatedStartTime = maxInstant;
       }
       if (formattedResult.length > 0) {

@@ -18,7 +18,12 @@ export interface QueriesHistory {
    * @param startTimeFromCache - the start of the history query (may differ of start time if split in intervals). The origin start
    * time is used to not skip interval in case history query throw an error instead of retrieving values
    */
-  historyQuery(items: Array<SouthConnectorItemDTO>, startTime: Instant, endTime: Instant, startTimeFromCache: Instant): Promise<Instant>;
+  historyQuery(
+    items: Array<SouthConnectorItemDTO>,
+    startTime: Instant,
+    endTime: Instant,
+    startTimeFromCache: Instant
+  ): Promise<Instant | null>;
 }
 
 export interface QueriesSubscription {

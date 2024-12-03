@@ -185,9 +185,13 @@ export default class SouthOPCUA
   /**
    * Get values from the OPCUA server between startTime and endTime and write them into the cache.
    */
-  async historyQuery(items: Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
+  async historyQuery(
+    items: Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>>,
+    startTime: Instant,
+    endTime: Instant
+  ): Promise<Instant | null> {
     try {
-      let maxTimestamp = DateTime.fromISO(startTime).toMillis();
+      let maxTimestamp: number | null = null;
       if (!this.session) {
         this.logger.error('OPCUA session not set. The connector cannot read values');
         return startTime;
@@ -260,7 +264,7 @@ export default class SouthOPCUA
                       ...result.historyData.dataValues.map((dataValue: DataValue) => {
                         const selectedTimestamp = dataValue.sourceTimestamp ?? dataValue.serverTimestamp;
                         const selectedTime = selectedTimestamp!.getTime();
-                        maxTimestamp = selectedTime > maxTimestamp ? selectedTime : maxTimestamp;
+                        maxTimestamp = !maxTimestamp || selectedTime > maxTimestamp ? selectedTime : maxTimestamp;
                         return {
                           pointId: associatedItem.itemName,
                           timestamp: selectedTimestamp!.toISOString(),
@@ -330,7 +334,7 @@ export default class SouthOPCUA
           }
         }
       }
-      return DateTime.fromMillis(maxTimestamp).toUTC().toISO() as Instant;
+      return maxTimestamp ? DateTime.fromMillis(maxTimestamp).toUTC().toISO() : null;
     } catch (error) {
       await this.disconnect();
       if (!this.disconnecting && this.connector.enabled) {

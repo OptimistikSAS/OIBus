@@ -111,12 +111,16 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
    * Get entries from the database between startTime and endTime (if used in the SQL query)
    * and write them into a CSV file and send it to the engine.
    */
-  async historyQuery(items: Array<SouthConnectorItemDTO<SouthMSSQLItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
-    let updatedStartTime = startTime;
+  async historyQuery(
+    items: Array<SouthConnectorItemDTO<SouthMSSQLItemSettings>>,
+    startTime: Instant,
+    endTime: Instant
+  ): Promise<Instant | null> {
+    let updatedStartTime: Instant | null = null;
 
     for (const item of items) {
       const startRequest = DateTime.now().toMillis();
-      const result: Array<any> = await this.queryData(item, updatedStartTime, endTime);
+      const result: Array<any> = await this.queryData(item, startTime, endTime);
       const requestDuration = DateTime.now().toMillis() - startRequest;
 
       if (result.length > 0) {
@@ -131,7 +135,7 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
             } else {
               const entryDate = convertDateTimeToInstant(value, datetimeField);
               if (datetimeField.useAsReference) {
-                if (entryDate > updatedStartTime) {
+                if (!updatedStartTime || entryDate > updatedStartTime) {
                   updatedStartTime = entryDate;
                 }
               }

@@ -270,7 +270,7 @@ describe('South PI', () => {
     expect(logger.warn).toHaveBeenCalledWith('log2');
 
     const noResult = await south.historyQuery(items, startTime, endTime);
-    expect(noResult).toEqual('2020-01-01T00:00:00.000Z');
+    expect(noResult).toEqual(null);
     expect(logger.debug).toHaveBeenCalledWith('No result found. Request done in 0 ms');
     expect(logger.warn).toHaveBeenCalledTimes(2);
   });
