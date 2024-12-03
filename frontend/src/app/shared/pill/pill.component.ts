@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, output } from '@angular/core';
 
 @Component({
   selector: 'oib-pill',
@@ -9,7 +9,7 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from 
 export class PillComponent {
   @Input() type: 'primary' | 'secondary' | 'info' = 'primary';
   @Input() removable = true;
-  @Output() readonly removed = new EventEmitter<void>();
+  readonly removed = output<void>();
 
   remove() {
     this.removed.emit(undefined);

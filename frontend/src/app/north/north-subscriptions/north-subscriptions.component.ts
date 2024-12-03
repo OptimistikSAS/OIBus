@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import { Component, Input, OnInit, inject, output } from '@angular/core';
 
 import { of, switchMap, tap } from 'rxjs';
 import { ConfirmationService } from '../../shared/confirmation.service';
@@ -29,7 +29,7 @@ export class NorthSubscriptionsComponent implements OnInit {
 
   @Input() northConnector: NorthConnectorDTO<NorthSettings> | null = null;
 
-  @Output() readonly inMemorySubscriptions = new EventEmitter<Array<SouthConnectorLightDTO> | null>();
+  readonly inMemorySubscriptions = output<Array<SouthConnectorLightDTO> | null>();
 
   subscriptions: Array<SouthConnectorLightDTO> = []; // Array used to store subscription on north connector creation
   southConnectors: Array<SouthConnectorLightDTO> = [];
