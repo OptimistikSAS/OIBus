@@ -1,15 +1,15 @@
 <button
   class="btn btn-primary oib-save-button"
-  [class.solo]="!insideOfGroup"
-  [attr.form]="form"
-  [id]="buttonId"
-  [disabled]="disabled || (state.isPending | async)"
+  [class.solo]="!insideOfGroup()"
+  [attr.form]="form()"
+  [id]="buttonId()"
+  [disabled]="disabled() || (state().isPending | async)"
 >
-  @if (state.isPending | async) {
+  @if (state().isPending | async) {
     <span aria-hidden="true" class="fa fa-spinner fa-spin me-2" role="status"></span>
   }
-  @if ((state.isPending | async) === false) {
-    <span aria-hidden="true" class="fa me-2" [ngClass]="iconClass" role="status"></span>
+  @if ((state().isPending | async) === false) {
+    <span aria-hidden="true" class="fa me-2" [ngClass]="iconClass()" role="status"></span>
   }
-  <span [translate]="translationKey"></span>
+  <span [translate]="translationKey()"></span>
 </button>

@@ -22,7 +22,6 @@ export class FileContentModalComponent implements AfterViewInit {
   ngAfterViewInit() {
     this.codeBlock().writeValue(this.content);
     const codeBlock = this.codeBlock();
-    codeBlock.contentType = this.contentType;
 
     // Attach a listener to the code editor to resize the modal when the content changes
     codeBlock.onChange = () => {
@@ -30,15 +29,17 @@ export class FileContentModalComponent implements AfterViewInit {
         return;
       }
 
-      this.codeBlock().codeEditorInstance!.onDidContentSizeChange(() => {
-        const contentHeight = Math.min(window.innerHeight * 0.75, this.codeBlock().codeEditorInstance!.getContentHeight());
-        const containerWidth = this.codeBlock()._editorContainer()!.nativeElement.clientWidth;
-
-        const codeBlockValue = this.codeBlock();
-        codeBlockValue._editorContainer()!.nativeElement.style.height = `${contentHeight}px`;
-        codeBlockValue.codeEditorInstance!.layout({ width: containerWidth, height: contentHeight });
-        this.callbackSet = true;
-      });
+      const codeBlockValue = this.codeBlock();
+      const codeEditorInstance = codeBlockValue.codeEditorInstance();
+      if (codeEditorInstance) {
+        codeEditorInstance.onDidContentSizeChange(() => {
+          const contentHeight = Math.min(window.innerHeight * 0.75, codeEditorInstance.getContentHeight());
+          const containerWidth = this.codeBlock()._editorContainer()!.nativeElement.clientWidth;
+          codeBlockValue._editorContainer()!.nativeElement.style.height = `${contentHeight}px`;
+          codeEditorInstance.layout({ width: containerWidth, height: contentHeight });
+          this.callbackSet = true;
+        });
+      }
     };
   }
 

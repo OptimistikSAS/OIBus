@@ -1,6 +1,6 @@
 <div class="oib-box-title align-items-center d-flex">
   <span>
-    <b>{{ label }}</b>
+    <b>{{ label() }}</b>
   </span>
   <button type="button" [disabled]="editedElement" class="btn btn-link ms-2 py-0 add-button" (click)="editNewElement()">
     <span class="fa fa-plus-circle"></span>&ngsp;
@@ -26,8 +26,8 @@
         @if (isEdited(element)) {
           <oib-edit-element
             class="my-1 oib-editing-element"
-            [parentForm]="parentForm"
-            [formDescription]="formDescription"
+            [parentForm]="parentForm()"
+            [formDescription]="formDescription()"
             [element]="element"
             [existingElements]="elements"
             (saved)="save($event)"

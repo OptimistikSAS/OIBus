@@ -1,6 +1,6 @@
 /* eslint-disable-next-line */
 /// <reference path="../../../../../node_modules/monaco-editor/monaco.d.ts" />
-import { AfterViewInit, Component, ElementRef, forwardRef, Input, inject, viewChild } from '@angular/core';
+import { Component, ElementRef, forwardRef, inject, viewChild, input, signal } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MonacoEditorLoaderService } from './monaco-editor-loader.service';
 import { formDirectives } from '../../form-directives';
@@ -20,15 +20,15 @@ import { formDirectives } from '../../form-directives';
     }
   ]
 })
-export class OibCodeBlockComponent implements AfterViewInit, ControlValueAccessor {
+export class OibCodeBlockComponent implements ControlValueAccessor {
   private monacoEditorLoader = inject(MonacoEditorLoaderService);
 
   readonly _editorContainer = viewChild.required<ElementRef<HTMLDivElement>>('editorContainer');
-  @Input() key = '';
-  @Input() contentType = '';
-  @Input() height = '12rem';
-  @Input() readOnly = false;
-  disabled = false;
+  readonly key = input('');
+  readonly contentType = input('');
+  readonly height = input('12rem');
+  readonly readOnly = input(false);
+  readonly disabled = signal(false);
 
   onChange: (value: string) => void = () => {};
   onTouched = () => {};
@@ -36,11 +36,11 @@ export class OibCodeBlockComponent implements AfterViewInit, ControlValueAccesso
   /**
    * Holds the instance of the current code editor
    */
-  codeEditorInstance: monaco.editor.IStandaloneCodeEditor | null = null;
+  codeEditorInstance = signal<monaco.editor.IStandaloneCodeEditor | null>(null);
   /**
    * Value to write when the loading is complete
    */
-  private pendingValueToWrite: string | null = null;
+  private pendingValueToWrite = signal<string | null>(null);
 
   registerOnChange(fn: any): void {
     this.onChange = fn;
@@ -50,44 +50,52 @@ export class OibCodeBlockComponent implements AfterViewInit, ControlValueAccesso
     this.onTouched = fn;
   }
 
-  setDisabledState(_isDisabled: boolean): void {}
+  setDisabledState(isDisabled: boolean): void {
+    this.disabled.set(isDisabled);
+  }
 
-  ngAfterViewInit() {
+  constructor() {
     this.monacoEditorLoader.loadMonacoEditor().then(() => {
-      this.codeEditorInstance = monaco.editor.create(this._editorContainer().nativeElement, {
-        value: '',
-        language: this.contentType,
-        theme: 'vs-light',
-        selectOnLineNumbers: true,
-        wordWrap: 'on',
-        minimap: { enabled: false },
-        readOnly: this.readOnly
-      });
+      this.codeEditorInstance.set(
+        monaco.editor.create(this._editorContainer().nativeElement, {
+          value: '',
+          language: this.contentType(),
+          theme: 'vs-light',
+          selectOnLineNumbers: true,
+          wordWrap: 'on',
+          minimap: { enabled: false },
+          readOnly: this.readOnly()
+        })
+      );
 
       // we listen on changes
-      this.codeEditorInstance.getModel()!.onDidChangeContent(() => {
-        this.onChange(this.codeEditorInstance!.getValue());
+      const codeEditor = this.codeEditorInstance()!;
+      codeEditor.getModel()!.onDidChangeContent(() => {
+        this.onChange(codeEditor.getValue());
       });
-      if (this.pendingValueToWrite) {
-        this.codeEditorInstance.setValue(this.pendingValueToWrite);
+      const pendingValueToWrite = this.pendingValueToWrite();
+      if (pendingValueToWrite) {
+        codeEditor.setValue(pendingValueToWrite);
       }
     });
   }
 
   writeValue(value: string): void {
     // we can only set the value once the editor is loaded, which can take some time on first load
-    if (this.codeEditorInstance) {
-      this.codeEditorInstance.setValue(value);
+    const codeEditor = this.codeEditorInstance();
+    if (codeEditor) {
+      codeEditor.setValue(value);
     } else {
       // if the editor is not yet loaded, we store the value to write,
       // and it'll be set once the loading is complete
-      this.pendingValueToWrite = value;
+      this.pendingValueToWrite.set(value);
     }
   }
 
   changeLanguage(language: string) {
-    if (this.codeEditorInstance) {
-      monaco.editor.setModelLanguage(this.codeEditorInstance.getModel()!, language);
+    const codeEditor = this.codeEditorInstance();
+    if (codeEditor) {
+      monaco.editor.setModelLanguage(codeEditor.getModel()!, language);
     }
   }
 }

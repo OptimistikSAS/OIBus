@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { BehaviorSubject, defer, finalize, Observable } from 'rxjs';
 import { AsyncPipe, NgClass } from '@angular/common';
 import { TranslateDirective } from '@ngx-translate/core';
@@ -36,13 +36,13 @@ export class ObservableState {
   imports: [AsyncPipe, NgClass, TranslateDirective]
 })
 export class SaveButtonComponent {
-  @Input() form = 'form';
-  @Input() translationKey = 'common.save';
-  @Input() iconClass = 'fa-save';
-  @Input() buttonId = 'save-button';
-  @Input() state = new ObservableState();
-  @Input() disabled = false;
+  readonly form = input('form');
+  readonly translationKey = input('common.save');
+  readonly iconClass = input('fa-save');
+  readonly buttonId = input('save-button');
+  readonly state = input(new ObservableState());
+  readonly disabled = input(false);
   // input to indicate if the button is part of a button group with a cancel button
   // if not then it is rounded all the way
-  @Input() insideOfGroup = true;
+  readonly insideOfGroup = input(true);
 }
