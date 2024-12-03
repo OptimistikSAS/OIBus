@@ -46,7 +46,7 @@ const REGISTRATION_CHECK_DURATION = 3000;
     NgbTooltip
   ],
   templateUrl: './oia-module.component.html',
-  styleUrls: ['./oia-module.component.scss'],
+  styleUrl: './oia-module.component.scss',
   providers: [PageLoader]
 })
 export class OiaModuleComponent implements OnInit, OnDestroy {
