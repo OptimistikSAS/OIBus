@@ -1,4 +1,4 @@
-import { Component, EventEmitter, forwardRef, Input, OnInit, Output, inject } from '@angular/core';
+import { Component, forwardRef, Input, OnInit, inject, output } from '@angular/core';
 import { FormGroup, NonNullableFormBuilder } from '@angular/forms';
 import { formDirectives } from '../../../form-directives';
 
@@ -24,8 +24,8 @@ export class EditElementComponent implements OnInit {
   @Input({ required: true }) existingElements!: Array<any>;
   @Input({ required: true }) parentForm!: FormGroup;
 
-  @Output() readonly saved = new EventEmitter<any>();
-  @Output() readonly cancelled = new EventEmitter<void>();
+  readonly saved = output<any>();
+  readonly cancelled = output<void>();
 
   ngOnInit() {
     this.controlsByRow = groupFormControlsByRow(this.formDescription);

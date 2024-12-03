@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, Input, OnInit, output } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../../shared/form-directives';
 import { NorthCacheFiles } from '../../../../../../backend/shared/model/north-connector.model';
@@ -34,7 +34,7 @@ export interface ItemActionEvent {
   imports: [...formDirectives, TranslateModule, DatetimePipe, FileSizePipe, NgbTooltipModule]
 })
 export class FileTableComponent implements OnInit {
-  @Output() itemAction = new EventEmitter<ItemActionEvent>();
+  readonly itemAction = output<ItemActionEvent>();
 
   @Input() actions: Array<ItemActionEvent['type']> = [];
   actionButtonData: Record<ItemActionEvent['type'], { icon: string; text: string }> = {

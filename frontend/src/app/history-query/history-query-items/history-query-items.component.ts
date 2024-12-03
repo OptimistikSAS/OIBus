@@ -1,4 +1,4 @@
-import { Component, EventEmitter, inject, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, inject, Input, OnChanges, OnInit, SimpleChanges, output } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
@@ -60,7 +60,7 @@ export class HistoryQueryItemsComponent implements OnInit, OnChanges {
   @Input() historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> | null = null;
   @Input() creationItems: Array<HistoryQueryItemCommandDTO<SouthItemSettings>> = [];
   @Input({ required: true }) southManifest!: SouthConnectorManifest;
-  @Output() readonly inMemoryItems = new EventEmitter<Array<HistoryQueryItemCommandDTO<SouthItemSettings>> | null>();
+  readonly inMemoryItems = output<Array<HistoryQueryItemCommandDTO<SouthItemSettings>> | null>();
 
   allItems: Array<HistoryQueryItemCommandDTO<SouthItemSettings>> = [];
   filteredItems: Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>> = [];
