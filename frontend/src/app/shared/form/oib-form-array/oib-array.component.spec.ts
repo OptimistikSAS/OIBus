@@ -115,7 +115,7 @@ describe('ArrayComponent', () => {
       expect(b.disabled).toBeTrue();
     });
 
-    expect(tester.editComponent.element).toEqual({
+    expect(tester.editComponent.element()).toEqual({
       fieldName: '',
       useAsReference: false,
       type: 'string',
@@ -147,7 +147,7 @@ describe('ArrayComponent', () => {
       expect(b.disabled).toBeTrue();
     });
 
-    expect(tester.editComponent.element).toEqual({
+    expect(tester.editComponent.element()).toEqual({
       fieldName: '',
       useAsReference: false,
       type: 'string',

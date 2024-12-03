@@ -1,14 +1,14 @@
 import {
-  AfterContentInit,
   ChangeDetectionStrategy,
   Component,
   Directive,
   ElementRef,
-  Input,
   TemplateRef,
   inject,
   viewChild,
-  contentChild
+  contentChild,
+  input,
+  computed
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { TranslateDirective } from '@ngx-translate/core';
@@ -33,26 +33,18 @@ export class BoxTitleDirective {
   imports: [NgTemplateOutlet, TranslateDirective, OibHelpComponent],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class BoxComponent implements AfterContentInit {
-  @Input() boxTitle = '';
-  @Input() helpUrl = '';
-  // TODO Signal migration: use a computed
-  titleTemplateRef: TemplateRef<void> | null = null;
-  // TODO Signal migration: use a computed
-  removePadding = false;
-  @Input() imagePath = '';
+export class BoxComponent {
+  readonly boxTitle = input('');
+  readonly helpUrl = input('');
+  readonly removePadding = computed(() => this.isPaddingRemoved());
+  readonly imagePath = input('');
 
   readonly boxContent = viewChild.required<ElementRef<HTMLDivElement>>('boxContent');
   readonly titleQuery = contentChild(BoxTitleDirective);
+  readonly titleTemplateRef = computed(() => this.titleQuery()?.templateRef || null);
 
-  ngAfterContentInit(): void {
-    this.titleTemplateRef = this.titleQuery()?.templateRef || null;
-    this.checkContent();
-  }
-
-  private checkContent(): void {
+  private isPaddingRemoved(): boolean {
     const contentElement = this.boxContent()?.nativeElement;
-
     if (contentElement) {
       const tableElement = contentElement.querySelector('table');
       const alertWarningElement = contentElement.querySelector('.alert-warning');
@@ -62,11 +54,12 @@ export class BoxComponent implements AfterContentInit {
       const normalContentElement = contentElement.querySelector('.row');
 
       if (tableElement || emptyDivElements.length <= 0 || alertWarningElement || greyContainerElement || multipleContentElement) {
-        this.removePadding = true;
+        return true;
       }
       if (normalContentElement) {
-        this.removePadding = false;
+        return false;
       }
     }
+    return false;
   }
 }

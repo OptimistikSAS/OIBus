@@ -1,4 +1,4 @@
-import { Component, inject, Input, OnInit } from '@angular/core';
+import { Component, inject, OnInit, input } from '@angular/core';
 
 import { AbstractControl, FormControl, FormGroup, FormSubmittedEvent } from '@angular/forms';
 import { formDirectives } from '../form-directives';
@@ -15,14 +15,6 @@ import { groupFormControlsByRow } from '../form-utils';
 import { PipeProviderService } from './pipe-provider.service';
 import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
 
-// TypeScript issue with Intl: https://github.com/microsoft/TypeScript/issues/49231
-// eslint-disable-next-line @typescript-eslint/no-namespace
-declare namespace Intl {
-  type Key = 'calendar' | 'collation' | 'currency' | 'numberingSystem' | 'timeZone' | 'unit';
-
-  function supportedValuesOf(input: Key): Array<string>;
-}
-
 @Component({
   selector: 'oib-form',
   imports: [...formDirectives, OibCodeBlockComponent, NgbTypeahead, TranslateDirective, OibArrayComponent],
@@ -32,11 +24,11 @@ declare namespace Intl {
 export class FormComponent implements OnInit {
   private pipeProviderService = inject(PipeProviderService);
 
-  @Input() settingsSchema: Array<Array<OibFormControl>> = [];
-  @Input() scanModes: Array<ScanModeDTO> = [];
-  @Input() certificates: Array<CertificateDTO> = [];
-  @Input({ required: true }) form!: FormGroup;
-  @Input({ required: true }) parentForm!: FormGroup;
+  readonly settingsSchema = input<Array<Array<OibFormControl>>>([]);
+  readonly scanModes = input<Array<ScanModeDTO>>([]);
+  readonly certificates = input<Array<CertificateDTO>>([]);
+  readonly form = input.required<FormGroup>();
+  readonly parentForm = input.required<FormGroup>();
 
   private timezones: ReadonlyArray<Timezone> = Intl.supportedValuesOf('timeZone');
   timezoneTypeahead: (text$: Observable<string>) => Observable<Array<Timezone>> = inMemoryTypeahead(
@@ -48,15 +40,17 @@ export class FormComponent implements OnInit {
   settingsGroupedByRowByFormGroup = new Map<string, Array<Array<OibFormControl>>>();
 
   ngOnInit(): void {
-    this.settingsSchema.forEach(settings => {
+    this.settingsSchema().forEach(settings => {
       settings.forEach(setting => {
         if (setting.type === 'OibFormGroup') {
           this.settingsGroupedByRowByFormGroup.set(setting.key, groupFormControlsByRow(setting.content));
         }
       });
     });
-    this.form.setValue(this.form.getRawValue());
-    this.parentForm.events.pipe(filter(event => event instanceof FormSubmittedEvent)).subscribe(() => this.form.markAllAsTouched());
+    this.form().setValue(this.form().getRawValue());
+    this.parentForm()
+      .events.pipe(filter(event => event instanceof FormSubmittedEvent))
+      .subscribe(() => this.form().markAllAsTouched());
   }
 
   asFormGroup(abstractControl: AbstractControl): FormGroup {

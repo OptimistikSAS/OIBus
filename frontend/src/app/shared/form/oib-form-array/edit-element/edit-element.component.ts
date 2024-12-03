@@ -1,4 +1,4 @@
-import { Component, forwardRef, Input, OnInit, inject, output } from '@angular/core';
+import { Component, forwardRef, OnInit, inject, output, input } from '@angular/core';
 import { FormGroup, NonNullableFormBuilder } from '@angular/forms';
 import { formDirectives } from '../../../form-directives';
 import { OibFormControl } from '../../../../../../../backend/shared/model/form.model';
@@ -17,19 +17,19 @@ export class EditElementComponent implements OnInit {
   form: FormGroup | null = null;
   controlsByRow: Array<Array<OibFormControl>> | null = null;
 
-  @Input({ required: true }) formDescription!: Array<OibFormControl>;
-  @Input({ required: true }) element!: any;
-  @Input({ required: true }) existingElements!: Array<any>;
-  @Input({ required: true }) parentForm!: FormGroup;
+  readonly formDescription = input.required<Array<OibFormControl>>();
+  readonly element = input.required<any>();
+  readonly existingElements = input.required<Array<any>>();
+  readonly parentForm = input.required<FormGroup>();
 
   readonly saved = output<any>();
   readonly cancelled = output<void>();
 
   ngOnInit() {
-    this.controlsByRow = groupFormControlsByRow(this.formDescription);
+    this.controlsByRow = groupFormControlsByRow(this.formDescription());
     // we need to wrap in a sub form group to be able to inject properly into the oib-form
-    this.form = this.fb.group({ wrapper: createFormGroup(this.formDescription, this.fb) });
-    this.form.patchValue({ wrapper: this.element });
+    this.form = this.fb.group({ wrapper: createFormGroup(this.formDescription(), this.fb) });
+    this.form.patchValue({ wrapper: this.element() });
   }
 
   getFormGroup(): FormGroup {
