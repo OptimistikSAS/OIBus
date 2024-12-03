@@ -25,7 +25,6 @@ declare namespace Intl {
 
 @Component({
   selector: 'oib-form',
-  standalone: true,
   imports: [...formDirectives, OibCodeBlockComponent, NgbTypeahead, TranslateModule, OibArrayComponent],
   templateUrl: './form.component.html',
   styleUrl: './form.component.scss'

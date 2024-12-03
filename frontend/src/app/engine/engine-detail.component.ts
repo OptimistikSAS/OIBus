@@ -17,7 +17,6 @@ import { CertificateListComponent } from './certificate-list/certificate-list.co
 
 @Component({
   selector: 'oib-engine-detail',
-  standalone: true,
   imports: [
     TranslateModule,
     ScanModeListComponent,

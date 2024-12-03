@@ -67,8 +67,7 @@ export function formatDateTime(
  * or a timestamp in milliseconds. But it also accepts instances of DateTime.
  */
 @Pipe({
-  name: 'datetime',
-  standalone: true
+  name: 'datetime'
 })
 export class DatetimePipe implements PipeTransform {
   private locale = inject(LOCALE_ID);

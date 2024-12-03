@@ -13,7 +13,6 @@ import { BackNavigationDirective } from '../../shared/back-navigation.directives
 
 @Component({
   selector: 'oib-edit-engine',
-  standalone: true,
   imports: [TranslateModule, ...formDirectives, RouterLink, SaveButtonComponent, BoxComponent, BackNavigationDirective],
   templateUrl: './edit-engine.component.html',
   styleUrl: './edit-engine.component.scss'

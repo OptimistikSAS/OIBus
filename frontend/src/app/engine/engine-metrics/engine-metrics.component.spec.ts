@@ -11,7 +11,6 @@ import { provideHttpClient } from '@angular/common/http';
 
 @Component({
   template: `<oib-engine-metrics [metrics]="metrics" />`,
-  standalone: true,
   imports: [EngineMetricsComponent]
 })
 class TestComponent {

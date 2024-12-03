@@ -28,8 +28,7 @@ declare namespace Intl {
   selector: 'oib-edit-user-settings',
   templateUrl: './edit-user-settings.component.html',
   styleUrl: './edit-user-settings.component.scss',
-  imports: [...formDirectives, TranslateModule, NgbTypeahead, SaveButtonComponent],
-  standalone: true
+  imports: [...formDirectives, TranslateModule, NgbTypeahead, SaveButtonComponent]
 })
 export class EditUserSettingsComponent {
   private modalService = inject(ModalService);

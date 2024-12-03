@@ -12,7 +12,6 @@ import { PageTitleDirective } from '../services/page-title.directive';
 
 @Component({
   selector: 'oib-navbar',
-  standalone: true,
   imports: [RouterLink, TranslateModule, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, PageTitleDirective],
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.scss'

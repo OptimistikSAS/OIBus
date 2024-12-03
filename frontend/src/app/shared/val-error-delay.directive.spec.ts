@@ -5,7 +5,6 @@ import { ValErrorDelayDirective } from './val-error-delay.directive';
 
 @Component({
   template: '<val-errors>@if (showError) {<div>test</div>}</val-errors>',
-  standalone: true,
   imports: [ValErrorDelayDirective]
 })
 class TestComponent {

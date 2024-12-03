@@ -16,7 +16,6 @@ import { provideCurrentUser } from '../current-user-testing';
 
 @Component({
   template: '',
-  standalone: true,
   imports: [DatetimepickerComponent, DatepickerContainerComponent, NgTemplateOutlet, NgbInputDatepicker, NgbTimepicker, ...formDirectives],
   providers: [noAnimation, provideDatepicker()]
 })

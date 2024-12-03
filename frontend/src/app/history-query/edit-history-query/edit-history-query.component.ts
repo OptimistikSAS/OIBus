@@ -47,7 +47,6 @@ import { dateTimeRangeValidatorBuilder } from '../../shared/validators';
 
 @Component({
   selector: 'oib-edit-history-query',
-  standalone: true,
   imports: [
     TranslateModule,
     ...formDirectives,

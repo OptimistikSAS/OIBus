@@ -4,8 +4,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 @Component({
   selector: 'oib-confirmation-modal',
   templateUrl: './confirmation-modal.component.html',
-  styleUrl: './confirmation-modal.component.scss',
-  standalone: true
+  styleUrl: './confirmation-modal.component.scss'
 })
 export class ConfirmationModalComponent {
   activeModal = inject(NgbActiveModal);

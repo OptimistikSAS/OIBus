@@ -21,7 +21,6 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
       <button id="submit">Submit</button>
     </form>
   `,
-  standalone: true,
   imports: [ValdemortModule, TranslateModule, ReactiveFormsModule, DefaultValidationErrorsComponent]
 })
 class TestComponent {

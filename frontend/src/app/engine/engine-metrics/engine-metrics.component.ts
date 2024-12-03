@@ -12,7 +12,6 @@ import { Router } from '@angular/router';
 
 @Component({
   selector: 'oib-engine-metrics',
-  standalone: true,
   imports: [TranslateModule, BoxComponent, BoxTitleDirective, PercentPipe, FileSizePipe, DatetimePipe, DurationPipe],
   templateUrl: './engine-metrics.component.html',
   styleUrl: './engine-metrics.component.scss'

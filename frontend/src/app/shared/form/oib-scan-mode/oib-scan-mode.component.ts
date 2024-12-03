@@ -7,7 +7,6 @@ import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'oib-scan-mode',
-  standalone: true,
   imports: [...formDirectives, TranslateModule],
   templateUrl: './oib-scan-mode.component.html',
   styleUrl: './oib-scan-mode.component.scss',

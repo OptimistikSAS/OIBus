@@ -31,8 +31,7 @@ import { NorthSettings } from '../../../../../../backend/shared/model/north-sett
     BoxComponent,
     BoxTitleDirective,
     FileTableComponent
-  ],
-  standalone: true
+  ]
 })
 export class CacheFilesComponent implements OnInit {
   private northConnectorService = inject(NorthConnectorService);

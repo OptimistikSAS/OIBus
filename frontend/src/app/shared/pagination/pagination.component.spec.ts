@@ -10,7 +10,6 @@ import { Page } from '../../../../../backend/shared/model/types';
 
 @Component({
   template: `<oib-pagination [page]="page" (pageChanged)="pageChanged($event)" [navigate]="navigate" />`,
-  standalone: true,
   imports: [PaginationComponent]
 })
 class TestComponent {

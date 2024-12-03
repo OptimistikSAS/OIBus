@@ -48,7 +48,6 @@ const items: Array<SouthConnectorItemDTO<SouthItemSettings>> = [
 
 @Component({
   template: `<oib-south-items [southConnector]="southConnector" [scanModes]="scanModes" [southManifest]="manifest" />`,
-  standalone: true,
   imports: [SouthItemsComponent]
 })
 class TestComponent {

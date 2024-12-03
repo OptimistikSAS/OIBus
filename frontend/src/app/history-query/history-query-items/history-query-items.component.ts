@@ -37,7 +37,6 @@ export interface TableData {
 
 @Component({
   selector: 'oib-history-query-items',
-  standalone: true,
   imports: [
     TranslateModule,
     PaginationComponent,

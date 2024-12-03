@@ -26,8 +26,7 @@ import { HistoryQueryItemCommandDTO } from '../../../../../backend/shared/model/
   selector: 'oib-south-item-test',
   templateUrl: './south-item-test.component.html',
   styleUrl: './south-item-test.component.scss',
-  imports: [...formDirectives, OibCodeBlockComponent, TranslateModule, DatetimepickerComponent, ValErrorDelayDirective],
-  standalone: true
+  imports: [...formDirectives, OibCodeBlockComponent, TranslateModule, DatetimepickerComponent, ValErrorDelayDirective]
 })
 export class SouthItemTestComponent<TItemType extends 'south' | 'history-south'> implements AfterViewInit, OnInit {
   @ViewChild('monacoEditor') codeBlock!: OibCodeBlockComponent;

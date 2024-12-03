@@ -12,8 +12,7 @@ import { OIBusCommandDTO } from '../../../../../../backend/shared/model/command.
   selector: 'oib-oia-command-details-modal',
   templateUrl: './oia-command-details-modal.component.html',
   styleUrl: './oia-command-details-modal.component.scss',
-  imports: [TranslateModule, OibusCommandTypeEnumPipe, DatetimePipe, JsonPipe, BooleanEnumPipe],
-  standalone: true
+  imports: [TranslateModule, OibusCommandTypeEnumPipe, DatetimePipe, JsonPipe, BooleanEnumPipe]
 })
 export class OiaCommandDetailsModalComponent {
   private activeModal = inject(NgbActiveModal);

@@ -15,7 +15,6 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
       <oib-form [parentForm]="form" [scanModes]="scanModes" [settingsSchema]="schema" [form]="form.controls.settings" />
     </div>
   </form>`,
-  standalone: true,
   imports: [FormComponent, ...formDirectives]
 })
 class TestComponent {

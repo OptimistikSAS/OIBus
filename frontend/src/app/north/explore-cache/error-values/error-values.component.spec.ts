@@ -10,7 +10,6 @@ import { NorthSettings } from '../../../../../../backend/shared/model/north-sett
 
 @Component({
   template: `<oib-error-values [northConnector]="northConnector" />`,
-  standalone: true,
   imports: [ErrorValuesComponent]
 })
 class TestComponent {

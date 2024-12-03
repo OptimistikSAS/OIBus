@@ -29,7 +29,6 @@ import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/
 
 @Component({
   selector: 'oib-edit-south',
-  standalone: true,
   imports: [
     TranslateModule,
     ...formDirectives,

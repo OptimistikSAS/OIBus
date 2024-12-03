@@ -5,8 +5,7 @@ import { OibHelpComponent } from './oib-help.component';
 
 @Component({
   template: ` <oib-help [url]="url" />`,
-  imports: [OibHelpComponent],
-  standalone: true
+  imports: [OibHelpComponent]
 })
 class TestComponent {
   url = 'https://oibus.optimistik.com' as const;

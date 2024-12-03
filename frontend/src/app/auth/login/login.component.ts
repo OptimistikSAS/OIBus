@@ -15,8 +15,7 @@ import { WindowService } from '../../shared/window.service';
   selector: 'oib-login',
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
-  imports: [...formDirectives, TranslateModule, NgbCollapse],
-  standalone: true
+  imports: [...formDirectives, TranslateModule, NgbCollapse]
 })
 export class LoginComponent {
   private currentUserService = inject(CurrentUserService);

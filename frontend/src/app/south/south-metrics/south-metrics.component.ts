@@ -14,7 +14,6 @@ import { Router } from '@angular/router';
   selector: 'oib-south-metrics',
   templateUrl: './south-metrics.component.html',
   styleUrl: './south-metrics.component.scss',
-  standalone: true,
   imports: [TranslateModule, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe]
 })
 export class SouthMetricsComponent implements OnInit {

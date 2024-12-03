@@ -31,8 +31,7 @@ import { PipeProviderService } from '../pipe-provider.service';
       useExisting: OibArrayComponent,
       multi: true
     }
-  ],
-  standalone: true
+  ]
 })
 export class OibArrayComponent implements OnInit, AfterViewChecked, ControlValueAccessor, Validator {
   private pipeProviderService = inject(PipeProviderService);

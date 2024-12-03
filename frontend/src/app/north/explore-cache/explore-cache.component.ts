@@ -36,8 +36,7 @@ import { NorthSettings } from '../../../../../backend/shared/model/north-setting
     CacheFilesComponent,
     CacheValuesComponent,
     ErrorValuesComponent
-  ],
-  standalone: true
+  ]
 })
 export class ExploreCacheComponent implements OnInit {
   private route = inject(ActivatedRoute);

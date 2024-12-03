@@ -17,8 +17,7 @@ import { NgbInputDatepicker } from '@ng-bootstrap/ng-bootstrap';
   templateUrl: './datepicker-container.component.html',
   host: {
     class: 'input-group'
-  },
-  standalone: true
+  }
 })
 export class DatepickerContainerComponent {
   @ContentChild(NgbInputDatepicker)

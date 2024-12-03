@@ -33,8 +33,7 @@ import { FormControlValidationDirective } from '../form-control-validation.direc
       multi: true
     }
   ],
-  imports: [NgbDropdown, FormControlValidationDirective, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownButtonItem, NgbDropdownItem],
-  standalone: true
+  imports: [NgbDropdown, FormControlValidationDirective, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownButtonItem, NgbDropdownItem]
 })
 export class MultiSelectComponent implements ControlValueAccessor, AfterContentInit {
   disabled = false;

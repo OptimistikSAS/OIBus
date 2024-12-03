@@ -15,8 +15,7 @@ import { ObservableState, SaveButtonComponent } from '../../shared/save-button/s
   selector: 'oib-create-history-query-modal',
   templateUrl: './create-history-query-modal.component.html',
   styleUrl: './create-history-query-modal.component.scss',
-  imports: [...formDirectives, TranslateModule, SaveButtonComponent],
-  standalone: true
+  imports: [...formDirectives, TranslateModule, SaveButtonComponent]
 })
 export class CreateHistoryQueryModalComponent implements OnInit {
   private modal = inject(NgbActiveModal);

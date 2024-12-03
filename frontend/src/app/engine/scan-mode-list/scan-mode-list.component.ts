@@ -13,7 +13,6 @@ import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 
 @Component({
   selector: 'oib-scan-mode-list',
-  standalone: true,
   imports: [TranslateModule, BoxComponent, BoxTitleDirective, OibHelpComponent],
   templateUrl: './scan-mode-list.component.html',
   styleUrl: './scan-mode-list.component.scss'

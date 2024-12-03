@@ -4,8 +4,7 @@ import { SerializationType } from '../../../../backend/shared/model/types';
 
 @Pipe({
   name: 'serializationsEnum',
-  pure: false,
-  standalone: true
+  pure: false
 })
 export class SerializationsEnumPipe extends BaseEnumPipe<SerializationType> implements PipeTransform {
   constructor() {

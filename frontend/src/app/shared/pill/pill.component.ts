@@ -5,7 +5,6 @@ import { NgClass } from '@angular/common';
   selector: 'oib-pill',
   templateUrl: './pill.component.html',
   styleUrl: './pill.component.scss',
-  standalone: true,
   imports: [NgClass],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
