@@ -1,12 +1,18 @@
-import { AfterViewInit, Component, ContentChild, ElementRef, forwardRef, inject, Input, OnInit, TemplateRef } from '@angular/core';
-import { ControlValueAccessor, NG_VALIDATORS, NG_VALUE_ACCESSOR, NonNullableFormBuilder, Validator } from '@angular/forms';
+import { AfterViewInit, Component, contentChild, ElementRef, forwardRef, inject, input, OnInit, TemplateRef } from '@angular/core';
+import {
+  ControlValueAccessor,
+  NG_VALIDATORS,
+  NG_VALUE_ACCESSOR,
+  NonNullableFormBuilder,
+  ReactiveFormsModule,
+  Validator
+} from '@angular/forms';
 import { combineLatest } from 'rxjs';
 import { DateTime } from 'luxon';
 import { Instant, LocalDate, LocalTime } from '../../../../../backend/shared/model/types';
 import { NgTemplateOutlet } from '@angular/common';
 import { NgbInputDatepicker, NgbTimepicker } from '@ng-bootstrap/ng-bootstrap';
 import { DatepickerContainerComponent } from '../datepicker-container/datepicker-container.component';
-import { formDirectives } from '../form-directives';
 import { CurrentUserService } from '../current-user.service';
 
 /**
@@ -55,26 +61,22 @@ import { CurrentUserService } from '../current-user.service';
     { provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => DatetimepickerComponent), multi: true },
     { provide: NG_VALIDATORS, useExisting: forwardRef(() => DatetimepickerComponent), multi: true }
   ],
-  imports: [...formDirectives, NgTemplateOutlet, NgbTimepicker, DatepickerContainerComponent, NgbInputDatepicker]
+  imports: [NgTemplateOutlet, DatepickerContainerComponent, NgbInputDatepicker, ReactiveFormsModule, NgbTimepicker]
 })
 export class DatetimepickerComponent implements OnInit, AfterViewInit, ControlValueAccessor, Validator {
+  private fb = inject(NonNullableFormBuilder);
   private element = inject<ElementRef<HTMLElement>>(ElementRef);
+  private currentUserService = inject(CurrentUserService);
 
-  // TODO: Skipped for migration because:
-  //  Query type is too complex to automatically migrate.
-  @ContentChild('date')
-  dateTemplate: TemplateRef<any> | null = null;
+  readonly dateTemplate = contentChild<TemplateRef<any>>('date');
 
-  // TODO: Skipped for migration because:
-  //  Query type is too complex to automatically migrate.
-  @ContentChild('time')
-  timeTemplate: TemplateRef<any> | null = null;
+  readonly timeTemplate = contentChild<TemplateRef<any>>('time');
 
-  @Input()
-  timezone = inject(CurrentUserService).getTimezone();
+  displaySeconds = input(false);
+  timezone = input(this.currentUserService.getTimezone());
 
-  dateCtrl = inject(NonNullableFormBuilder).control(null as LocalDate | null);
-  timeCtrl = inject(NonNullableFormBuilder).control(null as LocalTime | null);
+  dateCtrl = this.fb.control<string | null>(null);
+  timeCtrl = this.fb.control<string | null>(null);
 
   private onChange: (value: any) => void = () => {};
   private onTouched: () => void = () => {};
@@ -99,7 +101,7 @@ export class DatetimepickerComponent implements OnInit, AfterViewInit, ControlVa
 
   writeValue(value: Instant): void {
     if (value) {
-      const local = DateTime.fromISO(value).setZone(this.timezone);
+      const local = DateTime.fromISO(value).setZone(this.timezone());
       this.dateCtrl.setValue(local.toFormat('yyyy-MM-dd'));
       this.timeCtrl.setValue(local.toFormat('HH:mm:ss'));
     } else {
@@ -128,14 +130,10 @@ export class DatetimepickerComponent implements OnInit, AfterViewInit, ControlVa
     combineLatest([this.dateCtrl.valueChanges, this.timeCtrl.valueChanges]).subscribe(
       ([date, time]: [LocalDate | null, LocalTime | null]) => {
         if (this.dateCtrl.valid && this.timeCtrl.valid && date && time) {
-          const local = DateTime.fromFormat(`${date} ${time}`, 'yyyy-MM-dd HH:mm:ss', { zone: this.timezone });
+          const local = DateTime.fromFormat(`${date} ${time}`, 'yyyy-MM-dd HH:mm:ss', { zone: this.timezone() });
           this.onChange(local.toUTC().toISO());
         } else {
           this.onChange(null);
-        }
-
-        if (!this.dateCtrl.touched || !this.timeCtrl.touched) {
-          this.onTouched();
         }
       }
     );

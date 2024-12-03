@@ -1,4 +1,4 @@
-import { Component, ContentChild } from '@angular/core';
+import { Component, contentChild } from '@angular/core';
 import { NgbInputDatepicker } from '@ng-bootstrap/ng-bootstrap';
 
 /**
@@ -20,12 +20,9 @@ import { NgbInputDatepicker } from '@ng-bootstrap/ng-bootstrap';
   }
 })
 export class DatepickerContainerComponent {
-  // TODO: Skipped for migration because:
-  //  Query type is too complex to automatically migrate.
-  @ContentChild(NgbInputDatepicker)
-  datePicker: NgbInputDatepicker | null = null;
+  readonly datePicker = contentChild.required(NgbInputDatepicker);
 
   toggle() {
-    this.datePicker!.toggle();
+    this.datePicker().toggle();
   }
 }
