@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, inject, Input, OnInit, viewChild } from '@angular/core';
+import { AfterViewInit, Component, inject, OnInit, viewChild, input } from '@angular/core';
 import {
   SouthConnectorItemCommandDTO,
   SouthConnectorManifest,
@@ -34,19 +34,22 @@ export class SouthItemTestComponent<TItemType extends 'south' | 'history-south'>
   readonly codeBlock = viewChild.required<OibCodeBlockComponent>('monacoEditor');
 
   /** What kind of item is being tested */
-  @Input() type!: TItemType;
+  readonly type = input.required<TItemType>();
 
   /** Either southId or historyId (or 'create') */
-  @Input() entityId!: string;
+  readonly entityId = input.required<string>();
 
-  @Input() item!: TItemType extends 'south'
-    ? SouthConnectorItemCommandDTO<SouthItemSettings>
-    : TItemType extends 'history-south'
-      ? HistoryQueryItemCommandDTO<SouthItemSettings>
-      : never;
+  readonly item =
+    input.required<
+      TItemType extends 'south'
+        ? SouthConnectorItemCommandDTO<SouthItemSettings>
+        : TItemType extends 'history-south'
+          ? HistoryQueryItemCommandDTO<SouthItemSettings>
+          : never
+    >();
 
-  @Input() connector!: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
-  @Input() manifest!: SouthConnectorManifest;
+  readonly connector = input.required<SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>>();
+  readonly manifest = input.required<SouthConnectorManifest>();
 
   private southConnectorService = inject(SouthConnectorService);
   private historyQueryService = inject(HistoryQueryService);
@@ -80,7 +83,7 @@ export class SouthItemTestComponent<TItemType extends 'south' | 'history-south'>
   }
 
   get supportsHistorySettings() {
-    return this.manifest.modes.history;
+    return this.manifest().modes.history;
   }
 
   get testingSettings(): SouthConnectorItemTestingSettings {
@@ -133,20 +136,19 @@ export class SouthItemTestComponent<TItemType extends 'south' | 'history-south'>
   }
 
   private makeRequest() {
-    if (this.type === 'south') {
+    const type = this.type();
+    if (type === 'south') {
       return this.southConnectorService.testItem(
-        this.entityId,
-        this.connector,
-        this.item as SouthConnectorItemCommandDTO<SouthItemSettings>,
+        this.entityId(),
+        this.connector(),
+        this.item() as SouthConnectorItemCommandDTO<SouthItemSettings>,
         this.testingSettings
       );
-    }
-
-    if (this.type === 'history-south') {
+    } else if (type === 'history-south') {
       return this.historyQueryService.testSouthItem(
-        this.entityId,
-        this.connector,
-        this.item as HistoryQueryItemCommandDTO<SouthItemSettings>,
+        this.entityId(),
+        this.connector(),
+        this.item() as HistoryQueryItemCommandDTO<SouthItemSettings>,
         this.testingSettings
       );
     }
