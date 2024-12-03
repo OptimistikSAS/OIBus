@@ -1,4 +1,4 @@
-import { Component, EventEmitter, inject, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, inject, Input, OnChanges, OnInit, SimpleChanges, output } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
@@ -65,7 +65,7 @@ export class SouthItemsComponent implements OnInit, OnChanges {
   @Input({ required: true }) southManifest!: SouthConnectorManifest;
   @Input({ required: true }) scanModes!: Array<ScanModeDTO>;
 
-  @Output() readonly inMemoryItems = new EventEmitter<Array<SouthConnectorItemCommandDTO<SouthItemSettings>> | null>();
+  readonly inMemoryItems = output<Array<SouthConnectorItemCommandDTO<SouthItemSettings>> | null>();
 
   allItems: Array<SouthConnectorItemCommandDTO<SouthItemSettings>> = []; // Array used to store item commands on south connector creation
   filteredItems: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>> = [];
