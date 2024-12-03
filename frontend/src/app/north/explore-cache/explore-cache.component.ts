@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, OnInit, inject, viewChild } from '@angular/core';
 import { TranslateDirective } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
 import { NorthConnectorService } from '../../services/north-connector.service';
@@ -33,12 +33,11 @@ export class ExploreCacheComponent implements OnInit {
   private northConnectorService = inject(NorthConnectorService);
 
   northConnector: NorthConnectorDTO<NorthSettings> | null = null;
-  @ViewChild(ArchiveFilesComponent) archiveFilesComponent!: ArchiveFilesComponent;
-  @ViewChild(ErrorFilesComponent) errorFilesComponent!: ErrorFilesComponent;
-  @ViewChild(CacheFilesComponent) cacheFilesComponent!: CacheFilesComponent;
-
-  @ViewChild(CacheValuesComponent) cacheValuesComponent!: CacheValuesComponent;
-  @ViewChild(ErrorValuesComponent) errorValuesComponent!: ErrorValuesComponent;
+  readonly archiveFilesComponent = viewChild.required(ArchiveFilesComponent);
+  readonly errorFilesComponent = viewChild.required(ErrorFilesComponent);
+  readonly cacheFilesComponent = viewChild.required(CacheFilesComponent);
+  readonly cacheValuesComponent = viewChild.required(CacheValuesComponent);
+  readonly errorValuesComponent = viewChild.required(ErrorValuesComponent);
 
   ngOnInit() {
     this.route.paramMap
@@ -57,11 +56,10 @@ export class ExploreCacheComponent implements OnInit {
   }
 
   refreshCache() {
-    this.errorFilesComponent.refreshErrorFiles();
-    this.archiveFilesComponent.refreshArchiveFiles();
-    this.cacheFilesComponent.refreshCacheFiles();
-
-    this.cacheValuesComponent.refreshCacheValues();
-    this.errorValuesComponent.refreshErrorValues();
+    this.errorFilesComponent().refreshErrorFiles();
+    this.archiveFilesComponent().refreshArchiveFiles();
+    this.cacheFilesComponent().refreshCacheFiles();
+    this.cacheValuesComponent().refreshCacheValues();
+    this.errorValuesComponent().refreshErrorValues();
   }
 }

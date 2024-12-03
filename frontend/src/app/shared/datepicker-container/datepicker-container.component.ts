@@ -20,6 +20,8 @@ import { NgbInputDatepicker } from '@ng-bootstrap/ng-bootstrap';
   }
 })
 export class DatepickerContainerComponent {
+  // TODO: Skipped for migration because:
+  //  Query type is too complex to automatically migrate.
   @ContentChild(NgbInputDatepicker)
   datePicker: NgbInputDatepicker | null = null;
 

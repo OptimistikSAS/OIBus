@@ -23,6 +23,8 @@ import { formDirectives } from '../../form-directives';
 export class OibCodeBlockComponent implements AfterViewInit, ControlValueAccessor {
   private monacoEditorLoader = inject(MonacoEditorLoaderService);
 
+  // TODO: Skipped for migration because:
+  //  Query type is too complex to automatically migrate.
   @ViewChild('editorContainer') _editorContainer: ElementRef | null = null;
   @Input() key = '';
   @Input() contentType = '';

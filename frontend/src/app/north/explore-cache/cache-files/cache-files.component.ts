@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, Input, OnInit, inject, viewChild } from '@angular/core';
 import { TranslateDirective } from '@ngx-translate/core';
 import { formDirectives } from '../../../shared/form-directives';
 import { NorthConnectorService } from '../../../services/north-connector.service';
@@ -23,7 +23,7 @@ export class CacheFilesComponent implements OnInit {
 
   @Input() northConnector: NorthConnectorDTO<NorthSettings> | null = null;
   cacheFiles: Array<NorthCacheFiles> = [];
-  @ViewChild('fileTable') fileTable!: FileTableComponent;
+  readonly fileTable = viewChild.required<FileTableComponent>('fileTable');
   fileTablePages = emptyPage<FileTableData>();
 
   ngOnInit() {
@@ -56,9 +56,10 @@ export class CacheFilesComponent implements OnInit {
   refreshCacheFiles() {
     this.northConnectorService.getCacheFiles(this.northConnector!.id).subscribe(cacheFiles => {
       this.cacheFiles = cacheFiles;
-      if (this.fileTable) {
-        this.fileTable.refreshTable(cacheFiles);
-        this.fileTablePages = this.fileTable.pages;
+      const fileTable = this.fileTable();
+      if (fileTable) {
+        fileTable.refreshTable(cacheFiles);
+        this.fileTablePages = fileTable.pages;
       }
     });
   }
@@ -89,6 +90,6 @@ export class CacheFilesComponent implements OnInit {
   }
 
   private getCheckedFiles(): Array<string> {
-    return this.cacheFiles.filter(file => this.fileTable.checkboxByFiles.get(file.filename)).map(file => file.filename);
+    return this.cacheFiles.filter(file => this.fileTable().checkboxByFiles.get(file.filename)).map(file => file.filename);
   }
 }
