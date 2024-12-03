@@ -5,7 +5,7 @@ import { ObservableState, SaveButtonComponent } from '../../shared/save-button/s
 import { formDirectives } from '../../shared/form-directives';
 import { FormControl, FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest, Observable, of, switchMap, tap } from 'rxjs';
 import { FormComponent } from '../../shared/form/form.component';
 import { OibFormControl } from '../../../../../backend/shared/model/form.model';
@@ -35,7 +35,6 @@ import { NorthSettings } from '../../../../../backend/shared/model/north-setting
   imports: [
     TranslateModule,
     ...formDirectives,
-    RouterLink,
     SaveButtonComponent,
     FormComponent,
     OibScanModeComponent,
