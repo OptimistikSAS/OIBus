@@ -1,112 +1,198 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FileTableComponent } from './file-table.component';
-import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import { Component, signal } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { FileTableComponent, FileTableData, ItemActionEvent } from './file-table.component';
 import { provideHttpClient } from '@angular/common/http';
+import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import { ComponentTester, TestButton } from 'ngx-speculoos';
+
+const firstFile = { filename: '8-1696843490050.txt', modificationDate: '2023-10-10T17:41:59.937Z', size: 6 };
+const unsortedFiles: Array<FileTableData> = [
+  firstFile,
+  { filename: '5-1696843490043.txt', modificationDate: '2023-10-10T17:41:58.395Z', size: 4 },
+  { filename: '7-1696843490046.txt', modificationDate: '2023-10-09T09:24:43.208Z', size: 0 },
+  { filename: '4-1696843490042.txt', modificationDate: '2023-10-10T17:41:55.343Z', size: 5 },
+  { filename: '1-1696843490039.txt', modificationDate: '2023-10-10T17:41:53.331Z', size: 3 },
+  { filename: '3-1696843490039.txt', modificationDate: '2023-10-09T09:24:43.187Z', size: 0 },
+  { filename: '6-1696843490045.txt', modificationDate: '2023-10-09T09:24:43.207Z', size: 0 },
+  { filename: '2-1696843490039.txt', modificationDate: '2023-10-09T09:24:43.187Z', size: 0 }
+];
+
+@Component({
+  template: `
+    <oib-file-table
+      [files]="files()"
+      [actions]="actions()"
+      (itemAction)="onItemAction($event)"
+      (selectedFiles)="selectedFiles.set($event)"
+    />
+  `,
+  imports: [FileTableComponent]
+})
+class FileTableTestComponent {
+  readonly files = signal(unsortedFiles);
+  readonly actions = signal(['remove', 'retry', 'view', 'archive'] as Array<ItemActionEvent['type']>);
+  readonly itemAction = signal<ItemActionEvent | undefined>(undefined);
+  readonly selectedFiles = signal<Array<FileTableData>>([]);
+
+  onItemAction(event: ItemActionEvent) {
+    this.itemAction.set(event);
+  }
+}
+
+class FileTestComponentTester extends ComponentTester<FileTableTestComponent> {
+  constructor() {
+    super(FileTableTestComponent);
+  }
+
+  get filenames() {
+    return this.elements('.filename');
+  }
+
+  get modificationDates() {
+    return this.elements('.modification-date');
+  }
+
+  get actionGroups() {
+    return this.elements('.action-buttons');
+  }
+
+  get removeButton() {
+    return this.element('.fa-trash')! as TestButton;
+  }
+
+  get sortByFilenameButton() {
+    return this.button('.sort-by-filename')!;
+  }
+
+  get checkboxes() {
+    return this.elements<HTMLInputElement>('.toggle-parameter');
+  }
+
+  get mainCheckbox() {
+    return this.element<HTMLInputElement>('#toggle-all-parameters')!;
+  }
+}
 
 describe('FileTableComponent', () => {
-  let component: FileTableComponent;
-  let fixture: ComponentFixture<FileTableComponent>;
-  const testFiles = [
-    { filename: '8-1696843490050.txt', modificationDate: '2023-10-10T17:41:59.937Z', size: 6 },
-    { filename: '5-1696843490043.txt', modificationDate: '2023-10-10T17:41:58.395Z', size: 4 },
-    { filename: '4-1696843490042.txt', modificationDate: '2023-10-10T17:41:55.343Z', size: 5 },
-    { filename: '1-1696843490039.txt', modificationDate: '2023-10-10T17:41:53.331Z', size: 3 },
-    { filename: '7-1696843490046.txt', modificationDate: '2023-10-09T09:24:43.208Z', size: 0 },
-    { filename: '6-1696843490045.txt', modificationDate: '2023-10-09T09:24:43.207Z', size: 0 },
-    { filename: '2-1696843490039.txt', modificationDate: '2023-10-09T09:24:43.187Z', size: 0 },
-    { filename: '3-1696843490039.txt', modificationDate: '2023-10-09T09:24:43.187Z', size: 0 }
-  ];
+  let tester: FileTestComponentTester;
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [FileTableComponent],
+  beforeEach(() => {
+    TestBed.configureTestingModule({
       providers: [provideI18nTesting(), provideHttpClient()]
-    }).compileComponents();
+    });
 
-    fixture = TestBed.createComponent(FileTableComponent);
-    component = fixture.componentInstance;
-    component.files = [...testFiles];
-    component.actions = ['remove', 'retry', 'view', 'archive'];
-
-    fixture.detectChanges();
+    tester = new FileTestComponentTester();
+    tester.detectChanges();
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
+  it('should display files', () => {
+    expect(tester.filenames.length).toBe(8);
   });
 
   it('should create actions on init', () => {
-    const actionGroups = fixture.debugElement.nativeElement.querySelectorAll('.action-buttons');
-    expect(actionGroups.length).toBe(8);
+    expect(tester.actionGroups.length).toBe(8);
 
-    const actionButtons = actionGroups[0].querySelectorAll('button');
-    expect(actionButtons[0].querySelector('span').classList).toContain(component.actionButtonData.remove.icon);
-    expect(actionButtons[1].querySelector('span').classList).toContain(component.actionButtonData.retry.icon);
-    expect(actionButtons[2].querySelector('span').classList).toContain(component.actionButtonData.view.icon);
-    expect(actionButtons[3].querySelector('span').classList).toContain(component.actionButtonData.archive.icon);
+    const actionButtons = tester.actionGroups[0].elements('button');
+    expect(actionButtons[0].element('span')).toHaveClass('fa-trash');
+    expect(actionButtons[1].element('span')).toHaveClass('fa-refresh');
+    expect(actionButtons[2].element('span')).toHaveClass('fa-search');
+    expect(actionButtons[3].element('span')).toHaveClass('fa-archive');
   });
 
   it('should dispatch action event', () => {
-    spyOn(component.itemAction, 'emit');
-    component.onItemActionClick('remove', component.files[0]);
-    expect(component.itemAction.emit).toHaveBeenCalledWith({ type: 'remove', file: component.files[0] });
+    tester.removeButton.click();
+    expect(tester.componentInstance.itemAction()).toEqual({ type: 'remove', file: firstFile });
   });
 
-  it('should handle passsing duplicate actions', () => {
-    const temp = TestBed.createComponent(FileTableComponent);
-    temp.componentInstance.actions = ['remove', 'remove', 'remove', 'retry', 'view', 'archive'];
-    temp.detectChanges();
-    expect(temp.componentInstance.actions.length).toBe(4);
+  it('should handle passing duplicate actions', () => {
+    tester.componentInstance.actions.set(['remove', 'remove', 'remove', 'retry', 'view', 'archive']);
+    tester.detectChanges();
+    expect(tester.actionGroups.length).toBe(8);
+
+    const actionButtons = tester.actionGroups[0].elements('button');
+    expect(actionButtons[0].element('span')).toHaveClass('fa-trash');
+    expect(actionButtons[1].element('span')).toHaveClass('fa-refresh');
+    expect(actionButtons[2].element('span')).toHaveClass('fa-search');
+    expect(actionButtons[3].element('span')).toHaveClass('fa-archive');
   });
 
-  it('should be sorted by modification date by deafault', () => {
-    const dates = component.files.map(file => new Date(file.modificationDate));
-    const isDescendingSorted = dates.every((val, i, arr) => !i || val <= arr[i - 1]);
-    expect(isDescendingSorted).toBe(true);
+  it('should be sorted by modification date by default', () => {
+    const modificationDates = tester.modificationDates.map(cell => cell.textContent);
+    expect(modificationDates).toEqual([
+      '10 Oct 2023, 19:41:59',
+      '10 Oct 2023, 19:41:58',
+      '10 Oct 2023, 19:41:55',
+      '10 Oct 2023, 19:41:53',
+      '9 Oct 2023, 11:24:43',
+      '9 Oct 2023, 11:24:43',
+      '9 Oct 2023, 11:24:43',
+      '9 Oct 2023, 11:24:43'
+    ]);
   });
 
   it('should correctly sort files', () => {
-    // Desc filename
-    component.toggleColumnSort('filename');
-    expect(component.files[0].filename).toBe('1-1696843490039.txt');
-    // Asc filename
-    component.toggleColumnSort('filename');
-    expect(component.files[0].filename).toBe('8-1696843490050.txt');
+    tester.sortByFilenameButton.click();
+    tester.detectChanges();
+    expect(tester.filenames[0]).toHaveText('8-1696843490050.txt');
+    expect(tester.sortByFilenameButton.element('span.fa')).toHaveClass('fa-sort-desc');
+
+    tester.sortByFilenameButton.click();
+    expect(tester.filenames[0]).toHaveText('8-1696843490050.txt');
+    expect(tester.sortByFilenameButton.element('span.fa')).toHaveClass('fa-sort');
+
+    tester.sortByFilenameButton.click();
+    expect(tester.filenames[0]).toHaveText('1-1696843490039.txt');
+    expect(tester.sortByFilenameButton.element('span.fa')).toHaveClass('fa-sort-asc');
   });
 
   it('should correctly check files', () => {
-    component.onFileCheckboxClick(true, component.files[0]);
-    component.onFileCheckboxClick(true, component.files[1]);
-    component.onFileCheckboxClick(true, component.files[2]);
-    let checkedBoxes = [...component.checkboxByFiles.values()];
-    expect(checkedBoxes.filter(checked => checked).length).toBe(3);
+    tester.checkboxes[0].check();
+    tester.checkboxes[1].check();
+    tester.checkboxes[2].check();
+    // the first 3 sorted files are checked
+    expect(tester.componentInstance.selectedFiles().map(file => file.modificationDate)).toEqual([
+      '2023-10-10T17:41:59.937Z',
+      '2023-10-10T17:41:58.395Z',
+      '2023-10-10T17:41:55.343Z'
+    ]);
 
-    component.onFileCheckboxClick(false, component.files[0]);
-    checkedBoxes = [...component.checkboxByFiles.values()];
-    expect(checkedBoxes.filter(checked => checked).length).toBe(2);
+    tester.checkboxes[0].uncheck();
+    expect(tester.componentInstance.selectedFiles().map(file => file.modificationDate)).toEqual([
+      '2023-10-10T17:41:58.395Z',
+      '2023-10-10T17:41:55.343Z'
+    ]);
   });
 
   it('should correctly check all files', () => {
-    component.onFileMainCheckBoxClick(true);
-    const checkedBoxes = [...component.checkboxByFiles.values()];
-    expect(checkedBoxes.every(checked => checked)).toBeTruthy();
+    tester.mainCheckbox.check();
+    expect(tester.componentInstance.selectedFiles()).toEqual(unsortedFiles);
+    tester.mainCheckbox.uncheck();
+    expect(tester.componentInstance.selectedFiles()).toEqual([]);
   });
 
   it('should refresh table', () => {
-    const newFiles = [...testFiles];
+    const newFiles = [...unsortedFiles];
     newFiles.pop();
-    component.refreshTable(newFiles);
+
+    tester.componentInstance.files.set(newFiles);
+    tester.detectChanges();
 
     // Files changed
-    expect(component.files).toEqual(newFiles);
+    expect(tester.filenames.length).toBe(7);
 
     // Default ordering is kept
-    const dates = component.files.map(file => new Date(file.modificationDate));
-    const isDescendingSorted = dates.every((val, i, arr) => !i || val <= arr[i - 1]);
-    expect(isDescendingSorted).toBe(true);
+    const modificationDates = tester.modificationDates.map(cell => cell.textContent);
+    expect(modificationDates).toEqual([
+      '10 Oct 2023, 19:41:59',
+      '10 Oct 2023, 19:41:58',
+      '10 Oct 2023, 19:41:55',
+      '10 Oct 2023, 19:41:53',
+      '9 Oct 2023, 11:24:43',
+      '9 Oct 2023, 11:24:43',
+      '9 Oct 2023, 11:24:43'
+    ]);
 
     // Checkboxes are cleared
-    const checkedBoxes = [...component.checkboxByFiles.values()];
-    expect(checkedBoxes.every(checked => !checked)).toBeTruthy();
+    expect(tester.componentInstance.selectedFiles()).toEqual([]);
   });
 });

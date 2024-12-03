@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, viewChild, input } from '@angular/core';
+import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { TranslateDirective } from '@ngx-translate/core';
 import { formDirectives } from '../../../shared/form-directives';
 import { NorthConnectorService } from '../../../services/north-connector.service';
@@ -21,8 +21,9 @@ export class ErrorValuesComponent implements OnInit {
 
   readonly northConnector = input<NorthConnectorDTO<NorthSettings> | null>(null);
   errorValues: Array<NorthCacheFiles> = [];
-  readonly fileTable = viewChild<FileTableComponent>('fileTable');
   fileTablePages = emptyPage<FileTableData>();
+  readonly page = signal(0);
+  readonly selectedFiles = signal<Array<FileTableData>>([]);
 
   ngOnInit() {
     this.northConnectorService.getCacheErrorValues(this.northConnector()!.id).subscribe(errorValues => {
@@ -32,14 +33,14 @@ export class ErrorValuesComponent implements OnInit {
   }
 
   retryErrorValues() {
-    const files = this.errorValues.filter(file => this.fileTable()?.checkboxByFiles.get(file.filename)).map(file => file.filename);
+    const files = this.selectedFiles().map(file => file.filename);
     this.northConnectorService.retryCacheErrorValues(this.northConnector()!.id, files).subscribe(() => {
       this.refreshErrorValues();
     });
   }
 
   removeErrorValues() {
-    const files = this.errorValues.filter(file => this.fileTable()?.checkboxByFiles.get(file.filename)).map(file => file.filename);
+    const files = this.selectedFiles().map(file => file.filename);
     this.northConnectorService.removeCacheErrorValues(this.northConnector()!.id, files).subscribe(() => {
       this.refreshErrorValues();
     });
@@ -48,11 +49,6 @@ export class ErrorValuesComponent implements OnInit {
   refreshErrorValues() {
     this.northConnectorService.getCacheErrorValues(this.northConnector()!.id).subscribe(errorValues => {
       this.errorValues = errorValues;
-      const fileTable = this.fileTable();
-      if (fileTable) {
-        fileTable.refreshTable(errorValues);
-        this.fileTablePages = fileTable.pages;
-      }
     });
   }
 }
