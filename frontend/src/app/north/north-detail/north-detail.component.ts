@@ -33,7 +33,6 @@ import { NorthSettings } from '../../../../../backend/shared/model/north-setting
 
 @Component({
   selector: 'oib-north-detail',
-  standalone: true,
   imports: [
     TranslateModule,
     RouterLink,

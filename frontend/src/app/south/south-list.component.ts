@@ -23,7 +23,6 @@ const PAGE_SIZE = 15;
 
 @Component({
   selector: 'oib-south-list',
-  standalone: true,
   imports: [
     TranslateModule,
     RouterLink,

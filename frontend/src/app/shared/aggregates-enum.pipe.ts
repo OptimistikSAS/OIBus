@@ -4,8 +4,7 @@ import { Aggregate } from '../../../../backend/shared/model/types';
 
 @Pipe({
   name: 'aggregatesEnum',
-  pure: false,
-  standalone: true
+  pure: false
 })
 export class AggregatesEnumPipe extends BaseEnumPipe<Aggregate> implements PipeTransform {
   constructor() {

@@ -12,7 +12,6 @@ import { NavigationService } from './shared/navigation.service';
   selector: 'oib-root',
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
-  standalone: true,
   imports: [RouterOutlet, NavbarComponent, NotificationComponent, DefaultValidationErrorsComponent]
 })
 export class AppComponent implements OnInit {

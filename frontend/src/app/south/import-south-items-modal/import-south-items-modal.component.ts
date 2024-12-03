@@ -36,8 +36,7 @@ const PAGE_SIZE = 20;
     NgbTypeahead,
     FormComponent,
     PaginationComponent
-  ],
-  standalone: true
+  ]
 })
 export class ImportSouthItemsModalComponent {
   private modal = inject(NgbActiveModal);

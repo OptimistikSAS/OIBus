@@ -4,8 +4,7 @@ import { Resampling } from '../../../../backend/shared/model/types';
 
 @Pipe({
   name: 'resamplingEnum',
-  pure: false,
-  standalone: true
+  pure: false
 })
 export class ResamplingEnumPipe extends BaseEnumPipe<Resampling> implements PipeTransform {
   constructor() {

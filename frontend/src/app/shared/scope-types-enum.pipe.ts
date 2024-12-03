@@ -4,8 +4,7 @@ import { ScopeType } from '../../../../backend/shared/model/engine.model';
 
 @Pipe({
   name: 'scopeTypesEnum',
-  pure: false,
-  standalone: true
+  pure: false
 })
 export class ScopeTypesEnumPipe extends BaseEnumPipe<ScopeType> implements PipeTransform {
   constructor() {

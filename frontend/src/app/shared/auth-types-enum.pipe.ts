@@ -4,8 +4,7 @@ import { AuthenticationType } from '../../../../backend/shared/model/engine.mode
 
 @Pipe({
   name: 'authTypesEnum',
-  pure: false,
-  standalone: true
+  pure: false
 })
 export class AuthTypesEnumPipe extends BaseEnumPipe<AuthenticationType> implements PipeTransform {
   constructor() {

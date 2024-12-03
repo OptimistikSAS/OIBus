@@ -6,8 +6,7 @@ import { Title } from '@angular/platform-browser';
  * Directive that can be used to set the page title in a template
  */
 @Directive({
-  selector: 'oib-page-title',
-  standalone: true
+  selector: 'oib-page-title'
 })
 export class PageTitleDirective implements OnChanges {
   private titleService = inject(Title);

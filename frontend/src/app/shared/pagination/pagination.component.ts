@@ -7,8 +7,7 @@ import { NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
   selector: 'oib-pagination',
   templateUrl: './pagination.component.html',
   styleUrl: './pagination.component.scss',
-  imports: [NgbPaginationModule],
-  standalone: true
+  imports: [NgbPaginationModule]
 })
 export class PaginationComponent {
   private router = inject(Router, { optional: true });

@@ -12,8 +12,7 @@ import { formDirectives } from '../../shared/form-directives';
   selector: 'oib-edit-ip-filter-modal',
   templateUrl: './edit-ip-filter-modal.component.html',
   styleUrl: './edit-ip-filter-modal.component.scss',
-  imports: [...formDirectives, TranslateModule, SaveButtonComponent],
-  standalone: true
+  imports: [...formDirectives, TranslateModule, SaveButtonComponent]
 })
 export class EditIpFilterModalComponent {
   private modal = inject(NgbActiveModal);

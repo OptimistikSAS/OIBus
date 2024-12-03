@@ -10,7 +10,6 @@ import { NorthSettings } from '../../../../../../backend/shared/model/north-sett
 
 @Component({
   template: `<oib-archive-files #component [northConnector]="northConnector" />`,
-  standalone: true,
   imports: [ArchiveFilesComponent]
 })
 class TestComponent {

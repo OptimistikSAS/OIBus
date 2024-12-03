@@ -36,7 +36,6 @@ const REGISTRATION_CHECK_DURATION = 3000;
 
 @Component({
   selector: 'oib-oia-module',
-  standalone: true,
   imports: [
     TranslateModule,
     ...formDirectives,

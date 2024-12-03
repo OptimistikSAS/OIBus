@@ -6,8 +6,7 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
 @Component({
   template: `<oib-legend [legendList]="legend" />`,
-  imports: [LegendComponent],
-  standalone: true
+  imports: [LegendComponent]
 })
 class TestComponent {
   legend = [

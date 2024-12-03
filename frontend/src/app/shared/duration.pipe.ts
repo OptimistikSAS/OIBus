@@ -12,8 +12,7 @@ import { formatNumber } from '@angular/common';
  * If the duration is not an integer number of seconds, then too bad: it's truncated to the second.
  */
 @Pipe({
-  name: 'duration',
-  standalone: true
+  name: 'duration'
 })
 export class DurationPipe implements PipeTransform {
   private translateService = inject(TranslateService);

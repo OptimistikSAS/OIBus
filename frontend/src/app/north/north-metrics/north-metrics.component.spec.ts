@@ -13,7 +13,6 @@ import { NorthSettings } from '../../../../../backend/shared/model/north-setting
 
 @Component({
   template: `<oib-north-metrics [connectorMetrics]="metrics" [northConnector]="northConnector" [manifest]="manifest" />`,
-  standalone: true,
   imports: [NorthMetricsComponent]
 })
 class TestComponent {

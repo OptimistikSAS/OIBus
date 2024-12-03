@@ -16,8 +16,7 @@ interface Action {
   templateUrl: './notification.component.html',
   styleUrl: './notification.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgbToastModule, TranslateModule, AsyncPipe],
-  standalone: true
+  imports: [NgbToastModule, TranslateModule, AsyncPipe]
 })
 export class NotificationComponent {
   private notificationService = inject(NotificationService);

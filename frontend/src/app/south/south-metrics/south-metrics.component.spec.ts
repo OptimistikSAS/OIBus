@@ -12,7 +12,6 @@ import { provideHttpClient } from '@angular/common/http';
 
 @Component({
   template: `<oib-south-metrics [connectorMetrics]="metrics" [southConnector]="southConnector" [manifest]="manifest" />`,
-  standalone: true,
   imports: [SouthMetricsComponent]
 })
 class TestComponent {

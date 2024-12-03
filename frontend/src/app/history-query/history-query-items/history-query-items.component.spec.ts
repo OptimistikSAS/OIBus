@@ -75,7 +75,6 @@ const historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSetti
 
 @Component({
   template: `<oib-history-query-items [historyQuery]="historyQuery" [southManifest]="manifest" />`,
-  standalone: true,
   imports: [HistoryQueryItemsComponent]
 })
 class TestComponent {

@@ -41,7 +41,6 @@ import { NgClass } from '@angular/common';
 
 @Component({
   selector: 'oib-logs',
-  standalone: true,
   imports: [
     TranslateModule,
     ...formDirectives,

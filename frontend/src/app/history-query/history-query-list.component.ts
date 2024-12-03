@@ -24,7 +24,6 @@ const PAGE_SIZE = 15;
 
 @Component({
   selector: 'oib-history-query-list',
-  standalone: true,
   imports: [
     NgClass,
     TranslateModule,

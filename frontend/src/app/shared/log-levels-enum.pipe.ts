@@ -4,8 +4,7 @@ import { LogLevel } from '../../../../backend/shared/model/engine.model';
 
 @Pipe({
   name: 'logLevelsEnum',
-  pure: false,
-  standalone: true
+  pure: false
 })
 export class LogLevelsEnumPipe extends BaseEnumPipe<LogLevel> implements PipeTransform {
   constructor() {

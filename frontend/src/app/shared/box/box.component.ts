@@ -16,7 +16,6 @@ import { TranslateModule } from '@ngx-translate/core';
 import { OibHelpComponent } from '../oib-help/oib-help.component';
 
 @Directive({
-  standalone: true,
   selector: 'ng-template[oibBoxTitle]'
 })
 export class BoxTitleDirective {
@@ -30,7 +29,6 @@ export class BoxTitleDirective {
  */
 @Component({
   selector: 'oib-box',
-  standalone: true,
   templateUrl: './box.component.html',
   styleUrl: './box.component.scss',
   imports: [NgbCollapse, NgTemplateOutlet, TranslateModule, OibHelpComponent],

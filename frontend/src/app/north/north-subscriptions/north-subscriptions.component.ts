@@ -16,7 +16,6 @@ import { NorthSettings } from '../../../../../backend/shared/model/north-setting
 
 @Component({
   selector: 'oib-north-subscriptions',
-  standalone: true,
   imports: [TranslateModule, BoxComponent, BoxTitleDirective, OibHelpComponent],
   templateUrl: './north-subscriptions.component.html',
   styleUrl: './north-subscriptions.component.scss'

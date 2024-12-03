@@ -33,8 +33,7 @@ declare namespace Intl {
   selector: 'oib-edit-history-query-item-modal',
   templateUrl: './edit-history-query-item-modal.component.html',
   styleUrl: './edit-history-query-item-modal.component.scss',
-  imports: [...formDirectives, TranslateModule, SaveButtonComponent, FormComponent, SouthItemTestComponent],
-  standalone: true
+  imports: [...formDirectives, TranslateModule, SaveButtonComponent, FormComponent, SouthItemTestComponent]
 })
 export class EditHistoryQueryItemModalComponent {
   mode: 'create' | 'edit' | 'copy' = 'create';

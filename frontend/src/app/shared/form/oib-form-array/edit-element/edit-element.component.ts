@@ -11,8 +11,7 @@ import { FormComponent } from '../../form.component';
   selector: 'oib-edit-element',
   templateUrl: './edit-element.component.html',
   styleUrl: './edit-element.component.scss',
-  imports: [...formDirectives, TranslateModule, forwardRef(() => FormComponent)],
-  standalone: true
+  imports: [...formDirectives, TranslateModule, forwardRef(() => FormComponent)]
 })
 export class EditElementComponent implements OnInit {
   private fb = inject(NonNullableFormBuilder);

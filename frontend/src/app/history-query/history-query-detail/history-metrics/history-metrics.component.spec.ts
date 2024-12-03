@@ -19,7 +19,6 @@ import { NorthSettings } from '../../../../../../backend/shared/model/north-sett
     [northManifest]="northManifest"
     [southManifest]="southManifest"
   />`,
-  standalone: true,
   imports: [HistoryMetricsComponent]
 })
 class TestComponent {
