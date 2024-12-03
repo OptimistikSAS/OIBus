@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, inject, Input, ViewChild, OnInit } from '@angular/core';
+import { AfterViewInit, Component, inject, Input, OnInit, viewChild } from '@angular/core';
 import {
   SouthConnectorItemCommandDTO,
   SouthConnectorManifest,
@@ -31,8 +31,7 @@ import { HistoryQueryItemCommandDTO } from '../../../../../backend/shared/model/
 export class SouthItemTestComponent<TItemType extends 'south' | 'history-south'> implements AfterViewInit, OnInit {
   private translate = inject(TranslateService);
 
-  @ViewChild('monacoEditor') codeBlock!: OibCodeBlockComponent;
-  @ViewChild('testButton') testButton!: ElementRef<HTMLButtonElement>;
+  readonly codeBlock = viewChild.required<OibCodeBlockComponent>('monacoEditor');
 
   /** What kind of item is being tested */
   @Input() type!: TItemType;
@@ -63,7 +62,7 @@ export class SouthItemTestComponent<TItemType extends 'south' | 'history-south'>
   }> | null = null;
 
   ngAfterViewInit() {
-    this.codeBlock.writeValue(this.translate.instant('south.test-item.editor-message.initial'));
+    this.codeBlock().writeValue(this.translate.instant('south.test-item.editor-message.initial'));
   }
 
   ngOnInit() {
@@ -116,12 +115,12 @@ export class SouthItemTestComponent<TItemType extends 'south' | 'history-south'>
 
         switch (result.type) {
           case 'time-values':
-            this.codeBlock.changeLanguage('json');
-            this.codeBlock.writeValue(JSON.stringify(result.content));
+            this.codeBlock().changeLanguage('json');
+            this.codeBlock().writeValue(JSON.stringify(result.content));
             break;
           case 'raw':
-            this.codeBlock.changeLanguage('plaintext');
-            this.codeBlock.writeValue(result.content ?? result.filePath);
+            this.codeBlock().changeLanguage('plaintext');
+            this.codeBlock().writeValue(result.content ?? result.filePath);
             break;
         }
       });
@@ -157,7 +156,7 @@ export class SouthItemTestComponent<TItemType extends 'south' | 'history-south'>
 
   private initTest() {
     this.isTestRunning = true;
-    this.codeBlock.writeValue(this.translate.instant('south.test-item.editor-message.loading'));
+    this.codeBlock().writeValue(this.translate.instant('south.test-item.editor-message.loading'));
   }
 
   private finishTest(editorMessage: string | undefined = undefined) {
@@ -165,7 +164,7 @@ export class SouthItemTestComponent<TItemType extends 'south' | 'history-south'>
     this.testSubscription = null;
 
     if (editorMessage) {
-      this.codeBlock.writeValue(editorMessage);
+      this.codeBlock().writeValue(editorMessage);
     }
   }
 }
