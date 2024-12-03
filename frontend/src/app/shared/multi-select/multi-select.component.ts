@@ -1,4 +1,4 @@
-import { AfterContentInit, Component, ContentChildren, EventEmitter, forwardRef, Input, Output, QueryList } from '@angular/core';
+import { AfterContentInit, Component, ContentChildren, forwardRef, Input, QueryList, output } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MultiSelectOptionDirective } from './multi-select-option.directive';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
@@ -49,8 +49,7 @@ export class MultiSelectComponent implements ControlValueAccessor, AfterContentI
 
   @Input() compareWith: ((o1: any, o2: any) => boolean) | null = null;
 
-  @Output()
-  readonly selectionChange = new EventEmitter<Array<any>>();
+  readonly selectionChange = output<Array<any>>();
 
   selectedLabels = '';
 
