@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ViewChild, inject } from '@angular/core';
+import { AfterViewInit, Component, inject, viewChild } from '@angular/core';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
@@ -13,28 +13,30 @@ import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-c
 export class FileContentModalComponent implements AfterViewInit {
   private modal = inject(NgbActiveModal);
 
-  @ViewChild('codeBlock') codeBlock!: OibCodeBlockComponent;
+  readonly codeBlock = viewChild.required<OibCodeBlockComponent>('codeBlock');
   content = '';
   filename = '';
   contentType = '';
   private callbackSet = false;
 
   ngAfterViewInit() {
-    this.codeBlock.writeValue(this.content);
-    this.codeBlock.contentType = this.contentType;
+    this.codeBlock().writeValue(this.content);
+    const codeBlock = this.codeBlock();
+    codeBlock.contentType = this.contentType;
 
     // Attach a listener to the code editor to resize the modal when the content changes
-    this.codeBlock.onChange = () => {
+    codeBlock.onChange = () => {
       if (this.callbackSet) {
         return;
       }
 
-      this.codeBlock.codeEditorInstance!.onDidContentSizeChange(() => {
-        const contentHeight = Math.min(window.innerHeight * 0.75, this.codeBlock.codeEditorInstance!.getContentHeight());
-        const containerWidth = this.codeBlock._editorContainer!.nativeElement.clientWidth;
+      this.codeBlock().codeEditorInstance!.onDidContentSizeChange(() => {
+        const contentHeight = Math.min(window.innerHeight * 0.75, this.codeBlock().codeEditorInstance!.getContentHeight());
+        const containerWidth = this.codeBlock()._editorContainer!.nativeElement.clientWidth;
 
-        this.codeBlock._editorContainer!.nativeElement.style.height = `${contentHeight}px`;
-        this.codeBlock.codeEditorInstance!.layout({ width: containerWidth, height: contentHeight });
+        const codeBlockValue = this.codeBlock();
+        codeBlockValue._editorContainer!.nativeElement.style.height = `${contentHeight}px`;
+        codeBlockValue.codeEditorInstance!.layout({ width: containerWidth, height: contentHeight });
         this.callbackSet = true;
       });
     };

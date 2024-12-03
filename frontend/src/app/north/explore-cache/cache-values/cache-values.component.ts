@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, Input, OnInit, inject, viewChild } from '@angular/core';
 import { TranslateDirective } from '@ngx-translate/core';
 import { formDirectives } from '../../../shared/form-directives';
 import { NorthConnectorService } from '../../../services/north-connector.service';
@@ -20,7 +20,7 @@ export class CacheValuesComponent implements OnInit {
 
   @Input() northConnector: NorthConnectorDTO<NorthSettings> | null = null;
   cacheValues: Array<NorthCacheFiles> = [];
-  @ViewChild('valueTable') valueTable!: FileTableComponent;
+  readonly valueTable = viewChild.required<FileTableComponent>('valueTable');
   valueTablePages = emptyPage<FileTableData>();
 
   ngOnInit() {
@@ -31,7 +31,7 @@ export class CacheValuesComponent implements OnInit {
   }
 
   removeCacheValues() {
-    const files = this.cacheValues.filter(file => this.valueTable.checkboxByFiles.get(file.filename)).map(file => file.filename);
+    const files = this.cacheValues.filter(file => this.valueTable().checkboxByFiles.get(file.filename)).map(file => file.filename);
     this.northConnectorService.removeCacheValues(this.northConnector!.id, files).subscribe(() => {
       this.refreshCacheValues();
     });
@@ -40,9 +40,10 @@ export class CacheValuesComponent implements OnInit {
   refreshCacheValues() {
     this.northConnectorService.getCacheValues(this.northConnector!.id).subscribe(cacheFiles => {
       this.cacheValues = cacheFiles;
-      if (this.valueTable) {
-        this.valueTable.refreshTable(cacheFiles);
-        this.valueTablePages = this.valueTable.pages;
+      const valueTable = this.valueTable();
+      if (valueTable) {
+        valueTable.refreshTable(cacheFiles);
+        this.valueTablePages = valueTable.pages;
       }
     });
   }

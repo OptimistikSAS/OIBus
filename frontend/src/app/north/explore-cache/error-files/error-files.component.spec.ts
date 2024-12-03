@@ -4,7 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { NorthConnectorService } from '../../../services/north-connector.service';
 import { of } from 'rxjs';
 import { NorthConnectorDTO } from '../../../../../../backend/shared/model/north-connector.model';
-import { Component, ViewChild } from '@angular/core';
+import { Component, viewChild } from '@angular/core';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { NorthSettings } from '../../../../../../backend/shared/model/north-settings.model';
 
@@ -13,7 +13,7 @@ import { NorthSettings } from '../../../../../../backend/shared/model/north-sett
   imports: [ErrorFilesComponent]
 })
 class TestComponent {
-  @ViewChild('component') component!: ErrorFilesComponent;
+  readonly component = viewChild.required<ErrorFilesComponent>('component');
   northConnector: NorthConnectorDTO<NorthSettings> = {
     id: 'northId',
     name: 'North Connector'
@@ -60,13 +60,13 @@ describe('ErrorFilesComponent', () => {
       size: 123
     };
 
-    tester.componentInstance.component.onItemAction({ type: 'remove', file });
+    tester.componentInstance.component().onItemAction({ type: 'remove', file });
     expect(northConnectorService.removeCacheErrorFiles).toHaveBeenCalled();
 
-    tester.componentInstance.component.onItemAction({ type: 'retry', file });
+    tester.componentInstance.component().onItemAction({ type: 'retry', file });
     expect(northConnectorService.retryCacheErrorFiles).toHaveBeenCalled();
 
-    tester.componentInstance.component.onItemAction({ type: 'view', file });
+    tester.componentInstance.component().onItemAction({ type: 'view', file });
     expect(northConnectorService.getCacheErrorFileContent).toHaveBeenCalled();
   });
 });
