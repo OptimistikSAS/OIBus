@@ -3,7 +3,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AsyncValidatorFn, NonNullableFormBuilder, Validators } from '@angular/forms';
 import { map, Observable, of, switchMap } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '../../../../../backend/shared/model/scan-mode.model';
 import { formDirectives } from '../../shared/form-directives';
@@ -14,7 +14,7 @@ import { DatetimePipe } from '../../shared/datetime.pipe';
   selector: 'oib-edit-scan-mode-modal',
   templateUrl: './edit-scan-mode-modal.component.html',
   styleUrl: './edit-scan-mode-modal.component.scss',
-  imports: [...formDirectives, TranslateModule, SaveButtonComponent, DatetimePipe]
+  imports: [...formDirectives, TranslateDirective, SaveButtonComponent, DatetimePipe]
 })
 export class EditScanModeModalComponent {
   private modal = inject(NgbActiveModal);

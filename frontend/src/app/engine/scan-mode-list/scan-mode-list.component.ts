@@ -4,7 +4,7 @@ import { switchMap, tap } from 'rxjs';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { EditScanModeModalComponent } from '../edit-scan-mode-modal/edit-scan-mode-modal.component';
@@ -13,7 +13,7 @@ import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 
 @Component({
   selector: 'oib-scan-mode-list',
-  imports: [TranslateModule, BoxComponent, BoxTitleDirective, OibHelpComponent],
+  imports: [TranslateDirective, BoxComponent, BoxTitleDirective, OibHelpComponent],
   templateUrl: './scan-mode-list.component.html',
   styleUrl: './scan-mode-list.component.scss'
 })

@@ -1,5 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
 import { ConfirmationService } from '../shared/confirmation.service';
 import { NotificationService } from '../shared/notification.service';
@@ -22,7 +22,7 @@ const PAGE_SIZE = 15;
 
 @Component({
   selector: 'oib-north-list',
-  imports: [TranslateModule, RouterLink, LoadingSpinnerComponent, ...formDirectives, PaginationComponent, AsyncPipe, LegendComponent],
+  imports: [TranslateDirective, RouterLink, LoadingSpinnerComponent, ...formDirectives, PaginationComponent, AsyncPipe, LegendComponent],
   templateUrl: './north-list.component.html',
   styleUrl: './north-list.component.scss'
 })

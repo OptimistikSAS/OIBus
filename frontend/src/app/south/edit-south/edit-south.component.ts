@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import {
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
@@ -30,7 +30,7 @@ import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/
 @Component({
   selector: 'oib-edit-south',
   imports: [
-    TranslateModule,
+    TranslateDirective,
     ...formDirectives,
     SaveButtonComponent,
     FormComponent,

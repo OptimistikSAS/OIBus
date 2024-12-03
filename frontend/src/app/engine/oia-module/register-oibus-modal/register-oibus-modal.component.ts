@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { NonNullableFormBuilder, Validators } from '@angular/forms';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { formDirectives } from '../../../shared/form-directives';
 import { EngineService } from '../../../services/engine.service';
 import { LOG_LEVELS, RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../../../../backend/shared/model/engine.model';
@@ -13,7 +13,7 @@ import { OibusCommandTypeEnumPipe } from '../../../shared/oibus-command-type-enu
   selector: 'oib-register-oibus-modal',
   templateUrl: './register-oibus-modal.component.html',
   styleUrl: './register-oibus-modal.component.scss',
-  imports: [...formDirectives, TranslateModule, SaveButtonComponent, OibusCommandTypeEnumPipe, BoxComponent]
+  imports: [...formDirectives, TranslateDirective, SaveButtonComponent, OibusCommandTypeEnumPipe, BoxComponent]
 })
 export class RegisterOibusModalComponent {
   private modal = inject(NgbActiveModal);

@@ -1,5 +1,5 @@
 import { Component, inject, Input, OnChanges, OnInit, SimpleChanges, output } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
@@ -29,6 +29,7 @@ import { ImportItemModalComponent } from '../../shared/import-item-modal/import-
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 
 const PAGE_SIZE = 20;
+
 const enum ColumnSortState {
   INDETERMINATE = 0,
   ASCENDING = 1,
@@ -43,14 +44,15 @@ export interface TableData {
 @Component({
   selector: 'oib-south-items',
   imports: [
-    TranslateModule,
+    TranslateDirective,
     FormControlValidationDirective,
     FormsModule,
     ReactiveFormsModule,
     BoxComponent,
     BoxTitleDirective,
     PaginationComponent,
-    OibHelpComponent
+    OibHelpComponent,
+    TranslatePipe
   ],
   templateUrl: './south-items.component.html',
   styleUrl: './south-items.component.scss'

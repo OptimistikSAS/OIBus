@@ -1,5 +1,5 @@
 import { Component, Input, OnInit, ViewChild, inject } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { formDirectives } from '../../../shared/form-directives';
 import { NorthConnectorService } from '../../../services/north-connector.service';
 import { NorthCacheFiles, NorthConnectorDTO } from '../../../../../../backend/shared/model/north-connector.model';
@@ -15,7 +15,7 @@ import { NorthSettings } from '../../../../../../backend/shared/model/north-sett
   selector: 'oib-cache-files',
   templateUrl: './cache-files.component.html',
   styleUrl: './cache-files.component.scss',
-  imports: [...formDirectives, TranslateModule, PaginationComponent, BoxComponent, BoxTitleDirective, FileTableComponent]
+  imports: [...formDirectives, TranslateDirective, PaginationComponent, BoxComponent, BoxTitleDirective, FileTableComponent]
 })
 export class CacheFilesComponent implements OnInit {
   private northConnectorService = inject(NorthConnectorService);

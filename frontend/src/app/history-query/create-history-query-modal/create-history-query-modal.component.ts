@@ -1,6 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
 
 import { NorthConnectorLightDTO, NorthType } from '../../../../../backend/shared/model/north-connector.model';
@@ -15,7 +15,7 @@ import { ObservableState, SaveButtonComponent } from '../../shared/save-button/s
   selector: 'oib-create-history-query-modal',
   templateUrl: './create-history-query-modal.component.html',
   styleUrl: './create-history-query-modal.component.scss',
-  imports: [...formDirectives, TranslateModule, SaveButtonComponent]
+  imports: [...formDirectives, TranslateDirective, SaveButtonComponent]
 })
 export class CreateHistoryQueryModalComponent implements OnInit {
   private modal = inject(NgbActiveModal);

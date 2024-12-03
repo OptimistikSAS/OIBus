@@ -1,5 +1,5 @@
-import { importProvidersFrom, inject, LOCALE_ID, provideEnvironmentInitializer } from '@angular/core';
-import { TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
+import { inject, LOCALE_ID, provideEnvironmentInitializer } from '@angular/core';
+import { provideTranslateService, TranslateLoader, TranslateService } from '@ngx-translate/core';
 import { ModuleTranslateLoader } from './module-translate-loader';
 
 import { DEFAULT_TZ, Language, Timezone } from '../../../backend/shared/model/types';
@@ -32,14 +32,12 @@ export function storeTimezone(timezone: Timezone) {
  */
 export const provideI18n = () => {
   return [
-    importProvidersFrom(
-      TranslateModule.forRoot({
-        loader: {
-          provide: TranslateLoader,
-          useClass: ModuleTranslateLoader
-        }
-      })
-    ),
+    provideTranslateService({
+      loader: {
+        provide: TranslateLoader,
+        useClass: ModuleTranslateLoader
+      }
+    }),
     { provide: LOCALE_ID, useValue: languageToUse() },
     // provideEnvironmentInitializer allows us to run code when the app starts
     provideEnvironmentInitializer(() => {

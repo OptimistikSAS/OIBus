@@ -1,8 +1,6 @@
 import { Component, forwardRef, Input, OnInit, inject, output } from '@angular/core';
 import { FormGroup, NonNullableFormBuilder } from '@angular/forms';
 import { formDirectives } from '../../../form-directives';
-
-import { TranslateModule } from '@ngx-translate/core';
 import { OibFormControl } from '../../../../../../../backend/shared/model/form.model';
 import { createFormGroup, groupFormControlsByRow } from '../../../form-utils';
 import { FormComponent } from '../../form.component';
@@ -11,7 +9,7 @@ import { FormComponent } from '../../form.component';
   selector: 'oib-edit-element',
   templateUrl: './edit-element.component.html',
   styleUrl: './edit-element.component.scss',
-  imports: [...formDirectives, TranslateModule, forwardRef(() => FormComponent)]
+  imports: [...formDirectives, forwardRef(() => FormComponent)]
 })
 export class EditElementComponent implements OnInit {
   private fb = inject(NonNullableFormBuilder);

@@ -1,4 +1,4 @@
-import { importProvidersFrom, inject, LOCALE_ID, provideEnvironmentInitializer } from '@angular/core';
+import { inject, LOCALE_ID, provideEnvironmentInitializer } from '@angular/core';
 import { MissingTranslationHandler, MissingTranslationHandlerParams, provideTranslateService, TranslateService } from '@ngx-translate/core';
 import EN_TRANSLATIONS from './en.json';
 
