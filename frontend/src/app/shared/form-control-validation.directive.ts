@@ -10,8 +10,7 @@ import { ValdemortConfig } from 'ngx-valdemort';
  * and the error message appear together).
  */
 @Directive({
-  selector: '.form-control,.form-select',
-  standalone: true
+  selector: '.form-control,.form-select'
 })
 export class FormControlValidationDirective {
   private ngControl = inject(NgControl, { optional: true });

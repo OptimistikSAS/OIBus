@@ -6,7 +6,6 @@ import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-c
 
 @Component({
   selector: 'oib-file-content-modal',
-  standalone: true,
   imports: [TranslateModule, OibCodeBlockComponent],
   templateUrl: './file-content-modal.component.html',
   styleUrl: './file-content-modal.component.scss'

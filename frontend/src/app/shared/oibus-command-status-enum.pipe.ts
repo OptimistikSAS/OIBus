@@ -4,8 +4,7 @@ import { OIBusCommandStatus } from '../../../../backend/shared/model/command.mod
 
 @Pipe({
   name: 'oibusCommandStatusEnum',
-  pure: false,
-  standalone: true
+  pure: false
 })
 export class OibusCommandStatusEnumPipe extends BaseEnumPipe<OIBusCommandStatus> implements PipeTransform {
   constructor() {

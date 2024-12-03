@@ -4,8 +4,7 @@ import { DateTimeType } from '../../../../backend/shared/model/types';
 
 @Pipe({
   name: 'datetimeTypesEnum',
-  pure: false,
-  standalone: true
+  pure: false
 })
 export class DatetimeTypesEnumPipe extends BaseEnumPipe<DateTimeType> implements PipeTransform {
   constructor() {

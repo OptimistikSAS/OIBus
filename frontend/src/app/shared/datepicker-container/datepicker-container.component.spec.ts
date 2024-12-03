@@ -13,8 +13,7 @@ import { formDirectives } from '../form-directives';
       <input class="form-control" [formControl]="dateCtrl" ngbDatepicker />
     </oib-datepicker-container>
   `,
-  imports: [DatepickerContainerComponent, ...formDirectives, NgbInputDatepicker],
-  standalone: true
+  imports: [DatepickerContainerComponent, ...formDirectives, NgbInputDatepicker]
 })
 class TestComponent {
   dateCtrl = new UntypedFormControl();

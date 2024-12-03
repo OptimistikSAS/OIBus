@@ -13,7 +13,6 @@ import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 
 @Component({
   selector: 'oib-ip-filter-list',
-  standalone: true,
   imports: [TranslateModule, BoxComponent, BoxTitleDirective, OibHelpComponent],
   templateUrl: './ip-filter-list.component.html',
   styleUrl: './ip-filter-list.component.scss'

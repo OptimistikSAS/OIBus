@@ -14,8 +14,7 @@ import { DatetimePipe } from '../../shared/datetime.pipe';
   selector: 'oib-edit-scan-mode-modal',
   templateUrl: './edit-scan-mode-modal.component.html',
   styleUrl: './edit-scan-mode-modal.component.scss',
-  imports: [...formDirectives, TranslateModule, SaveButtonComponent, DatetimePipe],
-  standalone: true
+  imports: [...formDirectives, TranslateModule, SaveButtonComponent, DatetimePipe]
 })
 export class EditScanModeModalComponent {
   private modal = inject(NgbActiveModal);

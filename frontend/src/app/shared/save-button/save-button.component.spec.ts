@@ -12,8 +12,7 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
       <oib-save-button form="test-form" [state]="state" />
     </form>
   `,
-  imports: [SaveButtonComponent, ReactiveFormsModule],
-  standalone: true
+  imports: [SaveButtonComponent, ReactiveFormsModule]
 })
 class TestComponent {
   state = new ObservableState();

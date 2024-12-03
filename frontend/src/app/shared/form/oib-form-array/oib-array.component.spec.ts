@@ -10,7 +10,6 @@ import { buildDateTimeFieldsFormControl } from '../../../../../../backend/shared
 
 @Component({
   template: '<oib-array [parentForm]="parentForm" [formDescription]="formDescription" [formControl]="control" />',
-  standalone: true,
   imports: [OibArrayComponent, ...formDirectives]
 })
 class TestComponent {

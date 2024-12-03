@@ -36,8 +36,7 @@ declare namespace Intl {
   selector: 'oib-edit-south-item-modal',
   templateUrl: './edit-south-item-modal.component.html',
   styleUrl: './edit-south-item-modal.component.scss',
-  imports: [...formDirectives, TranslateModule, SaveButtonComponent, OibScanModeComponent, FormComponent, SouthItemTestComponent],
-  standalone: true
+  imports: [...formDirectives, TranslateModule, SaveButtonComponent, OibScanModeComponent, FormComponent, SouthItemTestComponent]
 })
 export class EditSouthItemModalComponent {
   private modal = inject(NgbActiveModal);

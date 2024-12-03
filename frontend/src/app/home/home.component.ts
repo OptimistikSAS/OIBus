@@ -17,7 +17,6 @@ const NUMBER_OF_COLUMN = 3;
 
 @Component({
   selector: 'oib-home',
-  standalone: true,
   imports: [TranslateModule, EngineMetricsComponent, NorthMetricsComponent, SouthMetricsComponent, RouterLink],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss'

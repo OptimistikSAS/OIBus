@@ -10,8 +10,7 @@ import { formDirectives } from '../../shared/form-directives';
   selector: 'oib-choose-south-connector-type-modal',
   templateUrl: './choose-south-connector-type-modal.component.html',
   styleUrl: './choose-south-connector-type-modal.component.scss',
-  imports: [...formDirectives, TranslateModule],
-  standalone: true
+  imports: [...formDirectives, TranslateModule]
 })
 export class ChooseSouthConnectorTypeModalComponent implements OnInit {
   private modal = inject(NgbActiveModal);

@@ -11,8 +11,7 @@ import { NorthConnectorService } from '../../services/north-connector.service';
   selector: 'oib-choose-north-connector-type-modal',
   templateUrl: './choose-north-connector-type-modal.component.html',
   styleUrl: './choose-north-connector-type-modal.component.scss',
-  imports: [...formDirectives, TranslateModule],
-  standalone: true
+  imports: [...formDirectives, TranslateModule]
 })
 export class ChooseNorthConnectorTypeModalComponent implements OnInit {
   private modal = inject(NgbActiveModal);

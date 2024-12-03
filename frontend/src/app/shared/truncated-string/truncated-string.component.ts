@@ -4,7 +4,6 @@ import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   selector: 'oib-truncated-string',
-  standalone: true,
   templateUrl: './truncated-string.component.html',
   styleUrl: './truncated-string.component.scss',
   imports: [NgbPopover],

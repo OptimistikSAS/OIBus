@@ -30,7 +30,6 @@ import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/
 
 @Component({
   selector: 'oib-south-detail',
-  standalone: true,
   imports: [
     TranslateModule,
     RouterLink,

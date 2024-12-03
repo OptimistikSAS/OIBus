@@ -12,8 +12,7 @@ import { DateTime } from 'luxon';
   selector: 'oib-export-item-modal',
   templateUrl: './export-item-modal.component.html',
   styleUrl: './export-item-modal.component.scss',
-  imports: [TranslateModule, ...formDirectives, CsvCharacterEnumPipe],
-  standalone: true
+  imports: [TranslateModule, ...formDirectives, CsvCharacterEnumPipe]
 })
 export class ExportItemModalComponent implements OnInit {
   private modal = inject(NgbActiveModal);

@@ -4,8 +4,7 @@ import { OIBusCommandType } from '../../../../backend/shared/model/command.model
 
 @Pipe({
   name: 'oibusCommandTypeEnum',
-  pure: false,
-  standalone: true
+  pure: false
 })
 export class OibusCommandTypeEnumPipe extends BaseEnumPipe<OIBusCommandType> implements PipeTransform {
   constructor() {

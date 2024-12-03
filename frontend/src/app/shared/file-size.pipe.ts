@@ -6,8 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
  */
 @Pipe({
   name: 'fileSize',
-  pure: false,
-  standalone: true
+  pure: false
 })
 export class FileSizePipe implements PipeTransform {
   private translateService = inject(TranslateService);
