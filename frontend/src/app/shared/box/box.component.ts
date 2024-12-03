@@ -2,13 +2,13 @@ import {
   AfterContentInit,
   ChangeDetectionStrategy,
   Component,
-  ContentChild,
   Directive,
   ElementRef,
   Input,
   TemplateRef,
-  ViewChild,
-  inject
+  inject,
+  viewChild,
+  contentChild
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { TranslateDirective } from '@ngx-translate/core';
@@ -36,20 +36,22 @@ export class BoxTitleDirective {
 export class BoxComponent implements AfterContentInit {
   @Input() boxTitle = '';
   @Input() helpUrl = '';
+  // TODO Signal migration: use a computed
   titleTemplateRef: TemplateRef<void> | null = null;
+  // TODO Signal migration: use a computed
   removePadding = false;
   @Input() imagePath = '';
 
-  @ViewChild('boxContent', { static: true }) boxContent: ElementRef<any> | undefined;
-  @ContentChild(BoxTitleDirective, { static: true }) titleQuery: BoxTitleDirective | undefined;
+  readonly boxContent = viewChild.required<ElementRef<HTMLDivElement>>('boxContent');
+  readonly titleQuery = contentChild(BoxTitleDirective);
 
   ngAfterContentInit(): void {
-    this.titleTemplateRef = this.titleQuery?.templateRef || null;
+    this.titleTemplateRef = this.titleQuery()?.templateRef || null;
     this.checkContent();
   }
 
   private checkContent(): void {
-    const contentElement = this.boxContent?.nativeElement;
+    const contentElement = this.boxContent()?.nativeElement;
 
     if (contentElement) {
       const tableElement = contentElement.querySelector('table');

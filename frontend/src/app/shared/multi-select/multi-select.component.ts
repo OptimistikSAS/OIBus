@@ -37,6 +37,8 @@ import { FormControlValidationDirective } from '../form-control-validation.direc
 })
 export class MultiSelectComponent implements ControlValueAccessor, AfterContentInit {
   disabled = false;
+  // TODO: Skipped for migration because:
+  //  Query type is too complex to automatically migrate.
   @ContentChildren(MultiSelectOptionDirective) options: QueryList<MultiSelectOptionDirective> | null = null;
 
   @Input() placeholder = '';
