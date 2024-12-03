@@ -3,7 +3,7 @@ import { Component, Input, OnInit, inject, output } from '@angular/core';
 import { of, switchMap, tap } from 'rxjs';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { NorthConnectorDTO } from '../../../../../backend/shared/model/north-connector.model';
 import { SouthConnectorLightDTO } from '../../../../../backend/shared/model/south-connector.model';
@@ -16,7 +16,7 @@ import { NorthSettings } from '../../../../../backend/shared/model/north-setting
 
 @Component({
   selector: 'oib-north-subscriptions',
-  imports: [TranslateModule, BoxComponent, BoxTitleDirective, OibHelpComponent],
+  imports: [TranslateDirective, BoxComponent, BoxTitleDirective, OibHelpComponent],
   templateUrl: './north-subscriptions.component.html',
   styleUrl: './north-subscriptions.component.scss'
 })

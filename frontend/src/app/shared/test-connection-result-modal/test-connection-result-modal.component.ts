@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { SouthConnectorCommandDTO, SouthConnectorDTO } from '../../../../../backend/shared/model/south-connector.model';
 
 import { SouthConnectorService } from '../../services/south-connector.service';
@@ -14,7 +14,7 @@ import { NorthSettings } from '../../../../../backend/shared/model/north-setting
   selector: 'oib-test-connection-result-modal',
   templateUrl: './test-connection-result-modal.component.html',
   styleUrl: './test-connection-result-modal.component.scss',
-  imports: [TranslateModule]
+  imports: [TranslateDirective]
 })
 export class TestConnectionResultModalComponent {
   private modal = inject(NgbActiveModal);

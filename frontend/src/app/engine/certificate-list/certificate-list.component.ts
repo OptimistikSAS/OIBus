@@ -4,7 +4,7 @@ import { switchMap } from 'rxjs';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { CertificateService } from '../../services/certificate.service';
 import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
 import { EditCertificateModalComponent } from '../edit-certificate-modal/edit-certificate-modal.component';
@@ -16,7 +16,7 @@ import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 
 @Component({
   selector: 'oib-certificate-list',
-  imports: [TranslateModule, BoxComponent, BoxTitleDirective, DatetimePipe, ClipboardCopyDirective, OibHelpComponent],
+  imports: [TranslateDirective, BoxComponent, BoxTitleDirective, DatetimePipe, ClipboardCopyDirective, OibHelpComponent],
   templateUrl: './certificate-list.component.html',
   styleUrl: './certificate-list.component.scss'
 })

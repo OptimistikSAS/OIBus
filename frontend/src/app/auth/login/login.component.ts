@@ -5,7 +5,7 @@ import { RequestedUrlService } from '../authentication.guard';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { formDirectives } from '../../shared/form-directives';
 import { CurrentUserService } from '../../shared/current-user.service';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { WindowService } from '../../shared/window.service';
 
 /**
@@ -15,7 +15,7 @@ import { WindowService } from '../../shared/window.service';
   selector: 'oib-login',
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
-  imports: [...formDirectives, TranslateModule, NgbCollapse]
+  imports: [...formDirectives, TranslateDirective, NgbCollapse]
 })
 export class LoginComponent {
   private currentUserService = inject(CurrentUserService);

@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { AsyncPipe, DecimalPipe } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { combineLatest, of, switchMap } from 'rxjs';
 import { PageLoader } from '../../shared/page-loader.service';
@@ -37,7 +37,7 @@ import { NorthSettings } from '../../../../../backend/shared/model/north-setting
 @Component({
   selector: 'oib-history-query-detail',
   imports: [
-    TranslateModule,
+    TranslateDirective,
     RouterLink,
     DecimalPipe,
     BackNavigationDirective,
@@ -76,8 +76,6 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
   searchParams: SouthConnectorItemSearchParam | null = null;
   northManifest: NorthConnectorManifest | null = null;
   southManifest: SouthConnectorManifest | null = null;
-  importing = false;
-  exporting = false;
 
   historyMetrics: HistoryQueryMetrics | null = null;
   historyStream: EventSource | null = null;
@@ -151,10 +149,6 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
 
   getScanMode(scanModeId: string) {
     return this.scanModes.find(scanMode => scanMode.id === scanModeId)?.name || scanModeId;
-  }
-
-  searchItem(searchParams: SouthConnectorItemSearchParam) {
-    this.router.navigate(['.'], { queryParams: { page: 0, name: searchParams.name }, relativeTo: this.route });
   }
 
   connectToEventSource(): void {

@@ -96,7 +96,7 @@
                 <td>{{ getScanMode(item.scanModeId)?.name }}</td>
               }
               @if (!southManifest.items.scanMode.subscriptionOnly && item.scanModeId === 'subscription') {
-                <td>{{ 'scan-mode.subscription' | translate }}</td>
+                <td translate="scan-mode.subscription"></td>
               }
               @for (setting of displaySettings; track setting) {
                 <td>{{ getFieldValue(item.settings, setting.key, setting.pipe) }}</td>

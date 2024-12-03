@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ObservableState } from '../../shared/save-button/save-button.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
 import {
   SouthConnectorItemCommandDTO,
@@ -24,7 +24,7 @@ const PAGE_SIZE = 20;
   selector: 'oib-import-south-items-modal',
   templateUrl: './import-south-items-modal.component.html',
   styleUrl: './import-south-items-modal.component.scss',
-  imports: [...formDirectives, TranslateModule, PaginationComponent]
+  imports: [...formDirectives, TranslateDirective, PaginationComponent]
 })
 export class ImportSouthItemsModalComponent {
   private modal = inject(NgbActiveModal);

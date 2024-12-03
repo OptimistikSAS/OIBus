@@ -63,7 +63,7 @@
                     <label class="form-label" for="console-level" translate="engine.logger.console.level"></label>
                     <select formControlName="level" class="form-select mb-2 mr-sm-2" id="console-level">
                       @for (level of logLevels; track level) {
-                        <option [ngValue]="level">{{ 'enums.log-levels.' + level | translate }}</option>
+                        <option [ngValue]="level" [translate]="'enums.log-levels.' + level"></option>
                       }
                     </select>
                   </div>
@@ -78,7 +78,7 @@
                     <label class="form-label" for="file-level" translate="engine.logger.file.level"></label>
                     <select formControlName="level" class="form-select mb-2 mr-sm-2" id="file-level">
                       @for (level of logLevels; track level) {
-                        <option [ngValue]="level">{{ 'enums.log-levels.' + level | translate }}</option>
+                        <option [ngValue]="level" [translate]="'enums.log-levels.' + level"></option>
                       }
                     </select>
                   </div>
@@ -112,7 +112,7 @@
                     <label class="form-label" for="database-level" translate="engine.logger.database.level"></label>
                     <select formControlName="level" class="form-select mb-2 mr-sm-2" id="database-level">
                       @for (level of logLevels; track level) {
-                        <option [ngValue]="level">{{ 'enums.log-levels.' + level | translate }}</option>
+                        <option [ngValue]="level" [translate]="'enums.log-levels.' + level"></option>
                       }
                     </select>
                   </div>
@@ -141,7 +141,7 @@
                       <label class="form-label" for="loki-level" translate="engine.logger.loki.level"></label>
                       <select formControlName="level" class="form-select mb-2 mr-sm-2" id="loki-level">
                         @for (level of logLevels; track level) {
-                          <option [ngValue]="level">{{ 'enums.log-levels.' + level | translate }}</option>
+                          <option [ngValue]="level" [translate]="'enums.log-levels.' + level"></option>
                         }
                       </select>
                     </div>
@@ -198,7 +198,7 @@
                       <label class="form-label" for="oia-level" translate="engine.logger.oia.level"></label>
                       <select formControlName="level" class="form-select mb-2 mr-sm-2" id="oia-level">
                         @for (level of logLevels; track level) {
-                          <option [ngValue]="level">{{ 'enums.log-levels.' + level | translate }}</option>
+                          <option [ngValue]="level" [translate]="'enums.log-levels.' + level"></option>
                         }
                       </select>
                     </div>

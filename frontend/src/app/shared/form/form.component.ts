@@ -9,7 +9,7 @@ import { Timezone } from '../../../../../backend/shared/model/types';
 import { filter, Observable } from 'rxjs';
 import { inMemoryTypeahead } from '../typeahead';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { OibArrayComponent } from './oib-form-array/oib-array.component';
 import { groupFormControlsByRow } from '../form-utils';
 import { PipeProviderService } from './pipe-provider.service';
@@ -25,7 +25,7 @@ declare namespace Intl {
 
 @Component({
   selector: 'oib-form',
-  imports: [...formDirectives, OibCodeBlockComponent, NgbTypeahead, TranslateModule, OibArrayComponent],
+  imports: [...formDirectives, OibCodeBlockComponent, NgbTypeahead, TranslateDirective, OibArrayComponent],
   templateUrl: './form.component.html',
   styleUrl: './form.component.scss'
 })

@@ -8,7 +8,7 @@
         <label class="col form-label" for="delimiter" translate="common.delimiter"></label>
         <select formControlName="delimiter" class="form-select w-50 mb-3" id="delimiter">
           @for (delimiter of csvDelimiters; track delimiter) {
-            <option [ngValue]="delimiter">{{ 'enums.csv-character.' + delimiter | translate }}</option>
+            <option [ngValue]="delimiter" [translate]="'enums.csv-character.' + delimiter"></option>
           }
         </select>
       </div>
