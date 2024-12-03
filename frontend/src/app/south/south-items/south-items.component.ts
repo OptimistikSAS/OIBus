@@ -1,4 +1,4 @@
-import { Component, inject, Input, OnChanges, OnInit, SimpleChanges, output } from '@angular/core';
+import { Component, inject, OnChanges, OnInit, SimpleChanges, output, input } from '@angular/core';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
@@ -63,9 +63,9 @@ export class SouthItemsComponent implements OnInit, OnChanges {
   private modalService = inject(ModalService);
   private southConnectorService = inject(SouthConnectorService);
   private pipeProviderService = inject(PipeProviderService);
-  @Input() southConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> | null = null;
-  @Input({ required: true }) southManifest!: SouthConnectorManifest;
-  @Input({ required: true }) scanModes!: Array<ScanModeDTO>;
+  readonly southConnector = input<SouthConnectorDTO<SouthSettings, SouthItemSettings> | null>(null);
+  readonly southManifest = input.required<SouthConnectorManifest>();
+  readonly scanModes = input.required<Array<ScanModeDTO>>();
 
   readonly inMemoryItems = output<Array<SouthConnectorItemCommandDTO<SouthItemSettings>> | null>();
 
@@ -85,7 +85,7 @@ export class SouthItemsComponent implements OnInit, OnChanges {
 
   ngOnInit() {
     this.resetPage();
-    this.displaySettings = this.southManifest.items.settings.filter(setting => setting.displayInViewMode);
+    this.displaySettings = this.southManifest().items.settings.filter(setting => setting.displayInViewMode);
 
     // subscribe to changes to search control
     this.searchControl.valueChanges.pipe(debounceTime(200), distinctUntilChanged()).subscribe(() => {
@@ -115,8 +115,9 @@ export class SouthItemsComponent implements OnInit, OnChanges {
 
   filter(): Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>> {
     const searchText = this.searchControl.value || '';
-    if (this.southConnector) {
-      return this.southConnector.items.filter(item => item.name.toLowerCase().includes(searchText.toLowerCase()));
+    const southConnector = this.southConnector();
+    if (southConnector) {
+      return southConnector.items.filter(item => item.name.toLowerCase().includes(searchText.toLowerCase()));
     } else {
       return this.allItems.filter(item => item.name.toLowerCase().includes(searchText.toLowerCase()));
     }
@@ -126,12 +127,12 @@ export class SouthItemsComponent implements OnInit, OnChanges {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl' });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
     component.prepareForEdition(
-      this.southManifest.items,
+      this.southManifest().items,
       this.allItems,
-      this.scanModes,
+      this.scanModes(),
       southItem,
-      this.southConnector,
-      this.southManifest
+      this.southConnector(),
+      this.southManifest()
     );
     this.refreshAfterEditionModalClosed(modalRef, southItem);
   }
@@ -139,7 +140,7 @@ export class SouthItemsComponent implements OnInit, OnChanges {
   addItem() {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl' });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
-    component.prepareForCreation(this.southManifest.items, this.allItems, this.scanModes, this.southConnector, this.southManifest);
+    component.prepareForCreation(this.southManifest().items, this.allItems, this.scanModes(), this.southConnector(), this.southManifest());
     this.refreshAfterCreationModalClosed(modalRef);
   }
 
@@ -150,8 +151,9 @@ export class SouthItemsComponent implements OnInit, OnChanges {
     modalRef.result
       .pipe(
         switchMap((command: SouthConnectorItemCommandDTO<SouthItemSettings>) => {
-          if (this.southConnector) {
-            return this.southConnectorService.createItem(this.southConnector!.id, command);
+          const southConnector = this.southConnector();
+          if (southConnector) {
+            return this.southConnectorService.createItem(southConnector!.id, command);
           } else {
             this.allItems.push({
               id: command.id ?? null,
@@ -166,7 +168,7 @@ export class SouthItemsComponent implements OnInit, OnChanges {
         })
       )
       .subscribe(() => {
-        if (this.southConnector) {
+        if (this.southConnector()) {
           this.notificationService.success(`south.items.created`);
           this.inMemoryItems.emit(null);
         } else {
@@ -186,8 +188,9 @@ export class SouthItemsComponent implements OnInit, OnChanges {
     modalRef.result
       .pipe(
         switchMap((command: SouthConnectorItemCommandDTO<SouthItemSettings>) => {
-          if (this.southConnector) {
-            return this.southConnectorService.updateItem(this.southConnector!.id, command.id!, command);
+          const southConnector = this.southConnector();
+          if (southConnector) {
+            return this.southConnectorService.updateItem(southConnector!.id, command.id!, command);
           } else {
             this.allItems = this.allItems.filter(item => item.name !== oldItem.name);
             this.allItems.push({ ...oldItem, ...command });
@@ -196,7 +199,7 @@ export class SouthItemsComponent implements OnInit, OnChanges {
         })
       )
       .subscribe(() => {
-        if (this.southConnector) {
+        if (this.southConnector()) {
           this.notificationService.success(`south.items.updated`);
           this.inMemoryItems.emit(null);
         } else {
@@ -213,8 +216,9 @@ export class SouthItemsComponent implements OnInit, OnChanges {
       })
       .pipe(
         switchMap(() => {
-          if (this.southConnector) {
-            return this.southConnectorService.deleteItem(this.southConnector!.id, item.id!);
+          const southConnector = this.southConnector();
+          if (southConnector) {
+            return this.southConnectorService.deleteItem(southConnector!.id, item.id!);
           } else {
             this.allItems = this.allItems.filter(element => element.name !== item.name);
             return of(null);
@@ -222,7 +226,7 @@ export class SouthItemsComponent implements OnInit, OnChanges {
         })
       )
       .subscribe(() => {
-        if (this.southConnector) {
+        if (this.southConnector()) {
           this.notificationService.success('south.items.deleted');
           this.inMemoryItems.emit(null);
         } else {
@@ -235,17 +239,18 @@ export class SouthItemsComponent implements OnInit, OnChanges {
   duplicateItem(item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>) {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl' });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
-    component.prepareForCopy(this.southManifest.items, this.scanModes, item, this.southConnector, this.southManifest);
+    component.prepareForCopy(this.southManifest().items, this.scanModes(), item, this.southConnector(), this.southManifest());
     this.refreshAfterCreationModalClosed(modalRef);
   }
 
   exportItems() {
     const modalRef = this.modalService.open(ExportItemModalComponent);
-    modalRef.componentInstance.prepare(this.southConnector?.name);
+    modalRef.componentInstance.prepare(this.southConnector()?.name);
     modalRef.result.subscribe(response => {
-      if (response && this.southConnector) {
-        this.southConnectorService.exportItems(this.southConnector!.id, response.fileName, response.delimiter).subscribe();
-      } else if (response && !this.southConnector) {
+      const southConnector = this.southConnector();
+      if (response && southConnector) {
+        this.southConnectorService.exportItems(southConnector!.id, response.fileName, response.delimiter).subscribe();
+      } else if (response && !southConnector) {
         this.southConnectorService.itemsToCsv(this.allItems, response.fileName, response.delimiter).subscribe();
       }
     });
@@ -258,8 +263,9 @@ export class SouthItemsComponent implements OnInit, OnChanges {
       })
       .pipe(
         switchMap(() => {
-          if (this.southConnector) {
-            return this.southConnectorService.deleteAllItems(this.southConnector!.id);
+          const southConnector = this.southConnector();
+          if (southConnector) {
+            return this.southConnectorService.deleteAllItems(southConnector!.id);
           } else {
             this.allItems = [];
             return of(null);
@@ -267,7 +273,7 @@ export class SouthItemsComponent implements OnInit, OnChanges {
         })
       )
       .subscribe(() => {
-        if (this.southConnector) {
+        if (this.southConnector()) {
           this.notificationService.success('south.items.all-deleted');
           this.inMemoryItems.emit(null);
         } else {
@@ -285,11 +291,12 @@ export class SouthItemsComponent implements OnInit, OnChanges {
   }
 
   checkImportItems(file: File, delimiter: string) {
+    const southConnector = this.southConnector();
     this.southConnectorService
       .checkImportItems(
-        this.southManifest.id,
-        this.southConnector?.id || 'create',
-        this.southConnector ? this.southConnector.items : this.allItems,
+        this.southManifest().id,
+        southConnector?.id || 'create',
+        southConnector ? southConnector.items : this.allItems,
         file,
         delimiter
       )
@@ -303,12 +310,13 @@ export class SouthItemsComponent implements OnInit, OnChanges {
         }) => {
           const modalRef = this.modalService.open(ImportSouthItemsModalComponent, { size: 'xl' });
           const component: ImportSouthItemsModalComponent = modalRef.componentInstance;
+          const southConnectorValue = this.southConnector();
           component.prepare(
-            this.southManifest.items,
-            this.southConnector ? this.southConnector.items : this.allItems,
+            this.southManifest().items,
+            southConnectorValue ? southConnectorValue.items : this.allItems,
             result.items,
             result.errors,
-            this.scanModes
+            this.scanModes()
           );
           this.refreshAfterImportModalClosed(modalRef);
         }
@@ -322,8 +330,9 @@ export class SouthItemsComponent implements OnInit, OnChanges {
     modalRef.result
       .pipe(
         switchMap((newItems: Array<SouthConnectorItemCommandDTO<SouthItemSettings>>) => {
-          if (this.southConnector) {
-            return this.southConnectorService.importItems(this.southConnector!.id, newItems);
+          const southConnector = this.southConnector();
+          if (southConnector) {
+            return this.southConnectorService.importItems(southConnector!.id, newItems);
           } else {
             for (const item of newItems) {
               this.allItems.push(item);
@@ -333,7 +342,7 @@ export class SouthItemsComponent implements OnInit, OnChanges {
         })
       )
       .subscribe(() => {
-        if (this.southConnector) {
+        if (this.southConnector()) {
           this.notificationService.success(`south.items.import.imported`);
           this.inMemoryItems.emit(null);
         } else {
@@ -344,33 +353,33 @@ export class SouthItemsComponent implements OnInit, OnChanges {
   }
 
   getScanMode(scanModeId: string | null): ScanModeDTO | undefined {
-    return this.scanModes.find(scanMode => scanMode.id === scanModeId);
+    return this.scanModes().find(scanMode => scanMode.id === scanModeId);
   }
 
   toggleItem(item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>, value: boolean) {
     if (value) {
       this.southConnectorService
-        .enableItem(this.southConnector!.id, item.id!)
+        .enableItem(this.southConnector()!.id, item.id!)
         .pipe(
           tap(() => {
             this.notificationService.success('south.items.enabled', { name: item.name });
           })
         )
         .subscribe(() => {
-          if (this.southConnector) {
+          if (this.southConnector()) {
             this.inMemoryItems.emit(null);
           }
         });
     } else {
       this.southConnectorService
-        .disableItem(this.southConnector!.id, item.id!)
+        .disableItem(this.southConnector()!.id, item.id!)
         .pipe(
           tap(() => {
             this.notificationService.success('south.items.disabled', { name: item.name });
           })
         )
         .subscribe(() => {
-          if (this.southConnector) {
+          if (this.southConnector()) {
             this.inMemoryItems.emit(null);
           }
         });

@@ -1,4 +1,4 @@
-@if (this.southConnector) {
+@if (southConnector()) {
   <div class="my-2">
     <span class="fa fa-warning mx-1" style="color: orange"></span>
     <span translate="south.items.display-mode-info"></span>
@@ -44,7 +44,7 @@
           type="button"
           class="btn btn-danger btn-sm oib-box-btn"
           (click)="deleteAllItems()"
-          [disabled]="this.southConnector ? this.southConnector.items.length === 0 : this.allItems.length === 0"
+          [disabled]="southConnector() ? southConnector()!.items.length === 0 : this.allItems.length === 0"
           translate="south.items.delete-all"
           id="delete-all"
         ></button>
@@ -65,7 +65,7 @@
                 <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.name] }}"></span>
               </button>
             </th>
-            @if (!southManifest.items.scanMode.subscriptionOnly) {
+            @if (!southManifest().items.scanMode.subscriptionOnly) {
               <th style="width: 8rem">
                 <button type="button" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('scanMode')">
                   <span translate="south.items.scan-mode" class="me-2"></span>
@@ -82,7 +82,7 @@
         <tbody>
           @for (item of displayedItems.content; track item.id) {
             <tr class="south-item">
-              @if (this.southConnector) {
+              @if (southConnector()) {
                 <td>
                   <div class="form-check form-switch">
                     <input (click)="toggleItem(item, !item.enabled)" [checked]="item.enabled" type="checkbox" class="form-check-input" />
@@ -92,10 +92,10 @@
                 <td></td>
               }
               <td>{{ item.name }}</td>
-              @if (!southManifest.items.scanMode.subscriptionOnly && item.scanModeId !== 'subscription') {
+              @if (!southManifest().items.scanMode.subscriptionOnly && item.scanModeId !== 'subscription') {
                 <td>{{ getScanMode(item.scanModeId)?.name }}</td>
               }
-              @if (!southManifest.items.scanMode.subscriptionOnly && item.scanModeId === 'subscription') {
+              @if (!southManifest().items.scanMode.subscriptionOnly && item.scanModeId === 'subscription') {
                 <td translate="scan-mode.subscription"></td>
               }
               @for (setting of displaySettings; track setting) {
