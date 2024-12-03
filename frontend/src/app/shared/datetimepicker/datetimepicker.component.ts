@@ -59,7 +59,6 @@ import { CurrentUserService } from '../current-user.service';
 })
 export class DatetimepickerComponent implements OnInit, AfterViewInit, ControlValueAccessor, Validator {
   private element = inject<ElementRef<HTMLElement>>(ElementRef);
-  private currentUserService = inject(CurrentUserService);
 
   @ContentChild('date')
   dateTemplate: TemplateRef<any> | null = null;
@@ -68,17 +67,13 @@ export class DatetimepickerComponent implements OnInit, AfterViewInit, ControlVa
   timeTemplate: TemplateRef<any> | null = null;
 
   @Input()
-  timezone = 'UTC';
+  timezone = inject(CurrentUserService).getTimezone();
 
   dateCtrl = inject(NonNullableFormBuilder).control(null as LocalDate | null);
   timeCtrl = inject(NonNullableFormBuilder).control(null as LocalTime | null);
 
   private onChange: (value: any) => void = () => {};
   private onTouched: () => void = () => {};
-
-  constructor() {
-    this.timezone = this.currentUserService.getTimezone();
-  }
 
   registerOnChange(fn: any): void {
     this.onChange = fn;

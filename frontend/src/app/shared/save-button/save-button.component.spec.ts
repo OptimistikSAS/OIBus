@@ -19,8 +19,6 @@ class TestComponent {
   save$ = of(null).pipe(delay(500), this.state.pendingUntilFinalization());
   form = inject(NonNullableFormBuilder).group({ name: '' });
 
-  constructor() {}
-
   save() {
     this.save$.subscribe();
   }

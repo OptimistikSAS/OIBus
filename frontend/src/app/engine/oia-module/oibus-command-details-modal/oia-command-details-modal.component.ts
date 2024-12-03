@@ -19,8 +19,6 @@ export class OiaCommandDetailsModalComponent {
 
   command: OIBusCommandDTO | null = null;
 
-  constructor() {}
-
   prepare(command: OIBusCommandDTO) {
     this.command = command;
   }

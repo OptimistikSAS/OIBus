@@ -29,6 +29,8 @@ import { HistoryQueryItemCommandDTO } from '../../../../../backend/shared/model/
   imports: [...formDirectives, OibCodeBlockComponent, TranslateModule, DatetimepickerComponent, ValErrorDelayDirective]
 })
 export class SouthItemTestComponent<TItemType extends 'south' | 'history-south'> implements AfterViewInit, OnInit {
+  private translate = inject(TranslateService);
+
   @ViewChild('monacoEditor') codeBlock!: OibCodeBlockComponent;
   @ViewChild('testButton') testButton!: ElementRef<HTMLButtonElement>;
 
@@ -59,8 +61,6 @@ export class SouthItemTestComponent<TItemType extends 'south' | 'history-south'>
       endTime: FormControl<Instant>;
     }>;
   }> | null = null;
-
-  constructor(private translate: TranslateService) {}
 
   ngAfterViewInit() {
     this.codeBlock.writeValue(this.translate.instant('south.test-item.editor-message.initial'));

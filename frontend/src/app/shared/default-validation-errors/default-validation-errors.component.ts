@@ -12,7 +12,6 @@ import { DecimalPipe } from '@angular/common';
 export class DefaultValidationErrorsComponent {
   constructor() {
     const valdemortConfig = inject(ValdemortConfig);
-
     valdemortConfig.errorsClasses = 'invalid-feedback';
     valdemortConfig.displayMode = DisplayMode.ONE;
   }
