@@ -1,7 +1,7 @@
 @if (valueTablePages.totalElements) {
   <div class="d-flex flex-row-reverse">
     <div [class]="valueTablePages.totalPages > 1 ? 'ms-2' : ''">
-      <oib-pagination [page]="valueTablePages" (pageChanged)="valueTable.changePage($event)" />
+      <oib-pagination [page]="valueTablePages" (pageChanged)="valueTable().changePage($event)" />
     </div>
   </div>
 }

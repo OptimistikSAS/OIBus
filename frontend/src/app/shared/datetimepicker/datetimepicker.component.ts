@@ -60,9 +60,13 @@ import { CurrentUserService } from '../current-user.service';
 export class DatetimepickerComponent implements OnInit, AfterViewInit, ControlValueAccessor, Validator {
   private element = inject<ElementRef<HTMLElement>>(ElementRef);
 
+  // TODO: Skipped for migration because:
+  //  Query type is too complex to automatically migrate.
   @ContentChild('date')
   dateTemplate: TemplateRef<any> | null = null;
 
+  // TODO: Skipped for migration because:
+  //  Query type is too complex to automatically migrate.
   @ContentChild('time')
   timeTemplate: TemplateRef<any> | null = null;
 
