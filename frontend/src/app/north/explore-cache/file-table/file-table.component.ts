@@ -36,6 +36,8 @@ export interface ItemActionEvent {
 export class FileTableComponent implements OnInit {
   readonly itemAction = output<ItemActionEvent>();
 
+  // TODO: Skipped for migration because:
+  //  Your application code writes to the input. This prevents migration.
   @Input() actions: Array<ItemActionEvent['type']> = [];
   actionButtonData: Record<ItemActionEvent['type'], { icon: string; text: string }> = {
     remove: { icon: 'fa-trash', text: 'north.cache-settings.remove-file' },
@@ -43,6 +45,8 @@ export class FileTableComponent implements OnInit {
     view: { icon: 'fa-search', text: 'north.cache-settings.view-file' },
     archive: { icon: 'fa-archive', text: 'north.cache-settings.archive-file' }
   };
+  // TODO: Skipped for migration because:
+  //  Your application code writes to the input. This prevents migration.
   @Input() files: Array<FileTableData> = [];
   pages: Page<FileTableData> = emptyPage();
   checkboxByFiles: Map<string, boolean> = new Map<string, boolean>();
