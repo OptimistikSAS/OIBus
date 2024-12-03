@@ -1,14 +1,9 @@
 import { Component, Input, OnInit, ViewChild, inject } from '@angular/core';
-import { SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../../shared/form-directives';
 import { NorthConnectorService } from '../../../services/north-connector.service';
-
 import { NorthConnectorDTO, NorthCacheFiles } from '../../../../../../backend/shared/model/north-connector.model';
-import { RouterLink } from '@angular/router';
-import { DatetimePipe } from '../../../shared/datetime.pipe';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
-import { FileSizePipe } from '../../../shared/file-size.pipe';
 import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
 import { emptyPage } from '../../../shared/test-utils';
 import { NorthSettings } from '../../../../../../backend/shared/model/north-settings.model';
@@ -18,18 +13,7 @@ import { FileTableComponent, FileTableData } from '../file-table/file-table.comp
   selector: 'oib-cache-values',
   templateUrl: './cache-values.component.html',
   styleUrl: './cache-values.component.scss',
-  imports: [
-    ...formDirectives,
-    TranslateModule,
-    SaveButtonComponent,
-    DatetimePipe,
-    PaginationComponent,
-    FileSizePipe,
-    RouterLink,
-    BoxComponent,
-    BoxTitleDirective,
-    FileTableComponent
-  ]
+  imports: [...formDirectives, TranslateModule, PaginationComponent, BoxComponent, BoxTitleDirective, FileTableComponent]
 })
 export class CacheValuesComponent implements OnInit {
   private northConnectorService = inject(NorthConnectorService);

@@ -10,14 +10,13 @@ import { EngineMetricsComponent } from '../engine/engine-metrics/engine-metrics.
 import { NorthMetricsComponent } from '../north/north-metrics/north-metrics.component';
 import { SouthMetricsComponent } from '../south/south-metrics/south-metrics.component';
 import { HomeMetrics } from '../../../../backend/shared/model/engine.model';
-import { RouterLink } from '@angular/router';
 import { WindowService } from '../shared/window.service';
 
 const NUMBER_OF_COLUMN = 3;
 
 @Component({
   selector: 'oib-home',
-  imports: [TranslateModule, EngineMetricsComponent, NorthMetricsComponent, SouthMetricsComponent, RouterLink],
+  imports: [TranslateModule, EngineMetricsComponent, NorthMetricsComponent, SouthMetricsComponent],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss'
 })

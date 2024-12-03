@@ -1,10 +1,8 @@
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
-
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { EngineService } from '../../services/engine.service';
 import { RegistrationSettingsDTO } from '../../../../../backend/shared/model/engine.model';
-import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { ModalService } from '../../shared/modal.service';
 import { RegisterOibusModalComponent } from './register-oibus-modal/register-oibus-modal.component';
@@ -39,9 +37,6 @@ const REGISTRATION_CHECK_DURATION = 3000;
   imports: [
     TranslateModule,
     ...formDirectives,
-    RouterLink,
-    BoxComponent,
-    BoxTitleDirective,
     DatetimePipe,
     OibusCommandTypeEnumPipe,
     MultiSelectComponent,

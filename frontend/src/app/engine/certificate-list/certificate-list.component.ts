@@ -10,22 +10,13 @@ import { CertificateDTO } from '../../../../../backend/shared/model/certificate.
 import { EditCertificateModalComponent } from '../edit-certificate-modal/edit-certificate-modal.component';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { DatetimePipe } from '../../shared/datetime.pipe';
-import { TruncatedStringComponent } from '../../shared/truncated-string/truncated-string.component';
 import { ClipboardCopyDirective } from '../../shared/clipboard-copy-directive';
 import { DownloadService } from '../../services/download.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 
 @Component({
   selector: 'oib-certificate-list',
-  imports: [
-    TranslateModule,
-    BoxComponent,
-    BoxTitleDirective,
-    DatetimePipe,
-    TruncatedStringComponent,
-    ClipboardCopyDirective,
-    OibHelpComponent
-  ],
+  imports: [TranslateModule, BoxComponent, BoxTitleDirective, DatetimePipe, ClipboardCopyDirective, OibHelpComponent],
   templateUrl: './certificate-list.component.html',
   styleUrl: './certificate-list.component.scss'
 })

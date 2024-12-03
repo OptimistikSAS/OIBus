@@ -9,7 +9,6 @@ import { AsyncPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ModalService } from '../shared/modal.service';
 import { ChooseSouthConnectorTypeModalComponent } from './choose-south-connector-type-modal/choose-south-connector-type-modal.component';
-import { EnabledEnumPipe } from '../shared/enabled-enum.pipe';
 import { FormControlValidationDirective } from '../shared/form-control-validation.directive';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
@@ -26,7 +25,6 @@ const PAGE_SIZE = 15;
   imports: [
     TranslateModule,
     RouterLink,
-    EnabledEnumPipe,
     FormControlValidationDirective,
     FormsModule,
     LoadingSpinnerComponent,
