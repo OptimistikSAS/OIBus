@@ -12,7 +12,6 @@ import { AsyncPipe } from '@angular/common';
 import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
 import { NonNullableFormBuilder } from '@angular/forms';
 import { formDirectives } from '../shared/form-directives';
-import { EnabledEnumPipe } from '../shared/enabled-enum.pipe';
 import { createPageFromArray, Page } from '../../../../backend/shared/model/types';
 import { emptyPage } from '../shared/test-utils';
 import { PaginationComponent } from '../shared/pagination/pagination.component';
@@ -23,16 +22,7 @@ const PAGE_SIZE = 15;
 
 @Component({
   selector: 'oib-north-list',
-  imports: [
-    TranslateModule,
-    RouterLink,
-    LoadingSpinnerComponent,
-    ...formDirectives,
-    EnabledEnumPipe,
-    PaginationComponent,
-    AsyncPipe,
-    LegendComponent
-  ],
+  imports: [TranslateModule, RouterLink, LoadingSpinnerComponent, ...formDirectives, PaginationComponent, AsyncPipe, LegendComponent],
   templateUrl: './north-list.component.html',
   styleUrl: './north-list.component.scss'
 })

@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
-import { NgbActiveModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
-import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { ObservableState } from '../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
 import {
@@ -10,11 +10,8 @@ import {
 } from '../../../../../backend/shared/model/south-connector.model';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 
-import { OibCodeBlockComponent } from '../../shared/form/oib-code-block/oib-code-block.component';
 import { groupFormControlsByRow } from '../../shared/form-utils';
-import { OibScanModeComponent } from '../../shared/form/oib-scan-mode/oib-scan-mode.component';
 import { OibFormControl } from '../../../../../backend/shared/model/form.model';
-import { FormComponent } from '../../shared/form/form.component';
 import { PipeProviderService } from '../../shared/form/pipe-provider.service';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { createPageFromArray, Page } from '../../../../../backend/shared/model/types';
@@ -27,16 +24,7 @@ const PAGE_SIZE = 20;
   selector: 'oib-import-south-items-modal',
   templateUrl: './import-south-items-modal.component.html',
   styleUrl: './import-south-items-modal.component.scss',
-  imports: [
-    ...formDirectives,
-    TranslateModule,
-    SaveButtonComponent,
-    OibCodeBlockComponent,
-    OibScanModeComponent,
-    NgbTypeahead,
-    FormComponent,
-    PaginationComponent
-  ]
+  imports: [...formDirectives, TranslateModule, PaginationComponent]
 })
 export class ImportSouthItemsModalComponent {
   private modal = inject(NgbActiveModal);
@@ -47,8 +35,10 @@ export class ImportSouthItemsModalComponent {
   southItemRows: Array<Array<OibFormControl>> = [];
   existingItemList: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>> = [];
   newItemList: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>> = [];
-  errorList: Array<{ item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>; error: string }> =
-    [];
+  errorList: Array<{
+    item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>;
+    error: string;
+  }> = [];
   scanModes: Array<ScanModeDTO> = [];
   displaySettings: Array<OibFormControl> = [];
   displayedItemsNew: Page<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>> = emptyPage();
@@ -61,7 +51,10 @@ export class ImportSouthItemsModalComponent {
     southItemSchema: SouthConnectorItemManifest,
     existingItemList: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>>,
     newItemList: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>>,
-    errorList: Array<{ item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>; error: string }>,
+    errorList: Array<{
+      item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>;
+      error: string;
+    }>,
     scanModes: Array<ScanModeDTO>
   ) {
     this.existingItemList = existingItemList;
@@ -110,9 +103,10 @@ export class ImportSouthItemsModalComponent {
     return createPageFromArray(this.newItemList, PAGE_SIZE, pageNumber);
   }
 
-  private createPageError(
-    pageNumber: number
-  ): Page<{ item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>; error: string }> {
+  private createPageError(pageNumber: number): Page<{
+    item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>;
+    error: string;
+  }> {
     return createPageFromArray(this.errorList, PAGE_SIZE, pageNumber);
   }
 

@@ -1,15 +1,11 @@
 import { Component } from '@angular/core';
-import { NgbActiveModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
-import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { ObservableState } from '../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
 import { SouthConnectorItemManifest } from '../../../../../backend/shared/model/south-connector.model';
-
-import { OibCodeBlockComponent } from '../../shared/form/oib-code-block/oib-code-block.component';
 import { groupFormControlsByRow } from '../../shared/form-utils';
-import { OibScanModeComponent } from '../../shared/form/oib-scan-mode/oib-scan-mode.component';
 import { OibFormControl } from '../../../../../backend/shared/model/form.model';
-import { FormComponent } from '../../shared/form/form.component';
 import { PipeProviderService } from '../../shared/form/pipe-provider.service';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { createPageFromArray, Page } from '../../../../../backend/shared/model/types';
@@ -23,16 +19,7 @@ const PAGE_SIZE = 20;
   selector: 'oib-import-history-query-items-modal',
   templateUrl: './import-history-query-items-modal.component.html',
   styleUrl: './import-history-query-items-modal.component.scss',
-  imports: [
-    ...formDirectives,
-    TranslateModule,
-    SaveButtonComponent,
-    OibCodeBlockComponent,
-    OibScanModeComponent,
-    NgbTypeahead,
-    FormComponent,
-    PaginationComponent
-  ]
+  imports: [...formDirectives, TranslateModule, PaginationComponent]
 })
 export class ImportHistoryQueryItemsModalComponent {
   state = new ObservableState();
@@ -40,7 +27,10 @@ export class ImportHistoryQueryItemsModalComponent {
   southItemRows: Array<Array<OibFormControl>> = [];
   existingItemList: Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>> = [];
   newItemList: Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>> = [];
-  errorList: Array<{ item: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>; error: string }> = [];
+  errorList: Array<{
+    item: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>;
+    error: string;
+  }> = [];
   displaySettings: Array<OibFormControl> = [];
   displayedItemsNew: Page<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>> = emptyPage();
   displayedItemsError: Page<{
@@ -57,7 +47,10 @@ export class ImportHistoryQueryItemsModalComponent {
     southItemSchema: SouthConnectorItemManifest,
     existingItemList: Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>>,
     newItemList: Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>>,
-    errorList: Array<{ item: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>; error: string }>
+    errorList: Array<{
+      item: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>;
+      error: string;
+    }>
   ) {
     this.existingItemList = existingItemList;
     this.newItemList = newItemList;
@@ -98,9 +91,10 @@ export class ImportHistoryQueryItemsModalComponent {
     return createPageFromArray(this.newItemList, PAGE_SIZE, pageNumber);
   }
 
-  private createPageError(
-    pageNumber: number
-  ): Page<{ item: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>; error: string }> {
+  private createPageError(pageNumber: number): Page<{
+    item: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>;
+    error: string;
+  }> {
     return createPageFromArray(this.errorList, PAGE_SIZE, pageNumber);
   }
 

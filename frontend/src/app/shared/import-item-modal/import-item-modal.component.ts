@@ -1,17 +1,16 @@
 import { Component } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
-import { CsvCharacterEnumPipe } from '../csv-character-enum.pipe';
 import { CsvCharacter, ALL_CSV_CHARACTERS } from '../../../../../backend/shared/model/types';
 import { NonNullableFormBuilder, Validators } from '@angular/forms';
 import { inject, OnInit } from '@angular/core';
-import { formDirectives } from '../../shared/form-directives';
+import { formDirectives } from '../form-directives';
 
 @Component({
   selector: 'oib-import-item-modal',
   templateUrl: './import-item-modal.component.html',
   styleUrl: './import-item-modal.component.scss',
-  imports: [TranslateModule, ...formDirectives, CsvCharacterEnumPipe]
+  imports: [TranslateModule, ...formDirectives]
 })
 export class ImportItemModalComponent implements OnInit {
   private modal = inject(NgbActiveModal);

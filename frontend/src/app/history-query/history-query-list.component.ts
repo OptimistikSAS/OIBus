@@ -1,6 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
-import { AsyncPipe, NgClass } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
 import { ConfirmationService } from '../shared/confirmation.service';
 import { NotificationService } from '../shared/notification.service';
@@ -15,7 +15,6 @@ import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angul
 import { emptyPage } from '../shared/test-utils';
 import { FormControlValidationDirective } from '../shared/form-control-validation.directive';
 import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
-import { EnabledEnumPipe } from '../shared/enabled-enum.pipe';
 import { DatetimePipe } from '../shared/datetime.pipe';
 import { ObservableState } from '../shared/save-button/save-button.component';
 import { LegendComponent } from '../shared/legend/legend.component';
@@ -25,7 +24,6 @@ const PAGE_SIZE = 15;
 @Component({
   selector: 'oib-history-query-list',
   imports: [
-    NgClass,
     TranslateModule,
     RouterLink,
     PaginationComponent,
@@ -33,7 +31,6 @@ const PAGE_SIZE = 15;
     FormsModule,
     ReactiveFormsModule,
     LoadingSpinnerComponent,
-    EnabledEnumPipe,
     DatetimePipe,
     AsyncPipe,
     LegendComponent
