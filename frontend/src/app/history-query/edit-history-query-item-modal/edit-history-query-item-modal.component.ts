@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AbstractControl, FormControl, FormGroup, NonNullableFormBuilder, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
 import {
   SouthConnectorCommandDTO,
@@ -22,7 +22,7 @@ import { NorthSettings } from '../../../../../backend/shared/model/north-setting
   selector: 'oib-edit-history-query-item-modal',
   templateUrl: './edit-history-query-item-modal.component.html',
   styleUrl: './edit-history-query-item-modal.component.scss',
-  imports: [...formDirectives, TranslateModule, SaveButtonComponent, FormComponent, SouthItemTestComponent]
+  imports: [...formDirectives, TranslateDirective, SaveButtonComponent, FormComponent, SouthItemTestComponent]
 })
 export class EditHistoryQueryItemModalComponent {
   private modal = inject(NgbActiveModal);

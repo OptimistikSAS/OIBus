@@ -1,12 +1,12 @@
 import { AfterViewInit, Component, ViewChild, inject } from '@angular/core';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-code-block.component';
 
 @Component({
   selector: 'oib-file-content-modal',
-  imports: [TranslateModule, OibCodeBlockComponent],
+  imports: [TranslateDirective, OibCodeBlockComponent],
   templateUrl: './file-content-modal.component.html',
   styleUrl: './file-content-modal.component.scss'
 })

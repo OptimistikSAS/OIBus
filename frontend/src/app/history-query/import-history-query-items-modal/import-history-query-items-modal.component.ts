@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ObservableState } from '../../shared/save-button/save-button.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
 import { SouthConnectorItemManifest } from '../../../../../backend/shared/model/south-connector.model';
 import { groupFormControlsByRow } from '../../shared/form-utils';
@@ -19,7 +19,7 @@ const PAGE_SIZE = 20;
   selector: 'oib-import-history-query-items-modal',
   templateUrl: './import-history-query-items-modal.component.html',
   styleUrl: './import-history-query-items-modal.component.scss',
-  imports: [...formDirectives, TranslateModule, PaginationComponent]
+  imports: [...formDirectives, TranslateDirective, PaginationComponent]
 })
 export class ImportHistoryQueryItemsModalComponent {
   private modal = inject(NgbActiveModal);

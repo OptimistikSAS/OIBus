@@ -1,5 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { AsyncPipe } from '@angular/common';
 import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
 import { ConfirmationService } from '../shared/confirmation.service';
@@ -24,7 +24,7 @@ const PAGE_SIZE = 15;
 @Component({
   selector: 'oib-history-query-list',
   imports: [
-    TranslateModule,
+    TranslateDirective,
     RouterLink,
     PaginationComponent,
     FormControlValidationDirective,

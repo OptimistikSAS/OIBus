@@ -1,5 +1,5 @@
 import { Component, inject, Input, OnChanges, OnInit, SimpleChanges, output } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 
@@ -25,6 +25,7 @@ import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
 const PAGE_SIZE = 20;
+
 const enum ColumnSortState {
   INDETERMINATE = 0,
   ASCENDING = 1,
@@ -38,14 +39,15 @@ export interface TableData {
 @Component({
   selector: 'oib-history-query-items',
   imports: [
-    TranslateModule,
+    TranslateDirective,
     PaginationComponent,
     FormControlValidationDirective,
     FormsModule,
     ReactiveFormsModule,
     BoxComponent,
     BoxTitleDirective,
-    OibHelpComponent
+    OibHelpComponent,
+    TranslatePipe
   ],
   templateUrl: './history-query-items.component.html',
   styleUrl: './history-query-items.component.scss'
@@ -280,7 +282,10 @@ export class HistoryQueryItemsComponent implements OnInit, OnChanges {
       .subscribe(
         (result: {
           items: Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>>;
-          errors: Array<{ item: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>; error: string }>;
+          errors: Array<{
+            item: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>;
+            error: string;
+          }>;
         }) => {
           const modalRef = this.modalService.open(ImportHistoryQueryItemsModalComponent, { size: 'xl' });
           const component: ImportHistoryQueryItemsModalComponent = modalRef.componentInstance;

@@ -10,7 +10,7 @@ import {
 } from '@angular/forms';
 import { formDirectives } from '../../form-directives';
 
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { EditElementComponent } from './edit-element/edit-element.component';
 import { OibFormControl } from '../../../../../../backend/shared/model/form.model';
 import { PipeProviderService } from '../pipe-provider.service';
@@ -19,7 +19,7 @@ import { PipeProviderService } from '../pipe-provider.service';
   selector: 'oib-array',
   templateUrl: './oib-array.component.html',
   styleUrl: './oib-array.component.scss',
-  imports: [...formDirectives, TranslateModule, EditElementComponent],
+  imports: [...formDirectives, TranslateDirective, EditElementComponent],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { formDirectives } from '../../shared/form-directives';
 import { FormControl, FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
@@ -33,7 +33,7 @@ import { NorthSettings } from '../../../../../backend/shared/model/north-setting
 @Component({
   selector: 'oib-edit-north',
   imports: [
-    TranslateModule,
+    TranslateDirective,
     ...formDirectives,
     SaveButtonComponent,
     FormComponent,
@@ -42,7 +42,8 @@ import { NorthSettings } from '../../../../../backend/shared/model/north-setting
     BoxComponent,
     BoxTitleDirective,
     NorthSubscriptionsComponent,
-    OibHelpComponent
+    OibHelpComponent,
+    TranslatePipe
   ],
   templateUrl: './edit-north.component.html',
   styleUrl: './edit-north.component.scss'

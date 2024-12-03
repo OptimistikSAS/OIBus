@@ -2,7 +2,7 @@
   @for (item of legendList; track item) {
     <div class="d-flex m-1 px-2 legend-item">
       <div [class]="item.class"></div>
-      <span style="font-weight: bold" class="mx-1 mt-1">{{ item.label | translate }}</span>
+      <span style="font-weight: bold" class="mx-1 mt-1" [translate]="item.label"></span>
     </div>
   }
 </div>

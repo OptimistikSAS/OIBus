@@ -4,7 +4,7 @@ import { switchMap } from 'rxjs';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { IpFilterService } from '../../services/ip-filter.service';
 import { IPFilterDTO } from '../../../../../backend/shared/model/ip-filter.model';
 import { EditIpFilterModalComponent } from '../edit-ip-filter-modal/edit-ip-filter-modal.component';
@@ -13,7 +13,7 @@ import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 
 @Component({
   selector: 'oib-ip-filter-list',
-  imports: [TranslateModule, BoxComponent, BoxTitleDirective, OibHelpComponent],
+  imports: [TranslateDirective, BoxComponent, BoxTitleDirective, OibHelpComponent],
   templateUrl: './ip-filter-list.component.html',
   styleUrl: './ip-filter-list.component.scss'
 })

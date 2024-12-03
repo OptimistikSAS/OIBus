@@ -1,5 +1,5 @@
 import { Component, Input, NgZone, OnInit, inject } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { NorthConnectorMetrics } from '../../../../../backend/shared/model/engine.model';
 import { JsonPipe } from '@angular/common';
 import { DatetimePipe } from '../../shared/datetime.pipe';
@@ -15,7 +15,7 @@ import { Router } from '@angular/router';
   selector: 'oib-north-metrics',
   templateUrl: './north-metrics.component.html',
   styleUrl: './north-metrics.component.scss',
-  imports: [TranslateModule, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe, FileSizePipe]
+  imports: [TranslateDirective, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe, FileSizePipe]
 })
 export class NorthMetricsComponent implements OnInit {
   private zone = inject(NgZone);

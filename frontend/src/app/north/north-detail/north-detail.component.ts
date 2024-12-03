@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { combineLatest, of, switchMap, tap } from 'rxjs';
@@ -34,7 +34,7 @@ import { NorthSettings } from '../../../../../backend/shared/model/north-setting
 @Component({
   selector: 'oib-north-detail',
   imports: [
-    TranslateModule,
+    TranslateDirective,
     RouterLink,
     DecimalPipe,
     BackNavigationDirective,

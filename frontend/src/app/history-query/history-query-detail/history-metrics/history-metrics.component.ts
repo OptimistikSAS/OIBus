@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { HistoryQueryMetrics } from '../../../../../../backend/shared/model/engine.model';
 import { JsonPipe } from '@angular/common';
 import { DatetimePipe } from '../../../shared/datetime.pipe';
@@ -16,7 +16,7 @@ import { NorthSettings } from '../../../../../../backend/shared/model/north-sett
   selector: 'oib-history-metrics',
   templateUrl: './history-metrics.component.html',
   styleUrl: './history-metrics.component.scss',
-  imports: [TranslateModule, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe, ProgressbarComponent]
+  imports: [TranslateDirective, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe, ProgressbarComponent]
 })
 export class HistoryMetricsComponent {
   @Input({ required: true }) historyQuery!: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>;

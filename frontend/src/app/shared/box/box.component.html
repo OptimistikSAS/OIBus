@@ -7,7 +7,7 @@
         @if (imagePath) {
           <img class="oib-image-header" [src]="imagePath" alt="Image" />
         }
-        {{ boxTitle | translate }}
+        <span [translate]="boxTitle"></span>
       }
       @if (helpUrl) {
         <oib-help class="pull-right" [url]="helpUrl" />

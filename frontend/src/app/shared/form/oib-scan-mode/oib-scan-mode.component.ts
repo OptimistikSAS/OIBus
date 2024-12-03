@@ -3,11 +3,11 @@ import { formDirectives } from '../../form-directives';
 
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, NonNullableFormBuilder } from '@angular/forms';
 import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 
 @Component({
   selector: 'oib-scan-mode',
-  imports: [...formDirectives, TranslateModule],
+  imports: [...formDirectives, TranslateDirective],
   templateUrl: './oib-scan-mode.component.html',
   styleUrl: './oib-scan-mode.component.scss',
   providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => OibScanModeComponent), multi: true }]

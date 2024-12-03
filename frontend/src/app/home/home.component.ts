@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 
 import { NorthConnectorLightDTO } from '../../../../backend/shared/model/north-connector.model';
 import { SouthConnectorLightDTO } from '../../../../backend/shared/model/south-connector.model';
@@ -16,7 +16,7 @@ const NUMBER_OF_COLUMN = 3;
 
 @Component({
   selector: 'oib-home',
-  imports: [TranslateModule, EngineMetricsComponent, NorthMetricsComponent, SouthMetricsComponent],
+  imports: [TranslateDirective, EngineMetricsComponent, NorthMetricsComponent, SouthMetricsComponent],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss'
 })
