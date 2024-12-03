@@ -1,7 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AbstractControl, FormControl, FormGroup, NonNullableFormBuilder, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
-import { Observable } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
@@ -12,22 +11,12 @@ import {
 } from '../../../../../backend/shared/model/south-connector.model';
 
 import { createFormGroup, groupFormControlsByRow } from '../../shared/form-utils';
-import { Timezone } from '../../../../../backend/shared/model/types';
-import { inMemoryTypeahead } from '../../shared/typeahead';
 import { OibFormControl } from '../../../../../backend/shared/model/form.model';
 import { FormComponent } from '../../shared/form/form.component';
 import { HistoryQueryDTO, HistoryQueryItemCommandDTO, HistoryQueryItemDTO } from '../../../../../backend/shared/model/history-query.model';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { SouthItemTestComponent } from '../../south/south-item-test/south-item-test.component';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
-
-// TypeScript issue with Intl: https://github.com/microsoft/TypeScript/issues/49231
-// eslint-disable-next-line @typescript-eslint/no-namespace
-declare namespace Intl {
-  type Key = 'calendar' | 'collation' | 'currency' | 'numberingSystem' | 'timeZone' | 'unit';
-
-  function supportedValuesOf(input: Key): Array<string>;
-}
 
 @Component({
   selector: 'oib-edit-history-query-item-modal',
@@ -36,6 +25,9 @@ declare namespace Intl {
   imports: [...formDirectives, TranslateModule, SaveButtonComponent, FormComponent, SouthItemTestComponent]
 })
 export class EditHistoryQueryItemModalComponent {
+  private modal = inject(NgbActiveModal);
+  private fb = inject(NonNullableFormBuilder);
+
   mode: 'create' | 'edit' | 'copy' = 'create';
   state = new ObservableState();
 
@@ -52,17 +44,6 @@ export class EditHistoryQueryItemModalComponent {
     enabled: FormControl<boolean>;
     settings: FormGroup;
   }> | null = null;
-
-  private timezones: ReadonlyArray<Timezone> = Intl.supportedValuesOf('timeZone');
-  timezoneTypeahead: (text$: Observable<string>) => Observable<Array<Timezone>> = inMemoryTypeahead(
-    () => ['UTC', ...this.timezones],
-    timezone => timezone
-  );
-
-  constructor(
-    private modal: NgbActiveModal,
-    private fb: NonNullableFormBuilder
-  ) {}
 
   private checkUniqueness(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
