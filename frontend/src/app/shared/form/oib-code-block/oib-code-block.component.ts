@@ -1,6 +1,6 @@
 /* eslint-disable-next-line */
 /// <reference path="../../../../../node_modules/monaco-editor/monaco.d.ts" />
-import { AfterViewInit, Component, ElementRef, forwardRef, Input, ViewChild, inject } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, forwardRef, Input, inject, viewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MonacoEditorLoaderService } from './monaco-editor-loader.service';
 import { formDirectives } from '../../form-directives';
@@ -23,9 +23,7 @@ import { formDirectives } from '../../form-directives';
 export class OibCodeBlockComponent implements AfterViewInit, ControlValueAccessor {
   private monacoEditorLoader = inject(MonacoEditorLoaderService);
 
-  // TODO: Skipped for migration because:
-  //  Query type is too complex to automatically migrate.
-  @ViewChild('editorContainer') _editorContainer: ElementRef | null = null;
+  readonly _editorContainer = viewChild.required<ElementRef<HTMLDivElement>>('editorContainer');
   @Input() key = '';
   @Input() contentType = '';
   @Input() height = '12rem';
@@ -56,7 +54,7 @@ export class OibCodeBlockComponent implements AfterViewInit, ControlValueAccesso
 
   ngAfterViewInit() {
     this.monacoEditorLoader.loadMonacoEditor().then(() => {
-      this.codeEditorInstance = monaco.editor.create(this._editorContainer!.nativeElement, {
+      this.codeEditorInstance = monaco.editor.create(this._editorContainer().nativeElement, {
         value: '',
         language: this.contentType,
         theme: 'vs-light',
