@@ -214,8 +214,8 @@ describe('SouthSQLite', () => {
     expect(utils.persistResults).toHaveBeenCalledTimes(2);
     expect(south.queryData).toHaveBeenCalledTimes(3);
     expect(south.queryData).toHaveBeenCalledWith(items[0], startTime, nowDateString);
-    expect(south.queryData).toHaveBeenCalledWith(items[1], '2020-03-01T00:00:00.000Z', nowDateString);
-    expect(south.queryData).toHaveBeenCalledWith(items[2], '2020-03-01T00:00:00.000Z', nowDateString);
+    expect(south.queryData).toHaveBeenCalledWith(items[1], startTime, nowDateString);
+    expect(south.queryData).toHaveBeenCalledWith(items[2], startTime, nowDateString);
 
     expect(logger.info).toHaveBeenCalledWith(`Found 2 results for item ${items[0].name} in 0 ms`);
     expect(logger.debug).toHaveBeenCalledWith(`No result found for item ${items[2].name}. Request done in 0 ms`);

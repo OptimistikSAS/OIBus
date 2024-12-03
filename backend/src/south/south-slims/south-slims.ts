@@ -123,17 +123,21 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
   /**
    * Retrieve result from a REST API write them into a CSV file and send it to the Engine.
    */
-  async historyQuery(items: Array<SouthConnectorItemDTO<SouthSlimsItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
-    let updatedStartTime = startTime;
+  async historyQuery(
+    items: Array<SouthConnectorItemDTO<SouthSlimsItemSettings>>,
+    startTime: Instant,
+    endTime: Instant
+  ): Promise<Instant | null> {
+    let updatedStartTime: Instant | null = null;
 
     for (const item of items) {
       const startRequest = DateTime.now().toMillis();
-      const result: SlimsResults = await this.queryData(item, updatedStartTime, endTime);
+      const result: SlimsResults = await this.queryData(item, startTime, endTime);
       const requestDuration = DateTime.now().toMillis() - startRequest;
 
       const { formattedResult, maxInstant } = this.parseData(item, result);
 
-      if (maxInstant > updatedStartTime) {
+      if (!updatedStartTime || maxInstant > updatedStartTime) {
         updatedStartTime = maxInstant;
       }
       if (formattedResult.length > 0) {

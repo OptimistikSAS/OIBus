@@ -123,12 +123,12 @@ export default class SouthPostgreSQL
     items: Array<SouthConnectorItemDTO<SouthPostgreSQLItemSettings>>,
     startTime: Instant,
     endTime: Instant
-  ): Promise<Instant> {
-    let updatedStartTime = startTime;
+  ): Promise<Instant | null> {
+    let updatedStartTime: Instant | null = null;
 
     for (const item of items) {
       const startRequest = DateTime.now().toMillis();
-      const result: Array<any> = await this.queryData(item, updatedStartTime, endTime);
+      const result: Array<any> = await this.queryData(item, startTime, endTime);
       const requestDuration = DateTime.now().toMillis() - startRequest;
 
       if (result.length > 0) {
@@ -143,7 +143,7 @@ export default class SouthPostgreSQL
             } else {
               const entryDate = convertDateTimeToInstant(value, datetimeField);
               if (datetimeField.useAsReference) {
-                if (entryDate > updatedStartTime) {
+                if (!updatedStartTime || entryDate > updatedStartTime) {
                   updatedStartTime = entryDate;
                 }
               }
@@ -170,9 +170,6 @@ export default class SouthPostgreSQL
       } else {
         this.logger.debug(`No result found for item ${item.name}. Request done in ${requestDuration} ms`);
       }
-    }
-    if (updatedStartTime !== startTime) {
-      this.logger.debug(`Next start time updated from ${startTime} to ${updatedStartTime}`);
     }
     return updatedStartTime;
   }

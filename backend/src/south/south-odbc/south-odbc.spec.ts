@@ -215,8 +215,8 @@ describe('SouthODBC odbc driver with authentication', () => {
     await south.historyQuery(items, startTime, nowDateString);
     expect(south.queryOdbcData).toHaveBeenCalledTimes(3);
     expect(south.queryOdbcData).toHaveBeenCalledWith(items[0], startTime, nowDateString);
-    expect(south.queryOdbcData).toHaveBeenCalledWith(items[1], '2023-02-01T00:00:00.000Z', nowDateString);
-    expect(south.queryOdbcData).toHaveBeenCalledWith(items[2], '2023-02-01T00:00:00.000Z', nowDateString);
+    expect(south.queryOdbcData).toHaveBeenCalledWith(items[1], startTime, nowDateString);
+    expect(south.queryOdbcData).toHaveBeenCalledWith(items[2], startTime, nowDateString);
   });
 
   it('should get data from ODBC', async () => {
@@ -290,7 +290,7 @@ describe('SouthODBC odbc driver with authentication', () => {
 
     expect(utils.logQuery).toHaveBeenCalledWith(items[1].settings.query, startTime, endTime, logger);
 
-    expect(result).toEqual(startTime);
+    expect(result).toEqual(null);
   });
 
   it('should manage query error', async () => {
@@ -725,8 +725,8 @@ describe('SouthODBC odbc remote with authentication', () => {
     await south.historyQuery(items, startTime, nowDateString);
     expect(south.queryRemoteAgentData).toHaveBeenCalledTimes(3);
     expect(south.queryRemoteAgentData).toHaveBeenCalledWith(items[0], startTime, nowDateString);
-    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(items[1], '2023-02-01T00:00:00.000Z', nowDateString);
-    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(items[2], '2023-02-01T00:00:00.000Z', nowDateString);
+    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(items[1], startTime, nowDateString);
+    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(items[2], startTime, nowDateString);
   });
 
   it('should get data from Remote agent', async () => {
@@ -827,7 +827,7 @@ describe('SouthODBC odbc remote with authentication', () => {
       }
     });
 
-    expect(result).toEqual(startTime);
+    expect(result).toEqual(null);
   });
 
   it('should manage query error', async () => {

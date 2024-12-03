@@ -121,18 +121,26 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
    * Get entries from the database between startTime and endTime (if used in the SQL query)
    * and write them into a CSV file and send it to the engine.
    */
-  async historyQuery(items: Array<SouthConnectorItemDTO<SouthOLEDBItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
-    let updatedStartTime = startTime;
+  async historyQuery(
+    items: Array<SouthConnectorItemDTO<SouthOLEDBItemSettings>>,
+    startTime: Instant,
+    endTime: Instant
+  ): Promise<Instant | null> {
+    let updatedStartTime: Instant | null = null;
 
     for (const item of items) {
       // Has to query through a remote agent
-      updatedStartTime = await this.queryRemoteAgentData(item, updatedStartTime, endTime);
+      updatedStartTime = await this.queryRemoteAgentData(item, startTime, endTime);
     }
     return updatedStartTime;
   }
 
-  async queryRemoteAgentData(item: SouthConnectorItemDTO<SouthOLEDBItemSettings>, startTime: Instant, endTime: Instant): Promise<Instant> {
-    let updatedStartTime = startTime;
+  async queryRemoteAgentData(
+    item: SouthConnectorItemDTO<SouthOLEDBItemSettings>,
+    startTime: Instant,
+    endTime: Instant
+  ): Promise<Instant | null> {
+    let updatedStartTime: Instant | null = null;
     const startRequest = DateTime.now().toMillis();
 
     const headers: HeadersInit = {};
@@ -178,7 +186,7 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
           this.addValues.bind(this),
           this.logger
         );
-        if (result.maxInstantRetrieved > updatedStartTime) {
+        if (result.maxInstantRetrieved > startTime) {
           updatedStartTime = result.maxInstantRetrieved;
         }
       } else {

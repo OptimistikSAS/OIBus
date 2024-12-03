@@ -274,8 +274,8 @@ describe('SouthOLEDB with authentication', () => {
     await south.historyQuery(items, startTime, nowDateString);
     expect(south.queryRemoteAgentData).toHaveBeenCalledTimes(3);
     expect(south.queryRemoteAgentData).toHaveBeenCalledWith(items[0], startTime, nowDateString);
-    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(items[1], '2023-02-01T00:00:00.000Z', nowDateString);
-    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(items[2], '2023-02-01T00:00:00.000Z', nowDateString);
+    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(items[1], startTime, nowDateString);
+    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(items[2], startTime, nowDateString);
   });
 
   it('should get data from Remote agent', async () => {
@@ -372,7 +372,7 @@ describe('SouthOLEDB with authentication', () => {
       }
     });
 
-    expect(result).toEqual(startTime);
+    expect(result).toEqual(null);
   });
 
   it('should manage query error', async () => {
