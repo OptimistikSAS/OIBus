@@ -23,9 +23,7 @@ export class PageLoader {
   pageLoads$: Observable<number>;
 
   constructor() {
-    const route = this.route;
-
-    const pageQueryParam$ = route.queryParamMap.pipe(map(paramMap => +(paramMap.get('page') || 0)));
+    const pageQueryParam$ = this.route.queryParamMap.pipe(map(paramMap => +(paramMap.get('page') || 0)));
     this.pageLoads$ = merge(pageQueryParam$, this.pageLoadsSubject);
   }
 
@@ -38,7 +36,11 @@ export class PageLoader {
     if (pageNumber === page.number) {
       this.pageLoadsSubject.next(pageNumber);
     } else {
-      this.router.navigate(['.'], { queryParams: { page: pageNumber }, relativeTo: this.route, queryParamsHandling: 'merge' });
+      this.router.navigate(['.'], {
+        queryParams: { page: pageNumber },
+        relativeTo: this.route,
+        queryParamsHandling: 'merge'
+      });
     }
   }
 }
