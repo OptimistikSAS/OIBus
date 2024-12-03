@@ -40,10 +40,10 @@ describe('ConfirmationService', () => {
       })
       .subscribe(() => (closed = true));
 
-    expect(confirmationModalComponent.title).toBe('Hello');
-    expect(confirmationModalComponent.message).toBe('world');
-    expect(confirmationModalComponent.yes).toBe('Yep');
-    expect(confirmationModalComponent.no).toBe('Nope');
+    expect(confirmationModalComponent.title()).toBe('Hello');
+    expect(confirmationModalComponent.message()).toBe('world');
+    expect(confirmationModalComponent.yes()).toBe('Yep');
+    expect(confirmationModalComponent.no()).toBe('Nope');
     expect(closed).toBe(true);
   });
 
@@ -59,10 +59,10 @@ describe('ConfirmationService', () => {
     };
     confirmationService.confirm(options).subscribe(() => (closed = true));
 
-    expect(confirmationModalComponent.title).toBe('Save');
-    expect(confirmationModalComponent.message).toBe('Close');
-    expect(confirmationModalComponent.yes).toBe('Cancel');
-    expect(confirmationModalComponent.no).toBe('Delete');
+    expect(confirmationModalComponent.title()).toBe('Save');
+    expect(confirmationModalComponent.message()).toBe('Close');
+    expect(confirmationModalComponent.yes()).toBe('Cancel');
+    expect(confirmationModalComponent.no()).toBe('Delete');
     expect(closed).toBe(true);
   });
 
@@ -75,10 +75,10 @@ describe('ConfirmationService', () => {
     };
     confirmationService.confirm(options).subscribe(() => (closed = true));
 
-    expect(confirmationModalComponent.title).toBe('Confirmation');
-    expect(confirmationModalComponent.message).toBe('Hello');
-    expect(confirmationModalComponent.yes).toBe('Yes');
-    expect(confirmationModalComponent.no).toBe('No');
+    expect(confirmationModalComponent.title()).toBe('Confirmation');
+    expect(confirmationModalComponent.message()).toBe('Hello');
+    expect(confirmationModalComponent.yes()).toBe('Yes');
+    expect(confirmationModalComponent.no()).toBe('No');
     expect(closed).toBe(true);
   });
 

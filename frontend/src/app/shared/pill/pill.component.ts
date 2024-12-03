@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, output, input } from '@angular/core';
 
 @Component({
   selector: 'oib-pill',
@@ -7,8 +7,8 @@ import { ChangeDetectionStrategy, Component, Input, output } from '@angular/core
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PillComponent {
-  @Input() type: 'primary' | 'secondary' | 'info' = 'primary';
-  @Input() removable = true;
+  readonly type = input<'primary' | 'secondary' | 'info'>('primary');
+  readonly removable = input(true);
   readonly removed = output<void>();
 
   remove() {

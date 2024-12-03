@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { TranslateDirective } from '@ngx-translate/core';
 
 @Component({
@@ -9,5 +9,10 @@ import { TranslateDirective } from '@ngx-translate/core';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LegendComponent {
-  @Input() legendList: Array<{ class: string; label: string }> = [];
+  readonly legendList = input<
+    Array<{
+      class: string;
+      label: string;
+    }>
+  >([]);
 }

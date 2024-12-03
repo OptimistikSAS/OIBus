@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, forwardRef, Input, OnInit, inject } from '@angular/core';
+import { AfterViewChecked, Component, forwardRef, OnInit, inject, input } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -36,10 +36,10 @@ import { PipeProviderService } from '../pipe-provider.service';
 export class OibArrayComponent implements OnInit, AfterViewChecked, ControlValueAccessor, Validator {
   private pipeProviderService = inject(PipeProviderService);
 
-  @Input() label = '';
-  @Input() key = '';
-  @Input({ required: true }) formDescription!: Array<OibFormControl>;
-  @Input({ required: true }) parentForm!: FormGroup;
+  readonly label = input('');
+  readonly key = input('');
+  readonly formDescription = input.required<Array<OibFormControl>>();
+  readonly parentForm = input.required<FormGroup>();
 
   elements: Array<any> = [];
   elementsIncludingNew: Array<any> = [];
@@ -49,7 +49,7 @@ export class OibArrayComponent implements OnInit, AfterViewChecked, ControlValue
   disabled = false;
 
   ngOnInit(): void {
-    this.formDescription.forEach(formControl => {
+    this.formDescription().forEach(formControl => {
       if (formControl.displayInViewMode) {
         this.displayedFields.push({ key: formControl.key, label: formControl.label, pipe: formControl.pipe });
       }
@@ -222,7 +222,7 @@ export class OibArrayComponent implements OnInit, AfterViewChecked, ControlValue
 
   createDefaultValue(): any {
     const defaultValue: any = {};
-    this.formDescription.forEach(formControl => (defaultValue[formControl.key] = formControl.defaultValue));
+    this.formDescription().forEach(formControl => (defaultValue[formControl.key] = formControl.defaultValue));
     return defaultValue;
   }
 
