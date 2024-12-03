@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject, viewChild } from '@angular/core';
+import { Component, OnInit, inject, viewChild, input } from '@angular/core';
 import { TranslateDirective } from '@ngx-translate/core';
 import { formDirectives } from '../../../shared/form-directives';
 import { NorthConnectorService } from '../../../services/north-connector.service';
@@ -21,13 +21,13 @@ export class CacheFilesComponent implements OnInit {
   private northConnectorService = inject(NorthConnectorService);
   private modalService = inject(ModalService);
 
-  @Input() northConnector: NorthConnectorDTO<NorthSettings> | null = null;
+  readonly northConnector = input<NorthConnectorDTO<NorthSettings> | null>(null);
   cacheFiles: Array<NorthCacheFiles> = [];
   readonly fileTable = viewChild.required<FileTableComponent>('fileTable');
   fileTablePages = emptyPage<FileTableData>();
 
   ngOnInit() {
-    this.northConnectorService.getCacheFiles(this.northConnector!.id).subscribe(cacheFiles => {
+    this.northConnectorService.getCacheFiles(this.northConnector()!.id).subscribe(cacheFiles => {
       this.cacheFiles = cacheFiles;
       this.refreshCacheFiles();
     });
@@ -38,7 +38,7 @@ export class CacheFilesComponent implements OnInit {
    * By default, retry all checked files.
    */
   archiveCacheFiles(files: Array<string> = this.getCheckedFiles()) {
-    this.northConnectorService.archiveCacheFiles(this.northConnector!.id, files).subscribe(() => {
+    this.northConnectorService.archiveCacheFiles(this.northConnector()!.id, files).subscribe(() => {
       this.refreshCacheFiles();
     });
   }
@@ -48,13 +48,13 @@ export class CacheFilesComponent implements OnInit {
    * By default, remove all checked files.
    */
   removeCacheFiles(files: Array<string> = this.getCheckedFiles()) {
-    this.northConnectorService.removeCacheFiles(this.northConnector!.id, files).subscribe(() => {
+    this.northConnectorService.removeCacheFiles(this.northConnector()!.id, files).subscribe(() => {
       this.refreshCacheFiles();
     });
   }
 
   refreshCacheFiles() {
-    this.northConnectorService.getCacheFiles(this.northConnector!.id).subscribe(cacheFiles => {
+    this.northConnectorService.getCacheFiles(this.northConnector()!.id).subscribe(cacheFiles => {
       this.cacheFiles = cacheFiles;
       const fileTable = this.fileTable();
       if (fileTable) {
@@ -73,7 +73,7 @@ export class CacheFilesComponent implements OnInit {
         this.archiveCacheFiles([event.file.filename]);
         break;
       case 'view':
-        this.northConnectorService.getCacheFileContent(this.northConnector!.id, event.file.filename).subscribe(async response => {
+        this.northConnectorService.getCacheFileContent(this.northConnector()!.id, event.file.filename).subscribe(async response => {
           if (!response.body) return;
           const content = await response.body.text();
           // Split header into content type and encoding
