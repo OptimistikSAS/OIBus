@@ -32,10 +32,10 @@ export class FileContentModalComponent implements AfterViewInit {
 
       this.codeBlock().codeEditorInstance!.onDidContentSizeChange(() => {
         const contentHeight = Math.min(window.innerHeight * 0.75, this.codeBlock().codeEditorInstance!.getContentHeight());
-        const containerWidth = this.codeBlock()._editorContainer!.nativeElement.clientWidth;
+        const containerWidth = this.codeBlock()._editorContainer()!.nativeElement.clientWidth;
 
         const codeBlockValue = this.codeBlock();
-        codeBlockValue._editorContainer!.nativeElement.style.height = `${contentHeight}px`;
+        codeBlockValue._editorContainer()!.nativeElement.style.height = `${contentHeight}px`;
         codeBlockValue.codeEditorInstance!.layout({ width: containerWidth, height: contentHeight });
         this.callbackSet = true;
       });
