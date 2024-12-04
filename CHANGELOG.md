@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.8](https://github.com/OptimistikSAS/OIBus/compare/v3.4.7...v3.4.8) (2024-12-04)
+
+
+### Bug Fixes
+
+* **south:** update max instant if start interval is lower ([c089d0b](https://github.com/OptimistikSAS/OIBus/commit/c089d0b6adcb61beee0eb5ef082cb29c7e8fe63a))
+
 ## [3.4.7](https://github.com/OptimistikSAS/OIBus/compare/v3.4.6...v3.4.7) (2024-11-05)
 
 
