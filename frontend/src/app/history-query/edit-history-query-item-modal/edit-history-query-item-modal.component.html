@@ -26,15 +26,13 @@
         <oib-form [parentForm]="form" [form]="form.controls.settings" [settingsSchema]="southItemRows" />
       }
     </form>
-    @if (formItem && historyQuery && southConnectorCommand && southManifest) {
-      <oib-south-item-test
-        type="history-south"
-        [entityId]="historyQuery.id"
-        [item]="formItem"
-        [connector]="southConnectorCommand"
-        [manifest]="southManifest"
-      />
-    }
+    <oib-south-item-test
+      type="history-south"
+      [entityId]="historyId"
+      [item]="formItem"
+      [connectorCommand]="southConnectorCommand"
+      [manifest]="southManifest"
+    />
   </div>
 }
 <div class="modal-footer">

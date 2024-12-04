@@ -3,10 +3,15 @@ import { ComponentTester, createMock } from 'ngx-speculoos';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { fakeAsync, TestBed } from '@angular/core/testing';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
-import { SouthConnectorItemManifest } from '../../../../../backend/shared/model/south-connector.model';
+import {
+  SouthConnectorCommandDTO,
+  SouthConnectorItemManifest,
+  SouthConnectorManifest
+} from '../../../../../backend/shared/model/south-connector.model';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { HistoryQueryItemCommandDTO, HistoryQueryItemDTO } from '../../../../../backend/shared/model/history-query.model';
-import { SouthItemSettings } from '../../../../../backend/shared/model/south-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
+import { provideHttpClient } from '@angular/common/http';
 
 class EditHistoryQueryItemModalComponentTester extends ComponentTester<EditHistoryQueryItemModalComponent> {
   constructor() {
@@ -43,6 +48,9 @@ describe('EditHistoryQueryItemModalComponent', () => {
     settings: [],
     schema: []
   } as SouthConnectorItemManifest;
+  const historyId = 'historyId';
+  const southConnectorCommand = {} as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+  const southManifest = { modes: { history: false } } as SouthConnectorManifest;
   const allItems: Array<HistoryQueryItemDTO<SouthItemSettings>> = [
     {
       id: 'id1',
@@ -62,7 +70,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
     fakeActiveModal = createMock(NgbActiveModal);
 
     TestBed.configureTestingModule({
-      providers: [provideI18nTesting(), { provide: NgbActiveModal, useValue: fakeActiveModal }]
+      providers: [provideI18nTesting(), provideHttpClient(), { provide: NgbActiveModal, useValue: fakeActiveModal }]
     });
 
     TestBed.createComponent(DefaultValidationErrorsComponent).detectChanges();
@@ -72,7 +80,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
 
   describe('create mode', () => {
     beforeEach(() => {
-      tester.componentInstance.prepareForCreation(southItemSchema, allItems, null, null);
+      tester.componentInstance.prepareForCreation(southItemSchema, allItems, historyId, southConnectorCommand, southManifest);
       tester.detectChanges();
     });
 
@@ -117,7 +125,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
     };
 
     it('should duplicate item', () => {
-      tester.componentInstance.prepareForCopy(southItemSchema, southItem, null, null);
+      tester.componentInstance.prepareForCopy(southItemSchema, southItem, historyId, southConnectorCommand, southManifest);
       tester.detectChanges();
       expect(tester.name).toHaveValue('myName-copy');
 
@@ -145,7 +153,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
     };
 
     beforeEach(() => {
-      tester.componentInstance.prepareForEdition(southItemSchema, allItems, southItem, null, null);
+      tester.componentInstance.prepareForEdition(southItemSchema, allItems, southItem, historyId, southConnectorCommand, southManifest);
       tester.detectChanges();
     });
 

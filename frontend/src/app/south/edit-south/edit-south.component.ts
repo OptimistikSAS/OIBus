@@ -53,6 +53,7 @@ export class EditSouthComponent implements OnInit {
   private route = inject(ActivatedRoute);
 
   mode: 'create' | 'edit' = 'create';
+  southId!: string;
   southConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> | null = null;
   southType = '';
   duplicateId = '';
@@ -122,6 +123,12 @@ export class EditSouthComponent implements OnInit {
           // we should provoke all value changes to make sure fields are properly hidden and disabled
           this.southForm.setValue(this.southForm.getRawValue());
         }
+
+        if (this.mode === 'edit' && this.southConnector) {
+          this.southId = this.southConnector.id;
+        } else {
+          this.southId = 'create';
+        }
       });
   }
 
@@ -147,6 +154,27 @@ export class EditSouthComponent implements OnInit {
       return;
     }
 
+    if (value === 'save') {
+      this.createOrUpdateSouthConnector(this.formSouthConnectorCommand);
+    } else {
+      const modalRef = this.modalService.open(TestConnectionResultModalComponent);
+      const component: TestConnectionResultModalComponent = modalRef.componentInstance;
+      component.runTest('south', this.southConnector, this.formSouthConnectorCommand);
+    }
+  }
+
+  updateInMemoryItems(items: Array<SouthConnectorItemCommandDTO<SouthItemSettings>> | null) {
+    if (items) {
+      this.inMemoryItems = items;
+    } else {
+      this.southConnectorService.get(this.southConnector!.id).subscribe(southConnector => {
+        this.southConnector!.items = southConnector.items;
+        this.southConnector = JSON.parse(JSON.stringify(this.southConnector)); // Used to force a refresh in south item list
+      });
+    }
+  }
+
+  get formSouthConnectorCommand(): SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> {
     const formValue = this.southForm!.value;
     const command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
       name: formValue.name!,
@@ -165,23 +193,7 @@ export class EditSouthComponent implements OnInit {
           }))
         : this.inMemoryItems
     };
-    if (value === 'save') {
-      this.createOrUpdateSouthConnector(command);
-    } else {
-      const modalRef = this.modalService.open(TestConnectionResultModalComponent);
-      const component: TestConnectionResultModalComponent = modalRef.componentInstance;
-      component.runTest('south', this.southConnector, command);
-    }
-  }
 
-  updateInMemoryItems(items: Array<SouthConnectorItemCommandDTO<SouthItemSettings>> | null) {
-    if (items) {
-      this.inMemoryItems = items;
-    } else {
-      this.southConnectorService.get(this.southConnector!.id).subscribe(southConnector => {
-        this.southConnector!.items = southConnector.items;
-        this.southConnector = JSON.parse(JSON.stringify(this.southConnector)); // Used to force a refresh in south item list
-      });
-    }
+    return command;
   }
 }

@@ -185,6 +185,8 @@
         </oib-box>
         <!-- Items -->
         <oib-history-query-items
+          [historyId]="historyQuery!.id"
+          [southConnectorCommand]="southConnectorCommand"
           (inMemoryItems)="updateInMemoryItems($event)"
           [historyQuery]="historyQuery"
           [southManifest]="southManifest"
