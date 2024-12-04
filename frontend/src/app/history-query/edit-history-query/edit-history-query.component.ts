@@ -76,6 +76,7 @@ export class EditHistoryQueryComponent implements OnInit {
   private route = inject(ActivatedRoute);
 
   mode: 'create' | 'edit' = 'create';
+  historyId!: string;
   historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> | null = null;
   state = new ObservableState();
   northSettingsControls: Array<Array<OibFormControl>> = [];
@@ -224,6 +225,12 @@ export class EditHistoryQueryComponent implements OnInit {
           }
         }
 
+        if (this.mode === 'edit' && this.historyQuery) {
+          this.historyId = this.historyQuery.id;
+        } else {
+          this.historyId = 'create';
+        }
+
         // we should provoke all value changes to make sure fields are properly hidden and disabled
         this.historyQueryForm.setValue(this.historyQueryForm.getRawValue());
 
@@ -324,28 +331,39 @@ export class EditHistoryQueryComponent implements OnInit {
     if (!this.historyQueryForm?.valid) {
       return;
     }
-    const formValue = this.historyQueryForm.value;
+
     const historyQueryId = this.historyQuery?.id ?? null;
     let command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> | NorthConnectorCommandDTO<NorthSettings>;
     let fromConnectorId;
 
     if (type === 'south') {
-      command = {
-        type: this.southManifest!.id,
-        settings: formValue.southSettings
-      } as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+      command = this.southConnectorCommand;
       fromConnectorId = this.fromSouthId;
     } else {
-      command = {
-        type: this.northManifest!.id,
-        settings: formValue.northSettings,
-        caching: formValue.caching
-      } as NorthConnectorCommandDTO<NorthSettings>;
+      command = this.northConnectorComand;
       fromConnectorId = this.fromNorthId;
     }
 
     const modalRef = this.modalService.open(TestConnectionResultModalComponent);
     const component: TestConnectionResultModalComponent = modalRef.componentInstance;
     component.runHistoryQueryTest(type, command, historyQueryId, fromConnectorId ? fromConnectorId : null);
+  }
+
+  get southConnectorCommand() {
+    const formValue = this.historyQueryForm!.value;
+    return {
+      type: this.southManifest!.id,
+      settings: formValue.southSettings
+    } as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+  }
+
+  get northConnectorComand() {
+    const formValue = this.historyQueryForm!.value;
+
+    return {
+      type: this.northManifest!.id,
+      settings: formValue.northSettings,
+      caching: formValue.caching
+    } as NorthConnectorCommandDTO<NorthSettings>;
   }
 }

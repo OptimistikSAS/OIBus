@@ -8,6 +8,7 @@ import { Modal, ModalService } from '../../shared/modal.service';
 import { FormControlValidationDirective } from '../../shared/form-control-validation.directive';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import {
+  SouthConnectorCommandDTO,
   SouthConnectorDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
@@ -64,6 +65,9 @@ export class SouthItemsComponent implements OnInit, OnChanges {
   private southConnectorService = inject(SouthConnectorService);
   private pipeProviderService = inject(PipeProviderService);
   readonly southConnector = input<SouthConnectorDTO<SouthSettings, SouthItemSettings> | null>(null);
+  readonly southId = input.required<string>();
+  readonly southConnectorCommand = input.required<SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>>();
+
   readonly southManifest = input.required<SouthConnectorManifest>();
   readonly scanModes = input.required<Array<ScanModeDTO>>();
 
@@ -131,7 +135,8 @@ export class SouthItemsComponent implements OnInit, OnChanges {
       this.allItems,
       this.scanModes(),
       southItem,
-      this.southConnector(),
+      this.southId(),
+      this.southConnectorCommand(),
       this.southManifest()
     );
     this.refreshAfterEditionModalClosed(modalRef, southItem);
@@ -140,7 +145,14 @@ export class SouthItemsComponent implements OnInit, OnChanges {
   addItem() {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl' });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
-    component.prepareForCreation(this.southManifest().items, this.allItems, this.scanModes(), this.southConnector(), this.southManifest());
+    component.prepareForCreation(
+      this.southManifest().items,
+      this.allItems,
+      this.scanModes(),
+      this.southId(),
+      this.southConnectorCommand(),
+      this.southManifest()
+    );
     this.refreshAfterCreationModalClosed(modalRef);
   }
 
@@ -239,7 +251,14 @@ export class SouthItemsComponent implements OnInit, OnChanges {
   duplicateItem(item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>) {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl' });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
-    component.prepareForCopy(this.southManifest().items, this.scanModes(), item, this.southConnector(), this.southManifest());
+    component.prepareForCopy(
+      this.southManifest().items,
+      this.scanModes(),
+      item,
+      this.southId(),
+      this.southConnectorCommand(),
+      this.southManifest()
+    );
     this.refreshAfterCreationModalClosed(modalRef);
   }
 
@@ -293,13 +312,7 @@ export class SouthItemsComponent implements OnInit, OnChanges {
   checkImportItems(file: File, delimiter: string) {
     const southConnector = this.southConnector();
     this.southConnectorService
-      .checkImportItems(
-        this.southManifest().id,
-        southConnector?.id || 'create',
-        southConnector ? southConnector.items : this.allItems,
-        file,
-        delimiter
-      )
+      .checkImportItems(this.southManifest().id, this.southId(), southConnector ? southConnector.items : this.allItems, file, delimiter)
       .subscribe(
         (result: {
           items: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>>;

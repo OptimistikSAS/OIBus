@@ -4,13 +4,16 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { fakeAsync, TestBed } from '@angular/core/testing';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import {
+  SouthConnectorCommandDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
-  SouthConnectorItemManifest
+  SouthConnectorItemManifest,
+  SouthConnectorManifest
 } from '../../../../../backend/shared/model/south-connector.model';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
-import { SouthItemSettings } from '../../../../../backend/shared/model/south-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
+import { provideHttpClient } from '@angular/common/http';
 
 class EditSouthItemModalComponentTester extends ComponentTester<EditSouthItemModalComponent> {
   constructor() {
@@ -51,6 +54,9 @@ describe('EditSouthItemModalComponent', () => {
     settings: [],
     schema: []
   } as SouthConnectorItemManifest;
+  const southId = 'southId';
+  const southConnectorCommand = {} as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+  const southManifest = { modes: { history: false } } as SouthConnectorManifest;
   const allItems: Array<SouthConnectorItemDTO<SouthItemSettings>> = [
     {
       id: 'id1',
@@ -86,7 +92,7 @@ describe('EditSouthItemModalComponent', () => {
     fakeActiveModal = createMock(NgbActiveModal);
 
     TestBed.configureTestingModule({
-      providers: [provideI18nTesting(), { provide: NgbActiveModal, useValue: fakeActiveModal }]
+      providers: [provideI18nTesting(), provideHttpClient(), { provide: NgbActiveModal, useValue: fakeActiveModal }]
     });
 
     TestBed.createComponent(DefaultValidationErrorsComponent).detectChanges();
@@ -96,7 +102,7 @@ describe('EditSouthItemModalComponent', () => {
 
   describe('create mode', () => {
     beforeEach(() => {
-      tester.componentInstance.prepareForCreation(southItemSchema, allItems, scanModes, null, null);
+      tester.componentInstance.prepareForCreation(southItemSchema, allItems, scanModes, southId, southConnectorCommand, southManifest);
       tester.detectChanges();
     });
 
@@ -147,7 +153,7 @@ describe('EditSouthItemModalComponent', () => {
     };
 
     it('should duplicate item', () => {
-      tester.componentInstance.prepareForCopy(southItemSchema, scanModes, southItem, null, null);
+      tester.componentInstance.prepareForCopy(southItemSchema, scanModes, southItem, southId, southConnectorCommand, southManifest);
       tester.detectChanges();
       expect(tester.name).toHaveValue('myName-copy');
 
@@ -179,7 +185,15 @@ describe('EditSouthItemModalComponent', () => {
     };
 
     beforeEach(() => {
-      tester.componentInstance.prepareForEdition(southItemSchema, allItems, scanModes, southItem, null, null);
+      tester.componentInstance.prepareForEdition(
+        southItemSchema,
+        allItems,
+        scanModes,
+        southItem,
+        southId,
+        southConnectorCommand,
+        southManifest
+      );
       tester.detectChanges();
     });
 

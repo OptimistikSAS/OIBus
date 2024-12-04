@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, inject, OnInit, viewChild, input } from '@angular/core';
+import { AfterViewInit, Component, inject, OnInit, viewChild, input, effect } from '@angular/core';
 import {
   SouthConnectorItemCommandDTO,
   SouthConnectorManifest,
@@ -48,7 +48,7 @@ export class SouthItemTestComponent<TItemType extends 'south' | 'history-south'>
           : never
     >();
 
-  readonly connector = input.required<SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>>();
+  readonly connectorCommand = input.required<SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>>();
   readonly manifest = input.required<SouthConnectorManifest>();
 
   private southConnectorService = inject(SouthConnectorService);
@@ -69,17 +69,11 @@ export class SouthItemTestComponent<TItemType extends 'south' | 'history-south'>
   }
 
   ngOnInit() {
-    this.testingSettingsForm = this.fb.group({});
+    this.initForm();
+  }
 
-    if (this.supportsHistorySettings) {
-      this.testingSettingsForm.addControl(
-        'history',
-        this.fb.group({
-          startTime: [DateTime.now().minus({ minutes: 10 }).toUTC().toISO()!, [dateTimeRangeValidatorBuilder('start')]],
-          endTime: [DateTime.now().toUTC().toISO()!, [dateTimeRangeValidatorBuilder('end')]]
-        })
-      );
-    }
+  constructor() {
+    effect(() => this.manifest() && this.initForm());
   }
 
   get supportsHistorySettings() {
@@ -140,20 +134,34 @@ export class SouthItemTestComponent<TItemType extends 'south' | 'history-south'>
     if (type === 'south') {
       return this.southConnectorService.testItem(
         this.entityId(),
-        this.connector(),
+        this.connectorCommand(),
         this.item() as SouthConnectorItemCommandDTO<SouthItemSettings>,
         this.testingSettings
       );
     } else if (type === 'history-south') {
       return this.historyQueryService.testSouthItem(
         this.entityId(),
-        this.connector(),
+        this.connectorCommand(),
         this.item() as HistoryQueryItemCommandDTO<SouthItemSettings>,
         this.testingSettings
       );
     }
 
     return null;
+  }
+
+  private initForm() {
+    this.testingSettingsForm = this.fb.group({});
+
+    if (this.supportsHistorySettings) {
+      this.testingSettingsForm.addControl(
+        'history',
+        this.fb.group({
+          startTime: [DateTime.now().minus({ minutes: 10 }).toUTC().toISO()!, [dateTimeRangeValidatorBuilder('start')]],
+          endTime: [DateTime.now().toUTC().toISO()!, [dateTimeRangeValidatorBuilder('end')]]
+        })
+      );
+    }
   }
 
   private initTest() {
