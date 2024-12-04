@@ -6,7 +6,7 @@ import { NotificationService } from '../../shared/notification.service';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { FormControlValidationDirective } from '../../shared/form-control-validation.directive';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
+import { SouthConnectorCommandDTO, SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
 import { debounceTime, distinctUntilChanged, of, switchMap, tap } from 'rxjs';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { OibFormControl } from '../../../../../backend/shared/model/form.model';
@@ -59,6 +59,8 @@ export class HistoryQueryItemsComponent implements OnInit, OnChanges {
   private historyQueryService = inject(HistoryQueryService);
   private pipeProviderService = inject(PipeProviderService);
 
+  @Input({ required: true }) historyId!: string;
+  @Input({ required: true }) southConnectorCommand!: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
   @Input() historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> | null = null;
   @Input() creationItems: Array<HistoryQueryItemCommandDTO<SouthItemSettings>> = [];
   @Input({ required: true }) southManifest!: SouthConnectorManifest;
@@ -120,14 +122,21 @@ export class HistoryQueryItemsComponent implements OnInit, OnChanges {
   editItem(historyQueryItem: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>) {
     const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent, { size: 'xl' });
     const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
-    component.prepareForEdition(this.southManifest.items, this.allItems, historyQueryItem, this.historyQuery, this.southManifest);
+    component.prepareForEdition(
+      this.southManifest.items,
+      this.allItems,
+      historyQueryItem,
+      this.historyId,
+      this.southConnectorCommand,
+      this.southManifest
+    );
     this.refreshAfterEditionModalClosed(modalRef, historyQueryItem);
   }
 
   addItem() {
     const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent, { size: 'xl' });
     const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
-    component.prepareForCreation(this.southManifest.items, this.allItems, this.historyQuery, this.southManifest);
+    component.prepareForCreation(this.southManifest.items, this.allItems, this.historyId, this.southConnectorCommand, this.southManifest);
     this.refreshAfterCreationModalClosed(modalRef);
   }
 
@@ -221,7 +230,7 @@ export class HistoryQueryItemsComponent implements OnInit, OnChanges {
   duplicateItem(item: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>) {
     const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent, { size: 'xl' });
     const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
-    component.prepareForCopy(this.southManifest.items, item, this.historyQuery, this.southManifest);
+    component.prepareForCopy(this.southManifest.items, item, this.historyId, this.southConnectorCommand, this.southManifest);
     this.refreshAfterCreationModalClosed(modalRef);
   }
 

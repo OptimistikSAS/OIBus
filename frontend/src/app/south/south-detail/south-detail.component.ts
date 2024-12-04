@@ -120,18 +120,9 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
   }
 
   testConnection() {
-    const command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
-      name: this.southConnector!.name,
-      type: this.southConnector!.type,
-      description: this.southConnector!.description,
-      enabled: this.southConnector!.enabled,
-      settings: this.southConnector!.settings,
-      items: []
-    };
-
     const modalRef = this.modalService.open(TestConnectionResultModalComponent);
     const component: TestConnectionResultModalComponent = modalRef.componentInstance;
-    component.runTest('south', this.southConnector, command);
+    component.runTest('south', this.southConnector, this.southConnectorCommand);
   }
 
   toggleConnector(value: boolean) {
@@ -187,5 +178,14 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
     } else {
       this.notificationService.error('south.cache-path-copy.error');
     }
+  }
+
+  get southConnectorCommand() {
+    const command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
+      ...this.southConnector!,
+      items: this.southConnector!.items.map(i => ({ ...i, scanModeName: null }))
+    };
+
+    return command;
   }
 }

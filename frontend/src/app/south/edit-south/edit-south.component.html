@@ -84,7 +84,9 @@
               </div>
             </div>
             <oib-south-items
+              [southId]="southId"
               [southConnector]="southConnector"
+              [southConnectorCommand]="formSouthConnectorCommand"
               [southManifest]="manifest"
               [scanModes]="scanModes"
               (inMemoryItems)="updateInMemoryItems($event)"
@@ -92,7 +94,9 @@
           }
           @if (mode === 'create') {
             <oib-south-items
+              [southId]="southId"
               [southConnector]="southConnector"
+              [southConnectorCommand]="formSouthConnectorCommand"
               [southManifest]="manifest"
               [scanModes]="scanModes"
               (inMemoryItems)="updateInMemoryItems($event)"

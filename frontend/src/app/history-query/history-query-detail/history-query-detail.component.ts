@@ -217,16 +217,9 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
   test(type: 'south' | 'north') {
     let command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> | NorthConnectorCommandDTO<NorthSettings>;
     if (type === 'south') {
-      command = {
-        type: this.southManifest!.id,
-        settings: this.historyQuery!.southSettings
-      } as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+      command = this.southConnectorCommand;
     } else {
-      command = {
-        type: this.northManifest!.id,
-        settings: this.historyQuery!.northSettings,
-        caching: this.historyQuery!.caching
-      } as NorthConnectorCommandDTO<NorthSettings>;
+      command = this.northConnectorComand;
     }
 
     const modalRef = this.modalService.open(TestConnectionResultModalComponent);
@@ -244,5 +237,20 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
 
     const percentage = valueProgress > 0 ? valueProgress : fileProgress;
     return percentage === 1;
+  }
+
+  get southConnectorCommand() {
+    return {
+      type: this.southManifest!.id,
+      settings: this.historyQuery!.southSettings
+    } as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+  }
+
+  get northConnectorComand() {
+    return {
+      type: this.northManifest!.id,
+      settings: this.historyQuery!.northSettings,
+      caching: this.historyQuery!.caching
+    } as NorthConnectorCommandDTO<NorthSettings>;
   }
 }
