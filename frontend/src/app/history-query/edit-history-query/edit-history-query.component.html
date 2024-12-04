@@ -232,6 +232,8 @@
             </div>
             <oib-history-query-items
               (inMemoryItems)="updateInMemoryItems($event)"
+              [historyId]="historyId"
+              [southConnectorCommand]="southConnectorCommand"
               [historyQuery]="historyQuery"
               [southManifest]="southManifest"
             />
@@ -240,6 +242,8 @@
             <oib-history-query-items
               (inMemoryItems)="updateInMemoryItems($event)"
               [creationItems]="inMemoryItems"
+              [historyId]="historyId"
+              [southConnectorCommand]="southConnectorCommand"
               [historyQuery]="historyQuery"
               [southManifest]="southManifest"
             />

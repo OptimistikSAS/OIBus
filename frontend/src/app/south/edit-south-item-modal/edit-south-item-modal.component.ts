@@ -7,7 +7,6 @@ import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
 import {
   SouthConnectorCommandDTO,
-  SouthConnectorDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
   SouthConnectorItemManifest,
@@ -59,8 +58,9 @@ export class EditSouthItemModalComponent {
   southItemSchema: SouthConnectorItemManifest | null = null;
   southItemRows: Array<Array<OibFormControl>> = [];
 
-  southConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> | null = null;
-  southManifest: SouthConnectorManifest | null = null;
+  southId!: string;
+  southConnectorCommand!: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+  southManifest!: SouthConnectorManifest;
   item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings> | null = null;
   itemList: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>> = [];
 
@@ -117,12 +117,14 @@ export class EditSouthItemModalComponent {
     southItemSchema: SouthConnectorItemManifest,
     itemList: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>>,
     scanModes: Array<ScanModeDTO>,
-    southConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> | null,
-    southManifest: SouthConnectorManifest | null
+    southId: string,
+    southConnectorCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
+    southManifest: SouthConnectorManifest
   ) {
     this.mode = 'create';
     this.itemList = itemList;
-    this.southConnector = southConnector;
+    this.southId = southId;
+    this.southConnectorCommand = southConnectorCommand;
     this.southManifest = southManifest;
     this.subscriptionOnly = southItemSchema.scanMode.subscriptionOnly;
     this.acceptSubscription = southItemSchema.scanMode.acceptSubscription;
@@ -140,12 +142,14 @@ export class EditSouthItemModalComponent {
     itemList: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>>,
     scanModes: Array<ScanModeDTO>,
     southItem: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>,
-    southConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> | null,
-    southManifest: SouthConnectorManifest | null
+    southId: string,
+    southConnectorCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
+    southManifest: SouthConnectorManifest
   ) {
     this.mode = 'edit';
     this.itemList = itemList;
-    this.southConnector = southConnector;
+    this.southId = southId;
+    this.southConnectorCommand = southConnectorCommand;
     this.southManifest = southManifest;
     this.item = southItem;
     this.subscriptionOnly = southItemSchema.scanMode.subscriptionOnly;
@@ -163,10 +167,12 @@ export class EditSouthItemModalComponent {
     southItemSchema: SouthConnectorItemManifest,
     scanModes: Array<ScanModeDTO>,
     southItem: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>,
-    southConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> | null,
-    southManifest: SouthConnectorManifest | null
+    southId: string,
+    southConnectorCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
+    southManifest: SouthConnectorManifest
   ) {
-    this.southConnector = southConnector;
+    this.southId = southId;
+    this.southConnectorCommand = southConnectorCommand;
     this.southManifest = southManifest;
     this.item = JSON.parse(JSON.stringify(southItem)) as SouthConnectorItemDTO<SouthItemSettings>;
     this.item.name = `${southItem.name}-copy`;
@@ -205,19 +211,6 @@ export class EditSouthItemModalComponent {
       scanModeId: this.subscriptionOnly ? 'subscription' : formValue.scanModeId!,
       scanModeName: null,
       settings: formValue.settings!
-    };
-
-    return command;
-  }
-
-  get southConnectorCommand() {
-    if (!this.southConnector) {
-      return null;
-    }
-
-    const command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
-      ...this.southConnector,
-      items: this.southConnector.items.map(i => ({ ...i, scanModeName: null }))
     };
 
     return command;

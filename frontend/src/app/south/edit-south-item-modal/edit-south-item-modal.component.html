@@ -43,15 +43,13 @@
         <oib-form [parentForm]="form" [form]="form.controls.settings" [settingsSchema]="southItemRows" [scanModes]="scanModes" />
       }
     </form>
-    @if (formItem && southConnector && southConnectorCommand && southManifest) {
-      <oib-south-item-test
-        type="south"
-        [entityId]="southConnector.id"
-        [item]="formItem"
-        [connector]="southConnectorCommand"
-        [manifest]="southManifest"
-      />
-    }
+    <oib-south-item-test
+      type="south"
+      [entityId]="southId"
+      [item]="formItem"
+      [connectorCommand]="southConnectorCommand"
+      [manifest]="southManifest"
+    />
   </div>
 }
 <div class="modal-footer">

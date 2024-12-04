@@ -63,7 +63,9 @@
         </oib-box>
         <!-- Items -->
         <oib-south-items
+          [southId]="this.southConnector!.id"
           [southConnector]="southConnector"
+          [southConnectorCommand]="southConnectorCommand"
           [southManifest]="manifest"
           [scanModes]="scanModes"
           (inMemoryItems)="updateInMemoryItems($event)"
