@@ -50,10 +50,9 @@ export class BoxComponent {
       const alertWarningElement = contentElement.querySelector('.alert-warning');
       const emptyDivElements = contentElement.querySelectorAll('div');
       const greyContainerElement = contentElement.querySelector('.oib-grey-container');
-      const multipleContentElement = contentElement.querySelector('oib-form');
       const normalContentElement = contentElement.querySelector('.row');
 
-      if (tableElement || emptyDivElements.length <= 0 || alertWarningElement || greyContainerElement || multipleContentElement) {
+      if (tableElement || emptyDivElements.length <= 0 || alertWarningElement || greyContainerElement) {
         return true;
       }
       if (normalContentElement) {
