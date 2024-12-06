@@ -241,7 +241,7 @@ export class HistoryQueryItemsComponent implements OnInit, OnChanges {
       if (response.delimiter && this.historyQuery) {
         this.historyQueryService.exportItems(this.historyQuery.id, response.fileName, response.delimiter).subscribe();
       } else if (response && !this.historyQuery) {
-        this.historyQueryService.itemsToCsv(this.allItems, response.fileName, response.delimiter).subscribe();
+        this.historyQueryService.itemsToCsv(this.southManifest.id, this.allItems, response.fileName, response.delimiter).subscribe();
       }
     });
   }

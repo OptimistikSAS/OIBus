@@ -205,13 +205,14 @@ export class SouthConnectorService {
    * Export south items in CSV file
    */
   itemsToCsv(
+    southType: string,
     items: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>>,
     fileName: string,
     delimiter: string
   ): Observable<void> {
     return this.http
       .put(
-        `/api/south/items/to-csv`,
+        `/api/south/${southType}/items/to-csv`,
         {
           items,
           delimiter
