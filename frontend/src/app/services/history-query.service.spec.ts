@@ -207,12 +207,12 @@ describe('HistoryQueryService', () => {
     let downloaded = false;
 
     spyOn(downloadService, 'download');
-    service.itemsToCsv([], 'historyQueryName', ';').subscribe(() => (downloaded = true));
+    service.itemsToCsv('southType', [], 'historyQueryName', ';').subscribe(() => (downloaded = true));
 
     http
       .expectOne({
         method: 'PUT',
-        url: '/api/history-queries/south-items/to-csv'
+        url: '/api/history-queries/southType/south-items/to-csv'
       })
       .flush(new Blob());
 

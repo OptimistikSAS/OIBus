@@ -300,7 +300,7 @@ router.put('/api/south/:southId/items/export', (ctx: KoaContext<{ delimiter: str
   southConnectorController.exportSouthItems(ctx)
 );
 router.put(
-  '/api/south/items/to-csv',
+  '/api/south/:southType/items/to-csv',
   (ctx: KoaContext<{ items: Array<SouthConnectorItemDTO<SouthItemSettings>>; delimiter: string }, string>) =>
     southConnectorController.southConnectorItemsToCsv(ctx)
 );
@@ -360,7 +360,7 @@ router.put('/api/history-queries/:historyQueryId/south-items/export', (ctx: KoaC
   historyQueryController.exportSouthItems(ctx)
 );
 router.put(
-  '/api/history-queries/south-items/to-csv',
+  '/api/history-queries/:southType/south-items/to-csv',
   (ctx: KoaContext<{ items: Array<HistoryQueryItemDTO<SouthItemSettings>>; delimiter: string }, string>) =>
     historyQueryController.historyQueryItemsToCsv(ctx)
 );
