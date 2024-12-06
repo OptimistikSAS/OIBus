@@ -231,12 +231,12 @@ describe('SouthConnectorService', () => {
     let downloaded = false;
 
     spyOn(downloadService, 'download');
-    service.itemsToCsv([], 'southName', ';').subscribe(() => (downloaded = true));
+    service.itemsToCsv('southType', [], 'southName', ';').subscribe(() => (downloaded = true));
 
     http
       .expectOne({
         method: 'PUT',
-        url: '/api/south/items/to-csv'
+        url: '/api/south/southType/items/to-csv'
       })
       .flush(new Blob());
 

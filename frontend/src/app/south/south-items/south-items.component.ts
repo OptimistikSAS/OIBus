@@ -270,7 +270,7 @@ export class SouthItemsComponent implements OnInit, OnChanges {
       if (response && southConnector) {
         this.southConnectorService.exportItems(southConnector!.id, response.fileName, response.delimiter).subscribe();
       } else if (response && !southConnector) {
-        this.southConnectorService.itemsToCsv(this.allItems, response.fileName, response.delimiter).subscribe();
+        this.southConnectorService.itemsToCsv(this.southManifest().id, this.allItems, response.fileName, response.delimiter).subscribe();
       }
     });
   }
