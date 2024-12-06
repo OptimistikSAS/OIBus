@@ -187,13 +187,14 @@ export class HistoryQueryService {
   }
 
   itemsToCsv(
+    southType: string,
     items: Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>>,
     fileName: string,
     delimiter: string
   ): Observable<void> {
     return this.http
       .put(
-        `/api/history-queries/south-items/to-csv`,
+        `/api/history-queries/${southType}/south-items/to-csv`,
         {
           items,
           delimiter
