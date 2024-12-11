@@ -81,7 +81,7 @@ export default class OIAnalyticsCommandService {
           DateTime.now().toUTC().toISO(),
           `OIBus updated to version ${updateVersion}`
         );
-      } else {
+      } else if (launcherVersion === engineSettings.launcherVersion) {
         this.oIAnalyticsCommandRepository.markAsErrored(
           currentUpgradeCommand[0].id,
           `OIBus has not been updated. Rollback to version ${version}`
