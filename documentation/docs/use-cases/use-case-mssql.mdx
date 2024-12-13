@@ -3,12 +3,12 @@ displayed_sidebar: useCasesSidebar
 sidebar_position: 2
 ---
 
-# MSSQL → Azure Blob
+# Microsoft SQL Server™ → Azure Blob Storage™
 ## Beforehand
 This use case shows how to set up an SQL connector (here with MSSQL), particularly working on SQL queries with some tuning
 and how to send the resulting CSV files into Azure Blob.
 
-Details regarding the configurations can be located on the [North Azure Blob](../guide/north-connectors/azure-blob.md) and [South MSSQL](../guide/south-connectors/mssql.mdx) connectors pages.
+Details regarding the configurations can be located on the [North Azure Blob Storage](../guide/north-connectors/azure-blob.md) and [South Microsoft SQL Server™](../guide/south-connectors/mssql.mdx) connectors pages.
 
 This specific scenario is constructed around the depicted fictional network.
 
@@ -24,7 +24,7 @@ This specific scenario is constructed around the depicted fictional network.
 Make sure you have the URL or IP address of the MSSQL server, along with its associated port, and a read-only user.
 
 :::caution Read only user
-While a read-only user is not mandatory, it is strongly recommended to prevent the insertion or update of data through 
+While a read-only user is not mandatory, it is strongly recommended to prevent the insertion or update of data through
 a SQL query. South connectors are designed for accessing data, not for creating new entries.
 :::
 
@@ -37,7 +37,7 @@ With the proposed schema, the following settings can be set:
 <div style={{ textAlign: 'center' }}>
   <div>
 
-    ![OPCUA settings](../../static/img/use-cases/mssql-settings.png)
+    ![MSSQL settings](../../static/img/use-cases/mssql-settings.png)
 
   </div>
 </div>
@@ -50,20 +50,20 @@ You can verify the connection by testing the settings using the `Test settings` 
 OIBus provides query variables such as `@StartTime` and `@EndTime`. However, their usage is not mandatory.
 
 #### Without variable
-In this example, a moving window interval can regularly retrieve the data without the need for such variables, between 
+In this example, a moving window interval can regularly retrieve the data without the need for such variables, between
 now and yesterday:
 
 ```SQL
-SELECT data_name AS dataName, value, timestamp FROM table
-WHERE timestamp > DATEADD(DAY,-1,GETDATE()) AND timestamp < GETDATE()
+SELECT timestamp, message, level FROM table
+WHERE timestamp > DATEADD(DAY,-1,GETDATE()) AND timestamp <= GETDATE()
 ```
 
 :::caution DateTime type
-Ensure that you compare the date with a field of the same date type, such as a DateTime type. Use a 
+Ensure that you compare the date with a field of the same date type, such as a DateTime type. Use a
 [cast or convert function](https://learn.microsoft.com/en-us/sql/t-sql/functions/cast-and-convert-transact-sql?view=sql-server-ver16) to appropriately handle the field or your comparison date.
 :::
 
-In this scenario, the datetime fields section can still be employed to parse dates and output them in the appropriate format. 
+In this scenario, the datetime fields section can still be employed to parse dates and output them in the appropriate format.
 Only the `timestamp` is a date time field, and we do not use it as a reference because it is not utilized with `@StartTime` or
 `@EndTime`.
 
@@ -76,10 +76,10 @@ Only the `timestamp` is a date time field, and we do not use it as a reference b
 </div>
 
 #### With variables
-The `@StartTime` variable captures the last maximum instant retrieved from a previous query. By default, for the initial 
+The `@StartTime` variable captures the last maximum instant retrieved from a previous query. By default, for the initial
 query, it takes the current time minus one hour. The `@EndTime` variable is replaced by the current time.
 
-To prevent overloading the server with a large query, you can divide the \[`@StartTime`, `@EndTime`\] interval into 
+To prevent overloading the server with a large query, you can divide the \[`@StartTime`, `@EndTime`\] interval into
 smaller chunks. This can be configured in the **History settings** section, from the connector settings:
 - Max read interval (in seconds): If set to 60 seconds, and the interval is 1 hour, 60 sub-interval queries will be generated.
 - Read delay (in milliseconds) between each sub-interval query.
@@ -98,13 +98,13 @@ expanding the query interval while still allowing the retrieval of data before t
 Overlap proves beneficial when certain retrieved data exhibit latency and are stored after the query has been executed.
 In such cases, it allows for a slight extension of the requested interval.
 
-Exercise caution if your query involves aggregation, as it might alter your data by shifting the time origin of the first 
+Exercise caution if your query involves aggregation, as it might alter your data by shifting the time origin of the first
 interval.
 :::
 
 ```SQL
-SELECT timestamp, message, level FROM logs 
-WHERE timestamp > @StartTime AND timestamp < @EndTime
+SELECT timestamp, message, level FROM logs
+WHERE timestamp > @StartTime AND timestamp <= @EndTime
 ```
 
 ##### Date time fields
@@ -113,7 +113,7 @@ One date time field can be added:
 - Reference field: true
 - Type: ISO 8601
 
-The `timestamp` field contains a date-time in ISO-8601 format. It serves as a reference, implying that it will be 
+The `timestamp` field contains a date-time in ISO-8601 format. It serves as a reference, implying that it will be
 stored in the maximum instant of the South cache.
 
 ##### Serialization
@@ -153,7 +153,7 @@ timestamp;message;level
 2024-01-23T11:38:46.283Z;Connecting to OPCUA on opc.tcp://oibus.rd.optimistik.fr:53530/OPCUA/SimulationServer;debug
 ```
 
-In this example, the maximum instant saved for the `@StartTime` of the next query will be `2024-01-23T11:38:46.283Z`, 
+In this example, the maximum instant saved for the `@StartTime` of the next query will be `2024-01-23T11:38:46.283Z`,
 injected into the request in ISO 8601 format.
 
 :::tip SQLite log database

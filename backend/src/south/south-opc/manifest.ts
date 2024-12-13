@@ -2,9 +2,9 @@ import { SouthConnectorManifest } from '../../../shared/model/south-connector.mo
 
 const manifest: SouthConnectorManifest = {
   id: 'opc',
-  name: 'OPC Classic',
+  name: 'OPC Classic™',
   category: 'iot',
-  description: 'Establish a connection with an OIBus Agent to access data from an OPC Classic™ (HDA/DA) server',
+  description: 'Access data from an OPC Classic™ (HDA/DA) server through OIBus Agent',
   modes: {
     subscription: false,
     lastPoint: false,

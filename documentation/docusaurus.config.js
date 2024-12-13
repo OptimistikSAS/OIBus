@@ -130,7 +130,8 @@ const config = {
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} Optimistik. Built with Docusaurus.`,
+        copyright: `Copyright © ${new Date().getFullYear()} Optimistik. Built with Docusaurus.
+        All trademarks, logos and brand names are the property of their respective owners. All company, product and service names used in this website are for identification purposes only. Use of these names, trademarks and brands does not imply endorsement.`,
       },
       algolia: {
         // The application ID provided by Algolia

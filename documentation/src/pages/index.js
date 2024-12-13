@@ -9,24 +9,24 @@ import Translate from "@docusaurus/Translate";
 
 const HomepageHeader = () => {
   return (
-    <header className={clsx('hero hero--primary', styles.heroBanner)}>
+    <header className={clsx("hero hero--primary", styles.heroBanner)}>
       <div className="container">
-        <h1 className={clsx('hero__title', styles.welcomeTitle)}>
+        <h1 className={clsx("hero__title", styles.welcomeTitle)}>
           <Translate description="The homepage main heading">
             OIBus - Data collection solution
           </Translate>
         </h1>
-        <p className={clsx('hero__subtitle', styles.welcomeTitle)}>
+        <p className={clsx("hero__subtitle", styles.welcomeTitle)}>
           <Translate description="The tagline">
             Start collecting your data now
           </Translate>
         </p>
         <div className="row">
-          <div className={clsx('col col--4')}>
+          <div className={clsx("col col--4")}>
             <div className="text--center">
               <Link
-                className={clsx('button button--secondary button--md', styles.welcomeButtons)}
-                style={{ marginTop: '1em', marginBottom: '1em', color: '#f5f5f5' }}
+                className={clsx("button button--secondary button--md", styles.welcomeButtons)}
+                style={{ marginTop: "1em", marginBottom: "1em", color: "#f5f5f5" }}
                 to="/docs/guide/"
               >
                 <Translate description="The guide button">
@@ -35,11 +35,17 @@ const HomepageHeader = () => {
               </Link>
             </div>
           </div>
-          <div className={clsx('col col--4')}>
+          <div className={clsx("col col--4")}>
             <div className="text--center">
               <Link
-                className={clsx('button button--secondary button--md', styles.welcomeButtons)}
-                style={{ marginLeft: '2em', marginRight: '2em', marginTop: '1em', marginBottom: '1em', color: '#f5f5f5' }}
+                className={clsx("button button--secondary button--md", styles.welcomeButtons)}
+                style={{
+                  marginLeft: "2em",
+                  marginRight: "2em",
+                  marginTop: "1em",
+                  marginBottom: "1em",
+                  color: "#f5f5f5"
+                }}
                 to="/docs/guide/installation/"
               >
                 <Translate description="The install button">
@@ -48,11 +54,11 @@ const HomepageHeader = () => {
               </Link>
             </div>
           </div>
-          <div className={clsx('col col--4')}>
+          <div className={clsx("col col--4")}>
             <div className="text--center">
               <Link
-                className={clsx('button button--secondary button--md', styles.welcomeButtons)}
-                style={{ marginTop: '1em', marginBottom: '1em', color: '#f5f5f5' }}
+                className={clsx("button button--secondary button--md", styles.welcomeButtons)}
+                style={{ marginTop: "1em", marginBottom: "1em", color: "#f5f5f5" }}
                 to="/docs/developer/"
               >
                 <Translate description="The develop button">
@@ -64,8 +70,8 @@ const HomepageHeader = () => {
         </div>
       </div>
     </header>
-  )
-}
+  );
+};
 
 export default function Home() {
   return (
@@ -78,5 +84,5 @@ export default function Home() {
         <HomepageFeatures />
       </main>
     </Layout>
-  )
+  );
 }

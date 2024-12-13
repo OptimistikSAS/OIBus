@@ -3,9 +3,9 @@ import { buildDateTimeFieldsFormControl, buildSerializationFormControl, proxy } 
 
 const manifest: SouthConnectorManifest = {
   id: 'slims',
-  name: 'SLIMS',
+  name: 'SLIMS™',
   category: 'api',
-  description: 'Connect to SLIMS™ application',
+  description: 'Query time values from SLIMS™',
   modes: {
     subscription: false,
     lastPoint: false,
