@@ -2,7 +2,7 @@ import { SouthConnectorManifest } from '../../../shared/model/south-connector.mo
 
 const manifest: SouthConnectorManifest = {
   id: 'ads',
-  name: 'ADS',
+  name: 'ADS - TwinCAT®',
   category: 'iot',
   description: 'The ADS protocol used in TwinCAT® systems',
   modes: {

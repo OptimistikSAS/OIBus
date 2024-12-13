@@ -3,7 +3,7 @@ import { proxy } from '../../../shared/model/manifest-factory';
 
 const manifest: NorthConnectorManifest = {
   id: 'aws-s3',
-  name: 'AWS S3',
+  name: 'Amazon S3™',
   category: 'file',
   description: 'Store files in Amazon S3™ (Simple Storage Service)',
   modes: {
