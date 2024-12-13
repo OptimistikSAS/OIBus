@@ -2,7 +2,7 @@ import { SouthConnectorManifest } from '../../../shared/model/south-connector.mo
 
 const manifest: SouthConnectorManifest = {
   id: 'opcua',
-  name: 'OPC UA',
+  name: 'OPC UA™',
   category: 'iot',
   description: 'Query data from OPC UA™ server',
   modes: {

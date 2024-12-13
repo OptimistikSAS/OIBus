@@ -52,13 +52,13 @@ inconsistency between the injected @StartTime and @EndTime variables (string typ
 
 ```sql title="Bad SQL query with @StartTime and @EndTime and convert"
 SELECT data_name AS dataName, value, convert(datetime, DATETIME) AS timestamp FROM table
-WHERE datetime > @StartTime AND datetime < @EndTime
+WHERE datetime > @StartTime AND datetime <= @EndTime
 ```
 
 In the following case, the uniformity in formats guarantees proper functionality.
 ```sql title="Correct SQL query with @StartTime and @EndTime"
 SELECT data_name AS dataName, value, convert(datetime, DATETIME) AS timestamp FROM table
-WHERE convert(datetime, DATETIME) > @StartTime AND convert(datetime, DATETIME) < @EndTime
+WHERE convert(datetime, DATETIME) > @StartTime AND convert(datetime, DATETIME) <= @EndTime
 ```
 :::
 

@@ -5,7 +5,7 @@ const manifest: SouthConnectorManifest = {
   id: 'odbc',
   name: 'ODBC',
   category: 'database',
-  description: 'Query SQL databases with an ODBC driver',
+  description: 'Query SQL databases with an ODBC driver or OIBus Agent',
   modes: {
     subscription: false,
     lastPoint: false,
@@ -57,6 +57,7 @@ const manifest: SouthConnectorManifest = {
       label: 'Use remote agent',
       defaultValue: false,
       newRow: true,
+      class: 'col-3',
       validators: [{ key: 'required' }],
       displayInViewMode: true
     },
@@ -65,6 +66,7 @@ const manifest: SouthConnectorManifest = {
       type: 'OibText',
       label: 'Remote agent URL',
       defaultValue: 'http://ip-adress-or-host:2224',
+      class: 'col-9',
       validators: [{ key: 'required' }],
       conditionalDisplay: { field: 'remoteAgent', values: [true] }
     },
@@ -74,7 +76,8 @@ const manifest: SouthConnectorManifest = {
       label: 'Connection timeout',
       defaultValue: 15_000,
       unitLabel: 'ms',
-      class: 'col-3',
+      newRow: true,
+      class: 'col-4',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30_000 } }]
     },
     {
@@ -83,7 +86,7 @@ const manifest: SouthConnectorManifest = {
       label: 'Retry interval',
       defaultValue: 10_000,
       unitLabel: 'ms',
-      class: 'col-3',
+      class: 'col-4',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30_000 } }]
     },
     {
@@ -92,7 +95,7 @@ const manifest: SouthConnectorManifest = {
       label: 'Request timeout',
       defaultValue: 15_000,
       unitLabel: 'ms',
-      class: 'col-3',
+      class: 'col-4',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
       conditionalDisplay: { field: 'remoteAgent', values: [true] }
     },
@@ -103,12 +106,14 @@ const manifest: SouthConnectorManifest = {
       defaultValue: 'localhost',
       newRow: true,
       validators: [{ key: 'required' }],
+      class: 'col-9',
       displayInViewMode: true
     },
     {
       key: 'password',
       type: 'OibSecret',
       label: 'Password',
+      class: 'col-3',
       newRow: false,
       displayInViewMode: false
     }

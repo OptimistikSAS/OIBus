@@ -3,27 +3,32 @@ sidebar_position: 11
 ---
 
 import ItemSettings from './_south-sql-item-settings.mdx';
+import ThrottlingSettings from './_throttling-settings.mdx';
 
-# Oracle
-Send SQL queries to interact with an Oracle database.
-
-:::caution Dependency
-This connector requires the local installation of an Oracle Instant Client (Basic or Basic Light, minimal supported
-version is 18.5.0.0.0)
-:::
+# Oracle Database™
+Query data from an Oracle Database™.
 
 ## Specific settings
-When configuring the SQL connector to send SQL queries to a Oracle Server, you will need to provide the following
+
+When configuring the SQL connector to send SQL queries to an Oracle Server, you will need to provide the following
 details:
+- **Thick mode**: When enabled, access the database through an Oracle Client Library. More details [here](https://node-oracledb.readthedocs.io/en/latest/user_guide/introduction.html#node-oracledb-thick-mode-architecture).
+  - **Oracle Client Library**: The directory of the library installed on the machine.
 - **Host**: The address of the Oracle server.
 - **Port**: The Oracle server port (default is 1521).
+- **Connection timeout**: Timeout setting for establishing the connection.
 - **Database**: The name of the database to connect to.
 - **Username**: The username used for authentication.
 - **Password**: The password used for authentication.
-- **Connection timeout**: Timeout setting for establishing the connection.
+
+:::caution Dependency
+Oracle Instant Client (Basic or Basic Light) minimal supported version is 18.5.0.0.0)
+:::
 
 :::tip Database access
 It is strongly advised to use a read-only user when connecting to the database for security and data integrity purposes.
 :::
 
-<ItemSettings></ItemSettings>
+<ThrottlingSettings/>
+
+<ItemSettings/>

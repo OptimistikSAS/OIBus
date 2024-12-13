@@ -5,19 +5,28 @@ sidebar_position: 1
 import DownloadButton from "@site/src/components/DownloadButton";
 
 # Concept and installation
-OIBus Agent is a tool used to embed through HTTP some protocol specific queries. For now, [ODBC](./odbc) and
-[OPCHDA](./opchda) are supported.
+The OIBus Agent is a specialized tool designed to handle protocol-specific queries via HTTP. It is primarily used for
+Windows-only technologies, such as OPC Classic™, OLEDB, and OSIsoft PI System™. Additionally, it natively supports
+certain protocols, like ODBC, to ensure optimal performance.
 
-OIBus can request the agent through its South connectors [ODBC](../south-connectors/odbc) and [OPCHDA](../south-connectors/opc-hda).
+The primary purpose of the OIBus Agent is to integrate seamlessly with OIBus and its South connectors. However, it can
+also function independently via its API. This documentation provides a detailed overview of the API, organized protocol
+by protocol.
+
+
+## Download
 
 <div style={{ display: "flex", justifyContent: "space-around" }}>
-  <DownloadButton link={`https://github.com/OptimistikSAS/OIBusAgentRelease/releases/latest/download/oibus-agent-win_x64.zip`}>
+  <DownloadButton
+    link={`https://github.com/OptimistikSAS/OIBusAgentRelease/releases/latest/download/oibus-agent-win_x64.zip`}>
     <div>Windows (x64)</div>
   </DownloadButton>
-  <DownloadButton link={`https://github.com/OptimistikSAS/OIBusAgentRelease/releases/latest/download/oibus-agent-win_x86.zip`}>
+  <DownloadButton
+    link={`https://github.com/OptimistikSAS/OIBusAgentRelease/releases/latest/download/oibus-agent-win_x86.zip`}>
     <div>Windows (x86)</div>
   </DownloadButton>
-  <DownloadButton link={`https://github.com/OptimistikSAS/OIBusAgentRelease/releases/latest/download/oibus-agent-win_arm64.zip`}>
+  <DownloadButton
+    link={`https://github.com/OptimistikSAS/OIBusAgentRelease/releases/latest/download/oibus-agent-win_arm64.zip`}>
     <div>Windows (arm64)</div>
   </DownloadButton>
 </div>
@@ -30,7 +39,8 @@ Unzip the archive, from which you will get three files:
 - uninstall-agent.bat: script used to uninstall the service
 
 ### Installation
-By default, running `install-agent.bat` install the agent as a service with the name `OIBusAgent` and will listen to port `2224`:
+By default, running `install-agent.bat` install the agent as a service with the name `OIBusAgent` and will listen to
+port `2224`:
 ```
 install-agent.bat
 ```

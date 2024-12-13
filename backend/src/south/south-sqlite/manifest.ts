@@ -3,7 +3,7 @@ import { buildDateTimeFieldsFormControl, buildSerializationFormControl } from '.
 
 const manifest: SouthConnectorManifest = {
   id: 'sqlite',
-  name: 'SQLite',
+  name: 'SQLite™',
   category: 'database',
   description: 'Query  SQLite™ databases',
   modes: {
