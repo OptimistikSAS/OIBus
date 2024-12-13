@@ -3,7 +3,7 @@ import { proxy } from '../../../shared/model/manifest-factory';
 
 const manifest: NorthConnectorManifest = {
   id: 'azure-blob',
-  name: 'Azure Blob',
+  name: 'Azure Blob Storage™',
   category: 'file',
   description: 'Store files in Microsoft Azure Blob Storage™',
   modes: {

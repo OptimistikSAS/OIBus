@@ -1,24 +1,24 @@
 ---
-sidebar_position: 1
+sidebar_position: 3
 ---
 
-# Folder Scanner
+# SFTP
 
-The Folder Scanner South connector operates by periodically scanning the specified input folder for new files. It
-utilizes regular expressions (Regexp) defined in its items to determine which files to monitor. When a new file matching
-the defined criteria is detected, it is then transmitted to North caches.
+Read files from a remote SFTP server.
 
 ## Specific settings
 
-- **Input folder**: This field specifies the path of the folder to be scanned. The path can be either absolute or
-  relative.
-  In the case of a relative path, it is computed based on the **Data folder** mentioned in the _About_ section. Remote
-  paths can also be specified, such as `/remote.server/data` or `Z:\Remote disk\DATA`. Note that the path is
-  case-sensitive.
+- **Host**: IP address or hostname of the Modbus server machine.
+- **Port**: The port to use for connection (8080 by default).
+- **Authentication**:
+    - Password: The username and password
+    - Private key: The username and the path of the private key (PEM format). A passphrase can be used with the private
+      key.
 - **Compress file**: If enabled, files are compressed using gzip locally before being sent into the North caches.
 
 ## Item settings
 
+- **Remote folder**: This is the directory where files will be stored.
 - **RegExp**: You can use a Regular Expression to selectively retrieve files that match a specific pattern. Here are
   some examples:
     - `.*` retrieves all files in the input folder.
@@ -38,10 +38,4 @@ the defined criteria is detected, it is then transmitted to North caches.
 
 :::info Regex testing
 To check your regular expressions, you can utilize a tool like https://regex101.com/.
-:::
-
-:::danger User access
-The user who runs OIBus (the logged-in user when OIBus is executed from a terminal or the service session when OIBus is
-run as a service) must have read access to the input folder in order to read the files. If **Preserve file** is not
-enabled, the files are set to be removed and write access may also be needed to delete the files.
 :::

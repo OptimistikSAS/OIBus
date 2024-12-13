@@ -3,6 +3,7 @@ sidebar_position: 14
 ---
 
 import ItemSettings from './_south-sql-item-settings.mdx';
+import ThrottlingSettings from './_throttling-settings.mdx';
 
 # ODBC
 Send SQL queries to a local ODBC driver or to a remote [OIBus Agent](../oibus-agent/odbc.md) that can manage ODBC
@@ -10,16 +11,17 @@ queries on the same machine as the server.
 
 The OIBus agent can be installed separately, as specified in its [documentation](../oibus-agent/installation).
 
-This connector proves valuable when retrieving data from IP21 ODBC interfaces or other ODBC-compatible applications.
+This connector proves valuable when retrieving data from Aspen InfoPlus.21® (IP21) ODBC interfaces or other
+ODBC-compatible applications.
 
 ## Specific settings
-- **Use remote agent**: If set to `No`, ensure that an ODBC [driver is installed](#driver-installation) on the machine
+- **Use remote agent**: If disabled, ensure that an ODBC [driver is installed](#driver-installation) on the machine
 where OIBus is deployed. Alternatively, you can opt to [install an OIBus agent](../oibus-agent/installation) on a remote
 machine equipped with the necessary drivers.
 - **Remote agent URL**: Specify the URL of the remote OIBus agent, e.g., `http://ip-address-or-host:2224`.
+- **Connection timeout**: Timeout setting for establishing the connection.
 - **Retry interval**: Time to wait before retrying connection.
 - **Request timeout**: Determine the timeout duration for each query.
-- **Connection timeout**: Timeout setting for establishing the connection.
 - **Connection string**: The ODBC connection string.
 - **Password**: The authentication password, securely stored within OIBus configuration. If directly included in the
 connection string, the password will be stored in plain text. When a password is used, OIBus appends `PWD=<password>` to
@@ -51,7 +53,7 @@ Check if the installation was successful and list the ODBC config files: `odbcin
 Check the installed drivers: `cat /opt/homebrew/etc/odbcinst.ini`
 :::
 
-### Using OIBus with IP21
+### Using OIBus with Aspen InfoPlus.21® (IP21)
 ODBC connections often suffer from latency issues, particularly during large historian queries, such as those involving
 IP21. This can place a heavy load on both the network and the server.
 
@@ -75,4 +77,5 @@ different user, which can be configured through the service management window.
 
 The following connection string works with a basic IP21 installation: `Driver={AspenTech SQLplus};HOST=<host>;PORT=10014"`
 
-<ItemSettings></ItemSettings>
+<ThrottlingSettings />
+<ItemSettings />

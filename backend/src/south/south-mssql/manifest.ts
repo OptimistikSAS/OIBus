@@ -3,9 +3,9 @@ import { buildDateTimeFieldsFormControl, buildSerializationFormControl } from '.
 
 const manifest: SouthConnectorManifest = {
   id: 'mssql',
-  name: 'MSSQL',
+  name: 'Microsoft SQL Server™',
   category: 'database',
-  description: 'Query Microsoft SQL Server™ databases',
+  description: 'Query Microsoft SQL Server™ (MSSQL) databases',
   modes: {
     subscription: false,
     lastPoint: false,

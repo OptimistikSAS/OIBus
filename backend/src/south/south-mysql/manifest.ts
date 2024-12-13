@@ -3,7 +3,7 @@ import { buildDateTimeFieldsFormControl, buildSerializationFormControl } from '.
 
 const manifest: SouthConnectorManifest = {
   id: 'mysql',
-  name: 'MySQL',
+  name: 'MySQL® / MariaDB™',
   category: 'database',
   description: 'Query MySQL® or MariaDB™ databases',
   modes: {

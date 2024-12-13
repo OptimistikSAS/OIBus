@@ -20,7 +20,7 @@ const manifest: SouthConnectorManifest = {
       defaultValue: '127.0.0.1',
       displayInViewMode: true,
       newRow: true,
-      class: 'col-6'
+      class: 'col-8'
     },
     {
       key: 'port',
@@ -29,7 +29,7 @@ const manifest: SouthConnectorManifest = {
       defaultValue: 8080,
       validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
       displayInViewMode: true,
-      class: 'col-2'
+      class: 'col-4'
     },
     {
       key: 'authentication',
@@ -37,7 +37,7 @@ const manifest: SouthConnectorManifest = {
       options: ['password', 'private-key'],
       label: 'Authentication',
       pipe: 'authentication',
-      defaultValue: 'user',
+      defaultValue: 'password',
       newRow: true,
       validators: [{ key: 'required' }],
       displayInViewMode: true,

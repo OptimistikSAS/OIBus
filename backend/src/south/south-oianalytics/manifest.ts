@@ -3,7 +3,7 @@ import { buildSerializationFormControl, proxy } from '../../../shared/model/mani
 
 const manifest: SouthConnectorManifest = {
   id: 'oianalytics',
-  name: 'OIAnalytics',
+  name: 'OIAnalytics®',
   category: 'api',
   description: 'Query time values from OIAnalytics®',
   modes: {
