@@ -17,6 +17,10 @@
     "target": "ES2022",
     "module": "ES2022",
     "types": [
+      // jasmine shouldn't be there, but this is a workaround for https://youtrack.jetbrains.com/issue/WEB-69571/Types-specified-in-tsconfig.spec.json-are-not-recognized
+      // without this, the IDE marks plenty of lines in the tests as errors even though they are correct
+      // and we don't have autocompletion on jasmine anymore.
+      "jasmine",
       "@angular/localize"
     ]
   },

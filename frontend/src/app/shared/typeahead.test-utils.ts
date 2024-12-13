@@ -26,11 +26,10 @@ export class TestTypeahead extends TestInput {
    * It returns the TypeaheadTEster,
    * allowing to chain another method like `tester.myInput.fillWith('test').selectLabel('test')`.
    */
-  override fillWith(text: string): TestTypeahead {
+  override fillWith(text: string) {
     super.fillWith(text);
     tick(TYPEAHEAD_DEBOUNCE_TIME);
-    this.tester.detectChanges();
-    return this;
+    return this.tester.change();
   }
 
   /**
