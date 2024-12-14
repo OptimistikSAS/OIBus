@@ -1,6 +1,4 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-expect-error
-import ads from 'ads-client';
+import ads, { AdsDataType } from 'ads-client';
 import SouthADS from './south-ads';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
@@ -18,10 +16,24 @@ import { SouthConnectorEntity } from '../../model/south-connector.model';
 import testData from '../../tests/utils/test-data';
 import { mockBaseFolders } from '../../tests/utils/test-utils';
 
-// End of global variables
-
 jest.mock('node:fs/promises');
-jest.mock('ads-client');
+const readValue = jest.fn();
+const disconnect = jest.fn();
+const connect = jest.fn().mockImplementation(() => ({
+  targetAmsNetId: 'targetAmsNetId',
+  localAmsNetId: 'localAmsNetId',
+  localAdsPort: 'localAdsPort'
+}));
+jest.mock('ads-client', () => ({
+  Client: jest.fn().mockImplementation(() => ({
+    connection: {
+      connected: true
+    },
+    connect,
+    disconnect,
+    readValue
+  }))
+}));
 jest.mock('../../service/utils');
 
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
@@ -40,9 +52,6 @@ jest.mock(
 
 const logger: pino.Logger = new PinoLogger();
 const addContentCallback = jest.fn();
-
-const readSymbol = jest.fn();
-const disconnect = jest.fn();
 
 describe('South ADS', () => {
   let south: SouthADS;
@@ -101,19 +110,6 @@ describe('South ADS', () => {
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
-    // Mock ADS Client constructor and the used function
-    ads.Client.mockReturnValue({
-      connection: {
-        connected: true
-      },
-      connect: () =>
-        new Promise(resolve => {
-          resolve({});
-        }),
-      disconnect,
-      readSymbol
-    });
-
     south = new SouthADS(
       configuration,
       addContentCallback,
@@ -143,11 +139,8 @@ describe('South ADS', () => {
   it('should retry to connect in case of failure', async () => {
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
 
-    ads.Client.mockReturnValue({
-      connect: () =>
-        new Promise((resolve, reject) => {
-          reject();
-        })
+    connect.mockImplementationOnce(() => {
+      throw new Error('connection error');
     });
 
     south.disconnectAdsClient = jest.fn();
@@ -258,7 +251,7 @@ describe('South ADS', () => {
   });
 
   it('should parse ST_Example value', () => {
-    const subItems = [
+    const subItems: Array<AdsDataType> = [
       {
         name: 'SomeText',
         type: 'STRING(50)',
@@ -269,7 +262,6 @@ describe('South ADS', () => {
         comment: '',
         attributes: [],
         rpcMethods: [],
-        arrayData: [],
         subItems: []
       },
       {
@@ -285,7 +277,6 @@ describe('South ADS', () => {
           { name: 'DisplayMaxValue', value: '10000' }
         ],
         rpcMethods: [],
-        arrayData: [],
         subItems: []
       },
       {
@@ -298,10 +289,9 @@ describe('South ADS', () => {
         comment: '',
         attributes: [],
         rpcMethods: [],
-        arrayData: [],
         subItems: []
       }
-    ];
+    ] as unknown as Array<AdsDataType>;
     expect(
       south.parseValues(
         configuration.items[1].name,
@@ -427,30 +417,13 @@ describe('South ADS', () => {
   });
 
   it('should test ADS connection', async () => {
-    // Mock ADS Client constructor and the used function
-    ads.Client.mockReturnValue({
-      connection: {
-        connected: true
-      },
-      connect: () =>
-        new Promise(resolve => {
-          resolve({
-            targetAmsNetId: 'targetAmsNetId',
-            localAmsNetId: 'localAmsNetId',
-            localAdsPort: 'localAdsPort'
-          });
-        }),
-      disconnect,
-      readSymbol
-    });
-
     south.disconnect = jest.fn();
     await south.testConnection();
     expect(south.disconnect).toHaveBeenCalledTimes(1);
   });
 
   it('should read symbol', async () => {
-    readSymbol
+    readValue
       .mockImplementationOnce(() => {
         return new Promise(resolve => {
           resolve({
@@ -459,9 +432,9 @@ describe('South ADS', () => {
             },
             value: 1,
             timestamp: testData.constants.dates.FAKE_NOW,
-            type: {
+            dataType: {
               subItems: [],
-              enumInfo: []
+              enumInfos: []
             }
           });
         });
@@ -485,7 +458,7 @@ describe('South ADS', () => {
     await south.readAdsSymbol(configuration.items[0], testData.constants.dates.FAKE_NOW);
     await south.readAdsSymbol(configuration.items[0], testData.constants.dates.FAKE_NOW);
 
-    expect(readSymbol).toHaveBeenCalledTimes(2);
+    expect(readValue).toHaveBeenCalledTimes(2);
     expect(south.parseValues).toHaveBeenCalledTimes(2);
     expect(south.parseValues).toHaveBeenCalledWith(
       `${configuration.settings.plcName}${configuration.items[0].name}`,
