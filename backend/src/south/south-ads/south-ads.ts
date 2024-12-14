@@ -1,6 +1,4 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-expect-error
-import ads from 'ads-client';
+import { Client, AdsDataType } from 'ads-client';
 import SouthConnector from '../south-connector';
 import { DateTime } from 'luxon';
 import { Instant } from '../../../shared/model/types';
@@ -15,6 +13,7 @@ import SouthCacheRepository from '../../repository/cache/south-cache.repository'
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import { AdsEnumInfoEntry } from 'ads-client/dist/types/ads-protocol-types';
 
 interface ADSOptions {
   targetAmsNetId: string;
@@ -30,7 +29,7 @@ interface ADSOptions {
  * Class SouthADS - Provides instruction for TwinCAT ADS client connection
  */
 export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSItemSettings> implements QueriesLastPoint {
-  private client: ads.Client | null = null;
+  private client: Client | null = null;
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private disconnecting = false;
 
@@ -64,8 +63,8 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
     dataType: string,
     valueToParse: unknown,
     timestamp: Instant,
-    subItems: Array<any> = [],
-    enumInfo: Array<{ name: string; value: number }> = []
+    subItems: Array<AdsDataType> = [],
+    enumInfo: Array<AdsEnumInfoEntry> = []
   ): Array<OIBusTimeValue> {
     let valueToAdd: string | null = null;
     /**
@@ -143,7 +142,7 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
                   (valueToParse as Record<string, unknown>)[subItem.name],
                   timestamp,
                   subItem.subItems,
-                  subItem.enumInfo
+                  subItem.enumInfos
                 )
               );
             return parsedValues.reduce((concatenatedResults, result) => [...concatenatedResults, ...result], []);
@@ -188,7 +187,7 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
         content: results.reduce((concatenatedResults, result) => [...concatenatedResults, ...result], [])
       });
     } catch (error: unknown) {
-      if ((error as Error).message.startsWith('Client is not connected')) {
+      if ((error as Error).message.includes('Client is not connected')) {
         this.logger.error('ADS client disconnected. Reconnecting');
         await this.disconnect();
         this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
@@ -198,25 +197,17 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
     }
   }
 
-  readAdsSymbol(item: SouthConnectorItemEntity<SouthADSItemSettings>, timestamp: Instant): Promise<Array<OIBusTimeValue>> {
-    return new Promise((resolve, reject) => {
-      this.client
-        .readSymbol(item.settings.address)
-        .then((nodeResult: any) => {
-          const parsedResult = this.parseValues(
-            `${this.connector.settings.plcName}${item.name}`,
-            nodeResult.symbol?.type,
-            nodeResult.value,
-            timestamp,
-            nodeResult.type?.subItems,
-            nodeResult.type?.enumInfo
-          );
-          resolve(parsedResult);
-        })
-        .catch((error: Error) => {
-          reject(error);
-        });
-    });
+  async readAdsSymbol(item: SouthConnectorItemEntity<SouthADSItemSettings>, timestamp: Instant): Promise<Array<OIBusTimeValue>> {
+    const result = await this.client!.readValue(item.settings.address);
+
+    return this.parseValues(
+      `${this.connector.settings.plcName}${item.name}`,
+      result.symbol?.type,
+      result.value,
+      timestamp,
+      result.dataType?.subItems,
+      result.dataType?.enumInfos
+    );
   }
 
   override async testItem(
@@ -274,7 +265,7 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
       const options = this.createConnectionOptions();
       this.logger.info(`Connecting to ADS Client with options ${JSON.stringify(options)}`);
 
-      this.client = new ads.Client(options);
+      this.client = new Client(options);
       const result = await this.client.connect();
       this.logger.info(
         `Connected to the ${result.targetAmsNetId} with local AmsNetId ${result.localAmsNetId} and local port ${result.localAdsPort}`
@@ -291,7 +282,7 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
 
   override async testConnection(): Promise<void> {
     const options = this.createConnectionOptions();
-    this.client = new ads.Client(options);
+    this.client = new Client(options);
     await this.client.connect();
     await this.disconnect();
   }
