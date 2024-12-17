@@ -125,7 +125,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
     };
 
     it('should duplicate item', () => {
-      tester.componentInstance.prepareForCopy(southItemSchema, southItem, historyId, southConnectorCommand, southManifest);
+      tester.componentInstance.prepareForCopy(southItemSchema, allItems, southItem, historyId, southConnectorCommand, southManifest);
       tester.detectChanges();
       expect(tester.name).toHaveValue('myName-copy');
 
@@ -153,7 +153,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
     };
 
     beforeEach(() => {
-      tester.componentInstance.prepareForEdition(southItemSchema, allItems, southItem, historyId, southConnectorCommand, southManifest);
+      tester.componentInstance.prepareForEdition(southItemSchema, allItems, southItem, historyId, southConnectorCommand, southManifest, 0);
       tester.detectChanges();
     });
 

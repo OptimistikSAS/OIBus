@@ -153,7 +153,15 @@ describe('EditSouthItemModalComponent', () => {
     };
 
     it('should duplicate item', () => {
-      tester.componentInstance.prepareForCopy(southItemSchema, scanModes, southItem, southId, southConnectorCommand, southManifest);
+      tester.componentInstance.prepareForCopy(
+        southItemSchema,
+        allItems,
+        scanModes,
+        southItem,
+        southId,
+        southConnectorCommand,
+        southManifest
+      );
       tester.detectChanges();
       expect(tester.name).toHaveValue('myName-copy');
 
@@ -192,7 +200,8 @@ describe('EditSouthItemModalComponent', () => {
         southItem,
         southId,
         southConnectorCommand,
-        southManifest
+        southManifest,
+        0
       );
       tester.detectChanges();
     });

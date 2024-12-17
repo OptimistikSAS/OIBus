@@ -231,21 +231,22 @@
               </div>
             </div>
             <oib-history-query-items
-              (inMemoryItems)="updateInMemoryItems($event)"
               [historyId]="historyId"
-              [southConnectorCommand]="southConnectorCommand"
               [historyQuery]="historyQuery"
+              [southConnectorCommand]="southConnectorCommand"
               [southManifest]="southManifest"
+              [saveChangesDirectly]="saveItemChangesDirectly"
+              (inMemoryItems)="updateInMemoryItems($event)"
             />
           }
           @if (mode === 'create') {
             <oib-history-query-items
-              (inMemoryItems)="updateInMemoryItems($event)"
-              [creationItems]="inMemoryItems"
               [historyId]="historyId"
-              [southConnectorCommand]="southConnectorCommand"
               [historyQuery]="historyQuery"
+              [southConnectorCommand]="southConnectorCommand"
               [southManifest]="southManifest"
+              [saveChangesDirectly]="saveItemChangesDirectly"
+              (inMemoryItems)="updateInMemoryItems($event)"
             />
           }
         </form>
