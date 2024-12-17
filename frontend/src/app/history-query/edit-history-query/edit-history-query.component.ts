@@ -89,6 +89,7 @@ export class EditHistoryQueryComponent implements OnInit {
   northType = '';
   fromNorthId = '';
   duplicateId = '';
+  saveItemChangesDirectly!: boolean;
 
   historyQueryForm: FormGroup<{
     name: FormControl<string>;
@@ -122,22 +123,35 @@ export class EditHistoryQueryComponent implements OnInit {
           this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
 
           const paramHistoryQueryId = params.get('historyQueryId');
-          const paramDuplicateHistoryQuery = queryParams.get('duplicate');
+          const paramDuplicateHistoryQueryId = queryParams.get('duplicate');
           const southId = queryParams.get('southId');
           const northId = queryParams.get('northId') || '';
 
           let historyQueryObs: Observable<null | HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>> = of(null);
           let northObs: Observable<null | NorthConnectorDTO<NorthSettings>> = of(null);
           let southObs: Observable<null | SouthConnectorDTO<SouthSettings, SouthItemSettings>> = of(null);
+
+          // if there is a History ID, we are editing a South connector
           if (paramHistoryQueryId) {
             this.mode = 'edit';
+            this.historyId = paramHistoryQueryId;
+            this.saveItemChangesDirectly = true;
             historyQueryObs = this.historyQueryService.get(paramHistoryQueryId);
-          } else if (paramDuplicateHistoryQuery) {
-            // fetch the existing history query in case of duplicate
-            historyQueryObs = this.historyQueryService.get(paramDuplicateHistoryQuery);
-            this.duplicateId = paramDuplicateHistoryQuery;
-          } else {
+          }
+          // fetch the existing history query in case of duplicate
+          else if (paramDuplicateHistoryQueryId) {
+            this.mode = 'create';
+            this.historyId = 'create';
+            this.duplicateId = paramDuplicateHistoryQueryId;
+            this.saveItemChangesDirectly = false;
+            historyQueryObs = this.historyQueryService.get(paramDuplicateHistoryQueryId);
+          }
+          // otherwise, we are creating one
+          else {
             // In creation mode, check if we create a history query from new or existing connectors
+            this.mode = 'create';
+            this.historyId = 'create';
+            this.saveItemChangesDirectly = false;
             if (southId) {
               southObs = this.southConnectorService.get(southId);
             } else {
@@ -153,18 +167,28 @@ export class EditHistoryQueryComponent implements OnInit {
         }),
         switchMap(([historyQuery, northConnector, southConnector]) => {
           this.historyQuery = historyQuery;
+
+          // creating/duplicating history query
           if (historyQuery) {
             this.southType = historyQuery.southType;
             this.northType = historyQuery.northType;
-          } else {
+
+            // When changes are not saved directly, items come from memory
+            if (!this.saveItemChangesDirectly) {
+              this.inMemoryItems = historyQuery.items.map(item => ({
+                ...item,
+                id: null // we need to remove the exiting ids
+              }));
+            }
+          }
+          // creating new from an existing south and north connector
+          else {
             if (southConnector) {
               this.southType = southConnector.type;
               this.fromSouthId = southConnector.id;
               this.inMemoryItems = southConnector.items.map(item => ({
-                id: '',
-                name: item.name,
-                enabled: item.enabled,
-                settings: item.settings
+                ...item,
+                id: null // we need to remove the exiting ids
               }));
             }
             if (northConnector) {
@@ -225,12 +249,6 @@ export class EditHistoryQueryComponent implements OnInit {
           }
         }
 
-        if (this.mode === 'edit' && this.historyQuery) {
-          this.historyId = this.historyQuery.id;
-        } else {
-          this.historyId = 'create';
-        }
-
         // we should provoke all value changes to make sure fields are properly hidden and disabled
         this.historyQueryForm.setValue(this.historyQueryForm.getRawValue());
 
@@ -277,14 +295,15 @@ export class EditHistoryQueryComponent implements OnInit {
           }
         }
       },
-      items: this.historyQuery
-        ? this.historyQuery.items.map(item => ({
-            id: item.id,
-            name: item.name,
-            enabled: item.enabled,
-            settings: item.settings
-          }))
-        : this.inMemoryItems
+      items:
+        this.saveItemChangesDirectly && this.historyQuery
+          ? this.historyQuery.items.map(item => ({
+              id: item.id,
+              name: item.name,
+              enabled: item.enabled,
+              settings: item.settings
+            }))
+          : this.inMemoryItems
     };
     if (this.mode === 'edit') {
       const modalRef = this.modalService.open(ResetCacheHistoryQueryModalComponent);

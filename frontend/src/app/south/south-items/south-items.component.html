@@ -1,4 +1,4 @@
-@if (southConnector()) {
+@if (saveChangesDirectly()) {
   <div class="my-2">
     <span class="fa fa-warning mx-1" style="color: orange"></span>
     <span translate="south.items.display-mode-info"></span>
@@ -44,7 +44,7 @@
           type="button"
           class="btn btn-danger btn-sm oib-box-btn"
           (click)="deleteAllItems()"
-          [disabled]="southConnector() ? southConnector()!.items.length === 0 : this.allItems.length === 0"
+          [disabled]="this.allItems.length === 0"
           translate="south.items.delete-all"
           id="delete-all"
         ></button>
@@ -82,7 +82,7 @@
         <tbody>
           @for (item of displayedItems.content; track item.id) {
             <tr class="south-item">
-              @if (southConnector()) {
+              @if (this.saveChangesDirectly()) {
                 <td>
                   <div class="form-check form-switch">
                     <input (click)="toggleItem(item, !item.enabled)" [checked]="item.enabled" type="checkbox" class="form-check-input" />
