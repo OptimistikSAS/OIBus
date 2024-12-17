@@ -39,6 +39,12 @@ export class EditHistoryQueryItemModalComponent {
   item: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings> | null = null;
   itemList: Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>> = [];
 
+  /** Not every item passed will have an id, but we still need to check for uniqueness.
+   * This ensures that we have a backup identifier for the currently edited item.
+   * In 'copy' and 'create' cases, we always check all items' names
+   */
+  tableIndex: number | null = null;
+
   form: FormGroup<{
     name: FormControl<string>;
     enabled: FormControl<boolean>;
@@ -47,12 +53,22 @@ export class EditHistoryQueryItemModalComponent {
 
   private checkUniqueness(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
-      return this.itemList
-        .filter(item => item.id && item.id !== this.item?.id)
-        .map(item => item.name)
-        .includes(control.value)
-        ? { mustBeUnique: true }
-        : null;
+      let names!: Array<string>;
+
+      switch (this.mode) {
+        case 'copy':
+        case 'create':
+          names = this.itemList.map(item => item.name);
+          break;
+        case 'edit':
+          if (this.item!.id) {
+            names = this.itemList.filter(item => item.id && item.id !== this.item?.id).map(item => item.name);
+          }
+          names = this.itemList.filter((_, index) => index !== this.tableIndex).map(item => item.name);
+          break;
+      }
+
+      return names.includes(control.value) ? { mustBeUnique: true } : null;
     };
   }
 
@@ -93,6 +109,7 @@ export class EditHistoryQueryItemModalComponent {
 
   /**
    * Prepares the component for edition.
+   * @param tableIndex an additional identifier, when item ids are not available. This indexes the given itemList param
    */
   prepareForEdition(
     southItemSchema: SouthConnectorItemManifest,
@@ -100,7 +117,8 @@ export class EditHistoryQueryItemModalComponent {
     historyQueryItem: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>,
     historyId: string,
     southConnectorCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
-    southManifest: SouthConnectorManifest
+    southManifest: SouthConnectorManifest,
+    tableIndex: number
   ) {
     this.mode = 'edit';
     this.itemList = itemList;
@@ -111,6 +129,7 @@ export class EditHistoryQueryItemModalComponent {
     this.southItemRows = groupFormControlsByRow(southItemSchema.settings);
     this.southItemSchema = southItemSchema;
     this.createForm(historyQueryItem);
+    this.tableIndex = tableIndex;
   }
 
   /**
@@ -118,6 +137,7 @@ export class EditHistoryQueryItemModalComponent {
    */
   prepareForCopy(
     southItemSchema: SouthConnectorItemManifest,
+    itemList: Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>>,
     southItem: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>,
     historyId: string,
     southConnectorCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
@@ -129,6 +149,7 @@ export class EditHistoryQueryItemModalComponent {
     this.item = JSON.parse(JSON.stringify(southItem)) as HistoryQueryItemDTO<SouthItemSettings>;
     this.item.name = `${southItem.name}-copy`;
     this.mode = 'copy';
+    this.itemList = itemList;
     this.southItemSchema = southItemSchema;
     this.southItemRows = groupFormControlsByRow(southItemSchema.settings);
     this.createForm(this.item);

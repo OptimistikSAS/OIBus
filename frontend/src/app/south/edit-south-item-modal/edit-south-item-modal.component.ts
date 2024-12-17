@@ -64,6 +64,12 @@ export class EditSouthItemModalComponent {
   item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings> | null = null;
   itemList: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>> = [];
 
+  /** Not every item passed will have an id, but we still need to check for uniqueness.
+   * This ensures that we have a backup identifier for the currently edited item.
+   * In 'copy' and 'create' cases, we always check all items' names
+   */
+  tableIndex: number | null = null;
+
   form: FormGroup<{
     name: FormControl<string>;
     scanModeId: FormControl<string | null>;
@@ -79,12 +85,22 @@ export class EditSouthItemModalComponent {
 
   private checkUniqueness(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
-      return this.itemList
-        .filter(item => item.id && item.id !== this.item?.id)
-        .map(item => item.name)
-        .includes(control.value)
-        ? { mustBeUnique: true }
-        : null;
+      let names!: Array<string>;
+
+      switch (this.mode) {
+        case 'copy':
+        case 'create':
+          names = this.itemList.map(item => item.name);
+          break;
+        case 'edit':
+          if (this.item!.id) {
+            names = this.itemList.filter(item => item.id && item.id !== this.item?.id).map(item => item.name);
+          }
+          names = this.itemList.filter((_, index) => index !== this.tableIndex).map(item => item.name);
+          break;
+      }
+
+      return names.includes(control.value) ? { mustBeUnique: true } : null;
     };
   }
 
@@ -136,6 +152,7 @@ export class EditSouthItemModalComponent {
 
   /**
    * Prepares the component for edition.
+   * @param tableIndex an additional identifier, when item ids are not available. This indexes the given itemList param
    */
   prepareForEdition(
     southItemSchema: SouthConnectorItemManifest,
@@ -144,7 +161,8 @@ export class EditSouthItemModalComponent {
     southItem: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>,
     southId: string,
     southConnectorCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
-    southManifest: SouthConnectorManifest
+    southManifest: SouthConnectorManifest,
+    tableIndex: number
   ) {
     this.mode = 'edit';
     this.itemList = itemList;
@@ -158,6 +176,7 @@ export class EditSouthItemModalComponent {
     this.southItemSchema = southItemSchema;
     this.scanModes = scanModes;
     this.createForm(southItem);
+    this.tableIndex = tableIndex;
   }
 
   /**
@@ -165,6 +184,7 @@ export class EditSouthItemModalComponent {
    */
   prepareForCopy(
     southItemSchema: SouthConnectorItemManifest,
+    itemList: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>>,
     scanModes: Array<ScanModeDTO>,
     southItem: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>,
     southId: string,
@@ -177,6 +197,7 @@ export class EditSouthItemModalComponent {
     this.item = JSON.parse(JSON.stringify(southItem)) as SouthConnectorItemDTO<SouthItemSettings>;
     this.item.name = `${southItem.name}-copy`;
     this.mode = 'copy';
+    this.itemList = itemList;
     this.subscriptionOnly = southItemSchema.scanMode.subscriptionOnly;
     this.acceptSubscription = southItemSchema.scanMode.acceptSubscription;
     this.southItemSchema = southItemSchema;

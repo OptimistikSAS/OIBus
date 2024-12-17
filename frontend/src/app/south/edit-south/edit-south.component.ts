@@ -57,6 +57,7 @@ export class EditSouthComponent implements OnInit {
   southConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> | null = null;
   southType = '';
   duplicateId = '';
+  saveItemChangesDirectly!: boolean;
   state = new ObservableState();
 
   southSettingsControls: Array<Array<OibFormControl>> = [];
@@ -76,28 +77,48 @@ export class EditSouthComponent implements OnInit {
       .pipe(
         switchMap(([scanModes, params, queryParams]) => {
           this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
-          let paramSouthId = params.get('southId');
+          const paramSouthId = params.get('southId');
+          const duplicateSouthId = queryParams.get('duplicate');
           this.southType = queryParams.get('type') || '';
+
           // if there is a South ID, we are editing a South connector
           if (paramSouthId) {
             this.mode = 'edit';
-          } else {
-            // fetch the South connector in case of duplicate
-            paramSouthId = queryParams.get('duplicate');
-          }
-
-          if (paramSouthId) {
-            this.duplicateId = paramSouthId;
+            this.southId = paramSouthId;
+            this.saveItemChangesDirectly = true;
             return this.southConnectorService.get(paramSouthId).pipe(this.state.pendingUntilFinalization());
           }
+          // fetch the South connector in case of duplicate
+          else if (duplicateSouthId) {
+            this.mode = 'create';
+            this.southId = 'create';
+            this.duplicateId = duplicateSouthId;
+            this.saveItemChangesDirectly = false;
+            return this.southConnectorService.get(duplicateSouthId).pipe(this.state.pendingUntilFinalization());
+          }
           // otherwise, we are creating one
-          return of(null);
+          else {
+            this.mode = 'create';
+            this.southId = 'create';
+            this.saveItemChangesDirectly = false;
+            return of(null);
+          }
         }),
         switchMap(southConnector => {
           this.southConnector = southConnector;
           if (southConnector) {
             this.southType = southConnector.type;
+
+            // When changes are not saved directly, items come from memory
+            if (!this.saveItemChangesDirectly) {
+              this.inMemoryItems = southConnector.items.map(item => ({
+                ...item,
+                id: null, // we need to remove the exiting ids
+                scanModeName: null
+              }));
+            }
           }
+
           return this.southConnectorService.getSouthConnectorTypeManifest(this.southType);
         })
       )
@@ -122,12 +143,6 @@ export class EditSouthComponent implements OnInit {
         } else {
           // we should provoke all value changes to make sure fields are properly hidden and disabled
           this.southForm.setValue(this.southForm.getRawValue());
-        }
-
-        if (this.mode === 'edit' && this.southConnector) {
-          this.southId = this.southConnector.id;
-        } else {
-          this.southId = 'create';
         }
       });
   }
@@ -182,16 +197,17 @@ export class EditSouthComponent implements OnInit {
       description: formValue.description!,
       enabled: formValue.enabled!,
       settings: formValue.settings!,
-      items: this.southConnector
-        ? this.southConnector.items.map(item => ({
-            id: item.id,
-            name: item.name,
-            enabled: item.enabled,
-            scanModeId: item.scanModeId,
-            scanModeName: null,
-            settings: item.settings
-          }))
-        : this.inMemoryItems
+      items:
+        this.saveItemChangesDirectly && this.southConnector
+          ? this.southConnector.items.map(item => ({
+              id: item.id,
+              name: item.name,
+              enabled: item.enabled,
+              scanModeId: item.scanModeId,
+              scanModeName: null,
+              settings: item.settings
+            }))
+          : this.inMemoryItems
     };
 
     return command;
