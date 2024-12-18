@@ -42,7 +42,7 @@ describe('South OPC', () => {
   const configuration: SouthConnectorEntity<SouthOPCSettings, SouthOPCItemSettings> = {
     id: 'southId',
     name: 'south',
-    type: 'test',
+    type: 'opc',
     description: 'my test connector',
     enabled: true,
     settings: {

@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, forwardRef, OnInit, inject, input } from '@angular/core';
+import { AfterViewChecked, Component, forwardRef, inject, input, OnInit } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -8,18 +8,16 @@ import {
   ValidationErrors,
   Validator
 } from '@angular/forms';
-import { formDirectives } from '../../form-directives';
 
-import { TranslateDirective } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { EditElementComponent } from './edit-element/edit-element.component';
 import { OibFormControl } from '../../../../../../backend/shared/model/form.model';
-import { PipeProviderService } from '../pipe-provider.service';
 
 @Component({
   selector: 'oib-array',
   templateUrl: './oib-array.component.html',
   styleUrl: './oib-array.component.scss',
-  imports: [...formDirectives, TranslateDirective, EditElementComponent],
+  imports: [TranslateDirective, EditElementComponent, TranslatePipe],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -34,7 +32,7 @@ import { PipeProviderService } from '../pipe-provider.service';
   ]
 })
 export class OibArrayComponent implements OnInit, AfterViewChecked, ControlValueAccessor, Validator {
-  private pipeProviderService = inject(PipeProviderService);
+  private translateService = inject(TranslateService);
 
   readonly label = input('');
   readonly key = input('');
@@ -51,7 +49,11 @@ export class OibArrayComponent implements OnInit, AfterViewChecked, ControlValue
   ngOnInit(): void {
     this.formDescription().forEach(formControl => {
       if (formControl.displayInViewMode) {
-        this.displayedFields.push({ key: formControl.key, label: formControl.label, pipe: formControl.pipe });
+        if (formControl.type === 'OibSelect') {
+          this.displayedFields.push({ key: formControl.key, label: formControl.translationKey + '.' + 'title' });
+        } else {
+          this.displayedFields.push({ key: formControl.key, label: formControl.translationKey });
+        }
       }
     });
   }
@@ -157,7 +159,6 @@ export class OibArrayComponent implements OnInit, AfterViewChecked, ControlValue
   /**
    * Method that should be called when the "Save" or "OK" button of the edit component is clicked, in order to save the
    * edited/created element in the array.
-   * @param element: the element that has been created/edited by the edit component
    */
   save(element: any) {
     if (!this.editedElement) {
@@ -226,12 +227,12 @@ export class OibArrayComponent implements OnInit, AfterViewChecked, ControlValue
     return defaultValue;
   }
 
-  getFieldValue(element: any, field: string, pipeIdentifier: string | undefined): string {
-    const value = element[field];
-    if (value && pipeIdentifier && this.pipeProviderService.validIdentifier(pipeIdentifier)) {
-      return this.pipeProviderService.getPipeForString(pipeIdentifier).transform(value);
+  getFieldValue(element: any, field: string): string {
+    const foundFormControl = this.formDescription().find(formControl => formControl.key === field);
+    if (foundFormControl && element[field] && foundFormControl.type === 'OibSelect') {
+      return this.translateService.instant(foundFormControl.translationKey + '.' + element[field]);
     }
-    return value;
+    return element[field];
   }
 
   validate(_control: AbstractControl): ValidationErrors | null {

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, input } from '@angular/core';
+import { Component, OnInit, input } from '@angular/core';
 
 import { AbstractControl, FormControl, FormGroup, FormSubmittedEvent } from '@angular/forms';
 import { formDirectives } from '../form-directives';
@@ -9,21 +9,18 @@ import { Timezone } from '../../../../../backend/shared/model/types';
 import { filter, Observable } from 'rxjs';
 import { inMemoryTypeahead } from '../typeahead';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { OibArrayComponent } from './oib-form-array/oib-array.component';
 import { groupFormControlsByRow } from '../form-utils';
-import { PipeProviderService } from './pipe-provider.service';
 import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
 
 @Component({
   selector: 'oib-form',
-  imports: [...formDirectives, OibCodeBlockComponent, NgbTypeahead, TranslateDirective, OibArrayComponent],
+  imports: [...formDirectives, OibCodeBlockComponent, NgbTypeahead, TranslateDirective, OibArrayComponent, TranslatePipe],
   templateUrl: './form.component.html',
   styleUrl: './form.component.scss'
 })
 export class FormComponent implements OnInit {
-  private pipeProviderService = inject(PipeProviderService);
-
   readonly settingsSchema = input<Array<Array<OibFormControl>>>([]);
   readonly scanModes = input<Array<ScanModeDTO>>([]);
   readonly certificates = input<Array<CertificateDTO>>([]);
@@ -59,13 +56,6 @@ export class FormComponent implements OnInit {
 
   asFormControl(abstractControl: AbstractControl): FormControl {
     return abstractControl as FormControl;
-  }
-
-  transform(value: string, pipeIdentifier: string | undefined): string {
-    if (!pipeIdentifier || !this.pipeProviderService.validIdentifier(pipeIdentifier)) {
-      return value;
-    }
-    return this.pipeProviderService.getPipeForString(pipeIdentifier).transform(value);
   }
 
   checkIfRequired(setting: OibSelectFormControl) {

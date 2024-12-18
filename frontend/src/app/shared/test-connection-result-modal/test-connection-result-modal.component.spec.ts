@@ -64,7 +64,7 @@ describe('TestConnectionResultModalComponent', () => {
   describe('South type', () => {
     const southConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> = {
       id: 'id1',
-      type: 'SQL',
+      type: 'mssql',
       name: 'My South Connector 1',
       description: 'My South connector description',
       enabled: true,
@@ -128,7 +128,7 @@ describe('TestConnectionResultModalComponent', () => {
   describe('North type', () => {
     const northConnector: NorthConnectorDTO<NorthSettings> = {
       id: 'id1',
-      type: 'SQL',
+      type: 'file-writer',
       name: 'My South Connector 1',
       description: 'My South connector description',
       enabled: true,

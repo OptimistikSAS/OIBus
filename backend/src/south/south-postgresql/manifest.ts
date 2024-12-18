@@ -1,11 +1,8 @@
 import { SouthConnectorManifest } from '../../../shared/model/south-connector.model';
-import { buildDateTimeFieldsFormControl, buildSerializationFormControl } from '../../../shared/model/manifest-factory';
 
 const manifest: SouthConnectorManifest = {
   id: 'postgresql',
-  name: 'PostgreSQL',
   category: 'database',
-  description: 'Query PostgreSQL databases',
   modes: {
     subscription: false,
     lastPoint: false,
@@ -16,7 +13,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'throttling',
       type: 'OibFormGroup',
-      label: 'Throttling',
+      translationKey: 'south.postgresql.throttling.title',
       class: 'col',
       newRow: true,
       displayInViewMode: false,
@@ -25,7 +22,7 @@ const manifest: SouthConnectorManifest = {
         {
           key: 'maxReadInterval',
           type: 'OibNumber',
-          label: 'Max read interval',
+          translationKey: 'south.postgresql.throttling.max-read-interval',
           validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }],
           defaultValue: 3600,
           unitLabel: 's',
@@ -34,7 +31,7 @@ const manifest: SouthConnectorManifest = {
         {
           key: 'readDelay',
           type: 'OibNumber',
-          label: 'Read delay',
+          translationKey: 'south.postgresql.throttling.read-delay',
           validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }],
           defaultValue: 200,
           unitLabel: 'ms',
@@ -43,7 +40,7 @@ const manifest: SouthConnectorManifest = {
         {
           key: 'overlap',
           type: 'OibNumber',
-          label: 'Overlap',
+          translationKey: 'south.postgresql.throttling.overlap',
           validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }],
           defaultValue: 0,
           unitLabel: 'ms',
@@ -54,25 +51,26 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'host',
       type: 'OibText',
-      label: 'Host',
+      translationKey: 'south.postgresql.host',
       defaultValue: 'localhost',
       validators: [{ key: 'required' }],
       newRow: true,
+      class: 'col-6',
       displayInViewMode: true
     },
     {
       key: 'port',
       type: 'OibNumber',
-      label: 'Port',
+      translationKey: 'south.postgresql.port',
       defaultValue: 5432,
-      class: 'col-2',
+      class: 'col-3',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
       displayInViewMode: true
     },
     {
       key: 'connectionTimeout',
       type: 'OibNumber',
-      label: 'Connection timeout',
+      translationKey: 'south.postgresql.connection-timeout',
       defaultValue: 10_000,
       class: 'col-3',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30000 } }],
@@ -82,34 +80,37 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'database',
       type: 'OibText',
-      label: 'Database',
+      translationKey: 'south.postgresql.database',
       defaultValue: 'db',
       newRow: true,
+      class: 'col-8',
       validators: [{ key: 'required' }],
       displayInViewMode: true
     },
     {
+      key: 'requestTimeout',
+      type: 'OibNumber',
+      translationKey: 'south.postgresql.request-timeout',
+      defaultValue: 10_000,
+      class: 'col-4',
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
+      unitLabel: 'ms',
+      displayInViewMode: false
+    },
+    {
       key: 'username',
       type: 'OibText',
-      label: 'Username',
-      displayInViewMode: true
+      translationKey: 'south.postgresql.username',
+      displayInViewMode: true,
+      newRow: true,
+      class: 'col-6'
     },
     {
       key: 'password',
       type: 'OibSecret',
-      label: 'Password',
-      displayInViewMode: false
-    },
-    {
-      key: 'requestTimeout',
-      type: 'OibNumber',
-      label: 'Request timeout',
-      defaultValue: 10_000,
-      class: 'col-4',
-      newRow: true,
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
-      unitLabel: 'ms',
-      displayInViewMode: false
+      translationKey: 'south.postgresql.password',
+      displayInViewMode: false,
+      class: 'col-6'
     }
   ],
   items: {
@@ -121,7 +122,7 @@ const manifest: SouthConnectorManifest = {
       {
         key: 'query',
         type: 'OibCodeBlock',
-        label: 'Query',
+        translationKey: 'south.items.postgresql.query',
         contentType: 'sql',
         defaultValue:
           'SELECT level, message, timestamp, scope_name as scopeName FROM logs WHERE timestamp > @StartTime AND timestamp <= @EndTime',
@@ -129,8 +130,133 @@ const manifest: SouthConnectorManifest = {
         validators: [{ key: 'required' }],
         displayInViewMode: true
       },
-      buildDateTimeFieldsFormControl(['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms', 'timestamp', 'timestamptz']),
-      buildSerializationFormControl(['csv'])
+      {
+        key: 'dateTimeFields',
+        type: 'OibArray',
+        translationKey: 'south.items.postgresql.date-time-fields.date-time-field',
+        content: [
+          {
+            key: 'fieldName',
+            translationKey: 'south.items.postgresql.date-time-fields.field-name',
+            type: 'OibText',
+            defaultValue: '',
+            validators: [{ key: 'required' }],
+            displayInViewMode: true
+          },
+          {
+            key: 'useAsReference',
+            translationKey: 'south.items.postgresql.date-time-fields.use-as-reference',
+            type: 'OibCheckbox',
+            defaultValue: false,
+            displayInViewMode: true,
+            validators: [{ key: 'required' }]
+          },
+          {
+            key: 'type',
+            translationKey: 'south.items.postgresql.date-time-fields.type',
+            type: 'OibSelect',
+            defaultValue: 'string',
+            options: ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms', 'timestamp', 'timestamptz'],
+            displayInViewMode: true,
+            validators: [{ key: 'required' }]
+          },
+          {
+            key: 'timezone',
+            translationKey: 'south.items.postgresql.date-time-fields.timezone',
+            type: 'OibTimezone',
+            defaultValue: 'UTC',
+            newRow: true,
+            validators: [{ key: 'required' }],
+            displayInViewMode: true,
+            conditionalDisplay: { field: 'type', values: ['string', 'timestamp', 'DateTime', 'DateTime2', 'SmallDateTime', 'Date'] }
+          },
+          {
+            key: 'format',
+            translationKey: 'south.items.postgresql.date-time-fields.format',
+            type: 'OibText',
+            defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
+            validators: [{ key: 'required' }],
+            conditionalDisplay: { field: 'type', values: ['string'] }
+          },
+          {
+            key: 'locale',
+            translationKey: 'south.items.postgresql.date-time-fields.locale',
+            defaultValue: 'en-En',
+            type: 'OibText',
+            validators: [{ key: 'required' }],
+            conditionalDisplay: { field: 'type', values: ['string'] }
+          }
+        ],
+        class: 'col',
+        newRow: true,
+        displayInViewMode: false
+      },
+      {
+        key: 'serialization',
+        type: 'OibFormGroup',
+        translationKey: 'south.items.postgresql.serialization.title',
+        newRow: true,
+        displayInViewMode: false,
+        validators: [{ key: 'required' }],
+        content: [
+          {
+            key: 'type',
+            type: 'OibSelect',
+            translationKey: 'south.items.postgresql.serialization.type',
+            options: ['csv'],
+            defaultValue: 'csv',
+            newRow: true,
+            displayInViewMode: false,
+            validators: [{ key: 'required' }]
+          },
+          {
+            key: 'filename',
+            type: 'OibText',
+            translationKey: 'south.items.postgresql.serialization.filename',
+            defaultValue: '@ConnectorName-@ItemName-@CurrentDate.csv',
+            newRow: false,
+            displayInViewMode: false,
+            validators: [{ key: 'required' }]
+          },
+          {
+            key: 'delimiter',
+            type: 'OibSelect',
+            translationKey: 'south.items.postgresql.serialization.delimiter',
+            options: ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'],
+            defaultValue: 'COMMA',
+            newRow: false,
+            displayInViewMode: false,
+            validators: [{ key: 'required' }]
+          },
+          {
+            key: 'compression',
+            type: 'OibCheckbox',
+            translationKey: 'south.items.postgresql.serialization.compression',
+            defaultValue: false,
+            newRow: false,
+            displayInViewMode: false,
+            validators: [{ key: 'required' }]
+          },
+          {
+            key: 'outputTimestampFormat',
+            type: 'OibText',
+            translationKey: 'south.items.postgresql.serialization.output-timestamp-format',
+            defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
+            newRow: true,
+            displayInViewMode: false,
+            validators: [{ key: 'required' }]
+          },
+          {
+            key: 'outputTimezone',
+            type: 'OibTimezone',
+            translationKey: 'south.items.postgresql.serialization.output-timezone',
+            defaultValue: 'Europe/Paris',
+            newRow: false,
+            displayInViewMode: false,
+            validators: [{ key: 'required' }]
+          }
+        ]
+      }
     ]
   }
 };

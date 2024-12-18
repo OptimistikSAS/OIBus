@@ -2,6 +2,8 @@ import { SouthItemSettings, SouthSettings } from '../../shared/model/south-setti
 import { BaseEntity } from './types';
 import { HistoryQueryStatus } from '../../shared/model/history-query.model';
 import { NorthSettings } from '../../shared/model/north-settings.model';
+import { OIBusNorthType } from '../../shared/model/north-connector.model';
+import { OIBusSouthType } from '../../shared/model/south-connector.model';
 
 export interface HistoryQueryEntityLight extends BaseEntity {
   name: string;
@@ -9,8 +11,8 @@ export interface HistoryQueryEntityLight extends BaseEntity {
   status: HistoryQueryStatus;
   startTime: string;
   endTime: string;
-  southType: string;
-  northType: string;
+  southType: OIBusSouthType;
+  northType: OIBusNorthType;
 }
 
 export interface HistoryQueryEntity<S extends SouthSettings, N extends NorthSettings, I extends SouthItemSettings> extends BaseEntity {
@@ -19,8 +21,8 @@ export interface HistoryQueryEntity<S extends SouthSettings, N extends NorthSett
   status: HistoryQueryStatus;
   startTime: string;
   endTime: string;
-  southType: string;
-  northType: string;
+  southType: OIBusSouthType;
+  northType: OIBusNorthType;
   southSettings: S;
   northSettings: N;
   caching: {

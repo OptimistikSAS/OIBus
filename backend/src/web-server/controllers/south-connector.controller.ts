@@ -24,8 +24,6 @@ export default class SouthConnectorController {
       ctx.app.southService.getInstalledSouthManifests().map(manifest => ({
         id: manifest.id,
         category: manifest.category,
-        name: manifest.name,
-        description: manifest.description,
         modes: manifest.modes
       }))
     );

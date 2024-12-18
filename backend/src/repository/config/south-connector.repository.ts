@@ -2,7 +2,7 @@ import { generateRandomId } from '../../service/utils';
 import { Database } from 'better-sqlite3';
 import { SouthConnectorEntity, SouthConnectorEntityLight, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import { SouthConnectorItemSearchParam } from '../../../shared/model/south-connector.model';
+import { OIBusSouthType, SouthConnectorItemSearchParam } from '../../../shared/model/south-connector.model';
 import { Page } from '../../../shared/model/types';
 
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
@@ -245,7 +245,7 @@ export default class SouthConnectorRepository {
     return {
       id: result.id as string,
       name: result.name as string,
-      type: result.type as string,
+      type: result.type as OIBusSouthType,
       description: result.description as string,
       enabled: Boolean(result.enabled),
       settings: JSON.parse(result.settings as string) as S,
@@ -258,7 +258,7 @@ export const toSouthConnectorLight = (result: Record<string, string>): SouthConn
   return {
     id: result.id,
     name: result.name,
-    type: result.type,
+    type: result.type as OIBusSouthType,
     description: result.description,
     enabled: Boolean(result.enabled)
   };

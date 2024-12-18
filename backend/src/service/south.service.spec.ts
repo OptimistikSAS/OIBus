@@ -1042,9 +1042,9 @@ describe('south service', () => {
   });
 
   it('should throw error if connector not found when retrieving secrets from south', () => {
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(testData.south.list[0]);
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(testData.south.list[1]);
     expect(() => service.retrieveSecretsFromSouth('southId', testData.south.manifest)).toThrow(
-      `South connector southId (type ${testData.south.list[0].type}) must be of the type ${testData.south.manifest.id}`
+      `South connector southId (type ${testData.south.list[1].type}) must be of the type ${testData.south.manifest.id}`
     );
   });
 });

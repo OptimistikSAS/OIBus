@@ -1,17 +1,18 @@
 import { BaseEntity } from './types';
 import { NorthSettings } from '../../shared/model/north-settings.model';
 import { SouthConnectorEntityLight } from './south-connector.model';
+import { OIBusNorthType } from '../../shared/model/north-connector.model';
 
 export interface NorthConnectorEntityLight extends BaseEntity {
   name: string;
-  type: string;
+  type: OIBusNorthType;
   description: string;
   enabled: boolean;
 }
 
 export interface NorthConnectorEntity<T extends NorthSettings> extends BaseEntity {
   name: string;
-  type: string;
+  type: OIBusNorthType;
   description: string;
   enabled: boolean;
   settings: T;

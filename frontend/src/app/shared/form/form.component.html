@@ -6,8 +6,10 @@
           <div [class]="setting.class || 'col'">
             @if (setting.type !== 'OibFormGroup') {
               <div class="form-group">
-                @if (setting.label && setting.type !== 'OibCheckbox' && setting.type !== 'OibArray') {
-                  <label class="form-label" [for]="setting.type + '-' + setting.key">{{ setting.label }} </label>
+                @if (
+                  setting.translationKey && setting.type !== 'OibCheckbox' && setting.type !== 'OibArray' && setting.type !== 'OibSelect'
+                ) {
+                  <label class="form-label" [for]="setting.type + '-' + setting.key">{{ setting.translationKey | translate }} </label>
                 }
                 @if (setting.type === 'OibText') {
                   <input
@@ -52,6 +54,9 @@
                   />
                 }
                 @if (setting.type === 'OibSelect') {
+                  <label class="form-label" [for]="setting.type + '-' + setting.key"
+                    >{{ setting.translationKey + '.' + 'title' | translate }}
+                  </label>
                   <select
                     [formControl]="asFormControl(form().controls[setting.key])"
                     [id]="setting.type + '-' + setting.key"
@@ -61,7 +66,7 @@
                       <option [ngValue]="null"></option>
                     }
                     @for (option of setting.options; track option) {
-                      <option [ngValue]="option">{{ transform(option, setting.pipe) }}</option>
+                      <option [ngValue]="option">{{ setting.translationKey + '.' + option | translate }}</option>
                     }
                   </select>
                 }
@@ -85,8 +90,10 @@
                       type="checkbox"
                       class="form-check-input"
                     />
-                    @if (setting.label) {
-                      <label class="form-check-label" [for]="setting.type + '-' + setting.key">{{ setting.label }}</label>
+                    @if (setting.translationKey) {
+                      <label class="form-check-label" [for]="setting.type + '-' + setting.key">{{
+                        setting.translationKey | translate
+                      }}</label>
                     }
                   </div>
                 }
@@ -111,7 +118,7 @@
                   <oib-array
                     [parentForm]="parentForm()"
                     [formDescription]="setting.content"
-                    [label]="setting.label"
+                    [label]="setting.translationKey"
                     [key]="setting.key"
                     [formControl]="asFormControl(form().controls[setting.key])"
                   />
@@ -121,7 +128,7 @@
             }
             @if (setting.type === 'OibFormGroup' && setting.content.length > 0) {
               <div class="form-group">
-                <label class="form-label" [for]="setting.type + '-' + setting.key">{{ setting.label }}</label>
+                <label class="form-label" [for]="setting.type + '-' + setting.key">{{ setting.translationKey | translate }}</label>
                 <oib-form
                   [parentForm]="parentForm()"
                   [form]="asFormGroup(form().controls[setting.key])"

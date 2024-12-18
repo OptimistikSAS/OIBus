@@ -59,8 +59,8 @@ describe('HistoryQueryService', () => {
     const command: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
       name: 'myHistoryQuery',
       description: 'a test history query',
-      southType: 'SQL',
-      northType: 'OIConnect'
+      southType: 'mssql',
+      northType: 'file-writer'
     } as HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
 
     service.create(command, null, null, '').subscribe(() => (done = true));
@@ -77,8 +77,8 @@ describe('HistoryQueryService', () => {
       description: 'a test history query',
       startTime: '2023-01-01T00:00:00.000Z',
       endTime: '2023-01-01T00:00:00.000Z',
-      southType: 'SQL',
-      northType: 'OIConnect',
+      southType: 'mssql',
+      northType: 'file-writer',
       southSettings: {} as SouthSettings,
       northSettings: {} as NorthSettings,
       caching: {
@@ -292,7 +292,7 @@ describe('HistoryQueryService', () => {
   it('should test a History query North connector connection', () => {
     let done = false;
     const command: NorthConnectorCommandDTO<NorthSettings> = {
-      type: 'Test',
+      type: 'file-writer',
       settings: {}
     } as NorthConnectorCommandDTO<NorthSettings>;
 
@@ -306,7 +306,7 @@ describe('HistoryQueryService', () => {
   it('should test a History query South connector connection', () => {
     let done = false;
     const command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
-      type: 'Test',
+      type: 'mssql',
       settings: {}
     } as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
 

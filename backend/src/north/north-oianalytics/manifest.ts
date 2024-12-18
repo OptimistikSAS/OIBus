@@ -1,11 +1,8 @@
 import { NorthConnectorManifest } from '../../../shared/model/north-connector.model';
-import { proxy } from '../../../shared/model/manifest-factory';
 
 const manifest: NorthConnectorManifest = {
   id: 'oianalytics',
-  name: 'OIAnalytics®',
   category: 'api',
-  description: 'Send files and values to OIAnalytics®',
   modes: {
     files: true,
     points: true
@@ -14,7 +11,7 @@ const manifest: NorthConnectorManifest = {
     {
       key: 'useOiaModule',
       type: 'OibCheckbox',
-      label: 'Use OIAnalytics Module',
+      translationKey: 'north.oianalytics.use-oia-module',
       validators: [{ key: 'required' }],
       defaultValue: true,
       displayInViewMode: true,
@@ -23,7 +20,8 @@ const manifest: NorthConnectorManifest = {
     {
       key: 'timeout',
       type: 'OibNumber',
-      label: 'Timeout',
+      translationKey: 'north.oianalytics.timeout',
+
       defaultValue: 30,
       unitLabel: 's',
       validators: [{ key: 'required' }],
@@ -32,7 +30,7 @@ const manifest: NorthConnectorManifest = {
     {
       key: 'compress',
       type: 'OibCheckbox',
-      label: 'Compress data',
+      translationKey: 'north.oianalytics.compress',
       validators: [{ key: 'required' }],
       defaultValue: false,
       displayInViewMode: true,
@@ -41,14 +39,14 @@ const manifest: NorthConnectorManifest = {
     {
       key: 'specificSettings',
       type: 'OibFormGroup',
-      label: 'Specific settings',
+      translationKey: '',
       newRow: true,
       conditionalDisplay: { field: 'useOiaModule', values: [false] },
       content: [
         {
           key: 'host',
           type: 'OibText',
-          label: 'Host',
+          translationKey: 'north.oianalytics.specific-settings.host',
           validators: [
             { key: 'required' },
             {
@@ -64,7 +62,7 @@ const manifest: NorthConnectorManifest = {
         {
           key: 'acceptUnauthorized',
           type: 'OibCheckbox',
-          label: 'Accept unauthorized certificate',
+          translationKey: 'north.oianalytics.specific-settings.accept-unauthorized',
           validators: [{ key: 'required' }],
           defaultValue: false,
           displayInViewMode: true,
@@ -74,8 +72,7 @@ const manifest: NorthConnectorManifest = {
           key: 'authentication',
           type: 'OibSelect',
           options: ['basic', 'aad-client-secret', 'aad-certificate'],
-          label: 'Authentication',
-          pipe: 'authentication',
+          translationKey: 'north.oianalytics.specific-settings.authentication',
           defaultValue: 'basic',
           newRow: true,
           validators: [{ key: 'required' }],
@@ -84,7 +81,7 @@ const manifest: NorthConnectorManifest = {
         {
           key: 'accessKey',
           type: 'OibText',
-          label: 'Access key',
+          translationKey: 'north.oianalytics.specific-settings.access-key',
           validators: [{ key: 'required' }],
           conditionalDisplay: { field: 'authentication', values: ['basic'] },
           newRow: true,
@@ -93,14 +90,14 @@ const manifest: NorthConnectorManifest = {
         {
           key: 'secretKey',
           type: 'OibSecret',
-          label: 'Secret key',
+          translationKey: 'north.oianalytics.specific-settings.secret-key',
           conditionalDisplay: { field: 'authentication', values: ['basic'] },
           displayInViewMode: false
         },
         {
           key: 'tenantId',
           type: 'OibText',
-          label: 'Tenant ID',
+          translationKey: 'north.oianalytics.specific-settings.tenant-id',
           newRow: true,
           conditionalDisplay: { field: 'authentication', values: ['aad-client-secret', 'aad-certificate'] },
           displayInViewMode: true
@@ -108,7 +105,7 @@ const manifest: NorthConnectorManifest = {
         {
           key: 'clientId',
           type: 'OibText',
-          label: 'Client ID',
+          translationKey: 'north.oianalytics.specific-settings.client-id',
           newRow: false,
           validators: [{ key: 'required' }],
           conditionalDisplay: { field: 'authentication', values: ['aad-client-secret', 'aad-certificate'] },
@@ -117,25 +114,52 @@ const manifest: NorthConnectorManifest = {
         {
           key: 'clientSecret',
           type: 'OibSecret',
-          label: 'Client secret',
+          translationKey: 'north.oianalytics.specific-settings.client-secret',
           newRow: false,
           conditionalDisplay: { field: 'authentication', values: ['aad-client-secret'] }
         },
         {
           key: 'certificateId',
           type: 'OibCertificate',
-          label: 'Certificate',
+          translationKey: 'north.oianalytics.specific-settings.certificate-id',
           newRow: false,
           conditionalDisplay: { field: 'authentication', values: ['aad-certificate'] }
         },
         {
           key: 'scope',
           type: 'OibText',
-          label: 'Scope',
+          translationKey: 'north.oianalytics.specific-settings.scope',
           newRow: false,
           conditionalDisplay: { field: 'authentication', values: ['aad', 'aad-certificate'] }
         },
-        ...proxy
+        {
+          key: 'useProxy',
+          translationKey: 'north.oianalytics.specific-settings.use-proxy',
+          type: 'OibCheckbox',
+          newRow: true,
+          defaultValue: false,
+          displayInViewMode: true,
+          validators: [{ key: 'required' }]
+        },
+        {
+          key: 'proxyUrl',
+          translationKey: 'north.oianalytics.specific-settings.proxy-url',
+          type: 'OibText',
+          validators: [{ key: 'required' }],
+          conditionalDisplay: { field: 'useProxy', values: [true] }
+        },
+        {
+          key: 'proxyUsername',
+          translationKey: 'north.oianalytics.specific-settings.proxy-username',
+          type: 'OibText',
+          conditionalDisplay: { field: 'useProxy', values: [true] }
+        },
+        {
+          key: 'proxyPassword',
+          translationKey: 'north.oianalytics.specific-settings.proxy-password',
+          type: 'OibSecret',
+          conditionalDisplay: { field: 'useProxy', values: [true] }
+        }
       ]
     }
   ]

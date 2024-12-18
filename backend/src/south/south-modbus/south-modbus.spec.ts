@@ -76,7 +76,7 @@ describe('South Modbus', () => {
   const configuration: SouthConnectorEntity<SouthModbusSettings, SouthModbusItemSettings> = {
     id: 'southId',
     name: 'south',
-    type: 'test',
+    type: 'modbus',
     description: 'my test connector',
     enabled: true,
     settings: {
@@ -423,7 +423,7 @@ describe('SouthModbus test connection', () => {
   const configuration: SouthConnectorEntity<SouthModbusSettings, SouthModbusItemSettings> = {
     id: 'southId',
     name: 'south',
-    type: 'test',
+    type: 'modbus',
     description: 'my test connector',
     enabled: true,
     settings: {

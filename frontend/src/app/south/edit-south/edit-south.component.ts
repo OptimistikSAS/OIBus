@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 
 import { TranslateDirective } from '@ngx-translate/core';
 import {
+  OIBusSouthType,
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
   SouthConnectorItemCommandDTO,
@@ -26,6 +27,7 @@ import { TestConnectionResultModalComponent } from '../../shared/test-connection
 import { ModalService } from '../../shared/modal.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
+import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
 
 @Component({
   selector: 'oib-edit-south',
@@ -38,7 +40,8 @@ import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/
     BoxComponent,
     BoxTitleDirective,
     SouthItemsComponent,
-    OibHelpComponent
+    OibHelpComponent,
+    OIBusSouthTypeEnumPipe
   ],
   templateUrl: './edit-south.component.html',
   styleUrl: './edit-south.component.scss'
@@ -193,7 +196,7 @@ export class EditSouthComponent implements OnInit {
     const formValue = this.southForm!.value;
     const command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
       name: formValue.name!,
-      type: this.southType,
+      type: this.southType as OIBusSouthType,
       description: formValue.description!,
       enabled: formValue.enabled!,
       settings: formValue.settings!,

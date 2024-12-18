@@ -38,8 +38,8 @@ describe('SouthConnectorService', () => {
     service.getAvailableTypes().subscribe(types => (expectedSouthConnectorTypes = types));
 
     http.expectOne('/api/south-types').flush([
-      { category: 'Database', type: 'SQL', description: 'SQL description' },
-      { category: 'IoT', type: 'MQTT', description: 'MQTT description' }
+      { category: 'database', type: 'mssql' },
+      { category: 'iot', type: 'mqtt' }
     ]);
 
     expect(expectedSouthConnectorTypes.length).toBe(2);
@@ -47,11 +47,11 @@ describe('SouthConnectorService', () => {
 
   it('should get a South connector manifest', () => {
     let expectedSouthConnectorSchema: SouthConnectorManifest | null = null;
-    service.getSouthConnectorTypeManifest('SQL').subscribe(manifest => (expectedSouthConnectorSchema = manifest));
+    service.getSouthConnectorTypeManifest('mqtt').subscribe(manifest => (expectedSouthConnectorSchema = manifest));
 
-    http.expectOne('/api/south-types/SQL').flush({ name: 'mySouthConnector' });
+    http.expectOne('/api/south-types/mqtt').flush({ id: 'mqtt' });
 
-    expect(expectedSouthConnectorSchema!).toEqual({ name: 'mySouthConnector' } as SouthConnectorManifest);
+    expect(expectedSouthConnectorSchema!).toEqual({ id: 'mqtt' } as SouthConnectorManifest);
   });
 
   it('should get all South connectors', () => {
@@ -89,7 +89,7 @@ describe('SouthConnectorService', () => {
       name: 'mySouthConnector',
       description: 'a test south connector',
       enabled: true,
-      type: 'Test',
+      type: 'mssql',
       settings: {} as SouthSettings,
       items: []
     };
@@ -107,7 +107,7 @@ describe('SouthConnectorService', () => {
       name: 'mySouthConnector',
       description: 'a test south connector',
       enabled: true,
-      type: 'Test',
+      type: 'mssql',
       settings: {} as SouthSettings,
       items: []
     };
@@ -301,7 +301,7 @@ describe('SouthConnectorService', () => {
       name: 'mySouthConnector',
       description: 'a test south connector',
       enabled: true,
-      type: 'Test',
+      type: 'mssql',
       settings: {} as SouthSettings,
       items: []
     };

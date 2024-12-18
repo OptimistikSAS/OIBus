@@ -1,12 +1,10 @@
 import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ObservableState } from '../../shared/save-button/save-button.component';
-import { TranslateDirective } from '@ngx-translate/core';
-import { formDirectives } from '../../shared/form-directives';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { SouthConnectorItemManifest } from '../../../../../backend/shared/model/south-connector.model';
 import { groupFormControlsByRow } from '../../shared/form-utils';
 import { OibFormControl } from '../../../../../backend/shared/model/form.model';
-import { PipeProviderService } from '../../shared/form/pipe-provider.service';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { createPageFromArray, Page } from '../../../../../backend/shared/model/types';
 import { emptyPage } from '../../shared/test-utils';
@@ -19,11 +17,10 @@ const PAGE_SIZE = 20;
   selector: 'oib-import-history-query-items-modal',
   templateUrl: './import-history-query-items-modal.component.html',
   styleUrl: './import-history-query-items-modal.component.scss',
-  imports: [...formDirectives, TranslateDirective, PaginationComponent]
+  imports: [TranslateDirective, PaginationComponent, TranslatePipe]
 })
 export class ImportHistoryQueryItemsModalComponent {
   private modal = inject(NgbActiveModal);
-  private pipeProviderService = inject(PipeProviderService);
 
   state = new ObservableState();
   southItemSchema: SouthConnectorItemManifest | null = null;
@@ -69,12 +66,8 @@ export class ImportHistoryQueryItemsModalComponent {
     this.modal.close(this.newItemList);
   }
 
-  getFieldValue(element: any, field: string, pipeIdentifier: string | undefined): string {
-    const value = element[field];
-    if (value && pipeIdentifier && this.pipeProviderService.validIdentifier(pipeIdentifier)) {
-      return this.pipeProviderService.getPipeForString(pipeIdentifier).transform(value);
-    }
-    return value;
+  getFieldValue(element: any, field: string): string {
+    return element[field];
   }
 
   changePageNew(pageNumber: number) {

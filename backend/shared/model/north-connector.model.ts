@@ -3,11 +3,15 @@ import { BaseEntity, Instant } from './types';
 import { NorthSettings } from './north-settings.model';
 import { SouthConnectorLightDTO } from './south-connector.model';
 
+export const OIBUS_NORTH_CATEGORIES = ['debug', 'api', 'file'] as const;
+export type OIBusNorthCategory = (typeof OIBUS_NORTH_CATEGORIES)[number];
+
+export const OIBUS_NORTH_TYPES = ['azure-blob', 'aws-s3', 'console', 'file-writer', 'oianalytics', 'sftp'] as const;
+export type OIBusNorthType = (typeof OIBUS_NORTH_TYPES)[number];
+
 export interface NorthType {
-  id: string;
-  category: string;
-  name: string;
-  description: string;
+  id: OIBusNorthType;
+  category: OIBusNorthCategory;
   modes: {
     files: boolean;
     points: boolean;
@@ -16,14 +20,14 @@ export interface NorthType {
 
 export interface NorthConnectorLightDTO extends BaseEntity {
   name: string;
-  type: string;
+  type: OIBusNorthType;
   description: string;
   enabled: boolean;
 }
 
 export interface NorthConnectorDTO<T extends NorthSettings> extends BaseEntity {
   name: string;
-  type: string;
+  type: OIBusNorthType;
   description: string;
   enabled: boolean;
   settings: T;
@@ -49,7 +53,7 @@ export interface NorthConnectorDTO<T extends NorthSettings> extends BaseEntity {
 
 export interface NorthConnectorCommandDTO<T extends NorthSettings> {
   name: string;
-  type: string;
+  type: OIBusNorthType;
   description: string;
   enabled: boolean;
   settings: T;
@@ -75,10 +79,8 @@ export interface NorthConnectorCommandDTO<T extends NorthSettings> {
 }
 
 export interface NorthConnectorManifest {
-  id: string;
-  category: string;
-  name: string;
-  description: string;
+  id: OIBusNorthType;
+  category: OIBusNorthCategory;
   modes: {
     files: boolean;
     points: boolean;
