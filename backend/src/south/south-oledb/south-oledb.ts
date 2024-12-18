@@ -2,11 +2,9 @@ import path from 'node:path';
 
 import SouthConnector from '../south-connector';
 import {
-  convertDateTimeToInstant,
   convertDelimiter,
   createFolder,
   formatInstant,
-  generateCsvContent,
   generateFilenameForSerialization,
   logQuery,
   persistResults
@@ -144,28 +142,7 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
   ): Promise<void> {
     const startTime = testingSettings.history!.startTime;
     const endTime = testingSettings.history!.endTime;
-    const result: Array<Record<string, string>> = (await this.queryRemoteAgentData(item, startTime, endTime, true)) as Array<
-      Record<string, string>
-    >;
-
-    const formattedResults = result.map(entry => {
-      const formattedEntry: Record<string, string | number> = {};
-      Object.entries(entry).forEach(([key, value]) => {
-        const datetimeField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.fieldName === key) || null;
-        if (!datetimeField) {
-          formattedEntry[key] = value;
-        } else {
-          const entryDate = convertDateTimeToInstant(value, datetimeField);
-          formattedEntry[key] = formatInstant(entryDate, {
-            type: 'string',
-            format: item.settings.serialization.outputTimestampFormat,
-            timezone: item.settings.serialization.outputTimezone,
-            locale: 'en-En'
-          });
-        }
-      });
-      return formattedEntry;
-    });
+    const result = (await this.queryRemoteAgentData(item, startTime, endTime, true)) as string;
 
     let oibusContent: OIBusContent;
     switch (item.settings.serialization.type) {
@@ -176,8 +153,7 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
           this.connector.name,
           item.name
         );
-        const content = generateCsvContent(formattedResults, item.settings.serialization.delimiter);
-        oibusContent = { type: 'raw', filePath, content };
+        oibusContent = { type: 'raw', filePath, content: result };
         break;
       }
     }
@@ -222,7 +198,7 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
     startTime: Instant,
     endTime: Instant,
     test?: boolean
-  ): Promise<Instant | Array<Record<string, any>> | null> {
+  ): Promise<Instant | string | null> {
     let updatedStartTime: Instant | null = null;
     const startRequest = DateTime.now().toMillis();
 
@@ -250,14 +226,14 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
       }),
       headers
     };
+
     const response = await fetch(`${this.connector.settings.agentUrl}/api/ole/${this.connector.id}/read`, fetchOptions);
     if (response.status === 200) {
-      const result: { recordCount: number; content: Array<Record<string, string>>; maxInstantRetrieved: Instant } =
-        (await response.json()) as {
-          recordCount: number;
-          content: Array<Record<string, string>>;
-          maxInstantRetrieved: string;
-        };
+      const result: { recordCount: number; content: string; maxInstantRetrieved: Instant } = (await response.json()) as {
+        recordCount: number;
+        content: string;
+        maxInstantRetrieved: string;
+      };
       const requestDuration = DateTime.now().toMillis() - startRequest;
       this.logger.info(`Found ${result.recordCount} results for item ${item.name} in ${requestDuration} ms`);
 
