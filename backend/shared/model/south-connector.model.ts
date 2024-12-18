@@ -2,11 +2,33 @@ import { OibFormControl } from './form.model';
 import { BaseEntity, Instant } from './types';
 import { SouthItemSettings, SouthSettings } from './south-settings.model';
 
+export const OIBUS_SOUTH_CATEGORIES = ['file', 'iot', 'database', 'api'] as const;
+export type OIBusSouthCategory = (typeof OIBUS_SOUTH_CATEGORIES)[number];
+
+export const OIBUS_SOUTH_TYPES = [
+  'ads',
+  'folder-scanner',
+  'modbus',
+  'mqtt',
+  'mssql',
+  'mysql',
+  'odbc',
+  'oianalytics',
+  'oledb',
+  'opc',
+  'opcua',
+  'oracle',
+  'osisoft-pi',
+  'postgresql',
+  'sftp',
+  'slims',
+  'sqlite'
+] as const;
+export type OIBusSouthType = (typeof OIBUS_SOUTH_TYPES)[number];
+
 export interface SouthType {
-  id: string;
-  category: string;
-  name: string;
-  description: string;
+  id: OIBusSouthType;
+  category: OIBusSouthCategory;
   modes: {
     subscription: boolean;
     lastPoint: boolean;
@@ -17,14 +39,14 @@ export interface SouthType {
 
 export interface SouthConnectorLightDTO extends BaseEntity {
   name: string;
-  type: string;
+  type: OIBusSouthType;
   description: string;
   enabled: boolean;
 }
 
 export interface SouthConnectorDTO<T extends SouthSettings, I extends SouthItemSettings> extends BaseEntity {
   name: string;
-  type: string;
+  type: OIBusSouthType;
   description: string;
   enabled: boolean;
   settings: T;
@@ -33,7 +55,7 @@ export interface SouthConnectorDTO<T extends SouthSettings, I extends SouthItemS
 
 export interface SouthConnectorCommandDTO<T extends SouthSettings, I extends SouthItemSettings> {
   name: string;
-  type: string;
+  type: OIBusSouthType;
   description: string;
   enabled: boolean;
   settings: T;
@@ -82,10 +104,8 @@ export interface SouthConnectorItemTestingSettings {
 }
 
 export interface SouthConnectorManifest {
-  id: string;
-  category: string;
-  name: string;
-  description: string;
+  id: OIBusSouthType;
+  category: OIBusSouthCategory;
   modes: {
     subscription: boolean;
     lastPoint: boolean;

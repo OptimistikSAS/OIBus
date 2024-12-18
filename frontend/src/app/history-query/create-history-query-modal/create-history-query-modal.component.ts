@@ -10,12 +10,14 @@ import { SouthConnectorService } from '../../services/south-connector.service';
 import { combineLatest } from 'rxjs';
 import { NonNullableFormBuilder, Validators } from '@angular/forms';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
+import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
+import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 
 @Component({
   selector: 'oib-create-history-query-modal',
   templateUrl: './create-history-query-modal.component.html',
   styleUrl: './create-history-query-modal.component.scss',
-  imports: [...formDirectives, TranslateDirective, SaveButtonComponent]
+  imports: [...formDirectives, TranslateDirective, SaveButtonComponent, OIBusSouthTypeEnumPipe, OIBusNorthTypeEnumPipe]
 })
 export class CreateHistoryQueryModalComponent implements OnInit {
   private modal = inject(NgbActiveModal);

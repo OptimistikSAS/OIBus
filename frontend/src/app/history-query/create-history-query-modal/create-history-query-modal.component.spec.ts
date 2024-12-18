@@ -82,8 +82,14 @@ describe('CreateHistoryQueryModalComponent', () => {
     historyQueryService.create.and.returnValue(of({ id: 'historyId' } as HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>));
     northConnectorService.getNorthConnectorTypes.and.returnValue(
       of([
-        { id: 'mongodb', category: 'database', name: 'MongoDB', description: 'MongoDB description', modes: { files: false, points: true } },
-        { id: 'mqtt', category: 'iot', name: 'MQTT', description: 'MQTT description', modes: { files: false, points: true } }
+        { id: 'console', category: 'debug', name: 'Console', description: 'Console description', modes: { files: false, points: true } },
+        {
+          id: 'file-writer',
+          category: 'file',
+          name: 'File writer',
+          description: 'File writer description',
+          modes: { files: false, points: true }
+        }
       ])
     );
 
@@ -97,9 +103,9 @@ describe('CreateHistoryQueryModalComponent', () => {
           modes: { lastFile: false, lastPoint: false, subscription: true, history: true }
         },
         {
-          id: 'opcua-ha',
+          id: 'opcua',
           category: 'iot',
-          name: 'OPCUA_HA',
+          name: 'OPCUA',
           description: 'OPCUA description',
           modes: { lastFile: false, lastPoint: false, subscription: false, history: true }
         },
@@ -133,13 +139,13 @@ describe('CreateHistoryQueryModalComponent', () => {
       expect(tester.southTypeSelect!.optionLabels.length).toBe(2);
       expect(tester.northTypeSelect!.optionLabels.length).toBe(2);
 
-      tester.southTypeSelect!.selectLabel('SQL');
-      tester.northTypeSelect!.selectLabel('MongoDB');
+      tester.southTypeSelect!.selectLabel('OPC UA™');
+      tester.northTypeSelect!.selectLabel('File writer');
       tester.createButton.click();
 
       expect(fakeActiveModal.close).toHaveBeenCalledWith({
-        northType: 'mongodb',
-        southType: 'mssql',
+        northType: 'file-writer',
+        southType: 'opcua',
         northId: null,
         southId: null
       });
@@ -153,14 +159,14 @@ describe('CreateHistoryQueryModalComponent', () => {
         name: 'myNorthConnector1',
         description: 'a test north connector',
         enabled: true,
-        type: 'test'
+        type: 'console'
       },
       {
         id: 'id2',
         name: 'myNorthConnector2',
         description: 'a test north connector',
         enabled: true,
-        type: 'test'
+        type: 'console'
       }
     ];
     const southConnectors: Array<SouthConnectorLightDTO> = [
@@ -173,7 +179,7 @@ describe('CreateHistoryQueryModalComponent', () => {
       },
       {
         id: 'id2',
-        type: 'opcua-ha',
+        type: 'opcua',
         name: 'South Connector 2',
         description: 'My second South connector description',
         enabled: true
@@ -207,7 +213,7 @@ describe('CreateHistoryQueryModalComponent', () => {
       expect(tester.northIdSelect!.optionLabels.length).toBe(2);
 
       tester.southIdSelect!.selectLabel('South Connector1 (mssql)');
-      tester.northIdSelect!.selectLabel('myNorthConnector2 (test)');
+      tester.northIdSelect!.selectLabel('myNorthConnector2 (console)');
       tester.createButton.click();
 
       expect(fakeActiveModal.close).toHaveBeenCalledWith({

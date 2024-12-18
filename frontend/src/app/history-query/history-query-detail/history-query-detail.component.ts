@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { AsyncPipe, DecimalPipe } from '@angular/common';
-import { TranslateDirective } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { combineLatest, of, switchMap } from 'rxjs';
 import { PageLoader } from '../../shared/page-loader.service';
@@ -33,6 +33,8 @@ import { TestConnectionResultModalComponent } from '../../shared/test-connection
 import { LogsComponent } from '../../logs/logs.component';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
+import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
 
 @Component({
   selector: 'oib-history-query-detail',
@@ -49,7 +51,10 @@ import { NorthSettings } from '../../../../../backend/shared/model/north-setting
     HistoryMetricsComponent,
     AsyncPipe,
     ClipboardModule,
-    LogsComponent
+    LogsComponent,
+    OIBusNorthTypeEnumPipe,
+    OIBusSouthTypeEnumPipe,
+    TranslatePipe
   ],
   templateUrl: './history-query-detail.component.html',
   styleUrl: './history-query-detail.component.scss',
@@ -67,6 +72,7 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private windowService = inject(WindowService);
   private cd = inject(ChangeDetectorRef);
+  private translateService = inject(TranslateService);
 
   historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> | null = null;
   northDisplayedSettings: Array<{ key: string; value: string }> = [];
@@ -122,8 +128,11 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
           .filter(setting => setting.displayInViewMode)
           .map(setting => {
             return {
-              key: setting.label,
-              value: northSettings[setting.key]
+              key: setting.type === 'OibSelect' ? setting.translationKey + '.title' : setting.translationKey,
+              value:
+                setting.type === 'OibSelect'
+                  ? this.translateService.instant(setting.translationKey + '.' + northSettings[setting.key])
+                  : northSettings[setting.key]
             };
           });
 
@@ -133,8 +142,11 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
           .filter(setting => setting.displayInViewMode)
           .map(setting => {
             return {
-              key: setting.label,
-              value: southSettings[setting.key]
+              key: setting.type === 'OibSelect' ? setting.translationKey + '.title' : setting.translationKey,
+              value:
+                setting.type === 'OibSelect'
+                  ? this.translateService.instant(setting.translationKey + '.' + southSettings[setting.key])
+                  : southSettings[setting.key]
             };
           });
       });

@@ -44,7 +44,7 @@ class TestComponent {
   item = {} as SouthConnectorItemCommandDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>;
   connectorCommand = {} as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
   manifest = {
-    id: 'sql',
+    id: 'mssql',
     category: 'database',
     name: 'SQL',
     description: 'SQL description',
@@ -83,8 +83,10 @@ class SouthItemTestComponentTester extends ComponentTester<TestComponent> {
   }
 
   changeSupportsHistory(support: boolean) {
-    const newManifest = { ...this.componentInstance.manifest, modes: { history: support } } as SouthConnectorManifest;
-    this.componentInstance.manifest = newManifest;
+    this.componentInstance.manifest = {
+      ...this.componentInstance.manifest,
+      modes: { history: support }
+    } as SouthConnectorManifest;
   }
 
   get startTime() {

@@ -3,7 +3,7 @@
     <div class="row justify-content-center">
       <div class="col-md-10 col-lg-8">
         <div class="oib-header-container mb-3">
-          <h1 id="title" translate="north.title" [translateParams]="{ name: northConnector.name, type: manifest.name }">
+          <h1 id="title" translate="north.title" [translateParams]="{ name: northConnector.name, type: manifest.id | oIBusNorthTypeEnum }">
             <span class="ms-3">
               <button class="btn btn-primary" id="edit-link" routerLink="edit">
                 <i class="fa fa-pencil"></i>
@@ -33,7 +33,11 @@
           <ng-template oibBoxTitle>
             <div class="d-flex justify-content-between align-items-center">
               <div>
-                <span translate="north.specific-settings" [translateParams]="{ type: manifest.name }" id="specific-settings-title"></span>
+                <span
+                  translate="north.specific-settings"
+                  [translateParams]="{ type: manifest.id | oIBusNorthTypeEnum }"
+                  id="specific-settings-title"
+                ></span>
               </div>
               <div>
                 <button
@@ -54,7 +58,7 @@
               </tr>
               @for (setting of displayedSettings; track setting) {
                 <tr>
-                  <td>{{ setting.key }}</td>
+                  <td>{{ setting.key | translate }}</td>
                   <td>{{ setting.value }}</td>
                 </tr>
               }

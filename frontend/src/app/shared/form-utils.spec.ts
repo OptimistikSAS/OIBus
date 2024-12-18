@@ -39,21 +39,21 @@ describe('form-utils', () => {
         {
           type: 'OibText',
           key: 'oibText1',
-          label: 'my Label',
+          translationKey: 'my Label',
           defaultValue: 'default',
           validators: []
         },
         {
           type: 'OibText',
           key: 'oibText2',
-          label: 'my Label',
+          translationKey: 'my Label',
           defaultValue: 'default',
           validators: []
         },
         {
           type: 'OibText',
           key: 'oibText3',
-          label: 'my Label',
+          translationKey: 'my Label',
           newRow: true,
           defaultValue: 'default',
           validators: []
@@ -65,14 +65,14 @@ describe('form-utils', () => {
           {
             type: 'OibText',
             key: 'oibText1',
-            label: 'my Label',
+            translationKey: 'my Label',
             defaultValue: 'default',
             validators: []
           },
           {
             type: 'OibText',
             key: 'oibText2',
-            label: 'my Label',
+            translationKey: 'my Label',
             defaultValue: 'default',
             validators: []
           }
@@ -81,7 +81,7 @@ describe('form-utils', () => {
           {
             type: 'OibText',
             key: 'oibText3',
-            label: 'my Label',
+            translationKey: 'my Label',
             newRow: true,
             defaultValue: 'default',
             validators: []
@@ -96,21 +96,21 @@ describe('form-utils', () => {
         {
           type: 'OibText',
           key: 'oibText1',
-          label: 'my Label',
+          translationKey: 'my Label',
           defaultValue: 'default',
           validators: []
         },
         {
           type: 'OibText',
           key: 'oibText2',
-          label: 'my Label',
+          translationKey: 'my Label',
           defaultValue: 'default',
           validators: []
         },
         {
           type: 'OibText',
           key: 'oibText3',
-          label: 'my Label',
+          translationKey: 'my Label',
           newRow: true,
           defaultValue: 'default',
           validators: []
@@ -122,14 +122,14 @@ describe('form-utils', () => {
           {
             type: 'OibText',
             key: 'oibText1',
-            label: 'my Label',
+            translationKey: 'my Label',
             defaultValue: 'default',
             validators: []
           },
           {
             type: 'OibText',
             key: 'oibText2',
-            label: 'my Label',
+            translationKey: 'my Label',
             defaultValue: 'default',
             validators: []
           }
@@ -138,7 +138,7 @@ describe('form-utils', () => {
           {
             type: 'OibText',
             key: 'oibText3',
-            label: 'my Label',
+            translationKey: 'my Label',
             newRow: true,
             defaultValue: 'default',
             validators: []

@@ -1,6 +1,6 @@
 <div class="oib-box-title align-items-center d-flex">
   <span>
-    <b>{{ label() }}</b>
+    <b>{{ label() | translate }}</b>
   </span>
   <button type="button" [disabled]="editedElement" class="btn btn-link ms-2 py-0 add-button" (click)="editNewElement()">
     <span class="fa fa-plus-circle"></span>&ngsp;
@@ -11,7 +11,7 @@
   <div class="row mx-1 mt-1 px-1">
     @for (field of displayedFields; track field) {
       <div class="col-2">
-        <b>{{ field.label }}</b>
+        <b>{{ field.label | translate }}</b>
       </div>
     }
   </div>
@@ -36,7 +36,7 @@
         } @else {
           <div class="row form-data px-1 field-display mx-1 oib-fake-table">
             @for (field of displayedFields; track field) {
-              <div class="col-2">{{ getFieldValue(element, field.key, field.pipe) }}</div>
+              <div class="col-2">{{ getFieldValue(element, field.key) }}</div>
             }
             <div class="col-2 text-end text-nowrap">
               <button type="button" [disabled]="editDisabled" class="btn btn-link px-1 py-0 edit-button" (click)="edit(element)">

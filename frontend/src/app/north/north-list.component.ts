@@ -17,12 +17,22 @@ import { emptyPage } from '../shared/test-utils';
 import { PaginationComponent } from '../shared/pagination/pagination.component';
 import { ObservableState } from '../shared/save-button/save-button.component';
 import { LegendComponent } from '../shared/legend/legend.component';
+import { OIBusNorthTypeEnumPipe } from '../shared/oibus-north-type-enum.pipe';
 
 const PAGE_SIZE = 15;
 
 @Component({
   selector: 'oib-north-list',
-  imports: [TranslateDirective, RouterLink, LoadingSpinnerComponent, ...formDirectives, PaginationComponent, AsyncPipe, LegendComponent],
+  imports: [
+    TranslateDirective,
+    RouterLink,
+    LoadingSpinnerComponent,
+    ...formDirectives,
+    PaginationComponent,
+    AsyncPipe,
+    LegendComponent,
+    OIBusNorthTypeEnumPipe
+  ],
   templateUrl: './north-list.component.html',
   styleUrl: './north-list.component.scss'
 })

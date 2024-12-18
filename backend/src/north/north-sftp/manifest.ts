@@ -2,9 +2,7 @@ import { NorthConnectorManifest } from '../../../shared/model/north-connector.mo
 
 const manifest: NorthConnectorManifest = {
   id: 'sftp',
-  name: 'SFTP',
   category: 'file',
-  description: 'Upload files and data to an SFTP server',
   modes: {
     files: true,
     points: true
@@ -13,46 +11,46 @@ const manifest: NorthConnectorManifest = {
     {
       key: 'host',
       type: 'OibText',
-      label: 'Host',
+      translationKey: 'north.sftp.host',
       validators: [{ key: 'required' }],
       defaultValue: '127.0.0.1',
       displayInViewMode: true,
       newRow: true,
-      class: 'col-8'
+      class: 'col-9'
     },
     {
       key: 'port',
       type: 'OibNumber',
-      label: 'Port',
+      translationKey: 'north.sftp.port',
       defaultValue: 8080,
       validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
       displayInViewMode: true,
-      class: 'col-4'
+      class: 'col-3'
     },
     {
       key: 'authentication',
       type: 'OibSelect',
       options: ['password', 'private-key'],
-      label: 'Authentication',
-      pipe: 'authentication',
+      translationKey: 'north.sftp.authentication',
       defaultValue: 'password',
       newRow: true,
       validators: [{ key: 'required' }],
       displayInViewMode: true,
-      class: 'col-4'
+      class: 'col-6'
     },
     {
       key: 'username',
       type: 'OibText',
-      label: 'Username',
+      translationKey: 'north.sftp.username',
       defaultValue: '',
+      newRow: true,
       displayInViewMode: false,
       class: 'col-4'
     },
     {
       key: 'password',
       type: 'OibSecret',
-      label: 'Password',
+      translationKey: 'north.sftp.password',
       defaultValue: '',
       displayInViewMode: false,
       conditionalDisplay: { field: 'authentication', values: ['password'] },
@@ -61,17 +59,16 @@ const manifest: NorthConnectorManifest = {
     {
       key: 'privateKey',
       type: 'OibText',
-      label: 'Private key path (PEM format)',
+      translationKey: 'north.sftp.private-key',
       validators: [{ key: 'required' }],
       conditionalDisplay: { field: 'authentication', values: ['private-key'] },
-      newRow: true,
       displayInViewMode: false,
       class: 'col-4'
     },
     {
       key: 'passphrase',
       type: 'OibSecret',
-      label: 'Passphrase',
+      translationKey: 'north.sftp.passphrase',
       conditionalDisplay: { field: 'authentication', values: ['private-key'] },
       displayInViewMode: false,
       class: 'col-4'
@@ -79,7 +76,7 @@ const manifest: NorthConnectorManifest = {
     {
       key: 'remoteFolder',
       type: 'OibText',
-      label: 'Remote folder',
+      translationKey: 'north.sftp.remote-folder',
       defaultValue: '/remote-folder',
       newRow: true,
       validators: [{ key: 'required' }],
@@ -88,7 +85,7 @@ const manifest: NorthConnectorManifest = {
     {
       key: 'prefix',
       type: 'OibText',
-      label: 'Prefix',
+      translationKey: 'north.sftp.prefix',
       defaultValue: '@ConnectorName-',
       newRow: true,
       validators: [
@@ -100,7 +97,7 @@ const manifest: NorthConnectorManifest = {
     {
       key: 'suffix',
       type: 'OibText',
-      label: 'Suffix',
+      translationKey: 'north.sftp.suffix',
       defaultValue: '-@CurrentDate',
       newRow: false,
       validators: [

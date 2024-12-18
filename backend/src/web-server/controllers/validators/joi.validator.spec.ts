@@ -50,56 +50,56 @@ describe('Joi validator', () => {
       {
         key: 'text',
         type: 'OibText',
-        label: 'OibText'
+        translationKey: 'OibText'
       },
       {
         key: 'number',
         type: 'OibNumber',
-        label: 'OibNumber'
+        translationKey: 'OibNumber'
       },
       {
         key: 'select',
         type: 'OibSelect',
         options: ['GET', 'POST', 'PUT', 'PATCH'],
-        label: 'OibSelect'
+        translationKey: 'OibSelect'
       },
       {
         key: 'secret',
         type: 'OibSecret',
-        label: 'OibSecret'
+        translationKey: 'OibSecret'
       },
       {
         key: 'area',
         type: 'OibTextArea',
-        label: 'OibTextArea'
+        translationKey: 'OibTextArea'
       },
       {
         key: 'block',
         type: 'OibCodeBlock',
         contentType: 'json',
-        label: 'OibCodeBlock'
+        translationKey: 'OibCodeBlock'
       },
       {
         key: 'checkbox',
         type: 'OibCheckbox',
-        label: 'OibCheckbox'
+        translationKey: 'OibCheckbox'
       },
       {
         key: 'timezone',
         type: 'OibTimezone',
-        label: 'OibTimezone'
+        translationKey: 'OibTimezone'
       },
       {
         key: 'scanMode',
         type: 'OibScanMode',
-        label: 'OibScanMode',
+        translationKey: 'OibScanMode',
         acceptSubscription: false,
         subscriptionOnly: false
       },
       {
         key: 'certificate',
         type: 'OibCertificate',
-        label: 'OibCertificate'
+        translationKey: 'OibCertificate'
       }
     ];
 
@@ -125,7 +125,7 @@ describe('Joi validator', () => {
       {
         key: 'host',
         type: 'OibText',
-        label: 'Host',
+        translationKey: 'Host',
         validators: [
           { key: 'required' },
           { key: 'minLength', params: { minLength: 1 } },
@@ -149,7 +149,7 @@ describe('Joi validator', () => {
       {
         key: 'port',
         type: 'OibNumber',
-        label: 'Port',
+        translationKey: 'Port',
         defaultValue: 1883,
         newRow: false,
         validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
@@ -171,7 +171,7 @@ describe('Joi validator', () => {
         key: 'requestMethod',
         type: 'OibSelect',
         options: ['GET', 'POST', 'PUT', 'PATCH'],
-        label: 'HTTP Method',
+        translationKey: 'HTTP Method',
         defaultValue: 'POST',
         newRow: false,
         validators: [{ key: 'required' }]
@@ -191,7 +191,7 @@ describe('Joi validator', () => {
       {
         key: 'verbose',
         type: 'OibCheckbox',
-        label: 'Verbose',
+        translationKey: 'Verbose',
         newRow: true,
         validators: [{ key: 'required' }],
         displayInViewMode: true
@@ -211,20 +211,20 @@ describe('Joi validator', () => {
       {
         key: 'driver',
         type: 'OibSelect',
-        label: 'SQL Driver',
+        translationKey: 'SQL Driver',
         options: ['MSSQL', 'MySQL', 'PostgreSQL', 'Oracle', 'SQLite'],
         validators: [{ key: 'required' }]
       },
       {
         key: 'databasePath',
         type: 'OibText',
-        label: 'Database path',
+        translationKey: 'Database path',
         conditionalDisplay: { field: 'driver', values: ['SQLite'] }
       },
       {
         key: 'query',
         type: 'OibText',
-        label: 'Query'
+        translationKey: 'Query'
       }
     ];
 
@@ -249,7 +249,7 @@ describe('Joi validator', () => {
       {
         key: 'authentication',
         type: 'OibFormGroup',
-        label: 'Authentication',
+        translationKey: 'Authentication',
         class: 'col',
         newRow: true,
         displayInViewMode: false,
@@ -258,9 +258,8 @@ describe('Joi validator', () => {
           {
             key: 'type',
             type: 'OibSelect',
-            label: 'Type',
+            translationKey: 'Type',
             options: ['none', 'basic', 'bearer', 'api-key'],
-            pipe: 'authentication',
             validators: [{ key: 'required' }],
             defaultValue: 'none',
             newRow: true,
@@ -269,21 +268,21 @@ describe('Joi validator', () => {
           {
             key: 'username',
             type: 'OibText',
-            label: 'Username',
+            translationKey: 'Username',
             defaultValue: '',
             displayInViewMode: false
           },
           {
             key: 'password',
             type: 'OibSecret',
-            label: 'Password',
+            translationKey: 'Password',
             defaultValue: '',
             displayInViewMode: false
           },
           {
             key: 'token',
             type: 'OibSecret',
-            label: 'Token',
+            translationKey: 'Token',
             defaultValue: '',
             newRow: false,
             displayInViewMode: false
@@ -291,7 +290,7 @@ describe('Joi validator', () => {
           {
             key: 'apiKeyHeader',
             type: 'OibSecret',
-            label: 'Api key header',
+            translationKey: 'Api key header',
             defaultValue: '',
             newRow: false,
             displayInViewMode: false
@@ -299,7 +298,7 @@ describe('Joi validator', () => {
           {
             key: 'apiKey',
             type: 'OibSecret',
-            label: 'Api key',
+            translationKey: 'Api key',
             defaultValue: '',
             newRow: false,
             displayInViewMode: false
@@ -327,7 +326,7 @@ describe('Joi validator', () => {
       {
         key: 'authentication',
         type: 'OibFormGroup',
-        label: 'Authentication',
+        translationKey: 'Authentication',
         class: 'col',
         newRow: true,
         displayInViewMode: false,
@@ -335,9 +334,8 @@ describe('Joi validator', () => {
           {
             key: 'type',
             type: 'OibSelect',
-            label: 'Type',
+            translationKey: 'Type',
             options: ['none', 'basic', 'bearer', 'api-key'],
-            pipe: 'authentication',
             defaultValue: 'none',
             newRow: true,
             displayInViewMode: false
@@ -345,21 +343,21 @@ describe('Joi validator', () => {
           {
             key: 'username',
             type: 'OibText',
-            label: 'Username',
+            translationKey: 'Username',
             defaultValue: '',
             displayInViewMode: false
           },
           {
             key: 'password',
             type: 'OibSecret',
-            label: 'Password',
+            translationKey: 'Password',
             defaultValue: '',
             displayInViewMode: false
           },
           {
             key: 'token',
             type: 'OibSecret',
-            label: 'Token',
+            translationKey: 'Token',
             defaultValue: '',
             newRow: false,
             displayInViewMode: false
@@ -367,7 +365,7 @@ describe('Joi validator', () => {
           {
             key: 'apiKeyHeader',
             type: 'OibSecret',
-            label: 'Api key header',
+            translationKey: 'Api key header',
             defaultValue: '',
             newRow: false,
             displayInViewMode: false
@@ -375,7 +373,7 @@ describe('Joi validator', () => {
           {
             key: 'apiKey',
             type: 'OibSecret',
-            label: 'Api key',
+            translationKey: 'Api key',
             defaultValue: '',
             newRow: false,
             displayInViewMode: false
@@ -403,35 +401,34 @@ describe('Joi validator', () => {
       {
         key: 'dateTimeFields',
         type: 'OibArray',
-        label: 'Date time fields',
+        translationKey: 'Date time fields',
         validators: [{ key: 'required' }],
         content: [
           {
             key: 'fieldName',
-            label: 'Field name',
+            translationKey: 'Field name',
             type: 'OibText',
             defaultValue: '',
             displayInViewMode: true
           },
           {
             key: 'useAsReference',
-            label: 'Reference field',
+            translationKey: 'Reference field',
             type: 'OibCheckbox',
             defaultValue: false,
             displayInViewMode: true
           },
           {
             key: 'type',
-            label: 'Type',
+            translationKey: 'Type',
             type: 'OibSelect',
             defaultValue: 'string',
             options: ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'],
-            pipe: 'dateTimeType',
             displayInViewMode: true
           },
           {
             key: 'timezone',
-            label: 'Timezone',
+            translationKey: 'Timezone',
             type: 'OibTimezone',
             defaultValue: 'UTC',
             newRow: true,
@@ -439,13 +436,13 @@ describe('Joi validator', () => {
           },
           {
             key: 'format',
-            label: 'Format',
+            translationKey: 'Format',
             type: 'OibText',
             defaultValue: 'yyyy-MM-dd HH:mm:ss'
           },
           {
             key: 'locale',
-            label: 'Locale',
+            translationKey: 'Locale',
             defaultValue: 'en-En',
             type: 'OibText'
           }

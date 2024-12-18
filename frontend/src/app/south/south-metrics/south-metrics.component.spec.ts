@@ -33,8 +33,6 @@ class TestComponent {
   manifest: SouthConnectorManifest = {
     id: 'mssql',
     category: 'database',
-    name: 'SQL',
-    description: 'SQL',
     settings: [],
     items: {
       scanMode: {
@@ -43,7 +41,7 @@ class TestComponent {
       },
       settings: [
         {
-          label: 'query',
+          translationKey: 'query',
           key: 'query',
           displayInViewMode: true,
           type: 'OibText'

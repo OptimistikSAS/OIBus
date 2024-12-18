@@ -21,7 +21,7 @@ class TestComponent {
   scanModes: Array<ScanModeDTO> = [];
   form = new FormGroup({
     settings: new FormRecord({
-      myOibSelectField: new FormControl('option2'),
+      myOibSelectField: new FormControl('DOT'),
       myOibTextField: new FormControl(null),
       myOibNumberField: new FormControl(2224),
       myOibTextAreaField: new FormControl(null),
@@ -34,17 +34,17 @@ class TestComponent {
       {
         key: 'myOibSelectField',
         type: 'OibSelect',
-        options: ['option1', 'option2', 'option3'],
-        label: 'Select field',
+        options: ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'],
+        translationKey: 'south.items.postgresql.serialization.delimiter',
         newRow: true,
         class: 'col-8',
-        defaultValue: 'option2',
+        defaultValue: 'DOT',
         displayInViewMode: true
       },
       {
         key: 'myOibTextField',
         type: 'OibText',
-        label: 'Text field',
+        translationKey: 'south.items.postgresql.serialization.filename',
         newRow: false,
         class: 'col-4',
         displayInViewMode: true
@@ -54,7 +54,7 @@ class TestComponent {
       {
         key: 'myOibNumberField',
         type: 'OibNumber',
-        label: 'Number field',
+        translationKey: 'south.postgresql.port',
         newRow: true,
         class: 'col-3',
         defaultValue: 2223,
@@ -64,7 +64,7 @@ class TestComponent {
       {
         key: 'myOibTextAreaField',
         type: 'OibTextArea',
-        label: 'Text area field',
+        translationKey: 'south.items.postgresql.query',
         newRow: false,
         class: 'col-3',
         validators: [{ key: 'required' }],
@@ -74,7 +74,7 @@ class TestComponent {
       {
         key: 'myOibSecretField',
         type: 'OibSecret',
-        label: 'Secret field',
+        translationKey: 'south.postgresql.password',
         newRow: false,
         class: 'col-3',
         displayInViewMode: true
@@ -82,7 +82,7 @@ class TestComponent {
       {
         key: 'myOibCheckboxField',
         type: 'OibCheckbox',
-        label: 'Checkbox field',
+        translationKey: 'south.items.postgresql.date-time-fields.use-as-reference',
         defaultValue: false,
         newRow: true,
         displayInViewMode: true
@@ -142,7 +142,7 @@ describe('FormComponent', () => {
   });
 
   it('should display filled element', () => {
-    expect(tester.oibSelectComponent.selectedLabel).toBe('option2');
+    expect(tester.oibSelectComponent.selectedLabel).toBe('Dot .');
     expect(tester.oibTextComponent.value).toBe('');
     expect(tester.oibNumberComponent.value).toBe('2224');
     expect(tester.oibTextAreaComponent.value).toBe('');

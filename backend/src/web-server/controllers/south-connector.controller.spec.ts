@@ -30,8 +30,6 @@ describe('South connector controller', () => {
       {
         id: testData.south.manifest.id,
         category: testData.south.manifest.category,
-        name: testData.south.manifest.name,
-        description: testData.south.manifest.description,
         modes: testData.south.manifest.modes
       }
     ]);

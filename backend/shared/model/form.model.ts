@@ -73,9 +73,8 @@ export type FormComponentValidator =
 export interface BaseOibFormControl<T> {
   key: string;
   type: FormComponentType;
-  label: string;
+  translationKey: string;
   defaultValue?: T;
-  pipe?: string; // an optional pipe name to format the value;
   unitLabel?: string; // an optional unit label to indicate which unit is used
   newRow?: boolean;
   class?: string;

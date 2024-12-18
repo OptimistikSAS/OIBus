@@ -42,7 +42,7 @@ describe('South PI', () => {
   const configuration: SouthConnectorEntity<SouthPISettings, SouthPIItemSettings> = {
     id: 'southId',
     name: 'south',
-    type: 'test',
+    type: 'osisoft-pi',
     description: 'my test connector',
     enabled: true,
     settings: {

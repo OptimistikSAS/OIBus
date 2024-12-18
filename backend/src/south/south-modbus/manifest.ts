@@ -2,9 +2,7 @@ import { SouthConnectorManifest } from '../../../shared/model/south-connector.mo
 
 const manifest: SouthConnectorManifest = {
   id: 'modbus',
-  name: 'Modbus',
   category: 'iot',
-  description: 'Access Modbus registers on a PLC',
   modes: {
     subscription: false,
     lastPoint: true,
@@ -15,7 +13,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'host',
       type: 'OibText',
-      label: 'Host',
+      translationKey: 'south.modbus.host',
       defaultValue: '127.0.0.1',
       class: 'col-4',
       validators: [{ key: 'required' }],
@@ -24,7 +22,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'port',
       type: 'OibNumber',
-      label: 'Port',
+      translationKey: 'south.modbus.port',
       defaultValue: 502,
       validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
       displayInViewMode: true
@@ -32,7 +30,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'retryInterval',
       type: 'OibNumber',
-      label: 'Retry interval',
+      translationKey: 'south.modbus.retry-interval',
       unitLabel: 'ms',
       defaultValue: 10000,
       class: 'col-4',
@@ -42,7 +40,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'slaveId',
       type: 'OibNumber',
-      label: 'Slave ID',
+      translationKey: 'south.modbus.slave-id',
       defaultValue: 1,
       newRow: true,
       class: 'col-4',
@@ -53,7 +51,7 @@ const manifest: SouthConnectorManifest = {
       key: 'addressOffset',
       type: 'OibSelect',
       options: ['modbus', 'jbus'],
-      label: 'Address offset',
+      translationKey: 'south.modbus.address-offset',
       defaultValue: 'modbus',
       class: 'col-4',
       validators: [{ key: 'required' }],
@@ -63,7 +61,7 @@ const manifest: SouthConnectorManifest = {
       key: 'endianness',
       type: 'OibSelect',
       options: ['big-endian', 'little-endian'],
-      label: 'Endianness',
+      translationKey: 'south.modbus.endianness',
       defaultValue: 'big-endian',
       class: 'col-4',
       validators: [{ key: 'required' }],
@@ -72,7 +70,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'swapBytesInWords',
       type: 'OibCheckbox',
-      label: 'Swap Bytes?',
+      translationKey: 'south.modbus.swap-bytes-in-words',
       defaultValue: false,
       newRow: true,
       class: 'col-4',
@@ -82,7 +80,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'swapWordsInDWords',
       type: 'OibCheckbox',
-      label: 'Swap Words?',
+      translationKey: 'south.modbus.swap-words-in-dwords',
       defaultValue: false,
       newRow: false,
       class: 'col-4',
@@ -99,8 +97,9 @@ const manifest: SouthConnectorManifest = {
       {
         key: 'address',
         type: 'OibText',
-        label: 'Address',
+        translationKey: 'south.items.modbus.address',
         defaultValue: '0x0001',
+        class: 'col-6',
         validators: [{ key: 'required' }],
         displayInViewMode: true
       },
@@ -108,15 +107,16 @@ const manifest: SouthConnectorManifest = {
         key: 'modbusType',
         type: 'OibSelect',
         options: ['coil', 'discrete-input', 'input-register', 'holding-register'],
-        label: 'Modbus type',
+        translationKey: 'south.items.modbus.modbus-type',
         defaultValue: 'holding-register',
+        class: 'col-6',
         validators: [{ key: 'required' }],
         displayInViewMode: true
       },
       {
         key: 'data',
         type: 'OibFormGroup',
-        label: '',
+        translationKey: '',
         newRow: true,
         displayInViewMode: false,
         validators: [{ key: 'required' }],
@@ -126,26 +126,29 @@ const manifest: SouthConnectorManifest = {
             key: 'dataType',
             type: 'OibSelect',
             options: ['uint16', 'int16', 'uint32', 'int32', 'big-uint64', 'big-int64', 'float', 'double', 'bit'],
-            label: 'Data type',
+            translationKey: 'south.items.modbus.data.data-type',
             defaultValue: 'uint16',
             validators: [{ key: 'required' }],
+            class: 'col-4',
             displayInViewMode: false
           },
           {
             key: 'bitIndex',
             type: 'OibNumber',
-            label: 'Bit index',
+            translationKey: 'south.items.modbus.data.bit-index',
             defaultValue: 1,
             validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }, { key: 'max', params: { max: 15 } }],
             conditionalDisplay: { field: 'dataType', values: ['bit'] },
+            class: 'col-4',
             displayInViewMode: false
           },
           {
             key: 'multiplierCoefficient',
             type: 'OibNumber',
-            label: 'Multiplier coefficient',
+            translationKey: 'south.items.modbus.data.multiplier-coefficient',
             defaultValue: 1,
             validators: [{ key: 'required' }],
+            class: 'col-4',
             displayInViewMode: false
           }
         ]

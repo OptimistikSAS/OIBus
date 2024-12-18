@@ -5,7 +5,6 @@ import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 
 import { Modal, ModalService } from '../../shared/modal.service';
-import { FormControlValidationDirective } from '../../shared/form-control-validation.directive';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import {
   SouthConnectorCommandDTO,
@@ -21,7 +20,6 @@ import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model
 import { OibFormControl } from '../../../../../backend/shared/model/form.model';
 import { createPageFromArray, Page } from '../../../../../backend/shared/model/types';
 import { emptyPage } from '../../shared/test-utils';
-import { PipeProviderService } from '../../shared/form/pipe-provider.service';
 import { ImportSouthItemsModalComponent } from '../import-south-items-modal/import-south-items-modal.component';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
@@ -46,7 +44,6 @@ export interface TableData {
   selector: 'oib-south-items',
   imports: [
     TranslateDirective,
-    FormControlValidationDirective,
     FormsModule,
     ReactiveFormsModule,
     BoxComponent,
@@ -63,8 +60,6 @@ export class SouthItemsComponent implements OnInit {
   private notificationService = inject(NotificationService);
   private modalService = inject(ModalService);
   private southConnectorService = inject(SouthConnectorService);
-  private pipeProviderService = inject(PipeProviderService);
-
   /** Either the edited dto or the duplicated dto */
   readonly southConnector = input<SouthConnectorDTO<SouthSettings, SouthItemSettings> | null>(null);
   /** Actual southId (or 'create') */
@@ -405,12 +400,8 @@ export class SouthItemsComponent implements OnInit {
     }
   }
 
-  getFieldValue(element: any, field: string, pipeIdentifier: string | undefined): string {
-    const value = element[field];
-    if (value && pipeIdentifier && this.pipeProviderService.validIdentifier(pipeIdentifier)) {
-      return this.pipeProviderService.getPipeForString(pipeIdentifier).transform(value);
-    }
-    return value;
+  getFieldValue(element: any, field: string): string {
+    return element[field];
   }
 
   toggleColumnSort(columnName: keyof TableData) {

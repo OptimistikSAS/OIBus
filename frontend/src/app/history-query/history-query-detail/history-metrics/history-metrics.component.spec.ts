@@ -25,13 +25,11 @@ class TestComponent {
   southManifest: SouthConnectorManifest = {
     id: 'mssql',
     category: 'database',
-    name: 'SQL',
-    description: 'SQL',
     settings: [
       {
         key: 'database',
         type: 'OibText',
-        label: 'Database',
+        translationKey: 'Database',
         validators: [{ key: 'required' }],
         displayInViewMode: true
       }
@@ -43,7 +41,7 @@ class TestComponent {
       },
       settings: [
         {
-          label: 'query',
+          translationKey: 'query',
           key: 'query',
           displayInViewMode: true,
           type: 'OibText'
@@ -59,9 +57,7 @@ class TestComponent {
   };
   northManifest: NorthConnectorManifest = {
     id: 'oianalytics',
-    name: 'OIAnalytics',
     category: 'api',
-    description: 'OIAnalytics description',
     modes: {
       files: true,
       points: true
@@ -70,7 +66,7 @@ class TestComponent {
       {
         key: 'host',
         type: 'OibText',
-        label: 'Host',
+        translationKey: 'Host',
         validators: [
           { key: 'required' },
           {
@@ -88,8 +84,8 @@ class TestComponent {
     name: 'History query',
     description: 'My History query description',
     status: 'RUNNING',
-    southType: 'OPCUA_HA',
-    northType: 'OIConnect',
+    southType: 'opcua',
+    northType: 'console',
     startTime: '2023-01-01T00:00:00.000Z',
     endTime: '2023-01-01T00:00:00.000Z',
     southSettings: {

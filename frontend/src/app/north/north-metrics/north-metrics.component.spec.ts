@@ -35,9 +35,7 @@ class TestComponent {
   } as NorthConnectorDTO<NorthSettings>;
   manifest: NorthConnectorManifest = {
     id: 'oianalytics',
-    name: 'OIAnalytics',
     category: 'api',
-    description: 'OIAnalytics description',
     modes: {
       files: true,
       points: true
@@ -46,7 +44,7 @@ class TestComponent {
       {
         key: 'host',
         type: 'OibText',
-        label: 'Host',
+        translationKey: 'Host',
         validators: [
           { key: 'required' },
           {

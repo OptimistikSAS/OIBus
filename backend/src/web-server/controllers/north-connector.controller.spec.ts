@@ -29,8 +29,6 @@ describe('North connector controller', () => {
       {
         id: testData.north.manifest.id,
         category: testData.north.manifest.category,
-        name: testData.north.manifest.name,
-        description: testData.north.manifest.description,
         modes: testData.north.manifest.modes
       }
     ]);

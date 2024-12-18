@@ -4,6 +4,7 @@ import { NorthConnectorEntity, NorthConnectorEntityLight } from '../../model/nor
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { toSouthConnectorLight } from './south-connector.repository';
 import { SouthConnectorEntityLight } from '../../model/south-connector.model';
+import { OIBusNorthType } from '../../../shared/model/north-connector.model';
 
 const NORTH_CONNECTORS_TABLE = 'north_connectors';
 const SUBSCRIPTION_TABLE = 'subscription';
@@ -168,7 +169,7 @@ export default class NorthConnectorRepository {
     return {
       id: result.id,
       name: result.name,
-      type: result.type,
+      type: result.type as OIBusNorthType,
       description: result.description,
       enabled: Boolean(result.enabled)
     };
@@ -178,7 +179,7 @@ export default class NorthConnectorRepository {
     return {
       id: result.id as string,
       name: result.name as string,
-      type: result.type as string,
+      type: result.type as OIBusNorthType,
       description: result.description as string,
       enabled: Boolean(result.enabled),
       settings: JSON.parse(result.settings as string) as N,
