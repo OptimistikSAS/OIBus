@@ -6,7 +6,7 @@ import { provideI18nTesting } from '../../../../../i18n/mock-i18n';
 import { formDirectives } from '../../../form-directives';
 import { EditElementComponent } from './edit-element.component';
 import { DefaultValidationErrorsComponent } from '../../../default-validation-errors/default-validation-errors.component';
-import { buildDateTimeFieldsFormControl } from '../../../../../../../backend/shared/model/manifest-factory';
+import { OibFormControl } from '../../../../../../../backend/shared/model/form.model';
 
 @Component({
   template: ` <form [formGroup]="form">
@@ -22,7 +22,59 @@ import { buildDateTimeFieldsFormControl } from '../../../../../../../backend/sha
   imports: [EditElementComponent, ...formDirectives]
 })
 class TestComponent {
-  formDescription = buildDateTimeFieldsFormControl([]).content;
+  formDescription: Array<OibFormControl> = [
+    {
+      key: 'fieldName',
+      translationKey: 'south.items.postgresql.date-time-fields.field-name',
+      type: 'OibText',
+      defaultValue: '',
+      validators: [{ key: 'required' }],
+      displayInViewMode: true
+    },
+    {
+      key: 'useAsReference',
+      translationKey: 'south.items.postgresql.date-time-fields.use-as-reference',
+      type: 'OibCheckbox',
+      defaultValue: false,
+      displayInViewMode: true,
+      validators: [{ key: 'required' }]
+    },
+    {
+      key: 'type',
+      translationKey: 'south.items.postgresql.date-time-fields.type',
+      type: 'OibSelect',
+      defaultValue: 'string',
+      options: ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms', 'timestamp', 'timestamptz'],
+      displayInViewMode: true,
+      validators: [{ key: 'required' }]
+    },
+    {
+      key: 'timezone',
+      translationKey: 'south.items.postgresql.date-time-fields.timezone',
+      type: 'OibTimezone',
+      defaultValue: 'UTC',
+      newRow: true,
+      validators: [{ key: 'required' }],
+      displayInViewMode: true,
+      conditionalDisplay: { field: 'type', values: ['string', 'timestamp', 'DateTime', 'DateTime2', 'SmallDateTime', 'Date'] }
+    },
+    {
+      key: 'format',
+      translationKey: 'south.items.postgresql.date-time-fields.format',
+      type: 'OibText',
+      defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
+      validators: [{ key: 'required' }],
+      conditionalDisplay: { field: 'type', values: ['string'] }
+    },
+    {
+      key: 'locale',
+      translationKey: 'south.items.postgresql.date-time-fields.locale',
+      defaultValue: 'en-En',
+      type: 'OibText',
+      validators: [{ key: 'required' }],
+      conditionalDisplay: { field: 'type', values: ['string'] }
+    }
+  ];
 
   element = {
     fieldName: 'field1',

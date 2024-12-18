@@ -1,11 +1,8 @@
 import { NorthConnectorManifest } from '../../../shared/model/north-connector.model';
-import { proxy } from '../../../shared/model/manifest-factory';
 
 const manifest: NorthConnectorManifest = {
   id: 'azure-blob',
-  name: 'Azure Blob Storage™',
   category: 'file',
-  description: 'Store files in Microsoft Azure Blob Storage™',
   modes: {
     files: true,
     points: true
@@ -14,7 +11,7 @@ const manifest: NorthConnectorManifest = {
     {
       key: 'useCustomUrl',
       type: 'OibCheckbox',
-      label: 'Use custom URL',
+      translationKey: 'north.azure-blob.use-custom-url',
       validators: [{ key: 'required' }],
       defaultValue: false,
       displayInViewMode: true,
@@ -23,7 +20,7 @@ const manifest: NorthConnectorManifest = {
     {
       key: 'account',
       type: 'OibText',
-      label: 'Account',
+      translationKey: 'north.azure-blob.account',
       class: 'col-9',
       validators: [{ key: 'required' }],
       displayInViewMode: true,
@@ -32,7 +29,7 @@ const manifest: NorthConnectorManifest = {
     {
       key: 'customUrl',
       type: 'OibText',
-      label: 'Custom URL',
+      translationKey: 'north.azure-blob.custom-url',
       class: 'col-9',
       validators: [
         { key: 'required' },
@@ -47,7 +44,8 @@ const manifest: NorthConnectorManifest = {
     {
       key: 'container',
       type: 'OibText',
-      label: 'Container',
+      translationKey: 'north.azure-blob.container',
+      class: 'col-6',
       validators: [{ key: 'required' }],
       newRow: true,
       displayInViewMode: true
@@ -55,54 +53,87 @@ const manifest: NorthConnectorManifest = {
     {
       key: 'path',
       type: 'OibText',
-      label: 'Path',
+      translationKey: 'north.azure-blob.path',
+      class: 'col-6',
       displayInViewMode: true
     },
     {
       key: 'authentication',
       type: 'OibSelect',
       options: ['access-key', 'sas-token', 'aad', 'external'],
-      label: 'Authentication',
-      pipe: 'authentication',
+      translationKey: 'north.azure-blob.authentication',
       defaultValue: 'access-key',
       newRow: true,
+      class: 'col-3',
       validators: [{ key: 'required' }],
       displayInViewMode: true
     },
     {
       key: 'sasToken',
       type: 'OibSecret',
-      label: 'Shared Access Signature token',
+      translationKey: 'north.azure-blob.sas-token',
+      class: 'col-3',
       conditionalDisplay: { field: 'authentication', values: ['sas-token'] }
     },
     {
       key: 'accessKey',
       type: 'OibSecret',
-      label: 'Access key',
+      translationKey: 'north.azure-blob.access-key',
+      class: 'col-3',
       conditionalDisplay: { field: 'authentication', values: ['access-key'] }
     },
     {
       key: 'tenantId',
       type: 'OibText',
-      label: 'Tenant ID',
+      translationKey: 'north.azure-blob.tenant-id',
       newRow: true,
+      class: 'col-3',
       conditionalDisplay: { field: 'authentication', values: ['aad'] }
     },
     {
       key: 'clientId',
       type: 'OibText',
-      label: 'Client ID',
+      translationKey: 'north.azure-blob.client-id',
       newRow: false,
+      class: 'col-3',
       conditionalDisplay: { field: 'authentication', values: ['aad'] }
     },
     {
       key: 'clientSecret',
       type: 'OibSecret',
-      label: 'Client secret',
+      translationKey: 'north.azure-blob.client-secret',
       newRow: false,
+      class: 'col-3',
       conditionalDisplay: { field: 'authentication', values: ['aad'] }
     },
-    ...proxy
+    {
+      key: 'useProxy',
+      translationKey: 'north.azure-blob.use-proxy',
+      type: 'OibCheckbox',
+      newRow: true,
+      defaultValue: false,
+      displayInViewMode: true,
+      validators: [{ key: 'required' }]
+    },
+    {
+      key: 'proxyUrl',
+      translationKey: 'north.azure-blob.proxy-url',
+      type: 'OibText',
+      validators: [{ key: 'required' }],
+      conditionalDisplay: { field: 'useProxy', values: [true] }
+    },
+    {
+      key: 'proxyUsername',
+      translationKey: 'north.azure-blob.proxy-username',
+      type: 'OibText',
+      conditionalDisplay: { field: 'useProxy', values: [true] }
+    },
+    {
+      key: 'proxyPassword',
+      translationKey: 'north.azure-blob.proxy-password',
+      type: 'OibSecret',
+      conditionalDisplay: { field: 'useProxy', values: [true] }
+    }
   ]
 };
 

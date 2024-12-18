@@ -45,7 +45,7 @@ describe('SouthFolderScanner', () => {
   const configuration: SouthConnectorEntity<SouthFolderScannerSettings, SouthFolderScannerItemSettings> = {
     id: 'southId',
     name: 'south',
-    type: 'test',
+    type: 'folder-scanner',
     description: 'my test connector',
     enabled: true,
     settings: {
@@ -235,7 +235,7 @@ describe('SouthFolderScanner with compression', () => {
   const configuration: SouthConnectorEntity<SouthFolderScannerSettings, SouthFolderScannerItemSettings> = {
     id: 'southId',
     name: 'south',
-    type: 'test',
+    type: 'folder-scanner',
     description: 'my test connector',
     enabled: true,
     settings: {

@@ -21,7 +21,7 @@
           <div class="form-group">
             <select [formControl]="createForm.controls.southType" id="south-type" class="form-select mb-2 mr-sm-2">
               @for (southType of southTypes; track southType) {
-                <option [ngValue]="southType.id">{{ southType.name }}</option>
+                <option [ngValue]="southType.id">{{ southType.id | oIBusSouthTypeEnum }}</option>
               }
             </select>
             <val-errors [control]="createForm.controls.southType" />
@@ -53,7 +53,7 @@
           <div class="form-group">
             <select [formControl]="createForm.controls.northType" id="north-type" class="form-select mb-2 mr-sm-2">
               @for (northType of northTypes; track northType.id) {
-                <option [ngValue]="northType.id">{{ northType.name }}</option>
+                <option [ngValue]="northType.id">{{ northType.id | oIBusNorthTypeEnum }}</option>
               }
             </select>
             <val-errors [control]="createForm.controls.northType" />

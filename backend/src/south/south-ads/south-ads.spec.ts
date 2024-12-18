@@ -49,7 +49,7 @@ describe('South ADS', () => {
   const configuration: SouthConnectorEntity<SouthADSSettings, SouthADSItemSettings> = {
     id: 'southId',
     name: 'south',
-    type: 'test',
+    type: 'ads',
     description: 'my test connector',
     enabled: true,
     settings: {

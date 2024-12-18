@@ -1,17 +1,20 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { formDirectives } from '../../shared/form-directives';
 
 import { NorthType } from '../../../../../backend/shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
+import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
+import { OIBusNorthTypeDescriptionEnumPipe } from '../../shared/oibus-north-type-description-enum.pipe';
+import { OIBusNorthCategoryEnumPipe } from '../../shared/oibus-north-category-enum.pipe';
 
 @Component({
   selector: 'oib-choose-north-connector-type-modal',
   templateUrl: './choose-north-connector-type-modal.component.html',
   styleUrl: './choose-north-connector-type-modal.component.scss',
-  imports: [...formDirectives, TranslateDirective, TranslatePipe]
+  imports: [...formDirectives, TranslateDirective, OIBusNorthTypeEnumPipe, OIBusNorthTypeDescriptionEnumPipe, OIBusNorthCategoryEnumPipe]
 })
 export class ChooseNorthConnectorTypeModalComponent implements OnInit {
   private modal = inject(NgbActiveModal);

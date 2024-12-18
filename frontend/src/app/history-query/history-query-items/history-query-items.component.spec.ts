@@ -18,8 +18,8 @@ const testHistoryQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemS
   name: 'History query',
   description: 'My History query description',
   status: 'PENDING',
-  southType: 'OPCUA_HA',
-  northType: 'OIConnect',
+  southType: 'opcua',
+  northType: 'file-writer',
   startTime: '2023-01-01T00:00:00.000Z',
   endTime: '2023-01-01T00:00:00.000Z',
   southSettings: {
@@ -90,8 +90,6 @@ class TestComponent {
   manifest: SouthConnectorManifest = {
     id: 'mssql',
     category: 'database',
-    name: 'SQL',
-    description: 'SQL',
     settings: [],
     items: {
       scanMode: {
@@ -100,7 +98,7 @@ class TestComponent {
       },
       settings: [
         {
-          label: 'query',
+          translationKey: 'south.items.mssql.query',
           key: 'query',
           displayInViewMode: true,
           type: 'OibText'

@@ -14,12 +14,12 @@
               <img
                 class="oib-modal-category-image"
                 [src]="'/' + southType.category + '.svg'"
-                [alt]="'enums.categories.' + southType.category | translate"
+                [alt]="southType.category | oIBusSouthCategoryEnum"
               />
             </div>
             <div class="ms-3 text-start">
-              <h6 class="mb-0">{{ southType.name }}</h6>
-              <p class="mb-0">{{ southType.description }}</p>
+              <h6 class="mb-0">{{ southType.id | oIBusSouthTypeEnum }}</h6>
+              <p class="mb-0">{{ southType.id | oIBusSouthTypeDescriptionEnum }}</p>
             </div>
           </button>
         </div>

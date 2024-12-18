@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 
-import { TranslateDirective } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
@@ -27,6 +27,7 @@ import { EngineService } from '../../services/engine.service';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { LogsComponent } from '../../logs/logs.component';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
+import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
 
 @Component({
   selector: 'oib-south-detail',
@@ -40,7 +41,9 @@ import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/
     EnabledEnumPipe,
     SouthItemsComponent,
     ClipboardModule,
-    LogsComponent
+    LogsComponent,
+    OIBusSouthTypeEnumPipe,
+    TranslatePipe
   ],
   templateUrl: './south-detail.component.html',
   styleUrl: './south-detail.component.scss',
@@ -53,6 +56,8 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
   private notificationService = inject(NotificationService);
   private modalService = inject(ModalService);
   private engineService = inject(EngineService);
+  private translateService = inject(TranslateService);
+
   protected router = inject(Router);
   private route = inject(ActivatedRoute);
   private cd = inject(ChangeDetectorRef);
@@ -102,8 +107,11 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
           .filter(setting => setting.displayInViewMode)
           .map(setting => {
             return {
-              key: setting.label,
-              value: southSettings[setting.key]
+              key: setting.type === 'OibSelect' ? setting.translationKey + '.title' : setting.translationKey,
+              value:
+                setting.type === 'OibSelect'
+                  ? this.translateService.instant(setting.translationKey + '.' + southSettings[setting.key])
+                  : southSettings[setting.key]
             };
           });
       });

@@ -6,6 +6,8 @@ import { Page } from '../../../shared/model/types';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { Instant } from '../../model/types';
+import { OIBusNorthType } from '../../../shared/model/north-connector.model';
+import { OIBusSouthType } from '../../../shared/model/south-connector.model';
 
 const HISTORY_QUERIES_TABLE = 'history_queries';
 const HISTORY_ITEMS_TABLE = 'history_items';
@@ -284,8 +286,8 @@ export default class HistoryQueryRepository {
       status: result.status as HistoryQueryStatus,
       startTime: result.start_time as Instant,
       endTime: result.end_time as Instant,
-      southType: result.south_type as string,
-      northType: result.north_type as string,
+      southType: result.south_type as OIBusSouthType,
+      northType: result.north_type as OIBusNorthType,
       southSettings: JSON.parse(result.south_settings as string) as S,
       northSettings: JSON.parse(result.north_settings as string) as N,
       caching: {
@@ -318,7 +320,7 @@ export const toHistoryQueryLight = (result: Record<string, string>): HistoryQuer
     status: result.status as HistoryQueryStatus,
     startTime: result.start_time,
     endTime: result.end_time,
-    southType: result.south_type,
-    northType: result.north_type
+    southType: result.south_type as OIBusSouthType,
+    northType: result.north_type as OIBusNorthType
   };
 };

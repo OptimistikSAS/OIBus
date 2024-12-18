@@ -36,7 +36,7 @@
           <tr>
             <th translate="south.items.name"></th>
             @for (setting of displaySettings; track setting) {
-              <th>{{ setting.label }}</th>
+              <th>{{ setting.translationKey | translate }}</th>
             }
           </tr>
         </thead>
@@ -45,7 +45,7 @@
             <tr class="south-item">
               <td>{{ item.name }}</td>
               @for (setting of displaySettings; track setting) {
-                <td>{{ getFieldValue(item.settings, setting.key, setting.pipe) }}</td>
+                <td>{{ getFieldValue(item.settings, setting.key) }}</td>
               }
             </tr>
           }

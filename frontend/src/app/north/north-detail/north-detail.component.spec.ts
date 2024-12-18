@@ -45,7 +45,7 @@ describe('NorthDetailComponent', () => {
 
   const northConnector: NorthConnectorDTO<NorthSettings> = {
     id: 'id1',
-    type: 'Generic',
+    type: 'file-writer',
     name: 'North Connector',
     description: 'My North connector description',
     enabled: true,
@@ -73,9 +73,7 @@ describe('NorthDetailComponent', () => {
   };
   const manifest: NorthConnectorManifest = {
     id: 'oianalytics',
-    name: 'OIAnalytics',
     category: 'api',
-    description: 'OIAnalytics description',
     modes: {
       files: true,
       points: true
@@ -84,7 +82,7 @@ describe('NorthDetailComponent', () => {
       {
         key: 'host',
         type: 'OibText',
-        label: 'Host',
+        translationKey: 'north.oianalytics.specific-settings.host',
         validators: [
           { key: 'required' },
           {
@@ -153,7 +151,7 @@ describe('NorthDetailComponent', () => {
     expect(settings.length).toBe(2);
     expect(settings[0]).toContainText('Status');
     expect(settings[0]).toContainText('active');
-    expect(settings[1]).toContainText('Host');
+    expect(settings[1]).toContainText('URL');
     expect(settings[1]).toContainText('url');
   });
 

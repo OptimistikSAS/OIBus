@@ -50,15 +50,11 @@ describe('ChooseSouthConnectorTypeModalComponent', () => {
         {
           id: 'mssql',
           category: 'database',
-          name: 'SQL',
-          description: 'SQL description',
           modes: { lastFile: false, lastPoint: false, subscription: true, history: true }
         },
         {
           id: 'mqtt',
           category: 'iot',
-          name: 'MQTT',
-          description: 'MQTT description',
           modes: { lastFile: false, lastPoint: false, subscription: true, history: true }
         }
       ])

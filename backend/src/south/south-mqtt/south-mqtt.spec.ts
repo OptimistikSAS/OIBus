@@ -66,7 +66,7 @@ describe('SouthMQTT without authentication', () => {
   const configuration: SouthConnectorDTO<SouthMQTTSettings, SouthMQTTItemSettings> = {
     id: 'southId',
     name: 'south',
-    type: 'test',
+    type: 'mqtt',
     description: 'my test connector',
     enabled: true,
     settings: {
@@ -250,7 +250,7 @@ describe('SouthMQTT with Basic Auth', () => {
   const configuration: SouthConnectorDTO<SouthMQTTSettings, SouthMQTTItemSettings> = {
     id: 'southId',
     name: 'south',
-    type: 'test',
+    type: 'mqtt',
     description: 'my test connector',
     enabled: true,
     settings: {
@@ -785,7 +785,7 @@ describe('SouthMQTT with Cert', () => {
   const configuration: SouthConnectorDTO<SouthMQTTSettings, SouthMQTTItemSettings> = {
     id: 'southId',
     name: 'south',
-    type: 'test',
+    type: 'mqtt',
     description: 'my test connector',
     enabled: true,
     settings: {
@@ -961,7 +961,7 @@ describe('SouthMQTT without Cert', () => {
   const configuration: SouthConnectorDTO<SouthMQTTSettings, SouthMQTTItemSettings> = {
     id: 'southId',
     name: 'south',
-    type: 'test',
+    type: 'mqtt',
     description: 'my test connector',
     enabled: true,
     settings: {

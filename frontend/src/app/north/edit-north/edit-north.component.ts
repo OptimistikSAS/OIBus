@@ -14,7 +14,8 @@ import { ScanModeService } from '../../services/scan-mode.service';
 import {
   NorthConnectorCommandDTO,
   NorthConnectorDTO,
-  NorthConnectorManifest
+  NorthConnectorManifest,
+  OIBusNorthType
 } from '../../../../../backend/shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { OibScanModeComponent } from '../../shared/form/oib-scan-mode/oib-scan-mode.component';
@@ -29,6 +30,7 @@ import { NorthSubscriptionsComponent } from '../north-subscriptions/north-subscr
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { SouthConnectorLightDTO } from '../../../../../backend/shared/model/south-connector.model';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 
 @Component({
   selector: 'oib-edit-north',
@@ -43,7 +45,8 @@ import { NorthSettings } from '../../../../../backend/shared/model/north-setting
     BoxTitleDirective,
     NorthSubscriptionsComponent,
     OibHelpComponent,
-    TranslatePipe
+    TranslatePipe,
+    OIBusNorthTypeEnumPipe
   ],
   templateUrl: './edit-north.component.html',
   styleUrl: './edit-north.component.scss'
@@ -195,7 +198,7 @@ export class EditNorthComponent implements OnInit {
 
     const command: NorthConnectorCommandDTO<NorthSettings> = {
       name: formValue.name!,
-      type: this.northType,
+      type: this.northType as OIBusNorthType,
       description: formValue.description!,
       enabled: formValue.enabled!,
       settings: formValue.settings!,

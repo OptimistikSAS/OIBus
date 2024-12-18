@@ -1,11 +1,8 @@
 import { SouthConnectorManifest } from '../../../shared/model/south-connector.model';
-import { buildDateTimeFieldsFormControl, buildSerializationFormControl } from '../../../shared/model/manifest-factory';
 
 const manifest: SouthConnectorManifest = {
   id: 'oracle',
-  name: 'Oracle Database™',
   category: 'database',
-  description: 'Query data from an Oracle Database™',
   modes: {
     subscription: false,
     lastPoint: false,
@@ -16,7 +13,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'throttling',
       type: 'OibFormGroup',
-      label: 'Throttling',
+      translationKey: 'south.oracle.throttling.title',
       class: 'col',
       newRow: true,
       displayInViewMode: false,
@@ -25,7 +22,7 @@ const manifest: SouthConnectorManifest = {
         {
           key: 'maxReadInterval',
           type: 'OibNumber',
-          label: 'Max read interval',
+          translationKey: 'south.oracle.throttling.max-read-interval',
           validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }],
           defaultValue: 3600,
           unitLabel: 's',
@@ -34,7 +31,7 @@ const manifest: SouthConnectorManifest = {
         {
           key: 'readDelay',
           type: 'OibNumber',
-          label: 'Read delay',
+          translationKey: 'south.oracle.throttling.read-delay',
           validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }],
           defaultValue: 200,
           unitLabel: 'ms',
@@ -43,7 +40,7 @@ const manifest: SouthConnectorManifest = {
         {
           key: 'overlap',
           type: 'OibNumber',
-          label: 'Overlap',
+          translationKey: 'south.oracle.throttling.overlap',
           validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }],
           defaultValue: 0,
           unitLabel: 'ms',
@@ -54,19 +51,19 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'thickMode',
       type: 'OibCheckbox',
-      label: 'Thick mode',
+      translationKey: 'south.oracle.thick-mode',
       newRow: true,
       defaultValue: false,
-      class: 'col-3',
+      class: 'col-4',
       validators: [{ key: 'required' }],
       displayInViewMode: true
     },
     {
       key: 'oracleClient',
       type: 'OibText',
-      label: 'Oracle Client Library',
+      translationKey: 'south.oracle.oracle-client',
       defaultValue: '',
-      class: 'col-9',
+      class: 'col-8',
       conditionalDisplay: { field: 'thickMode', values: [true] },
       validators: [{ key: 'required' }],
       displayInViewMode: true
@@ -74,24 +71,26 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'host',
       type: 'OibText',
-      label: 'Host',
+      translationKey: 'south.oracle.host',
       defaultValue: 'localhost',
+      newRow: true,
+      class: 'col-6',
       validators: [{ key: 'required' }],
       displayInViewMode: true
     },
     {
       key: 'port',
       type: 'OibNumber',
-      label: 'Port',
+      translationKey: 'south.oracle.port',
       defaultValue: 1521,
-      class: 'col-2',
+      class: 'col-3',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
       displayInViewMode: true
     },
     {
       key: 'connectionTimeout',
       type: 'OibNumber',
-      label: 'Connection timeout',
+      translationKey: 'south.oracle.connection-timeout',
       defaultValue: 15000,
       unitLabel: 'ms',
       class: 'col-3',
@@ -101,21 +100,24 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'database',
       type: 'OibText',
-      label: 'Database',
+      translationKey: 'south.oracle.database',
       defaultValue: 'db',
       newRow: true,
+      class: 'col-6',
       validators: [{ key: 'required' }],
       displayInViewMode: true
     },
     {
       key: 'username',
       type: 'OibText',
-      label: 'Username'
+      translationKey: 'south.oracle.username',
+      class: 'col-3'
     },
     {
       key: 'password',
       type: 'OibSecret',
-      label: 'Password'
+      translationKey: 'south.oracle.password',
+      class: 'col-3'
     }
   ],
   items: {
@@ -127,7 +129,7 @@ const manifest: SouthConnectorManifest = {
       {
         key: 'query',
         type: 'OibCodeBlock',
-        label: 'Query',
+        translationKey: 'south.items.oracle.query',
         contentType: 'sql',
         defaultValue:
           'SELECT level, message, timestamp, scope_name as scopeName FROM logs WHERE timestamp > @StartTime AND timestamp <= @EndTime',
@@ -138,7 +140,7 @@ const manifest: SouthConnectorManifest = {
       {
         key: 'requestTimeout',
         type: 'OibNumber',
-        label: 'Request timeout',
+        translationKey: 'south.items.oracle.request-timeout',
         defaultValue: 15000,
         class: 'col-4',
         unitLabel: 'ms',
@@ -146,8 +148,133 @@ const manifest: SouthConnectorManifest = {
         validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
         displayInViewMode: false
       },
-      buildDateTimeFieldsFormControl(['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms']),
-      buildSerializationFormControl(['csv'])
+      {
+        key: 'dateTimeFields',
+        type: 'OibArray',
+        translationKey: 'south.items.oracle.date-time-fields.date-time-field',
+        content: [
+          {
+            key: 'fieldName',
+            translationKey: 'south.items.oracle.date-time-fields.field-name',
+            type: 'OibText',
+            defaultValue: '',
+            validators: [{ key: 'required' }],
+            displayInViewMode: true
+          },
+          {
+            key: 'useAsReference',
+            translationKey: 'south.items.oracle.date-time-fields.use-as-reference',
+            type: 'OibCheckbox',
+            defaultValue: false,
+            displayInViewMode: true,
+            validators: [{ key: 'required' }]
+          },
+          {
+            key: 'type',
+            translationKey: 'south.items.oracle.date-time-fields.type',
+            type: 'OibSelect',
+            defaultValue: 'string',
+            options: ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'],
+            displayInViewMode: true,
+            validators: [{ key: 'required' }]
+          },
+          {
+            key: 'timezone',
+            translationKey: 'south.items.oracle.date-time-fields.timezone',
+            type: 'OibTimezone',
+            defaultValue: 'UTC',
+            newRow: true,
+            validators: [{ key: 'required' }],
+            displayInViewMode: true,
+            conditionalDisplay: { field: 'type', values: ['string', 'timestamp', 'DateTime', 'DateTime2', 'SmallDateTime', 'Date'] }
+          },
+          {
+            key: 'format',
+            translationKey: 'south.items.oracle.date-time-fields.format',
+            type: 'OibText',
+            defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
+            validators: [{ key: 'required' }],
+            conditionalDisplay: { field: 'type', values: ['string'] }
+          },
+          {
+            key: 'locale',
+            translationKey: 'south.items.oracle.date-time-fields.locale',
+            defaultValue: 'en-En',
+            type: 'OibText',
+            validators: [{ key: 'required' }],
+            conditionalDisplay: { field: 'type', values: ['string'] }
+          }
+        ],
+        class: 'col',
+        newRow: true,
+        displayInViewMode: false
+      },
+      {
+        key: 'serialization',
+        type: 'OibFormGroup',
+        translationKey: 'south.items.oracle.serialization.title',
+        newRow: true,
+        displayInViewMode: false,
+        validators: [{ key: 'required' }],
+        content: [
+          {
+            key: 'type',
+            type: 'OibSelect',
+            translationKey: 'south.items.oracle.serialization.type',
+            options: ['csv'],
+            defaultValue: 'csv',
+            newRow: true,
+            displayInViewMode: false,
+            validators: [{ key: 'required' }]
+          },
+          {
+            key: 'filename',
+            type: 'OibText',
+            translationKey: 'south.items.oracle.serialization.filename',
+            defaultValue: '@ConnectorName-@ItemName-@CurrentDate.csv',
+            newRow: false,
+            displayInViewMode: false,
+            validators: [{ key: 'required' }]
+          },
+          {
+            key: 'delimiter',
+            type: 'OibSelect',
+            translationKey: 'south.items.oracle.serialization.delimiter',
+            options: ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'],
+            defaultValue: 'COMMA',
+            newRow: false,
+            displayInViewMode: false,
+            validators: [{ key: 'required' }]
+          },
+          {
+            key: 'compression',
+            type: 'OibCheckbox',
+            translationKey: 'south.items.oracle.serialization.compression',
+            defaultValue: false,
+            newRow: false,
+            displayInViewMode: false,
+            validators: [{ key: 'required' }]
+          },
+          {
+            key: 'outputTimestampFormat',
+            type: 'OibText',
+            translationKey: 'south.items.oracle.serialization.output-timestamp-format',
+            defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
+            newRow: true,
+            displayInViewMode: false,
+            validators: [{ key: 'required' }]
+          },
+          {
+            key: 'outputTimezone',
+            type: 'OibTimezone',
+            translationKey: 'south.items.oracle.serialization.output-timezone',
+            defaultValue: 'Europe/Paris',
+            newRow: false,
+            displayInViewMode: false,
+            validators: [{ key: 'required' }]
+          }
+        ]
+      }
     ]
   }
 };

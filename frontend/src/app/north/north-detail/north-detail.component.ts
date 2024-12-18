@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
-import { TranslateDirective } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { combineLatest, of, switchMap, tap } from 'rxjs';
@@ -25,11 +25,11 @@ import { NorthConnectorMetrics, OIBusInfo } from '../../../../../backend/shared/
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { ModalService } from '../../shared/modal.service';
 import { BooleanEnumPipe } from '../../shared/boolean-enum.pipe';
-import { PipeProviderService } from '../../shared/form/pipe-provider.service';
 import { EngineService } from '../../services/engine.service';
 import { LogsComponent } from '../../logs/logs.component';
 import { SouthConnectorLightDTO } from '../../../../../backend/shared/model/south-connector.model';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 
 @Component({
   selector: 'oib-north-detail',
@@ -45,7 +45,9 @@ import { NorthSettings } from '../../../../../backend/shared/model/north-setting
     DurationPipe,
     EnabledEnumPipe,
     ClipboardModule,
-    LogsComponent
+    LogsComponent,
+    OIBusNorthTypeEnumPipe,
+    TranslatePipe
   ],
   templateUrl: './north-detail.component.html',
   styleUrl: './north-detail.component.scss',
@@ -60,8 +62,8 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
   private modalService = inject(ModalService);
   private route = inject(ActivatedRoute);
   private cd = inject(ChangeDetectorRef);
-  private pipeProviderService = inject(PipeProviderService);
   private booleanPipe = inject(BooleanEnumPipe);
+  private translateService = inject(TranslateService);
 
   northConnector: NorthConnectorDTO<NorthSettings> | null = null;
   displayedSettings: Array<{ key: string; value: string }> = [];
@@ -112,17 +114,17 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
               case 'OibTimezone':
               case 'OibScanMode':
                 return {
-                  key: setting.label,
+                  key: setting.translationKey,
                   value: northSettings[setting.key]
                 };
               case 'OibSelect':
                 return {
-                  key: setting.label,
-                  value: this.transform(northSettings[setting.key] as string, setting.pipe)
+                  key: setting.translationKey + '.title',
+                  value: this.translateService.instant(setting.translationKey + '.' + northSettings[setting.key])
                 };
               case 'OibCheckbox':
                 return {
-                  key: setting.label,
+                  key: setting.translationKey,
                   value: this.booleanPipe.transform(northSettings[setting.key] as boolean)
                 };
               case 'OibCertificate':
@@ -130,7 +132,7 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
               case 'OibArray':
               case 'OibFormGroup':
                 return {
-                  key: setting.label,
+                  key: setting.translationKey,
                   value: ''
                 };
             }
@@ -147,13 +149,6 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
 
   getScanMode(scanModeId: string) {
     return this.scanModes.find(scanMode => scanMode.id === scanModeId)?.name || scanModeId;
-  }
-
-  transform(value: string, pipeIdentifier: string | undefined): string {
-    if (!pipeIdentifier || !this.pipeProviderService.validIdentifier(pipeIdentifier)) {
-      return value;
-    }
-    return this.pipeProviderService.getPipeForString(pipeIdentifier).transform(value);
   }
 
   testConnection() {

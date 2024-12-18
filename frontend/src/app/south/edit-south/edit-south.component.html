@@ -4,7 +4,7 @@
       <div class="col-md-10 col-lg-8">
         <div class="d-flex">
           @if (mode === 'create') {
-            <h1 [translate]="'south.create-title'" [translateParams]="{ type: manifest.name }"></h1>
+            <h1 [translate]="'south.create-title'" [translateParams]="{ type: manifest.id | oIBusSouthTypeEnum }"></h1>
           }
           @if (mode === 'edit' && southConnector) {
             <h1 [translate]="'south.edit-title'" [translateParams]="{ name: southConnector.name }"></h1>
@@ -49,7 +49,7 @@
                   <div>
                     <span
                       translate="south.specific-settings"
-                      [translateParams]="{ type: manifest.name }"
+                      [translateParams]="{ type: manifest.id | oIBusSouthTypeEnum }"
                       id="specific-settings-title"
                     ></span>
                   </div>

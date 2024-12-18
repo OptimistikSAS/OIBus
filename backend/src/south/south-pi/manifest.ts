@@ -2,9 +2,7 @@ import { SouthConnectorManifest } from '../../../shared/model/south-connector.mo
 
 const manifest: SouthConnectorManifest = {
   id: 'osisoft-pi',
-  name: 'OSIsoft PI System™',
   category: 'database',
-  description: 'Access data from a PI System™ through OIBus Agent',
   modes: {
     subscription: false,
     lastPoint: false,
@@ -15,7 +13,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'throttling',
       type: 'OibFormGroup',
-      label: 'Throttling',
+      translationKey: 'south.osisoft-pi.throttling.title',
       class: 'col',
       newRow: true,
       displayInViewMode: false,
@@ -24,7 +22,7 @@ const manifest: SouthConnectorManifest = {
         {
           key: 'maxReadInterval',
           type: 'OibNumber',
-          label: 'Max read interval',
+          translationKey: 'south.osisoft-pi.throttling.max-read-interval',
           validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }],
           defaultValue: 3600,
           unitLabel: 's',
@@ -33,7 +31,7 @@ const manifest: SouthConnectorManifest = {
         {
           key: 'readDelay',
           type: 'OibNumber',
-          label: 'Read delay',
+          translationKey: 'south.osisoft-pi.throttling.read-delay',
           validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }],
           defaultValue: 200,
           unitLabel: 'ms',
@@ -42,7 +40,7 @@ const manifest: SouthConnectorManifest = {
         {
           key: 'overlap',
           type: 'OibNumber',
-          label: 'Overlap',
+          translationKey: 'south.osisoft-pi.throttling.overlap',
           validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }],
           defaultValue: 0,
           unitLabel: 'ms',
@@ -51,7 +49,7 @@ const manifest: SouthConnectorManifest = {
         {
           key: 'maxInstantPerItem',
           type: 'OibCheckbox',
-          label: 'Max instant per item',
+          translationKey: 'south.osisoft-pi.throttling.max-instant-per-item',
           defaultValue: false,
           validators: [{ key: 'required' }],
           displayInViewMode: true
@@ -61,7 +59,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'agentUrl',
       type: 'OibText',
-      label: 'Remote agent URL',
+      translationKey: 'south.osisoft-pi.agent-url',
       defaultValue: 'http://ip-adress-or-host:2224',
       validators: [{ key: 'required' }],
       newRow: true,
@@ -70,7 +68,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'retryInterval',
       type: 'OibNumber',
-      label: 'Retry interval',
+      translationKey: 'south.osisoft-pi.retry-interval',
       defaultValue: 10_000,
       unitLabel: 'ms',
       class: 'col-3',
@@ -87,8 +85,8 @@ const manifest: SouthConnectorManifest = {
         key: 'type',
         type: 'OibSelect',
         options: ['point-id', 'point-query'],
-        label: 'Type',
-        defaultValue: 'pointId',
+        translationKey: 'south.items.osisoft-pi.type',
+        defaultValue: 'point-id',
         class: 'col-4',
         validators: [{ key: 'required' }],
         displayInViewMode: true
@@ -96,7 +94,7 @@ const manifest: SouthConnectorManifest = {
       {
         key: 'piPoint',
         type: 'OibText',
-        label: 'Point ID',
+        translationKey: 'south.items.osisoft-pi.pi-point',
         validators: [{ key: 'required' }],
         conditionalDisplay: { field: 'type', values: ['point-id'] },
         newRow: true,
@@ -105,7 +103,7 @@ const manifest: SouthConnectorManifest = {
       {
         key: 'piQuery',
         type: 'OibTextArea',
-        label: 'Point Query',
+        translationKey: 'south.items.osisoft-pi.pi-query',
         defaultValue: '*',
         validators: [{ key: 'required' }],
         conditionalDisplay: { field: 'type', values: ['point-query'] },

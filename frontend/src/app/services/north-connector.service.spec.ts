@@ -43,11 +43,11 @@ describe('NorthConnectorService', () => {
 
   it('should get a North connector manifest', () => {
     let expectedNorthConnectorSchema: NorthConnectorManifest | null = null;
-    service.getNorthConnectorTypeManifest('SQL').subscribe(manifest => (expectedNorthConnectorSchema = manifest));
+    service.getNorthConnectorTypeManifest('console').subscribe(manifest => (expectedNorthConnectorSchema = manifest));
 
-    http.expectOne('/api/north-types/SQL').flush({ name: 'myNorthConnector' });
+    http.expectOne('/api/north-types/console').flush({ id: 'console' });
 
-    expect(expectedNorthConnectorSchema!).toEqual({ name: 'myNorthConnector' } as NorthConnectorManifest);
+    expect(expectedNorthConnectorSchema!).toEqual({ id: 'console' } as NorthConnectorManifest);
   });
 
   it('should get all North connectors', () => {
@@ -85,7 +85,7 @@ describe('NorthConnectorService', () => {
       name: 'myNorthConnector',
       description: 'a test north connector',
       enabled: true,
-      type: 'Test',
+      type: 'file-writer',
       settings: {} as NorthSettings,
       caching: {
         scanModeId: 'scanModeId1',
@@ -121,7 +121,7 @@ describe('NorthConnectorService', () => {
       name: 'myNorthConnector',
       description: 'a test north connector',
       enabled: true,
-      type: 'Test',
+      type: 'file-writer',
       settings: {} as NorthSettings,
       caching: {
         scanModeId: 'scanModeId1',
@@ -382,7 +382,7 @@ describe('NorthConnectorService', () => {
       name: 'myNorthConnector',
       description: 'a test north connector',
       enabled: true,
-      type: 'Test',
+      type: 'file-writer',
       settings: {} as NorthSettings,
       caching: {
         scanModeId: 'scanModeId1',
