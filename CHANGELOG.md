@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.9](https://github.com/OptimistikSAS/OIBus/compare/v3.4.8...v3.4.9) (2024-12-18)
+
+
+### Bug Fixes
+
+* **oledb:** fix oledb read payload ([a8bccde](https://github.com/OptimistikSAS/OIBus/commit/a8bccde1930965bb987631084aa4deaddd994b5f))
+
 ## [3.4.8](https://github.com/OptimistikSAS/OIBus/compare/v3.4.7...v3.4.8) (2024-12-04)
 
 
