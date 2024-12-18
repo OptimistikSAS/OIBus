@@ -1,6 +1,8 @@
 import { BaseEntity } from './types';
 import { SouthItemSettings, SouthSettings } from './south-settings.model';
 import { NorthSettings } from './north-settings.model';
+import { OIBusSouthType } from './south-connector.model';
+import { OIBusNorthType } from './north-connector.model';
 
 export const HISTORY_QUERY_STATUS = ['PENDING', 'RUNNING', 'PAUSED', 'FINISHED', 'ERRORED'] as const;
 export type HistoryQueryStatus = (typeof HISTORY_QUERY_STATUS)[number];
@@ -11,8 +13,8 @@ export interface HistoryQueryLightDTO extends BaseEntity {
   status: HistoryQueryStatus;
   startTime: string;
   endTime: string;
-  southType: string;
-  northType: string;
+  southType: OIBusSouthType;
+  northType: OIBusNorthType;
 }
 
 export interface HistoryQueryDTO<S extends SouthSettings, N extends NorthSettings, I extends SouthItemSettings> extends BaseEntity {
@@ -21,8 +23,8 @@ export interface HistoryQueryDTO<S extends SouthSettings, N extends NorthSetting
   status: HistoryQueryStatus;
   startTime: string;
   endTime: string;
-  southType: string;
-  northType: string;
+  southType: OIBusSouthType;
+  northType: OIBusNorthType;
   southSettings: S;
   northSettings: N;
   caching: {
@@ -47,8 +49,8 @@ export interface HistoryQueryCommandDTO<S extends SouthSettings, N extends North
   description: string;
   startTime: string;
   endTime: string;
-  southType: string;
-  northType: string;
+  southType: OIBusSouthType;
+  northType: OIBusNorthType;
   southSettings: S;
   northSettings: N;
   caching: {

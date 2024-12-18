@@ -4,7 +4,6 @@ import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 
 import { Modal, ModalService } from '../../shared/modal.service';
-import { FormControlValidationDirective } from '../../shared/form-control-validation.directive';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { SouthConnectorCommandDTO, SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
 import { debounceTime, distinctUntilChanged, of, switchMap, tap } from 'rxjs';
@@ -20,7 +19,6 @@ import { ExportItemModalComponent } from '../../shared/export-item-modal/export-
 import { ImportItemModalComponent } from '../../shared/import-item-modal/import-item-modal.component';
 import { EditHistoryQueryItemModalComponent } from '../edit-history-query-item-modal/edit-history-query-item-modal.component';
 import { ImportHistoryQueryItemsModalComponent } from '../import-history-query-items-modal/import-history-query-items-modal.component';
-import { PipeProviderService } from '../../shared/form/pipe-provider.service';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
@@ -41,7 +39,6 @@ export interface TableData {
   imports: [
     TranslateDirective,
     PaginationComponent,
-    FormControlValidationDirective,
     FormsModule,
     ReactiveFormsModule,
     BoxComponent,
@@ -57,7 +54,6 @@ export class HistoryQueryItemsComponent implements OnInit {
   private notificationService = inject(NotificationService);
   private modalService = inject(ModalService);
   private historyQueryService = inject(HistoryQueryService);
-  private pipeProviderService = inject(PipeProviderService);
 
   /** Actual historyId (or 'create') */
   readonly historyId = input.required<string>();
@@ -409,11 +405,7 @@ export class HistoryQueryItemsComponent implements OnInit {
     }
   }
 
-  getFieldValue(element: any, field: string, pipeIdentifier: string | undefined): string {
-    const value = element[field];
-    if (value && pipeIdentifier && this.pipeProviderService.validIdentifier(pipeIdentifier)) {
-      return this.pipeProviderService.getPipeForString(pipeIdentifier).transform(value);
-    }
-    return value;
+  getFieldValue(element: any, field: string): string {
+    return element[field];
   }
 }

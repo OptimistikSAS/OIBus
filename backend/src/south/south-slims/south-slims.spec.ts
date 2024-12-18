@@ -50,7 +50,7 @@ describe('SouthSlims with body', () => {
   const configuration: SouthConnectorEntity<SouthSlimsSettings, SouthSlimsItemSettings> = {
     id: 'southId',
     name: 'south',
-    type: 'test',
+    type: 'slims',
     description: 'my test connector',
     enabled: true,
     settings: {
@@ -305,7 +305,7 @@ describe('SouthSlims with body and accept self signed', () => {
   const configuration: SouthConnectorEntity<SouthSlimsSettings, SouthSlimsItemSettings> = {
     id: 'southId',
     name: 'south',
-    type: 'test',
+    type: 'slims',
     description: 'my test connector',
     enabled: true,
     settings: {
@@ -481,7 +481,7 @@ describe('SouthSlims with query params', () => {
   const configuration: SouthConnectorEntity<SouthSlimsSettings, SouthSlimsItemSettings> = {
     id: 'southId',
     name: 'south',
-    type: 'test',
+    type: 'slims',
     description: 'my test connector',
     enabled: true,
     settings: {
@@ -1207,7 +1207,7 @@ describe('SouthSlims with query params and accept self signed', () => {
   const configuration: SouthConnectorEntity<SouthSlimsSettings, SouthSlimsItemSettings> = {
     id: 'southId',
     name: 'south',
-    type: 'test',
+    type: 'slims',
     description: 'my test connector',
     enabled: true,
     settings: {

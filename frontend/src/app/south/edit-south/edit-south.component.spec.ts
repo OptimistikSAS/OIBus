@@ -97,7 +97,7 @@ describe('EditSouthComponent', () => {
     });
 
     it('should display general settings', () => {
-      expect(tester.title).toContainText('Create SQL south connector');
+      expect(tester.title).toContainText('Create Microsoft SQL Server™ south connector');
       expect(tester.enabled).toBeChecked();
       expect(tester.description).toHaveValue('');
       expect(tester.specificForm).toBeDefined();
@@ -109,7 +109,7 @@ describe('EditSouthComponent', () => {
   describe('edit mode', () => {
     const southConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> = {
       id: 'id1',
-      type: 'SQL',
+      type: 'mssql',
       name: 'My South Connector 1',
       description: 'My South connector description',
       enabled: true,
@@ -131,7 +131,7 @@ describe('EditSouthComponent', () => {
       expect(tester.enabled).toBeChecked();
       expect(tester.description).toHaveValue('My South connector description');
       expect(tester.specificForm).toBeDefined();
-      expect(tester.specificTitle).toContainText('SQL settings');
+      expect(tester.specificTitle).toContainText('Microsoft SQL Server™ settings');
     });
   });
 });

@@ -122,74 +122,6 @@
       "iot": "IoT",
       "oi": "OI"
     },
-    "auth-types": {
-      "none": "None",
-      "basic": "Basic auth",
-      "password": "Password",
-      "bearer": "Bearer",
-      "api-key": "API key",
-      "cert": "Certificate",
-      "aad": "Application Active Directory",
-      "aad-client-secret": "Azure Active Directory with client secret",
-      "aad-certificate": "Azure Active Directory with certificate",
-      "accessKey": "Access key",
-      "private-key": "Private key",
-      "sasToken": "Shared Access Signature token",
-      "external": "External"
-    },
-    "datetime-types": {
-      "iso-string": "ISO 8601",
-      "string": "String",
-      "unix-epoch": "UNIX Epoch (s)",
-      "unix-epoch-ms": "UNIX Epoch (ms)",
-      "timestamp": "timestamp",
-      "timestamptz": "timestamptz",
-      "DateTime": "DateTime",
-      "DateTime2": "DateTime2",
-      "SmallDateTime": "SmallDateTime",
-      "Date": "Date",
-      "DateTimeOffset": "DateTimeOffset"
-    },
-    "serialization-types": {
-      "csv": "CSV File",
-      "json": "OIBus values"
-    },
-    "aggregates": {
-      "raw": "Raw",
-      "interpolative": "Interpolate",
-      "total": "Total",
-      "average": "Average",
-      "time-average": "Time average",
-      "count": "Count",
-      "stdev": "Standard deviation",
-      "minimum-actual-time": "Minimum actual time",
-      "minimum": "Minimum",
-      "maximum-actual-time": "Maximum actual time",
-      "maximum": "Maximum",
-      "start": "Start",
-      "end": "End",
-      "delta": "Delta",
-      "reg-slope": "Reg slope",
-      "reg-const": "Reg const",
-      "reg-dev": "Reg dev",
-      "variance": "Variance",
-      "range": "Range",
-      "duration-good": "Duration good",
-      "duration-bad": "Duration bad",
-      "percent-good": "Percent good",
-      "percent-bad": "Percent bad",
-      "worst-quality": "Worst quality",
-      "annotations": "Annotations"
-    },
-    "resampling": {
-      "none": "None",
-      "1s": "1 second",
-      "10s": "10 seconds",
-      "30s": "30 seconds",
-      "1min": "1 minute",
-      "1h": "1 hour",
-      "1d": "1 day"
-    },
     "csv-character": {
       "DOT": "Dot .",
       "SEMI_COLON": "Semi colon ;",
@@ -230,6 +162,71 @@
       "create-north": "Create north connector",
       "update-north": "Update north connector",
       "delete-north": "Delete north connector"
+    },
+    "oibus-north-category": {
+      "debug": "Debug",
+      "file": "File",
+      "api": "API"
+    },
+    "oibus-north-type": {
+      "aws-s3": "Amazon S3™",
+      "azure-blob": "Azure Blob Storage™",
+      "console": "Console",
+      "file-writer": "File writer",
+      "oianalytics": "OIAnalytics®",
+      "sftp": "SFTP"
+    },
+    "oibus-north-type-description": {
+      "aws-s3": "Store files in Amazon S3™ (Simple Storage Service)",
+      "azure-blob": "Store files in Microsoft Azure Blob Storage™",
+      "console": "Display filenames or values in Console (used for debug)",
+      "file-writer": "Write files and data to the output folder",
+      "oianalytics": "Send files and values to OIAnalytics®",
+      "sftp": "Upload files and data to an SFTP server"
+    },
+    "oibus-south-category": {
+      "iot": "IOT",
+      "database": "Database",
+      "file": "File",
+      "api": "API"
+    },
+    "oibus-south-type": {
+      "ads": "ADS - TwinCAT®",
+      "folder-scanner": "Folder scanner",
+      "modbus": "Modbus",
+      "mqtt": "MQTT",
+      "mssql": "Microsoft SQL Server™",
+      "mysql": "MySQL® / MariaDB™",
+      "odbc": "ODBC",
+      "oianalytics": "OIAnalytics®",
+      "oledb": "OLEDB",
+      "opc": "OPC Classic™",
+      "opcua": "OPC UA™",
+      "oracle": "Oracle Database™",
+      "osisoft-pi": "OSIsoft PI System™",
+      "postgresql": "PostgreSQL",
+      "sftp": "SFTP",
+      "slims": "SLIMS™",
+      "sqlite": "SQLite™"
+    },
+    "oibus-south-type-description": {
+      "ads": "The ADS protocol used in TwinCAT® systems",
+      "folder-scanner": "Read files from a local or remote folder",
+      "modbus": "Access Modbus registers on a PLC",
+      "mqtt": "Subscribe to MQTT broker topics",
+      "mssql": "Query Microsoft SQL Server™ databases",
+      "mysql": "Query MySQL® or MariaDB™ databases",
+      "odbc": "Query SQL databases with an ODBC driver",
+      "oianalytics": "Query time values from OIAnalytics®",
+      "oledb": "Query SQL databases with OLEDB",
+      "opc": "Connect to OIBus Agent to retrieve data from OPC Classic™ (HDA/DA) server",
+      "opcua": "Query data from OPC UA™ server (HA/DA)",
+      "oracle": "Query data from an Oracle Database™",
+      "osisoft-pi": "Establish a connection with an OIBus Agent to access data from a PI System™",
+      "postgresql": "Query PostgreSQL databases",
+      "sftp": "Read files from a remote SFTP server",
+      "slims": "Connect to SLIMS™ application",
+      "sqlite": "Query  SQLite™ databases"
     }
   },
   "nav": {
@@ -561,18 +558,9 @@
     "disabled": "Disabled",
     "started": "South connector {{ name }} started",
     "stopped": "South connector {{ name }} stopped",
-    "shared-connection": "Shared connection",
     "cache-path-copy": {
       "success": "Cache path copied into clipboard",
       "error": "Error while copying cache path into clipboard"
-    },
-    "history": {
-      "settings": "History settings",
-      "max-instant-per-item": "Max instant per item",
-      "max-read-interval": "Max read interval",
-      "read-delay": "Read delay",
-      "overlap": "Overlap",
-      "max-instant-per-item-disabling-warning": "Disabling max instant per item might result in data loss."
     },
     "test-connection": {
       "title": "Testing settings",
@@ -601,6 +589,309 @@
       "edit-title": "Edit item",
       "copy-title": "Add a new item to the south connector"
     },
+    "ads": {
+      "net-id": "Net ID",
+      "port": "Port",
+      "router-address": "Router address",
+      "router-tcp-port": "Router TCP port",
+      "client-ams-net-id": "AMS Net ID",
+      "client-ads-port": "ADS Client port",
+      "retry-interval": "Retry interval",
+      "plc-name": "PLC name",
+      "enum-as-text": {
+        "title": "Enumeration value",
+        "text": "Text",
+        "integer": "Integer"
+      },
+      "bool-as-text": {
+        "title": "Boolean value",
+        "text": "Text",
+        "integer": "Integer"
+      },
+      "structure-filtering": {
+        "structure": "Structure filtering",
+        "name": "Structure name",
+        "fields": "Fields to keep (comma separated)"
+      }
+    },
+    "folder-scanner": {
+      "input-folder": "Input folder",
+      "compression": "Enable compression"
+    },
+    "modbus": {
+      "host": "Host",
+      "port": "Port",
+      "retry-interval": "Retry interval",
+      "slave-id": "Slave ID",
+      "address-offset": {
+        "title": "Address offset",
+        "modbus": "Modbus",
+        "jbus": "JBus"
+      },
+      "endianness": {
+        "title": "Endianness",
+        "big-endian": "Big endian",
+        "little-endian": "Little endian"
+      },
+      "swap-bytes-in-words": "Swap Bytes?",
+      "swap-words-in-dwords": "Swap Words?"
+    },
+    "mqtt": {
+      "url": "URL",
+      "qos": {
+        "title": "QoS",
+        "0": "0",
+        "1": "1",
+        "2": "2"
+      },
+      "persistent": "Persistent",
+      "authentication": {
+        "title": "Authentication",
+        "none": "None",
+        "basic": "User",
+        "cert": "Certificate"
+      },
+      "username": "Username",
+      "password": "Password",
+      "cert-file-path": "Cert file path",
+      "key-file-path": "Key file path",
+      "ca-file-path": "CA file path",
+      "reject-unauthorized": "Reject unauthorized connection",
+      "reconnect-period": "Reconnect period",
+      "connect-timeout": "Connect timeout"
+    },
+    "mssql": {
+      "throttling": {
+        "title": "Throttling",
+        "max-read-interval": "Max read interval",
+        "read-delay": "Read delay",
+        "overlap": "Overlap"
+      },
+      "host": "Host",
+      "port": "Port",
+      "connection-timeout": "Connection timeout",
+      "database": "Database",
+      "username": "Username",
+      "password": "Password",
+      "domain": "Domain",
+      "encryption": "Use encryption",
+      "trust-server-certificate": "Trust server certificate",
+      "request-timeout": "Request timeout"
+    },
+    "mysql": {
+      "throttling": {
+        "title": "Throttling",
+        "max-read-interval": "Max read interval",
+        "read-delay": "Read delay",
+        "overlap": "Overlap"
+      },
+      "host": "Host",
+      "port": "Port",
+      "connection-timeout": "Connection timeout",
+      "database": "Database",
+      "username": "Username",
+      "password": "Password"
+    },
+    "odbc": {
+      "throttling": {
+        "title": "Throttling",
+        "max-read-interval": "Max read interval",
+        "read-delay": "Read delay",
+        "overlap": "Overlap"
+      },
+      "remote-agent": "Use remote agent",
+      "agent-url": "Remote agent URL",
+      "connection-timeout": "Connection timeout",
+      "retry-interval": "Retry interval",
+      "request-timeout": "Request timeout",
+      "connection-string": "Connection string",
+      "password": "Password"
+    },
+    "oianalytics": {
+      "throttling": {
+        "title": "Throttling",
+        "max-read-interval": "Max read interval",
+        "read-delay": "Read delay",
+        "overlap": "Overlap"
+      },
+      "use-oia-module": "Use OIAnalytics registration",
+      "timeout": "Timeout",
+      "specific-settings": {
+        "title": "Specific settings",
+        "host": "Host",
+        "accept-unauthorized": "Accept unauthorized certificate",
+        "authentication": {
+          "title": "Authentication",
+          "basic": "Access key",
+          "aad-client-secret": "Azure Active Directory with client secret",
+          "aad-certificate": "Azure Active Directory with certificate"
+        },
+        "access-key": "Access key",
+        "secret-key": "Secret key",
+        "tenant-id": "Tenant ID",
+        "client-id": "Client ID",
+        "client-secret": "Client secret",
+        "certificate-id": "Certificate",
+        "scope": "Scope",
+        "use-proxy": "Use proxy",
+        "proxy-url": "Proxy URL",
+        "proxy-username": "Proxy username",
+        "proxy-password": "Proxy password"
+      }
+    },
+    "oledb": {
+      "throttling": {
+        "title": "Throttling",
+        "max-read-interval": "Max read interval",
+        "read-delay": "Read delay",
+        "overlap": "Overlap"
+      },
+      "agent-url": "Remote agent URL",
+      "connection-timeout": "Connection timeout",
+      "retry-interval": "Retry interval",
+      "request-timeout": "Request timeout",
+      "connection-string": "Connection string"
+    },
+    "opc": {
+      "throttling": {
+        "title": "Throttling",
+        "max-read-interval": "Max read interval",
+        "read-delay": "Read delay",
+        "overlap": "Overlap",
+        "max-instant-per-item": "Max instant per item"
+      },
+      "agent-url": "Remote agent URL",
+      "retry-interval": "Retry interval",
+      "host": "Server URL (from the agent)",
+      "server-name": "Server name"
+    },
+    "opcua": {
+      "throttling": {
+        "title": "Throttling",
+        "max-read-interval": "Max read interval",
+        "read-delay": "Read delay",
+        "overlap": "Overlap",
+        "max-instant-per-item": "Max instant per item"
+      },
+      "shared-connection": "Share the session with other connectors?",
+      "url": "URL",
+      "keep-session-alive": "Keep session alive",
+      "read-timeout": "Read timeout",
+      "retry-interval": "Retry interval",
+      "security-mode": {
+        "title": "Security mode",
+        "none": "None",
+        "sign": "Sign",
+        "sign-and-encrypt": "Sign and encrypt"
+      },
+      "security-policy": {
+        "title": "Security policy",
+        "none": "None",
+        "basic128": "Basic128",
+        "basic192": "Basic192",
+        "basic256": "Basic256",
+        "basic128-rsa15": "Basic128-RSA15",
+        "basic192-rsa15": "Basic192-RSA15",
+        "basic256-rsa15": "Basic256-RSA15",
+        "basic256-sha256": "Basic256-SHA256",
+        "aes128-sha256-rsa-oaep": "AES128-SHA256-RSA-OAEP",
+        "pub-sub-aes-128-ctr": "PubSub AES-128-CTR",
+        "pub-sub-aes-256-ctr": "PubSub AES-256-CTR"
+      },
+      "authentication": {
+        "title": "Authentication",
+        "none": "None",
+        "basic": "Password",
+        "cert": "Certificate"
+      },
+      "username": "Username",
+      "password": "Password",
+      "cert-file-path": "Cert file path",
+      "key-file-path": "Key file path"
+    },
+    "oracle": {
+      "throttling": {
+        "title": "Throttling",
+        "max-read-interval": "Max read interval",
+        "read-delay": "Read delay",
+        "overlap": "Overlap"
+      },
+      "thick-mode": "Thick mode",
+      "oracle-client": "Oracle Client Library",
+      "host": "Host",
+      "port": "Port",
+      "connection-timeout": "Connection timeout",
+      "database": "Database",
+      "username": "Username",
+      "password": "Password"
+    },
+    "osisoft-pi": {
+      "throttling": {
+        "title": "Throttling",
+        "max-read-interval": "Max read interval",
+        "read-delay": "Read delay",
+        "overlap": "Overlap",
+        "max-instant-per-item": "Max instant per item"
+      },
+      "agent-url": "Remote agent URL",
+      "retry-interval": "Retry interval"
+    },
+    "postgresql": {
+      "throttling": {
+        "title": "Throttling",
+        "max-read-interval": "Max read interval",
+        "read-delay": "Read delay",
+        "overlap": "Overlap"
+      },
+      "host": "Host",
+      "port": "Port",
+      "connection-timeout": "Connection timeout",
+      "request-timeout": "Request timeout",
+      "database": "Database",
+      "username": "Username",
+      "password": "Password"
+    },
+    "sftp": {
+      "host": "Host",
+      "port": "Port",
+      "authentication": {
+        "title": "Authentication",
+        "password": "Password",
+        "private-key": "Private key"
+      },
+      "username": "Username",
+      "password": "Password",
+      "private-key": "Private key",
+      "passphrase": "Passphrase",
+      "compression": "Compress files"
+    },
+    "slims": {
+      "throttling": {
+        "title": "Throttling",
+        "max-read-interval": "Max read interval",
+        "read-delay": "Read delay",
+        "overlap": "Overlap"
+      },
+      "host": "Host",
+      "port": "Port",
+      "accept-unauthorized": "Accept unauthorized certificate",
+      "timeout": "Connection timeout",
+      "username": "Username",
+      "password": "Password",
+      "use-proxy": "Use proxy",
+      "proxy-url": "Proxy URL",
+      "proxy-username": "Proxy username",
+      "proxy-password": "Proxy password"
+    },
+    "sqlite": {
+      "throttling": {
+        "title": "Throttling",
+        "max-read-interval": "Max read interval",
+        "read-delay": "Read delay",
+        "overlap": "Overlap"
+      },
+      "database-path": "Database path"
+    },
     "items": {
       "title": "Items",
       "export": "Export",
@@ -610,7 +901,8 @@
         "title": "Import validation",
         "error-title": "These items have errors and won't be imported",
         "error": "Error",
-        "valid-title": "These items will be created"
+        "valid-title": "These items will be created",
+        "csv-file": "CSV File"
       },
       "test": {
         "title": "Result for item {{name}}"
@@ -637,7 +929,539 @@
       "search": {
         "name": "Name"
       },
-      "scan-mode-change-warning": "Changing scan mode when max instant per item is disabled might lead to data duplication or loss."
+      "scan-mode-change-warning": "Changing scan mode when max instant per item is disabled might lead to data duplication or loss.",
+      "ads": {
+        "address": "Address"
+      },
+      "folder-scanner": {
+        "regex": "Regex to pick up files",
+        "min-age": "Min age",
+        "preserve-files": "Preserve files",
+        "ignore-modified-date": "Ignorer modification date"
+      },
+      "modbus": {
+        "address": "Address",
+        "modbus-type": {
+          "title": "Modbus type",
+          "coil": "Coil",
+          "discrete-input": "Discrete input",
+          "input-register": "Input register",
+          "holding-register": "Holding register"
+        },
+        "data": {
+          "data-type": {
+            "title": "Data type",
+            "uint16": "UInt16",
+            "int16": "Int16",
+            "uint32": "UInt32",
+            "int32": "Int32",
+            "big-uint64": "Big UInt64",
+            "big-int64": "Big Int64",
+            "float": "Float",
+            "double": "Double",
+            "bit": "Bit"
+          },
+          "bit-index": "Bit index",
+          "multiplier-coefficient": "Multiplier coefficient"
+        }
+      },
+      "mqtt": {
+        "topic": "Topic",
+        "value-type": {
+          "title": "Value type",
+          "number": "Number",
+          "string": "String",
+          "json": "JSON object"
+        },
+        "json-payload": {
+          "title": "JSON payload",
+          "use-array": "Payload in array?",
+          "data-array-path": "Array path",
+          "value-path": "Value path",
+          "point-id-origin": {
+            "title": "Point ID origin",
+            "oibus": "OIBus",
+            "payload": "Payload"
+          },
+          "point-id-path": "Point ID path",
+          "timestamp-origin": {
+            "title": "Timestamp origin",
+            "oibus": "OIBus",
+            "payload": "Payload"
+          },
+          "timestamp-payload": {
+            "title": "Timestamp",
+            "timestamp-path": "Timestamp path",
+            "timestamp-type": {
+              "title": "Type",
+              "string": "String",
+              "iso-string": "ISO string",
+              "unix-epoch": "Unix epoch (s)",
+              "unix-epoch-ms": "Unix epoch (ms)"
+            },
+            "timestamp-format": "Timestamp format",
+            "timezone": "Timezone"
+          },
+          "other-fields": {
+            "title": "Additional fields",
+            "name": "Field name in output",
+            "path": "Path in the retrieved payload"
+          }
+        }
+      },
+      "mssql": {
+        "query": "Query",
+        "date-time-fields": {
+          "date-time-field": "Date time fields",
+          "field-name": "Field name",
+          "use-as-reference": "Reference field",
+          "type": {
+            "title": "Type",
+            "iso-string": "ISO String",
+            "unix-epoch": "UNIX epoch (s)",
+            "unix-epoch-ms": "UNIX epoch (ms)",
+            "string": "String",
+            "timestamp": "Timestamp",
+            "timestamptz": "Timestamp with timezone",
+            "DateTime": "DateTime",
+            "DateTime2": "DateTime2",
+            "DateTimeOffset": "DateTime Offset",
+            "SmallDateTime": "Small DateTime",
+            "Date": "Date"
+          },
+          "timezone": "Timezone",
+          "format": "Format",
+          "locale": "Locale"
+        },
+        "serialization": {
+          "title": "Serialization",
+          "type": {
+            "title": "Type",
+            "csv": "CSV"
+          },
+          "filename": "Filename",
+          "delimiter": {
+            "title": "Delimiter",
+            "DOT": "Dot .",
+            "SEMI_COLON": "Semi colon ;",
+            "COLON": "Colon :",
+            "COMMA": "Comma ,",
+            "SLASH": "Slash /",
+            "TAB": "Tab",
+            "NON_BREAKING_SPACE": "Space",
+            "PIPE": "Pipe |"
+          },
+          "compression": "Compression",
+          "output-timestamp-format": "Output date time format",
+          "output-timezone": "Output timezone"
+        }
+      },
+      "mysql": {
+        "query": "Query",
+        "request-timeout": "Request timeout",
+        "date-time-fields": {
+          "date-time-field": "Date time fields",
+          "field-name": "Field name",
+          "use-as-reference": "Reference field",
+          "type": {
+            "title": "Type",
+            "iso-string": "ISO String",
+            "unix-epoch": "UNIX epoch (s)",
+            "unix-epoch-ms": "UNIX epoch (ms)",
+            "string": "String"
+          },
+          "timezone": "Timezone",
+          "format": "Format",
+          "locale": "Locale"
+        },
+        "serialization": {
+          "title": "Serialization",
+          "type": {
+            "title": "Type",
+            "csv": "CSV"
+          },
+          "filename": "Filename",
+          "delimiter": {
+            "title": "Delimiter",
+            "DOT": "Dot .",
+            "SEMI_COLON": "Semi colon ;",
+            "COLON": "Colon :",
+            "COMMA": "Comma ,",
+            "SLASH": "Slash /",
+            "TAB": "Tab",
+            "NON_BREAKING_SPACE": "Space",
+            "PIPE": "Pipe |"
+          },
+          "compression": "Compression",
+          "output-timestamp-format": "Output date time format",
+          "output-timezone": "Output timezone"
+        }
+      },
+      "odbc": {
+        "query": "Query",
+        "date-time-fields": {
+          "date-time-field": "Date time fields",
+          "field-name": "Field name",
+          "use-as-reference": "Reference field",
+          "type": {
+            "title": "Type",
+            "iso-string": "ISO String",
+            "unix-epoch": "UNIX epoch (s)",
+            "unix-epoch-ms": "UNIX epoch (ms)",
+            "string": "String"
+          },
+          "timezone": "Timezone",
+          "format": "Format",
+          "locale": "Locale"
+        },
+        "serialization": {
+          "title": "Serialization",
+          "type": {
+            "title": "Type",
+            "csv": "CSV"
+          },
+          "filename": "Filename",
+          "delimiter": {
+            "title": "Delimiter",
+            "DOT": "Dot .",
+            "SEMI_COLON": "Semi colon ;",
+            "COLON": "Colon :",
+            "COMMA": "Comma ,",
+            "SLASH": "Slash /",
+            "TAB": "Tab",
+            "NON_BREAKING_SPACE": "Space",
+            "PIPE": "Pipe |"
+          },
+          "compression": "Compression",
+          "output-timestamp-format": "Output date time format",
+          "output-timezone": "Output timezone"
+        }
+      },
+      "oianalytics": {
+        "endpoint": "Endpoint",
+        "query-params": {
+          "query-param": "Query params",
+          "key": "Key",
+          "value": "Value"
+        },
+        "serialization": {
+          "title": "Serialization",
+          "type": {
+            "title": "Type",
+            "csv": "CSV"
+          },
+          "filename": "Filename",
+          "delimiter": {
+            "title": "Delimiter",
+            "DOT": "Dot .",
+            "SEMI_COLON": "Semi colon ;",
+            "COLON": "Colon :",
+            "COMMA": "Comma ,",
+            "SLASH": "Slash /",
+            "TAB": "Tab",
+            "NON_BREAKING_SPACE": "Space",
+            "PIPE": "Pipe |"
+          },
+          "compression": "Compression",
+          "output-timestamp-format": "Output date time format",
+          "output-timezone": "Output timezone"
+        }
+      },
+      "oledb": {
+        "query": "Query",
+        "date-time-fields": {
+          "date-time-field": "Date time fields",
+          "field-name": "Field name",
+          "use-as-reference": "Reference field",
+          "type": {
+            "title": "Type",
+            "iso-string": "ISO String",
+            "unix-epoch": "UNIX epoch (s)",
+            "unix-epoch-ms": "UNIX epoch (ms)",
+            "string": "String"
+          },
+          "timezone": "Timezone",
+          "format": "Format",
+          "locale": "Locale"
+        },
+        "serialization": {
+          "title": "Serialization",
+          "type": {
+            "title": "Type",
+            "csv": "CSV"
+          },
+          "filename": "Filename",
+          "delimiter": {
+            "title": "Delimiter",
+            "DOT": "Dot .",
+            "SEMI_COLON": "Semi colon ;",
+            "COLON": "Colon :",
+            "COMMA": "Comma ,",
+            "SLASH": "Slash /",
+            "TAB": "Tab",
+            "NON_BREAKING_SPACE": "Space",
+            "PIPE": "Pipe |"
+          },
+          "compression": "Compression",
+          "output-timestamp-format": "Output date time format",
+          "output-timezone": "Output timezone"
+        }
+      },
+      "opc": {
+        "node-id": "Node ID",
+        "aggregate": {
+          "title": "Aggregate",
+          "raw": "Raw",
+          "interpolative": "Interpolative",
+          "total": "Total",
+          "average": "Average",
+          "time-average": "Time average",
+          "count": "Count",
+          "stdev": "STDEV",
+          "minimum-actual-time": "Minimum actual time",
+          "minimum": "Minimum",
+          "maximum-actual-time": "Maximum actual time",
+          "maximum": "Maximum",
+          "start": "Start",
+          "end": "End",
+          "delta": "Delta",
+          "reg-slope": "Reg slope",
+          "reg-const": "Reg const",
+          "reg-dev": "Reg dev",
+          "variance": "Variance",
+          "range": "Range",
+          "duration-good": "Duration good",
+          "duration-bad": "Duration bad",
+          "percent-good": "Percent good",
+          "percent-bad": "Percent bad",
+          "worst-quality": "Worst quality",
+          "annotations": "Annotations"
+        },
+        "resampling": {
+          "title": "Resampling",
+          "none": "None",
+          "1s": "1 second",
+          "10s": "10 seconds",
+          "30s": "30 seconds",
+          "1min": "1 minute",
+          "1h": "1 hour",
+          "1d": "1 day"
+        }
+      },
+      "opcua": {
+        "node-id": "Node ID",
+        "mode": {
+          "title": "Mode",
+          "ha": "HA",
+          "da": "DA"
+        },
+        "ha-mode": {
+          "title": "HA mode",
+          "aggregate": {
+            "title": "Aggregate",
+            "raw": "Raw",
+            "average": "Average",
+            "minimum": "Minimum",
+            "maximum": "Maximum",
+            "count": "Count"
+          },
+          "resampling": {
+            "title": "Resampling",
+            "none": "None",
+            "1s": "1 second",
+            "10s": "10 seconds",
+            "30s": "30 seconds",
+            "1min": "1 minute",
+            "1h": "1 hour",
+            "1d": "1 day"
+          }
+        }
+      },
+      "oracle": {
+        "query": "Query",
+        "request-timeout": "Request timeout",
+        "date-time-fields": {
+          "date-time-field": "Date time fields",
+          "field-name": "Field name",
+          "use-as-reference": "Reference field",
+          "type": {
+            "title": "Type",
+            "iso-string": "ISO String",
+            "unix-epoch": "UNIX epoch (s)",
+            "unix-epoch-ms": "UNIX epoch (ms)",
+            "string": "String"
+          },
+          "timezone": "Timezone",
+          "format": "Format",
+          "locale": "Locale"
+        },
+        "serialization": {
+          "title": "Serialization",
+          "type": {
+            "title": "Type",
+            "csv": "CSV"
+          },
+          "filename": "Filename",
+          "delimiter": {
+            "title": "Delimiter",
+            "DOT": "Dot .",
+            "SEMI_COLON": "Semi colon ;",
+            "COLON": "Colon :",
+            "COMMA": "Comma ,",
+            "SLASH": "Slash /",
+            "TAB": "Tab",
+            "NON_BREAKING_SPACE": "Space",
+            "PIPE": "Pipe |"
+          },
+          "compression": "Compression",
+          "output-timestamp-format": "Output date time format",
+          "output-timezone": "Output timezone"
+        }
+      },
+      "osisoft-pi": {
+        "type": {
+          "title": "Type",
+          "point-id": "PI point",
+          "point-query": "PI query"
+        },
+        "pi-point": "PI point",
+        "pi-query": "PI query"
+      },
+      "postgresql": {
+        "query": "Query",
+        "date-time-fields": {
+          "date-time-field": "Date time fields",
+          "field-name": "Field name",
+          "use-as-reference": "Reference field",
+          "type": {
+            "title": "Type",
+            "iso-string": "ISO String",
+            "unix-epoch": "UNIX epoch (s)",
+            "unix-epoch-ms": "UNIX epoch (ms)",
+            "string": "String",
+            "timestamp": "Timestamp",
+            "timestamptz": "Timestamp with timezone"
+          },
+          "timezone": "Timezone",
+          "format": "Format",
+          "locale": "Locale"
+        },
+        "serialization": {
+          "title": "Serialization",
+          "type": {
+            "title": "Type",
+            "csv": "CSV"
+          },
+          "filename": "Filename",
+          "delimiter": {
+            "title": "Delimiter",
+            "DOT": "Dot .",
+            "SEMI_COLON": "Semi colon ;",
+            "COLON": "Colon :",
+            "COMMA": "Comma ,",
+            "SLASH": "Slash /",
+            "TAB": "Tab",
+            "NON_BREAKING_SPACE": "Space",
+            "PIPE": "Pipe |"
+          },
+          "compression": "Compression",
+          "output-timestamp-format": "Output date time format",
+          "output-timezone": "Output timezone"
+        }
+      },
+      "sftp": {
+        "remote-folder": "Remote folder",
+        "regex": "Regex to pick up files",
+        "min-age": "Min age",
+        "preserve-files": "Preserve files",
+        "ignore-modified-date": "Ignorer modification date"
+      },
+      "slims": {
+        "endpoint": "Endpoint",
+        "body": "Body",
+        "query-params": {
+          "query-param": "Query params",
+          "key": "Key",
+          "value": "Value"
+        },
+        "date-time-fields": {
+          "date-time-field": "Date time fields",
+          "field-name": "Field name",
+          "use-as-reference": "Reference field",
+          "type": {
+            "title": "Type",
+            "iso-string": "ISO String",
+            "unix-epoch": "UNIX epoch (s)",
+            "unix-epoch-ms": "UNIX epoch (ms)",
+            "string": "String"
+          },
+          "timezone": "Timezone",
+          "format": "Format",
+          "locale": "Locale"
+        },
+        "serialization": {
+          "title": "Serialization",
+          "type": {
+            "title": "Type",
+            "csv": "CSV"
+          },
+          "filename": "Filename",
+          "delimiter": {
+            "title": "Delimiter",
+            "DOT": "Dot .",
+            "SEMI_COLON": "Semi colon ;",
+            "COLON": "Colon :",
+            "COMMA": "Comma ,",
+            "SLASH": "Slash /",
+            "TAB": "Tab",
+            "NON_BREAKING_SPACE": "Space",
+            "PIPE": "Pipe |"
+          },
+          "compression": "Compression",
+          "output-timestamp-format": "Output date time format",
+          "output-timezone": "Output timezone"
+        }
+      },
+      "sqlite": {
+        "query": "Query",
+        "date-time-fields": {
+          "date-time-field": "Date time fields",
+          "field-name": "Field name",
+          "use-as-reference": "Reference field",
+          "type": {
+            "title": "Type",
+            "iso-string": "ISO String",
+            "unix-epoch": "UNIX epoch (s)",
+            "unix-epoch-ms": "UNIX epoch (ms)",
+            "string": "String"
+          },
+          "timezone": "Timezone",
+          "format": "Format",
+          "locale": "Locale"
+        },
+        "serialization": {
+          "title": "Serialization",
+          "type": {
+            "title": "Type",
+            "csv": "CSV"
+          },
+          "filename": "Filename",
+          "delimiter": {
+            "title": "Delimiter",
+            "DOT": "Dot .",
+            "SEMI_COLON": "Semi colon ;",
+            "COLON": "Colon :",
+            "COMMA": "Comma ,",
+            "SLASH": "Slash /",
+            "TAB": "Tab",
+            "NON_BREAKING_SPACE": "Space",
+            "PIPE": "Pipe |"
+          },
+          "compression": "Compression",
+          "output-timestamp-format": "Output date time format",
+          "output-timezone": "Output timezone"
+        }
+      }
     },
     "monitoring": {
       "title": "{{ name }} metrics",
@@ -771,6 +1595,91 @@
     },
     "cache": {
       "title": "Cache content for connector {{ name }}"
+    },
+    "aws-s3": {
+      "bucket": "Bucket",
+      "region": "Region",
+      "folder": "Folder",
+      "access-key": "Access key",
+      "secret-key": "Secret key",
+      "use-proxy": "Use proxy",
+      "proxy-url": "Proxy URL",
+      "proxy-username": "Proxy username",
+      "proxy-password": "Proxy password"
+    },
+    "azure-blob": {
+      "use-custom-url": "Use custom URL",
+      "account": "Account",
+      "custom-url": "Custom URL",
+      "container": "Container",
+      "path": "Path",
+      "authentication": {
+        "title": "Authentication",
+        "access-key": "Access key",
+        "sas-token": "SAS token",
+        "aad": "Application Active Directory",
+        "external": "External"
+      },
+      "access-key": "Access key",
+      "sas-token": "Shared Access Signature token",
+      "tenant-id": "Tenant ID",
+      "client-id": "Client ID",
+      "client-secret": "Client secret",
+      "use-proxy": "Use proxy",
+      "proxy-url": "Proxy URL",
+      "proxy-username": "Proxy username",
+      "proxy-password": "Proxy password"
+    },
+    "console": {
+      "verbose": "Verbose"
+    },
+    "file-writer": {
+      "output-folder": "Output folder",
+      "prefix": "Prefix",
+      "suffix": "Suffix"
+    },
+    "oianalytics": {
+      "use-oia-module": "Use OIA module",
+      "timeout": "Timeout",
+      "compress": "Compress",
+      "specific-settings": {
+        "host": "URL",
+        "accept-unauthorized": "Accept unauthorized",
+        "authentication": {
+          "title": "Authentication",
+          "basic": "Access key",
+          "aad-client-secret": "Azure Active Directory with client secret",
+          "aad-certificate": "Azure Active Directory with certificate"
+        },
+        "access-key": "Access key",
+        "secret-key": "Secret key",
+        "tenant-id": "Tenant ID",
+        "client-id": "Client ID",
+        "client-secret": "Client secret",
+        "certificate-id": "Certificate",
+        "scope": "Scope",
+        "use-proxy": "Use proxy",
+        "proxy-url": "Proxy URL",
+        "proxy-username": "Proxy username",
+        "proxy-password": "Proxy password"
+      }
+    },
+    "sftp": {
+      "host": "Host",
+      "port": "Port",
+      "authentication": {
+        "title": "Authentication",
+        "password": "Password",
+        "private-key": "Private key"
+      },
+      "remote-folder": "Remote folder",
+      "prefix": "Prefix",
+      "suffix": "Suffix",
+      "username": "Username",
+      "password": "Password",
+      "private-key": "Private key",
+      "passphrase": "Passphrase",
+      "compression": "Compress files"
     }
   },
   "logs": {

@@ -57,13 +57,11 @@ describe('HistoryQueryDetailComponent', () => {
   const southManifest: SouthConnectorManifest = {
     id: 'mssql',
     category: 'database',
-    name: 'SQL',
-    description: 'SQL',
     settings: [
       {
         key: 'database',
         type: 'OibText',
-        label: 'Database',
+        translationKey: 'south.mssql.database',
         validators: [{ key: 'required' }],
         displayInViewMode: true
       }
@@ -75,7 +73,7 @@ describe('HistoryQueryDetailComponent', () => {
       },
       settings: [
         {
-          label: 'query',
+          translationKey: 'south.items.mssql.query',
           key: 'query',
           displayInViewMode: true,
           type: 'OibText'
@@ -91,9 +89,7 @@ describe('HistoryQueryDetailComponent', () => {
   };
   const northManifest: NorthConnectorManifest = {
     id: 'oianalytics',
-    name: 'OIAnalytics',
     category: 'api',
-    description: 'OIAnalytics description',
     modes: {
       files: true,
       points: true
@@ -102,7 +98,7 @@ describe('HistoryQueryDetailComponent', () => {
       {
         key: 'host',
         type: 'OibText',
-        label: 'Host',
+        translationKey: 'south.oianalytics.specific-settings.host',
         validators: [
           { key: 'required' },
           {
@@ -119,8 +115,8 @@ describe('HistoryQueryDetailComponent', () => {
     name: 'History query',
     description: 'My History query description',
     status: 'PENDING',
-    southType: 'OPCUA_HA',
-    northType: 'OIConnect',
+    southType: 'opcua',
+    northType: 'console',
     startTime: '2023-01-01T00:00:00.000Z',
     endTime: '2023-01-01T00:00:00.000Z',
     southSettings: {

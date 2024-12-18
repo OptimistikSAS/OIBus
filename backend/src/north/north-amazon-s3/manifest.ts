@@ -1,11 +1,8 @@
 import { NorthConnectorManifest } from '../../../shared/model/north-connector.model';
-import { proxy } from '../../../shared/model/manifest-factory';
 
 const manifest: NorthConnectorManifest = {
   id: 'aws-s3',
-  name: 'Amazon S3™',
   category: 'file',
-  description: 'Store files in Amazon S3™ (Simple Storage Service)',
   modes: {
     files: true,
     points: true
@@ -14,7 +11,7 @@ const manifest: NorthConnectorManifest = {
     {
       key: 'bucket',
       type: 'OibText',
-      label: 'Bucket',
+      translationKey: 'north.aws-s3.bucket',
       newRow: true,
       validators: [{ key: 'required' }],
       displayInViewMode: true
@@ -22,7 +19,7 @@ const manifest: NorthConnectorManifest = {
     {
       key: 'region',
       type: 'OibText',
-      label: 'Region',
+      translationKey: 'north.aws-s3.region',
       defaultValue: 'eu-west-3',
       newRow: false,
       validators: [{ key: 'required' }],
@@ -31,7 +28,7 @@ const manifest: NorthConnectorManifest = {
     {
       key: 'folder',
       type: 'OibText',
-      label: 'Folder',
+      translationKey: 'north.aws-s3.folder',
       newRow: false,
       validators: [{ key: 'required' }],
       displayInViewMode: true
@@ -39,18 +36,46 @@ const manifest: NorthConnectorManifest = {
     {
       key: 'accessKey',
       type: 'OibText',
-      label: 'Access key',
+      translationKey: 'north.aws-s3.access-key',
       newRow: true,
+      class: 'col-6',
       validators: [{ key: 'required' }],
       displayInViewMode: true
     },
     {
       key: 'secretKey',
       type: 'OibSecret',
-      label: 'Secret key',
-      newRow: true
+      translationKey: 'north.aws-s3.secret-key',
+      class: 'col-6'
     },
-    ...proxy
+    {
+      key: 'useProxy',
+      translationKey: 'north.aws-s3.use-proxy',
+      type: 'OibCheckbox',
+      newRow: true,
+      defaultValue: false,
+      displayInViewMode: true,
+      validators: [{ key: 'required' }]
+    },
+    {
+      key: 'proxyUrl',
+      translationKey: 'north.aws-s3.proxy-url',
+      type: 'OibText',
+      validators: [{ key: 'required' }],
+      conditionalDisplay: { field: 'useProxy', values: [true] }
+    },
+    {
+      key: 'proxyUsername',
+      translationKey: 'north.aws-s3.proxy-username',
+      type: 'OibText',
+      conditionalDisplay: { field: 'useProxy', values: [true] }
+    },
+    {
+      key: 'proxyPassword',
+      translationKey: 'north.aws-s3.proxy-password',
+      type: 'OibSecret',
+      conditionalDisplay: { field: 'useProxy', values: [true] }
+    }
   ]
 };
 

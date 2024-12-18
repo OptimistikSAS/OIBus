@@ -35,54 +35,54 @@ const settings: Array<OibFormControl> = [
   {
     key: 'field1',
     type: 'OibText',
-    label: 'Field 1'
+    translationKey: 'Field 1'
   },
   {
     key: 'field2',
     type: 'OibSecret',
-    label: 'Field 2'
+    translationKey: 'Field 2'
   },
   {
     key: 'field3',
     type: 'OibText',
-    label: 'Field 3'
+    translationKey: 'Field 3'
   },
   {
     key: 'field4',
     type: 'OibArray',
-    label: 'Field 4',
+    translationKey: 'Field 4',
     content: [
       {
         key: 'fieldArray1',
         type: 'OibText',
-        label: 'Field array 1'
+        translationKey: 'Field array 1'
       },
       {
         key: 'fieldArray2',
         type: 'OibSecret',
-        label: 'Field array 2'
+        translationKey: 'Field array 2'
       },
       {
         key: 'fieldArray3',
         type: 'OibSecret',
-        label: 'Field array 3'
+        translationKey: 'Field array 3'
       }
     ]
   },
   {
     key: 'field5',
     type: 'OibFormGroup',
-    label: 'Field 5',
+    translationKey: 'Field 5',
     content: [
       {
         key: 'fieldGroup1',
         type: 'OibText',
-        label: 'Field group 1'
+        translationKey: 'Field group 1'
       },
       {
         key: 'fieldGroup2',
         type: 'OibSecret',
-        label: 'Field group 2'
+        translationKey: 'Field group 2'
       }
     ]
   }
@@ -231,7 +231,7 @@ describe('Encryption service with crypto settings', () => {
   it('should properly encrypt connector secrets', async () => {
     const command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
       name: 'connector',
-      type: 'any',
+      type: 'opcua',
       description: 'my connector',
       enabled: true,
       settings: {
@@ -251,7 +251,7 @@ describe('Encryption service with crypto settings', () => {
     const connector: SouthConnectorDTO<SouthSettings, SouthItemSettings> = {
       id: 'id1',
       name: 'connector',
-      type: 'any',
+      type: 'opcua',
       description: 'my connector',
       enabled: true,
       settings: {
@@ -288,7 +288,7 @@ describe('Encryption service with crypto settings', () => {
   it('should properly encrypt connector secrets when no secret provided', async () => {
     const command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
       name: 'connector',
-      type: 'any',
+      type: 'opcua',
       description: 'my connector',
       enabled: true,
       items: [],
@@ -334,7 +334,7 @@ describe('Encryption service with crypto settings', () => {
   it('should properly keep existing and encrypted connector secrets', async () => {
     const command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
       name: 'connector',
-      type: 'any',
+      type: 'opcua',
       description: 'my connector',
       enabled: true,
       items: [],
@@ -355,7 +355,7 @@ describe('Encryption service with crypto settings', () => {
     const connector: SouthConnectorDTO<SouthSettings, SouthItemSettings> = {
       id: 'id1',
       name: 'connector',
-      type: 'any',
+      type: 'opcua',
       description: 'my connector',
       enabled: true,
       settings: {
@@ -399,7 +399,7 @@ describe('Encryption service with crypto settings', () => {
   it('should properly decrypt connector secrets', async () => {
     const command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
       name: 'connector',
-      type: 'any',
+      type: 'opcua',
       description: 'my connector',
       enabled: true,
       settings: {
@@ -445,7 +445,7 @@ describe('Encryption service with crypto settings', () => {
     const connector: SouthConnectorDTO<SouthSettings, SouthItemSettings> = {
       id: 'id1',
       name: 'connector',
-      type: 'any',
+      type: 'opcua',
       description: 'my connector',
       enabled: true,
       settings: {
@@ -481,7 +481,7 @@ describe('Encryption service with crypto settings', () => {
   it('should properly decrypt connector secrets with private key', async () => {
     const command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
       name: 'connector',
-      type: 'any',
+      type: 'opcua',
       description: 'my connector',
       enabled: true,
       items: [],

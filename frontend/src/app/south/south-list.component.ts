@@ -17,7 +17,7 @@ import { emptyPage } from '../shared/test-utils';
 import { PaginationComponent } from '../shared/pagination/pagination.component';
 import { ObservableState } from '../shared/save-button/save-button.component';
 import { LegendComponent } from '../shared/legend/legend.component';
-
+import { OIBusSouthTypeEnumPipe } from '../shared/oibus-south-type-enum.pipe';
 const PAGE_SIZE = 15;
 
 @Component({
@@ -31,7 +31,8 @@ const PAGE_SIZE = 15;
     ReactiveFormsModule,
     PaginationComponent,
     AsyncPipe,
-    LegendComponent
+    LegendComponent,
+    OIBusSouthTypeEnumPipe
   ],
   templateUrl: './south-list.component.html',
   styleUrl: './south-list.component.scss'

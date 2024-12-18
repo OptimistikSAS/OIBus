@@ -1,11 +1,8 @@
 import { SouthConnectorManifest } from '../../../shared/model/south-connector.model';
-import { buildSerializationFormControl, proxy } from '../../../shared/model/manifest-factory';
 
 const manifest: SouthConnectorManifest = {
   id: 'oianalytics',
-  name: 'OIAnalytics®',
   category: 'api',
-  description: 'Query time values from OIAnalytics®',
   modes: {
     subscription: false,
     lastPoint: false,
@@ -16,7 +13,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'throttling',
       type: 'OibFormGroup',
-      label: 'Throttling',
+      translationKey: 'south.oianalytics.throttling.title',
       class: 'col',
       newRow: true,
       displayInViewMode: false,
@@ -25,7 +22,7 @@ const manifest: SouthConnectorManifest = {
         {
           key: 'maxReadInterval',
           type: 'OibNumber',
-          label: 'Max read interval',
+          translationKey: 'south.oianalytics.throttling.max-read-interval',
           validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }],
           defaultValue: 3600,
           unitLabel: 's',
@@ -34,7 +31,7 @@ const manifest: SouthConnectorManifest = {
         {
           key: 'readDelay',
           type: 'OibNumber',
-          label: 'Read delay',
+          translationKey: 'south.oianalytics.throttling.read-delay',
           validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }],
           defaultValue: 200,
           unitLabel: 'ms',
@@ -43,7 +40,7 @@ const manifest: SouthConnectorManifest = {
         {
           key: 'overlap',
           type: 'OibNumber',
-          label: 'Overlap',
+          translationKey: 'south.oianalytics.throttling.overlap',
           validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }],
           defaultValue: 0,
           unitLabel: 'ms',
@@ -54,7 +51,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'useOiaModule',
       type: 'OibCheckbox',
-      label: 'Use OIAnalytics registration',
+      translationKey: 'south.oianalytics.use-oia-module',
       validators: [{ key: 'required' }],
       newRow: true,
       defaultValue: true,
@@ -64,7 +61,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'timeout',
       type: 'OibNumber',
-      label: 'Timeout',
+      translationKey: 'south.oianalytics.timeout',
       defaultValue: 30,
       unitLabel: 's',
       validators: [{ key: 'required' }],
@@ -73,14 +70,14 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'specificSettings',
       type: 'OibFormGroup',
-      label: 'Specific settings',
+      translationKey: '',
       newRow: true,
       conditionalDisplay: { field: 'useOiaModule', values: [false] },
       content: [
         {
           key: 'host',
           type: 'OibText',
-          label: 'Host',
+          translationKey: 'south.oianalytics.specific-settings.host',
           validators: [
             { key: 'required' },
             {
@@ -96,7 +93,7 @@ const manifest: SouthConnectorManifest = {
         {
           key: 'acceptUnauthorized',
           type: 'OibCheckbox',
-          label: 'Accept unauthorized certificate',
+          translationKey: 'south.oianalytics.specific-settings.accept-unauthorized',
           validators: [{ key: 'required' }],
           defaultValue: false,
           displayInViewMode: true,
@@ -106,8 +103,7 @@ const manifest: SouthConnectorManifest = {
           key: 'authentication',
           type: 'OibSelect',
           options: ['basic', 'aad-client-secret', 'aad-certificate'],
-          label: 'Authentication',
-          pipe: 'authentication',
+          translationKey: 'south.oianalytics.specific-settings.authentication',
           defaultValue: 'basic',
           newRow: true,
           validators: [{ key: 'required' }],
@@ -116,7 +112,7 @@ const manifest: SouthConnectorManifest = {
         {
           key: 'accessKey',
           type: 'OibText',
-          label: 'Access key',
+          translationKey: 'south.oianalytics.specific-settings.access-key',
           validators: [{ key: 'required' }],
           conditionalDisplay: { field: 'authentication', values: ['basic'] },
           newRow: true,
@@ -125,14 +121,14 @@ const manifest: SouthConnectorManifest = {
         {
           key: 'secretKey',
           type: 'OibSecret',
-          label: 'Secret key',
+          translationKey: 'south.oianalytics.specific-settings.secret-key',
           conditionalDisplay: { field: 'authentication', values: ['basic'] },
           displayInViewMode: false
         },
         {
           key: 'tenantId',
           type: 'OibText',
-          label: 'Tenant ID',
+          translationKey: 'south.oianalytics.specific-settings.tenant-id',
           newRow: true,
           conditionalDisplay: { field: 'authentication', values: ['aad-client-secret', 'aad-certificate'] },
           displayInViewMode: true
@@ -140,7 +136,7 @@ const manifest: SouthConnectorManifest = {
         {
           key: 'clientId',
           type: 'OibText',
-          label: 'Client ID',
+          translationKey: 'south.oianalytics.specific-settings.client-id',
           newRow: false,
           validators: [{ key: 'required' }],
           conditionalDisplay: { field: 'authentication', values: ['aad-client-secret', 'aad-certificate'] },
@@ -149,25 +145,52 @@ const manifest: SouthConnectorManifest = {
         {
           key: 'clientSecret',
           type: 'OibSecret',
-          label: 'Client secret',
+          translationKey: 'south.oianalytics.specific-settings.client-secret',
           newRow: false,
           conditionalDisplay: { field: 'authentication', values: ['aad-client-secret'] }
         },
         {
           key: 'certificateId',
           type: 'OibCertificate',
-          label: 'Certificate',
+          translationKey: 'south.oianalytics.specific-settings.certificate-id',
           newRow: false,
           conditionalDisplay: { field: 'authentication', values: ['aad-certificate'] }
         },
         {
           key: 'scope',
           type: 'OibText',
-          label: 'Scope',
+          translationKey: 'south.oianalytics.specific-settings.scope',
           newRow: false,
           conditionalDisplay: { field: 'authentication', values: ['aad-certificate'] }
         },
-        ...proxy
+        {
+          key: 'useProxy',
+          translationKey: 'south.oianalytics.specific-settings.use-proxy',
+          type: 'OibCheckbox',
+          newRow: true,
+          defaultValue: false,
+          displayInViewMode: true,
+          validators: [{ key: 'required' }]
+        },
+        {
+          key: 'proxyUrl',
+          translationKey: 'south.oianalytics.specific-settings.proxy-url',
+          type: 'OibText',
+          validators: [{ key: 'required' }],
+          conditionalDisplay: { field: 'useProxy', values: [true] }
+        },
+        {
+          key: 'proxyUsername',
+          translationKey: 'south.oianalytics.specific-settings.proxy-username',
+          type: 'OibText',
+          conditionalDisplay: { field: 'useProxy', values: [true] }
+        },
+        {
+          key: 'proxyPassword',
+          translationKey: 'south.oianalytics.specific-settings.proxy-password',
+          type: 'OibSecret',
+          conditionalDisplay: { field: 'useProxy', values: [true] }
+        }
       ]
     }
   ],
@@ -180,18 +203,18 @@ const manifest: SouthConnectorManifest = {
       {
         key: 'endpoint',
         type: 'OibText',
-        label: 'Endpoint',
+        translationKey: 'south.items.oianalytics.endpoint',
         defaultValue: '/endpoint',
         validators: [{ key: 'required' }]
       },
       {
         key: 'queryParams',
         type: 'OibArray',
-        label: 'Query params',
+        translationKey: 'south.items.oianalytics.query-params.query-param',
         content: [
           {
             key: 'key',
-            label: 'Key',
+            translationKey: 'south.items.oianalytics.query-params.key',
             type: 'OibText',
             defaultValue: '',
             validators: [{ key: 'required' }],
@@ -199,7 +222,7 @@ const manifest: SouthConnectorManifest = {
           },
           {
             key: 'value',
-            label: 'Value',
+            translationKey: 'south.items.oianalytics.query-params.value',
             type: 'OibText',
             defaultValue: '',
             validators: [{ key: 'required' }],
@@ -210,7 +233,72 @@ const manifest: SouthConnectorManifest = {
         newRow: true,
         displayInViewMode: false
       },
-      buildSerializationFormControl(['csv'])
+      {
+        key: 'serialization',
+        type: 'OibFormGroup',
+        translationKey: 'south.items.oianalytics.serialization.title',
+        newRow: true,
+        displayInViewMode: false,
+        validators: [{ key: 'required' }],
+        content: [
+          {
+            key: 'type',
+            type: 'OibSelect',
+            translationKey: 'south.items.oianalytics.serialization.type',
+            options: ['csv'],
+            defaultValue: 'csv',
+            newRow: true,
+            displayInViewMode: false,
+            validators: [{ key: 'required' }]
+          },
+          {
+            key: 'filename',
+            type: 'OibText',
+            translationKey: 'south.items.oianalytics.serialization.filename',
+            defaultValue: '@ConnectorName-@ItemName-@CurrentDate.csv',
+            newRow: false,
+            displayInViewMode: false,
+            validators: [{ key: 'required' }]
+          },
+          {
+            key: 'delimiter',
+            type: 'OibSelect',
+            translationKey: 'south.items.oianalytics.serialization.delimiter',
+            options: ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'],
+            defaultValue: 'COMMA',
+            newRow: false,
+            displayInViewMode: false,
+            validators: [{ key: 'required' }]
+          },
+          {
+            key: 'compression',
+            type: 'OibCheckbox',
+            translationKey: 'south.items.oianalytics.serialization.compression',
+            defaultValue: false,
+            newRow: false,
+            displayInViewMode: false,
+            validators: [{ key: 'required' }]
+          },
+          {
+            key: 'outputTimestampFormat',
+            type: 'OibText',
+            translationKey: 'south.items.oianalytics.serialization.output-timestamp-format',
+            defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
+            newRow: true,
+            displayInViewMode: false,
+            validators: [{ key: 'required' }]
+          },
+          {
+            key: 'outputTimezone',
+            type: 'OibTimezone',
+            translationKey: 'south.items.oianalytics.serialization.output-timezone',
+            defaultValue: 'Europe/Paris',
+            newRow: false,
+            displayInViewMode: false,
+            validators: [{ key: 'required' }]
+          }
+        ]
+      }
     ]
   }
 };

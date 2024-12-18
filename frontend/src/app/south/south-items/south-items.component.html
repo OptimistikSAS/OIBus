@@ -74,7 +74,7 @@
               </th>
             }
             @for (setting of displaySettings; track setting) {
-              <th>{{ setting.label }}</th>
+              <th>{{ setting.translationKey | translate }}</th>
             }
             <th style="width: 8rem"></th>
           </tr>
@@ -99,7 +99,7 @@
                 <td translate="scan-mode.subscription"></td>
               }
               @for (setting of displaySettings; track setting) {
-                <td>{{ getFieldValue(item.settings, setting.key, setting.pipe) }}</td>
+                <td>{{ getFieldValue(item.settings, setting.key) }}</td>
               }
               <td class="text-nowrap action-buttons">
                 <div class="pull-right">

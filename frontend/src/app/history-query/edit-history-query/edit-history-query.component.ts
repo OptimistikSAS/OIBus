@@ -14,7 +14,8 @@ import { ScanModeService } from '../../services/scan-mode.service';
 import {
   NorthConnectorCommandDTO,
   NorthConnectorDTO,
-  NorthConnectorManifest
+  NorthConnectorManifest,
+  OIBusNorthType
 } from '../../../../../backend/shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { OibScanModeComponent } from '../../shared/form/oib-scan-mode/oib-scan-mode.component';
@@ -25,6 +26,7 @@ import {
   HistoryQueryItemCommandDTO
 } from '../../../../../backend/shared/model/history-query.model';
 import {
+  OIBusSouthType,
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
   SouthConnectorManifest
@@ -44,6 +46,8 @@ import { ResetCacheHistoryQueryModalComponent } from '../reset-cache-history-que
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 import { dateTimeRangeValidatorBuilder } from '../../shared/validators';
+import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
+import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
 
 @Component({
   selector: 'oib-edit-history-query',
@@ -59,7 +63,9 @@ import { dateTimeRangeValidatorBuilder } from '../../shared/validators';
     BoxTitleDirective,
     HistoryQueryItemsComponent,
     OibHelpComponent,
-    TranslatePipe
+    TranslatePipe,
+    OIBusNorthTypeEnumPipe,
+    OIBusSouthTypeEnumPipe
   ],
   templateUrl: './edit-history-query.component.html',
   styleUrl: './edit-history-query.component.scss'
@@ -273,8 +279,8 @@ export class EditHistoryQueryComponent implements OnInit {
       description: formValue.description!,
       startTime: formValue.startTime!,
       endTime: formValue.endTime!,
-      northType: this.northType,
-      southType: this.southType,
+      northType: this.northType as OIBusNorthType,
+      southType: this.southType as OIBusSouthType,
       southSettings: formValue.southSettings,
       northSettings: formValue.northSettings,
       caching: {

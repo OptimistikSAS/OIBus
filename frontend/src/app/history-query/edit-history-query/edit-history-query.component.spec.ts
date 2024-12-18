@@ -79,8 +79,8 @@ describe('EditHistoryQueryComponent', () => {
     status: 'PENDING',
     startTime: '2023-01-01T00:00:00.000Z',
     endTime: '2023-02-01T00:00:00.000Z',
-    northType: 'Console',
-    southType: 'SQL',
+    northType: 'console',
+    southType: 'mssql',
     northSettings: {} as NorthSettings,
     southSettings: {} as SouthSettings,
     caching: {
@@ -147,8 +147,6 @@ describe('EditHistoryQueryComponent', () => {
       of({
         id: 'console',
         category: 'debug',
-        name: 'Console',
-        description: 'Console description',
         modes: {
           files: true,
           points: true
@@ -159,10 +157,8 @@ describe('EditHistoryQueryComponent', () => {
     );
     southConnectorService.getSouthConnectorTypeManifest.and.returnValue(
       of({
-        id: 'sql',
+        id: 'mssql',
         category: 'database',
-        name: 'SQL',
-        description: 'SQL description',
         modes: {
           history: true,
           lastFile: false,
@@ -194,14 +190,14 @@ describe('EditHistoryQueryComponent', () => {
     expect(tester.description).toHaveValue('My History query description');
     expect(tester.specificForm).toBeDefined();
     expect(tester.northSpecificTitle).toContainText('Console settings');
-    expect(tester.southSpecificTitle).toContainText('SQL settings');
+    expect(tester.southSpecificTitle).toContainText('Microsoft SQL Server™ settings');
     expect(tester.sharedConnection).toBeNull();
   });
 
   it('should display south sharing input when connection can be shared', () => {
     southConnectorService.getSouthConnectorTypeManifest.and.returnValue(
       of({
-        id: 'sql',
+        id: 'mssql',
         category: 'database',
         name: 'SQL',
         description: 'SQL description',
@@ -231,11 +227,11 @@ describe('EditHistoryQueryComponent', () => {
   });
 
   it('should test north connection', () => {
-    tester.componentInstance.northManifest = { id: 'northId1', modes: {} } as NorthConnectorManifest;
+    tester.componentInstance.northManifest = { id: 'console', modes: {} } as NorthConnectorManifest;
     tester.componentInstance.historyQuery = historyQuery;
 
     const command = {
-      type: 'northId1',
+      type: 'console',
       settings: historyQuery.northSettings,
       caching: historyQuery.caching
     } as NorthConnectorCommandDTO<NorthSettings>;
@@ -253,11 +249,11 @@ describe('EditHistoryQueryComponent', () => {
   });
 
   it('should test south connection', () => {
-    tester.componentInstance.southManifest = { id: 'southId1', modes: {} } as SouthConnectorManifest;
+    tester.componentInstance.southManifest = { id: 'mssql', modes: {} } as SouthConnectorManifest;
     tester.componentInstance.historyQuery = historyQuery;
 
     const command = {
-      type: 'southId1',
+      type: 'mssql',
       settings: historyQuery.southSettings
     } as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
 

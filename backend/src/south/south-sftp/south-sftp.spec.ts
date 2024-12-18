@@ -56,7 +56,7 @@ describe('SouthSFTP', () => {
   const configuration: SouthConnectorEntity<SouthSFTPSettings, SouthSFTPItemSettings> = {
     id: 'southId',
     name: 'south',
-    type: 'test',
+    type: 'sftp',
     description: 'my test connector',
     enabled: true,
     settings: {
@@ -281,7 +281,7 @@ describe('SouthFTP with preserve file and compression', () => {
   const configuration: SouthConnectorEntity<SouthSFTPSettings, SouthSFTPItemSettings> = {
     id: 'southId',
     name: 'south',
-    type: 'test',
+    type: 'sftp',
     description: 'my test connector',
     enabled: true,
     settings: {
@@ -437,7 +437,7 @@ describe('SouthSFTP test connection with private key', () => {
   const configuration: SouthConnectorEntity<SouthSFTPSettings, SouthSFTPItemSettings> = {
     id: 'southId',
     name: 'south',
-    type: 'test',
+    type: 'sftp',
     description: 'my test connector',
     enabled: true,
     settings: {

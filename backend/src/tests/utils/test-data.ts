@@ -162,10 +162,8 @@ const certificateCommand: Certificate = {
 };
 
 const southTestManifest: SouthConnectorManifest = {
-  id: 'south-test',
-  category: 'debug',
-  name: 'Test',
-  description: '',
+  id: 'folder-scanner',
+  category: 'file',
   modes: {
     subscription: true,
     lastPoint: true,
@@ -182,19 +180,19 @@ const southTestManifest: SouthConnectorManifest = {
       {
         key: 'objectArray',
         type: 'OibArray',
-        label: 'Array',
+        translationKey: 'Array',
         content: []
       },
       {
         key: 'objectSettings',
         type: 'OibFormGroup',
-        label: 'Group',
+        translationKey: 'Group',
         content: []
       },
       {
         key: 'objectValue',
         type: 'OibNumber',
-        label: 'Number'
+        translationKey: 'Number'
       }
     ]
   }
@@ -371,10 +369,8 @@ const itemTestingSettings: SouthConnectorItemTestingSettings = {
 };
 
 const northTestManifest: NorthConnectorManifest = {
-  id: 'north-test',
+  id: 'console',
   category: 'debug',
-  name: 'Test',
-  description: '',
   modes: {
     files: true,
     points: true

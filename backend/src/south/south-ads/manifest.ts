@@ -2,9 +2,7 @@ import { SouthConnectorManifest } from '../../../shared/model/south-connector.mo
 
 const manifest: SouthConnectorManifest = {
   id: 'ads',
-  name: 'ADS - TwinCAT®',
   category: 'iot',
-  description: 'The ADS protocol used in TwinCAT® systems',
   modes: {
     subscription: false,
     lastPoint: true,
@@ -15,7 +13,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'netId',
       type: 'OibText',
-      label: 'Net ID',
+      translationKey: 'south.ads.net-id',
       defaultValue: '127.0.0.1.1.1',
       newRow: true,
       class: 'col-8',
@@ -25,7 +23,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'port',
       type: 'OibNumber',
-      label: 'PLC Port',
+      translationKey: 'south.ads.port',
       defaultValue: 851,
       newRow: false,
       class: 'col-4',
@@ -35,7 +33,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'routerAddress',
       type: 'OibText',
-      label: 'Router address',
+      translationKey: 'south.ads.router-address',
       newRow: true,
       class: 'col-8',
       displayInViewMode: true
@@ -43,7 +41,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'routerTcpPort',
       type: 'OibNumber',
-      label: 'Router TCP port',
+      translationKey: 'south.ads.router-tcp-port',
       newRow: false,
       class: 'col-4',
       validators: [
@@ -55,7 +53,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'clientAmsNetId',
       type: 'OibText',
-      label: 'AMS Net ID',
+      translationKey: 'south.ads.client-ams-net-id',
       newRow: true,
       class: 'col-8',
       displayInViewMode: true
@@ -63,7 +61,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'clientAdsPort',
       type: 'OibNumber',
-      label: 'ADS Client port',
+      translationKey: 'south.ads.client-ads-port',
       newRow: false,
       class: 'col-4',
       validators: [
@@ -75,7 +73,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'retryInterval',
       type: 'OibNumber',
-      label: 'Retry interval',
+      translationKey: 'south.ads.retry-interval',
       unitLabel: 'ms',
       defaultValue: 10_000,
       newRow: true,
@@ -86,7 +84,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'plcName',
       type: 'OibText',
-      label: 'PLC name',
+      translationKey: 'south.ads.plc-name',
       defaultValue: '',
       newRow: true,
       class: 'col-4',
@@ -96,7 +94,7 @@ const manifest: SouthConnectorManifest = {
       key: 'enumAsText',
       type: 'OibSelect',
       options: ['text', 'integer'],
-      label: 'Enumeration value',
+      translationKey: 'south.ads.enum-as-text',
       defaultValue: 'integer',
       class: 'col-4',
       validators: [{ key: 'required' }],
@@ -105,7 +103,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'boolAsText',
       type: 'OibSelect',
-      label: 'Boolean value',
+      translationKey: 'south.ads.bool-as-text',
       options: ['text', 'integer'],
       defaultValue: 'integer',
       class: 'col-4',
@@ -115,11 +113,11 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'structureFiltering',
       type: 'OibArray',
-      label: 'Structure filtering',
+      translationKey: 'south.ads.structure-filtering.structure',
       content: [
         {
           key: 'name',
-          label: 'Structure name',
+          translationKey: 'south.ads.structure-filtering.name',
           type: 'OibText',
           defaultValue: '',
           validators: [{ key: 'required' }],
@@ -127,7 +125,7 @@ const manifest: SouthConnectorManifest = {
         },
         {
           key: 'fields',
-          label: 'Fields to keep (comma separated)',
+          translationKey: 'south.ads.structure-filtering.fields',
           type: 'OibText',
           defaultValue: '',
           validators: [{ key: 'required' }],
@@ -148,7 +146,7 @@ const manifest: SouthConnectorManifest = {
       {
         key: 'address',
         type: 'OibText',
-        label: 'Address',
+        translationKey: 'south.items.ads.address',
         validators: [{ key: 'required' }],
         displayInViewMode: true
       }

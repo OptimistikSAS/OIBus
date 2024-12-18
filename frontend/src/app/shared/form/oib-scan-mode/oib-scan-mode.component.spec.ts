@@ -27,7 +27,7 @@ class TestComponent {
   settings: OibScanModeFormControl = {
     key: 'myOibScanMode',
     type: 'OibScanMode',
-    label: 'Scan mode field'
+    translationKey: 'Scan mode field'
   } as OibScanModeFormControl;
   scanModes: Array<ScanModeDTO> = [
     { id: 'id1', name: 'scanMode1', description: '', cron: '* * * * *' },

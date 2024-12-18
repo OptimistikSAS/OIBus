@@ -52,8 +52,6 @@ describe('SouthDetailComponent', () => {
   const manifest: SouthConnectorManifest = {
     id: 'mssql',
     category: 'database',
-    name: 'SQL',
-    description: 'SQL',
     settings: [],
     items: {
       scanMode: {
@@ -62,7 +60,7 @@ describe('SouthDetailComponent', () => {
       },
       settings: [
         {
-          label: 'query',
+          translationKey: 'south.items.mssql.query',
           key: 'query',
           displayInViewMode: true,
           type: 'OibText'
@@ -78,7 +76,7 @@ describe('SouthDetailComponent', () => {
   };
   const southConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> = {
     id: 'id1',
-    type: 'Generic',
+    type: 'mssql',
     name: 'South Connector',
     description: 'My South connector description',
     enabled: true,

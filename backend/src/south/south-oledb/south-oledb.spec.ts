@@ -272,16 +272,8 @@ describe('SouthOLEDB', () => {
     await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
     expect(south.queryRemoteAgentData).toHaveBeenCalledTimes(3);
     expect(south.queryRemoteAgentData).toHaveBeenCalledWith(configuration.items[0], startTime, testData.constants.dates.FAKE_NOW);
-    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(
-      configuration.items[1],
-      startTime,
-      testData.constants.dates.FAKE_NOW
-    );
-    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(
-      configuration.items[2],
-      startTime,
-      testData.constants.dates.FAKE_NOW
-    );
+    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(configuration.items[1], startTime, testData.constants.dates.FAKE_NOW);
+    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(configuration.items[2], startTime, testData.constants.dates.FAKE_NOW);
   });
 
   it('should get data from Remote agent', async () => {

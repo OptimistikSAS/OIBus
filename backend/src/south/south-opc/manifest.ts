@@ -2,9 +2,7 @@ import { SouthConnectorManifest } from '../../../shared/model/south-connector.mo
 
 const manifest: SouthConnectorManifest = {
   id: 'opc',
-  name: 'OPC Classic™',
   category: 'iot',
-  description: 'Access data from an OPC Classic™ (HDA/DA) server through OIBus Agent',
   modes: {
     subscription: false,
     lastPoint: false,
@@ -15,7 +13,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'throttling',
       type: 'OibFormGroup',
-      label: 'Throttling',
+      translationKey: 'south.opc.throttling.title',
       class: 'col',
       newRow: true,
       displayInViewMode: false,
@@ -24,7 +22,7 @@ const manifest: SouthConnectorManifest = {
         {
           key: 'maxReadInterval',
           type: 'OibNumber',
-          label: 'Max read interval',
+          translationKey: 'south.opc.throttling.max-read-interval',
           validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }],
           defaultValue: 3600,
           unitLabel: 's',
@@ -33,7 +31,7 @@ const manifest: SouthConnectorManifest = {
         {
           key: 'readDelay',
           type: 'OibNumber',
-          label: 'Read delay',
+          translationKey: 'south.opc.throttling.read-delay',
           validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }],
           defaultValue: 200,
           unitLabel: 'ms',
@@ -42,7 +40,7 @@ const manifest: SouthConnectorManifest = {
         {
           key: 'overlap',
           type: 'OibNumber',
-          label: 'Overlap',
+          translationKey: 'south.opc.throttling.overlap',
           validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }],
           defaultValue: 0,
           unitLabel: 'ms',
@@ -51,7 +49,7 @@ const manifest: SouthConnectorManifest = {
         {
           key: 'maxInstantPerItem',
           type: 'OibCheckbox',
-          label: 'Max instant per item',
+          translationKey: 'south.opc.throttling.max-instant-per-item',
           defaultValue: false,
           validators: [{ key: 'required' }],
           displayInViewMode: true
@@ -61,7 +59,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'agentUrl',
       type: 'OibText',
-      label: 'Remote agent URL',
+      translationKey: 'south.opc.agent-url',
       defaultValue: 'http://ip-adress-or-host:2224',
       validators: [{ key: 'required' }],
       newRow: true,
@@ -70,7 +68,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'retryInterval',
       type: 'OibNumber',
-      label: 'Retry interval',
+      translationKey: 'south.opc.retry-interval',
       defaultValue: 10_000,
       unitLabel: 'ms',
       class: 'col-3',
@@ -79,7 +77,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'host',
       type: 'OibText',
-      label: 'Server URL (from the agent)',
+      translationKey: 'south.opc.host',
       defaultValue: 'localhost',
       class: 'col-7',
       newRow: true,
@@ -89,7 +87,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'serverName',
       type: 'OibText',
-      label: 'Server name',
+      translationKey: 'south.opc.server-name',
       defaultValue: 'Matrikon.OPC.Simulation',
       class: 'col-5',
       newRow: false,
@@ -106,15 +104,14 @@ const manifest: SouthConnectorManifest = {
       {
         key: 'nodeId',
         type: 'OibText',
-        label: 'Node ID',
+        translationKey: 'south.items.opc.node-id',
         validators: [{ key: 'required' }],
         displayInViewMode: true
       },
       {
         key: 'aggregate',
         type: 'OibSelect',
-        label: 'Aggregate',
-        pipe: 'aggregates',
+        translationKey: 'south.items.opc.aggregate',
         options: [
           'raw',
           'interpolative',
@@ -149,8 +146,7 @@ const manifest: SouthConnectorManifest = {
       {
         key: 'resampling',
         type: 'OibSelect',
-        label: 'Resampling',
-        pipe: 'resampling',
+        translationKey: 'south.items.opc.resampling',
         options: ['none', '1s', '10s', '30s', '1min', '1h', '1d'],
         defaultValue: 'none',
         validators: [{ key: 'required' }],

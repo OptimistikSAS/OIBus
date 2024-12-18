@@ -39,7 +39,7 @@
               <th translate="south.items.scan-mode" style="width: 8rem"></th>
             }
             @for (setting of displaySettings; track setting) {
-              <th>{{ setting.label }}</th>
+              <th>{{ setting.translationKey | translate }}</th>
             }
           </tr>
         </thead>
@@ -54,7 +54,7 @@
                 <td translate="scan-mode.subscription"></td>
               }
               @for (setting of displaySettings; track setting) {
-                <td>{{ getFieldValue(item.settings, setting.key, setting.pipe) }}</td>
+                <td>{{ getFieldValue(item.settings, setting.key) }}</td>
               }
             </tr>
           }

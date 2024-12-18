@@ -90,7 +90,7 @@ describe('SouthOPCUA', () => {
   const configuration: SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings> = {
     id: 'southId',
     name: 'south',
-    type: 'test',
+    type: 'opcua',
     description: 'my test connector',
     enabled: true,
     settings: {
@@ -942,7 +942,7 @@ describe('SouthOPCUA with basic auth', () => {
   const configuration: SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings> = {
     id: 'southId',
     name: 'south',
-    type: 'test',
+    type: 'opcua',
     description: 'my test connector',
     enabled: true,
     settings: {
@@ -1100,7 +1100,7 @@ describe('SouthOPCUA with certificate', () => {
   const configuration: SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings> = {
     id: 'southId',
     name: 'south',
-    type: 'test',
+    type: 'opcua',
     description: 'my test connector',
     enabled: true,
     settings: {
@@ -1353,7 +1353,7 @@ describe('SouthOPCUA test connection', () => {
   const configuration: SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings> = {
     id: 'southId',
     name: 'south',
-    type: 'test',
+    type: 'opcua',
     description: 'my test connector',
     enabled: true,
     settings: {
@@ -1634,7 +1634,7 @@ describe('SouthOPCUA with shared connection', () => {
   const configuration: SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings> = {
     id: 'southId',
     name: 'south',
-    type: 'test',
+    type: 'opcua',
     description: 'my test connector',
     enabled: true,
     settings: {

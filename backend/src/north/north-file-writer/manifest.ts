@@ -2,9 +2,7 @@ import { NorthConnectorManifest } from '../../../shared/model/north-connector.mo
 
 const manifest: NorthConnectorManifest = {
   id: 'file-writer',
-  name: 'File Writer',
   category: 'file',
-  description: 'Write files and data to the output folder',
   modes: {
     files: true,
     points: true
@@ -13,7 +11,7 @@ const manifest: NorthConnectorManifest = {
     {
       key: 'outputFolder',
       type: 'OibText',
-      label: 'Output folder',
+      translationKey: 'north.file-writer.output-folder',
       defaultValue: './output',
       newRow: true,
       validators: [{ key: 'required' }],
@@ -22,7 +20,7 @@ const manifest: NorthConnectorManifest = {
     {
       key: 'prefix',
       type: 'OibText',
-      label: 'Prefix',
+      translationKey: 'north.file-writer.prefix',
       defaultValue: '@ConnectorName-',
       validators: [
         { key: 'minLength', params: { minLength: 1 } },
@@ -33,7 +31,7 @@ const manifest: NorthConnectorManifest = {
     {
       key: 'suffix',
       type: 'OibText',
-      label: 'Suffix',
+      translationKey: 'north.file-writer.suffix',
       defaultValue: '-@CurrentDate',
       validators: [
         { key: 'minLength', params: { minLength: 1 } },

@@ -50,7 +50,7 @@ describe('ExploreCacheComponent', () => {
 
   const northConnector: NorthConnectorDTO<NorthSettings> = {
     id: 'id1',
-    type: 'Generic',
+    type: 'file-writer',
     name: 'North Connector',
     description: 'My North connector description',
     enabled: true,

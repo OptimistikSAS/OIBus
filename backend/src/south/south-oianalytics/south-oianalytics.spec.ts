@@ -75,7 +75,7 @@ describe('SouthOIAnalytics with Basic auth', () => {
   const configuration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings> = {
     id: 'southId',
     name: 'south',
-    type: 'test',
+    type: 'oianalytics',
     description: 'my test connector',
     enabled: true,
     settings: {
@@ -301,7 +301,7 @@ describe('SouthOIAnalytics without proxy but with accept self signed', () => {
   const configuration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings> = {
     id: 'southId',
     name: 'south',
-    type: 'test',
+    type: 'oianalytics',
     description: 'my test connector',
     enabled: true,
     settings: {
@@ -532,7 +532,7 @@ describe('SouthOIAnalytics with proxy', () => {
   const configuration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings> = {
     id: 'southId',
     name: 'south',
-    type: 'test',
+    type: 'oianalytics',
     description: 'my test connector',
     enabled: true,
     settings: {
@@ -681,7 +681,7 @@ describe('SouthOIAnalytics with proxy but without proxy password', () => {
   const configuration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings> = {
     id: 'southId',
     name: 'south',
-    type: 'test',
+    type: 'oianalytics',
     description: 'my test connector',
     enabled: true,
     settings: {
@@ -841,7 +841,7 @@ describe('SouthOIAnalytics without proxy but with acceptUnauthorized', () => {
   const configuration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings> = {
     id: 'southId',
     name: 'south',
-    type: 'test',
+    type: 'oianalytics',
     description: 'my test connector',
     enabled: true,
     settings: {
@@ -959,7 +959,7 @@ describe('SouthOIAnalytics with aad-certificate', () => {
   const configuration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings> = {
     id: 'southId',
     name: 'south',
-    type: 'test',
+    type: 'oianalytics',
     description: 'my test connector',
     enabled: true,
     settings: {
@@ -1084,7 +1084,7 @@ describe('SouthOIAnalytics with OIA module', () => {
   const configuration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings> = {
     id: 'southId',
     name: 'south',
-    type: 'test',
+    type: 'oianalytics',
     description: 'my test connector',
     enabled: true,
     settings: {
