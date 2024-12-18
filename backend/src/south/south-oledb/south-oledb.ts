@@ -161,7 +161,9 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
         timeColumn: referenceTimestampField?.fieldName,
         datasourceTimestampFormat: referenceTimestampField?.format,
         datasourceTimezone: referenceTimestampField?.timezone,
-        delimiter: convertDelimiter(item.settings.serialization.delimiter)
+        delimiter: convertDelimiter(item.settings.serialization.delimiter),
+        outputTimestampFormat: item.settings.serialization.outputTimestampFormat,
+        outputTimezone: item.settings.serialization.outputTimezone
       }),
       headers
     };
