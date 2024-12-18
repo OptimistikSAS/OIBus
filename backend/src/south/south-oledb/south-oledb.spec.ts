@@ -315,7 +315,9 @@ describe('SouthOLEDB', () => {
         timeColumn: 'timestamp',
         datasourceTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
         datasourceTimezone: 'Europe/Paris',
-        delimiter: 'COMMA'
+        delimiter: 'COMMA',
+        outputTimestampFormat: configuration.items[0].settings.serialization.outputTimestampFormat,
+        outputTimezone: configuration.items[0].settings.serialization.outputTimezone
       }),
       headers: {
         'Content-Type': 'application/json'
@@ -366,7 +368,9 @@ describe('SouthOLEDB', () => {
         connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
         sql: 'SELECT * FROM table',
         readTimeout: 1000,
-        delimiter: 'COMMA'
+        delimiter: 'COMMA',
+        outputTimestampFormat: configuration.items[1].settings.serialization.outputTimestampFormat,
+        outputTimezone: configuration.items[1].settings.serialization.outputTimezone
       }),
       headers: {
         'Content-Type': 'application/json'
@@ -472,7 +476,9 @@ describe('SouthOLEDB', () => {
         timeColumn: 'timestamp',
         datasourceTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
         datasourceTimezone: 'Europe/Paris',
-        delimiter: 'COMMA'
+        delimiter: 'COMMA',
+        outputTimestampFormat: configuration.items[0].settings.serialization.outputTimestampFormat,
+        outputTimezone: configuration.items[0].settings.serialization.outputTimezone
       }),
       headers: {
         'Content-Type': 'application/json'

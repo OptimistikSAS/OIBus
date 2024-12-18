@@ -155,7 +155,7 @@ const manifest: SouthConnectorManifest = {
             key: 'format',
             translationKey: 'south.items.oledb.date-time-fields.format',
             type: 'OibText',
-            defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
+            defaultValue: 'yyyy-MM-dd HH:mm:ss.fff',
             validators: [{ key: 'required' }],
             conditionalDisplay: { field: 'type', values: ['string'] }
           },
@@ -222,7 +222,7 @@ const manifest: SouthConnectorManifest = {
             key: 'outputTimestampFormat',
             type: 'OibText',
             translationKey: 'south.items.oledb.serialization.output-timestamp-format',
-            defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
+            defaultValue: 'yyyy-MM-dd HH:mm:ss.fff',
             newRow: true,
             displayInViewMode: false,
             validators: [{ key: 'required' }]
