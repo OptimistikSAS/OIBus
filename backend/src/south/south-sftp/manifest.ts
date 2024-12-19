@@ -86,10 +86,7 @@ const manifest: SouthConnectorManifest = {
     }
   ],
   items: {
-    scanMode: {
-      acceptSubscription: false,
-      subscriptionOnly: false
-    },
+    scanMode: 'POLL',
     settings: [
       {
         key: 'remoteFolder',

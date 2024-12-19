@@ -78,7 +78,7 @@ describe('EditSouthComponent', () => {
           history: true
         },
         items: {
-          scanMode: { subscriptionOnly: false, acceptSubscription: true },
+          scanMode: 'POLL',
           settings: [],
           schema: {} as unknown
         },

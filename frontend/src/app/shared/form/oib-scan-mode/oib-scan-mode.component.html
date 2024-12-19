@@ -1,7 +1,7 @@
 <label class="form-label" [for]="'oib-scan-mode-input-' + key()">{{ label() }}</label>
 <select [formControl]="scanModeInputCtrl" [id]="'OibScanMode-' + key()" class="form-select mb-2 mr-sm-2">
   <option [ngValue]="null"></option>
-  @if (acceptSubscription()) {
+  @if (scanModeType() === 'SUBSCRIPTION_AND_POLL') {
     <option ngValue="subscription" translate="scan-mode.subscription"></option>
   }
   @for (scanMode of scanModes(); track scanMode.id) {

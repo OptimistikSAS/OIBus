@@ -35,10 +35,7 @@ class TestComponent {
       }
     ],
     items: {
-      scanMode: {
-        acceptSubscription: false,
-        subscriptionOnly: false
-      },
+      scanMode: 'POLL',
       settings: [
         {
           translationKey: 'query',

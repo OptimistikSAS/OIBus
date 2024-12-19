@@ -202,10 +202,7 @@ const manifest: SouthConnectorManifest = {
     }
   ],
   items: {
-    scanMode: {
-      acceptSubscription: true,
-      subscriptionOnly: false
-    },
+    scanMode: 'SUBSCRIPTION_AND_POLL',
     settings: [
       {
         key: 'nodeId',
