@@ -12,13 +12,7 @@ import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 @Component({
   template: `<form [formGroup]="form">
     <div formGroupName="settings">
-      <oib-scan-mode
-        [scanModes]="scanModes"
-        [key]="settings.key"
-        [formControlName]="settings.key"
-        [acceptSubscription]="true"
-        [subscriptionOnly]="false"
-      />
+      <oib-scan-mode [scanModes]="scanModes" [key]="settings.key" [formControlName]="settings.key" [scanModeType]="'POLL'" />
     </div>
   </form>`,
   imports: [OibScanModeComponent, ...formDirectives]

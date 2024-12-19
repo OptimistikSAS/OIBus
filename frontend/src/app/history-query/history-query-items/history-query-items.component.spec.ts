@@ -92,10 +92,7 @@ class TestComponent {
     category: 'database',
     settings: [],
     items: {
-      scanMode: {
-        acceptSubscription: false,
-        subscriptionOnly: false
-      },
+      scanMode: 'POLL',
       settings: [
         {
           translationKey: 'south.items.mssql.query',

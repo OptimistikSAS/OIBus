@@ -169,10 +169,7 @@ describe('EditHistoryQueryComponent', () => {
         },
         settings: [],
         items: {
-          scanMode: {
-            acceptSubscription: false,
-            subscriptionOnly: false
-          },
+          scanMode: 'POLL',
           settings: [],
           schema: {} as unknown
         },
@@ -211,10 +208,7 @@ describe('EditHistoryQueryComponent', () => {
         },
         settings: [],
         items: {
-          scanMode: {
-            acceptSubscription: false,
-            subscriptionOnly: false
-          },
+          scanMode: 'POLL',
           settings: [],
           schema: {} as unknown
         },

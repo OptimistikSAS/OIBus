@@ -65,7 +65,7 @@
                 <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.name] }}"></span>
               </button>
             </th>
-            @if (!southManifest().items.scanMode.subscriptionOnly) {
+            @if (southManifest().items.scanMode !== 'SUBSCRIPTION') {
               <th style="width: 8rem">
                 <button type="button" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('scanMode')">
                   <span translate="south.items.scan-mode" class="me-2"></span>
@@ -92,10 +92,10 @@
                 <td></td>
               }
               <td>{{ item.name }}</td>
-              @if (!southManifest().items.scanMode.subscriptionOnly && item.scanModeId !== 'subscription') {
+              @if (southManifest().items.scanMode !== 'SUBSCRIPTION' && item.scanModeId !== 'subscription') {
                 <td>{{ getScanMode(item.scanModeId)?.name }}</td>
               }
-              @if (!southManifest().items.scanMode.subscriptionOnly && item.scanModeId === 'subscription') {
+              @if (southManifest().items.scanMode !== 'SUBSCRIPTION' && item.scanModeId === 'subscription') {
                 <td translate="scan-mode.subscription"></td>
               }
               @for (setting of displaySettings; track setting) {
