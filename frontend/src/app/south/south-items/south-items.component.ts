@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, output, input, effect } from '@angular/core';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
@@ -60,6 +60,7 @@ export class SouthItemsComponent implements OnInit {
   private notificationService = inject(NotificationService);
   private modalService = inject(ModalService);
   private southConnectorService = inject(SouthConnectorService);
+  private translateService = inject(TranslateService);
   /** Either the edited dto or the duplicated dto */
   readonly southConnector = input<SouthConnectorDTO<SouthSettings, SouthItemSettings> | null>(null);
   /** Actual southId (or 'create') */
@@ -401,6 +402,10 @@ export class SouthItemsComponent implements OnInit {
   }
 
   getFieldValue(element: any, field: string): string {
+    const foundFormControl = this.southManifest().items.settings.find(formControl => formControl.key === field);
+    if (foundFormControl && element[field] && foundFormControl.type === 'OibSelect') {
+      return this.translateService.instant(foundFormControl.translationKey + '.' + element[field]);
+    }
     return element[field];
   }
 
