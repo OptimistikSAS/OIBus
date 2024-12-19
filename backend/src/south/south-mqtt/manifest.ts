@@ -145,10 +145,7 @@ const manifest: SouthConnectorManifest = {
     }
   ],
   items: {
-    scanMode: {
-      acceptSubscription: true,
-      subscriptionOnly: true
-    },
+    scanMode: 'SUBSCRIPTION',
     settings: [
       {
         key: 'topic',

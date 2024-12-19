@@ -14,7 +14,7 @@
           </div>
         </div>
         <!-- Scan mode -->
-        @if (!subscriptionOnly) {
+        @if (southItemSchema!.scanMode !== 'SUBSCRIPTION') {
           <div class="col-3">
             <div class="form-group">
               <oib-scan-mode
@@ -22,8 +22,7 @@
                 key="item-scan-mode"
                 [label]="'scan-mode.label' | translate"
                 formControlName="scanModeId"
-                [acceptSubscription]="acceptSubscription"
-                [subscriptionOnly]="subscriptionOnly"
+                [scanModeType]="southItemSchema!.scanMode"
               />
               <val-errors controlName="scanModeId" />
             </div>

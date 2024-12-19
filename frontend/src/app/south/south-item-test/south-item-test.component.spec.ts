@@ -58,10 +58,7 @@ class TestComponent {
     },
     settings: [],
     items: {
-      scanMode: {
-        acceptSubscription: false,
-        subscriptionOnly: false
-      },
+      scanMode: 'POLL',
       settings: [],
       schema: {} as unknown
     },
