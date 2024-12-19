@@ -89,10 +89,7 @@ export interface SouthConnectorItemSearchParam {
 }
 
 export interface SouthConnectorItemManifest {
-  scanMode: {
-    acceptSubscription: boolean;
-    subscriptionOnly: boolean;
-  };
+  scanMode: 'POLL' | 'SUBSCRIPTION' | 'SUBSCRIPTION_AND_POLL';
   settings: Array<OibFormControl>;
 }
 

@@ -26,7 +26,7 @@ describe('ImportSouthItemsModalComponent', () => {
   let fakeActiveModal: NgbActiveModal;
 
   const southItemSchema: SouthConnectorItemManifest = {
-    scanMode: { subscriptionOnly: false, acceptSubscription: true },
+    scanMode: 'SUBSCRIPTION_AND_POLL',
     settings: [],
     schema: []
   } as SouthConnectorItemManifest;

@@ -44,7 +44,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
   let fakeActiveModal: NgbActiveModal;
 
   const southItemSchema: SouthConnectorItemManifest = {
-    scanMode: { subscriptionOnly: false, acceptSubscription: true },
+    scanMode: 'POLL',
     settings: [],
     schema: []
   } as SouthConnectorItemManifest;

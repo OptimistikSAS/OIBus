@@ -16,8 +16,7 @@ export class OibScanModeComponent implements ControlValueAccessor {
   readonly label = input('');
   readonly key = input('');
   readonly scanModes = input<Array<ScanModeDTO>>([]);
-  readonly acceptSubscription = input(false);
-  readonly subscriptionOnly = input(false);
+  readonly scanModeType = input<'POLL' | 'SUBSCRIPTION' | 'SUBSCRIPTION_AND_POLL'>('POLL');
   scanModeInputCtrl = inject(NonNullableFormBuilder).control(null as string | null);
   disabled = false;
   onChange: (value: string) => void = () => {};

@@ -172,10 +172,7 @@ const southTestManifest: SouthConnectorManifest = {
   },
   settings: [],
   items: {
-    scanMode: {
-      acceptSubscription: false,
-      subscriptionOnly: false
-    },
+    scanMode: 'POLL',
     settings: [
       {
         key: 'objectArray',

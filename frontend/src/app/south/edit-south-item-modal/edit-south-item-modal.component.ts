@@ -51,8 +51,6 @@ export class EditSouthItemModalComponent {
 
   mode: 'create' | 'edit' | 'copy' = 'create';
   state = new ObservableState();
-  subscriptionOnly = false;
-  acceptSubscription = false;
 
   scanModes: Array<ScanModeDTO> = [];
   southItemSchema: SouthConnectorItemManifest | null = null;
@@ -112,7 +110,7 @@ export class EditSouthItemModalComponent {
       settings: createFormGroup(this.southItemSchema!.settings, this.fb)
     });
 
-    if (this.subscriptionOnly) {
+    if (this.southItemSchema!.scanMode === 'SUBSCRIPTION') {
       this.form.controls.scanModeId.disable();
     } else {
       this.form.controls.scanModeId.enable();
@@ -142,8 +140,6 @@ export class EditSouthItemModalComponent {
     this.southId = southId;
     this.southConnectorCommand = southConnectorCommand;
     this.southManifest = southManifest;
-    this.subscriptionOnly = southItemSchema.scanMode.subscriptionOnly;
-    this.acceptSubscription = southItemSchema.scanMode.acceptSubscription;
     this.southItemRows = groupFormControlsByRow(southItemSchema.settings);
     this.southItemSchema = southItemSchema;
     this.scanModes = scanModes;
@@ -152,7 +148,7 @@ export class EditSouthItemModalComponent {
 
   /**
    * Prepares the component for edition.
-   * @param tableIndex an additional identifier, when item ids are not available. This indexes the given itemList param
+   * tableIndex is an additional identifier, when item ids are not available. This indexes the given itemList param
    */
   prepareForEdition(
     southItemSchema: SouthConnectorItemManifest,
@@ -170,8 +166,6 @@ export class EditSouthItemModalComponent {
     this.southConnectorCommand = southConnectorCommand;
     this.southManifest = southManifest;
     this.item = southItem;
-    this.subscriptionOnly = southItemSchema.scanMode.subscriptionOnly;
-    this.acceptSubscription = southItemSchema.scanMode.acceptSubscription;
     this.southItemRows = groupFormControlsByRow(southItemSchema.settings);
     this.southItemSchema = southItemSchema;
     this.scanModes = scanModes;
@@ -198,8 +192,6 @@ export class EditSouthItemModalComponent {
     this.item.name = `${southItem.name}-copy`;
     this.mode = 'copy';
     this.itemList = itemList;
-    this.subscriptionOnly = southItemSchema.scanMode.subscriptionOnly;
-    this.acceptSubscription = southItemSchema.scanMode.acceptSubscription;
     this.southItemSchema = southItemSchema;
     this.southItemRows = groupFormControlsByRow(southItemSchema.settings);
     this.scanModes = scanModes;
@@ -225,15 +217,13 @@ export class EditSouthItemModalComponent {
       id = this.item?.id || null;
     }
 
-    const command: SouthConnectorItemCommandDTO<SouthItemSettings> = {
+    return {
       id,
       enabled: formValue.enabled!,
       name: formValue.name!,
-      scanModeId: this.subscriptionOnly ? 'subscription' : formValue.scanModeId!,
+      scanModeId: this.southItemSchema!.scanMode === 'SUBSCRIPTION' ? 'subscription' : formValue.scanModeId!,
       scanModeName: null,
       settings: formValue.settings!
     };
-
-    return command;
   }
 }
