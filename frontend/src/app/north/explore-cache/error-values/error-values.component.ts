@@ -21,7 +21,7 @@ export class ErrorValuesComponent implements OnInit {
 
   readonly northConnector = input<NorthConnectorDTO<NorthSettings> | null>(null);
   errorValues: Array<NorthCacheFiles> = [];
-  readonly fileTable = viewChild.required<FileTableComponent>('fileTable');
+  readonly fileTable = viewChild<FileTableComponent>('fileTable');
   fileTablePages = emptyPage<FileTableData>();
 
   ngOnInit() {
@@ -32,14 +32,14 @@ export class ErrorValuesComponent implements OnInit {
   }
 
   retryErrorValues() {
-    const files = this.errorValues.filter(file => this.fileTable().checkboxByFiles.get(file.filename)).map(file => file.filename);
+    const files = this.errorValues.filter(file => this.fileTable()?.checkboxByFiles.get(file.filename)).map(file => file.filename);
     this.northConnectorService.retryCacheErrorValues(this.northConnector()!.id, files).subscribe(() => {
       this.refreshErrorValues();
     });
   }
 
   removeErrorValues() {
-    const files = this.errorValues.filter(file => this.fileTable().checkboxByFiles.get(file.filename)).map(file => file.filename);
+    const files = this.errorValues.filter(file => this.fileTable()?.checkboxByFiles.get(file.filename)).map(file => file.filename);
     this.northConnectorService.removeCacheErrorValues(this.northConnector()!.id, files).subscribe(() => {
       this.refreshErrorValues();
     });

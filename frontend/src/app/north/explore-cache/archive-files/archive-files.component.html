@@ -1,7 +1,7 @@
 @if (fileTablePages.totalElements) {
   <div class="d-flex flex-row-reverse">
     <div [class]="fileTablePages.totalPages > 1 ? 'ms-2' : ''">
-      <oib-pagination [page]="fileTablePages" (pageChanged)="fileTable().changePage($event)" />
+      <oib-pagination [page]="fileTablePages" (pageChanged)="fileTable()?.changePage($event)" />
     </div>
   </div>
 }
@@ -34,6 +34,8 @@
   @if (archiveFiles.length !== 0) {
     <oib-file-table #fileTable [actions]="['view', 'retry', 'remove']" (itemAction)="onItemAction($event)" [files]="archiveFiles" />
   } @else {
-    <div class="mb-3 oib-grey-container" translate="north.cache-settings.archive-files-none"></div>
+    <div>
+      <div class="mb-3 oib-grey-container" translate="north.cache-settings.archive-files-none"></div>
+    </div>
   }
 </oib-box>

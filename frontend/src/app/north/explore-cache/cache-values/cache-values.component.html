@@ -1,7 +1,7 @@
 @if (valueTablePages.totalElements) {
   <div class="d-flex flex-row-reverse">
     <div [class]="valueTablePages.totalPages > 1 ? 'ms-2' : ''">
-      <oib-pagination [page]="valueTablePages" (pageChanged)="valueTable().changePage($event)" />
+      <oib-pagination [page]="valueTablePages" (pageChanged)="valueTable()?.changePage($event)" />
     </div>
   </div>
 }
@@ -27,6 +27,8 @@
   @if (cacheValues.length !== 0) {
     <oib-file-table #valueTable [actions]="[]" [files]="cacheValues" />
   } @else {
-    <div class="mb-3 oib-grey-container" translate="north.cache-settings.cache-values-none"></div>
+    <div>
+      <div class="mb-3 oib-grey-container" translate="north.cache-settings.cache-values-none"></div>
+    </div>
   }
 </oib-box>
