@@ -20,7 +20,7 @@ export class CacheValuesComponent implements OnInit {
 
   readonly northConnector = input<NorthConnectorDTO<NorthSettings> | null>(null);
   cacheValues: Array<NorthCacheFiles> = [];
-  readonly valueTable = viewChild.required<FileTableComponent>('valueTable');
+  readonly valueTable = viewChild<FileTableComponent>('valueTable');
   valueTablePages = emptyPage<FileTableData>();
 
   ngOnInit() {
@@ -31,7 +31,7 @@ export class CacheValuesComponent implements OnInit {
   }
 
   removeCacheValues() {
-    const files = this.cacheValues.filter(file => this.valueTable().checkboxByFiles.get(file.filename)).map(file => file.filename);
+    const files = this.cacheValues.filter(file => this.valueTable()?.checkboxByFiles.get(file.filename)).map(file => file.filename);
     this.northConnectorService.removeCacheValues(this.northConnector()!.id, files).subscribe(() => {
       this.refreshCacheValues();
     });
