@@ -23,7 +23,7 @@ export class ErrorFilesComponent implements OnInit {
 
   readonly northConnector = input<NorthConnectorDTO<NorthSettings> | null>(null);
   errorFiles: Array<NorthCacheFiles> = [];
-  readonly fileTable = viewChild.required<FileTableComponent>('fileTable');
+  readonly fileTable = viewChild<FileTableComponent>('fileTable');
   fileTablePages = emptyPage<FileTableData>();
 
   ngOnInit() {
@@ -90,6 +90,6 @@ export class ErrorFilesComponent implements OnInit {
   }
 
   private getCheckedFiles(): Array<string> {
-    return this.errorFiles.filter(file => this.fileTable().checkboxByFiles.get(file.filename)).map(file => file.filename);
+    return this.errorFiles.filter(file => this.fileTable()?.checkboxByFiles.get(file.filename)).map(file => file.filename);
   }
 }

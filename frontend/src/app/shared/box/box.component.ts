@@ -49,7 +49,8 @@ export class BoxComponent {
       const tableElement = contentElement.querySelector('table');
       const alertWarningElement = contentElement.querySelector('.alert-warning');
       const emptyDivElements = contentElement.querySelectorAll('div');
-      const greyContainerElement = contentElement.querySelector('.oib-grey-container');
+      // Only match empty containers when that's the only thing in the box
+      const greyContainerElement = contentElement.querySelector(':scope > div > div.oib-grey-container');
       const normalContentElement = contentElement.querySelector('.row');
 
       if (tableElement || emptyDivElements.length <= 0 || alertWarningElement || greyContainerElement) {
