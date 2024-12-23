@@ -7,34 +7,34 @@ runs:
     - name: Run backend linting
       shell: bash
       working-directory: backend
-      run: npm run lint
+      run: pnpm run lint
 
     - name: Run frontend linting
       shell: bash
       working-directory: frontend
-      run: npm run lint
+      run: pnpm run lint
 
     - name: Run launcher linting
       shell: bash
       working-directory: launcher
-      run: npm run lint
+      run: pnpm run lint
 
     - name: Build backend
       shell: bash
       working-directory: backend
-      run: npm run build
+      run: pnpm run build
 
     - name: Run backend unit tests
       shell: bash
       working-directory: backend
-      run: npm test
+      run: pnpm test
 
     - name: Build frontend
       shell: bash
       working-directory: frontend
-      run: npm run build
+      run: pnpm run build
 
     - name: Run frontend unit tests
       shell: bash
       working-directory: frontend
-      run: npm test
+      run: pnpm test

@@ -6,20 +6,20 @@
   "author": "Optimistik SAS",
   "license": "EUPL",
   "engines": {
-    "node": ">=v22.13",
-    "npm": ">=10"
+    "node": ">=v22.13"
   },
+  "packageManager": "pnpm@10.6.2",
   "scripts": {
     "lint": "eslint src/",
-    "lint:fix": "npm run lint -- --fix",
+    "lint:fix": "pnpm run lint -- --fix",
     "build": "tsc --project tsconfig.app.json",
-    "start": "tsc --sourceMap --project tsconfig.app.json && npm run start:launcher",
+    "start": "tsc --sourceMap --project tsconfig.app.json && pnpm run start:launcher",
     "start:launcher": "node ./dist/src/index.js --config ../data-folder",
-    "build:win-x64": "rimraf ../build/bin/win-x64/oibus-launcher && npm run build && pkg ./dist/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/win-x64/oibus-launcher --target node22-win-x64",
-    "build:macos-x64": "rimraf ../build/bin/macos-x64/oibus-launcher && npm run build && pkg ./dist/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/macos-x64/oibus-launcher --target node22-macos-x64",
-    "build:macos-arm64": "rimraf ../build/bin/macos-arm64/oibus-launcher && npm run build && pkg ./dist/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/macos-arm64/oibus-launcher --target node22-macos-arm64",
-    "build:linux-x64": "rimraf ../build/bin/linux-x64/oibus-launcher && npm run build && pkg ./dist/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/linux-x64/oibus-launcher --target node22-linux-x64",
-    "build:linux-arm64": "rimraf ../build/bin/linux-arm64/oibus-launcher && npm run build && pkg ./dist/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/linux-arm64/oibus-launcher --target node22-linux-arm64",
+    "build:win-x64": "rimraf ../build/bin/win-x64/oibus-launcher && pnpm run build && pkg ./dist/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/win-x64/oibus-launcher --target node22-win-x64",
+    "build:macos-x64": "rimraf ../build/bin/macos-x64/oibus-launcher && pnpm run build && pkg ./dist/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/macos-x64/oibus-launcher --target node22-macos-x64",
+    "build:macos-arm64": "rimraf ../build/bin/macos-arm64/oibus-launcher && pnpm run build && pkg ./dist/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/macos-arm64/oibus-launcher --target node22-macos-arm64",
+    "build:linux-x64": "rimraf ../build/bin/linux-x64/oibus-launcher && pnpm run build && pkg ./dist/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/linux-x64/oibus-launcher --target node22-linux-x64",
+    "build:linux-arm64": "rimraf ../build/bin/linux-arm64/oibus-launcher && pnpm run build && pkg ./dist/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/linux-arm64/oibus-launcher --target node22-linux-arm64",
     "start:macos-x64": "../build/bin/macos-x64/oibus-launcher --config ../data-folder",
     "start:macos-arm64": "../build/bin/macos-arm64/oibus-launcher --config ../data-folder",
     "start:win-x64": "..\\build\\bin\\win-x64\\oibus-launcher.exe --config ..\\data-folder",
@@ -30,9 +30,11 @@
     "Optimistik"
   ],
   "dependencies": {
-    "minimist": "1.2.8"
+    "minimist": "1.2.8",
+    "tslib": "2.8.1"
   },
   "devDependencies": {
+    "@eslint/js": "9.19.0",
     "@types/minimist": "1.2.5",
     "@types/node": "22.10.10",
     "eslint": "9.19.0",

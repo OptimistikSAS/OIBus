@@ -3,9 +3,9 @@
   "version": "3.5.12",
   "private": true,
   "engines": {
-    "node": ">=v22.13",
-    "npm": ">=10"
+    "node": ">=v22.13"
   },
+  "packageManager": "pnpm@10.6.2",
   "scripts": {
     "docusaurus": "docusaurus",
     "start": "docusaurus start",

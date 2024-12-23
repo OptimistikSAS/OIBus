@@ -1,0 +1,16 @@
+{
+  "name": "OIBus",
+  "type": "module",
+  "author": "Optimistik SAS",
+  "license": "EUPL",
+  "description": "OIBus",
+  "engines": {
+    "node": ">=v22.10"
+  },
+  "packageManager": "pnpm@10.6.2",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3"
+    ]
+  }
+}
