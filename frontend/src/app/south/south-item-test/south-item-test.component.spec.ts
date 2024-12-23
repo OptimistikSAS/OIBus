@@ -19,7 +19,7 @@ import { provideDatepicker } from '../../shared/datepicker.providers';
 import { OibCodeBlockComponent } from '../../shared/form/oib-code-block/oib-code-block.component';
 import { OIBusRawContent, OIBusTimeValueContent } from '../../../../../backend/shared/model/engine.model';
 import { getMessageFromHttpErrorResponse } from '../../shared/error-interceptor.service';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   template: ` <oib-south-item-test
@@ -31,7 +31,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
     [manifest]="manifest"
   />`,
   standalone: true,
-  imports: [SouthItemTestComponent, TranslateModule]
+  imports: [SouthItemTestComponent]
 })
 class TestComponent {
   @ViewChild('testedComponent') testedComponent!: SouthItemTestComponent<'south'>;
@@ -309,7 +309,12 @@ describe('SouthItemTestComponent', () => {
       tester.changeEntityId(testCase.entityId);
       tester.detectChanges();
 
-      testCase.service.testItem.and.returnValue(of({ type: 'raw', filePath: '/file/path' } as OIBusRawContent).pipe(delay(3000)));
+      testCase.service.testItem.and.returnValue(
+        of({
+          type: 'raw',
+          filePath: '/file/path'
+        } as OIBusRawContent).pipe(delay(3000))
+      );
 
       tester.testButton.click();
 
@@ -346,7 +351,12 @@ describe('SouthItemTestComponent', () => {
       tester.changeEntityId(testCase.entityId);
       tester.detectChanges();
 
-      testCase.service.testItem.and.returnValue(of({ type: 'raw', filePath: '/file/path' } as OIBusRawContent).pipe(delay(3000)));
+      testCase.service.testItem.and.returnValue(
+        of({
+          type: 'raw',
+          filePath: '/file/path'
+        } as OIBusRawContent).pipe(delay(3000))
+      );
 
       tester.testButton.click();
 
