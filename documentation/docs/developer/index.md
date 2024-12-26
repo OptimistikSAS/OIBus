@@ -17,15 +17,20 @@ But first, you may want to download OIBus and start it on your machine from its 
 
 ## Technologies
 
-- Install Node.js and NPM. Check the .nvm file to check on which version of Node.js OIBus run. Of course, you can
+- Install Node.js and pnpm. Check the .nvm file to check on which version of Node.js OIBus run. Of course, you can
   directly use the
-  [nvm tool](https://github.com/nvm-sh/nvm)
+  [nvm tool](https://github.com/nvm-sh/nvm).
 - OIBus configuration is stored on a local SQLite database. You may need a SQL explorer tool such
-  as [DBeaver](https://dbeaver.io/)
+  as [DBeaver](https://dbeaver.io/).
 - OIBus can run on x64 or arm64 architectures (on Windows, Linux and Mac).
 - Frontend is build with [Angular](https://angular.io/). No need to install it globally, since it is embedded in the dev
   dependencies.
-- The documentation uses [Docusaurus](https://docusaurus.io/), based on [React](https://react.dev/)
+- The documentation uses [Docusaurus](https://docusaurus.io/), based on [React](https://react.dev/).
+
+:::tip pmpm
+OIBus uses pnpm. pnpm can directly be [installed on the machine](https://pnpm.io/next/installation) or pnpm can be used
+through [Node.js Corepack feature](https://nodejs.org/docs/latest-v22.x/api/corepack.html).
+:::
 
 ## Steps to try out the application
 
