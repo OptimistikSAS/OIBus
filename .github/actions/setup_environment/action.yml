@@ -1,0 +1,31 @@
+name: Setup environment
+description: "Checkout project, set up Node and install dependencies"
+inputs:
+  prerelease:
+    description: 'Is it a prerelease or not'
+    required: false
+  tag_name:
+    description: 'If it is a prerelease, this option is used to update the package version'
+    required: false
+    default: ''
+
+runs:
+  using: "composite"
+  steps:
+    - name: Update package.json if pre-release
+      if: ${{ inputs.prerelease }}
+      shell: bash
+      run: |
+        TAG_NAME=${{ inputs.tag_name }}
+        echo "Updating backend/package.json version to $TAG_NAME for pre-release"
+        jq --arg version "$TAG_NAME" '.version = $version' backend/package.json > tmp.json && mv tmp.json backend/package.json
+        echo "Updating frontend/package.json version to $TAG_NAME for pre-release"
+        jq --arg version "$TAG_NAME" '.version = $version' frontend/package.json > tmp.json && mv tmp.json frontend/package.json
+        echo "Updating launcher/package.json version to $TAG_NAME for pre-release"
+        jq --arg version "$TAG_NAME" '.version = $version' launcher/package.json > tmp.json && mv tmp.json launcher/package.json
+        echo "Updating documentation/package.json version to $TAG_NAME for pre-release"
+        jq --arg version "$TAG_NAME" '.version = $version' documentation/package.json > tmp.json && mv tmp.json documentation/package.json
+
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile

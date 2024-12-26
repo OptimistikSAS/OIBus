@@ -25,7 +25,7 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4.0.0
-        
+
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
@@ -50,24 +50,9 @@ jobs:
           echo "Pre-release: ${{ steps.release_info.outputs.prerelease }}"
           echo "Tag name: ${{ steps.release_info.outputs.tag_name }}"
 
-      - name: Setup launcher environment
-        uses: ./.github/actions/setup_launcher_environment
+      - name: Setup environment
+        uses: ./.github/actions/setup_environment
         with:
-          cache_version: ${{ secrets.GH_ACTIONS_CACHE_KEY }}
-          prerelease: ${{ steps.release_info.outputs.prerelease }}
-          tag_name: ${{ steps.release_info.outputs.tag_name }}
-
-      - name: Setup backend environment
-        uses: ./.github/actions/setup_backend_environment
-        with:
-          cache_version: ${{ secrets.GH_ACTIONS_CACHE_KEY }}
-          prerelease: ${{ steps.release_info.outputs.prerelease }}
-          tag_name: ${{ steps.release_info.outputs.tag_name }}
-
-      - name: Setup frontend environment
-        uses: ./.github/actions/setup_frontend_environment
-        with:
-          cache_version: ${{ secrets.GH_ACTIONS_CACHE_KEY }}
           prerelease: ${{ steps.release_info.outputs.prerelease }}
           tag_name: ${{ steps.release_info.outputs.tag_name }}
 
@@ -131,7 +116,6 @@ jobs:
       matrix:
         config:
           - { friendlyName: 'Linux ARM64', os: 'ubuntu-latest', architecture: 'aarch64', platform: 'linux-arm64', archiveName: 'oibus-linux_arm64', zip: 'zip -r' }
-          - { friendlyName: 'Linux ARMv7', os: 'ubuntu-latest', architecture: 'armv7', platform: 'linux-arm64', archiveName: 'oibus-linux_armv7', zip: 'zip -r' }
     timeout-minutes: 440
 
     steps:
@@ -167,24 +151,9 @@ jobs:
           echo "Pre-release: ${{ steps.release_info.outputs.prerelease }}"
           echo "Tag name: ${{ steps.release_info.outputs.tag_name }}"
 
-      - name: Setup launcher environment
-        uses: ./.github/actions/setup_launcher_environment
+      - name: Setup environment
+        uses: ./.github/actions/setup_environment
         with:
-          cache_version: ${{ secrets.GH_ACTIONS_CACHE_KEY }}
-          prerelease: ${{ steps.release_info.outputs.prerelease }}
-          tag_name: ${{ steps.release_info.outputs.tag_name }}
-
-      - name: Setup backend environment
-        uses: ./.github/actions/setup_backend_environment
-        with:
-          cache_version: ${{ secrets.GH_ACTIONS_CACHE_KEY }}
-          prerelease: ${{ steps.release_info.outputs.prerelease }}
-          tag_name: ${{ steps.release_info.outputs.tag_name }}
-
-      - name: Setup frontend environment
-        uses: ./.github/actions/setup_frontend_environment
-        with:
-          cache_version: ${{ secrets.GH_ACTIONS_CACHE_KEY }}
           prerelease: ${{ steps.release_info.outputs.prerelease }}
           tag_name: ${{ steps.release_info.outputs.tag_name }}
 
@@ -213,7 +182,7 @@ jobs:
             apt update && apt -y install curl build-essential
             curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
             apt-get install -y nodejs
-            pnpm install -g @yao-pkg/pkg
+            npm install -g @yao-pkg/pkg
           run: |
             cd ./backend/
             pkg \
