@@ -30,7 +30,8 @@
     "Optimistik"
   ],
   "dependencies": {
-    "minimist": "1.2.8"
+    "minimist": "1.2.8",
+    "tslib": "2.8.1"
   },
   "devDependencies": {
     "@types/minimist": "1.2.5",
