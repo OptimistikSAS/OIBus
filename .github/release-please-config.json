@@ -14,28 +14,8 @@
     },
     {
       "type": "json",
-      "path": "backend/package-lock.json",
-      "jsonpath": "version"
-    },
-    {
-      "type": "json",
-      "path": "backend/package-lock.json",
-      "jsonpath": "packages[\"\"].version"
-    },
-    {
-      "type": "json",
       "path": "frontend/package.json",
       "jsonpath": "version"
-    },
-    {
-      "type": "json",
-      "path": "frontend/package-lock.json",
-      "jsonpath": "version"
-    },
-    {
-      "type": "json",
-      "path": "frontend/package-lock.json",
-      "jsonpath": "packages[\"\"].version"
     },
     {
       "type": "json",
@@ -44,28 +24,8 @@
     },
     {
       "type": "json",
-      "path": "documentation/package-lock.json",
-      "jsonpath": "version"
-    },
-    {
-      "type": "json",
-      "path": "documentation/package-lock.json",
-      "jsonpath": "packages[\"\"].version"
-    },
-    {
-      "type": "json",
       "path": "launcher/package.json",
       "jsonpath": "version"
-    },
-    {
-      "type": "json",
-      "path": "launcher/package-lock.json",
-      "jsonpath": "version"
-    },
-    {
-      "type": "json",
-      "path": "launcher/package-lock.json",
-      "jsonpath": "packages[\"\"].version"
     }
   ]
 }
