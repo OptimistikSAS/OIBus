@@ -6,9 +6,9 @@
   "license": "EUPL",
   "description": "OIBus frontend",
   "engines": {
-    "node": ">=v22.10",
-    "npm": ">=10"
+    "node": ">=v22.10"
   },
+  "packageManager": "pnpm@9.15.1",
   "scripts": {
     "ng": "ng",
     "start": "ng build --watch --configuration development",
