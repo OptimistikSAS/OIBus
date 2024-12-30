@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import NorthConnector from '../north-connector';
 import pino from 'pino';
 import EncryptionService from '../../service/encryption.service';
-import { NorthConsoleSettings } from '../../../shared/model/north-settings.model';
+import { NorthConsoleItemSettings, NorthConsoleSettings } from '../../../shared/model/north-settings.model';
 import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
@@ -13,9 +13,9 @@ import { BaseFolders } from '../../model/types';
 /**
  * Class Console - display values and file path into the console
  */
-export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
+export default class NorthConsole extends NorthConnector<NorthConsoleSettings, NorthConsoleItemSettings> {
   constructor(
-    configuration: NorthConnectorEntity<NorthConsoleSettings>,
+    configuration: NorthConnectorEntity<NorthConsoleSettings, NorthConsoleItemSettings>,
     encryptionService: EncryptionService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,

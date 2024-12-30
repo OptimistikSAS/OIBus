@@ -32,13 +32,15 @@ import NorthConnectorRepository from './north-connector.repository';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../shared/model/north-settings.model';
 import CertificateRepository from './certificate.repository';
 import UserRepository from './user.repository';
 import { User } from '../../model/user.model';
 import argon2 from 'argon2';
 import HistoryQueryRepository from './history-query.repository';
-import { HistoryQueryEntity, HistoryQueryItemEntity } from '../../model/histor-query.model';
+import { HistoryQueryEntity, SouthHistoryQueryItemEntity } from '../../model/histor-query.model';
+import TransformerRepository from './transformer.repository';
+import { Transformer } from '../../model/transformer.model';
 
 jest.mock('../../service/utils');
 jest.mock('argon2');
@@ -1073,7 +1075,7 @@ describe('Repository with populated database', () => {
     it('should save a new north connector', () => {
       (generateRandomId as jest.Mock).mockReturnValueOnce('newId');
 
-      const newNorthConnector: NorthConnectorEntity<NorthSettings> = JSON.parse(JSON.stringify(testData.north.list[0]));
+      const newNorthConnector: NorthConnectorEntity<NorthSettings, NorthItemSettings> = JSON.parse(JSON.stringify(testData.north.list[0]));
       newNorthConnector.id = '';
       newNorthConnector.name = 'new connector';
       newNorthConnector.subscriptions = [];
@@ -1088,7 +1090,7 @@ describe('Repository with populated database', () => {
     });
 
     it('should update a north connector', () => {
-      const newNorthConnector: NorthConnectorEntity<NorthSettings> = JSON.parse(JSON.stringify(testData.north.list[1]));
+      const newNorthConnector: NorthConnectorEntity<NorthSettings, NorthItemSettings> = JSON.parse(JSON.stringify(testData.north.list[1]));
       newNorthConnector.caching.maxSize = 999;
       newNorthConnector.subscriptions = [
         ...testData.north.list[1].subscriptions,
@@ -1171,12 +1173,12 @@ describe('Repository with populated database', () => {
     it('should save a new history query', () => {
       (generateRandomId as jest.Mock).mockReturnValueOnce('newId');
 
-      const newHistoryQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> = JSON.parse(
+      const newHistoryQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings> = JSON.parse(
         JSON.stringify(testData.historyQueries.list[0])
       );
       newHistoryQuery.id = '';
       newHistoryQuery.name = 'new history query';
-      newHistoryQuery.items = [];
+      newHistoryQuery.southItems = [];
       repository.saveHistoryQuery(newHistoryQuery);
 
       expect(newHistoryQuery.id).toEqual('newId');
@@ -1184,17 +1186,17 @@ describe('Repository with populated database', () => {
 
       expect(createdHistoryQuery.id).toEqual('newId');
       expect(createdHistoryQuery.name).toEqual('new history query');
-      expect(createdHistoryQuery.items.length).toEqual(0);
+      expect(createdHistoryQuery.southItems.length).toEqual(0);
     });
 
     it('should update a history query', () => {
       (generateRandomId as jest.Mock).mockReturnValueOnce('newItemId');
 
-      const newHistoryQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> = JSON.parse(
+      const newHistoryQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings> = JSON.parse(
         JSON.stringify(testData.historyQueries.list[0])
       );
-      newHistoryQuery.items = [
-        ...testData.historyQueries.list[0].items,
+      newHistoryQuery.southItems = [
+        ...testData.historyQueries.list[0].southItems,
         {
           id: '',
           name: 'new item',
@@ -1206,7 +1208,7 @@ describe('Repository with populated database', () => {
 
       const updatedHistoryQuery = repository.findHistoryQueryById(newHistoryQuery.id)!;
 
-      expect(updatedHistoryQuery.items.length).toEqual(3);
+      expect(updatedHistoryQuery.southItems.length).toEqual(3);
     });
 
     it('should delete a history query', () => {
@@ -1220,7 +1222,7 @@ describe('Repository with populated database', () => {
     });
 
     it('should list items', () => {
-      const results = repository.listHistoryQueryItems(testData.historyQueries.list[1].id, {
+      const results = repository.listSouthHistoryQueryItems(testData.historyQueries.list[1].id, {
         enabled: true,
         name: 'item'
       });
@@ -1228,7 +1230,7 @@ describe('Repository with populated database', () => {
     });
 
     it('should search items', () => {
-      const results = repository.searchHistoryQueryItems(testData.historyQueries.list[1].id, {
+      const results = repository.searchSouthHistoryQueryItems(testData.historyQueries.list[1].id, {
         enabled: true,
         name: 'item',
         page: 0
@@ -1236,7 +1238,7 @@ describe('Repository with populated database', () => {
       expect(results.totalElements).toEqual(1);
 
       expect(
-        repository.searchHistoryQueryItems(testData.historyQueries.list[1].id, {
+        repository.searchSouthHistoryQueryItems(testData.historyQueries.list[1].id, {
           enabled: true,
           name: 'item'
         }).totalElements
@@ -1244,46 +1246,51 @@ describe('Repository with populated database', () => {
     });
 
     it('should find items', () => {
-      const results = repository.findAllItemsForHistoryQuery(testData.historyQueries.list[1].id);
+      const results = repository.findAllSouthItemsForHistoryQuery(testData.historyQueries.list[1].id);
       expect(results.length).toEqual(1);
     });
 
     it('should find item', () => {
-      const result = repository.findHistoryQueryItemById(testData.historyQueries.list[1].id, testData.historyQueries.list[1].items[0].id);
-      expect(result).toEqual(testData.historyQueries.list[1].items[0]);
-      expect(repository.findHistoryQueryItemById(testData.historyQueries.list[0].id, testData.historyQueries.list[1].items[0].id)).toEqual(
-        null
+      const result = repository.findSouthHistoryQueryItemById(
+        testData.historyQueries.list[1].id,
+        testData.historyQueries.list[1].southItems[0].id
       );
+      expect(result).toEqual(testData.historyQueries.list[1].southItems[0]);
+      expect(
+        repository.findSouthHistoryQueryItemById(testData.historyQueries.list[0].id, testData.historyQueries.list[1].southItems[0].id)
+      ).toEqual(null);
     });
 
     it('should delete item', () => {
-      repository.deleteHistoryQueryItem(testData.historyQueries.list[1].items[0].id);
-      expect(repository.findHistoryQueryItemById(testData.historyQueries.list[1].id, testData.historyQueries.list[1].items[0].id)).toEqual(
-        null
-      );
+      repository.deleteSouthHistoryQueryItem(testData.historyQueries.list[1].southItems[0].id);
+      expect(
+        repository.findSouthHistoryQueryItemById(testData.historyQueries.list[1].id, testData.historyQueries.list[1].southItems[0].id)
+      ).toEqual(null);
     });
 
     it('should delete all item by south', () => {
-      repository.deleteAllHistoryQueryItemsByHistoryQuery(testData.historyQueries.list[1].id);
-      expect(repository.findAllItemsForHistoryQuery(testData.historyQueries.list[1].id).length).toEqual(0);
+      repository.deleteAllSouthHistoryQueryItemsByHistoryQuery(testData.historyQueries.list[1].id);
+      expect(repository.findAllSouthItemsForHistoryQuery(testData.historyQueries.list[1].id).length).toEqual(0);
     });
 
     it('should disable and enable item', () => {
-      repository.disableHistoryQueryItem(testData.historyQueries.list[0].items[0].id);
+      repository.disableSouthHistoryQueryItem(testData.historyQueries.list[0].southItems[0].id);
       expect(
-        repository.findHistoryQueryItemById(testData.historyQueries.list[0].id, testData.historyQueries.list[0].items[0].id)!.enabled
+        repository.findSouthHistoryQueryItemById(testData.historyQueries.list[0].id, testData.historyQueries.list[0].southItems[0].id)!
+          .enabled
       ).toEqual(false);
-      repository.enableHistoryQueryItem(testData.historyQueries.list[0].items[0].id);
+      repository.enableSouthHistoryQueryItem(testData.historyQueries.list[0].southItems[0].id);
       expect(
-        repository.findHistoryQueryItemById(testData.historyQueries.list[0].id, testData.historyQueries.list[0].items[0].id)!.enabled
+        repository.findSouthHistoryQueryItemById(testData.historyQueries.list[0].id, testData.historyQueries.list[0].southItems[0].id)!
+          .enabled
       ).toEqual(true);
     });
 
     it('should save all items', () => {
       (generateRandomId as jest.Mock).mockReturnValueOnce('newItemIdHistory1');
 
-      const itemsToSave: Array<HistoryQueryItemEntity<SouthItemSettings>> = JSON.parse(
-        JSON.stringify(testData.historyQueries.list[0].items)
+      const itemsToSave: Array<SouthHistoryQueryItemEntity<SouthItemSettings>> = JSON.parse(
+        JSON.stringify(testData.historyQueries.list[0].southItems)
       );
       itemsToSave.push({
         id: '',
@@ -1293,15 +1300,62 @@ describe('Repository with populated database', () => {
       });
       itemsToSave[0].name = 'updated name';
 
-      repository.saveAllItems(testData.historyQueries.list[0].id, itemsToSave);
+      repository.saveAllSouthItems(testData.historyQueries.list[0].id, itemsToSave);
 
-      const results = repository.findAllItemsForHistoryQuery(testData.historyQueries.list[0].id);
+      const results = repository.findAllSouthItemsForHistoryQuery(testData.historyQueries.list[0].id);
       expect(results.length).toEqual(4);
 
       expect(
-        repository.findHistoryQueryItemById(testData.historyQueries.list[0].id, testData.historyQueries.list[0].items[0].id)!.name
+        repository.findSouthHistoryQueryItemById(testData.historyQueries.list[0].id, testData.historyQueries.list[0].southItems[0].id)!.name
       ).toEqual(itemsToSave[0].name);
-      expect(repository.findHistoryQueryItemById(testData.historyQueries.list[0].id, 'newItemIdHistory1')!.id).toEqual('newItemIdHistory1');
+      expect(repository.findSouthHistoryQueryItemById(testData.historyQueries.list[0].id, 'newItemIdHistory1')!.id).toEqual(
+        'newItemIdHistory1'
+      );
+    });
+  });
+
+  describe('Transformer', () => {
+    let repository: TransformerRepository;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      repository = new TransformerRepository(database);
+    });
+
+    it('searchTransformers() should properly searchTransformers transformers', () => {
+      expect(repository.searchTransformers({ inputType: 'OIBusTimeValues', outputType: 'CSV', name: 'transformer' })).toEqual(
+        testData.transformers.list
+      );
+    });
+
+    it('findTransformerById() should properly get a transformer', () => {
+      expect(repository.findTransformerById(testData.transformers.list[0].id)).toEqual(testData.transformers.list[0]);
+      expect(repository.findTransformerById('badId')).toEqual(null);
+    });
+
+    it('saveTransformer() should create a transformer', () => {
+      (generateRandomId as jest.Mock).mockReturnValueOnce('newId');
+      const transformer: Transformer = JSON.parse(JSON.stringify(testData.transformers.command));
+      repository.saveTransformer(transformer);
+      expect(transformer.id).toEqual('newId');
+
+      const result = repository.findTransformerById('newId');
+      expect(result).toEqual({ ...transformer, id: 'newId' });
+    });
+
+    it('saveTransformer() should update a transformer', () => {
+      const transformer: Transformer = JSON.parse(JSON.stringify(testData.transformers.command));
+      transformer.id = 'newId';
+      transformer.name = 'new name';
+      repository.saveTransformer(transformer);
+      const result = repository.findTransformerById(transformer.id)!;
+      expect(result.name).toEqual(transformer.name);
+    });
+
+    it('delete() should delete a transformer', () => {
+      expect(repository.findTransformerById('newId')).not.toEqual(null);
+      repository.deleteTransformer('newId');
+      expect(repository.findTransformerById('newId')).toEqual(null);
     });
   });
 });

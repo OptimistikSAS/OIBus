@@ -91,7 +91,8 @@ describe('SouthConnectorService', () => {
       enabled: true,
       type: 'mssql',
       settings: {} as SouthSettings,
-      items: []
+      items: [],
+      transformers: []
     };
 
     service.create(command, '').subscribe(() => (done = true));
@@ -109,7 +110,8 @@ describe('SouthConnectorService', () => {
       enabled: true,
       type: 'mssql',
       settings: {} as SouthSettings,
-      items: []
+      items: [],
+      transformers: []
     };
 
     service.update('id1', command).subscribe(() => (done = true));
@@ -303,7 +305,8 @@ describe('SouthConnectorService', () => {
       enabled: true,
       type: 'mssql',
       settings: {} as SouthSettings,
-      items: []
+      items: [],
+      transformers: []
     };
 
     service.testConnection('id1', command).subscribe(() => (done = true));

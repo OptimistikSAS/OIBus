@@ -83,6 +83,7 @@ describe('South ADS', () => {
         }
       ]
     },
+    transformers: [],
     items: [
       {
         id: 'id1',

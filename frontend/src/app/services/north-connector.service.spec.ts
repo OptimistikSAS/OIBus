@@ -13,7 +13,7 @@ import {
 } from '../../../../backend/shared/model/north-connector.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { SouthConnectorLightDTO } from '../../../../backend/shared/model/south-connector.model';
-import { NorthSettings } from '../../../../backend/shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../../backend/shared/model/north-settings.model';
 
 describe('NorthConnectorService', () => {
   let http: HttpTestingController;
@@ -60,8 +60,8 @@ describe('NorthConnectorService', () => {
   });
 
   it('should get a North connector', () => {
-    let expectedNorthConnector: NorthConnectorDTO<NorthSettings> | null = null;
-    const northConnector = { id: 'id1' } as NorthConnectorDTO<NorthSettings>;
+    let expectedNorthConnector: NorthConnectorDTO<NorthSettings, NorthItemSettings> | null = null;
+    const northConnector = { id: 'id1' } as NorthConnectorDTO<NorthSettings, NorthItemSettings>;
 
     service.get('id1').subscribe(c => (expectedNorthConnector = c));
 
@@ -81,7 +81,7 @@ describe('NorthConnectorService', () => {
 
   it('should create a North connector', () => {
     let done = false;
-    const command: NorthConnectorCommandDTO<NorthSettings> = {
+    const command: NorthConnectorCommandDTO<NorthSettings, NorthItemSettings> = {
       name: 'myNorthConnector',
       description: 'a test north connector',
       enabled: true,
@@ -105,7 +105,9 @@ describe('NorthConnectorService', () => {
           }
         }
       },
-      subscriptions: []
+      subscriptions: [],
+      transformers: [],
+      items: []
     };
 
     service.create(command, '').subscribe(() => (done = true));
@@ -117,7 +119,7 @@ describe('NorthConnectorService', () => {
 
   it('should update a North connector', () => {
     let done = false;
-    const command: NorthConnectorCommandDTO<NorthSettings> = {
+    const command: NorthConnectorCommandDTO<NorthSettings, NorthItemSettings> = {
       name: 'myNorthConnector',
       description: 'a test north connector',
       enabled: true,
@@ -141,7 +143,9 @@ describe('NorthConnectorService', () => {
           }
         }
       },
-      subscriptions: []
+      subscriptions: [],
+      transformers: [],
+      items: []
     };
 
     service.update('id1', command).subscribe(() => (done = true));
@@ -378,7 +382,7 @@ describe('NorthConnectorService', () => {
 
   it('should test a North connector connection', () => {
     let done = false;
-    const command: NorthConnectorCommandDTO<NorthSettings> = {
+    const command: NorthConnectorCommandDTO<NorthSettings, NorthItemSettings> = {
       name: 'myNorthConnector',
       description: 'a test north connector',
       enabled: true,
@@ -402,7 +406,9 @@ describe('NorthConnectorService', () => {
           }
         }
       },
-      subscriptions: []
+      subscriptions: [],
+      items: [],
+      transformers: []
     };
 
     service.testConnection('id1', command).subscribe(() => (done = true));

@@ -15,7 +15,7 @@ import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/confi
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import { NorthFileWriterSettings } from '../../../shared/model/north-settings.model';
+import { NorthFileWriterItemSettings, NorthFileWriterSettings } from '../../../shared/model/north-settings.model';
 import testData from '../../tests/utils/test-data';
 import { mockBaseFolders } from '../../tests/utils/test-utils';
 
@@ -46,7 +46,7 @@ jest.mock(
 jest.mock('../../service/utils');
 jest.mock('papaparse');
 
-let configuration: NorthConnectorEntity<NorthFileWriterSettings>;
+let configuration: NorthConnectorEntity<NorthFileWriterSettings, NorthFileWriterItemSettings>;
 let north: NorthFileWriter;
 
 describe('NorthFileWriter', () => {

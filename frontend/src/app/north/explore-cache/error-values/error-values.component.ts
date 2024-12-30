@@ -8,7 +8,7 @@ import { PaginationComponent } from '../../../shared/pagination/pagination.compo
 import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
 import { FileTableComponent, FileTableData } from '../file-table/file-table.component';
 import { emptyPage } from '../../../shared/test-utils';
-import { NorthSettings } from '../../../../../../backend/shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../../../../backend/shared/model/north-settings.model';
 
 @Component({
   selector: 'oib-error-values',
@@ -19,7 +19,7 @@ import { NorthSettings } from '../../../../../../backend/shared/model/north-sett
 export class ErrorValuesComponent implements OnInit {
   private northConnectorService = inject(NorthConnectorService);
 
-  readonly northConnector = input<NorthConnectorDTO<NorthSettings> | null>(null);
+  readonly northConnector = input<NorthConnectorDTO<NorthSettings, NorthItemSettings> | null>(null);
   errorValues: Array<NorthCacheFiles> = [];
   fileTablePages = emptyPage<FileTableData>();
   readonly page = signal(0);

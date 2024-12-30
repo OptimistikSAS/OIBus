@@ -643,7 +643,7 @@ describe('south service', () => {
     expect(southConnectorRepository.findSouthById).toHaveBeenCalledWith(testData.south.list[0].id);
     expect(southConnectorRepository.saveItem).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(dataStreamEngine.reloadItems).toHaveBeenCalledWith(testData.south.list[0].id);
+    expect(dataStreamEngine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0].id);
   });
 
   it('createItem() should throw an error if connector does not exist', async () => {
@@ -688,7 +688,7 @@ describe('south service', () => {
     expect(southConnectorRepository.findItemById).toHaveBeenCalledWith(testData.south.list[0].id, 'itemId');
     expect(southConnectorRepository.saveItem).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(dataStreamEngine.reloadItems).toHaveBeenCalledWith(testData.south.list[0].id);
+    expect(dataStreamEngine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0].id);
   });
 
   it('updateItem() should throw an error if item does not exist', async () => {
@@ -730,7 +730,7 @@ describe('south service', () => {
     expect(southConnectorRepository.findItemById).toHaveBeenCalledWith(testData.south.list[0].id, 'itemId');
     expect(southConnectorRepository.deleteItem).toHaveBeenCalledWith(testData.south.list[0].items[0].id);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(dataStreamEngine.reloadItems).toHaveBeenCalledWith(testData.south.list[0].id);
+    expect(dataStreamEngine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0].id);
   });
 
   it('deleteItem() should throw an error if item does not exist', async () => {
@@ -754,7 +754,7 @@ describe('south service', () => {
     expect(southConnectorRepository.deleteAllItemsBySouth).toHaveBeenCalledWith(testData.south.list[0].id);
     expect(southCacheRepository.deleteAllBySouthConnector).toHaveBeenCalledWith(testData.south.list[0].id);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(dataStreamEngine.reloadItems).toHaveBeenCalledWith(testData.south.list[0].id);
+    expect(dataStreamEngine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0].id);
   });
 
   it('deleteAllItemsForSouthConnector() should throw an error if connector does not exist', async () => {
@@ -771,7 +771,7 @@ describe('south service', () => {
     expect(southConnectorRepository.findItemById).toHaveBeenCalledWith(testData.south.list[0].id, 'itemId');
     expect(southConnectorRepository.enableItem).toHaveBeenCalledWith(testData.south.list[0].items[0].id);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(dataStreamEngine.reloadItems).toHaveBeenCalledWith(testData.south.list[0].id);
+    expect(dataStreamEngine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0].id);
   });
 
   it('enableItem() should throw an error if item is not found', async () => {
@@ -785,7 +785,7 @@ describe('south service', () => {
     expect(southConnectorRepository.findItemById).toHaveBeenCalledWith(testData.south.list[0].id, 'itemId');
     expect(southConnectorRepository.disableItem).toHaveBeenCalledWith(testData.south.list[0].items[0].id);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(dataStreamEngine.reloadItems).toHaveBeenCalledWith(testData.south.list[0].id);
+    expect(dataStreamEngine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0].id);
   });
 
   it('disableItem() should throw an error if item is not found', async () => {
@@ -1009,7 +1009,7 @@ describe('south service', () => {
     await service.importItems(testData.south.list[0].id, [itemCommand]);
     expect(southConnectorRepository.saveAllItems).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(dataStreamEngine.reloadItems).toHaveBeenCalledWith(testData.south.list[0].id);
+    expect(dataStreamEngine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0].id);
   });
 
   it('importItems() should import items', async () => {

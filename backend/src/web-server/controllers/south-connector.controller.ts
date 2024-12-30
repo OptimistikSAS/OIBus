@@ -13,9 +13,8 @@ import {
 import { Page } from '../../../shared/model/types';
 import JoiValidator from './validators/joi.validator';
 import { toSouthConnectorDTO, toSouthConnectorItemDTO, toSouthConnectorLightDTO } from '../../service/south.service';
-import { itemToFlattenedCSV } from '../../service/utils';
+import { southItemToFlattenedCSV } from '../../service/utils';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import { TransformerDTO, TransformerFilterDTO } from '../../../../shared/model/transformer.model';
 
 export default class SouthConnectorController {
   constructor(protected readonly validator: JoiValidator) {}
@@ -270,7 +269,7 @@ export default class SouthConnectorController {
       return ctx.throw(404, 'South manifest not found');
     }
 
-    ctx.body = itemToFlattenedCSV(
+    ctx.body = southItemToFlattenedCSV(
       ctx.request.body!.items.map(item => toSouthConnectorItemDTO(item, manifest.id, ctx.app.encryptionService)),
       ctx.request.body!.delimiter,
       ctx.app.scanModeService.findAll()
@@ -286,7 +285,7 @@ export default class SouthConnectorController {
       return ctx.notFound();
     }
 
-    ctx.body = itemToFlattenedCSV(
+    ctx.body = southItemToFlattenedCSV(
       southConnector.items.map(item => toSouthConnectorItemDTO(item, southConnector.type, ctx.app.encryptionService)),
       ctx.request.body!.delimiter,
       ctx.app.scanModeService.findAll()
@@ -327,64 +326,4 @@ export default class SouthConnectorController {
     }
     ctx.noContent();
   }
-
-  async addTransformer(ctx: KoaContext<void, void>): Promise<void> {
-    try {
-      const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.southId);
-      if (!southConnector) {
-        return ctx.throw(404, 'South not found');
-      }
-
-      const transformer = ctx.app.repositoryService.transformerRepository.getTransformer(ctx.params.transformerId);
-      if (!transformer) {
-        return ctx.throw(404, 'Transformer not found');
-      }
-
-      ctx.app.repositoryService.southTransformerRepository.addTransformer(ctx.params.southId, ctx.params.transformerId);
-      ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
-    }
-  }
-
-  async getTransformers(ctx: KoaContext<void, Array<TransformerDTO>>): Promise<void> {
-    try {
-      const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.southId);
-      if (!southConnector) {
-        return ctx.throw(404, 'South not found');
-      }
-
-      const filter: TransformerFilterDTO = {
-        inputType: ctx.query.inputType as string,
-        outputType: ctx.query.outputType as string,
-        name: ctx.query.name as string
-      };
-
-      const transformers = ctx.app.repositoryService.southTransformerRepository.getTransformers(ctx.params.southId, filter);
-      ctx.ok(transformers);
-    } catch (error: any) {
-      ctx.badRequest(error.message);
-    }
-  }
-
-  async removeTransformer(ctx: KoaContext<void, void>): Promise<void> {
-    try {
-      const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.southId);
-      if (!southConnector) {
-        return ctx.throw(404, 'South not found');
-      }
-
-      const transformer = ctx.app.repositoryService.transformerRepository.getTransformer(ctx.params.transformerId);
-      if (!transformer) {
-        return ctx.throw(404, 'Transformer not found');
-      }
-
-      ctx.app.repositoryService.southTransformerRepository.removeTransformer(ctx.params.southId, ctx.params.transformerId);
-      ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
-    }
-  }
-
-  async addContent(_southId: string, _content: OIBusContent): Promise<void> {}
 }

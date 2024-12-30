@@ -10,7 +10,7 @@ import { HistoryQueryDTO } from '../../../../../../backend/shared/model/history-
 import { HistoryQueryMetrics } from '../../../../../../backend/shared/model/engine.model';
 import { provideHttpClient } from '@angular/common/http';
 import { SouthItemSettings, SouthSettings } from '../../../../../../backend/shared/model/south-settings.model';
-import { NorthSettings } from '../../../../../../backend/shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../../../../backend/shared/model/north-settings.model';
 
 @Component({
   template: `<oib-history-metrics
@@ -57,8 +57,7 @@ class TestComponent {
     category: 'api',
     modes: {
       files: true,
-      points: true,
-      items: false
+      points: true
     },
     settings: [
       {
@@ -74,10 +73,11 @@ class TestComponent {
         ],
         displayInViewMode: true
       }
-    ]
+    ],
+    items: { settings: [] }
   };
 
-  historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
+  historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings> = {
     id: 'id1',
     name: 'History query',
     description: 'My History query description',
@@ -109,7 +109,10 @@ class TestComponent {
         }
       }
     },
-    items: []
+    southItems: [],
+    northItems: [],
+    northTransformers: [],
+    southTransformers: []
   };
   historyMetrics: HistoryQueryMetrics = {
     metricsStart: '2020-01-01T00:00:00.000Z',

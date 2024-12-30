@@ -11,7 +11,7 @@ import { ArchiveFilesComponent } from './archive-files/archive-files.component';
 import { CacheFilesComponent } from './cache-files/cache-files.component';
 import { CacheValuesComponent } from './cache-values/cache-values.component';
 import { ErrorValuesComponent } from './error-values/error-values.component';
-import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
 @Component({
   selector: 'oib-explore-cache',
@@ -32,7 +32,7 @@ export class ExploreCacheComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private northConnectorService = inject(NorthConnectorService);
 
-  northConnector: NorthConnectorDTO<NorthSettings> | null = null;
+  northConnector: NorthConnectorDTO<NorthSettings, NorthItemSettings> | null = null;
   readonly archiveFilesComponent = viewChild.required(ArchiveFilesComponent);
   readonly errorFilesComponent = viewChild.required(ErrorFilesComponent);
   readonly cacheFilesComponent = viewChild.required(CacheFilesComponent);

@@ -5,8 +5,7 @@ const manifest: NorthConnectorManifest = {
   category: 'api',
   modes: {
     files: true,
-    points: true,
-    items: false
+    points: true
   },
   settings: [
     {
@@ -163,7 +162,10 @@ const manifest: NorthConnectorManifest = {
         }
       ]
     }
-  ]
+  ],
+  items: {
+    settings: []
+  }
 };
 
 export default manifest;

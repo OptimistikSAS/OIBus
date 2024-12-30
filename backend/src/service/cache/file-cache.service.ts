@@ -9,7 +9,7 @@ import { Instant } from '../../../shared/model/types';
 import { NorthCacheFiles } from '../../../shared/model/north-connector.model';
 import { EventEmitter } from 'node:events';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../shared/model/north-settings.model';
 
 const FILE_FOLDER = 'files';
 const ARCHIVE_TIMEOUT = 600_000; // check if archive must be emptied every 10 minutes
@@ -35,7 +35,7 @@ export default class FileCacheService {
     baseCacheFolder: string,
     baseErrorFolder: string,
     baseArchiveFolder: string,
-    private _settings: NorthConnectorEntity<NorthSettings>
+    private _settings: NorthConnectorEntity<NorthSettings, NorthItemSettings>
   ) {
     this._logger = logger;
     this._cacheFolder = path.resolve(baseCacheFolder, FILE_FOLDER);
@@ -452,7 +452,7 @@ export default class FileCacheService {
     return this._triggerRun;
   }
 
-  set settings(value: NorthConnectorEntity<NorthSettings>) {
+  set settings(value: NorthConnectorEntity<NorthSettings, NorthItemSettings>) {
     this._settings = value;
   }
 

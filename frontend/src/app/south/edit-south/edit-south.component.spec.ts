@@ -114,7 +114,8 @@ describe('EditSouthComponent', () => {
       description: 'My South connector description',
       enabled: true,
       settings: {} as SouthSettings,
-      items: []
+      items: [],
+      transformers: []
     };
 
     beforeEach(() => {

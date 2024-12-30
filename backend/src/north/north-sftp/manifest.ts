@@ -5,8 +5,7 @@ const manifest: NorthConnectorManifest = {
   category: 'file',
   modes: {
     files: true,
-    points: true,
-    items: false
+    points: true
   },
   settings: [
     {
@@ -107,6 +106,9 @@ const manifest: NorthConnectorManifest = {
       ],
       displayInViewMode: true
     }
-  ]
+  ],
+  items: {
+    settings: []
+  }
 };
 export default manifest;
