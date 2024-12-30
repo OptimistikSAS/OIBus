@@ -3,7 +3,7 @@
 //
 import { EngineSettingsCommandDTO } from '../../../shared/model/engine.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../shared/model/north-settings.model';
 import { NorthConnectorCommandDTO } from '../../../shared/model/north-connector.model';
 import { SouthConnectorCommandDTO } from '../../../shared/model/south-connector.model';
 import { CertificateDTO } from '../../../shared/model/certificate.model';
@@ -86,7 +86,7 @@ export interface OIAnalyticsSouthCommandDTO {
 export interface OIAnalyticsNorthCommandDTO {
   oIBusInternalId: string | null;
   type: string;
-  settings: NorthConnectorCommandDTO<NorthSettings>;
+  settings: NorthConnectorCommandDTO<NorthSettings, NorthItemSettings>;
 }
 
 export interface OIBusFullConfigurationCommandDTO {
@@ -194,13 +194,13 @@ export interface OIAnalyticsFetchDeleteSouthConnectorCommandDTO extends BaseOIAn
 export interface OIAnalyticsFetchCreateNorthConnectorCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
   type: 'create-north';
   retrieveSecretsFromNorth: string | null; // used to retrieve passwords in case of duplicate
-  commandContent: NorthConnectorCommandDTO<NorthSettings>;
+  commandContent: NorthConnectorCommandDTO<NorthSettings, NorthItemSettings>;
 }
 
 export interface OIAnalyticsFetchUpdateNorthConnectorCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
   type: 'update-north';
   northConnectorId: string;
-  commandContent: NorthConnectorCommandDTO<NorthSettings>;
+  commandContent: NorthConnectorCommandDTO<NorthSettings, NorthItemSettings>;
 }
 
 export interface OIAnalyticsFetchDeleteNorthConnectorCommandDTO extends BaseOIAnalyticsFetchCommandDTO {

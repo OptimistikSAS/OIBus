@@ -11,6 +11,7 @@ import IPFilterService from '../service/ip-filter.service';
 import OIAnalyticsCommandService from '../service/oia/oianalytics-command.service';
 import HistoryQueryService from '../service/history-query.service';
 import HomeMetricsService from '../service/metrics/home-metrics.service';
+import TransformerService from '../service/transformer.service';
 
 interface KoaRequest<RequestBody> extends Request {
   body?: RequestBody;
@@ -25,6 +26,7 @@ export interface KoaApplication extends Koa {
   oIAnalyticsCommandService: OIAnalyticsCommandService;
   southService: SouthService;
   northService: NorthService;
+  transformerService: TransformerService;
   historyQueryService: HistoryQueryService;
   homeMetricsService: HomeMetricsService;
   repositoryService: RepositoryService;

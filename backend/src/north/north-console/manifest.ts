@@ -5,8 +5,7 @@ const manifest: NorthConnectorManifest = {
   category: 'debug',
   modes: {
     files: true,
-    points: true,
-    items: false
+    points: true
   },
   settings: [
     {
@@ -17,7 +16,10 @@ const manifest: NorthConnectorManifest = {
       validators: [{ key: 'required' }],
       displayInViewMode: true
     }
-  ]
+  ],
+  items: {
+    settings: []
+  }
 };
 
 export default manifest;

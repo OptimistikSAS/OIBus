@@ -5,8 +5,7 @@ const manifest: NorthConnectorManifest = {
   category: 'file',
   modes: {
     files: true,
-    points: true,
-    items: false
+    points: true
   },
   settings: [
     {
@@ -77,7 +76,10 @@ const manifest: NorthConnectorManifest = {
       type: 'OibSecret',
       conditionalDisplay: { field: 'useProxy', values: [true] }
     }
-  ]
+  ],
+  items: {
+    settings: []
+  }
 };
 
 export default manifest;

@@ -9,7 +9,7 @@ import { EventEmitter } from 'node:events';
 import { OIBusTimeValue } from '../../../shared/model/engine.model';
 import { Instant } from '../../../shared/model/types';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../shared/model/north-settings.model';
 import { DateTime } from 'luxon';
 
 const BUFFER_TIMEOUT = 300; // group temporary chunk files every 300ms
@@ -33,7 +33,7 @@ export default class ValueCacheService {
     logger: pino.Logger,
     baseCacheFolder: string,
     baseErrorFolder: string,
-    private _settings: NorthConnectorEntity<NorthSettings>
+    private _settings: NorthConnectorEntity<NorthSettings, NorthItemSettings>
   ) {
     this._logger = logger;
     this._cacheFolder = path.resolve(baseCacheFolder, VALUE_FOLDER);
@@ -442,7 +442,7 @@ export default class ValueCacheService {
     return this._triggerRun;
   }
 
-  set settings(value: NorthConnectorEntity<NorthSettings>) {
+  set settings(value: NorthConnectorEntity<NorthSettings, NorthItemSettings>) {
     this._settings = value;
   }
 

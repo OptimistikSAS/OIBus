@@ -4,8 +4,8 @@ import { Injectable, inject } from '@angular/core';
 import {
   HistoryQueryCommandDTO,
   HistoryQueryDTO,
-  HistoryQueryItemCommandDTO,
-  HistoryQueryItemDTO,
+  HistoryQuerySouthItemCommandDTO,
+  HistoryQuerySouthItemDTO,
   HistoryQueryItemSearchParam,
   HistoryQueryLightDTO
 } from '../../../../backend/shared/model/history-query.model';
@@ -15,7 +15,7 @@ import { DownloadService } from './download.service';
 import { NorthConnectorCommandDTO } from '../../../../backend/shared/model/north-connector.model';
 import { OIBusContent } from '../../../../backend/shared/model/engine.model';
 import { SouthItemSettings, SouthSettings } from '../../../../backend/shared/model/south-settings.model';
-import { NorthSettings } from '../../../../backend/shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../../backend/shared/model/north-settings.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on History queries
@@ -38,8 +38,10 @@ export class HistoryQueryService {
    * Get one History query
    * @param historyQueryId - the ID of the History query
    */
-  get(historyQueryId: string): Observable<HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>> {
-    return this.http.get<HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>>(`/api/history-queries/${historyQueryId}`);
+  get(historyQueryId: string): Observable<HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings>> {
+    return this.http.get<HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings>>(
+      `/api/history-queries/${historyQueryId}`
+    );
   }
 
   /**
@@ -50,11 +52,11 @@ export class HistoryQueryService {
    * @param retrieveSecretsFromHistory - The ID of the duplicated History Query used to retrieved secrets in the backend
    */
   create(
-    command: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>,
+    command: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings>,
     retrieveSecretsFromSouth: string | null,
     retrieveSecretsFromNorth: string | null,
     retrieveSecretsFromHistory: string | null
-  ): Observable<HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>> {
+  ): Observable<HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings>> {
     const params: Record<string, string | Array<string>> = {};
     if (retrieveSecretsFromHistory) {
       params['duplicate'] = retrieveSecretsFromHistory;
@@ -65,7 +67,11 @@ export class HistoryQueryService {
     if (retrieveSecretsFromNorth) {
       params['fromNorth'] = retrieveSecretsFromNorth;
     }
-    return this.http.post<HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>>(`/api/history-queries`, command, { params });
+    return this.http.post<HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings>>(
+      `/api/history-queries`,
+      command,
+      { params }
+    );
   }
 
   /**
@@ -74,7 +80,11 @@ export class HistoryQueryService {
    * @param command - the new values of the selected History query
    * @param resetCache - The user wants to reset the history cache to restart from scratch
    */
-  update(historyQueryId: string, command: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>, resetCache: boolean) {
+  update(
+    historyQueryId: string,
+    command: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings>,
+    resetCache: boolean
+  ) {
     const params: Record<string, string | Array<string>> = {};
     if (resetCache) {
       params['resetCache'] = resetCache.toString();
@@ -95,14 +105,19 @@ export class HistoryQueryService {
    * @param historyQueryId - the ID of the South connector
    * @param searchParams - The search params
    */
-  searchItems(historyQueryId: string, searchParams: HistoryQueryItemSearchParam): Observable<Page<HistoryQueryItemDTO<SouthItemSettings>>> {
+  searchItems(
+    historyQueryId: string,
+    searchParams: HistoryQueryItemSearchParam
+  ): Observable<Page<HistoryQuerySouthItemDTO<SouthItemSettings>>> {
     const params: Record<string, string | Array<string>> = {
       page: `${searchParams.page || 0}`
     };
     if (searchParams.name) {
       params['name'] = searchParams.name;
     }
-    return this.http.get<Page<HistoryQueryItemDTO<SouthItemSettings>>>(`/api/history-queries/${historyQueryId}/south-items`, { params });
+    return this.http.get<Page<HistoryQuerySouthItemDTO<SouthItemSettings>>>(`/api/history-queries/${historyQueryId}/south-items`, {
+      params
+    });
   }
 
   /**
@@ -110,8 +125,8 @@ export class HistoryQueryService {
    * @param historyQueryId - the ID of the History query
    * @param itemId - the ID of the History query item
    */
-  getItem(historyQueryId: string, itemId: string): Observable<HistoryQueryItemDTO<SouthItemSettings>> {
-    return this.http.get<HistoryQueryItemDTO<SouthItemSettings>>(`/api/history-queries/${historyQueryId}/south-items/${itemId}`);
+  getItem(historyQueryId: string, itemId: string): Observable<HistoryQuerySouthItemDTO<SouthItemSettings>> {
+    return this.http.get<HistoryQuerySouthItemDTO<SouthItemSettings>>(`/api/history-queries/${historyQueryId}/south-items/${itemId}`);
   }
 
   /**
@@ -119,8 +134,11 @@ export class HistoryQueryService {
    * @param historyQueryId - the ID of the History query
    * @param command - The values of the History query item to create
    */
-  createItem(historyQueryId: string, command: HistoryQueryItemCommandDTO<SouthItemSettings>): Observable<HistoryQueryItemDTO<any>> {
-    return this.http.post<HistoryQueryItemDTO<SouthItemSettings>>(`/api/history-queries/${historyQueryId}/south-items`, command);
+  createItem(
+    historyQueryId: string,
+    command: HistoryQuerySouthItemCommandDTO<SouthItemSettings>
+  ): Observable<HistoryQuerySouthItemDTO<any>> {
+    return this.http.post<HistoryQuerySouthItemDTO<SouthItemSettings>>(`/api/history-queries/${historyQueryId}/south-items`, command);
   }
 
   /**
@@ -129,7 +147,7 @@ export class HistoryQueryService {
    * @param itemId - the ID of the History query item
    * @param command - the new values of the selected History query item
    */
-  updateItem(historyQueryId: string, itemId: string, command: HistoryQueryItemCommandDTO<SouthItemSettings>) {
+  updateItem(historyQueryId: string, itemId: string, command: HistoryQuerySouthItemCommandDTO<SouthItemSettings>) {
     return this.http.put<void>(`/api/history-queries/${historyQueryId}/south-items/${itemId}`, command);
   }
 
@@ -171,7 +189,7 @@ export class HistoryQueryService {
   testSouthItem(
     historyId: string,
     south: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
-    item: HistoryQueryItemCommandDTO<SouthItemSettings>,
+    item: HistoryQuerySouthItemCommandDTO<SouthItemSettings>,
     testingSettings: SouthConnectorItemTestingSettings
   ): Observable<OIBusContent> {
     return this.http.put<OIBusContent>(`/api/history-queries/${historyId}/south/items/test-item`, { south, item, testingSettings });
@@ -188,7 +206,7 @@ export class HistoryQueryService {
 
   itemsToCsv(
     southType: string,
-    items: Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>>,
+    items: Array<HistoryQuerySouthItemDTO<SouthItemSettings> | HistoryQuerySouthItemCommandDTO<SouthItemSettings>>,
     fileName: string,
     delimiter: string
   ): Observable<void> {
@@ -210,13 +228,13 @@ export class HistoryQueryService {
   checkImportItems(
     southType: string,
     historyQueryId: string,
-    currentItems: Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>>,
+    currentItems: Array<HistoryQuerySouthItemDTO<SouthItemSettings> | HistoryQuerySouthItemCommandDTO<SouthItemSettings>>,
     file: File,
     delimiter: string
   ): Observable<{
-    items: Array<HistoryQueryItemDTO<SouthItemSettings>>;
+    items: Array<HistoryQuerySouthItemDTO<SouthItemSettings>>;
     errors: Array<{
-      item: HistoryQueryItemDTO<SouthItemSettings>;
+      item: HistoryQuerySouthItemDTO<SouthItemSettings>;
       error: string;
     }>;
   }> {
@@ -225,15 +243,15 @@ export class HistoryQueryService {
     formData.set('currentItems', JSON.stringify(currentItems));
     formData.set('delimiter', delimiter);
     return this.http.post<{
-      items: Array<HistoryQueryItemDTO<SouthItemSettings>>;
-      errors: Array<{ item: HistoryQueryItemDTO<SouthItemSettings>; error: string }>;
+      items: Array<HistoryQuerySouthItemDTO<SouthItemSettings>>;
+      errors: Array<{ item: HistoryQuerySouthItemDTO<SouthItemSettings>; error: string }>;
     }>(`/api/history-queries/${southType}/south-items/check-south-import/${historyQueryId}`, formData);
   }
 
   /**
    * Upload south history items from a CSV file
    */
-  importItems(historyQueryId: string, items: Array<HistoryQueryItemCommandDTO<SouthItemSettings>>): Observable<void> {
+  importItems(historyQueryId: string, items: Array<HistoryQuerySouthItemCommandDTO<SouthItemSettings>>): Observable<void> {
     return this.http.post<void>(`/api/history-queries/${historyQueryId}/south-items/import`, { items });
   }
 
@@ -257,7 +275,7 @@ export class HistoryQueryService {
 
   testNorthConnection(
     historyQueryId: string,
-    settings: NorthConnectorCommandDTO<NorthSettings>,
+    settings: NorthConnectorCommandDTO<NorthSettings, NorthItemSettings>,
     fromNorth: string | null = null
   ): Observable<void> {
     return this.http.put<void>(`/api/history-queries/${historyQueryId}/north/test-connection`, settings, {

@@ -11,7 +11,7 @@ import { compress, filesExists } from '../../service/utils';
 
 import ValueCacheServiceMock from '../../tests/__mocks__/service/cache/value-cache-service.mock';
 import FileCacheServiceMock from '../../tests/__mocks__/service/cache/file-cache-service.mock';
-import { NorthOIAnalyticsSettings } from '../../../shared/model/north-settings.model';
+import { NorthOIAnalyticsItemSettings, NorthOIAnalyticsSettings } from '../../../shared/model/north-settings.model';
 import { createProxyAgent } from '../../service/proxy-agent';
 import { OIBusTimeValue } from '../../../shared/model/engine.model';
 import zlib from 'node:zlib';
@@ -82,7 +82,7 @@ const myReadStream = {
 (fsSync.createReadStream as jest.Mock).mockReturnValue(myReadStream);
 
 let north: NorthOIAnalytics;
-let configuration: NorthConnectorEntity<NorthOIAnalyticsSettings>;
+let configuration: NorthConnectorEntity<NorthOIAnalyticsSettings, NorthOIAnalyticsItemSettings>;
 describe('NorthOIAnalytics without proxy', () => {
   beforeEach(async () => {
     jest.clearAllMocks();

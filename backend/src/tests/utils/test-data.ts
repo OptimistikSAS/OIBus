@@ -26,12 +26,14 @@ import { OIAnalyticsMessage } from '../../model/oianalytics-message.model';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../shared/model/north-settings.model';
 import { HistoryQueryEntity } from '../../model/histor-query.model';
-import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO } from '../../../shared/model/history-query.model';
+import { HistoryQueryCommandDTO, HistoryQuerySouthItemCommandDTO } from '../../../shared/model/history-query.model';
 import { User } from '../../model/user.model';
 import { Certificate } from '../../model/certificate.model';
 import { OIBusLog } from '../../model/logs.model';
+import { TransformerCommand } from '../../../shared/model/transformer.model';
+import { Transformer } from '../../model/transformer.model';
 
 const constants = {
   dates: {
@@ -73,6 +75,32 @@ const ipFilters: Array<IPFilter> = [
     id: 'ipFilterId2',
     address: '*',
     description: 'All ips'
+  }
+];
+
+const transformerCommandDTO: TransformerCommand = {
+  name: 'my new transformer',
+  description: 'description',
+  inputType: 'OIBusTimeValues',
+  outputType: 'CSV',
+  code: 'console.log("Hello World");'
+};
+const transformers: Array<Transformer> = [
+  {
+    id: 'transformerId1',
+    name: 'my transformer 1',
+    description: 'description',
+    inputType: 'OIBusTimeValues',
+    outputType: 'CSV',
+    code: 'console.log("Hello World");'
+  },
+  {
+    id: 'transformerId2',
+    name: 'my transformer 2',
+    description: 'description',
+    inputType: 'OIBusTimeValues',
+    outputType: 'CSV',
+    code: 'console.log("Hello World");'
   }
 ];
 
@@ -220,7 +248,8 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         settings: {} as SouthItemSettings,
         scanModeId: scanModes[1].id
       }
-    ]
+    ],
+    transformers: []
   },
   {
     id: 'southId2',
@@ -254,7 +283,8 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         settings: {} as SouthItemSettings,
         scanModeId: scanModes[0].id
       }
-    ]
+    ],
+    transformers: []
   },
   {
     id: 'southId3',
@@ -317,7 +347,8 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         } as SouthItemSettings,
         scanModeId: scanModes[0].id
       }
-    ]
+    ],
+    transformers: []
   }
 ];
 const southConnectorCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
@@ -343,6 +374,10 @@ const southConnectorCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSe
       scanModeId: scanModes[1].id,
       scanModeName: null
     }
+  ],
+  transformers: [
+    { order: 0, id: 'transformerId1' },
+    { order: 1, id: 'transformerId2' }
   ]
 };
 const southConnectorItemCommand: SouthConnectorItemCommandDTO<SouthItemSettings> = {
@@ -372,9 +407,12 @@ const northTestManifest: NorthConnectorManifest = {
     files: true,
     points: true
   },
-  settings: []
+  settings: [],
+  items: {
+    settings: []
+  }
 };
-const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
+const northConnectors: Array<NorthConnectorEntity<NorthSettings, NorthItemSettings>> = [
   {
     id: 'northId1',
     name: 'North 1',
@@ -418,7 +456,9 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
         description: southConnectors[1].description,
         enabled: southConnectors[1].enabled
       }
-    ]
+    ],
+    items: [],
+    transformers: []
   },
   {
     id: 'northId2',
@@ -456,10 +496,12 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
         description: southConnectors[0].description,
         enabled: southConnectors[0].enabled
       }
-    ]
+    ],
+    items: [],
+    transformers: []
   }
 ];
-const northConnectorCommand: NorthConnectorCommandDTO<NorthSettings> = {
+const northConnectorCommand: NorthConnectorCommandDTO<NorthSettings, NorthItemSettings> = {
   name: 'North 1',
   type: 'file-writer',
   description: 'my file writer',
@@ -487,10 +529,15 @@ const northConnectorCommand: NorthConnectorCommandDTO<NorthSettings> = {
       }
     }
   },
-  subscriptions: [southConnectors[0].id]
+  subscriptions: [southConnectors[0].id],
+  items: [],
+  transformers: [
+    { order: 0, id: 'transformerId1' },
+    { order: 1, id: 'transformerId2' }
+  ]
 };
 
-const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>> = [
+const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings>> = [
   {
     id: 'historyId1',
     name: 'my first History Query',
@@ -539,7 +586,7 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
         sendFileImmediately: false
       }
     },
-    items: [
+    southItems: [
       {
         id: 'historyQueryItem1',
         name: 'item1',
@@ -552,7 +599,10 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
         enabled: true,
         settings: {} as SouthItemSettings
       }
-    ]
+    ],
+    northItems: [],
+    southTransformers: [],
+    northTransformers: []
   },
   {
     id: 'historyId2',
@@ -602,17 +652,20 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
         sendFileImmediately: false
       }
     },
-    items: [
+    southItems: [
       {
         id: 'historyQueryItem3',
         name: 'item3',
         enabled: true,
         settings: {} as SouthItemSettings
       }
-    ]
+    ],
+    northItems: [],
+    southTransformers: [],
+    northTransformers: []
   }
 ];
-const historyQueryCommand: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
+const historyQueryCommand: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings> = {
   name: 'name',
   description: 'description',
   startTime: '2020-02-01T02:02:59.999Z',
@@ -659,16 +712,17 @@ const historyQueryCommand: HistoryQueryCommandDTO<SouthSettings, NorthSettings, 
       sendFileImmediately: false
     }
   },
-  items: [
+  southItems: [
     {
       id: 'historyQueryItem4',
       name: 'item4',
       enabled: true,
       settings: {} as SouthItemSettings
     }
-  ]
+  ],
+  northItems: []
 };
-const historyQueryItemCommand: HistoryQueryItemCommandDTO<SouthItemSettings> = {
+const historyQueryItemCommand: HistoryQuerySouthItemCommandDTO<SouthItemSettings> = {
   id: 'newHistoryQueryItemId',
   name: 'New History query Item',
   enabled: true,
@@ -1381,6 +1435,10 @@ export default Object.freeze({
     list: ipFilters,
     command: ipFilterCommandDTO
   },
+  transformers: {
+    list: transformers,
+    command: transformerCommandDTO
+  },
   scanMode: {
     list: scanModes,
     command: scanModeCommandDTO
@@ -1402,7 +1460,7 @@ export default Object.freeze({
   historyQueries: {
     list: historyQueries,
     command: historyQueryCommand,
-    itemCommand: historyQueryItemCommand,
+    southItemCommand: historyQueryItemCommand,
     metrics: historyQueryMetrics
   },
   users: {

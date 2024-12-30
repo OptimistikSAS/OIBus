@@ -1,13 +1,22 @@
 export interface TransformerDTO {
   id: string;
   name: string;
-  description: string | null;
+  description: string;
   inputType: string;
   outputType: string;
   code: string;
-  fileRegex: string | null;
 }
 
-export type TransformerFilterDTO = Partial<Pick<TransformerDTO, 'inputType' | 'outputType' | 'name'>>;
+export interface TransformerCommand {
+  name: string;
+  description: string;
+  inputType: string;
+  outputType: string;
+  code: string;
+}
 
-export type TransformerCommandDTO = Omit<TransformerDTO, 'id'>;
+export interface TransformerSearchParam {
+  name?: string;
+  inputType?: string;
+  outputType?: string;
+}

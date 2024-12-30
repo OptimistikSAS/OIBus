@@ -12,7 +12,7 @@ import { ScanModeService } from '../../services/scan-mode.service';
 import { NotificationService } from '../../shared/notification.service';
 import { EngineService } from '../../services/engine.service';
 import { OIBusInfo } from '../../../../../backend/shared/model/engine.model';
-import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
 class NorthDetailComponentTester extends ComponentTester<NorthDetailComponent> {
   constructor() {
@@ -43,7 +43,7 @@ describe('NorthDetailComponent', () => {
   let engineService: jasmine.SpyObj<EngineService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
 
-  const northConnector: NorthConnectorDTO<NorthSettings> = {
+  const northConnector: NorthConnectorDTO<NorthSettings, NorthItemSettings> = {
     id: 'id1',
     type: 'file-writer',
     name: 'North Connector',
@@ -69,6 +69,8 @@ describe('NorthDetailComponent', () => {
         }
       }
     },
+    items: [],
+    transformers: [],
     subscriptions: []
   };
   const manifest: NorthConnectorManifest = {
@@ -76,8 +78,7 @@ describe('NorthDetailComponent', () => {
     category: 'api',
     modes: {
       files: true,
-      points: true,
-      items: false
+      points: true
     },
     settings: [
       {
@@ -93,7 +94,8 @@ describe('NorthDetailComponent', () => {
         ],
         displayInViewMode: true
       }
-    ]
+    ],
+    items: { settings: [] }
   };
   const engineInfo: OIBusInfo = {
     version: '3.0.0',

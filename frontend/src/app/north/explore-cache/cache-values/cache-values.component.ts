@@ -6,7 +6,7 @@ import { NorthConnectorDTO, NorthCacheFiles } from '../../../../../../backend/sh
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
 import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
 import { emptyPage } from '../../../shared/test-utils';
-import { NorthSettings } from '../../../../../../backend/shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../../../../backend/shared/model/north-settings.model';
 import { FileTableComponent, FileTableData } from '../file-table/file-table.component';
 
 @Component({
@@ -18,7 +18,7 @@ import { FileTableComponent, FileTableData } from '../file-table/file-table.comp
 export class CacheValuesComponent implements OnInit {
   private northConnectorService = inject(NorthConnectorService);
 
-  readonly northConnector = input<NorthConnectorDTO<NorthSettings> | null>(null);
+  readonly northConnector = input<NorthConnectorDTO<NorthSettings, NorthItemSettings> | null>(null);
   cacheValues: Array<NorthCacheFiles> = [];
   valueTablePages = emptyPage<FileTableData>();
   readonly page = signal(0);

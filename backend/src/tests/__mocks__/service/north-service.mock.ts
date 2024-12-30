@@ -42,5 +42,17 @@ export default jest.fn().mockImplementation(() => ({
   checkSubscription: jest.fn(),
   createSubscription: jest.fn(),
   deleteSubscription: jest.fn(),
-  deleteAllSubscriptionsByNorth: jest.fn()
+  deleteAllSubscriptionsByNorth: jest.fn(),
+  getNorthItems: jest.fn(),
+  searchNorthItems: jest.fn(),
+  findNorthConnectorItemById: jest.fn(),
+  createItem: jest.fn(),
+  updateItem: jest.fn(),
+  deleteItem: jest.fn(),
+  deleteAllItemsForNorthConnector: jest.fn(),
+  enableItem: jest.fn(),
+  disableItem: jest.fn(),
+  checkCsvFileImport: jest.fn(),
+  checkCsvContentImport: jest.fn(),
+  importItems: jest.fn()
 }));

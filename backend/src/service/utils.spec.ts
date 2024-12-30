@@ -26,7 +26,7 @@ import {
   getOIBusInfo,
   getPlatformFromOsType,
   httpGetWithBody,
-  itemToFlattenedCSV,
+  southItemToFlattenedCSV,
   logQuery,
   persistResults,
   unzip,
@@ -1233,7 +1233,7 @@ describe('Service utils', () => {
       (csv.unparse as jest.Mock).mockReturnValue('csv content');
 
       expect(
-        itemToFlattenedCSV(
+        southItemToFlattenedCSV(
           [
             ...testData.south.list[2].items.map(item => ({ ...item, settings: { ...item.settings, objectSettings: {} } })),
             {
