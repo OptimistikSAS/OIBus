@@ -43,7 +43,7 @@ export default class FileCacheService {
     this._archiveFolder = path.resolve(baseArchiveFolder, FILE_FOLDER);
 
     // Remove old files from archive even if the connector is not enabled
-    if (this._settings.caching.rawFiles.archive.retentionDuration > 0) {
+    if (this._settings.caching.rawFiles.archive.retentionDuration > 0 && this._settings.id !== 'test') {
       // refresh the archiveFolder at the beginning only if retentionDuration is different from 0
       this.archiveTimeout = setTimeout(this.refreshArchiveFolder.bind(this), ARCHIVE_TIMEOUT_INIT);
     }
