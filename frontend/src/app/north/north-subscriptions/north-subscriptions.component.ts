@@ -12,7 +12,7 @@ import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component'
 import { CreateNorthSubscriptionModalComponent } from '../create-north-subscription-modal/create-north-subscription-modal.component';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
-import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
 @Component({
   selector: 'oib-north-subscriptions',
@@ -30,7 +30,7 @@ export class NorthSubscriptionsComponent implements OnInit {
   // TODO: Skipped for migration because:
   //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
   //  and migrating would break narrowing currently.
-  readonly northConnector = input<NorthConnectorDTO<NorthSettings> | null>(null);
+  readonly northConnector = input<NorthConnectorDTO<NorthSettings, NorthItemSettings> | null>(null);
 
   readonly inMemorySubscriptions = output<Array<SouthConnectorLightDTO> | null>();
 

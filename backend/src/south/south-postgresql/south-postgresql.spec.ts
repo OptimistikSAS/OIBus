@@ -69,6 +69,7 @@ describe('SouthPostgreSQL with authentication', () => {
       connectionTimeout: 1000,
       requestTimeout: 1000
     },
+    transformers: [],
     items: [
       {
         id: 'id1',
@@ -389,6 +390,7 @@ describe('SouthPostgreSQL without authentication', () => {
       connectionTimeout: 1000,
       requestTimeout: 1000
     },
+    transformers: [],
     items: [
       {
         id: 'id1',
@@ -542,6 +544,7 @@ describe('SouthPostgreSQL test connection', () => {
       connectionTimeout: 1000,
       requestTimeout: 1000
     },
+    transformers: [],
     items: [
       {
         id: 'id1',

@@ -292,6 +292,7 @@ describe('Encryption service with crypto settings', () => {
       description: 'my connector',
       enabled: true,
       items: [],
+      transformers: [],
       settings: {
         field1: 'not a secret',
         field2: 'secret',
@@ -338,6 +339,7 @@ describe('Encryption service with crypto settings', () => {
       description: 'my connector',
       enabled: true,
       items: [],
+      transformers: [],
       settings: {
         field1: 'not a secret',
         field2: '',
@@ -485,6 +487,7 @@ describe('Encryption service with crypto settings', () => {
       description: 'my connector',
       enabled: true,
       items: [],
+      transformers: [],
       settings: {
         field1: 'not a secret',
         field2: 'secret',

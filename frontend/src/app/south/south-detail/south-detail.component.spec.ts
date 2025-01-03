@@ -88,7 +88,8 @@ describe('SouthDetailComponent', () => {
         } as SouthItemSettings,
         scanModeId: 'scanModeId1'
       }
-    ]
+    ],
+    transformers: []
   };
   const engineInfo: OIBusInfo = {
     version: '3.0.0',

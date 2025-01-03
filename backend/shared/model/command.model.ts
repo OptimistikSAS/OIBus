@@ -4,7 +4,7 @@ import { ScanModeCommandDTO } from './scan-mode.model';
 import { SouthConnectorCommandDTO } from './south-connector.model';
 import { SouthItemSettings, SouthSettings } from './south-settings.model';
 import { NorthConnectorCommandDTO } from './north-connector.model';
-import { NorthSettings } from './north-settings.model';
+import { NorthItemSettings, NorthSettings } from './north-settings.model';
 
 export const OIBUS_COMMAND_TYPES = [
   'update-version',
@@ -113,14 +113,14 @@ export interface OIBusDeleteSouthConnectorCommandDTO extends BaseOIBusCommandDTO
 export interface OIBusCreateNorthConnectorCommandDTO extends BaseOIBusCommandDTO {
   type: 'create-north';
   targetVersion: string;
-  commandContent: NorthConnectorCommandDTO<NorthSettings>;
+  commandContent: NorthConnectorCommandDTO<NorthSettings, NorthItemSettings>;
 }
 
 export interface OIBusUpdateNorthConnectorCommandDTO extends BaseOIBusCommandDTO {
   type: 'update-north';
   targetVersion: string;
   northConnectorId: string;
-  commandContent: NorthConnectorCommandDTO<NorthSettings>;
+  commandContent: NorthConnectorCommandDTO<NorthSettings, NorthItemSettings>;
 }
 
 export interface OIBusDeleteNorthConnectorCommandDTO extends BaseOIBusCommandDTO {

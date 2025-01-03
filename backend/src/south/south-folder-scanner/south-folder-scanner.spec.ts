@@ -52,6 +52,7 @@ describe('SouthFolderScanner', () => {
       inputFolder: 'inputFolder',
       compression: false
     },
+    transformers: [],
     items: [
       {
         id: 'id1',
@@ -242,6 +243,7 @@ describe('SouthFolderScanner with compression', () => {
       inputFolder: 'inputFolder',
       compression: true
     },
+    transformers: [],
     items: [
       {
         id: 'id1',

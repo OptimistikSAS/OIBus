@@ -57,6 +57,7 @@ describe('South OPC', () => {
       host: 'localhost',
       serverName: 'Matrikon.OPC.Simulation'
     },
+    transformers: [],
     items: [
       {
         id: 'id1',

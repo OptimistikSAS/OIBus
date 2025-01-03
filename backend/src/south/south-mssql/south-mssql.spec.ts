@@ -78,6 +78,7 @@ describe('SouthMSSQL with authentication', () => {
       requestTimeout: 1000,
       trustServerCertificate: true
     },
+    transformers: [],
     items: [
       {
         id: 'id1',
@@ -330,7 +331,6 @@ describe('SouthMSSQL without authentication', () => {
     type: 'mssql',
     description: 'my test connector',
     enabled: true,
-
     settings: {
       throttling: {
         maxReadInterval: 3600,
@@ -348,6 +348,7 @@ describe('SouthMSSQL without authentication', () => {
       requestTimeout: 1000,
       trustServerCertificate: true
     },
+    transformers: [],
     items: [
       {
         id: 'id1',
@@ -513,6 +514,7 @@ describe('SouthMSSQL test connection', () => {
       requestTimeout: 1000,
       trustServerCertificate: true
     },
+    transformers: [],
     items: [
       {
         id: 'id1',

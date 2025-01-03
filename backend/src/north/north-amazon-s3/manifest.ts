@@ -76,7 +76,10 @@ const manifest: NorthConnectorManifest = {
       type: 'OibSecret',
       conditionalDisplay: { field: 'useProxy', values: [true] }
     }
-  ]
+  ],
+  items: {
+    settings: []
+  }
 };
 
 export default manifest;

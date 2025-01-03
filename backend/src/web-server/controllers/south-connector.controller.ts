@@ -13,7 +13,7 @@ import {
 import { Page } from '../../../shared/model/types';
 import JoiValidator from './validators/joi.validator';
 import { toSouthConnectorDTO, toSouthConnectorItemDTO, toSouthConnectorLightDTO } from '../../service/south.service';
-import { itemToFlattenedCSV } from '../../service/utils';
+import { southItemToFlattenedCSV } from '../../service/utils';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 
 export default class SouthConnectorController {
@@ -269,7 +269,7 @@ export default class SouthConnectorController {
       return ctx.throw(404, 'South manifest not found');
     }
 
-    ctx.body = itemToFlattenedCSV(
+    ctx.body = southItemToFlattenedCSV(
       ctx.request.body!.items.map(item => toSouthConnectorItemDTO(item, manifest.id, ctx.app.encryptionService)),
       ctx.request.body!.delimiter,
       ctx.app.scanModeService.findAll()
@@ -285,7 +285,7 @@ export default class SouthConnectorController {
       return ctx.notFound();
     }
 
-    ctx.body = itemToFlattenedCSV(
+    ctx.body = southItemToFlattenedCSV(
       southConnector.items.map(item => toSouthConnectorItemDTO(item, southConnector.type, ctx.app.encryptionService)),
       ctx.request.body!.delimiter,
       ctx.app.scanModeService.findAll()

@@ -3,7 +3,7 @@ import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
 import JoiValidator from './validators/joi.validator';
 import testData from '../../tests/utils/test-data';
 import { toSouthConnectorDTO, toSouthConnectorItemDTO, toSouthConnectorLightDTO } from '../../service/south.service';
-import { itemToFlattenedCSV } from '../../service/utils';
+import { southItemToFlattenedCSV } from '../../service/utils';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 
@@ -492,7 +492,7 @@ describe('South connector controller', () => {
       items: testData.south.list[0].items,
       delimiter: ';'
     };
-    (itemToFlattenedCSV as jest.Mock).mockReturnValue('csv content');
+    (southItemToFlattenedCSV as jest.Mock).mockReturnValue('csv content');
     ctx.app.scanModeService.findAll.mockReturnValueOnce(testData.scanMode.list);
     ctx.app.southService.getInstalledSouthManifests.mockReturnValueOnce([{ ...testData.south.manifest, id: testData.south.list[0].type }]);
 
@@ -518,7 +518,7 @@ describe('South connector controller', () => {
   it('exportSouthItems() should download a csv file', async () => {
     ctx.params.southType = testData.south.list[0].type;
     ctx.params.southId = testData.south.list[0].id;
-    (itemToFlattenedCSV as jest.Mock).mockReturnValueOnce('csv content');
+    (southItemToFlattenedCSV as jest.Mock).mockReturnValueOnce('csv content');
     ctx.app.southService.findById.mockReturnValueOnce(testData.south.list[0]);
     ctx.request.body = { delimiter: ';' };
 

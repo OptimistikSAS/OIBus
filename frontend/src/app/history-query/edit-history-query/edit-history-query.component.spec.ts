@@ -16,7 +16,7 @@ import { NorthConnectorCommandDTO, NorthConnectorManifest } from '../../../../..
 import { SouthConnectorCommandDTO, SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
-import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
 class EditHistoryQueryComponentTester extends ComponentTester<EditHistoryQueryComponent> {
   constructor() {
@@ -72,7 +72,7 @@ describe('EditHistoryQueryComponent', () => {
   let scanModeService: jasmine.SpyObj<ScanModeService>;
   let modalService: jasmine.SpyObj<ModalService>;
 
-  const historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
+  const historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings> = {
     id: 'id1',
     name: 'Test',
     description: 'My History query description',
@@ -100,7 +100,7 @@ describe('EditHistoryQueryComponent', () => {
         }
       }
     },
-    items: [
+    southItems: [
       {
         id: 'id1',
         name: 'item1',
@@ -109,7 +109,10 @@ describe('EditHistoryQueryComponent', () => {
           query: 'sql'
         } as SouthItemSettings
       }
-    ]
+    ],
+    northItems: [],
+    northTransformers: [],
+    southTransformers: []
   };
 
   beforeEach(() => {
@@ -152,7 +155,7 @@ describe('EditHistoryQueryComponent', () => {
           points: true
         },
         settings: [],
-        schema: {} as unknown
+        items: { settings: [] }
       } as NorthConnectorManifest)
     );
     southConnectorService.getSouthConnectorTypeManifest.and.returnValue(
@@ -228,7 +231,7 @@ describe('EditHistoryQueryComponent', () => {
       type: 'console',
       settings: historyQuery.northSettings,
       caching: historyQuery.caching
-    } as NorthConnectorCommandDTO<NorthSettings>;
+    } as NorthConnectorCommandDTO<NorthSettings, NorthItemSettings>;
 
     const spy = jasmine.createSpy();
     modalService.open.and.returnValue({

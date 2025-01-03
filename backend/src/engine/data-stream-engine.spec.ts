@@ -5,7 +5,7 @@ import DataStreamEngine from './data-stream-engine';
 import testData from '../tests/utils/test-data';
 import { OIBusRawContent, OIBusTimeValueContent } from '../../shared/model/engine.model';
 import NorthConnector from '../north/north-connector';
-import { NorthSettings } from '../../shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../shared/model/north-settings.model';
 import SouthConnector from '../south/south-connector';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import NorthConnectorMock from '../tests/__mocks__/north-connector.mock';
@@ -53,8 +53,8 @@ const anotherLogger: pino.Logger = new PinoLogger();
 
 describe('DataStreamEngine', () => {
   let engine: DataStreamEngine;
-  const mockedNorth1 = new NorthConnectorMock(testData.north.list[0]) as unknown as NorthConnector<NorthSettings>;
-  const mockedNorth2 = new NorthConnectorMock(testData.north.list[1]) as unknown as NorthConnector<NorthSettings>;
+  const mockedNorth1 = new NorthConnectorMock(testData.north.list[0]) as unknown as NorthConnector<NorthSettings, NorthItemSettings>;
+  const mockedNorth2 = new NorthConnectorMock(testData.north.list[1]) as unknown as NorthConnector<NorthSettings, NorthItemSettings>;
   const mockedSouth1 = new SouthConnectorMock(testData.south.list[0]) as unknown as SouthConnector<SouthSettings, SouthItemSettings>;
   const mockedSouth2 = new SouthConnectorMock(testData.south.list[1]) as unknown as SouthConnector<SouthSettings, SouthItemSettings>;
 
@@ -352,13 +352,22 @@ describe('DataStreamEngine', () => {
     expect(mockedNorth1.retryAllErrorValues).toHaveBeenCalledWith();
   });
 
-  it('should manage item change', async () => {
+  it('should manage south item change', async () => {
     await engine.start([], [mockedSouth1]);
 
-    await engine.reloadItems('bad id');
+    await engine.reloadSouthItems('bad id');
     expect(mockedSouth1.onItemChange).not.toHaveBeenCalled();
-    await engine.reloadItems(testData.south.list[0].id);
+    await engine.reloadSouthItems(testData.south.list[0].id);
     expect(mockedSouth1.onItemChange).toHaveBeenCalled();
+  });
+
+  it('should manage north item change', async () => {
+    await engine.start([mockedNorth1], []);
+
+    await engine.reloadNorthItems('bad id');
+    expect(mockedNorth1.onItemChange).not.toHaveBeenCalled();
+    await engine.reloadNorthItems(testData.north.list[0].id);
+    expect(mockedNorth1.onItemChange).toHaveBeenCalled();
   });
 
   it('should update north subscriptions', async () => {

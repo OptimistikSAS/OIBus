@@ -10,7 +10,7 @@ import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { flushPromises, mockBaseFolders } from '../../tests/utils/test-utils';
 import testData from '../../tests/utils/test-data';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../shared/model/north-settings.model';
 
 jest.mock('node:fs/promises');
 jest.mock('node:fs');
@@ -20,7 +20,7 @@ const logger: pino.Logger = new PinoLogger();
 const anotherLogger: pino.Logger = new PinoLogger();
 
 describe('FileCacheService without sendFileImmediately', () => {
-  let settings: NorthConnectorEntity<NorthSettings>;
+  let settings: NorthConnectorEntity<NorthSettings, NorthItemSettings>;
   let service: FileCache;
 
   beforeEach(() => {
@@ -452,7 +452,7 @@ describe('FileCacheService without sendFileImmediately', () => {
 });
 
 describe('FileCacheService with sendFileImmediately', () => {
-  let settings: NorthConnectorEntity<NorthSettings>;
+  let settings: NorthConnectorEntity<NorthSettings, NorthItemSettings>;
   let service: FileCache;
 
   beforeEach(() => {

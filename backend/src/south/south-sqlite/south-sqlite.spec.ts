@@ -77,6 +77,7 @@ describe('SouthSQLite', () => {
       },
       databasePath: './database.db'
     },
+    transformers: [],
     items: [
       {
         id: 'id1',
@@ -335,6 +336,7 @@ describe('SouthSQLite test connection', () => {
       },
       databasePath: './database.db'
     },
+    transformers: [],
     items: [
       {
         id: 'id1',

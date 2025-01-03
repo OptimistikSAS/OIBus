@@ -16,7 +16,10 @@ const manifest: NorthConnectorManifest = {
       validators: [{ key: 'required' }],
       displayInViewMode: true
     }
-  ]
+  ],
+  items: {
+    settings: []
+  }
 };
 
 export default manifest;
