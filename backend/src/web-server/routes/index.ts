@@ -272,7 +272,7 @@ router.put('/api/north/:northId/items/:id/enable', (ctx: KoaContext<void, void>)
 router.put('/api/north/:northId/items/:id/disable', (ctx: KoaContext<void, void>) => northConnectorController.disableNorthItem(ctx));
 router.delete('/api/north/:northId/items/all', (ctx: KoaContext<void, void>) => northConnectorController.deleteAllNorthItem(ctx));
 router.delete('/api/north/:northId/items/:id', (ctx: KoaContext<void, void>) => northConnectorController.deleteNorthItem(ctx));
-router.put('/api/north/:northId/cache/reset-metrics', (ctx: KoaContext<void, void>) => northConnectorController.resetMetrics(ctx));
+router.put('/api/north/:northId/cache/reset-metrics', (ctx: KoaContext<void, void>) => northConnectorController.resetNorthMetrics(ctx));
 
 router.get('/api/north/:northId/cache/values', (ctx: KoaContext<void, Array<NorthCacheFiles>>) =>
   northConnectorController.getCacheValues(ctx)

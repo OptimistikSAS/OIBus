@@ -109,6 +109,8 @@ import DataStreamEngine from '../engine/data-stream-engine';
 import { PassThrough } from 'node:stream';
 import { BaseFolders } from '../model/types';
 import { toTransformerDTO } from './transformer.service';
+import { Transformer } from '../model/transformer.model';
+import TransformerRepository from '../repository/config/transformer.repository';
 
 export const southManifestList: Array<SouthConnectorManifest> = [
   folderScannerManifest,
@@ -138,6 +140,7 @@ export default class SouthService {
     private readonly southMetricsRepository: SouthConnectorMetricsRepository,
     private readonly southCacheRepository: SouthCacheRepository,
     private readonly scanModeRepository: ScanModeRepository,
+    private readonly transformerRepository: TransformerRepository,
     private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
     private readonly certificateRepository: CertificateRepository,
     private readonly oIAnalyticsMessageService: OIAnalyticsMessageService,
@@ -378,7 +381,14 @@ export default class SouthService {
       ),
       name: southConnector ? southConnector.name : `${command!.type}:test-connection`,
       items: [],
-      transformers: [] // TODO
+      transformers: command.transformers.map(element => {
+        const foundTransformer = this.transformerRepository.searchTransformers({}).find(transformer => transformer.id === element.id);
+        if (!foundTransformer) throw new Error(`Transformer ${element.id} not found`);
+        return {
+          transformer: foundTransformer,
+          order: element.order
+        };
+      })
     };
 
     const south = this.runSouth(testToRun, async (_southId: string, _content: OIBusContent): Promise<void> => Promise.resolve(), logger, {
@@ -428,7 +438,14 @@ export default class SouthService {
       ),
       name: southConnector ? southConnector.name : `${command!.type}:test-connection`,
       items: [testItemToRun],
-      transformers: [] // TODO
+      transformers: command.transformers.map(element => {
+        const foundTransformer = this.transformerRepository.searchTransformers({}).find(transformer => transformer.id === element.id);
+        if (!foundTransformer) throw new Error(`Transformer ${element.id} not found`);
+        return {
+          transformer: foundTransformer,
+          order: element.order
+        };
+      })
     };
 
     const mockedAddContent = async (_southId: string, _content: OIBusContent): Promise<void> => Promise.resolve();
@@ -473,6 +490,7 @@ export default class SouthService {
       this.retrieveSecretsFromSouth(retrieveSecretsFromSouth, manifest),
       this.encryptionService,
       this.scanModeRepository.findAll(),
+      this.transformerRepository.searchTransformers({}),
       !!retrieveSecretsFromSouth
     );
     this.southConnectorRepository.saveSouthConnector(southEntity);
@@ -517,7 +535,8 @@ export default class SouthService {
       command,
       previousSettings,
       this.encryptionService,
-      this.scanModeRepository.findAll()
+      this.scanModeRepository.findAll(),
+      this.transformerRepository.searchTransformers({})
     );
     this.southConnectorRepository.saveSouthConnector(southEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
@@ -876,6 +895,7 @@ const copySouthConnectorCommandToSouthEntity = async <S extends SouthSettings, I
   currentSettings: SouthConnectorEntity<S, I> | null,
   encryptionService: EncryptionService,
   scanModes: Array<ScanMode>,
+  transformers: Array<Transformer>,
   retrieveSecretsFromSouth = false
 ): Promise<void> => {
   const manifest = southManifestList.find(element => element.id === command.type)!;
@@ -903,6 +923,14 @@ const copySouthConnectorCommandToSouthEntity = async <S extends SouthSettings, I
       return itemEntity;
     })
   );
+  southEntity.transformers = command.transformers.map(element => {
+    const foundTransformer = transformers.find(transformer => transformer.id === element.id);
+    if (!foundTransformer) throw new Error(`Transformer ${element.id} not found`);
+    return {
+      transformer: foundTransformer,
+      order: element.order
+    };
+  });
 };
 
 const copySouthItemCommandToSouthItemEntity = async <I extends SouthItemSettings>(

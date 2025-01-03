@@ -26,6 +26,7 @@ export default class NorthConnectorMock {
   cacheFile = jest.fn();
   isSubscribed = jest.fn();
   isCacheEmpty = jest.fn();
+  onItemChange = jest.fn();
   disconnect = jest.fn();
   stop = jest.fn();
   setLogger = jest.fn();

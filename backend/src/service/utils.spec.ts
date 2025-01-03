@@ -30,7 +30,8 @@ import {
   logQuery,
   persistResults,
   unzip,
-  validateCronExpression
+  validateCronExpression,
+  northItemToFlattenedCSV
 } from './utils';
 import csv from 'papaparse';
 import pino from 'pino';
@@ -1223,7 +1224,7 @@ describe('Service utils', () => {
     });
   });
 
-  describe('itemToFlattenedCSV', () => {
+  describe('southItemToFlattenedCSV', () => {
     beforeEach(() => {
       jest.resetAllMocks();
       jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
@@ -1243,6 +1244,29 @@ describe('Service utils', () => {
           ],
           ',',
           testData.scanMode.list
+        )
+      ).toEqual('csv content');
+    });
+  });
+
+  describe('northItemToFlattenedCSV', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    });
+
+    it('should properly concert items into csv', () => {
+      (csv.unparse as jest.Mock).mockReturnValue('csv content');
+
+      expect(
+        northItemToFlattenedCSV(
+          [
+            ...testData.north.list[0].items.map(item => ({ ...item, settings: { ...item.settings, objectSettings: {}, aField: 'field' } })),
+            {
+              ...testData.north.list[0].items[0]
+            }
+          ],
+          ','
         )
       ).toEqual('csv content');
     });

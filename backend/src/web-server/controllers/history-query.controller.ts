@@ -208,7 +208,7 @@ export default class HistoryQueryController extends AbstractController {
     };
     const page = ctx.app.historyQueryService.searchNorthHistoryQueryItems(ctx.params.historyQueryId, searchParams);
     ctx.ok({
-      content: page.content.map(item => toNorthHistoryQueryItemDTO(item, historyQuery.southType, ctx.app.encryptionService)),
+      content: page.content.map(item => toNorthHistoryQueryItemDTO(item, historyQuery.northType, ctx.app.encryptionService)),
       totalElements: page.totalElements,
       size: page.size,
       number: page.number,
@@ -268,7 +268,7 @@ export default class HistoryQueryController extends AbstractController {
     }
     try {
       const item = await ctx.app.historyQueryService.createNorthHistoryQueryItem(ctx.params.historyQueryId, ctx.request.body!);
-      ctx.created(toNorthHistoryQueryItemDTO(item, historyQuery.southType, ctx.app.encryptionService));
+      ctx.created(toNorthHistoryQueryItemDTO(item, historyQuery.northType, ctx.app.encryptionService));
     } catch (error: unknown) {
       ctx.badRequest((error as Error).message);
     }

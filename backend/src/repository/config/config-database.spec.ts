@@ -30,7 +30,7 @@ import OIAnalyticsMessageRepository from './oianalytics-message.repository';
 import SouthConnectorRepository from './south-connector.repository';
 import NorthConnectorRepository from './north-connector.repository';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
-import { NorthConnectorEntity } from '../../model/north-connector.model';
+import { NorthConnectorEntity, NorthConnectorItemEntity } from '../../model/north-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { NorthItemSettings, NorthSettings } from '../../../shared/model/north-settings.model';
 import CertificateRepository from './certificate.repository';
@@ -1067,6 +1067,7 @@ describe('Repository with populated database', () => {
       newNorthConnector.id = '';
       newNorthConnector.name = 'new connector';
       newNorthConnector.subscriptions = [];
+      newNorthConnector.items = [];
       repository.saveNorthConnector(newNorthConnector);
 
       expect(newNorthConnector.id).toEqual('newId');
@@ -1088,6 +1089,15 @@ describe('Repository with populated database', () => {
           type: testData.south.list[1].type,
           description: testData.south.list[1].description,
           enabled: testData.south.list[1].enabled
+        }
+      ];
+      newNorthConnector.items = [
+        ...testData.north.list[1].items,
+        {
+          id: '',
+          name: 'new item',
+          enabled: true,
+          settings: {} as NorthItemSettings
         }
       ];
       repository.saveNorthConnector(newNorthConnector);
@@ -1128,6 +1138,105 @@ describe('Repository with populated database', () => {
       repository.deleteAllSubscriptionsByNorth(testData.north.list[1].id);
       expect(repository.checkSubscription(testData.north.list[1].id, testData.south.list[0].id)).toEqual(false);
     });
+
+    it('should list items', () => {
+      const results = repository.listItems(testData.north.list[1].id, {
+        enabled: true,
+        name: 'item'
+      });
+      expect(results.length).toEqual(2);
+    });
+
+    it('should search items', () => {
+      const results = repository.searchItems(testData.north.list[1].id, {
+        enabled: true,
+        name: 'item',
+        page: 0
+      });
+      expect(results.totalElements).toEqual(2);
+
+      expect(
+        repository.searchItems(testData.north.list[1].id, {
+          enabled: true,
+          name: 'item'
+        }).totalElements
+      ).toEqual(2);
+    });
+
+    it('should find items', () => {
+      const results = repository.findAllItemsForNorth(testData.north.list[1].id);
+      expect(results.length).toEqual(2);
+    });
+
+    it('should find item', () => {
+      const result = repository.findItemById(testData.north.list[1].id, testData.north.list[1].items[0].id);
+      expect(result).toEqual(testData.north.list[1].items[0]);
+      expect(repository.findItemById(testData.north.list[0].id, testData.north.list[1].items[0].id)).toEqual(null);
+    });
+
+    it('should delete item', () => {
+      repository.deleteItem(testData.north.list[1].items[0].id);
+      expect(repository.findItemById(testData.north.list[1].id, testData.north.list[1].items[0].id)).toEqual(null);
+    });
+
+    it('should delete all item by north', () => {
+      repository.deleteAllItemsByNorth(testData.north.list[1].id);
+      expect(repository.findAllItemsForNorth(testData.north.list[1].id).length).toEqual(0);
+    });
+
+    it('should disable and enable item', () => {
+      repository.disableItem(testData.north.list[0].items[0].id);
+      expect(repository.findItemById(testData.north.list[0].id, testData.north.list[0].items[0].id)!.enabled).toEqual(false);
+      repository.enableItem(testData.north.list[0].items[0].id);
+      expect(repository.findItemById(testData.north.list[0].id, testData.north.list[0].items[0].id)!.enabled).toEqual(true);
+    });
+
+    it('should save all items without removing existing items', () => {
+      (generateRandomId as jest.Mock).mockReturnValueOnce('newItemIdNorth1');
+
+      const itemsToSave: Array<NorthConnectorItemEntity<NorthItemSettings>> = JSON.parse(JSON.stringify(testData.north.list[0].items));
+      itemsToSave.push({
+        id: '',
+        name: 'new item',
+        enabled: false,
+        settings: {} as NorthItemSettings
+      });
+      itemsToSave[0].name = 'updated name';
+
+      repository.saveAllItems(testData.north.list[0].id, itemsToSave, false);
+
+      const results = repository.findAllItemsForNorth(testData.north.list[0].id);
+      expect(results.length).toEqual(3);
+
+      expect(repository.findItemById(testData.north.list[0].id, testData.north.list[0].items[0].id)!.name).toEqual(itemsToSave[0].name);
+      expect(repository.findItemById(testData.north.list[0].id, 'newItemIdNorth1')!.id).toEqual('newItemIdNorth1');
+    });
+
+    it('should save all items and remove existing items', () => {
+      (generateRandomId as jest.Mock)
+        .mockReturnValueOnce('newItemIdNorth1')
+        .mockReturnValueOnce('newItemIdNorth2')
+        .mockReturnValueOnce('newItemIdNorth3');
+
+      const itemsToSave: Array<NorthConnectorItemEntity<NorthItemSettings>> = JSON.parse(JSON.stringify(testData.north.list[0].items)).map(
+        (item: NorthConnectorItemEntity<NorthItemSettings>) => ({ ...item, id: '' })
+      );
+      itemsToSave.push({
+        id: '',
+        name: 'new item',
+        enabled: false,
+        settings: {} as NorthItemSettings
+      });
+
+      repository.saveAllItems(testData.north.list[0].id, itemsToSave, true);
+
+      const results = repository.findAllItemsForNorth(testData.north.list[0].id);
+      expect(results.length).toEqual(3);
+
+      expect(repository.findItemById(testData.north.list[0].id, 'newItemIdNorth1')!.id).toEqual('newItemIdNorth1');
+      expect(repository.findItemById(testData.north.list[0].id, 'newItemIdNorth2')!.id).toEqual('newItemIdNorth2');
+      expect(repository.findItemById(testData.north.list[0].id, 'newItemIdNorth3')!.id).toEqual('newItemIdNorth3');
+    });
   });
 
   describe('History query', () => {
@@ -1167,6 +1276,7 @@ describe('Repository with populated database', () => {
       newHistoryQuery.id = '';
       newHistoryQuery.name = 'new history query';
       newHistoryQuery.southItems = [];
+      newHistoryQuery.northItems = [];
       repository.saveHistoryQuery(newHistoryQuery);
 
       expect(newHistoryQuery.id).toEqual('newId');
@@ -1192,6 +1302,15 @@ describe('Repository with populated database', () => {
           settings: {} as SouthItemSettings
         }
       ];
+      newHistoryQuery.northItems = [
+        ...testData.historyQueries.list[0].northItems,
+        {
+          id: '',
+          name: 'new item',
+          enabled: true,
+          settings: {} as NorthItemSettings
+        }
+      ];
       repository.saveHistoryQuery(newHistoryQuery);
 
       const updatedHistoryQuery = repository.findHistoryQueryById(newHistoryQuery.id)!;
@@ -1209,7 +1328,7 @@ describe('Repository with populated database', () => {
       expect(repository.findHistoryQueryById(testData.historyQueries.list[0].id)!.status).toEqual('FINISHED');
     });
 
-    it('should list items', () => {
+    it('should list south items', () => {
       const results = repository.listSouthHistoryQueryItems(testData.historyQueries.list[1].id, {
         enabled: true,
         name: 'item'
@@ -1217,7 +1336,7 @@ describe('Repository with populated database', () => {
       expect(results.length).toEqual(1);
     });
 
-    it('should search items', () => {
+    it('should search south items', () => {
       const results = repository.searchSouthHistoryQueryItems(testData.historyQueries.list[1].id, {
         enabled: true,
         name: 'item',
@@ -1233,12 +1352,12 @@ describe('Repository with populated database', () => {
       ).toEqual(1);
     });
 
-    it('should find items', () => {
+    it('should find south items', () => {
       const results = repository.findAllSouthItemsForHistoryQuery(testData.historyQueries.list[1].id);
       expect(results.length).toEqual(1);
     });
 
-    it('should find item', () => {
+    it('should find south item', () => {
       const result = repository.findSouthHistoryQueryItemById(
         testData.historyQueries.list[1].id,
         testData.historyQueries.list[1].southItems[0].id
@@ -1249,19 +1368,19 @@ describe('Repository with populated database', () => {
       ).toEqual(null);
     });
 
-    it('should delete item', () => {
+    it('should delete south item', () => {
       repository.deleteSouthHistoryQueryItem(testData.historyQueries.list[1].southItems[0].id);
       expect(
         repository.findSouthHistoryQueryItemById(testData.historyQueries.list[1].id, testData.historyQueries.list[1].southItems[0].id)
       ).toEqual(null);
     });
 
-    it('should delete all item by south', () => {
+    it('should delete all south items by history query', () => {
       repository.deleteAllSouthHistoryQueryItemsByHistoryQuery(testData.historyQueries.list[1].id);
       expect(repository.findAllSouthItemsForHistoryQuery(testData.historyQueries.list[1].id).length).toEqual(0);
     });
 
-    it('should disable and enable item', () => {
+    it('should disable and enable south item', () => {
       repository.disableSouthHistoryQueryItem(testData.historyQueries.list[0].southItems[0].id);
       expect(
         repository.findSouthHistoryQueryItemById(testData.historyQueries.list[0].id, testData.historyQueries.list[0].southItems[0].id)!
@@ -1274,7 +1393,7 @@ describe('Repository with populated database', () => {
       ).toEqual(true);
     });
 
-    it('should save all items', () => {
+    it('should save all south items', () => {
       (generateRandomId as jest.Mock).mockReturnValueOnce('newItemIdHistory1');
 
       const itemsToSave: Array<SouthHistoryQueryItemEntity<SouthItemSettings>> = JSON.parse(
@@ -1297,6 +1416,98 @@ describe('Repository with populated database', () => {
         repository.findSouthHistoryQueryItemById(testData.historyQueries.list[0].id, testData.historyQueries.list[0].southItems[0].id)!.name
       ).toEqual(itemsToSave[0].name);
       expect(repository.findSouthHistoryQueryItemById(testData.historyQueries.list[0].id, 'newItemIdHistory1')!.id).toEqual(
+        'newItemIdHistory1'
+      );
+    });
+
+    it('should list north items', () => {
+      const results = repository.listNorthHistoryQueryItems(testData.historyQueries.list[1].id, {
+        enabled: true,
+        name: 'item'
+      });
+      expect(results.length).toEqual(1);
+    });
+
+    it('should search north items', () => {
+      const results = repository.searchNorthHistoryQueryItems(testData.historyQueries.list[1].id, {
+        enabled: true,
+        name: 'item',
+        page: 0
+      });
+      expect(results.totalElements).toEqual(1);
+
+      expect(
+        repository.searchNorthHistoryQueryItems(testData.historyQueries.list[1].id, {
+          enabled: true,
+          name: 'item'
+        }).totalElements
+      ).toEqual(1);
+    });
+
+    it('should find north items', () => {
+      const results = repository.findAllNorthItemsForHistoryQuery(testData.historyQueries.list[1].id);
+      expect(results.length).toEqual(1);
+    });
+
+    it('should find north item', () => {
+      const result = repository.findNorthHistoryQueryItemById(
+        testData.historyQueries.list[1].id,
+        testData.historyQueries.list[1].northItems[0].id
+      );
+      expect(result).toEqual(testData.historyQueries.list[1].northItems[0]);
+      expect(
+        repository.findNorthHistoryQueryItemById(testData.historyQueries.list[0].id, testData.historyQueries.list[1].northItems[0].id)
+      ).toEqual(null);
+    });
+
+    it('should delete north item', () => {
+      repository.deleteNorthHistoryQueryItem(testData.historyQueries.list[1].northItems[0].id);
+      expect(
+        repository.findNorthHistoryQueryItemById(testData.historyQueries.list[1].id, testData.historyQueries.list[1].northItems[0].id)
+      ).toEqual(null);
+    });
+
+    it('should delete all north items by north', () => {
+      repository.deleteAllNorthHistoryQueryItemsByHistoryQuery(testData.historyQueries.list[1].id);
+      expect(repository.findAllNorthItemsForHistoryQuery(testData.historyQueries.list[1].id).length).toEqual(0);
+    });
+
+    it('should disable and enable north item', () => {
+      repository.disableNorthHistoryQueryItem(testData.historyQueries.list[0].northItems[0].id);
+      expect(
+        repository.findNorthHistoryQueryItemById(testData.historyQueries.list[0].id, testData.historyQueries.list[0].northItems[0].id)!
+          .enabled
+      ).toEqual(false);
+      repository.enableNorthHistoryQueryItem(testData.historyQueries.list[0].northItems[0].id);
+      expect(
+        repository.findNorthHistoryQueryItemById(testData.historyQueries.list[0].id, testData.historyQueries.list[0].northItems[0].id)!
+          .enabled
+      ).toEqual(true);
+    });
+
+    it('should save all north items without removing existing items', () => {
+      (generateRandomId as jest.Mock).mockReturnValueOnce('newItemIdHistory1');
+
+      const itemsToSave: Array<NorthConnectorItemEntity<NorthItemSettings>> = JSON.parse(
+        JSON.stringify(testData.historyQueries.list[0].northItems)
+      );
+      itemsToSave.push({
+        id: '',
+        name: 'new history item',
+        enabled: false,
+        settings: {} as NorthItemSettings
+      });
+      itemsToSave[0].name = 'updated name';
+
+      repository.saveAllNorthItems(testData.historyQueries.list[0].id, itemsToSave);
+
+      const results = repository.findAllNorthItemsForHistoryQuery(testData.historyQueries.list[0].id);
+      expect(results.length).toEqual(4);
+
+      expect(
+        repository.findNorthHistoryQueryItemById(testData.historyQueries.list[0].id, testData.historyQueries.list[0].northItems[0].id)!.name
+      ).toEqual(itemsToSave[0].name);
+      expect(repository.findNorthHistoryQueryItemById(testData.historyQueries.list[0].id, 'newItemIdHistory1')!.id).toEqual(
         'newItemIdHistory1'
       );
     });

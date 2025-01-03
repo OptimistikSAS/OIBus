@@ -109,6 +109,7 @@ const testSouthConnectorCommand: SouthConnectorCommandDTO<SouthSettings, SouthIt
   template: `<oib-history-query-items
     [historyId]="historyId"
     [southConnectorCommand]="southConnectorCommand"
+    [historyQuery]="historyQuery"
     [southManifest]="manifest"
     [saveChangesDirectly]="saveChangesDirectly"
     (inMemoryItems)="updateInMemoryItems($event)"

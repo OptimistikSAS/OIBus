@@ -89,6 +89,7 @@ const testSouthConnectorCommand: SouthConnectorCommandDTO<SouthSettings, SouthIt
   template: `<oib-south-items
     southId="southId"
     [southConnectorCommand]="southConnectorCommand"
+    [southConnector]="southConnector"
     [scanModes]="scanModes"
     [southManifest]="manifest"
     [saveChangesDirectly]="saveChangesDirectly"
