@@ -536,11 +536,11 @@ const createTransformer = async (database: knex.Knex, transformer: Transformer) 
 };
 
 const createNorthTransformer = async (database: knex.Knex, northId: string, transformerId: string, order: number) => {
-  await database.insert({ north_id: northId, transformer_id: transformerId, order }).into('north_transformers');
+  await database.insert({ north_id: northId, transformer_id: transformerId, transformer_order: order }).into('north_transformers');
 };
 
 const createSouthTransformer = async (database: knex.Knex, southId: string, transformerId: string, order: number) => {
-  await database.insert({ south_id: southId, transformer_id: transformerId, order }).into('south_transformers');
+  await database.insert({ south_id: southId, transformer_id: transformerId, transformer_order: order }).into('south_transformers');
 };
 
 const createHistoryQueryTransformer = async (
@@ -550,7 +550,9 @@ const createHistoryQueryTransformer = async (
   order: number,
   type: 'south' | 'north'
 ) => {
-  await database.insert({ history_id: historyId, type, transformer_id: transformerId, order }).into('south_transformers');
+  await database
+    .insert({ history_id: historyId, connector_type: type, transformer_id: transformerId, transformer_order: order })
+    .into('history_transformers');
 };
 
 const createSubscription = async (database: knex.Knex, northId: string, southId: string) => {

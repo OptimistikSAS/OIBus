@@ -1,6 +1,10 @@
 import { ScanMode } from '../../model/scan-mode.model';
 import { ScanModeCommandDTO } from '../../../shared/model/scan-mode.model';
-import { NorthConnectorCommandDTO, NorthConnectorManifest } from '../../../shared/model/north-connector.model';
+import {
+  NorthConnectorCommandDTO,
+  NorthConnectorItemCommandDTO,
+  NorthConnectorManifest
+} from '../../../shared/model/north-connector.model';
 import {
   SouthConnectorCommandDTO,
   SouthConnectorItemCommandDTO,
@@ -28,7 +32,11 @@ import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-se
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { NorthItemSettings, NorthSettings } from '../../../shared/model/north-settings.model';
 import { HistoryQueryEntity } from '../../model/histor-query.model';
-import { HistoryQueryCommandDTO, HistoryQuerySouthItemCommandDTO } from '../../../shared/model/history-query.model';
+import {
+  HistoryQueryCommandDTO,
+  HistoryQueryNorthItemCommandDTO,
+  HistoryQuerySouthItemCommandDTO
+} from '../../../shared/model/history-query.model';
 import { User } from '../../model/user.model';
 import { Certificate } from '../../model/certificate.model';
 import { OIBusLog } from '../../model/logs.model';
@@ -256,7 +264,10 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         scanModeId: scanModes[1].id
       }
     ],
-    transformers: []
+    transformers: [
+      { order: 0, transformer: transformers[0] },
+      { order: 1, transformer: transformers[1] }
+    ]
   },
   {
     id: 'southId2',
@@ -291,7 +302,10 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         scanModeId: scanModes[0].id
       }
     ],
-    transformers: []
+    transformers: [
+      { order: 0, transformer: transformers[0] },
+      { order: 1, transformer: transformers[1] }
+    ]
   },
   {
     id: 'southId3',
@@ -355,7 +369,10 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         scanModeId: scanModes[0].id
       }
     ],
-    transformers: []
+    transformers: [
+      { order: 0, transformer: transformers[0] },
+      { order: 1, transformer: transformers[1] }
+    ]
   }
 ];
 const southConnectorCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
@@ -464,8 +481,24 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings, NorthItemSettin
         enabled: southConnectors[1].enabled
       }
     ],
-    items: [],
-    transformers: []
+    items: [
+      {
+        id: 'northItem1',
+        name: 'item1',
+        enabled: true,
+        settings: {} as NorthItemSettings
+      },
+      {
+        id: 'northItem2',
+        name: 'item2',
+        enabled: true,
+        settings: {} as NorthItemSettings
+      }
+    ],
+    transformers: [
+      { order: 0, transformer: transformers[0] },
+      { order: 1, transformer: transformers[1] }
+    ]
   },
   {
     id: 'northId2',
@@ -504,8 +537,18 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings, NorthItemSettin
         enabled: southConnectors[0].enabled
       }
     ],
-    items: [],
-    transformers: []
+    items: [
+      {
+        id: 'northItem4',
+        name: 'item4',
+        enabled: true,
+        settings: {} as NorthItemSettings
+      }
+    ],
+    transformers: [
+      { order: 0, transformer: transformers[0] },
+      { order: 1, transformer: transformers[1] }
+    ]
   }
 ];
 const northConnectorCommand: NorthConnectorCommandDTO<NorthSettings, NorthItemSettings> = {
@@ -537,11 +580,29 @@ const northConnectorCommand: NorthConnectorCommandDTO<NorthSettings, NorthItemSe
     }
   },
   subscriptions: [southConnectors[0].id],
-  items: [],
+  items: [
+    {
+      id: 'northItem5',
+      name: 'item5',
+      enabled: true,
+      settings: {} as NorthItemSettings
+    }
+  ],
   transformers: [
     { order: 0, id: 'transformerId1' },
     { order: 1, id: 'transformerId2' }
   ]
+};
+const northConnectorItemCommand: NorthConnectorItemCommandDTO<NorthItemSettings> = {
+  id: 'newNorthItemId',
+  name: 'New North Item',
+  enabled: true,
+  settings: {
+    regex: '*',
+    minAge: 100,
+    preserveFiles: true,
+    ignoreModifiedDate: false
+  }
 };
 
 const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings>> = [
@@ -595,21 +656,40 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
     },
     southItems: [
       {
-        id: 'historyQueryItem1',
+        id: 'southHistoryQueryItem1',
         name: 'item1',
         enabled: true,
         settings: {} as SouthItemSettings
       },
       {
-        id: 'historyQueryItem2',
+        id: 'southHistoryQueryItem2',
         name: 'item2',
         enabled: true,
         settings: {} as SouthItemSettings
       }
     ],
-    northItems: [],
-    southTransformers: [],
-    northTransformers: []
+    northItems: [
+      {
+        id: 'northHistoryQueryItem1',
+        name: 'item1',
+        enabled: true,
+        settings: {} as NorthItemSettings
+      },
+      {
+        id: 'northHistoryQueryItem2',
+        name: 'item2',
+        enabled: true,
+        settings: {} as NorthItemSettings
+      }
+    ],
+    southTransformers: [
+      { order: 0, transformer: transformers[0] },
+      { order: 1, transformer: transformers[1] }
+    ],
+    northTransformers: [
+      { order: 0, transformer: transformers[0] },
+      { order: 1, transformer: transformers[1] }
+    ]
   },
   {
     id: 'historyId2',
@@ -661,15 +741,28 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
     },
     southItems: [
       {
-        id: 'historyQueryItem3',
+        id: 'southHistoryQueryItem3',
         name: 'item3',
         enabled: true,
         settings: {} as SouthItemSettings
       }
     ],
-    northItems: [],
-    southTransformers: [],
-    northTransformers: []
+    northItems: [
+      {
+        id: 'northHistoryQueryItem3',
+        name: 'item3',
+        enabled: true,
+        settings: {} as NorthItemSettings
+      }
+    ],
+    southTransformers: [
+      { order: 0, transformer: transformers[0] },
+      { order: 1, transformer: transformers[1] }
+    ],
+    northTransformers: [
+      { order: 0, transformer: transformers[0] },
+      { order: 1, transformer: transformers[1] }
+    ]
   }
 ];
 const historyQueryCommand: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings> = {
@@ -721,19 +814,40 @@ const historyQueryCommand: HistoryQueryCommandDTO<SouthSettings, NorthSettings, 
   },
   southItems: [
     {
-      id: 'historyQueryItem4',
+      id: 'southHistoryQueryItem4',
       name: 'item4',
       enabled: true,
       settings: {} as SouthItemSettings
     }
   ],
-  northItems: []
+  northItems: [
+    {
+      id: 'northHistoryQueryItem4',
+      name: 'item4',
+      enabled: true,
+      settings: {} as NorthItemSettings
+    }
+  ],
+  southTransformers: [
+    { order: 0, id: 'transformerId1' },
+    { order: 1, id: 'transformerId2' }
+  ],
+  northTransformers: [
+    { order: 0, id: 'transformerId1' },
+    { order: 1, id: 'transformerId2' }
+  ]
 };
-const historyQueryItemCommand: HistoryQuerySouthItemCommandDTO<SouthItemSettings> = {
-  id: 'newHistoryQueryItemId',
-  name: 'New History query Item',
+const historyQuerySouthItemCommand: HistoryQuerySouthItemCommandDTO<SouthItemSettings> = {
+  id: 'newSouthHistoryQueryItemId',
+  name: 'New South History query Item',
   enabled: true,
   settings: {} as SouthItemSettings
+};
+const historyQueryNorthItemCommand: HistoryQueryNorthItemCommandDTO<NorthItemSettings> = {
+  id: 'newNorthHistoryQueryItemId',
+  name: 'New North History query Item',
+  enabled: true,
+  settings: {} as NorthItemSettings
 };
 
 const engineSettings: EngineSettings = {
@@ -1512,6 +1626,7 @@ export default Object.freeze({
   north: {
     list: northConnectors,
     command: northConnectorCommand,
+    itemCommand: northConnectorItemCommand,
     manifest: northTestManifest,
     metrics: northMetrics
   },
@@ -1526,7 +1641,8 @@ export default Object.freeze({
   historyQueries: {
     list: historyQueries,
     command: historyQueryCommand,
-    southItemCommand: historyQueryItemCommand,
+    southItemCommand: historyQuerySouthItemCommand,
+    northItemCommand: historyQueryNorthItemCommand,
     metrics: historyQueryMetrics
   },
   users: {

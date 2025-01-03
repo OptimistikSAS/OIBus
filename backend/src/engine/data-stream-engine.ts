@@ -377,6 +377,10 @@ export default class DataStreamEngine {
     await this.southConnectors.get(southId)?.onItemChange();
   }
 
+  async reloadNorthItems(northId: string): Promise<void> {
+    await this.northConnectors.get(northId)?.onItemChange();
+  }
+
   async reloadSouth(southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings>) {
     await this.stopSouth(southConnector.id);
     const south = this.southConnectors.get(southConnector.id);

@@ -63,6 +63,8 @@ import { ReadStream } from 'node:fs';
 import { toTransformerDTO } from './transformer.service';
 import multer from '@koa/multer';
 import csv from 'papaparse';
+import { Transformer } from '../model/transformer.model';
+import TransformerRepository from '../repository/config/transformer.repository';
 
 export const northManifestList: Array<NorthConnectorManifest> = [
   consoleManifest,
@@ -80,6 +82,7 @@ export default class NorthService {
     private southConnectorRepository: SouthConnectorRepository,
     private northMetricsRepository: NorthConnectorMetricsRepository,
     private scanModeRepository: ScanModeRepository,
+    private transformerRepository: TransformerRepository,
     private logRepository: LogRepository,
     private readonly certificateRepository: CertificateRepository,
     private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
@@ -189,7 +192,14 @@ export default class NorthService {
       name: northConnector ? northConnector.name : `${command!.type}:test-connection`,
       subscriptions: [],
       items: [],
-      transformers: []
+      transformers: command.transformers.map(element => {
+        const foundTransformer = this.transformerRepository.searchTransformers({}).find(transformer => transformer.id === element.id);
+        if (!foundTransformer) throw new Error(`Transformer ${element.id} not found`);
+        return {
+          transformer: foundTransformer,
+          order: element.order
+        };
+      })
     };
 
     const north = this.runNorth(testToRun, logger, {
@@ -229,7 +239,9 @@ export default class NorthService {
       this.retrieveSecretsFromNorth(retrieveSecretsFromNorth, manifest),
       this.encryptionService,
       this.scanModeRepository.findAll(),
-      this.southConnectorRepository.findAllSouth()
+      this.transformerRepository.searchTransformers({}),
+      this.southConnectorRepository.findAllSouth(),
+      !!retrieveSecretsFromNorth
     );
     this.northConnectorRepository.saveNorthConnector(northEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
@@ -393,6 +405,7 @@ export default class NorthService {
       previousSettings,
       this.encryptionService,
       this.scanModeRepository.findAll(),
+      this.transformerRepository.searchTransformers({}),
       this.southConnectorRepository.findAllSouth()
     );
     this.northConnectorRepository.saveNorthConnector(northEntity);
@@ -530,6 +543,7 @@ export default class NorthService {
     await copyNorthItemCommandToNorthItemEntity<I>(northItemEntity, command, null, northConnector.type, this.encryptionService);
     this.northConnectorRepository.saveItem<I>(northConnector.id, northItemEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    await this.dataStreamEngine.reloadNorthItems(northConnector.id);
     return northItemEntity;
   }
 
@@ -554,6 +568,7 @@ export default class NorthService {
     await copyNorthItemCommandToNorthItemEntity<I>(northItemEntity, command, previousSettings, northConnector.type, this.encryptionService);
     this.northConnectorRepository.saveItem<I>(northConnectorId, northItemEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    await this.dataStreamEngine.reloadNorthItems(northConnector.id);
   }
 
   async deleteItem(northConnectorId: string, itemId: string): Promise<void> {
@@ -565,6 +580,7 @@ export default class NorthService {
     if (!northItem) throw new Error(`North item ${itemId} not found`);
     this.northConnectorRepository.deleteItem(northItem.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    await this.dataStreamEngine.reloadNorthItems(northConnector.id);
   }
 
   async deleteAllItemsForNorthConnector(northConnectorId: string): Promise<void> {
@@ -574,6 +590,8 @@ export default class NorthService {
     }
     this.northConnectorRepository.deleteAllItemsByNorth(northConnectorId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+
+    await this.dataStreamEngine.reloadNorthItems(northConnector.id);
   }
 
   async enableItem(northConnectorId: string, itemId: string): Promise<void> {
@@ -581,6 +599,8 @@ export default class NorthService {
     if (!northItem) throw new Error(`North item ${itemId} not found`);
     this.northConnectorRepository.enableItem(northItem.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+
+    await this.dataStreamEngine.reloadNorthItems(northConnectorId);
   }
 
   async disableItem(northConnectorId: string, itemId: string): Promise<void> {
@@ -588,6 +608,8 @@ export default class NorthService {
     if (!northItem) throw new Error(`North item ${itemId} not found`);
     this.northConnectorRepository.disableItem(northItem.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+
+    await this.dataStreamEngine.reloadNorthItems(northConnectorId);
   }
 
   async checkCsvFileImport<I extends NorthItemSettings>(
@@ -696,6 +718,8 @@ export default class NorthService {
 
     this.northConnectorRepository.saveAllItems(northConnector.id, itemsToAdd, deleteItemsNotPresent);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+
+    await this.dataStreamEngine.reloadNorthItems(northConnectorId);
   }
 
   private async deleteBaseFolders(north: NorthConnectorEntity<NorthSettings, NorthItemSettings>) {
@@ -820,7 +844,9 @@ export const copyNorthConnectorCommandToNorthEntity = async <N extends NorthSett
   currentSettings: NorthConnectorEntity<N, I> | null,
   encryptionService: EncryptionService,
   scanModes: Array<ScanMode>,
-  southConnectors: Array<SouthConnectorLightDTO>
+  transformers: Array<Transformer>,
+  southConnectors: Array<SouthConnectorLightDTO>,
+  retrieveSecretsFromNorth = false
 ): Promise<void> => {
   northEntity.name = command.name;
   northEntity.type = command.type;
@@ -855,7 +881,28 @@ export const copyNorthConnectorCommandToNorthEntity = async <N extends NorthSett
     }
     return subscription;
   });
-  // TODO
+  northEntity.items = await Promise.all(
+    command.items.map(async itemCommand => {
+      const itemEntity = {} as NorthConnectorItemEntity<I>;
+      await copyNorthItemCommandToNorthItemEntity(
+        itemEntity,
+        itemCommand,
+        currentSettings?.items.find(element => element.id === itemCommand.id) || null,
+        northEntity.type,
+        encryptionService,
+        retrieveSecretsFromNorth
+      );
+      return itemEntity;
+    })
+  );
+  northEntity.transformers = command.transformers.map(element => {
+    const foundTransformer = transformers.find(transformer => transformer.id === element.id);
+    if (!foundTransformer) throw new Error(`Transformer ${element.id} not found`);
+    return {
+      transformer: foundTransformer,
+      order: element.order
+    };
+  });
 };
 
 export const toNorthConnectorItemDTO = <I extends NorthItemSettings>(

@@ -5,7 +5,7 @@ import { ScanModeCommandDTO } from '../../shared/model/scan-mode.model';
 import { SouthConnectorCommandDTO } from '../../shared/model/south-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { NorthConnectorCommandDTO } from '../../shared/model/north-connector.model';
-import { NorthSettings } from '../../shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../shared/model/north-settings.model';
 
 export interface BaseOIBusCommand extends BaseEntity {
   type: OIBusCommandType;
@@ -85,13 +85,13 @@ export interface OIBusDeleteSouthConnectorCommand extends BaseOIBusCommand {
 export interface OIBusCreateNorthConnectorCommand extends BaseOIBusCommand {
   type: 'create-north';
   northConnectorId: string | null; // used to retrieve passwords in case of duplicate
-  commandContent: NorthConnectorCommandDTO<NorthSettings>;
+  commandContent: NorthConnectorCommandDTO<NorthSettings, NorthItemSettings>;
 }
 
 export interface OIBusUpdateNorthConnectorCommand extends BaseOIBusCommand {
   type: 'update-north';
   northConnectorId: string;
-  commandContent: NorthConnectorCommandDTO<NorthSettings>;
+  commandContent: NorthConnectorCommandDTO<NorthSettings, NorthItemSettings>;
 }
 
 export interface OIBusDeleteNorthConnectorCommand extends BaseOIBusCommand {

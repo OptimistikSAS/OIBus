@@ -652,6 +652,13 @@ export default abstract class NorthConnector<T extends NorthSettings, I extends 
     await this.valueCacheService.retryAllErrorValues();
   }
 
+  /**
+   * Reset on item changes
+   */
+  async onItemChange(): Promise<void> {
+    this.connector.items = this.northConnectorRepository.findAllItemsForNorth(this.connector.id);
+  }
+
   async updateScanMode(scanMode: ScanMode): Promise<void> {
     if (this.cronByScanModeIds.get(scanMode.id)) {
       this.createCronJob(scanMode);

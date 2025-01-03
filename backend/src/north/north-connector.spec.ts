@@ -691,4 +691,9 @@ describe('NorthConnector test', () => {
   it('should check if North caches are empty', async () => {
     expect(await north.isCacheEmpty()).toBeFalsy();
   });
+
+  it('should manage item changes', async () => {
+    await north.onItemChange();
+    expect(northConnectorRepository.findAllItemsForNorth).toHaveBeenCalled();
+  });
 });

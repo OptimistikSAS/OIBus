@@ -164,10 +164,10 @@ export default class NorthConnectorRepository {
 
   deleteNorth(id: string): void {
     const transaction = this.database.transaction(() => {
+      this.database.prepare(`DELETE FROM ${NORTH_ITEMS_TABLE} WHERE connector_id = ?;`).run(id);
+      this.database.prepare(`DELETE FROM ${NORTH_TRANSFORMERS_TABLE} WHERE north_id = ?;`).run(id);
       this.database.prepare(`DELETE FROM ${NORTH_CONNECTORS_TABLE} WHERE id = ?;`).run(id);
       this.database.prepare(`DELETE FROM ${SUBSCRIPTION_TABLE} WHERE north_connector_id = ?;`).run(id);
-      this.database.prepare(`DELETE FROM ${NORTH_TRANSFORMERS_TABLE} WHERE north_id = ?;`).run(id);
-      this.database.prepare(`DELETE FROM ${NORTH_ITEMS_TABLE} WHERE connector_id = ?;`).run(id);
     });
     transaction();
   }

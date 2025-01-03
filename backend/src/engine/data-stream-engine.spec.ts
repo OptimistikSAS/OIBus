@@ -352,13 +352,22 @@ describe('DataStreamEngine', () => {
     expect(mockedNorth1.retryAllErrorValues).toHaveBeenCalledWith();
   });
 
-  it('should manage item change', async () => {
+  it('should manage south item change', async () => {
     await engine.start([], [mockedSouth1]);
 
     await engine.reloadSouthItems('bad id');
     expect(mockedSouth1.onItemChange).not.toHaveBeenCalled();
     await engine.reloadSouthItems(testData.south.list[0].id);
     expect(mockedSouth1.onItemChange).toHaveBeenCalled();
+  });
+
+  it('should manage north item change', async () => {
+    await engine.start([mockedNorth1], []);
+
+    await engine.reloadNorthItems('bad id');
+    expect(mockedNorth1.onItemChange).not.toHaveBeenCalled();
+    await engine.reloadNorthItems(testData.north.list[0].id);
+    expect(mockedNorth1.onItemChange).toHaveBeenCalled();
   });
 
   it('should update north subscriptions', async () => {

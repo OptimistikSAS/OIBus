@@ -98,12 +98,12 @@ export type NorthSettings =
   | NorthOIAnalyticsSettings
   | NorthSFTPSettings;
 
-export interface NorthAmazonS3ItemSettings {}
-export interface NorthAzureBlobItemSettings {}
-export interface NorthConsoleItemSettings {}
-export interface NorthFileWriterItemSettings {}
-export interface NorthOIAnalyticsItemSettings {}
-export interface NorthSFTPItemSettings {}
+export type NorthAmazonS3ItemSettings = object;
+export type NorthAzureBlobItemSettings = object;
+export type NorthConsoleItemSettings = object;
+export type NorthFileWriterItemSettings = object;
+export type NorthOIAnalyticsItemSettings = object;
+export type NorthSFTPItemSettings = object;
 
 export type NorthItemSettings =
   | NorthAmazonS3ItemSettings

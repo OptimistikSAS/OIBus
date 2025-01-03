@@ -168,7 +168,7 @@ export default class HistoryQueryRepository {
       this.database.prepare(`DELETE FROM ${HISTORY_TRANSFORMERS_TABLE} WHERE history_id = ?;`).run(historyQuery.id);
       if (historyQuery.southTransformers.length > 0) {
         const insert = this.database.prepare(
-          `INSERT INTO ${HISTORY_TRANSFORMERS_TABLE} (history_id, type, transformer_id, transformer_order) VALUES (?, ?, ?, ?);`
+          `INSERT INTO ${HISTORY_TRANSFORMERS_TABLE} (history_id, connector_type, transformer_id, transformer_order) VALUES (?, ?, ?, ?);`
         );
         for (const transformer of historyQuery.southTransformers) {
           insert.run(historyQuery.id, 'south', transformer.transformer.id, transformer.order);
@@ -176,7 +176,7 @@ export default class HistoryQueryRepository {
       }
       if (historyQuery.northTransformers.length > 0) {
         const insert = this.database.prepare(
-          `INSERT INTO ${HISTORY_TRANSFORMERS_TABLE} (history_id, type, transformer_id, transformer_order) VALUES (?, ?, ?, ?);`
+          `INSERT INTO ${HISTORY_TRANSFORMERS_TABLE} (history_id, connector_type, transformer_id, transformer_order) VALUES (?, ?, ?, ?);`
         );
         for (const transformer of historyQuery.northTransformers) {
           insert.run(historyQuery.id, 'north', transformer.transformer.id, transformer.order);

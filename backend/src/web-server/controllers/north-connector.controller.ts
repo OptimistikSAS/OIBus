@@ -98,7 +98,7 @@ export default class NorthConnectorController {
     }
   };
 
-  async resetMetrics(ctx: KoaContext<void, void>): Promise<void> {
+  async resetNorthMetrics(ctx: KoaContext<void, void>): Promise<void> {
     ctx.app.oIBusService.resetNorthConnectorMetrics(ctx.params.northId);
     ctx.noContent();
   }
@@ -314,8 +314,8 @@ export default class NorthConnectorController {
   }
 
   async searchNorthItems(ctx: KoaContext<void, Page<NorthConnectorItemDTO<NorthItemSettings>>>): Promise<void> {
-    const southConnector = ctx.app.southService.findById(ctx.params.northId);
-    if (!southConnector) {
+    const northConnector = ctx.app.northService.findById(ctx.params.northId);
+    if (!northConnector) {
       return ctx.notFound();
     }
     const searchParams: NorthConnectorItemSearchParam = {
@@ -324,7 +324,7 @@ export default class NorthConnectorController {
     };
     const page = ctx.app.northService.searchNorthItems(ctx.params.northId, searchParams);
     ctx.ok({
-      content: page.content.map(item => toNorthConnectorItemDTO(item, southConnector.type, ctx.app.encryptionService)),
+      content: page.content.map(item => toNorthConnectorItemDTO(item, northConnector.type, ctx.app.encryptionService)),
       totalElements: page.totalElements,
       size: page.size,
       number: page.number,
@@ -333,13 +333,13 @@ export default class NorthConnectorController {
   }
 
   async getNorthItem(ctx: KoaContext<void, NorthConnectorItemDTO<NorthItemSettings>>): Promise<void> {
-    const southConnector = ctx.app.northService.findById(ctx.params.northId);
-    if (!southConnector) {
+    const northConnector = ctx.app.northService.findById(ctx.params.northId);
+    if (!northConnector) {
       return ctx.notFound();
     }
     const item = ctx.app.northService.findNorthConnectorItemById(ctx.params.northId, ctx.params.id);
     if (item) {
-      ctx.ok(toNorthConnectorItemDTO(item, southConnector.type, ctx.app.encryptionService));
+      ctx.ok(toNorthConnectorItemDTO(item, northConnector.type, ctx.app.encryptionService));
     } else {
       ctx.notFound();
     }
@@ -348,13 +348,13 @@ export default class NorthConnectorController {
   async createNorthItem(
     ctx: KoaContext<NorthConnectorItemCommandDTO<NorthItemSettings>, NorthConnectorItemDTO<NorthItemSettings>>
   ): Promise<void> {
-    const southConnector = ctx.app.northService.findById(ctx.params.northId);
-    if (!southConnector) {
+    const northConnector = ctx.app.northService.findById(ctx.params.northId);
+    if (!northConnector) {
       return ctx.notFound();
     }
     try {
       const item = await ctx.app.northService.createItem(ctx.params.northId!, ctx.request.body!);
-      ctx.created(toNorthConnectorItemDTO(item, southConnector.type, ctx.app.encryptionService));
+      ctx.created(toNorthConnectorItemDTO(item, northConnector.type, ctx.app.encryptionService));
     } catch (error: unknown) {
       ctx.badRequest((error as Error).message);
     }
@@ -412,7 +412,7 @@ export default class NorthConnectorController {
   async northConnectorItemsToCsv(
     ctx: KoaContext<{ items: Array<NorthConnectorItemDTO<NorthItemSettings>>; delimiter: string }, string>
   ): Promise<void> {
-    const manifest = ctx.app.northService.getInstalledNorthManifests().find(southManifest => southManifest.id === ctx.params.southType);
+    const manifest = ctx.app.northService.getInstalledNorthManifests().find(northManifest => northManifest.id === ctx.params.northType);
     if (!manifest) {
       return ctx.throw(404, 'North manifest not found');
     }
@@ -427,13 +427,13 @@ export default class NorthConnectorController {
   }
 
   async exportNorthItems(ctx: KoaContext<{ delimiter: string }, string>): Promise<void> {
-    const southConnector = ctx.app.northService.findById(ctx.params.northId);
-    if (!southConnector) {
+    const northConnector = ctx.app.northService.findById(ctx.params.northId);
+    if (!northConnector) {
       return ctx.notFound();
     }
 
     ctx.body = northItemToFlattenedCSV(
-      southConnector.items.map(item => toNorthConnectorItemDTO(item, southConnector.type, ctx.app.encryptionService)),
+      northConnector.items.map(item => toNorthConnectorItemDTO(item, northConnector.type, ctx.app.encryptionService)),
       ctx.request.body!.delimiter
     );
     ctx.set('Content-disposition', 'attachment; filename=items.csv');
@@ -453,7 +453,7 @@ export default class NorthConnectorController {
     try {
       return ctx.ok(
         await ctx.app.northService.checkCsvFileImport(
-          ctx.params.southType,
+          ctx.params.northType,
           ctx.request.file,
           ctx.request.body!.delimiter,
           JSON.parse(ctx.request.body!.currentItems)
