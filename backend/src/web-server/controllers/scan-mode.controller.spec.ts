@@ -3,173 +3,131 @@ import Joi from 'joi';
 import ScanModeController from './scan-mode.controller';
 import JoiValidator from './validators/joi.validator';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
-import { validateCronExpression } from '../../service/utils';
-import { ValidatedCronExpression } from '../../../../shared/model/scan-mode.model';
+import { ValidatedCronExpression } from '../../../shared/model/scan-mode.model';
+import testData from '../../tests/utils/test-data';
+import { toScanModeDTO } from '../../service/scan-mode.service';
 
 jest.mock('./validators/joi.validator');
-jest.mock('../../service/utils');
 
 const validator = new JoiValidator();
 const schema = Joi.object({});
 const scanModeController = new ScanModeController(validator, schema);
 
 const ctx = new KoaContextMock();
-const scanModeCommand = {
-  address: 'address',
-  description: 'description'
-};
-const scanMode = {
-  id: '1',
-  ...scanModeCommand
-};
 
-describe('Scan mode controller', () => {
+describe('Scan Mode Controller', () => {
   beforeEach(async () => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
   });
 
-  it('getScanModes() should return scan modes', async () => {
-    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValue([scanMode]);
+  it('findAll() should return scan modes', async () => {
+    ctx.app.scanModeService.findAll.mockReturnValueOnce(testData.scanMode.list);
 
-    await scanModeController.getScanModes(ctx);
+    await scanModeController.findAll(ctx);
 
-    expect(ctx.app.repositoryService.scanModeRepository.getScanModes).toHaveBeenCalled();
-    expect(ctx.ok).toHaveBeenCalledWith([scanMode]);
+    expect(ctx.app.scanModeService.findAll).toHaveBeenCalled();
+    expect(ctx.ok).toHaveBeenCalledWith(testData.scanMode.list.map(element => toScanModeDTO(element)));
   });
 
-  it('getScanMode() should return scan mode', async () => {
+  it('findById() should return a scan mode', async () => {
     const id = 'id';
 
     ctx.params.id = id;
-    ctx.app.repositoryService.scanModeRepository.getScanMode.mockReturnValue(scanMode);
+    ctx.app.scanModeService.findById.mockReturnValueOnce(testData.scanMode.list[0]);
 
-    await scanModeController.getScanMode(ctx);
+    await scanModeController.findById(ctx);
 
-    expect(ctx.app.repositoryService.scanModeRepository.getScanMode).toHaveBeenCalledWith(id);
-    expect(ctx.ok).toHaveBeenCalledWith(scanMode);
+    expect(ctx.app.scanModeService.findById).toHaveBeenCalledWith(id);
+    expect(ctx.ok).toHaveBeenCalledWith(toScanModeDTO(testData.scanMode.list[0]));
   });
 
-  it('getScanMode() should return not found', async () => {
+  it('findById() should return not found', async () => {
     const id = 'id';
     ctx.params.id = id;
-    ctx.app.repositoryService.scanModeRepository.getScanMode.mockReturnValue(null);
+    ctx.app.scanModeService.findById.mockReturnValueOnce(null);
 
-    await scanModeController.getScanMode(ctx);
+    await scanModeController.findById(ctx);
 
-    expect(ctx.app.repositoryService.scanModeRepository.getScanMode).toHaveBeenCalledWith(id);
+    expect(ctx.app.scanModeService.findById).toHaveBeenCalledWith(id);
     expect(ctx.notFound).toHaveBeenCalledWith();
   });
 
-  it('verifyScanMode() should return validated cron expression', async () => {
-    const cron = '* * * * * *';
-    const validatedCronExpression: ValidatedCronExpression = { nextExecutions: [], humanReadableForm: '' };
-    ctx.request.body = { cron };
-    (validateCronExpression as jest.Mock).mockReturnValue(validatedCronExpression);
+  it('create() should create a scan mode', async () => {
+    ctx.request.body = testData.scanMode.command;
+    ctx.app.scanModeService.create.mockReturnValueOnce(testData.scanMode.list[0]);
 
-    await scanModeController.verifyScanMode(ctx);
+    await scanModeController.create(ctx);
 
+    expect(ctx.app.scanModeService.create).toHaveBeenCalledWith(testData.scanMode.command);
+    expect(ctx.created).toHaveBeenCalledWith(toScanModeDTO(testData.scanMode.list[0]));
+  });
+
+  it('create() should throw bad request', async () => {
+    ctx.request.body = testData.scanMode.command;
+    ctx.app.scanModeService.create.mockImplementationOnce(() => {
+      throw Error('bad request');
+    });
+
+    await scanModeController.create(ctx);
+
+    expect(ctx.app.scanModeService.create).toHaveBeenCalledWith(testData.scanMode.command);
+    expect(ctx.badRequest).toHaveBeenCalledWith('bad request');
+  });
+
+  it('update() should update a scan mode', async () => {
+    ctx.params.id = 'id';
+    ctx.request.body = testData.scanMode.command;
+
+    await scanModeController.update(ctx);
+
+    expect(ctx.app.scanModeService.update).toHaveBeenCalledWith('id', testData.scanMode.command);
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('update() should throw bad request', async () => {
+    ctx.params.id = 'id';
+    ctx.request.body = testData.scanMode.command;
+    ctx.app.scanModeService.update.mockImplementationOnce(() => {
+      throw Error('bad request');
+    });
+
+    await scanModeController.update(ctx);
+
+    expect(ctx.app.scanModeService.update).toHaveBeenCalledWith('id', testData.scanMode.command);
+    expect(ctx.badRequest).toHaveBeenCalledWith('bad request');
+  });
+
+  it('delete() should delete a scan mode', async () => {
+    const id = 'id';
+    ctx.params.id = id;
+
+    await scanModeController.delete(ctx);
+
+    expect(ctx.app.scanModeService.delete).toHaveBeenCalledWith(id);
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('delete() should delete a scan mode', async () => {
+    const id = 'id';
+    ctx.params.id = id;
+    ctx.app.scanModeService.delete.mockImplementationOnce(() => {
+      throw Error('bad request');
+    });
+
+    await scanModeController.delete(ctx);
+
+    expect(ctx.app.scanModeService.delete).toHaveBeenCalledWith(id);
+    expect(ctx.badRequest).toHaveBeenCalledWith('bad request');
+  });
+
+  it('verifyCron() should return validated cron expression', async () => {
+    ctx.request.body = testData.scanMode.command;
+    const validatedCronExpression: ValidatedCronExpression = { isValid: true, errorMessage: '', nextExecutions: [], humanReadableForm: '' };
+    ctx.app.scanModeService.verifyCron.mockReturnValueOnce(validatedCronExpression);
+
+    await scanModeController.verifyCron(ctx);
+
+    expect(ctx.app.scanModeService.verifyCron).toHaveBeenCalledWith(testData.scanMode.command);
     expect(ctx.ok).toHaveBeenCalledWith(validatedCronExpression);
-  });
-
-  it('verifyScanMode() should return bad request for no cron expression', async () => {
-    ctx.request.body = {};
-    await scanModeController.verifyScanMode(ctx);
-
-    expect(ctx.badRequest).toHaveBeenCalledWith('Cron expression is required');
-
-    ctx.request = {};
-    await scanModeController.verifyScanMode(ctx);
-
-    expect(ctx.badRequest).toHaveBeenCalledWith('Cron expression is required');
-  });
-
-  it('verifyScanMode() should return bad request for invalid cron expression', async () => {
-    const cron = '* * *';
-    const validationError = new Error('invalid cron expression');
-    ctx.request.body = { cron };
-    (validateCronExpression as jest.Mock).mockImplementationOnce(() => {
-      throw validationError;
-    });
-
-    await scanModeController.verifyScanMode(ctx);
-
-    expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
-  });
-
-  it('createScanMode() should create scan mode', async () => {
-    ctx.request.body = scanModeCommand;
-    ctx.app.repositoryService.scanModeRepository.createScanMode.mockReturnValue(scanMode);
-
-    await scanModeController.createScanMode(ctx);
-
-    expect(validator.validate).toHaveBeenCalledWith(schema, scanModeCommand);
-    expect(ctx.app.repositoryService.scanModeRepository.createScanMode).toHaveBeenCalledWith(scanModeCommand);
-    expect(ctx.created).toHaveBeenCalledWith(scanMode);
-  });
-
-  it('createScanMode() should return bad request', async () => {
-    ctx.request.body = scanModeCommand;
-    const validationError = new Error('invalid body');
-    validator.validate = jest.fn().mockImplementationOnce(() => {
-      throw validationError;
-    });
-
-    await scanModeController.createScanMode(ctx);
-
-    expect(validator.validate).toHaveBeenCalledWith(schema, scanModeCommand);
-    expect(ctx.app.repositoryService.scanModeRepository.createScanMode).not.toHaveBeenCalledWith();
-    expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
-  });
-
-  it('updateScanMode() should update scan mode', async () => {
-    const id = 'id';
-    ctx.params.id = id;
-    ctx.request.body = scanModeCommand;
-
-    await scanModeController.updateScanMode(ctx);
-
-    expect(validator.validate).toHaveBeenCalledWith(schema, scanModeCommand);
-    expect(ctx.app.reloadService.onUpdateScanMode).toHaveBeenCalledWith('id', scanModeCommand);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('updateScanMode() should return bad request', async () => {
-    ctx.params.id = 'scanModeId';
-    ctx.request.body = scanModeCommand;
-    const validationError = new Error('invalid body');
-    validator.validate = jest.fn().mockImplementationOnce(() => {
-      throw validationError;
-    });
-
-    await scanModeController.updateScanMode(ctx);
-
-    expect(validator.validate).toHaveBeenCalledWith(schema, scanModeCommand);
-    expect(ctx.app.reloadService.onUpdateScanMode).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
-  });
-
-  it('deleteScanMode() should delete scan mode', async () => {
-    const id = 'id';
-    ctx.params.id = id;
-    ctx.app.repositoryService.scanModeRepository.getScanMode.mockReturnValue(scanMode);
-
-    await scanModeController.deleteScanMode(ctx);
-
-    expect(ctx.app.repositoryService.scanModeRepository.getScanMode).toHaveBeenCalledWith(id);
-    expect(ctx.app.repositoryService.scanModeRepository.deleteScanMode).toHaveBeenCalledWith(id);
-    expect(ctx.app.repositoryService.southCacheRepository.deleteCacheScanModesByScanMode).toHaveBeenCalledWith(id);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('deleteScanMode() should return not found', async () => {
-    const id = 'id';
-    ctx.params.id = id;
-    ctx.app.repositoryService.scanModeRepository.getScanMode.mockReturnValue(null);
-
-    await scanModeController.deleteScanMode(ctx);
-
-    expect(ctx.app.repositoryService.scanModeRepository.getScanMode).toHaveBeenCalledWith(id);
-    expect(ctx.app.repositoryService.scanModeRepository.deleteScanMode).not.toHaveBeenCalled();
-    expect(ctx.notFound).toHaveBeenCalled();
   });
 });

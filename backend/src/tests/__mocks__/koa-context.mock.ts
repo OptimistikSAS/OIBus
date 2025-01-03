@@ -1,24 +1,30 @@
-import RepositoryServiceMock from './repository-service.mock';
-import ReloadServiceMock from './reload-service.mock';
-import EncryptionServiceMock from './encryption-service.mock';
-import NorthServiceMock from './north-service.mock';
-import SouthServiceMock from './south-service.mock';
-import OIBusServiceMock from './oibus-service.mock';
-import EngineMetricsServiceMock from './engine-metrics-service.mock';
-import RegistrationServiceMock from './registration-service.mock';
+import RepositoryServiceMock from './service/repository-service.mock';
+import EncryptionServiceMock from './service/encryption-service.mock';
+import NorthServiceMock from './service/north-service.mock';
+import SouthServiceMock from './service/south-service.mock';
+import OIBusServiceMock from './service/oibus-service.mock';
+import EngineMetricsServiceMock from './service/metrics/engine-metrics-service.mock';
+import ScanModeServiceMock from './service/scan-mode-service.mock';
+import IpFilterServiceMock from './service/ip-filter-service.mock';
+import OIAnalyticsRegistrationServiceMock from './service/oia/oianalytics-registration-service.mock';
+import OIAnalyticsCommandServiceMock from './service/oia/oianalytics-command-service.mock';
+import HistoryQueryServiceMock from './service/history-query-service.mock';
 
 /**
  * Create a mock object for Koa Context
  */
 export default jest.fn().mockImplementation(() => ({
   app: {
+    scanModeService: new ScanModeServiceMock(),
+    ipFilterService: new IpFilterServiceMock(),
     repositoryService: new RepositoryServiceMock(),
-    reloadService: new ReloadServiceMock(),
     encryptionService: new EncryptionServiceMock(),
     northService: new NorthServiceMock(),
     southService: new SouthServiceMock(),
-    oibusService: new OIBusServiceMock(),
-    registrationService: new RegistrationServiceMock(),
+    historyQueryService: new HistoryQueryServiceMock(),
+    oIBusService: new OIBusServiceMock(),
+    oIAnalyticsRegistrationService: new OIAnalyticsRegistrationServiceMock(),
+    oIAnalyticsCommandService: new OIAnalyticsCommandServiceMock(),
     engineMetricsService: new EngineMetricsServiceMock(),
     logger: {
       trace: jest.fn(),
@@ -27,12 +33,16 @@ export default jest.fn().mockImplementation(() => ({
       warn: jest.fn(),
       error: jest.fn(),
       child: jest.fn()
+    },
+    ipFilters: {
+      whiteList: []
     }
   },
   request: {},
   params: {},
   query: {},
   ok: jest.fn(),
+  attachment: jest.fn(),
   created: jest.fn(),
   noContent: jest.fn(),
   badRequest: jest.fn(),

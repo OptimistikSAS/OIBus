@@ -1,12 +1,12 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { NgbActiveModal, NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { AbstractControl, NonNullableFormBuilder, ValidationErrors, Validators } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
-import { ChangePasswordCommand } from '../../../../../shared/model/user.model';
+import { ChangePasswordCommand } from '../../../../../backend/shared/model/user.model';
 import { UserSettingsService } from '../../services/user-settings.service';
 import { formDirectives } from '../../shared/form-directives';
-import { NgIf } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
+
+import { TranslateDirective } from '@ngx-translate/core';
 import { switchMap } from 'rxjs';
 
 interface NewPasswordFormValue {
@@ -25,13 +25,16 @@ function samePasswordValidator(newPasswordForm: AbstractControl): ValidationErro
   selector: 'oib-change-password-modal',
   templateUrl: './change-password-modal.component.html',
   styleUrl: './change-password-modal.component.scss',
-  imports: [...formDirectives, TranslateModule, NgbCollapse, NgIf],
-  standalone: true
+  imports: [...formDirectives, TranslateDirective, NgbCollapse]
 })
 export class ChangePasswordModalComponent {
-  form = this.fb.group({
+  private modal = inject(NgbActiveModal);
+  private notificationService = inject(NotificationService);
+  private userSettingsService = inject(UserSettingsService);
+
+  form = inject(NonNullableFormBuilder).group({
     currentPassword: ['', Validators.required],
-    newPasswordForm: this.fb.group(
+    newPasswordForm: inject(NonNullableFormBuilder).group(
       {
         newPassword: ['', Validators.required],
         newPasswordConfirmation: ['', Validators.required]
@@ -40,13 +43,6 @@ export class ChangePasswordModalComponent {
     )
   });
   error = false;
-
-  constructor(
-    private fb: NonNullableFormBuilder,
-    private modal: NgbActiveModal,
-    private notificationService: NotificationService,
-    private userSettingsService: UserSettingsService
-  ) {}
 
   save() {
     if (!this.form.valid) {

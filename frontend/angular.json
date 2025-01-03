@@ -22,12 +22,15 @@
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": [
-              "zone.js"
+              "zone.js",
+              "@angular/localize/init"
             ],
             "tsConfig": "tsconfig.app.json",
             "assets": [
-              "src/favicon.ico",
-              "src/assets",
+              {
+                "glob": "**/*",
+                "input": "public"
+              },
               {
                 "glob": "**/*",
                 "input": "node_modules/monaco-editor/min",
@@ -37,6 +40,13 @@
             "styles": [
               "src/styles.scss"
             ],
+            "stylePreprocessorOptions": {
+              "sass": {
+                "silenceDeprecations": [
+                  "import"
+                ]
+              }
+            },
             "scripts": []
           },
           "configurations": {
@@ -44,13 +54,13 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "1500kb",
-                  "maximumError": "2mb"
+                  "maximumWarning": "1500kB",
+                  "maximumError": "2MB"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "2kb",
-                  "maximumError": "4kb"
+                  "maximumWarning": "4kB",
+                  "maximumError": "8kB"
                 }
               ],
               "outputHashing": "all"
@@ -67,11 +77,7 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "proxyConfig": "proxy.conf.mjs",
-            "allowedHosts": [
-              "localhost",
-              ".test"
-            ]
+            "proxyConfig": "proxy.conf.mjs"
           },
           "configurations": {
             "production": {
@@ -84,10 +90,7 @@
           "defaultConfiguration": "development"
         },
         "extract-i18n": {
-          "builder": "@angular-devkit/build-angular:extract-i18n",
-          "options": {
-            "buildTarget": "frontend:build"
-          }
+          "builder": "@angular-devkit/build-angular:extract-i18n"
         },
         "lint": {
           "builder": "@angular-eslint/builder:lint",
@@ -105,18 +108,21 @@
             "main": "src/test.ts",
             "polyfills": [
               "zone.js",
-              "zone.js/testing"
+              "zone.js/testing",
+              "@angular/localize/init"
             ],
             "tsConfig": "tsconfig.spec.json",
             "assets": [
-              "src/favicon.ico",
-              "src/assets"
+              {
+                "glob": "**/*",
+                "input": "public"
+              }
             ],
             "styles": [
               "src/styles.scss"
             ],
             "scripts": [],
-            "karmaConfig": "karma.conf.js"
+            "karmaConfig": "karma.conf.cjs"
           }
         }
       }

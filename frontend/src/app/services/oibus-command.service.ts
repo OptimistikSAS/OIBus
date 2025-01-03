@@ -1,17 +1,17 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { CommandSearchParam, OIBusCommandDTO } from '../../../../shared/model/command.model';
-import { Page } from '../../../../shared/model/types';
+import { CommandSearchParam, OIBusCommandDTO } from '../../../../backend/shared/model/command.model';
+import { Page } from '../../../../backend/shared/model/types';
 
 @Injectable({
   providedIn: 'root'
 })
 export class OibusCommandService {
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
 
   searchCommands(searchParams: CommandSearchParam): Observable<Page<OIBusCommandDTO>> {
-    const params: { [key: string]: string | string[] } = {
+    const params: Record<string, string | Array<string>> = {
       page: `${searchParams.page || 0}`
     };
     if (searchParams.types) {

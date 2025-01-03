@@ -1,92 +1,147 @@
-import { SouthConnectorManifest } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorManifest } from '../../../shared/model/south-connector.model';
 
 const manifest: SouthConnectorManifest = {
   id: 'opcua',
-  name: 'OPC UA',
   category: 'iot',
-  description: 'Request data from OPC UA server',
   modes: {
     subscription: true,
     lastPoint: true,
     lastFile: false,
-    history: true,
-    forceMaxInstantPerItem: false
+    history: true
   },
   settings: [
     {
+      key: 'throttling',
+      type: 'OibFormGroup',
+      translationKey: 'south.opcua.throttling.title',
+      class: 'col',
+      newRow: true,
+      displayInViewMode: false,
+      validators: [{ key: 'required' }],
+      content: [
+        {
+          key: 'maxReadInterval',
+          type: 'OibNumber',
+          translationKey: 'south.opcua.throttling.max-read-interval',
+          validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }],
+          defaultValue: 3600,
+          unitLabel: 's',
+          displayInViewMode: true
+        },
+        {
+          key: 'readDelay',
+          type: 'OibNumber',
+          translationKey: 'south.opcua.throttling.read-delay',
+          validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }],
+          defaultValue: 200,
+          unitLabel: 'ms',
+          displayInViewMode: true
+        },
+        {
+          key: 'overlap',
+          type: 'OibNumber',
+          translationKey: 'south.opcua.throttling.overlap',
+          validators: [{ key: 'required' }, { key: 'min', params: { min: 0 } }],
+          defaultValue: 0,
+          unitLabel: 'ms',
+          displayInViewMode: true
+        },
+        {
+          key: 'maxInstantPerItem',
+          type: 'OibCheckbox',
+          translationKey: 'south.opcua.throttling.max-instant-per-item',
+          defaultValue: false,
+          validators: [{ key: 'required' }],
+          displayInViewMode: true
+        }
+      ]
+    },
+    {
+      key: 'sharedConnection',
+      type: 'OibCheckbox',
+      translationKey: 'south.opcua.shared-connection',
+      defaultValue: false,
+      newRow: true,
+      validators: [{ key: 'required' }],
+      displayInViewMode: false
+    },
+    {
       key: 'url',
       type: 'OibText',
-      label: 'URL',
+      translationKey: 'south.opcua.url',
       defaultValue: 'opc.tcp://servername:port/endpoint',
       newRow: true,
+      class: 'col-8',
       validators: [{ key: 'required' }, { key: 'pattern', params: { pattern: '^(http:\\/\\/|opc.tcp:\\/\\/).*' } }],
       displayInViewMode: true
     },
     {
       key: 'keepSessionAlive',
       type: 'OibCheckbox',
-      label: 'Keep Session Alive',
+      translationKey: 'south.opcua.keep-session-alive',
       defaultValue: false,
       newRow: false,
+      class: 'col-4',
       validators: [{ key: 'required' }],
       displayInViewMode: true
     },
     {
       key: 'readTimeout',
       type: 'OibNumber',
-      label: 'Read timeout',
+      translationKey: 'south.opcua.read-timeout',
       unitLabel: 'ms',
       defaultValue: 15_000,
-      newRow: false,
+      newRow: true,
+      class: 'col-4',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
       displayInViewMode: false
     },
     {
       key: 'retryInterval',
       type: 'OibNumber',
-      label: 'Retry interval',
+      translationKey: 'south.opcua.retry-interval',
       unitLabel: 'ms',
-      defaultValue: 5_000,
+      defaultValue: 10_000,
       newRow: false,
+      class: 'col-4',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
       displayInViewMode: false
     },
     {
       key: 'securityMode',
       type: 'OibSelect',
-      label: 'Security Mode',
-      options: ['None', 'Sign', 'SignAndEncrypt'],
-      defaultValue: 'None',
+      translationKey: 'south.opcua.security-mode',
+      options: ['none', 'sign', 'sign-and-encrypt'],
+      defaultValue: 'none',
       validators: [{ key: 'required' }],
+      class: 'col-6',
       newRow: true,
       displayInViewMode: true
     },
     {
       key: 'securityPolicy',
       type: 'OibSelect',
-      label: 'Security Policy',
+      translationKey: 'south.opcua.security-policy',
       options: [
-        'None',
-        'Basic128',
-        'Basic192',
-        'Basic256',
-        'Basic128Rsa15',
-        'Basic192Rsa15',
-        'Basic256Rsa15',
-        'Basic256Sha256',
-        'Aes128_Sha256_RsaOaep',
-        'PubSub_Aes128_CTR',
-        'PubSub_Aes256_CTR'
+        'none',
+        'basic128',
+        'basic192',
+        'basic192-rsa15',
+        'basic256-rsa15',
+        'basic256-sha256',
+        'aes128-sha256-rsa-oaep',
+        'pub-sub-aes-128-ctr',
+        'pub-sub-aes-256-ctr'
       ],
-      defaultValue: 'None',
-      conditionalDisplay: { field: 'securityMode', values: ['Sign', 'SignAndEncrypt'] },
-      newRow: false,
+      defaultValue: 'none',
+      conditionalDisplay: { field: 'securityMode', values: ['sign', 'sign-and-encrypt'] },
+      class: 'col-6',
       displayInViewMode: true
     },
     {
       key: 'authentication',
       type: 'OibFormGroup',
-      label: 'Authentication',
+      translationKey: '',
       class: 'col',
       newRow: true,
       displayInViewMode: false,
@@ -95,19 +150,21 @@ const manifest: SouthConnectorManifest = {
         {
           key: 'type',
           type: 'OibSelect',
-          label: 'Type',
+          translationKey: 'south.opcua.authentication',
           options: ['none', 'basic', 'cert'],
-          pipe: 'authentication',
           defaultValue: 'none',
           validators: [{ key: 'required' }],
           newRow: true,
+          class: 'col-6',
           displayInViewMode: false
         },
         {
           key: 'username',
           type: 'OibText',
-          label: 'Username',
+          translationKey: 'south.opcua.username',
           defaultValue: '',
+          newRow: true,
+          class: 'col-6',
           validators: [{ key: 'required' }],
           conditionalDisplay: { field: 'type', values: ['basic'] },
           displayInViewMode: false
@@ -115,69 +172,66 @@ const manifest: SouthConnectorManifest = {
         {
           key: 'password',
           type: 'OibSecret',
-          label: 'Password',
+          translationKey: 'south.opcua.password',
           defaultValue: '',
+          class: 'col-6',
           conditionalDisplay: { field: 'type', values: ['basic'] },
           displayInViewMode: false
         },
         {
           key: 'certFilePath',
           type: 'OibText',
-          label: 'Cert file path',
+          translationKey: 'south.opcua.cert-file-path',
           defaultValue: '',
           conditionalDisplay: { field: 'type', values: ['cert'] },
           validators: [{ key: 'required' }],
-          newRow: false,
+          newRow: true,
+          class: 'col-6',
           displayInViewMode: false
         },
         {
           key: 'keyFilePath',
           type: 'OibText',
-          label: 'Key file path',
+          translationKey: 'south.opcua.key-file-path',
           defaultValue: '',
           conditionalDisplay: { field: 'type', values: ['cert'] },
-          newRow: false,
+          class: 'col-6',
           displayInViewMode: false
         }
       ]
     }
   ],
   items: {
-    scanMode: {
-      acceptSubscription: true,
-      subscriptionOnly: false
-    },
+    scanMode: 'SUBSCRIPTION_AND_POLL',
     settings: [
       {
         key: 'nodeId',
         type: 'OibText',
-        label: 'Node ID',
+        translationKey: 'south.items.opcua.node-id',
         validators: [{ key: 'required' }],
         displayInViewMode: true
       },
-
       {
         key: 'mode',
         type: 'OibSelect',
-        label: 'Mode',
-        options: ['HA', 'DA'],
-        defaultValue: 'HA',
+        translationKey: 'south.items.opcua.mode',
+        options: ['ha', 'da'],
+        defaultValue: 'ha',
         validators: [{ key: 'required' }],
         displayInViewMode: true
       },
       {
         key: 'haMode',
         type: 'OibFormGroup',
-        label: '',
+        translationKey: 'south.items.opcua.ha-mode.title',
         newRow: true,
         displayInViewMode: false,
-        conditionalDisplay: { field: 'mode', values: ['HA'] },
+        conditionalDisplay: { field: 'mode', values: ['ha'] },
         content: [
           {
             key: 'aggregate',
             type: 'OibSelect',
-            label: 'Aggregate',
-            pipe: 'aggregates',
+            translationKey: 'south.items.opcua.ha-mode.aggregate',
             options: ['raw', 'average', 'minimum', 'maximum', 'count'],
             defaultValue: 'raw',
             validators: [{ key: 'required' }],
@@ -186,8 +240,7 @@ const manifest: SouthConnectorManifest = {
           {
             key: 'resampling',
             type: 'OibSelect',
-            label: 'Resampling',
-            pipe: 'resampling',
+            translationKey: 'south.items.opcua.ha-mode.resampling',
             options: ['none', '1s', '10s', '30s', '1min', '1h', '1d'],
             defaultValue: 'none',
             validators: [{ key: 'required' }],

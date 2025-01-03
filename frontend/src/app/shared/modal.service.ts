@@ -1,4 +1,4 @@
-import { Injectable, Type } from '@angular/core';
+import { Injectable, Type, inject } from '@angular/core';
 import { NgbModal, NgbModalOptions, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, EMPTY, from, throwError } from 'rxjs';
 
@@ -40,7 +40,7 @@ export class Modal<T> {
   providedIn: 'root'
 })
 export class ModalService {
-  constructor(private ngbModal: NgbModal) {}
+  private ngbModal = inject(NgbModal);
 
   /**
    * Opens a modal containing an instance of the given component, and returns a `Modal` instance,

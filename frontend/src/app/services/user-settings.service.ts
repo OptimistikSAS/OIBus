@@ -1,13 +1,13 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ChangePasswordCommand, User, UserCommandDTO } from '../../../../shared/model/user.model';
+import { ChangePasswordCommand, User, UserCommandDTO } from '../../../../backend/shared/model/user.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class UserSettingsService {
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
 
   // we do not use the current user service here, to make sure we get the actual data from the server and not the cached data
   get(): Observable<User> {

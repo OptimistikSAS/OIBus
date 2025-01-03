@@ -1,12 +1,19 @@
-import { AfterViewInit, Component, ContentChild, ElementRef, forwardRef, Input, OnInit, TemplateRef } from '@angular/core';
-import { ControlValueAccessor, NG_VALIDATORS, NG_VALUE_ACCESSOR, NonNullableFormBuilder, Validator } from '@angular/forms';
+import { AfterViewInit, Component, contentChild, ElementRef, forwardRef, inject, input, OnInit, TemplateRef } from '@angular/core';
+import {
+  ControlValueAccessor,
+  NG_VALIDATORS,
+  NG_VALUE_ACCESSOR,
+  NonNullableFormBuilder,
+  ReactiveFormsModule,
+  Validator
+} from '@angular/forms';
 import { combineLatest } from 'rxjs';
 import { DateTime } from 'luxon';
-import { Instant, LocalDate, LocalTime } from '../../../../../shared/model/types';
+import { Instant, LocalDate, LocalTime } from '../../../../../backend/shared/model/types';
 import { NgTemplateOutlet } from '@angular/common';
 import { NgbInputDatepicker, NgbTimepicker } from '@ng-bootstrap/ng-bootstrap';
 import { DatepickerContainerComponent } from '../datepicker-container/datepicker-container.component';
-import { formDirectives } from '../form-directives';
+import { CurrentUserService } from '../current-user.service';
 
 /**
  * Component combining a ng-bootstrap input date picker and a ng-bootstrap time picker, which can be used
@@ -54,29 +61,25 @@ import { formDirectives } from '../form-directives';
     { provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => DatetimepickerComponent), multi: true },
     { provide: NG_VALIDATORS, useExisting: forwardRef(() => DatetimepickerComponent), multi: true }
   ],
-  imports: [...formDirectives, NgTemplateOutlet, NgbTimepicker, DatepickerContainerComponent, NgbInputDatepicker],
-  standalone: true
+  imports: [NgTemplateOutlet, DatepickerContainerComponent, NgbInputDatepicker, ReactiveFormsModule, NgbTimepicker]
 })
 export class DatetimepickerComponent implements OnInit, AfterViewInit, ControlValueAccessor, Validator {
-  @ContentChild('date')
-  dateTemplate: TemplateRef<any> | null = null;
+  private fb = inject(NonNullableFormBuilder);
+  private element = inject<ElementRef<HTMLElement>>(ElementRef);
+  private currentUserService = inject(CurrentUserService);
 
-  @ContentChild('time')
-  timeTemplate: TemplateRef<any> | null = null;
+  readonly dateTemplate = contentChild<TemplateRef<any>>('date');
 
-  @Input()
-  timeZone = 'Europe/Paris';
+  readonly timeTemplate = contentChild<TemplateRef<any>>('time');
 
-  dateCtrl = this.fb.control(null as LocalDate | null);
-  timeCtrl = this.fb.control(null as LocalTime | null);
+  displaySeconds = input(false);
+  timezone = input(this.currentUserService.getTimezone());
+
+  dateCtrl = this.fb.control<string | null>(null);
+  timeCtrl = this.fb.control<string | null>(null);
 
   private onChange: (value: any) => void = () => {};
   private onTouched: () => void = () => {};
-
-  constructor(
-    private fb: NonNullableFormBuilder,
-    private element: ElementRef<HTMLElement>
-  ) {}
 
   registerOnChange(fn: any): void {
     this.onChange = fn;
@@ -98,7 +101,7 @@ export class DatetimepickerComponent implements OnInit, AfterViewInit, ControlVa
 
   writeValue(value: Instant): void {
     if (value) {
-      const local = DateTime.fromISO(value).setZone(this.timeZone);
+      const local = DateTime.fromISO(value).setZone(this.timezone());
       this.dateCtrl.setValue(local.toFormat('yyyy-MM-dd'));
       this.timeCtrl.setValue(local.toFormat('HH:mm:ss'));
     } else {
@@ -127,7 +130,7 @@ export class DatetimepickerComponent implements OnInit, AfterViewInit, ControlVa
     combineLatest([this.dateCtrl.valueChanges, this.timeCtrl.valueChanges]).subscribe(
       ([date, time]: [LocalDate | null, LocalTime | null]) => {
         if (this.dateCtrl.valid && this.timeCtrl.valid && date && time) {
-          const local = DateTime.fromFormat(`${date} ${time}`, 'yyyy-MM-dd HH:mm:ss', { zone: this.timeZone });
+          const local = DateTime.fromFormat(`${date} ${time}`, 'yyyy-MM-dd HH:mm:ss', { zone: this.timezone() });
           this.onChange(local.toUTC().toISO());
         } else {
           this.onChange(null);

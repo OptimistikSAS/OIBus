@@ -30,9 +30,9 @@ Net ID是一个类似IP地址加上两个额外数字值的地址。通常，Net
 
 要启用ADS连接器与TwinCAT运行时之间的通信，您必须使用_TwinCAT静态路由_工具配置静态路由。以下示例展示了如何使用**AMS Net ID**配置两条路由，它应在OIBus方使用。关键的是，**AMS Net ID**在与静态路由中指定的IP地址一起使用时才有效。
 
-![TwinCAT Static Routes tool](../../../static/img/guide/south/ads/installation-ads-distant.png)
+![TwinCAT Static Routes tool](../../../../../../static/img/guide/south/ads/installation-ads-distant.png)
 
-![Add a TwinCAT Static Route](../../../static/img/guide/south/ads/routes.png)
+![Add a TwinCAT Static Route](../../../../../../static/img/guide/south/ads/routes.png)
 
 指定的AMSNetId必须填写在OIBus配置的**AMS Net ID**字段中。
 

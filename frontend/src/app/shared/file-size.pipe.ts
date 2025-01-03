@@ -1,4 +1,4 @@
-import { Pipe, PipeTransform } from '@angular/core';
+import { Pipe, PipeTransform, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 
 /**
@@ -6,11 +6,10 @@ import { TranslateService } from '@ngx-translate/core';
  */
 @Pipe({
   name: 'fileSize',
-  pure: false,
-  standalone: true
+  pure: false
 })
 export class FileSizePipe implements PipeTransform {
-  constructor(private translateService: TranslateService) {}
+  private translateService = inject(TranslateService);
 
   transform(size: number): string {
     const ONE_KB = 1024;

@@ -5,15 +5,15 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { NorthConnectorService } from './north-connector.service';
 import {
   NorthCacheFiles,
-  NorthArchiveFiles,
   NorthConnectorCommandDTO,
   NorthConnectorDTO,
   NorthConnectorManifest,
   NorthType,
-  NorthValueFiles
-} from '../../../../shared/model/north-connector.model';
-import { SubscriptionDTO } from '../../../../shared/model/subscription.model';
+  NorthConnectorLightDTO
+} from '../../../../backend/shared/model/north-connector.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { SouthConnectorLightDTO } from '../../../../backend/shared/model/south-connector.model';
+import { NorthSettings } from '../../../../backend/shared/model/north-settings.model';
 
 describe('NorthConnectorService', () => {
   let http: HttpTestingController;
@@ -43,15 +43,15 @@ describe('NorthConnectorService', () => {
 
   it('should get a North connector manifest', () => {
     let expectedNorthConnectorSchema: NorthConnectorManifest | null = null;
-    service.getNorthConnectorTypeManifest('SQL').subscribe(manifest => (expectedNorthConnectorSchema = manifest));
+    service.getNorthConnectorTypeManifest('console').subscribe(manifest => (expectedNorthConnectorSchema = manifest));
 
-    http.expectOne('/api/north-types/SQL').flush({ name: 'myNorthConnector' });
+    http.expectOne('/api/north-types/console').flush({ id: 'console' });
 
-    expect(expectedNorthConnectorSchema!).toEqual({ name: 'myNorthConnector' } as NorthConnectorManifest);
+    expect(expectedNorthConnectorSchema!).toEqual({ id: 'console' } as NorthConnectorManifest);
   });
 
   it('should get all North connectors', () => {
-    let expectedNorthConnectors: Array<NorthConnectorDTO> = [];
+    let expectedNorthConnectors: Array<NorthConnectorLightDTO> = [];
     service.list().subscribe(northConnectors => (expectedNorthConnectors = northConnectors));
 
     http.expectOne('/api/north').flush([{ name: 'North connector 1' }, { name: 'North connector 2' }]);
@@ -60,8 +60,8 @@ describe('NorthConnectorService', () => {
   });
 
   it('should get a North connector', () => {
-    let expectedNorthConnector: NorthConnectorDTO | null = null;
-    const northConnector = { id: 'id1' } as NorthConnectorDTO;
+    let expectedNorthConnector: NorthConnectorDTO<NorthSettings> | null = null;
+    const northConnector = { id: 'id1' } as NorthConnectorDTO<NorthSettings>;
 
     service.get('id1').subscribe(c => (expectedNorthConnector = c));
 
@@ -81,60 +81,72 @@ describe('NorthConnectorService', () => {
 
   it('should create a North connector', () => {
     let done = false;
-    const command: NorthConnectorCommandDTO = {
+    const command: NorthConnectorCommandDTO<NorthSettings> = {
       name: 'myNorthConnector',
       description: 'a test north connector',
       enabled: true,
-      type: 'Test',
-      settings: {},
+      type: 'file-writer',
+      settings: {} as NorthSettings,
       caching: {
         scanModeId: 'scanModeId1',
+        scanModeName: null,
         retryInterval: 1000,
         retryCount: 3,
-        groupCount: 1000,
-        maxSendCount: 10000,
-        sendFileImmediately: true,
-        maxSize: 30
+        maxSize: 30,
+        oibusTimeValues: {
+          groupCount: 1000,
+          maxSendCount: 10000
+        },
+        rawFiles: {
+          sendFileImmediately: true,
+          archive: {
+            enabled: false,
+            retentionDuration: 0
+          }
+        }
       },
-      archive: {
-        enabled: false,
-        retentionDuration: 0
-      }
+      subscriptions: []
     };
 
-    service.create(command, [], '').subscribe(() => (done = true));
+    service.create(command, '').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/north' });
-    expect(testRequest.request.body).toEqual({ north: command, subscriptions: [] });
+    expect(testRequest.request.body).toEqual(command);
     testRequest.flush(null);
     expect(done).toBe(true);
   });
 
   it('should update a North connector', () => {
     let done = false;
-    const command: NorthConnectorCommandDTO = {
+    const command: NorthConnectorCommandDTO<NorthSettings> = {
       name: 'myNorthConnector',
       description: 'a test north connector',
       enabled: true,
-      type: 'Test',
-      settings: {},
+      type: 'file-writer',
+      settings: {} as NorthSettings,
       caching: {
         scanModeId: 'scanModeId1',
+        scanModeName: null,
         retryInterval: 1000,
         retryCount: 3,
-        groupCount: 1000,
-        maxSendCount: 10000,
-        sendFileImmediately: true,
-        maxSize: 30
+        maxSize: 30,
+        oibusTimeValues: {
+          groupCount: 1000,
+          maxSendCount: 10000
+        },
+        rawFiles: {
+          sendFileImmediately: true,
+          archive: {
+            enabled: false,
+            retentionDuration: 0
+          }
+        }
       },
-      archive: {
-        enabled: false,
-        retentionDuration: 0
-      }
+      subscriptions: []
     };
 
-    service.update('id1', command, [], []).subscribe(() => (done = true));
+    service.update('id1', command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/north/id1' });
-    expect(testRequest.request.body).toEqual({ north: command, subscriptions: [], subscriptionsToDelete: [] });
+    expect(testRequest.request.body).toEqual(command);
     testRequest.flush(null);
     expect(done).toBe(true);
   });
@@ -148,8 +160,8 @@ describe('NorthConnectorService', () => {
   });
 
   it('should get North connector subscriptions', () => {
-    let expectedNorthConnectorSubscriptions: Array<SubscriptionDTO> | null = null;
-    const northConnectorSubscriptions: Array<SubscriptionDTO> = [];
+    let expectedNorthConnectorSubscriptions: Array<SouthConnectorLightDTO> | null = null;
+    const northConnectorSubscriptions: Array<SouthConnectorLightDTO> = [];
 
     service.getSubscriptions('id1').subscribe(c => (expectedNorthConnectorSubscriptions = c));
 
@@ -260,8 +272,8 @@ describe('NorthConnectorService', () => {
   });
 
   it('should get archive files', () => {
-    let expectedNorthArchiveFiles: Array<NorthArchiveFiles> | null = null;
-    const northArchiveFiles: Array<NorthArchiveFiles> = [];
+    let expectedNorthArchiveFiles: Array<NorthCacheFiles> | null = null;
+    const northArchiveFiles: Array<NorthCacheFiles> = [];
 
     service.getCacheArchiveFiles('id1').subscribe(c => (expectedNorthArchiveFiles = c));
 
@@ -311,8 +323,8 @@ describe('NorthConnectorService', () => {
   });
 
   it('should get cache values', () => {
-    let expectedNorthValues: Array<NorthValueFiles> | null = null;
-    const northValueFiles: Array<NorthValueFiles> = [];
+    let expectedNorthValues: Array<NorthCacheFiles> | null = null;
+    const northValueFiles: Array<NorthCacheFiles> = [];
 
     service.getCacheValues('id1').subscribe(c => (expectedNorthValues = c));
 
@@ -366,25 +378,31 @@ describe('NorthConnectorService', () => {
 
   it('should test a North connector connection', () => {
     let done = false;
-    const command: NorthConnectorCommandDTO = {
+    const command: NorthConnectorCommandDTO<NorthSettings> = {
       name: 'myNorthConnector',
       description: 'a test north connector',
       enabled: true,
-      type: 'Test',
-      settings: {},
+      type: 'file-writer',
+      settings: {} as NorthSettings,
       caching: {
         scanModeId: 'scanModeId1',
+        scanModeName: null,
         retryInterval: 1000,
         retryCount: 3,
-        groupCount: 1000,
-        maxSendCount: 10000,
-        sendFileImmediately: true,
-        maxSize: 30
+        maxSize: 30,
+        oibusTimeValues: {
+          groupCount: 1000,
+          maxSendCount: 10000
+        },
+        rawFiles: {
+          sendFileImmediately: true,
+          archive: {
+            enabled: false,
+            retentionDuration: 0
+          }
+        }
       },
-      archive: {
-        enabled: false,
-        retentionDuration: 0
-      }
+      subscriptions: []
     };
 
     service.testConnection('id1', command).subscribe(() => (done = true));

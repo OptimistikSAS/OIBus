@@ -1,37 +1,48 @@
-import manifest from './manifest';
 import SouthConnector from '../south-connector';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
-import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
-import { Instant } from '../../../../shared/model/types';
+import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
-import { SouthPIItemSettings, SouthPISettings } from '../../../../shared/model/south-settings.model';
+import { SouthPIItemSettings, SouthPISettings } from '../../../shared/model/south-settings.model';
 import fetch from 'node-fetch';
-import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
+import SouthConnectorRepository from '../../repository/config/south-connector.repository';
+import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import { BaseFolders } from '../../model/types';
+import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 
 /**
  * Class SouthPI - Run a PI Agent to connect to a PI server.
  * This connector communicates with the Agent through a HTTP connection
  */
-export default class SouthPI extends SouthConnector implements QueriesHistory {
-  static type = manifest.id;
-
+export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItemSettings> implements QueriesHistory {
   private connected = false;
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private disconnecting = false;
 
   constructor(
-    connector: SouthConnectorDTO<SouthPISettings>,
-    engineAddValuesCallback: (southId: string, values: Array<OIBusDataValue>) => Promise<void>,
-    engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
+    connector: SouthConnectorEntity<SouthPISettings, SouthPIItemSettings>,
+    engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
-    repositoryService: RepositoryService,
+    southConnectorRepository: SouthConnectorRepository,
+    southCacheRepository: SouthCacheRepository,
+    scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
-    baseFolder: string
+    baseFolders: BaseFolders
   ) {
-    super(connector, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(
+      connector,
+      engineAddContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      baseFolders
+    );
   }
 
   async connect(): Promise<void> {
@@ -80,12 +91,61 @@ export default class SouthPI extends SouthConnector implements QueriesHistory {
     }
   }
 
+  override async testItem(
+    item: SouthConnectorItemEntity<SouthPIItemSettings>,
+    testingSettings: SouthConnectorItemTestingSettings,
+    callback: (data: OIBusContent) => void
+  ): Promise<void> {
+    await this.connect();
+    const content: OIBusContent = { type: 'time-values', content: [] };
+
+    const startTime = testingSettings.history!.startTime;
+    const endTime = testingSettings.history!.endTime;
+
+    const headers: Record<string, string> = {};
+    headers['Content-Type'] = 'application/json';
+    const fetchOptions = {
+      method: 'PUT',
+      body: JSON.stringify({
+        startTime,
+        endTime,
+        items: [
+          {
+            name: item.name,
+            type: item.settings.type === 'point-id' ? 'pointId' : 'pointQuery',
+            piPoint: item.settings.piPoint,
+            piQuery: item.settings.piQuery
+          }
+        ]
+      }),
+      headers
+    };
+    const response = await fetch(`${this.connector.settings.agentUrl}/api/pi/${this.connector.id}/read`, fetchOptions);
+    if (response.status === 200) {
+      const result: {
+        recordCount: number;
+        content: Array<OIBusTimeValue>;
+        maxInstantRetrieved: Instant;
+      } = (await response.json()) as {
+        recordCount: number;
+        content: Array<OIBusTimeValue>;
+        maxInstantRetrieved: string;
+      };
+      content.content = result.content;
+      await this.disconnect();
+    } else {
+      await this.disconnect();
+      throw new Error(`Error occurred when sending connect command to remote agent. ${response.status}`);
+    }
+    callback(content);
+  }
+
   /**
    * Get entries from the database between startTime and endTime (if used in the SQL query)
    * and write them into the cache and send it to the engine.
    */
   async historyQuery(
-    items: Array<SouthConnectorItemDTO<SouthPIItemSettings>>,
+    items: Array<SouthConnectorItemEntity<SouthPIItemSettings>>,
     startTime: Instant,
     endTime: Instant
   ): Promise<Instant | null> {
@@ -101,7 +161,7 @@ export default class SouthPI extends SouthConnector implements QueriesHistory {
         endTime,
         items: items.map(item => ({
           name: item.name,
-          type: item.settings.type,
+          type: item.settings.type === 'point-id' ? 'pointId' : 'pointQuery',
           piPoint: item.settings.piPoint,
           piQuery: item.settings.piQuery
         }))
@@ -112,13 +172,13 @@ export default class SouthPI extends SouthConnector implements QueriesHistory {
     if (response.status === 200) {
       const result: {
         recordCount: number;
-        content: Array<OIBusDataValue>;
+        content: Array<OIBusTimeValue>;
         logs: Array<string>;
         maxInstantRetrieved: Instant;
       } = (await response.json()) as {
         recordCount: number;
-        content: OIBusDataValue[];
-        logs: string[];
+        content: Array<OIBusTimeValue>;
+        logs: Array<string>;
         maxInstantRetrieved: string;
       };
       const requestDuration = DateTime.now().toMillis() - startRequest;
@@ -128,9 +188,9 @@ export default class SouthPI extends SouthConnector implements QueriesHistory {
           this.logger.warn(log);
         }
       }
-      if (result.content.length > 0) {
+      if (result.recordCount > 0) {
         this.logger.debug(`Found ${result.recordCount} results for ${items.length} items in ${requestDuration} ms`);
-        await this.addValues(result.content);
+        await this.addContent({ type: 'time-values', content: result.content });
         if (result.maxInstantRetrieved > startTime) {
           updatedStartTime = result.maxInstantRetrieved;
         }
@@ -144,6 +204,21 @@ export default class SouthPI extends SouthConnector implements QueriesHistory {
       throw new Error(`Error occurred when querying remote agent with status ${response.status}`);
     }
     return updatedStartTime;
+  }
+
+  getThrottlingSettings(settings: SouthPISettings): SouthThrottlingSettings {
+    return {
+      maxReadInterval: settings.throttling.maxReadInterval,
+      readDelay: settings.throttling.readDelay
+    };
+  }
+
+  getMaxInstantPerItem(settings: SouthPISettings): boolean {
+    return settings.throttling.maxInstantPerItem;
+  }
+
+  getOverlap(settings: SouthPISettings): number {
+    return settings.throttling.overlap;
   }
 
   async disconnect(): Promise<void> {

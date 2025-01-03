@@ -1,5 +1,5 @@
-import { ENVIRONMENT_INITIALIZER, importProvidersFrom, inject, LOCALE_ID } from '@angular/core';
-import { MissingTranslationHandler, MissingTranslationHandlerParams, TranslateModule, TranslateService } from '@ngx-translate/core';
+import { inject, LOCALE_ID, provideEnvironmentInitializer } from '@angular/core';
+import { MissingTranslationHandler, MissingTranslationHandlerParams, provideTranslateService, TranslateService } from '@ngx-translate/core';
 import EN_TRANSLATIONS from './en.json';
 
 /**
@@ -17,23 +17,17 @@ export class CustomMissingTranslationHandler implements MissingTranslationHandle
  */
 export const provideI18nTesting = () => {
   return [
-    importProvidersFrom(
-      TranslateModule.forRoot({
-        useDefaultLang: false,
-        missingTranslationHandler: { provide: MissingTranslationHandler, useClass: CustomMissingTranslationHandler }
-      })
-    ),
+    provideTranslateService({
+      useDefaultLang: false,
+      missingTranslationHandler: { provide: MissingTranslationHandler, useClass: CustomMissingTranslationHandler }
+    }),
     { provide: LOCALE_ID, useValue: 'en' },
-    // ENVIRONMENT_INITIALIZER is a special token that allows us to run code when the app starts
-    {
-      provide: ENVIRONMENT_INITIALIZER,
-      multi: true,
-      useValue: () => {
-        const translateService = inject(TranslateService);
-        // use the EN translations for testing
-        translateService.setTranslation('en', EN_TRANSLATIONS);
-        translateService.use('en');
-      }
-    }
+    // provideEnvironmentInitializer allows us to run code when the app starts
+    provideEnvironmentInitializer(() => {
+      const translateService = inject(TranslateService);
+      // use the EN translations for testing
+      translateService.setTranslation('en', EN_TRANSLATIONS);
+      translateService.use('en');
+    })
   ];
 };

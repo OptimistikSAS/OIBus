@@ -6,7 +6,7 @@ import { of } from 'rxjs';
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { EngineService } from '../../../services/engine.service';
-import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../../../../shared/model/engine.model';
+import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../../../../backend/shared/model/engine.model';
 
 class RegisterOibusModalComponentTester extends ComponentTester<RegisterOibusModalComponent> {
   constructor() {
@@ -35,6 +35,18 @@ class RegisterOibusModalComponentTester extends ComponentTester<RegisterOibusMod
 
   get proxyPassword() {
     return this.input('#proxy-password')!;
+  }
+
+  get commandRefreshInterval() {
+    return this.input('#command-refresh-interval')!;
+  }
+
+  get commandRetryInterval() {
+    return this.input('#command-retry-interval')!;
+  }
+
+  get messageRetryInterval() {
+    return this.input('#message-retry-interval')!;
   }
 
   get validationErrors() {
@@ -68,29 +80,140 @@ describe('RegisterOibusModalComponent', () => {
     });
 
     engineService.updateRegistrationSettings.and.returnValue(of());
+    engineService.editRegistrationSettings.and.returnValue(of());
     TestBed.createComponent(DefaultValidationErrorsComponent).detectChanges();
 
     tester = new RegisterOibusModalComponentTester();
-    tester.componentInstance.prepare({ host: '' } as RegistrationSettingsDTO);
-    tester.detectChanges();
   });
 
-  it('should have an empty form', () => {
+  it('should have an empty form in register mode', () => {
+    tester.componentInstance.prepare({ host: '' } as RegistrationSettingsDTO, 'register');
+    tester.detectChanges();
     expect(tester.host).toHaveValue('');
     expect(tester.acceptUnauthorized).not.toBeChecked();
     expect(tester.useProxy).not.toBeChecked();
   });
 
   it('should not register if invalid', () => {
+    tester.componentInstance.prepare({ host: '' } as RegistrationSettingsDTO, 'register');
+    tester.detectChanges();
     tester.save.click();
 
-    // host
-    expect(tester.validationErrors.length).toBe(1);
+    // host and the three intervals
+    expect(tester.validationErrors.length).toBe(4);
     expect(fakeActiveModal.close).not.toHaveBeenCalled();
   });
 
   it('should register if valid', fakeAsync(() => {
+    tester.componentInstance.prepare({ host: '' } as RegistrationSettingsDTO, 'register');
+    tester.detectChanges();
     tester.host.fillWith('http://localhost:4200');
+    tester.acceptUnauthorized.check();
+    tester.useProxy.check();
+    tester.proxyUrl.fillWith('http://localhost:8080');
+    tester.proxyUsername.fillWith('user');
+    tester.proxyPassword.fillWith('pass');
+    tester.commandRefreshInterval.fillWith('15');
+    tester.commandRetryInterval.fillWith('10');
+    tester.messageRetryInterval.fillWith('5');
+    tester.detectChanges();
+    tester.save.click();
+
+    const expectedCommand: RegistrationSettingsCommandDTO = {
+      host: 'http://localhost:4200',
+      acceptUnauthorized: true,
+      useProxy: true,
+      proxyUrl: 'http://localhost:8080',
+      proxyUsername: 'user',
+      proxyPassword: 'pass',
+      commandRefreshInterval: 15,
+      commandRetryInterval: 10,
+      messageRetryInterval: 5,
+      commandPermissions: {
+        updateVersion: true,
+        restartEngine: true,
+        regenerateCipherKeys: true,
+        updateEngineSettings: true,
+        updateRegistrationSettings: true,
+        createScanMode: true,
+        updateScanMode: true,
+        deleteScanMode: true,
+        createIpFilter: true,
+        updateIpFilter: true,
+        deleteIpFilter: true,
+        createCertificate: true,
+        updateCertificate: true,
+        deleteCertificate: true,
+        createHistoryQuery: true,
+        updateHistoryQuery: true,
+        deleteHistoryQuery: true,
+        createOrUpdateHistoryItemsFromCsv: true,
+        createSouth: true,
+        updateSouth: true,
+        deleteSouth: true,
+        createOrUpdateSouthItemsFromCsv: true,
+        createNorth: true,
+        updateNorth: true,
+        deleteNorth: true
+      }
+    };
+
+    expect(engineService.updateRegistrationSettings).toHaveBeenCalledWith(expectedCommand);
+  }));
+
+  it('should cancel in register mode', () => {
+    tester.componentInstance.prepare({ host: '' } as RegistrationSettingsDTO, 'register');
+    tester.detectChanges();
+    tester.cancel.click();
+    expect(fakeActiveModal.dismiss).toHaveBeenCalled();
+  });
+
+  it('should have an empty form in edit mode', () => {
+    tester.componentInstance.prepare({ host: '' } as RegistrationSettingsDTO, 'edit');
+    tester.detectChanges();
+    expect(tester.host).toHaveValue('');
+    expect(tester.acceptUnauthorized).not.toBeChecked();
+    expect(tester.useProxy).not.toBeChecked();
+  });
+
+  it('should edit registration if valid', fakeAsync(() => {
+    tester.componentInstance.prepare(
+      {
+        host: 'http://localhost:4200',
+        commandRefreshInterval: 10,
+        commandRetryInterval: 5,
+        messageRetryInterval: 5,
+        commandPermissions: {
+          updateVersion: true,
+          restartEngine: true,
+          regenerateCipherKeys: true,
+          updateEngineSettings: true,
+          updateRegistrationSettings: true,
+          createScanMode: true,
+          updateScanMode: true,
+          deleteScanMode: true,
+          createIpFilter: true,
+          updateIpFilter: true,
+          deleteIpFilter: true,
+          createCertificate: true,
+          updateCertificate: true,
+          deleteCertificate: true,
+          createHistoryQuery: true,
+          updateHistoryQuery: true,
+          deleteHistoryQuery: true,
+          createOrUpdateHistoryItemsFromCsv: true,
+          createSouth: true,
+          updateSouth: true,
+          deleteSouth: true,
+          createOrUpdateSouthItemsFromCsv: true,
+          createNorth: true,
+          updateNorth: true,
+          deleteNorth: true
+        }
+      } as RegistrationSettingsDTO,
+      'edit'
+    );
+    tester.detectChanges();
     tester.acceptUnauthorized.check();
     tester.useProxy.check();
     tester.proxyUrl.fillWith('http://localhost:8080');
@@ -105,13 +228,45 @@ describe('RegisterOibusModalComponent', () => {
       useProxy: true,
       proxyUrl: 'http://localhost:8080',
       proxyUsername: 'user',
-      proxyPassword: 'pass'
+      proxyPassword: 'pass',
+      commandRefreshInterval: 10,
+      commandRetryInterval: 5,
+      messageRetryInterval: 5,
+      commandPermissions: {
+        updateVersion: true,
+        restartEngine: true,
+        regenerateCipherKeys: true,
+        updateEngineSettings: true,
+        updateRegistrationSettings: true,
+        createScanMode: true,
+        updateScanMode: true,
+        deleteScanMode: true,
+        createIpFilter: true,
+        updateIpFilter: true,
+        deleteIpFilter: true,
+        createCertificate: true,
+        updateCertificate: true,
+        deleteCertificate: true,
+        createHistoryQuery: true,
+        updateHistoryQuery: true,
+        deleteHistoryQuery: true,
+        createOrUpdateHistoryItemsFromCsv: true,
+        createSouth: true,
+        updateSouth: true,
+        deleteSouth: true,
+        createOrUpdateSouthItemsFromCsv: true,
+        createNorth: true,
+        updateNorth: true,
+        deleteNorth: true
+      }
     };
 
-    expect(engineService.updateRegistrationSettings).toHaveBeenCalledWith(expectedCommand);
+    expect(engineService.editRegistrationSettings).toHaveBeenCalledWith(expectedCommand);
   }));
 
-  it('should cancel', () => {
+  it('should cancel in edit mode', () => {
+    tester.componentInstance.prepare({ host: '' } as RegistrationSettingsDTO, 'edit');
+    tester.detectChanges();
     tester.cancel.click();
     expect(fakeActiveModal.dismiss).toHaveBeenCalled();
   });

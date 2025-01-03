@@ -1,41 +1,59 @@
 import path from 'node:path';
 
 import SouthConnector from '../south-connector';
-import manifest from './manifest';
-import { convertDelimiter, createFolder, formatInstant, logQuery, persistResults } from '../../service/utils';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
+import {
+  convertDelimiter,
+  createFolder,
+  formatInstant,
+  generateFilenameForSerialization,
+  logQuery,
+  persistResults
+} from '../../service/utils';
 import EncryptionService from '../../service/encryption.service';
-import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
-import { Instant } from '../../../../shared/model/types';
+import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
-import { SouthOLEDBItemSettings, SouthOLEDBSettings } from '../../../../shared/model/south-settings.model';
+import { SouthOLEDBItemSettings, SouthOLEDBSettings } from '../../../shared/model/south-settings.model';
 import fetch, { HeadersInit, RequestInit } from 'node-fetch';
-import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import { OIBusContent } from '../../../shared/model/engine.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
+import SouthConnectorRepository from '../../repository/config/south-connector.repository';
+import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import { BaseFolders } from '../../model/types';
+import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 
 /**
  * Class SouthOLEDB - Retrieve data from SQL databases with OLEDB driver and send them to the cache as CSV files.
  */
 
 export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, SouthOLEDBItemSettings> implements QueriesHistory {
-  static type = manifest.id;
-
   private readonly tmpFolder: string;
   private connected = false;
   private reconnectTimeout: NodeJS.Timeout | null = null;
 
   constructor(
-    connector: SouthConnectorDTO<SouthOLEDBSettings>,
-    engineAddValuesCallback: (southId: string, values: Array<OIBusDataValue>) => Promise<void>,
-    engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
+    connector: SouthConnectorEntity<SouthOLEDBSettings, SouthOLEDBItemSettings>,
+    engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
-    repositoryService: RepositoryService,
+    southConnectorRepository: SouthConnectorRepository,
+    southCacheRepository: SouthCacheRepository,
+    scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
-    baseFolder: string
+    baseFolders: BaseFolders
   ) {
-    super(connector, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
-    this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
+    super(
+      connector,
+      engineAddContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      baseFolders
+    );
+    this.tmpFolder = path.resolve(this.baseFolders.cache, 'tmp');
   }
 
   /**
@@ -117,12 +135,37 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
     }
   }
 
+  override async testItem(
+    item: SouthConnectorItemEntity<SouthOLEDBItemSettings>,
+    testingSettings: SouthConnectorItemTestingSettings,
+    callback: (data: OIBusContent) => void
+  ): Promise<void> {
+    const startTime = testingSettings.history!.startTime;
+    const endTime = testingSettings.history!.endTime;
+    const result = (await this.queryRemoteAgentData(item, startTime, endTime, true)) as string;
+
+    let oibusContent: OIBusContent;
+    switch (item.settings.serialization.type) {
+      case 'csv': {
+        const filePath = generateFilenameForSerialization(
+          this.tmpFolder,
+          item.settings.serialization.filename,
+          this.connector.name,
+          item.name
+        );
+        oibusContent = { type: 'raw', filePath, content: result };
+        break;
+      }
+    }
+    callback(oibusContent);
+  }
+
   /**
    * Get entries from the database between startTime and endTime (if used in the SQL query)
    * and write them into a CSV file and send it to the engine.
    */
   async historyQuery(
-    items: Array<SouthConnectorItemDTO<SouthOLEDBItemSettings>>,
+    items: Array<SouthConnectorItemEntity<SouthOLEDBItemSettings>>,
     startTime: Instant,
     endTime: Instant
   ): Promise<Instant | null> {
@@ -130,16 +173,32 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
 
     for (const item of items) {
       // Has to query through a remote agent
-      updatedStartTime = await this.queryRemoteAgentData(item, startTime, endTime);
+      updatedStartTime = (await this.queryRemoteAgentData(item, startTime, endTime)) as string;
     }
     return updatedStartTime;
   }
 
+  getThrottlingSettings(settings: SouthOLEDBSettings): SouthThrottlingSettings {
+    return {
+      maxReadInterval: settings.throttling.maxReadInterval,
+      readDelay: settings.throttling.readDelay
+    };
+  }
+
+  getMaxInstantPerItem(_settings: SouthOLEDBSettings): boolean {
+    return false;
+  }
+
+  getOverlap(settings: SouthOLEDBSettings): number {
+    return settings.throttling.overlap;
+  }
+
   async queryRemoteAgentData(
-    item: SouthConnectorItemDTO<SouthOLEDBItemSettings>,
+    item: SouthConnectorItemEntity<SouthOLEDBItemSettings>,
     startTime: Instant,
-    endTime: Instant
-  ): Promise<Instant | null> {
+    endTime: Instant,
+    test?: boolean
+  ): Promise<Instant | string | null> {
     let updatedStartTime: Instant | null = null;
     const startRequest = DateTime.now().toMillis();
 
@@ -167,32 +226,36 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
       }),
       headers
     };
+
     const response = await fetch(`${this.connector.settings.agentUrl}/api/ole/${this.connector.id}/read`, fetchOptions);
     if (response.status === 200) {
-      const result: { recordCount: number; content: Array<any>; maxInstantRetrieved: Instant } = (await response.json()) as {
+      const result: { recordCount: number; content: string; maxInstantRetrieved: Instant } = (await response.json()) as {
         recordCount: number;
-        content: OIBusDataValue[];
+        content: string;
         maxInstantRetrieved: string;
       };
       const requestDuration = DateTime.now().toMillis() - startRequest;
       this.logger.info(`Found ${result.recordCount} results for item ${item.name} in ${requestDuration} ms`);
 
-      if (result.content.length > 0) {
-        await persistResults(
-          result.content,
-          { type: 'file', filename: item.settings.serialization.filename, compression: item.settings.serialization.compression },
-          this.connector.name,
-          item.name,
-          this.tmpFolder,
-          this.addFile.bind(this),
-          this.addValues.bind(this),
-          this.logger
-        );
-        if (result.maxInstantRetrieved > startTime) {
-          updatedStartTime = result.maxInstantRetrieved;
-        }
+      if (test) {
+        return result.content;
       } else {
-        this.logger.debug(`No result found for item ${item.name}. Request done in ${requestDuration} ms`);
+        if (result.recordCount > 0) {
+          await persistResults(
+            result.content,
+            { type: 'file', filename: item.settings.serialization.filename, compression: item.settings.serialization.compression },
+            this.connector.name,
+            item.name,
+            this.tmpFolder,
+            this.addContent.bind(this),
+            this.logger
+          );
+          if (result.maxInstantRetrieved > startTime) {
+            updatedStartTime = result.maxInstantRetrieved;
+          }
+        } else {
+          this.logger.debug(`No result found for item ${item.name}. Request done in ${requestDuration} ms`);
+        }
       }
     } else if (response.status === 400) {
       const errorMessage = await response.text();

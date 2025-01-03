@@ -1,5 +1,5 @@
 /**
- * Create a mock object for Encryption Service
+ * Create a mock object for Proxy Server
  */
 export default jest.fn().mockImplementation(() => {
   return {

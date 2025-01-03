@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Injectable } from '@angular/core';
-import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '../../../../shared/model/scan-mode.model';
+import { Injectable, inject } from '@angular/core';
+import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '../../../../backend/shared/model/scan-mode.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on Scan Modes
@@ -10,7 +10,7 @@ import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '../../
   providedIn: 'root'
 })
 export class ScanModeService {
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
 
   /**
    * Get the scan modes
@@ -56,7 +56,7 @@ export class ScanModeService {
    * Verify the cron expression
    * @param cron - the cron expression to verify
    */
-  verifyCron(cron: string) {
+  verifyCron(cron: string): Observable<ValidatedCronExpression> {
     return this.http.post<ValidatedCronExpression>(`/api/scan-modes/verify`, { cron });
   }
 }

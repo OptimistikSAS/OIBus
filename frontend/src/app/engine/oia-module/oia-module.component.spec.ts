@@ -6,11 +6,11 @@ import { ComponentTester, createMock, stubRoute } from 'ngx-speculoos';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { EngineService } from '../../services/engine.service';
-import { RegistrationSettingsDTO } from '../../../../../shared/model/engine.model';
+import { RegistrationSettingsDTO } from '../../../../../backend/shared/model/engine.model';
 import { provideHttpClient } from '@angular/common/http';
 import { OibusCommandService } from '../../services/oibus-command.service';
 import { emptyPage } from '../../shared/test-utils';
-import { OIBusCommandDTO } from '../../../../../shared/model/command.model';
+import { OIBusCommandDTO } from '../../../../../backend/shared/model/command.model';
 
 class OiaModuleComponentTester extends ComponentTester<OiaModuleComponent> {
   constructor() {
@@ -35,8 +35,15 @@ describe('OiaModuleComponent', () => {
     status: 'NOT_REGISTERED',
     activationCode: '',
     activationDate: '',
-    activationExpirationDate: ''
-  };
+    activationExpirationDate: '',
+    checkUrl: null,
+    proxyUrl: null,
+    proxyUsername: null,
+    commandRefreshInterval: 10,
+    commandRetryInterval: 5,
+    messageRetryInterval: 5,
+    commandPermissions: {}
+  } as RegistrationSettingsDTO;
 
   const route = stubRoute({
     queryParams: {

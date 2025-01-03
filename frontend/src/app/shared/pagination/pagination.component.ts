@@ -1,33 +1,33 @@
-import { Component, EventEmitter, Input, Optional, Output } from '@angular/core';
+import { Component, inject, output, input } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Page } from '../../../../../shared/model/types';
+import { Page } from '../../../../../backend/shared/model/types';
 import { NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
-import { NgIf } from '@angular/common';
 
 @Component({
   selector: 'oib-pagination',
   templateUrl: './pagination.component.html',
   styleUrl: './pagination.component.scss',
-  imports: [NgbPaginationModule, NgIf],
-  standalone: true
+  imports: [NgbPaginationModule]
 })
 export class PaginationComponent {
-  @Input() page: Page<any> | null = null;
-  @Output() readonly pageChanged = new EventEmitter<number>();
+  private router = inject(Router, { optional: true });
+  private route = inject(ActivatedRoute, { optional: true });
 
-  @Input() navigate = false;
+  readonly page = input<Page<any> | null>(null);
+  readonly pageChanged = output<number>();
 
-  constructor(
-    @Optional() private router: Router,
-    @Optional() private route: ActivatedRoute
-  ) {}
+  readonly navigate = input(false);
 
   onPageChanged($event: number) {
     const newPage = $event - 1;
     this.pageChanged.emit(newPage);
 
-    if (this.navigate && this.router && this.route) {
-      this.router.navigate(['.'], { relativeTo: this.route, queryParams: { page: newPage }, queryParamsHandling: 'merge' });
+    if (this.navigate() && this.router && this.route) {
+      this.router.navigate(['.'], {
+        relativeTo: this.route,
+        queryParams: { page: newPage },
+        queryParamsHandling: 'merge'
+      });
     }
   }
 }

@@ -1,13 +1,13 @@
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import {
   EngineSettingsCommandDTO,
   EngineSettingsDTO,
   OIBusInfo,
   RegistrationSettingsCommandDTO,
   RegistrationSettingsDTO
-} from '../../../../shared/model/engine.model';
+} from '../../../../backend/shared/model/engine.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on the engine settings
@@ -16,7 +16,7 @@ import {
   providedIn: 'root'
 })
 export class EngineService {
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
 
   /**
    * Get the engine settings
@@ -35,10 +35,6 @@ export class EngineService {
 
   getInfo(): Observable<OIBusInfo> {
     return this.http.get<OIBusInfo>('/api/info');
-  }
-
-  shutdown(): Observable<void> {
-    return this.http.put<void>('/api/shutdown', null);
   }
 
   restart(): Observable<void> {
@@ -64,6 +60,13 @@ export class EngineService {
    */
   updateRegistrationSettings(command: RegistrationSettingsCommandDTO): Observable<void> {
     return this.http.put<void>(`/api/registration`, command);
+  }
+
+  /**
+   * Edit the engine settings
+   */
+  editRegistrationSettings(command: RegistrationSettingsCommandDTO): Observable<void> {
+    return this.http.put<void>(`/api/registration/edit`, command);
   }
 
   unregister(): Observable<void> {

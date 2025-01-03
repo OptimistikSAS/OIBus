@@ -1,28 +1,28 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { formDirectives } from '../../shared/form-directives';
-import { NgForOf } from '@angular/common';
-import { NorthType } from '../../../../../shared/model/north-connector.model';
+
+import { NorthType } from '../../../../../backend/shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
+import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
+import { OIBusNorthTypeDescriptionEnumPipe } from '../../shared/oibus-north-type-description-enum.pipe';
+import { OIBusNorthCategoryEnumPipe } from '../../shared/oibus-north-category-enum.pipe';
 
 @Component({
   selector: 'oib-choose-north-connector-type-modal',
   templateUrl: './choose-north-connector-type-modal.component.html',
   styleUrl: './choose-north-connector-type-modal.component.scss',
-  imports: [...formDirectives, TranslateModule, NgForOf],
-  standalone: true
+  imports: [...formDirectives, TranslateDirective, OIBusNorthTypeEnumPipe, OIBusNorthTypeDescriptionEnumPipe, OIBusNorthCategoryEnumPipe]
 })
 export class ChooseNorthConnectorTypeModalComponent implements OnInit {
-  northTypes: Array<NorthType> = [];
-  groupedNorthTypes: { category: string; types: NorthType[] }[] = [];
+  private modal = inject(NgbActiveModal);
+  private northConnectorService = inject(NorthConnectorService);
+  private router = inject(Router);
 
-  constructor(
-    private modal: NgbActiveModal,
-    private northConnectorService: NorthConnectorService,
-    private router: Router
-  ) {}
+  northTypes: Array<NorthType> = [];
+  groupedNorthTypes: Array<{ category: string; types: Array<NorthType> }> = [];
 
   ngOnInit() {
     this.northConnectorService.getNorthConnectorTypes().subscribe(types => {
@@ -32,7 +32,7 @@ export class ChooseNorthConnectorTypeModalComponent implements OnInit {
   }
 
   groupNorthTypes() {
-    const groupedTypes: { [key: string]: NorthType[] } = {};
+    const groupedTypes: Record<string, Array<NorthType>> = {};
 
     for (const northType of this.northTypes) {
       if (groupedTypes[northType.category]) {

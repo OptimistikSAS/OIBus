@@ -1,15 +1,13 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { BaseEnumPipe } from './base-enum-pipe';
-import { TranslateService } from '@ngx-translate/core';
-import { LogLevel } from '../../../../shared/model/engine.model';
+import { LogLevel } from '../../../../backend/shared/model/engine.model';
 
 @Pipe({
   name: 'logLevelsEnum',
-  pure: false,
-  standalone: true
+  pure: false
 })
 export class LogLevelsEnumPipe extends BaseEnumPipe<LogLevel> implements PipeTransform {
-  constructor(translateService: TranslateService) {
-    super(translateService, 'log-levels');
+  constructor() {
+    super('log-levels');
   }
 }

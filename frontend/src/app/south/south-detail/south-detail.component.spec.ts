@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { SouthDetailComponent } from './south-detail.component';
 import { ComponentTester, createMock, stubRoute } from 'ngx-speculoos';
 import { SouthConnectorService } from '../../services/south-connector.service';
-import { SouthConnectorDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
 import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
@@ -11,8 +11,9 @@ import { ActivatedRoute, provideRouter } from '@angular/router';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 import { ScanModeService } from '../../services/scan-mode.service';
-import { OIBusInfo } from '../../../../../shared/model/engine.model';
+import { OIBusInfo } from '../../../../../backend/shared/model/engine.model';
 import { EngineService } from '../../services/engine.service';
+import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 
 class SouthDisplayComponentTester extends ComponentTester<SouthDetailComponent> {
   constructor() {
@@ -34,6 +35,10 @@ class SouthDisplayComponentTester extends ComponentTester<SouthDetailComponent> 
   get southItems() {
     return this.elements('tbody tr.south-item');
   }
+
+  get southLogs() {
+    return this.elements('#logs-title');
+  }
 }
 
 describe('SouthDetailComponent', () => {
@@ -47,17 +52,12 @@ describe('SouthDetailComponent', () => {
   const manifest: SouthConnectorManifest = {
     id: 'mssql',
     category: 'database',
-    name: 'SQL',
-    description: 'SQL',
     settings: [],
     items: {
-      scanMode: {
-        acceptSubscription: false,
-        subscriptionOnly: false
-      },
+      scanMode: 'POLL',
       settings: [
         {
-          label: 'query',
+          translationKey: 'south.items.mssql.query',
           key: 'query',
           displayInViewMode: true,
           type: 'OibText'
@@ -68,26 +68,31 @@ describe('SouthDetailComponent', () => {
       subscription: false,
       history: true,
       lastFile: true,
-      lastPoint: false,
-      forceMaxInstantPerItem: false
+      lastPoint: false
     }
   };
-  const southConnector: SouthConnectorDTO = {
+  const southConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> = {
     id: 'id1',
-    type: 'Generic',
+    type: 'mssql',
     name: 'South Connector',
     description: 'My South connector description',
     enabled: true,
-    history: {
-      maxInstantPerItem: false,
-      maxReadInterval: 0,
-      readDelay: 200,
-      overlap: 0
-    },
-    settings: {}
+    settings: {} as SouthSettings,
+    items: [
+      {
+        id: 'id1',
+        name: 'item1',
+        enabled: true,
+        settings: {
+          query: 'sql'
+        } as SouthItemSettings,
+        scanModeId: 'scanModeId1'
+      }
+    ]
   };
   const engineInfo: OIBusInfo = {
-    version: '3.0',
+    version: '3.0.0',
+    launcherVersion: '3.5.0',
     dataDirectory: 'data-folder',
     processId: '1234',
     architecture: 'x64',
@@ -142,20 +147,6 @@ describe('SouthDetailComponent', () => {
     southConnectorService.getSouthConnectorTypeManifest.and.returnValue(of(manifest));
     southConnectorService.startSouth.and.returnValue(of(undefined));
     southConnectorService.stopSouth.and.returnValue(of(undefined));
-    southConnectorService.listItems.and.returnValue(
-      of([
-        {
-          id: 'id1',
-          name: 'item1',
-          enabled: true,
-          connectorId: 'southId',
-          settings: {
-            query: 'sql'
-          },
-          scanModeId: 'scanModeId1'
-        }
-      ])
-    );
 
     tester = new SouthDisplayComponentTester();
   });
@@ -176,6 +167,11 @@ describe('SouthDetailComponent', () => {
     expect(item.elements('td')[1]).toContainText('item1');
     expect(item.elements('td')[2]).toContainText('Every mn');
     expect(item.elements('td')[3]).toContainText('sql');
+  });
+
+  it('should display logs', () => {
+    tester.detectChanges();
+    expect(tester.southLogs.length).toBe(1);
   });
 
   it('should stop south', () => {

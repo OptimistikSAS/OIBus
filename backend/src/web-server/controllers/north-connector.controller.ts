@@ -1,12 +1,15 @@
 import { KoaContext } from '../koa';
 import {
-  NorthCacheSettingsDTO,
+  NorthCacheFiles,
   NorthConnectorCommandDTO,
   NorthConnectorDTO,
-  NorthConnectorWithItemsCommandDTO,
+  NorthConnectorLightDTO,
+  NorthConnectorManifest,
   NorthType
-} from '../../../../shared/model/north-connector.model';
+} from '../../../shared/model/north-connector.model';
 import JoiValidator from './validators/joi.validator';
+import { toNorthConnectorDTO, toNorthConnectorLightDTO } from '../../service/north.service';
+import { NorthSettings } from '../../../shared/model/north-settings.model';
 
 export default class NorthConnectorController {
   constructor(protected readonly validator: JoiValidator) {}
@@ -16,14 +19,12 @@ export default class NorthConnectorController {
       ctx.app.northService.getInstalledNorthManifests().map(manifest => ({
         id: manifest.id,
         category: manifest.category,
-        name: manifest.name,
-        description: manifest.description,
         modes: manifest.modes
       }))
     );
   }
 
-  async getNorthConnectorManifest(ctx: KoaContext<void, object>): Promise<void> {
+  async getNorthConnectorManifest(ctx: KoaContext<void, NorthConnectorManifest>): Promise<void> {
     const manifest = ctx.app.northService.getInstalledNorthManifests().find(northManifest => northManifest.id === ctx.params.id);
     if (!manifest) {
       ctx.throw(404, 'North not found');
@@ -31,552 +32,266 @@ export default class NorthConnectorController {
     ctx.ok(manifest);
   }
 
-  async getNorthConnectors(ctx: KoaContext<void, Array<NorthConnectorDTO>>): Promise<void> {
-    const northConnectors = ctx.app.repositoryService.northConnectorRepository.getNorthConnectors();
-    ctx.ok(
-      northConnectors.map(connector => {
-        const manifest = ctx.app.northService.getInstalledNorthManifests().find(northManifest => northManifest.id === connector.type);
-        if (manifest) {
-          connector.settings = ctx.app.encryptionService.filterSecrets(connector.settings, manifest.settings);
-          return connector;
-        }
-        return null;
-      })
+  async findAll(ctx: KoaContext<void, Array<NorthConnectorLightDTO>>): Promise<void> {
+    const northConnectors = ctx.app.northService.findAll();
+    ctx.ok(northConnectors.map(connector => toNorthConnectorLightDTO(connector)));
+  }
+
+  async findById(ctx: KoaContext<void, NorthConnectorDTO<NorthSettings>>): Promise<void> {
+    const northConnector = ctx.app.northService.findById(ctx.params.id);
+    if (northConnector) {
+      ctx.ok(toNorthConnectorDTO(northConnector, ctx.app.encryptionService));
+    } else {
+      ctx.notFound();
+    }
+  }
+
+  async create(ctx: KoaContext<NorthConnectorCommandDTO<NorthSettings>, NorthConnectorDTO<NorthSettings>>): Promise<void> {
+    try {
+      const northConnector = await ctx.app.northService.createNorth(ctx.request.body!, (ctx.query.duplicate as string) || null);
+      ctx.created(toNorthConnectorDTO(northConnector, ctx.app.encryptionService));
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
+    }
+  }
+
+  async updateNorth(ctx: KoaContext<NorthConnectorCommandDTO<NorthSettings>, void>): Promise<void> {
+    try {
+      await ctx.app.northService.updateNorth(ctx.params.id!, ctx.request.body!);
+      ctx.noContent();
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
+    }
+  }
+
+  async delete(ctx: KoaContext<void, void>): Promise<void> {
+    try {
+      await ctx.app.northService.deleteNorth(ctx.params.id!);
+      ctx.noContent();
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
+    }
+  }
+
+  start = async (ctx: KoaContext<void, void>) => {
+    try {
+      await ctx.app.northService.startNorth(ctx.params.id!);
+      ctx.noContent();
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
+    }
+  };
+
+  stop = async (ctx: KoaContext<void, void>) => {
+    try {
+      await ctx.app.northService.stopNorth(ctx.params.id!);
+      ctx.noContent();
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
+    }
+  };
+
+  async resetMetrics(ctx: KoaContext<void, void>): Promise<void> {
+    ctx.app.oIBusService.resetNorthConnectorMetrics(ctx.params.northId);
+    ctx.noContent();
+  }
+
+  async getErrorFiles(ctx: KoaContext<void, Array<NorthCacheFiles>>): Promise<void> {
+    const filenameContains = (ctx.query.filenameContains as string) || null;
+    const startTime = (ctx.query.start as string) || null;
+    const endTime = (ctx.query.end as string) || null;
+    const errorFiles: Array<NorthCacheFiles> = await ctx.app.northService.getErrorFiles(
+      ctx.params.northId,
+      startTime,
+      endTime,
+      filenameContains
     );
-  }
-
-  async getNorthConnector(ctx: KoaContext<void, NorthConnectorDTO>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
-    if (northConnector) {
-      const manifest = ctx.app.northService.getInstalledNorthManifests().find(northManifest => northManifest.id === northConnector.type);
-      if (manifest) {
-        northConnector.settings = ctx.app.encryptionService.filterSecrets(northConnector.settings, manifest.settings);
-        ctx.ok(northConnector);
-      } else {
-        ctx.throw(404, 'North type not found');
-      }
-    } else {
-      ctx.notFound();
-    }
-  }
-
-  async createNorthConnector(ctx: KoaContext<NorthConnectorWithItemsCommandDTO, void>): Promise<void> {
-    if (!ctx.request.body || !ctx.request.body.subscriptions || !ctx.request.body.north) {
-      return ctx.badRequest();
-    }
-    const command = ctx.request.body!.north;
-
-    try {
-      const manifest = ctx.app.northService.getInstalledNorthManifests().find(northManifest => northManifest.id === command.type);
-      if (!manifest) {
-        return ctx.throw(404, 'North manifest not found');
-      }
-
-      await this.validator.validateSettings(manifest.settings, command.settings);
-
-      if (!command.caching.scanModeId && !command.caching.scanModeName) {
-        throw new Error(`Scan mode not specified`);
-      } else if (!command.caching.scanModeId && command.caching.scanModeName) {
-        const scanModes = ctx.app.repositoryService.scanModeRepository.getScanModes();
-        const scanMode = scanModes.find(element => element.name === command.caching.scanModeName);
-        if (!scanMode) {
-          throw new Error(`Scan mode ${command.caching.scanModeName} not found`);
-        }
-        command.caching.scanModeId = scanMode.id;
-      }
-
-      let duplicatedConnector: NorthConnectorDTO | null = null;
-      if (ctx.query.duplicateId) {
-        duplicatedConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.query.duplicateId);
-        if (!duplicatedConnector) {
-          return ctx.notFound();
-        }
-      }
-      command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(
-        command.settings,
-        duplicatedConnector?.settings,
-        manifest.settings
-      );
-
-      const subscriptionsToAdd = ctx.request.body.subscriptions
-        .filter(element => element.type === 'south')
-        .map(element => element.subscription!.id);
-      const externalSubscriptionsToAdd = ctx.request.body.subscriptions
-        .filter(element => element.type === 'external-source')
-        .map(element => element.externalSubscription!.id);
-
-      const northConnector = await ctx.app.reloadService.onCreateNorth(command);
-
-      for (const subscription of subscriptionsToAdd) {
-        ctx.app.repositoryService.subscriptionRepository.createNorthSubscription(northConnector.id, subscription);
-      }
-      for (const subscription of externalSubscriptionsToAdd) {
-        ctx.app.repositoryService.subscriptionRepository.createExternalNorthSubscription(northConnector.id, subscription);
-      }
-
-      if (command.enabled) {
-        await ctx.app.reloadService.oibusEngine.startNorth(northConnector.id);
-      }
-      ctx.created(northConnector);
-    } catch (error: any) {
-      ctx.badRequest(error.message);
-    }
-  }
-
-  async updateNorthConnector(ctx: KoaContext<NorthConnectorWithItemsCommandDTO, void>): Promise<void> {
-    if (!ctx.request.body || !ctx.request.body.subscriptions || !ctx.request.body.subscriptionsToDelete || !ctx.request.body.north) {
-      return ctx.badRequest();
-    }
-    const command = ctx.request.body!.north;
-
-    try {
-      const manifest = ctx.app.northService.getInstalledNorthManifests().find(northManifest => northManifest.id === command.type);
-      if (!manifest) {
-        return ctx.throw(404, 'North manifest not found');
-      }
-
-      await this.validator.validateSettings(manifest.settings, command!.settings);
-
-      const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
-      if (!northConnector) {
-        return ctx.notFound();
-      }
-
-      command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(
-        command.settings,
-        northConnector.settings,
-        manifest.settings
-      );
-
-      const existingSubscriptions = ctx.app.repositoryService.subscriptionRepository.getNorthSubscriptions(ctx.params.id);
-      const existingExternalSubscriptions = ctx.app.repositoryService.subscriptionRepository.getExternalNorthSubscriptions(ctx.params.id);
-      const subscriptionsToAdd = ctx.request.body.subscriptions
-        .filter(
-          element =>
-            element.type === 'south' &&
-            !existingSubscriptions.find(existingSubscription => existingSubscription === element.subscription!.id)
-        )
-        .map(element => element.subscription!.id);
-      const externalSubscriptionsToAdd = ctx.request.body.subscriptions
-        .filter(
-          element =>
-            element.type === 'external-source' &&
-            !existingExternalSubscriptions.find(existingSubscription => existingSubscription === element.externalSubscription!.id)
-        )
-        .map(element => element.externalSubscription!.id);
-
-      const subscriptionsToRemove = ctx.request.body.subscriptionsToDelete
-        .filter(element => element.type === 'south')
-        .map(element => element.subscription!.id);
-      const externalSubscriptionsToRemove = ctx.request.body.subscriptionsToDelete
-        .filter(element => element.type === 'external-source')
-        .map(element => element.externalSubscription!.id);
-      for (const subscription of subscriptionsToAdd) {
-        ctx.app.repositoryService.subscriptionRepository.createNorthSubscription(ctx.params.id, subscription);
-      }
-      for (const subscription of externalSubscriptionsToAdd) {
-        ctx.app.repositoryService.subscriptionRepository.createExternalNorthSubscription(ctx.params.id, subscription);
-      }
-      for (const subscription of subscriptionsToRemove) {
-        ctx.app.repositoryService.subscriptionRepository.deleteNorthSubscription(ctx.params.id, subscription);
-      }
-      for (const subscription of externalSubscriptionsToRemove) {
-        ctx.app.repositoryService.subscriptionRepository.deleteExternalNorthSubscription(ctx.params.id, subscription);
-      }
-      await ctx.app.reloadService.onUpdateNorthSettings(ctx.params.id, command);
-      ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
-    }
-  }
-
-  async deleteNorthConnector(ctx: KoaContext<void, void>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
-    if (northConnector) {
-      await ctx.app.repositoryService.subscriptionRepository.deleteNorthSubscriptions(ctx.params.id);
-      await ctx.app.repositoryService.subscriptionRepository.deleteExternalNorthSubscriptions(ctx.params.id);
-      await ctx.app.reloadService.onDeleteNorth(ctx.params.id);
-      ctx.noContent();
-    } else {
-      ctx.notFound();
-    }
-  }
-
-  startNorthConnector = async (ctx: KoaContext<void, void>) => {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
-    if (!northConnector) {
-      return ctx.notFound();
-    }
-
-    try {
-      await ctx.app.reloadService.onStartNorth(ctx.params.id);
-      ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
-    }
-  };
-
-  stopNorthConnector = async (ctx: KoaContext<void, void>) => {
-    const southConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
-    if (!southConnector) {
-      return ctx.notFound();
-    }
-
-    try {
-      await ctx.app.reloadService.onStopNorth(ctx.params.id);
-      ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
-    }
-  };
-
-  async resetNorthMetrics(ctx: KoaContext<void, void>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
-    if (northConnector) {
-      await ctx.app.reloadService.oibusEngine.resetNorthMetrics(ctx.params.northId);
-      ctx.noContent();
-    } else {
-      ctx.notFound();
-    }
-  }
-
-  async getFileErrors(ctx: KoaContext<void, void>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
-    if (!northConnector) {
-      return ctx.notFound();
-    }
-
-    const fileNameContains = ctx.query.fileNameContains || '';
-    const errorFiles = await ctx.app.reloadService.oibusEngine.getErrorFiles(northConnector.id, '', '', fileNameContains);
     ctx.ok(errorFiles);
   }
 
-  async getFileErrorContent(ctx: KoaContext<void, void>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
-    if (!northConnector) {
-      return ctx.notFound();
-    }
-
-    ctx.attachment(ctx.params.filename);
-    const fileStream = await ctx.app.reloadService.oibusEngine.getErrorFileContent(northConnector.id, ctx.params.filename);
+  async getErrorFileContent(ctx: KoaContext<void, void>): Promise<void> {
+    const fileStream = await ctx.app.northService.getErrorFileContent(ctx.params.northId, ctx.params.filename);
     if (!fileStream) {
       return ctx.notFound();
     }
+    ctx.attachment(ctx.params.filename);
     ctx.ok(fileStream);
   }
 
-  async removeFileErrors(ctx: KoaContext<Array<string>, void>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
-    if (!northConnector) {
-      return ctx.notFound();
-    }
-
+  async removeErrorFiles(ctx: KoaContext<Array<string>, void>): Promise<void> {
     if (!Array.isArray(ctx.request.body)) {
-      return ctx.throw(400, 'Invalid file list');
+      return ctx.badRequest('Invalid file list');
     }
-
-    await ctx.app.reloadService.oibusEngine.removeErrorFiles(northConnector.id, ctx.request.body);
+    await ctx.app.northService.removeErrorFiles(ctx.params.northId, ctx.request.body);
     ctx.noContent();
   }
 
   async retryErrorFiles(ctx: KoaContext<Array<string>, void>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
-    if (!northConnector) {
-      return ctx.notFound();
-    }
-
     if (!Array.isArray(ctx.request.body)) {
-      return ctx.throw(400, 'Invalid file list');
+      return ctx.badRequest('Invalid file list');
     }
-
-    await ctx.app.reloadService.oibusEngine.retryErrorFiles(northConnector.id, ctx.request.body);
+    await ctx.app.northService.retryErrorFiles(ctx.params.northId, ctx.request.body);
     ctx.noContent();
   }
 
   async removeAllErrorFiles(ctx: KoaContext<void, void>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
-    if (!northConnector) {
-      return ctx.notFound();
-    }
-
-    await ctx.app.reloadService.oibusEngine.removeAllErrorFiles(northConnector.id);
+    await ctx.app.northService.removeAllErrorFiles(ctx.params.northId);
     ctx.noContent();
   }
 
   async retryAllErrorFiles(ctx: KoaContext<void, void>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
-    if (!northConnector) {
-      return ctx.notFound();
-    }
-
-    await ctx.app.reloadService.oibusEngine.retryAllErrorFiles(northConnector.id);
+    await ctx.app.northService.retryAllErrorFiles(ctx.params.northId);
     ctx.noContent();
   }
 
-  async getCacheFiles(ctx: KoaContext<void, void>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
-    if (!northConnector) {
-      return ctx.notFound();
-    }
-
-    const fileNameContains = ctx.query.fileNameContains || '';
-    const errorFiles = await ctx.app.reloadService.oibusEngine.getCacheFiles(northConnector.id, '', '', fileNameContains);
-    ctx.ok(errorFiles);
+  async getCacheFiles(ctx: KoaContext<void, Array<NorthCacheFiles>>): Promise<void> {
+    const filenameContains = (ctx.query.filenameContains as string) || null;
+    const startTime = (ctx.query.start as string) || null;
+    const endTime = (ctx.query.end as string) || null;
+    const cacheFiles = await ctx.app.northService.getCacheFiles(ctx.params.northId, startTime, endTime, filenameContains);
+    ctx.ok(cacheFiles);
   }
 
   async getCacheFileContent(ctx: KoaContext<void, void>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
-    if (!northConnector) {
-      return ctx.notFound();
-    }
-
-    ctx.attachment(ctx.params.filename);
-    const fileStream = await ctx.app.reloadService.oibusEngine.getCacheFileContent(northConnector.id, ctx.params.filename);
+    const fileStream = await ctx.app.northService.getCacheFileContent(ctx.params.northId, ctx.params.filename);
     if (!fileStream) {
       return ctx.notFound();
     }
+    ctx.attachment(ctx.params.filename);
     ctx.ok(fileStream);
   }
 
   async removeCacheFiles(ctx: KoaContext<Array<string>, void>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
-    if (!northConnector) {
-      return ctx.notFound();
-    }
-
     if (!Array.isArray(ctx.request.body)) {
-      return ctx.throw(400, 'Invalid file list');
+      return ctx.badRequest('Invalid file list');
     }
-
-    await ctx.app.reloadService.oibusEngine.removeCacheFiles(northConnector.id, ctx.request.body);
+    await ctx.app.northService.removeCacheFiles(ctx.params.northId, ctx.request.body);
     ctx.noContent();
   }
 
   async archiveCacheFiles(ctx: KoaContext<Array<string>, void>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
-    if (!northConnector) {
-      return ctx.notFound();
-    }
-
     if (!Array.isArray(ctx.request.body)) {
-      return ctx.throw(400, 'Invalid file list');
+      return ctx.badRequest('Invalid file list');
     }
+    await ctx.app.northService.archiveCacheFiles(ctx.params.northId, ctx.request.body);
+    ctx.noContent();
+  }
 
-    await ctx.app.reloadService.oibusEngine.archiveCacheFiles(northConnector.id, ctx.request.body);
+  async removeAllCacheFiles(ctx: KoaContext<void, void>): Promise<void> {
+    await ctx.app.northService.removeAllCacheFiles(ctx.params.northId);
     ctx.noContent();
   }
 
   async getArchiveFiles(ctx: KoaContext<void, void>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
-    if (!northConnector) {
-      return ctx.notFound();
-    }
-
-    const fileNameContains = ctx.query.fileNameContains || '';
-    const errorFiles = await ctx.app.reloadService.oibusEngine.getArchiveFiles(northConnector.id, '', '', fileNameContains);
-    ctx.ok(errorFiles);
+    const filenameContains = (ctx.query.filenameContains as string) || null;
+    const startTime = (ctx.query.start as string) || null;
+    const endTime = (ctx.query.end as string) || null;
+    const archiveFiles = await ctx.app.northService.getArchiveFiles(ctx.params.northId, startTime, endTime, filenameContains);
+    ctx.ok(archiveFiles);
   }
 
   async getArchiveFileContent(ctx: KoaContext<void, void>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
-    if (!northConnector) {
-      return ctx.notFound();
-    }
-
-    ctx.attachment(ctx.params.filename);
-    const fileStream = await ctx.app.reloadService.oibusEngine.getArchiveFileContent(northConnector.id, ctx.params.filename);
+    const fileStream = await ctx.app.northService.getArchiveFileContent(ctx.params.northId, ctx.params.filename);
     if (!fileStream) {
       return ctx.notFound();
     }
+    ctx.attachment(ctx.params.filename);
     ctx.ok(fileStream);
   }
 
   async removeArchiveFiles(ctx: KoaContext<Array<string>, void>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
-    if (!northConnector) {
-      return ctx.notFound();
-    }
-
     if (!Array.isArray(ctx.request.body)) {
-      return ctx.throw(400, 'Invalid file list');
+      return ctx.badRequest('Invalid file list');
     }
-
-    await ctx.app.reloadService.oibusEngine.removeArchiveFiles(northConnector.id, ctx.request.body);
+    await ctx.app.northService.removeArchiveFiles(ctx.params.northId, ctx.request.body);
     ctx.noContent();
   }
 
   async retryArchiveFiles(ctx: KoaContext<Array<string>, void>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
-    if (!northConnector) {
-      return ctx.notFound();
-    }
-
     if (!Array.isArray(ctx.request.body)) {
-      return ctx.throw(400, 'Invalid file list');
+      return ctx.badRequest('Invalid file list');
     }
-
-    await ctx.app.reloadService.oibusEngine.retryArchiveFiles(northConnector.id, ctx.request.body);
+    await ctx.app.northService.retryArchiveFiles(ctx.params.northId, ctx.request.body);
     ctx.noContent();
   }
 
   async removeAllArchiveFiles(ctx: KoaContext<void, void>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
-    if (!northConnector) {
-      return ctx.notFound();
-    }
-
-    await ctx.app.reloadService.oibusEngine.removeAllArchiveFiles(northConnector.id);
+    await ctx.app.northService.removeAllArchiveFiles(ctx.params.northId);
     ctx.noContent();
   }
 
   async retryAllArchiveFiles(ctx: KoaContext<void, void>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
-    if (!northConnector) {
-      return ctx.notFound();
-    }
-
-    await ctx.app.reloadService.oibusEngine.retryAllArchiveFiles(northConnector.id);
+    await ctx.app.northService.retryAllArchiveFiles(ctx.params.northId);
     ctx.noContent();
   }
 
-  async getCacheValues(ctx: KoaContext<void, void>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
-    if (!northConnector) {
-      return ctx.notFound();
-    }
-
-    const fileNameContains = ctx.query.fileNameContains || '';
-    const cacheValues = await ctx.app.reloadService.oibusEngine.getCacheValues(northConnector.id, fileNameContains);
+  async getCacheValues(ctx: KoaContext<void, Array<NorthCacheFiles>>): Promise<void> {
+    const filenameContains = (ctx.query.filenameContains as string) || '';
+    const cacheValues = await ctx.app.northService.getCacheValues(ctx.params.northId, filenameContains);
     ctx.ok(cacheValues);
   }
 
   async removeCacheValues(ctx: KoaContext<Array<string>, void>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
-    if (!northConnector) {
-      return ctx.notFound();
-    }
-
     if (!Array.isArray(ctx.request.body)) {
-      return ctx.throw(400, 'Invalid file list');
+      return ctx.badRequest('Invalid file list');
     }
-
-    await ctx.app.reloadService.oibusEngine.removeCacheValues(northConnector.id, ctx.request.body);
+    await ctx.app.northService.removeCacheValues(ctx.params.northId, ctx.request.body);
     ctx.noContent();
   }
 
   async removeAllCacheValues(ctx: KoaContext<void, void>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
-    if (!northConnector) {
-      return ctx.notFound();
-    }
-
-    await ctx.app.reloadService.oibusEngine.removeAllCacheValues(northConnector.id);
+    await ctx.app.northService.removeAllCacheValues(ctx.params.northId);
     ctx.noContent();
   }
 
-  async getValueErrors(ctx: KoaContext<void, void>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
-    if (!northConnector) {
-      return ctx.notFound();
-    }
-
-    const fileNameContains = ctx.query.fileNameContains || '';
-    const errorFiles = await ctx.app.reloadService.oibusEngine.getValueErrors(northConnector.id, '', '', fileNameContains);
-    ctx.ok(errorFiles);
+  async getErrorValues(ctx: KoaContext<void, void>): Promise<void> {
+    const filenameContains = (ctx.query.filenameContains as string) || null;
+    const startTime = (ctx.query.start as string) || null;
+    const endTime = (ctx.query.end as string) || null;
+    const errorValues = await ctx.app.northService.getErrorValues(ctx.params.northId, startTime, endTime, filenameContains);
+    ctx.ok(errorValues);
   }
 
-  async removeValueErrors(ctx: KoaContext<Array<string>, void>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
-    if (!northConnector) {
-      return ctx.notFound();
-    }
-
+  async removeErrorValues(ctx: KoaContext<Array<string>, void>): Promise<void> {
     if (!Array.isArray(ctx.request.body)) {
-      return ctx.throw(400, 'Invalid file list');
+      return ctx.badRequest('Invalid file list');
     }
-
-    await ctx.app.reloadService.oibusEngine.removeValueErrors(northConnector.id, ctx.request.body);
+    await ctx.app.northService.removeErrorValues(ctx.params.northId, ctx.request.body);
     ctx.noContent();
   }
 
-  async removeAllValueErrors(ctx: KoaContext<void, void>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
-    if (!northConnector) {
-      return ctx.notFound();
-    }
-
-    await ctx.app.reloadService.oibusEngine.removeAllValueErrors(northConnector.id);
-    ctx.noContent();
-  }
-
-  async retryValueErrors(ctx: KoaContext<Array<string>, void>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
-    if (!northConnector) {
-      return ctx.notFound();
-    }
-
+  async retryErrorValues(ctx: KoaContext<Array<string>, void>): Promise<void> {
     if (!Array.isArray(ctx.request.body)) {
-      return ctx.throw(400, 'Invalid file list');
+      return ctx.badRequest('Invalid file list');
     }
-
-    await ctx.app.reloadService.oibusEngine.retryValueErrors(northConnector.id, ctx.request.body);
+    await ctx.app.northService.retryErrorValues(ctx.params.northId, ctx.request.body);
     ctx.noContent();
   }
 
-  async retryAllValueErrors(ctx: KoaContext<void, void>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
-    if (!northConnector) {
-      return ctx.notFound();
-    }
-
-    await ctx.app.reloadService.oibusEngine.retryAllValueErrors(northConnector.id);
+  async removeAllErrorValues(ctx: KoaContext<void, void>): Promise<void> {
+    await ctx.app.northService.removeAllErrorValues(ctx.params.northId);
     ctx.noContent();
   }
 
-  async testNorthConnection(ctx: KoaContext<NorthConnectorCommandDTO, void>): Promise<void> {
+  async retryAllErrorValues(ctx: KoaContext<void, void>): Promise<void> {
+    await ctx.app.northService.retryAllErrorValues(ctx.params.northId);
+    ctx.noContent();
+  }
+
+  async testNorthConnection(ctx: KoaContext<NorthConnectorCommandDTO<NorthSettings>, void>): Promise<void> {
     try {
-      const manifest = ctx.request.body
-        ? ctx.app.northService.getInstalledNorthManifests().find(northManifest => northManifest.id === ctx.request.body!.type)
-        : null;
-      if (!manifest) {
-        return ctx.throw(404, 'North manifest not found');
-      }
-      let northConnector: NorthConnectorDTO | null = null;
-      if (ctx.params.id !== 'create') {
-        northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
-        if (!northConnector) {
-          return ctx.notFound();
-        }
-      }
-      if (!northConnector && ctx.query.duplicateId) {
-        northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.query.duplicateId);
-        if (!northConnector) {
-          return ctx.notFound();
-        }
-      }
-
-      await this.validator.validateSettings(manifest.settings, ctx.request.body!.settings);
-      const northCaching = { ...ctx.request.body!.caching };
-      delete northCaching.scanModeName;
-      northCaching.scanModeId = '';
-      const command: NorthConnectorDTO = {
-        id: northConnector?.id || 'test',
-        ...ctx.request.body!,
-        caching: northCaching as NorthCacheSettingsDTO,
-        name: northConnector?.name || `${ctx.request.body!.type}:test-connection`
-      };
-      command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(
-        command.settings,
-        northConnector?.settings,
-        manifest.settings
+      const logger = ctx.app.logger.child(
+        {
+          scopeType: 'north',
+          scopeId: 'test',
+          scopeName: 'test'
+        },
+        { level: 'silent' }
       );
-      const logger = ctx.app.logger.child({ scopeType: 'north', scopeId: command.id, scopeName: command.name }, { level: 'silent' });
-      const northToTest = ctx.app.northService.createNorth(command, 'baseFolder', logger);
-      await northToTest.testConnection();
-
+      await ctx.app.northService.testNorth(ctx.params.id, ctx.request.body!, logger);
       ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 }

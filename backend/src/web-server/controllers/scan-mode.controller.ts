@@ -1,66 +1,52 @@
 import { KoaContext } from '../koa';
-import { ScanModeCommandDTO, ScanModeDTO } from '../../../../shared/model/scan-mode.model';
+import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '../../../shared/model/scan-mode.model';
 import AbstractController from './abstract.controller';
-import { validateCronExpression } from '../../service/utils';
+import { toScanModeDTO } from '../../service/scan-mode.service';
 
 export default class ScanModeController extends AbstractController {
-  async getScanModes(ctx: KoaContext<void, Array<ScanModeDTO>>): Promise<void> {
-    const scanModes = ctx.app.repositoryService.scanModeRepository.getScanModes();
+  async findAll(ctx: KoaContext<void, Array<ScanModeDTO>>): Promise<void> {
+    const scanModes = ctx.app.scanModeService.findAll().map(scanMode => toScanModeDTO(scanMode));
     ctx.ok(scanModes);
   }
 
-  async verifyScanMode(ctx: KoaContext<ScanModeCommandDTO, void>): Promise<void> {
-    try {
-      if (!ctx.request.body?.cron) {
-        ctx.badRequest('Cron expression is required');
-        return;
-      }
-
-      const expression = validateCronExpression(ctx.request.body.cron);
-      ctx.ok(expression);
-    } catch (error: any) {
-      ctx.badRequest(error.message);
-    }
-  }
-
-  async getScanMode(ctx: KoaContext<void, ScanModeDTO>): Promise<void> {
-    const scanMode = ctx.app.repositoryService.scanModeRepository.getScanMode(ctx.params.id);
+  async findById(ctx: KoaContext<void, ScanModeDTO>): Promise<void> {
+    const scanMode = ctx.app.scanModeService.findById(ctx.params.id);
     if (scanMode) {
-      ctx.ok(scanMode);
+      ctx.ok(toScanModeDTO(scanMode));
     } else {
       ctx.notFound();
     }
   }
 
-  async createScanMode(ctx: KoaContext<ScanModeCommandDTO, void>): Promise<void> {
+  async create(ctx: KoaContext<ScanModeCommandDTO, void>): Promise<void> {
     try {
-      await this.validate(ctx.request.body);
-      const scanMode = ctx.app.repositoryService.scanModeRepository.createScanMode(ctx.request.body as ScanModeCommandDTO);
-      ctx.created(scanMode);
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+      const scanMode = await ctx.app.scanModeService.create(ctx.request.body!);
+      ctx.created(toScanModeDTO(scanMode));
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 
-  async updateScanMode(ctx: KoaContext<ScanModeCommandDTO, void>): Promise<void> {
+  async update(ctx: KoaContext<ScanModeCommandDTO, void>): Promise<void> {
     try {
-      await this.validate(ctx.request.body);
-
-      await ctx.app.reloadService.onUpdateScanMode(ctx.params.id, ctx.request.body as ScanModeCommandDTO);
+      await ctx.app.scanModeService.update(ctx.params.id!, ctx.request.body!);
       ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 
-  async deleteScanMode(ctx: KoaContext<void, void>): Promise<void> {
-    const scanMode = ctx.app.repositoryService.scanModeRepository.getScanMode(ctx.params.id);
-    if (scanMode) {
-      ctx.app.repositoryService.scanModeRepository.deleteScanMode(ctx.params.id);
-      ctx.app.repositoryService.southCacheRepository.deleteCacheScanModesByScanMode(ctx.params.id);
+  async delete(ctx: KoaContext<void, void>): Promise<void> {
+    try {
+      await ctx.app.scanModeService.delete(ctx.params.id!);
       ctx.noContent();
-    } else {
-      ctx.notFound();
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
+  }
+
+  async verifyCron(ctx: KoaContext<{ cron: string }, ValidatedCronExpression>): Promise<void> {
+    const invalidCron = await ctx.app.scanModeService.verifyCron(ctx.request.body!);
+    ctx.ok(invalidCron);
   }
 }

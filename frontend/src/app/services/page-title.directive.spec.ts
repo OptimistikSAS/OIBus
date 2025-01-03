@@ -6,8 +6,7 @@ import { ComponentTester } from 'ngx-speculoos';
 
 @Component({
   selector: 'oib-test',
-  template: '<oib-page-title title="OIBus name"></oib-page-title>',
-  standalone: true,
+  template: '<oib-page-title title="OIBus name" />',
   imports: [PageTitleDirective]
 })
 class TestComponent {}

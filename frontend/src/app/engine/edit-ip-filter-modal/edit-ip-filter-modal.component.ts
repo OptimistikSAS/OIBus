@@ -1,10 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { FormBuilder, Validators } from '@angular/forms';
+import { NonNullableFormBuilder, Validators } from '@angular/forms';
 import { Observable, switchMap } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
-import { TranslateModule } from '@ngx-translate/core';
-import { IpFilterCommandDTO, IpFilterDTO } from '../../../../../shared/model/ip-filter.model';
+import { TranslateDirective } from '@ngx-translate/core';
+import { IPFilterCommandDTO, IPFilterDTO } from '../../../../../backend/shared/model/ip-filter.model';
 import { IpFilterService } from '../../services/ip-filter.service';
 import { formDirectives } from '../../shared/form-directives';
 
@@ -12,23 +12,19 @@ import { formDirectives } from '../../shared/form-directives';
   selector: 'oib-edit-ip-filter-modal',
   templateUrl: './edit-ip-filter-modal.component.html',
   styleUrl: './edit-ip-filter-modal.component.scss',
-  imports: [...formDirectives, TranslateModule, SaveButtonComponent],
-  standalone: true
+  imports: [...formDirectives, TranslateDirective, SaveButtonComponent]
 })
 export class EditIpFilterModalComponent {
+  private modal = inject(NgbActiveModal);
+  private ipFilterService = inject(IpFilterService);
+
   mode: 'create' | 'edit' = 'create';
   state = new ObservableState();
-  ipFilter: IpFilterDTO | null = null;
-  form = this.fb.group({
+  ipFilter: IPFilterDTO | null = null;
+  form = inject(NonNullableFormBuilder).group({
     address: ['', Validators.required],
     description: ''
   });
-
-  constructor(
-    private modal: NgbActiveModal,
-    private fb: FormBuilder,
-    private ipFilterService: IpFilterService
-  ) {}
 
   /**
    * Prepares the component for creation.
@@ -40,7 +36,7 @@ export class EditIpFilterModalComponent {
   /**
    * Prepares the component for edition.
    */
-  prepareForEdition(ipFilter: IpFilterDTO) {
+  prepareForEdition(ipFilter: IPFilterDTO) {
     this.mode = 'edit';
     this.ipFilter = ipFilter;
 
@@ -61,12 +57,12 @@ export class EditIpFilterModalComponent {
 
     const formValue = this.form.value;
 
-    const command: IpFilterCommandDTO = {
+    const command: IPFilterCommandDTO = {
       address: formValue.address!,
       description: formValue.description!
     };
 
-    let obs: Observable<IpFilterDTO>;
+    let obs: Observable<IPFilterDTO>;
     if (this.mode === 'create') {
       obs = this.ipFilterService.create(command);
     } else {

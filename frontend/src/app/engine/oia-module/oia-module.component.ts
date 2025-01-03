@@ -1,10 +1,8 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
-import { NgForOf, NgIf } from '@angular/common';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { EngineService } from '../../services/engine.service';
-import { RegistrationSettingsDTO } from '../../../../../shared/model/engine.model';
-import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
+import { RegistrationSettingsDTO } from '../../../../../backend/shared/model/engine.model';
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { ModalService } from '../../shared/modal.service';
 import { RegisterOibusModalComponent } from './register-oibus-modal/register-oibus-modal.component';
@@ -22,62 +20,57 @@ import {
   OIBusCommandDTO,
   OIBusCommandStatus,
   OIBusCommandType
-} from '../../../../../shared/model/command.model';
-import { Page } from '../../../../../shared/model/types';
+} from '../../../../../backend/shared/model/command.model';
+import { Page } from '../../../../../backend/shared/model/types';
 import { PageLoader } from '../../shared/page-loader.service';
 import { NonNullableFormBuilder } from '@angular/forms';
 import { OibusCommandService } from '../../services/oibus-command.service';
 import { OibusCommandTypeEnumPipe } from '../../shared/oibus-command-type-enum.pipe';
 import { OibusCommandStatusEnumPipe } from '../../shared/oibus-command-status-enum.pipe';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { OiaCommandDetailsModalComponent } from './oibus-command-details-modal/oia-command-details-modal.component';
 
 const REGISTRATION_CHECK_DURATION = 3000;
 
 @Component({
   selector: 'oib-oia-module',
-  standalone: true,
   imports: [
-    TranslateModule,
+    TranslateDirective,
     ...formDirectives,
-    NgForOf,
-    NgIf,
-    RouterLink,
-    BoxComponent,
-    BoxTitleDirective,
     DatetimePipe,
     OibusCommandTypeEnumPipe,
     MultiSelectComponent,
     MultiSelectOptionDirective,
     PaginationComponent,
-    OibusCommandStatusEnumPipe
+    OibusCommandStatusEnumPipe,
+    NgbTooltip,
+    TranslatePipe
   ],
   templateUrl: './oia-module.component.html',
-  styleUrls: ['./oia-module.component.scss'],
+  styleUrl: './oia-module.component.scss',
   providers: [PageLoader]
 })
 export class OiaModuleComponent implements OnInit, OnDestroy {
+  private oibusService = inject(EngineService);
+  private oibusCommandService = inject(OibusCommandService);
+  private notificationService = inject(NotificationService);
+  private confirmationService = inject(ConfirmationService);
+  private modalService = inject(ModalService);
+  private router = inject(Router);
+  private pageLoader = inject(PageLoader);
+
   registration: RegistrationSettingsDTO | null = null;
-  oibusCommands: Page<OIBusCommandDTO> = emptyPage();
+  commands: Page<OIBusCommandDTO> = emptyPage();
   readonly statusList = OIBUS_COMMAND_STATUS;
   readonly typeList = OIBUS_COMMAND_TYPES;
   // subscription to reload the page periodically
   subscription = new Subscription();
   registrationSubscription = new Subscription();
-  readonly searchForm = this.fb.group({
+  route = inject(ActivatedRoute);
+  readonly searchForm = inject(NonNullableFormBuilder).group({
     types: this.route.snapshot.queryParamMap.getAll('types'),
     status: this.route.snapshot.queryParamMap.getAll('status')
   });
-
-  constructor(
-    private oibusService: EngineService,
-    private oibusCommandService: OibusCommandService,
-    private notificationService: NotificationService,
-    private confirmationService: ConfirmationService,
-    private modalService: ModalService,
-    private route: ActivatedRoute,
-    private router: Router,
-    private pageLoader: PageLoader,
-    private fb: NonNullableFormBuilder
-  ) {}
 
   ngOnInit(): void {
     this.createRegistrationSubscription();
@@ -98,8 +91,8 @@ export class OiaModuleComponent implements OnInit, OnDestroy {
             return this.oibusCommandService.searchCommands({ page, types, status }).pipe(catchError(() => EMPTY));
           })
         )
-        .subscribe(oibusCommands => {
-          this.oibusCommands = oibusCommands;
+        .subscribe(commands => {
+          this.commands = commands;
         })
     );
   }
@@ -111,11 +104,16 @@ export class OiaModuleComponent implements OnInit, OnDestroy {
 
   register(): void {
     const modalRef = this.modalService.open(RegisterOibusModalComponent, { size: 'xl' });
-    modalRef.componentInstance.prepare(this.registration!);
+    modalRef.componentInstance.prepare(this.registration!, 'register');
 
     modalRef.result.pipe(tap(() => this.notificationService.success('oia-module.registration.saved'))).subscribe(() => {
       this.createRegistrationSubscription();
     });
+  }
+
+  editRegister(): void {
+    const modalRef = this.modalService.open(RegisterOibusModalComponent, { size: 'xl' });
+    modalRef.componentInstance.prepare(this.registration!, 'edit');
   }
 
   createRegistrationSubscription(): void {
@@ -130,7 +128,7 @@ export class OiaModuleComponent implements OnInit, OnDestroy {
         )
         .subscribe(registration => {
           this.registration = registration;
-          if (this.registration.status !== 'PENDING') {
+          if (this.registration!.status !== 'PENDING') {
             this.registrationSubscription.unsubscribe();
           }
         })
@@ -161,5 +159,10 @@ export class OiaModuleComponent implements OnInit, OnDestroy {
       page: 0
     };
     this.router.navigate(['.'], { queryParams, relativeTo: this.route });
+  }
+
+  openCommandDetails(command: OIBusCommandDTO) {
+    const modal = this.modalService.open(OiaCommandDetailsModalComponent, { size: 'lg' });
+    modal.componentInstance.prepare(command);
   }
 }

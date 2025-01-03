@@ -9,7 +9,8 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { FormComponent } from '../../shared/form/form.component';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { provideHttpClient } from '@angular/common/http';
-import { SouthConnectorDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
+import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 
 class EditSouthComponentTester extends ComponentTester<EditSouthComponent> {
   constructor() {
@@ -74,11 +75,10 @@ describe('EditSouthComponent', () => {
           subscription: false,
           lastPoint: false,
           lastFile: false,
-          history: true,
-          forceMaxInstantPerItem: false
+          history: true
         },
         items: {
-          scanMode: { subscriptionOnly: false, acceptSubscription: true },
+          scanMode: 'POLL',
           settings: [],
           schema: {} as unknown
         },
@@ -86,7 +86,6 @@ describe('EditSouthComponent', () => {
         schema: {} as unknown
       } as SouthConnectorManifest)
     );
-    southConnectorService.listItems.and.returnValue(of([]));
   });
 
   describe('create mode', () => {
@@ -98,9 +97,8 @@ describe('EditSouthComponent', () => {
     });
 
     it('should display general settings', () => {
-      expect(tester.title).toContainText('Create SQL south connector');
+      expect(tester.title).toContainText('Create Microsoft SQL Server™ south connector');
       expect(tester.enabled).toBeChecked();
-      expect(tester.maxInstant).not.toBeChecked();
       expect(tester.description).toHaveValue('');
       expect(tester.specificForm).toBeDefined();
 
@@ -109,19 +107,14 @@ describe('EditSouthComponent', () => {
   });
 
   describe('edit mode', () => {
-    const southConnector: SouthConnectorDTO = {
+    const southConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> = {
       id: 'id1',
-      type: 'SQL',
+      type: 'mssql',
       name: 'My South Connector 1',
       description: 'My South connector description',
       enabled: true,
-      history: {
-        maxInstantPerItem: false,
-        maxReadInterval: 0,
-        readDelay: 200,
-        overlap: 0
-      },
-      settings: {}
+      settings: {} as SouthSettings,
+      items: []
     };
 
     beforeEach(() => {
@@ -133,15 +126,12 @@ describe('EditSouthComponent', () => {
     });
 
     it('should display general settings', () => {
-      tester.maxInstant.check();
       expect(southConnectorService.get).toHaveBeenCalledWith('id1');
       expect(tester.title).toContainText('Edit My South Connector 1');
       expect(tester.enabled).toBeChecked();
-      expect(tester.maxInstant).toBeChecked();
-
       expect(tester.description).toHaveValue('My South connector description');
       expect(tester.specificForm).toBeDefined();
-      expect(tester.specificTitle).toContainText('SQL settings');
+      expect(tester.specificTitle).toContainText('Microsoft SQL Server™ settings');
     });
   });
 });

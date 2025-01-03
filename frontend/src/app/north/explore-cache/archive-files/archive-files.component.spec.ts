@@ -3,21 +3,21 @@ import { ComponentTester, createMock } from 'ngx-speculoos';
 import { TestBed } from '@angular/core/testing';
 import { NorthConnectorService } from '../../../services/north-connector.service';
 import { of } from 'rxjs';
-import { NorthConnectorDTO } from '../../../../../../shared/model/north-connector.model';
-import { Component, ViewChild } from '@angular/core';
+import { NorthConnectorDTO } from '../../../../../../backend/shared/model/north-connector.model';
+import { Component, viewChild } from '@angular/core';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import { NorthSettings } from '../../../../../../backend/shared/model/north-settings.model';
 
 @Component({
-  template: `<oib-archive-files #component [northConnector]="northConnector"></oib-archive-files>`,
-  standalone: true,
+  template: `<oib-archive-files #component [northConnector]="northConnector" />`,
   imports: [ArchiveFilesComponent]
 })
 class TestComponent {
-  @ViewChild('component') component!: ArchiveFilesComponent;
-  northConnector: NorthConnectorDTO = {
+  readonly component = viewChild.required<ArchiveFilesComponent>('component');
+  northConnector: NorthConnectorDTO<NorthSettings> = {
     id: 'northId',
     name: 'North Connector'
-  } as NorthConnectorDTO;
+  } as NorthConnectorDTO<NorthSettings>;
 }
 
 class ArchiveFilesComponentTester extends ComponentTester<TestComponent> {
@@ -60,13 +60,13 @@ describe('ArchiveFilesComponent', () => {
       size: 123
     };
 
-    tester.componentInstance.component.onItemAction({ type: 'remove', file });
+    tester.componentInstance.component().onItemAction({ type: 'remove', file });
     expect(northConnectorService.removeCacheArchiveFiles).toHaveBeenCalled();
 
-    tester.componentInstance.component.onItemAction({ type: 'retry', file });
+    tester.componentInstance.component().onItemAction({ type: 'retry', file });
     expect(northConnectorService.retryCacheArchiveFiles).toHaveBeenCalled();
 
-    tester.componentInstance.component.onItemAction({ type: 'view', file });
+    tester.componentInstance.component().onItemAction({ type: 'view', file });
     expect(northConnectorService.getCacheArchiveFileContent).toHaveBeenCalled();
   });
 });

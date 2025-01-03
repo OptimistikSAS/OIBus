@@ -5,22 +5,25 @@ import path from 'node:path';
 
 import minimist from 'minimist';
 import { DateTime } from 'luxon';
-import fetch, { HeadersInit } from 'node-fetch';
 import AdmZip from 'adm-zip';
 
-import { CsvCharacter, DateTimeType, Instant, Interval, SerializationSettings, Timezone } from '../../../shared/model/types';
+import { CsvCharacter, DateTimeType, Instant, Interval, SerializationSettings, Timezone } from '../../shared/model/types';
 import pino from 'pino';
 import csv from 'papaparse';
 import https from 'node:https';
 import http from 'node:http';
-import { EngineSettingsDTO, OIBusInfo, RegistrationSettingsDTO } from '../../../shared/model/engine.model';
+import { EngineSettingsDTO, OIBusContent, OIBusInfo, OIBusTimeValue } from '../../shared/model/engine.model';
 import os from 'node:os';
-import { NorthCacheFiles } from '../../../shared/model/north-connector.model';
-import EncryptionService from './encryption.service';
-import { createProxyAgent } from './proxy-agent';
+import { NorthCacheFiles } from '../../shared/model/north-connector.model';
 import cronstrue from 'cronstrue';
 import cronparser from 'cron-parser';
-import { ValidatedCronExpression } from '../../../shared/model/scan-mode.model';
+import { ValidatedCronExpression } from '../../shared/model/scan-mode.model';
+import { SouthConnectorItemDTO } from '../../shared/model/south-connector.model';
+import { ScanMode } from '../model/scan-mode.model';
+import { HistoryQueryItemDTO } from '../../shared/model/history-query.model';
+import { SouthItemSettings } from '../../shared/model/south-settings.model';
+import { EventEmitter } from 'node:events';
+import { BaseFolders } from '../model/types';
 
 const COMPRESSION_LEVEL = 9;
 
@@ -31,13 +34,21 @@ const COMPRESSION_LEVEL = 9;
 export const getCommandLineArguments = () => {
   const args = minimist(process.argv.slice(2));
   console.info(`OIBus starting with the following arguments: ${JSON.stringify(args)}`);
-  const { config = './', check = false, ignoreIpFilters = false, ignoreRemoteUpdate = false, ignoreRemoteConfig = false } = args;
+  const {
+    config = './',
+    check = false,
+    ignoreIpFilters = false,
+    ignoreRemoteUpdate = false,
+    ignoreRemoteConfig = false,
+    launcherVersion = '3.4.0'
+  } = args;
   return {
     configFile: path.resolve(config),
     check,
     ignoreIpFilters: Boolean(ignoreIpFilters),
     ignoreRemoteUpdate: Boolean(ignoreRemoteUpdate),
-    ignoreRemoteConfig: Boolean(ignoreRemoteConfig)
+    ignoreRemoteConfig: Boolean(ignoreRemoteConfig),
+    launcherVersion
   };
 };
 
@@ -64,7 +75,7 @@ export const generateIntervals = (start: Instant, end: Instant, maxInterval: num
       const newStartTime = DateTime.fromMillis(startTime.toMillis() + i * 1000 * maxInterval);
       const newEndTime = DateTime.fromMillis(startTime.toMillis() + (i + 1) * 1000 * maxInterval);
 
-      // If the newEndTime is bigger than the original end, the definitive end of the interval must be end
+      // If the newEndTime is bigger than the original end, the definitive end of the interval must be the end
       intervalLists.push({
         start: newStartTime.toUTC().toISO() as Instant,
         end: newEndTime < endTime ? (newEndTime.toUTC().toISO() as Instant) : (endTime.toUTC().toISO() as Instant)
@@ -82,8 +93,17 @@ export const createFolder = async (folder: string): Promise<void> => {
   const folderPath = path.resolve(folder);
   try {
     await fs.stat(folderPath);
-  } catch (error) {
+  } catch {
     await fs.mkdir(folderPath, { recursive: true });
+  }
+};
+
+/**
+ * Create folders defined by the BaseFolders type
+ */
+export const createBaseFolders = async (baseFoldes: BaseFolders) => {
+  for (const type of Object.keys(baseFoldes) as Array<keyof BaseFolders>) {
+    await createFolder(baseFoldes[type]);
   }
 };
 
@@ -162,7 +182,11 @@ export const dirSize = async (dir: string): Promise<number> => {
 /**
  * Get all occurrences of a substring with a value
  */
-const getOccurrences = (str: string, keyword: string, value: any): Array<{ index: number; value: any }> => {
+const getOccurrences = (
+  str: string,
+  keyword: string,
+  value: string | number | DateTime
+): Array<{ index: number; value: string | number | DateTime }> => {
   const occurrences = [];
   let occurrenceIndex = str.indexOf(keyword, 0);
   while (occurrenceIndex > -1) {
@@ -212,29 +236,21 @@ export const convertDelimiter = (delimiter: CsvCharacter): string => {
 };
 
 export const persistResults = async (
-  data: Array<any>,
+  data: Array<unknown> | string,
   serializationSettings: SerializationSettings,
   connectorName: string,
   itemName: string,
   baseFolder: string,
-  addFileFn: (filePath: string) => Promise<void>,
-  addValueFn: (values: Array<any>) => Promise<void>,
+  addContentFn: (data: OIBusContent) => Promise<void>,
   logger: pino.Logger
 ): Promise<void> => {
   switch (serializationSettings.type) {
     case 'json':
-      await addValueFn(data);
-      break;
+      return addContentFn({ type: 'time-values', content: data as Array<OIBusTimeValue> });
     case 'file':
-      const filePath = path.join(
-        baseFolder,
-        serializationSettings.filename
-          .replace('@CurrentDate', DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))
-          .replace('@ConnectorName', connectorName)
-          .replace('@ItemName', itemName)
-      );
+      const filePath = generateFilenameForSerialization(baseFolder, serializationSettings.filename, connectorName, itemName);
       logger.debug(`Writing ${data.length} bytes into file at "${filePath}"`);
-      await fs.writeFile(filePath, data);
+      await fs.writeFile(filePath, data as string);
 
       if (serializationSettings.compression) {
         // Compress and send the compressed file
@@ -249,7 +265,7 @@ export const persistResults = async (
         }
 
         logger.debug(`Sending compressed file "${gzipPath}" to Engine`);
-        await addFileFn(gzipPath);
+        await addContentFn({ type: 'raw', filePath: gzipPath });
         try {
           await fs.unlink(gzipPath);
           logger.trace(`File "${gzipPath}" deleted`);
@@ -258,7 +274,7 @@ export const persistResults = async (
         }
       } else {
         logger.debug(`Sending file "${filePath}" to Engine`);
-        await addFileFn(filePath);
+        await addContentFn({ type: 'raw', filePath });
         try {
           await fs.unlink(filePath);
           logger.trace(`File ${filePath} deleted`);
@@ -268,18 +284,8 @@ export const persistResults = async (
       }
       break;
     case 'csv':
-      const options = {
-        header: true,
-        delimiter: convertDelimiter(serializationSettings.delimiter)
-      };
-      const csvPath = path.join(
-        baseFolder,
-        serializationSettings.filename
-          .replace('@CurrentDate', DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))
-          .replace('@ConnectorName', connectorName)
-          .replace('@ItemName', itemName)
-      );
-      const csvContent = csv.unparse(data, options);
+      const csvPath = generateFilenameForSerialization(baseFolder, serializationSettings.filename, connectorName, itemName);
+      const csvContent = generateCsvContent(data as Array<Record<string, string>>, serializationSettings.delimiter);
 
       logger.debug(`Writing ${csvContent.length} bytes into CSV file at "${csvPath}"`);
       await fs.writeFile(csvPath, csvContent);
@@ -297,7 +303,8 @@ export const persistResults = async (
         }
 
         logger.debug(`Sending compressed CSV file "${gzipPath}" to Engine`);
-        await addFileFn(gzipPath);
+        await addContentFn({ type: 'raw', filePath: gzipPath });
+
         try {
           await fs.unlink(gzipPath);
           logger.trace(`CSV file "${gzipPath}" deleted`);
@@ -306,7 +313,8 @@ export const persistResults = async (
         }
       } else {
         logger.debug(`Sending CSV file "${csvPath}" to Engine`);
-        await addFileFn(csvPath);
+        await addContentFn({ type: 'raw', filePath: csvPath });
+
         try {
           await fs.unlink(csvPath);
           logger.trace(`CSV file ${csvPath} deleted`);
@@ -318,6 +326,23 @@ export const persistResults = async (
   }
 };
 
+export const generateFilenameForSerialization = (baseFolder: string, filename: string, connectorName: string, itemName: string): string => {
+  return path.join(
+    baseFolder,
+    filename
+      .replace('@CurrentDate', DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))
+      .replace('@ConnectorName', connectorName)
+      .replace('@ItemName', itemName)
+  );
+};
+
+export const generateCsvContent = (data: Array<Record<string, string | number>>, delimiter: CsvCharacter): string => {
+  const options = {
+    header: true,
+    delimiter: convertDelimiter(delimiter)
+  };
+  return csv.unparse(data, options);
+};
 /**
  * Log the executed query with replacements values for query variables
  */
@@ -368,23 +393,27 @@ export const formatInstant = (
 };
 
 export const convertDateTimeToInstant = (
-  dateTime: any,
+  dateTime: string | number | Date,
   options: { type: DateTimeType; timezone?: Timezone; format?: string; locale?: string }
 ): Instant => {
   if (!options.type) {
-    return dateTime;
+    return dateTime as Instant;
   }
   switch (options.type) {
     case 'unix-epoch':
-      return DateTime.fromMillis(parseInt(dateTime, 10) * 1000)
+      return DateTime.fromMillis(parseInt(dateTime as string, 10) * 1000)
         .toUTC()
         .toISO()!;
     case 'unix-epoch-ms':
-      return DateTime.fromMillis(parseInt(dateTime, 10)).toUTC().toISO()!;
+      return DateTime.fromMillis(parseInt(dateTime as string, 10))
+        .toUTC()
+        .toISO()!;
     case 'iso-string':
-      return DateTime.fromISO(dateTime).toUTC().toISO()!;
+      return DateTime.fromISO(dateTime as string)
+        .toUTC()
+        .toISO()!;
     case 'string':
-      return DateTime.fromFormat(dateTime, options.format!, {
+      return DateTime.fromFormat(dateTime as string, options.format!, {
         zone: options.timezone,
         locale: options.locale
       })
@@ -395,16 +424,22 @@ export const convertDateTimeToInstant = (
     case 'DateTime':
     case 'DateTime2':
     case 'SmallDateTime':
-      return DateTime.fromJSDate(dateTime).toUTC().setZone(options.timezone, { keepLocalTime: true }).toUTC().toISO()!;
+      return DateTime.fromJSDate(dateTime as Date)
+        .toUTC()
+        .setZone(options.timezone, { keepLocalTime: true })
+        .toUTC()
+        .toISO()!;
     case 'DateTimeOffset':
     case 'timestamptz':
-      return DateTime.fromJSDate(dateTime).toUTC().toISO()!;
+      return DateTime.fromJSDate(dateTime as Date)
+        .toUTC()
+        .toISO()!;
   }
 };
 
 export const formatQueryParams = (
-  startTime: any,
-  endTime: any,
+  startTime: string | number,
+  endTime: string | number,
   queryParams: Array<{
     key: string;
     value: string;
@@ -437,9 +472,9 @@ export const formatQueryParams = (
 /**
  * Some API such as SLIMS uses a body with GET. It's not standard and requires a specific implementation
  */
-export const httpGetWithBody = (body: string, options: any): Promise<any> =>
+export const httpGetWithBody = (body: string, options: Record<string, string | number | unknown>): Promise<unknown> =>
   new Promise((resolve, reject) => {
-    const callback = (response: any) => {
+    const callback = (response: EventEmitter) => {
       let str = '';
       response.on('data', (chunk: string) => {
         str += chunk;
@@ -462,33 +497,6 @@ export const httpGetWithBody = (body: string, options: any): Promise<any> =>
     req.end();
   });
 
-export const downloadFile = async (
-  connectionSettings: { host: string; headers: HeadersInit; agent: any },
-  endpoint: string,
-  filePath: string,
-  timeout: number
-): Promise<void> => {
-  let response;
-
-  try {
-    response = await fetch(`${connectionSettings.host}${endpoint}`, {
-      method: 'GET',
-      timeout,
-      agent: connectionSettings.agent,
-      headers: connectionSettings.headers
-    });
-  } catch (fetchError) {
-    throw new Error(`Download failed: ${fetchError}`);
-  }
-
-  if (!response.ok) {
-    throw new Error(`Download failed with status code ${response.status} and message: ${response.statusText}`);
-  }
-
-  const buffer = await response.buffer();
-  await fs.writeFile(filePath, buffer);
-};
-
 export const getOIBusInfo = (oibusSettings: EngineSettingsDTO): OIBusInfo => {
   return {
     dataDirectory: process.cwd(),
@@ -498,6 +506,7 @@ export const getOIBusInfo = (oibusSettings: EngineSettingsDTO): OIBusInfo => {
     operatingSystem: `${os.type()} ${os.release()}`,
     architecture: process.arch,
     version: oibusSettings.version,
+    launcherVersion: oibusSettings.launcherVersion,
     oibusId: oibusSettings.id,
     oibusName: oibusSettings.name,
     platform: getPlatformFromOsType(os.type())
@@ -522,9 +531,9 @@ export const getPlatformFromOsType = (osType: string): string => {
  */
 export const getFilesFiltered = async (
   folder: string,
-  fromDate: Instant,
-  toDate: Instant,
-  nameFilter: string,
+  fromDate: Instant | null,
+  toDate: Instant | null,
+  nameFilter: string | null,
   logger: pino.Logger
 ): Promise<Array<NorthCacheFiles>> => {
   const filenames = await fs.readdir(folder);
@@ -551,44 +560,6 @@ export const getFilesFiltered = async (
   return filteredFilenames;
 };
 
-export const getNetworkSettingsFromRegistration = async (
-  registrationSettings: RegistrationSettingsDTO | null,
-  endpoint: string,
-  encryptionService: EncryptionService
-): Promise<{ host: string; headers: HeadersInit; agent: any }> => {
-  if (!registrationSettings || registrationSettings.status !== 'REGISTERED') {
-    throw new Error('OIBus not registered in OIAnalytics');
-  }
-
-  if (registrationSettings.host.endsWith('/')) {
-    registrationSettings.host = registrationSettings.host.slice(0, registrationSettings.host.length - 1);
-  }
-
-  const headers: HeadersInit = {};
-
-  const token = await encryptionService.decryptText(registrationSettings.token!);
-  headers.authorization = `Bearer ${token}`;
-
-  const agent = createProxyAgent(
-    registrationSettings.useProxy,
-    `${registrationSettings.host}${endpoint}`,
-    registrationSettings.useProxy
-      ? {
-          url: registrationSettings.proxyUrl!,
-          username: registrationSettings.proxyUsername!,
-          password: registrationSettings.proxyPassword ? await encryptionService.decryptText(registrationSettings.proxyPassword) : null
-        }
-      : null,
-    registrationSettings.acceptUnauthorized
-  );
-
-  return {
-    host: registrationSettings.host,
-    headers,
-    agent
-  };
-};
-
 /**
  * Validates a cron expression and returns the next 3 executions and a human-readable form.
  * Next executions are in UTC.
@@ -597,25 +568,37 @@ export const getNetworkSettingsFromRegistration = async (
  */
 export const validateCronExpression = (cron: string): ValidatedCronExpression => {
   const response: ValidatedCronExpression = {
+    isValid: true,
     nextExecutions: [],
-    humanReadableForm: ''
+    humanReadableForm: '',
+    errorMessage: ''
   };
 
   // source for non-standard characters: https://en.wikipedia.org/wiki/Cron#Non-standard_characters
   const nonStandardCharacters = ['L', 'W', '#', '?', 'H'];
 
-  try {
-    // we limit the number of fields to 6 because the
-    // backend does not support quartz cron (7th part would be years), so we show an error
-    if (cron.split(' ').filter(Boolean).length >= 7) {
-      throw new Error('Too many fields. Only seconds, minutes, hours, day of month, month and day of week are supported.');
-    }
-    // backend does not support these characters
-    const badCharecters = nonStandardCharacters.filter(c => cron.includes(c));
-    if (badCharecters.length > 0) {
-      throw new Error(`Expression contains non-standard characters: ${badCharecters.join(', ')}`);
-    }
+  // we limit the number of fields to 6 because the
+  // backend does not support quartz cron (7th part would be years), so we show an error
+  if (cron.split(' ').filter(Boolean).length >= 7) {
+    return {
+      isValid: false,
+      errorMessage: 'Too many fields. Only seconds, minutes, hours, day of month, month and day of week are supported.',
+      nextExecutions: [],
+      humanReadableForm: ''
+    };
+  }
+  // backend does not support these characters
+  const badCharacters = nonStandardCharacters.filter(c => cron.includes(c));
+  if (badCharacters.length > 0) {
+    return {
+      isValid: false,
+      errorMessage: `Expression contains non-standard characters: ${badCharacters.join(', ')}`,
+      nextExecutions: [],
+      humanReadableForm: ''
+    };
+  }
 
+  try {
     // cronstrue throws an error if the cron is invalid
     // this error is more user-friendly
     response.humanReadableForm = cronstrue.toString(cron, {
@@ -623,16 +606,21 @@ export const validateCronExpression = (cron: string): ValidatedCronExpression =>
       use24HourTimeFormat: true
     });
 
-    // but cronstrue is not enough to validate the cron
+    // but cronstrue is not enough to validate the cron,
     // so we need to parse it with cronparser
     response.nextExecutions = cronparser
       .parseExpression(cron, { utc: true })
       .iterate(3)
       .map(exp => exp.toISOString() as Instant);
-  } catch (error: any) {
+  } catch (error: unknown) {
     // cronparser throws an error
     if (error instanceof Error) {
-      throw error;
+      return {
+        isValid: false,
+        errorMessage: error.message,
+        nextExecutions: [],
+        humanReadableForm: ''
+      };
     }
 
     // cronstrue throws a string
@@ -640,11 +628,66 @@ export const validateCronExpression = (cron: string): ValidatedCronExpression =>
       // remove the "Error: " prefix
       const string = error.replace(/^Error: /, '');
       const errorMessage = string.charAt(0).toUpperCase() + string.slice(1);
-      throw new Error(errorMessage);
+      return {
+        isValid: false,
+        errorMessage,
+        nextExecutions: [],
+        humanReadableForm: ''
+      };
     }
 
-    throw new Error('Invalid cron expression');
+    return {
+      isValid: false,
+      errorMessage: 'Invalid cron expression',
+      nextExecutions: [],
+      humanReadableForm: ''
+    };
   }
 
   return response;
+};
+
+export const checkScanMode = (scanModes: Array<ScanMode>, scanModeId: string | null, scanModeName: string | null) => {
+  if (scanModeId) return scanModeId;
+  if (!scanModeName) {
+    throw new Error(`Scan mode not specified`);
+  }
+  const scanMode = scanModes.find(element => element.name === scanModeName);
+  if (!scanMode) {
+    throw new Error(`Scan mode "${scanModeName}" not found`);
+  }
+  return scanMode.id;
+};
+
+export const itemToFlattenedCSV = <I extends SouthItemSettings>(
+  items: Array<SouthConnectorItemDTO<I> | HistoryQueryItemDTO<I>>,
+  delimiter: string,
+  scanModes?: Array<ScanMode>
+): string => {
+  const columns: Set<string> = new Set<string>(['name', 'enabled', 'scanMode']);
+
+  return csv.unparse(
+    items.map(item => {
+      const flattenedItem: Record<string, string | object | boolean> = {
+        ...item
+      };
+      if (scanModes) {
+        flattenedItem.scanMode = scanModes.find(scanMode => scanMode.id === flattenedItem.scanModeId)?.name ?? '';
+      }
+      for (const [itemSettingsKey, itemSettingsValue] of Object.entries(item.settings)) {
+        columns.add(`settings_${itemSettingsKey}`);
+        if (typeof itemSettingsValue === 'object') {
+          flattenedItem[`settings_${itemSettingsKey}`] = JSON.stringify(itemSettingsValue);
+        } else {
+          flattenedItem[`settings_${itemSettingsKey}`] = itemSettingsValue as string;
+        }
+      }
+      delete flattenedItem.id;
+      delete flattenedItem.scanModeId;
+      delete flattenedItem.settings;
+      delete flattenedItem.connectorId;
+      return flattenedItem;
+    }),
+    { columns: Array.from(columns), delimiter }
+  );
 };

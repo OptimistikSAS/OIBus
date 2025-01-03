@@ -1,15 +1,13 @@
 /**
- * Class used to resolve a promise from another variable
- * It is used in OPCHDA to resolve the connection and disconnection when the
- * HDA Agent sends the associated messages
+ * Class used to resolve a promise from another part of the code
  */
 export default class DeferredPromise {
-  promise: Promise<any>;
+  promise: Promise<void>;
   reject: any;
   resolve: any;
 
   constructor() {
-    this.promise = new Promise<any>((resolve, reject) => {
+    this.promise = new Promise<void>((resolve, reject) => {
       this.reject = reject;
       this.resolve = resolve;
     });

@@ -1,10 +1,10 @@
-import { Component, OnInit } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { Component, inject, OnInit } from '@angular/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { NonNullableFormBuilder, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { NgForOf, NgIf } from '@angular/common';
+import { Router } from '@angular/router';
+
 import { EngineService } from '../../services/engine.service';
-import { EngineSettingsCommandDTO, LOG_LEVELS, LogLevel } from '../../../../../shared/model/engine.model';
+import { EngineSettingsCommandDTO, LOG_LEVELS, LogLevel } from '../../../../../backend/shared/model/engine.model';
 import { NotificationService } from '../../shared/notification.service';
 import { formDirectives } from '../../shared/form-directives';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
@@ -13,14 +13,18 @@ import { BackNavigationDirective } from '../../shared/back-navigation.directives
 
 @Component({
   selector: 'oib-edit-engine',
-  standalone: true,
-  imports: [TranslateModule, ...formDirectives, RouterLink, NgForOf, NgIf, SaveButtonComponent, BoxComponent, BackNavigationDirective],
+  imports: [TranslateDirective, ...formDirectives, SaveButtonComponent, BoxComponent, BackNavigationDirective],
   templateUrl: './edit-engine.component.html',
   styleUrl: './edit-engine.component.scss'
 })
 export class EditEngineComponent implements OnInit {
+  private notificationService = inject(NotificationService);
+  private engineService = inject(EngineService);
+  private router = inject(Router);
+
   readonly logLevels = LOG_LEVELS;
 
+  private fb = inject(NonNullableFormBuilder);
   engineForm = this.fb.group({
     name: ['', Validators.required],
     port: [null as number | null, Validators.required],
@@ -55,12 +59,15 @@ export class EditEngineComponent implements OnInit {
 
   state = new ObservableState();
 
-  constructor(
-    private fb: NonNullableFormBuilder,
-    private notificationService: NotificationService,
-    private engineService: EngineService,
-    private router: Router
-  ) {}
+  constructor() {
+    this.engineForm.controls.proxyEnabled.valueChanges.subscribe(next => {
+      if (next) {
+        this.engineForm.controls.proxyPort.enable();
+      } else {
+        this.engineForm.controls.proxyPort.disable();
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.engineService.getEngineSettings().subscribe(settings => {
@@ -78,7 +85,7 @@ export class EditEngineComponent implements OnInit {
       name: formValue.name!,
       port: formValue.port!,
       proxyEnabled: formValue.proxyEnabled!,
-      proxyPort: formValue.proxyPort!,
+      proxyPort: formValue.proxyPort! || null,
       logParameters: {
         console: {
           level: formValue.logParameters!.console!.level!

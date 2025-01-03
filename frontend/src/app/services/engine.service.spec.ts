@@ -2,8 +2,9 @@ import { TestBed } from '@angular/core/testing';
 
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { EngineService } from './engine.service';
-import { EngineSettingsCommandDTO, EngineSettingsDTO, OIBusInfo } from '../../../../shared/model/engine.model';
+import { EngineSettingsCommandDTO, EngineSettingsDTO, OIBusInfo } from '../../../../backend/shared/model/engine.model';
 import { provideHttpClient } from '@angular/common/http';
+import { RegistrationSettingsCommandDTO } from '../../../../backend/shared/model/engine.model';
 
 describe('EngineService', () => {
   let http: HttpTestingController;
@@ -52,15 +53,6 @@ describe('EngineService', () => {
     expect(expectedInfo!).toEqual(engineInfo);
   });
 
-  it('should shutdown', () => {
-    let done = false;
-
-    service.shutdown().subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/shutdown' });
-    testRequest.flush(null);
-    expect(done).toBe(true);
-  });
-
   it('should restart', () => {
     let done = false;
 
@@ -76,6 +68,52 @@ describe('EngineService', () => {
     service.resetMetrics().subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/engine/reset-metrics' });
     expect(testRequest.request.body).toBeNull();
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should edit registration', () => {
+    let done = false;
+    const command: RegistrationSettingsCommandDTO = {
+      host: 'host',
+      useProxy: false,
+      acceptUnauthorized: false,
+      proxyUrl: null,
+      proxyUsername: null,
+      proxyPassword: null,
+      commandRefreshInterval: 10,
+      commandRetryInterval: 5,
+      messageRetryInterval: 5,
+      commandPermissions: {
+        updateVersion: true,
+        restartEngine: true,
+        regenerateCipherKeys: true,
+        updateEngineSettings: true,
+        updateRegistrationSettings: true,
+        createScanMode: true,
+        updateScanMode: true,
+        deleteScanMode: true,
+        createIpFilter: true,
+        updateIpFilter: true,
+        deleteIpFilter: true,
+        createCertificate: true,
+        updateCertificate: true,
+        deleteCertificate: true,
+        createHistoryQuery: true,
+        updateHistoryQuery: true,
+        deleteHistoryQuery: true,
+        createOrUpdateHistoryItemsFromCsv: true,
+        createSouth: true,
+        updateSouth: true,
+        deleteSouth: true,
+        createOrUpdateSouthItemsFromCsv: true,
+        createNorth: true,
+        updateNorth: true,
+        deleteNorth: true
+      }
+    };
+    service.editRegistrationSettings(command).subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/registration/edit' });
     testRequest.flush(null);
     expect(done).toBe(true);
   });

@@ -1,10 +1,10 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { map, merge, Observable, scan, Subject } from 'rxjs';
 
 import { Notification, NotificationService } from '../notification.service';
 import { NgbToastModule } from '@ng-bootstrap/ng-bootstrap';
-import { AsyncPipe, NgForOf, NgIf } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
+import { AsyncPipe } from '@angular/common';
+import { TranslateDirective } from '@ngx-translate/core';
 
 interface Action {
   type: 'addition' | 'removal';
@@ -16,14 +16,15 @@ interface Action {
   templateUrl: './notification.component.html',
   styleUrl: './notification.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIf, NgForOf, NgbToastModule, TranslateModule, AsyncPipe],
-  standalone: true
+  imports: [NgbToastModule, TranslateDirective, AsyncPipe]
 })
 export class NotificationComponent {
+  private notificationService = inject(NotificationService);
+
   notifications$: Observable<Array<Notification>>;
   private close$ = new Subject<Notification>();
 
-  constructor(private notificationService: NotificationService) {
+  constructor() {
     const additions$: Observable<Action> = this.notificationService.notificationChanges.pipe(
       map(notification => ({ type: 'addition', notification }))
     );

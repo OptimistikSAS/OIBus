@@ -1,13 +1,13 @@
 import build from 'pino-abstract-transport';
 
-import { LogDTO, PinoLog } from '../../../../shared/model/logs.model';
-import { LogLevel, ScopeType } from '../../../../shared/model/engine.model';
+import { LogDTO, PinoLog } from '../../../shared/model/logs.model';
+import { LogLevel, ScopeType } from '../../../shared/model/engine.model';
 import { createProxyAgent } from '../proxy-agent';
 import fetch, { HeadersInit } from 'node-fetch';
 
 const MAX_BATCH_LOG = 500;
 const MAX_BATCH_INTERVAL_S = 60;
-const LEVEL_FORMAT: { [key: string]: LogLevel } = {
+const LEVEL_FORMAT: Record<string, LogLevel> = {
   '10': 'TRACE',
   '20': 'DEBUG',
   '30': 'INFO',
@@ -15,7 +15,7 @@ const LEVEL_FORMAT: { [key: string]: LogLevel } = {
   '50': 'ERROR'
 };
 
-const SCOPE_TYPE_FORMAT: { [key: ScopeType]: LogLevel } = {
+const SCOPE_TYPE_FORMAT: Record<ScopeType, LogLevel> = {
   south: 'SOUTH',
   north: 'NORTH',
   'history-query': 'HISTORY_QUERY',
@@ -42,6 +42,7 @@ class OianalyticsTransport {
   private readonly options: OIAnalyticsOptions;
   private sendOIALogsInterval: NodeJS.Timeout | null = null;
   private batchLogs: Array<LogDTO> = [];
+  private stopping = false;
 
   constructor(options: OIAnalyticsOptions) {
     this.options = options;
@@ -92,7 +93,11 @@ class OianalyticsTransport {
     try {
       const response = await fetch(logUrl, fetchOptions);
       if (response.status !== 200 && response.status !== 201 && response.status !== 204) {
-        console.error(`OIAnalytics fetch error on ${logUrl}: ${response.status} - ${response.statusText} with payload ${dataBuffer}`);
+        if (response.status === 401) {
+          console.error(`OIAnalytics authentication error on ${logUrl}: ${response.status} - ${response.statusText}`);
+        } else {
+          console.error(`OIAnalytics fetch error on ${logUrl}: ${response.status} - ${response.statusText} with payload ${dataBuffer}`);
+        }
       }
     } catch (error) {
       console.error(`Error when sending logs to ${logUrl}. ${error}`);
@@ -103,6 +108,7 @@ class OianalyticsTransport {
    * Store the log in the batch log array and send them immediately if the array is full
    */
   addLogs = async (log: PinoLog): Promise<void> => {
+    if (this.stopping) return;
     this.batchLogs.push({
       timestamp: log.time,
       level: LEVEL_FORMAT[log.level],
@@ -119,10 +125,12 @@ class OianalyticsTransport {
       }
       await this.sendOIALogs();
 
-      const batchInterval = this.options.interval > MAX_BATCH_INTERVAL_S ? MAX_BATCH_INTERVAL_S : this.options.interval;
-      this.sendOIALogsInterval = setInterval(async () => {
-        await this.sendOIALogs();
-      }, batchInterval * 1000);
+      if (!this.stopping) {
+        const batchInterval = this.options.interval > MAX_BATCH_INTERVAL_S ? MAX_BATCH_INTERVAL_S : this.options.interval;
+        this.sendOIALogsInterval = setInterval(async () => {
+          await this.sendOIALogs();
+        }, batchInterval * 1000);
+      }
     }
   };
 
@@ -130,6 +138,7 @@ class OianalyticsTransport {
    * Clear timeout and interval and send last logs before closing the transport
    */
   end = async (): Promise<void> => {
+    this.stopping = true;
     if (this.sendOIALogsInterval) {
       clearInterval(this.sendOIALogsInterval);
     }

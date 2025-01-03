@@ -5,7 +5,7 @@ import { ComponentTester, createMock } from 'ngx-speculoos';
 import { of } from 'rxjs';
 import { MockModalService, provideModalTesting } from '../../shared/mock-modal.service.spec';
 import { ChangePasswordModalComponent } from '../change-password-modal/change-password-modal.component';
-import { User, UserCommandDTO } from '../../../../../shared/model/user.model';
+import { User, UserCommandDTO } from '../../../../../backend/shared/model/user.model';
 import { TestTypeahead } from '../../shared/typeahead.test-utils';
 import { UserSettingsService } from '../../services/user-settings.service';
 import { WindowService } from '../../shared/window.service';
@@ -38,6 +38,7 @@ class EditUserSettingsComponentTester extends ComponentTester<EditUserSettingsCo
   get timezone() {
     return this.custom('#timezone', TestTypeahead)!;
   }
+
   get save() {
     return this.button('#save-button')!;
   }
@@ -125,7 +126,8 @@ describe('EditUserSettingsComponent', () => {
   it('should save and reload if timezone is changed', fakeAsync(() => {
     tester.detectChanges();
 
-    tester.timezone.fillWith('Asia/T').selectLabel('Asia/Tokyo');
+    tester.timezone.fillWith('Asia/T');
+    tester.timezone.selectLabel('Asia/Tokyo');
 
     userSettingsService.update.and.returnValue(of(undefined));
     userSettingsService.get.and.returnValue(of({ ...userSettings, timezone: 'Asia/Tokyo' }));

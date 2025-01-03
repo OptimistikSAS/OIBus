@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ConfirmationModalComponent } from './confirmation-modal/confirmation-modal.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -28,10 +28,8 @@ export interface ConfirmationOptions {
   providedIn: 'root'
 })
 export class ConfirmationService {
-  constructor(
-    private modalService: ModalService,
-    private translateService: TranslateService
-  ) {}
+  private modalService = inject(ModalService);
+  private translateService = inject(TranslateService);
 
   /**
    * Opens a confirmation modal, and returns an observable, which emits and completes if the user clicks "Yes".
@@ -40,11 +38,11 @@ export class ConfirmationService {
    */
   confirm(options: ConfirmationOptions): Observable<void> {
     const modalRef = this.modalService.open(ConfirmationModalComponent, options);
-    modalRef.componentInstance.title =
-      options.title || this.translateService.instant(options.titleKey || 'common.confirmation-modal-title');
-    modalRef.componentInstance.yes = options.yes || this.translateService.instant(options.yesKey || 'common.yes');
-    modalRef.componentInstance.no = options.no || this.translateService.instant(options.noKey || 'common.no');
-    modalRef.componentInstance.message = options.message || this.translateService.instant(options.messageKey!, options.interpolateParams);
+    const title = options.title || this.translateService.instant(options.titleKey || 'common.confirmation-modal-title');
+    const yes = options.yes || this.translateService.instant(options.yesKey || 'common.yes');
+    const no = options.no || this.translateService.instant(options.noKey || 'common.no');
+    const message = options.message || this.translateService.instant(options.messageKey!, options.interpolateParams);
+    modalRef.componentInstance.initialize(title, message, yes, no);
     return modalRef.result;
   }
 }

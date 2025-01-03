@@ -1,28 +1,25 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { NavbarComponent } from './navbar/navbar.component';
 import { NotificationComponent } from './shared/notification/notification.component';
 import { DefaultValidationErrorsComponent } from './shared/default-validation-errors/default-validation-errors.component';
 import { WindowService } from './shared/window.service';
 import { CurrentUserService } from './shared/current-user.service';
-import { User } from '../../../shared/model/user.model';
+import { User } from '../../../backend/shared/model/user.model';
 import { NavigationService } from './shared/navigation.service';
 
 @Component({
   selector: 'oib-root',
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
-  standalone: true,
   imports: [RouterOutlet, NavbarComponent, NotificationComponent, DefaultValidationErrorsComponent]
 })
 export class AppComponent implements OnInit {
-  title = 'OIBus';
+  private currentUserService = inject(CurrentUserService);
+  private windowService = inject(WindowService);
+  private navigationService = inject(NavigationService);
 
-  constructor(
-    private currentUserService: CurrentUserService,
-    private windowService: WindowService,
-    private navigationService: NavigationService
-  ) {}
+  title = 'OIBus';
 
   ngOnInit(): void {
     this.navigationService.init();

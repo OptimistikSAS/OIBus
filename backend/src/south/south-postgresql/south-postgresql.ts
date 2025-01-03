@@ -3,24 +3,29 @@ import * as pg from 'pg';
 import { ClientConfig } from 'pg';
 
 import SouthConnector from '../south-connector';
-import manifest from './manifest';
 import {
   convertDateTimeToInstant,
   createFolder,
   formatInstant,
+  generateCsvContent,
+  generateFilenameForSerialization,
   generateReplacementParameters,
   logQuery,
   persistResults
 } from '../../service/utils';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
-import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
-import { Instant } from '../../../../shared/model/types';
+import { Instant } from '../../../shared/model/types';
 import { QueriesHistory } from '../south-interface';
 import { DateTime } from 'luxon';
-import { SouthPostgreSQLItemSettings, SouthPostgreSQLSettings } from '../../../../shared/model/south-settings.model';
-import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import { SouthPostgreSQLItemSettings, SouthPostgreSQLSettings } from '../../../shared/model/south-settings.model';
+import { OIBusContent } from '../../../shared/model/engine.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
+import SouthConnectorRepository from '../../repository/config/south-connector.repository';
+import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import { BaseFolders } from '../../model/types';
+import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 
 /**
  * Class SouthPostgreSQL - Retrieve data from PostgreSQL databases and send them to the cache as CSV files.
@@ -29,21 +34,29 @@ export default class SouthPostgreSQL
   extends SouthConnector<SouthPostgreSQLSettings, SouthPostgreSQLItemSettings>
   implements QueriesHistory
 {
-  static type = manifest.id;
-
   private readonly tmpFolder: string;
 
   constructor(
-    connector: SouthConnectorDTO<SouthPostgreSQLSettings>,
-    engineAddValuesCallback: (southId: string, values: Array<OIBusDataValue>) => Promise<void>,
-    engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
+    connector: SouthConnectorEntity<SouthPostgreSQLSettings, SouthPostgreSQLItemSettings>,
+    engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
-    repositoryService: RepositoryService,
+    southConnectorRepository: SouthConnectorRepository,
+    southCacheRepository: SouthCacheRepository,
+    scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
-    baseFolder: string
+    baseFolders: BaseFolders
   ) {
-    super(connector, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
-    this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
+    super(
+      connector,
+      engineAddContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      baseFolders
+    );
+    this.tmpFolder = path.resolve(this.baseFolders.cache, 'tmp');
   }
 
   /**
@@ -73,24 +86,24 @@ export default class SouthPostgreSQL
     try {
       connection = new pg.Client(config);
       await connection.connect();
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (connection) {
         await connection.end();
       }
 
-      if (/(timeout expired)|(^(connect ECONNREFUSED).*)/.test(error.message)) {
-        throw new Error(`Please check host and port. ${error.message}`);
+      if (/(timeout expired)|(^(connect ECONNREFUSED).*)/.test((error as Error).message)) {
+        throw new Error(`Please check host and port. ${(error as Error).message}`);
       }
 
-      switch (error.message) {
+      switch ((error as Error).message) {
         case `password authentication failed for user "${this.connector.settings.username}"`:
-          throw new Error(`Please check username and password. ${error.message}`);
+          throw new Error(`Please check username and password. ${(error as Error).message}`);
 
         case `database "${this.connector.settings.database}" does not exist`:
-          throw new Error(`Database "${this.connector.settings.database}" does not exist. ${error.message}`);
+          throw new Error(`Database "${this.connector.settings.database}" does not exist. ${(error as Error).message}`);
 
         default:
-          throw new Error(`Unexpected error. ${error.message}`);
+          throw new Error(`Unexpected error. ${(error as Error).message}`);
       }
     }
 
@@ -103,9 +116,9 @@ export default class SouthPostgreSQL
           AND table_schema = current_schema()
       `);
       table_count = rows[0]?.table_count ?? 0;
-    } catch (error: any) {
+    } catch (error: unknown) {
       await connection.end();
-      throw new Error(`Unable to read tables in database "${this.connector.settings.database}". ${error.message}`);
+      throw new Error(`Unable to read tables in database "${this.connector.settings.database}". ${(error as Error).message}`);
     }
 
     await connection.end();
@@ -115,12 +128,57 @@ export default class SouthPostgreSQL
     }
   }
 
+  override async testItem(
+    item: SouthConnectorItemEntity<SouthPostgreSQLItemSettings>,
+    testingSettings: SouthConnectorItemTestingSettings,
+    callback: (data: OIBusContent) => void
+  ): Promise<void> {
+    const startTime = testingSettings.history!.startTime;
+    const endTime = testingSettings.history!.endTime;
+    const result: Array<Record<string, string | number>> = await this.queryData(item, startTime, endTime);
+
+    const formattedResults = result.map(entry => {
+      const formattedEntry: Record<string, string | number> = {};
+      Object.entries(entry).forEach(([key, value]) => {
+        const datetimeField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.fieldName === key) || null;
+        if (!datetimeField) {
+          formattedEntry[key] = value;
+        } else {
+          const entryDate = convertDateTimeToInstant(value, datetimeField);
+          formattedEntry[key] = formatInstant(entryDate, {
+            type: 'string',
+            format: item.settings.serialization.outputTimestampFormat,
+            timezone: item.settings.serialization.outputTimezone,
+            locale: 'en-En'
+          });
+        }
+      });
+      return formattedEntry;
+    });
+
+    let oibusContent: OIBusContent;
+    switch (item.settings.serialization.type) {
+      case 'csv': {
+        const filePath = generateFilenameForSerialization(
+          this.tmpFolder,
+          item.settings.serialization.filename,
+          this.connector.name,
+          item.name
+        );
+        const content = generateCsvContent(formattedResults, item.settings.serialization.delimiter);
+        oibusContent = { type: 'raw', filePath, content };
+        break;
+      }
+    }
+    callback(oibusContent);
+  }
+
   /**
    * Get entries from the database between startTime and endTime (if used in the SQL query)
    * and write them into a CSV file and send it to the engine.
    */
   async historyQuery(
-    items: Array<SouthConnectorItemDTO<SouthPostgreSQLItemSettings>>,
+    items: Array<SouthConnectorItemEntity<SouthPostgreSQLItemSettings>>,
     startTime: Instant,
     endTime: Instant
   ): Promise<Instant | null> {
@@ -128,14 +186,14 @@ export default class SouthPostgreSQL
 
     for (const item of items) {
       const startRequest = DateTime.now().toMillis();
-      const result: Array<any> = await this.queryData(item, startTime, endTime);
+      const result: Array<Record<string, string | number>> = await this.queryData(item, startTime, endTime);
       const requestDuration = DateTime.now().toMillis() - startRequest;
 
       if (result.length > 0) {
         this.logger.info(`Found ${result.length} results for item ${item.name} in ${requestDuration} ms`);
 
         const formattedResult = result.map(entry => {
-          const formattedEntry: Record<string, any> = {};
+          const formattedEntry: Record<string, string | number> = {};
           Object.entries(entry).forEach(([key, value]) => {
             const datetimeField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.fieldName === key);
             if (!datetimeField) {
@@ -163,8 +221,7 @@ export default class SouthPostgreSQL
           this.connector.name,
           item.name,
           this.tmpFolder,
-          this.addFile.bind(this),
-          this.addValues.bind(this),
+          this.addContent.bind(this),
           this.logger
         );
       } else {
@@ -174,10 +231,29 @@ export default class SouthPostgreSQL
     return updatedStartTime;
   }
 
+  getThrottlingSettings(settings: SouthPostgreSQLSettings): SouthThrottlingSettings {
+    return {
+      maxReadInterval: settings.throttling.maxReadInterval,
+      readDelay: settings.throttling.readDelay
+    };
+  }
+
+  getMaxInstantPerItem(_settings: SouthPostgreSQLSettings): boolean {
+    return false;
+  }
+
+  getOverlap(settings: SouthPostgreSQLSettings): number {
+    return settings.throttling.overlap;
+  }
+
   /**
    * Apply the SQL query to the target PostgreSQL database
    */
-  async queryData(item: SouthConnectorItemDTO<SouthPostgreSQLItemSettings>, startTime: Instant, endTime: Instant): Promise<Array<any>> {
+  async queryData(
+    item: SouthConnectorItemEntity<SouthPostgreSQLItemSettings>,
+    startTime: Instant,
+    endTime: Instant
+  ): Promise<Array<Record<string, string | number>>> {
     const adaptedQuery = item.settings.query.replace(/@StartTime/g, '$1').replace(/@EndTime/g, '$2');
     const config = await this.createConnectionOptions();
 

@@ -1,17 +1,16 @@
-import { Directive, HostListener, Input } from '@angular/core';
+import { Directive, HostListener, inject, input } from '@angular/core';
 import { Clipboard } from '@angular/cdk/clipboard';
 
 @Directive({
-  selector: '[oibClipboardCopy]',
-  standalone: true
+  selector: '[oibClipboardCopy]'
 })
 export class ClipboardCopyDirective {
-  @Input({ required: true }) string: string | null | undefined;
+  private clipboard = inject(Clipboard);
 
-  constructor(private clipboard: Clipboard) {}
+  readonly string = input.required<string | null | undefined>();
 
   @HostListener('click', ['$event'])
   public onClick(): void {
-    this.clipboard.copy(this.string!);
+    this.clipboard.copy(this.string()!);
   }
 }

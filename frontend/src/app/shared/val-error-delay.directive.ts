@@ -1,4 +1,4 @@
-import { Directive, ElementRef, NgZone, OnDestroy } from '@angular/core';
+import { Directive, ElementRef, NgZone, OnDestroy, inject } from '@angular/core';
 
 /**
  * Directive which targets the val-errors elements, and which uses a mutation observer to detect the new errors appearing inside the
@@ -9,20 +9,21 @@ import { Directive, ElementRef, NgZone, OnDestroy } from '@angular/core';
  */
 @Directive({
   // eslint-disable-next-line @angular-eslint/directive-selector
-  selector: 'val-errors',
-  standalone: true
+  selector: 'val-errors'
 })
 export class ValErrorDelayDirective implements OnDestroy {
   observer: MutationObserver | null = null;
 
-  constructor(element: ElementRef<HTMLElement>, zone: NgZone) {
+  constructor() {
+    const element = inject<ElementRef<HTMLElement>>(ElementRef);
+    const zone = inject(NgZone);
+
     zone.runOutsideAngular(() => {
       const callback = (mutationsList: Array<MutationRecord>) => {
         for (const mutation of mutationsList) {
           if (mutation.type == 'childList') {
-            const errors = element.nativeElement.getElementsByTagName('div');
-            for (let i = 0; i < errors.length; i++) {
-              const error = errors[i];
+            const errors = Array.from(element.nativeElement.getElementsByTagName('div'));
+            for (const error of errors) {
               setTimeout(() => (error.style.display = 'block'), 150);
             }
           }

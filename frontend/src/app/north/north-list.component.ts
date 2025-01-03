@@ -1,51 +1,53 @@
-import { Component, OnInit } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { Component, inject, OnInit } from '@angular/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
 import { ConfirmationService } from '../shared/confirmation.service';
 import { NotificationService } from '../shared/notification.service';
 import { ModalService } from '../shared/modal.service';
-import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
+import { NorthConnectorLightDTO } from '../../../../backend/shared/model/north-connector.model';
 import { NorthConnectorService } from '../services/north-connector.service';
 import { ChooseNorthConnectorTypeModalComponent } from './choose-north-connector-type-modal/choose-north-connector-type-modal.component';
 import { RouterLink } from '@angular/router';
-import { AsyncPipe, NgForOf, NgIf } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
 import { NonNullableFormBuilder } from '@angular/forms';
 import { formDirectives } from '../shared/form-directives';
-import { EnabledEnumPipe } from '../shared/enabled-enum.pipe';
-import { createPageFromArray, Page } from '../../../../shared/model/types';
+import { createPageFromArray, Page } from '../../../../backend/shared/model/types';
 import { emptyPage } from '../shared/test-utils';
 import { PaginationComponent } from '../shared/pagination/pagination.component';
 import { ObservableState } from '../shared/save-button/save-button.component';
 import { LegendComponent } from '../shared/legend/legend.component';
+import { OIBusNorthTypeEnumPipe } from '../shared/oibus-north-type-enum.pipe';
 
 const PAGE_SIZE = 15;
 
 @Component({
   selector: 'oib-north-list',
-  standalone: true,
   imports: [
-    TranslateModule,
+    TranslateDirective,
     RouterLink,
-    NgIf,
-    NgForOf,
     LoadingSpinnerComponent,
     ...formDirectives,
-    EnabledEnumPipe,
     PaginationComponent,
     AsyncPipe,
-    LegendComponent
+    LegendComponent,
+    OIBusNorthTypeEnumPipe
   ],
   templateUrl: './north-list.component.html',
   styleUrl: './north-list.component.scss'
 })
 export class NorthListComponent implements OnInit {
-  allNorths: Array<NorthConnectorDTO> | null = null;
-  private filteredNorths: Array<NorthConnectorDTO> = [];
-  displayedNorths: Page<NorthConnectorDTO> = emptyPage();
+  private confirmationService = inject(ConfirmationService);
+  private notificationService = inject(NotificationService);
+  private modalService = inject(ModalService);
+  private northConnectorService = inject(NorthConnectorService);
+
+  allNorths: Array<NorthConnectorLightDTO> | null = null;
+  private filteredNorths: Array<NorthConnectorLightDTO> = [];
+  displayedNorths: Page<NorthConnectorLightDTO> = emptyPage();
   states = new Map<string, ObservableState>();
 
-  searchForm = this.fb.group({
+  searchForm = inject(NonNullableFormBuilder).group({
     name: [null as string | null]
   });
 
@@ -53,14 +55,6 @@ export class NorthListComponent implements OnInit {
     { label: 'north.disabled', class: 'grey-dot' },
     { label: 'north.enabled', class: 'green-dot' }
   ];
-
-  constructor(
-    private confirmationService: ConfirmationService,
-    private notificationService: NotificationService,
-    private modalService: ModalService,
-    private northConnectorService: NorthConnectorService,
-    private fb: NonNullableFormBuilder
-  ) {}
 
   ngOnInit() {
     this.northConnectorService.list().subscribe(norths => {
@@ -84,7 +78,7 @@ export class NorthListComponent implements OnInit {
   /**
    * Delete a North connector by its ID
    */
-  deleteNorth(north: NorthConnectorDTO) {
+  deleteNorth(north: NorthConnectorLightDTO) {
     this.confirmationService
       .confirm({
         messageKey: 'north.confirm-deletion',
@@ -126,11 +120,11 @@ export class NorthListComponent implements OnInit {
     this.displayedNorths = this.createPage(pageNumber);
   }
 
-  private createPage(pageNumber: number): Page<NorthConnectorDTO> {
+  private createPage(pageNumber: number): Page<NorthConnectorLightDTO> {
     return createPageFromArray(this.filteredNorths, PAGE_SIZE, pageNumber);
   }
 
-  filter(norths: Array<NorthConnectorDTO>): Array<NorthConnectorDTO> {
+  filter(norths: Array<NorthConnectorLightDTO>): Array<NorthConnectorLightDTO> {
     const formValue = this.searchForm.value;
     let filteredItems = norths;
 

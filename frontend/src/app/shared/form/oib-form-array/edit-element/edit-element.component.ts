@@ -1,9 +1,7 @@
-import { Component, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
+import { Component, forwardRef, OnInit, inject, output, input } from '@angular/core';
 import { FormGroup, NonNullableFormBuilder } from '@angular/forms';
 import { formDirectives } from '../../../form-directives';
-import { NgForOf, NgIf } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
-import { OibFormControl } from '../../../../../../../shared/model/form.model';
+import { OibFormControl } from '../../../../../../../backend/shared/model/form.model';
 import { createFormGroup, groupFormControlsByRow } from '../../../form-utils';
 import { FormComponent } from '../../form.component';
 
@@ -11,27 +9,27 @@ import { FormComponent } from '../../form.component';
   selector: 'oib-edit-element',
   templateUrl: './edit-element.component.html',
   styleUrl: './edit-element.component.scss',
-  imports: [...formDirectives, NgIf, NgForOf, TranslateModule, forwardRef(() => FormComponent)],
-  standalone: true
+  imports: [...formDirectives, forwardRef(() => FormComponent)]
 })
 export class EditElementComponent implements OnInit {
+  private fb = inject(NonNullableFormBuilder);
+
   form: FormGroup | null = null;
   controlsByRow: Array<Array<OibFormControl>> | null = null;
 
-  @Input({ required: true }) formDescription!: Array<OibFormControl>;
-  @Input({ required: true }) element!: any;
-  @Input({ required: true }) existingElements!: Array<any>;
+  readonly formDescription = input.required<Array<OibFormControl>>();
+  readonly element = input.required<any>();
+  readonly existingElements = input.required<Array<any>>();
+  readonly parentForm = input.required<FormGroup>();
 
-  @Output() readonly saved = new EventEmitter<any>();
-  @Output() readonly cancelled = new EventEmitter<void>();
-
-  constructor(private fb: NonNullableFormBuilder) {}
+  readonly saved = output<any>();
+  readonly cancelled = output<void>();
 
   ngOnInit() {
-    this.controlsByRow = groupFormControlsByRow(this.formDescription);
+    this.controlsByRow = groupFormControlsByRow(this.formDescription());
     // we need to wrap in a sub form group to be able to inject properly into the oib-form
-    this.form = this.fb.group({ wrapper: createFormGroup(this.formDescription, this.fb) });
-    this.form.patchValue({ wrapper: this.element });
+    this.form = this.fb.group({ wrapper: createFormGroup(this.formDescription(), this.fb) });
+    this.form.patchValue({ wrapper: this.element() });
   }
 
   getFormGroup(): FormGroup {

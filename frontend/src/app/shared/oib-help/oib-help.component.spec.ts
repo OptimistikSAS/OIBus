@@ -4,9 +4,8 @@ import { ComponentTester } from 'ngx-speculoos';
 import { OibHelpComponent } from './oib-help.component';
 
 @Component({
-  template: ` <oib-help [url]="url"></oib-help>`,
-  imports: [OibHelpComponent],
-  standalone: true
+  template: ` <oib-help [url]="url" />`,
+  imports: [OibHelpComponent]
 })
 class TestComponent {
   url = 'https://oibus.optimistik.com' as const;

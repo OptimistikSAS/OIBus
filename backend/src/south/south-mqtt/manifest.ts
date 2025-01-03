@@ -1,46 +1,44 @@
-import { SouthConnectorManifest } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorManifest } from '../../../shared/model/south-connector.model';
 
 const manifest: SouthConnectorManifest = {
   id: 'mqtt',
-  name: 'MQTT',
   category: 'iot',
-  description: 'Subscribe to MQTT broker topics',
   modes: {
     subscription: true,
     lastPoint: false,
     lastFile: false,
-    history: false,
-    forceMaxInstantPerItem: false
+    history: false
   },
   settings: [
     {
       key: 'url',
       type: 'OibText',
-      label: 'URL',
+      translationKey: 'south.mqtt.url',
       defaultValue: '',
       newRow: true,
       validators: [
         { key: 'required' },
         { key: 'pattern', params: { pattern: '^(mqtt:\\/\\/|mqtts:\\/\\/|tcp:\\/\\/|tls:\\/\\/|ws:\\/\\/|wss:\\/\\/).*' } }
       ],
+      class: 'col-6',
       displayInViewMode: true
     },
     {
       key: 'qos',
       type: 'OibSelect',
       options: ['0', '1', '2'],
-      label: 'QoS',
+      translationKey: 'south.mqtt.qos',
       defaultValue: '1',
-      newRow: false,
+      class: 'col-3',
       validators: [{ key: 'required' }],
       displayInViewMode: true
     },
     {
       key: 'persistent',
       type: 'OibCheckbox',
-      label: 'Persistent',
+      translationKey: 'south.mqtt.persistent',
       defaultValue: false,
-      newRow: false,
+      class: 'col-3',
       conditionalDisplay: { field: 'qos', values: ['1', '2'] },
       validators: [{ key: 'required' }],
       displayInViewMode: true
@@ -48,7 +46,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'authentication',
       type: 'OibFormGroup',
-      label: 'Authentication',
+      translationKey: '',
       class: 'col',
       newRow: true,
       displayInViewMode: false,
@@ -57,19 +55,21 @@ const manifest: SouthConnectorManifest = {
         {
           key: 'type',
           type: 'OibSelect',
-          label: 'Type',
+          translationKey: 'south.mqtt.authentication',
           options: ['none', 'basic', 'cert'],
-          pipe: 'authentication',
           validators: [{ key: 'required' }],
           defaultValue: 'none',
           newRow: true,
+          class: 'col-4',
           displayInViewMode: false
         },
         {
           key: 'username',
           type: 'OibText',
-          label: 'Username',
+          translationKey: 'south.mqtt.username',
           defaultValue: '',
+          newRow: true,
+          class: 'col-4',
           validators: [{ key: 'required' }],
           conditionalDisplay: { field: 'type', values: ['basic'] },
           displayInViewMode: false
@@ -77,37 +77,39 @@ const manifest: SouthConnectorManifest = {
         {
           key: 'password',
           type: 'OibSecret',
-          label: 'Password',
+          translationKey: 'south.mqtt.password',
           defaultValue: '',
+          class: 'col-4',
           conditionalDisplay: { field: 'type', values: ['basic'] },
           displayInViewMode: false
         },
         {
           key: 'certFilePath',
           type: 'OibText',
-          label: 'Cert file path',
+          translationKey: 'south.mqtt.cert-file-path',
           defaultValue: '',
+          newRow: true,
+          class: 'col-4',
           conditionalDisplay: { field: 'type', values: ['cert'] },
           validators: [{ key: 'required' }],
-          newRow: false,
           displayInViewMode: false
         },
         {
           key: 'keyFilePath',
           type: 'OibText',
-          label: 'Key file path',
+          translationKey: 'south.mqtt.key-file-path',
           defaultValue: '',
           conditionalDisplay: { field: 'type', values: ['cert'] },
-          newRow: false,
+          class: 'col-4',
           displayInViewMode: false
         },
         {
           key: 'caFilePath',
           type: 'OibText',
-          label: 'CA file path',
+          translationKey: 'south.mqtt.ca-file-path',
           defaultValue: '',
           conditionalDisplay: { field: 'type', values: ['cert'] },
-          newRow: false,
+          class: 'col-4',
           displayInViewMode: false
         }
       ]
@@ -115,7 +117,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'rejectUnauthorized',
       type: 'OibCheckbox',
-      label: 'Reject unauthorized connection',
+      translationKey: 'south.mqtt.reject-unauthorized',
       defaultValue: false,
       newRow: true,
       displayInViewMode: false,
@@ -124,9 +126,9 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'reconnectPeriod',
       type: 'OibNumber',
-      label: 'Reconnect period',
+      translationKey: 'south.mqtt.reconnect-period',
       unitLabel: 'ms',
-      defaultValue: 1000,
+      defaultValue: 10000,
       newRow: false,
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30_000 } }],
       displayInViewMode: false
@@ -134,7 +136,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'connectTimeout',
       type: 'OibNumber',
-      label: 'Connect timeout',
+      translationKey: 'south.mqtt.connect-timeout',
       unitLabel: 'ms',
       defaultValue: 10000,
       newRow: false,
@@ -143,32 +145,31 @@ const manifest: SouthConnectorManifest = {
     }
   ],
   items: {
-    scanMode: {
-      acceptSubscription: true,
-      subscriptionOnly: true
-    },
+    scanMode: 'SUBSCRIPTION',
     settings: [
       {
         key: 'topic',
         type: 'OibText',
-        label: 'Topic',
+        translationKey: 'south.items.mqtt.topic',
         validators: [{ key: 'required' }],
-        displayInViewMode: true
+        displayInViewMode: true,
+        class: 'col-8'
       },
       {
         key: 'valueType',
         type: 'OibSelect',
-        label: 'Value type',
+        translationKey: 'south.items.mqtt.value-type',
         options: ['number', 'string', 'json'],
         defaultValue: 'number',
         validators: [{ key: 'required' }],
         newRow: false,
-        displayInViewMode: true
+        displayInViewMode: true,
+        class: 'col-4'
       },
       {
         key: 'jsonPayload',
         type: 'OibFormGroup',
-        label: 'JSON payload',
+        translationKey: 'south.items.mqtt.json-payload.title',
         newRow: true,
         displayInViewMode: false,
         conditionalDisplay: { field: 'valueType', values: ['json'] },
@@ -176,7 +177,7 @@ const manifest: SouthConnectorManifest = {
           {
             key: 'useArray',
             type: 'OibCheckbox',
-            label: 'Payload in array',
+            translationKey: 'south.items.mqtt.json-payload.use-array',
             defaultValue: false,
             class: 'col-4',
             validators: [{ key: 'required' }]
@@ -184,36 +185,27 @@ const manifest: SouthConnectorManifest = {
           {
             key: 'dataArrayPath',
             type: 'OibText',
-            label: 'Array path',
+            translationKey: 'south.items.mqtt.json-payload.data-array-path',
             newRow: false,
             defaultValue: '',
             class: 'col-4',
             conditionalDisplay: { field: 'useArray', values: [true] }
           },
           {
-            key: 'pointIdOrigin',
-            type: 'OibSelect',
-            label: 'Point ID origin',
-            options: ['oibus', 'payload'],
-            defaultValue: 'oibus',
+            key: 'valuePath',
+            type: 'OibText',
+            translationKey: 'south.items.mqtt.json-payload.value-path',
+            defaultValue: 'value',
             class: 'col-4',
             newRow: true,
             validators: [{ key: 'required' }]
           },
           {
-            key: 'timestampOrigin',
+            key: 'pointIdOrigin',
             type: 'OibSelect',
-            label: 'Timestamp origin',
+            translationKey: 'south.items.mqtt.json-payload.point-id-origin',
             options: ['oibus', 'payload'],
             defaultValue: 'oibus',
-            class: 'col-4',
-            validators: [{ key: 'required' }]
-          },
-          {
-            key: 'valuePath',
-            type: 'OibText',
-            label: 'Value path',
-            defaultValue: 'value',
             class: 'col-4',
             newRow: true,
             validators: [{ key: 'required' }]
@@ -221,61 +213,75 @@ const manifest: SouthConnectorManifest = {
           {
             key: 'pointIdPath',
             type: 'OibText',
-            label: 'Point ID path',
+            translationKey: 'south.items.mqtt.json-payload.point-id-path',
             defaultValue: 'name',
             class: 'col-4',
             conditionalDisplay: { field: 'pointIdOrigin', values: ['payload'] }
           },
           {
+            key: 'timestampOrigin',
+            type: 'OibSelect',
+            translationKey: 'south.items.mqtt.json-payload.timestamp-origin',
+            options: ['oibus', 'payload'],
+            defaultValue: 'oibus',
+            newRow: true,
+            class: 'col-4',
+            validators: [{ key: 'required' }]
+          },
+          {
             key: 'timestampPayload',
             type: 'OibFormGroup',
-            label: '',
+            translationKey: 'south.items.mqtt.json-payload.timestamp-payload.title',
             newRow: true,
             conditionalDisplay: { field: 'timestampOrigin', values: ['payload'] },
             content: [
               {
                 key: 'timestampPath',
-                label: 'Timestamp path',
+                translationKey: 'south.items.mqtt.json-payload.timestamp-payload.timestamp-path',
                 type: 'OibText',
                 defaultValue: '',
                 validators: [{ key: 'required' }],
-                displayInViewMode: true
+                displayInViewMode: true,
+                class: 'col-4'
               },
               {
                 key: 'timestampType',
-                label: 'Type',
+                translationKey: 'south.items.mqtt.json-payload.timestamp-payload.timestamp-type',
                 type: 'OibSelect',
                 defaultValue: 'string',
                 options: ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'],
                 validators: [{ key: 'required' }],
-                pipe: 'dateTimeType'
-              },
-              {
-                key: 'timezone',
-                label: 'Timezone',
-                type: 'OibTimezone',
-                defaultValue: 'UTC',
-                validators: [{ key: 'required' }],
-                conditionalDisplay: { field: 'timestampType', values: ['string'] }
+                class: 'col-4'
               },
               {
                 key: 'timestampFormat',
-                label: 'Timestamp format',
+                translationKey: 'south.items.mqtt.json-payload.timestamp-payload.timestamp-format',
                 type: 'OibText',
-                defaultValue: 'yyyy-MM-dd HH:mm:ss',
+                newRow: true,
+                class: 'col-4',
+                defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
                 conditionalDisplay: { field: 'timestampType', values: ['string'] },
                 validators: [{ key: 'required' }]
+              },
+              {
+                key: 'timezone',
+                translationKey: 'south.items.mqtt.json-payload.timestamp-payload.timezone',
+                type: 'OibTimezone',
+                defaultValue: 'UTC',
+                class: 'col-4',
+                validators: [{ key: 'required' }],
+                conditionalDisplay: { field: 'timestampType', values: ['string'] }
               }
             ]
           },
           {
             key: 'otherFields',
             type: 'OibArray',
-            label: 'Additional fields',
+            translationKey: 'south.items.mqtt.json-payload.other-fields.title',
             content: [
               {
                 key: 'name',
-                label: 'Field name in output',
+                translationKey: 'south.items.mqtt.json-payload.other-fields.name',
                 type: 'OibText',
                 defaultValue: '',
                 validators: [{ key: 'required' }],
@@ -283,7 +289,7 @@ const manifest: SouthConnectorManifest = {
               },
               {
                 key: 'path',
-                label: 'Path in the retrieved payload',
+                translationKey: 'south.items.mqtt.json-payload.other-fields.path',
                 type: 'OibText',
                 defaultValue: '*',
                 validators: [{ key: 'required' }],

@@ -2,12 +2,10 @@ import { TestBed } from '@angular/core/testing';
 import { Component } from '@angular/core';
 import { ComponentTester } from 'ngx-speculoos';
 import { ValErrorDelayDirective } from './val-error-delay.directive';
-import { NgIf } from '@angular/common';
 
 @Component({
-  template: '<val-errors><div *ngIf="showError">test</div></val-errors>',
-  standalone: true,
-  imports: [ValErrorDelayDirective, NgIf]
+  template: '<val-errors>@if (showError) {<div>test</div>}</val-errors>',
+  imports: [ValErrorDelayDirective]
 })
 class TestComponent {
   showError = false;

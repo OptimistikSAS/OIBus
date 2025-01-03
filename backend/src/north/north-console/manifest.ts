@@ -1,10 +1,8 @@
-import { NorthConnectorManifest } from '../../../../shared/model/north-connector.model';
+import { NorthConnectorManifest } from '../../../shared/model/north-connector.model';
 
 const manifest: NorthConnectorManifest = {
   id: 'console',
-  name: 'Console',
   category: 'debug',
-  description: 'Display filename or values in Console (used for debug)',
   modes: {
     files: true,
     points: true
@@ -13,7 +11,7 @@ const manifest: NorthConnectorManifest = {
     {
       key: 'verbose',
       type: 'OibCheckbox',
-      label: 'Verbose',
+      translationKey: 'north.console.verbose',
       newRow: true,
       validators: [{ key: 'required' }],
       displayInViewMode: true

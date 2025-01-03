@@ -1,22 +1,19 @@
-import { SouthConnectorManifest } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorManifest } from '../../../shared/model/south-connector.model';
 
 const manifest: SouthConnectorManifest = {
   id: 'folder-scanner',
-  name: 'Folder Scanner',
   category: 'file',
-  description: 'Read files from a local or remote folder',
   modes: {
     subscription: false,
     lastPoint: false,
     lastFile: true,
-    history: false,
-    forceMaxInstantPerItem: false
+    history: false
   },
   settings: [
     {
       key: 'inputFolder',
       type: 'OibText',
-      label: 'Input folder',
+      translationKey: 'south.folder-scanner.input-folder',
       defaultValue: './input/',
       newRow: true,
       class: 'col-12',
@@ -26,7 +23,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'compression',
       type: 'OibCheckbox',
-      label: 'Compress file',
+      translationKey: 'south.folder-scanner.compression',
       defaultValue: false,
       newRow: true,
       validators: [{ key: 'required' }],
@@ -34,15 +31,12 @@ const manifest: SouthConnectorManifest = {
     }
   ],
   items: {
-    scanMode: {
-      acceptSubscription: false,
-      subscriptionOnly: false
-    },
+    scanMode: 'POLL',
     settings: [
       {
         key: 'regex',
         type: 'OibText',
-        label: 'RegExp',
+        translationKey: 'south.items.folder-scanner.regex',
         defaultValue: '.txt',
         validators: [{ key: 'required' }],
         displayInViewMode: true
@@ -50,7 +44,7 @@ const manifest: SouthConnectorManifest = {
       {
         key: 'minAge',
         type: 'OibNumber',
-        label: 'Minimum Age',
+        translationKey: 'south.items.folder-scanner.min-age',
         unitLabel: 'ms',
         defaultValue: 1000,
         newRow: true,
@@ -61,7 +55,7 @@ const manifest: SouthConnectorManifest = {
       {
         key: 'preserveFiles',
         type: 'OibCheckbox',
-        label: 'Preserve file',
+        translationKey: 'south.items.folder-scanner.preserve-files',
         defaultValue: true,
         class: 'col-4',
         validators: [{ key: 'required' }],
@@ -70,7 +64,7 @@ const manifest: SouthConnectorManifest = {
       {
         key: 'ignoreModifiedDate',
         type: 'OibCheckbox',
-        label: 'Ignore modified date',
+        translationKey: 'south.items.folder-scanner.ignore-modified-date',
         defaultValue: false,
         class: 'col-4',
         conditionalDisplay: { field: 'preserveFiles', values: [true] },

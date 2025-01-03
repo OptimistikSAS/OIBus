@@ -1,21 +1,28 @@
 import path from 'node:path';
 
 import fetch, { HeadersInit, RequestInit } from 'node-fetch';
-
-import manifest from './manifest';
 import SouthConnector from '../south-connector';
 import { createFolder, formatQueryParams, persistResults } from '../../service/utils';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
-import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
-import { Instant } from '../../../../shared/model/types';
+import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
-import { SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../../../shared/model/south-settings.model';
+import { SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../../shared/model/south-settings.model';
 import { createProxyAgent } from '../../service/proxy-agent';
-import { OIBusDataValue } from '../../../../shared/model/engine.model';
-import { ClientSecretCredential, ClientCertificateCredential } from '@azure/identity';
+import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
+import { ClientCertificateCredential, ClientSecretCredential } from '@azure/identity';
+import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
+import SouthConnectorRepository from '../../repository/config/south-connector.repository';
+import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
+import CertificateRepository from '../../repository/config/certificate.repository';
+import https from 'node:https';
+import { HttpsProxyAgent } from 'https-proxy-agent';
+import { HttpProxyAgent } from 'http-proxy-agent';
+import { BaseFolders } from '../../model/types';
+import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 
 interface OIATimeValues {
   type: string;
@@ -29,7 +36,7 @@ interface OIATimeValues {
     id: string;
     label: string;
   };
-  values: Array<number>;
+  values: Array<string | number>;
   timestamps: Array<Instant>;
 }
 
@@ -40,21 +47,31 @@ export default class SouthOIAnalytics
   extends SouthConnector<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings>
   implements QueriesHistory
 {
-  static type = manifest.id;
-
   private readonly tmpFolder: string;
 
   constructor(
-    connector: SouthConnectorDTO<SouthOIAnalyticsSettings>,
-    engineAddValuesCallback: (southId: string, values: Array<OIBusDataValue>) => Promise<void>,
-    engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
+    connector: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings>,
+    engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
-    repositoryService: RepositoryService,
+    southConnectorRepository: SouthConnectorRepository,
+    southCacheRepository: SouthCacheRepository,
+    scanModeRepository: ScanModeRepository,
+    private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
+    private readonly certificateRepository: CertificateRepository,
     logger: pino.Logger,
-    baseFolder: string
+    baseFolders: BaseFolders
   ) {
-    super(connector, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
-    this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
+    super(
+      connector,
+      engineAddContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      baseFolders
+    );
+    this.tmpFolder = path.resolve(this.baseFolders.cache, 'tmp');
   }
 
   /**
@@ -86,11 +103,23 @@ export default class SouthOIAnalytics
     }
   }
 
+  override async testItem(
+    item: SouthConnectorItemEntity<SouthOIAnalyticsItemSettings>,
+    testingSettings: SouthConnectorItemTestingSettings,
+    callback: (data: OIBusContent) => void
+  ): Promise<void> {
+    const startTime = testingSettings.history!.startTime;
+    const endTime = testingSettings.history!.endTime;
+    const result: Array<OIATimeValues> = await this.queryData(item, startTime, endTime);
+    const { formattedResult } = this.parseData(result);
+    callback({ type: 'time-values', content: formattedResult });
+  }
+
   /**
    * Retrieve result from a REST API write them into a CSV file and send it to the Engine.
    */
   async historyQuery(
-    items: Array<SouthConnectorItemDTO<SouthOIAnalyticsItemSettings>>,
+    items: Array<SouthConnectorItemEntity<SouthOIAnalyticsItemSettings>>,
     startTime: Instant,
     endTime: Instant
   ): Promise<Instant | null> {
@@ -98,7 +127,7 @@ export default class SouthOIAnalytics
 
     for (const item of items) {
       const startRequest = DateTime.now().toMillis();
-      const result: Array<any> = await this.queryData(item, startTime, endTime);
+      const result: Array<OIATimeValues> = await this.queryData(item, startTime, endTime);
       const requestDuration = DateTime.now().toMillis() - startRequest;
 
       const { formattedResult, maxInstant } = this.parseData(result);
@@ -115,8 +144,7 @@ export default class SouthOIAnalytics
           this.connector.name,
           item.name,
           this.tmpFolder,
-          this.addFile.bind(this),
-          this.addValues.bind(this),
+          this.addContent.bind(this),
           this.logger
         );
       } else {
@@ -126,7 +154,26 @@ export default class SouthOIAnalytics
     return updatedStartTime;
   }
 
-  async queryData(item: SouthConnectorItemDTO<SouthOIAnalyticsItemSettings>, startTime: Instant, endTime: Instant): Promise<any> {
+  getThrottlingSettings(settings: SouthOIAnalyticsSettings): SouthThrottlingSettings {
+    return {
+      maxReadInterval: settings.throttling.maxReadInterval,
+      readDelay: settings.throttling.readDelay
+    };
+  }
+
+  getMaxInstantPerItem(_settings: SouthOIAnalyticsSettings): boolean {
+    return false;
+  }
+
+  getOverlap(settings: SouthOIAnalyticsSettings): number {
+    return settings.throttling.overlap;
+  }
+
+  async queryData(
+    item: SouthConnectorItemEntity<SouthOIAnalyticsItemSettings>,
+    startTime: Instant,
+    endTime: Instant
+  ): Promise<Array<OIATimeValues>> {
     const connectionSettings = await this.getNetworkSettings(
       `${item.settings.endpoint}${formatQueryParams(startTime, endTime, item.settings.queryParams || [])}`
     );
@@ -152,11 +199,13 @@ export default class SouthOIAnalytics
     return response.json();
   }
 
-  async getNetworkSettings(endpoint: string): Promise<{ host: string; headers: HeadersInit; agent: any }> {
+  async getNetworkSettings(
+    endpoint: string
+  ): Promise<{ host: string; headers: HeadersInit; agent: https.Agent | HttpsProxyAgent<string> | HttpProxyAgent<string> | undefined }> {
     const headers: HeadersInit = {};
 
     if (this.connector.settings.useOiaModule) {
-      const registrationSettings = this.repositoryService.registrationRepository.getRegistrationSettings();
+      const registrationSettings = this.oIAnalyticsRegistrationRepository.get();
       if (!registrationSettings || registrationSettings.status !== 'REGISTERED') {
         throw new Error('OIBus not registered in OIAnalytics');
       }
@@ -213,7 +262,7 @@ export default class SouthOIAnalytics
         headers.authorization = `Bearer ${Buffer.from(result.token)}`;
         break;
       case 'aad-certificate':
-        const certificate = this.repositoryService.certificateRepository.findById(specificSettings.certificateId!);
+        const certificate = this.certificateRepository.findById(specificSettings.certificateId!);
         if (certificate != null) {
           const decryptedPrivateKey = await this.encryptionService.decryptText(certificate.privateKey);
           const clientCertificateCredential = new ClientCertificateCredential(specificSettings.tenantId!, specificSettings.clientId!, {
@@ -278,27 +327,11 @@ export default class SouthOIAnalytics
    * Return the formatted results flattened for easier access
    * (into csv files for example) and the latestDateRetrieved in ISO String format
    */
-  parseData(httpResult: Array<OIATimeValues>): { formattedResult: Array<OIBusDataValue>; maxInstant: Instant } {
-    if (!Array.isArray(httpResult)) {
-      throw Error('Bad data: expect OIAnalytics time values to be an array');
-    }
-    const formattedData: Array<any> = [];
+  parseData(httpResult: Array<OIATimeValues>): { formattedResult: Array<OIBusTimeValue>; maxInstant: Instant } {
+    const formattedData: Array<OIBusTimeValue> = [];
     let maxInstant = DateTime.fromMillis(0).toUTC().toISO()!;
     for (const element of httpResult) {
-      if (!element.data?.reference) {
-        throw Error('Bad data: expect data.reference field');
-      }
-      if (!element.unit?.label) {
-        throw Error('Bad data: expect unit.label field');
-      }
-      if (!Array.isArray(element.values)) {
-        throw Error('Bad data: expect values to be an array');
-      }
-      if (!Array.isArray(element.timestamps)) {
-        throw Error('Bad data: expect timestamps to be an array');
-      }
-
-      element.values.forEach((currentValue: any, index: number) => {
+      element.values.forEach((currentValue: string | number, index: number) => {
         const resultInstant = DateTime.fromISO(element.timestamps[index]).toUTC().toISO()!;
 
         formattedData.push({

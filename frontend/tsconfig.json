@@ -2,36 +2,35 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
-    "forceConsistentCasingInFileNames": true,
+    "outDir": "./dist/out-tsc",
     "strict": true,
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
     "esModuleInterop": true,
     "noUnusedLocals": true,
-    "sourceMap": true,
-    "declaration": false,
-    "downlevelIteration": true,
     "experimentalDecorators": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "importHelpers": true,
-    "allowSyntheticDefaultImports": true,
     "target": "ES2022",
     "module": "ES2022",
-    "useDefineForClassFields": false,
     "types": [
+      // jasmine shouldn't be there, but this is a workaround for https://youtrack.jetbrains.com/issue/WEB-69571/Types-specified-in-tsconfig.spec.json-are-not-recognized
+      // without this, the IDE marks plenty of lines in the tests as errors even though they are correct
+      // and we don't have autocompletion on jasmine anymore.
+      "jasmine",
       "@angular/localize"
-    ],
-    "lib": [
-      "ES2022",
-      "dom"
     ]
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
     "strictInjectionParameters": true,
     "strictInputAccessModifiers": true,
-    "strictTemplates": true
+    "strictTemplates": true,
+    "extendedDiagnostics": {
+      "defaultCategory": "error"
+    }
   }
 }

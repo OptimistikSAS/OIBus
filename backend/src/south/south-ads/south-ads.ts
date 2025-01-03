@@ -1,17 +1,19 @@
-// @ts-ignore
-import ads from 'ads-client';
-
-import manifest from './manifest';
+import { Client, AdsDataType } from 'ads-client';
 import SouthConnector from '../south-connector';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import { DateTime } from 'luxon';
-import { Instant } from '../../../../shared/model/types';
+import { Instant } from '../../../shared/model/types';
 import EncryptionService from '../../service/encryption.service';
-import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { QueriesLastPoint } from '../south-interface';
-import { SouthADSItemSettings, SouthADSSettings } from '../../../../shared/model/south-settings.model';
-import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import { SouthADSItemSettings, SouthADSSettings } from '../../../shared/model/south-settings.model';
+import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import SouthConnectorRepository from '../../repository/config/south-connector.repository';
+import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import { BaseFolders } from '../../model/types';
+import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import { AdsEnumInfoEntry } from 'ads-client/dist/types/ads-protocol-types';
 
 interface ADSOptions {
   targetAmsNetId: string;
@@ -27,22 +29,30 @@ interface ADSOptions {
  * Class SouthADS - Provides instruction for TwinCAT ADS client connection
  */
 export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSItemSettings> implements QueriesLastPoint {
-  static type = manifest.id;
-
-  private client: ads.Client | null = null;
+  private client: Client | null = null;
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private disconnecting = false;
 
   constructor(
-    connector: SouthConnectorDTO<SouthADSSettings>,
-    engineAddValuesCallback: (southId: string, values: Array<OIBusDataValue>) => Promise<void>,
-    engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
+    connector: SouthConnectorEntity<SouthADSSettings, SouthADSItemSettings>,
+    engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
-    repositoryService: RepositoryService,
+    southConnectorRepository: SouthConnectorRepository,
+    southCacheRepository: SouthCacheRepository,
+    scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
-    baseFolder: string
+    baseFolders: BaseFolders
   ) {
-    super(connector, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(
+      connector,
+      engineAddContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      baseFolders
+    );
   }
 
   /**
@@ -51,12 +61,12 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
   parseValues(
     itemName: string,
     dataType: string,
-    valueToParse: any,
+    valueToParse: unknown,
     timestamp: Instant,
-    subItems: Array<any> = [],
-    enumInfo: Array<{ name: string; value: number }> = []
-  ): Array<any> {
-    let valueToAdd = null;
+    subItems: Array<AdsDataType> = [],
+    enumInfo: Array<AdsEnumInfoEntry> = []
+  ): Array<OIBusTimeValue> {
+    let valueToAdd: string | null = null;
     /**
      * Source of the following data types:
      * https://infosys.beckhoff.com/english.php?content=../content/1033/tcplccontrol/html/tcplcctrl_plc_data_types_overview.htm&id
@@ -64,7 +74,7 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
      */
     switch (dataType) {
       case 'BOOL':
-        if (this.connector.settings.boolAsText === 'Text') {
+        if (this.connector.settings.boolAsText === 'text') {
           valueToAdd = JSON.stringify(valueToParse);
         } else {
           valueToAdd = valueToParse ? '1' : '0';
@@ -83,23 +93,25 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
       case 'ULINT':
       case 'TIME': // TIME and TIME_OF_DAY are parsed as numbers
       case 'TIME_OF_DAY':
-        valueToAdd = JSON.stringify(parseInt(valueToParse, 10));
+        valueToAdd = JSON.stringify(parseInt(valueToParse as string, 10));
         break;
       case 'REAL':
       case 'LREAL':
-        valueToAdd = JSON.stringify(parseFloat(valueToParse));
+        valueToAdd = JSON.stringify(parseFloat(valueToParse as string));
         break;
       case 'STRING':
       case dataType.match(/^STRING\([0-9]*\)$/)?.input: // Example: STRING(35)
-        valueToAdd = valueToParse;
+        valueToAdd = valueToParse as string;
         break;
       case 'DATE':
       case 'DATE_AND_TIME':
-        valueToAdd = new Date(valueToParse).toISOString();
+        valueToAdd = DateTime.fromISO(valueToParse as string)
+          .toUTC()
+          .toISO()!;
         break;
       case dataType.match(/^ARRAY\s\[[0-9][0-9]*\.\.[0-9][0-9]*]\sOF\s.*$/)?.input: {
         // Example: ARRAY [0..4] OF INT
-        const parsedValues = valueToParse.map((element: any, index: number) =>
+        const parsedValues = (valueToParse as Array<unknown>).map((element: unknown, index: number) =>
           this.parseValues(
             `${itemName}.${index}`,
             dataType.split(/^ARRAY\s\[[0-9][0-9]*\.\.[0-9][0-9]*]\sOF\s/)[1],
@@ -109,7 +121,10 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
             enumInfo
           )
         );
-        return parsedValues.reduce((concatenatedResults: Array<any>, result: Array<any>) => [...concatenatedResults, ...result], []);
+        return parsedValues.reduce(
+          (concatenatedResults: Array<OIBusTimeValue>, result: Array<OIBusTimeValue>) => [...concatenatedResults, ...result],
+          []
+        );
       }
       default:
         if (subItems.length > 0) {
@@ -124,10 +139,10 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
                 this.parseValues(
                   `${itemName}.${subItem.name}`,
                   subItem.type,
-                  valueToParse[subItem.name],
+                  (valueToParse as Record<string, unknown>)[subItem.name],
                   timestamp,
                   subItem.subItems,
-                  subItem.enumInfo
+                  subItem.enumInfos
                 )
               );
             return parsedValues.reduce((concatenatedResults, result) => [...concatenatedResults, ...result], []);
@@ -137,17 +152,17 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
           );
         } else if (enumInfo.length > 0) {
           // It is an ADS Enum object
-          if (this.connector.settings.enumAsText === 'Text') {
-            valueToAdd = valueToParse.name;
+          if (this.connector.settings.enumAsText === 'text') {
+            valueToAdd = (valueToParse as { name: string }).name;
           } else {
-            valueToAdd = JSON.stringify(valueToParse.value);
+            valueToAdd = JSON.stringify((valueToParse as { value: number }).value);
           }
         } else {
           this.logger.warn(`dataType ${dataType} not supported yet for point ${itemName}. Value was ${JSON.stringify(valueToParse)}`);
         }
         break;
     }
-    if (valueToAdd !== null) {
+    if (valueToAdd) {
       return [
         {
           pointId: itemName,
@@ -159,7 +174,7 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
     return [];
   }
 
-  async lastPointQuery(items: Array<SouthConnectorItemDTO<SouthADSItemSettings>>): Promise<void> {
+  async lastPointQuery(items: Array<SouthConnectorItemEntity<SouthADSItemSettings>>): Promise<void> {
     const timestamp = DateTime.now().toUTC().toISO()!;
     try {
       const startRequest = DateTime.now().toMillis();
@@ -167,9 +182,12 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
       const requestDuration = DateTime.now().toMillis() - startRequest;
       this.logger.debug(`Requested ${items.length} items in ${requestDuration} ms`);
 
-      await this.addValues(results.reduce((concatenatedResults, result) => [...concatenatedResults, ...result], []));
-    } catch (error: any) {
-      if (error.message.startsWith('Client is not connected')) {
+      await this.addContent({
+        type: 'time-values',
+        content: results.reduce((concatenatedResults, result) => [...concatenatedResults, ...result], [])
+      });
+    } catch (error: unknown) {
+      if ((error as Error).message.includes('Client is not connected')) {
         this.logger.error('ADS client disconnected. Reconnecting');
         await this.disconnect();
         this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
@@ -179,25 +197,35 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
     }
   }
 
-  readAdsSymbol(item: SouthConnectorItemDTO<SouthADSItemSettings>, timestamp: Instant): Promise<Array<OIBusDataValue>> {
-    return new Promise((resolve, reject) => {
-      this.client
-        .readSymbol(item.settings.address)
-        .then((nodeResult: any) => {
-          const parsedResult = this.parseValues(
-            `${this.connector.settings.plcName}${item.name}`,
-            nodeResult.symbol?.type,
-            nodeResult.value,
-            timestamp,
-            nodeResult.type?.subItems,
-            nodeResult.type?.enumInfo
-          );
-          resolve(parsedResult);
-        })
-        .catch((error: Error) => {
-          reject(error);
-        });
-    });
+  async readAdsSymbol(item: SouthConnectorItemEntity<SouthADSItemSettings>, timestamp: Instant): Promise<Array<OIBusTimeValue>> {
+    const result = await this.client!.readValue(item.settings.address);
+
+    return this.parseValues(
+      `${this.connector.settings.plcName}${item.name}`,
+      result.symbol?.type,
+      result.value,
+      timestamp,
+      result.dataType?.subItems,
+      result.dataType?.enumInfos
+    );
+  }
+
+  override async testItem(
+    item: SouthConnectorItemEntity<SouthADSItemSettings>,
+    _testingSettings: SouthConnectorItemTestingSettings,
+    callback: (data: OIBusContent) => void
+  ): Promise<void> {
+    try {
+      await this.connect();
+      const dataValues: Array<OIBusTimeValue> = await this.readAdsSymbol(item, DateTime.now().toUTC().toISO()!);
+      await this.disconnect();
+      callback({
+        type: 'time-values',
+        content: dataValues
+      });
+    } catch (error: unknown) {
+      throw new Error(`Unable to connect. ${(error as Error).message}`);
+    }
   }
 
   createConnectionOptions(): ADSOptions {
@@ -237,7 +265,7 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
       const options = this.createConnectionOptions();
       this.logger.info(`Connecting to ADS Client with options ${JSON.stringify(options)}`);
 
-      this.client = new ads.Client(options);
+      this.client = new Client(options);
       const result = await this.client.connect();
       this.logger.info(
         `Connected to the ${result.targetAmsNetId} with local AmsNetId ${result.localAmsNetId} and local port ${result.localAdsPort}`
@@ -254,7 +282,7 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
 
   override async testConnection(): Promise<void> {
     const options = this.createConnectionOptions();
-    this.client = new ads.Client(options);
+    this.client = new Client(options);
     await this.client.connect();
     await this.disconnect();
   }

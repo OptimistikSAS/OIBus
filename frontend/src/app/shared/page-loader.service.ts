@@ -1,7 +1,7 @@
 import { ActivatedRoute, Router } from '@angular/router';
 import { map, merge, Observable, Subject } from 'rxjs';
-import { Injectable } from '@angular/core';
-import { Page } from '../../../../shared/model/types';
+import { Injectable, inject } from '@angular/core';
+import { Page } from '../../../../backend/shared/model/types';
 
 /**
  * Service used to load a page when the `page` query param changes, or when we need to reload the current
@@ -11,6 +11,9 @@ import { Page } from '../../../../shared/model/types';
  */
 @Injectable()
 export class PageLoader {
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+
   private pageLoadsSubject = new Subject<number>();
 
   /**
@@ -19,11 +22,8 @@ export class PageLoader {
    */
   pageLoads$: Observable<number>;
 
-  constructor(
-    private route: ActivatedRoute,
-    private router: Router
-  ) {
-    const pageQueryParam$ = route.queryParamMap.pipe(map(paramMap => +(paramMap.get('page') || 0)));
+  constructor() {
+    const pageQueryParam$ = this.route.queryParamMap.pipe(map(paramMap => +(paramMap.get('page') || 0)));
     this.pageLoads$ = merge(pageQueryParam$, this.pageLoadsSubject);
   }
 
@@ -36,7 +36,11 @@ export class PageLoader {
     if (pageNumber === page.number) {
       this.pageLoadsSubject.next(pageNumber);
     } else {
-      this.router.navigate(['.'], { queryParams: { page: pageNumber }, relativeTo: this.route, queryParamsHandling: 'merge' });
+      this.router.navigate(['.'], {
+        queryParams: { page: pageNumber },
+        relativeTo: this.route,
+        queryParamsHandling: 'merge'
+      });
     }
   }
 }

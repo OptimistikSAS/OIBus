@@ -3,20 +3,26 @@ sidebar_position: 12
 ---
 
 import SerializationSettings from './_south-rest-serialization-settings.mdx';
+import ThrottlingSettings from './_throttling-settings.mdx';
 
-
-# SLIM (Rest API)
-Retrieve data from the [Agilent SLIMS](https://www.agilent.com/en/product/software-informatics/lab-workflow-management-software/slims)
+# SLIMS™
+Query time values from an [Agilent SLIMS™](https://www.agilent.com/en/product/software-informatics/lab-workflow-management-software/slims)
 application, which serves as a comprehensive laboratory management solution.
 
 ## Specific settings
 Here are the details for configuring your connection:
 - **URL**: This is the address of the SLIMS application.
 - **Port**: Specify the port that the application is listening on.
+- **Accept unauthorized certificate**: Decide whether to accept certificates even if they are outdated or self-signed.
+- **Timeout**: The duration before a connection failure is reported in HTTP requests.
 - **Username**: Provide the username used for authentication.
 - **Password**: Enter the password used for authentication.
 - **Use proxy**: Choose whether to route the request through a proxy.
-- **Accept unauthorized certificate**: Decide whether to accept certificates even if they are outdated or self-signed.
+  - **Proxy URL**: The URL of the proxy server to pass through.
+  - **Proxy username**: The username associated with the proxy.
+  - **Proxy password**: The password linked to the proxy.
+
+<ThrottlingSettings/>
 
 ## Item settings
 In the South connector, each item can be configured to be queried according to the chosen scan mode. Multiple queries to

@@ -1,38 +1,33 @@
 import { TestBed } from '@angular/core/testing';
 
 import { DefaultValidationErrorsComponent } from './default-validation-errors.component';
-import { Component } from '@angular/core';
-import { FormGroup, ReactiveFormsModule, UntypedFormBuilder, Validators } from '@angular/forms';
+import { Component, inject } from '@angular/core';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ComponentTester } from 'ngx-speculoos';
 import { ValdemortModule } from 'ngx-valdemort';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
 @Component({
   template: `
-    <oib-default-validation-errors></oib-default-validation-errors>
+    <oib-default-validation-errors />
     <form [formGroup]="form">
       <input formControlName="name" />
-      <val-errors controlName="name"></val-errors>
+      <val-errors controlName="name" />
 
       <input formControlName="age" type="number" id="age" />
-      <val-errors controlName="age" [label]="'common.save' | translate"></val-errors>
+      <val-errors controlName="age" [label]="'common.save' | translate" />
 
       <button id="submit">Submit</button>
     </form>
   `,
-  standalone: true,
-  imports: [ValdemortModule, TranslateModule, ReactiveFormsModule, DefaultValidationErrorsComponent]
+  imports: [ValdemortModule, TranslateDirective, ReactiveFormsModule, DefaultValidationErrorsComponent, TranslatePipe]
 })
 class TestComponent {
-  form: FormGroup;
-
-  constructor(fb: UntypedFormBuilder) {
-    this.form = fb.group({
-      name: ['', Validators.required],
-      age: [null, Validators.min(18)]
-    });
-  }
+  form = inject(NonNullableFormBuilder).group({
+    name: ['', Validators.required],
+    age: [null, Validators.min(18)]
+  });
 }
 
 class TestComponentTester extends ComponentTester<TestComponent> {

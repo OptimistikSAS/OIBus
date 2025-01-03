@@ -22,18 +22,13 @@ const certificateSchema: Joi.ObjectSchema = Joi.object({
   }).allow(null)
 });
 
-const externalSourceSchema: Joi.ObjectSchema = Joi.object({
-  reference: Joi.string().required(),
-  description: Joi.string().required().allow(null, '')
-});
-
 const commandSchema: Joi.ObjectSchema = Joi.object({});
 
 const engineSchema: Joi.ObjectSchema = Joi.object({
   name: Joi.string().required(),
   port: Joi.number().required().port(),
   proxyEnabled: Joi.boolean().required(),
-  proxyPort: Joi.number().required().port(),
+  proxyPort: Joi.number().port().optional().allow(null),
   logParameters: Joi.object({
     console: Joi.object({
       level: Joi.string().required().allow('silent', 'error', 'warning', 'info', 'debug', 'trace')
@@ -50,14 +45,28 @@ const engineSchema: Joi.ObjectSchema = Joi.object({
     loki: Joi.object({
       level: Joi.string().required().allow('silent', 'error', 'warning', 'info', 'debug', 'trace'),
       interval: Joi.number().integer().required().min(10),
-      address: Joi.string().required().allow(''),
-      username: Joi.string().required().allow(''),
-      password: Joi.string().required().allow('')
+      address: Joi.string().allow('', null),
+      username: Joi.string().allow('', null),
+      password: Joi.string().allow('', null)
     }),
     oia: Joi.object({
       level: Joi.string().required().allow('silent', 'error', 'warning', 'info', 'debug', 'trace'),
       interval: Joi.number().integer().required().min(10)
     })
+  })
+});
+
+const contentSchema: Joi.ObjectSchema = Joi.object({
+  type: Joi.string().required().allow('raw', 'time-values'),
+  content: Joi.array().when('type', {
+    is: Joi.string().valid('time-values'),
+    then: Joi.required(),
+    otherwise: Joi.allow('').optional()
+  }),
+  filePath: Joi.string().when('type', {
+    is: Joi.string().valid('raw'),
+    then: Joi.required(),
+    otherwise: Joi.allow('').optional()
   })
 });
 
@@ -67,7 +76,37 @@ const registrationSchema: Joi.ObjectSchema = Joi.object({
   useProxy: Joi.boolean().required(),
   proxyUrl: Joi.string().optional().allow(''),
   proxyUsername: Joi.string().optional().allow(''),
-  proxyPassword: Joi.string().optional().allow('')
+  proxyPassword: Joi.string().optional().allow(''),
+  commandRefreshInterval: Joi.number().integer().required().min(1),
+  commandRetryInterval: Joi.number().integer().required().min(1),
+  messageRetryInterval: Joi.number().integer().required().min(1),
+  commandPermissions: Joi.object({
+    updateVersion: Joi.boolean().required(),
+    restartEngine: Joi.boolean().required(),
+    regenerateCipherKeys: Joi.boolean().required(),
+    updateEngineSettings: Joi.boolean().required(),
+    updateRegistrationSettings: Joi.boolean().required(),
+    createScanMode: Joi.boolean().required(),
+    updateScanMode: Joi.boolean().required(),
+    deleteScanMode: Joi.boolean().required(),
+    createIpFilter: Joi.boolean().required(),
+    updateIpFilter: Joi.boolean().required(),
+    deleteIpFilter: Joi.boolean().required(),
+    createCertificate: Joi.boolean().required(),
+    updateCertificate: Joi.boolean().required(),
+    deleteCertificate: Joi.boolean().required(),
+    createHistoryQuery: Joi.boolean().required(),
+    updateHistoryQuery: Joi.boolean().required(),
+    deleteHistoryQuery: Joi.boolean().required(),
+    createOrUpdateHistoryItemsFromCsv: Joi.boolean().required(),
+    createSouth: Joi.boolean().required(),
+    updateSouth: Joi.boolean().required(),
+    deleteSouth: Joi.boolean().required(),
+    createOrUpdateSouthItemsFromCsv: Joi.boolean().required(),
+    createNorth: Joi.boolean().required(),
+    updateNorth: Joi.boolean().required(),
+    deleteNorth: Joi.boolean().required()
+  })
 });
 
 const ipFilterSchema: Joi.ObjectSchema = Joi.object({
@@ -111,23 +150,19 @@ const logSchema: Joi.ObjectSchema = Joi.object({
 });
 
 function cronValidator(value: string, helper: Joi.CustomHelpers) {
-  try {
-    validateCronExpression(value);
-    return true;
-  } catch (error: any) {
-    return helper.message({ custom: error.message });
-  }
+  const cronValidation = validateCronExpression(value);
+  return cronValidation.isValid ? true : helper.message({ custom: cronValidation.errorMessage });
 }
 
 export {
   scanModeSchema,
   certificateSchema,
-  externalSourceSchema,
   engineSchema,
   registrationSchema,
   ipFilterSchema,
   userSchema,
   historyQuerySchema,
   logSchema,
-  commandSchema
+  commandSchema,
+  contentSchema
 };

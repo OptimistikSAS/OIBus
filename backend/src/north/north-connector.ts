@@ -1,25 +1,24 @@
-import ArchiveService from '../service/cache/archive.service';
-
-import { NorthArchiveFiles, NorthCacheFiles, NorthConnectorDTO, NorthValueFiles } from '../../../shared/model/north-connector.model';
+import { NorthCacheFiles } from '../../shared/model/north-connector.model';
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
 import ValueCacheService from '../service/cache/value-cache.service';
 import FileCacheService from '../service/cache/file-cache.service';
-import RepositoryService from '../service/repository.service';
 import { CronJob } from 'cron';
 import { EventEmitter } from 'node:events';
-import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 import DeferredPromise from '../service/deferred-promise';
-import { OIBusDataValue, OIBusError } from '../../../shared/model/engine.model';
-import { ExternalSubscriptionDTO, SubscriptionDTO } from '../../../shared/model/subscription.model';
+import { OIBusContent, OIBusRawContent, OIBusTimeValue, OIBusTimeValueContent } from '../../shared/model/engine.model';
 import { DateTime } from 'luxon';
-import { PassThrough } from 'node:stream';
 import { ReadStream } from 'node:fs';
 import path from 'node:path';
-import { HandlesFile, HandlesValues } from './north-interface';
-import NorthConnectorMetricsService from '../service/north-connector-metrics.service';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
-import { dirSize, validateCronExpression } from '../service/utils';
+import { NorthSettings } from '../../shared/model/north-settings.model';
+import { createBaseFolders, dirSize, validateCronExpression } from '../service/utils';
+import { NorthConnectorEntity } from '../model/north-connector.model';
+import { SouthConnectorEntityLight } from '../model/south-connector.model';
+import NorthConnectorRepository from '../repository/config/north-connector.repository';
+import ScanModeRepository from '../repository/config/scan-mode.repository';
+import { ScanMode } from '../model/scan-mode.model';
+import { OIBusError } from '../model/engine.model';
+import { BaseFolders, Instant } from '../model/types';
 
 /**
  * Class NorthConnector : provides general attributes and methods for north connectors.
@@ -38,45 +37,49 @@ import { dirSize, validateCronExpression } from '../service/utils';
  * - **getProxy**: get the proxy handler
  * - **logger**: to log an event with different levels (error,warning,info,debug,trace)
  */
-export default class NorthConnector<T extends NorthSettings = any> {
-  public static type: string;
-
-  private archiveService: ArchiveService;
+export default abstract class NorthConnector<T extends NorthSettings> {
   private valueCacheService: ValueCacheService;
   private fileCacheService: FileCacheService;
-  protected metricsService: NorthConnectorMetricsService | null = null;
-  private subscribedTo: Array<SubscriptionDTO> = [];
-  private subscribedToExternalSources: Array<ExternalSubscriptionDTO> = [];
+  private subscribedTo: Array<SouthConnectorEntityLight> = [];
+
   private cacheSize = 0;
+  private errorSize = 0;
+  private archiveSize = 0;
 
   private fileBeingSent: string | null = null;
   private fileErrorCount = 0;
-  private valuesBeingSent: Map<string, Array<OIBusDataValue>> = new Map();
+  private valuesBeingSent = new Map<string, Array<OIBusTimeValue>>();
   private valueErrorCount = 0;
 
-  private taskJobQueue: Array<ScanModeDTO> = [];
+  private taskJobQueue: Array<ScanMode> = [];
   private cronByScanModeIds: Map<string, CronJob> = new Map<string, CronJob>();
   private taskRunner: EventEmitter = new EventEmitter();
   private runProgress$: DeferredPromise | null = null;
+
+  public metricsEvent: EventEmitter = new EventEmitter();
+
   private stopping = false;
 
-  constructor(
-    protected connector: NorthConnectorDTO<T>,
+  protected constructor(
+    protected connector: NorthConnectorEntity<T>,
     protected readonly encryptionService: EncryptionService,
-    protected readonly repositoryService: RepositoryService,
+    protected readonly northConnectorRepository: NorthConnectorRepository,
+    protected readonly scanModeRepository: ScanModeRepository,
     protected logger: pino.Logger,
-    protected readonly baseFolder: string
+    protected readonly baseFolders: BaseFolders
   ) {
-    this.archiveService = new ArchiveService(this.logger, this.baseFolder, this.connector.archive);
-    this.valueCacheService = new ValueCacheService(this.logger, this.baseFolder, this.connector.caching);
-    this.fileCacheService = new FileCacheService(this.logger, this.baseFolder, this.connector.caching);
+    this.valueCacheService = new ValueCacheService(this.logger, this.baseFolders.cache, this.baseFolders.error, this.connector);
+    this.fileCacheService = new FileCacheService(
+      this.logger,
+      this.baseFolders.cache,
+      this.baseFolders.error,
+      this.baseFolders.archive,
+      this.connector
+    );
 
     if (this.connector.id === 'test') {
       return;
     }
-
-    this.metricsService = new NorthConnectorMetricsService(this.connector.id, this.repositoryService.northMetricsRepository);
-    this.metricsService.initMetrics();
 
     this.taskRunner.on('next', async () => {
       if (this.taskJobQueue.length > 0) {
@@ -97,14 +100,6 @@ export default class NorthConnector<T extends NorthSettings = any> {
       }
     });
 
-    this.valueCacheService.triggerRun.on('cache-size', async (sizeToAdd: number) => {
-      this.cacheSize += sizeToAdd;
-      this.metricsService!.updateMetrics(this.connector.id, {
-        ...this.metricsService!.metrics,
-        cacheSize: this.cacheSize
-      });
-    });
-
     this.fileCacheService.triggerRun.on('next', async () => {
       this.taskJobQueue.push({ id: 'file-trigger', cron: '', name: '', description: '' });
       this.logger.trace(`File cache trigger immediately: ${!this.runProgress$}`);
@@ -113,53 +108,68 @@ export default class NorthConnector<T extends NorthSettings = any> {
       }
     });
 
-    this.fileCacheService.triggerRun.on('cache-size', async (sizeToAdd: number) => {
-      this.cacheSize += sizeToAdd;
-      this.metricsService!.updateMetrics(this.connector.id, {
-        ...this.metricsService!.metrics,
-        cacheSize: this.cacheSize
-      });
-    });
+    this.valueCacheService.triggerRun.on(
+      'cache-size',
+      async (sizeToAdd: { cacheSizeToAdd: number; errorSizeToAdd: number; archiveSizeToAdd: number }) => {
+        this.cacheSize += sizeToAdd.cacheSizeToAdd;
+        this.errorSize += sizeToAdd.errorSizeToAdd;
+        this.archiveSize += sizeToAdd.archiveSizeToAdd;
+        this.metricsEvent.emit('cache-size', {
+          cacheSize: this.cacheSize,
+          errorSize: this.errorSize,
+          archiveSize: this.archiveSize
+        });
+      }
+    );
 
-    this.archiveService.triggerRun.on('cache-size', async (sizeToAdd: number) => {
-      this.cacheSize += sizeToAdd;
-      this.metricsService!.updateMetrics(this.connector.id, {
-        ...this.metricsService!.metrics,
-        cacheSize: this.cacheSize
-      });
-    });
+    this.fileCacheService.triggerRun.on(
+      'cache-size',
+      async (sizeToAdd: { cacheSizeToAdd: number; errorSizeToAdd: number; archiveSizeToAdd: number }) => {
+        this.cacheSize += sizeToAdd.cacheSizeToAdd;
+        this.errorSize += sizeToAdd.errorSizeToAdd;
+        this.archiveSize += sizeToAdd.archiveSizeToAdd;
+        this.metricsEvent.emit('cache-size', {
+          cacheSize: this.cacheSize,
+          errorSize: this.errorSize,
+          archiveSize: this.archiveSize
+        });
+      }
+    );
   }
 
-  isEnabled(): boolean {
-    return this.connector.enabled;
-  }
-
-  /**
-   * Initialize services at startup
-   */
   async start(dataStream = true): Promise<void> {
+    if (this.connector.id !== 'test') {
+      await createBaseFolders(this.baseFolders);
+    }
     if (dataStream) {
       // Reload the settings only on data stream case, otherwise let the history query manage the settings
-      this.connector = this.repositoryService.northConnectorRepository.getNorthConnector(this.connector.id)!;
+      this.connector = this.northConnectorRepository.findNorthById(this.connector.id)!;
+      this.fileCacheService.settings = this.connector;
+      this.valueCacheService.settings = this.connector;
     }
     this.logger.debug(`North connector "${this.connector.name}" enabled. Starting services...`);
     if (this.connector.id !== 'test') {
-      this.cacheSize = await dirSize(this.baseFolder);
-      this.metricsService!.updateMetrics(this.connector.id, {
-        ...this.metricsService!.metrics,
-        cacheSize: this.cacheSize
+      this.cacheSize = await dirSize(this.baseFolders.cache);
+      this.errorSize = await dirSize(this.baseFolders.error);
+      this.archiveSize = await dirSize(this.baseFolders.archive);
+      this.metricsEvent.emit('cache-size', {
+        cacheSize: this.cacheSize,
+        errorSize: this.errorSize,
+        archiveSize: this.archiveSize
       });
       this.updateConnectorSubscription();
     }
     await this.valueCacheService.start();
     await this.fileCacheService.start();
-    await this.archiveService.start();
     await this.connect();
   }
 
   updateConnectorSubscription() {
-    this.subscribedTo = this.repositoryService.subscriptionRepository.getNorthSubscriptions(this.connector.id);
-    this.subscribedToExternalSources = this.repositoryService.subscriptionRepository.getExternalNorthSubscriptions(this.connector.id);
+    this.subscribedTo = this.northConnectorRepository.listNorthSubscriptions(this.connector.id);
+  }
+
+  isEnabled(): boolean {
+    return this.connector.enabled;
   }
 
   /**
@@ -168,17 +178,11 @@ export default class NorthConnector<T extends NorthSettings = any> {
    */
   async connect(): Promise<void> {
     if (this.connector.id !== 'test') {
-      this.metricsService!.updateMetrics(this.connector.id, {
-        ...this.metricsService!.metrics,
-        lastConnection: DateTime.now().toUTC().toISO()
+      this.metricsEvent.emit('connect', {
+        lastConnection: DateTime.now().toUTC().toISO()!
       });
-
-      const scanMode = this.repositoryService.scanModeRepository.getScanMode(this.connector.caching.scanModeId);
-      if (scanMode) {
-        this.createCronJob(scanMode);
-      } else {
-        this.logger.error(`Scan mode ${this.connector.caching.scanModeId} not found`);
-      }
+      const scanMode = this.scanModeRepository.findById(this.connector.caching.scanModeId)!;
+      this.createCronJob(scanMode);
     }
     this.logger.info(`North connector "${this.connector.name}" of type ${this.connector.type} started`);
   }
@@ -186,7 +190,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
   /**
    * Create a job used to populate the queue where each element of the queue is a job to call, associated to its scan mode
    */
-  createCronJob(scanMode: ScanModeDTO): void {
+  createCronJob(scanMode: ScanMode): void {
     const existingCronJob = this.cronByScanModeIds.get(scanMode.id);
     if (existingCronJob) {
       this.logger.debug(`Removing existing North cron job associated to scan mode "${scanMode.name}" (${scanMode.cron})`);
@@ -205,12 +209,14 @@ export default class NorthConnector<T extends NorthSettings = any> {
         true
       );
       this.cronByScanModeIds.set(scanMode.id, job);
-    } catch (error: any) {
-      this.logger.error(`Error when creating North cron job for scan mode "${scanMode.name}" (${scanMode.cron}): ${error.message}`);
+    } catch (error: unknown) {
+      this.logger.error(
+        `Error when creating North cron job for scan mode "${scanMode.name}" (${scanMode.cron}): ${(error as Error).message}`
+      );
     }
   }
 
-  addToQueue(scanMode: ScanModeDTO): void {
+  addToQueue(scanMode: ScanMode): void {
     const foundJob = this.taskJobQueue.find(element => element.id === scanMode.id);
     if (foundJob) {
       // If a job is already scheduled in queue, it will not be added
@@ -247,28 +253,30 @@ export default class NorthConnector<T extends NorthSettings = any> {
     this.logger.trace(`North run triggered with flag ${flag}`);
 
     const runStart = DateTime.now();
-    if (this.connector.id !== 'test') {
-      this.metricsService!.updateMetrics(this.connector.id, { ...this.metricsService!.metrics, lastRunStart: runStart.toUTC().toISO() });
-    }
 
-    if (this.handlesValues() && (flag === 'scan' || flag === 'value-trigger')) {
-      await this.handleValuesWrapper();
-    }
+    this.metricsEvent.emit('run-start', {
+      lastRunStart: runStart.toUTC().toISO()!
+    });
 
-    if (this.handlesFile() && (flag === 'scan' || flag === 'file-trigger')) {
-      await this.handleFilesWrapper();
-    }
-
-    if (this.connector.id !== 'test') {
-      this.metricsService!.updateMetrics(this.connector.id, {
-        ...this.metricsService!.metrics,
-        lastRunDuration: DateTime.now().toMillis() - runStart.toMillis()
-      });
-    }
+    await this.handleContentWrapper(flag);
+    this.metricsEvent.emit('run-end', {
+      lastRunDuration: DateTime.now().toMillis() - runStart.toMillis()
+    });
 
     this.taskJobQueue.shift();
     this.resolveDeferredPromise();
     this.taskRunner.emit('next');
+  }
+
+  async handleContentWrapper(flag: 'scan' | 'file-trigger' | 'value-trigger') {
+    // TODO: check connector compatibility, including transformer (to be developed)
+    if (flag === 'scan' || flag === 'value-trigger') {
+      await this.handleValuesWrapper();
+    }
+
+    if (flag === 'scan' || flag === 'file-trigger') {
+      await this.handleFilesWrapper();
+    }
   }
 
   /**
@@ -276,7 +284,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
    * to send them to a third party applications
    */
   async handleValuesWrapper(): Promise<void> {
-    const arrayValues = [];
+    const arrayValues: Array<OIBusTimeValue> = [];
     if (!this.valuesBeingSent.size) {
       this.valuesBeingSent = await this.valueCacheService.getValuesToSend();
       this.valueErrorCount = 0;
@@ -286,13 +294,15 @@ export default class NorthConnector<T extends NorthSettings = any> {
         arrayValues.push(...array);
       }
       try {
-        // @ts-ignore
-        await this.handleValues(arrayValues);
+        const content: OIBusTimeValueContent = {
+          type: 'time-values',
+          content: arrayValues
+        };
+        await this.handleContent(content);
+
         await this.valueCacheService.removeSentValues(this.valuesBeingSent);
-        const currentMetrics = this.metricsService!.metrics;
-        this.metricsService!.updateMetrics(this.connector.id, {
-          ...currentMetrics,
-          numberOfValuesSent: currentMetrics.numberOfValuesSent + arrayValues.length,
+        this.metricsEvent.emit('send-values', {
+          numberOfValuesSent: arrayValues.length,
           lastValueSent: arrayValues[arrayValues.length - 1]
         });
         this.valuesBeingSent = new Map();
@@ -319,16 +329,15 @@ export default class NorthConnector<T extends NorthSettings = any> {
     }
     if (this.fileBeingSent) {
       try {
-        // @ts-ignore
-        await this.handleFile(this.fileBeingSent);
-        const currentMetrics = this.metricsService!.metrics;
-        this.metricsService!.updateMetrics(this.connector.id, {
-          ...currentMetrics,
-          numberOfFilesSent: currentMetrics.numberOfFilesSent + 1,
+        const content: OIBusRawContent = {
+          type: 'raw',
+          filePath: this.fileBeingSent
+        };
+        await this.handleContent(content);
+        this.metricsEvent.emit('send-file', {
           lastFileSent: path.parse(this.fileBeingSent).base
         });
-        this.fileCacheService.removeFileFromQueue();
-        await this.archiveService.archiveOrRemoveFile(this.fileBeingSent);
+        await this.fileCacheService.archiveOrRemoveFile(this.fileBeingSent);
         this.fileBeingSent = null;
       } catch (error) {
         const oibusError = this.createOIBusError(error);
@@ -347,39 +356,35 @@ export default class NorthConnector<T extends NorthSettings = any> {
    * The error thrown can be overridden with an OIBusError to force a retry on specific cases
    */
   createOIBusError(error: unknown): OIBusError {
-    // The error is unknown by default, but it can be overridden with an OIBusError. In this case, we can retrieve the message
-    let message;
-    if (typeof error === 'object') {
-      message = (error as any)?.message ?? JSON.stringify(error);
+    if (error instanceof OIBusError) {
+      return error as OIBusError;
+    } else if (error instanceof Error) {
+      return new OIBusError(error.message, false);
     } else if (typeof error === 'string') {
-      message = error;
+      return new OIBusError(error, false);
     } else {
-      message = JSON.stringify(error);
+      return new OIBusError(JSON.stringify(error), false);
     }
-
-    // Do not retry by default, other retrieve the retry flag from the OIBusError object
-    const retry = typeof error === 'object' ? (error as any)?.retry ?? false : false;
-    return {
-      message: message,
-      retry
-    };
   }
 
   /**
    * Method called by the Engine to cache an array of values in order to cache them
    * and send them to a third party application.
    */
-  async cacheValues(values: Array<OIBusDataValue>): Promise<void> {
-    if (this.connector.caching.maxSize !== 0 && this.cacheSize >= this.connector.caching.maxSize * 1024 * 1024) {
+  async cacheValues(values: Array<OIBusTimeValue>): Promise<void> {
+    if (
+      this.connector.caching.maxSize !== 0 &&
+      this.cacheSize + this.errorSize + this.archiveSize >= this.connector.caching.maxSize * 1024 * 1024
+    ) {
       this.logger.debug(
         `North cache is exceeding the maximum allowed size ` +
-          `(${Math.floor((this.cacheSize / 1024 / 1024) * 100) / 100} MB >= ${this.connector.caching.maxSize} MB). ` +
+          `(${Math.floor(((this.cacheSize + this.errorSize + this.archiveSize) / 1024 / 1024) * 100) / 100} MB >= ${this.connector.caching.maxSize} MB). ` +
           'Values will be discarded until the cache is emptied (by sending files/values or manual removal)'
       );
       return;
     }
 
-    const chunkSize = this.connector.caching.maxSendCount;
+    const chunkSize = this.connector.caching.oibusTimeValues.maxSendCount;
     for (let i = 0; i < values.length; i += chunkSize) {
       const chunk = values.slice(i, i + chunkSize);
       this.logger.debug(`Caching ${chunk.length} values (cache size: ${Math.floor((this.cacheSize / 1024 / 1024) * 100) / 100} MB)`);
@@ -391,10 +396,13 @@ export default class NorthConnector<T extends NorthSettings = any> {
    * Method called by the Engine to cache a file and send them to a third party application.
    */
   async cacheFile(filePath: string): Promise<void> {
-    if (this.connector.caching.maxSize !== 0 && this.cacheSize >= this.connector.caching.maxSize * 1024 * 1024) {
+    if (
+      this.connector.caching.maxSize !== 0 &&
+      this.cacheSize + this.errorSize + this.archiveSize >= this.connector.caching.maxSize * 1024 * 1024
+    ) {
       this.logger.debug(
         `North cache is exceeding the maximum allowed size ` +
-          `(${Math.floor((this.cacheSize / 1024 / 1024) * 100) / 100} MB >= ${this.connector.caching.maxSize} MB). ` +
+          `(${Math.floor(((this.cacheSize + this.errorSize + this.archiveSize) / 1024 / 1024) * 100) / 100} MB >= ${this.connector.caching.maxSize} MB). ` +
           'Files will be discarded until the cache is emptied (by sending files/values or manual removal)'
       );
       return;
@@ -408,15 +416,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
    * If subscribedTo is not defined or an empty array, the subscription is true.
    */
   isSubscribed(southId: string): boolean {
-    return this.subscribedTo.length === 0 || this.subscribedTo.includes(southId);
-  }
-
-  /**
-   * Check whether the North is subscribed to an external source.
-   * If subscribedToExternalSources is not defined or an empty array, the subscription is true.
-   */
-  isSubscribedToExternalSource(externalSourceId: string): boolean {
-    return this.subscribedToExternalSources.length === 0 || this.subscribedToExternalSources.includes(externalSourceId);
+    return this.subscribedTo.length === 0 || this.subscribedTo.some(south => south.id === southId);
   }
 
   /**
@@ -443,7 +443,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
 
     if (dataStream) {
       // Reload the settings only on data stream case, otherwise let the history query manage the settings
-      this.connector = this.repositoryService.northConnectorRepository.getNorthConnector(this.connector.id)!;
+      this.connector = this.northConnectorRepository.findNorthById(this.connector.id)!;
     }
 
     if (this.runProgress$) {
@@ -457,7 +457,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
     this.cronByScanModeIds.clear();
     this.taskJobQueue = [];
 
-    await this.archiveService.stop();
+    await this.fileCacheService.stop();
     await this.valueCacheService.stop();
     await this.disconnect();
 
@@ -468,8 +468,8 @@ export default class NorthConnector<T extends NorthSettings = any> {
   /**
    * Get list of error files from file cache. Dates are in ISO format
    */
-  async getErrorFiles(fromDate: string, toDate: string, fileNameContains: string): Promise<Array<NorthCacheFiles>> {
-    return await this.fileCacheService.getErrorFiles(fromDate, toDate, fileNameContains);
+  async getErrorFiles(fromDate: Instant | null, toDate: Instant | null, filenameContains: string | null): Promise<Array<NorthCacheFiles>> {
+    return await this.fileCacheService.getErrorFiles(fromDate, toDate, filenameContains);
   }
 
   /**
@@ -484,7 +484,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
    */
   async removeErrorFiles(filenames: Array<string>): Promise<void> {
     this.logger.trace(`Removing ${filenames.length} error files from North connector "${this.connector.name}"...`);
-    await this.fileCacheService.removeFiles(this.fileCacheService.errorFolder, filenames);
+    await this.fileCacheService.removeErrorFiles(filenames);
   }
 
   /**
@@ -514,8 +514,8 @@ export default class NorthConnector<T extends NorthSettings = any> {
   /**
    * Get list of cache files. Dates are in ISO format
    */
-  async getCacheFiles(fromDate: string, toDate: string, fileNameContains: string): Promise<Array<NorthCacheFiles>> {
-    return await this.fileCacheService.getCacheFiles(fromDate, toDate, fileNameContains);
+  async getCacheFiles(fromDate: string | null, toDate: string | null, filenameContains: string | null): Promise<Array<NorthCacheFiles>> {
+    return await this.fileCacheService.getCacheFiles(fromDate, toDate, filenameContains);
   }
 
   /**
@@ -530,7 +530,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
    */
   async removeCacheFiles(filenames: Array<string>): Promise<void> {
     this.logger.trace(`Removing ${filenames.length} cache files from North connector "${this.connector.name}"...`);
-    await this.fileCacheService.removeFiles(this.fileCacheService.fileFolder, filenames);
+    await this.fileCacheService.removeCacheFiles(filenames);
   }
 
   /**
@@ -539,23 +539,22 @@ export default class NorthConnector<T extends NorthSettings = any> {
   async archiveCacheFiles(filenames: Array<string>): Promise<void> {
     this.logger.trace(`Moving ${filenames.length} cache files into archive from North connector "${this.connector.name}"...`);
     for (const filename of filenames) {
-      await this.archiveService.archiveOrRemoveFile(path.join(this.fileCacheService.fileFolder, filename));
-      this.fileCacheService.removeFileFromQueue(path.join(this.fileCacheService.fileFolder, filename));
+      await this.fileCacheService.archiveOrRemoveFile(path.join(this.fileCacheService.cacheFolder, filename));
     }
   }
 
   /**
    * Get list of archive files from file cache. Dates are in ISO format
    */
-  async getArchiveFiles(fromDate: string, toDate: string, fileNameContains: string): Promise<Array<NorthArchiveFiles>> {
-    return await this.archiveService.getArchiveFiles(fromDate, toDate, fileNameContains);
+  async getArchiveFiles(fromDate: string | null, toDate: string | null, filenameContains: string | null): Promise<Array<NorthCacheFiles>> {
+    return await this.fileCacheService.getArchiveFiles(fromDate, toDate, filenameContains);
   }
 
   /**
    * Get archive file content as a read stream.
    */
   async getArchiveFileContent(filename: string): Promise<ReadStream | null> {
-    return await this.archiveService.getArchiveFileContent(filename);
+    return await this.fileCacheService.getArchiveFileContent(filename);
   }
 
   /**
@@ -563,8 +562,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
    */
   async removeArchiveFiles(filenames: Array<string>): Promise<void> {
     this.logger.trace(`Removing ${filenames.length} archive files from North connector "${this.connector.name}"...`);
-    await this.archiveService.removeFiles(filenames);
-    this.cacheSize = await dirSize(this.baseFolder);
+    await this.fileCacheService.removeArchiveFiles(filenames);
   }
 
   /**
@@ -572,7 +570,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
    */
   async retryArchiveFiles(filenames: Array<string>): Promise<void> {
     this.logger.trace(`Retrying ${filenames.length} archive files in North connector "${this.connector.name}"...`);
-    await this.fileCacheService.retryFiles(this.archiveService.archiveFolder, filenames);
+    await this.fileCacheService.retryArchiveFiles(filenames);
   }
 
   /**
@@ -580,7 +578,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
    */
   async removeAllArchiveFiles(): Promise<void> {
     this.logger.trace(`Removing all archive files from North connector "${this.connector.name}"...`);
-    await this.archiveService.removeAllArchiveFiles();
+    await this.fileCacheService.removeAllArchiveFiles();
   }
 
   /**
@@ -588,14 +586,13 @@ export default class NorthConnector<T extends NorthSettings = any> {
    */
   async retryAllArchiveFiles(): Promise<void> {
     this.logger.trace(`Retrying all archive files in North connector "${this.connector.name}"...`);
-    await this.fileCacheService.retryAllFiles(this.archiveService.archiveFolder);
+    await this.fileCacheService.retryAllArchiveFiles();
   }
 
   setLogger(value: pino.Logger) {
     this.logger = value;
     this.fileCacheService.setLogger(value);
     this.valueCacheService.setLogger(value);
-    this.archiveService.setLogger(value);
   }
 
   async resetCache(): Promise<void> {
@@ -611,13 +608,13 @@ export default class NorthConnector<T extends NorthSettings = any> {
     }
   }
 
-  getCacheValues(fileNameContains: string): Array<NorthValueFiles> {
-    return this.valueCacheService.getQueuedFilesMetadata(fileNameContains);
+  getCacheValues(filenameContains: string): Array<NorthCacheFiles> {
+    return this.valueCacheService.getQueuedFilesMetadata(filenameContains);
   }
 
   async removeCacheValues(filenames: Array<string>): Promise<void> {
-    const sentValues = new Map<string, OIBusDataValue[]>(
-      filenames.map(filename => [path.join(this.valueCacheService.valueFolder, filename), []])
+    const sentValues = new Map<string, Array<OIBusTimeValue>>(
+      filenames.map(filename => [path.join(this.valueCacheService.cacheFolder, filename), []])
     );
     await this.valueCacheService.removeSentValues(sentValues);
   }
@@ -626,60 +623,45 @@ export default class NorthConnector<T extends NorthSettings = any> {
     await this.valueCacheService.removeAllValues();
   }
 
-  async getValueErrors(fromDate: string, toDate: string, fileNameContains: string): Promise<Array<NorthArchiveFiles>> {
-    return await this.valueCacheService.getErrorValueFiles(fromDate, toDate, fileNameContains);
+  async removeAllCacheFiles(): Promise<void> {
+    await this.fileCacheService.removeAllCacheFiles();
   }
 
-  async removeValueErrors(filenames: Array<string>): Promise<void> {
+  async getErrorValues(fromDate: string | null, toDate: string | null, filenameContains: string | null): Promise<Array<NorthCacheFiles>> {
+    return await this.valueCacheService.getErrorValues(fromDate, toDate, filenameContains);
+  }
+
+  async removeErrorValues(filenames: Array<string>): Promise<void> {
     this.logger.trace(`Removing ${filenames.length} value error files from North connector "${this.connector.name}"...`);
     await this.valueCacheService.removeErrorValues(filenames);
   }
 
-  async removeAllValueErrors(): Promise<void> {
+  async removeAllErrorValues(): Promise<void> {
     this.logger.trace(`Removing all value error files from North connector "${this.connector.name}"...`);
     await this.valueCacheService.removeAllErrorValues();
   }
 
-  async retryValueErrors(filenames: Array<string>): Promise<void> {
+  async retryErrorValues(filenames: Array<string>): Promise<void> {
     this.logger.trace(`Retrying ${filenames.length} value error files in North connector "${this.connector.name}"...`);
     await this.valueCacheService.retryErrorValues(filenames);
   }
 
-  async retryAllValueErrors(): Promise<void> {
+  async retryAllErrorValues(): Promise<void> {
     this.logger.trace(`Retrying all value error files in North connector "${this.connector.name}"...`);
     await this.valueCacheService.retryAllErrorValues();
   }
 
-  getMetricsDataStream(): PassThrough {
-    return this.metricsService!.stream;
-  }
-
-  resetMetrics(): void {
-    this.metricsService!.resetMetrics();
-  }
-
-  handlesFile(): this is HandlesFile {
-    return 'handleFile' in this;
-  }
-
-  handlesValues(): this is HandlesValues {
-    return 'handleValues' in this;
-  }
-
-  /**
-   * @throws {Error} Error with a message specifying wrong settings
-   */
-  async testConnection(): Promise<void> {
-    this.logger.warn('testConnection must be override');
-  }
-
-  async updateScanMode(scanMode: ScanModeDTO): Promise<void> {
+  async updateScanMode(scanMode: ScanMode): Promise<void> {
     if (this.cronByScanModeIds.get(scanMode.id)) {
       this.createCronJob(scanMode);
     }
   }
 
-  get settings(): NorthConnectorDTO<T> {
+  get settings(): NorthConnectorEntity<T> {
     return this.connector;
   }
+
+  abstract testConnection(): Promise<void>;
+
+  abstract handleContent(_data: OIBusContent): Promise<void>;
 }

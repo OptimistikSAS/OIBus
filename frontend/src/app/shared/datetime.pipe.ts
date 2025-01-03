@@ -1,6 +1,6 @@
-import { Inject, LOCALE_ID, Pipe, PipeTransform } from '@angular/core';
+import { LOCALE_ID, Pipe, PipeTransform, inject } from '@angular/core';
 import { DateTime } from 'luxon';
-import { Timezone } from '../../../../shared/model/types';
+import { Timezone } from '../../../../backend/shared/model/types';
 import { CurrentUserService } from './current-user.service';
 
 const FRIENDLY_FORMATS = {
@@ -67,14 +67,11 @@ export function formatDateTime(
  * or a timestamp in milliseconds. But it also accepts instances of DateTime.
  */
 @Pipe({
-  name: 'datetime',
-  standalone: true
+  name: 'datetime'
 })
 export class DatetimePipe implements PipeTransform {
-  constructor(
-    @Inject(LOCALE_ID) private locale: string,
-    private currentUserService: CurrentUserService
-  ) {}
+  private locale = inject(LOCALE_ID);
+  private currentUserService = inject(CurrentUserService);
 
   transform(value: string | Date | number | DateTime, format: FriendlyFormat | string = 'mediumDate', timezone?: Timezone): string | null {
     return formatDateTime(value, this.locale, timezone ?? this.currentUserService.getTimezone(), format);

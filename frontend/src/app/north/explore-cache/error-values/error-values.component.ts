@@ -1,74 +1,54 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
-import { SaveButtonComponent } from '../../../shared/save-button/save-button.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { Component, OnInit, inject, input, signal } from '@angular/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { formDirectives } from '../../../shared/form-directives';
 import { NorthConnectorService } from '../../../services/north-connector.service';
-import { NgForOf, NgIf } from '@angular/common';
-import { NorthCacheFiles, NorthConnectorDTO } from '../../../../../../shared/model/north-connector.model';
-import { RouterLink } from '@angular/router';
-import { DatetimePipe } from '../../../shared/datetime.pipe';
+
+import { NorthCacheFiles, NorthConnectorDTO } from '../../../../../../backend/shared/model/north-connector.model';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
-import { FileSizePipe } from '../../../shared/file-size.pipe';
 import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
 import { FileTableComponent, FileTableData } from '../file-table/file-table.component';
 import { emptyPage } from '../../../shared/test-utils';
+import { NorthSettings } from '../../../../../../backend/shared/model/north-settings.model';
 
 @Component({
   selector: 'oib-error-values',
   templateUrl: './error-values.component.html',
   styleUrl: './error-values.component.scss',
-  imports: [
-    ...formDirectives,
-    TranslateModule,
-    SaveButtonComponent,
-    NgForOf,
-    DatetimePipe,
-    NgIf,
-    PaginationComponent,
-    FileSizePipe,
-    RouterLink,
-    BoxComponent,
-    BoxTitleDirective,
-    FileTableComponent
-  ],
-  standalone: true
+  imports: [...formDirectives, TranslateDirective, PaginationComponent, BoxComponent, BoxTitleDirective, FileTableComponent]
 })
 export class ErrorValuesComponent implements OnInit {
-  @Input() northConnector: NorthConnectorDTO | null = null;
-  errorValues: Array<NorthCacheFiles> = [];
-  @ViewChild('fileTable') fileTable!: FileTableComponent;
-  fileTablePages = emptyPage<FileTableData>();
+  private northConnectorService = inject(NorthConnectorService);
 
-  constructor(private northConnectorService: NorthConnectorService) {}
+  readonly northConnector = input<NorthConnectorDTO<NorthSettings> | null>(null);
+  errorValues: Array<NorthCacheFiles> = [];
+  fileTablePages = emptyPage<FileTableData>();
+  readonly page = signal(0);
+  readonly selectedFiles = signal<Array<FileTableData>>([]);
 
   ngOnInit() {
-    this.northConnectorService.getCacheErrorValues(this.northConnector!.id).subscribe(errorValues => {
+    this.northConnectorService.getCacheErrorValues(this.northConnector()!.id).subscribe(errorValues => {
       this.errorValues = errorValues;
       this.refreshErrorValues();
     });
   }
 
   retryErrorValues() {
-    const files = this.errorValues.filter(file => this.fileTable.checkboxByFiles.get(file.filename)).map(file => file.filename);
-    this.northConnectorService.retryCacheErrorValues(this.northConnector!.id, files).subscribe(() => {
+    const files = this.selectedFiles().map(file => file.filename);
+    this.northConnectorService.retryCacheErrorValues(this.northConnector()!.id, files).subscribe(() => {
       this.refreshErrorValues();
     });
   }
 
   removeErrorValues() {
-    const files = this.errorValues.filter(file => this.fileTable.checkboxByFiles.get(file.filename)).map(file => file.filename);
-    this.northConnectorService.removeCacheErrorValues(this.northConnector!.id, files).subscribe(() => {
+    const files = this.selectedFiles().map(file => file.filename);
+    this.northConnectorService.removeCacheErrorValues(this.northConnector()!.id, files).subscribe(() => {
       this.refreshErrorValues();
     });
   }
 
   refreshErrorValues() {
-    this.northConnectorService.getCacheErrorValues(this.northConnector!.id).subscribe(errorValues => {
+    this.northConnectorService.getCacheErrorValues(this.northConnector()!.id).subscribe(errorValues => {
       this.errorValues = errorValues;
-      if (this.fileTable) {
-        this.fileTable.refreshTable(errorValues);
-        this.fileTablePages = this.fileTable.pages;
-      }
     });
   }
 }

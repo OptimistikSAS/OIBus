@@ -1,25 +1,24 @@
 import {
-  AfterContentInit,
   ChangeDetectionStrategy,
   Component,
-  ContentChild,
   Directive,
   ElementRef,
-  Input,
   TemplateRef,
-  ViewChild
+  inject,
+  viewChild,
+  contentChild,
+  input,
+  computed
 } from '@angular/core';
-import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
-import { NgIf, NgTemplateOutlet } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
+import { NgTemplateOutlet } from '@angular/common';
+import { TranslateDirective } from '@ngx-translate/core';
 import { OibHelpComponent } from '../oib-help/oib-help.component';
 
 @Directive({
-  standalone: true,
   selector: 'ng-template[oibBoxTitle]'
 })
 export class BoxTitleDirective {
-  constructor(public templateRef: TemplateRef<void>) {}
+  templateRef = inject<TemplateRef<void>>(TemplateRef);
 }
 
 /**
@@ -29,44 +28,38 @@ export class BoxTitleDirective {
  */
 @Component({
   selector: 'oib-box',
-  standalone: true,
   templateUrl: './box.component.html',
   styleUrl: './box.component.scss',
-  imports: [NgbCollapse, NgIf, NgTemplateOutlet, TranslateModule, OibHelpComponent],
+  imports: [NgTemplateOutlet, TranslateDirective, OibHelpComponent],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class BoxComponent implements AfterContentInit {
-  @Input() boxTitle = '';
-  @Input() helpUrl = '';
-  titleTemplateRef: TemplateRef<void> | null = null;
-  removePadding = false;
-  @Input() imagePath = '';
+export class BoxComponent {
+  readonly boxTitle = input('');
+  readonly helpUrl = input('');
+  readonly removePadding = computed(() => this.isPaddingRemoved());
+  readonly imagePath = input('');
 
-  @ViewChild('boxContent', { static: true }) boxContent: ElementRef<any> | undefined;
-  @ContentChild(BoxTitleDirective, { static: true }) titleQuery: BoxTitleDirective | undefined;
+  readonly boxContent = viewChild.required<ElementRef<HTMLDivElement>>('boxContent');
+  readonly titleQuery = contentChild(BoxTitleDirective);
+  readonly titleTemplateRef = computed(() => this.titleQuery()?.templateRef || null);
 
-  ngAfterContentInit(): void {
-    this.titleTemplateRef = this.titleQuery?.templateRef || null;
-    this.checkContent();
-  }
-
-  private checkContent(): void {
-    const contentElement = this.boxContent?.nativeElement;
-
+  private isPaddingRemoved(): boolean {
+    const contentElement = this.boxContent()?.nativeElement;
     if (contentElement) {
       const tableElement = contentElement.querySelector('table');
       const alertWarningElement = contentElement.querySelector('.alert-warning');
       const emptyDivElements = contentElement.querySelectorAll('div');
-      const greyContainerElement = contentElement.querySelector('.oib-grey-container');
-      const multipleContentElement = contentElement.querySelector('oib-form');
+      // Only match empty containers when that's the only thing in the box
+      const greyContainerElement = contentElement.querySelector(':scope > div > div.oib-grey-container');
       const normalContentElement = contentElement.querySelector('.row');
 
-      if (tableElement || emptyDivElements.length <= 0 || alertWarningElement || greyContainerElement || multipleContentElement) {
-        this.removePadding = true;
+      if (tableElement || emptyDivElements.length <= 0 || alertWarningElement || greyContainerElement) {
+        return true;
       }
       if (normalContentElement) {
-        this.removePadding = false;
+        return false;
       }
     }
+    return false;
   }
 }

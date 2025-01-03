@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { CertificateService } from './certificate.service';
-import { CertificateCommandDTO, CertificateDTO } from '../../../../shared/model/certificate.model';
+import { CertificateCommandDTO, CertificateDTO } from '../../../../backend/shared/model/certificate.model';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('CertificateService', () => {

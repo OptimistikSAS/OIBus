@@ -1,17 +1,23 @@
-import { Component, forwardRef, Input, OnInit, AfterViewChecked } from '@angular/core';
-import { AbstractControl, ControlValueAccessor, NG_VALIDATORS, NG_VALUE_ACCESSOR, ValidationErrors, Validator } from '@angular/forms';
-import { formDirectives } from '../../form-directives';
-import { NgForOf, NgIf } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
+import { AfterViewChecked, Component, forwardRef, inject, input, OnInit } from '@angular/core';
+import {
+  AbstractControl,
+  ControlValueAccessor,
+  FormGroup,
+  NG_VALIDATORS,
+  NG_VALUE_ACCESSOR,
+  ValidationErrors,
+  Validator
+} from '@angular/forms';
+
+import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { EditElementComponent } from './edit-element/edit-element.component';
-import { OibFormControl } from '../../../../../../shared/model/form.model';
-import { PipeProviderService } from '../pipe-provider.service';
+import { OibFormControl } from '../../../../../../backend/shared/model/form.model';
 
 @Component({
   selector: 'oib-array',
   templateUrl: './oib-array.component.html',
   styleUrl: './oib-array.component.scss',
-  imports: [...formDirectives, NgIf, NgForOf, TranslateModule, EditElementComponent],
+  imports: [TranslateDirective, EditElementComponent, TranslatePipe],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -23,13 +29,15 @@ import { PipeProviderService } from '../pipe-provider.service';
       useExisting: OibArrayComponent,
       multi: true
     }
-  ],
-  standalone: true
+  ]
 })
 export class OibArrayComponent implements OnInit, AfterViewChecked, ControlValueAccessor, Validator {
-  @Input() label = '';
-  @Input() key = '';
-  @Input({ required: true }) formDescription!: Array<OibFormControl>;
+  private translateService = inject(TranslateService);
+
+  readonly label = input('');
+  readonly key = input('');
+  readonly formDescription = input.required<Array<OibFormControl>>();
+  readonly parentForm = input.required<FormGroup>();
 
   elements: Array<any> = [];
   elementsIncludingNew: Array<any> = [];
@@ -38,12 +46,14 @@ export class OibArrayComponent implements OnInit, AfterViewChecked, ControlValue
 
   disabled = false;
 
-  constructor(private pipeProviderService: PipeProviderService) {}
-
   ngOnInit(): void {
-    this.formDescription.forEach(formControl => {
+    this.formDescription().forEach(formControl => {
       if (formControl.displayInViewMode) {
-        this.displayedFields.push({ key: formControl.key, label: formControl.label, pipe: formControl.pipe });
+        if (formControl.type === 'OibSelect') {
+          this.displayedFields.push({ key: formControl.key, label: formControl.translationKey + '.' + 'title' });
+        } else {
+          this.displayedFields.push({ key: formControl.key, label: formControl.translationKey });
+        }
       }
     });
   }
@@ -59,9 +69,8 @@ export class OibArrayComponent implements OnInit, AfterViewChecked, ControlValue
    * before the "col-2 text-end text-nowrap" div to align it to the right of the table.
    */
   countDivsInFakeTableRows() {
-    const rows = document.getElementsByClassName('oib-fake-table');
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i];
+    const rows = Array.from(document.getElementsByClassName('oib-fake-table'));
+    for (const row of rows) {
       const divElements = row.getElementsByTagName('div');
       if (divElements.length !== 6) {
         const numMissingDivs = 6 - divElements.length;
@@ -150,7 +159,6 @@ export class OibArrayComponent implements OnInit, AfterViewChecked, ControlValue
   /**
    * Method that should be called when the "Save" or "OK" button of the edit component is clicked, in order to save the
    * edited/created element in the array.
-   * @param element: the element that has been created/edited by the edit component
    */
   save(element: any) {
     if (!this.editedElement) {
@@ -215,19 +223,19 @@ export class OibArrayComponent implements OnInit, AfterViewChecked, ControlValue
 
   createDefaultValue(): any {
     const defaultValue: any = {};
-    this.formDescription.forEach(formControl => (defaultValue[formControl.key] = formControl.defaultValue));
+    this.formDescription().forEach(formControl => (defaultValue[formControl.key] = formControl.defaultValue));
     return defaultValue;
   }
 
-  getFieldValue(element: any, field: string, pipeIdentifier: string | undefined): string {
-    const value = element[field];
-    if (value && pipeIdentifier && this.pipeProviderService.validIdentifier(pipeIdentifier)) {
-      return this.pipeProviderService.getPipeForString(pipeIdentifier).transform(value);
+  getFieldValue(element: any, field: string): string {
+    const foundFormControl = this.formDescription().find(formControl => formControl.key === field);
+    if (foundFormControl && element[field] && foundFormControl.type === 'OibSelect') {
+      return this.translateService.instant(foundFormControl.translationKey + '.' + element[field]);
     }
-    return value;
+    return element[field];
   }
 
-  validate(control: AbstractControl): ValidationErrors | null {
+  validate(_control: AbstractControl): ValidationErrors | null {
     // When there are elements being edited/created, throw a validation error
     // to let the user validate or discard the pending changes
     if (this.editedElement !== null) {

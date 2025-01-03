@@ -1,7 +1,7 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "./dist"
+    "outDir": "./dist/backend"
   },
   "files": [
     "src/index.ts",
@@ -9,7 +9,7 @@
     "src/service/logger/oianalytics-transport.ts",
   ],
   "include": [
-    "src/db/**/*.ts",
+    "src/migration/**/*.ts",
     "src/**/manifest.ts"
   ],
   "exclude": [

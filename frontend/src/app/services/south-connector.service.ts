@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import {
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
@@ -8,10 +8,14 @@ import {
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
   SouthConnectorItemSearchParam,
-  SouthType
-} from '../../../../shared/model/south-connector.model';
-import { Page } from '../../../../shared/model/types';
+  SouthType,
+  SouthConnectorLightDTO,
+  SouthConnectorItemTestingSettings
+} from '../../../../backend/shared/model/south-connector.model';
+import { Page } from '../../../../backend/shared/model/types';
 import { DownloadService } from './download.service';
+import { OIBusContent } from '../../../../backend/shared/model/engine.model';
+import { SouthItemSettings, SouthSettings } from '../../../../backend/shared/model/south-settings.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on South connectors
@@ -20,10 +24,8 @@ import { DownloadService } from './download.service';
   providedIn: 'root'
 })
 export class SouthConnectorService {
-  constructor(
-    private http: HttpClient,
-    private downloadService: DownloadService
-  ) {}
+  private http = inject(HttpClient);
+  private downloadService = inject(DownloadService);
 
   /**
    * Get South connectors types
@@ -42,16 +44,16 @@ export class SouthConnectorService {
   /**
    * Get the South connectors
    */
-  list(): Observable<Array<SouthConnectorDTO<any>>> {
-    return this.http.get<Array<SouthConnectorDTO<any>>>(`/api/south`);
+  list(): Observable<Array<SouthConnectorLightDTO>> {
+    return this.http.get<Array<SouthConnectorLightDTO>>(`/api/south`);
   }
 
   /**
    * Get one South connector
    * @param southId - the ID of the South connector
    */
-  get(southId: string): Observable<SouthConnectorDTO<any>> {
-    return this.http.get<SouthConnectorDTO<any>>(`/api/south/${southId}`);
+  get(southId: string): Observable<SouthConnectorDTO<SouthSettings, SouthItemSettings>> {
+    return this.http.get<SouthConnectorDTO<SouthSettings, SouthItemSettings>>(`/api/south/${southId}`);
   }
 
   /**
@@ -65,35 +67,26 @@ export class SouthConnectorService {
   /**
    * Create a new South connector
    * @param command - the new South connector
-   * @param items - the new South connector items
-   * @param duplicateId - The ID of the duplicated South used to retrieved secrets in the backend
+   * @param retrieveSecretsFromSouth - The ID of the duplicated South used to retrieved secrets in the backend
    */
   create(
-    command: SouthConnectorCommandDTO<any>,
-    items: Array<SouthConnectorItemDTO<any>>,
-    duplicateId: string
-  ): Observable<SouthConnectorDTO<any>> {
-    const params: { [key: string]: string | string[] } = {};
-    if (duplicateId) {
-      params['duplicateId'] = duplicateId;
+    command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
+    retrieveSecretsFromSouth: string
+  ): Observable<SouthConnectorDTO<SouthSettings, SouthItemSettings>> {
+    const params: Record<string, string | Array<string>> = {};
+    if (retrieveSecretsFromSouth) {
+      params['duplicate'] = retrieveSecretsFromSouth;
     }
-    return this.http.post<SouthConnectorDTO<any>>(`/api/south`, { south: command, items }, { params });
+    return this.http.post<SouthConnectorDTO<SouthSettings, SouthItemSettings>>(`/api/south`, command, { params });
   }
 
   /**
    * Update the selected South connector
    * @param southId - the ID of the South connector
    * @param command - the new values of the selected South connector
-   * @param items - The items to create or update
-   * @param itemIdsToDelete - The item ids to delete
    */
-  update(
-    southId: string,
-    command: SouthConnectorCommandDTO<any>,
-    items: Array<SouthConnectorItemDTO<any>>,
-    itemIdsToDelete: Array<string>
-  ) {
-    return this.http.put<void>(`/api/south/${southId}`, { south: command, items, itemIdsToDelete });
+  update(southId: string, command: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>) {
+    return this.http.put<void>(`/api/south/${southId}`, command);
   }
 
   /**
@@ -113,20 +106,12 @@ export class SouthConnectorService {
   }
 
   /**
-   * Retrieve all South items
-   * @param southId - the ID of the South connector
-   */
-  listItems(southId: string): Observable<Array<SouthConnectorItemDTO<any>>> {
-    return this.http.get<Array<SouthConnectorItemDTO<any>>>(`/api/south/${southId}/items/all`);
-  }
-
-  /**
    * Retrieve the South items from search params
    * @param southId - the ID of the South connector
    * @param searchParams - The search params
    */
   searchItems(southId: string, searchParams: SouthConnectorItemSearchParam): Observable<Page<SouthConnectorItemDTO<any>>> {
-    const params: { [key: string]: string | string[] } = {
+    const params: Record<string, string | Array<string>> = {
       page: `${searchParams.page || 0}`
     };
     if (searchParams.name) {
@@ -198,62 +183,79 @@ export class SouthConnectorService {
     return this.http.delete<void>(`/api/south/${southId}/items/all`);
   }
 
-  /**
-   * Export south items in CSV file
-   */
-  exportItems(southId: string, southName: string): Observable<void> {
-    return this.http
-      .get(`/api/south/${southId}/items/export`, { responseType: 'blob', observe: 'response' })
-      .pipe(map(response => this.downloadService.download(response, `${southName}.csv`)));
+  testItem(
+    southId: string,
+    south: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> | null,
+    item: SouthConnectorItemCommandDTO<SouthItemSettings>,
+    testingSettings: SouthConnectorItemTestingSettings
+  ): Observable<OIBusContent> {
+    return this.http.put<OIBusContent>(`/api/south/${southId}/items/test-item`, { south, item, testingSettings });
   }
 
   /**
    * Export south items in CSV file
    */
-  itemsToCsv(items: Array<SouthConnectorItemDTO>, southName: string): Observable<void> {
+  exportItems(southId: string, fileName: string, delimiter: string): Observable<void> {
+    return this.http
+      .put(`/api/south/${southId}/items/export`, { delimiter }, { responseType: 'blob', observe: 'response' })
+      .pipe(map(response => this.downloadService.download(response, `${fileName}.csv`)));
+  }
+
+  /**
+   * Export south items in CSV file
+   */
+  itemsToCsv(
+    southType: string,
+    items: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>>,
+    fileName: string,
+    delimiter: string
+  ): Observable<void> {
     return this.http
       .put(
-        `/api/south/items/to-csv`,
+        `/api/south/${southType}/items/to-csv`,
         {
-          items
+          items,
+          delimiter
         },
         { responseType: 'blob', observe: 'response' }
       )
-      .pipe(map(response => this.downloadService.download(response, `${southName}.csv`)));
+      .pipe(map(response => this.downloadService.download(response, `${fileName}.csv`)));
   }
 
   /**
-   * Upload south items from a CSV file
+   * Upload south items from a CSV file to check if they can be imported
    */
   checkImportItems(
     southType: string,
     southId: string,
+    currentItems: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>>,
     file: File,
-    itemIdsToDelete: Array<string>
+    delimiter: string
   ): Observable<{
-    items: Array<SouthConnectorItemDTO>;
+    items: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>>;
     errors: Array<{
-      item: SouthConnectorItemDTO;
-      message: string;
+      item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>;
+      error: string;
     }>;
   }> {
     const formData = new FormData();
     formData.set('file', file);
-    formData.set('itemIdsToDelete', JSON.stringify(itemIdsToDelete));
-    return this.http.post<{ items: Array<SouthConnectorItemDTO>; errors: Array<{ item: SouthConnectorItemDTO; message: string }> }>(
-      `/api/south/${southType}/items/check-import/${southId}`,
-      formData
-    );
+    formData.set('currentItems', JSON.stringify(currentItems));
+    formData.set('delimiter', delimiter);
+    return this.http.post<{
+      items: Array<SouthConnectorItemDTO<SouthItemSettings>>;
+      errors: Array<{ item: SouthConnectorItemDTO<SouthItemSettings>; error: string }>;
+    }>(`/api/south/${southType}/items/check-import/${southId}`, formData);
   }
 
   /**
    * Upload south items from a CSV file
    */
-  importItems(southId: string, items: Array<SouthConnectorItemDTO>): Observable<void> {
+  importItems(southId: string, items: Array<SouthConnectorItemCommandDTO<SouthItemSettings>>): Observable<void> {
     return this.http.post<void>(`/api/south/${southId}/items/import`, { items });
   }
 
-  testConnection(southId: string, settings: SouthConnectorCommandDTO<any>): Observable<void> {
+  testConnection(southId: string, settings: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>): Observable<void> {
     return this.http.put<void>(`/api/south/${southId}/test-connection`, settings);
   }
 

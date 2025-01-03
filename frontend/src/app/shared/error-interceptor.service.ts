@@ -28,7 +28,7 @@ export function ignoreErrorIfStatusIs(...statusCodes: Array<HttpStatusCode>) {
   return new HttpContext().set(SHOULD_IGNORE_ERROR_PREDICATE, error => statusCodes.includes(error.status));
 }
 
-function getMessage(errorResponse: HttpErrorResponse): string {
+export function getMessageFromHttpErrorResponse(errorResponse: HttpErrorResponse): string {
   let message = `${errorResponse.status} - ${errorResponse.message}`;
   if (errorResponse.error && errorResponse.error.message) {
     message += ' - ' + errorResponse.error.message;
@@ -53,7 +53,7 @@ export const errorInterceptor: HttpInterceptorFn = (request, next) => {
         if (!shouldIgnoreErrorPredicate(errorResponse)) {
           if (errorResponse.error instanceof ProgressEvent) {
             // A client-side or network error occurred.
-            notificationService.error(getMessage(errorResponse));
+            notificationService.error(getMessageFromHttpErrorResponse(errorResponse));
           } else {
             // The backend returned an unsuccessful response code.
             if (errorResponse.status === HttpStatusCode.Unauthorized) {
@@ -70,7 +70,7 @@ export const errorInterceptor: HttpInterceptorFn = (request, next) => {
             } else if (errorResponse.error && errorResponse.error.functionalError) {
               notificationService.error(`enums.functional-error.${errorResponse.error.functionalError.code}`);
             } else {
-              notificationService.errorMessage(getMessage(errorResponse));
+              notificationService.errorMessage(getMessageFromHttpErrorResponse(errorResponse));
             }
           }
         }

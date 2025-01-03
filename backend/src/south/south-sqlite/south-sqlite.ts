@@ -4,36 +4,55 @@ import db from 'better-sqlite3';
 import pino from 'pino';
 
 import SouthConnector from '../south-connector';
-import manifest from './manifest';
-import { convertDateTimeToInstant, createFolder, formatInstant, logQuery, persistResults } from '../../service/utils';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
+import {
+  convertDateTimeToInstant,
+  createFolder,
+  formatInstant,
+  generateCsvContent,
+  generateFilenameForSerialization,
+  logQuery,
+  persistResults
+} from '../../service/utils';
 import EncryptionService from '../../service/encryption.service';
-import RepositoryService from '../../service/repository.service';
-import { Instant } from '../../../../shared/model/types';
+import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
-import { SouthSQLiteItemSettings, SouthSQLiteSettings } from '../../../../shared/model/south-settings.model';
-import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import { SouthSQLiteItemSettings, SouthSQLiteSettings } from '../../../shared/model/south-settings.model';
+import { OIBusContent } from '../../../shared/model/engine.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
+import SouthConnectorRepository from '../../repository/config/south-connector.repository';
+import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import { BaseFolders } from '../../model/types';
+import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 
 /**
  * Class SouthSQLite - Retrieve data from SQLite databases and send them to the cache as CSV files.
  */
 export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, SouthSQLiteItemSettings> implements QueriesHistory {
-  static type = manifest.id;
-
   private readonly tmpFolder: string;
 
   constructor(
-    connector: SouthConnectorDTO<SouthSQLiteSettings>,
-    engineAddValuesCallback: (southId: string, values: Array<OIBusDataValue>) => Promise<void>,
-    engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
+    connector: SouthConnectorEntity<SouthSQLiteSettings, SouthSQLiteItemSettings>,
+    engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
-    repositoryService: RepositoryService,
+    southConnectorRepository: SouthConnectorRepository,
+    southCacheRepository: SouthCacheRepository,
+    scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
-    baseFolder: string
+    baseFolders: BaseFolders
   ) {
-    super(connector, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
-    this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
+    super(
+      connector,
+      engineAddContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      baseFolders
+    );
+    this.tmpFolder = path.resolve(this.baseFolders.cache, 'tmp');
   }
 
   /**
@@ -49,8 +68,8 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
 
     try {
       await fs.access(dbPath, fs.constants.F_OK);
-    } catch (error: any) {
-      throw new Error(`Access error on "${dbPath}". ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`Access error on "${dbPath}". ${(error as Error).message}`);
     }
 
     const database = db(dbPath);
@@ -63,10 +82,10 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
            FROM sqlite_master
            WHERE type = 'table'`
         )
-        .all() as { table_count: number }[];
+        .all() as Array<{ table_count: number }>;
       table_count = result[0]?.table_count ?? 0;
-    } catch (error: any) {
-      throw new Error(`Unable to query system table. ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`Unable to query system table. ${(error as Error).message}`);
     }
     database.close();
 
@@ -75,12 +94,56 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
     }
   }
 
+  override async testItem(
+    item: SouthConnectorItemEntity<SouthSQLiteItemSettings>,
+    testingSettings: SouthConnectorItemTestingSettings,
+    callback: (data: OIBusContent) => void
+  ): Promise<void> {
+    const startTime = testingSettings.history!.startTime;
+    const endTime = testingSettings.history!.endTime;
+    const result: Array<Record<string, string | number>> = await this.queryData(item, startTime, endTime);
+
+    const formattedResults = result.map(entry => {
+      const formattedEntry: Record<string, string | number> = {};
+      Object.entries(entry).forEach(([key, value]) => {
+        const datetimeField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.fieldName === key) || null;
+        if (!datetimeField) {
+          formattedEntry[key] = value;
+        } else {
+          const entryDate = convertDateTimeToInstant(value, datetimeField);
+          formattedEntry[key] = formatInstant(entryDate, {
+            type: 'string',
+            format: item.settings.serialization.outputTimestampFormat,
+            timezone: item.settings.serialization.outputTimezone,
+            locale: 'en-En'
+          });
+        }
+      });
+      return formattedEntry;
+    });
+
+    let oibusContent: OIBusContent;
+    switch (item.settings.serialization.type) {
+      case 'csv':
+        const filePath = generateFilenameForSerialization(
+          this.tmpFolder,
+          item.settings.serialization.filename,
+          this.connector.name,
+          item.name
+        );
+        const content = generateCsvContent(formattedResults, item.settings.serialization.delimiter);
+        oibusContent = { type: 'raw', filePath, content };
+        break;
+    }
+    callback(oibusContent);
+  }
+
   /**
    * Get entries from the database between startTime and endTime (if used in the SQL query)
    * and write them into a CSV file and send it to the engine.
    */
   async historyQuery(
-    items: Array<SouthConnectorItemDTO<SouthSQLiteItemSettings>>,
+    items: Array<SouthConnectorItemEntity<SouthSQLiteItemSettings>>,
     startTime: Instant,
     endTime: Instant
   ): Promise<Instant | null> {
@@ -88,14 +151,14 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
 
     for (const item of items) {
       const startRequest = DateTime.now().toMillis();
-      const result: Array<any> = await this.queryData(item, startTime, endTime);
+      const result: Array<Record<string, string | number>> = await this.queryData(item, startTime, endTime);
       const requestDuration = DateTime.now().toMillis() - startRequest;
 
       if (result.length > 0) {
         this.logger.info(`Found ${result.length} results for item ${item.name} in ${requestDuration} ms`);
 
         const formattedResult = result.map(entry => {
-          const formattedEntry: Record<string, any> = {};
+          const formattedEntry: Record<string, string | number> = {};
           Object.entries(entry).forEach(([key, value]) => {
             const datetimeField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.fieldName === key);
             if (!datetimeField) {
@@ -123,8 +186,7 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
           this.connector.name,
           item.name,
           this.tmpFolder,
-          this.addFile.bind(this),
-          this.addValues.bind(this),
+          this.addContent.bind(this),
           this.logger
         );
       } else {
@@ -134,10 +196,29 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
     return updatedStartTime;
   }
 
+  getThrottlingSettings(settings: SouthSQLiteSettings): SouthThrottlingSettings {
+    return {
+      maxReadInterval: settings.throttling.maxReadInterval,
+      readDelay: settings.throttling.readDelay
+    };
+  }
+
+  getMaxInstantPerItem(_settings: SouthSQLiteSettings): boolean {
+    return false;
+  }
+
+  getOverlap(settings: SouthSQLiteSettings): number {
+    return settings.throttling.overlap;
+  }
+
   /**
    * Apply the SQL query to the target SQLite database
    */
-  async queryData(item: SouthConnectorItemDTO<SouthSQLiteItemSettings>, startTime: Instant, endTime: Instant): Promise<Array<any>> {
+  async queryData(
+    item: SouthConnectorItemEntity<SouthSQLiteItemSettings>,
+    startTime: Instant,
+    endTime: Instant
+  ): Promise<Array<Record<string, string | number>>> {
     this.logger.debug(`Opening ${path.resolve(this.connector.settings.databasePath)} SQLite database`);
     const database = db(path.resolve(this.connector.settings.databasePath));
 
@@ -158,7 +239,7 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
 
       const data = stmt.all(preparedParameters);
       database.close();
-      return data;
+      return data as unknown as Array<Record<string, string | number>>;
     } catch (error) {
       database.close();
       throw error;

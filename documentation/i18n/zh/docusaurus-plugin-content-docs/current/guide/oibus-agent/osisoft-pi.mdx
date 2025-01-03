@@ -1,0 +1,109 @@
+---
+sidebar_position: 5
+---
+
+# OSIsoft PI
+The OIBus agent can receive the following [HTTP calls](#http-api). The agent run a local PI module through an inter-process
+communication.
+
+:::caution OS compatibility
+This feature is available only on Windows.
+:::
+
+## HTTP API
+### Status
+```
+curl --location 'http://localhost:2224/api/pi/id/status'
+```
+
+### Connection
+```
+curl --location --request PUT 'http://localhost:2224/api/pi/id/connect' \
+--header 'Content-Type: application/json' \
+--data '{}'
+```
+
+### Read
+```
+curl --location --request PUT 'http://localhost:2224/api/pi/id/read' \
+--header 'Content-Type: application/json' \
+--data '{
+    "startTime": "2023-11-02T15:00:00.000Z",
+    "endTime": "2023-11-02T16:00:00.000Z",
+    "items": [
+        {
+            "name": "PUMP01.Bearing Temperature",
+            "type": "pointId",
+            "piPoint": "OSIDemo_Pump01.Bearing Temperature.7918cae4-e10a-5af6-340b-5b8d9da3f5b2",
+        },
+        {
+            "name": "PUMP02",
+            "type": "pointQuery",
+            "piQuery": "OSIDemo_Pump02*",
+        }
+    ]
+}'
+```
+
+### Disconnection
+```
+curl --location --request DELETE 'http://localhost:2224/api/pi/id/disconnect'
+```
+
+## OIBusPI Module
+
+OIBusPI is a module used by OIBus Agent to interact with OSIsoft PI Server. As a standalone module, it can also be
+run through a Command Line Interface.
+
+OIBusPI is built in C# with .NET Framework 4.8.
+
+Newtonsoft.Json and CommandLineParser libraries are also required to interact with HTTP commands and CLI commands
+respectively.
+
+### PIAgent (standalone)
+The agent is an executable that needs the following DLLs to run :
+
+- CommandLine.dll
+- Newtonsoft.Json.dll
+- OSIsoft.AFSDK.dll
+
+Several actions are possible:
+- catalog: list available tags and store them in a CSV file
+
+The following options are available for both commands:
+
+````
+-l --consoleLevel           Verbosity level for Console (error, warning, info, debug, trace). Default debug
+-x --fileLevel              Verbosity level for File (error, warning, info, debug, trace). Default debug
+````
+
+
+#### catalog
+PIAgent Catalog creates a csv file `catalog.csv`.
+
+The following options are available:
+````
+-f --file               Name of the output folder. Default: catalog.csv
+````
+
+##### Basic usage
+`.\PIAgent.exe catalog`
+
+```
+PointId
+\\EC2AMAZ\OSIDemo_Pump01.Bearing Temperature.7718cfe4-e10a-5ad6-340b-5b8b9da3f5b2
+\\EC2AMAZ\OSIDemo_Pump01.Calculated Efficiency.c201c256-a442-5354-2838-61c92056161d
+\\EC2AMAZ\OSIDemo_Pump01.Current Draw.6af509f0-8e22-5b75-32c2-a59ca3df5868
+...
+```
+
+##### Includes all and specific file
+`.\PIAgent.exe catalog --file myFile.csv`
+
+```
+PointId
+\\EC2AMAZ\OSIDemo_Pump01.Bearing Temperature.7718cfe4-e10a-5ad6-340b-5b8b9da3f5b2
+\\EC2AMAZ\OSIDemo_Pump01.Calculated Efficiency.c201c256-a442-5354-2838-61c92056161d
+\\EC2AMAZ\OSIDemo_Pump01.Current Draw.6af509f0-8e22-5b75-32c2-a59ca3df5868
+...
+```

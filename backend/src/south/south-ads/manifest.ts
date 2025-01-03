@@ -1,50 +1,49 @@
-import { SouthConnectorManifest } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorManifest } from '../../../shared/model/south-connector.model';
 
 const manifest: SouthConnectorManifest = {
   id: 'ads',
-  name: 'ADS',
   category: 'iot',
-  description: 'The ADS protocol (Automation Device Specification) is a transport layer within TwinCAT systems, developed by Beckhoff.',
   modes: {
     subscription: false,
     lastPoint: true,
     lastFile: false,
-    history: false,
-    forceMaxInstantPerItem: false
+    history: false
   },
   settings: [
     {
       key: 'netId',
       type: 'OibText',
-      label: 'Net ID',
+      translationKey: 'south.ads.net-id',
       defaultValue: '127.0.0.1.1.1',
       newRow: true,
+      class: 'col-8',
       validators: [{ key: 'required' }],
       displayInViewMode: true
     },
     {
       key: 'port',
       type: 'OibNumber',
-      label: 'PLC Port',
+      translationKey: 'south.ads.port',
       defaultValue: 851,
       newRow: false,
-      class: 'col-2',
+      class: 'col-4',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
       displayInViewMode: true
     },
     {
       key: 'routerAddress',
       type: 'OibText',
-      label: 'Router address',
+      translationKey: 'south.ads.router-address',
       newRow: true,
+      class: 'col-8',
       displayInViewMode: true
     },
     {
       key: 'routerTcpPort',
       type: 'OibNumber',
-      label: 'Router TCP port',
+      translationKey: 'south.ads.router-tcp-port',
       newRow: false,
-      class: 'col-2',
+      class: 'col-4',
       validators: [
         { key: 'min', params: { min: 1 } },
         { key: 'max', params: { max: 65535 } }
@@ -54,16 +53,17 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'clientAmsNetId',
       type: 'OibText',
-      label: 'AMS Net ID',
+      translationKey: 'south.ads.client-ams-net-id',
       newRow: true,
+      class: 'col-8',
       displayInViewMode: true
     },
     {
       key: 'clientAdsPort',
       type: 'OibNumber',
-      label: 'ADS Client port',
+      translationKey: 'south.ads.client-ads-port',
       newRow: false,
-      class: 'col-2',
+      class: 'col-4',
       validators: [
         { key: 'min', params: { min: 1 } },
         { key: 'max', params: { max: 65535 } }
@@ -73,9 +73,9 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'retryInterval',
       type: 'OibNumber',
-      label: 'Retry interval',
+      translationKey: 'south.ads.retry-interval',
       unitLabel: 'ms',
-      defaultValue: 10000,
+      defaultValue: 10_000,
       newRow: true,
       class: 'col-4',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 60_000 } }],
@@ -84,7 +84,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'plcName',
       type: 'OibText',
-      label: 'PLC name',
+      translationKey: 'south.ads.plc-name',
       defaultValue: '',
       newRow: true,
       class: 'col-4',
@@ -93,9 +93,9 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'enumAsText',
       type: 'OibSelect',
-      options: ['Text', 'Integer'],
-      label: 'Enumeration value',
-      defaultValue: 'Integer',
+      options: ['text', 'integer'],
+      translationKey: 'south.ads.enum-as-text',
+      defaultValue: 'integer',
       class: 'col-4',
       validators: [{ key: 'required' }],
       displayInViewMode: true
@@ -103,9 +103,9 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'boolAsText',
       type: 'OibSelect',
-      label: 'Boolean value',
-      options: ['Text', 'Integer'],
-      defaultValue: 'Integer',
+      translationKey: 'south.ads.bool-as-text',
+      options: ['text', 'integer'],
+      defaultValue: 'integer',
       class: 'col-4',
       validators: [{ key: 'required' }],
       displayInViewMode: true
@@ -113,11 +113,11 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'structureFiltering',
       type: 'OibArray',
-      label: 'Structure filtering',
+      translationKey: 'south.ads.structure-filtering.structure',
       content: [
         {
           key: 'name',
-          label: 'Structure name',
+          translationKey: 'south.ads.structure-filtering.name',
           type: 'OibText',
           defaultValue: '',
           validators: [{ key: 'required' }],
@@ -125,7 +125,7 @@ const manifest: SouthConnectorManifest = {
         },
         {
           key: 'fields',
-          label: 'Fields to keep (comma separated)',
+          translationKey: 'south.ads.structure-filtering.fields',
           type: 'OibText',
           defaultValue: '',
           validators: [{ key: 'required' }],
@@ -138,15 +138,12 @@ const manifest: SouthConnectorManifest = {
     }
   ],
   items: {
-    scanMode: {
-      acceptSubscription: false,
-      subscriptionOnly: false
-    },
+    scanMode: 'POLL',
     settings: [
       {
         key: 'address',
         type: 'OibText',
-        label: 'Address',
+        translationKey: 'south.items.ads.address',
         validators: [{ key: 'required' }],
         displayInViewMode: true
       }

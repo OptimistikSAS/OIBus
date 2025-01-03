@@ -1,0 +1,12 @@
+@import '../../../common.scss';
+
+::ng-deep .monaco-editor {
+  .overflow-guard {
+    outline: solid 1px $mediumGrey;
+  }
+}
+
+.fa-spinner:before {
+  display: block;
+  transform: translateY(1px);
+}

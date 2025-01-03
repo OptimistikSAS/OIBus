@@ -1,20 +1,20 @@
 import { KoaContext } from '../koa';
-import { ChangePasswordCommand, User, UserCommandDTO, UserLight, UserSearchParam } from '../../../../shared/model/user.model';
-import { Page } from '../../../../shared/model/types';
+import { ChangePasswordCommand, User, UserCommandDTO, UserLight, UserSearchParam } from '../../../shared/model/user.model';
+import { Page } from '../../../shared/model/types';
 import AbstractController from './abstract.controller';
 
 export default class UserController extends AbstractController {
-  async searchUsers(ctx: KoaContext<void, Page<UserLight>>): Promise<void> {
+  async search(ctx: KoaContext<void, Page<UserLight>>): Promise<void> {
     const searchParams: UserSearchParam = {
       page: ctx.query.page ? parseInt(ctx.query.page as string, 10) : 0,
       login: (ctx.query.login as string) || null
     };
-    const users = ctx.app.repositoryService.userRepository.searchUsers(searchParams);
+    const users = ctx.app.repositoryService.userRepository.search(searchParams);
     ctx.ok(users);
   }
 
-  async getUser(ctx: KoaContext<void, User>): Promise<void> {
-    const user = ctx.app.repositoryService.userRepository.getUserById(ctx.params.id);
+  async findById(ctx: KoaContext<void, User>): Promise<void> {
+    const user = ctx.app.repositoryService.userRepository.findById(ctx.params.id);
     if (user) {
       ctx.ok(user);
     } else {
@@ -22,26 +22,26 @@ export default class UserController extends AbstractController {
     }
   }
 
-  async createUser(ctx: KoaContext<{ user: UserCommandDTO; password: string }, void>): Promise<void> {
+  async create(ctx: KoaContext<{ user: UserCommandDTO; password: string }, void>): Promise<void> {
     try {
       await this.validate(ctx.request.body!.user);
       if (!ctx.request.body!.password) {
         return ctx.badRequest(`No password provided`);
       }
-      const user = await ctx.app.repositoryService.userRepository.createUser(ctx.request.body!.user, ctx.request.body!.password);
+      const user = await ctx.app.repositoryService.userRepository.create(ctx.request.body!.user, ctx.request.body!.password);
       ctx.created(user);
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 
-  async updateUser(ctx: KoaContext<UserCommandDTO, void>) {
+  async update(ctx: KoaContext<UserCommandDTO, void>) {
     try {
       await this.validate(ctx.request.body);
-      await ctx.app.repositoryService.userRepository.updateUser(ctx.params.id, ctx.request.body as UserCommandDTO);
+      ctx.app.repositoryService.userRepository.update(ctx.params.id, ctx.request.body!);
       ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 
@@ -52,15 +52,15 @@ export default class UserController extends AbstractController {
       }
       await ctx.app.repositoryService.userRepository.updatePassword(ctx.params.id, ctx.request.body.newPassword);
       ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 
-  async deleteUser(ctx: KoaContext<void, void>): Promise<void> {
-    const user = ctx.app.repositoryService.userRepository.getUserById(ctx.params.id);
+  async delete(ctx: KoaContext<void, void>): Promise<void> {
+    const user = ctx.app.repositoryService.userRepository.findById(ctx.params.id);
     if (user) {
-      ctx.app.repositoryService.userRepository.deleteUser(ctx.params.id);
+      ctx.app.repositoryService.userRepository.delete(ctx.params.id);
       ctx.noContent();
     } else {
       ctx.notFound();

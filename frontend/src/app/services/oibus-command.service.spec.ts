@@ -1,8 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { OibusCommandService } from './oibus-command.service';
-import { OIBusCommandDTO } from '../../../../shared/model/command.model';
-import { Page } from '../../../../shared/model/types';
+import { OIBusCommandDTO } from '../../../../backend/shared/model/command.model';
+import { Page } from '../../../../backend/shared/model/types';
 import { toPage } from '../shared/test-utils';
 import { provideHttpClient } from '@angular/common/http';
 
@@ -24,12 +24,14 @@ describe('OibusCommandService', () => {
     let expectedCommands: Page<OIBusCommandDTO> | null = null;
     const commands = toPage<OIBusCommandDTO>([{ id: '1' }] as Array<OIBusCommandDTO>);
 
-    service.searchCommands({ page: 0, types: ['UPGRADE'], status: ['COMPLETED', 'CANCELLED'] }).subscribe(c => (expectedCommands = c));
+    service
+      .searchCommands({ page: 0, types: ['update-version'], status: ['COMPLETED', 'CANCELLED'] })
+      .subscribe(c => (expectedCommands = c));
 
     http
       .expectOne({
         method: 'GET',
-        url: '/api/commands?page=0&types=UPGRADE&status=COMPLETED&status=CANCELLED'
+        url: '/api/commands?page=0&types=update-version&status=COMPLETED&status=CANCELLED'
       })
       .flush(commands);
 

@@ -3,43 +3,54 @@ import { QoS } from 'mqtt-packet';
 
 import objectPath from 'object-path';
 import SouthConnector from '../south-connector';
-import manifest from './manifest';
 import EncryptionService from '../../service/encryption.service';
-import RepositoryService from '../../service/repository.service';
 
 import pino from 'pino';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { DateTime } from 'luxon';
-import { Instant } from '../../../../shared/model/types';
+import { Instant } from '../../../shared/model/types';
 import { QueriesSubscription } from '../south-interface';
 import {
   SouthMQTTItemSettings,
   SouthMQTTItemSettingsJsonPayloadTimestampPayload,
   SouthMQTTSettings
-} from '../../../../shared/model/south-settings.model';
+} from '../../../shared/model/south-settings.model';
 import { convertDateTimeToInstant } from '../../service/utils';
-import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import SouthConnectorRepository from '../../repository/config/south-connector.repository';
+import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import { BaseFolders } from '../../model/types';
+import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 
 /**
  * Class SouthMQTT - Subscribe to data topic from a MQTT broker
  */
 export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQTTItemSettings> implements QueriesSubscription {
-  static type = manifest.id;
-
   private client: mqtt.MqttClient | null = null;
 
   constructor(
-    connector: SouthConnectorDTO<SouthMQTTSettings>,
-    engineAddValuesCallback: (southId: string, values: Array<OIBusDataValue>) => Promise<void>,
-    engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
+    connector: SouthConnectorEntity<SouthMQTTSettings, SouthMQTTItemSettings>,
+    engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
     encryptionService: EncryptionService,
-    repositoryService: RepositoryService,
+    southConnectorRepository: SouthConnectorRepository,
+    southCacheRepository: SouthCacheRepository,
+    scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
-    baseFolder: string
+    baseFolders: BaseFolders
   ) {
-    super(connector, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(
+      connector,
+      engineAddContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      baseFolders
+    );
   }
 
   override async connect(): Promise<void> {
@@ -72,6 +83,36 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
   override async testConnection(): Promise<void> {
     const options = await this.createConnectionOptions();
     await this.testConnectionToBroker(options);
+  }
+
+  override async testItem(
+    item: SouthConnectorItemEntity<SouthMQTTItemSettings>,
+    _testingSettings: SouthConnectorItemTestingSettings,
+    callback: (data: OIBusContent) => void
+  ): Promise<void> {
+    const options = await this.createConnectionOptions();
+    return new Promise((resolve, reject) => {
+      this.client = mqtt.connect(this.connector.settings.url, options);
+      this.client.on('connect', async () => {
+        this.logger.info(`Connected to ${this.connector.settings.url}`);
+        await this.subscribe([item]);
+      });
+      this.client.on('error', async error => {
+        await this.disconnect();
+        reject(`MQTT connection error ${error}`);
+      });
+      this.client.on('message', async (topic, message, packet) => {
+        this.logger.trace(`MQTT message for topic ${topic}: ${message}, dup:${packet.dup}`);
+        const messageTimestamp: Instant = DateTime.now().toUTC().toISO()!;
+        await this.unsubscribe([item]);
+        await this.disconnect();
+        callback({
+          type: 'time-values',
+          content: this.createContent(item, message, messageTimestamp)
+        });
+        resolve();
+      });
+    });
   }
 
   async testConnectionToBroker(options: mqtt.IClientOptions): Promise<void> {
@@ -117,7 +158,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     return options;
   }
 
-  async subscribe(items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>>): Promise<void> {
+  async subscribe(items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>>): Promise<void> {
     if (!this.client) {
       this.logger.error('MQTT client could not subscribe to items: client not set');
       return;
@@ -132,7 +173,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     }
   }
 
-  async unsubscribe(items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>>): Promise<void> {
+  async unsubscribe(items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>>): Promise<void> {
     if (!this.client) {
       this.logger.warn('MQTT client is not set. Nothing to unsubscribe');
       return;
@@ -147,50 +188,61 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     try {
       const associatedItem = this.getItem(topic);
 
-      switch (associatedItem.settings.valueType) {
-        case 'number':
-          await this.addValues([
-            {
-              pointId: associatedItem.name,
-              timestamp: messageTimestamp,
-              data: {
-                value: message.toString()
-              }
-            }
-          ]);
-          break;
-        case 'string':
-          await this.addValues([
-            {
-              pointId: associatedItem.name,
-              timestamp: messageTimestamp,
-              data: {
-                value: message.toString()
-              }
-            }
-          ]);
-          break;
-        case 'json':
-          await this.addValues(this.formatValues(associatedItem, JSON.parse(message.toString()), messageTimestamp));
-          break;
-      }
+      const content = this.createContent(associatedItem, message, messageTimestamp);
+      await this.addContent({
+        type: 'time-values',
+        content
+      });
     } catch (error) {
       this.logger.error(`Could not handle message "${message.toString()}" for topic "${topic}". ${error}`);
     }
   }
 
-  formatValues(item: SouthConnectorItemDTO<SouthMQTTItemSettings>, data: any, messageTimestamp: Instant): Array<OIBusDataValue> {
+  private createContent(
+    associatedItem: SouthConnectorItemEntity<SouthMQTTItemSettings>,
+    message: Buffer,
+    messageTimestamp: Instant
+  ): Array<OIBusTimeValue> {
+    switch (associatedItem.settings.valueType) {
+      case 'number':
+        return [
+          {
+            pointId: associatedItem.name,
+            timestamp: messageTimestamp,
+            data: {
+              value: message.toString()
+            }
+          }
+        ];
+
+      case 'string':
+        return [
+          {
+            pointId: associatedItem.name,
+            timestamp: messageTimestamp,
+            data: {
+              value: message.toString()
+            }
+          }
+        ];
+
+      case 'json':
+        return this.formatValues(associatedItem, JSON.parse(message.toString()), messageTimestamp);
+    }
+  }
+
+  formatValues(item: SouthConnectorItemEntity<SouthMQTTItemSettings>, data: object, messageTimestamp: Instant): Array<OIBusTimeValue> {
     if (item.settings.jsonPayload!.useArray) {
       const array = objectPath.get(data, item.settings.jsonPayload!.dataArrayPath!);
       if (!array || !Array.isArray(array)) {
         throw new Error(`Array not found for path ${item.settings.jsonPayload!.dataArrayPath!} in ${JSON.stringify(data)}`);
       }
-      return array.map((element: any) => this.formatValue(item, element, messageTimestamp));
+      return array.map((element: Array<object>) => this.formatValue(item, element, messageTimestamp));
     }
     return [this.formatValue(item, data, messageTimestamp)];
   }
 
-  formatValue(item: SouthConnectorItemDTO<SouthMQTTItemSettings>, data: any, messageTimestamp: Instant): OIBusDataValue {
+  formatValue(item: SouthConnectorItemEntity<SouthMQTTItemSettings>, data: object, messageTimestamp: Instant): OIBusTimeValue {
     const dataTimestamp =
       item.settings.jsonPayload!.timestampOrigin === 'oibus'
         ? messageTimestamp
@@ -201,7 +253,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
         ? item.name
         : this.getPointId(data, item.settings.jsonPayload!.pointIdPath!, item.name);
 
-    const dataValue: { value: string; [key: string]: any } = {
+    const dataValue: { value: string; [key: string]: string | number } = {
       value: objectPath.get(data, item.settings.jsonPayload!.valuePath)
     };
 
@@ -218,7 +270,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     };
   }
 
-  getPointId(data: any, pointIdPath: string, itemName: string): string {
+  getPointId(data: object, pointIdPath: string, itemName: string): string {
     const pointId = objectPath.get(data, pointIdPath!);
     if (!pointId) {
       this.logger.warn(`Point ID not found for path ${pointIdPath} in ${JSON.stringify(data)}. Using item name "${itemName}" instead`);
@@ -227,10 +279,10 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     return pointId;
   }
 
-  getItem(topic: string): SouthConnectorItemDTO<SouthMQTTItemSettings> {
-    const matchedPoints: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>> = [];
+  getItem(topic: string): SouthConnectorItemEntity<SouthMQTTItemSettings> {
+    const matchedPoints: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [];
 
-    const subscriptionItems = this.items.filter(item => item.scanModeId === 'subscription' && item.enabled);
+    const subscriptionItems = this.connector.items.filter(item => item.scanModeId === 'subscription' && item.enabled);
     // FIXME: simplify this code to find associated item from the most specific topic to the most generic
     for (const item of subscriptionItems) {
       const matchList = this.wildcardTopic(topic, item.settings.topic);
@@ -255,7 +307,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     return matchedPoints[0];
   }
 
-  getTimestamp(data: any, formatOptions: SouthMQTTItemSettingsJsonPayloadTimestampPayload, messageTimestamp: Instant): string {
+  getTimestamp(data: object, formatOptions: SouthMQTTItemSettingsJsonPayloadTimestampPayload, messageTimestamp: Instant): string {
     const timestamp = objectPath.get(data, formatOptions.timestampPath!);
     if (!timestamp) {
       this.logger.warn(

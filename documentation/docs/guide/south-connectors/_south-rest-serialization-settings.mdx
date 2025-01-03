@@ -14,4 +14,4 @@ format - it is uncorrelated to the datetime format of the serialization, used fo
 In situations where a query may impose a significant load on the server, especially when a large time interval is requested
 and the @StartTime and @EndTime [query variables](#query-variables) are utilized, you can split the query into several
 sub-queries with smaller intervals. This can be achieved by configuring the **Max read interval** field in the
-[history settings](./common-settings.md#history-settings).
+[throttling settings](#throttling-settings).

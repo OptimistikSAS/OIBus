@@ -1,36 +1,46 @@
 import path from 'node:path';
 
 import NorthConnector from '../north-connector';
-import manifest from './manifest';
-import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import EncryptionService from '../../service/encryption.service';
-import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { DateTime } from 'luxon';
-import { NorthSFTPSettings } from '../../../../shared/model/north-settings.model';
+import { NorthSFTPSettings } from '../../../shared/model/north-settings.model';
 import csv from 'papaparse';
-import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 
 import sftpClient, { ConnectOptions } from 'ssh2-sftp-client';
 import fs from 'node:fs/promises';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
+import NorthConnectorRepository from '../../repository/config/north-connector.repository';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import { BaseFolders } from '../../model/types';
 
 /**
  * Class NorthSFTP - Write files in an output folder
  */
 export default class NorthSFTP extends NorthConnector<NorthSFTPSettings> {
-  static type = manifest.id;
-
   constructor(
-    configuration: NorthConnectorDTO<NorthSFTPSettings>,
+    configuration: NorthConnectorEntity<NorthSFTPSettings>,
     encryptionService: EncryptionService,
-    repositoryService: RepositoryService,
+    northConnectorRepository: NorthConnectorRepository,
+    scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
-    baseFolder: string
+    baseFolders: BaseFolders
   ) {
-    super(configuration, encryptionService, repositoryService, logger, baseFolder);
+    super(configuration, encryptionService, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
-  async handleValues(values: Array<OIBusDataValue>): Promise<void> {
+  async handleContent(data: OIBusContent): Promise<void> {
+    switch (data.type) {
+      case 'raw':
+        return this.handleFile(data.filePath);
+
+      case 'time-values':
+        return this.handleValues(data.content);
+    }
+  }
+
+  async handleValues(values: Array<OIBusTimeValue>): Promise<void> {
     const nowDate = DateTime.now().toUTC();
     const prefix = (this.connector.settings.prefix || '')
       .replace('@CurrentDate', nowDate.toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))
@@ -91,9 +101,9 @@ export default class NorthSFTP extends NorthConnector<NorthSFTPSettings> {
       await client.connect(connectionOptions);
       folderExists = await client.exists(this.connector.settings.remoteFolder);
       await client.end();
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw new Error(
-        `Access error on "${this.connector.settings.remoteFolder}" on "${this.connector.settings.host}:${this.connector.settings.port}": ${error.message}`
+        `Access error on "${this.connector.settings.remoteFolder}" on "${this.connector.settings.host}:${this.connector.settings.port}": ${(error as Error).message}`
       );
     }
 

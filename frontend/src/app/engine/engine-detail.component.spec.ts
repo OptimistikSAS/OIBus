@@ -2,20 +2,18 @@ import { TestBed } from '@angular/core/testing';
 
 import { EngineDetailComponent } from './engine-detail.component';
 import { ComponentTester, createMock } from 'ngx-speculoos';
-import { EngineSettingsDTO } from '../../../../shared/model/engine.model';
+import { EngineSettingsDTO } from '../../../../backend/shared/model/engine.model';
 import { of, Subject } from 'rxjs';
 import { EngineService } from '../services/engine.service';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { ScanModeListComponent } from './scan-mode-list/scan-mode-list.component';
-import { ExternalSourceListComponent } from './external-source-list/external-source-list.component';
 import { IpFilterListComponent } from './ip-filter-list/ip-filter-list.component';
 import { ConfirmationService } from '../shared/confirmation.service';
 import { NotificationService } from '../shared/notification.service';
 import { ScanModeService } from '../services/scan-mode.service';
 import { IpFilterService } from '../services/ip-filter.service';
-import { ExternalSourceService } from '../services/external-source.service';
 
 class EngineComponentTester extends ComponentTester<EngineDetailComponent> {
   constructor() {
@@ -34,16 +32,8 @@ class EngineComponentTester extends ComponentTester<EngineDetailComponent> {
     return this.element(ScanModeListComponent);
   }
 
-  get externalSourceList() {
-    return this.element(ExternalSourceListComponent);
-  }
-
   get ipFilterList() {
     return this.element(IpFilterListComponent);
-  }
-
-  get shutdownButton() {
-    return this.button('#shutdown')!;
   }
 
   get restartButton() {
@@ -56,7 +46,6 @@ describe('EngineDetailComponent', () => {
   let engineService: jasmine.SpyObj<EngineService>;
   let scanModeService: jasmine.SpyObj<ScanModeService>;
   let ipFilterService: jasmine.SpyObj<IpFilterService>;
-  let externalSourceService: jasmine.SpyObj<ExternalSourceService>;
   let confirmationService: jasmine.SpyObj<ConfirmationService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
 
@@ -89,7 +78,6 @@ describe('EngineDetailComponent', () => {
     engineService = createMock(EngineService);
     scanModeService = createMock(ScanModeService);
     ipFilterService = createMock(IpFilterService);
-    externalSourceService = createMock(ExternalSourceService);
     confirmationService = createMock(ConfirmationService);
     notificationService = createMock(NotificationService);
 
@@ -101,7 +89,6 @@ describe('EngineDetailComponent', () => {
         { provide: EngineService, useValue: engineService },
         { provide: ScanModeService, useValue: scanModeService },
         { provide: IpFilterService, useValue: ipFilterService },
-        { provide: ExternalSourceService, useValue: externalSourceService },
         { provide: ConfirmationService, useValue: confirmationService },
         { provide: NotificationService, useValue: notificationService }
       ]
@@ -110,7 +97,6 @@ describe('EngineDetailComponent', () => {
     engineService.getEngineSettings.and.returnValue(of(engineSettings));
     scanModeService.list.and.returnValue(of([]));
     ipFilterService.list.and.returnValue(of([]));
-    externalSourceService.list.and.returnValue(of([]));
 
     tester = new EngineComponentTester();
     tester.detectChanges();
@@ -132,25 +118,7 @@ describe('EngineDetailComponent', () => {
     expect(table[3]).toContainText('Proxy serverEnabled on port 8888');
 
     expect(tester.scanModeList).toBeDefined();
-    expect(tester.externalSourceList).toBeDefined();
     expect(tester.ipFilterList).toBeDefined();
-  });
-
-  it('should shut down', () => {
-    const shutdownSubject = new Subject<void>();
-    engineService.shutdown.and.returnValue(shutdownSubject);
-    confirmationService.confirm.and.returnValue(of(undefined));
-
-    tester.shutdownButton.click();
-
-    expect(tester.shutdownButton.disabled).toBeTrue();
-    expect(tester.restartButton.disabled).toBeTrue();
-
-    shutdownSubject.next();
-    tester.detectChanges();
-
-    expect(engineService.shutdown).toHaveBeenCalled();
-    expect(notificationService.success).toHaveBeenCalledWith('engine.shutdown-complete');
   });
 
   it('should restart', () => {
@@ -160,7 +128,6 @@ describe('EngineDetailComponent', () => {
 
     tester.restartButton.click();
 
-    expect(tester.shutdownButton.disabled).toBeTrue();
     expect(tester.restartButton.disabled).toBeTrue();
 
     restartSubject.next();

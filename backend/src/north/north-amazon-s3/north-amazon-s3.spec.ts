@@ -2,20 +2,22 @@ import { createReadStream, ReadStream } from 'node:fs';
 import fs from 'node:fs/promises';
 
 import { S3Client } from '@aws-sdk/client-s3';
-
 import NorthAmazonS3 from './north-amazon-s3';
 import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/logger.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
-import RepositoryService from '../../service/repository.service';
-import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
-import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.mock';
-import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
-import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
-import ArchiveServiceMock from '../../tests/__mocks__/archive-service.mock';
-import { NorthAmazonS3Settings } from '../../../../shared/model/north-settings.model';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
+import ValueCacheServiceMock from '../../tests/__mocks__/service/cache/value-cache-service.mock';
+import FileCacheServiceMock from '../../tests/__mocks__/service/cache/file-cache-service.mock';
+import { NorthAmazonS3Settings } from '../../../shared/model/north-settings.model';
 import csv from 'papaparse';
+import NorthConnectorRepository from '../../repository/config/north-connector.repository';
+import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
+import testData from '../../tests/utils/test-data';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
+import { mockBaseFolders } from '../../tests/utils/test-utils';
 
 const sendMock = jest.fn();
 jest.mock('@aws-sdk/client-s3');
@@ -23,65 +25,41 @@ jest.mock('@aws-sdk/node-http-handler', () => ({ NodeHttpHandler: jest.fn() }));
 jest.mock('node:fs/promises');
 jest.mock('node:fs');
 jest.mock('papaparse');
-(fs.stat as jest.Mock).mockReturnValue({ size: 123 });
 jest.mock('../../service/utils');
-jest.mock(
-  '../../service/cache/archive.service',
-  () =>
-    function () {
-      return new ArchiveServiceMock();
-    }
-);
+(fs.stat as jest.Mock).mockReturnValue({ size: 123 });
+
+const logger: pino.Logger = new PinoLogger();
+const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
+const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
+const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
+const valueCacheService = new ValueCacheServiceMock();
+const fileCacheService = new FileCacheServiceMock();
+
 jest.mock(
   '../../service/cache/value-cache.service',
   () =>
     function () {
-      return new ValueCacheServiceMock();
+      return valueCacheService;
     }
 );
 jest.mock(
   '../../service/cache/file-cache.service',
   () =>
     function () {
-      return new FileCacheServiceMock();
+      return fileCacheService;
     }
 );
-const resetMetrics = jest.fn();
-jest.mock(
-  '../../service/north-connector-metrics.service',
-  () =>
-    function () {
-      return {
-        initMetrics: jest.fn(),
-        updateMetrics: jest.fn(),
-        get stream() {
-          return { stream: 'myStream' };
-        },
-        resetMetrics,
-        metrics: {
-          numberOfValuesSent: 1,
-          numberOfFilesSent: 1
-        }
-      };
-    }
-);
-
-const logger: pino.Logger = new PinoLogger();
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
-const repositoryService: RepositoryService = new RepositoryServiceMock();
 
 let north: NorthAmazonS3;
-const nowDateString = '2020-02-02T02:02:02.222Z';
+let configuration: NorthConnectorEntity<NorthAmazonS3Settings>;
 
 describe('NorthAmazonS3', () => {
   describe('with proxy', () => {
-    const configuration: NorthConnectorDTO<NorthAmazonS3Settings> = {
-      id: 'id',
-      name: 'north',
-      type: 'test',
-      description: 'my test connector',
-      enabled: true,
-      settings: {
+    beforeEach(async () => {
+      jest.clearAllMocks();
+      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+      configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
+      configuration.settings = {
         region: 'eu-west-1',
         bucket: 'oibus',
         folder: 'myFolder',
@@ -91,35 +69,22 @@ describe('NorthAmazonS3', () => {
         proxyUrl: 'http://localhost',
         proxyUsername: 'proxy-user',
         proxyPassword: 'proxy-password'
-      },
-      caching: {
-        scanModeId: 'id1',
-        retryInterval: 5000,
-        groupCount: 10000,
-        maxSendCount: 10000,
-        retryCount: 2,
-        sendFileImmediately: true,
-        maxSize: 30000
-      },
-      archive: {
-        enabled: true,
-        retentionDuration: 720
-      }
-    };
-
-    beforeEach(async () => {
-      jest.clearAllMocks();
-      jest.useFakeTimers();
-      jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+      };
       (csv.unparse as jest.Mock).mockReturnValue('csv content');
-
-      repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
-
+      (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
+      (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
       (S3Client as jest.Mock).mockImplementation(() => ({
         send: sendMock
       }));
 
-      north = new NorthAmazonS3(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+      north = new NorthAmazonS3(
+        configuration,
+        encryptionService,
+        northConnectorRepository,
+        scanModeRepository,
+        logger,
+        mockBaseFolders(testData.north.list[0].id)
+      );
     });
 
     it('should properly start', async () => {
@@ -139,7 +104,7 @@ describe('NorthAmazonS3', () => {
       (createReadStream as jest.Mock).mockImplementation(() => ({}) as ReadStream);
 
       await north.start();
-      await north.handleFile(filePath);
+      await north.handleContent({ type: 'raw', filePath });
 
       expect(createReadStream).toHaveBeenCalledWith(filePath);
     });
@@ -165,13 +130,12 @@ describe('NorthAmazonS3', () => {
   });
 
   describe('with proxy but without proxy password', () => {
-    const configuration: NorthConnectorDTO<NorthAmazonS3Settings> = {
-      id: 'id',
-      name: 'north',
-      type: 'test',
-      description: 'my test connector',
-      enabled: true,
-      settings: {
+    beforeEach(async () => {
+      jest.clearAllMocks();
+      jest.useFakeTimers();
+
+      configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
+      configuration.settings = {
         region: 'eu-west-1',
         bucket: 'oibus',
         folder: 'myFolder',
@@ -181,32 +145,23 @@ describe('NorthAmazonS3', () => {
         proxyUrl: 'http://localhost',
         proxyUsername: '',
         proxyPassword: ''
-      },
-      caching: {
-        scanModeId: 'id1',
-        retryInterval: 5000,
-        groupCount: 10000,
-        maxSendCount: 10000,
-        retryCount: 2,
-        sendFileImmediately: true,
-        maxSize: 30000
-      },
-      archive: {
-        enabled: true,
-        retentionDuration: 720
-      }
-    };
+      };
 
-    beforeEach(async () => {
-      jest.clearAllMocks();
-      jest.useFakeTimers();
-      repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
+      (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
+      (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
 
       (S3Client as jest.Mock).mockImplementation(() => ({
         send: sendMock
       }));
 
-      north = new NorthAmazonS3(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+      north = new NorthAmazonS3(
+        configuration,
+        encryptionService,
+        northConnectorRepository,
+        scanModeRepository,
+        logger,
+        mockBaseFolders(testData.north.list[0].id)
+      );
     });
 
     it('should properly start', async () => {
@@ -245,45 +200,35 @@ describe('NorthAmazonS3', () => {
   });
 
   describe('without proxy', () => {
-    const configuration: NorthConnectorDTO<NorthAmazonS3Settings> = {
-      id: 'id',
-      name: 'north',
-      type: 'test',
-      description: 'my test connector',
-      enabled: true,
-      settings: {
+    beforeEach(async () => {
+      jest.clearAllMocks();
+      jest.useFakeTimers();
+
+      configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
+      configuration.settings = {
         region: 'eu-west-1',
         bucket: 'oibus',
         folder: 'myFolder',
         accessKey: 'access-key',
         secretKey: '',
         useProxy: false
-      },
-      caching: {
-        scanModeId: 'id1',
-        retryInterval: 5000,
-        groupCount: 10000,
-        maxSendCount: 10000,
-        retryCount: 2,
-        sendFileImmediately: true,
-        maxSize: 30000
-      },
-      archive: {
-        enabled: true,
-        retentionDuration: 720
-      }
-    };
+      };
 
-    beforeEach(async () => {
-      jest.clearAllMocks();
-      jest.useFakeTimers();
-      repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
+      (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
+      (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
 
       (S3Client as jest.Mock).mockImplementation(() => ({
         send: sendMock
       }));
 
-      north = new NorthAmazonS3(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+      north = new NorthAmazonS3(
+        configuration,
+        encryptionService,
+        northConnectorRepository,
+        scanModeRepository,
+        logger,
+        mockBaseFolders(testData.north.list[0].id)
+      );
     });
 
     it('should properly start', async () => {
@@ -311,6 +256,10 @@ describe('NorthAmazonS3', () => {
       });
 
       await expect(north.testConnection()).rejects.toThrow(new Error(`Error testing Amazon S3 connection. ${error}`));
+    });
+
+    it('should throw error on handle values', async () => {
+      await expect(north.handleContent({ type: 'time-values', content: [] })).rejects.toThrow(new Error(`Can not manage time values`));
     });
   });
 });

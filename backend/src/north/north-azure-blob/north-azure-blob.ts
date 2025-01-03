@@ -4,31 +4,31 @@ import pino from 'pino';
 import { BlobServiceClient, StorageSharedKeyCredential } from '@azure/storage-blob';
 import { ClientSecretCredential, DefaultAzureCredential } from '@azure/identity';
 import NorthConnector from '../north-connector';
-import manifest from '../north-azure-blob/manifest';
-import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import EncryptionService from '../../service/encryption.service';
-import RepositoryService from '../../service/repository.service';
-import { HandlesFile } from '../north-interface';
-import { NorthAzureBlobSettings } from '../../../../shared/model/north-settings.model';
+import { NorthAzureBlobSettings } from '../../../shared/model/north-settings.model';
 import { ProxyOptions } from '@azure/core-http';
-import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
 import csv from 'papaparse';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
+import NorthConnectorRepository from '../../repository/config/north-connector.repository';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import { BaseFolders } from '../../model/types';
 
 const TEST_FILE = 'oibus-azure-test.txt';
 
-export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSettings> implements HandlesFile {
-  static type = manifest.id;
+export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSettings> {
   private blobClient: BlobServiceClient | null = null;
 
   constructor(
-    connector: NorthConnectorDTO<NorthAzureBlobSettings>,
+    connector: NorthConnectorEntity<NorthAzureBlobSettings>,
     encryptionService: EncryptionService,
-    repositoryService: RepositoryService,
+    northConnectorRepository: NorthConnectorRepository,
+    scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
-    baseFolder: string
+    baseFolders: BaseFolders
   ) {
-    super(connector, encryptionService, repositoryService, logger, baseFolder);
+    super(connector, encryptionService, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   async start(dataStream = true): Promise<void> {
@@ -79,11 +79,11 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
       ? `${this.connector.settings.customUrl}`
       : `https://${this.connector.settings.account}.blob.core.windows.net`;
     switch (this.connector.settings.authentication) {
-      case 'sasToken':
+      case 'sas-token':
         const decryptedToken = await this.encryptionService.decryptText(this.connector.settings.sasToken!);
         this.blobClient = new BlobServiceClient(`${url}?${decryptedToken}`, undefined, { proxyOptions });
         break;
-      case 'accessKey':
+      case 'access-key':
         const decryptedAccessKey = await this.encryptionService.decryptText(this.connector.settings.accessKey!);
         const sharedKeyCredential = new StorageSharedKeyCredential(this.connector.settings.account!, decryptedAccessKey);
         this.blobClient = new BlobServiceClient(url, sharedKeyCredential, {
@@ -107,6 +107,16 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
     }
   }
 
+  async handleContent(data: OIBusContent): Promise<void> {
+    switch (data.type) {
+      case 'raw':
+        return this.handleFile(data.filePath);
+
+      case 'time-values':
+        throw new Error('Can not manage time values');
+    }
+  }
+
   /**
    * Handle the file by uploading it to Azure Blob Storage.
    */
@@ -125,7 +135,7 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
     this.logger.info(`Upload block blob "${blobName}" successfully with requestId: ${uploadBlobResponse.requestId}`);
   }
 
-  async handleValues(values: Array<OIBusDataValue>): Promise<void> {
+  async handleValues(values: Array<OIBusTimeValue>): Promise<void> {
     const filename = `${this.connector.name}-${DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS')}.csv`;
     const container = this.connector.settings.container;
     const blobPath = this.connector.settings.path ? `${this.connector.settings.path}/${filename}` : filename;
@@ -152,14 +162,14 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
     await this.prepareConnection();
     const blobPath = this.connector.settings.path ? `${this.connector.settings.path}/${TEST_FILE}` : TEST_FILE;
 
-    let result: boolean = false;
+    let result = false;
     try {
       const blockBlobClient = this.blobClient!.getContainerClient(this.connector.settings.container).getBlockBlobClient(blobPath);
       await blockBlobClient.upload('', 0);
       result = await blockBlobClient.exists();
       try {
         await blockBlobClient.deleteIfExists();
-      } catch (deleteError) {
+      } catch {
         this.logger.error(`Could not delete file "${blobPath}"`);
       }
     } catch (error: unknown) {

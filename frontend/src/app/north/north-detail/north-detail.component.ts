@@ -1,13 +1,17 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
-import { DecimalPipe, NgForOf, NgIf, NgSwitch } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
+import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { combineLatest, of, switchMap, tap } from 'rxjs';
 import { PageLoader } from '../../shared/page-loader.service';
-import { NorthConnectorCommandDTO, NorthConnectorDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
+import {
+  NorthConnectorCommandDTO,
+  NorthConnectorDTO,
+  NorthConnectorManifest
+} from '../../../../../backend/shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
-import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
+import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { NorthSubscriptionsComponent } from '../north-subscriptions/north-subscriptions.component';
 import { NorthMetricsComponent } from '../north-metrics/north-metrics.component';
@@ -17,22 +21,21 @@ import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
 import { NotificationService } from '../../shared/notification.service';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 import { WindowService } from '../../shared/window.service';
-import { NorthConnectorMetrics, OIBusInfo } from '../../../../../shared/model/engine.model';
+import { NorthConnectorMetrics, OIBusInfo } from '../../../../../backend/shared/model/engine.model';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { ModalService } from '../../shared/modal.service';
 import { BooleanEnumPipe } from '../../shared/boolean-enum.pipe';
-import { PipeProviderService } from '../../shared/form/pipe-provider.service';
 import { EngineService } from '../../services/engine.service';
+import { LogsComponent } from '../../logs/logs.component';
+import { SouthConnectorLightDTO } from '../../../../../backend/shared/model/south-connector.model';
+import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 
 @Component({
   selector: 'oib-north-detail',
-  standalone: true,
   imports: [
-    NgIf,
-    TranslateModule,
+    TranslateDirective,
     RouterLink,
-    NgSwitch,
-    NgForOf,
     DecimalPipe,
     BackNavigationDirective,
     NorthSubscriptionsComponent,
@@ -41,33 +44,35 @@ import { EngineService } from '../../services/engine.service';
     BoxTitleDirective,
     DurationPipe,
     EnabledEnumPipe,
-    ClipboardModule
+    ClipboardModule,
+    LogsComponent,
+    OIBusNorthTypeEnumPipe,
+    TranslatePipe
   ],
   templateUrl: './north-detail.component.html',
   styleUrl: './north-detail.component.scss',
   providers: [PageLoader, BooleanEnumPipe]
 })
 export class NorthDetailComponent implements OnInit, OnDestroy {
-  northConnector: NorthConnectorDTO | null = null;
+  private windowService = inject(WindowService);
+  private northConnectorService = inject(NorthConnectorService);
+  private scanModeService = inject(ScanModeService);
+  private engineService = inject(EngineService);
+  private notificationService = inject(NotificationService);
+  private modalService = inject(ModalService);
+  private route = inject(ActivatedRoute);
+  private cd = inject(ChangeDetectorRef);
+  private booleanPipe = inject(BooleanEnumPipe);
+  private translateService = inject(TranslateService);
+
+  northConnector: NorthConnectorDTO<NorthSettings> | null = null;
   displayedSettings: Array<{ key: string; value: string }> = [];
   scanModes: Array<ScanModeDTO> = [];
   manifest: NorthConnectorManifest | null = null;
   connectorStream: EventSource | null = null;
   connectorMetrics: NorthConnectorMetrics | null = null;
   oibusInfo: OIBusInfo | null = null;
-
-  constructor(
-    private windowService: WindowService,
-    private northConnectorService: NorthConnectorService,
-    private scanModeService: ScanModeService,
-    private engineService: EngineService,
-    private notificationService: NotificationService,
-    private modalService: ModalService,
-    private route: ActivatedRoute,
-    private cd: ChangeDetectorRef,
-    private pipeProviderService: PipeProviderService,
-    private booleanPipe: BooleanEnumPipe
-  ) {}
+  northId: string | null = null;
 
   ngOnInit() {
     combineLatest([this.scanModeService.list(), this.engineService.getInfo()]).subscribe(([scanModes, engineInfo]) => {
@@ -77,10 +82,10 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
     this.route.paramMap
       .pipe(
         switchMap(params => {
-          const paramNorthId = params.get('northId');
+          this.northId = params.get('northId');
 
-          if (paramNorthId) {
-            return this.northConnectorService.get(paramNorthId);
+          if (this.northId) {
+            return this.northConnectorService.get(this.northId);
           }
           return of(null);
         }),
@@ -97,6 +102,7 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
           return;
         }
         this.connectToEventSource();
+        const northSettings: Record<string, string | boolean> = JSON.parse(JSON.stringify(this.northConnector!.settings));
         this.displayedSettings = manifest.settings
           .filter(setting => setting.displayInViewMode)
           .map(setting => {
@@ -108,25 +114,25 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
               case 'OibTimezone':
               case 'OibScanMode':
                 return {
-                  key: setting.label,
-                  value: this.northConnector!.settings[setting.key]
+                  key: setting.translationKey,
+                  value: northSettings[setting.key]
                 };
               case 'OibSelect':
                 return {
-                  key: setting.label,
-                  value: this.transform(this.northConnector!.settings[setting.key], setting.pipe)
+                  key: setting.translationKey + '.title',
+                  value: this.translateService.instant(setting.translationKey + '.' + northSettings[setting.key])
                 };
               case 'OibCheckbox':
                 return {
-                  key: setting.label,
-                  value: this.booleanPipe.transform(this.northConnector!.settings[setting.key])
+                  key: setting.translationKey,
+                  value: this.booleanPipe.transform(northSettings[setting.key] as boolean)
                 };
               case 'OibCertificate':
               case 'OibSecret':
               case 'OibArray':
               case 'OibFormGroup':
                 return {
-                  key: setting.label,
+                  key: setting.translationKey,
                   value: ''
                 };
             }
@@ -135,26 +141,42 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
       });
   }
 
+  updateInMemorySubscriptions(_subscriptions: Array<SouthConnectorLightDTO> | null) {
+    this.northConnectorService.get(this.northConnector!.id).subscribe(northConnector => {
+      this.northConnector = northConnector;
+    });
+  }
+
   getScanMode(scanModeId: string) {
     return this.scanModes.find(scanMode => scanMode.id === scanModeId)?.name || scanModeId;
   }
 
-  transform(value: string, pipeIdentifier: string | undefined): string {
-    if (!pipeIdentifier || !this.pipeProviderService.validIdentifier(pipeIdentifier)) {
-      return value;
-    }
-    return this.pipeProviderService.getPipeForString(pipeIdentifier).transform(value);
-  }
-
   testConnection() {
-    const command: NorthConnectorCommandDTO = {
+    const command: NorthConnectorCommandDTO<NorthSettings> = {
       name: this.northConnector!.name,
       type: this.northConnector!.type,
       description: this.northConnector!.description,
       enabled: this.northConnector!.enabled,
       settings: this.northConnector!.settings,
-      caching: this.northConnector!.caching,
-      archive: this.northConnector!.archive
+      caching: {
+        scanModeId: this.northConnector!.caching.scanModeId,
+        scanModeName: null,
+        retryInterval: this.northConnector!.caching.retryInterval,
+        retryCount: this.northConnector!.caching.retryCount,
+        maxSize: this.northConnector!.caching.maxSize,
+        oibusTimeValues: {
+          groupCount: this.northConnector!.caching.oibusTimeValues!.groupCount,
+          maxSendCount: this.northConnector!.caching.oibusTimeValues!.maxSendCount
+        },
+        rawFiles: {
+          sendFileImmediately: this.northConnector!.caching.rawFiles.sendFileImmediately,
+          archive: {
+            enabled: this.northConnector!.caching.rawFiles.archive.enabled,
+            retentionDuration: this.northConnector!.caching.rawFiles.archive.retentionDuration
+          }
+        }
+      },
+      subscriptions: []
     };
 
     const modalRef = this.modalService.open(TestConnectionResultModalComponent);

@@ -1,47 +1,33 @@
-import { Component, OnInit } from '@angular/core';
-import { NgForOf, NgIf } from '@angular/common';
+import { Component, OnInit, inject } from '@angular/core';
+
 import { switchMap } from 'rxjs';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { CertificateService } from '../../services/certificate.service';
-import { CertificateDTO } from '../../../../../shared/model/certificate.model';
+import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
 import { EditCertificateModalComponent } from '../edit-certificate-modal/edit-certificate-modal.component';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { DatetimePipe } from '../../shared/datetime.pipe';
-import { TruncatedStringComponent } from '../../shared/truncated-string/truncated-string.component';
 import { ClipboardCopyDirective } from '../../shared/clipboard-copy-directive';
 import { DownloadService } from '../../services/download.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 
 @Component({
   selector: 'oib-certificate-list',
-  standalone: true,
-  imports: [
-    NgIf,
-    NgForOf,
-    TranslateModule,
-    BoxComponent,
-    BoxTitleDirective,
-    DatetimePipe,
-    TruncatedStringComponent,
-    ClipboardCopyDirective,
-    OibHelpComponent
-  ],
+  imports: [TranslateDirective, BoxComponent, BoxTitleDirective, DatetimePipe, ClipboardCopyDirective, OibHelpComponent],
   templateUrl: './certificate-list.component.html',
   styleUrl: './certificate-list.component.scss'
 })
 export class CertificateListComponent implements OnInit {
-  certificates: Array<CertificateDTO> = [];
+  private confirmationService = inject(ConfirmationService);
+  private modalService = inject(ModalService);
+  private notificationService = inject(NotificationService);
+  private certificateService = inject(CertificateService);
+  private downloadService = inject(DownloadService);
 
-  constructor(
-    private confirmationService: ConfirmationService,
-    private modalService: ModalService,
-    private notificationService: NotificationService,
-    private certificateService: CertificateService,
-    private downloadService: DownloadService
-  ) {}
+  certificates: Array<CertificateDTO> = [];
 
   ngOnInit() {
     this.certificateService.list().subscribe(certificateList => {

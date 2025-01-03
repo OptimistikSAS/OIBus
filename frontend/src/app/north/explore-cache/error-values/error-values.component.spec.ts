@@ -3,20 +3,20 @@ import { ComponentTester, createMock } from 'ngx-speculoos';
 import { TestBed } from '@angular/core/testing';
 import { NorthConnectorService } from '../../../services/north-connector.service';
 import { of } from 'rxjs';
-import { NorthConnectorDTO } from '../../../../../../shared/model/north-connector.model';
+import { NorthConnectorDTO } from '../../../../../../backend/shared/model/north-connector.model';
 import { Component } from '@angular/core';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import { NorthSettings } from '../../../../../../backend/shared/model/north-settings.model';
 
 @Component({
-  template: `<oib-error-values [northConnector]="northConnector"></oib-error-values>`,
-  standalone: true,
+  template: `<oib-error-values [northConnector]="northConnector" />`,
   imports: [ErrorValuesComponent]
 })
 class TestComponent {
-  northConnector: NorthConnectorDTO = {
+  northConnector: NorthConnectorDTO<NorthSettings> = {
     id: 'northId',
     name: 'North Connector'
-  } as NorthConnectorDTO;
+  } as NorthConnectorDTO<NorthSettings>;
 }
 
 class ErrorValuesComponentTester extends ComponentTester<TestComponent> {

@@ -1,7 +1,7 @@
 import build from 'pino-abstract-transport';
-import LogRepository from '../../repository/log.repository';
+import LogRepository from '../../repository/logs/log.repository';
 import db from 'better-sqlite3';
-import { PinoLog } from '../../../../shared/model/logs.model';
+import { PinoLog } from '../../../shared/model/logs.model';
 
 const DEFAULT_MAX_NUMBER_OF_LOGS = 2000000;
 const CLEAN_UP_INTERVAL = 24 * 3600 * 1000; // One day
@@ -36,7 +36,7 @@ class SqliteTransport {
       }
       const logsToStore = this.batchLogs;
       this.batchLogs = [];
-      this.repository.addLogs(logsToStore);
+      this.repository.saveAll(logsToStore);
     } catch (error) {
       console.error(error);
     }
@@ -53,12 +53,12 @@ class SqliteTransport {
    * Delete old logs.
    */
   deleteOldLogsIfDatabaseTooLarge = (): void => {
-    const numberOfLogs = this.repository.countLogs();
+    const numberOfLogs = this.repository.count();
     const maxNumberOfLogs = this.options.maxNumberOfLogs || DEFAULT_MAX_NUMBER_OF_LOGS;
     if (numberOfLogs > maxNumberOfLogs) {
       // Remove the excess of logs and one tenth of the max allowed size
       const numberOfRecordToDelete = numberOfLogs - maxNumberOfLogs + maxNumberOfLogs / 10;
-      this.repository.deleteLogs(numberOfRecordToDelete);
+      this.repository.delete(numberOfRecordToDelete);
     }
   };
 
@@ -69,7 +69,7 @@ class SqliteTransport {
     clearInterval(this.removeOldLogsTimeout);
     clearInterval(this.storeLogsInterval);
 
-    await this.addLogs();
+    this.addLogs();
   };
 }
 

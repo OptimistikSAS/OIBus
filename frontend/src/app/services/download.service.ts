@@ -8,8 +8,6 @@ import { HttpResponse } from '@angular/common/http';
   providedIn: 'root'
 })
 export class DownloadService {
-  constructor() {}
-
   /**
    * Triggers the download of the blob contained in the given response, using the file name
    * It consists in creating a link, setting its href and download attributes, clicking the link,

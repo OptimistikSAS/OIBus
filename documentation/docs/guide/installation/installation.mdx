@@ -3,9 +3,12 @@ sidebar_position: 2
 ---
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import WindowsSteps from './_windows.mdx'
+import LinuxSteps from './_linux.mdx'
+import MacOSSteps from './_macos.mdx'
 
 
-# Installation Requirements
+# Installation
 Let's get OIBus up and running in under 2 minutes.
 
 ## System Requirements
@@ -15,31 +18,24 @@ In order to successfully install OIBus, your environment should meet the followi
 additional space (several GB, depending on your data stream) to store collected data in case of an upstream network failure.
 - **Administrative Privileges**: You must have administrative rights on your environment to install OIBus and register
 it as a service. This applies to both Windows and Linux platforms.
-- **Modern Web Browser**: You'll need a modern web browser to access the OIBus configuration interface. The browser can
-reside on the same computer as OIBus or on a different one, as long as you configure the
-[necessary access settings](../engine/ip-filters.md). Note: Internet Explorer is not supported.
 
-## Platforms
+:::caution
+You'll need a modern web browser to access the OIBus configuration interface. The browser can reside on the same
+computer as OIBus or on a different one, as long as you configure the
+[necessary access settings](../engine/ip-filters.md).
+
+Internet Explorer is not supported.
+:::
+
+## Installation steps
 <Tabs>
     <TabItem value="windows" label="Windows" default>
-      <div>
-        <div style={{ display: "flex", justifyContent: "space-around" }}>
-          <a href='./windows'>Windows installation</a>
-        </div>
-      </div>
+        <WindowsSteps />
     </TabItem>
     <TabItem value="linux" label="Linux">
-      <div>
-        <div style={{ display: "flex", justifyContent: "space-around" }}>
-          <a href='./linux'>Linux installation</a>
-        </div>
-      </div>
+        <LinuxSteps />
     </TabItem>
     <TabItem value="macos" label="MacOS">
-      <div>
-        <div style={{ display: "flex", justifyContent: "space-around" }}>
-          <a href='./macos'>macOS installation</a>
-        </div>
-      </div>
+        <MacOSSteps />
     </TabItem>
 </Tabs>

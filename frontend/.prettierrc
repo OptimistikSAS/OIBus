@@ -6,6 +6,6 @@ overrides:
   - files: "*.component.html"
     options:
       parser: angular
-  - files: "*.html"
+  - files: "src/index.html"
     options:
       parser: html

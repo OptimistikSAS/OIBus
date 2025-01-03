@@ -1,13 +1,12 @@
-import { Pipe, PipeTransform } from '@angular/core';
+import { Pipe, PipeTransform, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 
 @Pipe({
   name: 'enabled',
-  pure: false,
-  standalone: true
+  pure: false
 })
 export class EnabledEnumPipe implements PipeTransform {
-  constructor(private translateService: TranslateService) {}
+  private translateService = inject(TranslateService);
 
   transform(enabled: boolean): string {
     if (enabled) {

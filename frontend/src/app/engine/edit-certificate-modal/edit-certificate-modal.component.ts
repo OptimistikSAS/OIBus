@@ -1,30 +1,31 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { FormBuilder, Validators } from '@angular/forms';
+import { NonNullableFormBuilder, Validators } from '@angular/forms';
 import { Observable, switchMap } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
-import { CertificateCommandDTO, CertificateDTO } from '../../../../../shared/model/certificate.model';
+import { CertificateCommandDTO, CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
 import { CertificateService } from '../../services/certificate.service';
-import { NgIf } from '@angular/common';
 
 @Component({
   selector: 'oib-edit-certificate-modal',
   templateUrl: './edit-certificate-modal.component.html',
   styleUrl: './edit-certificate-modal.component.scss',
-  imports: [...formDirectives, TranslateModule, SaveButtonComponent, NgIf],
-  standalone: true
+  imports: [...formDirectives, TranslateDirective, SaveButtonComponent]
 })
 export class EditCertificateModalComponent {
+  private modal = inject(NgbActiveModal);
+  private certificateService = inject(CertificateService);
+
   mode: 'create' | 'edit' = 'create';
   state = new ObservableState();
   certificate: CertificateDTO | null = null;
-  form = this.fb.group({
+  form = inject(NonNullableFormBuilder).group({
     name: ['', Validators.required],
     description: '',
     regenerateCertificate: true,
-    certificateOptions: this.fb.group({
+    certificateOptions: inject(NonNullableFormBuilder).group({
       commonName: ['', Validators.required],
       countryName: ['', Validators.required],
       stateOrProvinceName: ['', Validators.required],
@@ -35,11 +36,7 @@ export class EditCertificateModalComponent {
     })
   });
 
-  constructor(
-    private modal: NgbActiveModal,
-    private fb: FormBuilder,
-    private certificateService: CertificateService
-  ) {
+  constructor() {
     this.form.controls.regenerateCertificate.valueChanges.subscribe(next => {
       if (next) {
         this.form.controls.certificateOptions.enable();

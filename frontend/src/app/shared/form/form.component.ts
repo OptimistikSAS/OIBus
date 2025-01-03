@@ -1,46 +1,31 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { NgForOf, NgIf } from '@angular/common';
-import { ControlContainer, FormGroup, FormGroupName } from '@angular/forms';
+import { Component, OnInit, input } from '@angular/core';
+
+import { AbstractControl, FormControl, FormGroup, FormSubmittedEvent } from '@angular/forms';
 import { formDirectives } from '../form-directives';
-import { OibFormControl, OibFormGroup, OibSelectFormControl } from '../../../../../shared/model/form.model';
-import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
+import { OibFormControl, OibSelectFormControl } from '../../../../../backend/shared/model/form.model';
+import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { OibCodeBlockComponent } from './oib-code-block/oib-code-block.component';
-import { Timezone } from '../../../../../shared/model/types';
-import { Observable } from 'rxjs';
+import { Timezone } from '../../../../../backend/shared/model/types';
+import { filter, Observable } from 'rxjs';
 import { inMemoryTypeahead } from '../typeahead';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { OibArrayComponent } from './oib-form-array/oib-array.component';
 import { groupFormControlsByRow } from '../form-utils';
-import { PipeProviderService } from './pipe-provider.service';
-import { CertificateDTO } from '../../../../../shared/model/certificate.model';
-
-// TypeScript issue with Intl: https://github.com/microsoft/TypeScript/issues/49231
-// eslint-disable-next-line @typescript-eslint/no-namespace
-declare namespace Intl {
-  type Key = 'calendar' | 'collation' | 'currency' | 'numberingSystem' | 'timeZone' | 'unit';
-
-  function supportedValuesOf(input: Key): string[];
-}
+import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
 
 @Component({
   selector: 'oib-form',
-  standalone: true,
-  imports: [...formDirectives, NgIf, NgForOf, OibCodeBlockComponent, NgbTypeahead, TranslateModule, OibArrayComponent],
+  imports: [...formDirectives, OibCodeBlockComponent, NgbTypeahead, TranslateDirective, OibArrayComponent, TranslatePipe],
   templateUrl: './form.component.html',
-  styleUrl: './form.component.scss',
-  viewProviders: [
-    {
-      provide: ControlContainer,
-      useExisting: FormGroupName
-    }
-  ]
+  styleUrl: './form.component.scss'
 })
 export class FormComponent implements OnInit {
-  @Input() settingsSchema: Array<Array<OibFormControl>> = [];
-  @Input() scanModes: Array<ScanModeDTO> = [];
-  @Input() certificates: Array<CertificateDTO> = [];
-  @Input({ required: true }) form!: FormGroup;
+  readonly settingsSchema = input<Array<Array<OibFormControl>>>([]);
+  readonly scanModes = input<Array<ScanModeDTO>>([]);
+  readonly certificates = input<Array<CertificateDTO>>([]);
+  readonly form = input.required<FormGroup>();
+  readonly parentForm = input.required<FormGroup>();
 
   private timezones: ReadonlyArray<Timezone> = Intl.supportedValuesOf('timeZone');
   timezoneTypeahead: (text$: Observable<string>) => Observable<Array<Timezone>> = inMemoryTypeahead(
@@ -51,28 +36,26 @@ export class FormComponent implements OnInit {
 
   settingsGroupedByRowByFormGroup = new Map<string, Array<Array<OibFormControl>>>();
 
-  constructor(private pipeProviderService: PipeProviderService) {}
-
   ngOnInit(): void {
-    this.settingsSchema.forEach(settings => {
+    this.settingsSchema().forEach(settings => {
       settings.forEach(setting => {
         if (setting.type === 'OibFormGroup') {
           this.settingsGroupedByRowByFormGroup.set(setting.key, groupFormControlsByRow(setting.content));
         }
       });
     });
-    this.form.setValue(this.form.getRawValue());
+    this.form().setValue(this.form().getRawValue());
+    this.parentForm()
+      .events.pipe(filter(event => event instanceof FormSubmittedEvent))
+      .subscribe(() => this.form().markAllAsTouched());
   }
 
-  getFormGroup(setting: OibFormGroup): FormGroup {
-    return this.form.controls[setting.key] as FormGroup;
+  asFormGroup(abstractControl: AbstractControl): FormGroup {
+    return abstractControl as FormGroup;
   }
 
-  transform(value: string, pipeIdentifier: string | undefined): string {
-    if (!pipeIdentifier || !this.pipeProviderService.validIdentifier(pipeIdentifier)) {
-      return value;
-    }
-    return this.pipeProviderService.getPipeForString(pipeIdentifier).transform(value);
+  asFormControl(abstractControl: AbstractControl): FormControl {
+    return abstractControl as FormControl;
   }
 
   checkIfRequired(setting: OibSelectFormControl) {

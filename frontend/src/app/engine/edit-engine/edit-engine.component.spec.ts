@@ -5,7 +5,7 @@ import { ComponentTester, createMock } from 'ngx-speculoos';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
-import { EngineSettingsDTO } from '../../../../../shared/model/engine.model';
+import { EngineSettingsDTO } from '../../../../../backend/shared/model/engine.model';
 import { EngineService } from '../../services/engine.service';
 import { of } from 'rxjs';
 import { NotificationService } from '../../shared/notification.service';
@@ -102,6 +102,7 @@ describe('EditEngineComponent', () => {
     name: 'OIBus Test',
     port: 2223,
     version: '3.3.3',
+    launcherVersion: '3.5.0',
     proxyEnabled: true,
     proxyPort: 9000,
     logParameters: {
@@ -157,7 +158,7 @@ describe('EditEngineComponent', () => {
     expect(tester.title).toContainText('Edit engine settings');
     expect(tester.name).toHaveValue(engineSettings.name);
     expect(tester.port).toHaveValue(engineSettings.port.toString());
-    expect(tester.proxyPort).toHaveValue(engineSettings.proxyPort.toString());
+    expect(tester.proxyPort).toHaveValue(engineSettings.proxyPort!.toString());
     expect(tester.proxyEnabled).toBeChecked();
     expect(tester.consoleLevel).toHaveSelectedLabel('Silent');
     expect(tester.fileLevel).toHaveSelectedLabel('Trace');
@@ -197,7 +198,7 @@ describe('EditEngineComponent', () => {
       name: 'OIBus Dev',
       port: 2223,
       proxyEnabled: false,
-      proxyPort: 8000,
+      proxyPort: null,
       logParameters: {
         console: {
           level: 'error'

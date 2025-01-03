@@ -1,15 +1,18 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import { NgClass, NgForOf, NgIf } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { TranslateDirective } from '@ngx-translate/core';
 
 @Component({
   selector: 'oib-legend',
   templateUrl: './legend.component.html',
   styleUrl: './legend.component.scss',
-  standalone: true,
-  imports: [NgClass, NgIf, NgForOf, TranslateModule],
+  imports: [TranslateDirective],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LegendComponent {
-  @Input() legendList: Array<{ class: string; label: string }> = [];
+  readonly legendList = input<
+    Array<{
+      class: string;
+      label: string;
+    }>
+  >([]);
 }

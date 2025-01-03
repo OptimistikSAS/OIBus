@@ -15,10 +15,7 @@ describe('ModalService', () => {
   const fakeModalComponent = new TestModalComponent();
 
   beforeEach(() => {
-    TestBed.configureTestingModule({
-      declarations: [TestModalComponent],
-      providers: [ModalService]
-    });
+    TestBed.configureTestingModule({});
     ngbModal = TestBed.inject(NgbModal);
     modalService = TestBed.inject(ModalService);
   });

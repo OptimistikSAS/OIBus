@@ -1,39 +1,45 @@
 import NorthConnector from '../north-connector';
 
-import manifest from './manifest';
-import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
-
 import EncryptionService from '../../service/encryption.service';
 import { createProxyAgent } from '../../service/proxy-agent';
-import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { createReadStream } from 'node:fs';
 import zlib from 'node:zlib';
 import FormData from 'form-data';
 import path from 'node:path';
 import fetch, { HeadersInit, RequestInit } from 'node-fetch';
-import { HandlesFile, HandlesValues } from '../north-interface';
 import { compress, filesExists } from '../../service/utils';
-import { NorthOIAnalyticsSettings } from '../../../../shared/model/north-settings.model';
-import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import { NorthOIAnalyticsSettings } from '../../../shared/model/north-settings.model';
+import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { ClientCertificateCredential, ClientSecretCredential } from '@azure/identity';
 import fs from 'node:fs/promises';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
+import NorthConnectorRepository from '../../repository/config/north-connector.repository';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import CertificateRepository from '../../repository/config/certificate.repository';
+import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
+import { OIBusError } from '../../model/engine.model';
+import https from 'node:https';
+import { HttpsProxyAgent } from 'https-proxy-agent';
+import { HttpProxyAgent } from 'http-proxy-agent';
+import { BaseFolders } from '../../model/types';
 
 /**
  * Class NorthOIAnalytics - Send files to a POST Multipart HTTP request and values as JSON payload
  * OIAnalytics endpoints are set in this connector
  */
-export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSettings> implements HandlesFile, HandlesValues {
-  static type = manifest.id;
-
+export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSettings> {
   constructor(
-    connector: NorthConnectorDTO<NorthOIAnalyticsSettings>,
+    connector: NorthConnectorEntity<NorthOIAnalyticsSettings>,
     encryptionService: EncryptionService,
-    repositoryService: RepositoryService,
+    northConnectorRepository: NorthConnectorRepository,
+    scanModeRepository: ScanModeRepository,
+    private readonly certificateRepository: CertificateRepository,
+    private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
     logger: pino.Logger,
-    baseFolder: string
+    baseFolders: BaseFolders
   ) {
-    super(connector, encryptionService, repositoryService, logger, baseFolder);
+    super(connector, encryptionService, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   override async testConnection(): Promise<void> {
@@ -57,10 +63,20 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     }
   }
 
+  async handleContent(data: OIBusContent): Promise<void> {
+    switch (data.type) {
+      case 'raw':
+        return this.handleFile(data.filePath);
+
+      case 'time-values':
+        return this.handleValues(data.content);
+    }
+  }
+
   /**
    * Handle values by sending them to OIAnalytics
    */
-  async handleValues(values: Array<OIBusDataValue>): Promise<void> {
+  async handleValues(values: Array<OIBusTimeValue>): Promise<void> {
     const endpoint = this.connector.settings.compress
       ? `/api/oianalytics/oibus/time-values/compressed?dataSourceId=${encodeURI(this.connector.name)}`
       : `/api/oianalytics/oibus/time-values?dataSourceId=${encodeURI(this.connector.name)}`;
@@ -126,7 +142,8 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     });
     const formHeaders = body.getHeaders();
     Object.keys(formHeaders).forEach(key => {
-      // @ts-ignore
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-expect-error
       connectionSettings.headers[key] = formHeaders[key];
     });
 
@@ -154,18 +171,20 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     }
 
     if (!response.ok) {
-      throw {
-        message: `Error ${response.status}: ${response.statusText}`,
-        retry: [400, 401, 403, 404, 500, 502, 503, 504].includes(response.status)
-      };
+      throw new OIBusError(
+        `Error ${response.status}: ${response.statusText}`,
+        [400, 401, 403, 404, 500, 502, 503, 504].includes(response.status)
+      );
     }
   }
 
-  async getNetworkSettings(endpoint: string): Promise<{ host: string; headers: HeadersInit; agent: any }> {
+  async getNetworkSettings(
+    endpoint: string
+  ): Promise<{ host: string; headers: HeadersInit; agent: https.Agent | HttpsProxyAgent<string> | HttpProxyAgent<string> | undefined }> {
     const headers: HeadersInit = {};
 
     if (this.connector.settings.useOiaModule) {
-      const registrationSettings = this.repositoryService.registrationRepository.getRegistrationSettings();
+      const registrationSettings = this.oIAnalyticsRegistrationRepository.get();
       if (!registrationSettings || registrationSettings.status !== 'REGISTERED') {
         throw new Error('OIBus not registered in OIAnalytics');
       }
@@ -222,7 +241,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
         headers.authorization = `Bearer ${Buffer.from(result.token)}`;
         break;
       case 'aad-certificate':
-        const certificate = this.repositoryService.certificateRepository.findById(specificSettings.certificateId!);
+        const certificate = this.certificateRepository.findById(specificSettings.certificateId!);
         if (certificate != null) {
           const decryptedPrivateKey = await this.encryptionService.decryptText(certificate.privateKey);
           const clientCertificateCredential = new ClientCertificateCredential(specificSettings.tenantId!, specificSettings.clientId!, {

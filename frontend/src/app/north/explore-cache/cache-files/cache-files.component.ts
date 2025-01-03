@@ -1,53 +1,34 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
-import { SaveButtonComponent } from '../../../shared/save-button/save-button.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { Component, OnInit, inject, input, signal } from '@angular/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { formDirectives } from '../../../shared/form-directives';
 import { NorthConnectorService } from '../../../services/north-connector.service';
-import { NgForOf, NgIf } from '@angular/common';
-import { NorthCacheFiles, NorthConnectorDTO } from '../../../../../../shared/model/north-connector.model';
-import { RouterLink } from '@angular/router';
-import { DatetimePipe } from '../../../shared/datetime.pipe';
+import { NorthCacheFiles, NorthConnectorDTO } from '../../../../../../backend/shared/model/north-connector.model';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
-import { FileSizePipe } from '../../../shared/file-size.pipe';
 import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
 import { emptyPage } from '../../../shared/test-utils';
 import { FileTableComponent, FileTableData, ItemActionEvent } from '../file-table/file-table.component';
 import { FileContentModalComponent } from '../file-content-modal/file-content-modal.component';
 import { ModalService } from '../../../shared/modal.service';
+import { NorthSettings } from '../../../../../../backend/shared/model/north-settings.model';
 
 @Component({
   selector: 'oib-cache-files',
   templateUrl: './cache-files.component.html',
   styleUrl: './cache-files.component.scss',
-  imports: [
-    ...formDirectives,
-    TranslateModule,
-    SaveButtonComponent,
-    NgForOf,
-    DatetimePipe,
-    NgIf,
-    PaginationComponent,
-    FileSizePipe,
-    RouterLink,
-    BoxComponent,
-    BoxTitleDirective,
-    FileTableComponent
-  ],
-  standalone: true
+  imports: [...formDirectives, TranslateDirective, PaginationComponent, BoxComponent, BoxTitleDirective, FileTableComponent]
 })
 export class CacheFilesComponent implements OnInit {
-  @Input() northConnector: NorthConnectorDTO | null = null;
-  cacheFiles: Array<NorthCacheFiles> = [];
-  @ViewChild('fileTable') fileTable!: FileTableComponent;
-  fileTablePages = emptyPage<FileTableData>();
+  private northConnectorService = inject(NorthConnectorService);
+  private modalService = inject(ModalService);
 
-  constructor(
-    private northConnectorService: NorthConnectorService,
-    private modalService: ModalService
-  ) {}
+  readonly northConnector = input<NorthConnectorDTO<NorthSettings> | null>(null);
+  cacheFiles: Array<NorthCacheFiles> = [];
+  readonly page = signal(0);
+  fileTablePages = emptyPage<FileTableData>();
+  readonly selectedFiles = signal<Array<FileTableData>>([]);
 
   ngOnInit() {
-    this.northConnectorService.getCacheFiles(this.northConnector!.id).subscribe(cacheFiles => {
+    this.northConnectorService.getCacheFiles(this.northConnector()!.id).subscribe(cacheFiles => {
       this.cacheFiles = cacheFiles;
       this.refreshCacheFiles();
     });
@@ -58,7 +39,7 @@ export class CacheFilesComponent implements OnInit {
    * By default, retry all checked files.
    */
   archiveCacheFiles(files: Array<string> = this.getCheckedFiles()) {
-    this.northConnectorService.archiveCacheFiles(this.northConnector!.id, files).subscribe(() => {
+    this.northConnectorService.archiveCacheFiles(this.northConnector()!.id, files).subscribe(() => {
       this.refreshCacheFiles();
     });
   }
@@ -68,18 +49,14 @@ export class CacheFilesComponent implements OnInit {
    * By default, remove all checked files.
    */
   removeCacheFiles(files: Array<string> = this.getCheckedFiles()) {
-    this.northConnectorService.removeCacheFiles(this.northConnector!.id, files).subscribe(() => {
+    this.northConnectorService.removeCacheFiles(this.northConnector()!.id, files).subscribe(() => {
       this.refreshCacheFiles();
     });
   }
 
   refreshCacheFiles() {
-    this.northConnectorService.getCacheFiles(this.northConnector!.id).subscribe(cacheFiles => {
+    this.northConnectorService.getCacheFiles(this.northConnector()!.id).subscribe(cacheFiles => {
       this.cacheFiles = cacheFiles;
-      if (this.fileTable) {
-        this.fileTable.refreshTable(cacheFiles);
-        this.fileTablePages = this.fileTable.pages;
-      }
     });
   }
 
@@ -92,7 +69,7 @@ export class CacheFilesComponent implements OnInit {
         this.archiveCacheFiles([event.file.filename]);
         break;
       case 'view':
-        this.northConnectorService.getCacheFileContent(this.northConnector!.id, event.file.filename).subscribe(async response => {
+        this.northConnectorService.getCacheFileContent(this.northConnector()!.id, event.file.filename).subscribe(async response => {
           if (!response.body) return;
           const content = await response.body.text();
           // Split header into content type and encoding
@@ -109,6 +86,6 @@ export class CacheFilesComponent implements OnInit {
   }
 
   private getCheckedFiles(): Array<string> {
-    return this.cacheFiles.filter(file => this.fileTable.checkboxByFiles.get(file.filename)).map(file => file.filename);
+    return this.selectedFiles().map(file => file.filename);
   }
 }

@@ -3,192 +3,206 @@ import fs from 'node:fs/promises';
 
 import SouthSQLite from './south-sqlite';
 import * as utils from '../../service/utils';
-import DatabaseMock, { all } from '../../tests/__mocks__/database.mock';
 import pino from 'pino';
 
-import PinoLogger from '../../tests/__mocks__/logger.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
-import RepositoryService from '../../service/repository.service';
-import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import { DateTime } from 'luxon';
 import {
   SouthSQLiteItemSettings,
   SouthSQLiteItemSettingsDateTimeFields,
   SouthSQLiteSettings
-} from '../../../../shared/model/south-settings.model';
+} from '../../../shared/model/south-settings.model';
+import SouthConnectorRepository from '../../repository/config/south-connector.repository';
+import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
+import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
+import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
+import { SouthConnectorEntity } from '../../model/south-connector.model';
+import testData from '../../tests/utils/test-data';
+import { mockBaseFolders } from '../../tests/utils/test-utils';
 
-jest.mock('../../service/utils');
 jest.mock('node:fs/promises');
+jest.mock('../../service/utils');
+
+const all = jest.fn();
+
+/**
+ * Create a mock object for SQLite database
+ */
+const DatabaseMock = jest.fn().mockImplementation(() => {
+  return {
+    prepare: jest.fn(),
+    transaction: jest.fn(),
+    close: jest.fn()
+  };
+});
+
 const mockDatabase = new DatabaseMock();
 jest.mock('better-sqlite3', () => () => mockDatabase);
 
-const database = new DatabaseMock();
+const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
+const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
+const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
+const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
+const southCacheService = new SouthCacheServiceMock();
+
 jest.mock(
   '../../service/south-cache.service',
   () =>
     function () {
-      return {
-        createSouthCacheScanModeTable: jest.fn(),
-        southCacheRepository: {
-          database
-        }
-      };
+      return southCacheService;
     }
 );
-
-jest.mock(
-  '../../service/south-connector-metrics.service',
-  () =>
-    function () {
-      return {
-        initMetrics: jest.fn(),
-        updateMetrics: jest.fn(),
-        get stream() {
-          return { stream: 'myStream' };
-        },
-        metrics: {
-          numberOfValuesRetrieved: 1,
-          numberOfFilesRetrieved: 1
-        }
-      };
-    }
-);
-const addValues = jest.fn();
-const addFile = jest.fn();
 
 const logger: pino.Logger = new PinoLogger();
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
-const repositoryService: RepositoryService = new RepositoryServiceMock();
-
-const items: Array<SouthConnectorItemDTO<SouthSQLiteItemSettings>> = [
-  {
-    id: 'id1',
-    name: 'item1',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {
-      query: 'SELECT * FROM table WHERE timestamp > @StartTime and timestamp < @EndTime',
-      dateTimeFields: [
-        {
-          fieldName: 'anotherTimestamp',
-          useAsReference: false,
-          type: 'unix-epoch-ms',
-          timezone: null,
-          format: null,
-          locale: null
-        } as unknown as SouthSQLiteItemSettingsDateTimeFields,
-        {
-          fieldName: 'timestamp',
-          useAsReference: true,
-          type: 'string',
-          timezone: 'Europe/Paris',
-          format: 'yyyy-MM-dd HH:mm:ss.SSS',
-          locale: 'en-US'
-        }
-      ],
-      serialization: {
-        type: 'csv',
-        filename: 'sql-@CurrentDate.csv',
-        delimiter: 'COMMA',
-        compression: true,
-        outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-        outputTimezone: 'Europe/Paris'
-      }
-    },
-    scanModeId: 'scanModeId1'
-  },
-  {
-    id: 'id2',
-    name: 'item2',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {
-      query: 'SELECT * FROM table',
-      dateTimeFields: null,
-      serialization: {
-        type: 'csv',
-        filename: 'sql-@CurrentDate.csv',
-        delimiter: 'COMMA',
-        compression: true,
-        outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-        outputTimezone: 'Europe/Paris'
-      }
-    },
-    scanModeId: 'scanModeId1'
-  },
-  {
-    id: 'id3',
-    name: 'item3',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {
-      query: 'SELECT * FROM table',
-      dateTimeFields: [
-        {
-          fieldName: 'anotherTimestamp',
-          useAsReference: false,
-          type: 'unix-epoch-ms',
-          timezone: null,
-          format: null,
-          locale: null
-        } as unknown as SouthSQLiteItemSettingsDateTimeFields,
-        {
-          fieldName: 'timestamp',
-          useAsReference: true,
-          type: 'string',
-          timezone: 'Europe/Paris',
-          format: 'yyyy-MM-dd HH:mm:ss.SSS',
-          locale: 'en-US'
-        }
-      ],
-      serialization: {
-        type: 'csv',
-        filename: 'sql-@CurrentDate.csv',
-        delimiter: 'COMMA',
-        compression: true,
-        outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-        outputTimezone: 'Europe/Paris'
-      }
-    },
-    scanModeId: 'scanModeId2'
-  }
-];
-const configuration: SouthConnectorDTO<SouthSQLiteSettings> = {
-  id: 'southId',
-  name: 'south',
-  type: 'sqlite',
-  description: 'my test connector',
-  enabled: true,
-  history: {
-    maxInstantPerItem: true,
-    maxReadInterval: 3600,
-    readDelay: 0,
-    overlap: 0
-  },
-  settings: {
-    databasePath: './database.db'
-  }
-};
-
-const nowDateString = '2020-02-02T02:02:02.222Z';
-let south: SouthSQLite;
+const addContentCallback = jest.fn();
 
 describe('SouthSQLite', () => {
+  let south: SouthSQLite;
+  const configuration: SouthConnectorEntity<SouthSQLiteSettings, SouthSQLiteItemSettings> = {
+    id: 'southId',
+    name: 'south',
+    type: 'sqlite',
+    description: 'my test connector',
+    enabled: true,
+    settings: {
+      throttling: {
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
+      },
+      databasePath: './database.db'
+    },
+    items: [
+      {
+        id: 'id1',
+        name: 'item1',
+        enabled: true,
+        settings: {
+          query: 'SELECT * FROM table WHERE timestamp > @StartTime and timestamp < @EndTime',
+          dateTimeFields: [
+            {
+              fieldName: 'anotherTimestamp',
+              useAsReference: false,
+              type: 'unix-epoch-ms',
+              timezone: null,
+              format: null,
+              locale: null
+            } as unknown as SouthSQLiteItemSettingsDateTimeFields,
+            {
+              fieldName: 'timestamp',
+              useAsReference: true,
+              type: 'string',
+              timezone: 'Europe/Paris',
+              format: 'yyyy-MM-dd HH:mm:ss.SSS',
+              locale: 'en-US'
+            }
+          ],
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id2',
+        name: 'item2',
+        enabled: true,
+        settings: {
+          query: 'SELECT * FROM table',
+          dateTimeFields: null,
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id3',
+        name: 'item3',
+        enabled: true,
+        settings: {
+          query: 'SELECT * FROM table',
+          dateTimeFields: [
+            {
+              fieldName: 'anotherTimestamp',
+              useAsReference: false,
+              type: 'unix-epoch-ms',
+              timezone: null,
+              format: null,
+              locale: null
+            } as unknown as SouthSQLiteItemSettingsDateTimeFields,
+            {
+              fieldName: 'timestamp',
+              useAsReference: true,
+              type: 'string',
+              timezone: 'Europe/Paris',
+              format: 'yyyy-MM-dd HH:mm:ss.SSS',
+              locale: 'en-US'
+            }
+          ],
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId2'
+      }
+    ]
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
-    (utils.generateReplacementParameters as jest.Mock).mockReturnValue([new Date(nowDateString), new Date(nowDateString)]);
+    (utils.generateReplacementParameters as jest.Mock).mockReturnValue([
+      new Date(testData.constants.dates.FAKE_NOW),
+      new Date(testData.constants.dates.FAKE_NOW)
+    ]);
 
-    south = new SouthSQLite(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthSQLite(
+      configuration,
+      addContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      mockBaseFolders(configuration.id)
+    );
+  });
+
+  it('should get throttling settings', () => {
+    expect(south.getThrottlingSettings(configuration.settings)).toEqual({
+      maxReadInterval: configuration.settings.throttling.maxReadInterval,
+      readDelay: configuration.settings.throttling.readDelay
+    });
+    expect(south.getMaxInstantPerItem(configuration.settings)).toEqual(false);
+    expect(south.getOverlap(configuration.settings)).toEqual(configuration.settings.throttling.overlap);
   });
 
   it('should create temp folder', async () => {
     await south.start();
-    expect(utils.createFolder).toHaveBeenCalledWith(path.resolve('baseFolder', 'tmp'));
+    expect(utils.createFolder).toHaveBeenCalledWith(path.resolve(mockBaseFolders(configuration.id).cache, 'tmp'));
   });
 
   it('should properly run historyQuery', async () => {
@@ -210,15 +224,15 @@ describe('SouthSQLite', () => {
       .mockReturnValue(startTime);
     (utils.convertDateTimeToInstant as jest.Mock).mockImplementation(instant => instant);
 
-    await south.historyQuery(items, startTime, nowDateString);
+    await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
     expect(utils.persistResults).toHaveBeenCalledTimes(2);
     expect(south.queryData).toHaveBeenCalledTimes(3);
-    expect(south.queryData).toHaveBeenCalledWith(items[0], startTime, nowDateString);
-    expect(south.queryData).toHaveBeenCalledWith(items[1], startTime, nowDateString);
-    expect(south.queryData).toHaveBeenCalledWith(items[2], startTime, nowDateString);
+    expect(south.queryData).toHaveBeenCalledWith(configuration.items[0], startTime, testData.constants.dates.FAKE_NOW);
+    expect(south.queryData).toHaveBeenCalledWith(configuration.items[1], startTime, testData.constants.dates.FAKE_NOW);
+    expect(south.queryData).toHaveBeenCalledWith(configuration.items[2], startTime, testData.constants.dates.FAKE_NOW);
 
-    expect(logger.info).toHaveBeenCalledWith(`Found 2 results for item ${items[0].name} in 0 ms`);
-    expect(logger.debug).toHaveBeenCalledWith(`No result found for item ${items[2].name}. Request done in 0 ms`);
+    expect(logger.info).toHaveBeenCalledWith(`Found 2 results for item ${configuration.items[0].name} in 0 ms`);
+    expect(logger.debug).toHaveBeenCalledWith(`No result found for item ${configuration.items[2].name}. Request done in 0 ms`);
   });
 
   it('should get data from sqlite', async () => {
@@ -231,10 +245,10 @@ describe('SouthSQLite', () => {
       .mockReturnValueOnce(DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'));
 
     (mockDatabase.prepare as jest.Mock).mockReturnValue({ all });
-    const result = await south.queryData(items[0], startTime, endTime);
+    const result = await south.queryData(configuration.items[0], startTime, endTime);
 
     expect(utils.logQuery).toHaveBeenCalledWith(
-      items[0].settings.query,
+      configuration.items[0].settings.query,
       DateTime.fromISO(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'),
       DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'),
       logger
@@ -250,9 +264,9 @@ describe('SouthSQLite', () => {
     all.mockReturnValue([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
 
     (mockDatabase.prepare as jest.Mock).mockReturnValue({ all });
-    const result = await south.queryData(items[1], startTime, endTime);
+    const result = await south.queryData(configuration.items[1], startTime, endTime);
     expect(utils.formatInstant).not.toHaveBeenCalled();
-    expect(utils.logQuery).toHaveBeenCalledWith(items[1].settings.query, startTime, endTime, logger);
+    expect(utils.logQuery).toHaveBeenCalledWith(configuration.items[1].settings.query, startTime, endTime, logger);
 
     expect(result).toEqual([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
   });
@@ -266,22 +280,167 @@ describe('SouthSQLite', () => {
 
     let error;
     try {
-      await south.queryData(items[1], startTime, endTime);
+      await south.queryData(configuration.items[1], startTime, endTime);
     } catch (err) {
       error = err;
     }
 
     expect(error).toEqual(new Error('query error'));
   });
+
+  it('should test item', async () => {
+    const formattedInstant = '2020-01-01T00:00:00.000Z';
+    south.queryData = jest.fn().mockReturnValueOnce([
+      { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
+      { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
+    ]);
+    (utils.formatInstant as jest.Mock).mockReturnValue(formattedInstant);
+    (utils.convertDateTimeToInstant as jest.Mock).mockImplementation(instant => instant);
+
+    const callback = jest.fn();
+    await south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback);
+    const { startTime, endTime } = testData.south.itemTestingSettings.history!;
+    expect(south.queryData).toHaveBeenCalledWith(configuration.items[0], startTime, endTime);
+  });
+
+  it('should test item without datetimeFields', async () => {
+    const formattedInstant = '2020-01-01T00:00:00.000Z';
+    south.queryData = jest.fn().mockReturnValueOnce([
+      { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
+      { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
+    ]);
+    (utils.formatInstant as jest.Mock).mockReturnValue(formattedInstant);
+    (utils.convertDateTimeToInstant as jest.Mock).mockImplementation(instant => instant);
+
+    const callback = jest.fn();
+    await south.testItem(configuration.items[1], testData.south.itemTestingSettings, callback);
+    const { startTime, endTime } = testData.south.itemTestingSettings.history!;
+    expect(south.queryData).toHaveBeenCalledWith(configuration.items[1], startTime, endTime);
+  });
 });
 
 describe('SouthSQLite test connection', () => {
+  let south: SouthSQLite;
+  const configuration: SouthConnectorEntity<SouthSQLiteSettings, SouthSQLiteItemSettings> = {
+    id: 'southId',
+    name: 'south',
+    type: 'sqlite',
+    description: 'my test connector',
+    enabled: true,
+    settings: {
+      throttling: {
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
+      },
+      databasePath: './database.db'
+    },
+    items: [
+      {
+        id: 'id1',
+        name: 'item1',
+        enabled: true,
+        settings: {
+          query: 'SELECT * FROM table WHERE timestamp > @StartTime and timestamp < @EndTime',
+          dateTimeFields: [
+            {
+              fieldName: 'anotherTimestamp',
+              useAsReference: false,
+              type: 'unix-epoch-ms',
+              timezone: null,
+              format: null,
+              locale: null
+            } as unknown as SouthSQLiteItemSettingsDateTimeFields,
+            {
+              fieldName: 'timestamp',
+              useAsReference: true,
+              type: 'string',
+              timezone: 'Europe/Paris',
+              format: 'yyyy-MM-dd HH:mm:ss.SSS',
+              locale: 'en-US'
+            }
+          ],
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id2',
+        name: 'item2',
+        enabled: true,
+        settings: {
+          query: 'SELECT * FROM table',
+          dateTimeFields: null,
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id3',
+        name: 'item3',
+        enabled: true,
+        settings: {
+          query: 'SELECT * FROM table',
+          dateTimeFields: [
+            {
+              fieldName: 'anotherTimestamp',
+              useAsReference: false,
+              type: 'unix-epoch-ms',
+              timezone: null,
+              format: null,
+              locale: null
+            } as unknown as SouthSQLiteItemSettingsDateTimeFields,
+            {
+              fieldName: 'timestamp',
+              useAsReference: true,
+              type: 'string',
+              timezone: 'Europe/Paris',
+              format: 'yyyy-MM-dd HH:mm:ss.SSS',
+              locale: 'en-US'
+            }
+          ],
+          serialization: {
+            type: 'csv',
+            filename: 'sql-@CurrentDate.csv',
+            delimiter: 'COMMA',
+            compression: true,
+            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+            outputTimezone: 'Europe/Paris'
+          }
+        },
+        scanModeId: 'scanModeId2'
+      }
+    ]
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
-
-    south = new SouthSQLite(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
+    south = new SouthSQLite(
+      configuration,
+      addContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      mockBaseFolders(configuration.id)
+    );
   });
 
   const dbPath = path.resolve(configuration.settings.databasePath);

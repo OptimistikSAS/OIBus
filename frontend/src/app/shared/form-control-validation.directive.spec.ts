@@ -13,7 +13,6 @@ import { ComponentTester } from 'ngx-speculoos';
       <button id="save">Save</button>
     </form>
   `,
-  standalone: true,
   imports: [ReactiveFormsModule, FormControlValidationDirective]
 })
 class FormComponent {

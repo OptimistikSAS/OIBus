@@ -1,53 +1,54 @@
-import { Component, OnInit } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
-import { SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { Component, inject, OnInit } from '@angular/core';
+import { TranslateDirective } from '@ngx-translate/core';
+import { SouthConnectorLightDTO } from '../../../../backend/shared/model/south-connector.model';
 import { SouthConnectorService } from '../services/south-connector.service';
 import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
 import { ConfirmationService } from '../shared/confirmation.service';
 import { NotificationService } from '../shared/notification.service';
-import { AsyncPipe, NgForOf, NgIf } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ModalService } from '../shared/modal.service';
 import { ChooseSouthConnectorTypeModalComponent } from './choose-south-connector-type-modal/choose-south-connector-type-modal.component';
-import { EnabledEnumPipe } from '../shared/enabled-enum.pipe';
 import { FormControlValidationDirective } from '../shared/form-control-validation.directive';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
-import { createPageFromArray, Page } from '../../../../shared/model/types';
+import { createPageFromArray, Page } from '../../../../backend/shared/model/types';
 import { emptyPage } from '../shared/test-utils';
 import { PaginationComponent } from '../shared/pagination/pagination.component';
 import { ObservableState } from '../shared/save-button/save-button.component';
 import { LegendComponent } from '../shared/legend/legend.component';
-
+import { OIBusSouthTypeEnumPipe } from '../shared/oibus-south-type-enum.pipe';
 const PAGE_SIZE = 15;
 
 @Component({
   selector: 'oib-south-list',
-  standalone: true,
   imports: [
-    TranslateModule,
+    TranslateDirective,
     RouterLink,
-    NgIf,
-    NgForOf,
-    EnabledEnumPipe,
     FormControlValidationDirective,
     FormsModule,
     LoadingSpinnerComponent,
     ReactiveFormsModule,
     PaginationComponent,
     AsyncPipe,
-    LegendComponent
+    LegendComponent,
+    OIBusSouthTypeEnumPipe
   ],
   templateUrl: './south-list.component.html',
   styleUrl: './south-list.component.scss'
 })
 export class SouthListComponent implements OnInit {
-  allSouths: Array<SouthConnectorDTO> | null = null;
-  private filteredSouths: Array<SouthConnectorDTO> = [];
-  displayedSouths: Page<SouthConnectorDTO> = emptyPage();
+  private confirmationService = inject(ConfirmationService);
+  private notificationService = inject(NotificationService);
+  private modalService = inject(ModalService);
+  private southConnectorService = inject(SouthConnectorService);
+
+  allSouths: Array<SouthConnectorLightDTO> | null = null;
+  private filteredSouths: Array<SouthConnectorLightDTO> = [];
+  displayedSouths: Page<SouthConnectorLightDTO> = emptyPage();
   states = new Map<string, ObservableState>();
 
-  searchForm = this.fb.group({
+  searchForm = inject(NonNullableFormBuilder).group({
     name: [null as string | null]
   });
 
@@ -55,14 +56,6 @@ export class SouthListComponent implements OnInit {
     { label: 'south.disabled', class: 'grey-dot' },
     { label: 'south.enabled', class: 'green-dot' }
   ];
-
-  constructor(
-    private confirmationService: ConfirmationService,
-    private notificationService: NotificationService,
-    private modalService: ModalService,
-    private southConnectorService: SouthConnectorService,
-    private fb: NonNullableFormBuilder
-  ) {}
 
   ngOnInit() {
     this.southConnectorService.list().subscribe(souths => {
@@ -86,7 +79,7 @@ export class SouthListComponent implements OnInit {
   /**
    * Delete a South connector by its ID
    */
-  deleteSouth(south: SouthConnectorDTO) {
+  deleteSouth(south: SouthConnectorLightDTO) {
     this.confirmationService
       .confirm({
         messageKey: 'south.confirm-deletion',
@@ -128,11 +121,11 @@ export class SouthListComponent implements OnInit {
     this.displayedSouths = this.createPage(pageNumber);
   }
 
-  private createPage(pageNumber: number): Page<SouthConnectorDTO> {
+  private createPage(pageNumber: number): Page<SouthConnectorLightDTO> {
     return createPageFromArray(this.filteredSouths, PAGE_SIZE, pageNumber);
   }
 
-  filter(souths: Array<SouthConnectorDTO>): Array<SouthConnectorDTO> {
+  filter(souths: Array<SouthConnectorLightDTO>): Array<SouthConnectorLightDTO> {
     const formValue = this.searchForm.value;
     let filteredItems = souths;
 

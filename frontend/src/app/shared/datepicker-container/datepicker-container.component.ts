@@ -1,5 +1,4 @@
-/* eslint-disable @angular-eslint/no-host-metadata-property */
-import { Component, ContentChild } from '@angular/core';
+import { Component, contentChild } from '@angular/core';
 import { NgbInputDatepicker } from '@ng-bootstrap/ng-bootstrap';
 
 /**
@@ -18,14 +17,12 @@ import { NgbInputDatepicker } from '@ng-bootstrap/ng-bootstrap';
   templateUrl: './datepicker-container.component.html',
   host: {
     class: 'input-group'
-  },
-  standalone: true
+  }
 })
 export class DatepickerContainerComponent {
-  @ContentChild(NgbInputDatepicker)
-  datePicker: NgbInputDatepicker | null = null;
+  readonly datePicker = contentChild.required(NgbInputDatepicker);
 
   toggle() {
-    this.datePicker!.toggle();
+    this.datePicker().toggle();
   }
 }

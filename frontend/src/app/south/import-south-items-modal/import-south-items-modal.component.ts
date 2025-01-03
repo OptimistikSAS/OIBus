@@ -1,57 +1,57 @@
-import { Component } from '@angular/core';
-import { NgbActiveModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
-import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
-import { TranslateModule } from '@ngx-translate/core';
-import { formDirectives } from '../../shared/form-directives';
-import { SouthConnectorItemDTO, SouthConnectorItemManifest } from '../../../../../shared/model/south-connector.model';
-import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
-import { NgForOf, NgIf, NgSwitch, NgSwitchCase } from '@angular/common';
-import { OibCodeBlockComponent } from '../../shared/form/oib-code-block/oib-code-block.component';
+import { Component, inject } from '@angular/core';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { ObservableState } from '../../shared/save-button/save-button.component';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import {
+  SouthConnectorItemCommandDTO,
+  SouthConnectorItemDTO,
+  SouthConnectorItemManifest
+} from '../../../../../backend/shared/model/south-connector.model';
+import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
+
 import { groupFormControlsByRow } from '../../shared/form-utils';
-import { OibScanModeComponent } from '../../shared/form/oib-scan-mode/oib-scan-mode.component';
-import { OibFormControl } from '../../../../../shared/model/form.model';
-import { FormComponent } from '../../shared/form/form.component';
-import { PipeProviderService } from '../../shared/form/pipe-provider.service';
+import { OibFormControl } from '../../../../../backend/shared/model/form.model';
+import { PaginationComponent } from '../../shared/pagination/pagination.component';
+import { createPageFromArray, Page } from '../../../../../backend/shared/model/types';
+import { emptyPage } from '../../shared/test-utils';
+import { SouthItemSettings } from '../../../../../backend/shared/model/south-settings.model';
+
+const PAGE_SIZE = 20;
 
 @Component({
   selector: 'oib-import-south-items-modal',
   templateUrl: './import-south-items-modal.component.html',
   styleUrl: './import-south-items-modal.component.scss',
-  imports: [
-    ...formDirectives,
-    TranslateModule,
-    SaveButtonComponent,
-    NgForOf,
-    NgSwitch,
-    NgSwitchCase,
-    NgIf,
-    OibCodeBlockComponent,
-    OibScanModeComponent,
-    NgbTypeahead,
-    FormComponent
-  ],
-  standalone: true
+  imports: [TranslateDirective, PaginationComponent, TranslatePipe]
 })
 export class ImportSouthItemsModalComponent {
+  private modal = inject(NgbActiveModal);
+
   state = new ObservableState();
   southItemSchema: SouthConnectorItemManifest | null = null;
   southItemRows: Array<Array<OibFormControl>> = [];
-  existingItemList: Array<SouthConnectorItemDTO> = [];
-  newItemList: Array<SouthConnectorItemDTO> = [];
-  errorList: Array<{ item: SouthConnectorItemDTO; message: string }> = [];
+  existingItemList: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>> = [];
+  newItemList: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>> = [];
+  errorList: Array<{
+    item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>;
+    error: string;
+  }> = [];
   scanModes: Array<ScanModeDTO> = [];
   displaySettings: Array<OibFormControl> = [];
-
-  constructor(
-    private modal: NgbActiveModal,
-    private pipeProviderService: PipeProviderService
-  ) {}
+  displayedItemsNew: Page<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>> = emptyPage();
+  displayedItemsError: Page<{
+    item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>;
+    error: string;
+  }> = emptyPage();
 
   prepare(
     southItemSchema: SouthConnectorItemManifest,
-    existingItemList: Array<SouthConnectorItemDTO>,
-    newItemList: Array<SouthConnectorItemDTO>,
-    errorList: Array<{ item: SouthConnectorItemDTO; message: string }>,
+    existingItemList: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>>,
+    newItemList: Array<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>>,
+    errorList: Array<{
+      item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>;
+      error: string;
+    }>,
     scanModes: Array<ScanModeDTO>
   ) {
     this.existingItemList = existingItemList;
@@ -62,6 +62,8 @@ export class ImportSouthItemsModalComponent {
 
     this.southItemSchema = southItemSchema;
     this.scanModes = scanModes;
+    this.changePageNew(0);
+    this.changePageError(0);
   }
 
   cancel() {
@@ -76,11 +78,36 @@ export class ImportSouthItemsModalComponent {
     return this.scanModes.find(scanMode => scanMode.id === scanModeId);
   }
 
-  getFieldValue(element: any, field: string, pipeIdentifier: string | undefined): string {
-    const value = element[field];
-    if (value && pipeIdentifier && this.pipeProviderService.validIdentifier(pipeIdentifier)) {
-      return this.pipeProviderService.getPipeForString(pipeIdentifier).transform(value);
-    }
-    return value;
+  getFieldValue(element: any, field: string): string {
+    return element[field];
+  }
+
+  changePageNew(pageNumber: number) {
+    this.displayedItemsNew = this.createPageNew(pageNumber);
+  }
+
+  changePageError(pageNumber: number) {
+    this.displayedItemsError = this.createPageError(pageNumber);
+  }
+
+  private createPageNew(
+    pageNumber: number
+  ): Page<SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>> {
+    return createPageFromArray(this.newItemList, PAGE_SIZE, pageNumber);
+  }
+
+  private createPageError(pageNumber: number): Page<{
+    item: SouthConnectorItemDTO<SouthItemSettings> | SouthConnectorItemCommandDTO<SouthItemSettings>;
+    error: string;
+  }> {
+    return createPageFromArray(this.errorList, PAGE_SIZE, pageNumber);
+  }
+
+  toggleItemNew() {
+    this.changePageNew(this.displayedItemsNew.number);
+  }
+
+  toggleItemError() {
+    this.changePageNew(this.displayedItemsError.number);
   }
 }

@@ -17,19 +17,18 @@ The OIBus home page show enabled connectors and the engine with their associated
 
 <div style={{textAlign: 'center'}}>
 
-  ![Home page](./first_access/home-page.png)
+  ![Home page](../../../static/img/guide/installation/first_access/home-page.png)
 
 </div>
 
 The magnifying glass icon redirect you to the display page of the connector or of the engine.
 
 ### Engine
-The engine page allows you to set logger, [Scan Modes](../engine/scan-modes.md), [IP Filters](../engine/ip-filters.md)
-and [External Sources](../engine/external-sources.md).
+The engine page allows you to set logger, [Scan Modes](../engine/scan-modes.md) and [IP Filters](../engine/ip-filters.md).
 
 <div style={{textAlign: 'center'}}>
 
-  ![Engine](./first_access/engine.png)
+  ![Engine](../../../static/img/guide/installation/first_access/engine.png)
 
 </div>
 
@@ -37,7 +36,19 @@ The restart button and the shutdown button has an effect on the engine only, not
 the connectors, but not the web service, which allows you to still access the OIBus interface.
 
 When installing OIBus, remember to choose an appropriate name. The _Engine name_ is important mainly if you use several
-OIBus and send the logs to a remote [loki instance](../engine/engine-settings.md#loki).
+OIBus and send the logs to a remote [loki instance](../engine/engine-settings.md#loki) or when you register OIBus into OIAnalytics.
+
+[Registering OIBus into OIAnalytics](../engine/oianalytics-registration) is useful when sending data to a [North OIAnalytics](../north-connectors/oianalytics)
+connector and when sending logs to OIAnalytics. From OIAnalytics, once registered, you can update OIBus remotely or parse the logs.
+
+:::tip Allow remote access by adding an IP filter with curl
+If you want to automatize the setup of OIBus, and access it remotely, you can send a curl command to accept connection
+from various IP addresses. Here is an example that accepts all IP addresses.
+
+```curl title="curl command"
+curl --location --request POST "http://localhost:2223/api/ip-filters" --header "Content-Type: application/json" --data-raw "{\"address\": \"*\", \"description\": \"All\" }" -u "admin:pass"
+```
+:::
 
 
 ### North
@@ -48,7 +59,7 @@ editing form, create a duplicate, or delete it.
 
 <div style={{textAlign: 'center'}}>
 
-  ![North](./first_access/north.png)
+  ![North](../../../static/img/guide/installation/first_access/north.png)
 
 </div>
 
@@ -61,12 +72,12 @@ editing form, create a duplicate, or delete it.
 
 <div style={{textAlign: 'center'}}>
 
-  ![South](./first_access/south.png)
+  ![South](../../../static/img/guide/installation/first_access/south.png)
 
 </div>
 
 ### History
-To add a North connector, simply click the "+" button. You can then either create a History query from scratch or
+To add a History query, simply click the "+" button. You can then either create a History query from scratch or
 by importing existing South or North settings.
 
 On the list's right-hand side, you have the options to activate/deactivate a connector, access its display page or
@@ -74,7 +85,7 @@ editing form, create a duplicate, or delete it.
 
 <div style={{textAlign: 'center'}}>
 
-  ![History Queries](./first_access/history-query.png)
+  ![History Queries](../../../static/img/guide/installation/first_access/history-query.png)
 
 </div>
 
@@ -85,7 +96,7 @@ or the content of the log message.
 
 <div style={{textAlign: 'center'}}>
 
-  ![Logs](./first_access/logs.png)
+  ![Logs](../../../static/img/guide/installation/first_access/logs.png)
 
 </div>
 
@@ -94,7 +105,7 @@ Information about the OIBus process and link to the documentation.
 
 <div style={{textAlign: 'center'}}>
 
-  ![About](./first_access/about.png)
+  ![About](../../../static/img/guide/installation/first_access/about.png)
 
 </div>
 
@@ -103,7 +114,7 @@ You can modify your password and select the timezone for how you'd like dates to
 
 <div style={{textAlign: 'center'}}>
 
-  ![User settings](./first_access/user-settings.png)
+  ![User settings](../../../static/img/guide/installation/first_access/user-settings.png)
 
 </div>
 

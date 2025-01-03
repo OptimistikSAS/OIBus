@@ -1,10 +1,9 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { EngineService } from '../services/engine.service';
-import { EngineMetrics, EngineSettingsDTO } from '../../../../shared/model/engine.model';
-import { AsyncPipe, NgForOf, NgIf } from '@angular/common';
+import { EngineMetrics, EngineSettingsDTO } from '../../../../backend/shared/model/engine.model';
+import { AsyncPipe } from '@angular/common';
 import { ScanModeListComponent } from './scan-mode-list/scan-mode-list.component';
-import { ExternalSourceListComponent } from './external-source-list/external-source-list.component';
 import { IpFilterListComponent } from './ip-filter-list/ip-filter-list.component';
 import { NotificationService } from '../shared/notification.service';
 import { ConfirmationService } from '../shared/confirmation.service';
@@ -18,16 +17,12 @@ import { CertificateListComponent } from './certificate-list/certificate-list.co
 
 @Component({
   selector: 'oib-engine-detail',
-  standalone: true,
   imports: [
-    NgIf,
-    TranslateModule,
+    TranslateDirective,
     ScanModeListComponent,
     CertificateListComponent,
-    ExternalSourceListComponent,
     IpFilterListComponent,
     AsyncPipe,
-    NgForOf,
     BoxComponent,
     EngineMetricsComponent,
     RouterLink
@@ -36,20 +31,16 @@ import { CertificateListComponent } from './certificate-list/certificate-list.co
   styleUrl: './engine-detail.component.scss'
 })
 export class EngineDetailComponent implements OnInit, OnDestroy {
+  private engineService = inject(EngineService);
+  private windowService = inject(WindowService);
+  private notificationService = inject(NotificationService);
+  private confirmationService = inject(ConfirmationService);
+  private cd = inject(ChangeDetectorRef);
+
   engineSettings: EngineSettingsDTO | null = null;
   connectorStream: EventSource | null = null;
   metrics: EngineMetrics | null = null;
-
   restarting = new ObservableState();
-  shuttingDown = new ObservableState();
-
-  constructor(
-    private engineService: EngineService,
-    private windowService: WindowService,
-    private notificationService: NotificationService,
-    private confirmationService: ConfirmationService,
-    private cd: ChangeDetectorRef
-  ) {}
 
   ngOnInit() {
     this.engineService.getEngineSettings().subscribe(settings => {
@@ -64,21 +55,6 @@ export class EngineDetailComponent implements OnInit, OnDestroy {
         this.cd.detectChanges();
       }
     };
-  }
-
-  shutdown() {
-    this.confirmationService
-      .confirm({
-        messageKey: 'engine.confirm-shutdown'
-      })
-      .pipe(
-        switchMap(() => {
-          return this.engineService.shutdown().pipe(this.shuttingDown.pendingUntilFinalization());
-        })
-      )
-      .subscribe(() => {
-        this.notificationService.success('engine.shutdown-complete');
-      });
   }
 
   restart() {

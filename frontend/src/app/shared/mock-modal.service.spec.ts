@@ -40,7 +40,7 @@ export class MockModalService<T> {
     } as unknown as Modal<T>;
   }
 
-  open(modalComponent: Type<T>, options?: ModalOptions): Modal<T> {
+  open(_modalComponent: Type<T>, _options?: ModalOptions): Modal<T> {
     if (!this.modal) {
       throw new Error('You need to setup your mock modal in your test by using mockClosedModal, mockDismissedModal...');
     }

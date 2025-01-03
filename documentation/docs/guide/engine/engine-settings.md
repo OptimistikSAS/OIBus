@@ -2,7 +2,7 @@
 sidebar_position: 1
 ---
 
-# OIBus Settings
+# Engine settings
 
 ## OIBus port
 
@@ -75,5 +75,5 @@ correctly to locate your OIBus logs within your Loki instance, specially if you 
 
 ### OIAnalytics
 
-If OIBus [is registered](./oianalytics-module.md), logs can be forwarded to OIAnalytics. Otherwise, these settings will
-be disregarded.
+If OIBus [is registered](./oianalytics-registration.mdx), logs can be forwarded to OIAnalytics. Otherwise, these
+settings will be disregarded.

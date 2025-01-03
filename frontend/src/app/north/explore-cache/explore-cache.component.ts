@@ -1,21 +1,17 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { SaveButtonComponent } from '../../shared/save-button/save-button.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { Component, OnInit, inject, viewChild } from '@angular/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
 import { NorthConnectorService } from '../../services/north-connector.service';
-import { NgForOf, NgIf } from '@angular/common';
-import { NorthConnectorDTO } from '../../../../../shared/model/north-connector.model';
+import { NorthConnectorDTO } from '../../../../../backend/shared/model/north-connector.model';
 import { of, switchMap } from 'rxjs';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { DatetimePipe } from '../../shared/datetime.pipe';
-import { PaginationComponent } from '../../shared/pagination/pagination.component';
+import { ActivatedRoute } from '@angular/router';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
-import { FileSizePipe } from '../../shared/file-size.pipe';
 import { ErrorFilesComponent } from './error-files/error-files.component';
 import { ArchiveFilesComponent } from './archive-files/archive-files.component';
 import { CacheFilesComponent } from './cache-files/cache-files.component';
 import { CacheValuesComponent } from './cache-values/cache-values.component';
 import { ErrorValuesComponent } from './error-values/error-values.component';
+import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
 @Component({
   selector: 'oib-explore-cache',
@@ -23,36 +19,25 @@ import { ErrorValuesComponent } from './error-values/error-values.component';
   styleUrl: './explore-cache.component.scss',
   imports: [
     ...formDirectives,
-    TranslateModule,
-    SaveButtonComponent,
-    NgForOf,
-    DatetimePipe,
-    NgIf,
-    PaginationComponent,
+    TranslateDirective,
     BackNavigationDirective,
-    FileSizePipe,
-    RouterLink,
     ErrorFilesComponent,
     ArchiveFilesComponent,
     CacheFilesComponent,
     CacheValuesComponent,
     ErrorValuesComponent
-  ],
-  standalone: true
+  ]
 })
 export class ExploreCacheComponent implements OnInit {
-  northConnector: NorthConnectorDTO | null = null;
-  @ViewChild(ArchiveFilesComponent) archiveFilesComponent!: ArchiveFilesComponent;
-  @ViewChild(ErrorFilesComponent) errorFilesComponent!: ErrorFilesComponent;
-  @ViewChild(CacheFilesComponent) cacheFilesComponent!: CacheFilesComponent;
+  private route = inject(ActivatedRoute);
+  private northConnectorService = inject(NorthConnectorService);
 
-  @ViewChild(CacheValuesComponent) cacheValuesComponent!: CacheValuesComponent;
-  @ViewChild(ErrorValuesComponent) errorValuesComponent!: ErrorValuesComponent;
-
-  constructor(
-    private route: ActivatedRoute,
-    private northConnectorService: NorthConnectorService
-  ) {}
+  northConnector: NorthConnectorDTO<NorthSettings> | null = null;
+  readonly archiveFilesComponent = viewChild.required(ArchiveFilesComponent);
+  readonly errorFilesComponent = viewChild.required(ErrorFilesComponent);
+  readonly cacheFilesComponent = viewChild.required(CacheFilesComponent);
+  readonly cacheValuesComponent = viewChild.required(CacheValuesComponent);
+  readonly errorValuesComponent = viewChild.required(ErrorValuesComponent);
 
   ngOnInit() {
     this.route.paramMap
@@ -71,11 +56,10 @@ export class ExploreCacheComponent implements OnInit {
   }
 
   refreshCache() {
-    this.errorFilesComponent.refreshErrorFiles();
-    this.archiveFilesComponent.refreshArchiveFiles();
-    this.cacheFilesComponent.refreshCacheFiles();
-
-    this.cacheValuesComponent.refreshCacheValues();
-    this.errorValuesComponent.refreshErrorValues();
+    this.errorFilesComponent().refreshErrorFiles();
+    this.archiveFilesComponent().refreshArchiveFiles();
+    this.cacheFilesComponent().refreshCacheFiles();
+    this.cacheValuesComponent().refreshCacheValues();
+    this.errorValuesComponent().refreshErrorValues();
   }
 }

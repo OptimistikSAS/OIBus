@@ -44,9 +44,6 @@ OIBus internally uses these dates in ISO UTC format, and the output datetime for
 If the `timestamp` field is utilized as a reference of type string, formatted as `yyyy-MM-dd HH:mm:ss`, the @StartTime
 and @EndTime will be injected into the query as `yyyy-MM-dd HH:mm:ss` format strings.
 
-
-If the timestamp field is utilized as a reference of type string, formatted as yyyy-MM-dd HH:mm:ss, the @StartTime and @EndTime will be injected into the query as yyyy-MM-dd HH:mm:ss format strings.
-
 In the subsequent query, the `datetime` field (retrieved from the database) is a DateTime object converted into a
 string (`timestamp`). OIBus will interpret the `timestamp` (string) field from the query as a reference field. However,
 injecting @StartTime and @EndTime as string variables in the same format may lead to unexpected behavior due to the
@@ -55,13 +52,13 @@ inconsistency between the injected @StartTime and @EndTime variables (string typ
 
 ```sql title="Bad SQL query with @StartTime and @EndTime and convert"
 SELECT data_name AS dataName, value, convert(datetime, DATETIME) AS timestamp FROM table
-WHERE datetime > @StartTime AND datetime < @EndTime
+WHERE datetime > @StartTime AND datetime <= @EndTime
 ```
 
 In the following case, the uniformity in formats guarantees proper functionality.
 ```sql title="Correct SQL query with @StartTime and @EndTime"
 SELECT data_name AS dataName, value, convert(datetime, DATETIME) AS timestamp FROM table
-WHERE convert(datetime, DATETIME) > @StartTime AND convert(datetime, DATETIME) < @EndTime
+WHERE convert(datetime, DATETIME) > @StartTime AND convert(datetime, DATETIME) <= @EndTime
 ```
 :::
 

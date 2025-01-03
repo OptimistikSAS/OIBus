@@ -7,7 +7,6 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
 @Component({
   template: `<oib-box [boxTitle]="title"> This is the content </oib-box>`,
-  standalone: true,
   imports: [BoxComponent, BoxTitleDirective]
 })
 class TestComponent {

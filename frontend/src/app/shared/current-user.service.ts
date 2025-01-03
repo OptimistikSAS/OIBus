@@ -1,8 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { catchError, Observable, of, shareReplay, switchMap } from 'rxjs';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Timezone } from '../../../../shared/model/types';
-import { User } from '../../../../shared/model/user.model';
+import { Timezone } from '../../../../backend/shared/model/types';
+import { User } from '../../../../backend/shared/model/user.model';
 import { WindowService } from './window.service';
 
 interface Token {
@@ -13,6 +13,9 @@ interface Token {
   providedIn: 'root'
 })
 export class CurrentUserService {
+  private http = inject(HttpClient);
+  private windowService = inject(WindowService);
+
   private currentUser$: Observable<User | null>;
 
   /**
@@ -22,16 +25,13 @@ export class CurrentUserService {
    */
   private timezone: Timezone;
 
-  constructor(
-    private http: HttpClient,
-    private windowService: WindowService
-  ) {
-    const storedToken = windowService.getStorageItem('oibus-token');
+  constructor() {
+    const storedToken = this.windowService.getStorageItem('oibus-token');
     this.currentUser$ = of(storedToken !== null).pipe(
       switchMap(authenticated => (authenticated ? this.retrieveConnection() : of(null))),
       shareReplay(1)
     );
-    this.timezone = windowService.timezoneToUse();
+    this.timezone = this.windowService.timezoneToUse();
   }
 
   /**

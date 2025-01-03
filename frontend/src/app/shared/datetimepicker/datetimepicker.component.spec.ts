@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { ComponentTester } from 'ngx-speculoos';
 import { TestDatetimepicker } from './datetimepicker.test-utils';
@@ -12,16 +12,18 @@ import { DatepickerContainerComponent } from '../datepicker-container/datepicker
 import { NgbInputDatepicker, NgbTimepicker } from '@ng-bootstrap/ng-bootstrap';
 import { NgTemplateOutlet } from '@angular/common';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import { provideCurrentUser } from '../current-user-testing';
 
 @Component({
   template: '',
-  standalone: true,
   imports: [DatetimepickerComponent, DatepickerContainerComponent, NgTemplateOutlet, NgbInputDatepicker, NgbTimepicker, ...formDirectives],
   providers: [noAnimation, provideDatepicker()]
 })
 class TestComponent {
   form: FormGroup;
-  constructor(fb: FormBuilder) {
+  constructor() {
+    const fb = inject(FormBuilder);
+
     this.form = fb.group({
       from: null as string | null
     });
@@ -51,7 +53,7 @@ describe('DatetimepickerComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideI18nTesting()]
+      providers: [provideI18nTesting(), provideCurrentUser()]
     });
   });
 
@@ -131,7 +133,7 @@ describe('DatetimepickerComponent', () => {
         TestComponent,
         `
         <form [formGroup]="form">
-          <oib-datetimepicker timeZone="UTC" formControlName="from"></oib-datetimepicker>
+          <oib-datetimepicker timezone="UTC" formControlName="from"></oib-datetimepicker>
         </form>`
       );
       tester = new TestComponentTester();
@@ -179,7 +181,7 @@ describe('DatetimepickerComponent', () => {
       expect(tester.datetimepicker.second).toHaveValue('00');
 
       tester.toggle.click();
-      expect(tester.firstWeekDay).toContainText('Su');
+      expect(tester.firstWeekDay).toContainText('S');
     });
   });
 });

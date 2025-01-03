@@ -1,7 +1,11 @@
-import { TestBed } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ComponentTester, createMock, TestInput } from 'ngx-speculoos';
 import { SouthConnectorService } from '../../services/south-connector.service';
-import { SouthConnectorDTO, SouthConnectorItemDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
+import {
+  SouthConnectorDTO,
+  SouthConnectorItemCommandDTO,
+  SouthConnectorManifest
+} from '../../../../../backend/shared/model/south-connector.model';
 import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
@@ -9,23 +13,58 @@ import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 import { SouthItemsComponent } from './south-items.component';
 import { Component } from '@angular/core';
-import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
+import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
+import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
+
+const testSouthConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> = {
+  id: 'southId',
+  name: 'South Connector',
+  items: [
+    {
+      id: 'id1',
+      name: 'item1',
+      enabled: true,
+      settings: {
+        query: 'sql'
+      } as SouthItemSettings,
+      scanModeId: 'scanModeId1'
+    },
+    {
+      id: 'id2',
+      name: 'item1-copy',
+      enabled: false,
+      settings: {
+        query: 'sql'
+      } as SouthItemSettings,
+      scanModeId: 'scanModeId1'
+    },
+    {
+      id: 'id3',
+      name: 'item3',
+      enabled: false,
+      settings: {
+        query: 'sql'
+      } as SouthItemSettings,
+      scanModeId: 'scanModeId1'
+    }
+  ]
+} as SouthConnectorDTO<SouthSettings, SouthItemSettings>;
 
 @Component({
   template: `<oib-south-items
+    [southId]="southConnector.id"
     [southConnector]="southConnector"
     [scanModes]="scanModes"
     [southManifest]="manifest"
-    [inMemory]="false"
-  ></oib-south-items>`,
-  standalone: true,
+    [saveChangesDirectly]="saveChangesDirectly"
+    (inMemoryItems)="updateInMemoryItems($event)"
+  />`,
   imports: [SouthItemsComponent]
 })
 class TestComponent {
-  southConnector: SouthConnectorDTO = {
-    id: 'southId',
-    name: 'South Connector'
-  } as SouthConnectorDTO;
+  _southConnectorService!: SouthConnectorService;
+
+  southConnector = structuredClone(testSouthConnector);
   scanModes: Array<ScanModeDTO> = [
     {
       id: 'scanModeId1',
@@ -37,17 +76,12 @@ class TestComponent {
   manifest: SouthConnectorManifest = {
     id: 'mssql',
     category: 'database',
-    name: 'SQL',
-    description: 'SQL',
     settings: [],
     items: {
-      scanMode: {
-        acceptSubscription: false,
-        subscriptionOnly: false
-      },
+      scanMode: 'POLL',
       settings: [
         {
-          label: 'query',
+          translationKey: 'south.items.mssql.query',
           key: 'query',
           displayInViewMode: true,
           type: 'OibText'
@@ -58,15 +92,27 @@ class TestComponent {
       subscription: false,
       history: true,
       lastFile: true,
-      lastPoint: false,
-      forceMaxInstantPerItem: false
+      lastPoint: false
     }
   };
+  saveChangesDirectly!: boolean;
+  inMemoryItems: Array<SouthConnectorItemCommandDTO<SouthItemSettings>> = [];
+  updateInMemoryItems(items: Array<SouthConnectorItemCommandDTO<SouthItemSettings>> | null) {
+    if (items) {
+      this.inMemoryItems = items;
+    } else {
+      this._southConnectorService.get(this.southConnector!.id).subscribe(southConnector => {
+        this.southConnector!.items = southConnector.items;
+        this.southConnector = JSON.parse(JSON.stringify(this.southConnector)); // Used to force a refresh in south item list
+      });
+    }
+  }
 }
 
 class SouthItemsComponentTester extends ComponentTester<TestComponent> {
-  constructor() {
+  constructor(readonly _southConnectorService: SouthConnectorService) {
     super(TestComponent);
+    this.componentInstance._southConnectorService = _southConnectorService;
   }
 
   get title() {
@@ -89,47 +135,32 @@ class SouthItemsComponentTester extends ComponentTester<TestComponent> {
     return this.elements('tbody tr.south-item');
   }
 
-  get importButton() {
-    return this.button('#import-button')!;
-  }
-
-  get fileInput() {
-    return this.input('#file')!;
-  }
-
   get spinner() {
     return this.element('#import-button .spinner-border')!;
   }
+
+  get sortByNameBtn() {
+    return this.button('button:has( > span[translate="south.items.name"])')!;
+  }
+
+  get sortByScanModeBtn() {
+    return this.button('button:has( > span[translate="south.items.scan-mode"])')!;
+  }
+
+  get tableItemNames() {
+    return this.elements<HTMLTableCellElement>('tbody tr.south-item td:nth-child(2)').map(e => e.nativeElement.innerText);
+  }
+
+  get tableScanModeNames() {
+    return this.elements<HTMLTableCellElement>('tbody tr.south-item td:nth-child(3)').map(e => e.nativeElement.innerText);
+  }
 }
 
-describe('SouthItemsComponent', () => {
+describe('SouthItemsComponent with saving changes directly', () => {
   let tester: SouthItemsComponentTester;
   let southConnectorService: jasmine.SpyObj<SouthConnectorService>;
   let confirmationService: jasmine.SpyObj<ConfirmationService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
-
-  const items: Array<SouthConnectorItemDTO> = [
-    {
-      id: 'id1',
-      name: 'item1',
-      enabled: true,
-      connectorId: 'southId',
-      settings: {
-        query: 'sql'
-      },
-      scanModeId: 'scanModeId1'
-    },
-    {
-      id: 'id2',
-      name: 'item2',
-      enabled: false,
-      connectorId: 'southId',
-      settings: {
-        query: 'sql'
-      },
-      scanModeId: 'scanModeId1'
-    }
-  ];
 
   beforeEach(() => {
     southConnectorService = createMock(SouthConnectorService);
@@ -146,65 +177,330 @@ describe('SouthItemsComponent', () => {
       ]
     });
 
-    southConnectorService.listItems.and.returnValue(of(items));
     southConnectorService.enableItem.and.returnValue(of(undefined));
     southConnectorService.disableItem.and.returnValue(of(undefined));
+    southConnectorService.deleteItem.and.returnValue(of(undefined));
     southConnectorService.deleteAllItems.and.returnValue(of(undefined));
     southConnectorService.exportItems.and.returnValue(of(undefined));
+    southConnectorService.get.and.returnValue(of(testSouthConnector));
 
-    tester = new SouthItemsComponentTester();
+    confirmationService.confirm.and.returnValue(of(undefined));
+
+    tester = new SouthItemsComponentTester(southConnectorService);
+    tester.componentInstance.saveChangesDirectly = true;
     tester.detectChanges();
   });
 
   it('should display items', () => {
-    expect(tester.southItems.length).toBe(2);
+    expect(tester.southItems.length).toBe(3);
     const item = tester.southItems[0];
-    expect(item.elements('td')[1]).toContainText('item1');
+    expect(item.elements('td')[1]).toContainText(testSouthConnector.items[0].name);
     expect(item.elements('td')[2]).toContainText('Every mn');
     expect(item.elements('td')[3]).toContainText('sql');
   });
 
   it('should enable south item', () => {
-    tester.toggleButtons[0].click();
-    expect(southConnectorService.disableItem).toHaveBeenCalledWith('southId', items[0].id);
-    expect(notificationService.success).toHaveBeenCalledWith('south.items.disabled', { name: items[0].name });
-    expect(southConnectorService.listItems).toHaveBeenCalledTimes(2);
+    const btnIdx = 1; // second one is disabled by default
+    tester.toggleButtons[btnIdx].click();
+    expect(southConnectorService.enableItem).toHaveBeenCalledWith('southId', testSouthConnector.items[btnIdx].id);
+    expect(notificationService.success).toHaveBeenCalledWith('south.items.enabled', { name: testSouthConnector.items[btnIdx].name });
   });
 
   it('should disable south item', () => {
-    tester.toggleButtons[1].click();
-    expect(southConnectorService.enableItem).toHaveBeenCalledWith('southId', items[1].id);
-    expect(notificationService.success).toHaveBeenCalledWith('south.items.enabled', { name: items[1].name });
-    expect(southConnectorService.listItems).toHaveBeenCalledTimes(2);
+    const btnIdx = 0; // first one is enabled by default
+    tester.toggleButtons[btnIdx].click();
+    expect(southConnectorService.disableItem).toHaveBeenCalledWith('southId', testSouthConnector.items[btnIdx].id);
+    expect(notificationService.success).toHaveBeenCalledWith('south.items.disabled', { name: testSouthConnector.items[btnIdx].name });
   });
 
   it('should delete all', () => {
-    confirmationService.confirm.and.returnValue(of(undefined));
+    southConnectorService.get.and.returnValue(of({ ...testSouthConnector, items: [] }));
 
     tester.deleteAllButton.click();
+
     expect(confirmationService.confirm).toHaveBeenCalledTimes(1);
     expect(southConnectorService.deleteAllItems).toHaveBeenCalledTimes(1);
     expect(notificationService.success).toHaveBeenCalledWith('south.items.all-deleted');
+    expect(tester.southItems.length).toBe(0);
   });
 
-  it('should export items', () => {
+  it('should sort items by name', () => {
+    const expectedOrder = tester.tableItemNames;
+
+    // Ascending
+    tester.sortByNameBtn.click();
+    expect(tester.tableItemNames).toEqual(expectedOrder);
+
+    // Descending
+    tester.sortByNameBtn.click();
+    expectedOrder.reverse();
+    expect(tester.tableItemNames).toEqual(expectedOrder);
+
+    // Unset
+    tester.sortByNameBtn.click();
+    expect(tester.tableItemNames).toEqual(expectedOrder);
+
+    // Ascending (this call reverses the list to the original sorting, if omitted, tests fail)
+    tester.sortByNameBtn.click();
+    expectedOrder.reverse();
+    expect(tester.tableItemNames).toEqual(expectedOrder);
+  });
+
+  it('should sort items by scan mode', () => {
+    const expectedOrder = tester.tableScanModeNames;
+
+    // Ascending
+    tester.sortByScanModeBtn.click();
+    expect(tester.tableScanModeNames).toEqual(expectedOrder);
+
+    // Descending
+    tester.sortByScanModeBtn.click();
+    expectedOrder.reverse();
+    expect(tester.tableScanModeNames).toEqual(expectedOrder);
+
+    // Unset
+    tester.sortByScanModeBtn.click();
+    expect(tester.tableScanModeNames).toEqual(expectedOrder);
+
+    // Ascending (this call reverses the list to the original sorting, if omitted, tests fail)
+    tester.sortByScanModeBtn.click();
+    expectedOrder.reverse();
+    expect(tester.tableScanModeNames).toEqual(expectedOrder);
+  });
+
+  it('should delete one item', () => {
+    // mock API response to delete first item
+    southConnectorService.get.and.returnValue(of({ ...testSouthConnector, items: testSouthConnector.items.slice(1) }));
+
+    tester.southItems[0].button('.delete-south-item')!.click();
+
+    expect(confirmationService.confirm).toHaveBeenCalledTimes(1);
+    expect(southConnectorService.deleteItem).toHaveBeenCalledTimes(1);
+    expect(tester.tableItemNames).toEqual(['item1-copy', 'item3']);
+  });
+
+  it('should reset sorting after deletion of an item', () => {
+    // Sort items descending
+    tester.sortByNameBtn.click(); // Ascending
+    tester.sortByNameBtn.click(); // Descending
+    expect(tester.tableItemNames).toEqual(['item3', 'item1-copy', 'item1']);
+
+    // mock API response to delete third item
+    southConnectorService.get.and.returnValue(of({ ...testSouthConnector, items: testSouthConnector.items.slice(0, 2) }));
+
+    tester.southItems[2].button('.delete-south-item')!.click();
+
+    expect(tester.tableItemNames).toEqual(['item1', 'item1-copy']);
+  });
+
+  it('should filter items', fakeAsync(() => {
+    const filterInput = tester.input('.oib-box-input-header');
+    filterInput?.fillWith('item1');
+    tick(300); // skip the 200ms debounce time
+    tester.detectChanges();
+
+    expect(tester.tableItemNames).toEqual(['item1', 'item1-copy']);
+  }));
+
+  it('should not reset sorting after filtering', fakeAsync(() => {
+    // Sort items descending
+    tester.sortByNameBtn.click(); // Ascending
+    tester.sortByNameBtn.click(); // Descending
+    expect(tester.tableItemNames).toEqual(['item3', 'item1-copy', 'item1']);
+
+    const filterInput = tester.input('.oib-box-input-header');
+    filterInput?.fillWith('item');
+    tick(300); // skip the 200ms debounce time
+    tester.detectChanges();
+
+    expect(tester.tableItemNames).toEqual(['item3', 'item1-copy', 'item1']);
+  }));
+
+  it('should be able to delete item when filtering', fakeAsync(() => {
+    const filterInput = tester.input('.oib-box-input-header');
+    filterInput?.fillWith('item3');
+    tick(300); // skip the 200ms debounce time
+    tester.detectChanges();
+
+    expect(tester.tableItemNames).toEqual(['item3']);
+
+    // Delete the third item in the list
+    southConnectorService.get.and.returnValue(of({ ...testSouthConnector, items: testSouthConnector.items.slice(0, 2) }));
+    tester.southItems[0].button('.delete-south-item')!.click();
+
+    expect(confirmationService.confirm).toHaveBeenCalledTimes(1);
+    expect(southConnectorService.deleteItem).toHaveBeenCalledTimes(1);
+    expect(tester.southItems).toEqual([]);
+
+    // Empty filter and make sure the items are correct
+    filterInput?.fillWith('');
+    tick(300); // skip the 200ms debounce time
+    tester.detectChanges();
+    expect(tester.tableItemNames).toEqual(['item1', 'item1-copy']);
+  }));
+});
+
+describe('SouthItemsComponent without saving changes directly', () => {
+  let tester: SouthItemsComponentTester;
+  let southConnectorService: jasmine.SpyObj<SouthConnectorService>;
+  let confirmationService: jasmine.SpyObj<ConfirmationService>;
+  let notificationService: jasmine.SpyObj<NotificationService>;
+
+  beforeEach(() => {
+    southConnectorService = createMock(SouthConnectorService);
+    confirmationService = createMock(ConfirmationService);
+    notificationService = createMock(NotificationService);
+
+    TestBed.configureTestingModule({
+      providers: [
+        provideI18nTesting(),
+        provideHttpClient(),
+        { provide: SouthConnectorService, useValue: southConnectorService },
+        { provide: ConfirmationService, useValue: confirmationService },
+        { provide: NotificationService, useValue: notificationService }
+      ]
+    });
+
+    southConnectorService.enableItem.and.returnValue(of(undefined));
+    southConnectorService.disableItem.and.returnValue(of(undefined));
+    southConnectorService.deleteItem.and.returnValue(of(undefined));
+    southConnectorService.deleteAllItems.and.returnValue(of(undefined));
+    southConnectorService.exportItems.and.returnValue(of(undefined));
+    southConnectorService.get.and.returnValue(of(testSouthConnector));
+
     confirmationService.confirm.and.returnValue(of(undefined));
 
-    tester.exportButton.click();
-    expect(southConnectorService.exportItems).toHaveBeenCalledWith('southId', 'South Connector');
+    tester = new SouthItemsComponentTester(southConnectorService);
+    tester.componentInstance.saveChangesDirectly = false;
+    tester.detectChanges();
   });
 
-  it('should select a file', () => {
-    spyOn(tester.fileInput.nativeElement, 'click');
-    tester.importButton.click();
-    expect(tester.fileInput.nativeElement.click).toHaveBeenCalled();
+  it('should display items', () => {
+    expect(tester.southItems.length).toBe(3);
+    const item = tester.southItems[0];
+    expect(item.elements('td')[1]).toContainText(testSouthConnector.items[0].name);
+    expect(item.elements('td')[2]).toContainText('Every mn');
+    expect(item.elements('td')[3]).toContainText('sql');
   });
 
-  it('should trigger the upload', () => {
-    southConnectorService.checkImportItems.and.returnValue(of({ items: [], errors: [] }));
-
-    const event = new Event('change');
-    tester.fileInput.dispatchEvent(event);
-    expect(southConnectorService.checkImportItems).toHaveBeenCalled();
+  it('should not have option to enable/disable south item', () => {
+    expect(tester.toggleButtons.length).toBe(0);
   });
+
+  it('should delete all', () => {
+    tester.deleteAllButton.click();
+
+    expect(confirmationService.confirm).toHaveBeenCalledTimes(1);
+    expect(southConnectorService.deleteAllItems).not.toHaveBeenCalled();
+    expect(notificationService.success).not.toHaveBeenCalled();
+    expect(tester.southItems.length).toBe(0);
+  });
+
+  it('should sort items by name', () => {
+    const expectedOrder = tester.tableItemNames;
+
+    // Ascending
+    tester.sortByNameBtn.click();
+    expect(tester.tableItemNames).toEqual(expectedOrder);
+
+    // Descending
+    tester.sortByNameBtn.click();
+    expectedOrder.reverse();
+    expect(tester.tableItemNames).toEqual(expectedOrder);
+
+    // Unset
+    tester.sortByNameBtn.click();
+    expect(tester.tableItemNames).toEqual(expectedOrder);
+
+    // Ascending (this call reverses the list to the original sorting, if omitted, tests fail)
+    tester.sortByNameBtn.click();
+    expectedOrder.reverse();
+    expect(tester.tableItemNames).toEqual(expectedOrder);
+  });
+
+  it('should sort items by scan mode', () => {
+    const expectedOrder = tester.tableScanModeNames;
+
+    // Ascending
+    tester.sortByScanModeBtn.click();
+    expect(tester.tableScanModeNames).toEqual(expectedOrder);
+
+    // Descending
+    tester.sortByScanModeBtn.click();
+    expectedOrder.reverse();
+    expect(tester.tableScanModeNames).toEqual(expectedOrder);
+
+    // Unset
+    tester.sortByScanModeBtn.click();
+    expect(tester.tableScanModeNames).toEqual(expectedOrder);
+
+    // Ascending (this call reverses the list to the original sorting, if omitted, tests fail)
+    tester.sortByScanModeBtn.click();
+    expectedOrder.reverse();
+    expect(tester.tableScanModeNames).toEqual(expectedOrder);
+  });
+
+  it('should delete one item', () => {
+    tester.southItems[0].button('.delete-south-item')!.click();
+
+    expect(confirmationService.confirm).toHaveBeenCalledTimes(1);
+    expect(southConnectorService.deleteItem).not.toHaveBeenCalled();
+    expect(tester.tableItemNames).toEqual(['item1-copy', 'item3']);
+  });
+
+  it('should reset sorting after deletion of an item', () => {
+    // Sort items descending
+    tester.sortByNameBtn.click(); // Ascending
+    tester.sortByNameBtn.click(); // Descending
+    expect(tester.tableItemNames).toEqual(['item3', 'item1-copy', 'item1']);
+
+    tester.southItems[0].button('.delete-south-item')!.click();
+
+    expect(tester.tableItemNames).toEqual(['item1', 'item1-copy']);
+  });
+
+  it('should filter items', fakeAsync(() => {
+    const filterInput = tester.input('.oib-box-input-header');
+    filterInput?.fillWith('item1');
+    tick(300); // skip the 200ms debounce time
+    tester.detectChanges();
+
+    expect(tester.tableItemNames).toEqual(['item1', 'item1-copy']);
+  }));
+
+  it('should not reset sorting after filtering', fakeAsync(() => {
+    // Sort items descending
+    tester.sortByNameBtn.click(); // Ascending
+    tester.sortByNameBtn.click(); // Descending
+    expect(tester.tableItemNames).toEqual(['item3', 'item1-copy', 'item1']);
+
+    const filterInput = tester.input('.oib-box-input-header');
+    filterInput?.fillWith('item');
+    tick(300); // skip the 200ms debounce time
+    tester.detectChanges();
+
+    expect(tester.tableItemNames).toEqual(['item3', 'item1-copy', 'item1']);
+  }));
+
+  it('should be able to delete item when filtering', fakeAsync(() => {
+    const filterInput = tester.input('.oib-box-input-header');
+    filterInput?.fillWith('item3');
+    tick(300); // skip the 200ms debounce time
+    tester.detectChanges();
+
+    expect(tester.tableItemNames).toEqual(['item3']);
+
+    // Delete the third item in the list
+    tester.southItems[0].button('.delete-south-item')!.click();
+
+    expect(confirmationService.confirm).toHaveBeenCalledTimes(1);
+    expect(southConnectorService.deleteItem).not.toHaveBeenCalled();
+    expect(tester.southItems).toEqual([]);
+
+    // Empty filter and make sure the items are correct
+    filterInput?.fillWith('');
+    tick(300); // skip the 200ms debounce time
+    tester.detectChanges();
+    expect(tester.tableItemNames).toEqual(['item1', 'item1-copy']);
+  }));
 });

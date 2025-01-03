@@ -3,16 +3,15 @@ import { TestBed } from '@angular/core/testing';
 import { ComponentTester } from 'ngx-speculoos';
 import { SouthMetricsComponent } from './south-metrics.component';
 import { Component } from '@angular/core';
-import { SouthConnectorDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
+import { SouthConnectorLightDTO, SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
 import { NotificationService } from '../../shared/notification.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
-import { SouthConnectorMetrics } from '../../../../../shared/model/engine.model';
+import { SouthConnectorMetrics } from '../../../../../backend/shared/model/engine.model';
 import { provideHttpClient } from '@angular/common/http';
 
 @Component({
-  template: `<oib-south-metrics [connectorMetrics]="metrics" [southConnector]="southConnector" [manifest]="manifest"></oib-south-metrics>`,
-  standalone: true,
+  template: `<oib-south-metrics [connectorMetrics]="metrics" [southConnector]="southConnector" [manifest]="manifest" />`,
   imports: [SouthMetricsComponent]
 })
 class TestComponent {
@@ -24,28 +23,22 @@ class TestComponent {
     numberOfValuesRetrieved: 11,
     numberOfFilesRetrieved: 12,
     lastValueRetrieved: { pointId: 'pointId', timestamp: '2020-02-02T00:00:00.000Z', data: { value: '13' } },
-    lastFileRetrieved: 'file',
-    historyMetrics: {}
+    lastFileRetrieved: 'file'
   };
-  southConnector: SouthConnectorDTO = {
+  southConnector: SouthConnectorLightDTO = {
     id: 'southId',
     name: 'South Connector'
-  } as SouthConnectorDTO;
+  } as SouthConnectorLightDTO;
 
   manifest: SouthConnectorManifest = {
     id: 'mssql',
     category: 'database',
-    name: 'SQL',
-    description: 'SQL',
     settings: [],
     items: {
-      scanMode: {
-        acceptSubscription: false,
-        subscriptionOnly: false
-      },
+      scanMode: 'POLL',
       settings: [
         {
-          label: 'query',
+          translationKey: 'query',
           key: 'query',
           displayInViewMode: true,
           type: 'OibText'
@@ -56,8 +49,7 @@ class TestComponent {
       subscription: false,
       history: true,
       lastFile: true,
-      lastPoint: false,
-      forceMaxInstantPerItem: false
+      lastPoint: false
     }
   };
 }

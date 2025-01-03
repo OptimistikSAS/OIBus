@@ -7,8 +7,8 @@ import { provideRouter } from '@angular/router';
 import { SouthConnectorService } from '../services/south-connector.service';
 import { NorthConnectorService } from '../services/north-connector.service';
 import { of } from 'rxjs';
-import { SouthConnectorDTO, SouthConnectorManifest } from '../../../../shared/model/south-connector.model';
-import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../shared/model/north-connector.model';
+import { SouthConnectorLightDTO, SouthConnectorManifest } from '../../../../backend/shared/model/south-connector.model';
+import { NorthConnectorLightDTO, NorthConnectorManifest } from '../../../../backend/shared/model/north-connector.model';
 import { EngineService } from '../services/engine.service';
 
 class HomeComponentTester extends ComponentTester<HomeComponent> {
@@ -60,18 +60,18 @@ describe('HomeComponent', () => {
 
     southService.list.and.returnValue(
       of([
-        { name: 'south1', enabled: true },
-        { name: 'south2', enabled: false },
-        { name: 'south3', enabled: true }
-      ] as Array<SouthConnectorDTO>)
+        { id: 'south1', name: 'south1', enabled: true },
+        { id: 'south2', name: 'south2', enabled: false },
+        { id: 'south3', name: 'south3', enabled: true }
+      ] as Array<SouthConnectorLightDTO>)
     );
 
     northService.list.and.returnValue(
       of([
-        { name: 'north1', enabled: true },
-        { name: 'north2', enabled: false },
-        { name: 'north2', enabled: true }
-      ] as Array<NorthConnectorDTO>)
+        { id: 'north1', name: 'north1', enabled: true },
+        { id: 'north2', name: 'north2', enabled: false },
+        { id: 'north3', name: 'north3', enabled: true }
+      ] as Array<NorthConnectorLightDTO>)
     );
     northService.getNorthConnectorTypeManifest.and.returnValue(of({} as NorthConnectorManifest));
     southService.getSouthConnectorTypeManifest.and.returnValue(of({} as SouthConnectorManifest));

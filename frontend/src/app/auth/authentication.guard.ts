@@ -24,7 +24,7 @@ export class RequestedUrlService {
  * The guard is currently only a CanActivateChild guard, but could also implement CanActivate using the same strategy if
  * needed.
  */
-export const authenticationGuard: CanActivateChildFn = (childRoute: ActivatedRouteSnapshot, routerState: RouterStateSnapshot) => {
+export const authenticationGuard: CanActivateChildFn = (_childRoute: ActivatedRouteSnapshot, routerState: RouterStateSnapshot) => {
   const windowService = inject(WindowService);
   const router = inject(Router);
   const requestedUrlService = inject(RequestedUrlService);

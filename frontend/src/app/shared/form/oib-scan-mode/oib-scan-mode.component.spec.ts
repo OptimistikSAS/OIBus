@@ -2,33 +2,26 @@ import { TestBed } from '@angular/core/testing';
 
 import { OibScanModeComponent } from './oib-scan-mode.component';
 import { Component } from '@angular/core';
-import { OibScanModeFormControl } from '../../../../../../shared/model/form.model';
+import { OibScanModeFormControl } from '../../../../../../backend/shared/model/form.model';
 import { formDirectives } from '../../form-directives';
 import { ComponentTester } from 'ngx-speculoos';
 import { FormControl, FormGroup } from '@angular/forms';
-import { ScanModeDTO } from '../../../../../../shared/model/scan-mode.model';
+import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 
 @Component({
   template: `<form [formGroup]="form">
     <div formGroupName="settings">
-      <oib-scan-mode
-        [scanModes]="scanModes"
-        [key]="settings.key"
-        [formControlName]="settings.key"
-        [acceptSubscription]="true"
-        [subscriptionOnly]="false"
-      ></oib-scan-mode>
+      <oib-scan-mode [scanModes]="scanModes" [key]="settings.key" [formControlName]="settings.key" [scanModeType]="'POLL'" />
     </div>
   </form>`,
-  standalone: true,
   imports: [OibScanModeComponent, ...formDirectives]
 })
 class TestComponent {
   settings: OibScanModeFormControl = {
     key: 'myOibScanMode',
     type: 'OibScanMode',
-    label: 'Scan mode field'
+    translationKey: 'Scan mode field'
   } as OibScanModeFormControl;
   scanModes: Array<ScanModeDTO> = [
     { id: 'id1', name: 'scanMode1', description: '', cron: '* * * * *' },

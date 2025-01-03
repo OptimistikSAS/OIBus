@@ -3,7 +3,7 @@ import { ComponentTester, createMock, stubRoute } from 'ngx-speculoos';
 import { TestBed } from '@angular/core/testing';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { of } from 'rxjs';
-import { NorthConnectorDTO } from '../../../../../shared/model/north-connector.model';
+import { NorthConnectorDTO } from '../../../../../backend/shared/model/north-connector.model';
 import { By } from '@angular/platform-browser';
 import { ErrorFilesComponent } from './error-files/error-files.component';
 import { ArchiveFilesComponent } from './archive-files/archive-files.component';
@@ -13,6 +13,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { CacheFilesComponent } from './cache-files/cache-files.component';
 import { CacheValuesComponent } from './cache-values/cache-values.component';
 import { ErrorValuesComponent } from './error-values/error-values.component';
+import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
 class ExploreCacheComponentTester extends ComponentTester<ExploreCacheComponent> {
   constructor() {
@@ -47,9 +48,9 @@ describe('ExploreCacheComponent', () => {
   let tester: ExploreCacheComponentTester;
   let northConnectorService: jasmine.SpyObj<NorthConnectorService>;
 
-  const northConnector: NorthConnectorDTO = {
+  const northConnector: NorthConnectorDTO<NorthSettings> = {
     id: 'id1',
-    type: 'Generic',
+    type: 'file-writer',
     name: 'North Connector',
     description: 'My North connector description',
     enabled: true,
@@ -57,11 +58,13 @@ describe('ExploreCacheComponent', () => {
       scanModeId: 'scanModeId1',
       retryInterval: 1000,
       retryCount: 3,
-      groupCount: 1000,
-      maxSendCount: 10000,
-      maxSize: 30
+      maxSize: 30,
+      oibusTimeValues: {
+        groupCount: 1000,
+        maxSendCount: 10000
+      }
     }
-  } as NorthConnectorDTO;
+  } as NorthConnectorDTO<NorthSettings>;
 
   beforeEach(() => {
     northConnectorService = createMock(NorthConnectorService);

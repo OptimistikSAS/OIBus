@@ -2,9 +2,10 @@ import { ImportSouthItemsModalComponent } from './import-south-items-modal.compo
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { fakeAsync, TestBed } from '@angular/core/testing';
-import { SouthConnectorItemDTO, SouthConnectorItemManifest } from '../../../../../shared/model/south-connector.model';
-import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
+import { SouthConnectorItemDTO, SouthConnectorItemManifest } from '../../../../../backend/shared/model/south-connector.model';
+import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import { SouthItemSettings } from '../../../../../backend/shared/model/south-settings.model';
 
 class ImportSouthItemsModalComponentTester extends ComponentTester<ImportSouthItemsModalComponent> {
   constructor() {
@@ -25,26 +26,24 @@ describe('ImportSouthItemsModalComponent', () => {
   let fakeActiveModal: NgbActiveModal;
 
   const southItemSchema: SouthConnectorItemManifest = {
-    scanMode: { subscriptionOnly: false, acceptSubscription: true },
+    scanMode: 'SUBSCRIPTION_AND_POLL',
     settings: [],
     schema: []
   } as SouthConnectorItemManifest;
-  const allItems: Array<SouthConnectorItemDTO> = [
+  const allItems: Array<SouthConnectorItemDTO<SouthItemSettings>> = [
     {
       id: 'id1',
       enabled: true,
       name: 'item',
-      connectorId: 'southId',
       scanModeId: 'scanModeId1',
-      settings: {}
+      settings: {} as SouthItemSettings
     },
     {
       id: 'id2',
       enabled: true,
       name: 'item2',
-      connectorId: 'southId',
       scanModeId: 'scanModeId1',
-      settings: {}
+      settings: {} as SouthItemSettings
     }
   ];
   const scanModes: Array<ScanModeDTO> = [
@@ -73,8 +72,8 @@ describe('ImportSouthItemsModalComponent', () => {
     tester.componentInstance.prepare(
       southItemSchema,
       allItems,
-      [{ name: 'item1' } as SouthConnectorItemDTO],
-      [{ item: { name: 'item2' } as SouthConnectorItemDTO, message: '' }],
+      [{ name: 'item1' } as SouthConnectorItemDTO<SouthItemSettings>],
+      [{ item: { name: 'item2' } as SouthConnectorItemDTO<SouthItemSettings>, error: '' }],
       scanModes
     );
     tester.detectChanges();

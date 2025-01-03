@@ -2,112 +2,81 @@ import fs from 'node:fs/promises';
 
 import NorthConsole from './north-console';
 import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/logger.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
-import RepositoryService from '../../service/repository.service';
-import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
-import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
-import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.mock';
-import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
-import { NorthConsoleSettings } from '../../../../shared/model/north-settings.model';
-import ArchiveServiceMock from '../../tests/__mocks__/archive-service.mock';
-import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
+import ValueCacheServiceMock from '../../tests/__mocks__/service/cache/value-cache-service.mock';
+import FileCacheServiceMock from '../../tests/__mocks__/service/cache/file-cache-service.mock';
+import { NorthConsoleSettings } from '../../../shared/model/north-settings.model';
+import { OIBusTimeValue } from '../../../shared/model/engine.model';
+import NorthConnectorRepository from '../../repository/config/north-connector.repository';
+import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
+import testData from '../../tests/utils/test-data';
+import { mockBaseFolders } from '../../tests/utils/test-utils';
 
 jest.mock('node:fs/promises');
 // Spy on console table and info
-jest.spyOn(global.console, 'table').mockImplementation(() => {});
+jest.spyOn(global.console, 'table').mockImplementation(() => ({}));
 jest.spyOn(process.stdout, 'write').mockImplementation(() => true);
 
 const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
-const repositoryService: RepositoryService = new RepositoryServiceMock();
+const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
+const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
+const valueCacheService = new ValueCacheServiceMock();
+const fileCacheService = new FileCacheServiceMock();
 
-jest.mock(
-  '../../service/cache/archive.service',
-  () =>
-    function () {
-      return new ArchiveServiceMock();
-    }
-);
 jest.mock(
   '../../service/cache/value-cache.service',
   () =>
     function () {
-      return new ValueCacheServiceMock();
+      return valueCacheService;
     }
 );
 jest.mock(
   '../../service/cache/file-cache.service',
   () =>
     function () {
-      return new FileCacheServiceMock();
-    }
-);
-const resetMetrics = jest.fn();
-jest.mock(
-  '../../service/north-connector-metrics.service',
-  () =>
-    function () {
-      return {
-        initMetrics: jest.fn(),
-        updateMetrics: jest.fn(),
-        get stream() {
-          return { stream: 'myStream' };
-        },
-        resetMetrics,
-        metrics: {
-          numberOfValuesSent: 1,
-          numberOfFilesSent: 1
-        }
-      };
+      return fileCacheService;
     }
 );
 
-const nowDateString = '2020-02-02T02:02:02.222Z';
-const configuration: NorthConnectorDTO<NorthConsoleSettings> = {
-  id: 'id',
-  name: 'north',
-  type: 'test',
-  description: 'my test connector',
-  enabled: true,
-  settings: {
-    verbose: true
-  },
-  caching: {
-    scanModeId: 'id1',
-    retryInterval: 5000,
-    groupCount: 10000,
-    maxSendCount: 10000,
-    retryCount: 2,
-    sendFileImmediately: true,
-    maxSize: 1000
-  },
-  archive: {
-    enabled: true,
-    retentionDuration: 720
-  }
-};
+let configuration: NorthConnectorEntity<NorthConsoleSettings>;
 let north: NorthConsole;
 
 describe('NorthConsole with verbose mode', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
+    configuration.settings = {
+      verbose: true
+    };
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
+    (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
 
-    north = new NorthConsole(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+    north = new NorthConsole(
+      configuration,
+      encryptionService,
+      northConnectorRepository,
+      scanModeRepository,
+      logger,
+      mockBaseFolders(testData.north.list[0].id)
+    );
   });
 
   it('should properly handle values in verbose mode', async () => {
-    const values: Array<OIBusDataValue> = [
+    const values: Array<OIBusTimeValue> = [
       {
         pointId: 'pointId',
-        timestamp: nowDateString,
+        timestamp: testData.constants.dates.FAKE_NOW,
         data: { value: '666', quality: 'good' }
       }
     ];
-    await north.handleValues(values);
+    await north.handleContent({ type: 'time-values', content: values });
 
     expect(console.table).toHaveBeenCalledWith(values, ['pointId', 'timestamp', 'data']);
     expect(process.stdout.write).not.toHaveBeenCalled();
@@ -116,7 +85,7 @@ describe('NorthConsole with verbose mode', () => {
   it('should properly handle values in verbose mode', async () => {
     const filePath = '/path/to/file/example.file';
     (fs.stat as jest.Mock).mockImplementationOnce(() => Promise.resolve({ size: 666 }));
-    await north.handleFile(filePath);
+    await north.handleContent({ type: 'raw', filePath });
     expect(fs.stat).toHaveBeenCalledWith(filePath);
     expect(console.table).toHaveBeenCalledWith([{ filePath, fileSize: 666 }]);
     expect(process.stdout.write).not.toHaveBeenCalled();
@@ -126,19 +95,30 @@ describe('NorthConsole with verbose mode', () => {
 describe('NorthConsole without verbose mode', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
-    configuration.settings.verbose = false;
-    repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
+    configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
+    configuration.settings = {
+      verbose: false
+    };
+    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
+    (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
 
-    north = new NorthConsole(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+    north = new NorthConsole(
+      configuration,
+      encryptionService,
+      northConnectorRepository,
+      scanModeRepository,
+      logger,
+      mockBaseFolders(testData.north.list[0].id)
+    );
   });
 
   it('should properly handle values in non verbose mode', async () => {
-    const values: Array<OIBusDataValue> = [
+    const values: Array<OIBusTimeValue> = [
       {
         pointId: 'pointId',
-        timestamp: nowDateString,
+        timestamp: testData.constants.dates.FAKE_NOW,
         data: { value: '666', quality: 'good' }
       }
     ];
@@ -156,16 +136,6 @@ describe('NorthConsole without verbose mode', () => {
     expect(fs.stat).not.toHaveBeenCalled();
     expect(process.stdout.write).toHaveBeenCalledWith('North Console sent 1 file.\r\n');
     expect(console.table).not.toHaveBeenCalled();
-  });
-});
-
-describe('NorthConsole test connection', () => {
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
-
-    north = new NorthConsole(configuration, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should be able to write test data to output', async () => {

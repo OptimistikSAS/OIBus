@@ -6,11 +6,10 @@ import { Component } from '@angular/core';
 import { ComponentTester, createMock, stubRoute } from 'ngx-speculoos';
 import { ActivatedRoute, Router } from '@angular/router';
 import { emptyPage, toPage } from '../test-utils';
-import { Page } from '../../../../../shared/model/types';
+import { Page } from '../../../../../backend/shared/model/types';
 
 @Component({
-  template: `<oib-pagination [page]="page" (pageChanged)="pageChanged($event)" [navigate]="navigate"></oib-pagination>`,
-  standalone: true,
+  template: `<oib-pagination [page]="page" (pageChanged)="pageChanged($event)" [navigate]="navigate" />`,
   imports: [PaginationComponent]
 })
 class TestComponent {

@@ -1,18 +1,18 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { NonNullableFormBuilder, Validators } from '@angular/forms';
-import { Language, LANGUAGES, Timezone } from '../../../../../shared/model/types';
+import { Language, LANGUAGES, Timezone } from '../../../../../backend/shared/model/types';
 import { Observable, of, switchMap, tap, timer } from 'rxjs';
 import { inMemoryTypeahead } from '../../shared/typeahead';
 import { CurrentUserService } from '../../shared/current-user.service';
 import { ChangePasswordModalComponent } from '../change-password-modal/change-password-modal.component';
-import { User, UserCommandDTO } from '../../../../../shared/model/user.model';
+import { User, UserCommandDTO } from '../../../../../backend/shared/model/user.model';
 import { ModalService } from '../../shared/modal.service';
 import { UserSettingsService } from '../../services/user-settings.service';
 import { NotificationService } from '../../shared/notification.service';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateDirective, TranslateService } from '@ngx-translate/core';
 import { WindowService } from '../../shared/window.service';
 import { formDirectives } from '../../shared/form-directives';
-import { NgForOf, NgIf } from '@angular/common';
+
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 
@@ -21,17 +21,24 @@ import { ObservableState, SaveButtonComponent } from '../../shared/save-button/s
 declare namespace Intl {
   type Key = 'calendar' | 'collation' | 'currency' | 'numberingSystem' | 'timeZone' | 'unit';
 
-  function supportedValuesOf(input: Key): string[];
+  function supportedValuesOf(input: Key): Array<string>;
 }
+
 @Component({
   selector: 'oib-edit-user-settings',
   templateUrl: './edit-user-settings.component.html',
   styleUrl: './edit-user-settings.component.scss',
-  imports: [...formDirectives, TranslateModule, NgIf, NgForOf, NgbTypeahead, SaveButtonComponent],
-  standalone: true
+  imports: [...formDirectives, TranslateDirective, NgbTypeahead, SaveButtonComponent]
 })
 export class EditUserSettingsComponent {
-  form = this.fb.group({
+  private modalService = inject(ModalService);
+  private userSettingsService = inject(UserSettingsService);
+  private notificationService = inject(NotificationService);
+  private translateService = inject(TranslateService);
+  private windowService = inject(WindowService);
+  private currentUserService = inject(CurrentUserService);
+
+  form = inject(NonNullableFormBuilder).group({
     firstName: ['', [Validators.maxLength(50)]],
     lastName: ['', [Validators.maxLength(50)]],
     timezone: ['' as Timezone, Validators.required]
@@ -47,15 +54,7 @@ export class EditUserSettingsComponent {
     timezone => timezone
   );
 
-  constructor(
-    private fb: NonNullableFormBuilder,
-    private modalService: ModalService,
-    private userSettingsService: UserSettingsService,
-    private notificationService: NotificationService,
-    private translateService: TranslateService,
-    private windowService: WindowService,
-    private currentUserService: CurrentUserService
-  ) {
+  constructor() {
     this.loadSettingsAndPopulate().subscribe();
   }
 

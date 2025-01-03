@@ -1,26 +1,23 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { ObservableState, SaveButtonComponent } from './save-button.component';
 import { ComponentTester } from 'ngx-speculoos';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { delay, of } from 'rxjs';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
 @Component({
   template: `
     <form [formGroup]="form" id="test-form" (ngSubmit)="save()">
-      <oib-save-button form="test-form" [state]="state"></oib-save-button>
+      <oib-save-button form="test-form" [state]="state" />
     </form>
   `,
-  imports: [SaveButtonComponent, ReactiveFormsModule],
-  standalone: true
+  imports: [SaveButtonComponent, ReactiveFormsModule]
 })
 class TestComponent {
   state = new ObservableState();
   save$ = of(null).pipe(delay(500), this.state.pendingUntilFinalization());
-  form = this.fb.group({ name: '' });
-
-  constructor(private fb: FormBuilder) {}
+  form = inject(NonNullableFormBuilder).group({ name: '' });
 
   save() {
     this.save$.subscribe();

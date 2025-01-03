@@ -7,7 +7,7 @@ import { NorthConnectorService } from '../services/north-connector.service';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
-import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
+import { NorthConnectorLightDTO } from '../../../../backend/shared/model/north-connector.model';
 import { NotificationService } from '../shared/notification.service';
 
 class NorthListComponentTester extends ComponentTester<NorthListComponent> {
@@ -28,21 +28,21 @@ describe('NorthListComponent', () => {
   let northConnectorService: jasmine.SpyObj<NorthConnectorService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
 
-  const northConnectors: Array<NorthConnectorDTO> = [
+  const northConnectors: Array<NorthConnectorLightDTO> = [
     {
       id: 'id1',
       name: 'myNorthConnector1',
       description: 'a test north connector',
       enabled: true,
-      type: 'Test'
-    } as NorthConnectorDTO,
+      type: 'file-writer'
+    },
     {
       id: 'id2',
       name: 'myNorthConnector2',
       description: 'a test north connector',
       enabled: false,
-      type: 'Test'
-    } as NorthConnectorDTO
+      type: 'file-writer'
+    }
   ];
 
   beforeEach(() => {
@@ -71,12 +71,12 @@ describe('NorthListComponent', () => {
     expect(tester.title).toContainText('North list');
     expect(tester.northList.length).toBe(2);
     expect(tester.northList[0].elements('td')[1]).toContainText(northConnectors[0].name);
-    expect(tester.northList[0].elements('td')[2]).toContainText(northConnectors[0].type);
+    expect(tester.northList[0].elements('td')[2]).toContainText('File writer');
     expect(tester.northList[0].elements('td')[3]).toContainText(northConnectors[0].description);
     expect(tester.northList[0].elements('td')[4].elements('a').length).toBe(3);
     expect(tester.northList[0].elements('td')[4].elements('button').length).toBe(2);
     expect(tester.northList[1].elements('td')[1]).toContainText(northConnectors[1].name);
-    expect(tester.northList[1].elements('td')[2]).toContainText(northConnectors[1].type);
+    expect(tester.northList[1].elements('td')[2]).toContainText('File writer');
     expect(tester.northList[1].elements('td')[3]).toContainText(northConnectors[1].description);
     expect(tester.northList[1].elements('td')[4].elements('a').length).toBe(3);
     expect(tester.northList[1].elements('td')[4].elements('button').length).toBe(2);

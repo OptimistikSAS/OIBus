@@ -6,12 +6,14 @@ import * as os from 'os';
 import { createFolder, filesExists, replaceConfigArgumentWithAbsolutePath } from './utils';
 
 const STARTED_DELAY = 30000;
+const UPDATE_SETTINGS_FILE = 'update.json';
 
 export default class Launcher {
-  private updated: boolean = false;
+  private updated = false;
   private startedTimeout: NodeJS.Timeout | null = null;
   private child: ChildProcessWithoutNullStreams | null = null;
-  private stopping: boolean = false;
+  private stopping = false;
+  private readonly args: Array<string> = [];
 
   constructor(
     private workDir: string,
@@ -19,7 +21,10 @@ export default class Launcher {
     private backupDir: string,
     private config: string,
     private check: boolean
-  ) {}
+  ) {
+    // The first argument is the binary being used. We must remove it since it's not used by the OIBus binary
+    this.args = replaceConfigArgumentWithAbsolutePath(process.argv.slice(1), this.config);
+  }
 
   async start(): Promise<void> {
     const oibusPath = this.getOibusPath();
@@ -28,10 +33,9 @@ export default class Launcher {
       await this.update();
     }
 
-    const args = replaceConfigArgumentWithAbsolutePath(process.argv, this.config);
-    console.log(`Starting OIBus launcher: ${oibusPath} ${args}`);
+    console.log(`Starting OIBus launcher: ${oibusPath} ${this.args}`);
     try {
-      this.child = spawn(oibusPath, args, { cwd: this.workDir });
+      this.child = spawn(oibusPath, this.args, { cwd: this.workDir });
 
       this.child.stdout.on('data', data => {
         console.info(`OIBus stdout: ${data.toString()}`);
@@ -89,6 +93,10 @@ export default class Launcher {
     return os.type() === 'Windows_NT' ? 'oibus.exe' : 'oibus';
   }
 
+  getOibusLauncherExecutable(): string {
+    return os.type() === 'Windows_NT' ? 'oibus-launcher_backup.exe' : 'oibus-launcher_backup';
+  }
+
   getOibusPath(): string {
     return path.resolve(this.workDir, this.getOibusExecutable());
   }
@@ -101,6 +109,10 @@ export default class Launcher {
     return path.resolve(this.backupDir, this.getOibusExecutable());
   }
 
+  getOibusLauncherBackupPath(): string {
+    return path.resolve(process.cwd(), this.getOibusLauncherExecutable());
+  }
+
   async checkForUpdate(): Promise<boolean> {
     const oibusUpdatePath = this.getOibusUpdatePath();
     console.log(`Checking for OIBus update: ${oibusUpdatePath}`);
@@ -108,20 +120,27 @@ export default class Launcher {
   }
 
   async update(): Promise<void> {
+    let backupFolders = RegExp('cache/*');
+    try {
+      const settings = JSON.parse(await fs.readFile(path.resolve('./', UPDATE_SETTINGS_FILE), 'utf8'));
+      backupFolders = RegExp(settings?.backupFolders || 'cache/*');
+    } catch (error: unknown) {
+      console.error((error as Error).message);
+    }
     const oibusUpdatePath = this.getOibusUpdatePath();
-    const oibusPath = this.getOibusPath();
-    const oibusBackupPath = this.getOibusBackupPath();
+    const oibusBinaryPath = this.getOibusPath();
+    const oibusBinaryBackupPath = this.getOibusBackupPath();
 
     await fs.rm(path.resolve(this.backupDir, 'data-folder'), { recursive: true, force: true });
 
     await createFolder(this.backupDir);
-    console.log(`Backup OIBus: ${oibusPath} -> ${oibusBackupPath}`);
-    await fs.rename(oibusPath, oibusBackupPath);
-    console.log(`Backup OIBus data folder: ${this.config} -> ${path.resolve(this.backupDir, 'data-folder')}`);
-    await fs.cp(this.config, path.resolve(this.backupDir, 'data-folder'), { force: true, recursive: true });
+    console.log(`Backup OIBus: ${oibusBinaryPath} -> ${oibusBinaryBackupPath}`);
+    await fs.rename(oibusBinaryPath, oibusBinaryBackupPath);
 
-    console.log(`Updating OIBus: ${oibusUpdatePath} -> ${oibusPath}`);
-    await fs.rename(oibusUpdatePath, oibusPath);
+    await this.backupDataFolder(backupFolders);
+
+    console.log(`Updating OIBus: ${oibusUpdatePath} -> ${oibusBinaryPath}`);
+    await fs.rename(oibusUpdatePath, oibusBinaryPath);
 
     for (const file of await fs.readdir(this.updateDir)) {
       try {
@@ -146,12 +165,43 @@ export default class Launcher {
     await fs.rm(path.resolve(this.backupDir, 'data-folder'), { recursive: true, force: true });
   }
 
-  handleOibusStarted(): void {
+  async handleOibusStarted(): Promise<void> {
     if (this.startedTimeout) {
       clearTimeout(this.startedTimeout);
       this.startedTimeout = null;
     }
 
     this.updated = false;
+    await fs.rm(path.resolve(this.backupDir, 'data-folder'), { recursive: true, force: true });
+    await fs.rm(this.getOibusBackupPath(), { force: true });
+    await fs.rm(this.getOibusLauncherBackupPath(), { force: true });
+    await fs.rm(path.resolve(process.cwd(), UPDATE_SETTINGS_FILE), { force: true });
+  }
+
+  async backupDataFolder(backupsFolders: RegExp): Promise<void> {
+    await fs.rm(path.resolve(this.backupDir, 'data-folder'), { recursive: true, force: true });
+    await createFolder(path.resolve(this.backupDir, 'data-folder'));
+    console.log(`Back up data folder with regex ${backupsFolders}`);
+    await this.copyFilesAndDirectoriesRecursively(this.config, path.resolve(this.backupDir, 'data-folder'), backupsFolders);
+  }
+
+  async copyFilesAndDirectoriesRecursively(srcDir: string, destDir: string, pattern: RegExp): Promise<void> {
+    const entries = await fs.readdir(srcDir, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const srcPath = path.join(srcDir, entry.name);
+      const destPath = path.join(destDir, entry.name);
+
+      // Test the full path from the based directory. For example, cache/* back up recursively all files and directory under
+      // the cache folder
+      if (entry.isDirectory() && pattern.test(path.resolve(entry.parentPath, entry.name).split(this.config)[1])) {
+        // Only create and recurse if the directory name matches the pattern
+        await fs.mkdir(destPath, { recursive: true });
+        await this.copyFilesAndDirectoriesRecursively(srcPath, destPath, pattern);
+      } else if (entry.isFile() && pattern.test(path.resolve(entry.parentPath, entry.name).split(this.config)[1])) {
+        // Copy the file if it matches the pattern
+        await fs.copyFile(srcPath, destPath);
+      }
+    }
   }
 }

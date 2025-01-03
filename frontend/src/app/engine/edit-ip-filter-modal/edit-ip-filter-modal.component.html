@@ -7,7 +7,7 @@
     <div class="form-group">
       <label class="form-label" for="address" translate="engine.ip-filter.address"></label>
       <input formControlName="address" id="address" class="form-control" />
-      <val-errors controlName="address"></val-errors>
+      <val-errors controlName="address" />
     </div>
     <!-- Description -->
     <div class="form-group">
@@ -18,7 +18,7 @@
 </div>
 <div class="modal-footer">
   <div class="btn-group">
-    <oib-save-button [state]="state"></oib-save-button>
+    <oib-save-button [state]="state" />
     <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
   </div>
 </div>

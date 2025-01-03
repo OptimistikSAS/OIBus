@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { languageToUse, storeLanguage, storeTimezone, timezoneToUse } from '../../i18n/i18n';
-import { Language, Timezone } from '../../../../shared/model/types';
+import { Language, Timezone } from '../../../../backend/shared/model/types';
 
 /**
  * Service wrapping the window object to ease testing
@@ -21,7 +21,7 @@ export class WindowService {
     return window.localStorage.removeItem(key);
   }
 
-  getHistoryState(): { [key: string]: unknown } | null;
+  getHistoryState(): Record<string, unknown> | null;
   getHistoryState<T>(key: string): T | null;
   getHistoryState(key?: string) {
     if (key) {

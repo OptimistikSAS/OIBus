@@ -1,7 +1,7 @@
-import { Component, Input, NgZone } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
-import { EngineMetrics } from '../../../../../shared/model/engine.model';
-import { NgIf, PercentPipe } from '@angular/common';
+import { Component, Input, NgZone, inject } from '@angular/core';
+import { TranslateDirective } from '@ngx-translate/core';
+import { EngineMetrics } from '../../../../../backend/shared/model/engine.model';
+import { PercentPipe } from '@angular/common';
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { DurationPipe } from '../../shared/duration.pipe';
 import { NotificationService } from '../../shared/notification.service';
@@ -12,21 +12,18 @@ import { Router } from '@angular/router';
 
 @Component({
   selector: 'oib-engine-metrics',
-  standalone: true,
-  imports: [TranslateModule, NgIf, BoxComponent, BoxTitleDirective, PercentPipe, FileSizePipe, DatetimePipe, DurationPipe],
+  imports: [TranslateDirective, BoxComponent, BoxTitleDirective, PercentPipe, FileSizePipe, DatetimePipe, DurationPipe],
   templateUrl: './engine-metrics.component.html',
   styleUrl: './engine-metrics.component.scss'
 })
 export class EngineMetricsComponent {
+  private zone = inject(NgZone);
+  private engineService = inject(EngineService);
+  private notificationService = inject(NotificationService);
+  private router = inject(Router);
+
   @Input() displayButton = false;
   @Input({ required: true }) metrics!: EngineMetrics;
-
-  constructor(
-    private zone: NgZone,
-    private engineService: EngineService,
-    private notificationService: NotificationService,
-    private router: Router
-  ) {}
 
   resetMetrics() {
     this.zone.run(() => {

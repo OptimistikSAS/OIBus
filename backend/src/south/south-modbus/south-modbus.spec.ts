@@ -1,15 +1,26 @@
 import SouthModbus from './south-modbus';
-import DatabaseMock from '../../tests/__mocks__/database.mock';
 import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/logger.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from '../../service/encryption.service';
-import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
-import RepositoryService from '../../service/repository.service';
-import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import net from 'node:net';
 import Stream from 'node:stream';
-import { SouthModbusItemSettings } from '../../../../shared/model/south-settings.model';
+import {
+  SouthModbusItemSettings,
+  SouthModbusItemSettingsModbusType,
+  SouthModbusSettings
+} from '../../../shared/model/south-settings.model';
+import SouthConnectorRepository from '../../repository/config/south-connector.repository';
+import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
+import ScanModeRepository from '../../repository/config/scan-mode.repository';
+import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
+import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
+import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
+import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import testData from '../../tests/utils/test-data';
+import { flushPromises } from '../../tests/utils/test-utils';
+import { mockBaseFolders } from '../../tests/utils/test-utils';
 
 jest.mock('node:fs/promises');
 jest.mock('node:net');
@@ -28,191 +39,169 @@ jest.mock('jsmodbus', () => ({
   }
 }));
 jest.mock('../../service/utils');
-const database = new DatabaseMock();
+
+const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
+const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
+const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
+const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
+const southCacheService = new SouthCacheServiceMock();
+
 jest.mock(
   '../../service/south-cache.service',
   () =>
     function () {
-      return {
-        southCacheRepository: {
-          database
-        }
-      };
+      return southCacheService;
     }
 );
-
-jest.mock(
-  '../../service/south-connector-metrics.service',
-  () =>
-    function () {
-      return {
-        initMetrics: jest.fn(),
-        updateMetrics: jest.fn(),
-        get stream() {
-          return { stream: 'myStream' };
-        },
-        metrics: {
-          numberOfValuesRetrieved: 1,
-          numberOfFilesRetrieved: 1
-        }
-      };
-    }
-);
-
-const addValues = jest.fn();
-const addFile = jest.fn();
 
 const logger: pino.Logger = new PinoLogger();
-
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
-const repositoryService: RepositoryService = new RepositoryServiceMock();
-
-const items: Array<SouthConnectorItemDTO<SouthModbusItemSettings>> = [
-  {
-    id: 'id1',
-    name: 'HoldingRegister',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {
-      address: '0x4E80',
-      modbusType: 'holdingRegister',
-      data: {
-        dataType: 'UInt16',
-        multiplierCoefficient: 1
-      }
-    },
-    scanModeId: 'scanModeId1'
-  },
-  {
-    id: 'id2',
-    name: 'HoldingRegister',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {
-      address: '20097',
-      modbusType: 'holdingRegister',
-      data: {
-        dataType: 'UInt16',
-        multiplierCoefficient: 1
-      }
-    },
-    scanModeId: 'scanModeId1'
-  },
-  {
-    id: 'id3',
-    name: 'InputRegister',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {
-      address: '0x3E81',
-      modbusType: 'inputRegister',
-      data: {
-        dataType: 'UInt16',
-        multiplierCoefficient: 1
-      }
-    },
-    scanModeId: 'scanModeId1'
-  },
-  {
-    id: 'id4',
-    name: 'DiscreteInput',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {
-      address: '0x1E82',
-      modbusType: 'discreteInput'
-    },
-    scanModeId: 'scanModeId1'
-  },
-  {
-    id: 'id5',
-    name: 'Coil',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {
-      address: '0x0E83',
-      modbusType: 'coil'
-    },
-    scanModeId: 'scanModeId1'
-  },
-  {
-    id: 'id6',
-    name: 'HoldingRegister',
-    enabled: true,
-    connectorId: 'southId',
-    settings: {
-      address: '0x0E88',
-      modbusType: 'holdingRegister',
-      data: {
-        dataType: 'Bit',
-        bitIndex: 1,
-        multiplierCoefficient: 1
-      }
-    },
-    scanModeId: 'scanModeId1'
-  }
-];
-
-let south: SouthModbus;
-const configuration: SouthConnectorDTO = {
-  id: 'southId',
-  name: 'south',
-  type: 'test',
-  description: 'my test connector',
-  enabled: true,
-  history: {
-    maxInstantPerItem: true,
-    maxReadInterval: 3600,
-    readDelay: 0,
-    overlap: 0
-  },
-  settings: {
-    port: 502,
-    host: '127.0.0.1',
-    slaveId: 1,
-    addressOffset: 'Modbus',
-    endianness: 'Big Endian',
-    swapBytesInWords: false,
-    swapWordsInDWords: false,
-    retryInterval: 10000
-  }
-};
-const nowDateString = '2020-02-02T02:02:02.222Z';
-const flushPromises = () => new Promise(jest.requireActual('timers').setImmediate);
+const addContentCallback = jest.fn();
 
 class CustomStream extends Stream {
   constructor() {
     super();
   }
 
-  connect(_connectionObject: any, _callback: any) {}
-  end() {}
-}
-repositoryService.southConnectorRepository.getSouthConnector = jest.fn().mockReturnValue(configuration);
+  connect(_connectionObject: unknown, _callback: () => Promise<void>): Promise<void> {
+    return Promise.resolve();
+  }
 
-describe('SouthModbus', () => {
+  end() {
+    return Promise.resolve();
+  }
+}
+
+describe('South Modbus', () => {
+  let south: SouthModbus;
+  const configuration: SouthConnectorEntity<SouthModbusSettings, SouthModbusItemSettings> = {
+    id: 'southId',
+    name: 'south',
+    type: 'modbus',
+    description: 'my test connector',
+    enabled: true,
+    settings: {
+      port: 502,
+      host: '127.0.0.1',
+      slaveId: 1,
+      addressOffset: 'modbus',
+      endianness: 'big-endian',
+      swapBytesInWords: false,
+      swapWordsInDWords: false,
+      retryInterval: 10000
+    },
+    items: [
+      {
+        id: 'id1',
+        name: 'HoldingRegister',
+        enabled: true,
+        settings: {
+          address: '0x4E80',
+          modbusType: 'holding-register',
+          data: {
+            dataType: 'uint16',
+            multiplierCoefficient: 1
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id2',
+        name: 'HoldingRegister',
+        enabled: true,
+        settings: {
+          address: '20097',
+          modbusType: 'holding-register',
+          data: {
+            dataType: 'uint16',
+            multiplierCoefficient: 1
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id3',
+        name: 'InputRegister',
+        enabled: true,
+        settings: {
+          address: '0x3E81',
+          modbusType: 'input-register',
+          data: {
+            dataType: 'uint16',
+            multiplierCoefficient: 1
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id4',
+        name: 'DiscreteInput',
+        enabled: true,
+        settings: {
+          address: '0x1E82',
+          modbusType: 'discrete-input'
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id5',
+        name: 'Coil',
+        enabled: true,
+        settings: {
+          address: '0x0E83',
+          modbusType: 'coil'
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id6',
+        name: 'HoldingRegister',
+        enabled: true,
+        settings: {
+          address: '0x0E88',
+          modbusType: 'holding-register',
+          data: {
+            dataType: 'bit',
+            bitIndex: 1,
+            multiplierCoefficient: 1
+          }
+        },
+        scanModeId: 'scanModeId1'
+      }
+    ]
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
 
     // Mock node:net Socket constructor and the used function
     (net.Socket as unknown as jest.Mock).mockReturnValue({
-      connect(_connectionObject: any, callback: any) {
-        callback();
+      connect(_connectionObject: unknown, callback: () => Promise<void>): Promise<void> {
+        return callback();
       },
       on() {
         jest.fn();
       }
     });
 
-    south = new SouthModbus(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthModbus(
+      configuration,
+      addContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      mockBaseFolders(configuration.id)
+    );
   });
 
   it('should fail to connect and try again', async () => {
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
     const mockedEmitter = new CustomStream();
-    mockedEmitter.connect = (_connectionObject: any, callback: any) => {
-      callback();
+    mockedEmitter.connect = (_connectionObject: unknown, _callback: () => Promise<void>): Promise<void> => {
+      return _callback();
     };
 
     // Mock node:net Socket constructor and the used function
@@ -249,7 +238,7 @@ describe('SouthModbus', () => {
     const result = await south.readCoil(1234);
     expect(readCoils).toHaveBeenCalledTimes(1);
     expect(readCoils).toHaveBeenCalledWith(1234, 1);
-    expect(result).toEqual(123);
+    expect(result).toEqual('123');
   });
 
   it('should read discrete input', async () => {
@@ -259,43 +248,41 @@ describe('SouthModbus', () => {
     const result = await south.readDiscreteInputRegister(1234);
     expect(readDiscreteInputs).toHaveBeenCalledTimes(1);
     expect(readDiscreteInputs).toHaveBeenCalledWith(1234, 1);
-    expect(result).toEqual(123);
+    expect(result).toEqual('123');
   });
 
   it('should read input', async () => {
-    await expect(south.readInputRegister(1234, 1, 'UInt16', 10)).rejects.toThrow('Read input error: Modbus client not set');
+    await expect(south.readInputRegister(1234, 1, 'uint16', 10)).rejects.toThrow('Read input error: Modbus client not set');
 
     south.getNumberOfWords = jest.fn().mockReturnValue(2);
     south.getValueFromBuffer = jest.fn().mockReturnValue(123);
     await south.start();
-    const result = await south.readInputRegister(1234, 1, 'UInt16', 10);
+    const result = await south.readInputRegister(1234, 1, 'uint16', 10);
     expect(readInputRegisters).toHaveBeenCalledTimes(1);
     expect(readInputRegisters).toHaveBeenCalledWith(1234, 2);
     expect(result).toEqual(123);
-    expect(south.getValueFromBuffer).toHaveBeenCalledWith(Buffer.from([1, 2, 3, 4]), 1, 'UInt16', 10);
+    expect(south.getValueFromBuffer).toHaveBeenCalledWith(Buffer.from([1, 2, 3, 4]), 1, 'uint16', 10);
   });
 
   it('should read holding', async () => {
-    await expect(south.readHoldingRegister(1234, 1, 'UInt16', 10)).rejects.toThrow('Read holding error: Modbus client not set');
+    await expect(south.readHoldingRegister(1234, 1, 'uint16', 10)).rejects.toThrow('Read holding error: Modbus client not set');
 
     south.getNumberOfWords = jest.fn().mockReturnValue(2);
     south.getValueFromBuffer = jest.fn().mockReturnValue(123);
     await south.start();
-    const result = await south.readHoldingRegister(1234, 1, 'UInt16', 10);
+    const result = await south.readHoldingRegister(1234, 1, 'uint16', 10);
     expect(readHoldingRegisters).toHaveBeenCalledTimes(1);
     expect(readHoldingRegisters).toHaveBeenCalledWith(1234, 2);
     expect(result).toEqual(123);
-    expect(south.getValueFromBuffer).toHaveBeenCalledWith(Buffer.from([1, 2, 3, 4]), 1, 'UInt16', 10);
+    expect(south.getValueFromBuffer).toHaveBeenCalledWith(Buffer.from([1, 2, 3, 4]), 1, 'uint16', 10);
   });
 
   it('should query last point', async () => {
-    const setTimeoutSpy = jest.spyOn(global, 'setTimeout').mockImplementation((callback: any) => {
-      return callback();
-    });
+    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
 
     south.disconnect = jest.fn();
     south.connect = jest.fn();
-    south.addValues = jest.fn();
+    south.addContent = jest.fn();
     south.modbusFunction = jest
       .fn()
       .mockImplementationOnce(() => {
@@ -310,138 +297,231 @@ describe('SouthModbus', () => {
       .mockImplementation(() => {
         return [];
       });
-    await expect(south.lastPointQuery([items[1]])).rejects.toThrow(new Error('modbus function error'));
+    await expect(south.lastPointQuery([configuration.items[1]])).rejects.toThrow(new Error('modbus function error'));
     expect(south.disconnect).toHaveBeenCalledTimes(1);
     expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
     jest.advanceTimersByTime(configuration.settings.retryInterval);
     expect(south.connect).toHaveBeenCalledTimes(1);
     jest.clearAllMocks();
 
-    await expect(south.lastPointQuery([items[1]])).rejects.toThrow(new Error('Offline - no connection to modbus server'));
+    await expect(south.lastPointQuery([configuration.items[1]])).rejects.toThrow(new Error('Offline - no connection to modbus server'));
     jest.clearAllMocks();
 
-    await south.lastPointQuery([items[2]]);
+    await south.lastPointQuery([configuration.items[2]]);
     expect(south.modbusFunction).toHaveBeenCalledTimes(1);
     expect(south.disconnect).not.toHaveBeenCalled();
     expect(south.connect).not.toHaveBeenCalled();
-    expect(south.addValues).toHaveBeenCalledWith([]);
+    expect(south.addContent).toHaveBeenCalledWith({ content: [], type: 'time-values' });
   });
 
   it('should call read coil method', async () => {
-    south.readCoil = jest.fn().mockReturnValue(123);
-    const values = await south.modbusFunction(items[4]);
+    south.readCoil = jest.fn().mockReturnValue('123');
+    const values = await south.modbusFunction(configuration.items[4]);
     expect(south.readCoil).toHaveBeenCalledTimes(1);
     expect(values).toEqual([
       {
-        pointId: items[4].name,
-        timestamp: nowDateString,
-        data: { value: JSON.stringify(123) }
+        pointId: configuration.items[4].name,
+        timestamp: testData.constants.dates.FAKE_NOW,
+        data: { value: '123' }
       }
     ]);
   });
 
   it('should call readDiscreteInputRegister method', async () => {
-    south.readDiscreteInputRegister = jest.fn().mockReturnValue(123);
-    const values = await south.modbusFunction(items[3]);
+    south.readDiscreteInputRegister = jest.fn().mockReturnValue('123');
+    const values = await south.modbusFunction(configuration.items[3]);
     expect(south.readDiscreteInputRegister).toHaveBeenCalledTimes(1);
     expect(values).toEqual([
       {
-        pointId: items[3].name,
-        timestamp: nowDateString,
-        data: { value: JSON.stringify(123) }
+        pointId: configuration.items[3].name,
+        timestamp: testData.constants.dates.FAKE_NOW,
+        data: { value: '123' }
       }
     ]);
   });
 
   it('should call readInputRegister method', async () => {
-    south.readInputRegister = jest.fn().mockReturnValue(123);
-    const values = await south.modbusFunction(items[2]);
+    south.readInputRegister = jest.fn().mockReturnValue('123');
+    const values = await south.modbusFunction(configuration.items[2]);
     expect(south.readInputRegister).toHaveBeenCalledTimes(1);
     expect(values).toEqual([
       {
-        pointId: items[2].name,
-        timestamp: nowDateString,
-        data: { value: JSON.stringify(123) }
+        pointId: configuration.items[2].name,
+        timestamp: testData.constants.dates.FAKE_NOW,
+        data: { value: '123' }
       }
     ]);
   });
 
   it('should call readHoldingRegister method', async () => {
-    south.readHoldingRegister = jest.fn().mockReturnValue(123);
-    const values = await south.modbusFunction(items[1]);
+    south.readHoldingRegister = jest.fn().mockReturnValue('123');
+    const values = await south.modbusFunction(configuration.items[1]);
     expect(south.readHoldingRegister).toHaveBeenCalledTimes(1);
     expect(values).toEqual([
       {
-        pointId: items[1].name,
-        timestamp: nowDateString,
-        data: { value: JSON.stringify(123) }
+        pointId: configuration.items[1].name,
+        timestamp: testData.constants.dates.FAKE_NOW,
+        data: { value: '123' }
       }
     ]);
   });
 
   it('should call readHoldingRegister method', async () => {
-    south.addValues = jest.fn();
-    configuration.settings.addressOffset = 'JBus';
-    const item: SouthConnectorItemDTO = {
+    south.addContent = jest.fn();
+    configuration.settings.addressOffset = 'jbus';
+    const item: SouthConnectorItemEntity<SouthModbusItemSettings> = {
       id: 'bad',
-      connectorId: 'connectorId',
       enabled: true,
       name: 'Bad Item',
       scanModeId: 'id',
       settings: {
-        modbusType: 'bad type',
+        modbusType: 'bad type' as SouthModbusItemSettingsModbusType,
         address: '1010'
       }
     };
     await expect(south.modbusFunction(item)).rejects.toThrow(`Wrong Modbus type "${item.settings.modbusType}" for point ${item.name}`);
   });
 
-  it('should generate buffer function name', () => {
-    const endianness = configuration.settings.endianness === 'Big Endian' ? 'BE' : 'LE';
-    expect(south.getBufferFunctionName('Bit')).toEqual('readUInt16' + endianness);
-    expect(south.getBufferFunctionName('UInt16')).toEqual('readUInt16' + endianness);
-    expect(south.getBufferFunctionName('Int16')).toEqual('readInt16' + endianness);
-    expect(south.getBufferFunctionName('UInt32')).toEqual('readUInt32' + endianness);
-    expect(south.getBufferFunctionName('Int32')).toEqual('readInt32' + endianness);
-    expect(south.getBufferFunctionName('Float')).toEqual('readFloat' + endianness);
-    expect(south.getBufferFunctionName('BigUInt64')).toEqual('readBigUInt64' + endianness);
-    expect(south.getBufferFunctionName('BigInt64')).toEqual('readBigInt64' + endianness);
-    expect(south.getBufferFunctionName('Double')).toEqual('readDouble' + endianness);
-  });
-
   it('should retrieve number of words', () => {
-    expect(south.getNumberOfWords('Bit')).toEqual(1);
-    expect(south.getNumberOfWords('UInt16')).toEqual(1);
-    expect(south.getNumberOfWords('Int16')).toEqual(1);
-    expect(south.getNumberOfWords('UInt32')).toEqual(2);
-    expect(south.getNumberOfWords('Int32')).toEqual(2);
-    expect(south.getNumberOfWords('Float')).toEqual(2);
-    expect(south.getNumberOfWords('BigUInt64')).toEqual(4);
-    expect(south.getNumberOfWords('BigInt64')).toEqual(4);
-    expect(south.getNumberOfWords('Double')).toEqual(4);
+    expect(south.getNumberOfWords('bit')).toEqual(1);
+    expect(south.getNumberOfWords('uint16')).toEqual(1);
+    expect(south.getNumberOfWords('int16')).toEqual(1);
+    expect(south.getNumberOfWords('uint32')).toEqual(2);
+    expect(south.getNumberOfWords('int32')).toEqual(2);
+    expect(south.getNumberOfWords('float')).toEqual(2);
+    expect(south.getNumberOfWords('big-uint64')).toEqual(4);
+    expect(south.getNumberOfWords('big-int64')).toEqual(4);
+    expect(south.getNumberOfWords('double')).toEqual(4);
     expect(south.getNumberOfWords('other')).toEqual(1);
   });
 
   it('should get value from buffer', () => {
-    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'UInt16', undefined)).toEqual(258);
-    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'UInt32', undefined)).toEqual(50594050);
-    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'Bit', 1)).toEqual(1);
+    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'uint16', undefined)).toEqual('258');
+    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'int16', undefined)).toEqual('258');
+    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'uint32', undefined)).toEqual('50594050');
+    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'int32', undefined)).toEqual('50594050');
+    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4, 5, 6, 7, 8]), 1, 'big-uint64', undefined)).toEqual('217299790240154880');
+    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4, 5, 6, 7, 8]), 1, 'big-int64', undefined)).toEqual('217299790240154880');
+    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'bit', 1)).toEqual('1');
     configuration.settings.swapWordsInDWords = true;
     configuration.settings.swapBytesInWords = true;
-    configuration.settings.endianness = 'Little Endian';
-    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'UInt32', 10)).toEqual(50594050);
-    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'UInt16', 10)).toEqual(258);
-    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'Bit', 1)).toEqual(1);
+    configuration.settings.endianness = 'little-endian';
+    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'uint32', 10)).toEqual('50594050');
+    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'uint16', 10)).toEqual('258');
+    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'bit', 1)).toEqual('1');
+    configuration.settings.swapWordsInDWords = true;
+    configuration.settings.swapBytesInWords = false;
+    expect(south.getValueFromBuffer(Buffer.from([0x00, 0x00, 0x80, 0x3f]), 1, 'float', undefined)).toEqual('1');
+    expect(south.getValueFromBuffer(Buffer.from([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3f]), 1, 'double', undefined)).toEqual(
+      '0.0078125'
+    );
   });
 });
 
 describe('SouthModbus test connection', () => {
+  let south: SouthModbus;
+  const configuration: SouthConnectorEntity<SouthModbusSettings, SouthModbusItemSettings> = {
+    id: 'southId',
+    name: 'south',
+    type: 'modbus',
+    description: 'my test connector',
+    enabled: true,
+    settings: {
+      port: 502,
+      host: '127.0.0.1',
+      slaveId: 1,
+      addressOffset: 'modbus',
+      endianness: 'big-endian',
+      swapBytesInWords: false,
+      swapWordsInDWords: false,
+      retryInterval: 10000
+    },
+    items: [
+      {
+        id: 'id1',
+        name: 'HoldingRegister',
+        enabled: true,
+        settings: {
+          address: '0x4E80',
+          modbusType: 'holding-register',
+          data: {
+            dataType: 'uint16',
+            multiplierCoefficient: 1
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id2',
+        name: 'HoldingRegister',
+        enabled: true,
+        settings: {
+          address: '20097',
+          modbusType: 'holding-register',
+          data: {
+            dataType: 'uint16',
+            multiplierCoefficient: 1
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id3',
+        name: 'InputRegister',
+        enabled: true,
+        settings: {
+          address: '0x3E81',
+          modbusType: 'input-register',
+          data: {
+            dataType: 'uint16',
+            multiplierCoefficient: 1
+          }
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id4',
+        name: 'DiscreteInput',
+        enabled: true,
+        settings: {
+          address: '0x1E82',
+          modbusType: 'discrete-input'
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id5',
+        name: 'Coil',
+        enabled: true,
+        settings: {
+          address: '0x0E83',
+          modbusType: 'coil'
+        },
+        scanModeId: 'scanModeId1'
+      },
+      {
+        id: 'id6',
+        name: 'HoldingRegister',
+        enabled: true,
+        settings: {
+          address: '0x0E88',
+          modbusType: 'holding-register',
+          data: {
+            dataType: 'bit',
+            bitIndex: 1,
+            multiplierCoefficient: 1
+          }
+        },
+        scanModeId: 'scanModeId1'
+      }
+    ]
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(configuration);
   });
-
-  let testingSouth: SouthModbus;
 
   // Error codes handled by the test function
   // With the expected error messages to throw
@@ -452,8 +532,10 @@ describe('SouthModbus test connection', () => {
   } as const;
 
   type ErrorCodes = keyof typeof ERROR_CODES;
+
   class ModbusError extends Error {
     private code: ErrorCodes;
+
     constructor(message: string, code: ErrorCodes) {
       super();
       this.name = 'ModbusError';
@@ -463,18 +545,27 @@ describe('SouthModbus test connection', () => {
   }
 
   it('Connecting to socket successfully', async () => {
-    testingSouth = new SouthModbus(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthModbus(
+      configuration,
+      addContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      mockBaseFolders(configuration.id)
+    );
 
     // Mock node:net Socket constructor and the used function
     (net.Socket as unknown as jest.Mock).mockReturnValue({
-      connect(_connectionObject: any, callback: any) {
-        callback();
+      connect(_connectionObject: unknown, callback: () => Promise<void>): Promise<void> {
+        return callback();
       },
       on: jest.fn(),
       end: jest.fn()
     });
 
-    await expect(testingSouth.testConnection()).resolves.not.toThrow();
+    await expect(south.testConnection()).resolves.not.toThrow();
   });
 
   it('Unable to create connection to socket', async () => {
@@ -487,27 +578,115 @@ describe('SouthModbus test connection', () => {
 
       // Mock node:net Socket constructor and the used function
       (net.Socket as unknown as jest.Mock).mockReturnValueOnce({
-        connect(_connectionObject: any, _callback: any) {
+        connect(_connectionObject: unknown, _callback: () => Promise<void>) {
           throw new ModbusError(errorMessage, code);
         },
         on: jest.fn(),
         end: jest.fn()
       });
 
-      await expect(testingSouth.testConnection()).rejects.toThrow(new Error(`${ERROR_CODES[code]} ${errorMessage}`));
+      await expect(south.testConnection()).rejects.toThrow(new Error(`${ERROR_CODES[code]} ${errorMessage}`));
     }
   });
 
   it('should fail to connect', async () => {
-    testingSouth = new SouthModbus(configuration, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthModbus(
+      configuration,
+      addContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      mockBaseFolders(configuration.id)
+    );
 
     const mockedEmitter = new CustomStream();
-    mockedEmitter.connect = (_connectionObject: any, _callback: any) => {};
+    mockedEmitter.connect = (_connectionObject: unknown, _callback: () => Promise<void>) => {
+      return _callback();
+    };
 
     // Mock node:net Socket constructor and the used function
     (net.Socket as unknown as jest.Mock).mockImplementation(() => mockedEmitter);
 
-    testingSouth.testConnection().catch(() => {});
+    south.testConnection().catch(() => null);
+
+    expect(net.Socket).toHaveBeenCalledTimes(1);
+    mockedEmitter.emit('error', 'connect error');
+    await flushPromises();
+  });
+
+  it('Connecting to socket successfully when testing configuration.items', async () => {
+    south = new SouthModbus(
+      configuration,
+      addContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      mockBaseFolders(configuration.id)
+    );
+    const callback = jest.fn();
+
+    // Mock node:net Socket constructor and the used function
+    (net.Socket as unknown as jest.Mock).mockReturnValue({
+      connect(_connectionObject: unknown, callback: () => Promise<void>) {
+        callback();
+      },
+      on: jest.fn(),
+      end: jest.fn()
+    });
+
+    await expect(south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback)).resolves.not.toThrow();
+  });
+
+  it('Unable to create connection to socket when testing configuration.items', async () => {
+    let code: ErrorCodes;
+    const errorMessage = 'Error creating connection to socket';
+    const callback = jest.fn();
+
+    for (code in ERROR_CODES) {
+      (logger.error as jest.Mock).mockClear();
+      (logger.info as jest.Mock).mockClear();
+
+      // Mock node:net Socket constructor and the used function
+      (net.Socket as unknown as jest.Mock).mockReturnValueOnce({
+        connect(_connectionObject: unknown, _callback: () => Promise<void>) {
+          throw new ModbusError(errorMessage, code);
+        },
+        on: jest.fn(),
+        end: jest.fn()
+      });
+
+      await expect(south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback)).rejects.toThrow(
+        new Error(`${ERROR_CODES[code]} ${errorMessage}`)
+      );
+    }
+  });
+
+  it('should fail to connect when testing items', async () => {
+    south = new SouthModbus(
+      configuration,
+      addContentCallback,
+      encryptionService,
+      southConnectorRepository,
+      southCacheRepository,
+      scanModeRepository,
+      logger,
+      mockBaseFolders(configuration.id)
+    );
+    const callback = jest.fn();
+
+    const mockedEmitter = new CustomStream();
+    mockedEmitter.connect = (_connectionObject: unknown, _callback: () => Promise<void>) => {
+      return _callback();
+    };
+
+    // Mock node:net Socket constructor and the used function
+    (net.Socket as unknown as jest.Mock).mockImplementation(() => mockedEmitter);
+
+    south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback).catch(() => null);
 
     expect(net.Socket).toHaveBeenCalledTimes(1);
     mockedEmitter.emit('error', 'connect error');

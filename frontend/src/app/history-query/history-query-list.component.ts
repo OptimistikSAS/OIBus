@@ -1,21 +1,20 @@
-import { Component, OnInit } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
-import { AsyncPipe, CommonModule, NgClass, NgForOf, NgIf } from '@angular/common';
+import { Component, inject, OnInit } from '@angular/core';
+import { TranslateDirective } from '@ngx-translate/core';
+import { AsyncPipe } from '@angular/common';
 import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
 import { ConfirmationService } from '../shared/confirmation.service';
 import { NotificationService } from '../shared/notification.service';
 import { ModalService } from '../shared/modal.service';
 import { Router, RouterLink } from '@angular/router';
 import { CreateHistoryQueryModalComponent } from './create-history-query-modal/create-history-query-modal.component';
-import { HistoryQueryDTO, HistoryQueryStatus } from '../../../../shared/model/history-query.model';
+import { HistoryQueryLightDTO, HistoryQueryStatus } from '../../../../backend/shared/model/history-query.model';
 import { HistoryQueryService } from '../services/history-query.service';
 import { PaginationComponent } from '../shared/pagination/pagination.component';
-import { createPageFromArray, Page } from '../../../../shared/model/types';
+import { createPageFromArray, Page } from '../../../../backend/shared/model/types';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { emptyPage } from '../shared/test-utils';
 import { FormControlValidationDirective } from '../shared/form-control-validation.directive';
 import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
-import { EnabledEnumPipe } from '../shared/enabled-enum.pipe';
 import { DatetimePipe } from '../shared/datetime.pipe';
 import { ObservableState } from '../shared/save-button/save-button.component';
 import { LegendComponent } from '../shared/legend/legend.component';
@@ -24,20 +23,14 @@ const PAGE_SIZE = 15;
 
 @Component({
   selector: 'oib-history-query-list',
-  standalone: true,
   imports: [
-    NgClass,
-    CommonModule,
-    TranslateModule,
+    TranslateDirective,
     RouterLink,
-    NgIf,
-    NgForOf,
     PaginationComponent,
     FormControlValidationDirective,
     FormsModule,
     ReactiveFormsModule,
     LoadingSpinnerComponent,
-    EnabledEnumPipe,
     DatetimePipe,
     AsyncPipe,
     LegendComponent
@@ -46,12 +39,18 @@ const PAGE_SIZE = 15;
   styleUrl: './history-query-list.component.scss'
 })
 export class HistoryQueryListComponent implements OnInit {
-  allHistoryQueries: Array<HistoryQueryDTO> | null = null;
-  filteredHistoryQueries: Array<HistoryQueryDTO> = [];
-  displayedHistoryQueries: Page<HistoryQueryDTO> = emptyPage();
+  private confirmationService = inject(ConfirmationService);
+  private notificationService = inject(NotificationService);
+  private modalService = inject(ModalService);
+  private historyQueryService = inject(HistoryQueryService);
+  private router = inject(Router);
+
+  allHistoryQueries: Array<HistoryQueryLightDTO> | null = null;
+  filteredHistoryQueries: Array<HistoryQueryLightDTO> = [];
+  displayedHistoryQueries: Page<HistoryQueryLightDTO> = emptyPage();
   states = new Map<string, ObservableState>();
 
-  searchForm = this.fb.group({
+  searchForm = inject(NonNullableFormBuilder).group({
     name: [null as string | null]
   });
 
@@ -62,15 +61,6 @@ export class HistoryQueryListComponent implements OnInit {
     { label: 'enums.status.FINISHED', class: 'blue-dot' },
     { label: 'enums.status.ABORTED', class: 'red-dot' }
   ];
-
-  constructor(
-    private confirmationService: ConfirmationService,
-    private notificationService: NotificationService,
-    private modalService: ModalService,
-    private historyQueryService: HistoryQueryService,
-    private router: Router,
-    private fb: NonNullableFormBuilder
-  ) {}
 
   ngOnInit() {
     this.historyQueryService.list().subscribe(queries => {
@@ -91,7 +81,7 @@ export class HistoryQueryListComponent implements OnInit {
     });
   }
 
-  delete(historyQuery: HistoryQueryDTO) {
+  delete(historyQuery: HistoryQueryLightDTO) {
     this.confirmationService
       .confirm({
         messageKey: 'history-query.confirm-deletion',
@@ -132,11 +122,11 @@ export class HistoryQueryListComponent implements OnInit {
     this.displayedHistoryQueries = this.createPage(pageNumber);
   }
 
-  private createPage(pageNumber: number): Page<HistoryQueryDTO> {
+  private createPage(pageNumber: number): Page<HistoryQueryLightDTO> {
     return createPageFromArray(this.filteredHistoryQueries, PAGE_SIZE, pageNumber);
   }
 
-  filter(souths: Array<HistoryQueryDTO>): Array<HistoryQueryDTO> {
+  filter(souths: Array<HistoryQueryLightDTO>): Array<HistoryQueryLightDTO> {
     const formValue = this.searchForm.value;
     let filteredItems = souths;
 
@@ -147,7 +137,7 @@ export class HistoryQueryListComponent implements OnInit {
     return filteredItems;
   }
 
-  toggleHistoryQuery(query: HistoryQueryDTO, newStatus: HistoryQueryStatus) {
+  toggleHistoryQuery(query: HistoryQueryLightDTO, newStatus: HistoryQueryStatus) {
     if (newStatus === 'RUNNING') {
       this.historyQueryService
         .startHistoryQuery(query.id)

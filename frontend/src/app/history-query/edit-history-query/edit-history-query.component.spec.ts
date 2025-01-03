@@ -11,10 +11,12 @@ import { provideHttpClient } from '@angular/common/http';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { HistoryQueryService } from '../../services/history-query.service';
-import { HistoryQueryDTO } from '../../../../../shared/model/history-query.model';
-import { NorthConnectorCommandDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
-import { SouthConnectorCommandDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
+import { HistoryQueryDTO } from '../../../../../backend/shared/model/history-query.model';
+import { NorthConnectorCommandDTO, NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
+import { SouthConnectorCommandDTO, SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
 import { Modal, ModalService } from '../../shared/modal.service';
+import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
+import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
 class EditHistoryQueryComponentTester extends ComponentTester<EditHistoryQueryComponent> {
   constructor() {
@@ -34,11 +36,11 @@ class EditHistoryQueryComponentTester extends ComponentTester<EditHistoryQueryCo
   }
 
   get startTime() {
-    return this.element('#start');
+    return this.element('#startTime');
   }
 
   get endTime() {
-    return this.element('#end');
+    return this.element('#endTime');
   }
 
   get northSpecificTitle() {
@@ -56,7 +58,12 @@ class EditHistoryQueryComponentTester extends ComponentTester<EditHistoryQueryCo
   get save() {
     return this.button('#save-button')!;
   }
+
+  get sharedConnection() {
+    return this.input('#south-shared-connection');
+  }
 }
+
 describe('EditHistoryQueryComponent', () => {
   let tester: EditHistoryQueryComponentTester;
   let northConnectorService: jasmine.SpyObj<NorthConnectorService>;
@@ -65,36 +72,44 @@ describe('EditHistoryQueryComponent', () => {
   let scanModeService: jasmine.SpyObj<ScanModeService>;
   let modalService: jasmine.SpyObj<ModalService>;
 
-  const historyQuery: HistoryQueryDTO = {
+  const historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
     id: 'id1',
     name: 'Test',
     description: 'My History query description',
     status: 'PENDING',
-    history: {
-      maxInstantPerItem: false,
-      maxReadInterval: 0,
-      readDelay: 200,
-      overlap: 0
-    },
     startTime: '2023-01-01T00:00:00.000Z',
     endTime: '2023-02-01T00:00:00.000Z',
-    northType: 'Console',
-    southType: 'SQL',
-    northSettings: {},
-    southSettings: {},
+    northType: 'console',
+    southType: 'mssql',
+    northSettings: {} as NorthSettings,
+    southSettings: {} as SouthSettings,
     caching: {
       scanModeId: 'scanModeId1',
       retryInterval: 1000,
       retryCount: 3,
-      groupCount: 1000,
-      maxSendCount: 10000,
-      sendFileImmediately: true,
-      maxSize: 30
+      maxSize: 30,
+      oibusTimeValues: {
+        groupCount: 1000,
+        maxSendCount: 10000
+      },
+      rawFiles: {
+        sendFileImmediately: true,
+        archive: {
+          enabled: false,
+          retentionDuration: 0
+        }
+      }
     },
-    archive: {
-      enabled: false,
-      retentionDuration: 0
-    }
+    items: [
+      {
+        id: 'id1',
+        name: 'item1',
+        enabled: true,
+        settings: {
+          query: 'sql'
+        } as SouthItemSettings
+      }
+    ]
   };
 
   beforeEach(() => {
@@ -132,8 +147,6 @@ describe('EditHistoryQueryComponent', () => {
       of({
         id: 'console',
         category: 'debug',
-        name: 'Console',
-        description: 'Console description',
         modes: {
           files: true,
           points: true
@@ -144,43 +157,26 @@ describe('EditHistoryQueryComponent', () => {
     );
     southConnectorService.getSouthConnectorTypeManifest.and.returnValue(
       of({
-        id: 'sql',
+        id: 'mssql',
         category: 'database',
-        name: 'SQL',
-        description: 'SQL description',
         modes: {
           history: true,
           lastFile: false,
           lastPoint: false,
           subscription: false,
-          forceMaxInstantPerItem: false
+          forceMaxInstantPerItem: false,
+          sharedConnection: false
         },
         settings: [],
         items: {
-          scanMode: {
-            acceptSubscription: false,
-            subscriptionOnly: false
-          },
+          scanMode: 'POLL',
           settings: [],
           schema: {} as unknown
         },
         schema: {} as unknown
       } as SouthConnectorManifest)
     );
-    historyQueryService.listItems.and.returnValue(
-      of([
-        {
-          id: 'id1',
-          name: 'item1',
-          enabled: true,
-          connectorId: 'southId',
-          scanModeId: 'history',
-          settings: {
-            query: 'sql'
-          }
-        }
-      ])
-    );
+
     tester = new EditHistoryQueryComponentTester();
     tester.detectChanges();
   });
@@ -191,18 +187,48 @@ describe('EditHistoryQueryComponent', () => {
     expect(tester.description).toHaveValue('My History query description');
     expect(tester.specificForm).toBeDefined();
     expect(tester.northSpecificTitle).toContainText('Console settings');
-    expect(tester.southSpecificTitle).toContainText('SQL settings');
+    expect(tester.southSpecificTitle).toContainText('Microsoft SQL Server™ settings');
+    expect(tester.sharedConnection).toBeNull();
+  });
+
+  it('should display south sharing input when connection can be shared', () => {
+    southConnectorService.getSouthConnectorTypeManifest.and.returnValue(
+      of({
+        id: 'mssql',
+        category: 'database',
+        name: 'SQL',
+        description: 'SQL description',
+        modes: {
+          history: true,
+          lastFile: false,
+          lastPoint: false,
+          subscription: false,
+          forceMaxInstantPerItem: false,
+          sharedConnection: true
+        },
+        settings: [],
+        items: {
+          scanMode: 'POLL',
+          settings: [],
+          schema: {} as unknown
+        },
+        schema: {} as unknown
+      } as SouthConnectorManifest)
+    );
+    tester = new EditHistoryQueryComponentTester();
+    tester.detectChanges();
+    expect(tester.sharedConnection).toBeDefined();
   });
 
   it('should test north connection', () => {
-    tester.componentInstance.northManifest = { id: 'northId1' } as NorthConnectorManifest;
+    tester.componentInstance.northManifest = { id: 'console', modes: {} } as NorthConnectorManifest;
     tester.componentInstance.historyQuery = historyQuery;
 
     const command = {
-      type: 'northId1',
-      archive: { enabled: false },
-      settings: historyQuery.northSettings
-    } as NorthConnectorCommandDTO;
+      type: 'console',
+      settings: historyQuery.northSettings,
+      caching: historyQuery.caching
+    } as NorthConnectorCommandDTO<NorthSettings>;
 
     const spy = jasmine.createSpy();
     modalService.open.and.returnValue({
@@ -217,13 +243,13 @@ describe('EditHistoryQueryComponent', () => {
   });
 
   it('should test south connection', () => {
-    tester.componentInstance.southManifest = { id: 'southId1' } as SouthConnectorManifest;
+    tester.componentInstance.southManifest = { id: 'mssql', modes: {} } as SouthConnectorManifest;
     tester.componentInstance.historyQuery = historyQuery;
 
     const command = {
-      type: 'southId1',
+      type: 'mssql',
       settings: historyQuery.southSettings
-    } as SouthConnectorCommandDTO;
+    } as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
 
     const spy = jasmine.createSpy();
     modalService.open.and.returnValue({
@@ -235,5 +261,29 @@ describe('EditHistoryQueryComponent', () => {
     tester.componentInstance.test('south');
     tester.detectChanges();
     expect(spy).toHaveBeenCalledWith('south', command, 'id1', null);
+  });
+
+  it('should validate start and end time', () => {
+    // Should throw error
+    historyQuery.startTime = '2024-01-01T00:00:00.000Z';
+    historyQuery.endTime = '2023-01-01T00:00:00.000Z';
+    tester = new EditHistoryQueryComponentTester();
+    tester.detectChanges();
+
+    expect(tester.componentInstance.historyQueryForm?.controls.startTime.errors).toEqual({
+      badStartDateRange: true
+    });
+    expect(tester.componentInstance.historyQueryForm?.controls.endTime.errors).toEqual({
+      badEndDateRange: true
+    });
+
+    // Should not throw error
+    historyQuery.startTime = '2023-01-01T00:00:00.000Z';
+    historyQuery.endTime = '2024-01-01T00:00:00.000Z';
+    tester = new EditHistoryQueryComponentTester();
+    tester.detectChanges();
+
+    expect(tester.componentInstance.historyQueryForm?.controls.startTime.errors).toEqual(null);
+    expect(tester.componentInstance.historyQueryForm?.controls.endTime.errors).toEqual(null);
   });
 });

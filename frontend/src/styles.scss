@@ -4,7 +4,9 @@ html {
   font-size: 12px;
 }
 
-// TODO use the SCSS import when https://github.com/angular/angular-cli/issues/26339 is fixed
+// TODO use the SCSS import when the unit tests use the esbuild builder
+// as they currently use the webpack builder,
+// the $fa-font-path variable needs to be different from the one that the esbuild builder uses
 // $fa-font-path: '../fonts';
 // @import 'font-awesome/scss/font-awesome';
 
@@ -42,6 +44,7 @@ html {
   &:hover {
     background-color: $mediumGrey;
   }
+
   &:active,
   &:focus,
   &:default {
@@ -110,6 +113,7 @@ img.oib-image-header {
   background-color: $yellow;
   color: $darkGrey;
   border: 0;
+
   &:hover {
     border-top-right-radius: 1rem;
     border-bottom-right-radius: 1rem;
@@ -118,24 +122,29 @@ img.oib-image-header {
     border: 0;
   }
 }
+
 // change to yellow when hover a day in the ngb-datepicker
 .dropdown-menu.show {
   .btn-light {
     color: $darkGrey;
   }
+
   .btn-light:hover {
     background-color: $yellow;
   }
+
   .btn-light:active,
   .bg-primary {
     background-color: $electricBlue;
     color: white;
   }
+
   .bg-primary {
     background-color: $electricBlue;
     color: white;
   }
 }
+
 .ngb-dp-weekday.small {
   color: $electricBlue;
 }
@@ -160,7 +169,7 @@ img.oib-image-header {
 // search bar form
 .oib-search-form {
   background-color: $veryLightGrey;
-  border-radius: 1rem;
+  border-radius: 0rem 0rem 1rem 1rem;
 }
 
 // display of grey empty field under a oib-box-title
@@ -189,6 +198,7 @@ img.oib-image-header {
   :not(caption) > * > * {
     border-bottom-width: 0;
   }
+
   --bs-table-bg: $white;
   --bs-table-color: $white;
   // table header
@@ -200,35 +210,43 @@ img.oib-image-header {
       color: $darkGrey;
       background-color: white;
     }
+
     // case of table header
     th {
       padding-left: 1rem;
       border-style: none;
-        .btn {
-          padding-right: 0;
-        }
+
+      .btn {
+        padding-right: 0;
+      }
     }
+
     // first case of the first line
     th:first-child {
       border-top-left-radius: 1rem;
       width: 3rem;
     }
+
     // last case of the first line
     th:last-child {
       border-top-right-radius: 1rem;
       width: 9rem;
     }
+
     th.first-column {
       width: 9rem;
     }
+
     th.last-column {
       width: 5rem;
     }
+
     // alternative case if oib-box-title is on top of table
     .light {
       background-color: $white;
     }
   }
+
   // body of the table
   tbody {
     padding: 0;
@@ -237,17 +255,18 @@ img.oib-image-header {
       vertical-align: middle;
       padding-left: 1rem;
       border-bottom-width: 0;
-      max-width: 0;
       text-overflow: clip;
       overflow: hidden;
       white-space: nowrap;
     }
+
     // line
     tr {
       // color of button in table in line
       .btn {
         color: $blue;
       }
+
       // hover settings
       &:hover {
         // color of button in line when hover the line
@@ -259,14 +278,17 @@ img.oib-image-header {
           }
         }
       }
+
       td:last-child {
         text-align: right;
         padding-right: 1em;
         overflow: visible;
       }
+
       .first-column-body {
         width: 15%;
       }
+
       .last-column-body {
         text-align: right;
         padding-right: 1em;
@@ -274,6 +296,7 @@ img.oib-image-header {
         text-overflow: clip;
       }
     }
+
     // customised colours on the lines (one out of two)
     tr:nth-child(even) {
       background-color: $white;
@@ -282,6 +305,93 @@ img.oib-image-header {
         background-color: $mediumGrey;
       }
     }
+
+    // customised colours on the lines (one out of two)
+    tr:nth-child(odd) {
+      background-color: $veryLightGrey;
+      // changes color when hover
+      &:hover {
+        background-color: $mediumGrey;
+      }
+    }
+  }
+}
+
+.oib-simple-table {
+  :not(caption) > * > * {
+    border-bottom-width: 0;
+  }
+
+  --bs-table-bg: $white;
+  --bs-table-color: $white;
+  // table header
+  thead {
+    color: $white;
+    background-color: $darkGrey;
+    // alternative case
+    &.light {
+      color: $darkGrey;
+      background-color: white;
+    }
+
+    // case of table header
+    th {
+      padding-left: 1rem;
+      border-style: none;
+
+      .btn {
+        padding-right: 0;
+      }
+    }
+
+    // alternative case if oib-box-title is on top of table
+    .light {
+      background-color: $white;
+    }
+  }
+
+  // body of the table
+  tbody {
+    padding: 0;
+    // case of table
+    td {
+      vertical-align: middle;
+      padding-left: 1rem;
+      border-bottom-width: 0;
+      text-overflow: clip;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    // line
+    tr {
+      // color of button in table in line
+      .btn {
+        color: $blue;
+      }
+
+      // hover settings
+      &:hover {
+        // color of button in line when hover the line
+        .btn {
+          color: $darkGrey;
+          // color of button when hover it
+          &:hover {
+            color: $yellow;
+          }
+        }
+      }
+    }
+
+    // customised colours on the lines (one out of two)
+    tr:nth-child(even) {
+      background-color: $white;
+      // changes color when hover
+      &:hover {
+        background-color: $mediumGrey;
+      }
+    }
+
     // customised colours on the lines (one out of two)
     tr:nth-child(odd) {
       background-color: $veryLightGrey;
@@ -305,6 +415,7 @@ img.oib-image-header {
   .btn-primary, .btn-secondary, .btn-danger {
     margin-right: 0.75rem;
   }
+
   .btn-primary, .btn-primary:focus {
     border-radius: 0.5rem;
     color: $white;
@@ -312,12 +423,14 @@ img.oib-image-header {
     border: none;
     outline: 2px solid $electricBlue;
     outline-offset: -2px;
-      &:hover {
-        border-radius: 0.5rem;
-        background-color: $electricBlue;
-        color: $white;
+
+    &:hover {
+      border-radius: 0.5rem;
+      background-color: $electricBlue;
+      color: $white;
     }
   }
+
   .btn-secondary, .btn-secondary:focus {
     border-radius: 0.5rem;
     color: $white;
@@ -325,12 +438,14 @@ img.oib-image-header {
     border: none;
     outline: 2px solid $yellow;
     outline-offset: -2px;
-      &:hover, &:active {
-        border-radius: 0.5rem;
-        background-color: $yellow;
-        color: $darkGrey;
+
+    &:hover, &:active {
+      border-radius: 0.5rem;
+      background-color: $yellow;
+      color: $darkGrey;
     }
   }
+
   .btn-danger, .btn-danger:focus {
     border-radius: 0.5rem;
     color: $white;
@@ -338,12 +453,14 @@ img.oib-image-header {
     border: none;
     outline: 2px solid $red;
     outline-offset: -2px;
-      &:hover {
-        border-radius: 0.5rem;
-        background-color: $red;
-        color: $white;
+
+    &:hover {
+      border-radius: 0.5rem;
+      background-color: $red;
+      color: $white;
     }
   }
+
   .btn:disabled, .btn.disabled, fieldset:disabled .btn {
     color: var(--bs-btn-disabled-color);
     pointer-events: none;
@@ -352,6 +469,7 @@ img.oib-image-header {
     opacity: 0.4;
   }
 }
+
 // style in oib-box-title of link button
 .btn-link {
   color: $white;
@@ -400,10 +518,11 @@ img.oib-image-header {
   color: $white;
   background-color: $yellow;
   border: none;
-    &:hover, &:active {
-      border-radius: 0.5rem;
-      background-color: $blue;
-      color: $darkGrey;
+
+  &:hover, &:active {
+    border-radius: 0.5rem;
+    background-color: $blue;
+    color: $darkGrey;
   }
 }
 
@@ -413,20 +532,24 @@ img.oib-image-header {
   border: none;
   color: $white;
   background-color: $blue;
+
   &:hover {
     background-color: $yellow;
   }
 }
+
 .btn-cancel-edit {
   height: 27px;
   border-radius: 0.5rem;
   border: none;
   color: $white;
   background-color: $blue;
-    &:hover {
-      background-color: $yellow;
+
+  &:hover {
+    background-color: $yellow;
   }
 }
+
 // override of some bootstrap styles to better fit Optimistik branding
 .btn-danger {
   border-radius: 0.5rem;
@@ -462,6 +585,7 @@ textarea.form-control {
   input.form-control {
     background-color: $white !important;
   }
+
   .form-select {
     background-color: $white !important;
   }
@@ -540,10 +664,12 @@ val-errors > div {
     opacity: 1;
   }
 }
+
 // customization of modal colors
 .modal-body {
   background-color: $white !important;
 }
+
 // customization of modal footer colors
 .modal-footer {
   background-color: $white !important;
@@ -551,6 +677,7 @@ val-errors > div {
   border-bottom-right-radius: 1rem;
   border: 0;
 }
+
 // customization of modal content colors
 .modal-content {
   background-color: transparent;
@@ -586,6 +713,7 @@ val-errors > div {
   .btn:not(:last-child) {
     border-right-color: white;
   }
+
   .btn:not(:first-child) {
     border-left-color: white;
   }
@@ -696,6 +824,7 @@ val-errors > div {
   //background-color: $lightGrey;
   border: 0.20rem solid $lightGrey;
   margin-bottom: 1rem;
+
   .box {
     margin-top: -0.15rem;
     margin-right: -0.15rem;

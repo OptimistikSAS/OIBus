@@ -4,12 +4,16 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { fakeAsync, TestBed } from '@angular/core/testing';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import {
+  SouthConnectorCommandDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
-  SouthConnectorItemManifest
-} from '../../../../../shared/model/south-connector.model';
-import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
+  SouthConnectorItemManifest,
+  SouthConnectorManifest
+} from '../../../../../backend/shared/model/south-connector.model';
+import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
+import { provideHttpClient } from '@angular/common/http';
 
 class EditSouthItemModalComponentTester extends ComponentTester<EditSouthItemModalComponent> {
   constructor() {
@@ -46,26 +50,27 @@ describe('EditSouthItemModalComponent', () => {
   let fakeActiveModal: NgbActiveModal;
 
   const southItemSchema: SouthConnectorItemManifest = {
-    scanMode: { subscriptionOnly: false, acceptSubscription: true },
+    scanMode: 'SUBSCRIPTION_AND_POLL',
     settings: [],
     schema: []
   } as SouthConnectorItemManifest;
-  const allItems: Array<SouthConnectorItemDTO> = [
+  const southId = 'southId';
+  const southConnectorCommand = {} as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+  const southManifest = { modes: { history: false } } as SouthConnectorManifest;
+  const allItems: Array<SouthConnectorItemDTO<SouthItemSettings>> = [
     {
       id: 'id1',
       enabled: true,
       name: 'item',
-      connectorId: 'southId',
       scanModeId: 'scanModeId1',
-      settings: {}
+      settings: {} as SouthItemSettings
     },
     {
       id: 'id2',
       enabled: true,
       name: 'item2',
-      connectorId: 'southId',
       scanModeId: 'scanModeId1',
-      settings: {}
+      settings: {} as SouthItemSettings
     }
   ];
   const scanModes: Array<ScanModeDTO> = [
@@ -87,7 +92,7 @@ describe('EditSouthItemModalComponent', () => {
     fakeActiveModal = createMock(NgbActiveModal);
 
     TestBed.configureTestingModule({
-      providers: [provideI18nTesting(), { provide: NgbActiveModal, useValue: fakeActiveModal }]
+      providers: [provideI18nTesting(), provideHttpClient(), { provide: NgbActiveModal, useValue: fakeActiveModal }]
     });
 
     TestBed.createComponent(DefaultValidationErrorsComponent).detectChanges();
@@ -97,7 +102,7 @@ describe('EditSouthItemModalComponent', () => {
 
   describe('create mode', () => {
     beforeEach(() => {
-      tester.componentInstance.prepareForCreation(southItemSchema, allItems, scanModes);
+      tester.componentInstance.prepareForCreation(southItemSchema, allItems, scanModes, southId, southConnectorCommand, southManifest);
       tester.detectChanges();
     });
 
@@ -120,12 +125,13 @@ describe('EditSouthItemModalComponent', () => {
 
       tester.detectChanges();
 
-      const command: SouthConnectorItemCommandDTO = {
-        id: '',
+      const command: SouthConnectorItemCommandDTO<SouthItemSettings> = {
+        id: null,
         enabled: true,
         name: 'MyName',
         scanModeId: 'scanModeId2',
-        settings: {}
+        scanModeName: null,
+        settings: {} as SouthItemSettings
       };
       tester.save.click();
       expect(fakeActiveModal.close).toHaveBeenCalledWith(command);
@@ -138,17 +144,24 @@ describe('EditSouthItemModalComponent', () => {
   });
 
   describe('copy mode', () => {
-    const southItem: SouthConnectorItemDTO = {
+    const southItem: SouthConnectorItemDTO<SouthItemSettings> = {
       id: 'id1',
       name: 'myName',
       enabled: true,
-      connectorId: 'southId1',
       scanModeId: 'scanModeId1',
-      settings: {}
+      settings: {} as SouthItemSettings
     };
 
     it('should duplicate item', () => {
-      tester.componentInstance.prepareForCopy(southItemSchema, scanModes, southItem);
+      tester.componentInstance.prepareForCopy(
+        southItemSchema,
+        allItems,
+        scanModes,
+        southItem,
+        southId,
+        southConnectorCommand,
+        southManifest
+      );
       tester.detectChanges();
       expect(tester.name).toHaveValue('myName-copy');
 
@@ -157,12 +170,13 @@ describe('EditSouthItemModalComponent', () => {
 
       tester.detectChanges();
 
-      const command: SouthConnectorItemCommandDTO = {
-        id: '',
+      const command: SouthConnectorItemCommandDTO<SouthItemSettings> = {
+        id: null,
         enabled: true,
         name: 'MyName-2',
         scanModeId: 'scanModeId2',
-        settings: {}
+        scanModeName: null,
+        settings: {} as SouthItemSettings
       };
       tester.save.click();
       expect(fakeActiveModal.close).toHaveBeenCalledWith(command);
@@ -170,17 +184,25 @@ describe('EditSouthItemModalComponent', () => {
   });
 
   describe('edit mode', () => {
-    const southItem: SouthConnectorItemDTO = {
+    const southItem: SouthConnectorItemDTO<SouthItemSettings> = {
       id: 'id1',
       name: 'myName',
       enabled: true,
-      connectorId: 'southId1',
       scanModeId: 'scanModeId1',
-      settings: {}
+      settings: {} as SouthItemSettings
     };
 
     beforeEach(() => {
-      tester.componentInstance.prepareForEdition(southItemSchema, allItems, scanModes, southItem);
+      tester.componentInstance.prepareForEdition(
+        southItemSchema,
+        allItems,
+        scanModes,
+        southItem,
+        southId,
+        southConnectorCommand,
+        southManifest,
+        0
+      );
       tester.detectChanges();
     });
 
@@ -218,12 +240,13 @@ describe('EditSouthItemModalComponent', () => {
       tester.enabled.uncheck();
       tester.scanMode.selectLabel('Subscribe');
       tester.save.click();
-      const command: SouthConnectorItemCommandDTO = {
+      const command: SouthConnectorItemCommandDTO<SouthItemSettings> = {
         id: 'id1',
         enabled: false,
         name: 'South Item 1 (updated)',
         scanModeId: 'subscription',
-        settings: {}
+        scanModeName: null,
+        settings: {} as SouthItemSettings
       };
       expect(fakeActiveModal.close).toHaveBeenCalledWith(command);
     }));

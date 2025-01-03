@@ -7,13 +7,14 @@ import minimist from 'minimist';
 
 import { DateTime } from 'luxon';
 import {
+  checkScanMode,
   compress,
   convertDateTimeToInstant,
   convertDelimiter,
+  createBaseFolders,
   createFolder,
   delay,
   dirSize,
-  downloadFile,
   filesExists,
   formatInstant,
   formatQueryParams,
@@ -22,10 +23,10 @@ import {
   generateReplacementParameters,
   getCommandLineArguments,
   getFilesFiltered,
-  getNetworkSettingsFromRegistration,
   getOIBusInfo,
   getPlatformFromOsType,
   httpGetWithBody,
+  itemToFlattenedCSV,
   logQuery,
   persistResults,
   unzip,
@@ -34,18 +35,16 @@ import {
 import csv from 'papaparse';
 import pino from 'pino';
 import AdmZip from 'adm-zip';
-import fetch from 'node-fetch';
-import PinoLogger from '../tests/__mocks__/logger.mock';
-import { DateTimeType } from '../../../shared/model/types';
+import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
+import { DateTimeType } from '../../shared/model/types';
 import Stream from 'node:stream';
 import http from 'node:http';
 import https from 'node:https';
 import os from 'node:os';
-import { EngineSettingsDTO, OIBusInfo, RegistrationSettingsDTO } from '../../../shared/model/engine.model';
-import { createProxyAgent } from './proxy-agent';
-import EncryptionService from './encryption.service';
-import EncryptionServiceMock from '../tests/__mocks__/encryption-service.mock';
+import { EngineSettingsDTO, OIBusInfo } from '../../shared/model/engine.model';
 import cronstrue from 'cronstrue';
+import testData from '../tests/utils/test-data';
+import { mockBaseFolders } from '../tests/utils/test-utils';
 
 jest.mock('node:zlib');
 jest.mock('node:fs/promises');
@@ -53,100 +52,11 @@ jest.mock('node:fs');
 jest.mock('minimist');
 jest.mock('papaparse');
 jest.mock('adm-zip');
-jest.mock('node-fetch');
-const { Response } = jest.requireActual('node-fetch');
 jest.mock('node:http', () => ({ request: jest.fn() }));
 jest.mock('node:https', () => ({ request: jest.fn() }));
 jest.mock('./proxy-agent');
 
-const nowDateString = '2020-02-02T02:02:02.222Z';
 describe('Service utils', () => {
-  describe('getNetworkSettings', () => {
-    const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
-
-    it('should get network settings and throw error if not registered', async () => {
-      await expect(
-        getNetworkSettingsFromRegistration(
-          {
-            status: 'PENDING'
-          } as RegistrationSettingsDTO,
-          '/api/oianalytics/oibus-commands/${oibusId}/check',
-          encryptionService
-        )
-      ).rejects.toThrow('OIBus not registered in OIAnalytics');
-    });
-
-    it('should get network settings', async () => {
-      const settings: RegistrationSettingsDTO = {
-        status: 'REGISTERED',
-        host: 'http://localhost:4200/',
-        token: 'my token',
-        useProxy: false,
-        acceptUnauthorized: false
-      } as RegistrationSettingsDTO;
-
-      const result = await getNetworkSettingsFromRegistration(settings, '/endpoint', encryptionService);
-      expect(result).toEqual({
-        host: 'http://localhost:4200',
-        headers: { authorization: 'Bearer my token' },
-        agent: undefined
-      });
-      expect(createProxyAgent).toHaveBeenCalledWith(false, 'http://localhost:4200/endpoint', null, false);
-    });
-
-    it('should get network settings and proxy', async () => {
-      const settings: RegistrationSettingsDTO = {
-        status: 'REGISTERED',
-        host: 'http://localhost:4200/',
-        token: 'my token',
-        useProxy: true,
-        proxyUrl: 'https://proxy.url',
-        proxyUsername: 'user',
-        proxyPassword: 'pass',
-        acceptUnauthorized: false
-      } as RegistrationSettingsDTO;
-
-      const result = await getNetworkSettingsFromRegistration(settings, '/endpoint', encryptionService);
-      expect(result).toEqual({
-        host: 'http://localhost:4200',
-        headers: { authorization: 'Bearer my token' },
-        agent: undefined
-      });
-      expect(createProxyAgent).toHaveBeenCalledWith(
-        true,
-        'http://localhost:4200/endpoint',
-        { url: 'https://proxy.url', username: 'user', password: 'pass' },
-        false
-      );
-    });
-
-    it('should get network settings and proxy without pass', async () => {
-      const settings: RegistrationSettingsDTO = {
-        status: 'REGISTERED',
-        host: 'http://localhost:4200/',
-        token: 'my token',
-        useProxy: true,
-        proxyUrl: 'https://proxy.url',
-        proxyUsername: 'user',
-        proxyPassword: '',
-        acceptUnauthorized: false
-      } as RegistrationSettingsDTO;
-
-      const result = await getNetworkSettingsFromRegistration(settings, '/endpoint', encryptionService);
-      expect(result).toEqual({
-        host: 'http://localhost:4200',
-        headers: { authorization: 'Bearer my token' },
-        agent: undefined
-      });
-      expect(createProxyAgent).toHaveBeenCalledWith(
-        true,
-        'http://localhost:4200/endpoint',
-        { url: 'https://proxy.url', username: 'user', password: null },
-        false
-      );
-    });
-  });
-
   describe('getCommandLineArguments', () => {
     beforeEach(() => {
       jest.clearAllMocks();
@@ -160,7 +70,8 @@ describe('Service utils', () => {
         configFile: path.resolve('./'),
         ignoreIpFilters: false,
         ignoreRemoteUpdate: false,
-        ignoreRemoteConfig: false
+        ignoreRemoteConfig: false,
+        launcherVersion: '3.4.0'
       });
     });
 
@@ -170,7 +81,8 @@ describe('Service utils', () => {
         config: 'myConfig.json',
         ignoreIpFilters: true,
         ignoreRemoteUpdate: true,
-        ignoreRemoteConfig: true
+        ignoreRemoteConfig: true,
+        launcherVersion: '3.5.0'
       });
       const result = getCommandLineArguments();
       expect(result).toEqual({
@@ -178,23 +90,22 @@ describe('Service utils', () => {
         configFile: path.resolve('myConfig.json'),
         ignoreIpFilters: true,
         ignoreRemoteUpdate: true,
-        ignoreRemoteConfig: true
+        ignoreRemoteConfig: true,
+        launcherVersion: '3.5.0'
       });
     });
   });
 
   describe('delay', () => {
     beforeEach(() => {
-      jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
       jest.clearAllMocks();
     });
 
     it('should delay', async () => {
-      const setTimeoutSpy = jest.spyOn(global, 'setTimeout').mockImplementation((callback: any) => {
-        return callback();
-      });
+      const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
 
-      await delay(1000);
+      delay(1000);
       jest.advanceTimersToNextTimer();
       expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 1000);
     });
@@ -261,6 +172,20 @@ describe('Service utils', () => {
 
       expect(fs.mkdir).toHaveBeenCalledTimes(1);
       expect(fs.mkdir).toHaveBeenCalledWith(path.resolve(folderToCreate), { recursive: true });
+    });
+  });
+
+  describe('createBaseFolders', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should properly create base folders', async () => {
+      (fs.stat as jest.Mock).mockImplementation(() => null);
+
+      await createBaseFolders(mockBaseFolders(testData.north.list[0].id));
+      expect(fs.mkdir).not.toHaveBeenCalled();
+      expect(fs.stat).toHaveBeenCalledTimes(3);
     });
   });
 
@@ -466,8 +391,7 @@ describe('Service utils', () => {
 
   describe('persistResults', () => {
     const logger: pino.Logger = new PinoLogger();
-    const addFile = jest.fn();
-    const addValues = jest.fn();
+    const addContent = jest.fn();
     const dataToWrite = [{ data1: 1 }, { data2: 2 }];
 
     describe('without compression', () => {
@@ -487,12 +411,11 @@ describe('Service utils', () => {
           'connectorName',
           'itemName',
           'myTmpFolder',
-          addFile,
-          addValues,
+          addContent,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addFile).toHaveBeenCalledWith(filePath);
+        expect(addContent).toHaveBeenCalledWith({ type: 'raw', filePath });
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledTimes(1);
       });
@@ -511,12 +434,11 @@ describe('Service utils', () => {
           'connectorName',
           'itemName',
           'myTmpFolder',
-          addFile,
-          addValues,
+          addContent,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addFile).toHaveBeenCalledWith(filePath);
+        expect(addContent).toHaveBeenCalledWith({ type: 'raw', filePath });
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledTimes(1);
       });
@@ -538,12 +460,11 @@ describe('Service utils', () => {
           'connectorName',
           'itemName',
           'myTmpFolder',
-          addFile,
-          addValues,
+          addContent,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addFile).toHaveBeenCalledWith(filePath);
+        expect(addContent).toHaveBeenCalledWith({ type: 'raw', filePath });
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledTimes(1);
         expect(logger.error).toHaveBeenCalledWith(
@@ -565,12 +486,11 @@ describe('Service utils', () => {
           'connectorName',
           'itemName',
           'myTmpFolder',
-          addFile,
-          addValues,
+          addContent,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addFile).toHaveBeenCalledWith(filePath);
+        expect(addContent).toHaveBeenCalledWith({ type: 'raw', filePath });
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledTimes(1);
         expect(logger.error).toHaveBeenCalledWith(`Error when deleting file "${filePath}" after caching it. ${new Error('unlink error')}`);
@@ -617,12 +537,11 @@ describe('Service utils', () => {
           'connectorName',
           'itemName',
           'myTmpFolder',
-          addFile,
-          addValues,
+          addContent,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addFile).toHaveBeenCalledWith(`${filePath}.gz`);
+        expect(addContent).toHaveBeenCalledWith({ type: 'raw', filePath: `${filePath}.gz` });
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledWith(`${filePath}.gz`);
         expect(fs.unlink).toHaveBeenCalledTimes(2);
@@ -639,12 +558,11 @@ describe('Service utils', () => {
           'connectorName',
           'itemName',
           'myTmpFolder',
-          addFile,
-          addValues,
+          addContent,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addFile).toHaveBeenCalledWith(`${filePath}.gz`);
+        expect(addContent).toHaveBeenCalledWith({ type: 'raw', filePath: `${filePath}.gz` });
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledWith(`${filePath}.gz`);
         expect(fs.unlink).toHaveBeenCalledTimes(2);
@@ -659,11 +577,10 @@ describe('Service utils', () => {
           'connectorName',
           'itemName',
           'myTmpFolder',
-          addFile,
-          addValues,
+          addContent,
           logger
         );
-        expect(addValues).toHaveBeenCalledWith(dataToWrite);
+        expect(addContent).toHaveBeenCalledWith({ type: 'time-values', content: dataToWrite });
       });
 
       it('should properly persists results into CSV file and log unlink errors', async () => {
@@ -683,8 +600,7 @@ describe('Service utils', () => {
           'connectorName',
           'itemName',
           'myTmpFolder',
-          addFile,
-          addValues,
+          addContent,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
@@ -693,7 +609,7 @@ describe('Service utils', () => {
         expect(logger.error).toHaveBeenCalledWith(
           `Error when deleting compressed CSV file "${filePath}.gz" after caching it. Error: unlink error`
         );
-        expect(addFile).toHaveBeenCalledWith(`${filePath}.gz`);
+        expect(addContent).toHaveBeenCalledWith({ type: 'raw', filePath: `${filePath}.gz` });
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledWith(`${filePath}.gz`);
         expect(fs.unlink).toHaveBeenCalledTimes(2);
@@ -713,8 +629,7 @@ describe('Service utils', () => {
           'connectorName',
           'itemName',
           'myTmpFolder',
-          addFile,
-          addValues,
+          addContent,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
@@ -723,7 +638,7 @@ describe('Service utils', () => {
         expect(logger.error).toHaveBeenCalledWith(
           `Error when deleting compressed file "${filePath}.gz" after caching it. Error: unlink error`
         );
-        expect(addFile).toHaveBeenCalledWith(`${filePath}.gz`);
+        expect(addContent).toHaveBeenCalledWith({ type: 'raw', filePath: `${filePath}.gz` });
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledWith(`${filePath}.gz`);
         expect(fs.unlink).toHaveBeenCalledTimes(2);
@@ -986,7 +901,7 @@ describe('Service utils', () => {
   describe('httpGetWithBody', () => {
     beforeEach(() => {
       jest.resetAllMocks();
-      jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     });
 
     it('should correctly create a body with GET HTTP', async () => {
@@ -1074,80 +989,9 @@ describe('Service utils', () => {
           end: jest.fn()
         };
       });
-      await expect(httpGetWithBody('body', { protocol: 'https:' })).rejects.toThrow('Unexpected token s in JSON at position 0');
-    });
-  });
-
-  describe('downloadFile', () => {
-    const connectionSettings = {
-      host: 'http://localhost:4200',
-      agent: undefined,
-      headers: { authorization: `Bearer token` }
-    };
-
-    beforeEach(() => {
-      jest.resetAllMocks();
-    });
-
-    it('should download file', async () => {
-      const filePath = 'oibus.zip';
-      const timeout = 1000;
-
-      const response = new Response('content');
-      (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(response));
-
-      await downloadFile(connectionSettings, '/endpoint', filePath, timeout);
-
-      expect(fetch).toHaveBeenCalledWith(`${connectionSettings.host}/endpoint`, {
-        method: 'GET',
-        timeout,
-        headers: connectionSettings.headers,
-        agent: connectionSettings.agent
-      });
-      expect(fs.writeFile).toHaveBeenCalledWith(filePath, Buffer.from('content'));
-    });
-
-    it('should handle fetch error during download', async () => {
-      const filePath = 'oibus.zip';
-      const timeout = 1000;
-
-      (fetch as unknown as jest.Mock).mockImplementationOnce(() => {
-        throw new Error('error');
-      });
-
-      try {
-        await downloadFile(connectionSettings, '/endpoint', filePath, timeout);
-      } catch (error) {
-        expect(error).toEqual(new Error('Download failed: Error: error'));
-      }
-      expect(fetch).toHaveBeenCalledWith(`${connectionSettings.host}/endpoint`, {
-        method: 'GET',
-        timeout,
-        headers: connectionSettings.headers,
-        agent: connectionSettings.agent
-      });
-      expect(fs.writeFile).not.toHaveBeenCalled();
-    });
-
-    it('should handle invalid fetch response during download', async () => {
-      const filePath = 'oibus.zip';
-      const timeout = 1000;
-      (fetch as unknown as jest.Mock).mockReturnValueOnce(
-        Promise.resolve(new Response('invalid', { status: 404, statusText: 'Not Found' }))
+      await expect(httpGetWithBody('body', { protocol: 'https:' })).rejects.toThrow(
+        'Unexpected token \'s\', "some datab"... is not valid JSON'
       );
-
-      try {
-        await downloadFile(connectionSettings, '/endpoint', filePath, timeout);
-      } catch (error) {
-        expect(error).toEqual(new Error('Download failed with status code 404 and message: Not Found'));
-      }
-      expect(fetch).toHaveBeenCalledWith(`${connectionSettings.host}/endpoint`, {
-        method: 'GET',
-        timeout,
-        headers: connectionSettings.headers,
-        agent: connectionSettings.agent
-      });
-      expect(fs.writeFile).not.toHaveBeenCalled();
     });
   });
 
@@ -1160,11 +1004,12 @@ describe('Service utils', () => {
       operatingSystem: `${os.type()} ${os.release()}`,
       processId: process.pid.toString(),
       version: '3.3.3',
+      launcherVersion: '3.5.0',
       oibusId: 'id',
       oibusName: 'name',
       platform: getPlatformFromOsType(os.type())
     };
-    const result = getOIBusInfo({ id: 'id', name: 'name', version: '3.3.3' } as EngineSettingsDTO);
+    const result = getOIBusInfo({ id: 'id', name: 'name', version: '3.3.3', launcherVersion: '3.5.0' } as EngineSettingsDTO);
     expect(result).toEqual(expectedResult);
   });
 
@@ -1180,7 +1025,7 @@ describe('Service utils', () => {
 
     beforeEach(() => {
       jest.resetAllMocks();
-      jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     });
 
     it('should properly get files', async () => {
@@ -1238,14 +1083,16 @@ describe('Service utils', () => {
   describe('validateCronExpression', () => {
     beforeEach(() => {
       jest.resetAllMocks();
-      jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     });
 
-    it('should properly validate a cron expression', () => {
+    it('should properly validate a cron expression (every second)', () => {
       const result = validateCronExpression('* * * * * *');
       const expectedResult = {
+        isValid: true,
+        errorMessage: '',
         humanReadableForm: 'Every second, every minute, every hour, every day',
-        nextExecutions: ['2020-02-02T02:02:03.000Z', '2020-02-02T02:02:04.000Z', '2020-02-02T02:02:05.000Z']
+        nextExecutions: ['2021-01-02T00:00:01.000Z', '2021-01-02T00:00:02.000Z', '2021-01-02T00:00:03.000Z']
       };
       expect(result).toEqual(expectedResult);
     });
@@ -1253,44 +1100,151 @@ describe('Service utils', () => {
     it('should properly validate a cron expression', () => {
       const result = validateCronExpression('0 */10 * * * *');
       const expectedResult = {
+        isValid: true,
+        errorMessage: '',
         humanReadableForm: 'Every 10 minutes, every hour, every day',
-        nextExecutions: ['2020-02-02T02:10:00.000Z', '2020-02-02T02:20:00.000Z', '2020-02-02T02:30:00.000Z']
+        nextExecutions: ['2021-01-02T00:10:00.000Z', '2021-01-02T00:20:00.000Z', '2021-01-02T00:30:00.000Z']
       };
       expect(result).toEqual(expectedResult);
     });
 
     it('should throw an error for too many fields', () => {
-      expect(() => validateCronExpression('* * * * * * 2024')).toThrow(
-        'Too many fields. Only seconds, minutes, hours, day of month, month and day of week are supported.'
-      );
+      expect(validateCronExpression('* * * * * * 2024')).toEqual({
+        isValid: false,
+        errorMessage: 'Too many fields. Only seconds, minutes, hours, day of month, month and day of week are supported.',
+        humanReadableForm: '',
+        nextExecutions: []
+      });
     });
 
     it('should throw an error for non standard characters', () => {
-      expect(() => validateCronExpression('* * * * 5L')).toThrow('Expression contains non-standard characters: L');
-      expect(() => validateCronExpression('* * * W * *')).toThrow('Expression contains non-standard characters: W');
-      expect(() => validateCronExpression('* * * * * 5#3')).toThrow('Expression contains non-standard characters: #');
-      expect(() => validateCronExpression('? ? * * * *')).toThrow('Expression contains non-standard characters: ?');
-      expect(() => validateCronExpression('H * * * *')).toThrow('Expression contains non-standard characters: H');
+      expect(validateCronExpression('* * * * 5L')).toEqual({
+        isValid: false,
+        errorMessage: 'Expression contains non-standard characters: L',
+        humanReadableForm: '',
+        nextExecutions: []
+      });
+
+      expect(validateCronExpression('* * * W * *')).toEqual({
+        isValid: false,
+        errorMessage: 'Expression contains non-standard characters: W',
+        humanReadableForm: '',
+        nextExecutions: []
+      });
+
+      expect(validateCronExpression('* * * * * 5#3')).toEqual({
+        isValid: false,
+        errorMessage: 'Expression contains non-standard characters: #',
+        humanReadableForm: '',
+        nextExecutions: []
+      });
+
+      expect(validateCronExpression('? ? * * * *')).toEqual({
+        isValid: false,
+        errorMessage: 'Expression contains non-standard characters: ?',
+        humanReadableForm: '',
+        nextExecutions: []
+      });
+
+      expect(validateCronExpression('H * * * *')).toEqual({
+        isValid: false,
+        errorMessage: 'Expression contains non-standard characters: H',
+        humanReadableForm: '',
+        nextExecutions: []
+      });
     });
 
     it('should throw an error for invalid cron expression caught by cronstrue', () => {
-      expect(() => validateCronExpression('0 35 10 19 01')).toThrow('Hours part must be >= 0 and <= 23');
-      expect(() => validateCronExpression('0 23 10 19 01')).toThrow('Month part must be >= 1 and <= 12');
-      expect(() => validateCronExpression('0 23 10 12 8')).toThrow('DOW part must be >= 0 and <= 6');
+      expect(validateCronExpression('0 35 10 19 01')).toEqual({
+        isValid: false,
+        errorMessage: 'Hours part must be >= 0 and <= 23',
+        humanReadableForm: '',
+        nextExecutions: []
+      });
+      expect(validateCronExpression('0 23 10 19 01')).toEqual({
+        isValid: false,
+        errorMessage: 'Month part must be >= 1 and <= 12',
+        humanReadableForm: '',
+        nextExecutions: []
+      });
+      expect(validateCronExpression('0 23 10 12 8')).toEqual({
+        isValid: false,
+        errorMessage: 'DOW part must be >= 0 and <= 6',
+        humanReadableForm: '',
+        nextExecutions: []
+      });
     });
 
     it('should throw an error for invalid cron expression caught by cron-parser', () => {
-      expect(() => validateCronExpression('0 23 10 12 6/')).toThrow('Constraint error, cannot repeat at every 0 time.');
-      expect(() => validateCronExpression('0 23 10 12 6/-')).toThrow('Constraint error, cannot repeat at every NaN time.');
-      expect(() => validateCronExpression('0 23 10 12 6/-')).toThrow('Constraint error, cannot repeat at every NaN time.');
-      expect(() => validateCronExpression('0 23 10-1 12 6/1')).toThrow('Invalid range: 10-1');
+      expect(validateCronExpression('0 23 10 12 6/')).toEqual({
+        isValid: false,
+        errorMessage: 'Constraint error, cannot repeat at every 0 time.',
+        humanReadableForm: '',
+        nextExecutions: []
+      });
+      expect(validateCronExpression('0 23 10 12 6/-')).toEqual({
+        isValid: false,
+        errorMessage: 'Constraint error, cannot repeat at every NaN time.',
+        humanReadableForm: '',
+        nextExecutions: []
+      });
+      expect(validateCronExpression('0 23 10-1 12 6/1')).toEqual({
+        isValid: false,
+        errorMessage: 'Invalid range: 10-1',
+        humanReadableForm: '',
+        nextExecutions: []
+      });
     });
 
     it('should catch unexpected errors', () => {
       jest.spyOn(cronstrue, 'toString').mockImplementation(() => {
         throw null;
       });
-      expect(() => validateCronExpression('* * * * * *')).toThrow('Invalid cron expression');
+      expect(validateCronExpression('* * * * * *')).toEqual({
+        isValid: false,
+        errorMessage: 'Invalid cron expression',
+        humanReadableForm: '',
+        nextExecutions: []
+      });
+    });
+  });
+
+  describe('checkScanMode', () => {
+    beforeEach(() => {
+      jest.resetAllMocks();
+      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    });
+
+    it('should properly check scan mode', () => {
+      expect(checkScanMode(testData.scanMode.list, 'scanModeId', null)).toEqual('scanModeId');
+      expect(() => checkScanMode(testData.scanMode.list, null, null)).toThrow('Scan mode not specified');
+      expect(() => checkScanMode(testData.scanMode.list, null, 'bad scan mode name')).toThrow('Scan mode "bad scan mode name" not found');
+      expect(checkScanMode(testData.scanMode.list, null, testData.scanMode.list[0].name)).toEqual(testData.scanMode.list[0].id);
+    });
+  });
+
+  describe('itemToFlattenedCSV', () => {
+    beforeEach(() => {
+      jest.resetAllMocks();
+      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    });
+
+    it('should properly concert items into csv', () => {
+      (csv.unparse as jest.Mock).mockReturnValue('csv content');
+
+      expect(
+        itemToFlattenedCSV(
+          [
+            ...testData.south.list[2].items.map(item => ({ ...item, settings: { ...item.settings, objectSettings: {} } })),
+            {
+              ...testData.south.list[2].items[0],
+              scanModeId: 'bad id'
+            }
+          ],
+          ',',
+          testData.scanMode.list
+        )
+      ).toEqual('csv content');
     });
   });
 });

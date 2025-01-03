@@ -5,7 +5,7 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { ComponentTester, createMock, TestButton } from 'ngx-speculoos';
 import { of } from 'rxjs';
 import { ScanModeService } from '../../services/scan-mode.service';
-import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
+import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { MockModalService, provideModalTesting } from '../../shared/mock-modal.service.spec';
 import { EditScanModeModalComponent } from '../edit-scan-mode-modal/edit-scan-mode-modal.component';
 import { ConfirmationService } from '../../shared/confirmation.service';

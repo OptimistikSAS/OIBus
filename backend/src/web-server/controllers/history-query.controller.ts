@@ -1,26 +1,23 @@
 import { KoaContext } from '../koa';
-import { HistoryQueryCommandDTO, HistoryQueryCreateCommandDTO, HistoryQueryDTO } from '../../../../shared/model/history-query.model';
+import {
+  HistoryQueryCommandDTO,
+  HistoryQueryDTO,
+  HistoryQueryItemCommandDTO,
+  HistoryQueryItemDTO,
+  HistoryQueryItemSearchParam,
+  HistoryQueryLightDTO
+} from '../../../shared/model/history-query.model';
 import JoiValidator from './validators/joi.validator';
 
-import {
-  SouthConnectorCommandDTO,
-  SouthConnectorDTO,
-  SouthConnectorItemCommandDTO,
-  SouthConnectorItemDTO,
-  SouthConnectorItemSearchParam
-} from '../../../../shared/model/south-connector.model';
-import { Page } from '../../../../shared/model/types';
-import csv from 'papaparse';
-import fs from 'node:fs/promises';
+import { SouthConnectorCommandDTO, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import { Page } from '../../../shared/model/types';
 import AbstractController from './abstract.controller';
 import Joi from 'joi';
-import { NorthCacheSettingsDTO, NorthConnectorCommandDTO, NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
-
-interface HistoryQueryWithItemsCommandDTO {
-  historyQuery: HistoryQueryCommandDTO;
-  items: Array<SouthConnectorItemDTO>;
-  itemIdsToDelete: Array<string>;
-}
+import { NorthConnectorCommandDTO } from '../../../shared/model/north-connector.model';
+import { toHistoryQueryDTO, toHistoryQueryItemDTO, toHistoryQueryLightDTO } from '../../service/history-query.service';
+import { itemToFlattenedCSV } from '../../service/utils';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
+import { NorthSettings } from '../../../shared/model/north-settings.model';
 
 export default class HistoryQueryController extends AbstractController {
   constructor(
@@ -30,558 +27,305 @@ export default class HistoryQueryController extends AbstractController {
     super(validator, schema);
   }
 
-  getHistoryQueries = (ctx: KoaContext<void, Array<HistoryQueryDTO>>) => {
-    const historyQueries = ctx.app.repositoryService.historyQueryRepository.getHistoryQueries();
-    ctx.ok(
-      historyQueries.map(historyQuery => {
-        const southManifest = ctx.app.southService.getInstalledSouthManifests().find(manifest => manifest.id === historyQuery.southType);
-        const northManifest = ctx.app.northService.getInstalledNorthManifests().find(manifest => manifest.id === historyQuery.northType);
-        if (southManifest && northManifest) {
-          historyQuery.southSettings = ctx.app.encryptionService.filterSecrets(historyQuery.southSettings, southManifest.settings);
-          historyQuery.northSettings = ctx.app.encryptionService.filterSecrets(historyQuery.northSettings, northManifest.settings);
-          return historyQuery;
-        }
-        return null;
-      })
-    );
-  };
+  async findAll(ctx: KoaContext<void, Array<HistoryQueryLightDTO>>): Promise<void> {
+    const historyQueries = ctx.app.historyQueryService.findAll();
+    ctx.ok(historyQueries.map(historyQuery => toHistoryQueryLightDTO(historyQuery)));
+  }
 
-  getHistoryQuery = (ctx: KoaContext<void, HistoryQueryDTO>) => {
-    const historyQuery = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.id);
+  async findById(ctx: KoaContext<void, HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>>): Promise<void> {
+    const historyQuery = ctx.app.historyQueryService.findById(ctx.params.id);
     if (!historyQuery) {
       return ctx.notFound();
     }
-    const southManifest = ctx.app.southService.getInstalledSouthManifests().find(manifest => manifest.id === historyQuery.southType);
-    const northManifest = ctx.app.northService.getInstalledNorthManifests().find(manifest => manifest.id === historyQuery.northType);
-    if (southManifest && northManifest) {
-      historyQuery.southSettings = ctx.app.encryptionService.filterSecrets(historyQuery.southSettings, southManifest.settings);
-      historyQuery.northSettings = ctx.app.encryptionService.filterSecrets(historyQuery.northSettings, northManifest.settings);
-      return ctx.ok(historyQuery);
-    } else {
-      ctx.notFound();
-    }
-  };
+    return ctx.ok(toHistoryQueryDTO(historyQuery, ctx.app.encryptionService));
+  }
 
-  createHistoryQuery = async (ctx: KoaContext<HistoryQueryCreateCommandDTO, void>) => {
-    if (!ctx.request.body || !ctx.request.body.items || !ctx.request.body.historyQuery) {
-      return ctx.badRequest();
-    }
-
-    const command = ctx.request.body.historyQuery;
-    const itemsToAdd = ctx.request.body.items;
-    const southManifest = ctx.app.southService.getInstalledSouthManifests().find(manifest => manifest.id === command.southType);
-    if (!southManifest) {
-      return ctx.throw(404, 'South manifest not found');
-    }
-    let southSource;
-    if (ctx.request.body.fromSouthId) {
-      southSource = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.request.body.fromSouthId)?.settings;
-      if (!southSource) {
-        return ctx.notFound();
-      }
-    }
-
-    const northManifest = ctx.app.northService.getInstalledNorthManifests().find(manifest => manifest.id === command.northType);
-    if (!northManifest) {
-      return ctx.throw(404, 'North manifest not found');
-    }
-    let northSource;
-    if (ctx.request.body.fromNorthId) {
-      northSource = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.request.body.fromNorthId)?.settings;
-      if (!northSource) {
-        return ctx.notFound();
-      }
-    }
-
-    let duplicatedHistory: HistoryQueryDTO | null = null;
-    if (ctx.query.duplicateId) {
-      duplicatedHistory = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.query.duplicateId);
-      if (!duplicatedHistory) {
-        return ctx.notFound();
-      }
-      if (!southSource) {
-        southSource = duplicatedHistory.southSettings;
-      }
-      if (!northSource) {
-        northSource = duplicatedHistory.northSettings;
-      }
-    }
+  async createHistoryQuery(
+    ctx: KoaContext<
+      HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>,
+      HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>
+    >
+  ): Promise<void> {
     try {
-      await this.validator.validateSettings(southManifest.settings, command.southSettings);
-      await this.validator.validateSettings(northManifest.settings, command.northSettings);
-      // Check if item settings match the item schema, throw an error otherwise
-      for (const item of itemsToAdd) {
-        await this.validator.validateSettings(southManifest.items.settings, item.settings);
-      }
-
-      command.southSettings = await ctx.app.encryptionService.encryptConnectorSecrets(
-        command.southSettings,
-        southSource,
-        southManifest.settings
+      const historyQuery = toHistoryQueryDTO(
+        await ctx.app.historyQueryService.createHistoryQuery(
+          ctx.request.body!,
+          (ctx.query.fromSouth as string) || null,
+          (ctx.query.fromNorth as string) || null,
+          (ctx.query.duplicate as string) || null
+        ),
+        ctx.app.encryptionService
       );
-      command.northSettings = await ctx.app.encryptionService.encryptConnectorSecrets(
-        command.northSettings,
-        northSource,
-        northManifest.settings
-      );
-
-      const historyQuery = await ctx.app.reloadService.onCreateHistoryQuery(command, itemsToAdd);
       ctx.created(historyQuery);
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
-  };
+  }
 
-  updateHistoryQuery = async (ctx: KoaContext<HistoryQueryWithItemsCommandDTO, void>) => {
-    if (!ctx.request.body || !ctx.request.body.items || !ctx.request.body.historyQuery) {
-      return ctx.badRequest();
-    }
-
-    const historyQuery = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.id);
-    if (!historyQuery) {
-      return ctx.notFound();
-    }
-    const southManifest = ctx.app.southService.getInstalledSouthManifests().find(manifest => manifest.id === historyQuery.southType);
-    if (!southManifest) {
-      return ctx.throw(404, 'South manifest not found');
-    }
-
-    const northManifest = ctx.app.northService.getInstalledNorthManifests().find(manifest => manifest.id === historyQuery.northType);
-    if (!northManifest) {
-      return ctx.throw(404, 'North manifest not found');
-    }
-
-    const command = ctx.request.body.historyQuery as HistoryQueryCommandDTO;
+  updateHistoryQuery = async (ctx: KoaContext<HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>, void>) => {
     try {
-      await this.validator.validateSettings(southManifest.settings, historyQuery.southSettings);
-      await this.validator.validateSettings(northManifest.settings, historyQuery.northSettings);
-      // Check if item settings match the item schema, throw an error otherwise
-      for (const item of ctx.request.body!.items) {
-        await this.validator.validateSettings(southManifest.items.settings, item.settings);
-      }
-
-      command.southSettings = await ctx.app.encryptionService.encryptConnectorSecrets(
-        command.southSettings,
-        historyQuery.southSettings,
-        southManifest.settings
-      );
-
-      command.northSettings = await ctx.app.encryptionService.encryptConnectorSecrets(
-        command.northSettings,
-        historyQuery.northSettings,
-        northManifest.settings
-      );
-
-      const itemsToAdd = ctx.request.body!.items.filter(item => !item.id);
-      const itemsToUpdate = ctx.request.body!.items.filter(item => item.id);
-      await ctx.app.reloadService.historyEngine.stopHistoryQuery(historyQuery.id, true);
-      for (const itemId of ctx.request.body!.itemIdsToDelete) {
-        await ctx.app.reloadService.onDeleteHistoryItem(historyQuery.id, itemId);
-      }
-      await ctx.app.reloadService.onCreateOrUpdateHistoryQueryItems(historyQuery, itemsToAdd, itemsToUpdate);
-      await ctx.app.reloadService.onUpdateHistoryQuerySettings(ctx.params.id, command);
-      await ctx.app.reloadService.historyEngine.startHistoryQuery(historyQuery.id);
+      await ctx.app.historyQueryService.updateHistoryQuery(ctx.params.id, ctx.request.body!, ctx.query.resetCache === 'true');
       ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
-    }
-  };
-
-  startHistoryQuery = async (ctx: KoaContext<void, void>) => {
-    const historyQuery = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.id);
-    if (!historyQuery) {
-      return ctx.notFound();
-    }
-
-    try {
-      if (historyQuery.status === 'FINISHED' || historyQuery.status === 'ERRORED') {
-        await ctx.app.reloadService.onRestartHistoryQuery(ctx.params.id);
-      } else {
-        await ctx.app.reloadService.onStartHistoryQuery(ctx.params.id);
-      }
-
-      ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
-    }
-  };
-
-  pauseHistoryQuery = async (ctx: KoaContext<void, void>) => {
-    const historyQuery = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.id);
-    if (!historyQuery) {
-      return ctx.notFound();
-    }
-
-    try {
-      await ctx.app.reloadService.onPauseHistoryQuery(ctx.params.id);
-      ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   };
 
   deleteHistoryQuery = async (ctx: KoaContext<void, void>) => {
-    await ctx.app.reloadService.onDeleteHistoryQuery(ctx.params.id);
-    ctx.noContent();
+    try {
+      await ctx.app.historyQueryService.deleteHistoryQuery(ctx.params.id);
+      ctx.noContent();
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
+    }
   };
 
-  async searchHistoryQueryItems(ctx: KoaContext<void, Page<SouthConnectorItemDTO>>): Promise<void> {
-    const searchParams: SouthConnectorItemSearchParam = {
+  startHistoryQuery = async (ctx: KoaContext<void, void>) => {
+    try {
+      await ctx.app.historyQueryService.startHistoryQuery(ctx.params.id);
+      ctx.noContent();
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
+    }
+  };
+
+  pauseHistoryQuery = async (ctx: KoaContext<void, void>) => {
+    try {
+      await ctx.app.historyQueryService.pauseHistoryQuery(ctx.params.id);
+      ctx.noContent();
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
+    }
+  };
+
+  async testSouthConnection(ctx: KoaContext<SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>, void>) {
+    try {
+      const logger = ctx.app.logger.child(
+        {
+          scopeType: 'south',
+          scopeId: 'test',
+          scopeName: 'test'
+        },
+        { level: 'silent' }
+      );
+      await ctx.app.historyQueryService.testSouth(ctx.params.id, (ctx.query.fromSouth as string) || null, ctx.request.body!, logger);
+      ctx.noContent();
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
+    }
+  }
+
+  async testHistoryQueryItem(
+    ctx: KoaContext<
+      {
+        south: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+        item: HistoryQueryItemCommandDTO<SouthItemSettings>;
+        testingSettings: SouthConnectorItemTestingSettings;
+      },
+      void
+    >
+  ) {
+    try {
+      const logger = ctx.app.logger.child(
+        {
+          scopeType: 'south',
+          scopeId: 'test',
+          scopeName: 'test'
+        },
+        { level: 'silent' }
+      );
+      await ctx.app.historyQueryService.testSouthItem(
+        ctx.params.id,
+        (ctx.query.fromSouth as string) || null,
+        ctx.request.body!.south,
+        ctx.request.body!.item,
+        ctx.request.body!.testingSettings,
+        ctx.ok,
+        logger
+      );
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
+    }
+  }
+
+  async testNorthConnection(ctx: KoaContext<NorthConnectorCommandDTO<NorthSettings>, void>) {
+    try {
+      const logger = ctx.app.logger.child(
+        {
+          scopeType: 'south',
+          scopeId: 'test',
+          scopeName: 'test'
+        },
+        { level: 'silent' }
+      );
+      await ctx.app.historyQueryService.testNorth(ctx.params.id, (ctx.query.fromNorth as string) || null, ctx.request.body!, logger);
+      ctx.noContent();
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
+    }
+  }
+
+  async searchHistoryQueryItems(ctx: KoaContext<void, Page<HistoryQueryItemDTO<SouthItemSettings>>>): Promise<void> {
+    const historyQuery = ctx.app.historyQueryService.findById(ctx.params.historyQueryId);
+    if (!historyQuery) {
+      return ctx.notFound();
+    }
+
+    const searchParams: HistoryQueryItemSearchParam = {
       page: ctx.query.page ? parseInt(ctx.query.page as string, 10) : 0,
       name: ctx.query.name as string | undefined
     };
-    const southItems = ctx.app.repositoryService.historyQueryItemRepository.searchHistoryItems(ctx.params.historyQueryId, searchParams);
-    ctx.ok(southItems);
+    const page = ctx.app.historyQueryService.searchHistoryQueryItems(ctx.params.historyQueryId, searchParams);
+    ctx.ok({
+      content: page.content.map(item => toHistoryQueryItemDTO(item, historyQuery.southType, ctx.app.encryptionService)),
+      totalElements: page.totalElements,
+      size: page.size,
+      number: page.number,
+      totalPages: page.totalPages
+    });
   }
 
-  async listItems(ctx: KoaContext<void, Array<SouthConnectorItemDTO>>): Promise<void> {
-    const items = ctx.app.repositoryService.historyQueryItemRepository.listHistoryItems(ctx.params.historyQueryId, {});
-    ctx.ok(items);
-  }
+  async getHistoryQueryItem(ctx: KoaContext<void, HistoryQueryItemDTO<SouthItemSettings>>): Promise<void> {
+    const historyQuery = ctx.app.historyQueryService.findById(ctx.params.historyQueryId);
+    if (!historyQuery) {
+      return ctx.notFound();
+    }
 
-  async getHistoryQueryItem(ctx: KoaContext<void, SouthConnectorItemDTO>): Promise<void> {
-    const southItem = ctx.app.repositoryService.historyQueryItemRepository.getHistoryItem(ctx.params.id);
-    if (southItem) {
-      ctx.ok(southItem);
+    const historyQueryItem = ctx.app.historyQueryService.findHistoryQueryItem(ctx.params.historyQueryId, ctx.params.id);
+    if (historyQueryItem) {
+      ctx.ok(toHistoryQueryItemDTO(historyQueryItem, historyQuery.southType, ctx.app.encryptionService));
     } else {
       ctx.notFound();
     }
   }
 
-  async createHistoryQueryItem(ctx: KoaContext<SouthConnectorItemCommandDTO, SouthConnectorItemDTO>): Promise<void> {
+  async createHistoryQueryItem(
+    ctx: KoaContext<HistoryQueryItemCommandDTO<SouthItemSettings>, HistoryQueryItemDTO<SouthItemSettings>>
+  ): Promise<void> {
+    const historyQuery = ctx.app.historyQueryService.findById(ctx.params.historyQueryId);
+    if (!historyQuery) {
+      return ctx.notFound();
+    }
     try {
-      const historyQuery = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.historyQueryId);
-      if (!historyQuery) {
-        return ctx.throw(404, 'History query not found');
-      }
-
-      const southManifest = ctx.app.southService.getInstalledSouthManifests().find(manifest => manifest.id === historyQuery.southType);
-      if (!southManifest) {
-        return ctx.throw(404, 'South manifest not found');
-      }
-
-      const command: SouthConnectorItemCommandDTO = ctx.request.body!;
-      await this.validator.validateSettings(southManifest.items.settings, command?.settings);
-
-      const historyQueryItem = await ctx.app.reloadService.onCreateHistoryItem(ctx.params.historyQueryId, command);
-      ctx.created(historyQueryItem);
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+      const item = await ctx.app.historyQueryService.createHistoryQueryItem(ctx.params.historyQueryId, ctx.request.body!);
+      ctx.created(toHistoryQueryItemDTO(item, historyQuery.southType, ctx.app.encryptionService));
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 
-  async updateHistoryQueryItem(ctx: KoaContext<SouthConnectorItemCommandDTO, void>): Promise<void> {
+  async updateHistoryQueryItem(ctx: KoaContext<HistoryQueryItemCommandDTO<SouthItemSettings>, void>): Promise<void> {
     try {
-      const historyQuery = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.historyQueryId);
-      if (!historyQuery) {
-        return ctx.throw(404, 'History query not found');
-      }
+      await ctx.app.historyQueryService.updateHistoryQueryItem(ctx.params.historyQueryId, ctx.params.id, ctx.request.body!);
+      ctx.noContent();
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
+    }
+  }
 
-      const southManifest = ctx.app.southService.getInstalledSouthManifests().find(manifest => manifest.id === historyQuery.southType);
-      if (!southManifest) {
-        return ctx.throw(404, 'History query South manifest not found');
-      }
+  async enableHistoryQueryItem(ctx: KoaContext<void, void>): Promise<void> {
+    try {
+      await ctx.app.historyQueryService.enableHistoryQueryItem(ctx.params.historyQueryId, ctx.params.id);
+      ctx.noContent();
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
+    }
+  }
 
-      const historyQueryItem = ctx.app.repositoryService.historyQueryItemRepository.getHistoryItem(ctx.params.id);
-      if (historyQueryItem) {
-        const command: SouthConnectorItemCommandDTO = ctx.request.body!;
-        await this.validator.validateSettings(southManifest.items.settings, command?.settings);
-        await ctx.app.reloadService.onUpdateHistoryItemsSettings(ctx.params.historyQueryId, historyQueryItem, command);
-        ctx.noContent();
-      } else {
-        ctx.notFound();
-      }
-    } catch (error: any) {
-      ctx.badRequest(error.message);
+  async disableHistoryQueryItem(ctx: KoaContext<void, void>): Promise<void> {
+    try {
+      await ctx.app.historyQueryService.disableHistoryQueryItem(ctx.params.historyQueryId, ctx.params.id);
+      ctx.noContent();
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
     }
   }
 
   async deleteHistoryQueryItem(ctx: KoaContext<void, void>): Promise<void> {
-    await ctx.app.reloadService.historyEngine.stopHistoryQuery(ctx.params.historyQueryId, true);
-    await ctx.app.reloadService.onDeleteHistoryItem(ctx.params.historyQueryId, ctx.params.id);
-    await ctx.app.reloadService.historyEngine.startHistoryQuery(ctx.params.historyQueryId);
-    ctx.noContent();
-  }
-
-  async enableHistoryQueryItem(ctx: KoaContext<void, void>): Promise<void> {
-    await ctx.app.reloadService.onEnableHistoryItem(ctx.params.historyQueryId, ctx.params.id);
-    ctx.noContent();
-  }
-
-  async disableHistoryQueryItem(ctx: KoaContext<void, void>): Promise<void> {
-    await ctx.app.reloadService.onDisableHistoryItem(ctx.params.historyQueryId, ctx.params.id);
-    ctx.noContent();
+    try {
+      await ctx.app.historyQueryService.deleteHistoryQueryItem(ctx.params.historyQueryId, ctx.params.id);
+      ctx.noContent();
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
+    }
   }
 
   async deleteAllItems(ctx: KoaContext<void, void>): Promise<void> {
-    await ctx.app.reloadService.historyEngine.stopHistoryQuery(ctx.params.historyQueryId, true);
-    await ctx.app.reloadService.onDeleteAllHistoryItems(ctx.params.historyQueryId);
-    ctx.noContent();
+    try {
+      await ctx.app.historyQueryService.deleteAllItemsForHistoryQuery(ctx.params.historyQueryId);
+      ctx.noContent();
+    } catch (error: unknown) {
+      ctx.badRequest((error as Error).message);
+    }
   }
 
-  async historySouthItemsToCsv(ctx: KoaContext<{ items: Array<SouthConnectorItemDTO> }, any>): Promise<void> {
-    const southItems = ctx.request.body!.items.map(item => {
-      const flattenedItem: Record<string, any> = {
-        ...item
-      };
-      for (const [itemSettingsKey, itemSettingsValue] of Object.entries(item.settings)) {
-        if (typeof itemSettingsValue === 'object') {
-          flattenedItem[`settings_${itemSettingsKey}`] = JSON.stringify(itemSettingsValue);
-        } else {
-          flattenedItem[`settings_${itemSettingsKey}`] = itemSettingsValue;
-        }
-      }
-      delete flattenedItem.id;
-      delete flattenedItem.scanModeId;
-      delete flattenedItem.settings;
-      delete flattenedItem.connectorId;
-      return flattenedItem;
-    });
-    ctx.body = csv.unparse(southItems);
-    ctx.set('Content-disposition', 'attachment; filename=items.csv');
-    ctx.set('Content-Type', 'application/force-download');
-    ctx.ok();
-  }
-
-  async exportSouthItems(ctx: KoaContext<void, any>): Promise<void> {
-    const columns: Set<string> = new Set<string>(['name', 'enabled']);
-
-    const southItems = ctx.app.repositoryService.historyQueryItemRepository.listHistoryItems(ctx.params.historyQueryId, {}).map(item => {
-      const flattenedItem: Record<string, any> = {
-        ...item
-      };
-      for (const [itemSettingsKey, itemSettingsValue] of Object.entries(item.settings)) {
-        columns.add(`settings_${itemSettingsKey}`);
-        if (typeof itemSettingsValue === 'object') {
-          flattenedItem[`settings_${itemSettingsKey}`] = JSON.stringify(itemSettingsValue);
-        } else {
-          flattenedItem[`settings_${itemSettingsKey}`] = itemSettingsValue;
-        }
-      }
-      delete flattenedItem.id;
-      delete flattenedItem.scanModeId;
-      delete flattenedItem.settings;
-      delete flattenedItem.connectorId;
-      return flattenedItem;
-    });
-    ctx.body = csv.unparse(southItems, { columns: Array.from(columns) });
-    ctx.set('Content-disposition', 'attachment; filename=items.csv');
-    ctx.set('Content-Type', 'application/force-download');
-    ctx.ok();
-  }
-
-  async checkImportSouthItems(ctx: KoaContext<void, any>): Promise<void> {
+  /**
+   * Endpoint used to download a CSV from a list of items when creating a history query (before the items are saved on
+   * the database). When the items are already saved, it is downloaded with the export method
+   */
+  async historyQueryItemsToCsv(
+    ctx: KoaContext<{ items: Array<HistoryQueryItemDTO<SouthItemSettings>>; delimiter: string }, string>
+  ): Promise<void> {
     const manifest = ctx.app.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === ctx.params.southType);
     if (!manifest) {
       return ctx.throw(404, 'South manifest not found');
     }
 
-    const file = ctx.request.file;
-
-    const existingItems: Array<SouthConnectorItemDTO> =
-      ctx.params.historyQueryId === 'create'
-        ? []
-        : ctx.app.repositoryService.historyQueryItemRepository.listHistoryItems(ctx.params.historyQueryId, {});
-    const validItems: Array<any> = [];
-    const errors: Array<any> = [];
-    try {
-      const fileContent = await fs.readFile(file.path);
-      const csvContent = csv.parse(fileContent.toString('utf8'), { header: true });
-
-      for (const data of csvContent.data) {
-        const item: SouthConnectorItemDTO = {
-          id: '',
-          name: (data as any).name,
-          enabled: true,
-          connectorId: ctx.params.historyQueryId !== 'create' ? ctx.params.historyQueryId : '',
-          scanModeId: '',
-          settings: {}
-        };
-
-        try {
-          for (const [key, value] of Object.entries(data as any)) {
-            if (key.startsWith('settings_')) {
-              const settingsKey = key.replace('settings_', '');
-              const manifestSettings = manifest.items.settings.find(settings => settings.key === settingsKey);
-              if (!manifestSettings) {
-                throw new Error(`Settings "${settingsKey}" not accepted in manifest`);
-              }
-              if ((manifestSettings.type === 'OibArray' || manifestSettings.type === 'OibFormGroup') && value) {
-                item.settings[settingsKey] = JSON.parse(value as string);
-              } else {
-                item.settings[settingsKey] = value;
-              }
-            }
-          }
-        } catch (err: any) {
-          errors.push({ item, message: err.message });
-          continue;
-        }
-
-        if (existingItems.find(existingItem => existingItem.name === item.name)) {
-          errors.push({ item, message: `Item name "${(data as any).name}" already used` });
-          continue;
-        }
-
-        try {
-          await this.validator.validateSettings(manifest.items.settings, item.settings);
-          validItems.push(item);
-        } catch (itemError: any) {
-          errors.push({ item, message: itemError.message });
-        }
-      }
-    } catch (error: any) {
-      return ctx.badRequest(error.message);
-    }
-
-    ctx.ok({ items: validItems, errors });
+    ctx.body = itemToFlattenedCSV(
+      ctx.request.body!.items.map(item => toHistoryQueryItemDTO(item, manifest.id, ctx.app.encryptionService)),
+      ctx.request.body!.delimiter
+    );
+    ctx.set('Content-disposition', 'attachment; filename=items.csv');
+    ctx.set('Content-Type', 'application/force-download');
+    ctx.ok();
   }
 
-  async importSouthItems(ctx: KoaContext<{ items: Array<SouthConnectorItemDTO> }, any>): Promise<void> {
-    const historyQuery = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.historyQueryId);
+  async exportSouthItems(ctx: KoaContext<{ delimiter: string }, string>): Promise<void> {
+    const historyQuery = ctx.app.historyQueryService.findById(ctx.params.historyQueryId);
     if (!historyQuery) {
-      return ctx.throw(404, 'History query not found');
+      return ctx.notFound();
     }
 
-    const manifest = ctx.app.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === historyQuery.southType);
-    if (!manifest) {
-      return ctx.throw(404, 'South manifest not found');
-    }
+    ctx.body = itemToFlattenedCSV(
+      historyQuery.items.map(item => {
+        return toHistoryQueryItemDTO(item, historyQuery.southType, ctx.app.encryptionService);
+      }),
+      ctx.request.body!.delimiter
+    );
+    ctx.set('Content-disposition', 'attachment; filename=items.csv');
+    ctx.set('Content-Type', 'application/force-download');
+    ctx.ok();
+  }
 
-    const items = ctx.request.body!.items;
-    try {
-      // Check if item settings match the item schema, throw an error otherwise
-      for (const item of items) {
-        await this.validator.validateSettings(manifest.items.settings, item.settings);
+  async checkImportSouthItems(
+    ctx: KoaContext<
+      { delimiter: string; currentItems: string },
+      {
+        items: Array<HistoryQueryItemCommandDTO<SouthItemSettings>>;
+        errors: Array<{ item: HistoryQueryItemCommandDTO<SouthItemSettings>; error: string }>;
       }
-    } catch (error: any) {
-      return ctx.badRequest(error.message);
-    }
-
+    >
+  ): Promise<void> {
     try {
-      await ctx.app.reloadService.historyEngine.stopHistoryQuery(historyQuery.id);
-      await ctx.app.reloadService.onCreateOrUpdateHistoryQueryItems(historyQuery, items, []);
-      await ctx.app.reloadService.historyEngine.startHistoryQuery(historyQuery.id);
-    } catch (error: any) {
-      return ctx.badRequest(error.message);
+      return ctx.ok(
+        await ctx.app.historyQueryService.checkCsvFileImport(
+          ctx.params.southType,
+          ctx.request.file,
+          ctx.request.body!.delimiter,
+          JSON.parse(ctx.request.body!.currentItems)
+        )
+      );
+    } catch (error: unknown) {
+      return ctx.badRequest((error as Error).message);
+    }
+  }
+
+  async importSouthItems(ctx: KoaContext<{ items: Array<HistoryQueryItemCommandDTO<SouthItemSettings>> }, void>): Promise<void> {
+    try {
+      await ctx.app.historyQueryService.importItems(ctx.params.historyQueryId, ctx.request.body!.items);
+    } catch (error: unknown) {
+      return ctx.badRequest((error as Error).message);
     }
     ctx.noContent();
-  }
-
-  async testSouthConnection(ctx: KoaContext<SouthConnectorCommandDTO, void>) {
-    try {
-      const manifest = ctx.request.body
-        ? ctx.app.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === ctx.request.body!.type)
-        : null;
-      if (!manifest) {
-        return ctx.throw(404, 'South manifest not found');
-      }
-
-      let southSettings: SouthConnectorDTO['settings'] | null = null;
-      // When we have a history query id, we can retrieve the old connector settings from repository
-      if (ctx.params.id !== 'create') {
-        southSettings = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.id)?.southSettings;
-        if (!southSettings) {
-          return ctx.notFound();
-        }
-      }
-      // When creating a new history query from exising connector, we can retrieve old connector settings using connector id
-      else if (ctx.request.query?.fromConnectorId && typeof ctx.request.query.fromConnectorId === 'string') {
-        southSettings = ctx.app.southService.getSouth(ctx.request.query!.fromConnectorId)?.settings;
-        if (!southSettings) {
-          return ctx.notFound();
-        }
-      }
-
-      if (ctx.query.duplicateId && !southSettings) {
-        southSettings = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.query.duplicateId)?.southSettings;
-        if (!southSettings) {
-          return ctx.notFound();
-        }
-      }
-      await this.validator.validateSettings(manifest.settings, ctx.request.body!.settings);
-
-      const command: SouthConnectorDTO = {
-        id: 'test',
-        ...ctx.request.body!,
-        name: `${ctx.request.body!.type}:test-connection`
-      };
-      command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(command.settings, southSettings, manifest.settings);
-      const logger = ctx.app.logger.child(
-        { scopeType: 'history-query', scopeId: command.id, scopeName: command.name },
-        { level: 'silent' }
-      );
-      const southToTest = ctx.app.southService.createSouth(
-        command,
-        /* istanbul ignore next: noop function */
-        async (_southId: string, _values: Array<any>) => {},
-        /* istanbul ignore next: noop function */
-        async (_southId: string, _filename: string) => {},
-        'baseFolder',
-        logger
-      );
-      await southToTest.testConnection();
-
-      ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
-    }
-  }
-
-  async testNorthConnection(ctx: KoaContext<NorthConnectorCommandDTO, void>) {
-    try {
-      const manifest = ctx.request.body
-        ? ctx.app.northService.getInstalledNorthManifests().find(northManifest => northManifest.id === ctx.request.body!.type)
-        : null;
-      if (!manifest) {
-        return ctx.throw(404, 'North manifest not found');
-      }
-
-      let northSettings: NorthConnectorDTO['settings'] | null = null;
-      // When we have a history query id, we can retrieve the old connector settings from repository
-      if (ctx.params.id !== 'create') {
-        northSettings = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.id)?.northSettings;
-        if (!northSettings) {
-          return ctx.notFound();
-        }
-      }
-      // When creating a new history query from exising connector, we can retrieve old connector settings using connector id
-      else if (ctx.request.query?.fromConnectorId && typeof ctx.request.query.fromConnectorId === 'string') {
-        northSettings = ctx.app.northService.getNorth(ctx.request.query!.fromConnectorId)?.settings;
-        if (!northSettings) {
-          return ctx.notFound();
-        }
-      }
-
-      if (ctx.query.duplicateId && !northSettings) {
-        northSettings = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.query.duplicateId)?.northSettings;
-        if (!northSettings) {
-          return ctx.notFound();
-        }
-      }
-      await this.validator.validateSettings(manifest.settings, ctx.request.body!.settings);
-
-      const northCaching = { ...ctx.request.body!.caching };
-      delete northCaching.scanModeName;
-      northCaching.scanModeId = '';
-
-      const command: NorthConnectorDTO = {
-        id: 'test',
-        ...ctx.request.body!,
-        caching: northCaching as NorthCacheSettingsDTO,
-        name: `${ctx.request.body!.type}:test-connection`
-      };
-      command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(command.settings, northSettings, manifest.settings);
-      const logger = ctx.app.logger.child(
-        { scopeType: 'history-query', scopeId: command.id, scopeName: command.name },
-        { level: 'silent' }
-      );
-      const northToTest = ctx.app.northService.createNorth(command, 'baseFolder', logger);
-      await northToTest.testConnection();
-
-      ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
-    }
   }
 }

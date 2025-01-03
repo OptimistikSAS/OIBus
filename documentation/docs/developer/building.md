@@ -6,6 +6,11 @@ sidebar_position: 2
 # Building OIBus
 OIBus uses [pkg](https://github.com/vercel/pkg) as its building tool.
 
+:::caution
+`pkg` is deprecated and for now, OIBus uses [a pkg fork](https://github.com/yao-pkg/pkg) that is compatible with latest
+versions of NodeJS.
+:::
+
 ## Building binaries
 - `npm run build:win`: Build OIBus for Windows x64 architecture
 - `npm run build:linux`: Build OIBus for x64 linux based architectures

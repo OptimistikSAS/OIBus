@@ -1,21 +1,72 @@
 import { ComponentTester } from 'ngx-speculoos';
 import { Component } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { FormControl, FormGroup } from '@angular/forms';
 import { OibArrayComponent } from './oib-array.component';
 import { TestBed } from '@angular/core/testing';
 import { EditElementComponent } from './edit-element/edit-element.component';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { formDirectives } from '../../form-directives';
-import { buildDateTimeFieldsFormControl } from '../../../../../../shared/model/manifest-factory';
+import { OibFormControl } from '../../../../../../backend/shared/model/form.model';
 
 @Component({
-  template: '<oib-array [formDescription]="formDescription" [formControl]="control"></oib-array>',
-  standalone: true,
+  template: '<oib-array [parentForm]="parentForm" [formDescription]="formDescription" [formControl]="control" />',
   imports: [OibArrayComponent, ...formDirectives]
 })
 class TestComponent {
-  formDescription = buildDateTimeFieldsFormControl([]).content;
-
+  formDescription: Array<OibFormControl> = [
+    {
+      key: 'fieldName',
+      translationKey: 'south.items.postgresql.date-time-fields.field-name',
+      type: 'OibText',
+      defaultValue: '',
+      validators: [{ key: 'required' }],
+      displayInViewMode: true
+    },
+    {
+      key: 'useAsReference',
+      translationKey: 'south.items.postgresql.date-time-fields.use-as-reference',
+      type: 'OibCheckbox',
+      defaultValue: false,
+      displayInViewMode: true,
+      validators: [{ key: 'required' }]
+    },
+    {
+      key: 'type',
+      translationKey: 'south.items.postgresql.date-time-fields.type',
+      type: 'OibSelect',
+      defaultValue: 'string',
+      options: ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms', 'timestamp', 'timestamptz'],
+      displayInViewMode: true,
+      validators: [{ key: 'required' }]
+    },
+    {
+      key: 'timezone',
+      translationKey: 'south.items.postgresql.date-time-fields.timezone',
+      type: 'OibTimezone',
+      defaultValue: 'UTC',
+      newRow: true,
+      validators: [{ key: 'required' }],
+      displayInViewMode: true,
+      conditionalDisplay: { field: 'type', values: ['string', 'timestamp', 'DateTime', 'DateTime2', 'SmallDateTime', 'Date'] }
+    },
+    {
+      key: 'format',
+      translationKey: 'south.items.postgresql.date-time-fields.format',
+      type: 'OibText',
+      defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
+      validators: [{ key: 'required' }],
+      conditionalDisplay: { field: 'type', values: ['string'] }
+    },
+    {
+      key: 'locale',
+      translationKey: 'south.items.postgresql.date-time-fields.locale',
+      defaultValue: 'en-En',
+      type: 'OibText',
+      validators: [{ key: 'required' }],
+      conditionalDisplay: { field: 'type', values: ['string'] }
+    }
+  ];
+  parentForm = new FormGroup({});
   control = new FormControl<Array<any>>([
     {
       fieldName: 'field1',
@@ -61,10 +112,6 @@ class TestComponentTester extends ComponentTester<TestComponent> {
     return this.elements<HTMLButtonElement>('.delete-button');
   }
 
-  get DatetimeFieldsComponent(): OibArrayComponent {
-    return this.component(OibArrayComponent);
-  }
-
   get validationErrors() {
     return this.componentInstance.control.errors;
   }
@@ -90,7 +137,7 @@ describe('ArrayComponent', () => {
 
     expect(tester.displayFields[0]).toContainText('field1');
     expect(tester.displayFields[0]).toContainText('false');
-    expect(tester.displayFields[0]).toContainText('UNIX Epoch (ms)');
+    expect(tester.displayFields[0]).toContainText('UNIX epoch (ms)');
     expect(tester.validationErrors).toEqual(null);
   });
 
@@ -116,12 +163,12 @@ describe('ArrayComponent', () => {
       expect(b.disabled).toBeTrue();
     });
 
-    expect(tester.editComponent.element).toEqual({
+    expect(tester.editComponent.element()).toEqual({
       fieldName: '',
       useAsReference: false,
       type: 'string',
       timezone: 'UTC',
-      format: 'yyyy-MM-dd HH:mm:ss',
+      format: 'yyyy-MM-dd HH:mm:ss.SSS',
       locale: 'en-En'
     });
 
@@ -148,12 +195,12 @@ describe('ArrayComponent', () => {
       expect(b.disabled).toBeTrue();
     });
 
-    expect(tester.editComponent.element).toEqual({
+    expect(tester.editComponent.element()).toEqual({
       fieldName: '',
       useAsReference: false,
       type: 'string',
       timezone: 'UTC',
-      format: 'yyyy-MM-dd HH:mm:ss',
+      format: 'yyyy-MM-dd HH:mm:ss.SSS',
       locale: 'en-En'
     });
 

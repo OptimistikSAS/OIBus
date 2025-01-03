@@ -1,31 +1,20 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormControlValidationDirective } from '../shared/form-control-validation.directive';
+import { Component, OnInit, inject } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
-import { TranslateModule } from '@ngx-translate/core';
-import { ValErrorDelayDirective } from '../shared/val-error-delay.directive';
-import { ValidationErrorsComponent } from 'ngx-valdemort';
+import { TranslateDirective } from '@ngx-translate/core';
 import { EngineService } from '../services/engine.service';
-import { OIBusInfo } from '../../../../shared/model/engine.model';
+import { OIBusInfo } from '../../../../backend/shared/model/engine.model';
 
 @Component({
   selector: 'oib-about',
-  standalone: true,
-  imports: [
-    CommonModule,
-    FormControlValidationDirective,
-    ReactiveFormsModule,
-    TranslateModule,
-    ValErrorDelayDirective,
-    ValidationErrorsComponent
-  ],
+  imports: [ReactiveFormsModule, TranslateDirective],
   templateUrl: './about.component.html',
   styleUrl: './about.component.scss'
 })
 export class AboutComponent implements OnInit {
+  private engineService = inject(EngineService);
+
   oibusInfo: OIBusInfo | null = null;
   readonly copyrightYear = new Date().getFullYear();
-  constructor(private engineService: EngineService) {}
 
   ngOnInit() {
     this.engineService.getInfo().subscribe(info => {

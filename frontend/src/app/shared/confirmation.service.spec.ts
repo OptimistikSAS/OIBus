@@ -2,8 +2,9 @@ import { TestBed } from '@angular/core/testing';
 import { ConfirmationModalComponent } from './confirmation-modal/confirmation-modal.component';
 import { ConfirmationOptions, ConfirmationService } from './confirmation.service';
 import { MockModalService, provideModalTesting } from './mock-modal.service.spec';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { createMock } from 'ngx-speculoos';
 
 describe('ConfirmationService', () => {
   let confirmationService: ConfirmationService;
@@ -13,11 +14,18 @@ describe('ConfirmationService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideI18nTesting(), provideModalTesting()]
+      providers: [
+        provideI18nTesting(),
+        provideModalTesting(),
+        {
+          provide: NgbActiveModal,
+          useValue: createMock(NgbActiveModal)
+        }
+      ]
     });
     mockModalService = TestBed.inject(MockModalService);
     confirmationService = TestBed.inject(ConfirmationService);
-    confirmationModalComponent = new ConfirmationModalComponent({} as NgbActiveModal);
+    confirmationModalComponent = TestBed.runInInjectionContext(() => new ConfirmationModalComponent());
   });
 
   it('should create a modal instance with title, message, yes and no', () => {
@@ -32,10 +40,10 @@ describe('ConfirmationService', () => {
       })
       .subscribe(() => (closed = true));
 
-    expect(confirmationModalComponent.title).toBe('Hello');
-    expect(confirmationModalComponent.message).toBe('world');
-    expect(confirmationModalComponent.yes).toBe('Yep');
-    expect(confirmationModalComponent.no).toBe('Nope');
+    expect(confirmationModalComponent.title()).toBe('Hello');
+    expect(confirmationModalComponent.message()).toBe('world');
+    expect(confirmationModalComponent.yes()).toBe('Yep');
+    expect(confirmationModalComponent.no()).toBe('Nope');
     expect(closed).toBe(true);
   });
 
@@ -51,10 +59,10 @@ describe('ConfirmationService', () => {
     };
     confirmationService.confirm(options).subscribe(() => (closed = true));
 
-    expect(confirmationModalComponent.title).toBe('Save');
-    expect(confirmationModalComponent.message).toBe('Close');
-    expect(confirmationModalComponent.yes).toBe('Cancel');
-    expect(confirmationModalComponent.no).toBe('Delete');
+    expect(confirmationModalComponent.title()).toBe('Save');
+    expect(confirmationModalComponent.message()).toBe('Close');
+    expect(confirmationModalComponent.yes()).toBe('Cancel');
+    expect(confirmationModalComponent.no()).toBe('Delete');
     expect(closed).toBe(true);
   });
 
@@ -67,10 +75,10 @@ describe('ConfirmationService', () => {
     };
     confirmationService.confirm(options).subscribe(() => (closed = true));
 
-    expect(confirmationModalComponent.title).toBe('Confirmation');
-    expect(confirmationModalComponent.message).toBe('Hello');
-    expect(confirmationModalComponent.yes).toBe('Yes');
-    expect(confirmationModalComponent.no).toBe('No');
+    expect(confirmationModalComponent.title()).toBe('Confirmation');
+    expect(confirmationModalComponent.message()).toBe('Hello');
+    expect(confirmationModalComponent.yes()).toBe('Yes');
+    expect(confirmationModalComponent.no()).toBe('No');
     expect(closed).toBe(true);
   });
 

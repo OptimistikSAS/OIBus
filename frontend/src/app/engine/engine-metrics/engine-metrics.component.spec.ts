@@ -6,12 +6,11 @@ import { Component } from '@angular/core';
 import { NotificationService } from '../../shared/notification.service';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { EngineService } from '../../services/engine.service';
-import { EngineMetrics } from '../../../../../shared/model/engine.model';
+import { EngineMetrics } from '../../../../../backend/shared/model/engine.model';
 import { provideHttpClient } from '@angular/common/http';
 
 @Component({
-  template: `<oib-engine-metrics [metrics]="metrics"></oib-engine-metrics>`,
-  standalone: true,
+  template: `<oib-engine-metrics [metrics]="metrics" />`,
   imports: [EngineMetricsComponent]
 })
 class TestComponent {

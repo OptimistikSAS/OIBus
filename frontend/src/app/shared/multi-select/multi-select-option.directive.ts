@@ -1,17 +1,14 @@
-import { Directive, Input } from '@angular/core';
+import { Directive, input } from '@angular/core';
 
 /**
  * An option of a multi-select
  */
 @Directive({
   // eslint-disable-next-line @angular-eslint/directive-selector
-  selector: 'oib-multi-select-option',
-  standalone: true
+  selector: 'oib-multi-select-option'
 })
-export class MultiSelectOptionDirective {
-  @Input()
-  value: any;
+export class MultiSelectOptionDirective<T> {
+  readonly value = input.required<T>();
 
-  @Input()
-  label = '';
+  readonly label = input.required<string>();
 }

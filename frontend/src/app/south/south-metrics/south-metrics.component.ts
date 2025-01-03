@@ -1,8 +1,8 @@
-import { Component, Input, NgZone, OnInit } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
-import { SouthConnectorDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
-import { SouthConnectorMetrics } from '../../../../../shared/model/engine.model';
-import { JsonPipe, NgIf } from '@angular/common';
+import { Component, NgZone, OnInit, inject, input, linkedSignal } from '@angular/core';
+import { TranslateDirective } from '@ngx-translate/core';
+import { SouthConnectorLightDTO, SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
+import { SouthConnectorMetrics } from '../../../../../backend/shared/model/engine.model';
+import { JsonPipe } from '@angular/common';
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { DurationPipe } from '../../shared/duration.pipe';
 import { NotificationService } from '../../shared/notification.service';
@@ -14,33 +14,31 @@ import { Router } from '@angular/router';
   selector: 'oib-south-metrics',
   templateUrl: './south-metrics.component.html',
   styleUrl: './south-metrics.component.scss',
-  standalone: true,
-  imports: [TranslateModule, NgIf, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe]
+  imports: [TranslateDirective, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe]
 })
 export class SouthMetricsComponent implements OnInit {
-  @Input({ required: true }) southConnector!: SouthConnectorDTO;
-  @Input() manifest: SouthConnectorManifest | null = null;
-  @Input() displayButton = false;
-  @Input({ required: true }) connectorMetrics!: SouthConnectorMetrics;
+  private zone = inject(NgZone);
+  private router = inject(Router);
+  private southService = inject(SouthConnectorService);
+  private notificationService = inject(NotificationService);
 
-  constructor(
-    private zone: NgZone,
-    private router: Router,
-    private southService: SouthConnectorService,
-    private notificationService: NotificationService
-  ) {}
+  readonly southConnector = input.required<SouthConnectorLightDTO>();
+  readonly manifest = input<SouthConnectorManifest | null>(null);
+  readonly manifestOrSouthConnectorTypeManifest = linkedSignal(() => this.manifest());
+  readonly displayButton = input(false);
+  readonly connectorMetrics = input.required<SouthConnectorMetrics>();
 
   ngOnInit(): void {
-    if (!this.manifest) {
-      this.southService.getSouthConnectorTypeManifest(this.southConnector.type).subscribe(manifest => {
-        this.manifest = manifest;
+    if (!this.manifest()) {
+      this.southService.getSouthConnectorTypeManifest(this.southConnector().type).subscribe(manifest => {
+        this.manifestOrSouthConnectorTypeManifest.set(manifest);
       });
     }
   }
 
   resetMetrics() {
     this.zone.run(() => {
-      this.southService.resetMetrics(this.southConnector.id).subscribe(() => {
+      this.southService.resetMetrics(this.southConnector().id).subscribe(() => {
         this.notificationService.success('south.monitoring.metrics-reset');
       });
     });
@@ -48,7 +46,7 @@ export class SouthMetricsComponent implements OnInit {
 
   navigateToDisplay() {
     this.zone.run(() => {
-      this.router.navigate(['/south', this.southConnector.id]);
+      this.router.navigate(['/south', this.southConnector().id]);
     });
   }
 }

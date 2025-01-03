@@ -1,71 +1,64 @@
 import path from 'node:path';
-import { HistoryQueryDTO } from '../../../shared/model/history-query.model';
-import { SouthConnectorDTO } from '../../../shared/model/south-connector.model';
-import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 
-import { createFolder, delay } from '../service/utils';
+import { createBaseFolders, delay } from '../service/utils';
 import pino from 'pino';
 import SouthService from '../service/south.service';
 import NorthService from '../service/north.service';
 import NorthConnector from '../north/north-connector';
 import SouthConnector from '../south/south-connector';
-import HistoryMetricsService from '../service/history-metrics.service';
-import HistoryQueryService from '../service/history-query.service';
-import { PassThrough } from 'node:stream';
-import { SouthSettings } from '../../../shared/model/south-settings.model';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
-import { OIBusDataValue } from '../../../shared/model/engine.model';
+import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
+import { NorthSettings } from '../../shared/model/north-settings.model';
+import { OIBusContent, OIBusTimeValue } from '../../shared/model/engine.model';
+import { SouthConnectorEntity } from '../model/south-connector.model';
+import { NorthConnectorEntity } from '../model/north-connector.model';
+import { HistoryQueryEntity } from '../model/histor-query.model';
+import HistoryQueryRepository from '../repository/config/history-query.repository';
+import { EventEmitter } from 'node:events';
+import { BaseFolders, Instant } from '../model/types';
+import { QueriesHistory } from '../south/south-interface';
 
 const FINISH_INTERVAL = 5000;
 
 export default class HistoryQuery {
-  protected readonly baseFolder: string;
-  private north: NorthConnector<any> | null = null;
-  private south: SouthConnector<any, any> | null = null;
+  private north: NorthConnector<NorthSettings> | null = null;
+  private south: SouthConnector<SouthSettings, SouthItemSettings> | null = null;
   private finishInterval: NodeJS.Timeout | null = null;
-  private readonly _metricsService: HistoryMetricsService;
   private stopping = false;
 
+  public metricsEvent: EventEmitter = new EventEmitter();
+
   constructor(
-    private historyConfiguration: HistoryQueryDTO,
+    private historyConfiguration: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>,
     private readonly southService: SouthService,
     private readonly northService: NorthService,
-    private readonly historyService: HistoryQueryService,
-    private logger: pino.Logger,
-    baseFolder: string
-  ) {
-    this.baseFolder = baseFolder;
-    this._metricsService = new HistoryMetricsService(
-      historyConfiguration.id,
-      this.historyService.repositoryService.southMetricsRepository,
-      this.historyService.repositoryService.northMetricsRepository
-    );
-  }
+    private readonly historyQueryRepository: HistoryQueryRepository,
+    private readonly baseFolders: BaseFolders,
+    private logger: pino.Logger
+  ) {}
 
-  /**
-   * Run history query according to its status
-   */
-  async start<S extends SouthSettings, N extends NorthSettings>(): Promise<void> {
-    this.historyConfiguration = this.historyService.repositoryService.historyQueryRepository.getHistoryQuery(this.historyConfiguration.id)!;
-    const southConfiguration: SouthConnectorDTO<S> = {
+  async start(): Promise<void> {
+    this.historyConfiguration = this.historyQueryRepository.findHistoryQueryById(this.historyConfiguration.id)!;
+
+    // South
+    const southConfiguration: SouthConnectorEntity<SouthSettings, SouthItemSettings> = {
       id: this.historyConfiguration.id,
       name: this.historyConfiguration.name,
       description: '',
       enabled: true,
-      history: this.historyConfiguration.history,
       type: this.historyConfiguration.southType,
-      settings: this.historyConfiguration.southSettings
+      settings: this.historyConfiguration.southSettings,
+      items: []
     };
-    const southFolder = path.resolve(this.baseFolder, 'south');
-    await createFolder(southFolder);
-    this.south = this.southService.createSouth(
-      southConfiguration,
-      this.addValues.bind(this),
-      this.addFile.bind(this),
-      southFolder,
-      this.logger
-    );
-    const northConfiguration: NorthConnectorDTO<N> = {
+    const southFolders: BaseFolders = {
+      cache: path.resolve(this.baseFolders.cache, 'south'),
+      archive: path.resolve(this.baseFolders.archive, 'south'),
+      error: path.resolve(this.baseFolders.error, 'south')
+    };
+    await createBaseFolders(southFolders);
+    this.south = this.southService.runSouth(southConfiguration, this.addContent.bind(this), this.logger, southFolders);
+
+    // North
+    const northConfiguration: NorthConnectorEntity<NorthSettings> = {
       id: this.historyConfiguration.id,
       name: this.historyConfiguration.name,
       description: '',
@@ -73,39 +66,52 @@ export default class HistoryQuery {
       type: this.historyConfiguration.northType,
       settings: this.historyConfiguration.northSettings,
       caching: this.historyConfiguration.caching,
-      archive: this.historyConfiguration.archive
+      subscriptions: []
     };
-    const northFolder = path.resolve(this.baseFolder, 'north');
-    await createFolder(northFolder);
-    this.north = this.northService.createNorth(northConfiguration, northFolder, this.logger);
-
-    this.south.getMetricsDataStream().on('data', data => {
-      // Remove the 'data: ' start of the string
-      const southMetrics = JSON.parse(Buffer.from(data).toString().slice(6));
-      this._metricsService.updateMetrics({ ...this._metricsService.metrics, south: southMetrics });
-    });
-
-    this.north.getMetricsDataStream().on('data', data => {
-      // Remove the 'data: ' start of the string
-      const northMetrics = JSON.parse(Buffer.from(data).toString().slice(6));
-      this._metricsService.updateMetrics({ ...this._metricsService.metrics, north: northMetrics });
-    });
+    const northFolders: BaseFolders = {
+      cache: path.resolve(this.baseFolders.cache, 'north'),
+      archive: path.resolve(this.baseFolders.archive, 'north'),
+      error: path.resolve(this.baseFolders.error, 'north')
+    };
+    await createBaseFolders(northFolders);
+    this.north = this.northService.runNorth(northConfiguration, this.logger, northFolders);
 
     if (this.historyConfiguration.status !== 'RUNNING') {
       this.logger.trace(`History Query "${this.historyConfiguration.name}" not enabled`);
       return;
     }
 
+    this.north.metricsEvent.on('connect', (data: { lastConnection: Instant }) => {
+      this.metricsEvent.emit('north-connect', data);
+    });
+    this.north.metricsEvent.on('run-start', (data: { lastRunStart: Instant }) => {
+      this.metricsEvent.emit('north-run-start', data);
+    });
+    this.north.metricsEvent.on('run-end', (data: { lastRunDuration: number }) => {
+      this.metricsEvent.emit('north-run-end', data);
+    });
+    this.north.metricsEvent.on('cache-size', (data: { cacheSize: number; errorSize: number; archiveSize: number }) => {
+      this.metricsEvent.emit('north-cache-size', data);
+    });
+    this.north.metricsEvent.on('send-values', (data: { numberOfValuesSent: number; lastValueSent: OIBusTimeValue }) => {
+      this.metricsEvent.emit('north-send-values', data);
+    });
+    this.north.metricsEvent.on('send-file', (data: { lastFileSent: string }) => {
+      this.metricsEvent.emit('north-send-file', data);
+    });
     await this.north.start(false);
 
     this.south.connectedEvent.on('connected', async () => {
       this.south!.createDeferredPromise();
 
       this.south!.historyQueryHandler(
-        this.historyService.listItems(this.historyConfiguration.id, { enabled: true }),
+        this.historyConfiguration.items.map(item => ({ ...item, scanModeId: 'history' })),
         this.historyConfiguration.startTime,
         this.historyConfiguration.endTime,
-        'history'
+        'history',
+        (this.south as unknown as QueriesHistory).getThrottlingSettings(this.historyConfiguration.southSettings),
+        (this.south as unknown as QueriesHistory).getMaxInstantPerItem(this.historyConfiguration.southSettings),
+        0
       )
         .then(() => {
           this.south!.resolveDeferredPromise();
@@ -114,9 +120,7 @@ export default class HistoryQuery {
           this.logger.error(`Error while executing history query. ${error}`);
           this.south!.resolveDeferredPromise();
           await delay(FINISH_INTERVAL);
-          this.historyConfiguration = this.historyService.repositoryService.historyQueryRepository.getHistoryQuery(
-            this.historyConfiguration.id
-          )!;
+          this.historyConfiguration = this.historyQueryRepository.findHistoryQueryById(this.historyConfiguration.id)!;
           if (this.historyConfiguration.status === 'RUNNING' && !this.stopping) {
             await this.south!.stop(false);
             await this.south!.start(false);
@@ -127,35 +131,57 @@ export default class HistoryQuery {
       }
       this.finishInterval = setInterval(this.finish.bind(this), FINISH_INTERVAL);
     });
+    this.south.metricsEvent.on('connect', (data: { lastConnection: Instant }) => {
+      this.metricsEvent.emit('south-connect', data);
+    });
+    this.south.metricsEvent.on('run-start', (data: { lastRunStart: Instant }) => {
+      this.metricsEvent.emit('south-run-start', data);
+    });
+    this.south.metricsEvent.on('run-end', (data: { lastRunDuration: number }) => {
+      this.metricsEvent.emit('south-run-end', data);
+    });
+    this.south.metricsEvent.on('history-query-start', (data: { running: boolean; intervalProgress: number }) => {
+      this.metricsEvent.emit('south-history-query-start', data);
+    });
+    this.south.metricsEvent.on(
+      'history-query-interval',
+      (data: {
+        running: boolean;
+        intervalProgress: number;
+        currentIntervalStart: Instant;
+        currentIntervalEnd: Instant;
+        currentIntervalNumber: number;
+        numberOfIntervals: number;
+      }) => {
+        this.metricsEvent.emit('south-history-query-interval', data);
+      }
+    );
+    this.south.metricsEvent.on('history-query-stop', (data: { running: boolean }) => {
+      this.metricsEvent.emit('south-history-query-stop', data);
+    });
+    this.south.metricsEvent.on('add-values', (data: { numberOfValuesRetrieved: number; lastValueRetrieved: OIBusTimeValue }) => {
+      this.metricsEvent.emit('south-add-values', data);
+    });
+    this.south.metricsEvent.on('add-file', (data: { lastFileRetrieved: string }) => {
+      this.metricsEvent.emit('south-add-file', data);
+    });
     await this.south.start(false);
   }
 
-  /**
-   * Add new values from a South connector to the Engine.
-   * The Engine will forward the values to the Cache.
-   */
-  async addValues(_historyId: string, values: Array<OIBusDataValue>): Promise<void> {
+  async addContent(_historyId: string, data: OIBusContent) {
     if (this.north) {
-      this.logger.info(`Add ${values.length} values from History Query "${this.historyConfiguration.name}" to north connector`);
-      await this.north.cacheValues(values);
+      switch (data.type) {
+        case 'time-values':
+          this.logger.info(`Add ${data.content.length} values from History Query "${this.historyConfiguration.name}" to north connector`);
+          return await this.north.cacheValues(data.content);
+        case 'raw':
+          this.logger.info(`Add file "${data.filePath}" from History Query "${this.historyConfiguration.name}" to north connector`);
+          return await this.north.cacheFile(data.filePath);
+      }
     }
   }
 
-  /**
-   * Add a new file from a South connector to the Engine.
-   * The Engine will forward the file to the Cache.
-   */
-  async addFile(_historyId: string, filePath: string): Promise<void> {
-    if (this.north) {
-      this.logger.info(`Add file "${filePath}" from History Query "${this.historyConfiguration.name}" to north connector`);
-      await this.north.cacheFile(filePath);
-    }
-  }
-
-  /**
-   * Stop history query
-   */
-  async stop(resetCache = false): Promise<void> {
+  async stop(): Promise<void> {
     this.stopping = true;
     if (this.finishInterval) {
       clearInterval(this.finishInterval);
@@ -164,21 +190,22 @@ export default class HistoryQuery {
     if (this.south) {
       this.south.connectedEvent.removeAllListeners();
       await this.south.stop(false);
-      if (resetCache) {
-        await this.south.resetCache();
-      }
+      this.south.metricsEvent.removeAllListeners();
     }
     if (this.north) {
       await this.north.stop(false);
-      if (resetCache) {
-        await this.north.resetCache();
-      }
-    }
-    // Also reset the metrics service
-    if (this._metricsService && resetCache) {
-      this._metricsService.resetMetrics();
+      this.north.metricsEvent.removeAllListeners();
     }
     this.stopping = false;
+  }
+
+  async resetCache(): Promise<void> {
+    if (this.south) {
+      await this.south.resetCache();
+    }
+    if (this.north) {
+      await this.north.resetCache();
+    }
   }
 
   /**
@@ -188,10 +215,8 @@ export default class HistoryQuery {
     if (!this.north || !this.south || ((await this.north.isCacheEmpty()) && !this.south.historyIsRunning)) {
       this.logger.info(`Finish "${this.historyConfiguration.name}" (${this.historyConfiguration.id})`);
       await this.stop();
-      this.historyService.repositoryService.historyQueryRepository.setHistoryQueryStatus(this.historyConfiguration.id, 'FINISHED');
-      this.historyConfiguration = this.historyService.repositoryService.historyQueryRepository.getHistoryQuery(
-        this.historyConfiguration.id
-      )!;
+      this.historyQueryRepository.updateHistoryQueryStatus(this.historyConfiguration.id, 'FINISHED');
+      this.historyConfiguration = this.historyQueryRepository.findHistoryQueryById(this.historyConfiguration.id)!;
     } else {
       this.logger.debug(`History query "${this.historyConfiguration.name}" is still running`);
     }
@@ -201,7 +226,7 @@ export default class HistoryQuery {
     this.logger = value;
   }
 
-  getMetricsDataStream(): PassThrough {
-    return this._metricsService.stream;
+  get settings(): HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> {
+    return this.historyConfiguration;
   }
 }
