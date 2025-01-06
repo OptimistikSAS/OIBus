@@ -198,6 +198,7 @@ img.oib-image-header {
   :not(caption) > * > * {
     border-bottom-width: 0;
   }
+  table-layout: fixed;
 
   --bs-table-bg: $white;
   --bs-table-color: $white;
@@ -255,7 +256,7 @@ img.oib-image-header {
       vertical-align: middle;
       padding-left: 1rem;
       border-bottom-width: 0;
-      text-overflow: clip;
+      text-overflow: ellipsis;
       overflow: hidden;
       white-space: nowrap;
     }
