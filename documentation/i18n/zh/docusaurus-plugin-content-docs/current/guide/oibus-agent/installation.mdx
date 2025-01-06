@@ -1,24 +1,75 @@
 ---
 sidebar_position: 1
 ---
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-import WindowsInstallation from './installation/_windows.mdx';
-import LinuxInstallation from './installation/_linux.mdx';
+
+import DownloadButton from "@site/src/components/DownloadButton";
 
 # Concept and installation
-OIBus Agent is a tool used to embed through HTTP some protocol specific queries.
+The OIBus Agent is a specialized tool designed to handle protocol-specific queries via HTTP. It is primarily used for
+Windows-only technologies, such as OPC Classic™, OLEDB, and OSIsoft PI System™. Additionally, it natively supports
+certain protocols, like ODBC, to ensure optimal performance.
 
-OIBus can request the agent through its South connectors [ODBC](../south-connectors/odbc) and [OPC](../south-connectors/opc.mdx).
+The primary purpose of the OIBus Agent is to integrate seamlessly with OIBus and its South connectors. However, it can
+also function independently via its API. This documentation provides a detailed overview of the API, organized protocol
+by protocol.
 
 
-<Tabs>
-  <TabItem value="windows" label="Windows" default>
-    <WindowsInstallation/>
-  </TabItem>
-  <TabItem value="linux" label="Linux">
-    <LinuxInstallation/>
-  </TabItem>
-</Tabs>
+## Download
+
+<div style={{ display: "flex", justifyContent: "space-around" }}>
+  <DownloadButton
+    link={`https://github.com/OptimistikSAS/OIBusAgentRelease/releases/latest/download/oibus-agent-win_x64-__VERSION__.zip`}>
+    <div>Windows (x64)</div>
+  </DownloadButton>
+  <DownloadButton
+    link={`https://github.com/OptimistikSAS/OIBusAgentRelease/releases/latest/download/oibus-agent-win_x86-__VERSION__.zip`}>
+    <div>Windows (x86)</div>
+  </DownloadButton>
+  <DownloadButton
+    link={`https://github.com/OptimistikSAS/OIBusAgentRelease/releases/latest/download/oibus-agent-win_arm64-__VERSION__.zip`}>
+    <div>Windows (arm64)</div>
+  </DownloadButton>
+</div>
+
+
+## Setup
+Unzip the archive, from which you will get three files:
+- OIBusAgent.exe: binary used to run the agent
+- install-agent.bat: script used to install the agent as a Windows service
+- uninstall-agent.bat: script used to uninstall the service
+
+### Installation
+By default, running `install-agent.bat` install the agent as a service with the name `OIBusAgent` and will listen to
+port `2224`:
+```
+install-agent.bat
+```
+
+But it is also possible to specify a name and a port through the command line:
+```
+install-agent.bat -n="My OIBus Agent" -p=2225
+```
+
+### Uninstalling
+If the agent has been set up with default values, running the uninstallation script is enough:
+```
+uninstall-agent.bat
+```
+
+If the agent has been installed with a specific name, you must specify its name:
+```
+uninstall-agent.bat -n="My OIBus Agent"
+```
+
+## Running the agent
+If you just want to run the agent without using the service manager, simply run the following command in a terminal:
+```
+OIBusAgent.exe
+```
+
+That will run the OIBus agent on its default HTTP port 2224. You can specify another port with:
+```
+OIBusAgent.exe -p 2225
+```
 
 
