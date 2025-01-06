@@ -63,7 +63,7 @@ steps:
    password.
 4. In OIBus, fill the API key and the associated secret key.
 
-![OIAnalytics API Key gen](@site/static/img/guide/north/oianalytics/oia-api-key-gen.png)
+![OIAnalytics API Key gen](../../../static/img/guide/north/oianalytics/oia-api-key-gen.png)
 
 :::danger Password retrieval
 It's crucial to emphasize that the API key generation is the only opportunity to access and copy the password associated

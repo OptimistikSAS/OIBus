@@ -1,5 +1,5 @@
 ---
-sidebar_position: 1
+sidebar_position: 2
 ---
 
 # OIBus security
@@ -35,7 +35,7 @@ ensures the security of the secrets even in the event of a database deletion.
 
 ### Exchange of secrets with OIAnalytics
 
-With a [OIAnalytics Registration](../engine/oianalytics-registration.mdx), OIBus sends its full configuration to
+With a [OIAnalytics Registration](./oianalytics-registration.mdx), OIBus sends its full configuration to
 OIAnalytics. In this situation, all secrets are filtered out and never leave OIBus.
 
 OIAnalytics allows users to create or update south or north connectors, which may involve entering secrets. When a
@@ -43,7 +43,7 @@ secret is provided, it is encrypted using a public key. Plain text secrets are n
 private key, securely stored in OIBus, can decrypt the secrets.
 
 The public/private key pair is generated during OIBus registration or when executing
-a [Regenerate Cipher Keys](../engine/oianalytics-registration.mdx#regenerate-cipher-keys) command. It uses RSA-OAEP with
+a [Regenerate Cipher Keys](./oianalytics-registration.mdx#regenerate-cipher-keys) command. It uses RSA-OAEP with
 a key size of 4096 bits.
 
 ## Physical security
