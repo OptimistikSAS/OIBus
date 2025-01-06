@@ -63,7 +63,8 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
 
   async prepareConnection(): Promise<void> {
     this.logger.info(
-      `Connecting to ${this.connector.settings.useADLS ? 'Azure Data Lake Storage' : 'Azure Blob Storage'} for the account ${this.connector.settings.account} and the container ${this.connector.settings.container} using ${this.connector.settings.authentication} authentication.`    );
+      `Connecting to ${this.connector.settings.useADLS ? 'Azure Data Lake Storage' : 'Azure Blob Storage'} for the account ${this.connector.settings.account} and the container ${this.connector.settings.container} using ${this.connector.settings.authentication} authentication.`
+    );
     let proxyOptions: ProxyOptions | undefined = undefined;
     if (this.connector.settings.useProxy) {
       const { proxyHost, proxyPort } = this.parseProxyUrl(this.connector.settings.proxyUrl!);
@@ -166,9 +167,9 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
       }
       this.logger.info(`Uploaded successfully "${blobName}" to Azure Data Lake Storage with requestId: ${requestId}.`);
     } else {
-    const blockBlobClient = this.blobClient!.getContainerClient(container).getBlockBlobClient(blobName);
-    const uploadBlobResponse = await blockBlobClient.upload(content, stats.size);
-    this.logger.info(`Upload block blob "${blobName}" successfully with requestId: ${uploadBlobResponse.requestId}`);
+      const blockBlobClient = this.blobClient!.getContainerClient(container).getBlockBlobClient(blobName);
+      const uploadBlobResponse = await blockBlobClient.upload(content, stats.size);
+      this.logger.info(`Upload block blob "${blobName}" successfully with requestId: ${uploadBlobResponse.requestId}`);
     }
   }
 
@@ -202,9 +203,9 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
       }
       this.logger.info(`Uploaded successfully "${blobPath}" to Azure Data Lake Storage with requestId: ${requestId}.`);
     } else {
-    const blockBlobClient = this.blobClient!.getContainerClient(container).getBlockBlobClient(blobPath);
-    const uploadBlobResponse = await blockBlobClient.upload(csvContent, csvContent.length);
-    this.logger.info(`Upload block blob "${blobPath}" successfully with requestId: ${uploadBlobResponse.requestId}`);
+      const blockBlobClient = this.blobClient!.getContainerClient(container).getBlockBlobClient(blobPath);
+      const uploadBlobResponse = await blockBlobClient.upload(csvContent, csvContent.length);
+      this.logger.info(`Upload block blob "${blobPath}" successfully with requestId: ${uploadBlobResponse.requestId}`);
     }
   }
   override async testConnection(): Promise<void> {
@@ -224,15 +225,15 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
           this.logger.error(`Could not delete file "${blobPath}"`);
         }
       } else {
-      const blockBlobClient = this.blobClient!.getContainerClient(this.connector.settings.container).getBlockBlobClient(blobPath);
-      await blockBlobClient.upload('', 0);
-      result = await blockBlobClient.exists();
-      try {
-        await blockBlobClient.deleteIfExists();
-      } catch {
-        this.logger.error(`Could not delete file "${blobPath}"`);
+        const blockBlobClient = this.blobClient!.getContainerClient(this.connector.settings.container).getBlockBlobClient(blobPath);
+        await blockBlobClient.upload('', 0);
+        result = await blockBlobClient.exists();
+        try {
+          await blockBlobClient.deleteIfExists();
+        } catch {
+          this.logger.error(`Could not delete file "${blobPath}"`);
+        }
       }
-    }
     } catch (error: unknown) {
       const errorString = `Connection could not establish. Check path and authentication. ${error}`;
       this.logger.error(errorString);
