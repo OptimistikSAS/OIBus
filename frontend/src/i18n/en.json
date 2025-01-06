@@ -1608,6 +1608,7 @@
       "proxy-password": "Proxy password"
     },
     "azure-blob": {
+      "use-adls": "Use Data Lake",
       "use-custom-url": "Use custom URL",
       "account": "Account",
       "custom-url": "Custom URL",
