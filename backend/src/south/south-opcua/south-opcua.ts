@@ -74,8 +74,6 @@ function toOPCUASecurityPolicy(securityPolicy: SouthOPCUASettingsSecurityPolicy 
       return 'Basic256Sha256';
     case 'aes128-sha256-rsa-oaep':
       return 'Aes128_Sha256_RsaOaep';
-    case 'aes256-sha256-rsa-pss':
-      return 'Aes256_Sha256_RsaPss';
     case 'pub-sub-aes-128-ctr':
       return 'PubSub_Aes128_CTR';
     case 'pub-sub-aes-256-ctr':

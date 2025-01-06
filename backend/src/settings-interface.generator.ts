@@ -125,10 +125,6 @@ function writeAttribute(filePath: string, attribute: Attribute) {
   appendFileSync(filePath, `  ${attribute.key}${undefinable}: ${attribute.type}${nullable};\n`);
 }
 
-function isSouthConnector(manifestObject: ConnectorManifest): manifestObject is SouthConnectorManifest {
-  return (manifestObject as SouthConnectorManifest).items !== undefined;
-}
-
 /**
  * Generate the appropriate types for the given manifest file
  * @param manifestObject the manifest
@@ -158,11 +154,11 @@ function generateTypesForManifest(
   const mainSettingsInterface = generateInterface(interfaceName, manifestObject.settings, typesToGenerate);
   typesToGenerate.settingsInterfaces.push(mainSettingsInterface);
 
-  if (isSouthConnector(manifestObject)) {
+  if (connectorType === 'South') {
     const interfaceName = buildSouthInterfaceName(manifestObject.id, true);
 
     // gather recursively all sub interfaces
-    const itemSubManifests: Array<SubManifest> = collectSubManifests(manifestObject.items.settings);
+    const itemSubManifests: Array<SubManifest> = collectSubManifests((manifestObject as unknown as SouthConnectorManifest).items.settings);
     itemSubManifests.forEach(subManifest => {
       const subManifestInterface = generateInterface(
         interfaceName + capitalizeFirstLetter(subManifest.name),
@@ -173,7 +169,11 @@ function generateTypesForManifest(
     });
 
     // generate item settings interface
-    const mainItemSettingsInterface = generateInterface(interfaceName, manifestObject.items.settings, typesToGenerate);
+    const mainItemSettingsInterface = generateInterface(
+      interfaceName,
+      (manifestObject as unknown as SouthConnectorManifest).items.settings,
+      typesToGenerate
+    );
     typesToGenerate.itemSettingsInterfaces.push(mainItemSettingsInterface);
   }
 }
