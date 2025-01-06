@@ -1,5 +1,5 @@
 ---
-sidebar_position: 2
+sidebar_position: 1
 ---
 
 # OIAnalytics registration
@@ -15,7 +15,7 @@ registrations page, complete the registration by copying the 6 characters code a
 **OIBus needs API access**.
 4. OIBus regularly checks if the registration is completed on OIAnalytics.
 5. On completion, OIBus sends the full configuration to OIAnalytics and activate the logs (if enabled in
-the [engine settings](./engine-settings.md#logging-parameters)).
+the [engine settings](../engine/engine-settings.md#logging-parameters)).
 6. OIBus regularly retrieves [commands from OIAnalytics](#commands).
 
 <div style={{ textAlign: 'center' }}>
@@ -55,7 +55,7 @@ list of available commands [here](#commands).
 ## OIAnalytics logs
 
 If configured within the logging parameters section of
-the [OIBus Engine settings](./engine-settings.md#logging-parameters), logs have the capability to be transmitted via
+the [OIBus Engine settings](../engine/engine-settings.md#logging-parameters), logs have the capability to be transmitted via
 HTTPS to OIAnalytics, allowing access to them on the OIAnalytics OIBus log page.
 
 ## Commands
@@ -84,7 +84,7 @@ The restart command kills the current process of OIBus. The OIBus launcher then 
 
 ### Update engine settings
 
-Apply the settings set on OIAnalytics for the [engine settings](./engine-settings.md).
+Apply the settings set on OIAnalytics for the [engine settings](../engine/engine-settings.md).
 
 ### Regenerate cipher keys
 
@@ -131,7 +131,7 @@ For firewall configuration, outbound connections from OIBus to OIAnalytics must 
 ### Secrets management
 
 When OIBus sends messages to OIAnalytics, all secrets are filtered out and never leave OIBus. For more details on local
-secret management, refer to [this page](../advanced/oibus-security.md).
+secret management, refer to [this page](./oibus-security.md).
 
 OIAnalytics allows users to create or update south or north connectors, which may involve entering secrets. When a
 secret is provided, it is encrypted using a public key. Plain text secrets are never stored on OIAnalytics. Only the

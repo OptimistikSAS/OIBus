@@ -75,5 +75,5 @@ correctly to locate your OIBus logs within your Loki instance, specially if you 
 
 ### OIAnalytics
 
-If OIBus [is registered](./oianalytics-registration.mdx), logs can be forwarded to OIAnalytics. Otherwise, these
+If OIBus [is registered](../advanced/oianalytics-registration.mdx), logs can be forwarded to OIAnalytics. Otherwise, these
 settings will be disregarded.
