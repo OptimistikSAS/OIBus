@@ -11,7 +11,7 @@ const manifest: NorthConnectorManifest = {
     {
       key: 'useADLS',
       type: 'OibCheckbox',
-      translationKey: 'Use Data Lake',
+      translationKey: 'north.azure-blob.use-adls',
       validators: [{ key: 'required' }],
       defaultValue: false,
       displayInViewMode: true,
