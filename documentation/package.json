@@ -11,7 +11,7 @@
     "start": "docusaurus start",
     "build": "docusaurus build && node update-agent-version.js",
     "swizzle": "docusaurus swizzle",
-    "deploy": "docusaurus deploy",
+    "deploy": "docusaurus build && node update-agent-version.js && gh-pages -d build",
     "clear": "docusaurus clear",
     "serve": "docusaurus serve",
     "write-translations": "docusaurus write-translations",
@@ -29,7 +29,8 @@
     "react-dom": "18.3.1"
   },
   "devDependencies": {
-    "@docusaurus/module-type-aliases": "3.6.3"
+    "@docusaurus/module-type-aliases": "3.6.3",
+    "gh-pages": "6.3.0"
   },
   "browserslist": {
     "production": [
