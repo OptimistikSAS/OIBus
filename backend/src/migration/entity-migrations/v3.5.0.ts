@@ -179,6 +179,7 @@ async function updateNorthConnectors(knex: Knex): Promise<void> {
     switch (type) {
       case 'azure-blob':
         newSettings.authentication = toNewAzureBlobAuthentication(newSettings.authentication);
+        newSettings.useADLS = false;
         break;
     }
     await knex(SOUTH_CONNECTORS_TABLE)
