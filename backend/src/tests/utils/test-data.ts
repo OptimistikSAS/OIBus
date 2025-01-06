@@ -32,6 +32,8 @@ import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO } from '../../../sha
 import { User } from '../../model/user.model';
 import { Certificate } from '../../model/certificate.model';
 import { OIBusLog } from '../../model/logs.model';
+import { CertificateCommandDTO } from '../../../shared/model/certificate.model';
+import { LogStreamCommandDTO } from '../../../shared/model/logs.model';
 
 const constants = {
   dates: {
@@ -151,14 +153,19 @@ const certificates: Array<Certificate> = [
     expiry: constants.dates.DATE_2
   }
 ];
-const certificateCommand: Certificate = {
-  id: 'new id',
+const certificateCommand: CertificateCommandDTO = {
   name: 'new certificate',
   description: 'description',
-  publicKey: 'public key',
-  privateKey: 'private key',
-  certificate: 'certificate',
-  expiry: constants.dates.DATE_3
+  regenerateCertificate: false,
+  options: {
+    commonName: 'OIBus',
+    countryName: 'FR',
+    stateOrProvinceName: 'Savoie',
+    localityName: 'Chambéry',
+    organizationName: 'Optimistik',
+    keySize: 4096,
+    daysBeforeExpiry: 90
+  }
 };
 
 const southTestManifest: SouthConnectorManifest = {
@@ -867,6 +874,65 @@ const logs: Array<OIBusLog> = [
     message: 'warn message log'
   }
 ];
+const logCommand: LogStreamCommandDTO = {
+  streams: [
+    {
+      values: [['1000000', 'message1']],
+      stream: {
+        level: 'trace',
+        oibus: 'oibusId',
+        oibusName: 'oibusName',
+        scopeType: 'scopeType',
+        scopeId: 'scopeId',
+        scopeName: 'scopeName'
+      }
+    },
+    {
+      values: [['1000001', 'message2']],
+      stream: {
+        level: 'debug',
+        oibus: 'oibusId',
+        oibusName: 'oibusName',
+        scopeType: 'scopeType',
+        scopeId: 'scopeId',
+        scopeName: 'scopeName'
+      }
+    },
+    {
+      values: [['1000002', 'message3']],
+      stream: {
+        level: 'info',
+        oibus: 'oibusId',
+        oibusName: 'oibusName',
+        scopeType: 'scopeType',
+        scopeId: 'scopeId',
+        scopeName: 'scopeName'
+      }
+    },
+    {
+      values: [['1000003', 'message4']],
+      stream: {
+        level: 'warn',
+        oibus: 'oibusId',
+        oibusName: 'oibusName',
+        scopeType: 'scopeType',
+        scopeId: 'scopeId',
+        scopeName: 'scopeName'
+      }
+    },
+    {
+      values: [['1000004', 'message5']],
+      stream: {
+        level: 'error',
+        oibus: 'oibusId',
+        oibusName: 'oibusName',
+        scopeType: 'scopeType',
+        scopeId: 'scopeId',
+        scopeName: 'scopeName'
+      }
+    }
+  ]
+};
 
 const oIAnalyticsRegistrationRegistered: OIAnalyticsRegistration = {
   id: 'registrationId1',
@@ -1414,7 +1480,8 @@ export default Object.freeze({
     command: certificateCommand
   },
   logs: {
-    list: logs
+    list: logs,
+    command: logCommand
   },
   constants
 });

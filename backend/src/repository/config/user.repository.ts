@@ -38,6 +38,7 @@ export default class UserRepository {
   search(searchParams: UserSearchParam): Page<User> {
     const queryParams = [];
     let whereClause = '';
+    const page = searchParams.page ?? 0;
 
     if (searchParams.login) {
       whereClause += `WHERE login like '%' || ? || '%'`;
@@ -45,7 +46,7 @@ export default class UserRepository {
     }
     const query =
       `SELECT id, login, first_name, last_name, email, language, timezone FROM ${USERS_TABLE} ${whereClause}` +
-      ` LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * searchParams.page};`;
+      ` LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * page};`;
     const results = this.database
       .prepare(query)
       .all(...queryParams)
@@ -58,7 +59,7 @@ export default class UserRepository {
     return {
       content: results,
       size: PAGE_SIZE,
-      number: searchParams.page,
+      number: page,
       totalElements,
       totalPages
     };

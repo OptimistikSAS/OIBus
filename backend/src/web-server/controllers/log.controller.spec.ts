@@ -5,6 +5,9 @@ import JoiValidator from './validators/joi.validator';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
 import { LogSearchParam, Scope } from '../../../shared/model/logs.model';
 import testData from '../../tests/utils/test-data';
+import { createPageFromArray } from '../../../shared/model/types';
+import { toLogDTO } from '../../service/log.service';
+import { DateTime } from 'luxon';
 
 jest.mock('./validators/joi.validator');
 
@@ -13,66 +16,40 @@ const schema = Joi.object({});
 const logController = new LogController(validator, schema);
 
 const ctx = new KoaContextMock();
-const logStreamValuesCommand = {
-  values: [[`${1000000 * Date.now()}`, 'message']],
-  stream: {
-    level: 'info',
-    oibus: 'oibus',
-    scopeType: 'scopeType'
-  }
-};
-const logStreamCommand = {
-  streams: [logStreamValuesCommand, null]
-};
-const formattedLog = {
-  oibus: logStreamValuesCommand.stream.oibus,
-  time: new Date(parseInt(logStreamValuesCommand.values[0][0]) / 1000000),
-  scopeType: logStreamValuesCommand.stream.scopeType,
-  msg: logStreamValuesCommand.values[0][1]
-};
-const log = {
-  timestamp: formattedLog.time.toISOString(),
-  level: logStreamValuesCommand.stream.level,
-  scopeType: formattedLog.scopeType,
-  message: formattedLog.msg
-};
-const page = {
-  content: [log],
-  size: 10,
-  number: 1,
-  totalElements: 1,
-  totalPages: 1
-};
 
 describe('Log controller', () => {
   beforeEach(async () => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
   });
 
   it('searchLogs() should return logs', async () => {
     ctx.query.levels = ['info'];
     ctx.query.page = 1;
-    ctx.query.start = '2023-03-01T00:00:00.000Z';
-    ctx.query.end = '2023-03-31T00:00:00.000Z';
+    ctx.query.start = testData.constants.dates.DATE_1;
+    ctx.query.end = testData.constants.dates.DATE_2;
     ctx.query.scopeTypes = ['scopeType'];
     ctx.query.scopeIds = ['scope'];
     ctx.query.messageContent = 'message';
     const searchParams: LogSearchParam = {
       page: 1,
-      start: '2023-03-01T00:00:00.000Z',
-      end: '2023-03-31T00:00:00.000Z',
+      start: testData.constants.dates.DATE_1,
+      end: testData.constants.dates.DATE_2,
       levels: ['info'],
       scopeTypes: ['scopeType'],
       scopeIds: ['scope'],
       messageContent: 'message'
     };
-    ctx.app.repositoryService.logRepository.search.mockReturnValue(page);
+    const expectedResult = createPageFromArray(testData.logs.list, 25, 0);
+    ctx.app.logService.search.mockReturnValue(expectedResult);
 
     await logController.search(ctx);
 
-    expect(ctx.app.repositoryService.logRepository.search).toHaveBeenCalledWith(searchParams);
-    expect(ctx.ok).toHaveBeenCalledWith(page);
+    expect(ctx.app.logService.search).toHaveBeenCalledWith(searchParams);
+    expect(ctx.ok).toHaveBeenCalledWith({
+      ...expectedResult,
+      content: expectedResult.content.map(element => toLogDTO(element))
+    });
   });
 
   it('search() should return logs with default search params', async () => {
@@ -83,66 +60,61 @@ describe('Log controller', () => {
     };
     const searchParams: LogSearchParam = {
       page: 0,
-      start: new Date(Date.now() - 86400000).toISOString(),
-      end: new Date().toISOString(),
+      start: DateTime.now().minus({ days: 1 }).toUTC().toISO(),
+      end: testData.constants.dates.FAKE_NOW,
       levels: ['info'],
       scopeTypes: ['scopeType1'],
       scopeIds: ['scope1'],
       messageContent: null
     };
-    ctx.app.repositoryService.logRepository.search.mockReturnValue(page);
+    const expectedResult = createPageFromArray(testData.logs.list, 25, 0);
+    ctx.app.logService.search.mockReturnValue(expectedResult);
 
     await logController.search(ctx);
 
-    expect(ctx.app.repositoryService.logRepository.search).toHaveBeenCalledWith(searchParams);
-    expect(ctx.ok).toHaveBeenCalledWith(page);
+    expect(ctx.app.logService.search).toHaveBeenCalledWith(searchParams);
+    expect(ctx.ok).toHaveBeenCalledWith({ ...expectedResult, content: expectedResult.content.map(element => toLogDTO(element)) });
   });
 
-  const levels: Array<string> = ['trace', 'debug', 'info', 'warn', 'error'];
-  it.each(levels)(`addLogs() should %p log`, async level => {
-    ctx.request.body = logStreamCommand;
-    ctx.request.body.streams[0].stream.level = level;
+  it('addLogsFromRemote() should return no content', async () => {
+    ctx.request.body = testData.logs.command;
 
-    await logController.addLogs(ctx);
+    await logController.addLogsFromRemote(ctx);
 
-    expect(ctx.app.logger[level]).toHaveBeenCalledWith(formattedLog);
+    expect(ctx.app.logService.addLogsFromRemote).toHaveBeenCalledWith(testData.logs.command, ctx.app.logger);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
-  it('addLogs() should return bad request', async () => {
-    ctx.request.body = undefined;
-    ctx.app.repositoryService.logRepository.search.mockReturnValue(page);
+  it('addLogsFromRemote() should return bad request', async () => {
+    (ctx.app.logService.addLogsFromRemote as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('bad request');
+    });
+    await logController.addLogsFromRemote(ctx);
 
-    await logController.addLogs(ctx);
-
-    expect(ctx.app.logger.trace).not.toHaveBeenCalled();
-    expect(ctx.app.logger.debug).not.toHaveBeenCalled();
-    expect(ctx.app.logger.info).not.toHaveBeenCalled();
-    expect(ctx.app.logger.warn).not.toHaveBeenCalled();
-    expect(ctx.app.logger.error).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalled();
+    expect(ctx.app.logService.addLogsFromRemote).toHaveBeenCalledWith(testData.logs.command, ctx.app.logger);
+    expect(ctx.badRequest).toHaveBeenCalledWith('bad request');
   });
 
   it('should suggest scopes by name', async () => {
     const scopes: Array<Scope> = [{ scopeId: 'id', scopeName: 'name' }];
-    ctx.app.repositoryService.logRepository.searchScopesByName.mockReturnValue(scopes);
+    ctx.app.logService.searchScopesByName.mockReturnValue(scopes);
     ctx.query = { name: 'name' };
     await logController.suggestScopes(ctx);
     expect(ctx.ok).toHaveBeenCalledWith(scopes);
-    expect(ctx.app.repositoryService.logRepository.searchScopesByName).toHaveBeenCalledWith('name');
+    expect(ctx.app.logService.searchScopesByName).toHaveBeenCalledWith('name');
   });
 
   it('should get scope by its ID', async () => {
     const scope: Scope = { scopeId: 'id', scopeName: 'name' };
-    ctx.app.repositoryService.logRepository.getScopeById.mockReturnValue(scope);
+    ctx.app.logService.getScopeById.mockReturnValueOnce(scope);
     ctx.params = { id: 'id' };
     await logController.getScopeById(ctx);
     expect(ctx.ok).toHaveBeenCalledWith(scope);
-    expect(ctx.app.repositoryService.logRepository.getScopeById).toHaveBeenCalledWith('id');
+    expect(ctx.app.logService.getScopeById).toHaveBeenCalledWith('id');
   });
 
-  it('should get scope by its ID', async () => {
-    ctx.app.repositoryService.logRepository.getScopeById.mockReturnValue(null);
+  it('should get scope by its ID and return null if not found', async () => {
+    ctx.app.logService.getScopeById.mockReturnValueOnce(null);
     ctx.params = { id: 'id' };
     await logController.getScopeById(ctx);
     expect(ctx.noContent).toHaveBeenCalled();

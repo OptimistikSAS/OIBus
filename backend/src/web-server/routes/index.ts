@@ -29,7 +29,7 @@ import {
 import OianalyticsCommandController from '../controllers/oianalytics-command.controller';
 import ContentController from '../controllers/content.controller';
 import { Page } from '../../../shared/model/types';
-import { ChangePasswordCommand, User, UserCommandDTO, UserLight } from '../../../shared/model/user.model';
+import { ChangePasswordCommand, UserDTO, UserCommandDTO, UserLight } from '../../../shared/model/user.model';
 import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '../../../shared/model/scan-mode.model';
 import { CertificateCommandDTO, CertificateDTO } from '../../../shared/model/certificate.model';
 import {
@@ -95,11 +95,11 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-router.get('/api/users', (ctx: KoaContext<void, Page<UserLight>>) => userController.search(ctx));
-router.get('/api/users/:id', (ctx: KoaContext<void, User>) => userController.findById(ctx));
-router.post('/api/users', (ctx: KoaContext<{ user: UserCommandDTO; password: string }, void>) => userController.create(ctx));
+router.get('/api/users', (ctx: KoaContext<void, Page<UserDTO>>) => userController.search(ctx));
+router.get('/api/users/:id', (ctx: KoaContext<void, UserDTO>) => userController.findById(ctx));
+router.post('/api/users', (ctx: KoaContext<{ user: UserCommandDTO; password: string }, UserDTO>) => userController.create(ctx));
 router.put('/api/users/:id', (ctx: KoaContext<UserCommandDTO, void>) => userController.update(ctx));
-router.put('/api/users/:id/change-password', (ctx: KoaContext<ChangePasswordCommand, void>) => userController.changePassword(ctx));
+router.put('/api/users/:id/change-password', (ctx: KoaContext<ChangePasswordCommand, void>) => userController.updatePassword(ctx));
 router.delete('/api/users/:id', (ctx: KoaContext<void, void>) => userController.delete(ctx));
 
 router.get('/api/scan-modes', (ctx: KoaContext<void, Array<ScanModeDTO>>) => scanModeController.findAll(ctx));
@@ -412,7 +412,7 @@ router.put(
 router.get('/api/logs', (ctx: KoaContext<void, Page<LogDTO>>) => logController.search(ctx));
 router.get('/api/scope-logs/suggestions', (ctx: KoaContext<void, Array<Scope>>) => logController.suggestScopes(ctx));
 router.get('/api/scope-logs/:id', (ctx: KoaContext<void, Scope>) => logController.getScopeById(ctx));
-router.post('/api/logs', (ctx: KoaContext<LogStreamCommandDTO, void>) => logController.addLogs(ctx));
+router.post('/api/logs', (ctx: KoaContext<LogStreamCommandDTO, void>) => logController.addLogsFromRemote(ctx));
 
 router.get('/api/commands', (ctx: KoaContext<void, Page<OIBusCommandDTO>>) => commandController.search(ctx));
 

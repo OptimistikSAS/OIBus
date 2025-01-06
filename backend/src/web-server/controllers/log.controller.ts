@@ -3,11 +3,12 @@ import { Page } from '../../../shared/model/types';
 import { LogDTO, LogSearchParam, LogStreamCommandDTO, Scope } from '../../../shared/model/logs.model';
 import { DateTime } from 'luxon';
 import AbstractController from './abstract.controller';
+import { toLogDTO } from '../../service/log.service';
 
 export default class LogsConnectorController extends AbstractController {
   async search(ctx: KoaContext<void, Page<LogDTO>>): Promise<void> {
-    const now = DateTime.now().toMillis();
-    const dayAgo = new Date(now - 86400000);
+    const now = DateTime.now();
+    const dayAgo = now.minus({ days: 1 });
 
     const levels = Array.isArray(ctx.query.levels) ? ctx.query.levels : [];
     if (typeof ctx.query.levels === 'string') {
@@ -26,25 +27,31 @@ export default class LogsConnectorController extends AbstractController {
 
     const searchParams: LogSearchParam = {
       page: ctx.query.page ? parseInt(ctx.query.page as string, 10) : 0,
-      start: (ctx.query.start as string) || new Date(dayAgo).toISOString(),
-      end: (ctx.query.end as string) || new Date(now).toISOString(),
+      start: (ctx.query.start as string) || dayAgo.toUTC().toISO(),
+      end: (ctx.query.end as string) || now.toUTC().toISO(),
       levels,
       scopeIds,
       scopeTypes,
       messageContent: (ctx.query.messageContent as string) || null
     };
 
-    const logs = ctx.app.repositoryService.logRepository.search(searchParams);
-    ctx.ok(logs);
+    const page = ctx.app.logService.search(searchParams);
+    ctx.ok({
+      content: page.content.map(element => toLogDTO(element)),
+      totalElements: page.totalElements,
+      size: page.size,
+      number: page.number,
+      totalPages: page.totalPages
+    });
   }
 
   async suggestScopes(ctx: KoaContext<void, Array<Scope>>): Promise<void> {
-    const scopes = ctx.app.repositoryService.logRepository.searchScopesByName(ctx.query.name as string);
+    const scopes = ctx.app.logService.searchScopesByName(ctx.query.name as string);
     ctx.ok(scopes);
   }
 
   async getScopeById(ctx: KoaContext<void, Scope>): Promise<void> {
-    const scope = ctx.app.repositoryService.logRepository.getScopeById(ctx.params.id);
+    const scope = ctx.app.logService.getScopeById(ctx.params.id);
     if (scope) {
       ctx.ok(scope);
     } else {
@@ -52,44 +59,9 @@ export default class LogsConnectorController extends AbstractController {
     }
   }
 
-  async addLogs(ctx: KoaContext<LogStreamCommandDTO, void>): Promise<void> {
+  async addLogsFromRemote(ctx: KoaContext<LogStreamCommandDTO, void>): Promise<void> {
     try {
-      await this.validate(ctx.request.body);
-      const command: LogStreamCommandDTO = ctx.request.body as LogStreamCommandDTO;
-
-      command.streams.forEach(myStream => {
-        myStream?.values.forEach(value => {
-          const formattedLog = {
-            oibus: myStream.stream.oibus,
-            time: new Date(parseInt(value[0]) / 1000000),
-            scopeType: myStream.stream.scopeType,
-            scopeId: myStream.stream.scopeId,
-            scopeName: myStream.stream.scopeName,
-            msg: value[1]
-          };
-          switch (myStream.stream.level) {
-            case 'trace':
-              ctx.app.logger.trace(formattedLog);
-              break;
-
-            case 'debug':
-              ctx.app.logger.debug(formattedLog);
-              break;
-
-            case 'info':
-              ctx.app.logger.info(formattedLog);
-              break;
-
-            case 'warn':
-              ctx.app.logger.warn(formattedLog);
-              break;
-
-            case 'error':
-              ctx.app.logger.error(formattedLog);
-              break;
-          }
-        });
-      });
+      await ctx.app.logService.addLogsFromRemote(ctx.request.body as LogStreamCommandDTO, ctx.app.logger);
       ctx.noContent();
     } catch (error: unknown) {
       ctx.badRequest((error as Error).message);

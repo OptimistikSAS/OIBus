@@ -2,7 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateDirective } from '@ngx-translate/core';
 import { CurrentUserService } from '../shared/current-user.service';
-import { User } from '../../../../backend/shared/model/user.model';
+import { UserDTO } from '../../../../backend/shared/model/user.model';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 
 import { EngineService } from '../services/engine.service';
@@ -20,7 +20,7 @@ export class NavbarComponent implements OnInit {
   private currentUserService = inject(CurrentUserService);
   private engineService = inject(EngineService);
 
-  user: User | null = null;
+  user: UserDTO | null = null;
   info: OIBusInfo | null = null;
 
   ngOnInit() {

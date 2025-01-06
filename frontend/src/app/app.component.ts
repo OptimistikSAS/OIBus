@@ -5,7 +5,7 @@ import { NotificationComponent } from './shared/notification/notification.compon
 import { DefaultValidationErrorsComponent } from './shared/default-validation-errors/default-validation-errors.component';
 import { WindowService } from './shared/window.service';
 import { CurrentUserService } from './shared/current-user.service';
-import { User } from '../../../backend/shared/model/user.model';
+import { UserDTO } from '../../../backend/shared/model/user.model';
 import { NavigationService } from './shared/navigation.service';
 
 @Component({
@@ -26,7 +26,7 @@ export class AppComponent implements OnInit {
     this.currentUserService.get().subscribe(user => this.reloadIfLanguageOrTimezoneNeedsChange(user));
   }
 
-  private reloadIfLanguageOrTimezoneNeedsChange(user: User | null) {
+  private reloadIfLanguageOrTimezoneNeedsChange(user: UserDTO | null) {
     // if the user language is not the used one
     if (user && (user.language !== this.windowService.languageToUse() || user.timezone !== this.windowService.timezoneToUse())) {
       // then first store the new ones

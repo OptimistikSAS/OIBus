@@ -9,6 +9,9 @@ import IpFilterServiceMock from './service/ip-filter-service.mock';
 import OIAnalyticsRegistrationServiceMock from './service/oia/oianalytics-registration-service.mock';
 import OIAnalyticsCommandServiceMock from './service/oia/oianalytics-command-service.mock';
 import HistoryQueryServiceMock from './service/history-query-service.mock';
+import UserServiceMock from './service/user-service.mock';
+import LogServiceMock from './service/log-service.mock';
+import CertificateServiceMock from './service/certificate-service.mock';
 
 /**
  * Create a mock object for Koa Context
@@ -17,7 +20,6 @@ export default jest.fn().mockImplementation(() => ({
   app: {
     scanModeService: new ScanModeServiceMock(),
     ipFilterService: new IpFilterServiceMock(),
-    repositoryService: new RepositoryServiceMock(),
     encryptionService: new EncryptionServiceMock(),
     northService: new NorthServiceMock(),
     southService: new SouthServiceMock(),
@@ -26,6 +28,9 @@ export default jest.fn().mockImplementation(() => ({
     oIAnalyticsRegistrationService: new OIAnalyticsRegistrationServiceMock(),
     oIAnalyticsCommandService: new OIAnalyticsCommandServiceMock(),
     engineMetricsService: new EngineMetricsServiceMock(),
+    userService: new UserServiceMock(),
+    logService: new LogServiceMock(),
+    certificateService: new CertificateServiceMock(),
     logger: {
       trace: jest.fn(),
       debug: jest.fn(),
