@@ -204,7 +204,6 @@ export const SOUTH_O_P_C_U_A_SETTINGS_SECURITY_POLICYS = [
   'basic256-rsa15',
   'basic256-sha256',
   'aes128-sha256-rsa-oaep',
-  'aes256-sha256-rsa-pss',
   'pub-sub-aes-128-ctr',
   'pub-sub-aes-256-ctr'
 ] as const;
@@ -464,11 +463,11 @@ export interface SouthMSSQLSettings {
   port: number;
   connectionTimeout: number;
   database: string;
+  encryption: boolean;
+  trustServerCertificate: boolean;
   username: string | null;
   password: string | null;
   domain: string | null;
-  encryption: boolean;
-  trustServerCertificate: boolean;
   requestTimeout: number;
 }
 
@@ -553,9 +552,9 @@ export interface SouthPostgreSQLSettings {
   port: number;
   connectionTimeout: number;
   database: string;
+  requestTimeout: number;
   username: string | null;
   password: string | null;
-  requestTimeout: number;
 }
 
 export interface SouthSFTPSettings {

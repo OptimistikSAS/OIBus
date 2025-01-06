@@ -1477,7 +1477,6 @@ describe('SouthOPCUA test connection', () => {
     'basic256-rsa15',
     'basic256-sha256',
     'aes128-sha256-rsa-oaep',
-    'aes256-sha256-rsa-pss',
     'pub-sub-aes-128-ctr',
     'pub-sub-aes-256-ctr'
   ];
