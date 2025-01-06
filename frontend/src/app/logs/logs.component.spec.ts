@@ -35,6 +35,8 @@ describe('LogsComponent', () => {
       timestamp: '2023-01-01T00:00:00.000Z',
       level: 'error',
       scopeType: 'internal',
+      scopeName: null,
+      scopeId: null,
       message: 'my log 1'
     },
     {

@@ -5,7 +5,7 @@ import { ComponentTester, createMock } from 'ngx-speculoos';
 import { of } from 'rxjs';
 import { MockModalService, provideModalTesting } from '../../shared/mock-modal.service.spec';
 import { ChangePasswordModalComponent } from '../change-password-modal/change-password-modal.component';
-import { User, UserCommandDTO } from '../../../../../backend/shared/model/user.model';
+import { UserDTO, UserCommandDTO } from '../../../../../backend/shared/model/user.model';
 import { TestTypeahead } from '../../shared/typeahead.test-utils';
 import { UserSettingsService } from '../../services/user-settings.service';
 import { WindowService } from '../../shared/window.service';
@@ -51,7 +51,7 @@ describe('EditUserSettingsComponent', () => {
   let windowService: jasmine.SpyObj<WindowService>;
   let currentUserService: jasmine.SpyObj<CurrentUserService>;
 
-  let userSettings: User;
+  let userSettings: UserDTO;
 
   beforeEach(() => {
     userSettingsService = createMock(UserSettingsService);
@@ -78,7 +78,7 @@ describe('EditUserSettingsComponent', () => {
       lastName: 'Admin',
       language: 'en', // current language of the mock i18n translate service
       timezone: 'Europe/Paris' // current language of the mock i18n translate service
-    } as User;
+    } as UserDTO;
     userSettingsService.get.and.returnValue(of(userSettings));
 
     currentUserService.getTimezone.and.returnValue('Europe/Paris');

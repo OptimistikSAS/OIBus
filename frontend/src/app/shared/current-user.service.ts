@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { catchError, Observable, of, shareReplay, switchMap } from 'rxjs';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Timezone } from '../../../../backend/shared/model/types';
-import { User } from '../../../../backend/shared/model/user.model';
+import { UserDTO } from '../../../../backend/shared/model/user.model';
 import { WindowService } from './window.service';
 
 interface Token {
@@ -16,7 +16,7 @@ export class CurrentUserService {
   private http = inject(HttpClient);
   private windowService = inject(WindowService);
 
-  private currentUser$: Observable<User | null>;
+  private currentUser$: Observable<UserDTO | null>;
 
   /**
    * The current user timezone. The timezone is handled like the user language: it's read from local storage, or defaulted to
@@ -37,12 +37,12 @@ export class CurrentUserService {
   /**
    * Gets a flux emitting the current user or null as soon as it's known, and then re-emits every time it changes.
    */
-  get(): Observable<User | null> {
+  get(): Observable<UserDTO | null> {
     return this.currentUser$;
   }
 
-  retrieveConnection(): Observable<User | null> {
-    return this.http.get<User>('/api/users/current-user').pipe(
+  retrieveConnection(): Observable<UserDTO | null> {
+    return this.http.get<UserDTO>('/api/users/current-user').pipe(
       catchError((error: HttpErrorResponse) => {
         if (error.status === 403) {
           // Triggered when password is reset or token expired
@@ -60,7 +60,7 @@ export class CurrentUserService {
     this.windowService.redirectTo('/login');
   }
 
-  loginWithPassword(login: string, password: string): Observable<User | null> {
+  loginWithPassword(login: string, password: string): Observable<UserDTO | null> {
     const test = window.btoa(`${login}:${password}`);
     const headers = { authorization: `Basic ${test}` };
     return this.http.post<Token>('/api/users/authentication', null, { headers }).pipe(

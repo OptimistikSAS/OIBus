@@ -21,6 +21,9 @@ import ScanModeService from './service/scan-mode.service';
 import IPFilterService from './service/ip-filter.service';
 import HomeMetricsService from './service/metrics/home-metrics.service';
 import OIAnalyticsClient from './service/oia/oianalytics-client.service';
+import CertificateService from './service/certificate.service';
+import UserService from './service/user.service';
+import LogService from './service/log.service';
 
 const CONFIG_DATABASE = 'oibus.db';
 const CRYPTO_DATABASE = 'crypto.db';
@@ -196,6 +199,9 @@ const LOG_DB_NAME = 'logs.db';
     oIAnalyticsMessageService,
     oIBusService.getProxyServer()
   );
+  const certificateService = new CertificateService(new JoiValidator(), repositoryService.certificateRepository, encryptionService);
+  const userService = new UserService(new JoiValidator(), repositoryService.userRepository);
+  const logService = new LogService(new JoiValidator(), repositoryService.logRepository);
 
   const oIAnalyticsCommandService = new OIAnalyticsCommandService(
     repositoryService.oianalyticsCommandRepository,
@@ -221,6 +227,9 @@ const LOG_DB_NAME = 'logs.db';
     encryptionService,
     scanModeService,
     ipFilterService,
+    certificateService,
+    logService,
+    userService,
     oIAnalyticsRegistrationService,
     oIAnalyticsCommandService,
     oIBusService,
@@ -228,7 +237,6 @@ const LOG_DB_NAME = 'logs.db';
     northService,
     historyQueryService,
     homeMetricsService,
-    repositoryService,
     ignoreIpFilters,
     loggerService.createChildLogger('web-server')
   );

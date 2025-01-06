@@ -34,7 +34,6 @@ import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import CertificateRepository from './certificate.repository';
-import { Certificate } from '../../model/certificate.model';
 import UserRepository from './user.repository';
 import { User } from '../../model/user.model';
 import argon2 from 'argon2';
@@ -104,32 +103,35 @@ describe('Repository with populated database', () => {
     });
 
     it('should create a certificate', () => {
-      repository.create(testData.certificates.command);
-      expect(repository.findById('new id')).toEqual(testData.certificates.command);
+      const createCertificate = JSON.parse(JSON.stringify(testData.certificates.list[0]));
+      createCertificate.id = 'new id';
+      repository.create(createCertificate);
+      expect(repository.findById('new id')).toEqual(createCertificate);
     });
 
     it('should update a certificate', () => {
-      const newCommand: Certificate = JSON.parse(JSON.stringify(testData.certificates.command));
-      newCommand.expiry = testData.constants.dates.DATE_2;
-      newCommand.publicKey = 'new public key';
-      newCommand.privateKey = 'new private key';
-      repository.update(newCommand);
-      const result = repository.findById(newCommand.id)!;
-      expect(result.expiry).toEqual(newCommand.expiry);
-      expect(result.publicKey).toEqual(newCommand.publicKey);
-      expect(result.privateKey).toEqual(newCommand.privateKey);
+      const updateCertificate = JSON.parse(JSON.stringify(testData.certificates.list[0]));
+      updateCertificate.id = 'new id';
+      updateCertificate.expiry = testData.constants.dates.DATE_2;
+      updateCertificate.publicKey = 'new public key';
+      updateCertificate.privateKey = 'new private key';
+      repository.update(updateCertificate);
+      const result = repository.findById(updateCertificate.id)!;
+      expect(result.expiry).toEqual(updateCertificate.expiry);
+      expect(result.publicKey).toEqual(updateCertificate.publicKey);
+      expect(result.privateKey).toEqual(updateCertificate.privateKey);
     });
 
     it('should update name and description certificate', () => {
-      repository.updateNameAndDescription(testData.certificates.command.id, 'new name', 'new description');
-      const result = repository.findById(testData.certificates.command.id)!;
+      repository.updateNameAndDescription('new id', 'new name', 'new description');
+      const result = repository.findById('new id')!;
       expect(result.name).toEqual('new name');
       expect(result.description).toEqual('new description');
     });
 
     it('should delete certificate', () => {
-      repository.delete(testData.certificates.command.id);
-      expect(repository.findById(testData.certificates.command.id)).toEqual(null);
+      repository.delete('new id');
+      expect(repository.findById('new id')).toEqual(null);
     });
   });
 
@@ -152,6 +154,21 @@ describe('Repository with populated database', () => {
         repository.search({
           login: 'second',
           page: 0
+        })
+      ).toEqual(createPageFromArray([testData.users.list[1]], 50, 0));
+
+      expect(
+        repository.search({
+          login: '',
+          page: 0
+        }).totalElements
+      ).toEqual(2);
+    });
+
+    it('should search users without page', () => {
+      expect(
+        repository.search({
+          login: 'second'
         })
       ).toEqual(createPageFromArray([testData.users.list[1]], 50, 0));
 

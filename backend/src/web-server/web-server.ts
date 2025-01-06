@@ -11,7 +11,6 @@ import ipFilter from './middlewares/ip-filter';
 import webClient from './middlewares/web-client';
 import sse from './middlewares/sse';
 import EncryptionService from '../service/encryption.service';
-import RepositoryService from '../service/repository.service';
 import pino from 'pino';
 import * as Http from 'http';
 import Koa from 'koa';
@@ -26,6 +25,9 @@ import OIAnalyticsCommandService from '../service/oia/oianalytics-command.servic
 import OIAnalyticsRegistrationService from '../service/oia/oianalytics-registration.service';
 import HistoryQueryService from '../service/history-query.service';
 import HomeMetricsService from '../service/metrics/home-metrics.service';
+import CertificateService from '../service/certificate.service';
+import UserService from '../service/user.service';
+import LogService from '../service/log.service';
 
 /**
  * Class Server - Provides the web client and establish socket connections.
@@ -43,6 +45,9 @@ export default class WebServer {
     private readonly encryptionService: EncryptionService,
     private readonly scanModeService: ScanModeService,
     private readonly ipFilterService: IPFilterService,
+    private readonly certificateService: CertificateService,
+    private readonly logService: LogService,
+    private readonly userService: UserService,
     private readonly oIAnalyticsRegistrationService: OIAnalyticsRegistrationService,
     private readonly oIAnalyticsCommandService: OIAnalyticsCommandService,
     private readonly oIBusService: OIBusService,
@@ -50,7 +55,6 @@ export default class WebServer {
     private readonly northService: NorthService,
     private readonly historyQueryService: HistoryQueryService,
     private readonly homeMetricsService: HomeMetricsService,
-    private readonly repositoryService: RepositoryService,
     private readonly ignoreIpFilters: boolean,
     logger: pino.Logger
   ) {
@@ -67,12 +71,6 @@ export default class WebServer {
     return this._port;
   }
 
-  async setPort(value: number): Promise<void> {
-    this._port = value;
-    await this.stop();
-    await this.start();
-  }
-
   /**
    * Initialise the web server services and middlewares
    */
@@ -80,12 +78,7 @@ export default class WebServer {
     this.app = new Koa() as KoaApplication;
 
     this.app.ipFilters = {
-      whiteList: [
-        '127.0.0.1',
-        '::1',
-        '::ffff:127.0.0.1',
-        ...this.repositoryService.ipFilterRepository.findAll().map(filter => filter.address)
-      ]
+      whiteList: ['127.0.0.1', '::1', '::ffff:127.0.0.1', ...this.ipFilterService.findAll().map(filter => filter.address)]
     };
 
     this.app.use(
@@ -93,6 +86,8 @@ export default class WebServer {
         this._id,
         this.scanModeService,
         this.ipFilterService,
+        this.certificateService,
+        this.logService,
         this.oIAnalyticsRegistrationService,
         this.oIAnalyticsCommandService,
         this.oIBusService,
@@ -100,8 +95,8 @@ export default class WebServer {
         this.northService,
         this.historyQueryService,
         this.homeMetricsService,
-        this.repositoryService,
         this.encryptionService,
+        this.userService,
         this.logger
       )
     );

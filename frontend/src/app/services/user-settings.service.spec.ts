@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { UserSettingsService } from './user-settings.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ChangePasswordCommand, User, UserCommandDTO } from '../../../../backend/shared/model/user.model';
+import { ChangePasswordCommand, UserDTO, UserCommandDTO } from '../../../../backend/shared/model/user.model';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('UserSettingsService', () => {
@@ -21,10 +21,10 @@ describe('UserSettingsService', () => {
   afterEach(() => http.verify());
 
   it('should get user settings', () => {
-    let actualSettings: User | null = null;
+    let actualSettings: UserDTO | null = null;
     service.get().subscribe(settings => (actualSettings = settings));
 
-    const expectedSettings = { id: 'id1', login: 'admin' } as User;
+    const expectedSettings = { id: 'id1', login: 'admin' } as UserDTO;
     http.expectOne({ method: 'GET', url: '/api/users/current-user' }).flush(expectedSettings);
 
     expect(actualSettings!).toEqual(expectedSettings);

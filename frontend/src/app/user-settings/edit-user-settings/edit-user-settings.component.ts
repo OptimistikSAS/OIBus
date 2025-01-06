@@ -5,7 +5,7 @@ import { Observable, of, switchMap, tap, timer } from 'rxjs';
 import { inMemoryTypeahead } from '../../shared/typeahead';
 import { CurrentUserService } from '../../shared/current-user.service';
 import { ChangePasswordModalComponent } from '../change-password-modal/change-password-modal.component';
-import { User, UserCommandDTO } from '../../../../../backend/shared/model/user.model';
+import { UserDTO, UserCommandDTO } from '../../../../../backend/shared/model/user.model';
 import { ModalService } from '../../shared/modal.service';
 import { UserSettingsService } from '../../services/user-settings.service';
 import { NotificationService } from '../../shared/notification.service';
@@ -39,11 +39,11 @@ export class EditUserSettingsComponent {
   private currentUserService = inject(CurrentUserService);
 
   form = inject(NonNullableFormBuilder).group({
-    firstName: ['', [Validators.maxLength(50)]],
-    lastName: ['', [Validators.maxLength(50)]],
+    firstName: [null as string | null, [Validators.maxLength(50)]],
+    lastName: [null as string | null, [Validators.maxLength(50)]],
     timezone: ['' as Timezone, Validators.required]
   });
-  editedUserSettings: User | null = null;
+  editedUserSettings: UserDTO | null = null;
   languages: Array<Language> = LANGUAGES;
 
   state = new ObservableState();
@@ -98,7 +98,7 @@ export class EditUserSettingsComponent {
       .subscribe();
   }
 
-  private loadSettingsAndPopulate(): Observable<User> {
+  private loadSettingsAndPopulate(): Observable<UserDTO> {
     return this.userSettingsService.get().pipe(
       tap(settings => {
         this.editedUserSettings = settings;

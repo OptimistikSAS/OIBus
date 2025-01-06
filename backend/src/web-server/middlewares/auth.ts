@@ -14,7 +14,7 @@ const auth = () => {
         return authError(ctx);
       }
 
-      const hashedPassword = ctx.app.repositoryService.userRepository.getHashedPasswordByLogin(basicUser.name);
+      const hashedPassword = ctx.app.userService.getHashedPasswordByLogin(basicUser.name);
       if (!hashedPassword) {
         return authError(ctx);
       }
@@ -38,7 +38,7 @@ const auth = () => {
         }
         // login and hashed password
         headerUser = { name: verifiedToken.login, pass: verifiedToken.password };
-        const hashedPassword = ctx.app.repositoryService.userRepository.getHashedPasswordByLogin(headerUser.name);
+        const hashedPassword = ctx.app.userService.getHashedPasswordByLogin(headerUser.name);
         if (!hashedPassword || hashedPassword !== verifiedToken.password) {
           return authError(ctx);
         }
@@ -56,7 +56,7 @@ const auth = () => {
       }
       // login and hashed password
       headerUser = { name: verifiedToken.login, pass: verifiedToken.password };
-      const hashedPassword = ctx.app.repositoryService.userRepository.getHashedPasswordByLogin(headerUser.name);
+      const hashedPassword = ctx.app.userService.getHashedPasswordByLogin(headerUser.name);
       if (!hashedPassword || hashedPassword !== verifiedToken.password) {
         return authError(ctx);
       }
@@ -68,7 +68,7 @@ const auth = () => {
     }
 
     if (ctx.request.url === '/api/users/current-user') {
-      const currentUser = ctx.app.repositoryService.userRepository.findByLogin(headerUser.name)!;
+      const currentUser = ctx.app.userService.findByLogin(headerUser.name)!;
       return ctx.ok(currentUser);
     }
     if (ctx.request.url === '/api/users/authentication') {

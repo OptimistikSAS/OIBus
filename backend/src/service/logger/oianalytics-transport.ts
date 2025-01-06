@@ -113,8 +113,8 @@ class OianalyticsTransport {
       timestamp: log.time,
       level: LEVEL_FORMAT[log.level],
       scopeType: SCOPE_TYPE_FORMAT[log.scopeType],
-      scopeId: log.scopeId || undefined,
-      scopeName: log.scopeName || undefined,
+      scopeId: log.scopeId || null,
+      scopeName: log.scopeName || null,
       message: log.msg
     });
     const batchLimit = this.options.batchLimit || MAX_BATCH_LOG;

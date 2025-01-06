@@ -28,12 +28,16 @@ describe('LogService', () => {
         timestamp: '2023-01-01T00:00:00.000Z',
         level: 'error',
         scopeType: 'internal',
+        scopeName: null,
+        scopeId: null,
         message: 'my log 1'
       },
       {
         timestamp: '2023-01-02T00:00:00.000Z',
         level: 'error',
         scopeType: 'internal',
+        scopeName: null,
+        scopeId: null,
         message: 'my log 2'
       }
     ]);

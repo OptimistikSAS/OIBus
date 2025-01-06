@@ -6,7 +6,7 @@ import { ComponentTester, createMock } from 'ngx-speculoos';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { CurrentUserService } from '../shared/current-user.service';
 import { of } from 'rxjs';
-import { User } from '../../../../backend/shared/model/user.model';
+import { UserDTO } from '../../../../backend/shared/model/user.model';
 import { EngineService } from '../services/engine.service';
 import { OIBusInfo } from '../../../../backend/shared/model/engine.model';
 
@@ -33,7 +33,7 @@ describe('NavbarComponent', () => {
     login: 'admin',
     language: 'en',
     timezone: 'Asia/Tokyo'
-  } as User;
+  } as UserDTO;
 
   beforeEach(() => {
     currentUserService = createMock(CurrentUserService);
