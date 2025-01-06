@@ -7,7 +7,7 @@ import { of } from 'rxjs';
 import { UserSettingsService } from '../../services/user-settings.service';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
-import { User } from '../../../../../backend/shared/model/user.model';
+import { UserDTO } from '../../../../../backend/shared/model/user.model';
 
 class ChangePasswordModalComponentTester extends ComponentTester<ChangePasswordModalComponent> {
   constructor() {
@@ -44,7 +44,7 @@ describe('ChangePasswordModalComponent', () => {
   let activeModal: jasmine.SpyObj<NgbActiveModal>;
   let userSettingsService: jasmine.SpyObj<UserSettingsService>;
 
-  let userSettings: User;
+  let userSettings: UserDTO;
 
   beforeEach(() => {
     activeModal = createMock(NgbActiveModal);
@@ -66,7 +66,7 @@ describe('ChangePasswordModalComponent', () => {
       lastName: 'Admin',
       language: 'en', // current language of the mock i18n translate service
       timezone: 'Europe/Paris' // current language of the mock i18n translate service
-    } as User;
+    } as UserDTO;
     userSettingsService.get.and.returnValue(of(userSettings));
 
     TestBed.createComponent(DefaultValidationErrorsComponent).detectChanges();

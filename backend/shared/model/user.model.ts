@@ -1,8 +1,8 @@
 import { BaseEntity, Language, Timezone } from './types';
 
 export interface UserSearchParam {
-  login: string | null;
-  page: number;
+  login?: string;
+  page?: number;
 }
 
 export interface UserLight {
@@ -11,11 +11,11 @@ export interface UserLight {
   friendlyName: string;
 }
 
-export interface User extends BaseEntity {
+export interface UserDTO extends BaseEntity {
   login: string;
-  firstName: string;
-  lastName: string;
-  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
   language: Language;
   timezone: Timezone;
   friendlyName: string;

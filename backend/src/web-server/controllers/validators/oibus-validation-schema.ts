@@ -10,7 +10,7 @@ const scanModeSchema: Joi.ObjectSchema = Joi.object({
 const certificateSchema: Joi.ObjectSchema = Joi.object({
   name: Joi.string().required(),
   description: Joi.string().required().allow(null, ''),
-  regenerateCertificate: Joi.boolean().required(),
+  regenerateCertificate: Joi.boolean(),
   options: Joi.object({
     commonName: Joi.string().required(),
     countryName: Joi.string().required(),

@@ -5,8 +5,8 @@ export interface LogDTO {
   timestamp: string;
   level: LogLevel;
   scopeType: ScopeType;
-  scopeId?: string;
-  scopeName?: string;
+  scopeId: string | null;
+  scopeName: string | null;
   message: string;
 }
 

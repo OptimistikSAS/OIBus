@@ -2,7 +2,8 @@ import Joi from 'joi';
 import JoiValidator from './validators/joi.validator';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
 import CertificateController from './certificate.controller';
-import { CertificateCommandDTO, CertificateDTO } from '../../../shared/model/certificate.model';
+import testData from '../../tests/utils/test-data';
+import { toCertificateDTO } from '../../service/certificate.service';
 
 jest.mock('./validators/joi.validator');
 
@@ -11,234 +12,101 @@ const schema = Joi.object({});
 const certificateController = new CertificateController(validator, schema);
 
 const ctx = new KoaContextMock();
-const certificateCommand: CertificateCommandDTO = {
-  name: 'cert',
-  description: 'description',
-  regenerateCertificate: true,
-  options: {
-    commonName: 'cn',
-    localityName: 'ch',
-    stateOrProvinceName: 'sav',
-    countryName: 'fr',
-    organizationName: 'opt',
-    keySize: 2048,
-    daysBeforeExpiry: 10
-  }
-};
-const certificate1: CertificateDTO = {
-  id: '1',
-  name: 'cert1',
-  description: 'cert1 desc',
-  publicKey: 'pub1',
-  certificate: 'cert',
-  expiry: '2033-01-01T00:00:00Z'
-};
 
 describe('Certificate controller', () => {
   beforeEach(async () => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
   });
 
   it('should find all certificates', async () => {
-    ctx.app.repositoryService.certificateRepository.findAll.mockReturnValue([certificate1]);
+    ctx.app.certificateService.findAll.mockReturnValue(testData.certificates.list);
 
     await certificateController.findAll(ctx);
 
-    expect(ctx.app.repositoryService.certificateRepository.findAll).toHaveBeenCalled();
-    expect(ctx.ok).toHaveBeenCalledWith([certificate1]);
+    expect(ctx.app.certificateService.findAll).toHaveBeenCalled();
+    expect(ctx.ok).toHaveBeenCalledWith(testData.certificates.list.map(element => toCertificateDTO(element)));
   });
 
   it('should find a certificate by id', async () => {
-    const id = 'id';
-
-    ctx.params.id = id;
-    ctx.app.repositoryService.certificateRepository.findById.mockReturnValue(certificate1);
+    ctx.params.id = 'id';
+    ctx.app.certificateService.findById.mockReturnValue(testData.certificates.list[0]);
 
     await certificateController.findById(ctx);
 
-    expect(ctx.app.repositoryService.certificateRepository.findById).toHaveBeenCalledWith(id);
-    expect(ctx.ok).toHaveBeenCalledWith(certificate1);
+    expect(ctx.app.certificateService.findById).toHaveBeenCalledWith('id');
+    expect(ctx.ok).toHaveBeenCalledWith(toCertificateDTO(testData.certificates.list[0]));
   });
 
   it('should return not found', async () => {
-    const id = 'id';
-    ctx.params.id = id;
-    ctx.app.repositoryService.certificateRepository.findById.mockReturnValue(null);
+    ctx.params.id = 'id';
+    ctx.app.certificateService.findById.mockReturnValue(null);
 
     await certificateController.findById(ctx);
 
-    expect(ctx.app.repositoryService.certificateRepository.findById).toHaveBeenCalledWith(id);
+    expect(ctx.app.certificateService.findById).toHaveBeenCalledWith('id');
     expect(ctx.notFound).toHaveBeenCalledWith();
   });
 
   it('should create a certificate', async () => {
-    ctx.request.body = certificateCommand;
-    ctx.app.repositoryService.certificateRepository.create.mockReturnValue(certificate1);
-    ctx.app.encryptionService.generateSelfSignedCertificate.mockReturnValue({
-      private: 'pk',
-      public: 'pub',
-      cert: 'cert',
-      fingerprint: 'f'
+    ctx.request.body = testData.certificates.command;
+    ctx.app.certificateService.create.mockReturnValue(testData.certificates.list[0]);
+
+    await certificateController.create(ctx);
+
+    expect(ctx.app.certificateService.create).toHaveBeenCalledWith(testData.certificates.command);
+    expect(ctx.created).toHaveBeenCalledWith(toCertificateDTO(testData.certificates.list[0]));
+  });
+
+  it('should not create a certificate if bad request', async () => {
+    ctx.request.body = testData.certificates.command;
+    ctx.app.certificateService.create.mockImplementationOnce(() => {
+      throw new Error('bad request');
     });
-
     await certificateController.create(ctx);
 
-    expect(validator.validate).toHaveBeenCalledWith(schema, certificateCommand);
-    expect(ctx.app.encryptionService.generateSelfSignedCertificate).toHaveBeenCalledWith(certificateCommand.options);
-    expect(ctx.app.repositoryService.certificateRepository.create).toHaveBeenCalled();
-    expect(ctx.created).toHaveBeenCalledWith(certificate1);
+    expect(ctx.badRequest).toHaveBeenCalledWith('bad request');
   });
 
-  it('should fail to create a certificate on error', async () => {
-    ctx.request.body = certificateCommand;
-    ctx.app.repositoryService.certificateRepository.create.mockReturnValue(certificate1);
-    ctx.app.encryptionService.generateSelfSignedCertificate.mockImplementation(() => {
-      throw new Error('cert error');
-    });
-
-    await certificateController.create(ctx);
-    expect(validator.validate).toHaveBeenCalledWith(schema, certificateCommand);
-    expect(ctx.badRequest).toHaveBeenCalledWith('cert error');
-  });
-
-  it('should fail to create a certificate with bad body', async () => {
-    ctx.request.body = {
-      options: null
-    };
-
-    await certificateController.create(ctx);
-    expect(ctx.app.encryptionService.generateSelfSignedCertificate).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalled();
-  });
-
-  it('should update a certificate with only name and description', async () => {
+  it('should update a certificate', async () => {
     ctx.params.id = 'id';
-    ctx.request.body = {
-      name: 'new-name',
-      description: 'new-description',
-      regenerateCertificate: false,
-      options: null
-    };
-
-    ctx.app.repositoryService.certificateRepository.findById.mockReturnValue(certificate1);
+    ctx.request.body = testData.certificates.command;
 
     await certificateController.update(ctx);
 
-    expect(validator.validate).toHaveBeenCalledWith(schema, {
-      name: 'new-name',
-      description: 'new-description',
-      regenerateCertificate: false,
-      options: null
-    });
-    expect(ctx.app.repositoryService.certificateRepository.updateNameAndDescription).toHaveBeenCalledWith(
-      '1',
-      'new-name',
-      'new-description'
-    );
+    expect(ctx.app.certificateService.update).toHaveBeenCalledWith('id', testData.certificates.command);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
-  it('should regenerate a certificate', async () => {
+  it('should not update a certificate if bad request', async () => {
     ctx.params.id = 'id';
-    ctx.request.body = certificateCommand;
-
-    ctx.app.repositoryService.certificateRepository.findById.mockReturnValue(certificate1);
-    ctx.app.encryptionService.generateSelfSignedCertificate.mockReturnValue({
-      private: 'pk',
-      public: 'pub',
-      cert: 'cert',
-      fingerprint: 'f'
+    ctx.request.body = testData.certificates.command;
+    ctx.app.certificateService.update.mockImplementationOnce(() => {
+      throw new Error('bad request');
     });
 
     await certificateController.update(ctx);
 
-    expect(validator.validate).toHaveBeenCalledWith(schema, certificateCommand);
-    expect(ctx.app.encryptionService.generateSelfSignedCertificate).toHaveBeenCalledWith(certificateCommand.options);
-    expect(ctx.app.repositoryService.certificateRepository.update).toHaveBeenCalled();
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('should fail to regenerate a certificate on error', async () => {
-    ctx.params.id = 'id';
-    ctx.request.body = certificateCommand;
-
-    ctx.app.repositoryService.certificateRepository.findById.mockReturnValue(certificate1);
-    ctx.app.encryptionService.generateSelfSignedCertificate.mockImplementationOnce(() => {
-      throw new Error('cert error');
-    });
-
-    await certificateController.update(ctx);
-
-    expect(validator.validate).toHaveBeenCalledWith(schema, certificateCommand);
-    expect(ctx.app.encryptionService.generateSelfSignedCertificate).toHaveBeenCalledWith(certificateCommand.options);
-    expect(ctx.badRequest).toHaveBeenCalledWith('cert error');
-  });
-
-  it('should fail to update a certificate when not found', async () => {
-    ctx.params.id = 'id';
-    ctx.request.body = {
-      name: 'new-name',
-      description: 'new-description',
-      regenerateCertificate: false,
-      options: null
-    };
-
-    ctx.app.repositoryService.certificateRepository.findById.mockReturnValue(null);
-
-    await certificateController.update(ctx);
-
-    expect(validator.validate).toHaveBeenCalledWith(schema, {
-      name: 'new-name',
-      description: 'new-description',
-      regenerateCertificate: false,
-      options: null
-    });
-    expect(ctx.notFound).toHaveBeenCalled();
-  });
-
-  it('should fail to regenerate with null options', async () => {
-    ctx.params.id = 'id';
-    ctx.request.body = {
-      name: 'new-name',
-      description: 'new-description',
-      regenerateCertificate: true,
-      options: null
-    };
-
-    ctx.app.repositoryService.certificateRepository.findById.mockReturnValue(certificate1);
-
-    await certificateController.update(ctx);
-
-    expect(validator.validate).toHaveBeenCalledWith(schema, {
-      name: 'new-name',
-      description: 'new-description',
-      regenerateCertificate: true,
-      options: null
-    });
-    expect(ctx.badRequest).toHaveBeenCalled();
+    expect(ctx.app.certificateService.update).toHaveBeenCalledWith('id', testData.certificates.command);
+    expect(ctx.badRequest).toHaveBeenCalledWith('bad request');
   });
 
   it('should delete a certificate', async () => {
-    const id = 'id';
-    ctx.params.id = id;
-    ctx.app.repositoryService.certificateRepository.findById.mockReturnValue(certificate1);
+    ctx.params.id = 'id';
 
     await certificateController.delete(ctx);
 
-    expect(ctx.app.repositoryService.certificateRepository.findById).toHaveBeenCalledWith(id);
-    expect(ctx.app.repositoryService.certificateRepository.delete).toHaveBeenCalledWith(id);
+    expect(ctx.app.certificateService.delete).toHaveBeenCalledWith('id');
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
   it('should return not found when deleting an unknown certificate', async () => {
-    const id = 'id';
-    ctx.params.id = id;
-    ctx.app.repositoryService.certificateRepository.findById.mockReturnValue(null);
+    ctx.params.id = 'id';
+    ctx.app.certificateService.delete.mockImplementationOnce(() => {
+      throw new Error('bad request');
+    });
 
     await certificateController.delete(ctx);
 
-    expect(ctx.app.repositoryService.certificateRepository.findById).toHaveBeenCalledWith(id);
-    expect(ctx.app.repositoryService.certificateRepository.delete).not.toHaveBeenCalled();
-    expect(ctx.notFound).toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('bad request');
   });
 });

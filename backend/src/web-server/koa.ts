@@ -1,5 +1,4 @@
 import Koa, { Context, Request } from 'koa';
-import RepositoryService from '../service/repository.service';
 import EncryptionService from '../service/encryption.service';
 import pino from 'pino';
 import SouthService from '../service/south.service';
@@ -11,6 +10,9 @@ import IPFilterService from '../service/ip-filter.service';
 import OIAnalyticsCommandService from '../service/oia/oianalytics-command.service';
 import HistoryQueryService from '../service/history-query.service';
 import HomeMetricsService from '../service/metrics/home-metrics.service';
+import UserService from '../service/user.service';
+import CertificateService from '../service/certificate.service';
+import LogService from '../service/log.service';
 
 interface KoaRequest<RequestBody> extends Request {
   body?: RequestBody;
@@ -20,6 +22,8 @@ export interface KoaApplication extends Koa {
   id: string;
   scanModeService: ScanModeService;
   ipFilterService: IPFilterService;
+  certificateService: CertificateService;
+  logService: LogService;
   oIBusService: OIBusService;
   oIAnalyticsRegistrationService: OianalyticsRegistrationService;
   oIAnalyticsCommandService: OIAnalyticsCommandService;
@@ -27,11 +31,11 @@ export interface KoaApplication extends Koa {
   northService: NorthService;
   historyQueryService: HistoryQueryService;
   homeMetricsService: HomeMetricsService;
-  repositoryService: RepositoryService;
   ipFilters: {
     whiteList: Array<string>;
   };
   encryptionService: EncryptionService;
+  userService: UserService;
   logger: pino.Logger;
 }
 
