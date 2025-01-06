@@ -42,6 +42,7 @@ export interface NorthAmazonS3Settings {
 }
 
 export interface NorthAzureBlobSettings {
+  useADLS: boolean;
   useCustomUrl: boolean;
   account?: string;
   customUrl?: string;
