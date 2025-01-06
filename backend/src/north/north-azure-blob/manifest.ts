@@ -9,6 +9,15 @@ const manifest: NorthConnectorManifest = {
   },
   settings: [
     {
+      key: 'useADLS',
+      type: 'OibCheckbox',
+      translationKey: 'Use Data Lake',
+      validators: [{ key: 'required' }],
+      defaultValue: false,
+      displayInViewMode: true,
+      class: 'col-3'
+    },
+    {
       key: 'useCustomUrl',
       type: 'OibCheckbox',
       translationKey: 'north.azure-blob.use-custom-url',
