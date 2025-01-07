@@ -1,6 +1,6 @@
-<div [ngClass]="{ 'oib-padded-container': !this.scopeId && !this.scopeType }">
+<div [ngClass]="{ 'oib-padded-container': !scopeId() && !scopeType() }">
   <div class="oib-header-container">
-    @if (!this.scopeId && !this.scopeType) {
+    @if (!scopeId() && !scopeType()) {
       <div class="row mb-2">
         <div class="col d-flex">
           <div class="oib-block-title">
@@ -12,13 +12,13 @@
     }
     <div>
       <div ngbAccordion class="mb-4">
-        <div ngbAccordionItem="searchArea" #searchArea="ngbAccordionItem" [collapsed]="this.embedded">
+        <div ngbAccordionItem="searchArea" #searchArea="ngbAccordionItem" [collapsed]="embedded()">
           <div ngbAccordionHeader>
             <button
               ngbAccordionButton
               class="log-toggle-btn accordion-button btn collapsed d-flex justify-content-between align-items-center w-100
-              {{ searchArea.collapsed ? '' : embedded ? 'rounded-0' : 'rounded-bottom-0' }}
-              {{ embedded ? 'log-toggle-embedded' : '' }}"
+              {{ searchArea.collapsed ? '' : embedded() ? 'rounded-0' : 'rounded-bottom-0' }}
+              {{ embedded() ? 'log-toggle-embedded' : '' }}"
             >
               <div>
                 <i class="fa fa-search fa-lg me-3"></i>
@@ -41,7 +41,7 @@
                       <oib-datetimepicker formControlName="end" id="end" />
                       <val-errors [control]="searchForm" />
                     </div>
-                    @if (!this.scopeId && !this.scopeType) {
+                    @if (!scopeId() && !scopeType()) {
                       <label for="levels" class="col-auto col-form-label" translate="logs.search.levels"></label>
                       <div class="col-1">
                         <oib-multi-select formControlName="levels" id="levels">
@@ -61,7 +61,7 @@
                     }
                   </div>
                   <div class="row gx-2 py-3">
-                    @if (!this.scopeId && !this.scopeType) {
+                    @if (!scopeId() && !scopeType()) {
                       <label for="scope-ids" class="col-auto col-form-label" translate="logs.search.scope"></label>
                       <div class="col-2">
                         <input
@@ -75,7 +75,7 @@
                           (selectItem)="selectScope($event)"
                         />
                         <div [style.margin-top.rem]="selectedScopes.length ? -0.75 : 0">
-                          @for (scope of selectedScopes; track scope.scopeId) {
+                          @for (scope of selectedScopes(); track scope.scopeId) {
                             <oib-pill type="secondary" [removable]="true" (removed)="removeScope(scope)"> {{ scope.scopeName }} </oib-pill>
                           }
                         </div>
@@ -91,13 +91,13 @@
                       </div>
                     }
                     <label for="message-content" class="col-auto col-form-label" translate="logs.search.message-content"></label>
-                    <div [ngClass]="!this.scopeId && !this.scopeType ? 'col-8' : 'col-7'">
+                    <div [ngClass]="!scopeId() && !scopeType() ? 'col-8' : 'col-7'">
                       <input type="text" class="form-control" id="message-content" formControlName="messageContent" />
                     </div>
 
                     <div class="col">
-                      <button class="btn btn-primary pull-right" id="search-button" [disabled]="loading">
-                        @if (loading) {
+                      <button class="btn btn-primary pull-right" id="search-button" [disabled]="loading()">
+                        @if (loading()) {
                           <span class="fa fa-spin fa-spinner"></span>
                         } @else {
                           <span translate="common.search"></span>
@@ -112,38 +112,38 @@
         </div>
       </div>
 
-      @if (logs.totalElements) {
+      @if (logs().totalElements) {
         <div class="d-flex justify-content-between mb-2">
-          @if (this.levels && this.levels.length > 0) {
+          @if (levels && levels.length > 0) {
             <oib-legend [legendList]="LEGEND" />
           }
-          <div [class]="logs.totalPages > 1 ? 'ms-2' : ''">
-            <oib-pagination [page]="logs" [navigate]="true" />
+          <div [class]="logs().totalPages > 1 ? 'ms-2' : ''">
+            <oib-pagination [page]="logs()" [navigate]="true" />
           </div>
         </div>
       }
-      @if (logs.totalElements !== 0) {
+      @if (logs().totalElements !== 0) {
         <div class="table-container">
           <table class="table table-sm table-hover oib-table-logs">
-            <thead [ngClass]="{ light: this.scopeId && this.scopeType }">
+            <thead [ngClass]="{ light: scopeId() && scopeType() }">
               <tr>
                 <th style="width: 1%"></th>
                 <th translate="logs.date"></th>
-                @if (!this.scopeId && !this.scopeType) {
+                @if (!scopeId() && !scopeType()) {
                   <th translate="logs.scope-type" style="width: 8%"></th>
                   <th translate="logs.scope" style="width: 4%"></th>
                 }
-                <th [ngClass]="{ 'w-50': this.scopeId && this.scopeType }" translate="logs.message"></th>
+                <th [ngClass]="{ 'w-50': scopeId() && scopeType() }" translate="logs.message"></th>
               </tr>
             </thead>
             <tbody>
-              @for (log of logs.content; track log) {
+              @for (log of logs().content; track log) {
                 <tr class="data">
                   <td>
                     <span style="display: block" [class]="getLevelClass(log.level)"></span>
                   </td>
                   <td class="text-nowrap">{{ log.timestamp | datetime: 'mediumWithSeconds' }}</td>
-                  @if (!this.scopeId && !this.scopeType) {
+                  @if (!scopeId() && !scopeType()) {
                     <td>{{ log.scopeType | scopeTypesEnum }}</td>
                     <td>{{ log.scopeName }}</td>
                   }
