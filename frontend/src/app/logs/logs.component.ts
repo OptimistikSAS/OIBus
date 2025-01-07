@@ -1,4 +1,4 @@
-import { Component, inject, OnDestroy, OnInit, Input } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, input, signal } from '@angular/core';
 import { TranslateDirective } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PageLoader } from '../shared/page-loader.service';
@@ -67,9 +67,9 @@ export class LogsComponent implements OnInit, OnDestroy {
   private pageLoader = inject(PageLoader);
   private logService = inject(LogService);
 
-  @Input() scopeId: string | null = null;
-  @Input() scopeType: ScopeType | null = null;
-  @Input() embedded = false;
+  readonly scopeId = input<string | null>(null);
+  readonly scopeType = input<ScopeType | null>(null);
+  readonly embedded = input(false);
 
   readonly searchForm = inject(NonNullableFormBuilder).group(
     {
@@ -92,15 +92,14 @@ export class LogsComponent implements OnInit, OnDestroy {
     { label: 'enums.log-levels.trace', class: 'grey-dot' }
   ];
 
-  searchParams: LogSearchParam | null = null;
   readonly levels = LOG_LEVELS.filter(level => level !== 'silent');
   readonly scopeTypes = SCOPE_TYPES;
-  selectedScopes: Array<Scope> = [];
-  loading = false;
+  selectedScopes = signal<Array<Scope>>([]);
+  loading = signal(false);
   // subscription to reload the page periodically
   subscription = new Subscription();
-  logs: Page<LogDTO> = emptyPage();
-  noLogMatchingWarning = false;
+  logs = signal<Page<LogDTO>>(emptyPage());
+  noLogMatchingWarning = signal(false);
 
   scopeTypeahead = (text$: Observable<string>) =>
     text$.pipe(
@@ -108,33 +107,30 @@ export class LogsComponent implements OnInit, OnDestroy {
       distinctUntilChanged(),
       switchMap(text => this.logService.suggestByScopeName(text)),
       tap(scopes => {
-        this.noLogMatchingWarning = scopes.length === 0;
+        this.noLogMatchingWarning.set(scopes.length === 0);
       })
     );
   scopeFormatter = (scope: Scope) => scope.scopeName;
 
-  constructor() {
-    this.searchParams = this.toSearchParams(this.route);
-    this.searchForm.setValue({
-      messageContent: this.searchParams.messageContent,
-      start: this.searchParams.start,
-      end: this.searchParams.end,
-      scopeTypes: this.searchParams.scopeTypes,
-      scopeIds: '',
-      levels: this.searchParams.levels,
-      page: this.searchParams.page
-    });
-  }
-
   ngOnInit(): void {
-    if (this.scopeId !== null && this.scopeType !== null) {
+    const searchParams = this.toSearchParams(this.route);
+    this.searchForm.setValue({
+      messageContent: searchParams.messageContent,
+      start: searchParams.start,
+      end: searchParams.end,
+      scopeTypes: searchParams.scopeTypes,
+      scopeIds: '',
+      levels: searchParams.levels,
+      page: searchParams.page
+    });
+    if (this.scopeId() !== null && this.scopeType() !== null) {
       this.searchForm.controls.scopeTypes.disable();
       this.searchForm.controls.scopeIds.disable();
     }
     const queryScopeIds = this.route.snapshot.queryParamMap.getAll('scopeIds');
     if (queryScopeIds.length > 0) {
       combineLatest(queryScopeIds.map(scopeId => this.logService.getScopeById(scopeId))).subscribe(selectedScopes => {
-        this.selectedScopes = selectedScopes.filter(scope => !!scope) as Array<Scope>;
+        this.selectedScopes.set(selectedScopes.filter(scope => !!scope));
       });
     }
     this.subscription.add(
@@ -148,15 +144,14 @@ export class LogsComponent implements OnInit, OnDestroy {
             return [page];
           }),
           exhaustMap(page => {
-            this.searchParams = this.toSearchParams(this.route);
-            this.loading = true;
-            const criteria: LogSearchParam = { ...this.searchParams, page };
+            this.loading.set(true);
+            const criteria: LogSearchParam = { ...this.toSearchParams(this.route), page };
             return this.logService.searchLogs(criteria).pipe(catchError(() => EMPTY));
           })
         )
         .subscribe(logs => {
-          this.logs = logs;
-          this.loading = false;
+          this.logs.set(logs);
+          this.loading.set(false);
         })
     );
   }
@@ -167,9 +162,11 @@ export class LogsComponent implements OnInit, OnDestroy {
     const messageContent = queryParamMap.get('messageContent');
     let scopeTypes: Array<string>;
     let scopeIds: Array<string>;
-    if (this.scopeId !== null && this.scopeType !== null) {
-      scopeTypes = [this.scopeType];
-      scopeIds = [this.scopeId];
+    const scopeId = this.scopeId();
+    const scopeType = this.scopeType();
+    if (scopeId !== null && scopeType !== null) {
+      scopeTypes = [scopeType];
+      scopeIds = [scopeId];
     } else {
       scopeTypes = queryParamMap.getAll('scopeTypes');
       scopeIds = queryParamMap.getAll('scopeIds');
@@ -186,16 +183,18 @@ export class LogsComponent implements OnInit, OnDestroy {
       return;
     }
     const formValue = this.searchForm.value;
+    const scopeId = this.scopeId();
+    const scopeType = this.scopeType();
     const criteria: LogSearchParam = {
       start: formValue.start!,
       end: formValue.end!,
       messageContent: formValue.messageContent!,
       levels: formValue.levels!,
-      scopeTypes: this.scopeType ? [this.scopeType] : formValue.scopeTypes!,
-      scopeIds: this.scopeId ? [this.scopeId] : this.selectedScopes!.map(scope => scope.scopeId),
+      scopeTypes: scopeType ? [scopeType] : formValue.scopeTypes!,
+      scopeIds: scopeId ? [scopeId] : this.selectedScopes()!.map(scope => scope.scopeId),
       page: 0
     };
-    this.router.navigate(['.'], { queryParams: criteria, relativeTo: this.route });
+    this.router.navigate([], { queryParams: criteria });
   }
 
   ngOnDestroy() {
@@ -203,13 +202,13 @@ export class LogsComponent implements OnInit, OnDestroy {
   }
 
   selectScope(event: NgbTypeaheadSelectItemEvent<Scope>) {
-    this.selectedScopes.push(event.item);
+    this.selectedScopes.update(scopes => [...scopes, event.item]);
     this.searchForm.controls.scopeIds.setValue('');
     event.preventDefault();
   }
 
   removeScope(scopeToRemove: Scope) {
-    this.selectedScopes = this.selectedScopes.filter(scope => scope.scopeId !== scopeToRemove.scopeId);
+    this.selectedScopes.update(scopes => scopes.filter(scope => scope.scopeId !== scopeToRemove.scopeId));
   }
 
   getLevelClass(logLevel: LogLevel): string {

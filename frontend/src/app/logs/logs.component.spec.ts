@@ -1,4 +1,4 @@
-import { discardPeriodicTasks, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 
 import { LogsComponent } from './logs.component';
 import { ComponentTester, createMock, stubRoute } from 'ngx-speculoos';
@@ -109,6 +109,5 @@ describe('LogsComponent', () => {
     expect(tester.logs[1].elements('td')[2]).toContainText('South');
     expect(tester.logs[1].elements('td')[3]).toContainText('My South');
     expect(tester.logs[1].elements('td')[4]).toContainText('my log 2');
-    discardPeriodicTasks();
   }));
 });
