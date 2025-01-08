@@ -105,14 +105,9 @@ export default class EngineRepository {
       );
   }
 
-  updateVersion(version: string): void {
-    const query = `UPDATE ${ENGINES_TABLE} SET oibus_version = ? WHERE rowid=(SELECT MIN(rowid) FROM ${ENGINES_TABLE});`;
-    this.database.prepare(query).run(version);
-  }
-
-  updateLauncherVersion(version: string): void {
-    const query = `UPDATE ${ENGINES_TABLE} SET oibus_launcher_version = ? WHERE rowid=(SELECT MIN(rowid) FROM ${ENGINES_TABLE});`;
-    this.database.prepare(query).run(version);
+  updateVersion(version: string, launcherVersion: string): void {
+    const query = `UPDATE ${ENGINES_TABLE} SET oibus_version = ?, oibus_launcher_version = ? WHERE rowid=(SELECT MIN(rowid) FROM ${ENGINES_TABLE});`;
+    this.database.prepare(query).run(version, launcherVersion);
   }
 
   private createDefault(command: Omit<EngineSettings, 'id' | 'version' | 'launcherVersion'>, launcherVersion: string): void {

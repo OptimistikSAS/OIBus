@@ -162,12 +162,8 @@ export default class OIBusService {
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 
-  updateOIBusVersion(version: string): void {
-    this.engineRepository.updateVersion(version);
-  }
-
-  updateOIBusLauncherVersion(version: string): void {
-    this.engineRepository.updateLauncherVersion(version);
+  updateOIBusVersion(version: string, launcherVersion: string): void {
+    this.engineRepository.updateVersion(version, launcherVersion);
   }
 
   async resetLogger(settings: EngineSettings) {

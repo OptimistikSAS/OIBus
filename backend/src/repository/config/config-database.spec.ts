@@ -76,13 +76,8 @@ describe('Repository with populated database', () => {
     });
 
     it('should update version', () => {
-      repository.updateVersion('9.9.99');
+      repository.updateVersion('9.9.99', '9.9.99');
       expect(repository.get()!.version).toEqual('9.9.99');
-    });
-
-    it('should update launcher version', () => {
-      repository.updateLauncherVersion('9.9.999');
-      expect(repository.get()!.launcherVersion).toEqual('9.9.999');
     });
   });
 
