@@ -26,7 +26,7 @@ async function updateVersion() {
 
         if (fs.statSync(filePath).isDirectory()) {
           updateFiles(filePath); // Recursively process subdirectories
-        } else if (file.endsWith('.html')) {
+        } else if (file.endsWith('.js') || file.endsWith('.html')) {
           let content = fs.readFileSync(filePath, 'utf-8');
 
           // Replace the placeholder with the latest version
