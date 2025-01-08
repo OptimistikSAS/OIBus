@@ -686,8 +686,8 @@ const engineSettings: EngineSettings = {
   id: 'oibusId1',
   name: 'OIBus',
   port: 2223,
-  version: '3.5.0',
-  launcherVersion: '3.5.0',
+  version: '3.4.9',
+  launcherVersion: '3.4.9',
   proxyEnabled: true,
   proxyPort: 9000,
   logParameters: {
