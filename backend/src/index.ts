@@ -180,7 +180,8 @@ const LOG_DB_NAME = 'logs.db';
     northService,
     historyQueryService,
     dataStreamEngine,
-    historyQueryEngine
+    historyQueryEngine,
+    ignoreIpFilters
   );
   await oIBusService.startOIBus();
 

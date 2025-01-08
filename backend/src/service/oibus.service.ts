@@ -54,12 +54,13 @@ export default class OIBusService {
     private northService: NorthService,
     private historyQueryService: HistoryQueryService,
     private dataStreamEngine: DataStreamEngine,
-    private historyQueryEngine: HistoryQueryEngine
+    private historyQueryEngine: HistoryQueryEngine,
+    private readonly ignoreIpFilters: boolean
   ) {
     this.metrics = this.engineMetricsRepository.getMetrics(this.getEngineSettings().id)!;
 
     this.logger = this.loggerService.createChildLogger('internal');
-    this.proxyServer = new ProxyServer(this.logger);
+    this.proxyServer = new ProxyServer(this.logger, this.ignoreIpFilters);
     this.setLogger(this.logger);
 
     this.oIAnalyticsRegistrationService.registrationEvent.on('updated', async () => {

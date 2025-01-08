@@ -31,11 +31,11 @@ describe('ProxyServer', () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
 
-    proxyServer = new ProxyServer(logger);
+    proxyServer = new ProxyServer(logger, false);
   });
 
   it('should initialize with default IP filters', () => {
-    expect(proxyServer['ipFilter']).toEqual(['127.0.0.1', '::1', '::ffff:127.0.0.1']);
+    expect(proxyServer['ipFilters']).toEqual(['127.0.0.1', '::1', '::ffff:127.0.0.1']);
   });
 
   it('should update the logger', () => {
@@ -46,7 +46,7 @@ describe('ProxyServer', () => {
 
   it('should update IP filters', () => {
     proxyServer.refreshIpFilters(['192.168.0.1', '10.0.0.1']);
-    expect(proxyServer['ipFilter']).toEqual(['127.0.0.1', '::1', '::ffff:127.0.0.1', '192.168.0.1', '10.0.0.1']);
+    expect(proxyServer['ipFilters']).toEqual(['127.0.0.1', '::1', '::ffff:127.0.0.1', '192.168.0.1', '10.0.0.1']);
   });
 
   it('should initialize HTTP proxy and webserver on start', async () => {
@@ -113,6 +113,24 @@ describe('ProxyServer', () => {
       method: 'GET',
       url: 'http://example.com',
       socket: { remoteAddress: '192.168.0.1' }
+    } as unknown as http.IncomingMessage;
+
+    const mockRes = {
+      writeHead: jest.fn(),
+      end: jest.fn()
+    } as unknown as http.ServerResponse;
+
+    proxyServer['handleHttpRequest'](mockReq, mockRes);
+
+    expect(mockRes.writeHead).toHaveBeenCalledWith(403, { 'Content-Type': 'text/plain' });
+    expect(mockRes.end).toHaveBeenCalledWith('Forbidden');
+  });
+
+  it('should block http requests if remote address is not provided', () => {
+    const mockReq = {
+      method: 'GET',
+      url: 'http://example.com',
+      socket: { remoteAddress: null }
     } as unknown as http.IncomingMessage;
 
     const mockRes = {
@@ -300,5 +318,47 @@ describe('ProxyServer', () => {
 
     expect(logger.error).toHaveBeenCalledWith(`Proxy server error on client socket: ${error}`);
     expect(mockTargetSocket.end).toHaveBeenCalled();
+  });
+
+  it('should allow bad ip if ignoreIpFilter is set to true', () => {
+    proxyServer = new ProxyServer(logger, true);
+
+    const mockReq = {
+      method: 'CONNECT',
+      url: 'https://example.com',
+      socket: { remoteAddress: null },
+      headers: { host: 'example.com:443' },
+      httpVersion: '1.1'
+    } as unknown as http.IncomingMessage;
+
+    const mockClientSocket = {
+      write: jest.fn(),
+      pipe: jest.fn().mockImplementation(destStream => destStream),
+      on: jest.fn()
+    } as unknown as net.Socket;
+
+    const mockTargetSocket = {
+      write: jest.fn(),
+      pipe: jest.fn().mockImplementation(destStream => destStream),
+      on: jest.fn()
+    };
+
+    let connectionCallback: () => void;
+
+    (net.createConnection as jest.Mock).mockImplementation((options, callback) => {
+      connectionCallback = callback;
+      return mockTargetSocket;
+    });
+
+    proxyServer['handleHttpsRequest'](mockReq, mockClientSocket, Buffer.from(''));
+
+    setImmediate(() => {
+      connectionCallback();
+    });
+    jest.runAllTimers();
+
+    expect(net.createConnection).toHaveBeenCalledWith({ host: 'example.com', port: 443 }, expect.any(Function));
+    expect(mockTargetSocket.write).toHaveBeenCalledWith(Buffer.from(''));
+    expect(mockClientSocket.write).toHaveBeenCalledWith('HTTP/1.1 200 Connection established\r\n\r\n');
   });
 });

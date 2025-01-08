@@ -75,7 +75,8 @@ describe('OIBus Service', () => {
       northService,
       historyQueryService,
       dataStreamEngine,
-      historyQueryEngine
+      historyQueryEngine,
+      false
     );
   });
 
