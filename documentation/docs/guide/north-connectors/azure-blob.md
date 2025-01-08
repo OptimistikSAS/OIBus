@@ -12,7 +12,7 @@ Here are the key parameters for configuring the Azure Blob connector:
 
 - **Use Data Lake**: Use Azure Data Lake Storage instead of Azure Blob Storage.
 - **Use custom URL**: Use a custom URL to access your instance. Otherwise, a standard URL will be used (for Azure Blob
-  Storage, it would be `https://<acount>.dfs.core.windows.net`).
+  Storage, it would be `https://<acount>.blob.core.windows.net`).
 - **Account**: The Azure account to use. This account must have access to the specified container.
 - **Container**: The Azure Blob container where files will be stored.
 - **Path**: The folder within the container where files should be stored.
