@@ -18,9 +18,9 @@ const SCAN_MODES_TABLE = 'scan_modes';
 const ENGINES_TABLE = 'engines';
 
 export async function up(knex: Knex): Promise<void> {
+  await removeExternalSubscriptions(knex);
   await removeNorthOIBusConnectors(knex);
   await removeNorthOIBusHistoryQueries(knex);
-  await removeExternalSubscriptions(knex);
   await updateNorthConnectors(knex);
   await updateSouthConnectors(knex);
   await updateSouthConnectorItems(knex);
@@ -36,13 +36,14 @@ async function removeNorthOIBusConnectors(knex: Knex): Promise<void> {
   const northConnectors: Array<{ id: string; name: string }> = await knex(NORTH_CONNECTORS_TABLE)
     .select('id', 'name')
     .where('type', 'oibus');
-  await knex(NORTH_CONNECTORS_TABLE).delete().where('type', 'oibus');
   for (const north of northConnectors) {
+    await knex(SUBSCRIPTION_TABLE).delete().where('north_connector_id', north.id);
     const baseFolder = path.resolve('./cache/data-stream', `north-${north.id}`);
     if (await filesExists(baseFolder)) {
       await fs.rm(baseFolder, { recursive: true });
     }
   }
+  await knex(NORTH_CONNECTORS_TABLE).delete().where('type', 'oibus');
 }
 
 async function removeNorthOIBusHistoryQueries(knex: Knex): Promise<void> {
@@ -93,7 +94,6 @@ function toNewOPCUASecurityPolicy(
   | 'none'
   | 'basic128'
   | 'basic192'
-  | 'basic256'
   | 'basic192-rsa15'
   | 'basic256-rsa15'
   | 'basic256-sha256'
