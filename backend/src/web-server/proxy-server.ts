@@ -11,9 +11,12 @@ export default class ProxyServer {
   private _logger: pino.Logger;
   private webServer: http.Server | null = null;
   private httpProxy: httpProxy | null = null;
-  private ipFilter: Array<string> = [];
+  private ipFilters: Array<string> = [];
 
-  constructor(logger: pino.Logger) {
+  constructor(
+    logger: pino.Logger,
+    private readonly ignoreIpFilters: boolean
+  ) {
     this._logger = logger;
     this.refreshIpFilters([]);
   }
@@ -27,7 +30,7 @@ export default class ProxyServer {
   }
 
   refreshIpFilters(ipFilters: Array<string>) {
-    this.ipFilter = ['127.0.0.1', '::1', '::ffff:127.0.0.1', ...ipFilters];
+    this.ipFilters = ['127.0.0.1', '::1', '::ffff:127.0.0.1', ...ipFilters];
   }
 
   async start(port: number): Promise<void> {
@@ -119,8 +122,20 @@ export default class ProxyServer {
   private isIpAddressAllowed(req: http.IncomingMessage) {
     const clientIpAddress = req.socket.remoteAddress;
 
+    if (this.ignoreIpFilters) {
+      return true;
+    }
     // IP Address filtering
-    if (!clientIpAddress || !this.ipFilter.includes(clientIpAddress)) {
+    if (!clientIpAddress) {
+      this._logger.trace(`Client IP address is not provided. HTTP incoming message ${req.method} to ${req.url} is ignored `);
+      return false;
+    }
+
+    const allowed = this.ipFilters.some(ipToTest => {
+      const formattedRegext = `^${ipToTest.replace(/\\/g, '\\\\').replace(/\./g, '\\.').replace(/\*$/g, '.*')}$`;
+      return new RegExp(formattedRegext).test(clientIpAddress);
+    });
+    if (!allowed) {
       this._logger.trace(`Ignore ${req.method} request to ${req.url} from IP ${clientIpAddress}`);
       return false;
     }
