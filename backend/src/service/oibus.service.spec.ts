@@ -295,13 +295,8 @@ describe('OIBus Service', () => {
   });
 
   it('should update OIBus version', () => {
-    service.updateOIBusVersion('3.4.0');
-    expect(engineRepository.updateVersion).toHaveBeenCalledWith('3.4.0');
-  });
-
-  it('should update OIBus launcher version', () => {
-    service.updateOIBusLauncherVersion('3.4.0');
-    expect(engineRepository.updateLauncherVersion).toHaveBeenCalledWith('3.4.0');
+    service.updateOIBusVersion('3.4.9', '3.4.5');
+    expect(engineRepository.updateVersion).toHaveBeenCalledWith('3.4.9', '3.4.5');
   });
 
   it('should reset North Connector Metrics', () => {

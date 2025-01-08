@@ -10,7 +10,6 @@ export default jest.fn().mockImplementation(() => ({
   getProxyServer: jest.fn(),
   updateEngineSettings: jest.fn(),
   updateOIBusVersion: jest.fn(),
-  updateOIBusLauncherVersion: jest.fn(),
   setWebServerChangeLogger: jest.fn(),
   setWebServerChangePort: jest.fn(),
   restartOIBus: jest.fn(),

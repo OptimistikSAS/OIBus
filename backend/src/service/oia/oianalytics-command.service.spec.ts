@@ -43,6 +43,7 @@ import OIAnalyticsMessageServiceMock from '../../tests/__mocks__/service/oia/oia
 import crypto from 'node:crypto';
 import OIAnalyticsRegistrationService from './oianalytics-registration.service';
 import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
+import { EngineSettings } from '../../model/engine.model';
 
 jest.mock('node:crypto');
 jest.mock('node:fs/promises');
@@ -95,14 +96,14 @@ describe('OIAnalytics Command Service', () => {
 
   it('should properly start and stop service', async () => {
     expect(oIBusService.getEngineSettings).toHaveBeenCalledTimes(1);
-    expect(oIBusService.updateOIBusLauncherVersion).not.toHaveBeenCalled();
     expect(oIBusService.updateOIBusVersion).toHaveBeenCalledWith(
-      (testData.oIAnalytics.commands.oIBusList[0] as OIBusUpdateVersionCommand).commandContent.version.slice(1)
+      (testData.oIAnalytics.commands.oIBusList[0] as OIBusUpdateVersionCommand).commandContent.version.slice(1),
+      testData.engine.settings.launcherVersion
     );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       testData.oIAnalytics.commands.oIBusList[0].id,
       testData.constants.dates.FAKE_NOW,
-      `OIBus updated to version ${(testData.oIAnalytics.commands.oIBusList[0] as OIBusUpdateVersionCommand).commandContent.version.slice(1)}`
+      `OIBus updated to version ${(testData.oIAnalytics.commands.oIBusList[0] as OIBusUpdateVersionCommand).commandContent.version.slice(1)}, launcher updated to version ${testData.engine.settings.launcherVersion}`
     );
 
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
@@ -774,7 +775,6 @@ describe('OIAnalytics Command service with update error', () => {
   it('should properly start and stop service', async () => {
     expect(oIBusService.getEngineSettings).toHaveBeenCalledTimes(1);
     expect(oIBusService.updateOIBusVersion).not.toHaveBeenCalled();
-    expect(oIBusService.updateOIBusLauncherVersion).not.toHaveBeenCalled();
     expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(
       testData.oIAnalytics.commands.oIBusList[0].id,
       `OIBus has not been updated. Rollback to version ${version}`
@@ -809,7 +809,7 @@ describe('OIAnalytics Command service with no commands', () => {
   it('should properly start when not registered', () => {
     expect(oIBusService.getEngineSettings).toHaveBeenCalled();
     expect(oIAnalyticsCommandRepository.list).toHaveBeenCalled();
-    expect(oIBusService.updateOIBusVersion).toHaveBeenCalledWith(version);
+    expect(oIBusService.updateOIBusVersion).toHaveBeenCalledWith(version, '3.4.0');
     expect(oIAnalyticsCommandRepository.markAsCompleted).not.toHaveBeenCalled();
   });
 
@@ -827,5 +827,37 @@ describe('OIAnalytics Command service with no commands', () => {
   it('should not run an update', async () => {
     await service.executeCommand();
     expect(logger.error).toHaveBeenCalledWith('OIBus is not set up to execute remote');
+  });
+});
+
+describe('OIAnalytics Command service with no commands and without update', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValue([]);
+    const engineSettings: EngineSettings = JSON.parse(JSON.stringify(testData.engine.settings));
+    engineSettings.version = version;
+    (oIBusService.getEngineSettings as jest.Mock).mockReturnValue(engineSettings);
+    service = new OIAnalyticsCommandService(
+      oIAnalyticsCommandRepository,
+      oIAnalyticsRegistrationService,
+      oIAnalyticsMessageService,
+      encryptionService,
+      oIAnalyticsClient,
+      oIBusService,
+      scanModeService,
+      southService,
+      northService,
+      logger,
+      'binaryFolder',
+      true,
+      engineSettings.launcherVersion
+    );
+  });
+
+  it('should properly start when not registered', () => {
+    expect(oIBusService.updateOIBusVersion).not.toHaveBeenCalled();
+    expect(oIAnalyticsCommandRepository.markAsCompleted).not.toHaveBeenCalled();
   });
 });

@@ -62,10 +62,6 @@ export default class OIAnalyticsCommandService {
     launcherVersion: string
   ) {
     const engineSettings = this.oIBusService.getEngineSettings();
-    if (launcherVersion !== engineSettings.launcherVersion) {
-      this.logger.info(`OIBus launcher updated to ${launcherVersion}`);
-      this.oIBusService.updateOIBusLauncherVersion(launcherVersion);
-    }
     const currentUpgradeCommand = this.oIAnalyticsCommandRepository.list({
       status: ['RUNNING'],
       types: ['update-version']
@@ -74,21 +70,23 @@ export default class OIAnalyticsCommandService {
       const updateVersion = (currentUpgradeCommand[0] as OIBusUpdateVersionCommand).commandContent.version.startsWith('v')
         ? (currentUpgradeCommand[0] as OIBusUpdateVersionCommand).commandContent.version.slice(1)
         : (currentUpgradeCommand[0] as OIBusUpdateVersionCommand).commandContent.version;
-      if (engineSettings.version !== updateVersion) {
-        this.oIBusService.updateOIBusVersion(updateVersion);
+      if (engineSettings.version !== updateVersion || engineSettings.launcherVersion !== launcherVersion) {
+        this.oIBusService.updateOIBusVersion(updateVersion, launcherVersion);
         this.oIAnalyticsCommandRepository.markAsCompleted(
           currentUpgradeCommand[0].id,
           DateTime.now().toUTC().toISO(),
-          `OIBus updated to version ${updateVersion}`
+          `OIBus updated to version ${updateVersion}, launcher updated to version ${launcherVersion}`
         );
-      } else if (launcherVersion === engineSettings.launcherVersion) {
+        this.logger.info(`OIBus updated to version ${version}, launcher updated to version ${launcherVersion}`);
+      } else {
         this.oIAnalyticsCommandRepository.markAsErrored(
           currentUpgradeCommand[0].id,
           `OIBus has not been updated. Rollback to version ${version}`
         );
       }
-    } else if (engineSettings.version !== version) {
-      this.oIBusService.updateOIBusVersion(version);
+    } else if (engineSettings.version !== version || engineSettings.launcherVersion !== launcherVersion) {
+      this.oIBusService.updateOIBusVersion(version, launcherVersion);
+      this.logger.info(`OIBus updated to version ${version}, launcher updated to version ${launcherVersion}`);
     }
   }
 
