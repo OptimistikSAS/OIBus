@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.5.1](https://github.com/OptimistikSAS/OIBus/compare/v3.5.0...v3.5.1) (2025-01-09)
+
+
+### Bug Fixes
+
+* **migration:** properly remove north oibus connectors ([5176df4](https://github.com/OptimistikSAS/OIBus/commit/5176df4f95738dffe02146c15b001d92c31b6d06))
+* **proxy-server:** properly filter ip address with regex ([89d5e4a](https://github.com/OptimistikSAS/OIBus/commit/89d5e4a4712706cb14b4e3eb616b54691b6de3fd))
+* **update:** properly update launcher version if only launcher is updated ([3547c77](https://github.com/OptimistikSAS/OIBus/commit/3547c77b212e8db4aa841a42a23a63e615ac541e))
+
 ## [3.5.0](https://github.com/OptimistikSAS/OIBus/compare/v3.4.9...v3.5.0) (2025-01-06)
 
 
