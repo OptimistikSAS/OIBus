@@ -243,7 +243,7 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
   }
 
   getMaxInstantPerItem(_settings: SouthMySQLSettings): boolean {
-    return false;
+    return true;
   }
 
   getOverlap(settings: SouthMySQLSettings): number {

@@ -186,7 +186,7 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
   }
 
   getMaxInstantPerItem(_settings: SouthOLEDBSettings): boolean {
-    return false;
+    return true;
   }
 
   getOverlap(settings: SouthOLEDBSettings): number {
