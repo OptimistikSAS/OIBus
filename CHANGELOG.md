@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.5.2](https://github.com/OptimistikSAS/OIBus/compare/v3.5.1...v3.5.2) (2025-01-10)
+
+
+### Bug Fixes
+
+* **south:** set maxInstantPerItem to true for sql connectors ([94fbdb0](https://github.com/OptimistikSAS/OIBus/commit/94fbdb0b1f4cfa575679bb1eb5c84caf44f3f33f))
+
 ## [3.5.1](https://github.com/OptimistikSAS/OIBus/compare/v3.5.0...v3.5.1) (2025-01-09)
 
 
