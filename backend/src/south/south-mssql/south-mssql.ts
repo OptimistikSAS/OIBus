@@ -237,7 +237,7 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
   }
 
   getMaxInstantPerItem(_settings: SouthMSSQLSettings): boolean {
-    return false;
+    return true;
   }
 
   getOverlap(settings: SouthMSSQLSettings): number {

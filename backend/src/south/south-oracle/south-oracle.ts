@@ -236,7 +236,7 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
   }
 
   getMaxInstantPerItem(_settings: SouthOracleSettings): boolean {
-    return false;
+    return true;
   }
 
   getOverlap(settings: SouthOracleSettings): number {

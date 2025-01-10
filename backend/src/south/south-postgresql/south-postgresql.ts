@@ -239,7 +239,7 @@ export default class SouthPostgreSQL
   }
 
   getMaxInstantPerItem(_settings: SouthPostgreSQLSettings): boolean {
-    return false;
+    return true;
   }
 
   getOverlap(settings: SouthPostgreSQLSettings): number {
