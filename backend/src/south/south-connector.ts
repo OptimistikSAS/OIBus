@@ -325,7 +325,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
         await this.historyQueryHandler(
           items,
           DateTime.now()
-            .minus(3600 * 1000)
+            .minus((this.getThrottlingSettings(this.connector.settings).maxReadInterval || 3600) * 1000)
             .toUTC()
             .toISO() as Instant,
           DateTime.now().toUTC().toISO() as Instant,
