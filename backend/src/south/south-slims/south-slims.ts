@@ -209,7 +209,7 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
   }
 
   getMaxInstantPerItem(_settings: SouthSlimsSettings): boolean {
-    return false;
+    return true;
   }
 
   getOverlap(settings: SouthSlimsSettings): number {

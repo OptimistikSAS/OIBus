@@ -181,7 +181,7 @@ describe('SouthOIAnalytics with Basic auth', () => {
       maxReadInterval: configuration.settings.throttling.maxReadInterval,
       readDelay: configuration.settings.throttling.readDelay
     });
-    expect(south.getMaxInstantPerItem(configuration.settings)).toEqual(false);
+    expect(south.getMaxInstantPerItem(configuration.settings)).toEqual(true);
     expect(south.getOverlap(configuration.settings)).toEqual(configuration.settings.throttling.overlap);
   });
 

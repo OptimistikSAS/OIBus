@@ -204,7 +204,7 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
   }
 
   getMaxInstantPerItem(_settings: SouthSQLiteSettings): boolean {
-    return false;
+    return true;
   }
 
   getOverlap(settings: SouthSQLiteSettings): number {

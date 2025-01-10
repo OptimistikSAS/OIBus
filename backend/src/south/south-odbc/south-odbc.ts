@@ -273,7 +273,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
   }
 
   getMaxInstantPerItem(_settings: SouthODBCSettings): boolean {
-    return false;
+    return true;
   }
 
   getOverlap(settings: SouthODBCSettings): number {

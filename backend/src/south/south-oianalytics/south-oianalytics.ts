@@ -162,7 +162,7 @@ export default class SouthOIAnalytics
   }
 
   getMaxInstantPerItem(_settings: SouthOIAnalyticsSettings): boolean {
-    return false;
+    return true;
   }
 
   getOverlap(settings: SouthOIAnalyticsSettings): number {
