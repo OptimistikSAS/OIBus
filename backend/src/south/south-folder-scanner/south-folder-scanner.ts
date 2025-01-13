@@ -13,7 +13,7 @@ import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/sout
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
-import { BaseFolders } from '../../model/types';
+import { BaseFolders, Instant } from '../../model/types';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 
 /**
@@ -80,23 +80,26 @@ export default class SouthFolderScanner
     const inputFolder = path.resolve(this.connector.settings.inputFolder);
     const filesInFolder = await fs.readdir(inputFolder);
     const filteredFiles = filesInFolder.filter(file => file.match(item.settings.regex));
-    const matchedFiles: Array<string> = [];
+    const matchedFiles: Array<{ name: string; modifyTime: Instant }> = [];
     for (const file of filteredFiles) {
       if (await this.checkAge(item, file)) {
-        matchedFiles.push(file);
+        const stats = await fs.stat(path.join(inputFolder, file));
+        matchedFiles.push({ name: file, modifyTime: DateTime.fromMillis(stats.mtimeMs).toUTC().toISO()! });
       }
     }
 
     const values: Array<OIBusTimeValue> = matchedFiles.map(file => ({
       pointId: item.name,
-      timestamp: DateTime.now().toUTC().toISO()!,
-      data: { value: file }
+      timestamp: file.modifyTime,
+      data: { value: file.name }
     }));
     callback({ type: 'time-values', content: values });
   }
 
   async start(dataStream = true): Promise<void> {
-    await createFolder(this.tmpFolder);
+    if (this.connector.id !== 'test') {
+      await createFolder(this.tmpFolder);
+    }
     await super.start(dataStream);
     // Create a custom table in the south cache database to manage file already sent when preserve file is set to true
     this.cacheService!.createCustomTable(`folder_scanner_${this.connector.id}`, 'filename TEXT PRIMARY KEY, mtime_ms INTEGER');

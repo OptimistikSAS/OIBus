@@ -155,7 +155,11 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
    * Get entries from the database between startTime and endTime (if used in the SQL query)
    * and write them into the cache and send it to the engine.
    */
-  async historyQuery(items: Array<SouthConnectorItemEntity<SouthOPCItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant | null> {
+  async historyQuery(
+    items: Array<SouthConnectorItemEntity<SouthOPCItemSettings>>,
+    startTime: Instant,
+    endTime: Instant
+  ): Promise<Instant | null> {
     try {
       let updatedStartTime: Instant | null = null;
       const itemsByAggregates = new Map<

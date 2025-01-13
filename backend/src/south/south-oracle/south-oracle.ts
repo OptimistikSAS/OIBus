@@ -16,7 +16,7 @@ import pino from 'pino';
 import { Instant } from '../../../shared/model/types';
 import { QueriesHistory } from '../south-interface';
 import { DateTime } from 'luxon';
-import { SouthOPCUASettings, SouthOracleItemSettings, SouthOracleSettings } from '../../../shared/model/south-settings.model';
+import { SouthOracleItemSettings, SouthOracleSettings } from '../../../shared/model/south-settings.model';
 import { OIBusContent } from '../../../shared/model/engine.model';
 
 import oracledb, { ConnectionAttributes } from 'oracledb';
@@ -63,7 +63,9 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
    * Initialize services (logger, certificate, status data) at startup
    */
   async start(dataStream = true): Promise<void> {
-    await createFolder(this.tmpFolder);
+    if (this.connector.id !== 'test') {
+      await createFolder(this.tmpFolder);
+    }
     await super.start(dataStream);
   }
 

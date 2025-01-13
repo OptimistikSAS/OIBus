@@ -71,14 +71,16 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
 
     const values: Array<OIBusTimeValue> = filesInFolder.map(file => ({
       pointId: item.name,
-      timestamp: DateTime.now().toUTC().toISO()!,
+      timestamp: DateTime.fromMillis(file.modifyTime).toUTC().toISO()!,
       data: { value: file.name }
     }));
     callback({ type: 'time-values', content: values });
   }
 
   async start(dataStream = true): Promise<void> {
-    await createFolder(this.tmpFolder);
+    if (this.connector.id !== 'test') {
+      await createFolder(this.tmpFolder);
+    }
     await super.start(dataStream);
     // Create a custom table in the south cache database to manage file already sent when preserve file is set to true
     this.cacheService!.createCustomTable(`folder_scanner_${this.connector.id}`, 'filename TEXT PRIMARY KEY, mtime_ms INTEGER');

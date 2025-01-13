@@ -322,15 +322,16 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       try {
         // By default, retrieve the last hour. If the scan mode has already run, and retrieve a data, the max instant will
         // be retrieved from the South cache inside the history query handler
+        const throttling = this.getThrottlingSettings(this.connector.settings);
         await this.historyQueryHandler(
           items,
           DateTime.now()
-            .minus((this.getThrottlingSettings(this.connector.settings).maxReadInterval || 3600) * 1000)
+            .minus((throttling.maxReadInterval || 3600) * 1000)
             .toUTC()
             .toISO() as Instant,
           DateTime.now().toUTC().toISO() as Instant,
           scanModeId,
-          this.getThrottlingSettings(this.connector.settings),
+          throttling,
           this.getMaxInstantPerItem(this.connector.settings),
           this.getOverlap(this.connector.settings)
         );
