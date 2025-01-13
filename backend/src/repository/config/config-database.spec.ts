@@ -39,6 +39,7 @@ import { User } from '../../model/user.model';
 import argon2 from 'argon2';
 import HistoryQueryRepository from './history-query.repository';
 import { HistoryQueryEntity, HistoryQueryItemEntity } from '../../model/histor-query.model';
+import { OIAnalyticsDeleteHistoryQuery, OIAnalyticsSaveHistoryQuery } from '../../model/oianalytics-message.model';
 
 jest.mock('../../service/utils');
 jest.mock('argon2');
@@ -769,6 +770,42 @@ describe('Repository with populated database', () => {
         status: 'PENDING',
         error: null,
         completedDate: null
+      });
+    });
+
+    it('should create save-history-query message', () => {
+      (generateRandomId as jest.Mock).mockReturnValueOnce('newSaveHistoryQueryId');
+
+      repository.create({
+        type: 'save-history-query',
+        historyId: 'historyId'
+      } as OIAnalyticsSaveHistoryQuery);
+
+      expect(repository.findById('newSaveHistoryQueryId')).toEqual({
+        id: 'newSaveHistoryQueryId',
+        type: 'save-history-query',
+        status: 'PENDING',
+        error: null,
+        completedDate: null,
+        historyId: 'historyId'
+      });
+    });
+
+    it('should create delete-history-query message', () => {
+      (generateRandomId as jest.Mock).mockReturnValueOnce('newDeleteHistoryQueryId');
+
+      repository.create({
+        type: 'delete-history-query',
+        historyId: 'historyId'
+      } as OIAnalyticsDeleteHistoryQuery);
+
+      expect(repository.findById('newDeleteHistoryQueryId')).toEqual({
+        id: 'newDeleteHistoryQueryId',
+        type: 'delete-history-query',
+        status: 'PENDING',
+        error: null,
+        completedDate: null,
+        historyId: 'historyId'
       });
     });
 
