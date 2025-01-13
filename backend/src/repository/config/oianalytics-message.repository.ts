@@ -6,7 +6,7 @@ import {
   OIAnalyticsMessageStatus,
   OIAnalyticsMessageType
 } from '../../../shared/model/oianalytics-message.model';
-import { OIAnalyticsMessage } from '../../model/oianalytics-message.model';
+import { OIAnalyticsDeleteHistoryQuery, OIAnalyticsMessage, OIAnalyticsSaveHistoryQuery } from '../../model/oianalytics-message.model';
 
 const OIANALYTICS_MESSAGE_TABLE = 'oianalytics_messages';
 const PAGE_SIZE = 50;
@@ -102,6 +102,14 @@ export default class OIAnalyticsMessageRepository {
       case 'full-config':
         insertQuery += `(id, type, status) VALUES (?, ?, ?);`;
         break;
+      case 'save-history-query':
+        insertQuery += `(id, type, status, history_id) VALUES (?, ?, ?, ?);`;
+        queryParams.push((message as OIAnalyticsSaveHistoryQuery).historyId);
+        break;
+      case 'delete-history-query':
+        insertQuery += `(id, type, status, history_id) VALUES (?, ?, ?, ?);`;
+        queryParams.push((message as OIAnalyticsDeleteHistoryQuery).historyId);
+        break;
     }
     const result = this.database.prepare(insertQuery).run(...queryParams);
     const query = `SELECT * FROM ${OIANALYTICS_MESSAGE_TABLE} WHERE ROWID = ?;`;
@@ -123,10 +131,28 @@ export default class OIAnalyticsMessageRepository {
       case 'full-config':
         return {
           id: message.id,
-          type: message.type as OIAnalyticsMessageType,
+          type: 'full-config',
           status: message.status as OIAnalyticsMessageStatus,
           error: message.error,
           completedDate: message.completed_date
+        };
+      case 'save-history-query':
+        return {
+          id: message.id,
+          type: 'save-history-query',
+          status: message.status as OIAnalyticsMessageStatus,
+          error: message.error,
+          completedDate: message.completed_date,
+          historyId: message.history_id
+        };
+      case 'delete-history-query':
+        return {
+          id: message.id,
+          type: 'delete-history-query',
+          status: message.status as OIAnalyticsMessageStatus,
+          error: message.error,
+          completedDate: message.completed_date,
+          historyId: message.history_id
         };
     }
   }
