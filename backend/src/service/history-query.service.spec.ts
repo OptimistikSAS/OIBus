@@ -361,7 +361,7 @@ describe('History Query service', () => {
     await service.createHistoryQuery(testData.historyQueries.command, testData.historyQueries.list[0].id, null, null);
     expect(service.retrieveSecrets).toHaveBeenCalledTimes(1);
     expect(historyQueryRepository.saveHistoryQuery).toHaveBeenCalledTimes(1);
-    expect(oIAnalyticsMessageService.createHistoryQueryMessage).toHaveBeenCalledTimes(1);
+    expect(oIAnalyticsMessageService.createSaveHistoryQueryMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(historyQueryEngine.createHistoryQuery).toHaveBeenCalledTimes(1);
   });
 
@@ -416,7 +416,7 @@ describe('History Query service', () => {
 
     await service.updateHistoryQuery(testData.historyQueries.list[0].id, testData.historyQueries.command, false);
     expect(historyQueryRepository.saveHistoryQuery).toHaveBeenCalledTimes(1);
-    expect(oIAnalyticsMessageService.createHistoryQueryMessage).toHaveBeenCalledTimes(1);
+    expect(oIAnalyticsMessageService.createSaveHistoryQueryMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(historyQueryEngine.reloadHistoryQuery).toHaveBeenCalledTimes(1);
   });
 
@@ -476,7 +476,7 @@ describe('History Query service', () => {
     expect(historyQueryEngine.deleteHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0]);
     expect(historyQueryRepository.deleteHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
     expect(historyQueryMetricsRepository.removeMetrics).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
-    expect(oIAnalyticsMessageService.createHistoryQueryMessage).toHaveBeenCalledWith(testData.historyQueries.list[0]);
+    expect(oIAnalyticsMessageService.createDeleteHistoryQueryMessageIfNotPending).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
   });
 
   it('startHistoryQuery() should fail to start if history not found', async () => {
@@ -492,6 +492,7 @@ describe('History Query service', () => {
 
     await service.startHistoryQuery(testData.historyQueries.list[0].id);
     expect(historyQueryRepository.updateHistoryQueryStatus).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'RUNNING');
+    expect(oIAnalyticsMessageService.createSaveHistoryQueryMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(historyQueryEngine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
   });
 
@@ -508,6 +509,7 @@ describe('History Query service', () => {
 
     await service.pauseHistoryQuery(testData.historyQueries.list[0].id);
     expect(historyQueryRepository.updateHistoryQueryStatus).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'PAUSED');
+    expect(oIAnalyticsMessageService.createSaveHistoryQueryMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(historyQueryEngine.stopHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
   });
 
@@ -552,7 +554,7 @@ describe('History Query service', () => {
     await service.createHistoryQueryItem(testData.historyQueries.list[0].id, itemCommand);
     expect(historyQueryRepository.findHistoryQueryById).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
     expect(historyQueryRepository.saveHistoryQueryItem).toHaveBeenCalledTimes(1);
-    expect(oIAnalyticsMessageService.createHistoryQueryMessage).toHaveBeenCalledTimes(1);
+    expect(oIAnalyticsMessageService.createSaveHistoryQueryMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(historyQueryEngine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
   });
 
@@ -609,6 +611,7 @@ describe('History Query service', () => {
     await service.updateHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId', itemCommand);
     expect(historyQueryRepository.findHistoryQueryItemById).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'itemId');
     expect(historyQueryRepository.saveHistoryQueryItem).toHaveBeenCalledTimes(1);
+    expect(oIAnalyticsMessageService.createSaveHistoryQueryMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(historyQueryEngine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
   });
 
@@ -671,6 +674,7 @@ describe('History Query service', () => {
     await service.deleteHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId');
     expect(historyQueryRepository.findHistoryQueryItemById).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'itemId');
     expect(historyQueryRepository.deleteHistoryQueryItem).toHaveBeenCalledWith(testData.historyQueries.list[0].items[0].id);
+    expect(oIAnalyticsMessageService.createSaveHistoryQueryMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(historyQueryEngine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
   });
 
@@ -695,6 +699,7 @@ describe('History Query service', () => {
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
     await service.deleteAllItemsForHistoryQuery(testData.historyQueries.list[0].id);
     expect(historyQueryRepository.deleteAllHistoryQueryItemsByHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+    expect(oIAnalyticsMessageService.createSaveHistoryQueryMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(historyQueryEngine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], true);
   });
 
@@ -712,6 +717,7 @@ describe('History Query service', () => {
     await service.enableHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId');
     expect(historyQueryRepository.findHistoryQueryItemById).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'itemId');
     expect(historyQueryRepository.enableHistoryQueryItem).toHaveBeenCalledWith(testData.historyQueries.list[0].items[0].id);
+    expect(oIAnalyticsMessageService.createSaveHistoryQueryMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(historyQueryEngine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
   });
 
@@ -728,6 +734,7 @@ describe('History Query service', () => {
     await service.disableHistoryQueryItem(testData.historyQueries.list[0].id, 'itemId');
     expect(historyQueryRepository.findHistoryQueryItemById).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'itemId');
     expect(historyQueryRepository.disableHistoryQueryItem).toHaveBeenCalledWith(testData.historyQueries.list[0].items[0].id);
+    expect(oIAnalyticsMessageService.createSaveHistoryQueryMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(historyQueryEngine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
   });
 
@@ -956,6 +963,7 @@ describe('History Query service', () => {
 
     await service.importItems(testData.historyQueries.list[0].id, [itemCommand]);
     expect(historyQueryRepository.saveAllItems).toHaveBeenCalledTimes(1);
+    expect(oIAnalyticsMessageService.createSaveHistoryQueryMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(historyQueryEngine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
   });
 
