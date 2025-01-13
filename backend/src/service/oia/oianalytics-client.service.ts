@@ -17,6 +17,7 @@ const RETRIEVE_CANCELLED_COMMANDS_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus
 const RETRIEVE_PENDING_COMMANDS_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/commands/pending`;
 const REGISTRATION_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/registration`;
 const SEND_CONFIGURATION_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/configuration`;
+const HISTORY_QUERY_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/configuration/history-query`;
 const DOWNLOAD_UPDATE_OIANALYTICS_ENDPOINT = `/api/oianalytics/oibus/upgrade/asset`;
 
 export default class OIAnalyticsClient {
@@ -143,6 +144,41 @@ export default class OIAnalyticsClient {
         'Content-Type': 'application/json'
       },
       body: payload,
+      timeout: OIANALYTICS_TIMEOUT,
+      agent: connectionSettings.agent
+    });
+    if (!response.ok) {
+      throw new Error(`${response.status} - ${response.statusText}`);
+    }
+  }
+
+  async sendHistoryQuery(registration: OIAnalyticsRegistration, payload: string): Promise<void> {
+    const connectionSettings = await this.getNetworkSettingsFromRegistration(registration, HISTORY_QUERY_OIANALYTICS_ENDPOINT);
+    const url = `${connectionSettings.host}${HISTORY_QUERY_OIANALYTICS_ENDPOINT}`;
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        authorization: `Bearer ${await this.encryptionService.decryptText(registration.token!)}`,
+        'Content-Type': 'application/json'
+      },
+      body: payload,
+      timeout: OIANALYTICS_TIMEOUT,
+      agent: connectionSettings.agent
+    });
+    if (!response.ok) {
+      throw new Error(`${response.status} - ${response.statusText}`);
+    }
+  }
+
+  async deleteHistoryQuery(registration: OIAnalyticsRegistration, historyId: string): Promise<void> {
+    const connectionSettings = await this.getNetworkSettingsFromRegistration(registration, HISTORY_QUERY_OIANALYTICS_ENDPOINT);
+    const url = `${connectionSettings.host}${HISTORY_QUERY_OIANALYTICS_ENDPOINT}?historyId=${historyId}`;
+    const response = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        authorization: `Bearer ${await this.encryptionService.decryptText(registration.token!)}`,
+        'Content-Type': 'application/json'
+      },
       timeout: OIANALYTICS_TIMEOUT,
       agent: connectionSettings.agent
     });
