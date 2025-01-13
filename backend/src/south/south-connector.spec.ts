@@ -658,7 +658,21 @@ describe('SouthConnector with history and subscription', () => {
     expect(logger.error).toHaveBeenCalledWith(`Error when calling historyQuery. ${new Error('history query error')}`);
     expect(logger.error).toHaveBeenCalledWith(`Error when calling lastPointQuery. ${new Error('last point query error')}`);
 
+    south.getThrottlingSettings = jest.fn().mockReturnValueOnce({ maxReadInterval: 0 });
     await south.run(testData.scanMode.list[0].id, testData.south.list[2].items as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>);
+
+    expect(south.historyQueryHandler).toHaveBeenCalledWith(
+      testData.south.list[2].items,
+      DateTime.fromISO(testData.constants.dates.FAKE_NOW)
+        .minus(3600 * 1000) // minus 3600*1000 because maxReadInterval is set to 1 s
+        .toUTC()
+        .toISO()!,
+      testData.constants.dates.FAKE_NOW,
+      testData.scanMode.list[0].id,
+      { maxReadInterval: 0 },
+      false,
+      south.settings.settings.throttling.overlap
+    );
     expect(south.historyQueryHandler).toHaveBeenCalledTimes(2);
     expect(south.lastPointQuery).toHaveBeenCalledTimes(2);
 

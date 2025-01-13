@@ -63,7 +63,9 @@ export default class SouthPostgreSQL
    * Initialize services (logger, certificate, status data) at startup
    */
   async start(dataStream = true): Promise<void> {
-    await createFolder(this.tmpFolder);
+    if (this.connector.id !== 'test') {
+      await createFolder(this.tmpFolder);
+    }
     await super.start(dataStream);
   }
 

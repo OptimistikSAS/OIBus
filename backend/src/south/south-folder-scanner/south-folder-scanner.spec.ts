@@ -19,6 +19,7 @@ import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-ser
 import { SouthConnectorEntity } from '../../model/south-connector.model';
 import testData from '../../tests/utils/test-data';
 import { mockBaseFolders } from '../../tests/utils/test-utils';
+import { DateTime } from 'luxon';
 
 jest.mock('node:fs/promises');
 jest.mock('../../service/utils');
@@ -382,7 +383,7 @@ describe('SouthFolderScanner with compression', () => {
     const callback = jest.fn();
     south.testConnection = jest.fn();
     south.checkAge = jest.fn().mockReturnValueOnce(true).mockReturnValueOnce(false);
-    fs.stat = jest.fn();
+    fs.stat = jest.fn().mockReturnValueOnce({ mtimeMs: DateTime.now().toMillis() });
     fs.readdir = jest.fn().mockReturnValue(['file1.txt', 'file2.csv', 'file3.csv']);
 
     await south.testItem(configuration.items[0], testData.south.itemTestingSettings, callback);
