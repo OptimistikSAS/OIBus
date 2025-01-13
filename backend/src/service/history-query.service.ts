@@ -774,6 +774,6 @@ export const toHistoryQueryItemDTO = <I extends SouthItemSettings>(
     id: historyQueryItem.id,
     name: historyQueryItem.name,
     enabled: historyQueryItem.enabled,
-    settings: encryptionService.filterSecrets<I>(historyQueryItem.settings, southManifest.settings)
+    settings: encryptionService.filterSecrets<I>(historyQueryItem.settings, southManifest.items.settings)
   };
 };
