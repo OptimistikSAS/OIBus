@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.5.4](https://github.com/OptimistikSAS/OIBus/compare/v3.5.3...v3.5.4) (2025-01-13)
+
+
+### Bug Fixes
+
+* **history-query:** history query update fix with items ([c6bf3c4](https://github.com/OptimistikSAS/OIBus/commit/c6bf3c4b199e7f67adcfb3041337f41a05a933e7))
+
 ## [3.5.3](https://github.com/OptimistikSAS/OIBus/compare/v3.5.2...v3.5.3) (2025-01-13)
 
 
