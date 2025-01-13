@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.5.3](https://github.com/OptimistikSAS/OIBus/compare/v3.5.2...v3.5.3) (2025-01-13)
+
+
+### Bug Fixes
+
+* **south:** do not create tmp file if testing south connector ([8c88ed4](https://github.com/OptimistikSAS/OIBus/commit/8c88ed48718be559d39068cdc7a35b90d2c372cc))
+* **south:** set default start time to max read interval if specified ([49eaf49](https://github.com/OptimistikSAS/OIBus/commit/49eaf49aa6f49c8e7d1966ca7add8fba23feff60))
+
 ## [3.5.2](https://github.com/OptimistikSAS/OIBus/compare/v3.5.1...v3.5.2) (2025-01-10)
 
 
