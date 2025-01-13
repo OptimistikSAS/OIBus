@@ -9,6 +9,8 @@ export default jest.fn().mockImplementation(() => {
     register: jest.fn(),
     checkRegistration: jest.fn(),
     sendConfiguration: jest.fn(),
+    sendHistoryQuery: jest.fn(),
+    deleteHistoryQuery: jest.fn(),
     downloadFile: jest.fn()
   };
 });

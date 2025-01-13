@@ -10,6 +10,7 @@ import { CertificateDTO } from '../../../shared/model/certificate.model';
 import { UserCommandDTO } from '../../../shared/model/user.model';
 import { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
 import { ScanModeCommandDTO } from '../../../shared/model/scan-mode.model';
+import { HistoryQueryCommandDTO } from '../../../shared/model/history-query.model';
 
 export interface OIAnalyticsScanModeCommandDTO {
   oIBusInternalId: string | null;
@@ -98,6 +99,11 @@ export interface OIBusFullConfigurationCommandDTO {
   southConnectors: Array<OIAnalyticsSouthCommandDTO>;
   northConnectors: Array<OIAnalyticsNorthCommandDTO>;
   users: Array<OIAnalyticsUserCommandDTO>;
+}
+
+export interface OIBusHistoryQueryCommandDTO {
+  oIBusInternalId: string | null;
+  settings: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
 }
 
 //
