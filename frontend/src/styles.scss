@@ -169,6 +169,10 @@ img.oib-image-header {
 // search bar form
 .oib-search-form {
   background-color: $veryLightGrey;
+  border-radius: 1rem 1rem 1rem 1rem;
+}
+
+.accordion-body .oib-search-form {
   border-radius: 0rem 0rem 1rem 1rem;
 }
 
