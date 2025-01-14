@@ -603,7 +603,11 @@ export default class HistoryQueryService {
       return source;
     }
     if (retrieveSecretsFromSouth || retrieveSecretsFromNorth) {
-      const source = {} as HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>;
+      const source = { items: [] as Array<HistoryQueryItemEntity<SouthItemSettings>> } as HistoryQueryEntity<
+        SouthSettings,
+        NorthSettings,
+        SouthItemSettings
+      >;
       if (retrieveSecretsFromSouth) {
         const south = this.southConnectorRepository.findSouthById(retrieveSecretsFromSouth);
         if (!south) {

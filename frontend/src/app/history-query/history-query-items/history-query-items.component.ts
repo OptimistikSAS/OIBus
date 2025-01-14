@@ -85,10 +85,12 @@ export class HistoryQueryItemsComponent implements OnInit {
     // This effect runs every time the history query input changes
     effect(() => {
       const historyQuery = this.historyQuery();
-      if (!historyQuery) return;
-
-      // initialize/update item list
-      this.allItems = historyQuery.items;
+      if (!historyQuery) {
+        this.allItems = this.southConnectorCommand().items;
+      } else {
+        // initialize/update item list
+        this.allItems = historyQuery.items;
+      }
 
       // reset column sorting
       this.columnSortStates = { name: ColumnSortState.INDETERMINATE };

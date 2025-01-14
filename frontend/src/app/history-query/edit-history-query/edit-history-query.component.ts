@@ -365,7 +365,7 @@ export class EditHistoryQueryComponent implements OnInit {
       command = this.southConnectorCommand;
       fromConnectorId = this.fromSouthId;
     } else {
-      command = this.northConnectorComand;
+      command = this.northConnectorCommand;
       fromConnectorId = this.fromNorthId;
     }
 
@@ -378,11 +378,12 @@ export class EditHistoryQueryComponent implements OnInit {
     const formValue = this.historyQueryForm!.value;
     return {
       type: this.southManifest!.id,
-      settings: formValue.southSettings
+      settings: formValue.southSettings,
+      items: this.inMemoryItems
     } as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
   }
 
-  get northConnectorComand() {
+  get northConnectorCommand() {
     const formValue = this.historyQueryForm!.value;
 
     return {
