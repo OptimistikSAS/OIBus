@@ -13,7 +13,11 @@ import { SouthConnectorService } from '../../services/south-connector.service';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { HistoryQueryDTO } from '../../../../../backend/shared/model/history-query.model';
 import { NorthConnectorCommandDTO, NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
-import { SouthConnectorCommandDTO, SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
+import {
+  SouthConnectorCommandDTO,
+  SouthConnectorItemDTO,
+  SouthConnectorManifest
+} from '../../../../../backend/shared/model/south-connector.model';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
@@ -248,7 +252,8 @@ describe('EditHistoryQueryComponent', () => {
 
     const command = {
       type: 'mssql',
-      settings: historyQuery.southSettings
+      settings: historyQuery.southSettings,
+      items: [] as Array<SouthConnectorItemDTO<SouthItemSettings>>
     } as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
 
     const spy = jasmine.createSpy();
