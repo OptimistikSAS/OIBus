@@ -64,9 +64,8 @@ export default class ProxyServer {
     this.webServer.on('connect', this.handleHttpsRequest.bind(this));
 
     // Listen for the `error` event on `webserver`.
-    this.webServer.on('error', (err: Error, _req: http.IncomingMessage, res: http.ServerResponse) => {
-      res.writeHead(500, { 'Content-Type': 'text/plain' });
-      res.end(err);
+    this.webServer.on('error', (err: Error) => {
+      this._logger.error(err.message);
     });
   }
 

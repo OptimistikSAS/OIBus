@@ -209,21 +209,17 @@ describe('ProxyServer', () => {
   });
 
   it('should handle webserver errors', async () => {
-    let errorCallback: ((error: Error, param: object, result: unknown) => void) | undefined = undefined;
+    let errorCallback: ((error: Error) => void) | undefined = undefined;
     jest.spyOn(httpMock, 'on').mockImplementation((event, callback) => {
       if (event === 'error') errorCallback = callback;
     });
-    const mockRes = {
-      writeHead: jest.fn(),
-      end: jest.fn()
-    } as unknown as http.ServerResponse;
-    const error = new Error();
+
+    const error = new Error('proxy error');
 
     await proxyServer.start(9000);
 
-    errorCallback!(error, {}, mockRes);
-    expect(mockRes.writeHead).toHaveBeenCalledWith(500, { 'Content-Type': 'text/plain' });
-    expect(mockRes.end).toHaveBeenCalledWith(error);
+    errorCallback!(error);
+    expect(logger.error).toHaveBeenCalledWith('proxy error');
   });
 
   it('should handle httpProxy errors', () => {
