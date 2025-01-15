@@ -50,12 +50,25 @@ If OIAnalytics module is not used, the following fields will be used:
     - **Proxy password**: The password linked to the proxy.
 
 ## OIAnalytics access
+### Best Practice for Connecting OIBus to OIAnalytics
+To securely connect OIBus to OIAnalytics, follow these steps:
+1. Register OIBus on OIAnalytics:
+    - This ensures seamless integration and secure communication between OIBus and OIAnalytics.
+2. Enable the Use OIAnalytics Module Option:
+   - In the North connector settings, enable the Use OIAnalytics Module option to establish the connection.
+   - By doing this, you eliminate the need to manually transfer API keys, simplifying the process and enhancing security.
+
+:::tip Proxy client
+If you want to pass data through a proxy, be sure to set the proxy in the 
+[OIAnalytics registration](../advanced/oianalytics-registration.mdx).
+:::
+
+### Alternative Approach: Obtaining an API Key
+If you choose not to register OIBus on OIAnalytics, you can still connect by obtaining an API Key. Here’s how.
 
 Data sent to OIAnalytics is transmitted through the OIAnalytics public API. API access in OIAnalytics is linked to a
-user
-account. Instead of conventional login credentials, an API key must be established within OIAnalytics using the
-following
-steps:
+user account. Instead of conventional login credentials, an API key must be established within OIAnalytics using the
+following steps:
 
 1. Navigate to Configuration -> Users.
 2. Locate the user for whom you intend to generate an API key, and click on the key icon.
