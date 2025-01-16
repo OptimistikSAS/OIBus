@@ -16,8 +16,6 @@ import LoggerService from './logger/logger.service';
 import LoggerServiceMock from '../tests/__mocks__/service/logger/logger-service.mock';
 import EngineMetricsRepository from '../repository/logs/engine-metrics.repository';
 import os from 'node:os';
-import IpFilterRepository from '../repository/config/ip-filter.repository';
-import IpFilterRepositoryMock from '../tests/__mocks__/repository/config/ip-filter-repository.mock';
 import testData from '../tests/utils/test-data';
 import { EngineSettings } from '../model/engine.model';
 import { EngineSettingsCommandDTO } from '../../shared/model/engine.model';
@@ -31,6 +29,8 @@ import NorthServiceMock from '../tests/__mocks__/service/north-service.mock';
 import HistoryQueryServiceMock from '../tests/__mocks__/service/history-query-service.mock';
 import OIAnalyticsRegistrationService from './oia/oianalytics-registration.service';
 import OIAnalyticsRegistrationServiceMock from '../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
+import IPFilterService from './ip-filter.service';
+import IpFilterServiceMock from '../tests/__mocks__/service/ip-filter-service.mock';
 
 jest.mock('./utils');
 jest.mock('../web-server/proxy-server');
@@ -38,7 +38,7 @@ jest.mock('../web-server/proxy-server');
 const validator = new JoiValidator();
 const engineRepository: EngineRepository = new EngineRepositoryMock();
 const engineMetricsRepository: EngineMetricsRepository = new EngineMetricsRepositoryMock();
-const ipFilterRepository: IpFilterRepository = new IpFilterRepositoryMock();
+const ipFilterService: IPFilterService = new IpFilterServiceMock();
 const oIAnalyticsRegistrationService: OIAnalyticsRegistrationService = new OIAnalyticsRegistrationServiceMock();
 const encryptionService: EncryptionService = new EncryptionServiceMock();
 const loggerService: LoggerService = new LoggerServiceMock();
@@ -60,13 +60,13 @@ describe('OIBus Service', () => {
     (engineRepository.get as jest.Mock).mockReturnValue(testData.engine.settings);
     (engineMetricsRepository.getMetrics as jest.Mock).mockReturnValue(testData.engine.metrics);
     (loggerService.createChildLogger as jest.Mock).mockReturnValue(logger);
-    (ipFilterRepository.findAll as jest.Mock).mockReturnValue(testData.ipFilters.list);
+    (ipFilterService.findAll as jest.Mock).mockReturnValue(testData.ipFilters.list);
 
     service = new OIBusService(
       validator,
       engineRepository,
       engineMetricsRepository,
-      ipFilterRepository,
+      ipFilterService,
       oIAnalyticsRegistrationService,
       encryptionService,
       loggerService,
@@ -97,7 +97,7 @@ describe('OIBus Service', () => {
     expect(logger.info).toHaveBeenCalled();
     expect(service.getProxyServer()).toBeDefined();
 
-    const settingsWithoutOIAlog = JSON.parse(JSON.stringify(testData.engine.settings));
+    const settingsWithoutOIAlog: EngineSettings = JSON.parse(JSON.stringify(testData.engine.settings));
     settingsWithoutOIAlog.logParameters.oia.level = 'silent';
     (engineRepository.get as jest.Mock).mockReturnValueOnce(settingsWithoutOIAlog).mockReturnValueOnce(testData.engine.settings);
     service.resetLogger = jest.fn();
@@ -107,6 +107,14 @@ describe('OIBus Service', () => {
 
     oIAnalyticsRegistrationService.registrationEvent.emit('updated');
     expect(service.resetLogger).toHaveBeenCalledWith(testData.engine.settings);
+
+    jest.clearAllMocks();
+    settingsWithoutOIAlog.proxyEnabled = false;
+    (engineRepository.get as jest.Mock).mockReturnValueOnce(settingsWithoutOIAlog).mockReturnValueOnce(testData.engine.settings);
+    ipFilterService.whiteListEvent.emit('update-white-list');
+    expect(service.getProxyServer().refreshIpFilters).not.toHaveBeenCalled();
+    ipFilterService.whiteListEvent.emit('update-white-list');
+    expect(service.getProxyServer().refreshIpFilters).toHaveBeenCalled();
 
     await service.stopOIBus();
 

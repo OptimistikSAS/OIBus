@@ -115,6 +115,32 @@ export default class OIAnalyticsCommandRepository {
         queryParams.push(JSON.stringify(command.commandContent));
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, scan_mode_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
         break;
+      case 'create-ip-filter':
+        queryParams.push(JSON.stringify(command.commandContent));
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, command_content) VALUES (?, ?, ?, ?, ?, ?, ?);`;
+        break;
+      case 'update-ip-filter':
+        queryParams.push(command.ipFilterId);
+        queryParams.push(JSON.stringify(command.commandContent));
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, ip_filter_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
+        break;
+      case 'delete-ip-filter':
+        queryParams.push(command.ipFilterId);
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, ip_filter_id) VALUES (?, ?, ?, ?, ?, ?, ?);`;
+        break;
+      case 'create-certificate':
+        queryParams.push(JSON.stringify(command.commandContent));
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, command_content) VALUES (?, ?, ?, ?, ?, ?, ?);`;
+        break;
+      case 'update-certificate':
+        queryParams.push(command.certificateId);
+        queryParams.push(JSON.stringify(command.commandContent));
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, certificate_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
+        break;
+      case 'delete-certificate':
+        queryParams.push(command.certificateId);
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, certificate_id) VALUES (?, ?, ?, ?, ?, ?, ?);`;
+        break;
       case 'create-south':
         queryParams.push(command.retrieveSecretsFromSouth || '');
         queryParams.push(JSON.stringify(command.commandContent));
@@ -336,6 +362,80 @@ export default class OIAnalyticsCommandRepository {
           result: command.result as string,
           scanModeId: command.scan_mode_id as string,
           commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'create-ip-filter':
+        return {
+          id: command.id as string,
+          type: 'create-ip-filter',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'update-ip-filter':
+        return {
+          id: command.id as string,
+          type: 'update-ip-filter',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          ipFilterId: command.ip_filter_id as string,
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'delete-ip-filter':
+        return {
+          id: command.id as string,
+          type: 'delete-ip-filter',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          ipFilterId: command.ip_filter_id as string
+        };
+      case 'create-certificate':
+        return {
+          id: command.id as string,
+          type: 'create-certificate',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'update-certificate':
+        return {
+          id: command.id as string,
+          type: 'update-certificate',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          certificateId: command.certificate_id as string,
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'delete-certificate':
+        return {
+          id: command.id as string,
+          type: 'delete-certificate',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          certificateId: command.certificate_id as string
         };
       case 'update-north':
         return {
