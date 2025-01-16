@@ -6,6 +6,8 @@ import { SouthConnectorCommandDTO } from '../../shared/model/south-connector.mod
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { NorthConnectorCommandDTO } from '../../shared/model/north-connector.model';
 import { NorthSettings } from '../../shared/model/north-settings.model';
+import { IPFilterCommandDTO } from '../../shared/model/ip-filter.model';
+import { CertificateCommandDTO } from '../../shared/model/certificate.model';
 
 export interface BaseOIBusCommand extends BaseEntity {
   type: OIBusCommandType;
@@ -65,6 +67,38 @@ export interface OIBusDeleteScanModeCommand extends BaseOIBusCommand {
   scanModeId: string;
 }
 
+export interface OIBusCreateIPFilterCommand extends BaseOIBusCommand {
+  type: 'create-ip-filter';
+  commandContent: IPFilterCommandDTO;
+}
+
+export interface OIBusUpdateIPFilterCommand extends BaseOIBusCommand {
+  type: 'update-ip-filter';
+  ipFilterId: string;
+  commandContent: IPFilterCommandDTO;
+}
+
+export interface OIBusDeleteIPFilterCommand extends BaseOIBusCommand {
+  type: 'delete-ip-filter';
+  ipFilterId: string;
+}
+
+export interface OIBusCreateCertificateCommand extends BaseOIBusCommand {
+  type: 'create-certificate';
+  commandContent: CertificateCommandDTO;
+}
+
+export interface OIBusUpdateCertificateCommand extends BaseOIBusCommand {
+  type: 'update-certificate';
+  certificateId: string;
+  commandContent: CertificateCommandDTO;
+}
+
+export interface OIBusDeleteCertificateCommand extends BaseOIBusCommand {
+  type: 'delete-certificate';
+  certificateId: string;
+}
+
 export interface OIBusCreateSouthConnectorCommand extends BaseOIBusCommand {
   type: 'create-south';
   southConnectorId: string | null; // used to retrieve passwords in case of duplicate
@@ -118,6 +152,12 @@ export type OIBusCommand =
   | OIBusCreateScanModeCommand
   | OIBusUpdateScanModeCommand
   | OIBusDeleteScanModeCommand
+  | OIBusCreateIPFilterCommand
+  | OIBusUpdateIPFilterCommand
+  | OIBusDeleteIPFilterCommand
+  | OIBusCreateCertificateCommand
+  | OIBusUpdateCertificateCommand
+  | OIBusDeleteCertificateCommand
   | OIBusCreateSouthConnectorCommand
   | OIBusUpdateSouthConnectorCommand
   | OIBusDeleteSouthConnectorCommand
