@@ -1,0 +1,13 @@
+@import '../../../../common.scss';
+
+$containerMinHeight: 30vh;
+
+#test-result-container {
+  min-height: $containerMinHeight;
+  outline: solid 1px $mediumGrey;
+}
+
+#loading-spinner-container,
+#message-container {
+  min-height: $containerMinHeight;
+}

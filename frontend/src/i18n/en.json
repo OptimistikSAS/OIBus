@@ -593,11 +593,23 @@
       "cancel-button": "Cancel",
       "query-start": "Query data from",
       "query-end": "Query data until",
-      "editor-message": {
+      "status-message": {
         "initial": "Test results will appear here",
-        "loading": "Running item...",
-        "error": "Error when testing item",
+        "item-error": "Error when testing item",
+        "display-result-error": "Error when displaying item, please try another view mode",
         "cancel": "Test cancelled"
+      },
+      "view": {
+        "raw": "Raw view",
+        "table": "Table view",
+        "json": "JSON view"
+      },
+      "table": {
+        "timestamp": "Timestamp",
+        "pointId": "Point Id",
+        "value": "Value",
+        "other": "Other",
+        "no-values": "There are no values to display"
       }
     },
     "type": "Type",

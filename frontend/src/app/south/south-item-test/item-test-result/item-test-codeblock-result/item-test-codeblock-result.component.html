@@ -1,0 +1,4 @@
+@if (codeBlock().chukedValueProgress() && codeBlock().chukedValueProgress() !== 1) {
+  <oib-progressbar [value]="codeBlock().chukedValueProgress()" [animated]="false" />
+}
+<oib-code-block height="30vh" #monacoEditor contentType="json" [readOnly]="true" />

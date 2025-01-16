@@ -1,0 +1,22 @@
+<div id="test-result-container">
+  @if (isLoading) {
+    <div id="loading-spinner-container" class="align-items-center d-flex justify-content-center" style="min-height: 30vh">
+      <oib-loading-spinner />
+    </div>
+  }
+  @if (message) {
+    <div
+      id="message-container"
+      [class]="'alert m-0 rounded-0' + (message.type === 'info' ? ' alert-primary' : ' alert-danger')"
+      style="min-height: 30vh"
+    >
+      @if (message.type !== 'info') {
+        <div>{{ 'south.test-item.status-message.' + message.type | translate }}</div>
+        <hr />
+      }
+      <div style="overflow-wrap: break-word">{{ message.value }}</div>
+    </div>
+  }
+
+  <ng-container #resultView />
+</div>
