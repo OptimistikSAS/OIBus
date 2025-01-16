@@ -16,14 +16,20 @@ import { flushPromises } from '../../tests/utils/test-utils';
 import { delay, getOIBusInfo, unzip } from '../utils';
 import fs from 'node:fs/promises';
 import {
+  OIBusCreateCertificateCommand,
+  OIBusCreateIPFilterCommand,
   OIBusCreateNorthConnectorCommand,
   OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand,
   OIBusCreateScanModeCommand,
   OIBusCreateSouthConnectorCommand,
+  OIBusDeleteCertificateCommand,
+  OIBusDeleteIPFilterCommand,
   OIBusDeleteNorthConnectorCommand,
   OIBusDeleteScanModeCommand,
   OIBusDeleteSouthConnectorCommand,
+  OIBusUpdateCertificateCommand,
   OIBusUpdateEngineSettingsCommand,
+  OIBusUpdateIPFilterCommand,
   OIBusUpdateNorthConnectorCommand,
   OIBusUpdateRegistrationSettingsCommand,
   OIBusUpdateScanModeCommand,
@@ -44,6 +50,12 @@ import crypto from 'node:crypto';
 import OIAnalyticsRegistrationService from './oianalytics-registration.service';
 import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
 import { EngineSettings } from '../../model/engine.model';
+import IpFilterServiceMock from '../../tests/__mocks__/service/ip-filter-service.mock';
+import CertificateServiceMock from '../../tests/__mocks__/service/certificate-service.mock';
+import IPFilterService from '../ip-filter.service';
+import CertificateService from '../certificate.service';
+import { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
+import { CertificateCommandDTO } from '../../../shared/model/certificate.model';
 
 jest.mock('node:crypto');
 jest.mock('node:fs/promises');
@@ -59,6 +71,8 @@ const oIAnalyticsMessageService: OIAnalyticsMessageService = new OIAnalyticsMess
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const oIBusService: OIBusService = new OibusServiceMock();
 const scanModeService: ScanModeService = new ScanModeServiceMock();
+const ipFilterService: IPFilterService = new IpFilterServiceMock();
+const certificateService: CertificateService = new CertificateServiceMock();
 const southService: SouthService = new SouthServiceMock();
 const northService: NorthService = new NorthServiceMock();
 const oIAnalyticsClient: OIAnalyticsClient = new OianalyticsClientMock();
@@ -85,6 +99,8 @@ describe('OIAnalytics Command Service', () => {
       oIAnalyticsClient,
       oIBusService,
       scanModeService,
+      ipFilterService,
+      certificateService,
       southService,
       northService,
       logger,
@@ -734,6 +750,122 @@ describe('OIAnalytics Command Service', () => {
       'OIAnalytics keys reloaded'
     );
   });
+
+  it('should execute create-ip-filter command', async () => {
+    const command: OIBusCreateIPFilterCommand = {
+      id: 'createIpFilterId',
+      type: 'create-ip-filter',
+      targetVersion: testData.engine.settings.version,
+      commandContent: {} as IPFilterCommandDTO
+    } as OIBusCreateIPFilterCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+
+    await service.executeCommand();
+
+    expect(ipFilterService.create).toHaveBeenCalledWith(command.commandContent);
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'IP Filter created successfully'
+    );
+  });
+
+  it('should execute update-ip-filter command', async () => {
+    const command: OIBusUpdateIPFilterCommand = {
+      id: 'updateIpFilterId',
+      type: 'update-ip-filter',
+      targetVersion: testData.engine.settings.version,
+      ipFilterId: 'ipFilterId',
+      commandContent: {} as IPFilterCommandDTO
+    } as OIBusUpdateIPFilterCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+
+    await service.executeCommand();
+
+    expect(ipFilterService.update).toHaveBeenCalledWith(command.ipFilterId, command.commandContent);
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'IP Filter updated successfully'
+    );
+  });
+
+  it('should execute delete-ip-filter command', async () => {
+    const command: OIBusDeleteIPFilterCommand = {
+      id: 'deleteIpFilterId',
+      type: 'delete-ip-filter',
+      targetVersion: testData.engine.settings.version,
+      ipFilterId: 'ipFilterId'
+    } as OIBusDeleteIPFilterCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+
+    await service.executeCommand();
+
+    expect(ipFilterService.delete).toHaveBeenCalledWith(command.ipFilterId);
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'IP Filter deleted successfully'
+    );
+  });
+
+  it('should execute create-certificate command', async () => {
+    const command: OIBusCreateCertificateCommand = {
+      id: 'createCertificateId',
+      type: 'create-certificate',
+      targetVersion: testData.engine.settings.version,
+      commandContent: {} as CertificateCommandDTO
+    } as OIBusCreateCertificateCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+
+    await service.executeCommand();
+
+    expect(certificateService.create).toHaveBeenCalledWith(command.commandContent);
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'Certificate created successfully'
+    );
+  });
+
+  it('should execute update-certificate command', async () => {
+    const command: OIBusUpdateCertificateCommand = {
+      id: 'updateCertificateId',
+      type: 'update-certificate',
+      targetVersion: testData.engine.settings.version,
+      certificateId: 'certificateId',
+      commandContent: {} as CertificateCommandDTO
+    } as OIBusUpdateCertificateCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+
+    await service.executeCommand();
+
+    expect(certificateService.update).toHaveBeenCalledWith(command.certificateId, command.commandContent);
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'Certificate updated successfully'
+    );
+  });
+
+  it('should execute delete-certificate command', async () => {
+    const command: OIBusDeleteCertificateCommand = {
+      id: 'deleteCertificateId',
+      type: 'delete-certificate',
+      targetVersion: testData.engine.settings.version,
+      certificateId: 'certificateId'
+    } as OIBusDeleteCertificateCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+
+    await service.executeCommand();
+
+    expect(certificateService.delete).toHaveBeenCalledWith(command.certificateId);
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'Certificate deleted successfully'
+    );
+  });
 });
 
 describe('OIAnalytics Command service with update error', () => {
@@ -763,6 +895,8 @@ describe('OIAnalytics Command service with update error', () => {
       oIAnalyticsClient,
       oIBusService,
       scanModeService,
+      ipFilterService,
+      certificateService,
       southService,
       northService,
       logger,
@@ -797,6 +931,8 @@ describe('OIAnalytics Command service with no commands', () => {
       oIAnalyticsClient,
       oIBusService,
       scanModeService,
+      ipFilterService,
+      certificateService,
       southService,
       northService,
       logger,
@@ -847,6 +983,8 @@ describe('OIAnalytics Command service with no commands and without update', () =
       oIAnalyticsClient,
       oIBusService,
       scanModeService,
+      ipFilterService,
+      certificateService,
       southService,
       northService,
       logger,
