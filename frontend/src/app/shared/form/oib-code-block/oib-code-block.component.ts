@@ -64,7 +64,11 @@ export class OibCodeBlockComponent implements ControlValueAccessor {
           selectOnLineNumbers: true,
           wordWrap: 'on',
           minimap: { enabled: false },
-          readOnly: this.readOnly()
+          readOnly: this.readOnly(),
+          automaticLayout: true,
+          stickyScroll: {
+            enabled: false
+          }
         })
       );
 

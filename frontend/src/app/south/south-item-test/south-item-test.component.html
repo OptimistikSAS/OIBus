@@ -1,28 +1,54 @@
 <div>
   <div class="d-flex justify-content-between oib-box-title">
     <span translate="south.test-item.title"></span>
-    <div>
-      <button
-        #testButton
-        translate="south.test-item.test-button"
-        id="test-item"
-        class="btn btn-secondary btn-sm oib-box-btn m-0"
-        [disabled]="isTestRunning"
-        (click)="testItem()"
-      >
-        @if (isTestRunning) {
-          <span class="fa fa-spinner fa-spin ms-2"></span>
-        } @else {
-          <span class="fa fa-check ms-2"></span>
-        }
-      </button>
-      <button
-        translate="south.test-item.cancel-button"
-        id="cancel-test-item"
-        class="btn btn-danger btn-sm oib-box-btn ms-3"
-        [disabled]="!isTestRunning"
-        (click)="cancelTesting()"
-      ></button>
+
+    <div class="align-items-center d-flex gap-2">
+      <!-- Change display mode -->
+      @if (currentDisplayMode) {
+        <div ngbDropdown class="d-inline-block">
+          <button type="button" class="btn btn-link oib-box-btn m-0" id="view-dropdown" ngbDropdownToggle>
+            <span class="fa {{ displayModeIcons[currentDisplayMode] }}"></span>
+            <span style="margin-left: 5px">{{ 'south.test-item.view.' + currentDisplayMode | translate }}</span>
+          </button>
+          <div ngbDropdownMenu aria-labelledby="view-dropdown">
+            @for (displayMode of availableDisplayModes; track $index) {
+              <button
+                ngbDropdownItem
+                class="{{ currentDisplayMode === displayMode ? 'active' : '' }}"
+                (click)="changeDisplayMode(displayMode)"
+              >
+                <span class="fa {{ displayModeIcons[displayMode] }}"></span>
+                <span style="margin-left: 5px">{{ 'south.test-item.view.' + displayMode | translate }}</span>
+              </button>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Test run buttons -->
+      <div>
+        <button
+          #testButton
+          translate="south.test-item.test-button"
+          id="test-item"
+          class="btn btn-secondary btn-sm oib-box-btn m-0"
+          [disabled]="isTestRunning"
+          (click)="testItem()"
+        >
+          @if (isTestRunning) {
+            <span class="fa fa-spinner fa-spin ms-2"></span>
+          } @else {
+            <span class="fa fa-check ms-2"></span>
+          }
+        </button>
+        <button
+          translate="south.test-item.cancel-button"
+          id="cancel-test-item"
+          class="btn btn-danger btn-sm oib-box-btn ms-2"
+          [disabled]="!isTestRunning"
+          (click)="cancelTesting()"
+        ></button>
+      </div>
     </div>
   </div>
 
@@ -50,5 +76,45 @@
     </form>
   }
 </div>
+@if (!currentDisplayMode && statusMessage) {
+  <div id="test-item-placeholder" class="p-2">
+    <span>{{ statusMessage }}</span>
+  </div>
+} @else {
+  @if (currentDisplayMode === 'table') {
+    <div id="tableView" class="mb-2 grid-table">
+      <div class="grid-table-header fw-bold">
+        <div class="p-2">{{ 'south.test-item.table.timestamp' | translate }}</div>
+        <div class="p-2">{{ 'south.test-item.table.pointId' | translate }}</div>
+        <div class="p-2">{{ 'south.test-item.table.value' | translate }}</div>
+        <div class="p-2">{{ 'south.test-item.table.other' | translate }}</div>
+      </div>
+      @for (item of tableView.content; track $index) {
+        <div class="grid-table-row">
+          <div class="p-2 h-100">{{ item.timestamp }}</div>
+          <div class="p-2 h-100">{{ item.pointId }}</div>
+          <div class="p-2 h-100" style="overflow-wrap: anywhere">{{ convertDataToString(item.data).value }}</div>
+          <div class="p-2 h-100">
+            <code class="json-content">{{ convertDataToString(item.data).other }}</code>
+          </div>
+        </div>
+      }
+      @if (tableView.totalElements === 0) {
+        <div class="p-2 h-100">{{ 'south.test-item.table.no-values' | translate }}</div>
+      }
+    </div>
+    @if (tableView.totalElements) {
+      <div class="d-flex flex-row-reverse">
+        <div [class]="tableView.totalPages > 1 ? 'ms-2' : ''">
+          <oib-pagination [page]="tableView" (pageChanged)="changePage($event)" />
+        </div>
+      </div>
+    }
+  }
 
-<oib-code-block height="30vh" #monacoEditor contentType="json" [readOnly]="true" />
+  <!--
+    The code block needs to be the DOM in order to be able to switch to it, because it takes time to load it.
+    Without this, the first render always fails to add the test result to it.
+  -->
+  <oib-code-block [hidden]="currentDisplayMode === 'table'" height="30vh" #monacoEditor contentType="json" [readOnly]="true" />
+}
