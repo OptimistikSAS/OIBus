@@ -1,28 +1,54 @@
 <div>
   <div class="d-flex justify-content-between oib-box-title">
     <span translate="south.test-item.title"></span>
-    <div>
-      <button
-        #testButton
-        translate="south.test-item.test-button"
-        id="test-item"
-        class="btn btn-secondary btn-sm oib-box-btn m-0"
-        [disabled]="isTestRunning"
-        (click)="testItem()"
-      >
-        @if (isTestRunning) {
-          <span class="fa fa-spinner fa-spin ms-2"></span>
-        } @else {
-          <span class="fa fa-check ms-2"></span>
-        }
-      </button>
-      <button
-        translate="south.test-item.cancel-button"
-        id="cancel-test-item"
-        class="btn btn-danger btn-sm oib-box-btn ms-3"
-        [disabled]="!isTestRunning"
-        (click)="cancelTesting()"
-      ></button>
+
+    <div class="align-items-center d-flex gap-2">
+      <!-- Change display mode -->
+      @if (currentDisplayMode) {
+        <div ngbDropdown class="d-inline-block">
+          <button type="button" class="btn btn-link oib-box-btn m-0" id="view-dropdown" ngbDropdownToggle>
+            <span class="fa {{ testResultView().currentDisplayModeIcon }}"></span>
+            <span style="margin-left: 5px">{{ 'south.test-item.view.' + currentDisplayMode | translate }}</span>
+          </button>
+          <div ngbDropdownMenu aria-labelledby="view-dropdown">
+            @for (displayMode of availableDisplayModes; track $index) {
+              <button
+                ngbDropdownItem
+                class="{{ currentDisplayMode === displayMode ? 'active' : '' }}"
+                (click)="changeDisplayMode(displayMode)"
+              >
+                <span class="fa {{ testResultView().displayModeIcons[displayMode] }}"></span>
+                <span style="margin-left: 5px">{{ 'south.test-item.view.' + displayMode | translate }}</span>
+              </button>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Test run buttons -->
+      <div>
+        <button
+          #testButton
+          translate="south.test-item.test-button"
+          id="test-item"
+          class="btn btn-secondary btn-sm oib-box-btn m-0"
+          [disabled]="isTestRunning"
+          (click)="testItem()"
+        >
+          @if (isTestRunning) {
+            <span class="fa fa-spinner fa-spin ms-2"></span>
+          } @else {
+            <span class="fa fa-check ms-2"></span>
+          }
+        </button>
+        <button
+          translate="south.test-item.cancel-button"
+          id="cancel-test-item"
+          class="btn btn-danger btn-sm oib-box-btn ms-2"
+          [disabled]="!isTestRunning"
+          (click)="cancelTesting()"
+        ></button>
+      </div>
     </div>
   </div>
 
@@ -50,5 +76,8 @@
     </form>
   }
 </div>
-
-<oib-code-block height="30vh" #monacoEditor contentType="json" [readOnly]="true" />
+<oib-item-test-result
+  #testResultViewComponent
+  (availableDisplayModes)="onAvailableDisplayModesChange($event)"
+  (currentDisplayMode)="onCurrentDisplayModeChange($event)"
+/>
