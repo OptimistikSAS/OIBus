@@ -15,8 +15,10 @@ async function updateOIAMessageTable(knex: Knex): Promise<void> {
 }
 
 async function updateOIACommandTable(knex: Knex): Promise<void> {
-  await knex.schema.alterTable(COMMANDS_TABLE, _table => {
-    // table.string('history_id');
+  await knex.schema.alterTable(COMMANDS_TABLE, table => {
+    table.string('certificate_id');
+    table.string('ip_filter_id');
+    table.string('history_id');
   });
 }
 
