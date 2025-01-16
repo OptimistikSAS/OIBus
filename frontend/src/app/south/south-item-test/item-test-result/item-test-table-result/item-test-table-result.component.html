@@ -1,0 +1,53 @@
+@switch (tableType) {
+  @case ('time-values') {
+    <div id="tableView" class="mb-2 grid-table">
+      <div class="grid-table-header fw-bold">
+        <div class="p-2">{{ 'south.test-item.table.timestamp' | translate }}</div>
+        <div class="p-2">{{ 'south.test-item.table.pointId' | translate }}</div>
+        <div class="p-2">{{ 'south.test-item.table.value' | translate }}</div>
+        <div class="p-2">{{ 'south.test-item.table.other' | translate }}</div>
+      </div>
+      @for (item of tableView.content; track $index) {
+        <div class="grid-table-row">
+          <div class="align-items-center d-flex h-100 p-2">{{ item.timestamp }}</div>
+          <div class="align-items-center d-flex h-100 p-2">{{ item.pointId }}</div>
+          <div class="align-items-center d-flex h-100 p-2" style="overflow-wrap: anywhere">{{ convertDataToString(item.data).value }}</div>
+          <div class="align-items-center d-flex h-100 p-2">
+            <code class="json-content">{{ convertDataToString(item.data).other }}</code>
+          </div>
+        </div>
+      }
+      @if (tableView.totalElements === 0) {
+        <div class="p-2 h-100" style="grid-column: 1/-1">{{ 'south.test-item.table.no-values' | translate }}</div>
+      }
+    </div>
+  }
+
+  @case ('generic') {
+    <div id="tableView" class="mb-2 grid-table" [style]="'grid-template-columns: repeat(' + headers?.length + ', minmax(0,max-content))'">
+      <div class="grid-table-header fw-bold">
+        @for (header of headers; track $index) {
+          <div class="p-2">{{ header }}</div>
+        }
+      </div>
+      @for (items of genericTableView.content; track $index) {
+        <div class="grid-table-row">
+          @for (item of items; track $index) {
+            <div class="align-items-center d-flex h-100 p-2" style="overflow-wrap: anywhere">{{ item }}</div>
+          }
+        </div>
+      }
+      @if (genericTableView.totalElements === 0) {
+        <div class="p-2 h-100" style="grid-column: 1/-1">{{ 'south.test-item.table.no-values' | translate }}</div>
+      }
+    </div>
+  }
+}
+
+@if (tableView.totalElements || genericTableView.totalElements) {
+  <div class="d-flex flex-row-reverse">
+    <div [class]="tableView.totalPages > 1 ? 'ms-2' : ''">
+      <oib-pagination [page]="tableView" (pageChanged)="changePage($event)" />
+    </div>
+  </div>
+}
