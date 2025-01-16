@@ -168,11 +168,12 @@ const LOG_DB_NAME = 'logs.db';
     historyQueryEngine
   );
 
+  const ipFilterService = new IPFilterService(new JoiValidator(), repositoryService.ipFilterRepository, oIAnalyticsMessageService);
   const oIBusService = new OIBusService(
     new JoiValidator(),
     repositoryService.engineRepository,
     repositoryService.engineMetricsRepository,
-    repositoryService.ipFilterRepository,
+    ipFilterService,
     oIAnalyticsRegistrationService,
     encryptionService,
     loggerService,
@@ -195,13 +196,12 @@ const LOG_DB_NAME = 'logs.db';
     oIAnalyticsMessageService,
     dataStreamEngine
   );
-  const ipFilterService = new IPFilterService(
+  const certificateService = new CertificateService(
     new JoiValidator(),
-    repositoryService.ipFilterRepository,
-    oIAnalyticsMessageService,
-    oIBusService.getProxyServer()
+    repositoryService.certificateRepository,
+    encryptionService,
+    oIAnalyticsMessageService
   );
-  const certificateService = new CertificateService(new JoiValidator(), repositoryService.certificateRepository, encryptionService);
   const userService = new UserService(new JoiValidator(), repositoryService.userRepository);
   const logService = new LogService(new JoiValidator(), repositoryService.logRepository);
 
@@ -213,6 +213,8 @@ const LOG_DB_NAME = 'logs.db';
     oIAnalyticsClient,
     oIBusService,
     scanModeService,
+    ipFilterService,
+    certificateService,
     southService,
     northService,
     loggerService.logger!,

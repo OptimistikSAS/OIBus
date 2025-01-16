@@ -9,6 +9,8 @@ import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service
 import { generateRandomId } from './utils';
 import { DateTime, Duration } from 'luxon';
 import { CertificateCommandDTO } from '../../shared/model/certificate.model';
+import OIAnalyticsMessageService from './oia/oianalytics-message.service';
+import OianalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
 
 jest.mock('./utils');
 jest.mock('../web-server/controllers/validators/joi.validator');
@@ -16,6 +18,7 @@ jest.mock('../web-server/controllers/validators/joi.validator');
 const validator = new JoiValidator();
 const certificateRepository: CertificateRepository = new CertificateRepositoryMock();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
+const oIAnalyticsMessageService: OIAnalyticsMessageService = new OianalyticsMessageServiceMock();
 
 let service: CertificateService;
 describe('Certificate Service', () => {
@@ -23,7 +26,7 @@ describe('Certificate Service', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
-    service = new CertificateService(validator, certificateRepository, encryptionService);
+    service = new CertificateService(validator, certificateRepository, encryptionService, oIAnalyticsMessageService);
   });
 
   it('findAll() should find all certificated', () => {
