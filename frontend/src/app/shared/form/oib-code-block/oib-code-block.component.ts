@@ -29,6 +29,7 @@ export class OibCodeBlockComponent implements ControlValueAccessor {
   readonly height = input('12rem');
   readonly readOnly = input(false);
   readonly disabled = signal(false);
+  readonly chukedValueProgress = signal(0);
 
   onChange: (value: string) => void = () => {};
   onTouched = () => {};
@@ -64,7 +65,11 @@ export class OibCodeBlockComponent implements ControlValueAccessor {
           selectOnLineNumbers: true,
           wordWrap: 'on',
           minimap: { enabled: false },
-          readOnly: this.readOnly()
+          readOnly: this.readOnly(),
+          automaticLayout: true,
+          stickyScroll: {
+            enabled: false
+          }
         })
       );
 
@@ -90,6 +95,82 @@ export class OibCodeBlockComponent implements ControlValueAccessor {
       // and it'll be set once the loading is complete
       this.pendingValueToWrite.set(value);
     }
+  }
+
+  writeValueChunked(value: string, chunkSize = 100_000): Promise<void> {
+    // we can only set the value once the editor is loaded, which can take some time on first load
+    const codeEditor = this.codeEditorInstance();
+    if (!codeEditor) {
+      // if the editor is not yet loaded, we store the value to write,
+      // and it'll be set once the loading is complete
+      this.pendingValueToWrite.set(value);
+      return Promise.resolve();
+    }
+
+    return new Promise(resolve => {
+      const model = codeEditor.getModel();
+      if (!model) return resolve();
+
+      let offset = 0;
+      const totalLength = value.length;
+
+      // First chunk needs to replace any existing content
+      const firstChunk = value.slice(0, chunkSize);
+      model.pushEditOperations(
+        [],
+        [
+          {
+            range: model.getFullModelRange(),
+            text: firstChunk
+          }
+        ],
+        () => null
+      );
+
+      offset = firstChunk.length;
+      this.chukedValueProgress.update(() => offset / totalLength);
+
+      const applyNextChunk = () => {
+        const chunk = value.slice(offset, offset + chunkSize);
+
+        if (chunk.length === 0) {
+          this.chukedValueProgress.update(() => 1);
+          return resolve();
+        }
+
+        // Get the current last position in the model
+        const lastLine = model!.getLineCount();
+        const lastLineContent = model!.getLineContent(lastLine);
+
+        // Apply the chunk at the end of the current content
+        model?.pushEditOperations(
+          [],
+          [
+            {
+              range: {
+                startLineNumber: lastLine,
+                startColumn: lastLineContent.length + 1,
+                endLineNumber: lastLine,
+                endColumn: lastLineContent.length + 1
+              },
+              text: chunk
+            }
+          ],
+          () => null
+        );
+
+        offset += chunk.length;
+
+        // Calculate and log progress
+        this.chukedValueProgress.update(() => offset / totalLength);
+
+        // Schedule next chunk
+        requestAnimationFrame(applyNextChunk);
+      };
+
+      // Start processing remaining chunks
+      requestAnimationFrame(applyNextChunk);
+    });
   }
 
   changeLanguage(language: string) {
