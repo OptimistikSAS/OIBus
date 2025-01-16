@@ -12,14 +12,20 @@ import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.mo
 import OIAnalyticsCommandRepository from './oianalytics-command.repository';
 import { createPageFromArray } from '../../../shared/model/types';
 import {
+  OIAnalyticsFetchCreateCertificateCommandDTO,
+  OIAnalyticsFetchCreateIPFilterCommandDTO,
   OIAnalyticsFetchCreateNorthConnectorCommandDTO,
   OIAnalyticsFetchCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO,
   OIAnalyticsFetchCreateSouthConnectorCommandDTO,
+  OIAnalyticsFetchDeleteCertificateCommandDTO,
+  OIAnalyticsFetchDeleteIPFilterCommandDTO,
   OIAnalyticsFetchDeleteNorthConnectorCommandDTO,
   OIAnalyticsFetchDeleteScanModeCommandDTO,
   OIAnalyticsFetchDeleteSouthConnectorCommandDTO,
   OIAnalyticsFetchRestartEngineCommandDTO,
+  OIAnalyticsFetchUpdateCertificateCommandDTO,
   OIAnalyticsFetchUpdateEngineSettingsCommandDTO,
+  OIAnalyticsFetchUpdateIPFilterCommandDTO,
   OIAnalyticsFetchUpdateNorthConnectorCommandDTO,
   OIAnalyticsFetchUpdateRegistrationSettingsCommandDTO,
   OIAnalyticsFetchUpdateScanModeCommandDTO,
@@ -704,6 +710,168 @@ describe('Repository with populated database', () => {
       repository.delete(testData.oIAnalytics.commands.oIBusList[5].id);
 
       expect(repository.findById(testData.oIAnalytics.commands.oIBusList[5].id)).toEqual(null);
+    });
+
+    it('should create a create ip filter command', () => {
+      const command: OIAnalyticsFetchCreateIPFilterCommandDTO = {
+        id: 'createIpFilterCommandId',
+        targetVersion: 'v3.5.0',
+        type: 'create-ip-filter',
+        commandContent: {
+          address: '*',
+          description: 'desc'
+        }
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        targetVersion: command.targetVersion,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        commandContent: { address: '*', description: 'desc' }
+      });
+    });
+
+    it('should create an update ip filter command', () => {
+      const command: OIAnalyticsFetchUpdateIPFilterCommandDTO = {
+        id: 'updateIpFilterCommandId',
+        targetVersion: 'v3.5.0',
+        type: 'update-ip-filter',
+        ipFilterId: 'ipFilterId',
+        commandContent: {
+          address: '*',
+          description: 'desc'
+        }
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        targetVersion: command.targetVersion,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        ipFilterId: 'ipFilterId',
+        commandContent: { address: '*', description: 'desc' }
+      });
+    });
+
+    it('should create a delete ip filter command', () => {
+      const command: OIAnalyticsFetchDeleteIPFilterCommandDTO = {
+        id: 'deleteIpFilterCommandId',
+        targetVersion: 'v3.5.0',
+        type: 'delete-ip-filter',
+        ipFilterId: 'ipFilterId'
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        targetVersion: command.targetVersion,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        ipFilterId: 'ipFilterId'
+      });
+    });
+
+    it('should create a create certificate command', () => {
+      const command: OIAnalyticsFetchCreateCertificateCommandDTO = {
+        id: 'createCertificateCommandId',
+        targetVersion: 'v3.5.0',
+        type: 'create-certificate',
+        commandContent: {
+          name: 'name',
+          description: 'desc',
+          regenerateCertificate: false,
+          options: null
+        }
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        targetVersion: command.targetVersion,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        commandContent: {
+          name: 'name',
+          description: 'desc',
+          regenerateCertificate: false,
+          options: null
+        }
+      });
+    });
+
+    it('should create an update certificate command', () => {
+      const command: OIAnalyticsFetchUpdateCertificateCommandDTO = {
+        id: 'updateCertificateCommandId',
+        targetVersion: 'v3.5.0',
+        type: 'update-certificate',
+        certificateId: 'certificateId',
+        commandContent: {
+          name: 'name',
+          description: 'desc',
+          regenerateCertificate: false,
+          options: null
+        }
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        targetVersion: command.targetVersion,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        certificateId: 'certificateId',
+        commandContent: {
+          name: 'name',
+          description: 'desc',
+          regenerateCertificate: false,
+          options: null
+        }
+      });
+    });
+
+    it('should create a delete certificate command', () => {
+      const command: OIAnalyticsFetchDeleteCertificateCommandDTO = {
+        id: 'deleteCertificateCommandId',
+        targetVersion: 'v3.5.0',
+        type: 'delete-certificate',
+        certificateId: 'certificateId'
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        targetVersion: command.targetVersion,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        certificateId: 'certificateId'
+      });
     });
   });
 
