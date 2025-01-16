@@ -11,16 +11,22 @@ import { OIAnalyticsRegistration, OIAnalyticsRegistrationEditCommand } from '../
 import OIBusService from '../oibus.service';
 import {
   OIBusCommand,
+  OIBusCreateCertificateCommand,
+  OIBusCreateIPFilterCommand,
   OIBusCreateNorthConnectorCommand,
   OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand,
   OIBusCreateScanModeCommand,
   OIBusCreateSouthConnectorCommand,
+  OIBusDeleteCertificateCommand,
+  OIBusDeleteIPFilterCommand,
   OIBusDeleteNorthConnectorCommand,
   OIBusDeleteScanModeCommand,
   OIBusDeleteSouthConnectorCommand,
   OIBusRegenerateCipherKeysCommand,
   OIBusRestartEngineCommand,
+  OIBusUpdateCertificateCommand,
   OIBusUpdateEngineSettingsCommand,
+  OIBusUpdateIPFilterCommand,
   OIBusUpdateNorthConnectorCommand,
   OIBusUpdateRegistrationSettingsCommand,
   OIBusUpdateScanModeCommand,
@@ -37,6 +43,8 @@ import crypto from 'node:crypto';
 import OIAnalyticsMessageService from './oianalytics-message.service';
 import OIAnalyticsRegistrationService from './oianalytics-registration.service';
 import { EventEmitter } from 'node:events';
+import IPFilterService from '../ip-filter.service';
+import CertificateService from '../certificate.service';
 
 const UPDATE_SETTINGS_FILE = 'update.json';
 
@@ -54,6 +62,8 @@ export default class OIAnalyticsCommandService {
     private oIAnalyticsClient: OIAnalyticsClient,
     private oIBusService: OIBusService,
     private scanModeService: ScanModeService,
+    private ipFilterService: IPFilterService,
+    private certificateService: CertificateService,
     private southService: SouthService,
     private northService: NorthService,
     private logger: pino.Logger,
@@ -281,6 +291,24 @@ export default class OIAnalyticsCommandService {
         case 'delete-scan-mode':
           await this.executeDeleteScanModeCommand(command);
           break;
+        case 'create-ip-filter':
+          await this.executeCreateIPFilterCommand(command);
+          break;
+        case 'update-ip-filter':
+          await this.executeUpdateIPFilterCommand(command);
+          break;
+        case 'delete-ip-filter':
+          await this.executeDeleteIPFilterCommand(command);
+          break;
+        case 'create-certificate':
+          await this.executeCreateCertificateCommand(command);
+          break;
+        case 'update-certificate':
+          await this.executeUpdateCertificateCommand(command);
+          break;
+        case 'delete-certificate':
+          await this.executeDeleteCertificateCommand(command);
+          break;
         case 'create-south':
           {
             const privateKey = await this.encryptionService.decryptText(registration.privateCipherKey!);
@@ -458,6 +486,36 @@ export default class OIAnalyticsCommandService {
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Scan mode deleted successfully');
   }
 
+  private async executeCreateIPFilterCommand(command: OIBusCreateIPFilterCommand) {
+    await this.ipFilterService.create(command.commandContent);
+    this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'IP Filter created successfully');
+  }
+
+  private async executeUpdateIPFilterCommand(command: OIBusUpdateIPFilterCommand) {
+    await this.ipFilterService.update(command.ipFilterId, command.commandContent);
+    this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'IP Filter updated successfully');
+  }
+
+  private async executeDeleteIPFilterCommand(command: OIBusDeleteIPFilterCommand) {
+    await this.ipFilterService.delete(command.ipFilterId);
+    this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'IP Filter deleted successfully');
+  }
+
+  private async executeCreateCertificateCommand(command: OIBusCreateCertificateCommand) {
+    await this.certificateService.create(command.commandContent);
+    this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Certificate created successfully');
+  }
+
+  private async executeUpdateCertificateCommand(command: OIBusUpdateCertificateCommand) {
+    await this.certificateService.update(command.certificateId, command.commandContent);
+    this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Certificate updated successfully');
+  }
+
+  private async executeDeleteCertificateCommand(command: OIBusDeleteCertificateCommand) {
+    await this.certificateService.delete(command.certificateId);
+    this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Certificate deleted successfully');
+  }
+
   private async decryptSouthSettings(command: OIBusCreateSouthConnectorCommand | OIBusUpdateSouthConnectorCommand, privateKey: string) {
     const manifest = this.southService.getInstalledSouthManifests().find(element => element.id === command.commandContent.type)!;
     command.commandContent.settings = await this.encryptionService.decryptSecretsWithPrivateKey(
@@ -568,12 +626,24 @@ export default class OIAnalyticsCommandService {
         return registration.commandPermissions.createScanMode;
       case 'update-scan-mode':
         return registration.commandPermissions.updateScanMode;
+      case 'delete-scan-mode':
+        return registration.commandPermissions.deleteScanMode;
+      case 'create-ip-filter':
+        return registration.commandPermissions.createIpFilter;
+      case 'update-ip-filter':
+        return registration.commandPermissions.updateIpFilter;
+      case 'delete-ip-filter':
+        return registration.commandPermissions.deleteIpFilter;
+      case 'create-certificate':
+        return registration.commandPermissions.createCertificate;
+      case 'update-certificate':
+        return registration.commandPermissions.updateCertificate;
+      case 'delete-certificate':
+        return registration.commandPermissions.deleteCertificate;
       case 'update-north':
         return registration.commandPermissions.updateNorth;
       case 'update-south':
         return registration.commandPermissions.updateSouth;
-      case 'delete-scan-mode':
-        return registration.commandPermissions.deleteScanMode;
       case 'delete-south':
         return registration.commandPermissions.deleteSouth;
       case 'delete-north':
@@ -595,9 +665,15 @@ export const toOIBusCommandDTO = (command: OIBusCommand): OIBusCommandDTO => {
     case 'create-south':
     case 'create-scan-mode':
     case 'update-scan-mode':
+    case 'delete-scan-mode':
+    case 'create-ip-filter':
+    case 'update-ip-filter':
+    case 'delete-ip-filter':
+    case 'create-certificate':
+    case 'update-certificate':
+    case 'delete-certificate':
     case 'update-north':
     case 'update-south':
-    case 'delete-scan-mode':
     case 'delete-south':
     case 'delete-north':
     case 'create-or-update-south-items-from-csv':
