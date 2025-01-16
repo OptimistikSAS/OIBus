@@ -6,7 +6,7 @@ import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-se
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { NorthConnectorCommandDTO } from '../../../shared/model/north-connector.model';
 import { SouthConnectorCommandDTO } from '../../../shared/model/south-connector.model';
-import { CertificateDTO } from '../../../shared/model/certificate.model';
+import { CertificateCommandDTO, CertificateDTO } from '../../../shared/model/certificate.model';
 import { UserCommandDTO } from '../../../shared/model/user.model';
 import { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
 import { ScanModeCommandDTO } from '../../../shared/model/scan-mode.model';
@@ -118,6 +118,12 @@ export const OIANALYTICS_FETCH_COMMAND_TYPES = [
   'create-scan-mode',
   'update-scan-mode',
   'delete-scan-mode',
+  'create-ip-filter',
+  'update-ip-filter',
+  'delete-ip-filter',
+  'create-certificate',
+  'update-certificate',
+  'delete-certificate',
   'create-south',
   'update-south',
   'delete-south',
@@ -180,6 +186,38 @@ export interface OIAnalyticsFetchDeleteScanModeCommandDTO extends BaseOIAnalytic
   scanModeId: string;
 }
 
+export interface OIAnalyticsFetchCreateIPFilterCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'create-ip-filter';
+  commandContent: IPFilterCommandDTO;
+}
+
+export interface OIAnalyticsFetchUpdateIPFilterCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'update-ip-filter';
+  ipFilterId: string;
+  commandContent: IPFilterCommandDTO;
+}
+
+export interface OIAnalyticsFetchDeleteIPFilterCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'delete-ip-filter';
+  ipFilterId: string;
+}
+
+export interface OIAnalyticsFetchCreateCertificateCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'create-certificate';
+  commandContent: CertificateCommandDTO;
+}
+
+export interface OIAnalyticsFetchUpdateCertificateCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'update-certificate';
+  certificateId: string;
+  commandContent: CertificateCommandDTO;
+}
+
+export interface OIAnalyticsFetchDeleteCertificateCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'delete-certificate';
+  certificateId: string;
+}
+
 export interface OIAnalyticsFetchCreateSouthConnectorCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
   type: 'create-south';
   retrieveSecretsFromSouth: string | null; // used to retrieve passwords in case of duplicate
@@ -231,6 +269,12 @@ export type OIAnalyticsFetchCommandDTO =
   | OIAnalyticsFetchCreateScanModeCommandDTO
   | OIAnalyticsFetchUpdateScanModeCommandDTO
   | OIAnalyticsFetchDeleteScanModeCommandDTO
+  | OIAnalyticsFetchCreateIPFilterCommandDTO
+  | OIAnalyticsFetchUpdateIPFilterCommandDTO
+  | OIAnalyticsFetchDeleteIPFilterCommandDTO
+  | OIAnalyticsFetchCreateCertificateCommandDTO
+  | OIAnalyticsFetchUpdateCertificateCommandDTO
+  | OIAnalyticsFetchDeleteCertificateCommandDTO
   | OIAnalyticsFetchCreateSouthConnectorCommandDTO
   | OIAnalyticsFetchUpdateSouthConnectorCommandDTO
   | OIAnalyticsFetchDeleteSouthConnectorCommandDTO
