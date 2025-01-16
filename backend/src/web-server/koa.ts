@@ -31,9 +31,7 @@ export interface KoaApplication extends Koa {
   northService: NorthService;
   historyQueryService: HistoryQueryService;
   homeMetricsService: HomeMetricsService;
-  ipFilters: {
-    whiteList: Array<string>;
-  };
+  whiteList: Array<string>;
   encryptionService: EncryptionService;
   userService: UserService;
   logger: pino.Logger;
