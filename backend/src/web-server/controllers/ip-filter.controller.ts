@@ -20,7 +20,7 @@ export default class IpFilterController extends AbstractController {
 
   async create(ctx: KoaContext<IPFilterCommandDTO, IPFilterDTO>): Promise<void> {
     try {
-      const ipFilter = await ctx.app.ipFilterService.create(ctx.request.body!, ctx.app.ipFilters);
+      const ipFilter = await ctx.app.ipFilterService.create(ctx.request.body!);
       ctx.created(toIPFilterDTO(ipFilter));
     } catch (error: unknown) {
       ctx.badRequest((error as Error).message);
@@ -29,7 +29,7 @@ export default class IpFilterController extends AbstractController {
 
   async update(ctx: KoaContext<IPFilterCommandDTO, void>): Promise<void> {
     try {
-      await ctx.app.ipFilterService.update(ctx.params.id, ctx.request.body!, ctx.app.ipFilters);
+      await ctx.app.ipFilterService.update(ctx.params.id, ctx.request.body!);
       ctx.noContent();
     } catch (error: unknown) {
       ctx.badRequest((error as Error).message);
@@ -38,7 +38,7 @@ export default class IpFilterController extends AbstractController {
 
   async delete(ctx: KoaContext<void, void>): Promise<void> {
     try {
-      await ctx.app.ipFilterService.delete(ctx.params.id!, ctx.app.ipFilters);
+      await ctx.app.ipFilterService.delete(ctx.params.id!);
       ctx.noContent();
     } catch (error: unknown) {
       ctx.badRequest((error as Error).message);
