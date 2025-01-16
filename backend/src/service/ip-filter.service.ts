@@ -4,14 +4,15 @@ import { ipFilterSchema } from '../web-server/controllers/validators/oibus-valid
 import IpFilterRepository from '../repository/config/ip-filter.repository';
 import { IPFilterCommandDTO, IPFilterDTO } from '../../shared/model/ip-filter.model';
 import { IPFilter } from '../model/ip-filter.model';
-import ProxyServer from '../web-server/proxy-server';
+import { EventEmitter } from 'node:events';
 
 export default class IPFilterService {
+  public whiteListEvent: EventEmitter = new EventEmitter(); // Used to trigger white list for Proxy server and Web server
+
   constructor(
     protected readonly validator: JoiValidator,
     private ipFilterRepository: IpFilterRepository,
-    private oIAnalyticsMessageService: OIAnalyticsMessageService,
-    private proxyServer: ProxyServer
+    private oIAnalyticsMessageService: OIAnalyticsMessageService
   ) {}
 
   findAll(): Array<IPFilter> {
@@ -22,18 +23,17 @@ export default class IPFilterService {
     return this.ipFilterRepository.findById(id);
   }
 
-  async create(command: IPFilterCommandDTO, webServerFilters: { whiteList: Array<string> }): Promise<IPFilter> {
+  async create(command: IPFilterCommandDTO): Promise<IPFilter> {
     await this.validator.validate(ipFilterSchema, command);
     const ipFilter = this.ipFilterRepository.create(command);
     const ipFilters = this.ipFilterRepository.findAll().map(ip => ip.address);
 
-    this.proxyServer.refreshIpFilters(ipFilters);
-    webServerFilters.whiteList = ['127.0.0.1', '::1', '::ffff:127.0.0.1', ...ipFilters];
+    this.whiteListEvent.emit('update-white-list', ['127.0.0.1', '::1', '::ffff:127.0.0.1', ...ipFilters]);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     return ipFilter;
   }
 
-  async update(id: string, command: IPFilterCommandDTO, webServerFilters: { whiteList: Array<string> }): Promise<void> {
+  async update(id: string, command: IPFilterCommandDTO): Promise<void> {
     await this.validator.validate(ipFilterSchema, command);
     const ipFilter = this.ipFilterRepository.findById(id);
     if (!ipFilter) {
@@ -43,12 +43,11 @@ export default class IPFilterService {
     this.ipFilterRepository.update(id, command);
 
     const ipFilters = this.ipFilterRepository.findAll().map(ip => ip.address);
-    this.proxyServer.refreshIpFilters(ipFilters);
-    webServerFilters.whiteList = ['127.0.0.1', '::1', '::ffff:127.0.0.1', ...ipFilters];
+    this.whiteListEvent.emit('update-white-list', ['127.0.0.1', '::1', '::ffff:127.0.0.1', ...ipFilters]);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 
-  async delete(id: string, webServerFilters: { whiteList: Array<string> }): Promise<void> {
+  async delete(id: string): Promise<void> {
     const ipFilter = this.ipFilterRepository.findById(id);
     if (!ipFilter) {
       throw new Error(`IP Filter ${id} not found`);
@@ -56,8 +55,7 @@ export default class IPFilterService {
 
     this.ipFilterRepository.delete(id);
     const ipFilters = this.ipFilterRepository.findAll().map(ip => ip.address);
-    this.proxyServer.refreshIpFilters(ipFilters);
-    webServerFilters.whiteList = ['127.0.0.1', '::1', '::ffff:127.0.0.1', ...ipFilters];
+    this.whiteListEvent.emit('update-white-list', ['127.0.0.1', '::1', '::ffff:127.0.0.1', ...ipFilters]);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 }
