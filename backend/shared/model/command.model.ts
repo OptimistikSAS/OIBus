@@ -26,9 +26,12 @@ export const OIBUS_COMMAND_TYPES = [
   'create-south',
   'update-south',
   'delete-south',
+  'test-south-connection',
+  'test-south-item',
   'create-north',
   'update-north',
   'delete-north',
+  'test-north-connection',
   'create-or-update-south-items-from-csv'
 ] as const;
 export type OIBusCommandType = (typeof OIBUS_COMMAND_TYPES)[number];
@@ -156,6 +159,19 @@ export interface OIBusDeleteSouthConnectorCommandDTO extends BaseOIBusCommandDTO
   southConnectorId: string;
 }
 
+export interface OIBusTestSouthConnectorCommandDTO extends BaseOIBusCommandDTO {
+  type: 'test-south-connection';
+  targetVersion: string;
+  southConnectorId: string;
+}
+
+export interface OIBusTestSouthConnectorItemCommandDTO extends BaseOIBusCommandDTO {
+  type: 'test-south-item';
+  targetVersion: string;
+  southConnectorId: string;
+  itemId: string;
+}
+
 export interface OIBusCreateNorthConnectorCommandDTO extends BaseOIBusCommandDTO {
   type: 'create-north';
   targetVersion: string;
@@ -171,6 +187,12 @@ export interface OIBusUpdateNorthConnectorCommandDTO extends BaseOIBusCommandDTO
 
 export interface OIBusDeleteNorthConnectorCommandDTO extends BaseOIBusCommandDTO {
   type: 'delete-north';
+  targetVersion: string;
+  northConnectorId: string;
+}
+
+export interface OIBusTestNorthConnectorCommandDTO extends BaseOIBusCommandDTO {
+  type: 'test-north-connection';
   targetVersion: string;
   northConnectorId: string;
 }
@@ -204,9 +226,12 @@ export type OIBusCommandDTO =
   | OIBusCreateSouthConnectorCommandDTO
   | OIBusUpdateSouthConnectorCommandDTO
   | OIBusDeleteSouthConnectorCommandDTO
+  | OIBusTestSouthConnectorCommandDTO
+  | OIBusTestSouthConnectorItemCommandDTO
   | OIBusCreateNorthConnectorCommandDTO
   | OIBusUpdateNorthConnectorCommandDTO
   | OIBusDeleteNorthConnectorCommandDTO
+  | OIBusTestNorthConnectorCommandDTO
   | OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO;
 
 export interface CommandSearchParam {
