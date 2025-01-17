@@ -305,6 +305,33 @@
             </div>
           </div>
         </div>
+        <div class="row mb-2">
+          <label class="form-label" translate="oia-module.commands.test-connector"></label>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="testNorthConnection" id="test-north-connection" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="create-north">{{ 'test-north-connection' | oibusCommandTypeEnum }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="testSouthConnection" id="test-south-connection" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="create-north">{{ 'test-south-connection' | oibusCommandTypeEnum }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="testSouthItem" id="test-south-item" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="create-north">{{ 'test-south-item' | oibusCommandTypeEnum }}</label>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </oib-box>
   </form>
