@@ -972,13 +972,19 @@ const oIAnalyticsRegistrationRegistered: OIAnalyticsRegistration = {
     updateHistoryQuery: true,
     deleteHistoryQuery: true,
     createOrUpdateHistoryItemsFromCsv: true,
+    testHistoryNorthConnection: true,
+    testHistorySouthConnection: true,
+    testHistorySouthItem: true,
     createSouth: true,
     updateSouth: true,
     deleteSouth: true,
+    testSouthConnection: true,
+    testSouthItem: true,
     createOrUpdateSouthItemsFromCsv: true,
     createNorth: true,
     updateNorth: true,
-    deleteNorth: true
+    deleteNorth: true,
+    testNorthConnection: true
   }
 };
 const oIAnalyticsRegistrationPending: OIAnalyticsRegistration = {
@@ -1019,13 +1025,19 @@ const oIAnalyticsRegistrationPending: OIAnalyticsRegistration = {
     updateHistoryQuery: true,
     deleteHistoryQuery: true,
     createOrUpdateHistoryItemsFromCsv: true,
+    testHistoryNorthConnection: true,
+    testHistorySouthConnection: true,
+    testHistorySouthItem: true,
     createSouth: true,
     updateSouth: true,
     deleteSouth: true,
+    testSouthConnection: true,
+    testSouthItem: true,
     createOrUpdateSouthItemsFromCsv: true,
     createNorth: true,
     updateNorth: true,
-    deleteNorth: true
+    deleteNorth: true,
+    testNorthConnection: true
   }
 };
 const oIAnalyticsRegistrationCommand: OIAnalyticsRegistrationEditCommand = {
@@ -1057,13 +1069,19 @@ const oIAnalyticsRegistrationCommand: OIAnalyticsRegistrationEditCommand = {
     updateHistoryQuery: true,
     deleteHistoryQuery: true,
     createOrUpdateHistoryItemsFromCsv: true,
+    testHistoryNorthConnection: true,
+    testHistorySouthConnection: true,
+    testHistorySouthItem: true,
     createSouth: true,
     updateSouth: true,
     deleteSouth: true,
+    testSouthConnection: true,
+    testSouthItem: true,
     createOrUpdateSouthItemsFromCsv: true,
     createNorth: true,
     updateNorth: true,
-    deleteNorth: true
+    deleteNorth: true,
+    testNorthConnection: true
   }
 };
 
