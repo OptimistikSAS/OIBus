@@ -23,6 +23,9 @@ import {
   OIAnalyticsFetchDeleteScanModeCommandDTO,
   OIAnalyticsFetchDeleteSouthConnectorCommandDTO,
   OIAnalyticsFetchRestartEngineCommandDTO,
+  OIAnalyticsFetchTestNorthConnectionCommandDTO,
+  OIAnalyticsFetchTestSouthConnectionCommandDTO,
+  OIAnalyticsFetchTestSouthItemCommandDTO,
   OIAnalyticsFetchUpdateCertificateCommandDTO,
   OIAnalyticsFetchUpdateEngineSettingsCommandDTO,
   OIAnalyticsFetchUpdateIPFilterCommandDTO,
@@ -46,6 +49,12 @@ import argon2 from 'argon2';
 import HistoryQueryRepository from './history-query.repository';
 import { HistoryQueryEntity, HistoryQueryItemEntity } from '../../model/histor-query.model';
 import { OIAnalyticsDeleteHistoryQuery, OIAnalyticsSaveHistoryQuery } from '../../model/oianalytics-message.model';
+import { NorthConnectorCommandDTO } from '../../../shared/model/north-connector.model';
+import {
+  SouthConnectorCommandDTO,
+  SouthConnectorItemCommandDTO,
+  SouthConnectorItemTestingSettings
+} from '../../../shared/model/south-connector.model';
 
 jest.mock('../../service/utils');
 jest.mock('argon2');
@@ -621,6 +630,64 @@ describe('Repository with populated database', () => {
       });
     });
 
+    it('should create a test south connection command', () => {
+      const command: OIAnalyticsFetchTestSouthConnectionCommandDTO = {
+        id: 'testSouthConnectionCommandId',
+        targetVersion: 'v3.5.0',
+        type: 'test-south-connection',
+        southConnectorId: 'southId',
+        commandContent: {} as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        targetVersion: command.targetVersion,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        southConnectorId: 'southId',
+        commandContent: {}
+      });
+    });
+
+    it('should create a test south item command', () => {
+      const command: OIAnalyticsFetchTestSouthItemCommandDTO = {
+        id: 'testSouthItemCommandId',
+        targetVersion: 'v3.5.0',
+        type: 'test-south-item',
+        southConnectorId: 'southId',
+        itemId: 'itemId',
+        commandContent: {
+          southCommand: {} as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
+          itemCommand: {} as SouthConnectorItemCommandDTO<SouthItemSettings>,
+          testingSettings: {} as SouthConnectorItemTestingSettings
+        }
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        targetVersion: command.targetVersion,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        itemId: 'itemId',
+        southConnectorId: 'southId',
+        commandContent: {
+          southCommand: {},
+          itemCommand: {},
+          testingSettings: {}
+        }
+      });
+    });
+
     it('should create a delete north command', () => {
       const command: OIAnalyticsFetchDeleteNorthConnectorCommandDTO = testData.oIAnalytics.commands
         .oIAnalyticsList[8] as OIAnalyticsFetchDeleteNorthConnectorCommandDTO;
@@ -636,6 +703,30 @@ describe('Repository with populated database', () => {
         result: null,
         targetVersion: command.targetVersion,
         northConnectorId: command.northConnectorId
+      });
+    });
+
+    it('should create a test north connection command', () => {
+      const command: OIAnalyticsFetchTestNorthConnectionCommandDTO = {
+        id: 'testNorthConnectionCommandId',
+        targetVersion: 'v3.5.0',
+        type: 'test-north-connection',
+        northConnectorId: 'northId',
+        commandContent: {} as NorthConnectorCommandDTO<NorthSettings>
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        targetVersion: command.targetVersion,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        northConnectorId: 'northId',
+        commandContent: {}
       });
     });
 
@@ -1617,13 +1708,19 @@ describe('Repository with empty database', () => {
           updateHistoryQuery: true,
           deleteHistoryQuery: true,
           createOrUpdateHistoryItemsFromCsv: true,
+          testHistoryNorthConnection: true,
+          testHistorySouthConnection: true,
+          testHistorySouthItem: true,
           createSouth: true,
           updateSouth: true,
           deleteSouth: true,
           createOrUpdateSouthItemsFromCsv: true,
+          testSouthConnection: true,
+          testSouthItem: true,
           createNorth: true,
           updateNorth: true,
-          deleteNorth: true
+          deleteNorth: true,
+          testNorthConnection: true
         }
       });
     });
