@@ -99,13 +99,19 @@ const registrationSchema: Joi.ObjectSchema = Joi.object({
     updateHistoryQuery: Joi.boolean().required(),
     deleteHistoryQuery: Joi.boolean().required(),
     createOrUpdateHistoryItemsFromCsv: Joi.boolean().required(),
+    testHistoryNorthConnection: Joi.boolean().required(),
+    testHistorySouthConnection: Joi.boolean().required(),
+    testHistorySouthItem: Joi.boolean().required(),
     createSouth: Joi.boolean().required(),
     updateSouth: Joi.boolean().required(),
     deleteSouth: Joi.boolean().required(),
     createOrUpdateSouthItemsFromCsv: Joi.boolean().required(),
+    testSouthConnection: Joi.boolean().required(),
+    testSouthItem: Joi.boolean().required(),
     createNorth: Joi.boolean().required(),
     updateNorth: Joi.boolean().required(),
-    deleteNorth: Joi.boolean().required()
+    deleteNorth: Joi.boolean().required(),
+    testNorthConnection: Joi.boolean().required()
   }).required()
 });
 
