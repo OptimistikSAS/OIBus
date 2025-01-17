@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.5.5](https://github.com/OptimistikSAS/OIBus/compare/v3.5.4...v3.5.5) (2025-01-17)
+
+
+### Bug Fixes
+
+* **history-query:** properly manage south items when creating from south ([2926efe](https://github.com/OptimistikSAS/OIBus/commit/2926efea2e562dab69f04dccf8591d728064344d))
+* **proxy-server:** log error if port is already used ([0502a32](https://github.com/OptimistikSAS/OIBus/commit/0502a32382c353487269c8ec3ee22c069bfc528f))
+* **web-client:** fix oib-search-form behavior ([6c4986a](https://github.com/OptimistikSAS/OIBus/commit/6c4986ae33c66d65d157793b7e8f62da057a96a0))
+
 ## [3.5.4](https://github.com/OptimistikSAS/OIBus/compare/v3.5.3...v3.5.4) (2025-01-13)
 
 
