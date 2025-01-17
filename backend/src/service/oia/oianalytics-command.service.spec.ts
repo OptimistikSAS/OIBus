@@ -27,6 +27,9 @@ import {
   OIBusDeleteNorthConnectorCommand,
   OIBusDeleteScanModeCommand,
   OIBusDeleteSouthConnectorCommand,
+  OIBusTestNorthConnectorCommand,
+  OIBusTestSouthConnectorCommand,
+  OIBusTestSouthConnectorItemCommand,
   OIBusUpdateCertificateCommand,
   OIBusUpdateEngineSettingsCommand,
   OIBusUpdateIPFilterCommand,
@@ -56,6 +59,14 @@ import IPFilterService from '../ip-filter.service';
 import CertificateService from '../certificate.service';
 import { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
 import { CertificateCommandDTO } from '../../../shared/model/certificate.model';
+import {
+  SouthConnectorCommandDTO,
+  SouthConnectorItemCommandDTO,
+  SouthConnectorItemTestingSettings
+} from '../../../shared/model/south-connector.model';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
+import { NorthConnectorCommandDTO } from '../../../shared/model/north-connector.model';
+import { NorthSettings } from '../../../shared/model/north-settings.model';
 
 jest.mock('node:crypto');
 jest.mock('node:fs/promises');
@@ -864,6 +875,80 @@ describe('OIAnalytics Command Service', () => {
       command.id,
       testData.constants.dates.FAKE_NOW,
       'Certificate deleted successfully'
+    );
+  });
+
+  it('should execute south-connection-test command', async () => {
+    const command: OIBusTestSouthConnectorCommand = {
+      id: 'testSouthConnectorId',
+      type: 'test-south-connection',
+      targetVersion: testData.engine.settings.version,
+      southConnectorId: 'southConnectorId',
+      commandContent: {} as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>
+    } as OIBusTestSouthConnectorCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+
+    await service.executeCommand();
+
+    expect(southService.testSouth).toHaveBeenCalledWith(command.southConnectorId, command.commandContent, logger);
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'South connection tested successfully'
+    );
+  });
+
+  it('should execute south-item-test command', async () => {
+    const command: OIBusTestSouthConnectorItemCommand = {
+      id: 'testSouthItemId',
+      type: 'test-south-item',
+      targetVersion: testData.engine.settings.version,
+      itemId: 'itemId',
+      southConnectorId: 'southConnectorId',
+      commandContent: {
+        southCommand: {} as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
+        itemCommand: {} as SouthConnectorItemCommandDTO<SouthItemSettings>,
+        testingSettings: {} as SouthConnectorItemTestingSettings
+      }
+    } as OIBusTestSouthConnectorItemCommand;
+
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (southService.testSouthItem as jest.Mock).mockImplementationOnce(
+      (_southId, _southCommand, _itemCommand, _testSettings, callback, _logger) => {
+        callback({});
+      }
+    );
+
+    await service.executeCommand();
+
+    expect(southService.testSouthItem).toHaveBeenCalledWith(
+      command.southConnectorId,
+      command.commandContent.southCommand,
+      command.commandContent.itemCommand,
+      command.commandContent.testingSettings,
+      expect.anything(),
+      logger
+    );
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(command.id, testData.constants.dates.FAKE_NOW, '{}');
+  });
+
+  it('should execute north-connection-test command', async () => {
+    const command: OIBusTestNorthConnectorCommand = {
+      id: 'testNorthConnectorId',
+      type: 'test-north-connection',
+      targetVersion: testData.engine.settings.version,
+      northConnectorId: 'northConnectorId',
+      commandContent: {} as NorthConnectorCommandDTO<NorthSettings>
+    } as OIBusTestNorthConnectorCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+
+    await service.executeCommand();
+
+    expect(northService.testNorth).toHaveBeenCalledWith(command.northConnectorId, command.commandContent, logger);
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'North connection tested successfully'
     );
   });
 });
