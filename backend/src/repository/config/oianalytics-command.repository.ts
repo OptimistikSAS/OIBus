@@ -115,6 +115,10 @@ export default class OIAnalyticsCommandRepository {
         queryParams.push(JSON.stringify(command.commandContent));
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, scan_mode_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
         break;
+      case 'delete-scan-mode':
+        queryParams.push(command.scanModeId);
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, scan_mode_id) VALUES (?, ?, ?, ?, ?, ?, ?);`;
+        break;
       case 'create-ip-filter':
         queryParams.push(JSON.stringify(command.commandContent));
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, command_content) VALUES (?, ?, ?, ?, ?, ?, ?);`;
@@ -151,6 +155,32 @@ export default class OIAnalyticsCommandRepository {
         queryParams.push(JSON.stringify(command.commandContent));
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, south_connector_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
         break;
+      case 'delete-south':
+        queryParams.push(command.southConnectorId);
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, south_connector_id) VALUES (?, ?, ?, ?, ?, ?, ?);`;
+        break;
+      case 'create-or-update-south-items-from-csv':
+        queryParams.push(command.southConnectorId);
+        queryParams.push(
+          JSON.stringify({
+            deleteItemsNotPresent: command.deleteItemsNotPresent,
+            csvContent: command.csvContent,
+            delimiter: command.delimiter
+          })
+        );
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, south_connector_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
+        break;
+      case 'test-south-connection':
+        queryParams.push(command.southConnectorId);
+        queryParams.push(JSON.stringify(command.commandContent));
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, south_connector_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
+        break;
+      case 'test-south-item':
+        queryParams.push(command.southConnectorId);
+        queryParams.push(command.itemId);
+        queryParams.push(JSON.stringify(command.commandContent));
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, south_connector_id, item_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+        break;
       case 'create-north':
         queryParams.push(command.retrieveSecretsFromNorth || '');
         queryParams.push(JSON.stringify(command.commandContent));
@@ -161,17 +191,14 @@ export default class OIAnalyticsCommandRepository {
         queryParams.push(JSON.stringify(command.commandContent));
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, north_connector_id, command_content) VALUES (?, ?, ?, ?, ?, ?,?, ?);`;
         break;
-      case 'delete-scan-mode':
-        queryParams.push(command.scanModeId);
-        insertQuery += `(id, retrieved_date, type, status, ack, target_version, scan_mode_id) VALUES (?, ?, ?, ?, ?, ?, ?);`;
-        break;
-      case 'delete-south':
-        queryParams.push(command.southConnectorId);
-        insertQuery += `(id, retrieved_date, type, status, ack, target_version, south_connector_id) VALUES (?, ?, ?, ?, ?, ?, ?);`;
-        break;
       case 'delete-north':
         queryParams.push(command.northConnectorId);
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, north_connector_id) VALUES (?, ?, ?, ?, ?, ?, ?);`;
+        break;
+      case 'test-north-connection':
+        queryParams.push(command.northConnectorId);
+        queryParams.push(JSON.stringify(command.commandContent));
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, north_connector_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
         break;
       case 'restart-engine':
       case 'regenerate-cipher-keys':
@@ -187,17 +214,6 @@ export default class OIAnalyticsCommandRepository {
           })
         );
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, command_content) VALUES (?, ?, ?, ?, ?, ?, ?);`;
-        break;
-      case 'create-or-update-south-items-from-csv':
-        queryParams.push(command.southConnectorId);
-        queryParams.push(
-          JSON.stringify({
-            deleteItemsNotPresent: command.deleteItemsNotPresent,
-            csvContent: command.csvContent,
-            delimiter: command.delimiter
-          })
-        );
-        insertQuery += `(id, retrieved_date, type, status, ack, target_version, south_connector_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
         break;
     }
     this.database.prepare(insertQuery).run(...queryParams);
@@ -325,6 +341,44 @@ export default class OIAnalyticsCommandRepository {
           northConnectorId: command.north_connector_id as string,
           commandContent: JSON.parse(command.command_content as string)
         };
+      case 'update-north':
+        return {
+          id: command.id as string,
+          type: 'update-north',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          northConnectorId: command.north_connector_id as string,
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'delete-north':
+        return {
+          id: command.id as string,
+          type: 'delete-north',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          northConnectorId: command.north_connector_id as string
+        };
+      case 'test-north-connection':
+        return {
+          id: command.id as string,
+          type: 'test-north-connection',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          northConnectorId: command.north_connector_id as string,
+          commandContent: JSON.parse(command.command_content as string)
+        };
       case 'create-south':
         return {
           id: command.id as string,
@@ -336,6 +390,71 @@ export default class OIAnalyticsCommandRepository {
           completedDate: command.completed_date as Instant,
           result: command.result as string,
           southConnectorId: command.south_connector_id as string,
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'update-south':
+        return {
+          id: command.id as string,
+          type: 'update-south',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          southConnectorId: command.south_connector_id as string,
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'delete-south':
+        return {
+          id: command.id as string,
+          type: 'delete-south',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          southConnectorId: command.south_connector_id as string
+        };
+      case 'create-or-update-south-items-from-csv':
+        return {
+          id: command.id as string,
+          type: 'create-or-update-south-items-from-csv',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          southConnectorId: command.south_connector_id as string,
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'test-south-connection':
+        return {
+          id: command.id as string,
+          type: 'test-south-connection',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          southConnectorId: command.south_connector_id as string,
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'test-south-item':
+        return {
+          id: command.id as string,
+          type: 'test-south-item',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          southConnectorId: command.south_connector_id as string,
+          itemId: command.item_id as string,
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'create-scan-mode':
@@ -362,6 +481,18 @@ export default class OIAnalyticsCommandRepository {
           result: command.result as string,
           scanModeId: command.scan_mode_id as string,
           commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'delete-scan-mode':
+        return {
+          id: command.id as string,
+          type: 'delete-scan-mode',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          scanModeId: command.scan_mode_id as string
         };
       case 'create-ip-filter':
         return {
@@ -436,81 +567,6 @@ export default class OIAnalyticsCommandRepository {
           completedDate: command.completed_date as Instant,
           result: command.result as string,
           certificateId: command.certificate_id as string
-        };
-      case 'update-north':
-        return {
-          id: command.id as string,
-          type: 'update-north',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
-          northConnectorId: command.north_connector_id as string,
-          commandContent: JSON.parse(command.command_content as string)
-        };
-      case 'update-south':
-        return {
-          id: command.id as string,
-          type: 'update-south',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
-          southConnectorId: command.south_connector_id as string,
-          commandContent: JSON.parse(command.command_content as string)
-        };
-      case 'delete-scan-mode':
-        return {
-          id: command.id as string,
-          type: 'delete-scan-mode',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
-          scanModeId: command.scan_mode_id as string
-        };
-      case 'delete-south':
-        return {
-          id: command.id as string,
-          type: 'delete-south',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
-          southConnectorId: command.south_connector_id as string
-        };
-      case 'delete-north':
-        return {
-          id: command.id as string,
-          type: 'delete-north',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
-          northConnectorId: command.north_connector_id as string
-        };
-      case 'create-or-update-south-items-from-csv':
-        return {
-          id: command.id as string,
-          type: 'create-or-update-south-items-from-csv',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
-          southConnectorId: command.south_connector_id as string,
-          commandContent: JSON.parse(command.command_content as string)
         };
     }
   }
