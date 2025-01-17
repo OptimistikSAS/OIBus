@@ -5,7 +5,11 @@ import { EngineSettingsCommandDTO } from '../../../shared/model/engine.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { NorthConnectorCommandDTO } from '../../../shared/model/north-connector.model';
-import { SouthConnectorCommandDTO } from '../../../shared/model/south-connector.model';
+import {
+  SouthConnectorCommandDTO,
+  SouthConnectorItemCommandDTO,
+  SouthConnectorItemTestingSettings
+} from '../../../shared/model/south-connector.model';
 import { CertificateCommandDTO, CertificateDTO } from '../../../shared/model/certificate.model';
 import { UserCommandDTO } from '../../../shared/model/user.model';
 import { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
@@ -128,9 +132,12 @@ export const OIANALYTICS_FETCH_COMMAND_TYPES = [
   'update-south',
   'delete-south',
   'create-or-update-south-items-from-csv',
+  'test-south-connection',
+  'test-south-item',
   'create-north',
   'update-north',
-  'delete-north'
+  'delete-north',
+  'test-north-connection'
 ] as const;
 export type OIAnalyticsFetchCommandType = (typeof OIANALYTICS_FETCH_COMMAND_TYPES)[number];
 
@@ -235,6 +242,31 @@ export interface OIAnalyticsFetchDeleteSouthConnectorCommandDTO extends BaseOIAn
   southConnectorId: string;
 }
 
+export interface OIAnalyticsFetchCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'create-or-update-south-items-from-csv';
+  southConnectorId: string;
+  deleteItemsNotPresent: boolean;
+  csvContent: string;
+  delimiter: string;
+}
+
+export interface OIAnalyticsFetchTestSouthConnectionCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'test-south-connection';
+  southConnectorId: string;
+  commandContent: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+}
+
+export interface OIAnalyticsFetchTestSouthItemCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'test-south-item';
+  southConnectorId: string;
+  itemId: string;
+  commandContent: {
+    southCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+    itemCommand: SouthConnectorItemCommandDTO<SouthItemSettings>;
+    testingSettings: SouthConnectorItemTestingSettings;
+  };
+}
+
 export interface OIAnalyticsFetchCreateNorthConnectorCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
   type: 'create-north';
   retrieveSecretsFromNorth: string | null; // used to retrieve passwords in case of duplicate
@@ -252,12 +284,10 @@ export interface OIAnalyticsFetchDeleteNorthConnectorCommandDTO extends BaseOIAn
   northConnectorId: string;
 }
 
-export interface OIAnalyticsFetchCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
-  type: 'create-or-update-south-items-from-csv';
-  southConnectorId: string;
-  deleteItemsNotPresent: boolean;
-  csvContent: string;
-  delimiter: string;
+export interface OIAnalyticsFetchTestNorthConnectionCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'test-north-connection';
+  northConnectorId: string;
+  commandContent: NorthConnectorCommandDTO<NorthSettings>;
 }
 
 export type OIAnalyticsFetchCommandDTO =
@@ -278,7 +308,10 @@ export type OIAnalyticsFetchCommandDTO =
   | OIAnalyticsFetchCreateSouthConnectorCommandDTO
   | OIAnalyticsFetchUpdateSouthConnectorCommandDTO
   | OIAnalyticsFetchDeleteSouthConnectorCommandDTO
+  | OIAnalyticsFetchTestSouthConnectionCommandDTO
+  | OIAnalyticsFetchTestSouthItemCommandDTO
+  | OIAnalyticsFetchCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO
   | OIAnalyticsFetchCreateNorthConnectorCommandDTO
   | OIAnalyticsFetchUpdateNorthConnectorCommandDTO
   | OIAnalyticsFetchDeleteNorthConnectorCommandDTO
-  | OIAnalyticsFetchCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO;
+  | OIAnalyticsFetchTestNorthConnectionCommandDTO;

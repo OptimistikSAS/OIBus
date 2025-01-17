@@ -24,6 +24,9 @@ import {
   OIBusDeleteSouthConnectorCommand,
   OIBusRegenerateCipherKeysCommand,
   OIBusRestartEngineCommand,
+  OIBusTestNorthConnectorCommand,
+  OIBusTestSouthConnectorCommand,
+  OIBusTestSouthConnectorItemCommand,
   OIBusUpdateCertificateCommand,
   OIBusUpdateEngineSettingsCommand,
   OIBusUpdateIPFilterCommand,
@@ -324,6 +327,12 @@ export default class OIAnalyticsCommandService {
         case 'delete-south':
           await this.executeDeleteSouthCommand(command);
           break;
+        case 'test-south-connection':
+          await this.executeTestSouthConnectionCommand(command);
+          break;
+        case 'test-south-item':
+          await this.executeTestSouthItemCommand(command);
+          break;
         case 'create-north':
           {
             const privateKey = await this.encryptionService.decryptText(registration.privateCipherKey!);
@@ -338,6 +347,9 @@ export default class OIAnalyticsCommandService {
           break;
         case 'delete-north':
           await this.executeDeleteNorthCommand(command);
+          break;
+        case 'test-north-connection':
+          await this.executeTestNorthConnectionCommand(command);
           break;
         case 'create-or-update-south-items-from-csv':
           await this.executeCreateOrUpdateSouthConnectorItemsFromCSVCommand(command);
@@ -552,6 +564,24 @@ export default class OIAnalyticsCommandService {
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'South connector deleted successfully');
   }
 
+  private async executeTestSouthConnectionCommand(command: OIBusTestSouthConnectorCommand) {
+    await this.southService.testSouth(command.southConnectorId, command.commandContent, this.logger);
+    this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'South connection tested successfully');
+  }
+
+  private async executeTestSouthItemCommand(command: OIBusTestSouthConnectorItemCommand) {
+    await this.southService.testSouthItem(
+      command.southConnectorId,
+      command.commandContent.southCommand,
+      command.commandContent.itemCommand,
+      command.commandContent.testingSettings,
+      result => {
+        this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
+      },
+      this.logger
+    );
+  }
+
   private async decryptNorthSettings(command: OIBusCreateNorthConnectorCommand | OIBusUpdateNorthConnectorCommand, privateKey: string) {
     const manifest = this.northService.getInstalledNorthManifests().find(element => element.id === command.commandContent.type)!;
     command.commandContent.settings = await this.encryptionService.decryptSecretsWithPrivateKey(
@@ -576,6 +606,11 @@ export default class OIAnalyticsCommandService {
   private async executeDeleteNorthCommand(command: OIBusDeleteNorthConnectorCommand) {
     await this.northService.deleteNorth(command.northConnectorId);
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'North connector deleted successfully');
+  }
+
+  private async executeTestNorthConnectionCommand(command: OIBusTestNorthConnectorCommand) {
+    await this.northService.testNorth(command.northConnectorId, command.commandContent, this.logger);
+    this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'North connection tested successfully');
   }
 
   private async executeCreateOrUpdateSouthConnectorItemsFromCSVCommand(command: OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand) {
@@ -618,10 +653,6 @@ export default class OIAnalyticsCommandService {
         return registration.commandPermissions.updateEngineSettings;
       case 'update-registration-settings':
         return registration.commandPermissions.updateRegistrationSettings;
-      case 'create-north':
-        return registration.commandPermissions.createNorth;
-      case 'create-south':
-        return registration.commandPermissions.createSouth;
       case 'create-scan-mode':
         return registration.commandPermissions.createScanMode;
       case 'update-scan-mode':
@@ -640,14 +671,24 @@ export default class OIAnalyticsCommandService {
         return registration.commandPermissions.updateCertificate;
       case 'delete-certificate':
         return registration.commandPermissions.deleteCertificate;
+      case 'create-north':
+        return registration.commandPermissions.createNorth;
       case 'update-north':
         return registration.commandPermissions.updateNorth;
+      case 'delete-north':
+        return registration.commandPermissions.deleteNorth;
+      case 'test-north-connection':
+        return registration.commandPermissions.testNorthConnection;
+      case 'create-south':
+        return registration.commandPermissions.createSouth;
       case 'update-south':
         return registration.commandPermissions.updateSouth;
       case 'delete-south':
         return registration.commandPermissions.deleteSouth;
-      case 'delete-north':
-        return registration.commandPermissions.deleteNorth;
+      case 'test-south-connection':
+        return registration.commandPermissions.testSouthConnection;
+      case 'test-south-item':
+        return registration.commandPermissions.testSouthItem;
       case 'create-or-update-south-items-from-csv':
         return registration.commandPermissions.createOrUpdateSouthItemsFromCsv;
     }
@@ -661,8 +702,11 @@ export const toOIBusCommandDTO = (command: OIBusCommand): OIBusCommandDTO => {
     case 'regenerate-cipher-keys':
     case 'update-engine-settings':
     case 'update-registration-settings':
-    case 'create-north':
     case 'create-south':
+    case 'update-south':
+    case 'delete-south':
+    case 'test-south-connection':
+    case 'test-south-item':
     case 'create-scan-mode':
     case 'update-scan-mode':
     case 'delete-scan-mode':
@@ -672,10 +716,10 @@ export const toOIBusCommandDTO = (command: OIBusCommand): OIBusCommandDTO => {
     case 'create-certificate':
     case 'update-certificate':
     case 'delete-certificate':
+    case 'create-north':
     case 'update-north':
-    case 'update-south':
-    case 'delete-south':
     case 'delete-north':
+    case 'test-north-connection':
     case 'create-or-update-south-items-from-csv':
       return command;
   }
