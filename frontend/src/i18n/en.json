@@ -164,10 +164,13 @@
       "create-south": "Create south connector",
       "update-south": "Update south connector",
       "delete-south": "Delete south connector",
+      "test-south-connection": "Test south connection",
+      "test-south-item": "Test south item",
       "create-or-update-south-items-from-csv": "Load south items from CSV",
       "create-north": "Create north connector",
       "update-north": "Update north connector",
-      "delete-north": "Delete north connector"
+      "delete-north": "Delete north connector",
+      "test-north-connection": "Test north connection"
     },
     "oibus-north-category": {
       "debug": "Debug",
@@ -335,6 +338,7 @@
       "certificate": "Certificate",
       "north-connector": "North connector",
       "south-connector": "South connector",
+      "test-connector": "Test connectors",
       "details-modal": {
         "title": "Command {{ type }}",
         "success-info": "Command completed successfully",
