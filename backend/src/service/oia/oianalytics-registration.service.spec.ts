@@ -134,13 +134,19 @@ describe('OIAnalytics Registration Service', () => {
         updateHistoryQuery: true,
         deleteHistoryQuery: true,
         createOrUpdateHistoryItemsFromCsv: true,
+        testHistoryNorthConnection: true,
+        testHistorySouthConnection: true,
+        testHistorySouthItem: true,
         createSouth: true,
         updateSouth: true,
         deleteSouth: true,
         createOrUpdateSouthItemsFromCsv: true,
+        testSouthConnection: true,
+        testSouthItem: true,
         createNorth: true,
         updateNorth: true,
-        deleteNorth: true
+        deleteNorth: true,
+        testNorthConnection: true
       }
     };
     const result = {
@@ -210,13 +216,19 @@ describe('OIAnalytics Registration Service', () => {
         updateHistoryQuery: true,
         deleteHistoryQuery: true,
         createOrUpdateHistoryItemsFromCsv: true,
+        testHistoryNorthConnection: true,
+        testHistorySouthConnection: true,
+        testHistorySouthItem: true,
         createSouth: true,
         updateSouth: true,
         deleteSouth: true,
         createOrUpdateSouthItemsFromCsv: true,
+        testSouthConnection: true,
+        testSouthItem: true,
         createNorth: true,
         updateNorth: true,
-        deleteNorth: true
+        deleteNorth: true,
+        testNorthConnection: true
       }
     };
     (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.registration.completed);
