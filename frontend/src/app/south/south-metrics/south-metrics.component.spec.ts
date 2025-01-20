@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import { ComponentTester } from 'ngx-speculoos';
+import { ComponentTester, createMock } from 'ngx-speculoos';
 import { SouthMetricsComponent } from './south-metrics.component';
 import { Component } from '@angular/core';
 import { SouthConnectorLightDTO, SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
@@ -11,7 +11,7 @@ import { SouthConnectorMetrics } from '../../../../../backend/shared/model/engin
 import { provideHttpClient } from '@angular/common/http';
 
 @Component({
-  template: `<oib-south-metrics [connectorMetrics]="metrics" [southConnector]="southConnector" [manifest]="manifest" />`,
+  template: ` <oib-south-metrics [connectorMetrics]="metrics" [southConnector]="southConnector" [manifest]="manifest" />`,
   imports: [SouthMetricsComponent]
 })
 class TestComponent {
@@ -70,6 +70,8 @@ describe('SouthMetricsComponent', () => {
   let notificationService: jasmine.SpyObj<NotificationService>;
 
   beforeEach(async () => {
+    southConnectorService = createMock(SouthConnectorService);
+    notificationService = createMock(NotificationService);
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
