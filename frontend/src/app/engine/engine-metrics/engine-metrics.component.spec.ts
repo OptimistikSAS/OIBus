@@ -10,7 +10,7 @@ import { EngineMetrics } from '../../../../../backend/shared/model/engine.model'
 import { provideHttpClient } from '@angular/common/http';
 
 @Component({
-  template: `<oib-engine-metrics [metrics]="metrics" />`,
+  template: ` <oib-engine-metrics [metrics]="metrics" />`,
   imports: [EngineMetricsComponent]
 })
 class TestComponent {
@@ -38,6 +38,7 @@ describe('EngineMetricsComponent', () => {
 
   beforeEach(async () => {
     const engineService = createMock(EngineService);
+    notificationService = createMock(NotificationService);
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
