@@ -39,6 +39,9 @@ const manifest: NorthConnectorManifest = {
       ],
       displayInViewMode: true
     }
-  ]
+  ],
+  items: {
+    settings: []
+  }
 };
 export default manifest;

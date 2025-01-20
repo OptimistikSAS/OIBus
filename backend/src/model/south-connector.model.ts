@@ -1,6 +1,7 @@
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { BaseEntity } from './types';
 import { OIBusSouthType } from '../../shared/model/south-connector.model';
+import { Transformer } from './transformer.model';
 
 export interface SouthConnectorEntityLight extends BaseEntity {
   name: string;
@@ -16,6 +17,7 @@ export interface SouthConnectorEntity<T extends SouthSettings, I extends SouthIt
   enabled: boolean;
   settings: T;
   items: Array<SouthConnectorItemEntity<I>>;
+  transformers: Array<{ order: number; transformer: Transformer }>;
 }
 
 export interface SouthConnectorItemEntity<T extends SouthItemSettings> extends BaseEntity {

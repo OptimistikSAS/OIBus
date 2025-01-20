@@ -23,7 +23,7 @@ import NorthConnectorRepository from '../../repository/config/north-connector.re
 import OIAnalyticsMessageRepository from '../../repository/config/oianalytics-message.repository';
 import { HistoryQueryEntity } from '../../model/histor-query.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../shared/model/north-settings.model';
 import { southManifestList } from '../south.service';
 import { northManifestList } from '../north.service';
 import IpFilterRepository from '../../repository/config/ip-filter.repository';
@@ -148,7 +148,7 @@ export default class OIAnalyticsMessageService {
     this.logger = logger;
   }
 
-  createHistoryQueryMessage(_historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>) {
+  createHistoryQueryMessage(_historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings>) {
     // TODO: implement history query message for settings
   }
 
@@ -339,7 +339,8 @@ export default class OIAnalyticsMessageService {
             scanModeId: item.scanModeId,
             scanModeName: null,
             settings: this.encryptionService.filterSecrets(item.settings, manifest.items.settings)
-          }))
+          })),
+          transformers: south.transformers.map(element => ({ order: element.order, id: element.transformer.id }))
         }
       };
     });
@@ -377,7 +378,14 @@ export default class OIAnalyticsMessageService {
               }
             }
           },
-          subscriptions: north.subscriptions.map(south => south.id)
+          subscriptions: north.subscriptions.map(south => south.id),
+          items: north.items.map(item => ({
+            id: item.id,
+            name: item.name,
+            enabled: item.enabled,
+            settings: this.encryptionService.filterSecrets(item.settings, manifest.items.settings)
+          })),
+          transformers: north.transformers.map(element => ({ order: element.order, id: element.transformer.id }))
         }
       };
     });

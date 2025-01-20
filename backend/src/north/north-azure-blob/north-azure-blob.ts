@@ -6,7 +6,7 @@ import { ClientSecretCredential, DefaultAzureCredential } from '@azure/identity'
 import { DataLakeServiceClient, StorageSharedKeyCredential as DataLakeStorageSharedKeyCredential } from '@azure/storage-file-datalake';
 import NorthConnector from '../north-connector';
 import EncryptionService from '../../service/encryption.service';
-import { NorthAzureBlobSettings } from '../../../shared/model/north-settings.model';
+import { NorthAzureBlobItemSettings, NorthAzureBlobSettings } from '../../../shared/model/north-settings.model';
 import { ProxyOptions } from '@azure/core-http';
 import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
@@ -18,12 +18,12 @@ import { BaseFolders } from '../../model/types';
 
 const TEST_FILE = 'oibus-azure-test.txt';
 
-export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSettings> {
+export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSettings, NorthAzureBlobItemSettings> {
   private blobClient: BlobServiceClient | null = null;
   private dataLakeClient: DataLakeServiceClient | null = null;
 
   constructor(
-    connector: NorthConnectorEntity<NorthAzureBlobSettings>,
+    connector: NorthConnectorEntity<NorthAzureBlobSettings, NorthAzureBlobItemSettings>,
     encryptionService: EncryptionService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,

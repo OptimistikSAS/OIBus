@@ -1,6 +1,7 @@
 import { OibFormControl } from './form.model';
 import { BaseEntity, Instant } from './types';
 import { SouthItemSettings, SouthSettings } from './south-settings.model';
+import { TransformerDTO } from './transformer.model';
 
 export const OIBUS_SOUTH_CATEGORIES = ['file', 'iot', 'database', 'api'] as const;
 export type OIBusSouthCategory = (typeof OIBUS_SOUTH_CATEGORIES)[number];
@@ -51,6 +52,7 @@ export interface SouthConnectorDTO<T extends SouthSettings, I extends SouthItemS
   enabled: boolean;
   settings: T;
   items: Array<SouthConnectorItemDTO<I>>;
+  transformers: Array<{ transformer: TransformerDTO; order: number }>;
 }
 
 export interface SouthConnectorCommandDTO<T extends SouthSettings, I extends SouthItemSettings> {
@@ -60,6 +62,7 @@ export interface SouthConnectorCommandDTO<T extends SouthSettings, I extends Sou
   enabled: boolean;
   settings: T;
   items: Array<SouthConnectorItemCommandDTO<I>>;
+  transformers: Array<{ id: string; order: number }>;
 }
 
 /**

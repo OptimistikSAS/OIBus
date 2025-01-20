@@ -20,7 +20,7 @@ import { Instant } from '../../../../../backend/shared/model/types';
 import { dateTimeRangeValidatorBuilder } from '../../shared/validators';
 import { DateTime } from 'luxon';
 import { HistoryQueryService } from '../../services/history-query.service';
-import { HistoryQueryItemCommandDTO } from '../../../../../backend/shared/model/history-query.model';
+import { HistoryQuerySouthItemCommandDTO } from '../../../../../backend/shared/model/history-query.model';
 
 @Component({
   selector: 'oib-south-item-test',
@@ -44,7 +44,7 @@ export class SouthItemTestComponent<TItemType extends 'south' | 'history-south'>
       TItemType extends 'south'
         ? SouthConnectorItemCommandDTO<SouthItemSettings>
         : TItemType extends 'history-south'
-          ? HistoryQueryItemCommandDTO<SouthItemSettings>
+          ? HistoryQuerySouthItemCommandDTO<SouthItemSettings>
           : never
     >();
 
@@ -142,7 +142,7 @@ export class SouthItemTestComponent<TItemType extends 'south' | 'history-south'>
       return this.historyQueryService.testSouthItem(
         this.entityId(),
         this.connectorCommand(),
-        this.item() as HistoryQueryItemCommandDTO<SouthItemSettings>,
+        this.item() as HistoryQuerySouthItemCommandDTO<SouthItemSettings>,
         this.testingSettings
       );
     }

@@ -85,6 +85,7 @@ describe('SouthMQTT without authentication', () => {
       reconnectPeriod: 1000,
       rejectUnauthorized: false
     },
+    transformers: [],
     items: [
       {
         id: 'id1',
@@ -266,6 +267,7 @@ describe('SouthMQTT with Basic Auth', () => {
       reconnectPeriod: 1000,
       rejectUnauthorized: false
     },
+    transformers: [],
     items: [
       {
         id: 'id1',
@@ -804,6 +806,7 @@ describe('SouthMQTT with Cert', () => {
       reconnectPeriod: 1000,
       rejectUnauthorized: false
     },
+    transformers: [],
     items: [
       {
         id: 'id1',
@@ -980,6 +983,7 @@ describe('SouthMQTT without Cert', () => {
       reconnectPeriod: 1000,
       rejectUnauthorized: false
     },
+    transformers: [],
     items: [
       {
         id: 'id1',

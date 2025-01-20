@@ -2,6 +2,7 @@ import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ComponentTester, createMock, TestInput } from 'ngx-speculoos';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import {
+  SouthConnectorCommandDTO,
   SouthConnectorDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorManifest
@@ -17,7 +18,6 @@ import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 
 const testSouthConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> = {
-  id: 'southId',
   name: 'South Connector',
   items: [
     {
@@ -49,10 +49,46 @@ const testSouthConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> = 
     }
   ]
 } as SouthConnectorDTO<SouthSettings, SouthItemSettings>;
+const testSouthConnectorCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
+  name: 'South Connector',
+  items: [
+    {
+      id: 'id1',
+      name: 'item1',
+      enabled: true,
+      settings: {
+        query: 'sql'
+      } as SouthItemSettings,
+      scanModeId: 'scanModeId1',
+      scanModeName: null
+    },
+    {
+      id: 'id2',
+      name: 'item1-copy',
+      enabled: false,
+      settings: {
+        query: 'sql'
+      } as SouthItemSettings,
+      scanModeId: 'scanModeId1',
+      scanModeName: null
+    },
+    {
+      id: 'id3',
+      name: 'item3',
+      enabled: false,
+      settings: {
+        query: 'sql'
+      } as SouthItemSettings,
+      scanModeId: 'scanModeId1',
+      scanModeName: null
+    }
+  ]
+} as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
 
 @Component({
   template: `<oib-south-items
-    [southId]="southConnector.id"
+    southId="southId"
+    [southConnectorCommand]="southConnectorCommand"
     [southConnector]="southConnector"
     [scanModes]="scanModes"
     [southManifest]="manifest"
@@ -63,8 +99,9 @@ const testSouthConnector: SouthConnectorDTO<SouthSettings, SouthItemSettings> = 
 })
 class TestComponent {
   _southConnectorService!: SouthConnectorService;
-
+  southId = 'southId';
   southConnector = structuredClone(testSouthConnector);
+  southConnectorCommand = structuredClone(testSouthConnectorCommand);
   scanModes: Array<ScanModeDTO> = [
     {
       id: 'scanModeId1',
@@ -101,7 +138,7 @@ class TestComponent {
     if (items) {
       this.inMemoryItems = items;
     } else {
-      this._southConnectorService.get(this.southConnector!.id).subscribe(southConnector => {
+      this._southConnectorService.get(this.southId).subscribe(southConnector => {
         this.southConnector!.items = southConnector.items;
         this.southConnector = JSON.parse(JSON.stringify(this.southConnector)); // Used to force a refresh in south item list
       });

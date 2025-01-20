@@ -9,7 +9,7 @@ import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { OIBusTimeValue } from '../../../shared/model/engine.model';
 import testData from '../../tests/utils/test-data';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../shared/model/north-settings.model';
 
 import { flushPromises, mockBaseFolders } from '../../tests/utils/test-utils';
 
@@ -25,7 +25,7 @@ const logger: pino.Logger = new PinoLogger();
 const anotherLogger: pino.Logger = new PinoLogger();
 
 describe('ValueCacheService', () => {
-  let settings: NorthConnectorEntity<NorthSettings>;
+  let settings: NorthConnectorEntity<NorthSettings, NorthItemSettings>;
   let service: ValueCacheService;
 
   beforeEach(() => {
@@ -360,7 +360,7 @@ describe('ValueCacheService', () => {
 });
 
 describe('ValueCacheService with values loaded', () => {
-  let settings: NorthConnectorEntity<NorthSettings>;
+  let settings: NorthConnectorEntity<NorthSettings, NorthItemSettings>;
   let service: ValueCacheService;
   const valuesToCache: Array<OIBusTimeValue> = [];
   for (let i = 0; i < 251; i += 1) {

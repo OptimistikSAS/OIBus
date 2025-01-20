@@ -1,7 +1,6 @@
 import { appendFileSync, openSync, readdirSync } from 'node:fs';
 import { OibFormControl } from '../shared/model/form.model';
 import { ConnectorManifest } from '../shared/model/types';
-import { SouthConnectorManifest } from '../shared/model/south-connector.model';
 import path from 'node:path';
 
 const SOUTH_SETTINGS_DESTINATION_PATH = 'shared/model/south-settings.model.ts';
@@ -137,7 +136,7 @@ function generateTypesForManifest(
   connectorType: ConnectorType
 ): void {
   const interfaceName =
-    connectorType === 'South' ? buildSouthInterfaceName(manifestObject.id, false) : buildNorthInterfaceName(manifestObject.id);
+    connectorType === 'South' ? buildSouthInterfaceName(manifestObject.id, false) : buildNorthInterfaceName(manifestObject.id, false);
 
   // gather recursively all sub interfaces
   const subManifests: Array<SubManifest> = collectSubManifests(manifestObject.settings);
@@ -154,28 +153,24 @@ function generateTypesForManifest(
   const mainSettingsInterface = generateInterface(interfaceName, manifestObject.settings, typesToGenerate);
   typesToGenerate.settingsInterfaces.push(mainSettingsInterface);
 
-  if (connectorType === 'South') {
-    const interfaceName = buildSouthInterfaceName(manifestObject.id, true);
+  // Manage items
+  const itemInterfaceName =
+    connectorType === 'South' ? buildSouthInterfaceName(manifestObject.id, true) : buildNorthInterfaceName(manifestObject.id, true);
 
-    // gather recursively all sub interfaces
-    const itemSubManifests: Array<SubManifest> = collectSubManifests((manifestObject as unknown as SouthConnectorManifest).items.settings);
-    itemSubManifests.forEach(subManifest => {
-      const subManifestInterface = generateInterface(
-        interfaceName + capitalizeFirstLetter(subManifest.name),
-        subManifest.settings,
-        typesToGenerate
-      );
-      typesToGenerate.itemSettingsSubInterfaces.push(subManifestInterface);
-    });
-
-    // generate item settings interface
-    const mainItemSettingsInterface = generateInterface(
-      interfaceName,
-      (manifestObject as unknown as SouthConnectorManifest).items.settings,
+  // gather recursively all sub interfaces
+  const itemSubManifests: Array<SubManifest> = collectSubManifests(manifestObject.items.settings);
+  itemSubManifests.forEach(subManifest => {
+    const subManifestInterface = generateInterface(
+      itemInterfaceName + capitalizeFirstLetter(subManifest.name),
+      subManifest.settings,
       typesToGenerate
     );
-    typesToGenerate.itemSettingsInterfaces.push(mainItemSettingsInterface);
-  }
+    typesToGenerate.itemSettingsSubInterfaces.push(subManifestInterface);
+  });
+
+  // generate item settings interface
+  const mainItemSettingsInterface = generateInterface(itemInterfaceName, manifestObject.items.settings, typesToGenerate);
+  typesToGenerate.itemSettingsInterfaces.push(mainItemSettingsInterface);
 }
 
 function generateInterface(interfaceName: string, settings: Array<OibFormControl>, typesToGenerate: TypeGenerationDescription): Interface {
@@ -277,36 +272,21 @@ function listFiles(directory: string) {
   return files;
 }
 
-function buildNorthInterfaceName(connectorId: string): string {
+function buildNorthInterfaceName(connectorId: string, itemInterface: boolean): string {
+  const prefix = itemInterface ? 'Item' : '';
   switch (connectorId) {
     case 'aws-s3':
-      return 'NorthAmazonS3Settings';
+      return `NorthAmazonS3${prefix}Settings`;
     case 'azure-blob':
-      return 'NorthAzureBlobSettings';
+      return `NorthAzureBlob${prefix}Settings`;
     case 'console':
-      return 'NorthConsoleSettings';
-    case 'csv-to-http':
-      return 'NorthCsvToHttpSettings';
+      return `NorthConsole${prefix}Settings`;
     case 'file-writer':
-      return 'NorthFileWriterSettings';
-    case 'influxdb':
-      return 'NorthInfluxDBSettings';
-    case 'mongodb':
-      return 'NorthMongoDBSettings';
-    case 'mqtt':
-      return 'NorthMqttSettings';
+      return `NorthFileWriter${prefix}Settings`;
     case 'oianalytics':
-      return 'NorthOIAnalyticsSettings';
-    case 'rest-api':
-      return 'NorthRestAPISettings';
-    case 'oibus':
-      return 'NorthOIBusSettings';
-    case 'timescaledb':
-      return 'NorthTimescaleDBSettings';
-    case 'watsy':
-      return 'NorthWatsySettings';
+      return `NorthOIAnalytics${prefix}Settings`;
     case 'sftp':
-      return 'NorthSFTPSettings';
+      return `NorthSFTP${prefix}Settings`;
   }
   return '';
 }

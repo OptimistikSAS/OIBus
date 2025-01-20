@@ -9,7 +9,7 @@ import {
   SouthConnectorManifest
 } from '../../../../../backend/shared/model/south-connector.model';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
-import { HistoryQueryItemCommandDTO, HistoryQueryItemDTO } from '../../../../../backend/shared/model/history-query.model';
+import { HistoryQuerySouthItemCommandDTO, HistoryQuerySouthItemDTO } from '../../../../../backend/shared/model/history-query.model';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { provideHttpClient } from '@angular/common/http';
 
@@ -51,7 +51,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
   const historyId = 'historyId';
   const southConnectorCommand = {} as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
   const southManifest = { modes: { history: false } } as SouthConnectorManifest;
-  const allItems: Array<HistoryQueryItemDTO<SouthItemSettings>> = [
+  const allItems: Array<HistoryQuerySouthItemDTO<SouthItemSettings>> = [
     {
       id: 'id1',
       enabled: true,
@@ -100,7 +100,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
       tester.name.fillWith('MyName');
       tester.detectChanges();
 
-      const command: HistoryQueryItemCommandDTO<SouthItemSettings> = {
+      const command: HistoryQuerySouthItemCommandDTO<SouthItemSettings> = {
         id: null,
         enabled: true,
         name: 'MyName',
@@ -117,7 +117,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
   });
 
   describe('copy mode', () => {
-    const southItem: HistoryQueryItemDTO<SouthItemSettings> = {
+    const southItem: HistoryQuerySouthItemDTO<SouthItemSettings> = {
       id: 'id1',
       name: 'myName',
       enabled: true,
@@ -133,7 +133,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
 
       tester.detectChanges();
 
-      const command: HistoryQueryItemCommandDTO<SouthItemSettings> = {
+      const command: HistoryQuerySouthItemCommandDTO<SouthItemSettings> = {
         id: null,
         enabled: true,
         name: 'MyName-2',
@@ -145,7 +145,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
   });
 
   describe('edit mode', () => {
-    const southItem: HistoryQueryItemDTO<SouthItemSettings> = {
+    const southItem: HistoryQuerySouthItemDTO<SouthItemSettings> = {
       id: 'id1',
       name: 'myName',
       enabled: true,
@@ -190,7 +190,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
       tester.name.fillWith('South Item 1 (updated)');
       tester.enabled.uncheck();
       tester.save.click();
-      const command: HistoryQueryItemCommandDTO<SouthItemSettings> = {
+      const command: HistoryQuerySouthItemCommandDTO<SouthItemSettings> = {
         id: 'id1',
         enabled: false,
         name: 'South Item 1 (updated)',

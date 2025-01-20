@@ -11,7 +11,11 @@ import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component'
 import { OibFormControl } from '../../../../../backend/shared/model/form.model';
 import { createPageFromArray, Page } from '../../../../../backend/shared/model/types';
 import { emptyPage } from '../../shared/test-utils';
-import { HistoryQueryDTO, HistoryQueryItemCommandDTO, HistoryQueryItemDTO } from '../../../../../backend/shared/model/history-query.model';
+import {
+  HistoryQueryDTO,
+  HistoryQuerySouthItemCommandDTO,
+  HistoryQuerySouthItemDTO
+} from '../../../../../backend/shared/model/history-query.model';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
@@ -20,7 +24,7 @@ import { ImportItemModalComponent } from '../../shared/import-item-modal/import-
 import { EditHistoryQueryItemModalComponent } from '../edit-history-query-item-modal/edit-history-query-item-modal.component';
 import { ImportHistoryQueryItemsModalComponent } from '../import-history-query-items-modal/import-history-query-items-modal.component';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
-import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
 const PAGE_SIZE = 20;
 
@@ -59,19 +63,19 @@ export class HistoryQueryItemsComponent implements OnInit {
   /** Actual historyId (or 'create') */
   readonly historyId = input.required<string>();
   readonly southConnectorCommand = input.required<SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>>();
-  readonly historyQuery = input<HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> | null>(null);
+  readonly historyQuery = input<HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings> | null>(null);
   readonly southManifest = input.required<SouthConnectorManifest>();
   /**
    * Wether to save the changes in the backend or just emit inMemoryItems.
    * If this is true, then historyId needs to be an actual id
    */
   readonly saveChangesDirectly = input.required<boolean>();
-  readonly inMemoryItems = output<Array<HistoryQueryItemCommandDTO<SouthItemSettings>> | null>();
+  readonly inMemoryItems = output<Array<HistoryQuerySouthItemCommandDTO<SouthItemSettings>> | null>();
 
-  allItems: Array<HistoryQueryItemCommandDTO<SouthItemSettings>> = [];
-  filteredItems: Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>> = [];
+  allItems: Array<HistoryQuerySouthItemCommandDTO<SouthItemSettings>> = [];
+  filteredItems: Array<HistoryQuerySouthItemDTO<SouthItemSettings> | HistoryQuerySouthItemCommandDTO<SouthItemSettings>> = [];
 
-  displayedItems: Page<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>> = emptyPage();
+  displayedItems: Page<HistoryQuerySouthItemDTO<SouthItemSettings> | HistoryQuerySouthItemCommandDTO<SouthItemSettings>> = emptyPage();
   displaySettings: Array<OibFormControl> = [];
 
   searchControl = inject(NonNullableFormBuilder).control(null as string | null);
@@ -89,7 +93,7 @@ export class HistoryQueryItemsComponent implements OnInit {
         this.allItems = this.southConnectorCommand().items;
       } else {
         // initialize/update item list
-        this.allItems = historyQuery.items;
+        this.allItems = historyQuery.southItems;
       }
 
       // reset column sorting
@@ -127,12 +131,12 @@ export class HistoryQueryItemsComponent implements OnInit {
     this.displayedItems = createPageFromArray(this.filteredItems, PAGE_SIZE, pageNumber);
   }
 
-  filter(): Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>> {
+  filter(): Array<HistoryQuerySouthItemDTO<SouthItemSettings> | HistoryQuerySouthItemCommandDTO<SouthItemSettings>> {
     const searchText = this.searchControl.value || '';
     return this.allItems.filter(item => item.name.toLowerCase().includes(searchText.toLowerCase()));
   }
 
-  editItem(historyQueryItem: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>) {
+  editItem(historyQueryItem: HistoryQuerySouthItemDTO<SouthItemSettings> | HistoryQuerySouthItemCommandDTO<SouthItemSettings>) {
     const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent, { size: 'xl' });
     const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
 
@@ -168,7 +172,7 @@ export class HistoryQueryItemsComponent implements OnInit {
   private refreshAfterCreationModalClosed(modalRef: Modal<any>) {
     modalRef.result
       .pipe(
-        switchMap((command: HistoryQueryItemDTO<SouthItemSettings>) => {
+        switchMap((command: HistoryQuerySouthItemDTO<SouthItemSettings>) => {
           if (this.saveChangesDirectly()) {
             return this.historyQueryService.createItem(this.historyId(), command);
           } else {
@@ -198,11 +202,11 @@ export class HistoryQueryItemsComponent implements OnInit {
    */
   private refreshAfterEditionModalClosed(
     modalRef: Modal<any>,
-    oldItem: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>
+    oldItem: HistoryQuerySouthItemDTO<SouthItemSettings> | HistoryQuerySouthItemCommandDTO<SouthItemSettings>
   ) {
     modalRef.result
       .pipe(
-        switchMap((command: HistoryQueryItemCommandDTO<SouthItemSettings>) => {
+        switchMap((command: HistoryQuerySouthItemCommandDTO<SouthItemSettings>) => {
           if (this.saveChangesDirectly()) {
             return this.historyQueryService.updateItem(this.historyId(), command.id!, command);
           } else {
@@ -223,7 +227,7 @@ export class HistoryQueryItemsComponent implements OnInit {
       });
   }
 
-  deleteItem(item: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>) {
+  deleteItem(item: HistoryQuerySouthItemDTO<SouthItemSettings> | HistoryQuerySouthItemCommandDTO<SouthItemSettings>) {
     this.confirmationService
       .confirm({
         messageKey: 'history-query.items.confirm-deletion'
@@ -249,7 +253,7 @@ export class HistoryQueryItemsComponent implements OnInit {
       });
   }
 
-  duplicateItem(item: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>) {
+  duplicateItem(item: HistoryQuerySouthItemDTO<SouthItemSettings> | HistoryQuerySouthItemCommandDTO<SouthItemSettings>) {
     const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent, { size: 'xl' });
     const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
     component.prepareForCopy(
@@ -311,9 +315,9 @@ export class HistoryQueryItemsComponent implements OnInit {
   checkImportItems(file: File, delimiter: string) {
     this.historyQueryService.checkImportItems(this.southManifest().id, this.historyId(), this.allItems, file, delimiter).subscribe(
       (result: {
-        items: Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>>;
+        items: Array<HistoryQuerySouthItemDTO<SouthItemSettings> | HistoryQuerySouthItemCommandDTO<SouthItemSettings>>;
         errors: Array<{
-          item: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>;
+          item: HistoryQuerySouthItemDTO<SouthItemSettings> | HistoryQuerySouthItemCommandDTO<SouthItemSettings>;
           error: string;
         }>;
       }) => {
@@ -331,7 +335,7 @@ export class HistoryQueryItemsComponent implements OnInit {
   private refreshAfterImportModalClosed(modalRef: Modal<any>) {
     modalRef.result
       .pipe(
-        switchMap((newItems: Array<HistoryQueryItemCommandDTO<SouthItemSettings>>) => {
+        switchMap((newItems: Array<HistoryQuerySouthItemCommandDTO<SouthItemSettings>>) => {
           if (this.saveChangesDirectly()) {
             return this.historyQueryService.importItems(this.historyId(), newItems);
           } else {
@@ -351,7 +355,7 @@ export class HistoryQueryItemsComponent implements OnInit {
       });
   }
 
-  toggleItem(item: HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>, value: boolean) {
+  toggleItem(item: HistoryQuerySouthItemDTO<SouthItemSettings> | HistoryQuerySouthItemCommandDTO<SouthItemSettings>, value: boolean) {
     if (value) {
       this.historyQueryService
         .enableItem(this.historyId(), item.id!)

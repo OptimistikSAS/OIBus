@@ -89,6 +89,7 @@ describe('South Modbus', () => {
       swapWordsInDWords: false,
       retryInterval: 10000
     },
+    transformers: [],
     items: [
       {
         id: 'id1',
@@ -436,6 +437,7 @@ describe('SouthModbus test connection', () => {
       swapWordsInDWords: false,
       retryInterval: 10000
     },
+    transformers: [],
     items: [
       {
         id: 'id1',
