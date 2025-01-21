@@ -15,8 +15,8 @@
       <div class="d-flex align-items-center">
         <div>
           <span translate="south.items.title"></span>
-          @if (this.filteredItems.length) {
-            <span class="mx-1">({{ this.filteredItems.length }})</span>
+          @if (filteredItems.length) {
+            <span class="mx-1">({{ filteredItems.length }})</span>
           }
         </div>
         <input
@@ -35,7 +35,7 @@
           class="btn btn-secondary btn-sm"
           id="export-items"
           (click)="exportItems()"
-          [disabled]="this.allItems.length === 0"
+          [disabled]="allItems.length === 0"
           translate="south.items.export"
         ></button>
         <button type="button" class="btn btn-secondary btn-sm" (click)="importItems()" id="import-button">
@@ -46,7 +46,7 @@
           id="delete-all"
           class="btn btn-danger btn-sm"
           (click)="deleteAllItems()"
-          [disabled]="this.allItems.length === 0"
+          [disabled]="allItems.length === 0"
           translate="south.items.delete-all"
         ></button>
         <oib-help url="https://oibus.optimistik.com/docs/guide/south-connectors/common-settings#item-section" />
@@ -79,7 +79,7 @@
         <tbody>
           @for (item of displayedItems.content; track item.id) {
             <tr class="south-item">
-              @if (this.saveChangesDirectly()) {
+              @if (saveChangesDirectly()) {
                 <td>
                   <div class="form-check form-switch">
                     <input (click)="toggleItem(item, !item.enabled)" [checked]="item.enabled" type="checkbox" class="form-check-input" />
