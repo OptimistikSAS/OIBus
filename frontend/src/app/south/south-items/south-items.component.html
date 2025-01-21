@@ -15,8 +15,8 @@
       <div class="d-flex align-items-center">
         <div>
           <span translate="south.items.title"></span>
-          @if (this.filteredItems.length) {
-            <span class="mx-1">({{ this.filteredItems.length }})</span>
+          @if (filteredItems.length) {
+            <span class="mx-1">({{ filteredItems.length }})</span>
           }
         </div>
         <input
@@ -44,7 +44,7 @@
           type="button"
           class="btn btn-danger btn-sm oib-box-btn"
           (click)="deleteAllItems()"
-          [disabled]="this.allItems.length === 0"
+          [disabled]="allItems.length === 0"
           translate="south.items.delete-all"
           id="delete-all"
         ></button>
@@ -86,7 +86,7 @@
         <tbody>
           @for (item of displayedItems.content; track item.id) {
             <tr class="south-item">
-              @if (this.saveChangesDirectly()) {
+              @if (saveChangesDirectly()) {
                 <td>
                   <div class="form-check form-switch">
                     <input (click)="toggleItem(item, !item.enabled)" [checked]="item.enabled" type="checkbox" class="form-check-input" />
