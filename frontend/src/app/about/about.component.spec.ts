@@ -4,7 +4,7 @@ import { AboutComponent } from './about.component';
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { EngineService } from '../services/engine.service';
-import { of } from 'rxjs';
+import { EMPTY, of } from 'rxjs';
 
 class AboutComponentTester extends ComponentTester<AboutComponent> {
   constructor() {
@@ -51,6 +51,7 @@ class AboutComponentTester extends ComponentTester<AboutComponent> {
     return this.element('#license');
   }
 }
+
 describe('AboutComponent', () => {
   let tester: AboutComponentTester;
   let engineService: jasmine.SpyObj<EngineService>;
@@ -61,11 +62,12 @@ describe('AboutComponent', () => {
     TestBed.configureTestingModule({
       providers: [provideI18nTesting(), { provide: EngineService, useValue: engineService }]
     });
-
-    tester = new AboutComponentTester();
   });
 
   it('should have static info', () => {
+    engineService.getInfo.and.returnValue(EMPTY);
+    tester = new AboutComponentTester();
+    tester.detectChanges();
     expect(tester.officialSite).toContainText('Official site');
     expect(tester.license).toContainText('License');
     expect(tester.version).toContainText('Version');
@@ -88,6 +90,7 @@ describe('AboutComponent', () => {
         oibusName: 'name'
       })
     );
+    tester = new AboutComponentTester();
     tester.detectChanges();
 
     expect(tester.officialSite).toContainText('Official site');

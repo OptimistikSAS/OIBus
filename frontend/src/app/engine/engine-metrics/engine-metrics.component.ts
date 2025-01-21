@@ -1,4 +1,4 @@
-import { Component, Input, NgZone, inject } from '@angular/core';
+import { Component, NgZone, inject, input } from '@angular/core';
 import { TranslateDirective } from '@ngx-translate/core';
 import { EngineMetrics } from '../../../../../backend/shared/model/engine.model';
 import { PercentPipe } from '@angular/common';
@@ -22,8 +22,8 @@ export class EngineMetricsComponent {
   private notificationService = inject(NotificationService);
   private router = inject(Router);
 
-  @Input() displayButton = false;
-  @Input({ required: true }) metrics!: EngineMetrics;
+  readonly displayButton = input(false);
+  readonly metrics = input.required<EngineMetrics>();
 
   resetMetrics() {
     this.zone.run(() => {

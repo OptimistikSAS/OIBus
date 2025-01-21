@@ -1,5 +1,5 @@
 import { PercentPipe } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { NgbProgressbarModule } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
@@ -9,7 +9,7 @@ import { NgbProgressbarModule } from '@ng-bootstrap/ng-bootstrap';
   styleUrl: './progressbar.component.scss'
 })
 export class ProgressbarComponent {
-  @Input({ required: true }) value!: number;
-  @Input() max = 1;
-  @Input({ required: true }) animated!: boolean;
+  readonly value = input.required<number>();
+  readonly max = input(1);
+  readonly animated = input.required<boolean>();
 }

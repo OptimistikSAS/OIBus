@@ -10,7 +10,7 @@ import { delay, of, throwError } from 'rxjs';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { SouthItemTestComponent } from './south-item-test.component';
-import { Component, ViewChild } from '@angular/core';
+import { Component } from '@angular/core';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { HistoryQueryItemCommandDTO } from '../../../../../backend/shared/model/history-query.model';
 import { HistoryQueryService } from '../../services/history-query.service';
@@ -23,7 +23,6 @@ import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   template: ` <oib-south-item-test
-    #testedComponent
     [type]="type"
     [entityId]="entityId"
     [item]="item"
@@ -34,10 +33,6 @@ import { TranslateService } from '@ngx-translate/core';
   imports: [SouthItemTestComponent]
 })
 class TestComponent {
-  @ViewChild('testedComponent') testedComponent!: SouthItemTestComponent<'south'>;
-
-  constructor(private translate: TranslateService) {}
-
   type!: string;
   entityId!: string;
 
@@ -126,12 +121,12 @@ class SouthItemTestComponentTester extends ComponentTester<TestComponent> {
     return this.button('#cancel-test-item')!;
   }
 
-  get testingSettingsForm() {
-    return this.componentInstance.testedComponent.testingSettingsForm!;
+  get southItemTestComponent() {
+    return this.component(SouthItemTestComponent);
   }
 
-  get translate() {
-    return this.componentInstance['translate'];
+  get testingSettingsForm() {
+    return this.component(SouthItemTestComponent).testingSettingsForm!;
   }
 }
 
@@ -178,9 +173,10 @@ describe('SouthItemTestComponent', () => {
 
     // Even though the codeblock does not work in the testing env
     // we can spy on it's calls
+    const codeBlockComponent = tester.component(OibCodeBlockComponent);
     codeBlockSpy = {
-      changeLanguage: spyOn(tester.componentInstance.testedComponent.codeBlock(), 'changeLanguage'),
-      writeValue: spyOn(tester.componentInstance.testedComponent.codeBlock(), 'writeValue')
+      changeLanguage: spyOn(codeBlockComponent, 'changeLanguage'),
+      writeValue: spyOn(codeBlockComponent, 'writeValue')
     };
   });
 
@@ -235,7 +231,7 @@ describe('SouthItemTestComponent', () => {
 
       expect(codeBlockSpy.changeLanguage).toHaveBeenCalledWith('plaintext');
       expect(codeBlockSpy.writeValue).toHaveBeenCalledWith('/file/path');
-      expect(tester.componentInstance.testedComponent.isTestRunning).toBeFalse();
+      expect(tester.southItemTestComponent.isTestRunning).toBeFalse();
     });
 
     it(`[${testCase.type}] should test the item with custom history settings`, () => {
@@ -275,7 +271,7 @@ describe('SouthItemTestComponent', () => {
 
       expect(codeBlockSpy.changeLanguage).toHaveBeenCalledWith('plaintext');
       expect(codeBlockSpy.writeValue).toHaveBeenCalledWith('/file/path');
-      expect(tester.componentInstance.testedComponent.isTestRunning).toBeFalse();
+      expect(tester.southItemTestComponent.isTestRunning).toBeFalse();
     });
 
     it(`[${testCase.type}] should test the item without history`, () => {
@@ -300,7 +296,7 @@ describe('SouthItemTestComponent', () => {
 
       expect(codeBlockSpy.changeLanguage).toHaveBeenCalledWith('plaintext');
       expect(codeBlockSpy.writeValue).toHaveBeenCalledWith('/file/path');
-      expect(tester.componentInstance.testedComponent.isTestRunning).toBeFalse();
+      expect(tester.southItemTestComponent.isTestRunning).toBeFalse();
     });
 
     it(`[${testCase.type}] should cancel the item test`, fakeAsync(() => {
@@ -342,7 +338,7 @@ describe('SouthItemTestComponent', () => {
       // values are not displayed
       expect(codeBlockSpy.changeLanguage).not.toHaveBeenCalled();
       expect(codeBlockSpy.writeValue).toHaveBeenCalled();
-      expect(tester.componentInstance.testedComponent.isTestRunning).toBeFalse();
+      expect(tester.southItemTestComponent.isTestRunning).toBeFalse();
     }));
 
     it(`[${testCase.type}] should not cancel the item test when it's already finished`, fakeAsync(() => {
@@ -385,7 +381,7 @@ describe('SouthItemTestComponent', () => {
       // values are properly displayed
       expect(codeBlockSpy.changeLanguage).toHaveBeenCalledWith('plaintext');
       expect(codeBlockSpy.writeValue).toHaveBeenCalledWith('/file/path');
-      expect(tester.componentInstance.testedComponent.isTestRunning).toBeFalse();
+      expect(tester.southItemTestComponent.isTestRunning).toBeFalse();
     }));
 
     it(`[${testCase.type}] should handle test request error`, () => {
@@ -416,11 +412,13 @@ describe('SouthItemTestComponent', () => {
         expectedSettings
       );
 
+      const translate = TestBed.inject(TranslateService);
+
       expect(codeBlockSpy.changeLanguage).not.toHaveBeenCalled();
       expect(codeBlockSpy.writeValue).toHaveBeenCalledWith(
-        `${tester.translate.instant('south.test-item.editor-message.error')}:\n${getMessageFromHttpErrorResponse(error)}`
+        `${translate.instant('south.test-item.editor-message.error')}:\n${getMessageFromHttpErrorResponse(error)}`
       );
-      expect(tester.componentInstance.testedComponent.isTestRunning).toBeFalse();
+      expect(tester.southItemTestComponent.isTestRunning).toBeFalse();
     });
 
     it(`[${testCase.type}] should handle time values as well`, () => {
@@ -448,7 +446,7 @@ describe('SouthItemTestComponent', () => {
 
       expect(codeBlockSpy.changeLanguage).toHaveBeenCalledWith('json');
       expect(codeBlockSpy.writeValue).toHaveBeenCalledWith(JSON.stringify(result.content));
-      expect(tester.componentInstance.testedComponent.isTestRunning).toBeFalse();
+      expect(tester.southItemTestComponent.isTestRunning).toBeFalse();
     });
   });
 });

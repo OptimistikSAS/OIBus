@@ -1,8 +1,8 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { TranslateDirective } from '@ngx-translate/core';
 import { EngineService } from '../services/engine.service';
-import { OIBusInfo } from '../../../../backend/shared/model/engine.model';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'oib-about',
@@ -10,15 +10,6 @@ import { OIBusInfo } from '../../../../backend/shared/model/engine.model';
   templateUrl: './about.component.html',
   styleUrl: './about.component.scss'
 })
-export class AboutComponent implements OnInit {
-  private engineService = inject(EngineService);
-
-  oibusInfo: OIBusInfo | null = null;
-  readonly copyrightYear = new Date().getFullYear();
-
-  ngOnInit() {
-    this.engineService.getInfo().subscribe(info => {
-      this.oibusInfo = info;
-    });
-  }
+export class AboutComponent {
+  readonly oibusInfo = toSignal(inject(EngineService).getInfo());
 }

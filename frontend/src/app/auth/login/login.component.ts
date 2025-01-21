@@ -1,6 +1,6 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
+import { NonNullableFormBuilder, Validators } from '@angular/forms';
 import { RequestedUrlService } from '../authentication.guard';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { formDirectives } from '../../shared/form-directives';
@@ -23,25 +23,26 @@ export class LoginComponent {
   private requestedUrlService = inject(RequestedUrlService);
   private windowService = inject(WindowService);
 
-  loginError = false;
-  form: FormGroup = inject(NonNullableFormBuilder).group({
+  readonly loginError = signal(false);
+  form = inject(NonNullableFormBuilder).group({
     login: ['', Validators.required],
     password: ['', Validators.required]
   });
 
   login() {
-    if (this.form.invalid) {
+    if (!this.form.valid) {
       return;
     }
 
-    this.loginError = false;
-    this.currentUserService.loginWithPassword(this.form.value.login, this.form.value.password).subscribe({
+    this.loginError.set(false);
+    const value = this.form.getRawValue();
+    this.currentUserService.loginWithPassword(value.login, value.password).subscribe({
       next: () => {
         this.router.navigateByUrl(this.requestedUrlService.getRequestedUrl()).then(() => {
           this.windowService.reload();
         });
       },
-      error: () => (this.loginError = true)
+      error: () => this.loginError.set(true)
     });
   }
 }
