@@ -1,6 +1,5 @@
-import { Component, OnInit, inject } from '@angular/core';
-
-import { switchMap } from 'rxjs';
+import { Component, inject } from '@angular/core';
+import { startWith, Subject, switchMap } from 'rxjs';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
@@ -13,6 +12,7 @@ import { DatetimePipe } from '../../shared/datetime.pipe';
 import { ClipboardCopyDirective } from '../../shared/clipboard-copy-directive';
 import { DownloadService } from '../../services/download.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'oib-certificate-list',
@@ -20,20 +20,20 @@ import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
   templateUrl: './certificate-list.component.html',
   styleUrl: './certificate-list.component.scss'
 })
-export class CertificateListComponent implements OnInit {
+export class CertificateListComponent {
   private confirmationService = inject(ConfirmationService);
   private modalService = inject(ModalService);
   private notificationService = inject(NotificationService);
   private certificateService = inject(CertificateService);
   private downloadService = inject(DownloadService);
 
-  certificates: Array<CertificateDTO> = [];
-
-  ngOnInit() {
-    this.certificateService.list().subscribe(certificateList => {
-      this.certificates = certificateList;
-    });
-  }
+  private refreshTrigger = new Subject<void>();
+  readonly certificates = toSignal(
+    this.refreshTrigger.pipe(
+      startWith(undefined),
+      switchMap(() => this.certificateService.list())
+    )
+  );
 
   /**
    * Open a modal to edit a certificate
@@ -57,9 +57,7 @@ export class CertificateListComponent implements OnInit {
 
   private refreshAfterEditCertificateModalClosed(modalRef: Modal<any>, mode: 'created' | 'updated') {
     modalRef.result.subscribe((certificate: CertificateDTO) => {
-      this.certificateService.list().subscribe(certificates => {
-        this.certificates = certificates;
-      });
+      this.refreshTrigger.next();
       this.notificationService.success(`engine.certificate.${mode}`, {
         name: certificate.name
       });
@@ -72,15 +70,9 @@ export class CertificateListComponent implements OnInit {
         messageKey: 'engine.certificate.confirm-deletion',
         interpolateParams: { name: certificate.name }
       })
-      .pipe(
-        switchMap(() => {
-          return this.certificateService.delete(certificate.id);
-        })
-      )
+      .pipe(switchMap(() => this.certificateService.delete(certificate.id)))
       .subscribe(() => {
-        this.certificateService.list().subscribe(certificates => {
-          this.certificates = certificates;
-        });
+        this.refreshTrigger.next();
         this.notificationService.success('engine.certificate.deleted', {
           name: certificate.name
         });

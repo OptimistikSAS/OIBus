@@ -5,7 +5,6 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { ComponentTester, createMock, TestButton } from 'ngx-speculoos';
 import { of } from 'rxjs';
 import { CertificateService } from '../../services/certificate.service';
-import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 import { provideHttpClient } from '@angular/common/http';
@@ -17,10 +16,6 @@ class CertificateListComponentTester extends ComponentTester<CertificateListComp
 
   get title() {
     return this.element('#title')!;
-  }
-
-  get addCertificate() {
-    return this.button('#add-certificate')!;
   }
 
   get deleteButtons() {
@@ -46,8 +41,6 @@ describe('CertificateListComponent', () => {
   let confirmationService: jasmine.SpyObj<ConfirmationService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
 
-  let certificates: Array<CertificateDTO>;
-
   beforeEach(() => {
     certificateService = createMock(CertificateService);
     confirmationService = createMock(ConfirmationService);
@@ -62,32 +55,31 @@ describe('CertificateListComponent', () => {
         { provide: NotificationService, useValue: notificationService }
       ]
     });
-
-    certificates = [
-      {
-        id: 'id1',
-        name: 'http://localhost',
-        description: 'My certificate 1',
-        publicKey: 'pub1',
-        certificate: 'cert1',
-        expiry: '2033-01-01T12:00:00Z'
-      },
-      {
-        id: 'id2',
-        name: 'Cert2',
-        description: 'My certificate 2',
-        publicKey: 'pub2',
-        certificate: 'cert2',
-        expiry: '2033-01-01T12:00:00Z'
-      }
-    ];
-
-    tester = new CertificateListComponentTester();
   });
 
   describe('with certificate', () => {
     beforeEach(() => {
-      certificateService.list.and.returnValue(of(certificates));
+      certificateService.list.and.returnValue(
+        of([
+          {
+            id: 'id1',
+            name: 'http://localhost',
+            description: 'My certificate 1',
+            publicKey: 'pub1',
+            certificate: 'cert1',
+            expiry: '2033-01-01T12:00:00Z'
+          },
+          {
+            id: 'id2',
+            name: 'Cert2',
+            description: 'My certificate 2',
+            publicKey: 'pub2',
+            certificate: 'cert2',
+            expiry: '2033-01-01T12:00:00Z'
+          }
+        ])
+      );
+      tester = new CertificateListComponentTester();
       tester.detectChanges();
     });
 
@@ -108,6 +100,7 @@ describe('CertificateListComponent', () => {
   describe('with no certificate', () => {
     it('should display an empty list', () => {
       certificateService.list.and.returnValue(of([]));
+      tester = new CertificateListComponentTester();
       tester.detectChanges();
       expect(tester.noCertificate).toContainText('No certificate');
     });

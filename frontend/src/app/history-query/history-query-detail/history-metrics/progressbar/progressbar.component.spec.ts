@@ -1,27 +1,28 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { ProgressbarComponent } from './progressbar.component';
+import { Component, signal } from '@angular/core';
+
+@Component({
+  template: '<oib-progressbar [value]="value()" [max]="max()" [animated]="animated()" />',
+  imports: [ProgressbarComponent]
+})
+class ProgressbarTestComponent {
+  value = signal(0.5);
+  max = signal(1);
+  animated = signal(false);
+}
 
 describe('ProgressbarComponent', () => {
-  let component: ProgressbarComponent;
-  let fixture: ComponentFixture<ProgressbarComponent>;
+  let fixture: ComponentFixture<ProgressbarTestComponent>;
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [ProgressbarComponent]
-    }).compileComponents();
-
-    fixture = TestBed.createComponent(ProgressbarComponent);
-    component = fixture.componentInstance;
+  beforeEach(() => {
+    TestBed.configureTestingModule({});
+    fixture = TestBed.createComponent(ProgressbarTestComponent);
     fixture.detectChanges();
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
-  });
-
   it('should set the width of the progress bar', () => {
-    component.value = 0.5;
     fixture.detectChanges();
     // class .progress-bar is a child of ngb-progressbar
     const progressBar = fixture.nativeElement.querySelector('.progress-bar');
@@ -29,23 +30,22 @@ describe('ProgressbarComponent', () => {
   });
 
   it('should set the width of the progress bar to 100%', () => {
-    component.value = 1;
+    fixture.componentInstance.value.set(1);
     fixture.detectChanges();
     const progressBar = fixture.nativeElement.querySelector('.progress-bar');
     expect(progressBar.style.width).toBe('100%');
   });
 
   it('should animate the progress bar', () => {
-    component.value = 0.5;
-    component.animated = true;
+    fixture.componentInstance.animated.set(true);
     fixture.detectChanges();
     const progressBar = fixture.nativeElement.querySelector('.progress-bar');
     expect(progressBar.classList).toContain('progress-bar-animated');
   });
 
   it('should take max value into account', () => {
-    component.value = 63;
-    component.max = 180;
+    fixture.componentInstance.value.set(63);
+    fixture.componentInstance.max.set(180);
     fixture.detectChanges();
     const progressBar = fixture.nativeElement.querySelector('.progress-bar');
     expect(progressBar.style.width).toBe('35%');

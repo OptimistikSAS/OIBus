@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { TranslateDirective } from '@ngx-translate/core';
 import { HistoryQueryMetrics } from '../../../../../../backend/shared/model/engine.model';
 import { JsonPipe } from '@angular/common';
@@ -19,23 +19,22 @@ import { NorthSettings } from '../../../../../../backend/shared/model/north-sett
   imports: [TranslateDirective, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe, ProgressbarComponent]
 })
 export class HistoryMetricsComponent {
-  @Input({ required: true }) historyQuery!: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>;
-  @Input({ required: true }) northManifest!: NorthConnectorManifest;
-  @Input({ required: true }) southManifest!: SouthConnectorManifest;
-  @Input({ required: true }) historyMetrics!: HistoryQueryMetrics;
-
-  get southProgressbarAnimated(): boolean {
-    return this.historyQuery.status === 'RUNNING' && this.historyMetrics.historyMetrics.intervalProgress !== 1;
-  }
+  readonly historyQuery = input.required<HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>>();
+  readonly northManifest = input.required<NorthConnectorManifest>();
+  readonly southManifest = input.required<SouthConnectorManifest>();
+  readonly historyMetrics = input.required<HistoryQueryMetrics>();
+  readonly southProgressbarAnimated = computed(
+    () => this.historyQuery().status === 'RUNNING' && this.historyMetrics().historyMetrics.intervalProgress !== 1
+  );
 
   get northProgress() {
-    const valueProgress = this.historyMetrics.north.numberOfValuesSent / this.historyMetrics.south.numberOfValuesRetrieved;
-    const fileProgress = this.historyMetrics.north.numberOfFilesSent / this.historyMetrics.south.numberOfFilesRetrieved;
+    const valueProgress = this.historyMetrics().north.numberOfValuesSent / this.historyMetrics().south.numberOfValuesRetrieved;
+    const fileProgress = this.historyMetrics().north.numberOfFilesSent / this.historyMetrics().south.numberOfFilesRetrieved;
 
     return valueProgress > 0 ? valueProgress : fileProgress;
   }
 
   get northProgressbarAnimated(): boolean {
-    return this.historyQuery.status === 'RUNNING' && this.northProgress < 1;
+    return this.historyQuery().status === 'RUNNING' && this.northProgress < 1;
   }
 }
