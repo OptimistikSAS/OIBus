@@ -376,7 +376,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       this.connector.caching.maxSize !== 0 &&
       this.cacheSize + this.errorSize + this.archiveSize >= this.connector.caching.maxSize * 1024 * 1024
     ) {
-      this.logger.debug(
+      this.logger.warn(
         `North cache is exceeding the maximum allowed size ` +
           `(${Math.floor(((this.cacheSize + this.errorSize + this.archiveSize) / 1024 / 1024) * 100) / 100} MB >= ${this.connector.caching.maxSize} MB). ` +
           'Values will be discarded until the cache is emptied (by sending files/values or manual removal)'
@@ -400,7 +400,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       this.connector.caching.maxSize !== 0 &&
       this.cacheSize + this.errorSize + this.archiveSize >= this.connector.caching.maxSize * 1024 * 1024
     ) {
-      this.logger.debug(
+      this.logger.warn(
         `North cache is exceeding the maximum allowed size ` +
           `(${Math.floor(((this.cacheSize + this.errorSize + this.archiveSize) / 1024 / 1024) * 100) / 100} MB >= ${this.connector.caching.maxSize} MB). ` +
           'Files will be discarded until the cache is emptied (by sending files/values or manual removal)'
