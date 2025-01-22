@@ -536,7 +536,7 @@ export const toNorthConnectorDTO = <N extends NorthSettings>(
       scanModeId: northEntity.caching.scanModeId,
       retryInterval: northEntity.caching.retryInterval,
       retryCount: northEntity.caching.retryCount,
-      maxSize: northEntity.caching.retryCount,
+      maxSize: northEntity.caching.maxSize,
       oibusTimeValues: {
         groupCount: northEntity.caching.oibusTimeValues.groupCount,
         maxSendCount: northEntity.caching.oibusTimeValues.maxSendCount
@@ -584,7 +584,7 @@ export const copyNorthConnectorCommandToNorthEntity = async <N extends NorthSett
     scanModeId: checkScanMode(scanModes, command.caching.scanModeId, command.caching.scanModeName),
     retryInterval: command.caching.retryInterval,
     retryCount: command.caching.retryCount,
-    maxSize: command.caching.retryCount,
+    maxSize: command.caching.maxSize,
     oibusTimeValues: {
       groupCount: command.caching.oibusTimeValues.groupCount,
       maxSendCount: command.caching.oibusTimeValues.maxSendCount
