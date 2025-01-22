@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.5.6](https://github.com/OptimistikSAS/OIBus/compare/v3.5.5...v3.5.6) (2025-01-22)
+
+
+### Bug Fixes
+
+* **deps:** update typescript to v5.7.3 ([4671b33](https://github.com/OptimistikSAS/OIBus/commit/4671b33cb6e7a6ff51dff356f3639682d0c120b1))
+* **north:** warn when exceeding cache size, and fix cache size edition ([52d3f16](https://github.com/OptimistikSAS/OIBus/commit/52d3f16f0300b64f5f3fa3029fe44487f04b2c87))
+
 ## [3.5.5](https://github.com/OptimistikSAS/OIBus/compare/v3.5.4...v3.5.5) (2025-01-17)
 
 
