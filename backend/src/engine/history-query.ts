@@ -105,7 +105,7 @@ export default class HistoryQuery {
       this.south!.createDeferredPromise();
 
       this.south!.historyQueryHandler(
-        this.historyConfiguration.items.map(item => ({ ...item, scanModeId: 'history' })),
+        this.historyConfiguration.items.map(item => ({ ...item, scanModeId: 'history' })).filter(item => item.enabled),
         this.historyConfiguration.startTime,
         this.historyConfiguration.endTime,
         'history',
