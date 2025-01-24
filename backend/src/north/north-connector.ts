@@ -291,7 +291,9 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     }
     if (this.valuesBeingSent.size) {
       for (const array of this.valuesBeingSent.values()) {
-        arrayValues.push(...array);
+        for (const value of array) {
+          arrayValues.push(value);
+        }
       }
       try {
         const content: OIBusTimeValueContent = {
