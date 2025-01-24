@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.5.7](https://github.com/OptimistikSAS/OIBus/compare/v3.5.6...v3.5.7) (2025-01-24)
+
+
+### Bug Fixes
+
+* **history-query:** filter disabled items for history query ([ba3b37b](https://github.com/OptimistikSAS/OIBus/commit/ba3b37be99fe3a9855d2e2ba042f4556a1323b73))
+* **north:** remove spread operator to avoid stack overflow ([b98a56b](https://github.com/OptimistikSAS/OIBus/commit/b98a56b43275dcdf2881b8ae88a93dce326ee79d))
+
 ## [3.5.6](https://github.com/OptimistikSAS/OIBus/compare/v3.5.5...v3.5.6) (2025-01-22)
 
 
