@@ -104,25 +104,25 @@ jobs:
           PFX_PASSWORD: ${{ secrets.PFX_PASSWORD }}
           PFX_BASE64_CONTENT: ${{ secrets.PFX_BASE64_CONTENT }}
           PFX_PATH: C://oibus.pfx
-        if: ${{ matrix.config['platform'] == 'win' }}
+        if: ${{ matrix.config['platform'] == 'win-x64' }}
         shell: pwsh
         working-directory: ./backend
         run: |
           $encodedBytes = [System.Convert]::FromBase64String("$env:PFX_BASE64_CONTENT")
           Set-Content -Path "$env:PFX_PATH" -AsByteStream -Value $encodedBytes
-          npm run build:win-setup
+          npm run build:win-setup-x64
           Remove-Item -Path "$env:PFX_PATH";
 
       - name: Rename windows installer
-        if: ${{ matrix.config['platform'] == 'win' }}
-        run: mv ./build/bin/win-setup-release/oibus-setup.exe ./build/bin/win-setup-release/oibus-setup-win_x64-${{ github.ref_name }}.exe
+        if: ${{ matrix.config['platform'] == 'win-x64' }}
+        run: mv ./build/bin/win-setup-release/oibus-setup.exe ./build/bin/win-setup-release/${{ matrix.config['archiveName'] }}-setup-${{ github.ref_name }}.exe
 
       - name: Upload Windows installer Artifact ${{ matrix.config['archiveName'] }}
-        if: ${{ matrix.config['platform'] == 'win' }}
+        if: ${{ matrix.config['platform'] == 'win-x64' }}
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
         run:
-          gh release upload ${{ github.ref_name }} ./build/bin/win-setup-release/oibus-setup-win_x64-${{ github.ref_name }}.exe
+          gh release upload ${{ github.ref_name }} ./build/bin/win-setup-release/${{ matrix.config['archiveName'] }}-setup-${{ github.ref_name }}.exe
 
     outputs:
       release_name: ${{ steps.release_info.outputs.release_name }}
