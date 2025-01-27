@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.5.8](https://github.com/OptimistikSAS/OIBus/compare/v3.5.7...v3.5.8) (2025-01-27)
+
+
+### Bug Fixes
+
+* **oianalytics:** only ignore remote update command if flag is set to true ([67268e7](https://github.com/OptimistikSAS/OIBus/commit/67268e79e906cea5ca93cf7821691c9dc4e88f4a))
+
 ## [3.5.7](https://github.com/OptimistikSAS/OIBus/compare/v3.5.6...v3.5.7) (2025-01-24)
 
 
