@@ -782,13 +782,66 @@ describe('OIAnalytics Command service with update error', () => {
   });
 });
 
+describe('OIAnalytics Command service with ignoreRemoteUpdate', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+
+    (oIBusService.getEngineSettings as jest.Mock).mockReturnValue(testData.engine.settings);
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValue(testData.oIAnalytics.commands.oIBusList);
+    (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValue(testData.oIAnalytics.registration.completed);
+
+    service = new OIAnalyticsCommandService(
+      oIAnalyticsCommandRepository,
+      oIAnalyticsRegistrationService,
+      oIAnalyticsMessageService,
+      encryptionService,
+      oIAnalyticsClient,
+      oIBusService,
+      scanModeService,
+      southService,
+      northService,
+      logger,
+      'binaryFolder',
+      true,
+      '3.4.0'
+    );
+  });
+
+  // it('should properly start when not registered', () => {
+  //   expect(oIBusService.getEngineSettings).toHaveBeenCalled();
+  //   expect(oIAnalyticsCommandRepository.list).toHaveBeenCalled();
+  //   expect(oIBusService.updateOIBusVersion).toHaveBeenCalledWith(version, '3.4.0');
+  //   expect(oIAnalyticsCommandRepository.markAsCompleted).not.toHaveBeenCalled();
+  // });
+
+  it('should change logger', async () => {
+    const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
+
+    service.setLogger(anotherLogger);
+    await service.stop();
+
+    expect(logger.debug).not.toHaveBeenCalled();
+    expect(anotherLogger.debug).toHaveBeenCalledTimes(2);
+    expect(clearIntervalSpy).not.toHaveBeenCalled();
+  });
+
+  it('should not run an update', async () => {
+    await service.executeCommand();
+    expect(logger.error).toHaveBeenCalledWith(
+      `Error while executing command ${testData.oIAnalytics.commands.oIBusList[0].id} (retrieved ${testData.oIAnalytics.commands.oIBusList[0].retrievedDate}) of type ${testData.oIAnalytics.commands.oIBusList[0].type}. Error: OIBus is not set up to execute remote update`
+    );
+  });
+});
+
 describe('OIAnalytics Command service with no commands', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValue([]);
     (oIBusService.getEngineSettings as jest.Mock).mockReturnValue(testData.engine.settings);
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValue([]);
+
     service = new OIAnalyticsCommandService(
       oIAnalyticsCommandRepository,
       oIAnalyticsRegistrationService,
@@ -811,22 +864,6 @@ describe('OIAnalytics Command service with no commands', () => {
     expect(oIAnalyticsCommandRepository.list).toHaveBeenCalled();
     expect(oIBusService.updateOIBusVersion).toHaveBeenCalledWith(version, '3.4.0');
     expect(oIAnalyticsCommandRepository.markAsCompleted).not.toHaveBeenCalled();
-  });
-
-  it('should change logger', async () => {
-    const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
-
-    service.setLogger(anotherLogger);
-    await service.stop();
-
-    expect(logger.debug).not.toHaveBeenCalled();
-    expect(anotherLogger.debug).toHaveBeenCalledTimes(2);
-    expect(clearIntervalSpy).not.toHaveBeenCalled();
-  });
-
-  it('should not run an update', async () => {
-    await service.executeCommand();
-    expect(logger.error).toHaveBeenCalledWith('OIBus is not set up to execute remote');
   });
 });
 

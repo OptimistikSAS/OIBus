@@ -209,11 +209,6 @@ export default class OIAnalyticsCommandService {
   }
 
   async executeCommand(): Promise<void> {
-    if (this.ignoreRemoteUpdate) {
-      this.logger.error(`OIBus is not set up to execute remote`);
-      return;
-    }
-
     const registration = this.oIAnalyticsRegistrationService.getRegistrationSettings()!;
     if (registration.status !== 'REGISTERED') {
       this.logger.trace(`OIAnalytics not registered. OIBus won't retrieve commands`);
@@ -344,6 +339,10 @@ export default class OIAnalyticsCommandService {
   }
 
   private async executeUpdateVersionCommand(command: OIBusUpdateVersionCommand, registration: OIAnalyticsRegistration) {
+    if (this.ignoreRemoteUpdate) {
+      throw new Error(`OIBus is not set up to execute remote update`);
+    }
+
     const runStart = DateTime.now();
     const engineSettings = this.oIBusService.getEngineSettings()!;
     const oibusInfo = getOIBusInfo(engineSettings);
