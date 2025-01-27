@@ -34,6 +34,7 @@ jobs:
           ref: ${{ github.ref }}
 
       - name: Use Node.js
+        if: ${{ steps.release.outputs.release_created }}
         uses: actions/setup-node@v4
         with:
           node-version-file: backend/package.json

@@ -57,8 +57,8 @@ export default class Launcher {
         }
 
         if (this.check) {
-          console.info('OIBus launcher started in check mode. Exiting process.');
-          process.exit();
+          console.info(`OIBus launcher started in check mode. Exiting process with code ${code}.`);
+          process.exit(code);
         }
         if (!this.stopping) {
           await this.start();
