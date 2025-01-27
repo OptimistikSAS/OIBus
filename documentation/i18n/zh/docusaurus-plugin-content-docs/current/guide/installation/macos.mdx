@@ -15,6 +15,12 @@ import packageInfo from '../../../../../../package.json'
       <div>MacOS (Intel 芯片)</div>
     </div>
   </DownloadButton>
+  <DownloadButton link={`https://github.com/OptimistikSAS/OIBus/releases/download/v${packageInfo.version}/oibus-macos_arm64-v${packageInfo.version}.zip`}>
+    <div>
+      <div>{`OIBus v${packageInfo.version}`}</div>
+      <div>MacOS (ARM 64)</div>
+    </div>
+  </DownloadButton>
 </div>
 
 macOS OIBus 二进制文件可以通过其可执行文件运行。解压缩后，启动终端并输入以下命令：

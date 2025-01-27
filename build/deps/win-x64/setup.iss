@@ -44,10 +44,10 @@ Name: {app}\update
 Name: {app}\backup
 
 [Files]
-Source: "..\..\bin\win\binaries\oibus.exe"; DestDir: "{app}\binaries"; Flags: ignoreversion
-Source: "..\..\bin\win\nssm.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\..\bin\win\oibus-launcher.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\..\bin\win\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\bin\win-x64\binaries\oibus.exe"; DestDir: "{app}\binaries"; Flags: ignoreversion
+Source: "..\..\bin\win-x64\nssm.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\bin\win-x64\oibus-launcher.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\bin\win-x64\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 
 [Messages]
 WelcomeLabel2=This will install [name/ver] on your computer.%n%n%nIMPORTANT:%nInternet Explorer is NOT supported. OIBus can only be configured using an up-to-date browser, like Google Chrome, Mozilla Firefox or Microsoft Edge.
