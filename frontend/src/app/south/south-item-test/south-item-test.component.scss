@@ -1,47 +1,6 @@
 @import '../../../common.scss';
 
-::ng-deep .monaco-editor {
-  .overflow-guard {
-    outline: solid 1px $mediumGrey;
-  }
-}
-
 .fa-spinner:before {
   display: block;
   transform: translateY(1px);
-}
-
-#test-item-placeholder {
-  height: 30vh;
-  outline: solid 1px $mediumGrey;
-}
-
-#tableView {
-  outline: solid 1px $mediumGrey;
-}
-.grid-header,
-.grid-row {
-  display: grid;
-  grid-template-columns: minmax(150px, auto) minmax(100px, 200px) minmax(75px, auto) minmax(100px, auto);
-}
-.grid-row {
-  &:hover {
-    background-color: $mediumGrey;
-  }
-}
-.json-content {
-  display: block;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-.grid-table {
-  display: grid;
-  grid-template-columns: minmax(150px, auto) minmax(100px, 200px) minmax(75px, auto) minmax(100px, auto);
-}
-.grid-table-header, .grid-table-row {
-  display: contents;
-}
-.grid-table-row:hover > div {
-  background-color: $mediumGrey;
 }

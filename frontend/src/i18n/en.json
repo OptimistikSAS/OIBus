@@ -576,8 +576,8 @@
       "query-end": "Query data until",
       "status-message": {
         "initial": "Test results will appear here",
-        "loading": "Running item...",
-        "error": "Error when testing item",
+        "item-error": "Error when testing item",
+        "display-result-error": "Error when displaying item, please try another view mode",
         "cancel": "Test cancelled"
       },
       "view": {

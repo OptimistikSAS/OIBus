@@ -7,7 +7,7 @@
       @if (currentDisplayMode) {
         <div ngbDropdown class="d-inline-block">
           <button type="button" class="btn btn-link oib-box-btn m-0" id="view-dropdown" ngbDropdownToggle>
-            <span class="fa {{ displayModeIcons[currentDisplayMode] }}"></span>
+            <span class="fa {{ this.testResultView().currentDisplayModeIcon }}"></span>
             <span style="margin-left: 5px">{{ 'south.test-item.view.' + currentDisplayMode | translate }}</span>
           </button>
           <div ngbDropdownMenu aria-labelledby="view-dropdown">
@@ -17,7 +17,7 @@
                 class="{{ currentDisplayMode === displayMode ? 'active' : '' }}"
                 (click)="changeDisplayMode(displayMode)"
               >
-                <span class="fa {{ displayModeIcons[displayMode] }}"></span>
+                <span class="fa {{ this.testResultView().displayModeIcons[displayMode] }}"></span>
                 <span style="margin-left: 5px">{{ 'south.test-item.view.' + displayMode | translate }}</span>
               </button>
             }
@@ -76,45 +76,8 @@
     </form>
   }
 </div>
-@if (!currentDisplayMode && statusMessage) {
-  <div id="test-item-placeholder" class="p-2">
-    <span>{{ statusMessage }}</span>
-  </div>
-} @else {
-  @if (currentDisplayMode === 'table') {
-    <div id="tableView" class="mb-2 grid-table">
-      <div class="grid-table-header fw-bold">
-        <div class="p-2">{{ 'south.test-item.table.timestamp' | translate }}</div>
-        <div class="p-2">{{ 'south.test-item.table.pointId' | translate }}</div>
-        <div class="p-2">{{ 'south.test-item.table.value' | translate }}</div>
-        <div class="p-2">{{ 'south.test-item.table.other' | translate }}</div>
-      </div>
-      @for (item of tableView.content; track $index) {
-        <div class="grid-table-row">
-          <div class="p-2 h-100">{{ item.timestamp }}</div>
-          <div class="p-2 h-100">{{ item.pointId }}</div>
-          <div class="p-2 h-100" style="overflow-wrap: anywhere">{{ convertDataToString(item.data).value }}</div>
-          <div class="p-2 h-100">
-            <code class="json-content">{{ convertDataToString(item.data).other }}</code>
-          </div>
-        </div>
-      }
-      @if (tableView.totalElements === 0) {
-        <div class="p-2 h-100">{{ 'south.test-item.table.no-values' | translate }}</div>
-      }
-    </div>
-    @if (tableView.totalElements) {
-      <div class="d-flex flex-row-reverse">
-        <div [class]="tableView.totalPages > 1 ? 'ms-2' : ''">
-          <oib-pagination [page]="tableView" (pageChanged)="changePage($event)" />
-        </div>
-      </div>
-    }
-  }
-
-  <!--
-    The code block needs to be the DOM in order to be able to switch to it, because it takes time to load it.
-    Without this, the first render always fails to add the test result to it.
-  -->
-  <oib-code-block [hidden]="currentDisplayMode === 'table'" height="30vh" #monacoEditor contentType="json" [readOnly]="true" />
-}
+<oib-item-test-result
+  #testResultView
+  (availableDisplayModes)="onAvailableDisplayModesChange($event)"
+  (currentDisplayMode)="onCurrentDisplayModeChange($event)"
+/>
