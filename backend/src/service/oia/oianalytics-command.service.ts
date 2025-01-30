@@ -328,10 +328,16 @@ export default class OIAnalyticsCommandService {
           await this.executeDeleteSouthCommand(command);
           break;
         case 'test-south-connection':
-          await this.executeTestSouthConnectionCommand(command);
+          {
+            const privateKey = await this.encryptionService.decryptText(registration.privateCipherKey!);
+            await this.executeTestSouthConnectionCommand(command, privateKey);
+          }
           break;
         case 'test-south-item':
-          await this.executeTestSouthItemCommand(command);
+          {
+            const privateKey = await this.encryptionService.decryptText(registration.privateCipherKey!);
+            await this.executeTestSouthItemCommand(command, privateKey);
+          }
           break;
         case 'create-north':
           {
@@ -349,7 +355,10 @@ export default class OIAnalyticsCommandService {
           await this.executeDeleteNorthCommand(command);
           break;
         case 'test-north-connection':
-          await this.executeTestNorthConnectionCommand(command);
+          {
+            const privateKey = await this.encryptionService.decryptText(registration.privateCipherKey!);
+            await this.executeTestNorthConnectionCommand(command, privateKey);
+          }
           break;
         case 'create-or-update-south-items-from-csv':
           await this.executeCreateOrUpdateSouthConnectorItemsFromCSVCommand(command);
@@ -528,7 +537,10 @@ export default class OIAnalyticsCommandService {
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Certificate deleted successfully');
   }
 
-  private async decryptSouthSettings(command: OIBusCreateSouthConnectorCommand | OIBusUpdateSouthConnectorCommand, privateKey: string) {
+  private async decryptSouthSettings(
+    command: OIBusCreateSouthConnectorCommand | OIBusUpdateSouthConnectorCommand | OIBusTestSouthConnectorCommand,
+    privateKey: string
+  ) {
     const manifest = this.southService.getInstalledSouthManifests().find(element => element.id === command.commandContent.type)!;
     command.commandContent.settings = await this.encryptionService.decryptSecretsWithPrivateKey(
       command.commandContent.settings,
@@ -544,6 +556,22 @@ export default class OIAnalyticsCommandService {
         scanModeId: item.scanModeId,
         scanModeName: item.scanModeName
       }))
+    );
+  }
+
+  private async decryptSouthItemSettings(command: OIBusTestSouthConnectorItemCommand, privateKey: string) {
+    const manifest = this.southService
+      .getInstalledSouthManifests()
+      .find(element => element.id === command.commandContent.southCommand.type)!;
+    command.commandContent.southCommand.settings = await this.encryptionService.decryptSecretsWithPrivateKey(
+      command.commandContent.southCommand.settings,
+      manifest.settings,
+      privateKey
+    );
+    command.commandContent.itemCommand.settings = await this.encryptionService.decryptSecretsWithPrivateKey(
+      command.commandContent.itemCommand.settings,
+      manifest.items.settings,
+      privateKey
     );
   }
 
@@ -564,12 +592,15 @@ export default class OIAnalyticsCommandService {
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'South connector deleted successfully');
   }
 
-  private async executeTestSouthConnectionCommand(command: OIBusTestSouthConnectorCommand) {
+  private async executeTestSouthConnectionCommand(command: OIBusTestSouthConnectorCommand, privateKey: string) {
+    await this.decryptSouthSettings(command, privateKey);
     await this.southService.testSouth(command.southConnectorId, command.commandContent, this.logger);
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'South connection tested successfully');
   }
 
-  private async executeTestSouthItemCommand(command: OIBusTestSouthConnectorItemCommand) {
+  private async executeTestSouthItemCommand(command: OIBusTestSouthConnectorItemCommand, privateKey: string) {
+    await this.decryptSouthItemSettings(command, privateKey);
+
     await this.southService.testSouthItem(
       command.southConnectorId,
       command.commandContent.southCommand,
@@ -582,7 +613,10 @@ export default class OIAnalyticsCommandService {
     );
   }
 
-  private async decryptNorthSettings(command: OIBusCreateNorthConnectorCommand | OIBusUpdateNorthConnectorCommand, privateKey: string) {
+  private async decryptNorthSettings(
+    command: OIBusCreateNorthConnectorCommand | OIBusUpdateNorthConnectorCommand | OIBusTestNorthConnectorCommand,
+    privateKey: string
+  ) {
     const manifest = this.northService.getInstalledNorthManifests().find(element => element.id === command.commandContent.type)!;
     command.commandContent.settings = await this.encryptionService.decryptSecretsWithPrivateKey(
       command.commandContent.settings,
@@ -608,7 +642,8 @@ export default class OIAnalyticsCommandService {
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'North connector deleted successfully');
   }
 
-  private async executeTestNorthConnectionCommand(command: OIBusTestNorthConnectorCommand) {
+  private async executeTestNorthConnectionCommand(command: OIBusTestNorthConnectorCommand, privateKey: string) {
+    await this.decryptNorthSettings(command, privateKey);
     await this.northService.testNorth(command.northConnectorId, command.commandContent, this.logger);
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'North connection tested successfully');
   }
