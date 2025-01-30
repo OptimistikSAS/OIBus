@@ -28,6 +28,9 @@ import UserRepositoryMock from '../../tests/__mocks__/repository/config/user-rep
 import OIAnalyticsRegistrationService from './oianalytics-registration.service';
 import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
 import { FetchError } from 'node-fetch';
+import HistoryQueryRepository from '../../repository/config/history-query.repository';
+import HistoryQueryRepositoryMock from '../../tests/__mocks__/repository/config/history-query-repository.mock';
+import { OIAnalyticsDeleteHistoryQuery, OIAnalyticsSaveHistoryQuery } from '../../model/oianalytics-message.model';
 
 jest.mock('node:fs/promises');
 jest.mock('../utils');
@@ -41,6 +44,7 @@ const userRepository: UserRepository = new UserRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const southRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
 const northRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
+const historyQueryRepository: HistoryQueryRepository = new HistoryQueryRepositoryMock();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const oIAnalyticsClient: OIAnalyticsClient = new OianalyticsClientMock();
 
@@ -76,6 +80,7 @@ describe('OIAnalytics Message Service', () => {
       userRepository,
       southRepository,
       northRepository,
+      historyQueryRepository,
       oIAnalyticsClient,
       encryptionService,
       logger
@@ -239,6 +244,7 @@ describe('OIAnalytics message service without message', () => {
       userRepository,
       southRepository,
       northRepository,
+      historyQueryRepository,
       oIAnalyticsClient,
       encryptionService,
       logger
@@ -261,8 +267,6 @@ describe('OIAnalytics message service without message', () => {
 describe('OIAnalytics message service without completed registration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValue(testData.oIAnalytics.registration.pending);
-    (oIAnalyticsMessageRepository.list as jest.Mock).mockReturnValue(testData.oIAnalytics.messages.oIBusList);
 
     service = new OIAnalyticsMessageService(
       oIAnalyticsMessageRepository,
@@ -274,6 +278,7 @@ describe('OIAnalytics message service without completed registration', () => {
       userRepository,
       southRepository,
       northRepository,
+      historyQueryRepository,
       oIAnalyticsClient,
       encryptionService,
       logger
@@ -281,13 +286,111 @@ describe('OIAnalytics message service without completed registration', () => {
   });
 
   it('should properly start and do nothing', () => {
+    (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock)
+      .mockReturnValueOnce(testData.oIAnalytics.registration.pending)
+      .mockReturnValueOnce(testData.oIAnalytics.registration.pending);
+    (oIAnalyticsMessageRepository.list as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.messages.oIBusList);
     service.start();
     expect(oIAnalyticsMessageRepository.list).toHaveBeenCalledTimes(1);
     expect(logger.debug).toHaveBeenCalledWith("OIBus is not registered to OIAnalytics. Messages won't be created");
     expect(logger.trace).toHaveBeenCalledWith("OIBus is not registered to OIAnalytics. Messages won't be sent");
   });
 
-  it('should create history query message', async () => {
-    service.createHistoryQueryMessage(testData.historyQueries.list[0]);
+  it('should not create save history query message if not register', async () => {
+    (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.registration.pending);
+    service.createSaveHistoryQueryMessageIfNotPending(testData.historyQueries.list[0].id);
+    expect(logger.debug).toHaveBeenCalledWith("OIBus is not registered to OIAnalytics. Messages won't be created");
+    expect(oIAnalyticsMessageRepository.list).not.toHaveBeenCalled();
+    expect(oIAnalyticsMessageRepository.create).not.toHaveBeenCalled();
+  });
+
+  it('should not create save history query message if message already exists', async () => {
+    const saveHistoryQueryMessage: OIAnalyticsSaveHistoryQuery = {
+      id: 'messageId2',
+      status: 'PENDING',
+      error: null,
+      completedDate: null,
+      type: 'save-history-query',
+      historyId: testData.historyQueries.list[0].id
+    };
+    (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.registration.completed);
+    (oIAnalyticsMessageRepository.list as jest.Mock).mockReturnValueOnce([saveHistoryQueryMessage]);
+    service.createSaveHistoryQueryMessageIfNotPending(testData.historyQueries.list[0].id);
+    expect(oIAnalyticsMessageRepository.create).not.toHaveBeenCalled();
+  });
+
+  it('should create save history query message and run it', async () => {
+    service.start();
+    const saveHistoryQueryMessage: OIAnalyticsSaveHistoryQuery = {
+      id: 'messageId3',
+      status: 'PENDING',
+      error: null,
+      completedDate: null,
+      type: 'save-history-query',
+      historyId: testData.historyQueries.list[0].id
+    };
+    (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock)
+      .mockReturnValueOnce(testData.oIAnalytics.registration.completed)
+      .mockReturnValueOnce(testData.oIAnalytics.registration.completed)
+      .mockReturnValueOnce(testData.oIAnalytics.registration.completed);
+    (oIAnalyticsMessageRepository.list as jest.Mock).mockReturnValueOnce([]);
+    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
+    (oIAnalyticsMessageRepository.create as jest.Mock).mockReturnValueOnce(saveHistoryQueryMessage);
+    service.createSaveHistoryQueryMessageIfNotPending(testData.historyQueries.list[0].id);
+    expect(oIAnalyticsMessageRepository.create).toHaveBeenCalledWith({
+      type: 'save-history-query',
+      historyId: testData.historyQueries.list[0].id
+    });
+    expect(oIAnalyticsClient.sendHistoryQuery).toHaveBeenCalledWith(testData.oIAnalytics.registration.completed, expect.anything());
+  });
+
+  it('should not create delete history query message if not register', async () => {
+    (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.registration.pending);
+    service.createDeleteHistoryQueryMessageIfNotPending(testData.historyQueries.list[0].id);
+    expect(logger.debug).toHaveBeenCalledWith("OIBus is not registered to OIAnalytics. Messages won't be created");
+    expect(oIAnalyticsMessageRepository.list).not.toHaveBeenCalled();
+    expect(oIAnalyticsMessageRepository.create).not.toHaveBeenCalled();
+  });
+
+  it('should not create delete history query message if message already exists', async () => {
+    const saveHistoryQueryMessage: OIAnalyticsDeleteHistoryQuery = {
+      id: 'messageId2',
+      status: 'PENDING',
+      error: null,
+      completedDate: null,
+      type: 'delete-history-query',
+      historyId: testData.historyQueries.list[0].id
+    };
+    (oIAnalyticsMessageRepository.list as jest.Mock).mockReturnValueOnce([saveHistoryQueryMessage]);
+    (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.registration.completed);
+    service.createDeleteHistoryQueryMessageIfNotPending(testData.historyQueries.list[0].id);
+    expect(oIAnalyticsMessageRepository.create).not.toHaveBeenCalled();
+  });
+
+  it('should create delete history query message and run it', async () => {
+    service.start();
+    const saveHistoryQueryMessage: OIAnalyticsDeleteHistoryQuery = {
+      id: 'messageId3',
+      status: 'PENDING',
+      error: null,
+      completedDate: null,
+      type: 'delete-history-query',
+      historyId: testData.historyQueries.list[0].id
+    };
+    (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock)
+      .mockReturnValueOnce(testData.oIAnalytics.registration.completed)
+      .mockReturnValueOnce(testData.oIAnalytics.registration.completed)
+      .mockReturnValueOnce(testData.oIAnalytics.registration.completed);
+    (oIAnalyticsMessageRepository.list as jest.Mock).mockReturnValueOnce([]);
+    (oIAnalyticsMessageRepository.create as jest.Mock).mockReturnValueOnce(saveHistoryQueryMessage);
+    service.createDeleteHistoryQueryMessageIfNotPending(testData.historyQueries.list[0].id);
+    expect(oIAnalyticsMessageRepository.create).toHaveBeenCalledWith({
+      type: 'delete-history-query',
+      historyId: testData.historyQueries.list[0].id
+    });
+    expect(oIAnalyticsClient.deleteHistoryQuery).toHaveBeenCalledWith(
+      testData.oIAnalytics.registration.completed,
+      testData.historyQueries.list[0].id
+    );
   });
 });

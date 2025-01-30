@@ -183,6 +183,60 @@
           </div>
         </div>
         <div class="row mb-2">
+          <label class="form-label" translate="oia-module.commands.ip-filter"></label>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="createIpFilter" id="create-ip-filter" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="create-ip-filter">{{ 'create-ip-filter' | oibusCommandTypeEnum }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="updateIpFilter" id="update-ip-filter" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="update-ip-filter">{{ 'update-ip-filter' | oibusCommandTypeEnum }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="deleteIpFilter" id="delete-ip-filter" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="delete-ip-filter">{{ 'delete-ip-filter' | oibusCommandTypeEnum }}</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row mb-2">
+          <label class="form-label" translate="oia-module.commands.certificate"></label>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="createCertificate" id="create-certificate" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="create-certificate">{{ 'create-certificate' | oibusCommandTypeEnum }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="updateCertificate" id="update-certificate" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="update-certificate">{{ 'update-certificate' | oibusCommandTypeEnum }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="deleteCertificate" id="delete-certificate" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="delete-certificate">{{ 'delete-certificate' | oibusCommandTypeEnum }}</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row mb-2">
           <label class="form-label" translate="oia-module.commands.north-connector"></label>
           <div class="col-3">
             <div class="form-group">
@@ -247,6 +301,33 @@
               <div class="form-check form-switch">
                 <input formControlName="deleteSouth" id="delete-south" type="checkbox" class="form-check-input" />
                 <label class="form-check-label" for="delete-south">{{ 'delete-south' | oibusCommandTypeEnum }}</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row mb-2">
+          <label class="form-label" translate="oia-module.commands.test-connector"></label>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="testNorthConnection" id="test-north-connection" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="create-north">{{ 'test-north-connection' | oibusCommandTypeEnum }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="testSouthConnection" id="test-south-connection" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="create-north">{{ 'test-south-connection' | oibusCommandTypeEnum }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="testSouthItem" id="test-south-item" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="create-north">{{ 'test-south-item' | oibusCommandTypeEnum }}</label>
               </div>
             </div>
           </div>

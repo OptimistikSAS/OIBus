@@ -5,6 +5,8 @@ import { SouthConnectorCommandDTO } from './south-connector.model';
 import { SouthItemSettings, SouthSettings } from './south-settings.model';
 import { NorthConnectorCommandDTO } from './north-connector.model';
 import { NorthSettings } from './north-settings.model';
+import { IPFilterCommandDTO } from './ip-filter.model';
+import { CertificateCommandDTO } from './certificate.model';
 
 export const OIBUS_COMMAND_TYPES = [
   'update-version',
@@ -15,12 +17,21 @@ export const OIBUS_COMMAND_TYPES = [
   'create-scan-mode',
   'update-scan-mode',
   'delete-scan-mode',
+  'create-ip-filter',
+  'update-ip-filter',
+  'delete-ip-filter',
+  'create-certificate',
+  'update-certificate',
+  'delete-certificate',
   'create-south',
   'update-south',
   'delete-south',
+  'test-south-connection',
+  'test-south-item',
   'create-north',
   'update-north',
   'delete-north',
+  'test-north-connection',
   'create-or-update-south-items-from-csv'
 ] as const;
 export type OIBusCommandType = (typeof OIBUS_COMMAND_TYPES)[number];
@@ -91,6 +102,44 @@ export interface OIBusDeleteScanModeCommandDTO extends BaseOIBusCommandDTO {
   scanModeId: string;
 }
 
+export interface OIBusCreateIPFilterCommandDTO extends BaseOIBusCommandDTO {
+  type: 'create-ip-filter';
+  targetVersion: string;
+  commandContent: IPFilterCommandDTO;
+}
+
+export interface OIBusUpdateIPFilterCommandDTO extends BaseOIBusCommandDTO {
+  type: 'update-ip-filter';
+  targetVersion: string;
+  ipFilterId: string;
+  commandContent: IPFilterCommandDTO;
+}
+
+export interface OIBusDeleteIPFilterCommandDTO extends BaseOIBusCommandDTO {
+  type: 'delete-ip-filter';
+  targetVersion: string;
+  ipFilterId: string;
+}
+
+export interface OIBusCreateCertificateCommandDTO extends BaseOIBusCommandDTO {
+  type: 'create-certificate';
+  targetVersion: string;
+  commandContent: CertificateCommandDTO;
+}
+
+export interface OIBusUpdateCertificateCommandDTO extends BaseOIBusCommandDTO {
+  type: 'update-certificate';
+  targetVersion: string;
+  certificateId: string;
+  commandContent: CertificateCommandDTO;
+}
+
+export interface OIBusDeleteCertificateCommandDTO extends BaseOIBusCommandDTO {
+  type: 'delete-certificate';
+  targetVersion: string;
+  certificateId: string;
+}
+
 export interface OIBusCreateSouthConnectorCommandDTO extends BaseOIBusCommandDTO {
   type: 'create-south';
   targetVersion: string;
@@ -110,6 +159,19 @@ export interface OIBusDeleteSouthConnectorCommandDTO extends BaseOIBusCommandDTO
   southConnectorId: string;
 }
 
+export interface OIBusTestSouthConnectorCommandDTO extends BaseOIBusCommandDTO {
+  type: 'test-south-connection';
+  targetVersion: string;
+  southConnectorId: string;
+}
+
+export interface OIBusTestSouthConnectorItemCommandDTO extends BaseOIBusCommandDTO {
+  type: 'test-south-item';
+  targetVersion: string;
+  southConnectorId: string;
+  itemId: string;
+}
+
 export interface OIBusCreateNorthConnectorCommandDTO extends BaseOIBusCommandDTO {
   type: 'create-north';
   targetVersion: string;
@@ -125,6 +187,12 @@ export interface OIBusUpdateNorthConnectorCommandDTO extends BaseOIBusCommandDTO
 
 export interface OIBusDeleteNorthConnectorCommandDTO extends BaseOIBusCommandDTO {
   type: 'delete-north';
+  targetVersion: string;
+  northConnectorId: string;
+}
+
+export interface OIBusTestNorthConnectorCommandDTO extends BaseOIBusCommandDTO {
+  type: 'test-north-connection';
   targetVersion: string;
   northConnectorId: string;
 }
@@ -149,12 +217,21 @@ export type OIBusCommandDTO =
   | OIBusCreateScanModeCommandDTO
   | OIBusUpdateScanModeCommandDTO
   | OIBusDeleteScanModeCommandDTO
+  | OIBusCreateIPFilterCommandDTO
+  | OIBusUpdateIPFilterCommandDTO
+  | OIBusDeleteIPFilterCommandDTO
+  | OIBusCreateCertificateCommandDTO
+  | OIBusUpdateCertificateCommandDTO
+  | OIBusDeleteCertificateCommandDTO
   | OIBusCreateSouthConnectorCommandDTO
   | OIBusUpdateSouthConnectorCommandDTO
   | OIBusDeleteSouthConnectorCommandDTO
+  | OIBusTestSouthConnectorCommandDTO
+  | OIBusTestSouthConnectorItemCommandDTO
   | OIBusCreateNorthConnectorCommandDTO
   | OIBusUpdateNorthConnectorCommandDTO
   | OIBusDeleteNorthConnectorCommandDTO
+  | OIBusTestNorthConnectorCommandDTO
   | OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO;
 
 export interface CommandSearchParam {

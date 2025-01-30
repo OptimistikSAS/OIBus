@@ -6,12 +6,14 @@ import EncryptionService from './encryption.service';
 import { CertificateCommandDTO } from '../../shared/model/certificate.model';
 import { generateRandomId } from './utils';
 import { DateTime, Duration } from 'luxon';
+import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 
 export default class CertificateService {
   constructor(
     protected readonly validator: JoiValidator,
     private certificateRepository: CertificateRepository,
-    private encryptionService: EncryptionService
+    private encryptionService: EncryptionService,
+    private oIAnalyticsMessageService: OIAnalyticsMessageService
   ) {}
 
   findAll(): Array<Certificate> {
@@ -37,7 +39,8 @@ export default class CertificateService {
       daysBeforeExpiry: command.options.daysBeforeExpiry,
       keySize: command.options.keySize
     });
-    return this.certificateRepository.create({
+
+    const certificate = this.certificateRepository.create({
       id: generateRandomId(6),
       name: command.name,
       description: command.description,
@@ -49,6 +52,8 @@ export default class CertificateService {
         .plus(Duration.fromObject({ days: command.options.daysBeforeExpiry }))
         .toISO()!
     });
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    return certificate;
   }
 
   async update(certificateId: string, command: CertificateCommandDTO): Promise<void> {
@@ -86,6 +91,7 @@ export default class CertificateService {
     } else {
       this.certificateRepository.updateNameAndDescription(certificateId, command.name, command.description);
     }
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 
   async delete(certificateId: string): Promise<void> {
@@ -94,6 +100,7 @@ export default class CertificateService {
       throw new Error(`Certificate ${certificateId} not found`);
     }
     this.certificateRepository.delete(certificateId);
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 }
 

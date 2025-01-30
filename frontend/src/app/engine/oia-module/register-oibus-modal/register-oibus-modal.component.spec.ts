@@ -148,13 +148,19 @@ describe('RegisterOibusModalComponent', () => {
         updateHistoryQuery: true,
         deleteHistoryQuery: true,
         createOrUpdateHistoryItemsFromCsv: true,
+        testHistoryNorthConnection: true,
+        testHistorySouthConnection: true,
+        testHistorySouthItem: true,
         createSouth: true,
         updateSouth: true,
         deleteSouth: true,
         createOrUpdateSouthItemsFromCsv: true,
+        testSouthConnection: true,
+        testSouthItem: true,
         createNorth: true,
         updateNorth: true,
-        deleteNorth: true
+        deleteNorth: true,
+        testNorthConnection: true
       }
     };
 
@@ -251,13 +257,19 @@ describe('RegisterOibusModalComponent', () => {
         updateHistoryQuery: true,
         deleteHistoryQuery: true,
         createOrUpdateHistoryItemsFromCsv: true,
+        testHistoryNorthConnection: true,
+        testHistorySouthConnection: true,
+        testHistorySouthItem: true,
         createSouth: true,
         updateSouth: true,
         deleteSouth: true,
         createOrUpdateSouthItemsFromCsv: true,
+        testSouthConnection: true,
+        testSouthItem: true,
         createNorth: true,
         updateNorth: true,
-        deleteNorth: true
+        deleteNorth: true,
+        testNorthConnection: true
       }
     };
 

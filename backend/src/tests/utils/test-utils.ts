@@ -351,13 +351,19 @@ const createOIAnalyticsRegistration = async (database: knex.Knex, registration: 
       command_update_history_query: registration.commandPermissions.updateHistoryQuery,
       command_delete_history_query: registration.commandPermissions.deleteHistoryQuery,
       command_create_or_update_history_items_from_csv: registration.commandPermissions.createOrUpdateHistoryItemsFromCsv,
+      command_test_history_south_connection: registration.commandPermissions.testHistorySouthConnection,
+      command_test_history_north_connection: registration.commandPermissions.testHistoryNorthConnection,
+      command_test_history_south_item: registration.commandPermissions.testHistorySouthItem,
       command_create_south: registration.commandPermissions.createSouth,
       command_update_south: registration.commandPermissions.updateSouth,
       command_delete_south: registration.commandPermissions.deleteSouth,
       command_create_or_update_south_items_from_csv: registration.commandPermissions.createOrUpdateSouthItemsFromCsv,
+      command_test_south_connection: registration.commandPermissions.testSouthConnection,
+      command_test_south_item: registration.commandPermissions.testSouthItem,
       command_create_north: registration.commandPermissions.createNorth,
       command_update_north: registration.commandPermissions.updateNorth,
-      command_delete_north: registration.commandPermissions.deleteNorth
+      command_delete_north: registration.commandPermissions.deleteNorth,
+      command_test_north_connection: registration.commandPermissions.testNorthConnection
     })
     .into('registrations');
 };
