@@ -59,14 +59,7 @@ import IPFilterService from '../ip-filter.service';
 import CertificateService from '../certificate.service';
 import { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
 import { CertificateCommandDTO } from '../../../shared/model/certificate.model';
-import {
-  SouthConnectorCommandDTO,
-  SouthConnectorItemCommandDTO,
-  SouthConnectorItemTestingSettings
-} from '../../../shared/model/south-connector.model';
-import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import { NorthConnectorCommandDTO } from '../../../shared/model/north-connector.model';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 
 jest.mock('node:crypto');
 jest.mock('node:fs/promises');
@@ -884,9 +877,15 @@ describe('OIAnalytics Command Service', () => {
       type: 'test-south-connection',
       targetVersion: testData.engine.settings.version,
       southConnectorId: 'southConnectorId',
-      commandContent: {} as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>
+      commandContent: testData.south.command
     } as OIBusTestSouthConnectorCommand;
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...testData.south.manifest,
+        id: command.commandContent.type
+      }
+    ]);
 
     await service.executeCommand();
 
@@ -906,8 +905,8 @@ describe('OIAnalytics Command Service', () => {
       itemId: 'itemId',
       southConnectorId: 'southConnectorId',
       commandContent: {
-        southCommand: {} as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>,
-        itemCommand: {} as SouthConnectorItemCommandDTO<SouthItemSettings>,
+        southCommand: testData.south.command,
+        itemCommand: testData.south.itemCommand,
         testingSettings: {} as SouthConnectorItemTestingSettings
       }
     } as OIBusTestSouthConnectorItemCommand;
@@ -918,6 +917,12 @@ describe('OIAnalytics Command Service', () => {
         callback({});
       }
     );
+    (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...testData.south.manifest,
+        id: command.commandContent.southCommand.type
+      }
+    ]);
 
     await service.executeCommand();
 
@@ -938,9 +943,16 @@ describe('OIAnalytics Command Service', () => {
       type: 'test-north-connection',
       targetVersion: testData.engine.settings.version,
       northConnectorId: 'northConnectorId',
-      commandContent: {} as NorthConnectorCommandDTO<NorthSettings>
+      commandContent: testData.north.command
     } as OIBusTestNorthConnectorCommand;
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+
+    (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...testData.north.manifest,
+        id: command.commandContent.type
+      }
+    ]);
 
     await service.executeCommand();
 
@@ -1071,6 +1083,8 @@ describe('OIAnalytics Command service with no commands', () => {
       oIAnalyticsClient,
       oIBusService,
       scanModeService,
+      ipFilterService,
+      certificateService,
       southService,
       northService,
       logger,
