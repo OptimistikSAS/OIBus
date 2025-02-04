@@ -808,17 +808,11 @@ describe('OIAnalytics Command service with ignoreRemoteUpdate', () => {
     );
   });
 
-  // it('should properly start when not registered', () => {
-  //   expect(oIBusService.getEngineSettings).toHaveBeenCalled();
-  //   expect(oIAnalyticsCommandRepository.list).toHaveBeenCalled();
-  //   expect(oIBusService.updateOIBusVersion).toHaveBeenCalledWith(version, '3.4.0');
-  //   expect(oIAnalyticsCommandRepository.markAsCompleted).not.toHaveBeenCalled();
-  // });
-
   it('should change logger', async () => {
     const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
 
-    service.setLogger(anotherLogger);
+    await service.start();
+    oIBusService.loggerEvent.emit('updated', anotherLogger);
     await service.stop();
 
     expect(logger.debug).not.toHaveBeenCalled();

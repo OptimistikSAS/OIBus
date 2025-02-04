@@ -96,6 +96,10 @@ export default class OIAnalyticsCommandService {
       this.oIAnalyticsRegistrationService.getRegistrationSettings()!.commandRefreshInterval * 1000
     );
 
+    this.oIBusService.loggerEvent.on('updated', (logger: pino.Logger) => {
+      this.logger = logger;
+    });
+
     this.oIAnalyticsRegistrationService.registrationEvent.on('updated', () => {
       const registrationSettings = this.oIAnalyticsRegistrationService.getRegistrationSettings()!;
       clearTimeout(this.retrieveCommandsInterval);
@@ -332,10 +336,6 @@ export default class OIAnalyticsCommandService {
     clearTimeout(this.retrieveCommandsInterval);
     this.retrieveCommandsInterval = undefined;
     this.logger.debug(`OIAnalytics command service stopped`);
-  }
-
-  setLogger(logger: pino.Logger) {
-    this.logger = logger;
   }
 
   private async executeUpdateVersionCommand(command: OIBusUpdateVersionCommand, registration: OIAnalyticsRegistration) {
