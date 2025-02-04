@@ -106,7 +106,7 @@ const registrationSchema: Joi.ObjectSchema = Joi.object({
     createNorth: Joi.boolean().required(),
     updateNorth: Joi.boolean().required(),
     deleteNorth: Joi.boolean().required()
-  })
+  }).required()
 });
 
 const ipFilterSchema: Joi.ObjectSchema = Joi.object({
