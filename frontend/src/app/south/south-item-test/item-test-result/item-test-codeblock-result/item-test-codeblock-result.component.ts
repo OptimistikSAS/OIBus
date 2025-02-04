@@ -3,10 +3,11 @@ import { OIBusContent } from '../../../../../../../backend/shared/model/engine.m
 import { OibCodeBlockComponent } from '../../../../shared/form/oib-code-block/oib-code-block.component';
 import { ContentDisplayMode } from '../item-test-result.component';
 import { BaseItemTestResult } from '../item-test-result.interface';
+import { ProgressbarComponent } from '../../../../history-query/history-query-detail/history-metrics/progressbar/progressbar.component';
 
 @Component({
   selector: 'oib-item-test-codeblock-result',
-  imports: [OibCodeBlockComponent],
+  imports: [OibCodeBlockComponent, ProgressbarComponent],
   templateUrl: './item-test-codeblock-result.component.html',
   styleUrl: './item-test-codeblock-result.component.scss'
 })
@@ -18,7 +19,6 @@ export class ItemTestCodeblockResultComponent implements BaseItemTestResult {
   readonly codeBlock = viewChild.required<OibCodeBlockComponent>('monacoEditor');
 
   constructor() {
-    effect(() => this.content() && this.writeValue());
     effect(() => this.contentType() && this.writeValue());
   }
 
@@ -29,17 +29,17 @@ export class ItemTestCodeblockResultComponent implements BaseItemTestResult {
     switch (this.contentType()) {
       // Pretty print json values
       case 'json':
-        this.codeBlock().writeValue(JSON.stringify(content.content, null, 2));
+        this.codeBlock().writeValueChunked(JSON.stringify(content.content, null, 2));
         break;
 
       // Display their raw content
       case 'plaintext':
         switch (content.type) {
           case 'time-values':
-            this.codeBlock()?.writeValue(JSON.stringify(content.content));
+            this.codeBlock()?.writeValueChunked(JSON.stringify(content.content));
             break;
           case 'raw':
-            this.codeBlock()?.writeValue(content.content ?? content.filePath);
+            this.codeBlock()?.writeValueChunked(content.content ?? content.filePath);
             break;
         }
         break;
