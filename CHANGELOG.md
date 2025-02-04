@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.5.9](https://github.com/OptimistikSAS/OIBus/compare/v3.5.8...v3.5.9) (2025-02-04)
+
+
+### Bug Fixes
+
+* **oianalytics:** fix registration command validation in API ([e82363d](https://github.com/OptimistikSAS/OIBus/commit/e82363d0cfa6fd7114d3a2e4553042fe9b23dbdd))
+* **oianalytics:** update logger in oianalytics command ([3117347](https://github.com/OptimistikSAS/OIBus/commit/311734796a2a1138e7167f0bf62fde77e745a690))
+
 ## [3.5.8](https://github.com/OptimistikSAS/OIBus/compare/v3.5.7...v3.5.8) (2025-01-27)
 
 
