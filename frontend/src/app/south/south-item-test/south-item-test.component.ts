@@ -107,8 +107,10 @@ export class SouthItemTestComponent<TItemType extends 'south' | 'history-south'>
     }
 
     this.initTest();
+    const request = this.makeRequest();
+    if (!request) return;
 
-    this.testSubscription = this.makeRequest()!
+    this.testSubscription = request
       .pipe(
         catchError((errorResponse: HttpErrorResponse, _) => {
           const errorMessage = getMessageFromHttpErrorResponse(errorResponse);
