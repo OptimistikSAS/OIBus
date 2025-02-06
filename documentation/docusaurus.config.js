@@ -35,12 +35,7 @@ const config = {
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
           lastVersion: 'current',
-          editLocalizedFiles: true,
-          versions: {
-            current: {
-              label: 'v3'
-            },
-          },
+          editLocalizedFiles: true
         },
         theme: { customCss: require.resolve('./src/css/custom.css') },
       },
@@ -74,11 +69,6 @@ const config = {
             docId: 'use-cases/index',
             position: 'left',
             label: 'Use cases',
-          },
-          {
-            type: 'docsVersionDropdown',
-            position: 'right',
-            dropdownActiveClassDisabled: true,
           },
           {
             type: 'localeDropdown',
