@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.5.10](https://github.com/OptimistikSAS/OIBus/compare/v3.5.9...v3.5.10) (2025-02-06)
+
+
+### Bug Fixes
+
+* **web-client:** do not display fields when condition does not match ([f3aa370](https://github.com/OptimistikSAS/OIBus/commit/f3aa370975677d4dfb6f0eb07b18a707192dd401))
+
 ## [3.5.9](https://github.com/OptimistikSAS/OIBus/compare/v3.5.8...v3.5.9) (2025-02-04)
 
 
