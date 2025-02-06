@@ -126,6 +126,12 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
         const northSettings: Record<string, string> = JSON.parse(JSON.stringify(this.historyQuery!.northSettings));
         this.northDisplayedSettings = northManifest.settings
           .filter(setting => setting.displayInViewMode)
+          .filter(setting => {
+            if (setting.conditionalDisplay) {
+              return setting.conditionalDisplay.values.includes(northSettings[setting.conditionalDisplay.field]);
+            }
+            return true;
+          })
           .map(setting => {
             return {
               key: setting.type === 'OibSelect' ? setting.translationKey + '.title' : setting.translationKey,
@@ -140,6 +146,12 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
         const southSettings: Record<string, string> = JSON.parse(JSON.stringify(this.historyQuery!.southSettings));
         this.southDisplayedSettings = southManifest.settings
           .filter(setting => setting.displayInViewMode)
+          .filter(setting => {
+            if (setting.conditionalDisplay) {
+              return setting.conditionalDisplay.values.includes(southSettings[setting.conditionalDisplay.field]);
+            }
+            return true;
+          })
           .map(setting => {
             return {
               key: setting.type === 'OibSelect' ? setting.translationKey + '.title' : setting.translationKey,

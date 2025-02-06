@@ -105,6 +105,12 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
         const southSettings: Record<string, string> = JSON.parse(JSON.stringify(this.southConnector!.settings));
         this.displayedSettings = manifest.settings
           .filter(setting => setting.displayInViewMode)
+          .filter(setting => {
+            if (setting.conditionalDisplay) {
+              return setting.conditionalDisplay.values.includes(southSettings[setting.conditionalDisplay.field]);
+            }
+            return true;
+          })
           .map(setting => {
             return {
               key: setting.type === 'OibSelect' ? setting.translationKey + '.title' : setting.translationKey,

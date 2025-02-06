@@ -311,7 +311,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     const timestamp = objectPath.get(data, formatOptions.timestampPath!);
     if (!timestamp) {
       this.logger.warn(
-        `Timestamp found for path ${formatOptions.timestampPath!} in ${JSON.stringify(
+        `Timestamp not found for path ${formatOptions.timestampPath!} in ${JSON.stringify(
           data
         )}. Using OIBus timestamp "${messageTimestamp}" instead`
       );
