@@ -20,13 +20,13 @@ unfolds within the SaaS application, courtesy of its easily configurable setting
 
 Here are the important parameters for configuring connectivity with the OIAnalytics SaaS application:
 
-- **Use OIAnalytics Module**: Use the connection settings of the OIAnalytics module
+- **Use OIAnalytics registration**: Use the connection settings of the [OIAnalytics registration](../advanced/oianalytics-registration.mdx).
 - **Timeout**: The duration before a connection failure is reported in HTTP requests.
 - **Compress data**: Compress the data if not already compressed. Compressed files will be detected with the .gz file
   extension,
   and JSON payload will be compressed and sent to a specific OIAnalytics endpoint.
 
-If OIAnalytics module is not used, the following fields will be used:
+If OIAnalytics registration is not used, the following fields will be used:
 
 - **Host**: The hostname of the SaaS application (e.g., `https://optimistik.oianalytics.com`).
 - **Accept unauthorized certificate**: This option is useful when HTTP queries traverse a firewall that strips the
@@ -54,8 +54,8 @@ If OIAnalytics module is not used, the following fields will be used:
 To securely connect OIBus to OIAnalytics, follow these steps:
 1. Register OIBus on OIAnalytics:
     - This ensures seamless integration and secure communication between OIBus and OIAnalytics.
-2. Enable the Use OIAnalytics Module Option:
-   - In the North connector settings, enable the Use OIAnalytics Module option to establish the connection.
+2. Enable the **Use OIAnalytics registration** option:
+   - In the North connector settings, enable the **Use OIAnalytics registration** option to establish the connection.
    - By doing this, you eliminate the need to manually transfer API keys, simplifying the process and enhancing security.
 
 :::tip Proxy client
