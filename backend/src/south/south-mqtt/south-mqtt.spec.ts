@@ -500,7 +500,7 @@ describe('SouthMQTT with Basic Auth', () => {
       south.getTimestamp({}, configuration.items[3].settings.jsonPayload!.timestampPayload!, testData.constants.dates.FAKE_NOW)
     ).toEqual(testData.constants.dates.FAKE_NOW);
     expect(logger.warn).toHaveBeenCalledWith(
-      `Timestamp found for path ${configuration.items[3].settings.jsonPayload!.timestampPayload!.timestampPath!} in ${JSON.stringify(
+      `Timestamp not found for path ${configuration.items[3].settings.jsonPayload!.timestampPayload!.timestampPath!} in ${JSON.stringify(
         {}
       )}. Using OIBus timestamp "${testData.constants.dates.FAKE_NOW}" instead`
     );

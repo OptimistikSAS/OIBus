@@ -1640,7 +1640,7 @@
       "suffix": "Suffix"
     },
     "oianalytics": {
-      "use-oia-module": "Use OIA module",
+      "use-oia-module": "Use OIAnalytics registration",
       "timeout": "Timeout",
       "compress": "Compress",
       "specific-settings": {

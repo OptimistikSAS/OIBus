@@ -105,6 +105,12 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
         const northSettings: Record<string, string | boolean> = JSON.parse(JSON.stringify(this.northConnector!.settings));
         this.displayedSettings = manifest.settings
           .filter(setting => setting.displayInViewMode)
+          .filter(setting => {
+            if (setting.conditionalDisplay) {
+              return setting.conditionalDisplay.values.includes(northSettings[setting.conditionalDisplay.field]);
+            }
+            return true;
+          })
           .map(setting => {
             switch (setting.type) {
               case 'OibText':
