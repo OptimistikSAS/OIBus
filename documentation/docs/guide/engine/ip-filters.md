@@ -17,6 +17,6 @@ curl --location --request POST "http://localhost:2223/api/ip-filters" --header "
 ```
 
 :::caution Allowing all with proxy server
-Be careful when allowing all IP addresses and using the [proxy server](./engine-settings.mdx#proxy-server): since the
+Be careful when allowing all IP addresses and using the [proxy server](./engine-settings.mdx#oibus-proxy-server-configuration): since the
 proxy simply forward without authenticating the request, it may be dangerous to accept all sources.
 :::
