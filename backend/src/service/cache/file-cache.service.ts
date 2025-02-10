@@ -172,7 +172,7 @@ export default class FileCacheService {
     const filenameInfo = path.parse(filePathInCache);
     const errorPath = path.resolve(this._errorFolder, filenameInfo.base);
     try {
-      const fileStat = await fs.stat(errorPath);
+      const fileStat = await fs.stat(path.resolve(filePathInCache));
       await fs.rename(filePathInCache, errorPath);
       this.triggerRun.emit('cache-size', { cacheSizeToAdd: -fileStat.size, errorSizeToAdd: fileStat.size, archiveSizeToAdd: 0 });
       this._logger.warn(`File "${filePathInCache}" moved to "${errorPath}" after ${errorCount} errors`);
