@@ -3,7 +3,8 @@
  */
 export default jest.fn().mockImplementation(() => {
   return {
-    findAllHistoryQueries: jest.fn(),
+    findAllHistoryQueriesLight: jest.fn(),
+    findAllHistoryQueriesFull: jest.fn(),
     findHistoryQueryById: jest.fn(),
     saveHistoryQuery: jest.fn(),
     updateHistoryQueryStatus: jest.fn(),

@@ -12,23 +12,30 @@ import OIBusService from '../oibus.service';
 import {
   OIBusCommand,
   OIBusCreateCertificateCommand,
+  OIBusCreateHistoryQueryCommand,
   OIBusCreateIPFilterCommand,
   OIBusCreateNorthConnectorCommand,
+  OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand,
   OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand,
   OIBusCreateScanModeCommand,
   OIBusCreateSouthConnectorCommand,
   OIBusDeleteCertificateCommand,
+  OIBusDeleteHistoryQueryCommand,
   OIBusDeleteIPFilterCommand,
   OIBusDeleteNorthConnectorCommand,
   OIBusDeleteScanModeCommand,
   OIBusDeleteSouthConnectorCommand,
   OIBusRegenerateCipherKeysCommand,
   OIBusRestartEngineCommand,
+  OIBusTestHistoryQueryNorthConnectionCommand,
+  OIBusTestHistoryQuerySouthConnectionCommand,
+  OIBusTestHistoryQuerySouthItemConnectionCommand,
   OIBusTestNorthConnectorCommand,
   OIBusTestSouthConnectorCommand,
   OIBusTestSouthConnectorItemCommand,
   OIBusUpdateCertificateCommand,
   OIBusUpdateEngineSettingsCommand,
+  OIBusUpdateHistoryQueryCommand,
   OIBusUpdateIPFilterCommand,
   OIBusUpdateNorthConnectorCommand,
   OIBusUpdateRegistrationSettingsCommand,
@@ -48,6 +55,10 @@ import OIAnalyticsRegistrationService from './oianalytics-registration.service';
 import { EventEmitter } from 'node:events';
 import IPFilterService from '../ip-filter.service';
 import CertificateService from '../certificate.service';
+import HistoryQueryService from '../history-query.service';
+import { HistoryQueryCommandDTO } from '../../../shared/model/history-query.model';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
+import { NorthSettings } from '../../../shared/model/north-settings.model';
 
 const UPDATE_SETTINGS_FILE = 'update.json';
 
@@ -69,6 +80,7 @@ export default class OIAnalyticsCommandService {
     private certificateService: CertificateService,
     private southService: SouthService,
     private northService: NorthService,
+    private historyQueryService: HistoryQueryService,
     private logger: pino.Logger,
     private binaryFolder: string,
     private ignoreRemoteUpdate: boolean,
@@ -323,6 +335,9 @@ export default class OIAnalyticsCommandService {
         case 'delete-south':
           await this.executeDeleteSouthCommand(command);
           break;
+        case 'create-or-update-south-items-from-csv':
+          await this.executeCreateOrUpdateSouthConnectorItemsFromCSVCommand(command);
+          break;
         case 'test-south-connection':
           {
             const privateKey = await this.encryptionService.decryptText(registration.privateCipherKey!);
@@ -356,8 +371,41 @@ export default class OIAnalyticsCommandService {
             await this.executeTestNorthConnectionCommand(command, privateKey);
           }
           break;
-        case 'create-or-update-south-items-from-csv':
-          await this.executeCreateOrUpdateSouthConnectorItemsFromCSVCommand(command);
+        case 'create-history-query':
+          {
+            const privateKey = await this.encryptionService.decryptText(registration.privateCipherKey!);
+            await this.executeCreateHistoryQueryCommand(command, privateKey);
+          }
+          break;
+        case 'update-history-query':
+          {
+            const privateKey = await this.encryptionService.decryptText(registration.privateCipherKey!);
+            await this.executeUpdateHistoryQueryCommand(command, privateKey);
+          }
+          break;
+        case 'delete-history-query':
+          await this.executeDeleteHistoryQueryCommand(command);
+          break;
+        case 'create-or-update-history-query-south-items-from-csv':
+          await this.executeCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand(command);
+          break;
+        case 'test-history-query-north-connection':
+          {
+            const privateKey = await this.encryptionService.decryptText(registration.privateCipherKey!);
+            await this.executeTestHistoryQueryNorthConnectionCommand(command, privateKey);
+          }
+          break;
+        case 'test-history-query-south-connection':
+          {
+            const privateKey = await this.encryptionService.decryptText(registration.privateCipherKey!);
+            await this.executeTestHistoryQuerySouthConnectionCommand(command, privateKey);
+          }
+          break;
+        case 'test-history-query-south-item':
+          {
+            const privateKey = await this.encryptionService.decryptText(registration.privateCipherKey!);
+            await this.executeTestHistoryQuerySouthItemCommand(command, privateKey);
+          }
           break;
       }
     } catch (error: unknown) {
@@ -592,6 +640,34 @@ export default class OIAnalyticsCommandService {
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'South connector deleted successfully');
   }
 
+  private async executeCreateOrUpdateSouthConnectorItemsFromCSVCommand(command: OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand) {
+    const southConnector = this.southService.findById(command.southConnectorId);
+    if (!southConnector) {
+      throw new Error(`South connector ${command.southConnectorId} not found`);
+    }
+
+    const { items, errors } = await this.southService.checkCsvContentImport(
+      southConnector.type,
+      command.commandContent.csvContent,
+      command.commandContent.delimiter,
+      command.commandContent.deleteItemsNotPresent ? [] : southConnector.items
+    );
+
+    if (errors.length > 0) {
+      let stringError = 'Error when checking csv items:';
+      for (const error of errors) {
+        stringError += `\n${error.item.name}: ${error.error}`;
+      }
+      throw new Error(stringError);
+    }
+    await this.southService.importItems(southConnector.id, items, command.commandContent.deleteItemsNotPresent);
+    this.oIAnalyticsCommandRepository.markAsCompleted(
+      command.id,
+      DateTime.now().toUTC().toISO(),
+      `${items.length} items imported on South connector ${southConnector.name}`
+    );
+  }
+
   private async executeTestSouthConnectionCommand(command: OIBusTestSouthConnectorCommand, privateKey: string) {
     await this.decryptSouthSettings(command, privateKey);
     await this.southService.testSouth(command.southConnectorId, command.commandContent, this.logger);
@@ -648,17 +724,87 @@ export default class OIAnalyticsCommandService {
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'North connection tested successfully');
   }
 
-  private async executeCreateOrUpdateSouthConnectorItemsFromCSVCommand(command: OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand) {
-    const southConnector = this.southService.findById(command.southConnectorId);
-    if (!southConnector) {
-      throw new Error(`South connector ${command.southConnectorId} not found`);
+  private async decryptHistoryQuerySettings(
+    command: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>,
+    privateKey: string
+  ) {
+    const northManifest = this.northService.getInstalledNorthManifests().find(element => element.id === command.northType)!;
+    const southManifest = this.southService.getInstalledSouthManifests().find(element => element.id === command.southType)!;
+    command.northSettings = await this.encryptionService.decryptSecretsWithPrivateKey(
+      command.northSettings,
+      northManifest.settings,
+      privateKey
+    );
+    command.southSettings = await this.encryptionService.decryptSecretsWithPrivateKey(
+      command.southSettings,
+      southManifest.settings,
+      privateKey
+    );
+    command.items = await Promise.all(
+      command.items.map(async item => ({
+        id: item.id,
+        enabled: item.enabled,
+        name: item.name,
+        settings: await this.encryptionService.decryptSecretsWithPrivateKey(item.settings, southManifest.items.settings, privateKey)
+      }))
+    );
+  }
+
+  private async decryptHistoryQuerySouthItemSettings(command: OIBusTestHistoryQuerySouthItemConnectionCommand, privateKey: string) {
+    const manifest = this.southService
+      .getInstalledSouthManifests()
+      .find(element => element.id === command.commandContent.historyCommand.southType)!;
+    command.commandContent.historyCommand.southSettings = await this.encryptionService.decryptSecretsWithPrivateKey(
+      command.commandContent.historyCommand.southSettings,
+      manifest.settings,
+      privateKey
+    );
+    command.commandContent.itemCommand.settings = await this.encryptionService.decryptSecretsWithPrivateKey(
+      command.commandContent.itemCommand.settings,
+      manifest.items.settings,
+      privateKey
+    );
+  }
+
+  private async executeCreateHistoryQueryCommand(command: OIBusCreateHistoryQueryCommand, privateKey: string) {
+    await this.decryptHistoryQuerySettings(command.commandContent, privateKey);
+    await this.historyQueryService.createHistoryQuery(
+      command.commandContent,
+      command.southConnectorId,
+      command.northConnectorId,
+      command.historyQueryId
+    );
+    this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'History query created successfully');
+  }
+
+  private async executeUpdateHistoryQueryCommand(command: OIBusUpdateHistoryQueryCommand, privateKey: string) {
+    await this.decryptHistoryQuerySettings(command.commandContent.historyQuery, privateKey);
+    await this.historyQueryService.updateHistoryQuery(
+      command.historyQueryId,
+      command.commandContent.historyQuery,
+      command.commandContent.resetCache
+    );
+    this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'History query updated successfully');
+  }
+
+  private async executeDeleteHistoryQueryCommand(command: OIBusDeleteHistoryQueryCommand) {
+    await this.historyQueryService.deleteHistoryQuery(command.historyQueryId);
+    this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'History query deleted successfully');
+  }
+
+  private async executeCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand(
+    command: OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand
+  ) {
+    const historyQuery = this.historyQueryService.findById(command.historyQueryId);
+    if (!historyQuery) {
+      throw new Error(`History query ${command.historyQueryId} not found`);
     }
 
-    const { items, errors } = await this.southService.checkCsvContentImport(
-      southConnector.type,
+    const { items, errors } = await this.historyQueryService.checkCsvContentImport(
+      historyQuery.southType,
       command.commandContent.csvContent,
       command.commandContent.delimiter,
-      command.commandContent.deleteItemsNotPresent ? [] : southConnector.items
+      command.commandContent.deleteItemsNotPresent ? [] : historyQuery.items
     );
 
     if (errors.length > 0) {
@@ -668,11 +814,79 @@ export default class OIAnalyticsCommandService {
       }
       throw new Error(stringError);
     }
-    await this.southService.importItems(southConnector.id, items, command.commandContent.deleteItemsNotPresent);
+    await this.historyQueryService.importItems(historyQuery.id, items, command.commandContent.deleteItemsNotPresent);
     this.oIAnalyticsCommandRepository.markAsCompleted(
       command.id,
       DateTime.now().toUTC().toISO(),
-      `${items.length} items imported on South connector ${southConnector.name}`
+      `${items.length} items imported on History query ${historyQuery.name}`
+    );
+  }
+
+  private async executeTestHistoryQueryNorthConnectionCommand(command: OIBusTestHistoryQueryNorthConnectionCommand, privateKey: string) {
+    await this.decryptHistoryQuerySettings(command.commandContent, privateKey);
+    await this.historyQueryService.testNorth(
+      command.historyQueryId,
+      command.northConnectorId,
+      {
+        name: command.commandContent.name,
+        type: command.commandContent.northType,
+        description: command.commandContent.description,
+        enabled: true,
+        settings: command.commandContent.northSettings,
+        caching: command.commandContent.caching,
+        subscriptions: []
+      },
+      this.logger
+    );
+    this.oIAnalyticsCommandRepository.markAsCompleted(
+      command.id,
+      DateTime.now().toUTC().toISO(),
+      'History query North connection tested successfully'
+    );
+  }
+
+  private async executeTestHistoryQuerySouthConnectionCommand(command: OIBusTestHistoryQuerySouthConnectionCommand, privateKey: string) {
+    await this.decryptHistoryQuerySettings(command.commandContent, privateKey);
+    await this.historyQueryService.testSouth(
+      command.historyQueryId,
+      command.southConnectorId,
+      {
+        name: command.commandContent.name,
+        type: command.commandContent.southType,
+        description: command.commandContent.description,
+        enabled: true,
+        settings: command.commandContent.southSettings,
+        items: []
+      },
+      this.logger
+    );
+    this.oIAnalyticsCommandRepository.markAsCompleted(
+      command.id,
+      DateTime.now().toUTC().toISO(),
+      'History query South connection tested successfully'
+    );
+  }
+
+  private async executeTestHistoryQuerySouthItemCommand(command: OIBusTestHistoryQuerySouthItemConnectionCommand, privateKey: string) {
+    await this.decryptHistoryQuerySouthItemSettings(command, privateKey);
+
+    await this.historyQueryService.testSouthItem(
+      command.historyQueryId,
+      command.southConnectorId,
+      {
+        name: command.commandContent.historyCommand.name,
+        type: command.commandContent.historyCommand.southType,
+        description: command.commandContent.historyCommand.description,
+        enabled: true,
+        settings: command.commandContent.historyCommand.southSettings,
+        items: []
+      },
+      command.commandContent.itemCommand,
+      command.commandContent.testingSettings,
+      result => {
+        this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
+      },
+      this.logger
     );
   }
 
@@ -726,6 +940,20 @@ export default class OIAnalyticsCommandService {
         return registration.commandPermissions.testSouthItem;
       case 'create-or-update-south-items-from-csv':
         return registration.commandPermissions.createOrUpdateSouthItemsFromCsv;
+      case 'create-history-query':
+        return registration.commandPermissions.createHistoryQuery;
+      case 'update-history-query':
+        return registration.commandPermissions.updateHistoryQuery;
+      case 'delete-history-query':
+        return registration.commandPermissions.deleteHistoryQuery;
+      case 'test-history-query-north-connection':
+        return registration.commandPermissions.testHistoryNorthConnection;
+      case 'test-history-query-south-connection':
+        return registration.commandPermissions.testHistorySouthConnection;
+      case 'test-history-query-south-item':
+        return registration.commandPermissions.testHistorySouthItem;
+      case 'create-or-update-history-query-south-items-from-csv':
+        return registration.commandPermissions.createOrUpdateHistoryItemsFromCsv;
     }
   }
 }
@@ -756,6 +984,13 @@ export const toOIBusCommandDTO = (command: OIBusCommand): OIBusCommandDTO => {
     case 'delete-north':
     case 'test-north-connection':
     case 'create-or-update-south-items-from-csv':
+    case 'create-history-query':
+    case 'update-history-query':
+    case 'delete-history-query':
+    case 'test-history-query-north-connection':
+    case 'test-history-query-south-connection':
+    case 'test-history-query-south-item':
+    case 'create-or-update-history-query-south-items-from-csv':
       return command;
   }
 };
