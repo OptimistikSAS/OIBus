@@ -170,7 +170,14 @@
       "create-north": "Create north connector",
       "update-north": "Update north connector",
       "delete-north": "Delete north connector",
-      "test-north-connection": "Test north connection"
+      "test-north-connection": "Test north connection",
+      "create-history-query": "Create history query",
+      "update-history-query": "Update history query",
+      "delete-history-query": "Delete history query",
+      "test-history-query-north-connection": "Test north connection",
+      "test-history-query-south-connection": "Test south connection",
+      "test-history-query-south-item": "Test south item",
+      "create-or-update-history-query-south-items-from-csv": "Load south items from CSV"
     },
     "oibus-north-category": {
       "debug": "Debug",
