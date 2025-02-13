@@ -52,7 +52,7 @@
     "basic-auth": "2.0.1",
     "better-sqlite3": "11.8.1",
     "cron": "3.5.0",
-    "cron-parser": "4.9.0",
+    "cron-parser": "5.0.0",
     "cronstrue": "2.53.0",
     "form-data": "4.0.1",
     "http-proxy": "1.18.1",
