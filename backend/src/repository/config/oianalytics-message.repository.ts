@@ -6,7 +6,7 @@ import {
   OIAnalyticsMessageStatus,
   OIAnalyticsMessageType
 } from '../../../shared/model/oianalytics-message.model';
-import { OIAnalyticsDeleteHistoryQuery, OIAnalyticsMessage, OIAnalyticsSaveHistoryQuery } from '../../model/oianalytics-message.model';
+import { OIAnalyticsMessage } from '../../model/oianalytics-message.model';
 
 const OIANALYTICS_MESSAGE_TABLE = 'oianalytics_messages';
 const PAGE_SIZE = 50;
@@ -102,13 +102,8 @@ export default class OIAnalyticsMessageRepository {
       case 'full-config':
         insertQuery += `(id, type, status) VALUES (?, ?, ?);`;
         break;
-      case 'save-history-query':
-        insertQuery += `(id, type, status, history_id) VALUES (?, ?, ?, ?);`;
-        queryParams.push((message as OIAnalyticsSaveHistoryQuery).historyId);
-        break;
-      case 'delete-history-query':
-        insertQuery += `(id, type, status, history_id) VALUES (?, ?, ?, ?);`;
-        queryParams.push((message as OIAnalyticsDeleteHistoryQuery).historyId);
+      case 'history-queries':
+        insertQuery += `(id, type, status) VALUES (?, ?, ?);`;
         break;
     }
     const result = this.database.prepare(insertQuery).run(...queryParams);
@@ -136,23 +131,13 @@ export default class OIAnalyticsMessageRepository {
           error: message.error,
           completedDate: message.completed_date
         };
-      case 'save-history-query':
+      case 'history-queries':
         return {
           id: message.id,
-          type: 'save-history-query',
+          type: 'history-queries',
           status: message.status as OIAnalyticsMessageStatus,
           error: message.error,
-          completedDate: message.completed_date,
-          historyId: message.history_id
-        };
-      case 'delete-history-query':
-        return {
-          id: message.id,
-          type: 'delete-history-query',
-          status: message.status as OIAnalyticsMessageStatus,
-          error: message.error,
-          completedDate: message.completed_date,
-          historyId: message.history_id
+          completedDate: message.completed_date
         };
     }
   }
