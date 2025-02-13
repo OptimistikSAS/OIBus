@@ -1,12 +1,13 @@
 import { EngineSettingsCommandDTO } from './engine.model';
 import { Instant } from './types';
 import { ScanModeCommandDTO } from './scan-mode.model';
-import { SouthConnectorCommandDTO } from './south-connector.model';
+import { SouthConnectorCommandDTO, SouthConnectorItemTestingSettings } from './south-connector.model';
 import { SouthItemSettings, SouthSettings } from './south-settings.model';
 import { NorthConnectorCommandDTO } from './north-connector.model';
 import { NorthSettings } from './north-settings.model';
 import { IPFilterCommandDTO } from './ip-filter.model';
 import { CertificateCommandDTO } from './certificate.model';
+import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO } from './history-query.model';
 
 export const OIBUS_COMMAND_TYPES = [
   'update-version',
@@ -32,7 +33,14 @@ export const OIBUS_COMMAND_TYPES = [
   'update-north',
   'delete-north',
   'test-north-connection',
-  'create-or-update-south-items-from-csv'
+  'create-or-update-south-items-from-csv',
+  'create-history-query',
+  'update-history-query',
+  'delete-history-query',
+  'test-history-query-north-connection',
+  'test-history-query-south-connection',
+  'test-history-query-south-item',
+  'create-or-update-history-query-south-items-from-csv'
 ] as const;
 export type OIBusCommandType = (typeof OIBUS_COMMAND_TYPES)[number];
 
@@ -208,6 +216,68 @@ export interface OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO extends
   };
 }
 
+export interface OIBusCreateHistoryQueryCommandDTO extends BaseOIBusCommandDTO {
+  type: 'create-history-query';
+  targetVersion: string;
+  commandContent: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+}
+
+export interface OIBusUpdateHistoryQueryCommandDTO extends BaseOIBusCommandDTO {
+  type: 'update-history-query';
+  targetVersion: string;
+  historyQueryId: string;
+  commandContent: {
+    resetCache: boolean;
+    historyQuery: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+  };
+}
+
+export interface OIBusDeleteHistoryQueryCommandDTO extends BaseOIBusCommandDTO {
+  type: 'delete-history-query';
+  targetVersion: string;
+  historyQueryId: string;
+}
+
+export interface OIBusTestHistoryQueryNorthConnectionCommandDTO extends BaseOIBusCommandDTO {
+  type: 'test-history-query-north-connection';
+  targetVersion: string;
+  historyQueryId: string;
+  northConnectorId: string | null;
+  commandContent: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+}
+
+export interface OIBusTestHistoryQuerySouthConnectionCommandDTO extends BaseOIBusCommandDTO {
+  type: 'test-history-query-south-connection';
+  targetVersion: string;
+  historyQueryId: string;
+  southConnectorId: string | null;
+  commandContent: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+}
+
+export interface OIBusTestHistoryQuerySouthItemCommandDTO extends BaseOIBusCommandDTO {
+  type: 'test-history-query-south-item';
+  targetVersion: string;
+  historyQueryId: string;
+  southConnectorId: string | null;
+  itemId: string;
+  commandContent: {
+    historyCommand: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+    itemCommand: HistoryQueryItemCommandDTO<SouthItemSettings>;
+    testingSettings: SouthConnectorItemTestingSettings;
+  };
+}
+
+export interface OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommandDTO extends BaseOIBusCommandDTO {
+  type: 'create-or-update-history-query-south-items-from-csv';
+  targetVersion: string;
+  historyQueryId: string;
+  commandContent: {
+    deleteItemsNotPresent: boolean;
+    csvContent: string;
+    delimiter: string;
+  };
+}
+
 export type OIBusCommandDTO =
   | OIBusUpdateVersionCommandDTO
   | OIBusRegenerateCipherKeysCommandDTO
@@ -232,7 +302,14 @@ export type OIBusCommandDTO =
   | OIBusUpdateNorthConnectorCommandDTO
   | OIBusDeleteNorthConnectorCommandDTO
   | OIBusTestNorthConnectorCommandDTO
-  | OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO;
+  | OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO
+  | OIBusCreateHistoryQueryCommandDTO
+  | OIBusUpdateHistoryQueryCommandDTO
+  | OIBusDeleteHistoryQueryCommandDTO
+  | OIBusTestHistoryQueryNorthConnectionCommandDTO
+  | OIBusTestHistoryQuerySouthConnectionCommandDTO
+  | OIBusTestHistoryQuerySouthItemCommandDTO
+  | OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommandDTO;
 
 export interface CommandSearchParam {
   page?: number;
