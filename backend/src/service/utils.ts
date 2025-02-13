@@ -609,15 +609,15 @@ export const validateCronExpression = (cron: string): ValidatedCronExpression =>
     // but cronstrue is not enough to validate the cron,
     // so we need to parse it with cronparser
     response.nextExecutions = cronparser
-      .parseExpression(cron, { utc: true })
-      .iterate(3)
+      .parse(cron)
+      .take(3)
       .map(exp => exp.toISOString() as Instant);
   } catch (error: unknown) {
     // cronparser throws an error
-    if (error instanceof Error) {
+    if (error && typeof error === 'object' && (error as Error).message) {
       return {
         isValid: false,
-        errorMessage: error.message,
+        errorMessage: (error as Error).message,
         nextExecutions: [],
         humanReadableForm: ''
       };
