@@ -217,6 +217,7 @@ const LOG_DB_NAME = 'logs.db';
     certificateService,
     southService,
     northService,
+    historyQueryService,
     loggerService.logger!,
     binaryFolder,
     ignoreRemoteUpdate,

@@ -4,7 +4,7 @@ import { EventEmitter } from 'node:events';
 import DeferredPromise from '../deferred-promise';
 import { DateTime } from 'luxon';
 import EncryptionService from '../encryption.service';
-import { OIAnalyticsDeleteHistoryQuery, OIAnalyticsMessage, OIAnalyticsSaveHistoryQuery } from '../../model/oianalytics-message.model';
+import { OIAnalyticsMessage } from '../../model/oianalytics-message.model';
 import {
   OIAnalyticsCertificateCommandDTO,
   OIAnalyticsEngineCommandDTO,
@@ -15,7 +15,7 @@ import {
   OIAnalyticsSouthCommandDTO,
   OIAnalyticsUserCommandDTO,
   OIBusFullConfigurationCommandDTO,
-  OIBusHistoryQueryCommandDTO
+  OIBusHistoryQueriesCommandDTO
 } from './oianalytics.model';
 import EngineRepository from '../../repository/config/engine.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
@@ -60,6 +60,7 @@ export default class OIAnalyticsMessageService {
 
   start(): void {
     this.createFullConfigMessageIfNotPending();
+    this.createFullHistoryQueriesMessageIfNotPending();
     this.messagesQueue = this.oIAnalyticsMessageRepository.list({ status: ['PENDING'], types: [] });
 
     this.triggerRun.on('next', async () => {
@@ -95,11 +96,8 @@ export default class OIAnalyticsMessageService {
         case 'full-config':
           await this.sendFullConfiguration(this.createFullConfigurationCommand(registration));
           break;
-        case 'save-history-query':
-          await this.sendSaveHistoryQueryMessage(this.createHistoryQuerySaveCommand(message.historyId));
-          break;
-        case 'delete-history-query':
-          await this.sendDeleteHistoryQueryMessage(message.historyId);
+        case 'history-queries':
+          await this.sendHistoryQueriesMessage(this.createSendHistoryQueriesCommand());
           break;
       }
       this.oIAnalyticsMessageRepository.markAsCompleted(message.id, DateTime.now().toUTC().toISO());
@@ -154,55 +152,13 @@ export default class OIAnalyticsMessageService {
     this.logger = logger;
   }
 
-  createSaveHistoryQueryMessageIfNotPending(historyId: string) {
-    const registration = this.oIAnalyticsRegistrationService.getRegistrationSettings()!;
-    if (registration.status !== 'REGISTERED') {
-      this.logger.debug(`OIBus is not registered to OIAnalytics. Messages won't be created`);
-      return;
-    }
-
-    if (
-      this.oIAnalyticsMessageRepository
-        .list({
-          status: ['PENDING'],
-          types: ['save-history-query']
-        })
-        .filter(element => (element as OIAnalyticsSaveHistoryQuery).historyId === historyId).length > 0
-    ) {
-      return;
-    }
-    const message = this.oIAnalyticsMessageRepository.create({ type: 'save-history-query', historyId } as OIAnalyticsSaveHistoryQuery);
-    this.addMessageToQueue(message);
-  }
-
-  createDeleteHistoryQueryMessageIfNotPending(historyId: string) {
-    const registration = this.oIAnalyticsRegistrationService.getRegistrationSettings()!;
-    if (registration.status !== 'REGISTERED') {
-      this.logger.debug(`OIBus is not registered to OIAnalytics. Messages won't be created`);
-      return;
-    }
-
-    if (
-      this.oIAnalyticsMessageRepository
-        .list({
-          status: ['PENDING'],
-          types: ['delete-history-query']
-        })
-        .filter(element => (element as OIAnalyticsSaveHistoryQuery).historyId === historyId).length > 0
-    ) {
-      return;
-    }
-    const message = this.oIAnalyticsMessageRepository.create({ type: 'delete-history-query', historyId } as OIAnalyticsDeleteHistoryQuery);
-    this.addMessageToQueue(message);
-  }
-
   /**
-   * Create a FULL_CONFIG message if there is no pending message of this type. It will trigger at startup
+   * Create a full-config message if there is no pending message of this type. It will trigger at startup
    */
   createFullConfigMessageIfNotPending() {
     const registration = this.oIAnalyticsRegistrationService.getRegistrationSettings()!;
     if (registration.status !== 'REGISTERED') {
-      this.logger.debug(`OIBus is not registered to OIAnalytics. Messages won't be created`);
+      this.logger.debug(`OIBus is not registered to OIAnalytics. Full config message won't be created`);
       return;
     }
 
@@ -215,6 +171,28 @@ export default class OIAnalyticsMessageService {
       return;
     }
     const message = this.oIAnalyticsMessageRepository.create({ type: 'full-config' });
+    this.addMessageToQueue(message);
+  }
+
+  /**
+   * Create a send-history-queries message if there is no pending message of this type. It will trigger at startup
+   */
+  createFullHistoryQueriesMessageIfNotPending() {
+    const registration = this.oIAnalyticsRegistrationService.getRegistrationSettings()!;
+    if (registration.status !== 'REGISTERED') {
+      this.logger.debug(`OIBus is not registered to OIAnalytics. History query message won't be created`);
+      return;
+    }
+
+    if (
+      this.oIAnalyticsMessageRepository.list({
+        status: ['PENDING'],
+        types: ['history-queries']
+      }).length > 0
+    ) {
+      return;
+    }
+    const message = this.oIAnalyticsMessageRepository.create({ type: 'history-queries' });
     this.addMessageToQueue(message);
   }
 
@@ -237,16 +215,10 @@ export default class OIAnalyticsMessageService {
     this.logger.debug('Full OIBus configuration sent to OIAnalytics');
   }
 
-  private async sendSaveHistoryQueryMessage(historyQuery: OIBusHistoryQueryCommandDTO): Promise<void> {
+  private async sendHistoryQueriesMessage(list: OIBusHistoryQueriesCommandDTO): Promise<void> {
     const registrationSettings = this.oIAnalyticsRegistrationService.getRegistrationSettings()!;
-    await this.oIAnalyticsClient.sendHistoryQuery(registrationSettings, JSON.stringify(historyQuery));
-    this.logger.debug(`History query ${historyQuery.oIBusInternalId} sent to OIAnalytics`);
-  }
-
-  private async sendDeleteHistoryQueryMessage(historyQueryId: string): Promise<void> {
-    const registrationSettings = this.oIAnalyticsRegistrationService.getRegistrationSettings()!;
-    await this.oIAnalyticsClient.deleteHistoryQuery(registrationSettings, historyQueryId);
-    this.logger.debug(`History query ${historyQueryId} deletion sent to OIAnalytics`);
+    await this.oIAnalyticsClient.sendHistoryQuery(registrationSettings, JSON.stringify(list));
+    this.logger.debug(`${list.historyQueries.length} history queries sent to OIAnalytics`);
   }
 
   //
@@ -265,49 +237,50 @@ export default class OIAnalyticsMessageService {
     };
   }
 
-  private createHistoryQuerySaveCommand(historyId: string): OIBusHistoryQueryCommandDTO {
-    const historyQuery = this.historyQueryRepository.findHistoryQueryById(historyId);
-    if (!historyQuery) {
-      throw new Error(`History query ${historyId} not found`);
-    }
-    const southManifest = southManifestList.find(manifest => manifest.id === historyQuery.southType)!;
-    const northManifest = northManifestList.find(manifest => manifest.id === historyQuery.northType)!;
+  private createSendHistoryQueriesCommand(): OIBusHistoryQueriesCommandDTO {
+    const historyQueries = this.historyQueryRepository.findAllHistoryQueriesFull();
     return {
-      oIBusInternalId: historyId,
-      settings: {
-        name: historyQuery.name,
-        description: historyQuery.description,
-        startTime: historyQuery.startTime,
-        endTime: historyQuery.endTime,
-        southType: historyQuery.southType,
-        northType: historyQuery.northType,
-        northSettings: this.encryptionService.filterSecrets(historyQuery.northSettings, northManifest.settings),
-        southSettings: this.encryptionService.filterSecrets(historyQuery.southSettings, southManifest.settings),
-        caching: {
-          scanModeId: historyQuery.caching.scanModeId,
-          scanModeName: null,
-          retryInterval: historyQuery.caching.retryInterval,
-          retryCount: historyQuery.caching.retryCount,
-          maxSize: historyQuery.caching.maxSize,
-          oibusTimeValues: {
-            groupCount: historyQuery.caching.oibusTimeValues.groupCount,
-            maxSendCount: historyQuery.caching.oibusTimeValues.maxSendCount
-          },
-          rawFiles: {
-            sendFileImmediately: historyQuery.caching.rawFiles.sendFileImmediately,
-            archive: {
-              enabled: historyQuery.caching.rawFiles.archive.enabled,
-              retentionDuration: historyQuery.caching.rawFiles.archive.retentionDuration
-            }
+      historyQueries: historyQueries.map(historyQuery => {
+        const southManifest = southManifestList.find(manifest => manifest.id === historyQuery.southType)!;
+        const northManifest = northManifestList.find(manifest => manifest.id === historyQuery.northType)!;
+        return {
+          oIBusInternalId: historyQuery.id,
+          settings: {
+            name: historyQuery.name,
+            description: historyQuery.description,
+            startTime: historyQuery.startTime,
+            endTime: historyQuery.endTime,
+            southType: historyQuery.southType,
+            northType: historyQuery.northType,
+            northSettings: this.encryptionService.filterSecrets(historyQuery.northSettings, northManifest.settings),
+            southSettings: this.encryptionService.filterSecrets(historyQuery.southSettings, southManifest.settings),
+            caching: {
+              scanModeId: historyQuery.caching.scanModeId,
+              scanModeName: null,
+              retryInterval: historyQuery.caching.retryInterval,
+              retryCount: historyQuery.caching.retryCount,
+              maxSize: historyQuery.caching.maxSize,
+              oibusTimeValues: {
+                groupCount: historyQuery.caching.oibusTimeValues.groupCount,
+                maxSendCount: historyQuery.caching.oibusTimeValues.maxSendCount
+              },
+              rawFiles: {
+                sendFileImmediately: historyQuery.caching.rawFiles.sendFileImmediately,
+                archive: {
+                  enabled: historyQuery.caching.rawFiles.archive.enabled,
+                  retentionDuration: historyQuery.caching.rawFiles.archive.retentionDuration
+                }
+              }
+            },
+            items: historyQuery.items.map(item => ({
+              id: item.id,
+              name: item.name,
+              enabled: item.enabled,
+              settings: this.encryptionService.filterSecrets(item.settings, southManifest.items.settings)
+            }))
           }
-        },
-        items: historyQuery.items.map(item => ({
-          id: item.id,
-          name: item.name,
-          enabled: item.enabled,
-          settings: this.encryptionService.filterSecrets(item.settings, southManifest.items.settings)
-        }))
-      }
+        };
+      })
     };
   }
 
