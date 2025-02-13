@@ -12,6 +12,7 @@ import { NorthConnectorCommandDTO } from '../../shared/model/north-connector.mod
 import { NorthSettings } from '../../shared/model/north-settings.model';
 import { IPFilterCommandDTO } from '../../shared/model/ip-filter.model';
 import { CertificateCommandDTO } from '../../shared/model/certificate.model';
+import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO } from '../../shared/model/history-query.model';
 
 export interface BaseOIBusCommand extends BaseEntity {
   type: OIBusCommandType;
@@ -173,6 +174,64 @@ export interface OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand extends Ba
   };
 }
 
+export interface OIBusCreateHistoryQueryCommand extends BaseOIBusCommand {
+  type: 'create-history-query';
+  northConnectorId: string | null; // used to retrieve passwords in case it is created from a north connector
+  southConnectorId: string | null; // used to retrieve passwords in case it is created from a south connector
+  historyQueryId: string | null; // used to retrieve passwords in case of duplicate
+  commandContent: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+}
+
+export interface OIBusUpdateHistoryQueryCommand extends BaseOIBusCommand {
+  type: 'update-history-query';
+  historyQueryId: string;
+  commandContent: {
+    resetCache: boolean;
+    historyQuery: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+  };
+}
+
+export interface OIBusDeleteHistoryQueryCommand extends BaseOIBusCommand {
+  type: 'delete-history-query';
+  historyQueryId: string;
+}
+
+export interface OIBusTestHistoryQueryNorthConnectionCommand extends BaseOIBusCommand {
+  type: 'test-history-query-north-connection';
+  historyQueryId: string;
+  northConnectorId: string | null;
+  commandContent: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+}
+
+export interface OIBusTestHistoryQuerySouthConnectionCommand extends BaseOIBusCommand {
+  type: 'test-history-query-south-connection';
+  historyQueryId: string;
+  southConnectorId: string | null;
+  commandContent: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+}
+
+export interface OIBusTestHistoryQuerySouthItemConnectionCommand extends BaseOIBusCommand {
+  type: 'test-history-query-south-item';
+  historyQueryId: string;
+  southConnectorId: string | null;
+  itemId: string;
+  commandContent: {
+    historyCommand: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+    itemCommand: HistoryQueryItemCommandDTO<SouthItemSettings>;
+    testingSettings: SouthConnectorItemTestingSettings;
+  };
+}
+
+export interface OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand extends BaseOIBusCommand {
+  type: 'create-or-update-history-query-south-items-from-csv';
+  historyQueryId: string;
+  commandContent: {
+    deleteItemsNotPresent: boolean;
+    csvContent: string;
+    delimiter: string;
+  };
+}
+
 export type OIBusCommand =
   | OIBusUpdateVersionCommand
   | OIBusRestartEngineCommand
@@ -197,4 +256,11 @@ export type OIBusCommand =
   | OIBusUpdateNorthConnectorCommand
   | OIBusDeleteNorthConnectorCommand
   | OIBusTestNorthConnectorCommand
-  | OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand;
+  | OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand
+  | OIBusCreateHistoryQueryCommand
+  | OIBusUpdateHistoryQueryCommand
+  | OIBusDeleteHistoryQueryCommand
+  | OIBusTestHistoryQueryNorthConnectionCommand
+  | OIBusTestHistoryQuerySouthConnectionCommand
+  | OIBusTestHistoryQuerySouthItemConnectionCommand
+  | OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand;

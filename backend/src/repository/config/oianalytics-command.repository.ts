@@ -215,6 +215,52 @@ export default class OIAnalyticsCommandRepository {
         );
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, command_content) VALUES (?, ?, ?, ?, ?, ?, ?);`;
         break;
+      case 'create-history-query':
+        queryParams.push(command.retrieveSecretsFromNorth || '');
+        queryParams.push(command.retrieveSecretsFromSouth || '');
+        queryParams.push(command.retrieveSecretsFromHistoryQuery || '');
+        queryParams.push(JSON.stringify(command.commandContent));
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, north_connector_id, south_connector_id, history_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+        break;
+      case 'update-history-query':
+        queryParams.push(command.historyId);
+        queryParams.push(JSON.stringify(command.commandContent));
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, history_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
+        break;
+      case 'delete-history-query':
+        queryParams.push(command.historyId);
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, history_id) VALUES (?, ?, ?, ?, ?, ?, ?);`;
+        break;
+      case 'create-or-update-history-query-south-items-from-csv':
+        queryParams.push(command.historyId);
+        queryParams.push(
+          JSON.stringify({
+            deleteItemsNotPresent: command.deleteItemsNotPresent,
+            csvContent: command.csvContent,
+            delimiter: command.delimiter
+          })
+        );
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, history_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
+        break;
+      case 'test-history-query-north-connection':
+        queryParams.push(command.historyId);
+        queryParams.push(command.northConnectorId);
+        queryParams.push(JSON.stringify(command.commandContent));
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, history_id, north_connector_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+        break;
+      case 'test-history-query-south-connection':
+        queryParams.push(command.historyId);
+        queryParams.push(command.southConnectorId);
+        queryParams.push(JSON.stringify(command.commandContent));
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, history_id, south_connector_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+        break;
+      case 'test-history-query-south-item':
+        queryParams.push(command.historyId);
+        queryParams.push(command.southConnectorId);
+        queryParams.push(command.itemId);
+        queryParams.push(JSON.stringify(command.commandContent));
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, history_id, south_connector_id, item_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+        break;
     }
     this.database.prepare(insertQuery).run(...queryParams);
   }
@@ -567,6 +613,102 @@ export default class OIAnalyticsCommandRepository {
           completedDate: command.completed_date as Instant,
           result: command.result as string,
           certificateId: command.certificate_id as string
+        };
+      case 'create-history-query':
+        return {
+          id: command.id as string,
+          type: 'create-history-query',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          northConnectorId: command.north_connector_id as string,
+          southConnectorId: command.south_connector_id as string,
+          historyQueryId: command.history_id as string,
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'update-history-query':
+        return {
+          id: command.id as string,
+          type: 'update-history-query',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          historyQueryId: command.history_id as string,
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'delete-history-query':
+        return {
+          id: command.id as string,
+          type: 'delete-history-query',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          historyQueryId: command.history_id as string
+        };
+      case 'create-or-update-history-query-south-items-from-csv':
+        return {
+          id: command.id as string,
+          type: 'create-or-update-history-query-south-items-from-csv',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          historyQueryId: command.history_id as string,
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'test-history-query-north-connection':
+        return {
+          id: command.id as string,
+          type: 'test-history-query-north-connection',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          historyQueryId: command.history_id as string,
+          northConnectorId: command.north_connector_id as string,
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'test-history-query-south-connection':
+        return {
+          id: command.id as string,
+          type: 'test-history-query-south-connection',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          historyQueryId: command.history_id as string,
+          southConnectorId: command.south_connector_id as string,
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'test-history-query-south-item':
+        return {
+          id: command.id as string,
+          type: 'test-history-query-south-item',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          historyQueryId: command.history_id as string,
+          southConnectorId: command.south_connector_id as string,
+          itemId: command.item_id as string,
+          commandContent: JSON.parse(command.command_content as string)
         };
     }
   }
