@@ -17,21 +17,28 @@ import { delay, getOIBusInfo, unzip } from '../utils';
 import fs from 'node:fs/promises';
 import {
   OIBusCreateCertificateCommand,
+  OIBusCreateHistoryQueryCommand,
   OIBusCreateIPFilterCommand,
   OIBusCreateNorthConnectorCommand,
+  OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand,
   OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand,
   OIBusCreateScanModeCommand,
   OIBusCreateSouthConnectorCommand,
   OIBusDeleteCertificateCommand,
+  OIBusDeleteHistoryQueryCommand,
   OIBusDeleteIPFilterCommand,
   OIBusDeleteNorthConnectorCommand,
   OIBusDeleteScanModeCommand,
   OIBusDeleteSouthConnectorCommand,
+  OIBusTestHistoryQueryNorthConnectionCommand,
+  OIBusTestHistoryQuerySouthConnectionCommand,
+  OIBusTestHistoryQuerySouthItemConnectionCommand,
   OIBusTestNorthConnectorCommand,
   OIBusTestSouthConnectorCommand,
   OIBusTestSouthConnectorItemCommand,
   OIBusUpdateCertificateCommand,
   OIBusUpdateEngineSettingsCommand,
+  OIBusUpdateHistoryQueryCommand,
   OIBusUpdateIPFilterCommand,
   OIBusUpdateNorthConnectorCommand,
   OIBusUpdateRegistrationSettingsCommand,
@@ -60,6 +67,8 @@ import CertificateService from '../certificate.service';
 import { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
 import { CertificateCommandDTO } from '../../../shared/model/certificate.model';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import HistoryQueryService from '../history-query.service';
+import HistoryQueryServiceMock from '../../tests/__mocks__/service/history-query-service.mock';
 
 jest.mock('node:crypto');
 jest.mock('node:fs/promises');
@@ -79,6 +88,7 @@ const ipFilterService: IPFilterService = new IpFilterServiceMock();
 const certificateService: CertificateService = new CertificateServiceMock();
 const southService: SouthService = new SouthServiceMock();
 const northService: NorthService = new NorthServiceMock();
+const historyQueryService: HistoryQueryService = new HistoryQueryServiceMock();
 const oIAnalyticsClient: OIAnalyticsClient = new OianalyticsClientMock();
 
 const logger: pino.Logger = new PinoLogger();
@@ -107,6 +117,7 @@ describe('OIAnalytics Command Service', () => {
       certificateService,
       southService,
       northService,
+      historyQueryService,
       logger,
       'binaryFolder',
       false,
@@ -963,6 +974,329 @@ describe('OIAnalytics Command Service', () => {
       'North connection tested successfully'
     );
   });
+
+  it('should execute create-history-query command', async () => {
+    const command: OIBusCreateHistoryQueryCommand = {
+      id: 'createHistoryQueryId',
+      type: 'create-history-query',
+      targetVersion: testData.engine.settings.version,
+      northConnectorId: null,
+      southConnectorId: null,
+      historyQueryId: null,
+      commandContent: testData.historyQueries.command
+    } as OIBusCreateHistoryQueryCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...testData.south.manifest,
+        id: testData.historyQueries.command.southType
+      }
+    ]);
+    (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...testData.north.manifest,
+        id: testData.historyQueries.command.northType
+      }
+    ]);
+
+    await service.executeCommand();
+
+    expect(historyQueryService.createHistoryQuery).toHaveBeenCalledWith(command.commandContent, null, null, null);
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'History query created successfully'
+    );
+  });
+
+  it('should execute update-history-query command', async () => {
+    const command: OIBusUpdateHistoryQueryCommand = {
+      id: 'updateHistoryQueryId',
+      type: 'update-history-query',
+      targetVersion: testData.engine.settings.version,
+      historyQueryId: 'h1',
+      commandContent: { resetCache: false, historyQuery: testData.historyQueries.command }
+    } as OIBusUpdateHistoryQueryCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...testData.south.manifest,
+        id: testData.historyQueries.command.southType
+      }
+    ]);
+    (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...testData.north.manifest,
+        id: testData.historyQueries.command.northType
+      }
+    ]);
+
+    await service.executeCommand();
+
+    expect(historyQueryService.updateHistoryQuery).toHaveBeenCalledWith(
+      command.historyQueryId,
+      command.commandContent.historyQuery,
+      command.commandContent.resetCache
+    );
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'History query updated successfully'
+    );
+  });
+
+  it('should execute delete-history-query command', async () => {
+    const command: OIBusDeleteHistoryQueryCommand = {
+      id: 'deleteHistoryQueryId',
+      type: 'delete-history-query',
+      targetVersion: testData.engine.settings.version,
+      historyQueryId: 'h1'
+    } as OIBusDeleteHistoryQueryCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+
+    await service.executeCommand();
+
+    expect(historyQueryService.deleteHistoryQuery).toHaveBeenCalledWith(command.historyQueryId);
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'History query deleted successfully'
+    );
+  });
+
+  it('should execute create-or-update-history-query-south-items-from-csv command', async () => {
+    const command: OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand = {
+      id: 'createOrUpdateHistoryQuerySouthItemsId',
+      type: 'create-or-update-history-query-south-items-from-csv',
+      targetVersion: testData.engine.settings.version,
+      historyQueryId: 'h1',
+      commandContent: {
+        deleteItemsNotPresent: false,
+        csvContent: '',
+        delimiter: ','
+      }
+    } as OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand;
+    (historyQueryService.findById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
+    (historyQueryService.checkCsvContentImport as jest.Mock).mockReturnValueOnce({ items: [{}, {}], errors: [] });
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+
+    await service.executeCommand();
+
+    expect(historyQueryService.findById).toHaveBeenCalledWith(command.historyQueryId);
+    expect(historyQueryService.checkCsvContentImport).toHaveBeenCalledWith(
+      testData.historyQueries.list[0].southType,
+      command.commandContent.csvContent,
+      command.commandContent.delimiter,
+      testData.historyQueries.list[0].items
+    );
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      `2 items imported on History query ${testData.historyQueries.list[0].name}`
+    );
+  });
+
+  it('should execute create-or-update-history-query-south-items-from-csv command and throw an error if south not found', async () => {
+    const command: OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand = {
+      id: 'createOrUpdateHistoryQuerySouthItemsId',
+      type: 'create-or-update-history-query-south-items-from-csv',
+      targetVersion: testData.engine.settings.version,
+      historyQueryId: 'h1',
+      commandContent: {
+        deleteItemsNotPresent: false,
+        csvContent: '',
+        delimiter: ','
+      }
+    } as OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand;
+    (historyQueryService.findById as jest.Mock).mockReturnValueOnce(null);
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+
+    await service.executeCommand();
+
+    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(
+      command.id,
+      `History query ${command.historyQueryId} not found`
+    );
+  });
+
+  it('should execute create-or-update-history-query-south-items-from-csv command', async () => {
+    const command: OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand = {
+      id: 'createOrUpdateHistoryQuerySouthItemsId',
+      type: 'create-or-update-history-query-south-items-from-csv',
+      targetVersion: testData.engine.settings.version,
+      historyQueryId: 'h1',
+      commandContent: {
+        deleteItemsNotPresent: true,
+        csvContent: '',
+        delimiter: ','
+      }
+    } as OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand;
+    (historyQueryService.findById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
+    (historyQueryService.checkCsvContentImport as jest.Mock).mockReturnValueOnce({
+      items: [{}, {}],
+      errors: [
+        { item: { name: 'item1' }, error: 'error1' },
+        { item: { name: 'item2' }, error: 'error2' }
+      ]
+    });
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (historyQueryService.checkCsvContentImport as jest.Mock).mockReturnValueOnce({});
+
+    await service.executeCommand();
+
+    expect(historyQueryService.checkCsvContentImport).toHaveBeenCalledWith(
+      testData.historyQueries.list[0].southType,
+      command.commandContent.csvContent,
+      command.commandContent.delimiter,
+      []
+    );
+    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(
+      command.id,
+      `Error when checking csv items:\nitem1: error1\nitem2: error2`
+    );
+  });
+
+  it('should execute test-history-query-north-connection command', async () => {
+    const command: OIBusTestHistoryQueryNorthConnectionCommand = {
+      id: 'testHistoryNorthConnectorId',
+      type: 'test-history-query-north-connection',
+      targetVersion: testData.engine.settings.version,
+      northConnectorId: 'northConnectorId',
+      historyQueryId: 'historyId',
+      commandContent: testData.historyQueries.command
+    } as OIBusTestHistoryQueryNorthConnectionCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+
+    (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...testData.south.manifest,
+        id: testData.historyQueries.command.southType
+      }
+    ]);
+    (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...testData.north.manifest,
+        id: testData.historyQueries.command.northType
+      }
+    ]);
+
+    await service.executeCommand();
+
+    expect(historyQueryService.testNorth).toHaveBeenCalledWith(
+      command.historyQueryId,
+      command.northConnectorId,
+      {
+        name: command.commandContent.name,
+        type: command.commandContent.northType,
+        description: command.commandContent.description,
+        enabled: true,
+        settings: command.commandContent.northSettings,
+        caching: command.commandContent.caching,
+        subscriptions: []
+      },
+      logger
+    );
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'History query North connection tested successfully'
+    );
+  });
+
+  it('should execute south-connection-test command', async () => {
+    const command: OIBusTestHistoryQuerySouthConnectionCommand = {
+      id: 'testHistorySouthConnectorId',
+      type: 'test-history-query-south-connection',
+      targetVersion: testData.engine.settings.version,
+      southConnectorId: 'southConnectorId',
+      historyQueryId: 'historyId',
+      commandContent: testData.historyQueries.command
+    } as OIBusTestHistoryQuerySouthConnectionCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+
+    (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...testData.south.manifest,
+        id: testData.historyQueries.command.southType
+      }
+    ]);
+    (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...testData.north.manifest,
+        id: testData.historyQueries.command.northType
+      }
+    ]);
+
+    await service.executeCommand();
+
+    expect(historyQueryService.testSouth).toHaveBeenCalledWith(
+      command.historyQueryId,
+      command.southConnectorId,
+      {
+        name: command.commandContent.name,
+        type: command.commandContent.southType,
+        description: command.commandContent.description,
+        enabled: true,
+        settings: command.commandContent.southSettings,
+        items: []
+      },
+      logger
+    );
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'History query South connection tested successfully'
+    );
+  });
+
+  it('should execute test-history-query-south-item command', async () => {
+    const command: OIBusTestHistoryQuerySouthItemConnectionCommand = {
+      id: 'testHistoryQuerySouthItemId',
+      type: 'test-history-query-south-item',
+      targetVersion: testData.engine.settings.version,
+      historyQueryId: 'historyId',
+      itemId: 'itemId',
+      southConnectorId: 'southConnectorId',
+      commandContent: {
+        historyCommand: testData.historyQueries.command,
+        itemCommand: testData.historyQueries.itemCommand,
+        testingSettings: {} as SouthConnectorItemTestingSettings
+      }
+    } as OIBusTestHistoryQuerySouthItemConnectionCommand;
+
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (historyQueryService.testSouthItem as jest.Mock).mockImplementationOnce(
+      (_historyId, _southId, _southCommand, _itemCommand, _testSettings, callback, _logger) => {
+        callback({});
+      }
+    );
+    (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...testData.south.manifest,
+        id: command.commandContent.historyCommand.southType
+      }
+    ]);
+
+    await service.executeCommand();
+
+    expect(historyQueryService.testSouthItem).toHaveBeenCalledWith(
+      command.historyQueryId,
+      command.southConnectorId,
+      {
+        name: command.commandContent.historyCommand.name,
+        type: command.commandContent.historyCommand.southType,
+        description: command.commandContent.historyCommand.description,
+        enabled: true,
+        settings: command.commandContent.historyCommand.southSettings,
+        items: []
+      },
+      command.commandContent.itemCommand,
+      command.commandContent.testingSettings,
+      expect.anything(),
+      logger
+    );
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(command.id, testData.constants.dates.FAKE_NOW, '{}');
+  });
 });
 
 describe('OIAnalytics Command service with update error', () => {
@@ -996,6 +1330,7 @@ describe('OIAnalytics Command service with update error', () => {
       certificateService,
       southService,
       northService,
+      historyQueryService,
       logger,
       'binaryFolder',
       false,
@@ -1034,6 +1369,7 @@ describe('OIAnalytics Command service with ignoreRemoteUpdate', () => {
       certificateService,
       southService,
       northService,
+      historyQueryService,
       logger,
       'binaryFolder',
       true,
@@ -1081,6 +1417,7 @@ describe('OIAnalytics Command service with no commands', () => {
       certificateService,
       southService,
       northService,
+      historyQueryService,
       logger,
       'binaryFolder',
       true,
@@ -1117,6 +1454,7 @@ describe('OIAnalytics Command service with no commands and without update', () =
       certificateService,
       southService,
       northService,
+      historyQueryService,
       logger,
       'binaryFolder',
       true,

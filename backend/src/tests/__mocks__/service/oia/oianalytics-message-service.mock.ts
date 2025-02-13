@@ -8,7 +8,6 @@ export default jest.fn().mockImplementation(() => {
     stop: jest.fn(),
     setLogger: jest.fn(),
     createFullConfigMessageIfNotPending: jest.fn(),
-    createSaveHistoryQueryMessageIfNotPending: jest.fn(),
-    createDeleteHistoryQueryMessageIfNotPending: jest.fn()
+    createFullHistoryQueriesMessageIfNotPending: jest.fn()
   };
 });

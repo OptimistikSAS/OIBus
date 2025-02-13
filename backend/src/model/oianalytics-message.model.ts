@@ -14,14 +14,8 @@ export interface OIAnalyticsMessageFullConfig extends BaseOIAnalyticsMessage {
 }
 
 // No need to store the history query, it will be sent at run time
-export interface OIAnalyticsSaveHistoryQuery extends BaseOIAnalyticsMessage {
-  type: 'save-history-query';
-  historyId: string;
+export interface OIAnalyticsMessageHistoryQueries extends BaseOIAnalyticsMessage {
+  type: 'history-queries';
 }
 
-export interface OIAnalyticsDeleteHistoryQuery extends BaseOIAnalyticsMessage {
-  type: 'delete-history-query';
-  historyId: string;
-}
-
-export type OIAnalyticsMessage = OIAnalyticsMessageFullConfig | OIAnalyticsSaveHistoryQuery | OIAnalyticsDeleteHistoryQuery;
+export type OIAnalyticsMessage = OIAnalyticsMessageFullConfig | OIAnalyticsMessageHistoryQueries;
