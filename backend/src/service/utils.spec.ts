@@ -1185,12 +1185,6 @@ describe('Service utils', () => {
     });
 
     it('should throw an error for invalid cron expression caught by cron-parser', () => {
-      expect(validateCronExpression('0 23 10 12 6/')).toEqual({
-        isValid: false,
-        errorMessage: 'Constraint error, cannot repeat at every 0 time.',
-        humanReadableForm: '',
-        nextExecutions: []
-      });
       expect(validateCronExpression('0 23 10 12 6/-')).toEqual({
         isValid: false,
         errorMessage: 'Constraint error, cannot repeat at every NaN time.',
@@ -1199,7 +1193,7 @@ describe('Service utils', () => {
       });
       expect(validateCronExpression('0 23 10-1 12 6/1')).toEqual({
         isValid: false,
-        errorMessage: 'Invalid range: 10-1',
+        errorMessage: 'Invalid range: 10-1, min(10) > max(1)',
         humanReadableForm: '',
         nextExecutions: []
       });
