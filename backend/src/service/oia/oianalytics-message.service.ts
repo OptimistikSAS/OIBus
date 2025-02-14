@@ -76,6 +76,7 @@ export default class OIAnalyticsMessageService {
       const registrationSettings = this.oIAnalyticsRegistrationService.getRegistrationSettings()!;
       if (registrationSettings.status === 'REGISTERED') {
         this.createFullConfigMessageIfNotPending();
+        this.createFullHistoryQueriesMessageIfNotPending();
       }
     });
   }
@@ -248,6 +249,7 @@ export default class OIAnalyticsMessageService {
           settings: {
             name: historyQuery.name,
             description: historyQuery.description,
+            status: historyQuery.status,
             startTime: historyQuery.startTime,
             endTime: historyQuery.endTime,
             southType: historyQuery.southType,
