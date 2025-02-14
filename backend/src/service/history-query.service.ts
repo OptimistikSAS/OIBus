@@ -186,7 +186,7 @@ export default class HistoryQueryService {
   }
 
   findAll(): Array<HistoryQueryEntityLight> {
-    return this.historyQueryRepository.findAllHistoryQueries();
+    return this.historyQueryRepository.findAllHistoryQueriesLight();
   }
 
   async createHistoryQuery<S extends SouthSettings, N extends NorthSettings, I extends SouthItemSettings>(
@@ -208,6 +208,7 @@ export default class HistoryQueryService {
     // Check if item settings match the item schema, throw an error otherwise
     for (const item of command.items) {
       await this.validator.validateSettings(southManifest.items.settings, item.settings);
+      item.id = null;
     }
 
     const historyQuery = {} as HistoryQueryEntity<S, N, I>;
@@ -225,8 +226,8 @@ export default class HistoryQueryService {
       this.scanModeRepository.findAll(),
       !!retrieveSecretsFromHistoryQuery || !!retrieveSecretsFromSouth
     );
-    this.historyQueryRepository.saveHistoryQuery<S, N, I>(historyQuery);
-    this.oIAnalyticsMessageService.createHistoryQueryMessage(historyQuery);
+    this.historyQueryRepository.saveHistoryQuery(historyQuery);
+    this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
 
     const baseFolders = this.getDefaultBaseFolders(historyQuery.id);
     await createBaseFolders(baseFolders);
@@ -271,8 +272,9 @@ export default class HistoryQueryService {
       this.encryptionService,
       this.scanModeRepository.findAll()
     );
-    this.historyQueryRepository.saveHistoryQuery<S, N, I>(historyQuery);
-    this.oIAnalyticsMessageService.createHistoryQueryMessage(historyQuery);
+    this.historyQueryRepository.saveHistoryQuery(historyQuery);
+    this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
+
     await this.historyQueryEngine.reloadHistoryQuery(historyQuery, resetCache);
   }
 
@@ -287,7 +289,7 @@ export default class HistoryQueryService {
     this.historyQueryRepository.deleteHistoryQuery(historyQuery.id);
     this.historyQueryMetricsRepository.removeMetrics(historyQuery.id);
     this.logRepository.deleteLogsByScopeId('history-query', historyQuery.id);
-    this.oIAnalyticsMessageService.createHistoryQueryMessage(historyQuery);
+    this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
 
     this.historyQueryEngine.logger.info(`Deleted History query "${historyQuery.name}" (${historyQuery.id})`);
   }
@@ -299,6 +301,7 @@ export default class HistoryQueryService {
     }
 
     this.historyQueryRepository.updateHistoryQueryStatus(historyQueryId, 'RUNNING');
+    this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     await this.historyQueryEngine.reloadHistoryQuery(historyQuery, historyQuery.status === 'FINISHED' || historyQuery.status === 'ERRORED');
   }
 
@@ -309,6 +312,7 @@ export default class HistoryQueryService {
     }
 
     this.historyQueryRepository.updateHistoryQueryStatus(historyQueryId, 'PAUSED');
+    this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     await this.historyQueryEngine.stopHistoryQuery(historyQuery.id);
   }
 
@@ -358,8 +362,7 @@ export default class HistoryQueryService {
     );
     this.historyQueryRepository.saveHistoryQueryItem<I>(historyQuery.id, historyQueryItemEntity);
 
-    this.oIAnalyticsMessageService.createHistoryQueryMessage(historyQuery);
-
+    this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     await this.historyQueryEngine.reloadHistoryQuery(historyQuery, false);
     return historyQueryItemEntity;
   }
@@ -392,6 +395,8 @@ export default class HistoryQueryService {
       this.encryptionService
     );
     this.historyQueryRepository.saveHistoryQueryItem<I>(historyQuery.id, historyQueryItemEntity);
+
+    this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     await this.historyQueryEngine.reloadHistoryQuery(historyQuery, false);
   }
 
@@ -404,6 +409,8 @@ export default class HistoryQueryService {
     if (!historyQueryItem) throw new Error(`History query item ${historyQueryItemId} not found`);
 
     this.historyQueryRepository.deleteHistoryQueryItem(historyQueryItem.id);
+
+    this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     await this.historyQueryEngine.reloadHistoryQuery(historyQuery, false);
   }
 
@@ -413,6 +420,7 @@ export default class HistoryQueryService {
       throw new Error(`History query ${historyQueryId} not found`);
     }
     this.historyQueryRepository.deleteAllHistoryQueryItemsByHistoryQuery(historyQueryId);
+    this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     await this.historyQueryEngine.reloadHistoryQuery(historyQuery, true);
   }
 
@@ -423,6 +431,7 @@ export default class HistoryQueryService {
     }
 
     this.historyQueryRepository.enableHistoryQueryItem(historyQueryItem.id);
+    this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     await this.historyQueryEngine.reloadHistoryQuery(this.historyQueryRepository.findHistoryQueryById(historyQueryId)!, false);
   }
 
@@ -433,6 +442,7 @@ export default class HistoryQueryService {
     }
 
     this.historyQueryRepository.disableHistoryQueryItem(historyQueryItem.id);
+    this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     await this.historyQueryEngine.reloadHistoryQuery(this.historyQueryRepository.findHistoryQueryById(historyQueryId)!, false);
   }
 
@@ -523,7 +533,8 @@ export default class HistoryQueryService {
 
   async importItems<S extends SouthSettings, N extends NorthSettings, I extends SouthItemSettings>(
     historyQueryId: string,
-    items: Array<HistoryQueryItemCommandDTO<I>>
+    items: Array<HistoryQueryItemCommandDTO<I>>,
+    deleteItemsNotPresent = false
   ) {
     const historyQuery = this.historyQueryRepository.findHistoryQueryById<S, N, I>(historyQueryId);
     if (!historyQuery) {
@@ -543,7 +554,8 @@ export default class HistoryQueryService {
       );
       itemsToAdd.push(historyQueryItemEntity);
     }
-    this.historyQueryRepository.saveAllItems<I>(historyQuery.id, itemsToAdd);
+    this.historyQueryRepository.saveAllItems<I>(historyQuery.id, itemsToAdd, deleteItemsNotPresent);
+    this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     await this.historyQueryEngine.reloadHistoryQuery(historyQuery, false);
   }
 

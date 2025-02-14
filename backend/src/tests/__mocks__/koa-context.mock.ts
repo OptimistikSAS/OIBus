@@ -1,4 +1,3 @@
-import RepositoryServiceMock from './service/repository-service.mock';
 import EncryptionServiceMock from './service/encryption-service.mock';
 import NorthServiceMock from './service/north-service.mock';
 import SouthServiceMock from './service/south-service.mock';
@@ -39,9 +38,7 @@ export default jest.fn().mockImplementation(() => ({
       error: jest.fn(),
       child: jest.fn()
     },
-    ipFilters: {
-      whiteList: []
-    }
+    whiteList: []
   },
   request: {},
   params: {},

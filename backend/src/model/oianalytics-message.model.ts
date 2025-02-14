@@ -13,4 +13,9 @@ export interface OIAnalyticsMessageFullConfig extends BaseOIAnalyticsMessage {
   type: 'full-config';
 }
 
-export type OIAnalyticsMessage = OIAnalyticsMessageFullConfig;
+// No need to store the history query, it will be sent at run time
+export interface OIAnalyticsMessageHistoryQueries extends BaseOIAnalyticsMessage {
+  type: 'history-queries';
+}
+
+export type OIAnalyticsMessage = OIAnalyticsMessageFullConfig | OIAnalyticsMessageHistoryQueries;

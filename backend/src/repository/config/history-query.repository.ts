@@ -16,12 +16,25 @@ const PAGE_SIZE = 50;
 export default class HistoryQueryRepository {
   constructor(private readonly database: Database) {}
 
-  findAllHistoryQueries(): Array<HistoryQueryEntityLight> {
+  findAllHistoryQueriesLight(): Array<HistoryQueryEntityLight> {
     const query = `SELECT id, name, description, status, start_time, end_time, south_type, north_type FROM ${HISTORY_QUERIES_TABLE};`;
     return this.database
       .prepare(query)
       .all()
       .map(result => toHistoryQueryLight(result as Record<string, string>));
+  }
+
+  findAllHistoryQueriesFull(): Array<HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>> {
+    const query =
+      `SELECT id, name, description, status, start_time, end_time, ` +
+      `south_type, north_type, south_settings, north_settings, ` +
+      `caching_scan_mode_id, caching_group_count, caching_retry_interval, ` +
+      `caching_retry_count, caching_max_send_count, ` +
+      `caching_send_file_immediately, caching_max_size, archive_enabled, ` +
+      `archive_retention_duration FROM ${HISTORY_QUERIES_TABLE};`;
+    const result = this.database.prepare(query).all();
+
+    return result.map(element => this.toHistoryQueryEntity(element as Record<string, string | number>));
   }
 
   findHistoryQueryById<S extends SouthSettings, N extends NorthSettings, I extends SouthItemSettings>(
@@ -238,8 +251,15 @@ export default class HistoryQueryRepository {
     }
   }
 
-  saveAllItems<I extends SouthItemSettings>(historyQueryId: string, historyQueryItems: Array<HistoryQueryItemEntity<I>>): void {
+  saveAllItems<I extends SouthItemSettings>(
+    historyQueryId: string,
+    historyQueryItems: Array<HistoryQueryItemEntity<I>>,
+    deleteItemsNotPresent: boolean
+  ): void {
     const transaction = this.database.transaction(() => {
+      if (deleteItemsNotPresent) {
+        this.deleteAllHistoryQueryItemsByHistoryQuery(historyQueryId);
+      }
       for (const item of historyQueryItems) {
         this.saveHistoryQueryItem<I>(historyQueryId, item);
       }

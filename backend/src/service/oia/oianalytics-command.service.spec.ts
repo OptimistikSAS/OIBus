@@ -16,14 +16,31 @@ import { flushPromises } from '../../tests/utils/test-utils';
 import { delay, getOIBusInfo, unzip } from '../utils';
 import fs from 'node:fs/promises';
 import {
+  OIBusCreateCertificateCommand,
+  OIBusCreateHistoryQueryCommand,
+  OIBusCreateIPFilterCommand,
   OIBusCreateNorthConnectorCommand,
+  OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand,
   OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand,
   OIBusCreateScanModeCommand,
   OIBusCreateSouthConnectorCommand,
+  OIBusDeleteCertificateCommand,
+  OIBusDeleteHistoryQueryCommand,
+  OIBusDeleteIPFilterCommand,
   OIBusDeleteNorthConnectorCommand,
   OIBusDeleteScanModeCommand,
   OIBusDeleteSouthConnectorCommand,
+  OIBusTestHistoryQueryNorthConnectionCommand,
+  OIBusTestHistoryQuerySouthConnectionCommand,
+  OIBusTestHistoryQuerySouthItemConnectionCommand,
+  OIBusTestNorthConnectorCommand,
+  OIBusTestSouthConnectorCommand,
+  OIBusTestSouthConnectorItemCommand,
+  OIBusUpdateCertificateCommand,
   OIBusUpdateEngineSettingsCommand,
+  OIBusUpdateHistoryQueryCommand,
+  OIBusUpdateHistoryQueryStatusCommand,
+  OIBusUpdateIPFilterCommand,
   OIBusUpdateNorthConnectorCommand,
   OIBusUpdateRegistrationSettingsCommand,
   OIBusUpdateScanModeCommand,
@@ -44,6 +61,15 @@ import crypto from 'node:crypto';
 import OIAnalyticsRegistrationService from './oianalytics-registration.service';
 import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
 import { EngineSettings } from '../../model/engine.model';
+import IpFilterServiceMock from '../../tests/__mocks__/service/ip-filter-service.mock';
+import CertificateServiceMock from '../../tests/__mocks__/service/certificate-service.mock';
+import IPFilterService from '../ip-filter.service';
+import CertificateService from '../certificate.service';
+import { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
+import { CertificateCommandDTO } from '../../../shared/model/certificate.model';
+import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import HistoryQueryService from '../history-query.service';
+import HistoryQueryServiceMock from '../../tests/__mocks__/service/history-query-service.mock';
 
 jest.mock('node:crypto');
 jest.mock('node:fs/promises');
@@ -59,8 +85,11 @@ const oIAnalyticsMessageService: OIAnalyticsMessageService = new OIAnalyticsMess
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const oIBusService: OIBusService = new OibusServiceMock();
 const scanModeService: ScanModeService = new ScanModeServiceMock();
+const ipFilterService: IPFilterService = new IpFilterServiceMock();
+const certificateService: CertificateService = new CertificateServiceMock();
 const southService: SouthService = new SouthServiceMock();
 const northService: NorthService = new NorthServiceMock();
+const historyQueryService: HistoryQueryService = new HistoryQueryServiceMock();
 const oIAnalyticsClient: OIAnalyticsClient = new OianalyticsClientMock();
 
 const logger: pino.Logger = new PinoLogger();
@@ -85,8 +114,11 @@ describe('OIAnalytics Command Service', () => {
       oIAnalyticsClient,
       oIBusService,
       scanModeService,
+      ipFilterService,
+      certificateService,
       southService,
       northService,
+      historyQueryService,
       logger,
       'binaryFolder',
       false,
@@ -734,6 +766,582 @@ describe('OIAnalytics Command Service', () => {
       'OIAnalytics keys reloaded'
     );
   });
+
+  it('should execute create-ip-filter command', async () => {
+    const command: OIBusCreateIPFilterCommand = {
+      id: 'createIpFilterId',
+      type: 'create-ip-filter',
+      targetVersion: testData.engine.settings.version,
+      commandContent: {} as IPFilterCommandDTO
+    } as OIBusCreateIPFilterCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+
+    await service.executeCommand();
+
+    expect(ipFilterService.create).toHaveBeenCalledWith(command.commandContent);
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'IP Filter created successfully'
+    );
+  });
+
+  it('should execute update-ip-filter command', async () => {
+    const command: OIBusUpdateIPFilterCommand = {
+      id: 'updateIpFilterId',
+      type: 'update-ip-filter',
+      targetVersion: testData.engine.settings.version,
+      ipFilterId: 'ipFilterId',
+      commandContent: {} as IPFilterCommandDTO
+    } as OIBusUpdateIPFilterCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+
+    await service.executeCommand();
+
+    expect(ipFilterService.update).toHaveBeenCalledWith(command.ipFilterId, command.commandContent);
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'IP Filter updated successfully'
+    );
+  });
+
+  it('should execute delete-ip-filter command', async () => {
+    const command: OIBusDeleteIPFilterCommand = {
+      id: 'deleteIpFilterId',
+      type: 'delete-ip-filter',
+      targetVersion: testData.engine.settings.version,
+      ipFilterId: 'ipFilterId'
+    } as OIBusDeleteIPFilterCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+
+    await service.executeCommand();
+
+    expect(ipFilterService.delete).toHaveBeenCalledWith(command.ipFilterId);
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'IP Filter deleted successfully'
+    );
+  });
+
+  it('should execute create-certificate command', async () => {
+    const command: OIBusCreateCertificateCommand = {
+      id: 'createCertificateId',
+      type: 'create-certificate',
+      targetVersion: testData.engine.settings.version,
+      commandContent: {} as CertificateCommandDTO
+    } as OIBusCreateCertificateCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+
+    await service.executeCommand();
+
+    expect(certificateService.create).toHaveBeenCalledWith(command.commandContent);
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'Certificate created successfully'
+    );
+  });
+
+  it('should execute update-certificate command', async () => {
+    const command: OIBusUpdateCertificateCommand = {
+      id: 'updateCertificateId',
+      type: 'update-certificate',
+      targetVersion: testData.engine.settings.version,
+      certificateId: 'certificateId',
+      commandContent: {} as CertificateCommandDTO
+    } as OIBusUpdateCertificateCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+
+    await service.executeCommand();
+
+    expect(certificateService.update).toHaveBeenCalledWith(command.certificateId, command.commandContent);
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'Certificate updated successfully'
+    );
+  });
+
+  it('should execute delete-certificate command', async () => {
+    const command: OIBusDeleteCertificateCommand = {
+      id: 'deleteCertificateId',
+      type: 'delete-certificate',
+      targetVersion: testData.engine.settings.version,
+      certificateId: 'certificateId'
+    } as OIBusDeleteCertificateCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+
+    await service.executeCommand();
+
+    expect(certificateService.delete).toHaveBeenCalledWith(command.certificateId);
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'Certificate deleted successfully'
+    );
+  });
+
+  it('should execute south-connection-test command', async () => {
+    const command: OIBusTestSouthConnectorCommand = {
+      id: 'testSouthConnectorId',
+      type: 'test-south-connection',
+      targetVersion: testData.engine.settings.version,
+      southConnectorId: 'southConnectorId',
+      commandContent: testData.south.command
+    } as OIBusTestSouthConnectorCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...testData.south.manifest,
+        id: command.commandContent.type
+      }
+    ]);
+
+    await service.executeCommand();
+
+    expect(southService.testSouth).toHaveBeenCalledWith(command.southConnectorId, command.commandContent, logger);
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'South connection tested successfully'
+    );
+  });
+
+  it('should execute south-item-test command', async () => {
+    const command: OIBusTestSouthConnectorItemCommand = {
+      id: 'testSouthItemId',
+      type: 'test-south-item',
+      targetVersion: testData.engine.settings.version,
+      itemId: 'itemId',
+      southConnectorId: 'southConnectorId',
+      commandContent: {
+        southCommand: testData.south.command,
+        itemCommand: testData.south.itemCommand,
+        testingSettings: {} as SouthConnectorItemTestingSettings
+      }
+    } as OIBusTestSouthConnectorItemCommand;
+
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (southService.testSouthItem as jest.Mock).mockImplementationOnce(
+      (_southId, _southCommand, _itemCommand, _testSettings, callback, _logger) => {
+        callback({});
+      }
+    );
+    (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...testData.south.manifest,
+        id: command.commandContent.southCommand.type
+      }
+    ]);
+
+    await service.executeCommand();
+
+    expect(southService.testSouthItem).toHaveBeenCalledWith(
+      command.southConnectorId,
+      command.commandContent.southCommand,
+      command.commandContent.itemCommand,
+      command.commandContent.testingSettings,
+      expect.anything(),
+      logger
+    );
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(command.id, testData.constants.dates.FAKE_NOW, '{}');
+  });
+
+  it('should execute north-connection-test command', async () => {
+    const command: OIBusTestNorthConnectorCommand = {
+      id: 'testNorthConnectorId',
+      type: 'test-north-connection',
+      targetVersion: testData.engine.settings.version,
+      northConnectorId: 'northConnectorId',
+      commandContent: testData.north.command
+    } as OIBusTestNorthConnectorCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+
+    (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...testData.north.manifest,
+        id: command.commandContent.type
+      }
+    ]);
+
+    await service.executeCommand();
+
+    expect(northService.testNorth).toHaveBeenCalledWith(command.northConnectorId, command.commandContent, logger);
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'North connection tested successfully'
+    );
+  });
+
+  it('should execute create-history-query command', async () => {
+    const command: OIBusCreateHistoryQueryCommand = {
+      id: 'createHistoryQueryId',
+      type: 'create-history-query',
+      targetVersion: testData.engine.settings.version,
+      northConnectorId: null,
+      southConnectorId: null,
+      historyQueryId: null,
+      commandContent: testData.historyQueries.command
+    } as OIBusCreateHistoryQueryCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...testData.south.manifest,
+        id: testData.historyQueries.command.southType
+      }
+    ]);
+    (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...testData.north.manifest,
+        id: testData.historyQueries.command.northType
+      }
+    ]);
+
+    await service.executeCommand();
+
+    expect(historyQueryService.createHistoryQuery).toHaveBeenCalledWith(command.commandContent, null, null, null);
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'History query created successfully'
+    );
+  });
+
+  it('should execute update-history-query command', async () => {
+    const command: OIBusUpdateHistoryQueryCommand = {
+      id: 'updateHistoryQueryId',
+      type: 'update-history-query',
+      targetVersion: testData.engine.settings.version,
+      historyQueryId: 'h1',
+      commandContent: { resetCache: false, historyQuery: testData.historyQueries.command }
+    } as OIBusUpdateHistoryQueryCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...testData.south.manifest,
+        id: testData.historyQueries.command.southType
+      }
+    ]);
+    (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...testData.north.manifest,
+        id: testData.historyQueries.command.northType
+      }
+    ]);
+
+    await service.executeCommand();
+
+    expect(historyQueryService.updateHistoryQuery).toHaveBeenCalledWith(
+      command.historyQueryId,
+      command.commandContent.historyQuery,
+      command.commandContent.resetCache
+    );
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'History query updated successfully'
+    );
+  });
+
+  it('should execute delete-history-query command', async () => {
+    const command: OIBusDeleteHistoryQueryCommand = {
+      id: 'deleteHistoryQueryId',
+      type: 'delete-history-query',
+      targetVersion: testData.engine.settings.version,
+      historyQueryId: 'h1'
+    } as OIBusDeleteHistoryQueryCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+
+    await service.executeCommand();
+
+    expect(historyQueryService.deleteHistoryQuery).toHaveBeenCalledWith(command.historyQueryId);
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'History query deleted successfully'
+    );
+  });
+
+  it('should execute create-or-update-history-query-south-items-from-csv command', async () => {
+    const command: OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand = {
+      id: 'createOrUpdateHistoryQuerySouthItemsId',
+      type: 'create-or-update-history-query-south-items-from-csv',
+      targetVersion: testData.engine.settings.version,
+      historyQueryId: 'h1',
+      commandContent: {
+        deleteItemsNotPresent: false,
+        csvContent: '',
+        delimiter: ','
+      }
+    } as OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand;
+    (historyQueryService.findById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
+    (historyQueryService.checkCsvContentImport as jest.Mock).mockReturnValueOnce({ items: [{}, {}], errors: [] });
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+
+    await service.executeCommand();
+
+    expect(historyQueryService.findById).toHaveBeenCalledWith(command.historyQueryId);
+    expect(historyQueryService.checkCsvContentImport).toHaveBeenCalledWith(
+      testData.historyQueries.list[0].southType,
+      command.commandContent.csvContent,
+      command.commandContent.delimiter,
+      testData.historyQueries.list[0].items
+    );
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      `2 items imported on History query ${testData.historyQueries.list[0].name}`
+    );
+  });
+
+  it('should execute create-or-update-history-query-south-items-from-csv command and throw an error if south not found', async () => {
+    const command: OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand = {
+      id: 'createOrUpdateHistoryQuerySouthItemsId',
+      type: 'create-or-update-history-query-south-items-from-csv',
+      targetVersion: testData.engine.settings.version,
+      historyQueryId: 'h1',
+      commandContent: {
+        deleteItemsNotPresent: false,
+        csvContent: '',
+        delimiter: ','
+      }
+    } as OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand;
+    (historyQueryService.findById as jest.Mock).mockReturnValueOnce(null);
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+
+    await service.executeCommand();
+
+    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(
+      command.id,
+      `History query ${command.historyQueryId} not found`
+    );
+  });
+
+  it('should execute create-or-update-history-query-south-items-from-csv command', async () => {
+    const command: OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand = {
+      id: 'createOrUpdateHistoryQuerySouthItemsId',
+      type: 'create-or-update-history-query-south-items-from-csv',
+      targetVersion: testData.engine.settings.version,
+      historyQueryId: 'h1',
+      commandContent: {
+        deleteItemsNotPresent: true,
+        csvContent: '',
+        delimiter: ','
+      }
+    } as OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand;
+    (historyQueryService.findById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
+    (historyQueryService.checkCsvContentImport as jest.Mock).mockReturnValueOnce({
+      items: [{}, {}],
+      errors: [
+        { item: { name: 'item1' }, error: 'error1' },
+        { item: { name: 'item2' }, error: 'error2' }
+      ]
+    });
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (historyQueryService.checkCsvContentImport as jest.Mock).mockReturnValueOnce({});
+
+    await service.executeCommand();
+
+    expect(historyQueryService.checkCsvContentImport).toHaveBeenCalledWith(
+      testData.historyQueries.list[0].southType,
+      command.commandContent.csvContent,
+      command.commandContent.delimiter,
+      []
+    );
+    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(
+      command.id,
+      `Error when checking csv items:\nitem1: error1\nitem2: error2`
+    );
+  });
+
+  it('should execute test-history-query-north-connection command', async () => {
+    const command: OIBusTestHistoryQueryNorthConnectionCommand = {
+      id: 'testHistoryNorthConnectorId',
+      type: 'test-history-query-north-connection',
+      targetVersion: testData.engine.settings.version,
+      northConnectorId: 'northConnectorId',
+      historyQueryId: 'historyId',
+      commandContent: testData.historyQueries.command
+    } as OIBusTestHistoryQueryNorthConnectionCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+
+    (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...testData.south.manifest,
+        id: testData.historyQueries.command.southType
+      }
+    ]);
+    (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...testData.north.manifest,
+        id: testData.historyQueries.command.northType
+      }
+    ]);
+
+    await service.executeCommand();
+
+    expect(historyQueryService.testNorth).toHaveBeenCalledWith(
+      command.historyQueryId,
+      command.northConnectorId,
+      {
+        name: command.commandContent.name,
+        type: command.commandContent.northType,
+        description: command.commandContent.description,
+        enabled: true,
+        settings: command.commandContent.northSettings,
+        caching: command.commandContent.caching,
+        subscriptions: []
+      },
+      logger
+    );
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'History query North connection tested successfully'
+    );
+  });
+
+  it('should execute south-connection-test command', async () => {
+    const command: OIBusTestHistoryQuerySouthConnectionCommand = {
+      id: 'testHistorySouthConnectorId',
+      type: 'test-history-query-south-connection',
+      targetVersion: testData.engine.settings.version,
+      southConnectorId: 'southConnectorId',
+      historyQueryId: 'historyId',
+      commandContent: testData.historyQueries.command
+    } as OIBusTestHistoryQuerySouthConnectionCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+
+    (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...testData.south.manifest,
+        id: testData.historyQueries.command.southType
+      }
+    ]);
+    (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...testData.north.manifest,
+        id: testData.historyQueries.command.northType
+      }
+    ]);
+
+    await service.executeCommand();
+
+    expect(historyQueryService.testSouth).toHaveBeenCalledWith(
+      command.historyQueryId,
+      command.southConnectorId,
+      {
+        name: command.commandContent.name,
+        type: command.commandContent.southType,
+        description: command.commandContent.description,
+        enabled: true,
+        settings: command.commandContent.southSettings,
+        items: []
+      },
+      logger
+    );
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'History query South connection tested successfully'
+    );
+  });
+
+  it('should execute test-history-query-south-item command', async () => {
+    const command: OIBusTestHistoryQuerySouthItemConnectionCommand = {
+      id: 'testHistoryQuerySouthItemId',
+      type: 'test-history-query-south-item',
+      targetVersion: testData.engine.settings.version,
+      historyQueryId: 'historyId',
+      itemId: 'itemId',
+      southConnectorId: 'southConnectorId',
+      commandContent: {
+        historyCommand: testData.historyQueries.command,
+        itemCommand: testData.historyQueries.itemCommand,
+        testingSettings: {} as SouthConnectorItemTestingSettings
+      }
+    } as OIBusTestHistoryQuerySouthItemConnectionCommand;
+
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (historyQueryService.testSouthItem as jest.Mock).mockImplementationOnce(
+      (_historyId, _southId, _southCommand, _itemCommand, _testSettings, callback, _logger) => {
+        callback({});
+      }
+    );
+    (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...testData.south.manifest,
+        id: command.commandContent.historyCommand.southType
+      }
+    ]);
+
+    await service.executeCommand();
+
+    expect(historyQueryService.testSouthItem).toHaveBeenCalledWith(
+      command.historyQueryId,
+      command.southConnectorId,
+      {
+        name: command.commandContent.historyCommand.name,
+        type: command.commandContent.historyCommand.southType,
+        description: command.commandContent.historyCommand.description,
+        enabled: true,
+        settings: command.commandContent.historyCommand.southSettings,
+        items: []
+      },
+      command.commandContent.itemCommand,
+      command.commandContent.testingSettings,
+      expect.anything(),
+      logger
+    );
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(command.id, testData.constants.dates.FAKE_NOW, '{}');
+  });
+
+  it('should execute update-history-query-status command', async () => {
+    const command: OIBusUpdateHistoryQueryStatusCommand = {
+      id: 'updateHistoryQueryStatusId',
+      type: 'update-history-query-status',
+      targetVersion: testData.engine.settings.version,
+      historyQueryId: 'historyId',
+      commandContent: {
+        historyQueryStatus: 'RUNNING'
+      }
+    } as OIBusUpdateHistoryQueryStatusCommand;
+
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+
+    await service.executeCommand();
+
+    expect(historyQueryService.startHistoryQuery).toHaveBeenCalledWith(command.historyQueryId);
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'History query started'
+    );
+
+    command.commandContent.historyQueryStatus = 'PAUSED';
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+
+    await service.executeCommand();
+
+    expect(historyQueryService.pauseHistoryQuery).toHaveBeenCalledWith(command.historyQueryId);
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'History query paused'
+    );
+
+    command.commandContent.historyQueryStatus = 'ERRORED';
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+
+    await service.executeCommand();
+    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(
+      command.id,
+      `History query status of ${command.historyQueryId} can not be updated to ${command.commandContent.historyQueryStatus}`
+    );
+  });
 });
 
 describe('OIAnalytics Command service with update error', () => {
@@ -763,8 +1371,11 @@ describe('OIAnalytics Command service with update error', () => {
       oIAnalyticsClient,
       oIBusService,
       scanModeService,
+      ipFilterService,
+      certificateService,
       southService,
       northService,
+      historyQueryService,
       logger,
       'binaryFolder',
       false,
@@ -799,21 +1410,17 @@ describe('OIAnalytics Command service with ignoreRemoteUpdate', () => {
       oIAnalyticsClient,
       oIBusService,
       scanModeService,
+      ipFilterService,
+      certificateService,
       southService,
       northService,
+      historyQueryService,
       logger,
       'binaryFolder',
       true,
       '3.4.0'
     );
   });
-
-  // it('should properly start when not registered', () => {
-  //   expect(oIBusService.getEngineSettings).toHaveBeenCalled();
-  //   expect(oIAnalyticsCommandRepository.list).toHaveBeenCalled();
-  //   expect(oIBusService.updateOIBusVersion).toHaveBeenCalledWith(version, '3.4.0');
-  //   expect(oIAnalyticsCommandRepository.markAsCompleted).not.toHaveBeenCalled();
-  // });
 
   it('should change logger', async () => {
     const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
@@ -850,8 +1457,11 @@ describe('OIAnalytics Command service with no commands', () => {
       oIAnalyticsClient,
       oIBusService,
       scanModeService,
+      ipFilterService,
+      certificateService,
       southService,
       northService,
+      historyQueryService,
       logger,
       'binaryFolder',
       true,
@@ -884,8 +1494,11 @@ describe('OIAnalytics Command service with no commands and without update', () =
       oIAnalyticsClient,
       oIBusService,
       scanModeService,
+      ipFilterService,
+      certificateService,
       southService,
       northService,
+      historyQueryService,
       logger,
       'binaryFolder',
       true,

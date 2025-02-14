@@ -102,6 +102,9 @@ export default class OIAnalyticsMessageRepository {
       case 'full-config':
         insertQuery += `(id, type, status) VALUES (?, ?, ?);`;
         break;
+      case 'history-queries':
+        insertQuery += `(id, type, status) VALUES (?, ?, ?);`;
+        break;
     }
     const result = this.database.prepare(insertQuery).run(...queryParams);
     const query = `SELECT * FROM ${OIANALYTICS_MESSAGE_TABLE} WHERE ROWID = ?;`;
@@ -123,7 +126,15 @@ export default class OIAnalyticsMessageRepository {
       case 'full-config':
         return {
           id: message.id,
-          type: message.type as OIAnalyticsMessageType,
+          type: 'full-config',
+          status: message.status as OIAnalyticsMessageStatus,
+          error: message.error,
+          completedDate: message.completed_date
+        };
+      case 'history-queries':
+        return {
+          id: message.id,
+          type: 'history-queries',
           status: message.status as OIAnalyticsMessageStatus,
           error: message.error,
           completedDate: message.completed_date

@@ -15,13 +15,13 @@ import process from 'node:process';
 import os from 'node:os';
 import { PassThrough } from 'node:stream';
 import EngineMetricsRepository from '../repository/logs/engine-metrics.repository';
-import IpFilterRepository from '../repository/config/ip-filter.repository';
 import { getOIBusInfo } from './utils';
 import SouthService from './south.service';
 import NorthService from './north.service';
 import HistoryQueryService from './history-query.service';
 import OIAnalyticsRegistrationService from './oia/oianalytics-registration.service';
 import { EventEmitter } from 'node:events';
+import IPFilterService from './ip-filter.service';
 
 const HEALTH_SIGNAL_INTERVAL = 60_000_000; // 10 minutes
 const UPDATE_ENGINE_METRICS_INTERVAL = 1000; // every second
@@ -45,7 +45,7 @@ export default class OIBusService {
     protected readonly validator: JoiValidator,
     private engineRepository: EngineRepository,
     private engineMetricsRepository: EngineMetricsRepository,
-    private ipFilterRepository: IpFilterRepository,
+    private ipFilterService: IPFilterService,
     private oIAnalyticsRegistrationService: OIAnalyticsRegistrationService,
     private encryptionService: EncryptionService,
     private loggerService: LoggerService,
@@ -67,6 +67,13 @@ export default class OIBusService {
       const engineSettings = this.getEngineSettings();
       if (engineSettings.logParameters.oia.level !== 'silent') {
         await this.resetLogger(engineSettings);
+      }
+    });
+
+    this.ipFilterService.whiteListEvent.on('update-white-list', (newWhiteList: Array<string>) => {
+      const engineSettings = this.getEngineSettings();
+      if (engineSettings.proxyEnabled) {
+        this.proxyServer.refreshIpFilters(newWhiteList);
       }
     });
   }
@@ -107,8 +114,12 @@ export default class OIBusService {
     this.logHealthSignal();
 
     if (settings.proxyEnabled) {
-      const ipFilters = ['127.0.0.1', '::1', '::ffff:127.0.0.1', ...this.ipFilterRepository.findAll().map(filter => filter.address)];
-      this.proxyServer.refreshIpFilters(ipFilters);
+      this.proxyServer.refreshIpFilters([
+        '127.0.0.1',
+        '::1',
+        '::ffff:127.0.0.1',
+        ...this.ipFilterService.findAll().map(filter => filter.address)
+      ]);
       await this.proxyServer.start(settings.proxyPort!);
     }
     const startDuration = DateTime.now().toMillis() - start;

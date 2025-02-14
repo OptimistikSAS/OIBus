@@ -229,6 +229,71 @@ describe('OIAnalytics Client', () => {
     await expect(service.sendConfiguration(testData.oIAnalytics.registration.completed, 'payload')).rejects.toThrow('400 - error');
   });
 
+  it('should send save history query', async () => {
+    (fetch as unknown as jest.Mock)
+      .mockReturnValueOnce(
+        Promise.resolve({
+          ok: true,
+          status: 200
+        })
+      )
+      .mockReturnValueOnce(
+        Promise.resolve({
+          ok: false,
+          status: 400,
+          statusText: 'error'
+        })
+      );
+
+    await service.sendHistoryQuery(testData.oIAnalytics.registration.completed, 'payload');
+    expect(fetch).toHaveBeenCalledWith(
+      `${testData.oIAnalytics.registration.completed.host}/api/oianalytics/oibus/configuration/history-query`,
+      {
+        method: 'PUT',
+        headers: {
+          authorization: `Bearer ${testData.oIAnalytics.registration.completed.token}`,
+          'Content-Type': 'application/json'
+        },
+        body: 'payload',
+        timeout: 10_000,
+        agent: null
+      }
+    );
+    await expect(service.sendHistoryQuery(testData.oIAnalytics.registration.completed, 'payload')).rejects.toThrow('400 - error');
+  });
+
+  it('should send delete history query', async () => {
+    (fetch as unknown as jest.Mock)
+      .mockReturnValueOnce(
+        Promise.resolve({
+          ok: true,
+          status: 200
+        })
+      )
+      .mockReturnValueOnce(
+        Promise.resolve({
+          ok: false,
+          status: 400,
+          statusText: 'error'
+        })
+      );
+
+    await service.deleteHistoryQuery(testData.oIAnalytics.registration.completed, 'historyId');
+    expect(fetch).toHaveBeenCalledWith(
+      `${testData.oIAnalytics.registration.completed.host}/api/oianalytics/oibus/configuration/history-query?historyId=historyId`,
+      {
+        method: 'DELETE',
+        headers: {
+          authorization: `Bearer ${testData.oIAnalytics.registration.completed.token}`,
+          'Content-Type': 'application/json'
+        },
+        timeout: 10_000,
+        agent: null
+      }
+    );
+    await expect(service.deleteHistoryQuery(testData.oIAnalytics.registration.completed, 'historyId')).rejects.toThrow('400 - error');
+  });
+
   it('should download file', async () => {
     (fetch as unknown as jest.Mock)
       .mockReturnValueOnce(

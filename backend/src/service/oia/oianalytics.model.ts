@@ -5,11 +5,16 @@ import { EngineSettingsCommandDTO } from '../../../shared/model/engine.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { NorthConnectorCommandDTO } from '../../../shared/model/north-connector.model';
-import { SouthConnectorCommandDTO } from '../../../shared/model/south-connector.model';
-import { CertificateDTO } from '../../../shared/model/certificate.model';
+import {
+  SouthConnectorCommandDTO,
+  SouthConnectorItemCommandDTO,
+  SouthConnectorItemTestingSettings
+} from '../../../shared/model/south-connector.model';
+import { CertificateCommandDTO, CertificateDTO } from '../../../shared/model/certificate.model';
 import { UserCommandDTO } from '../../../shared/model/user.model';
 import { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
 import { ScanModeCommandDTO } from '../../../shared/model/scan-mode.model';
+import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryStatus } from '../../../shared/model/history-query.model';
 
 export interface OIAnalyticsScanModeCommandDTO {
   oIBusInternalId: string | null;
@@ -100,6 +105,13 @@ export interface OIBusFullConfigurationCommandDTO {
   users: Array<OIAnalyticsUserCommandDTO>;
 }
 
+export interface OIBusHistoryQueriesCommandDTO {
+  historyQueries: Array<{
+    oIBusInternalId: string | null;
+    settings: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+  }>;
+}
+
 //
 // DTO fetch from OIAnalytics
 //
@@ -112,13 +124,30 @@ export const OIANALYTICS_FETCH_COMMAND_TYPES = [
   'create-scan-mode',
   'update-scan-mode',
   'delete-scan-mode',
+  'create-ip-filter',
+  'update-ip-filter',
+  'delete-ip-filter',
+  'create-certificate',
+  'update-certificate',
+  'delete-certificate',
   'create-south',
   'update-south',
   'delete-south',
   'create-or-update-south-items-from-csv',
+  'test-south-connection',
+  'test-south-item',
   'create-north',
   'update-north',
-  'delete-north'
+  'delete-north',
+  'test-north-connection',
+  'create-history-query',
+  'update-history-query',
+  'delete-history-query',
+  'test-history-query-north-connection',
+  'test-history-query-south-connection',
+  'test-history-query-south-item',
+  'create-or-update-history-query-south-items-from-csv',
+  'update-history-query-status'
 ] as const;
 export type OIAnalyticsFetchCommandType = (typeof OIANALYTICS_FETCH_COMMAND_TYPES)[number];
 
@@ -174,6 +203,38 @@ export interface OIAnalyticsFetchDeleteScanModeCommandDTO extends BaseOIAnalytic
   scanModeId: string;
 }
 
+export interface OIAnalyticsFetchCreateIPFilterCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'create-ip-filter';
+  commandContent: IPFilterCommandDTO;
+}
+
+export interface OIAnalyticsFetchUpdateIPFilterCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'update-ip-filter';
+  ipFilterId: string;
+  commandContent: IPFilterCommandDTO;
+}
+
+export interface OIAnalyticsFetchDeleteIPFilterCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'delete-ip-filter';
+  ipFilterId: string;
+}
+
+export interface OIAnalyticsFetchCreateCertificateCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'create-certificate';
+  commandContent: CertificateCommandDTO;
+}
+
+export interface OIAnalyticsFetchUpdateCertificateCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'update-certificate';
+  certificateId: string;
+  commandContent: CertificateCommandDTO;
+}
+
+export interface OIAnalyticsFetchDeleteCertificateCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'delete-certificate';
+  certificateId: string;
+}
+
 export interface OIAnalyticsFetchCreateSouthConnectorCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
   type: 'create-south';
   retrieveSecretsFromSouth: string | null; // used to retrieve passwords in case of duplicate
@@ -189,6 +250,31 @@ export interface OIAnalyticsFetchUpdateSouthConnectorCommandDTO extends BaseOIAn
 export interface OIAnalyticsFetchDeleteSouthConnectorCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
   type: 'delete-south';
   southConnectorId: string;
+}
+
+export interface OIAnalyticsFetchCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'create-or-update-south-items-from-csv';
+  southConnectorId: string;
+  deleteItemsNotPresent: boolean;
+  csvContent: string;
+  delimiter: string;
+}
+
+export interface OIAnalyticsFetchTestSouthConnectionCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'test-south-connection';
+  southConnectorId: string;
+  commandContent: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+}
+
+export interface OIAnalyticsFetchTestSouthItemCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'test-south-item';
+  southConnectorId: string;
+  itemId: string;
+  commandContent: {
+    southCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
+    itemCommand: SouthConnectorItemCommandDTO<SouthItemSettings>;
+    testingSettings: SouthConnectorItemTestingSettings;
+  };
 }
 
 export interface OIAnalyticsFetchCreateNorthConnectorCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
@@ -208,12 +294,72 @@ export interface OIAnalyticsFetchDeleteNorthConnectorCommandDTO extends BaseOIAn
   northConnectorId: string;
 }
 
-export interface OIAnalyticsFetchCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
-  type: 'create-or-update-south-items-from-csv';
+export interface OIAnalyticsFetchTestNorthConnectionCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'test-north-connection';
+  northConnectorId: string;
+  commandContent: NorthConnectorCommandDTO<NorthSettings>;
+}
+
+export interface OIAnalyticsFetchCreateHistoryQueryCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'create-history-query';
+  retrieveSecretsFromSouth: string | null;
+  retrieveSecretsFromNorth: string | null;
+  retrieveSecretsFromHistoryQuery: string | null;
+  commandContent: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+}
+
+export interface OIAnalyticsFetchUpdateHistoryQueryCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'update-history-query';
+  historyId: string;
+  commandContent: {
+    resetCache: boolean;
+    historyQuery: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+  };
+}
+
+export interface OIAnalyticsFetchDeleteHistoryQueryCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'delete-history-query';
+  historyId: string;
+}
+
+export interface OIAnalyticsFetchTestHistoryQueryNorthConnectionCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'test-history-query-north-connection';
+  historyId: string;
+  northConnectorId: string;
+  commandContent: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+}
+
+export interface OIAnalyticsFetchTestHistoryQuerySouthConnectionCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'test-history-query-south-connection';
+  historyId: string;
   southConnectorId: string;
+  commandContent: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+}
+
+export interface OIAnalyticsFetchTestHistoryQuerySouthItemConnectionCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'test-history-query-south-item';
+  historyId: string;
+  southConnectorId: string;
+  itemId: string;
+  commandContent: {
+    historyCommand: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+    itemCommand: HistoryQueryItemCommandDTO<SouthItemSettings>;
+    testingSettings: SouthConnectorItemTestingSettings;
+  };
+}
+
+export interface OIAnalyticsFetchCreateOrUpdateHistoryQuerySouthItemsFromCSVCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'create-or-update-history-query-south-items-from-csv';
+  historyId: string;
   deleteItemsNotPresent: boolean;
   csvContent: string;
   delimiter: string;
+}
+
+export interface OIAnalyticsFetchUpdateHistoryQueryStatusCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'update-history-query-status';
+  historyId: string;
+  historyQueryStatus: HistoryQueryStatus;
 }
 
 export type OIAnalyticsFetchCommandDTO =
@@ -225,10 +371,27 @@ export type OIAnalyticsFetchCommandDTO =
   | OIAnalyticsFetchCreateScanModeCommandDTO
   | OIAnalyticsFetchUpdateScanModeCommandDTO
   | OIAnalyticsFetchDeleteScanModeCommandDTO
+  | OIAnalyticsFetchCreateIPFilterCommandDTO
+  | OIAnalyticsFetchUpdateIPFilterCommandDTO
+  | OIAnalyticsFetchDeleteIPFilterCommandDTO
+  | OIAnalyticsFetchCreateCertificateCommandDTO
+  | OIAnalyticsFetchUpdateCertificateCommandDTO
+  | OIAnalyticsFetchDeleteCertificateCommandDTO
   | OIAnalyticsFetchCreateSouthConnectorCommandDTO
   | OIAnalyticsFetchUpdateSouthConnectorCommandDTO
   | OIAnalyticsFetchDeleteSouthConnectorCommandDTO
+  | OIAnalyticsFetchTestSouthConnectionCommandDTO
+  | OIAnalyticsFetchTestSouthItemCommandDTO
+  | OIAnalyticsFetchCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO
   | OIAnalyticsFetchCreateNorthConnectorCommandDTO
   | OIAnalyticsFetchUpdateNorthConnectorCommandDTO
   | OIAnalyticsFetchDeleteNorthConnectorCommandDTO
-  | OIAnalyticsFetchCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO;
+  | OIAnalyticsFetchTestNorthConnectionCommandDTO
+  | OIAnalyticsFetchCreateHistoryQueryCommandDTO
+  | OIAnalyticsFetchUpdateHistoryQueryCommandDTO
+  | OIAnalyticsFetchDeleteHistoryQueryCommandDTO
+  | OIAnalyticsFetchTestHistoryQueryNorthConnectionCommandDTO
+  | OIAnalyticsFetchTestHistoryQuerySouthConnectionCommandDTO
+  | OIAnalyticsFetchTestHistoryQuerySouthItemConnectionCommandDTO
+  | OIAnalyticsFetchCreateOrUpdateHistoryQuerySouthItemsFromCSVCommandDTO
+  | OIAnalyticsFetchUpdateHistoryQueryStatusCommandDTO;

@@ -53,9 +53,12 @@ export class RegisterOibusModalComponent {
       updateSouth: [true, Validators.required],
       createOrUpdateSouthItemsFromCsv: [true, Validators.required],
       deleteSouth: [true, Validators.required],
+      testSouthConnection: [true, Validators.required],
+      testSouthItem: [true, Validators.required],
       createNorth: [true, Validators.required],
       updateNorth: [true, Validators.required],
-      deleteNorth: [true, Validators.required]
+      deleteNorth: [true, Validators.required],
+      testNorthConnection: [true, Validators.required]
     })
   });
   mode: 'register' | 'edit' = 'register';
@@ -115,23 +118,29 @@ export class RegisterOibusModalComponent {
           createScanMode: formValue.commandPermissions!.createScanMode!,
           updateScanMode: formValue.commandPermissions!.updateScanMode!,
           deleteScanMode: formValue.commandPermissions!.deleteScanMode!,
-          createIpFilter: true,
-          updateIpFilter: true,
-          deleteIpFilter: true,
-          createCertificate: true,
-          updateCertificate: true,
-          deleteCertificate: true,
+          createIpFilter: formValue.commandPermissions!.createIpFilter!,
+          updateIpFilter: formValue.commandPermissions!.updateIpFilter!,
+          deleteIpFilter: formValue.commandPermissions!.deleteIpFilter!,
+          createCertificate: formValue.commandPermissions!.createCertificate!,
+          updateCertificate: formValue.commandPermissions!.updateCertificate!,
+          deleteCertificate: formValue.commandPermissions!.deleteCertificate!,
           createHistoryQuery: true,
           updateHistoryQuery: true,
           deleteHistoryQuery: true,
           createOrUpdateHistoryItemsFromCsv: true,
+          testHistoryNorthConnection: true,
+          testHistorySouthConnection: true,
+          testHistorySouthItem: true,
           createSouth: formValue.commandPermissions!.createSouth!,
           updateSouth: formValue.commandPermissions!.updateSouth!,
           deleteSouth: formValue.commandPermissions!.deleteSouth!,
           createOrUpdateSouthItemsFromCsv: formValue.commandPermissions!.createOrUpdateSouthItemsFromCsv!,
+          testSouthConnection: formValue.commandPermissions!.testSouthConnection!,
+          testSouthItem: formValue.commandPermissions!.testSouthItem!,
           createNorth: formValue.commandPermissions!.createNorth!,
           updateNorth: formValue.commandPermissions!.updateNorth!,
-          deleteNorth: formValue.commandPermissions!.deleteNorth!
+          deleteNorth: formValue.commandPermissions!.deleteNorth!,
+          testNorthConnection: formValue.commandPermissions!.testNorthConnection!
         }
       };
       this.oibusService
@@ -160,23 +169,29 @@ export class RegisterOibusModalComponent {
           createScanMode: formValue.commandPermissions!.createScanMode!,
           updateScanMode: formValue.commandPermissions!.updateScanMode!,
           deleteScanMode: formValue.commandPermissions!.deleteScanMode!,
-          createIpFilter: true,
-          updateIpFilter: true,
-          deleteIpFilter: true,
-          createCertificate: true,
-          updateCertificate: true,
-          deleteCertificate: true,
+          createIpFilter: formValue.commandPermissions!.createIpFilter!,
+          updateIpFilter: formValue.commandPermissions!.updateIpFilter!,
+          deleteIpFilter: formValue.commandPermissions!.deleteIpFilter!,
+          createCertificate: formValue.commandPermissions!.createCertificate!,
+          updateCertificate: formValue.commandPermissions!.updateCertificate!,
+          deleteCertificate: formValue.commandPermissions!.deleteCertificate!,
           createHistoryQuery: true,
           updateHistoryQuery: true,
           deleteHistoryQuery: true,
           createOrUpdateHistoryItemsFromCsv: true,
+          testHistoryNorthConnection: true,
+          testHistorySouthConnection: true,
+          testHistorySouthItem: true,
           createSouth: formValue.commandPermissions!.createSouth!,
           updateSouth: formValue.commandPermissions!.updateSouth!,
           deleteSouth: formValue.commandPermissions!.deleteSouth!,
           createOrUpdateSouthItemsFromCsv: formValue.commandPermissions!.createOrUpdateSouthItemsFromCsv!,
+          testSouthConnection: formValue.commandPermissions!.testSouthConnection!,
+          testSouthItem: formValue.commandPermissions!.testSouthItem!,
           createNorth: formValue.commandPermissions!.createNorth!,
           updateNorth: formValue.commandPermissions!.updateNorth!,
-          deleteNorth: formValue.commandPermissions!.deleteNorth!
+          deleteNorth: formValue.commandPermissions!.deleteNorth!,
+          testNorthConnection: formValue.commandPermissions!.testNorthConnection!
         }
       };
       this.oibusService
