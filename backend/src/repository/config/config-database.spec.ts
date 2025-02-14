@@ -35,6 +35,7 @@ import {
   OIAnalyticsFetchUpdateCertificateCommandDTO,
   OIAnalyticsFetchUpdateEngineSettingsCommandDTO,
   OIAnalyticsFetchUpdateHistoryQueryCommandDTO,
+  OIAnalyticsFetchUpdateHistoryQueryStatusCommandDTO,
   OIAnalyticsFetchUpdateIPFilterCommandDTO,
   OIAnalyticsFetchUpdateNorthConnectorCommandDTO,
   OIAnalyticsFetchUpdateRegistrationSettingsCommandDTO,
@@ -1191,6 +1192,32 @@ describe('Repository with populated database', () => {
           csvContent: command.csvContent,
           deleteItemsNotPresent: command.deleteItemsNotPresent,
           delimiter: command.delimiter
+        }
+      });
+    });
+
+    it('should create a update-history-query-status command', () => {
+      const command: OIAnalyticsFetchUpdateHistoryQueryStatusCommandDTO = {
+        id: 'updateHistoryQueryStatusCommandId',
+        targetVersion: 'v3.5.0',
+        type: 'update-history-query-status',
+        historyId: 'h1',
+        historyQueryStatus: 'RUNNING'
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        targetVersion: command.targetVersion,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        historyQueryId: command.historyId,
+        commandContent: {
+          historyQueryStatus: command.historyQueryStatus
         }
       });
     });
