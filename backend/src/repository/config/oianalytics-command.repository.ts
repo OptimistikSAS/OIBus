@@ -261,6 +261,15 @@ export default class OIAnalyticsCommandRepository {
         queryParams.push(JSON.stringify(command.commandContent));
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, history_id, south_connector_id, item_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
         break;
+      case 'update-history-query-status':
+        queryParams.push(command.historyId);
+        queryParams.push(
+          JSON.stringify({
+            historyQueryStatus: command.historyQueryStatus
+          })
+        );
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, history_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
+        break;
     }
     this.database.prepare(insertQuery).run(...queryParams);
   }
@@ -708,6 +717,19 @@ export default class OIAnalyticsCommandRepository {
           historyQueryId: command.history_id as string,
           southConnectorId: command.south_connector_id as string,
           itemId: command.item_id as string,
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'update-history-query-status':
+        return {
+          id: command.id as string,
+          type: 'update-history-query-status',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          historyQueryId: command.history_id as string,
           commandContent: JSON.parse(command.command_content as string)
         };
     }

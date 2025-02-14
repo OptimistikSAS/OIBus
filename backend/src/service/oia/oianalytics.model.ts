@@ -14,7 +14,7 @@ import { CertificateCommandDTO, CertificateDTO } from '../../../shared/model/cer
 import { UserCommandDTO } from '../../../shared/model/user.model';
 import { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
 import { ScanModeCommandDTO } from '../../../shared/model/scan-mode.model';
-import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO } from '../../../shared/model/history-query.model';
+import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryStatus } from '../../../shared/model/history-query.model';
 
 export interface OIAnalyticsScanModeCommandDTO {
   oIBusInternalId: string | null;
@@ -146,7 +146,8 @@ export const OIANALYTICS_FETCH_COMMAND_TYPES = [
   'test-history-query-north-connection',
   'test-history-query-south-connection',
   'test-history-query-south-item',
-  'create-or-update-history-query-south-items-from-csv'
+  'create-or-update-history-query-south-items-from-csv',
+  'update-history-query-status'
 ] as const;
 export type OIAnalyticsFetchCommandType = (typeof OIANALYTICS_FETCH_COMMAND_TYPES)[number];
 
@@ -355,6 +356,12 @@ export interface OIAnalyticsFetchCreateOrUpdateHistoryQuerySouthItemsFromCSVComm
   delimiter: string;
 }
 
+export interface OIAnalyticsFetchUpdateHistoryQueryStatusCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'update-history-query-status';
+  historyId: string;
+  historyQueryStatus: HistoryQueryStatus;
+}
+
 export type OIAnalyticsFetchCommandDTO =
   | OIAnalyticsFetchUpdateVersionCommandDTO
   | OIAnalyticsFetchRestartEngineCommandDTO
@@ -386,4 +393,5 @@ export type OIAnalyticsFetchCommandDTO =
   | OIAnalyticsFetchTestHistoryQueryNorthConnectionCommandDTO
   | OIAnalyticsFetchTestHistoryQuerySouthConnectionCommandDTO
   | OIAnalyticsFetchTestHistoryQuerySouthItemConnectionCommandDTO
-  | OIAnalyticsFetchCreateOrUpdateHistoryQuerySouthItemsFromCSVCommandDTO;
+  | OIAnalyticsFetchCreateOrUpdateHistoryQuerySouthItemsFromCSVCommandDTO
+  | OIAnalyticsFetchUpdateHistoryQueryStatusCommandDTO;

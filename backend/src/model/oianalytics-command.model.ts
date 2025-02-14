@@ -12,7 +12,7 @@ import { NorthConnectorCommandDTO } from '../../shared/model/north-connector.mod
 import { NorthSettings } from '../../shared/model/north-settings.model';
 import { IPFilterCommandDTO } from '../../shared/model/ip-filter.model';
 import { CertificateCommandDTO } from '../../shared/model/certificate.model';
-import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO } from '../../shared/model/history-query.model';
+import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryStatus } from '../../shared/model/history-query.model';
 
 export interface BaseOIBusCommand extends BaseEntity {
   type: OIBusCommandType;
@@ -232,6 +232,14 @@ export interface OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand extends
   };
 }
 
+export interface OIBusUpdateHistoryQueryStatusCommand extends BaseOIBusCommand {
+  type: 'update-history-query-status';
+  historyQueryId: string;
+  commandContent: {
+    historyQueryStatus: HistoryQueryStatus;
+  };
+}
+
 export type OIBusCommand =
   | OIBusUpdateVersionCommand
   | OIBusRestartEngineCommand
@@ -263,4 +271,5 @@ export type OIBusCommand =
   | OIBusTestHistoryQueryNorthConnectionCommand
   | OIBusTestHistoryQuerySouthConnectionCommand
   | OIBusTestHistoryQuerySouthItemConnectionCommand
-  | OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand;
+  | OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand
+  | OIBusUpdateHistoryQueryStatusCommand;
