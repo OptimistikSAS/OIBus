@@ -82,7 +82,7 @@ export default class SouthFolderScanner
     const filteredFiles = filesInFolder.filter(file => file.match(item.settings.regex));
     const matchedFiles: Array<{ name: string; modifyTime: Instant }> = [];
     for (const file of filteredFiles) {
-      if (await this.checkAge(item, file)) {
+      if (await this.checkAge(item, file, true)) {
         const stats = await fs.stat(path.join(inputFolder, file));
         matchedFiles.push({ name: file, modifyTime: DateTime.fromMillis(stats.mtimeMs).toUTC().toISO()! });
       }
@@ -157,7 +157,7 @@ export default class SouthFolderScanner
    * Filter the files if the name and the age of the file meet the request or - when preserveFiles - if they were
    * already sent.
    */
-  async checkAge(item: SouthConnectorItemEntity<SouthFolderScannerItemSettings>, filename: string): Promise<boolean> {
+  async checkAge(item: SouthConnectorItemEntity<SouthFolderScannerItemSettings>, filename: string, test = false): Promise<boolean> {
     const inputFolder = path.resolve(this.connector.settings.inputFolder);
 
     const timestamp = new Date().getTime();
@@ -171,7 +171,7 @@ export default class SouthFolderScanner
     this.logger.trace(`File "${filename}" matches age`);
 
     // Check if the file was already sent (if preserveFiles is true)
-    if (item.settings.preserveFiles) {
+    if (item.settings.preserveFiles && !test) {
       if (item.settings.ignoreModifiedDate) return true;
       const lastModifiedTime = this.getModifiedTime(filename);
 
