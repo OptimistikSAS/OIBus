@@ -7,7 +7,7 @@ import { NorthConnectorCommandDTO } from './north-connector.model';
 import { NorthSettings } from './north-settings.model';
 import { IPFilterCommandDTO } from './ip-filter.model';
 import { CertificateCommandDTO } from './certificate.model';
-import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO } from './history-query.model';
+import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryStatus } from './history-query.model';
 
 export const OIBUS_COMMAND_TYPES = [
   'update-version',
@@ -40,7 +40,8 @@ export const OIBUS_COMMAND_TYPES = [
   'test-history-query-north-connection',
   'test-history-query-south-connection',
   'test-history-query-south-item',
-  'create-or-update-history-query-south-items-from-csv'
+  'create-or-update-history-query-south-items-from-csv',
+  'update-history-query-status'
 ] as const;
 export type OIBusCommandType = (typeof OIBUS_COMMAND_TYPES)[number];
 
@@ -278,6 +279,15 @@ export interface OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommandDTO exte
   };
 }
 
+export interface OIBusUpdateHistoryQueryStatusCommandDTO extends BaseOIBusCommandDTO {
+  type: 'update-history-query-status';
+  targetVersion: string;
+  historyQueryId: string;
+  commandContent: {
+    historyQueryStatus: HistoryQueryStatus;
+  };
+}
+
 export type OIBusCommandDTO =
   | OIBusUpdateVersionCommandDTO
   | OIBusRegenerateCipherKeysCommandDTO
@@ -309,7 +319,8 @@ export type OIBusCommandDTO =
   | OIBusTestHistoryQueryNorthConnectionCommandDTO
   | OIBusTestHistoryQuerySouthConnectionCommandDTO
   | OIBusTestHistoryQuerySouthItemCommandDTO
-  | OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommandDTO;
+  | OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommandDTO
+  | OIBusUpdateHistoryQueryStatusCommandDTO;
 
 export interface CommandSearchParam {
   page?: number;
