@@ -73,7 +73,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
 
   override async disconnect(): Promise<void> {
     if (this.client) {
-      this.client.end(true);
+      this.client.end(true, { cmd: 'disconnect', properties: { sessionExpiryInterval: 60 } });
       this.logger.info(`Disconnected from ${this.connector.settings.url}...`);
       this.client = null;
     }
