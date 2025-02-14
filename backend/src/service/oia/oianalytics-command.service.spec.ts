@@ -39,6 +39,7 @@ import {
   OIBusUpdateCertificateCommand,
   OIBusUpdateEngineSettingsCommand,
   OIBusUpdateHistoryQueryCommand,
+  OIBusUpdateHistoryQueryStatusCommand,
   OIBusUpdateIPFilterCommand,
   OIBusUpdateNorthConnectorCommand,
   OIBusUpdateRegistrationSettingsCommand,
@@ -1296,6 +1297,50 @@ describe('OIAnalytics Command Service', () => {
       logger
     );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(command.id, testData.constants.dates.FAKE_NOW, '{}');
+  });
+
+  it('should execute update-history-query-status command', async () => {
+    const command: OIBusUpdateHistoryQueryStatusCommand = {
+      id: 'updateHistoryQueryStatusId',
+      type: 'update-history-query-status',
+      targetVersion: testData.engine.settings.version,
+      historyQueryId: 'historyId',
+      commandContent: {
+        historyQueryStatus: 'RUNNING'
+      }
+    } as OIBusUpdateHistoryQueryStatusCommand;
+
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+
+    await service.executeCommand();
+
+    expect(historyQueryService.startHistoryQuery).toHaveBeenCalledWith(command.historyQueryId);
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'History query started'
+    );
+
+    command.commandContent.historyQueryStatus = 'PAUSED';
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+
+    await service.executeCommand();
+
+    expect(historyQueryService.pauseHistoryQuery).toHaveBeenCalledWith(command.historyQueryId);
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'History query paused'
+    );
+
+    command.commandContent.historyQueryStatus = 'ERRORED';
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+
+    await service.executeCommand();
+    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(
+      command.id,
+      `History query status of ${command.historyQueryId} can not be updated to ${command.commandContent.historyQueryStatus}`
+    );
   });
 });
 

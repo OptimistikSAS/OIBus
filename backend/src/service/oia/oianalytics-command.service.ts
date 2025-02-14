@@ -36,6 +36,7 @@ import {
   OIBusUpdateCertificateCommand,
   OIBusUpdateEngineSettingsCommand,
   OIBusUpdateHistoryQueryCommand,
+  OIBusUpdateHistoryQueryStatusCommand,
   OIBusUpdateIPFilterCommand,
   OIBusUpdateNorthConnectorCommand,
   OIBusUpdateRegistrationSettingsCommand,
@@ -406,6 +407,9 @@ export default class OIAnalyticsCommandService {
             const privateKey = await this.encryptionService.decryptText(registration.privateCipherKey!);
             await this.executeTestHistoryQuerySouthItemCommand(command, privateKey);
           }
+          break;
+        case 'update-history-query-status':
+          await this.executeUpdateHistoryQueryStatusCommand(command);
           break;
       }
     } catch (error: unknown) {
@@ -890,6 +894,25 @@ export default class OIAnalyticsCommandService {
     );
   }
 
+  private async executeUpdateHistoryQueryStatusCommand(command: OIBusUpdateHistoryQueryStatusCommand) {
+    switch (command.commandContent.historyQueryStatus) {
+      case 'RUNNING':
+        await this.historyQueryService.startHistoryQuery(command.historyQueryId);
+        this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'History query started');
+        break;
+      case 'PAUSED':
+        await this.historyQueryService.pauseHistoryQuery(command.historyQueryId);
+        this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'History query paused');
+        break;
+      case 'ERRORED':
+      case 'FINISHED':
+      case 'PENDING':
+        throw new Error(
+          `History query status of ${command.historyQueryId} can not be updated to ${command.commandContent.historyQueryStatus}`
+        );
+    }
+  }
+
   private checkCommandPermission(command: OIBusCommand, registration: OIAnalyticsRegistration) {
     switch (command.type) {
       case 'update-version':
@@ -954,6 +977,8 @@ export default class OIAnalyticsCommandService {
         return registration.commandPermissions.testHistorySouthItem;
       case 'create-or-update-history-query-south-items-from-csv':
         return registration.commandPermissions.createOrUpdateHistoryItemsFromCsv;
+      case 'update-history-query-status':
+        return registration.commandPermissions.updateHistoryQuery;
     }
   }
 }
@@ -991,6 +1016,7 @@ export const toOIBusCommandDTO = (command: OIBusCommand): OIBusCommandDTO => {
     case 'test-history-query-south-connection':
     case 'test-history-query-south-item':
     case 'create-or-update-history-query-south-items-from-csv':
+    case 'update-history-query-status':
       return command;
   }
 };
