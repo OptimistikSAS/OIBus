@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.5.10](https://github.com/OptimistikSAS/OIBus/compare/v3.5.9...v3.5.10) (2025-02-14)
+
+
+### Bug Fixes
+
+* **backend:** Fix error file management by verifying correct path ([89a9892](https://github.com/OptimistikSAS/OIBus/commit/89a9892860a96ba1df4d4da4418ba084088fb04f))
+* **folder-scanner:** do not use folder scanner table when testing ([14cb029](https://github.com/OptimistikSAS/OIBus/commit/14cb029c899366c43d7ba182d7ef6028415a77ad))
+* **mqtt:** fix reconnection on broker with persistent connection ([c5d1e96](https://github.com/OptimistikSAS/OIBus/commit/c5d1e96aadd2eb8e8394831a7d17969e9a9e8197))
+* **opcua:** set oibus timestamp when server timestamp is not set ([452beb8](https://github.com/OptimistikSAS/OIBus/commit/452beb885bb1ed01ac0bb1ee9b529f44c82c7ac0))
+* **web-client:** do not display fields when condition does not match ([f3aa370](https://github.com/OptimistikSAS/OIBus/commit/f3aa370975677d4dfb6f0eb07b18a707192dd401))
+
 ## [3.5.9](https://github.com/OptimistikSAS/OIBus/compare/v3.5.8...v3.5.9) (2025-02-04)
 
 
