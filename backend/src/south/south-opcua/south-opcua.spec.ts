@@ -629,9 +629,17 @@ describe('SouthOPCUA', () => {
 
   it('should properly query items', async () => {
     const read = jest.fn().mockReturnValue([
-      { value: { value: 1, dataType: DataType.Float }, serverTimestamp: new Date(), statusCode: { value: 0 } },
-      { value: { value: 2, dataType: DataType.Double }, serverTimestamp: new Date(), statusCode: { value: 0 } },
-      { value: { value: 3, dataType: DataType.UInt16 }, serverTimestamp: new Date(), statusCode: { value: 0 } }
+      {
+        value: { value: 1, dataType: DataType.Float },
+        sourceTimestamp: new Date(testData.constants.dates.DATE_1),
+        statusCode: { value: 0 }
+      },
+      {
+        value: { value: 2, dataType: DataType.Double },
+        serverTimestamp: new Date(testData.constants.dates.DATE_2),
+        statusCode: { value: 0 }
+      },
+      { value: { value: 3, dataType: DataType.UInt16 }, statusCode: { value: 0 } }
     ]);
     (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ read });
     south.addContent = jest.fn();
@@ -650,7 +658,7 @@ describe('SouthOPCUA', () => {
       content: [
         {
           pointId: expectedItemsToRead[0].name,
-          timestamp: testData.constants.dates.FAKE_NOW,
+          timestamp: testData.constants.dates.DATE_1,
           data: {
             value: '1',
             quality: JSON.stringify({ value: 0 })
@@ -658,7 +666,7 @@ describe('SouthOPCUA', () => {
         },
         {
           pointId: expectedItemsToRead[1].name,
-          timestamp: testData.constants.dates.FAKE_NOW,
+          timestamp: testData.constants.dates.DATE_2,
           data: {
             value: '2',
             quality: JSON.stringify({ value: 0 })
