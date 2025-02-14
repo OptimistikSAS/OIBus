@@ -632,11 +632,12 @@ export default class SouthOPCUA
         );
       }
 
+      const defaultTimestamp = DateTime.now().toUTC().toISO();
       const values = dataValues.map((dataValue: DataValue, i) => {
         const selectedTimestamp = dataValue.sourceTimestamp ?? dataValue.serverTimestamp;
         return {
           pointId: items[i].name,
-          timestamp: selectedTimestamp!.toISOString(),
+          timestamp: selectedTimestamp ? selectedTimestamp.toISOString() : defaultTimestamp,
           data: {
             value: this.parseOPCUAValue(items[i].name, dataValue.value),
             quality: JSON.stringify(dataValue.statusCode)
