@@ -81,7 +81,7 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
         return this.handleFile(data.filePath);
 
       case 'time-values':
-        throw new Error('Can not manage time values');
+        return this.handleValues(data.content);
     }
   }
 

@@ -110,7 +110,8 @@ describe('NorthAzureBlob without proxy', () => {
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
   });
 
-  it('should properly handle files using Shared Access Signature authentication', async () => {    const filePath = '/path/to/file/example-123.file';
+  it('should properly handle files using Shared Access Signature authentication', async () => {
+    const filePath = '/path/to/file/example-123.file';
     (fs.stat as jest.Mock).mockImplementationOnce(() => Promise.resolve({ size: 666 }));
     (fs.readFile as jest.Mock).mockImplementationOnce(() => Promise.resolve('content'));
 
@@ -138,8 +139,6 @@ describe('NorthAzureBlob without proxy', () => {
     expect(getContainerClientMock).toHaveBeenCalledWith(configuration.settings.container);
     expect(getBlockBlobClientMock).toHaveBeenCalledWith('example.file');
     expect(uploadMock).toHaveBeenCalledWith('content', 666);
-
-    await expect(north.handleContent({ type: 'time-values', content: [] })).rejects.toThrow(new Error(`Can not manage time values`));
   });
 
   it('should properly handle files on Azure Data Lake Storage using Shared Access Signature authentication', async () => {
@@ -169,9 +168,9 @@ describe('NorthAzureBlob without proxy', () => {
     expect(getFileSystemClientMock).toHaveBeenCalledWith(configuration.settings.container);
     expect(getFileClientMock).toHaveBeenCalledWith('example.file');
     expect(bufferFlushMock).toHaveBeenCalledWith('content'.length);
-    await expect(north.handleContent({ type: 'time-values', content: [] })).rejects.toThrow(new Error(`Can not manage time values`));
   });
-  it('should properly handle values using Shared Access Signature authentication', async () => {    north = new NorthAzureBlob(
+  it('should properly handle values using Shared Access Signature authentication', async () => {
+    north = new NorthAzureBlob(
       configuration,
       encryptionService,
       northConnectorRepository,
@@ -181,7 +180,16 @@ describe('NorthAzureBlob without proxy', () => {
     );
 
     await north.start();
-    await north.handleValues([{ pointId: 'pointId', timestamp: '2020-02-02T02:02:02.222Z', data: { value: '123' } }]);
+    await north.handleContent({
+      type: 'time-values',
+      content: [
+        {
+          pointId: 'pointId',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '123' }
+        }
+      ]
+    });
 
     expect(BlobServiceClient).toHaveBeenCalledWith(
       `https://${configuration.settings.account}.blob.core.windows.net?${configuration.settings.sasToken}`,
@@ -214,7 +222,8 @@ describe('NorthAzureBlob without proxy', () => {
     expect(getFileClientMock).toHaveBeenCalledWith(`${configuration.name}-2021_01_02_00_00_00_000.csv`);
     expect(bufferFlushMock).toHaveBeenCalledWith('csv content'.length);
   });
-  it('should properly handle files using Access Key authentication', async () => {    const filePath = '/path/to/file/example-123.file';
+  it('should properly handle files using Access Key authentication', async () => {
+    const filePath = '/path/to/file/example-123.file';
     (fs.stat as jest.Mock).mockImplementationOnce(() => Promise.resolve({ size: 666 }));
     (fs.readFile as jest.Mock).mockImplementationOnce(() => Promise.resolve('content'));
     const sharedKeyCredential = jest.fn();
@@ -278,7 +287,8 @@ describe('NorthAzureBlob without proxy', () => {
     expect(getFileClientMock).toHaveBeenCalledWith('example.file');
     expect(bufferFlushMock).toHaveBeenCalledWith('content'.length);
   });
-  it('should properly handle files using Azure Active Directory authentication', async () => {    const filePath = '/path/to/file/example-123.file';
+  it('should properly handle files using Azure Active Directory authentication', async () => {
+    const filePath = '/path/to/file/example-123.file';
     (fs.stat as jest.Mock).mockImplementationOnce(() => Promise.resolve({ size: 666 }));
     (fs.readFile as jest.Mock).mockImplementationOnce(() => Promise.resolve('content'));
     const clientSecretCredential = jest.fn();
@@ -346,7 +356,8 @@ describe('NorthAzureBlob without proxy', () => {
     expect(getFileClientMock).toHaveBeenCalledWith('example.file');
     expect(bufferFlushMock).toHaveBeenCalledWith('content'.length);
   });
-  it('should properly handle files using external auth', async () => {    const filePath = '/path/to/file/example-123.file';
+  it('should properly handle files using external auth', async () => {
+    const filePath = '/path/to/file/example-123.file';
     (fs.stat as jest.Mock).mockImplementationOnce(() => Promise.resolve({ size: 666 }));
     (fs.readFile as jest.Mock).mockImplementationOnce(() => Promise.resolve('content'));
     const defaultAzureCredential = jest.fn();
@@ -411,7 +422,8 @@ describe('NorthAzureBlob without proxy', () => {
     expect(getFileClientMock).toHaveBeenCalledWith('my path/example.file');
     expect(bufferFlushMock).toHaveBeenCalledWith('content'.length);
   });
-  it('should properly handle values using external auth', async () => {    const defaultAzureCredential = jest.fn();
+  it('should properly handle values using external auth', async () => {
+    const defaultAzureCredential = jest.fn();
     (DefaultAzureCredential as jest.Mock).mockImplementationOnce(() => defaultAzureCredential);
 
     configuration.settings.authentication = 'external';
@@ -662,7 +674,8 @@ describe('NorthAzureBlob with proxy', () => {
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
   });
 
-  it('should properly handle files via proxy using Shared Access Signature authentication', async () => {    const filePath = '/path/to/file/example-123.file';
+  it('should properly handle files via proxy using Shared Access Signature authentication', async () => {
+    const filePath = '/path/to/file/example-123.file';
     (fs.stat as jest.Mock).mockImplementationOnce(() => Promise.resolve({ size: 666 }));
     (fs.readFile as jest.Mock).mockImplementationOnce(() => Promise.resolve('content'));
 
@@ -730,7 +743,8 @@ describe('NorthAzureBlob with proxy', () => {
     expect(getFileClientMock).toHaveBeenCalledWith('example.file');
     expect(bufferFlushMock).toHaveBeenCalledWith('content'.length);
   });
-  it('should properly handle files via proxy with blank credentials using Shared Access Signature authentication', async () => {    const filePath = '/path/to/file/example-123.file';
+  it('should properly handle files via proxy with blank credentials using Shared Access Signature authentication', async () => {
+    const filePath = '/path/to/file/example-123.file';
     (fs.stat as jest.Mock).mockImplementationOnce(() => Promise.resolve({ size: 666 }));
     (fs.readFile as jest.Mock).mockImplementationOnce(() => Promise.resolve('content'));
 
