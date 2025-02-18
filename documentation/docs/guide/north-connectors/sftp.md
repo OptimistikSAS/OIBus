@@ -8,7 +8,7 @@ Upload files and data to an SFTP server.
 
 ## Specific settings
 
-- **Host**: IP address or hostname of the Modbus server machine.
+- **Host**: IP address or hostname of the SFTP server machine.
 - **Port**: The port to use for connection (8080 by default).
 - **Authentication**:
     - Password: The username and password
