@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.5.11](https://github.com/OptimistikSAS/OIBus/compare/v3.5.10...v3.5.11) (2025-02-18)
+
+
+### Bug Fixes
+
+* **north:** properly manage time values for amazon s3 and azure blob ([eaf4cff](https://github.com/OptimistikSAS/OIBus/commit/eaf4cffccc8b6bcf9836ac1f946610564d6b6273))
+* **south:** return empty string if no instant is provided ([2e9a001](https://github.com/OptimistikSAS/OIBus/commit/2e9a001d60a68e9db667f4d6c9bb69ebeb599f0f))
+
 ## [3.5.10](https://github.com/OptimistikSAS/OIBus/compare/v3.5.9...v3.5.10) (2025-02-14)
 
 
