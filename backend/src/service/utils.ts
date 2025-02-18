@@ -363,9 +363,10 @@ export const logQuery = (query: string, startTime: string | number, endTime: str
 };
 
 export const formatInstant = (
-  instant: Instant,
+  instant: Instant | undefined,
   options: { type: DateTimeType; timezone?: Timezone; format?: string; locale?: string }
 ): string | number => {
+  if (!instant) return '';
   switch (options.type) {
     case 'unix-epoch':
       return Math.floor(DateTime.fromISO(instant).toMillis() / 1000);
