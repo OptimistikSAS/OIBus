@@ -138,7 +138,7 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
         return this.handleFile(data.filePath);
 
       case 'time-values':
-        throw new Error('Can not manage time values');
+        return this.handleValues(data.content);
     }
   }
 

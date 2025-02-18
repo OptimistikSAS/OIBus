@@ -113,7 +113,16 @@ describe('NorthAmazonS3', () => {
       (createReadStream as jest.Mock).mockImplementation(() => ({}) as ReadStream);
 
       await north.start();
-      await north.handleValues([{ pointId: 'pointId', timestamp: '2020-02-02T02:02:02.222Z', data: { value: '123' } }]);
+      await north.handleContent({
+        type: 'time-values',
+        content: [
+          {
+            pointId: 'pointId',
+            timestamp: '2020-02-02T02:02:02.222Z',
+            data: { value: '123' }
+          }
+        ]
+      });
     });
 
     it('should properly catch handle file error', async () => {
@@ -256,10 +265,6 @@ describe('NorthAmazonS3', () => {
       });
 
       await expect(north.testConnection()).rejects.toThrow(new Error(`Error testing Amazon S3 connection. ${error}`));
-    });
-
-    it('should throw error on handle values', async () => {
-      await expect(north.handleContent({ type: 'time-values', content: [] })).rejects.toThrow(new Error(`Can not manage time values`));
     });
   });
 });
