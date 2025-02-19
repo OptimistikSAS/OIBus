@@ -10,7 +10,7 @@ import { NorthConnectorManifest } from '../../../../../../backend/shared/model/n
 import { SouthConnectorManifest } from '../../../../../../backend/shared/model/south-connector.model';
 import { ProgressbarComponent } from './progressbar/progressbar.component';
 import { SouthItemSettings, SouthSettings } from '../../../../../../backend/shared/model/south-settings.model';
-import { NorthSettings } from '../../../../../../backend/shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../../../../backend/shared/model/north-settings.model';
 
 @Component({
   selector: 'oib-history-metrics',
@@ -19,7 +19,7 @@ import { NorthSettings } from '../../../../../../backend/shared/model/north-sett
   imports: [TranslateDirective, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe, ProgressbarComponent]
 })
 export class HistoryMetricsComponent {
-  readonly historyQuery = input.required<HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>>();
+  readonly historyQuery = input.required<HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings>>();
   readonly northManifest = input.required<NorthConnectorManifest>();
   readonly southManifest = input.required<SouthConnectorManifest>();
   readonly historyMetrics = input.required<HistoryQueryMetrics>();

@@ -4,10 +4,13 @@ import { SouthConnectorEntity, SouthConnectorEntityLight, SouthConnectorItemEnti
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { OIBusSouthType, SouthConnectorItemSearchParam } from '../../../shared/model/south-connector.model';
 import { Page } from '../../../shared/model/types';
+import { Transformer } from '../../model/transformer.model';
 
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
 const SOUTH_ITEMS_TABLE = 'south_items';
 const SUBSCRIPTION_TABLE = 'subscription';
+const SOUTH_TRANSFORMERS_TABLE = 'south_transformers';
+const TRANSFORMERS_TABLE = 'transformers';
 const PAGE_SIZE = 50;
 /**
  * Repository used for South connectors (Data sources)
@@ -73,6 +76,16 @@ export default class SouthConnectorRepository {
       } else {
         this.database.prepare(`DELETE FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`).run(south.id);
       }
+
+      this.database.prepare(`DELETE FROM ${SOUTH_TRANSFORMERS_TABLE} WHERE south_id = ?;`).run(south.id);
+      if (south.transformers.length > 0) {
+        const insert = this.database.prepare(
+          `INSERT INTO ${SOUTH_TRANSFORMERS_TABLE} (south_id, transformer_id, transformer_order) VALUES (?, ?, ?);`
+        );
+        for (const transformer of south.transformers) {
+          insert.run(south.id, transformer.transformer.id, transformer.order);
+        }
+      }
     });
     transaction();
   }
@@ -90,6 +103,7 @@ export default class SouthConnectorRepository {
   deleteSouth(id: string): void {
     const transaction = this.database.transaction(() => {
       this.database.prepare(`DELETE FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`).run(id);
+      this.database.prepare(`DELETE FROM ${SOUTH_TRANSFORMERS_TABLE} WHERE south_id = ?;`).run(id);
       this.database.prepare(`DELETE FROM ${SUBSCRIPTION_TABLE} WHERE south_connector_id = ?;`).run(id);
       this.database.prepare(`DELETE FROM ${SOUTH_CONNECTORS_TABLE} WHERE id = ?;`).run(id);
     });
@@ -229,6 +243,28 @@ export default class SouthConnectorRepository {
     this.database.prepare(query).run(id);
   }
 
+  findAllTransformersForSouth(southId: string): Array<{ transformer: Transformer; order: number }> {
+    const query = `SELECT t.id, t.name, t.description, t.input_type, t.output_type, t.code, st.transformer_order FROM ${SOUTH_TRANSFORMERS_TABLE} st JOIN ${TRANSFORMERS_TABLE} t ON st.transformer_id = t.id WHERE st.south_id = ?;`;
+    return this.database
+      .prepare(query)
+      .all(southId)
+      .map(result => this.toTransformer(result as Record<string, string | number>));
+  }
+
+  private toTransformer(result: Record<string, string | number>): { transformer: Transformer; order: number } {
+    return {
+      order: result.transformer_order as number,
+      transformer: {
+        id: result.id as string,
+        name: result.name as string,
+        description: result.description as string,
+        inputType: result.input_type as string,
+        outputType: result.output_type as string,
+        code: result.code as string
+      }
+    };
+  }
+
   private toSouthConnectorItemEntity<I extends SouthItemSettings>(result: Record<string, string>): SouthConnectorItemEntity<I> {
     return {
       id: result.id,
@@ -249,7 +285,8 @@ export default class SouthConnectorRepository {
       description: result.description as string,
       enabled: Boolean(result.enabled),
       settings: JSON.parse(result.settings as string) as S,
-      items: this.findAllItemsForSouth<I>(result.id as string)
+      items: this.findAllItemsForSouth<I>(result.id as string),
+      transformers: this.findAllTransformersForSouth(result.id as string)
     };
   }
 }

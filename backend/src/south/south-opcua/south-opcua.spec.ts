@@ -113,6 +113,7 @@ describe('SouthOPCUA', () => {
       securityPolicy: 'none',
       keepSessionAlive: false
     },
+    transformers: [],
     items: [
       {
         id: 'id1',
@@ -975,6 +976,7 @@ describe('SouthOPCUA with basic auth', () => {
       securityPolicy: null,
       keepSessionAlive: false
     },
+    transformers: [],
     items: [
       {
         id: 'id1',
@@ -1133,6 +1135,7 @@ describe('SouthOPCUA with certificate', () => {
       securityPolicy: 'none',
       keepSessionAlive: false
     },
+    transformers: [],
     items: [
       {
         id: 'id1',
@@ -1384,6 +1387,7 @@ describe('SouthOPCUA test connection', () => {
       securityPolicy: 'none',
       keepSessionAlive: false
     },
+    transformers: [],
     items: [
       {
         id: 'id1',
@@ -1664,6 +1668,7 @@ describe('SouthOPCUA with shared connection', () => {
       securityPolicy: 'none',
       keepSessionAlive: false
     },
+    transformers: [],
     items: [
       {
         id: 'id1',

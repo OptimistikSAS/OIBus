@@ -10,7 +10,7 @@ import { DataLakeServiceClient, StorageSharedKeyCredential as DataLakeStorageSha
 import { ClientSecretCredential, DefaultAzureCredential } from '@azure/identity';
 import ValueCacheServiceMock from '../../tests/__mocks__/service/cache/value-cache-service.mock';
 import FileCacheServiceMock from '../../tests/__mocks__/service/cache/file-cache-service.mock';
-import { NorthAzureBlobSettings } from '../../../shared/model/north-settings.model';
+import { NorthAzureBlobItemSettings, NorthAzureBlobSettings } from '../../../shared/model/north-settings.model';
 import csv from 'papaparse';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
@@ -84,7 +84,7 @@ jest.mock(
     }
 );
 
-let configuration: NorthConnectorEntity<NorthAzureBlobSettings>;
+let configuration: NorthConnectorEntity<NorthAzureBlobSettings, NorthAzureBlobItemSettings>;
 let north: NorthAzureBlob;
 describe('NorthAzureBlob without proxy', () => {
   beforeEach(async () => {

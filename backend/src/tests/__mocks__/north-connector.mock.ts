@@ -1,12 +1,12 @@
 import { EventEmitter } from 'node:events';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../shared/model/north-settings.model';
 
 /**
  * Create a mock object for North Connector
  */
 export default class NorthConnectorMock {
-  constructor(settings: NorthConnectorEntity<NorthSettings>) {
+  constructor(settings: NorthConnectorEntity<NorthSettings, NorthItemSettings>) {
     this.settings = settings;
   }
   start = jest.fn().mockImplementation(() => Promise.resolve());
@@ -26,6 +26,7 @@ export default class NorthConnectorMock {
   cacheFile = jest.fn();
   isSubscribed = jest.fn();
   isCacheEmpty = jest.fn();
+  onItemChange = jest.fn();
   disconnect = jest.fn();
   stop = jest.fn();
   setLogger = jest.fn();

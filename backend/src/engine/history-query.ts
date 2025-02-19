@@ -7,7 +7,7 @@ import NorthService from '../service/north.service';
 import NorthConnector from '../north/north-connector';
 import SouthConnector from '../south/south-connector';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
-import { NorthSettings } from '../../shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../shared/model/north-settings.model';
 import { OIBusContent, OIBusTimeValue } from '../../shared/model/engine.model';
 import { SouthConnectorEntity } from '../model/south-connector.model';
 import { NorthConnectorEntity } from '../model/north-connector.model';
@@ -20,7 +20,7 @@ import { QueriesHistory } from '../south/south-interface';
 const FINISH_INTERVAL = 5000;
 
 export default class HistoryQuery {
-  private north: NorthConnector<NorthSettings> | null = null;
+  private north: NorthConnector<NorthSettings, NorthItemSettings> | null = null;
   private south: SouthConnector<SouthSettings, SouthItemSettings> | null = null;
   private finishInterval: NodeJS.Timeout | null = null;
   private stopping = false;
@@ -28,7 +28,7 @@ export default class HistoryQuery {
   public metricsEvent: EventEmitter = new EventEmitter();
 
   constructor(
-    private historyConfiguration: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>,
+    private historyConfiguration: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings>,
     private readonly southService: SouthService,
     private readonly northService: NorthService,
     private readonly historyQueryRepository: HistoryQueryRepository,
@@ -47,7 +47,8 @@ export default class HistoryQuery {
       enabled: true,
       type: this.historyConfiguration.southType,
       settings: this.historyConfiguration.southSettings,
-      items: []
+      items: [],
+      transformers: this.historyConfiguration.southTransformers
     };
     const southFolders: BaseFolders = {
       cache: path.resolve(this.baseFolders.cache, 'south'),
@@ -58,7 +59,7 @@ export default class HistoryQuery {
     this.south = this.southService.runSouth(southConfiguration, this.addContent.bind(this), this.logger, southFolders);
 
     // North
-    const northConfiguration: NorthConnectorEntity<NorthSettings> = {
+    const northConfiguration: NorthConnectorEntity<NorthSettings, NorthItemSettings> = {
       id: this.historyConfiguration.id,
       name: this.historyConfiguration.name,
       description: '',
@@ -66,7 +67,9 @@ export default class HistoryQuery {
       type: this.historyConfiguration.northType,
       settings: this.historyConfiguration.northSettings,
       caching: this.historyConfiguration.caching,
-      subscriptions: []
+      subscriptions: [],
+      items: [],
+      transformers: this.historyConfiguration.northTransformers
     };
     const northFolders: BaseFolders = {
       cache: path.resolve(this.baseFolders.cache, 'north'),
@@ -105,7 +108,7 @@ export default class HistoryQuery {
       this.south!.createDeferredPromise();
 
       this.south!.historyQueryHandler(
-        this.historyConfiguration.items.map(item => ({ ...item, scanModeId: 'history' })).filter(item => item.enabled),
+        this.historyConfiguration.southItems.map(item => ({ ...item, scanModeId: 'history' })).filter(item => item.enabled),
         this.historyConfiguration.startTime,
         this.historyConfiguration.endTime,
         'history',
@@ -226,7 +229,7 @@ export default class HistoryQuery {
     this.logger = value;
   }
 
-  get settings(): HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> {
+  get settings(): HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings> {
     return this.historyConfiguration;
   }
 }

@@ -6,6 +6,9 @@ import {
   NorthCacheFiles,
   NorthConnectorCommandDTO,
   NorthConnectorDTO,
+  NorthConnectorItemCommandDTO,
+  NorthConnectorItemDTO,
+  NorthConnectorItemSearchParam,
   NorthConnectorLightDTO,
   NorthConnectorManifest
 } from '../../shared/model/north-connector.model';
@@ -15,7 +18,7 @@ import fileWriterManifest from '../north/north-file-writer/manifest';
 import consoleManifest from '../north/north-console/manifest';
 import amazonManifest from '../north/north-amazon-s3/manifest';
 import sftpManifest from '../north/north-sftp/manifest';
-import { NorthConnectorEntity, NorthConnectorEntityLight } from '../model/north-connector.model';
+import { NorthConnectorEntity, NorthConnectorEntityLight, NorthConnectorItemEntity } from '../model/north-connector.model';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
@@ -27,12 +30,19 @@ import { ScanMode } from '../model/scan-mode.model';
 import { SouthConnectorLightDTO } from '../../shared/model/south-connector.model';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
 import {
+  NorthAmazonS3ItemSettings,
   NorthAmazonS3Settings,
+  NorthAzureBlobItemSettings,
   NorthAzureBlobSettings,
+  NorthConsoleItemSettings,
   NorthConsoleSettings,
+  NorthFileWriterItemSettings,
   NorthFileWriterSettings,
+  NorthItemSettings,
+  NorthOIAnalyticsItemSettings,
   NorthOIAnalyticsSettings,
   NorthSettings,
+  NorthSFTPItemSettings,
   NorthSFTPSettings
 } from '../../shared/model/north-settings.model';
 import CertificateRepository from '../repository/config/certificate.repository';
@@ -48,8 +58,13 @@ import { PassThrough } from 'node:stream';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { BaseFolders } from '../model/types';
-import { Instant } from '../../shared/model/types';
+import { Instant, Page } from '../../shared/model/types';
 import { ReadStream } from 'node:fs';
+import { toTransformerDTO } from './transformer.service';
+import multer from '@koa/multer';
+import csv from 'papaparse';
+import { Transformer } from '../model/transformer.model';
+import TransformerRepository from '../repository/config/transformer.repository';
 
 export const northManifestList: Array<NorthConnectorManifest> = [
   consoleManifest,
@@ -67,6 +82,7 @@ export default class NorthService {
     private southConnectorRepository: SouthConnectorRepository,
     private northMetricsRepository: NorthConnectorMetricsRepository,
     private scanModeRepository: ScanModeRepository,
+    private transformerRepository: TransformerRepository,
     private logRepository: LogRepository,
     private readonly certificateRepository: CertificateRepository,
     private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
@@ -76,16 +92,16 @@ export default class NorthService {
   ) {}
 
   runNorth(
-    settings: NorthConnectorEntity<NorthSettings>,
+    settings: NorthConnectorEntity<NorthSettings, NorthItemSettings>,
     logger: pino.Logger,
     baseFolders: BaseFolders | undefined = undefined
-  ): NorthConnector<NorthSettings> {
+  ): NorthConnector<NorthSettings, NorthItemSettings> {
     const northBaseFolders = baseFolders ?? this.getDefaultBaseFolders(settings.id);
 
     switch (settings.type) {
       case 'aws-s3':
         return new NorthAmazonS3(
-          settings as NorthConnectorEntity<NorthAmazonS3Settings>,
+          settings as NorthConnectorEntity<NorthAmazonS3Settings, NorthAmazonS3ItemSettings>,
           this.encryptionService,
           this.northConnectorRepository,
           this.scanModeRepository,
@@ -94,7 +110,7 @@ export default class NorthService {
         );
       case 'azure-blob':
         return new NorthAzureBlob(
-          settings as NorthConnectorEntity<NorthAzureBlobSettings>,
+          settings as NorthConnectorEntity<NorthAzureBlobSettings, NorthAzureBlobItemSettings>,
           this.encryptionService,
           this.northConnectorRepository,
           this.scanModeRepository,
@@ -103,7 +119,7 @@ export default class NorthService {
         );
       case 'console':
         return new NorthConsole(
-          settings as NorthConnectorEntity<NorthConsoleSettings>,
+          settings as NorthConnectorEntity<NorthConsoleSettings, NorthConsoleItemSettings>,
           this.encryptionService,
           this.northConnectorRepository,
           this.scanModeRepository,
@@ -112,7 +128,7 @@ export default class NorthService {
         );
       case 'file-writer':
         return new NorthFileWriter(
-          settings as NorthConnectorEntity<NorthFileWriterSettings>,
+          settings as NorthConnectorEntity<NorthFileWriterSettings, NorthFileWriterItemSettings>,
           this.encryptionService,
           this.northConnectorRepository,
           this.scanModeRepository,
@@ -121,7 +137,7 @@ export default class NorthService {
         );
       case 'oianalytics':
         return new NorthOIAnalytics(
-          settings as NorthConnectorEntity<NorthOIAnalyticsSettings>,
+          settings as NorthConnectorEntity<NorthOIAnalyticsSettings, NorthOIAnalyticsItemSettings>,
           this.encryptionService,
           this.northConnectorRepository,
           this.scanModeRepository,
@@ -132,7 +148,7 @@ export default class NorthService {
         );
       case 'sftp':
         return new NorthSFTP(
-          settings as NorthConnectorEntity<NorthSFTPSettings>,
+          settings as NorthConnectorEntity<NorthSFTPSettings, NorthSFTPItemSettings>,
           this.encryptionService,
           this.northConnectorRepository,
           this.scanModeRepository,
@@ -144,8 +160,12 @@ export default class NorthService {
     }
   }
 
-  async testNorth<N extends NorthSettings>(id: string, command: NorthConnectorCommandDTO<N>, logger: pino.Logger): Promise<void> {
-    let northConnector: NorthConnectorEntity<N> | null = null;
+  async testNorth<N extends NorthSettings, I extends NorthItemSettings>(
+    id: string,
+    command: NorthConnectorCommandDTO<N, I>,
+    logger: pino.Logger
+  ): Promise<void> {
+    let northConnector: NorthConnectorEntity<N, I> | null = null;
     if (id !== 'create') {
       northConnector = this.northConnectorRepository.findNorthById(id);
       if (!northConnector) {
@@ -160,7 +180,7 @@ export default class NorthService {
 
     await this.validator.validateSettings(manifest.settings, command.settings);
 
-    const testToRun: NorthConnectorEntity<NorthSettings> = {
+    const testToRun: NorthConnectorEntity<NorthSettings, NorthItemSettings> = {
       id: northConnector?.id || 'test',
       ...command,
       caching: { ...command.caching, scanModeId: command.caching.scanModeId! },
@@ -170,14 +190,27 @@ export default class NorthService {
         manifest.settings
       ),
       name: northConnector ? northConnector.name : `${command!.type}:test-connection`,
-      subscriptions: []
+      subscriptions: [],
+      items: [],
+      transformers: command.transformers.map(element => {
+        const foundTransformer = this.transformerRepository.searchTransformers({}).find(transformer => transformer.id === element.id);
+        if (!foundTransformer) throw new Error(`Transformer ${element.id} not found`);
+        return {
+          transformer: foundTransformer,
+          order: element.order
+        };
+      })
     };
 
-    const north = this.runNorth(testToRun, logger, { cache: 'baseCacheFolder', archive: 'baseArchiveFolder', error: 'baseErrorFolder' });
+    const north = this.runNorth(testToRun, logger, {
+      cache: 'baseCacheFolder',
+      archive: 'baseArchiveFolder',
+      error: 'baseErrorFolder'
+    });
     return await north.testConnection();
   }
 
-  findById(northId: string): NorthConnectorEntity<NorthSettings> | null {
+  findById(northId: string): NorthConnectorEntity<NorthSettings, NorthItemSettings> | null {
     return this.northConnectorRepository.findNorthById(northId);
   }
 
@@ -189,24 +222,26 @@ export default class NorthService {
     return northManifestList;
   }
 
-  async createNorth<N extends NorthSettings>(
-    command: NorthConnectorCommandDTO<N>,
+  async createNorth<N extends NorthSettings, I extends NorthItemSettings>(
+    command: NorthConnectorCommandDTO<N, I>,
     retrieveSecretsFromNorth: string | null
-  ): Promise<NorthConnectorEntity<N>> {
+  ): Promise<NorthConnectorEntity<N, I>> {
     const manifest = this.getInstalledNorthManifests().find(northManifest => northManifest.id === command.type);
     if (!manifest) {
       throw new Error(`North manifest does not exist for type ${command.type}`);
     }
     await this.validator.validateSettings(manifest.settings, command.settings);
 
-    const northEntity = {} as NorthConnectorEntity<N>;
+    const northEntity = {} as NorthConnectorEntity<N, I>;
     await copyNorthConnectorCommandToNorthEntity(
       northEntity,
       command,
       this.retrieveSecretsFromNorth(retrieveSecretsFromNorth, manifest),
       this.encryptionService,
       this.scanModeRepository.findAll(),
-      this.southConnectorRepository.findAllSouth()
+      this.transformerRepository.searchTransformers({}),
+      this.southConnectorRepository.findAllSouth(),
+      !!retrieveSecretsFromNorth
     );
     this.northConnectorRepository.saveNorthConnector(northEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
@@ -349,8 +384,11 @@ export default class NorthService {
     return await this.dataStreamEngine.retryAllErrorValues(northConnectorId);
   }
 
-  async updateNorth<N extends NorthSettings>(northConnectorId: string, command: NorthConnectorCommandDTO<N>) {
-    const previousSettings = this.northConnectorRepository.findNorthById<N>(northConnectorId);
+  async updateNorth<N extends NorthSettings, I extends NorthItemSettings>(
+    northConnectorId: string,
+    command: NorthConnectorCommandDTO<N, I>
+  ) {
+    const previousSettings = this.northConnectorRepository.findNorthById<N, I>(northConnectorId);
     if (!previousSettings) {
       throw new Error(`North connector ${northConnectorId} does not exist`);
     }
@@ -360,13 +398,14 @@ export default class NorthService {
     }
     await this.validator.validateSettings(manifest.settings, command.settings);
 
-    const northEntity = { id: previousSettings.id } as NorthConnectorEntity<N>;
-    await copyNorthConnectorCommandToNorthEntity<N>(
+    const northEntity = { id: previousSettings.id } as NorthConnectorEntity<N, I>;
+    await copyNorthConnectorCommandToNorthEntity<N, I>(
       northEntity,
       command,
       previousSettings,
       this.encryptionService,
       this.scanModeRepository.findAll(),
+      this.transformerRepository.searchTransformers({}),
       this.southConnectorRepository.findAllSouth()
     );
     this.northConnectorRepository.saveNorthConnector(northEntity);
@@ -471,7 +510,219 @@ export default class NorthService {
     this.dataStreamEngine.updateSubscription(northId);
   }
 
-  private async deleteBaseFolders(north: NorthConnectorEntity<NorthSettings>) {
+  getNorthItems<I extends NorthItemSettings>(northId: string): Array<NorthConnectorItemEntity<I>> {
+    return this.northConnectorRepository.findAllItemsForNorth<I>(northId);
+  }
+
+  searchNorthItems<I extends NorthItemSettings>(
+    northConnectorId: string,
+    searchParams: NorthConnectorItemSearchParam
+  ): Page<NorthConnectorItemEntity<I>> {
+    return this.northConnectorRepository.searchItems<I>(northConnectorId, searchParams);
+  }
+
+  findNorthConnectorItemById(northConnectorId: string, itemId: string): NorthConnectorItemEntity<NorthItemSettings> | null {
+    return this.northConnectorRepository.findItemById(northConnectorId, itemId);
+  }
+
+  async createItem<I extends NorthItemSettings>(
+    northConnectorId: string,
+    command: NorthConnectorItemCommandDTO<I>
+  ): Promise<NorthConnectorItemEntity<I>> {
+    const northConnector = this.northConnectorRepository.findNorthById(northConnectorId);
+    if (!northConnector) {
+      throw new Error(`North connector ${northConnectorId} does not exist`);
+    }
+    const manifest = this.getInstalledNorthManifests().find(northManifest => northManifest.id === northConnector.type);
+    if (!manifest) {
+      throw new Error(`North manifest does not exist for type ${northConnector.type}`);
+    }
+    await this.validator.validateSettings(manifest.items.settings, command.settings);
+
+    const northItemEntity = {} as NorthConnectorItemEntity<I>;
+    await copyNorthItemCommandToNorthItemEntity<I>(northItemEntity, command, null, northConnector.type, this.encryptionService);
+    this.northConnectorRepository.saveItem<I>(northConnector.id, northItemEntity);
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    await this.dataStreamEngine.reloadNorthItems(northConnector.id);
+    return northItemEntity;
+  }
+
+  async updateItem<I extends NorthItemSettings>(
+    northConnectorId: string,
+    itemId: string,
+    command: NorthConnectorItemCommandDTO<I>
+  ): Promise<void> {
+    const previousSettings = this.northConnectorRepository.findItemById<I>(northConnectorId, itemId);
+    if (!previousSettings) {
+      throw new Error(`North item with ID ${itemId} does not exist`);
+    }
+    const northConnector = this.northConnectorRepository.findNorthById(northConnectorId)!;
+    const manifest = this.getInstalledNorthManifests().find(northManifest => northManifest.id === northConnector.type);
+    if (!manifest) {
+      throw new Error(`North manifest does not exist for type ${northConnector.type}`);
+    }
+
+    await this.validator.validateSettings(manifest.items.settings, command.settings);
+
+    const northItemEntity = { id: previousSettings.id } as NorthConnectorItemEntity<I>;
+    await copyNorthItemCommandToNorthItemEntity<I>(northItemEntity, command, previousSettings, northConnector.type, this.encryptionService);
+    this.northConnectorRepository.saveItem<I>(northConnectorId, northItemEntity);
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    await this.dataStreamEngine.reloadNorthItems(northConnector.id);
+  }
+
+  async deleteItem(northConnectorId: string, itemId: string): Promise<void> {
+    const northConnector = this.northConnectorRepository.findNorthById(northConnectorId);
+    if (!northConnector) {
+      throw new Error(`North connector ${northConnectorId} does not exist`);
+    }
+    const northItem = this.northConnectorRepository.findItemById(northConnectorId, itemId);
+    if (!northItem) throw new Error(`North item ${itemId} not found`);
+    this.northConnectorRepository.deleteItem(northItem.id);
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    await this.dataStreamEngine.reloadNorthItems(northConnector.id);
+  }
+
+  async deleteAllItemsForNorthConnector(northConnectorId: string): Promise<void> {
+    const northConnector = this.northConnectorRepository.findNorthById(northConnectorId);
+    if (!northConnector) {
+      throw new Error(`North connector ${northConnectorId} does not exist`);
+    }
+    this.northConnectorRepository.deleteAllItemsByNorth(northConnectorId);
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+
+    await this.dataStreamEngine.reloadNorthItems(northConnector.id);
+  }
+
+  async enableItem(northConnectorId: string, itemId: string): Promise<void> {
+    const northItem = this.northConnectorRepository.findItemById(northConnectorId, itemId);
+    if (!northItem) throw new Error(`North item ${itemId} not found`);
+    this.northConnectorRepository.enableItem(northItem.id);
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+
+    await this.dataStreamEngine.reloadNorthItems(northConnectorId);
+  }
+
+  async disableItem(northConnectorId: string, itemId: string): Promise<void> {
+    const northItem = this.northConnectorRepository.findItemById(northConnectorId, itemId);
+    if (!northItem) throw new Error(`North item ${itemId} not found`);
+    this.northConnectorRepository.disableItem(northItem.id);
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+
+    await this.dataStreamEngine.reloadNorthItems(northConnectorId);
+  }
+
+  async checkCsvFileImport<I extends NorthItemSettings>(
+    northType: string,
+    file: multer.File,
+    delimiter: string,
+    existingItems: Array<NorthConnectorItemDTO<I> | NorthConnectorItemCommandDTO<I>>
+  ): Promise<{
+    items: Array<NorthConnectorItemCommandDTO<NorthItemSettings>>;
+    errors: Array<{ item: NorthConnectorItemCommandDTO<NorthItemSettings>; error: string }>;
+  }> {
+    const fileContent = await fs.readFile(file.path);
+    return await this.checkCsvContentImport(northType, fileContent.toString('utf8'), delimiter, existingItems);
+  }
+
+  async checkCsvContentImport<I extends NorthItemSettings>(
+    northType: string,
+    fileContent: string,
+    delimiter: string,
+    existingItems: Array<NorthConnectorItemDTO<I> | NorthConnectorItemCommandDTO<I>>
+  ): Promise<{
+    items: Array<NorthConnectorItemCommandDTO<NorthItemSettings>>;
+    errors: Array<{ item: NorthConnectorItemCommandDTO<NorthItemSettings>; error: string }>;
+  }> {
+    const manifest = this.getInstalledNorthManifests().find(northManifest => northManifest.id === northType);
+    if (!manifest) {
+      throw new Error(`North manifest does not exist for type ${northType}`);
+    }
+
+    const csvContent = csv.parse(fileContent, { header: true, delimiter });
+
+    if (csvContent.meta.delimiter !== delimiter) {
+      throw new Error(`The entered delimiter "${delimiter}" does not correspond to the file delimiter "${csvContent.meta.delimiter}"`);
+    }
+
+    const validItems: Array<NorthConnectorItemCommandDTO<I>> = [];
+    const errors: Array<{ item: NorthConnectorItemCommandDTO<I>; error: string }> = [];
+    for (const data of csvContent.data) {
+      const item: NorthConnectorItemCommandDTO<I> = {
+        id: '',
+        name: (data as unknown as Record<string, string>).name,
+        enabled: (data as unknown as Record<string, string>).enabled.toLowerCase() === 'true',
+        settings: {} as I
+      };
+      if (existingItems.find(existingItem => existingItem.name === item.name)) {
+        errors.push({
+          item: item,
+          error: `Item name "${(data as unknown as Record<string, string>).name}" already used`
+        });
+        continue;
+      }
+
+      let hasSettingsError = false;
+      const settings: Record<string, string | object> = {};
+      for (const [key, value] of Object.entries(data as unknown as Record<string, string>)) {
+        if (key.startsWith('settings_')) {
+          const settingsKey = key.replace('settings_', '');
+          const manifestSettings = manifest.items.settings.find(settings => settings.key === settingsKey);
+          if (!manifestSettings) {
+            hasSettingsError = true;
+            errors.push({
+              item: item,
+              error: `Settings "${settingsKey}" not accepted in manifest`
+            });
+            break;
+          }
+          if ((manifestSettings.type === 'OibArray' || manifestSettings.type === 'OibFormGroup') && value) {
+            settings[settingsKey] = JSON.parse(value as string);
+          } else {
+            settings[settingsKey] = value;
+          }
+        }
+      }
+      if (hasSettingsError) continue;
+      item.settings = settings as unknown as I;
+
+      try {
+        await this.validator.validateSettings(manifest.items.settings, item.settings);
+        validItems.push(item);
+      } catch (itemError: unknown) {
+        errors.push({ item, error: (itemError as Error).message });
+      }
+    }
+
+    return { items: validItems, errors };
+  }
+
+  async importItems<I extends NorthItemSettings>(
+    northConnectorId: string,
+    items: Array<NorthConnectorItemCommandDTO<I>>,
+    deleteItemsNotPresent = false
+  ) {
+    const northConnector = this.northConnectorRepository.findNorthById(northConnectorId);
+    if (!northConnector) {
+      throw new Error(`North connector ${northConnectorId} does not exist`);
+    }
+    const manifest = this.getInstalledNorthManifests().find(northManifest => northManifest.id === northConnector.type)!;
+    const itemsToAdd: Array<NorthConnectorItemEntity<I>> = [];
+
+    for (const itemCommand of items) {
+      await this.validator.validateSettings(manifest.items.settings, itemCommand.settings);
+      const northItemEntity = {} as NorthConnectorItemEntity<I>;
+      await copyNorthItemCommandToNorthItemEntity(northItemEntity, itemCommand, null, northConnector.type, this.encryptionService);
+      itemsToAdd.push(northItemEntity);
+    }
+
+    this.northConnectorRepository.saveAllItems(northConnector.id, itemsToAdd, deleteItemsNotPresent);
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+
+    await this.dataStreamEngine.reloadNorthItems(northConnectorId);
+  }
+
+  private async deleteBaseFolders(north: NorthConnectorEntity<NorthSettings, NorthItemSettings>) {
     const folders = this.getDefaultBaseFolders(north.id);
 
     for (const type of Object.keys(folders) as Array<keyof BaseFolders>) {
@@ -505,7 +756,7 @@ export default class NorthService {
   retrieveSecretsFromNorth(
     retrieveSecretsFromNorth: string | null,
     manifest: NorthConnectorManifest
-  ): NorthConnectorEntity<NorthSettings> | null {
+  ): NorthConnectorEntity<NorthSettings, NorthItemSettings> | null {
     if (!retrieveSecretsFromNorth) return null;
     const source = this.northConnectorRepository.findNorthById(retrieveSecretsFromNorth);
     if (!source) {
@@ -518,10 +769,29 @@ export default class NorthService {
   }
 }
 
-export const toNorthConnectorDTO = <N extends NorthSettings>(
-  northEntity: NorthConnectorEntity<N>,
+const copyNorthItemCommandToNorthItemEntity = async <I extends NorthItemSettings>(
+  northItemEntity: NorthConnectorItemEntity<I>,
+  command: NorthConnectorItemCommandDTO<I>,
+  currentSettings: NorthConnectorItemEntity<I> | null,
+  northType: string,
+  encryptionService: EncryptionService,
+  retrieveSecretsFromNorth = false
+): Promise<void> => {
+  const manifest = northManifestList.find(element => element.id === northType)!;
+  northItemEntity.id = retrieveSecretsFromNorth ? '' : command.id || ''; // reset id if it is a copy from another connector
+  northItemEntity.name = command.name;
+  northItemEntity.enabled = command.enabled;
+  northItemEntity.settings = await encryptionService.encryptConnectorSecrets<I>(
+    command.settings,
+    currentSettings?.settings || null,
+    manifest.items.settings
+  );
+};
+
+export const toNorthConnectorDTO = <N extends NorthSettings, I extends NorthItemSettings>(
+  northEntity: NorthConnectorEntity<N, I>,
   encryptionService: EncryptionService
-): NorthConnectorDTO<N> => {
+): NorthConnectorDTO<N, I> => {
   return {
     id: northEntity.id,
     name: northEntity.name,
@@ -549,7 +819,12 @@ export const toNorthConnectorDTO = <N extends NorthSettings>(
         }
       }
     },
-    subscriptions: northEntity.subscriptions
+    subscriptions: northEntity.subscriptions,
+    items: northEntity.items.map(item => toNorthConnectorItemDTO<I>(item, northEntity.type, encryptionService)),
+    transformers: northEntity.transformers.map(transformer => ({
+      order: transformer.order,
+      transformer: toTransformerDTO(transformer.transformer)
+    }))
   };
 };
 
@@ -563,13 +838,15 @@ export const toNorthConnectorLightDTO = (entity: NorthConnectorEntityLight): Nor
   };
 };
 
-export const copyNorthConnectorCommandToNorthEntity = async <N extends NorthSettings>(
-  northEntity: NorthConnectorEntity<N>,
-  command: NorthConnectorCommandDTO<N>,
-  currentSettings: NorthConnectorEntity<N> | null,
+export const copyNorthConnectorCommandToNorthEntity = async <N extends NorthSettings, I extends NorthItemSettings>(
+  northEntity: NorthConnectorEntity<N, I>,
+  command: NorthConnectorCommandDTO<N, I>,
+  currentSettings: NorthConnectorEntity<N, I> | null,
   encryptionService: EncryptionService,
   scanModes: Array<ScanMode>,
-  southConnectors: Array<SouthConnectorLightDTO>
+  transformers: Array<Transformer>,
+  southConnectors: Array<SouthConnectorLightDTO>,
+  retrieveSecretsFromNorth = false
 ): Promise<void> => {
   northEntity.name = command.name;
   northEntity.type = command.type;
@@ -604,4 +881,40 @@ export const copyNorthConnectorCommandToNorthEntity = async <N extends NorthSett
     }
     return subscription;
   });
+  northEntity.items = await Promise.all(
+    command.items.map(async itemCommand => {
+      const itemEntity = {} as NorthConnectorItemEntity<I>;
+      await copyNorthItemCommandToNorthItemEntity(
+        itemEntity,
+        itemCommand,
+        currentSettings?.items.find(element => element.id === itemCommand.id) || null,
+        northEntity.type,
+        encryptionService,
+        retrieveSecretsFromNorth
+      );
+      return itemEntity;
+    })
+  );
+  northEntity.transformers = command.transformers.map(element => {
+    const foundTransformer = transformers.find(transformer => transformer.id === element.id);
+    if (!foundTransformer) throw new Error(`Transformer ${element.id} not found`);
+    return {
+      transformer: foundTransformer,
+      order: element.order
+    };
+  });
+};
+
+export const toNorthConnectorItemDTO = <I extends NorthItemSettings>(
+  entity: NorthConnectorItemEntity<I>,
+  northType: string,
+  encryptionService: EncryptionService
+): NorthConnectorItemDTO<I> => {
+  const manifest = northManifestList.find(element => element.id === northType)!;
+  return {
+    id: entity.id,
+    name: entity.name,
+    enabled: entity.enabled,
+    settings: encryptionService.filterSecrets<I>(entity.settings, manifest.items.settings)
+  };
 };

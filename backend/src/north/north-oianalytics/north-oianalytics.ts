@@ -9,7 +9,7 @@ import FormData from 'form-data';
 import path from 'node:path';
 import fetch, { HeadersInit, RequestInit } from 'node-fetch';
 import { compress, filesExists } from '../../service/utils';
-import { NorthOIAnalyticsSettings } from '../../../shared/model/north-settings.model';
+import { NorthOIAnalyticsItemSettings, NorthOIAnalyticsSettings } from '../../../shared/model/north-settings.model';
 import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { ClientCertificateCredential, ClientSecretCredential } from '@azure/identity';
 import fs from 'node:fs/promises';
@@ -28,9 +28,9 @@ import { BaseFolders } from '../../model/types';
  * Class NorthOIAnalytics - Send files to a POST Multipart HTTP request and values as JSON payload
  * OIAnalytics endpoints are set in this connector
  */
-export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSettings> {
+export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSettings, NorthOIAnalyticsItemSettings> {
   constructor(
-    connector: NorthConnectorEntity<NorthOIAnalyticsSettings>,
+    connector: NorthConnectorEntity<NorthOIAnalyticsSettings, NorthOIAnalyticsItemSettings>,
     encryptionService: EncryptionService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,

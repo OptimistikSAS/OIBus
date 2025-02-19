@@ -162,7 +162,10 @@ const manifest: NorthConnectorManifest = {
         }
       ]
     }
-  ]
+  ],
+  items: {
+    settings: []
+  }
 };
 
 export default manifest;

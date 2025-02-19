@@ -13,6 +13,17 @@ export default jest.fn().mockImplementation(() => {
     checkSubscription: jest.fn(),
     createSubscription: jest.fn(),
     deleteSubscription: jest.fn(),
-    deleteAllSubscriptionsByNorth: jest.fn()
+    deleteAllSubscriptionsByNorth: jest.fn(),
+    listItems: jest.fn(),
+    searchItems: jest.fn(),
+    findAllItemsForNorth: jest.fn(),
+    findItemById: jest.fn(),
+    saveItem: jest.fn(),
+    saveAllItems: jest.fn(),
+    deleteItem: jest.fn(),
+    deleteAllItemsByNorth: jest.fn(),
+    enableItem: jest.fn(),
+    disableItem: jest.fn(),
+    findAllTransformersForNorth: jest.fn()
   };
 });

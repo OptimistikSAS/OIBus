@@ -4,10 +4,10 @@ import { ScanModeCommandDTO } from './scan-mode.model';
 import { SouthConnectorCommandDTO, SouthConnectorItemTestingSettings } from './south-connector.model';
 import { SouthItemSettings, SouthSettings } from './south-settings.model';
 import { NorthConnectorCommandDTO } from './north-connector.model';
-import { NorthSettings } from './north-settings.model';
+import { NorthItemSettings, NorthSettings } from './north-settings.model';
 import { IPFilterCommandDTO } from './ip-filter.model';
 import { CertificateCommandDTO } from './certificate.model';
-import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryStatus } from './history-query.model';
+import { HistoryQueryCommandDTO, HistoryQuerySouthItemCommandDTO, HistoryQueryStatus } from './history-query.model';
 
 export const OIBUS_COMMAND_TYPES = [
   'update-version',
@@ -184,14 +184,14 @@ export interface OIBusTestSouthConnectorItemCommandDTO extends BaseOIBusCommandD
 export interface OIBusCreateNorthConnectorCommandDTO extends BaseOIBusCommandDTO {
   type: 'create-north';
   targetVersion: string;
-  commandContent: NorthConnectorCommandDTO<NorthSettings>;
+  commandContent: NorthConnectorCommandDTO<NorthSettings, NorthItemSettings>;
 }
 
 export interface OIBusUpdateNorthConnectorCommandDTO extends BaseOIBusCommandDTO {
   type: 'update-north';
   targetVersion: string;
   northConnectorId: string;
-  commandContent: NorthConnectorCommandDTO<NorthSettings>;
+  commandContent: NorthConnectorCommandDTO<NorthSettings, NorthItemSettings>;
 }
 
 export interface OIBusDeleteNorthConnectorCommandDTO extends BaseOIBusCommandDTO {
@@ -220,7 +220,7 @@ export interface OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO extends
 export interface OIBusCreateHistoryQueryCommandDTO extends BaseOIBusCommandDTO {
   type: 'create-history-query';
   targetVersion: string;
-  commandContent: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+  commandContent: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings>;
 }
 
 export interface OIBusUpdateHistoryQueryCommandDTO extends BaseOIBusCommandDTO {
@@ -229,7 +229,7 @@ export interface OIBusUpdateHistoryQueryCommandDTO extends BaseOIBusCommandDTO {
   historyQueryId: string;
   commandContent: {
     resetCache: boolean;
-    historyQuery: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+    historyQuery: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings>;
   };
 }
 
@@ -244,7 +244,7 @@ export interface OIBusTestHistoryQueryNorthConnectionCommandDTO extends BaseOIBu
   targetVersion: string;
   historyQueryId: string;
   northConnectorId: string | null;
-  commandContent: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+  commandContent: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings>;
 }
 
 export interface OIBusTestHistoryQuerySouthConnectionCommandDTO extends BaseOIBusCommandDTO {
@@ -252,7 +252,7 @@ export interface OIBusTestHistoryQuerySouthConnectionCommandDTO extends BaseOIBu
   targetVersion: string;
   historyQueryId: string;
   southConnectorId: string | null;
-  commandContent: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+  commandContent: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings>;
 }
 
 export interface OIBusTestHistoryQuerySouthItemCommandDTO extends BaseOIBusCommandDTO {
@@ -262,8 +262,8 @@ export interface OIBusTestHistoryQuerySouthItemCommandDTO extends BaseOIBusComma
   southConnectorId: string | null;
   itemId: string;
   commandContent: {
-    historyCommand: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
-    itemCommand: HistoryQueryItemCommandDTO<SouthItemSettings>;
+    historyCommand: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings>;
+    itemCommand: HistoryQuerySouthItemCommandDTO<SouthItemSettings>;
     testingSettings: SouthConnectorItemTestingSettings;
   };
 }

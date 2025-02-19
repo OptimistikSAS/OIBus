@@ -10,8 +10,8 @@ import { OIBusContent, OIBusRawContent, OIBusTimeValue, OIBusTimeValueContent } 
 import { DateTime } from 'luxon';
 import { ReadStream } from 'node:fs';
 import path from 'node:path';
-import { NorthSettings } from '../../shared/model/north-settings.model';
-import { createBaseFolders, dirSize, validateCronExpression } from '../service/utils';
+import { NorthItemSettings, NorthSettings } from '../../shared/model/north-settings.model';
+import { createBaseFolders } from '../service/utils';
 import { NorthConnectorEntity } from '../model/north-connector.model';
 import { SouthConnectorEntityLight } from '../model/south-connector.model';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
@@ -19,6 +19,7 @@ import ScanModeRepository from '../repository/config/scan-mode.repository';
 import { ScanMode } from '../model/scan-mode.model';
 import { OIBusError } from '../model/engine.model';
 import { BaseFolders, Instant } from '../model/types';
+import { dirSize, validateCronExpression } from '../service/utils';
 
 /**
  * Class NorthConnector : provides general attributes and methods for north connectors.
@@ -37,7 +38,7 @@ import { BaseFolders, Instant } from '../model/types';
  * - **getProxy**: get the proxy handler
  * - **logger**: to log an event with different levels (error,warning,info,debug,trace)
  */
-export default abstract class NorthConnector<T extends NorthSettings> {
+export default abstract class NorthConnector<T extends NorthSettings, I extends NorthItemSettings> {
   private valueCacheService: ValueCacheService;
   private fileCacheService: FileCacheService;
   private subscribedTo: Array<SouthConnectorEntityLight> = [];
@@ -61,7 +62,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   private stopping = false;
 
   protected constructor(
-    protected connector: NorthConnectorEntity<T>,
+    protected connector: NorthConnectorEntity<T, I>,
     protected readonly encryptionService: EncryptionService,
     protected readonly northConnectorRepository: NorthConnectorRepository,
     protected readonly scanModeRepository: ScanModeRepository,
@@ -653,13 +654,20 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     await this.valueCacheService.retryAllErrorValues();
   }
 
+  /**
+   * Reset on item changes
+   */
+  async onItemChange(): Promise<void> {
+    this.connector.items = this.northConnectorRepository.findAllItemsForNorth(this.connector.id);
+  }
+
   async updateScanMode(scanMode: ScanMode): Promise<void> {
     if (this.cronByScanModeIds.get(scanMode.id)) {
       this.createCronJob(scanMode);
     }
   }
 
-  get settings(): NorthConnectorEntity<T> {
+  get settings(): NorthConnectorEntity<T, I> {
     return this.connector;
   }
 

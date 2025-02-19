@@ -28,7 +28,7 @@ import { BooleanEnumPipe } from '../../shared/boolean-enum.pipe';
 import { EngineService } from '../../services/engine.service';
 import { LogsComponent } from '../../logs/logs.component';
 import { SouthConnectorLightDTO } from '../../../../../backend/shared/model/south-connector.model';
-import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 
 @Component({
@@ -65,7 +65,7 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
   private booleanPipe = inject(BooleanEnumPipe);
   private translateService = inject(TranslateService);
 
-  northConnector: NorthConnectorDTO<NorthSettings> | null = null;
+  northConnector: NorthConnectorDTO<NorthSettings, NorthItemSettings> | null = null;
   displayedSettings: Array<{ key: string; value: string }> = [];
   scanModes: Array<ScanModeDTO> = [];
   manifest: NorthConnectorManifest | null = null;
@@ -158,7 +158,7 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
   }
 
   testConnection() {
-    const command: NorthConnectorCommandDTO<NorthSettings> = {
+    const command: NorthConnectorCommandDTO<NorthSettings, NorthItemSettings> = {
       name: this.northConnector!.name,
       type: this.northConnector!.type,
       description: this.northConnector!.description,
@@ -182,7 +182,9 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
           }
         }
       },
-      subscriptions: []
+      subscriptions: [],
+      transformers: [],
+      items: [] // TODO
     };
 
     const modalRef = this.modalService.open(TestConnectionResultModalComponent);

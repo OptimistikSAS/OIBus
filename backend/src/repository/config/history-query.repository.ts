@@ -1,16 +1,25 @@
 import { HistoryQueryItemSearchParam, HistoryQueryStatus } from '../../../shared/model/history-query.model';
 import { generateRandomId } from '../../service/utils';
 import { Database } from 'better-sqlite3';
-import { HistoryQueryEntity, HistoryQueryEntityLight, HistoryQueryItemEntity } from '../../model/histor-query.model';
+import {
+  HistoryQueryEntity,
+  HistoryQueryEntityLight,
+  NorthHistoryQueryItemEntity,
+  SouthHistoryQueryItemEntity
+} from '../../model/histor-query.model';
 import { Page } from '../../../shared/model/types';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../shared/model/north-settings.model';
 import { Instant } from '../../model/types';
 import { OIBusNorthType } from '../../../shared/model/north-connector.model';
 import { OIBusSouthType } from '../../../shared/model/south-connector.model';
+import { Transformer } from '../../model/transformer.model';
 
 const HISTORY_QUERIES_TABLE = 'history_queries';
-const HISTORY_ITEMS_TABLE = 'history_items';
+const HISTORY_SOUTH_ITEMS_TABLE = 'history_south_items';
+const HISTORY_NORTH_ITEMS_TABLE = 'history_north_items';
+const HISTORY_TRANSFORMERS_TABLE = 'history_transformers';
+const TRANSFORMERS_TABLE = 'transformers';
 const PAGE_SIZE = 50;
 
 export default class HistoryQueryRepository {
@@ -24,7 +33,7 @@ export default class HistoryQueryRepository {
       .map(result => toHistoryQueryLight(result as Record<string, string>));
   }
 
-  findAllHistoryQueriesFull(): Array<HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>> {
+  findAllHistoryQueriesFull(): Array<HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings>> {
     const query =
       `SELECT id, name, description, status, start_time, end_time, ` +
       `south_type, north_type, south_settings, north_settings, ` +
@@ -37,9 +46,9 @@ export default class HistoryQueryRepository {
     return result.map(element => this.toHistoryQueryEntity(element as Record<string, string | number>));
   }
 
-  findHistoryQueryById<S extends SouthSettings, N extends NorthSettings, I extends SouthItemSettings>(
+  findHistoryQueryById<S extends SouthSettings, N extends NorthSettings, I extends SouthItemSettings, J extends NorthItemSettings>(
     id: string
-  ): HistoryQueryEntity<S, N, I> | null {
+  ): HistoryQueryEntity<S, N, I, J> | null {
     const query =
       `SELECT id, name, description, status, start_time, end_time, ` +
       `south_type, north_type, south_settings, north_settings, ` +
@@ -51,11 +60,11 @@ export default class HistoryQueryRepository {
     if (!result) {
       return null;
     }
-    return this.toHistoryQueryEntity<S, N, I>(result as Record<string, string | number>);
+    return this.toHistoryQueryEntity<S, N, I, J>(result as Record<string, string | number>);
   }
 
-  saveHistoryQuery<S extends SouthSettings, N extends NorthSettings, I extends SouthItemSettings>(
-    historyQuery: HistoryQueryEntity<S, N, I>
+  saveHistoryQuery<S extends SouthSettings, N extends NorthSettings, I extends SouthItemSettings, J extends NorthItemSettings>(
+    historyQuery: HistoryQueryEntity<S, N, I, J>
   ): void {
     const transaction = this.database.transaction(() => {
       if (!historyQuery.id) {
@@ -117,21 +126,21 @@ export default class HistoryQueryRepository {
           );
       }
 
-      if (historyQuery.items.length > 0) {
+      if (historyQuery.southItems.length > 0) {
         this.database
           .prepare(
-            `DELETE FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ? AND id NOT IN (${historyQuery.items.map(() => '?').join(', ')});`
+            `DELETE FROM ${HISTORY_SOUTH_ITEMS_TABLE} WHERE history_id = ? AND id NOT IN (${historyQuery.southItems.map(() => '?').join(', ')});`
           )
           .run(
             historyQuery.id,
-            historyQuery.items.map(item => item.id)
+            historyQuery.southItems.map(item => item.id)
           );
 
         const insert = this.database.prepare(
-          `INSERT INTO ${HISTORY_ITEMS_TABLE} (id, name, enabled, history_id, settings) VALUES (?, ?, ?, ?, ?);`
+          `INSERT INTO ${HISTORY_SOUTH_ITEMS_TABLE} (id, name, enabled, history_id, settings) VALUES (?, ?, ?, ?, ?);`
         );
-        const update = this.database.prepare(`UPDATE ${HISTORY_ITEMS_TABLE} SET name = ?, enabled = ?, settings = ? WHERE id = ?;`);
-        for (const item of historyQuery.items) {
+        const update = this.database.prepare(`UPDATE ${HISTORY_SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, settings = ? WHERE id = ?;`);
+        for (const item of historyQuery.southItems) {
           if (!item.id) {
             item.id = generateRandomId(6);
             insert.run(item.id, item.name, +item.enabled, historyQuery.id, JSON.stringify(item.settings));
@@ -140,7 +149,51 @@ export default class HistoryQueryRepository {
           }
         }
       } else {
-        this.database.prepare(`DELETE FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ?;`).run(historyQuery.id);
+        this.database.prepare(`DELETE FROM ${HISTORY_SOUTH_ITEMS_TABLE} WHERE history_id = ?;`).run(historyQuery.id);
+      }
+
+      if (historyQuery.northItems.length > 0) {
+        this.database
+          .prepare(
+            `DELETE FROM ${HISTORY_NORTH_ITEMS_TABLE} WHERE history_id = ? AND id NOT IN (${historyQuery.northItems.map(() => '?').join(', ')});`
+          )
+          .run(
+            historyQuery.id,
+            historyQuery.northItems.map(item => item.id)
+          );
+
+        const insert = this.database.prepare(
+          `INSERT INTO ${HISTORY_NORTH_ITEMS_TABLE} (id, name, enabled, history_id, settings) VALUES (?, ?, ?, ?, ?);`
+        );
+        const update = this.database.prepare(`UPDATE ${HISTORY_NORTH_ITEMS_TABLE} SET name = ?, enabled = ?, settings = ? WHERE id = ?;`);
+        for (const item of historyQuery.northItems) {
+          if (!item.id) {
+            item.id = generateRandomId(6);
+            insert.run(item.id, item.name, +item.enabled, historyQuery.id, JSON.stringify(item.settings));
+          } else {
+            update.run(item.name, +item.enabled, JSON.stringify(item.settings), item.id);
+          }
+        }
+      } else {
+        this.database.prepare(`DELETE FROM ${HISTORY_NORTH_ITEMS_TABLE} WHERE history_id = ?;`).run(historyQuery.id);
+      }
+
+      this.database.prepare(`DELETE FROM ${HISTORY_TRANSFORMERS_TABLE} WHERE history_id = ?;`).run(historyQuery.id);
+      if (historyQuery.southTransformers.length > 0) {
+        const insert = this.database.prepare(
+          `INSERT INTO ${HISTORY_TRANSFORMERS_TABLE} (history_id, connector_type, transformer_id, transformer_order) VALUES (?, ?, ?, ?);`
+        );
+        for (const transformer of historyQuery.southTransformers) {
+          insert.run(historyQuery.id, 'south', transformer.transformer.id, transformer.order);
+        }
+      }
+      if (historyQuery.northTransformers.length > 0) {
+        const insert = this.database.prepare(
+          `INSERT INTO ${HISTORY_TRANSFORMERS_TABLE} (history_id, connector_type, transformer_id, transformer_order) VALUES (?, ?, ?, ?);`
+        );
+        for (const transformer of historyQuery.northTransformers) {
+          insert.run(historyQuery.id, 'north', transformer.transformer.id, transformer.order);
+        }
       }
     });
     transaction();
@@ -153,16 +206,17 @@ export default class HistoryQueryRepository {
 
   deleteHistoryQuery(id: string): void {
     const transaction = this.database.transaction(() => {
-      this.database.prepare(`DELETE FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ?;`).run(id);
+      this.database.prepare(`DELETE FROM ${HISTORY_SOUTH_ITEMS_TABLE} WHERE history_id = ?;`).run(id);
+      this.database.prepare(`DELETE FROM ${HISTORY_TRANSFORMERS_TABLE} WHERE history_id = ?;`).run(id);
       this.database.prepare(`DELETE FROM ${HISTORY_QUERIES_TABLE} WHERE id = ?;`).run(id);
     });
     transaction();
   }
 
-  searchHistoryQueryItems<I extends SouthItemSettings>(
+  searchSouthHistoryQueryItems<I extends SouthItemSettings>(
     historyId: string,
     searchParams: HistoryQueryItemSearchParam
-  ): Page<HistoryQueryItemEntity<I>> {
+  ): Page<SouthHistoryQueryItemEntity<I>> {
     let whereClause = `WHERE history_id = ?`;
     const queryParams = [historyId];
 
@@ -177,13 +231,15 @@ export default class HistoryQueryRepository {
       whereClause += ` AND enabled = ?`;
     }
 
-    const query = `SELECT id, name, enabled, settings FROM ${HISTORY_ITEMS_TABLE} ${whereClause} LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * page};`;
+    const query = `SELECT id, name, enabled, settings FROM ${HISTORY_SOUTH_ITEMS_TABLE} ${whereClause} LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * page};`;
     const results = this.database
       .prepare(query)
       .all(...queryParams)
-      .map(result => this.toHistoryQueryItemEntity<I>(result as Record<string, string>));
+      .map(result => this.toSouthHistoryQueryItemEntity<I>(result as Record<string, string>));
     const totalElements: number = (
-      this.database.prepare(`SELECT COUNT(*) as count FROM ${HISTORY_ITEMS_TABLE} ${whereClause}`).get(...queryParams) as { count: number }
+      this.database.prepare(`SELECT COUNT(*) as count FROM ${HISTORY_SOUTH_ITEMS_TABLE} ${whereClause}`).get(...queryParams) as {
+        count: number;
+      }
     ).count;
     const totalPages = Math.ceil(totalElements / PAGE_SIZE);
     return {
@@ -195,10 +251,48 @@ export default class HistoryQueryRepository {
     };
   }
 
-  listHistoryQueryItems<I extends SouthItemSettings>(
+  searchNorthHistoryQueryItems<I extends NorthItemSettings>(
     historyId: string,
     searchParams: HistoryQueryItemSearchParam
-  ): Array<HistoryQueryItemEntity<I>> {
+  ): Page<NorthHistoryQueryItemEntity<I>> {
+    let whereClause = `WHERE history_id = ?`;
+    const queryParams = [historyId];
+
+    const page = searchParams.page ?? 0;
+
+    if (searchParams.name) {
+      queryParams.push(searchParams.name);
+      whereClause += ` AND name like '%' || ? || '%'`;
+    }
+    if (searchParams.enabled !== undefined) {
+      queryParams.push(`${+searchParams.enabled}`);
+      whereClause += ` AND enabled = ?`;
+    }
+
+    const query = `SELECT id, name, enabled, settings FROM ${HISTORY_NORTH_ITEMS_TABLE} ${whereClause} LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * page};`;
+    const results = this.database
+      .prepare(query)
+      .all(...queryParams)
+      .map(result => this.toNorthHistoryQueryItemEntity<I>(result as Record<string, string>));
+    const totalElements: number = (
+      this.database.prepare(`SELECT COUNT(*) as count FROM ${HISTORY_NORTH_ITEMS_TABLE} ${whereClause}`).get(...queryParams) as {
+        count: number;
+      }
+    ).count;
+    const totalPages = Math.ceil(totalElements / PAGE_SIZE);
+    return {
+      content: results,
+      size: PAGE_SIZE,
+      number: page,
+      totalElements,
+      totalPages
+    };
+  }
+
+  listSouthHistoryQueryItems<I extends SouthItemSettings>(
+    historyId: string,
+    searchParams: HistoryQueryItemSearchParam
+  ): Array<SouthHistoryQueryItemEntity<I>> {
     let whereClause = `WHERE history_id = ?`;
     const queryParams = [historyId];
     if (searchParams.name) {
@@ -210,84 +304,198 @@ export default class HistoryQueryRepository {
       whereClause += ` AND enabled = ?`;
     }
 
-    const query = `SELECT id, name, enabled, settings FROM ${HISTORY_ITEMS_TABLE} ${whereClause};`;
+    const query = `SELECT id, name, enabled, settings FROM ${HISTORY_SOUTH_ITEMS_TABLE} ${whereClause};`;
 
     return this.database
       .prepare(query)
       .all(...queryParams)
-      .map(result => this.toHistoryQueryItemEntity<I>(result as Record<string, string>));
+      .map(result => this.toSouthHistoryQueryItemEntity<I>(result as Record<string, string>));
   }
 
-  findAllItemsForHistoryQuery<I extends SouthItemSettings>(historyQueryId: string): Array<HistoryQueryItemEntity<I>> {
-    const query = `SELECT id, name, enabled, settings FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ?;`;
+  listNorthHistoryQueryItems<I extends NorthItemSettings>(
+    historyId: string,
+    searchParams: HistoryQueryItemSearchParam
+  ): Array<NorthHistoryQueryItemEntity<I>> {
+    let whereClause = `WHERE history_id = ?`;
+    const queryParams = [historyId];
+    if (searchParams.name) {
+      queryParams.push(searchParams.name);
+      whereClause += ` AND name like '%' || ? || '%'`;
+    }
+    if (searchParams.enabled !== undefined) {
+      queryParams.push(`${+searchParams.enabled}`);
+      whereClause += ` AND enabled = ?`;
+    }
+
+    const query = `SELECT id, name, enabled, settings FROM ${HISTORY_NORTH_ITEMS_TABLE} ${whereClause};`;
+
+    return this.database
+      .prepare(query)
+      .all(...queryParams)
+      .map(result => this.toNorthHistoryQueryItemEntity<I>(result as Record<string, string>));
+  }
+
+  findAllSouthItemsForHistoryQuery<I extends SouthItemSettings>(historyQueryId: string): Array<SouthHistoryQueryItemEntity<I>> {
+    const query = `SELECT id, name, enabled, settings FROM ${HISTORY_SOUTH_ITEMS_TABLE} WHERE history_id = ?;`;
     return this.database
       .prepare(query)
       .all(historyQueryId)
-      .map(result => this.toHistoryQueryItemEntity<I>(result as Record<string, string>));
+      .map(result => this.toSouthHistoryQueryItemEntity<I>(result as Record<string, string>));
   }
 
-  findHistoryQueryItemById<I extends SouthItemSettings>(
+  findAllNorthItemsForHistoryQuery<I extends NorthItemSettings>(historyQueryId: string): Array<NorthHistoryQueryItemEntity<I>> {
+    const query = `SELECT id, name, enabled, settings FROM ${HISTORY_NORTH_ITEMS_TABLE} WHERE history_id = ?;`;
+    return this.database
+      .prepare(query)
+      .all(historyQueryId)
+      .map(result => this.toNorthHistoryQueryItemEntity<I>(result as Record<string, string>));
+  }
+
+  findSouthHistoryQueryItemById<I extends SouthItemSettings>(
     historyQueryId: string,
     historyQueryItemId: string
-  ): HistoryQueryItemEntity<I> | null {
-    const query = `SELECT id, name, enabled, settings FROM ${HISTORY_ITEMS_TABLE} WHERE id = ? AND history_id = ?;`;
+  ): SouthHistoryQueryItemEntity<I> | null {
+    const query = `SELECT id, name, enabled, settings FROM ${HISTORY_SOUTH_ITEMS_TABLE} WHERE id = ? AND history_id = ?;`;
     const result = this.database.prepare(query).get(historyQueryItemId, historyQueryId);
     if (!result) return null;
-    return this.toHistoryQueryItemEntity(result as Record<string, string>);
+    return this.toSouthHistoryQueryItemEntity(result as Record<string, string>);
   }
 
-  saveHistoryQueryItem<I extends SouthItemSettings>(historyId: string, historyQueryItem: HistoryQueryItemEntity<I>): void {
+  findNorthHistoryQueryItemById<I extends NorthItemSettings>(
+    historyQueryId: string,
+    historyQueryItemId: string
+  ): NorthHistoryQueryItemEntity<I> | null {
+    const query = `SELECT id, name, enabled, settings FROM ${HISTORY_NORTH_ITEMS_TABLE} WHERE id = ? AND history_id = ?;`;
+    const result = this.database.prepare(query).get(historyQueryItemId, historyQueryId);
+    if (!result) return null;
+    return this.toNorthHistoryQueryItemEntity(result as Record<string, string>);
+  }
+
+  saveSouthHistoryQueryItem<I extends SouthItemSettings>(historyId: string, historyQueryItem: SouthHistoryQueryItemEntity<I>): void {
     if (!historyQueryItem.id) {
       historyQueryItem.id = generateRandomId(6);
-      const insertQuery = `INSERT INTO ${HISTORY_ITEMS_TABLE} (id, name, enabled, history_id, settings) ` + `VALUES (?, ?, ?, ?, ?);`;
+      const insertQuery = `INSERT INTO ${HISTORY_SOUTH_ITEMS_TABLE} (id, name, enabled, history_id, settings) ` + `VALUES (?, ?, ?, ?, ?);`;
       this.database
         .prepare(insertQuery)
         .run(historyQueryItem.id, historyQueryItem.name, +historyQueryItem.enabled, historyId, JSON.stringify(historyQueryItem.settings));
     } else {
-      const query = `UPDATE ${HISTORY_ITEMS_TABLE} SET name = ?, enabled = ?, settings = ? WHERE id = ?;`;
+      const query = `UPDATE ${HISTORY_SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, settings = ? WHERE id = ?;`;
       this.database
         .prepare(query)
         .run(historyQueryItem.name, +historyQueryItem.enabled, JSON.stringify(historyQueryItem.settings), historyQueryItem.id);
     }
   }
 
-  saveAllItems<I extends SouthItemSettings>(
+  saveNorthHistoryQueryItem<I extends NorthItemSettings>(historyId: string, historyQueryItem: NorthHistoryQueryItemEntity<I>): void {
+    if (!historyQueryItem.id) {
+      historyQueryItem.id = generateRandomId(6);
+      const insertQuery = `INSERT INTO ${HISTORY_NORTH_ITEMS_TABLE} (id, name, enabled, history_id, settings) ` + `VALUES (?, ?, ?, ?, ?);`;
+      this.database
+        .prepare(insertQuery)
+        .run(historyQueryItem.id, historyQueryItem.name, +historyQueryItem.enabled, historyId, JSON.stringify(historyQueryItem.settings));
+    } else {
+      const query = `UPDATE ${HISTORY_NORTH_ITEMS_TABLE} SET name = ?, enabled = ?, settings = ? WHERE id = ?;`;
+      this.database
+        .prepare(query)
+        .run(historyQueryItem.name, +historyQueryItem.enabled, JSON.stringify(historyQueryItem.settings), historyQueryItem.id);
+    }
+  }
+
+  saveAllSouthItems<I extends SouthItemSettings>(
     historyQueryId: string,
-    historyQueryItems: Array<HistoryQueryItemEntity<I>>,
+    historyQueryItems: Array<SouthHistoryQueryItemEntity<I>>,
     deleteItemsNotPresent: boolean
   ): void {
     const transaction = this.database.transaction(() => {
       if (deleteItemsNotPresent) {
-        this.deleteAllHistoryQueryItemsByHistoryQuery(historyQueryId);
+        this.deleteAllSouthHistoryQueryItemsByHistoryQuery(historyQueryId);
       }
       for (const item of historyQueryItems) {
-        this.saveHistoryQueryItem<I>(historyQueryId, item);
+        this.saveSouthHistoryQueryItem<I>(historyQueryId, item);
       }
     });
     transaction();
   }
 
-  deleteHistoryQueryItem(historyQueryId: string): void {
-    const query = `DELETE FROM ${HISTORY_ITEMS_TABLE} WHERE id = ?;`;
+  saveAllNorthItems<I extends NorthItemSettings>(
+    historyQueryId: string,
+    historyQueryItems: Array<NorthHistoryQueryItemEntity<I>>,
+    deleteItemsNotPresent: boolean
+  ): void {
+    const transaction = this.database.transaction(() => {
+      if (deleteItemsNotPresent) {
+        this.deleteAllNorthHistoryQueryItemsByHistoryQuery(historyQueryId);
+      }
+      for (const item of historyQueryItems) {
+        this.saveNorthHistoryQueryItem<I>(historyQueryId, item);
+      }
+    });
+    transaction();
+  }
+
+  deleteSouthHistoryQueryItem(historyQueryId: string): void {
+    const query = `DELETE FROM ${HISTORY_SOUTH_ITEMS_TABLE} WHERE id = ?;`;
     this.database.prepare(query).run(historyQueryId);
   }
 
-  deleteAllHistoryQueryItemsByHistoryQuery(historyQueryId: string): void {
-    const query = `DELETE FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ?;`;
+  deleteNorthHistoryQueryItem(historyQueryId: string): void {
+    const query = `DELETE FROM ${HISTORY_NORTH_ITEMS_TABLE} WHERE id = ?;`;
     this.database.prepare(query).run(historyQueryId);
   }
 
-  enableHistoryQueryItem(id: string): void {
-    const query = `UPDATE ${HISTORY_ITEMS_TABLE} SET enabled = 1 WHERE id = ?;`;
+  deleteAllSouthHistoryQueryItemsByHistoryQuery(historyQueryId: string): void {
+    const query = `DELETE FROM ${HISTORY_SOUTH_ITEMS_TABLE} WHERE history_id = ?;`;
+    this.database.prepare(query).run(historyQueryId);
+  }
+
+  deleteAllNorthHistoryQueryItemsByHistoryQuery(historyQueryId: string): void {
+    const query = `DELETE FROM ${HISTORY_NORTH_ITEMS_TABLE} WHERE history_id = ?;`;
+    this.database.prepare(query).run(historyQueryId);
+  }
+
+  enableSouthHistoryQueryItem(id: string): void {
+    const query = `UPDATE ${HISTORY_SOUTH_ITEMS_TABLE} SET enabled = 1 WHERE id = ?;`;
     this.database.prepare(query).run(id);
   }
 
-  disableHistoryQueryItem(id: string): void {
-    const query = `UPDATE ${HISTORY_ITEMS_TABLE} SET enabled = 0 WHERE id = ?;`;
+  enableNorthHistoryQueryItem(id: string): void {
+    const query = `UPDATE ${HISTORY_NORTH_ITEMS_TABLE} SET enabled = 1 WHERE id = ?;`;
     this.database.prepare(query).run(id);
   }
 
-  private toHistoryQueryItemEntity<I extends SouthItemSettings>(result: Record<string, string>): HistoryQueryItemEntity<I> {
+  disableSouthHistoryQueryItem(id: string): void {
+    const query = `UPDATE ${HISTORY_SOUTH_ITEMS_TABLE} SET enabled = 0 WHERE id = ?;`;
+    this.database.prepare(query).run(id);
+  }
+
+  disableNorthHistoryQueryItem(id: string): void {
+    const query = `UPDATE ${HISTORY_NORTH_ITEMS_TABLE} SET enabled = 0 WHERE id = ?;`;
+    this.database.prepare(query).run(id);
+  }
+
+  findAllTransformersForHistory(historyId: string, type: 'south' | 'north'): Array<{ transformer: Transformer; order: number }> {
+    const query = `SELECT t.id, t.name, t.description, t.input_type, t.output_type, t.code, ht.transformer_order FROM ${HISTORY_TRANSFORMERS_TABLE} ht JOIN ${TRANSFORMERS_TABLE} t ON ht.transformer_id = t.id WHERE ht.history_id = ? AND ht.connector_type = ?`;
+    return this.database
+      .prepare(query)
+      .all(historyId, type)
+      .map(result => this.toTransformer(result as Record<string, string | number>));
+  }
+
+  private toTransformer(result: Record<string, string | number>): { transformer: Transformer; order: number } {
+    return {
+      order: result.transformer_order as number,
+      transformer: {
+        id: result.id as string,
+        name: result.name as string,
+        description: result.description as string,
+        inputType: result.input_type as string,
+        outputType: result.output_type as string,
+        code: result.code as string
+      }
+    };
+  }
+
+  private toSouthHistoryQueryItemEntity<I extends SouthItemSettings>(result: Record<string, string>): SouthHistoryQueryItemEntity<I> {
     return {
       id: result.id,
       name: result.name,
@@ -296,9 +504,18 @@ export default class HistoryQueryRepository {
     };
   }
 
-  private toHistoryQueryEntity<S extends SouthSettings, N extends NorthSettings, I extends SouthItemSettings>(
+  private toNorthHistoryQueryItemEntity<I extends NorthItemSettings>(result: Record<string, string>): NorthHistoryQueryItemEntity<I> {
+    return {
+      id: result.id,
+      name: result.name,
+      enabled: Boolean(result.enabled),
+      settings: JSON.parse(result.settings) as I
+    };
+  }
+
+  private toHistoryQueryEntity<S extends SouthSettings, N extends NorthSettings, I extends SouthItemSettings, J extends NorthItemSettings>(
     result: Record<string, string | number>
-  ): HistoryQueryEntity<S, N, I> {
+  ): HistoryQueryEntity<S, N, I, J> {
     return {
       id: result.id as string,
       name: result.name as string,
@@ -327,7 +544,10 @@ export default class HistoryQueryRepository {
           }
         }
       },
-      items: this.findAllItemsForHistoryQuery<I>(result.id as string)
+      southItems: this.findAllSouthItemsForHistoryQuery<I>(result.id as string),
+      northItems: this.findAllNorthItemsForHistoryQuery<J>(result.id as string),
+      northTransformers: this.findAllTransformersForHistory(result.id as string, 'north'),
+      southTransformers: this.findAllTransformersForHistory(result.id as string, 'south')
     };
   }
 }

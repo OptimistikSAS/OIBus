@@ -17,7 +17,7 @@ import { OIBusInfo } from '../../../../../backend/shared/model/engine.model';
 import { EngineService } from '../../services/engine.service';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
-import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
 class HistoryQueryDetailComponentTester extends ComponentTester<HistoryQueryDetailComponent> {
   constructor() {
@@ -105,9 +105,10 @@ describe('HistoryQueryDetailComponent', () => {
         ],
         displayInViewMode: true
       }
-    ]
+    ],
+    items: { settings: [] }
   };
-  const historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
+  const historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings> = {
     id: 'id1',
     name: 'History query',
     description: 'My History query description',
@@ -139,7 +140,7 @@ describe('HistoryQueryDetailComponent', () => {
         }
       }
     },
-    items: [
+    southItems: [
       {
         id: 'id1',
         name: 'item1',
@@ -148,7 +149,10 @@ describe('HistoryQueryDetailComponent', () => {
           query: 'sql'
         } as SouthItemSettings
       }
-    ]
+    ],
+    northItems: [],
+    southTransformers: [],
+    northTransformers: []
   };
   const engineInfo: OIBusInfo = {
     version: '3.0.0',
@@ -240,7 +244,7 @@ describe('HistoryQueryDetailComponent', () => {
       type: northManifest.id,
       settings: historyQuery.northSettings,
       caching: historyQuery.caching
-    } as NorthConnectorCommandDTO<NorthSettings>;
+    } as NorthConnectorCommandDTO<NorthSettings, NorthItemSettings>;
 
     const spy = jasmine.createSpy();
     modalService.open.and.returnValue({

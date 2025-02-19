@@ -59,7 +59,7 @@ import CertificateService from '../certificate.service';
 import HistoryQueryService from '../history-query.service';
 import { HistoryQueryCommandDTO } from '../../../shared/model/history-query.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../../shared/model/north-settings.model';
 
 const UPDATE_SETTINGS_FILE = 'update.json';
 
@@ -729,7 +729,7 @@ export default class OIAnalyticsCommandService {
   }
 
   private async decryptHistoryQuerySettings(
-    command: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>,
+    command: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings>,
     privateKey: string
   ) {
     const northManifest = this.northService.getInstalledNorthManifests().find(element => element.id === command.northType)!;
@@ -744,8 +744,8 @@ export default class OIAnalyticsCommandService {
       southManifest.settings,
       privateKey
     );
-    command.items = await Promise.all(
-      command.items.map(async item => ({
+    command.southItems = await Promise.all(
+      command.southItems.map(async item => ({
         id: item.id,
         enabled: item.enabled,
         name: item.name,
@@ -804,11 +804,11 @@ export default class OIAnalyticsCommandService {
       throw new Error(`History query ${command.historyQueryId} not found`);
     }
 
-    const { items, errors } = await this.historyQueryService.checkCsvContentImport(
+    const { items, errors } = await this.historyQueryService.checkSouthCsvContentImport(
       historyQuery.southType,
       command.commandContent.csvContent,
       command.commandContent.delimiter,
-      command.commandContent.deleteItemsNotPresent ? [] : historyQuery.items
+      command.commandContent.deleteItemsNotPresent ? [] : historyQuery.southItems
     );
 
     if (errors.length > 0) {
@@ -818,7 +818,7 @@ export default class OIAnalyticsCommandService {
       }
       throw new Error(stringError);
     }
-    await this.historyQueryService.importItems(historyQuery.id, items, command.commandContent.deleteItemsNotPresent);
+    await this.historyQueryService.importSouthItems(historyQuery.id, items, command.commandContent.deleteItemsNotPresent);
     this.oIAnalyticsCommandRepository.markAsCompleted(
       command.id,
       DateTime.now().toUTC().toISO(),
@@ -838,7 +838,9 @@ export default class OIAnalyticsCommandService {
         enabled: true,
         settings: command.commandContent.northSettings,
         caching: command.commandContent.caching,
-        subscriptions: []
+        subscriptions: [],
+        items: [],
+        transformers: []
       },
       this.logger
     );
@@ -860,7 +862,8 @@ export default class OIAnalyticsCommandService {
         description: command.commandContent.description,
         enabled: true,
         settings: command.commandContent.southSettings,
-        items: []
+        items: [],
+        transformers: []
       },
       this.logger
     );
@@ -883,7 +886,8 @@ export default class OIAnalyticsCommandService {
         description: command.commandContent.historyCommand.description,
         enabled: true,
         settings: command.commandContent.historyCommand.southSettings,
-        items: []
+        items: [],
+        transformers: []
       },
       command.commandContent.itemCommand,
       command.commandContent.testingSettings,

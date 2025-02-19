@@ -9,10 +9,10 @@ import {
 } from '../../shared/model/south-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { NorthConnectorCommandDTO } from '../../shared/model/north-connector.model';
-import { NorthSettings } from '../../shared/model/north-settings.model';
+import { NorthItemSettings, NorthSettings } from '../../shared/model/north-settings.model';
 import { IPFilterCommandDTO } from '../../shared/model/ip-filter.model';
 import { CertificateCommandDTO } from '../../shared/model/certificate.model';
-import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryStatus } from '../../shared/model/history-query.model';
+import { HistoryQueryCommandDTO, HistoryQuerySouthItemCommandDTO, HistoryQueryStatus } from '../../shared/model/history-query.model';
 
 export interface BaseOIBusCommand extends BaseEntity {
   type: OIBusCommandType;
@@ -143,13 +143,13 @@ export interface OIBusTestSouthConnectorItemCommand extends BaseOIBusCommand {
 export interface OIBusCreateNorthConnectorCommand extends BaseOIBusCommand {
   type: 'create-north';
   northConnectorId: string | null; // used to retrieve passwords in case of duplicate
-  commandContent: NorthConnectorCommandDTO<NorthSettings>;
+  commandContent: NorthConnectorCommandDTO<NorthSettings, NorthItemSettings>;
 }
 
 export interface OIBusUpdateNorthConnectorCommand extends BaseOIBusCommand {
   type: 'update-north';
   northConnectorId: string;
-  commandContent: NorthConnectorCommandDTO<NorthSettings>;
+  commandContent: NorthConnectorCommandDTO<NorthSettings, NorthItemSettings>;
 }
 
 export interface OIBusDeleteNorthConnectorCommand extends BaseOIBusCommand {
@@ -161,7 +161,7 @@ export interface OIBusTestNorthConnectorCommand extends BaseOIBusCommand {
   type: 'test-north-connection';
   targetVersion: string;
   northConnectorId: string;
-  commandContent: NorthConnectorCommandDTO<NorthSettings>;
+  commandContent: NorthConnectorCommandDTO<NorthSettings, NorthItemSettings>;
 }
 
 export interface OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand extends BaseOIBusCommand {
@@ -179,7 +179,7 @@ export interface OIBusCreateHistoryQueryCommand extends BaseOIBusCommand {
   northConnectorId: string | null; // used to retrieve passwords in case it is created from a north connector
   southConnectorId: string | null; // used to retrieve passwords in case it is created from a south connector
   historyQueryId: string | null; // used to retrieve passwords in case of duplicate
-  commandContent: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+  commandContent: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings>;
 }
 
 export interface OIBusUpdateHistoryQueryCommand extends BaseOIBusCommand {
@@ -187,7 +187,7 @@ export interface OIBusUpdateHistoryQueryCommand extends BaseOIBusCommand {
   historyQueryId: string;
   commandContent: {
     resetCache: boolean;
-    historyQuery: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+    historyQuery: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings>;
   };
 }
 
@@ -200,14 +200,14 @@ export interface OIBusTestHistoryQueryNorthConnectionCommand extends BaseOIBusCo
   type: 'test-history-query-north-connection';
   historyQueryId: string;
   northConnectorId: string | null;
-  commandContent: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+  commandContent: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings>;
 }
 
 export interface OIBusTestHistoryQuerySouthConnectionCommand extends BaseOIBusCommand {
   type: 'test-history-query-south-connection';
   historyQueryId: string;
   southConnectorId: string | null;
-  commandContent: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
+  commandContent: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings>;
 }
 
 export interface OIBusTestHistoryQuerySouthItemConnectionCommand extends BaseOIBusCommand {
@@ -216,8 +216,8 @@ export interface OIBusTestHistoryQuerySouthItemConnectionCommand extends BaseOIB
   southConnectorId: string | null;
   itemId: string;
   commandContent: {
-    historyCommand: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings>;
-    itemCommand: HistoryQueryItemCommandDTO<SouthItemSettings>;
+    historyCommand: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings, NorthItemSettings>;
+    itemCommand: HistoryQuerySouthItemCommandDTO<SouthItemSettings>;
     testingSettings: SouthConnectorItemTestingSettings;
   };
 }
