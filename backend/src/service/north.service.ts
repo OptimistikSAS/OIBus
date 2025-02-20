@@ -15,6 +15,7 @@ import fileWriterManifest from '../north/north-file-writer/manifest';
 import consoleManifest from '../north/north-console/manifest';
 import amazonManifest from '../north/north-amazon-s3/manifest';
 import sftpManifest from '../north/north-sftp/manifest';
+import restManifest from '../north/north-rest/manifest';
 import { NorthConnectorEntity, NorthConnectorEntityLight } from '../model/north-connector.model';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
@@ -32,6 +33,7 @@ import {
   NorthConsoleSettings,
   NorthFileWriterSettings,
   NorthOIAnalyticsSettings,
+  NorthRESTSettings,
   NorthSettings,
   NorthSFTPSettings
 } from '../../shared/model/north-settings.model';
@@ -42,6 +44,7 @@ import NorthAzureBlob from '../north/north-azure-blob/north-azure-blob';
 import NorthFileWriter from '../north/north-file-writer/north-file-writer';
 import NorthOIAnalytics from '../north/north-oianalytics/north-oianalytics';
 import NorthSFTP from '../north/north-sftp/north-sftp';
+import NorthREST from '../north/north-rest/north-rest';
 import DataStreamEngine from '../engine/data-stream-engine';
 import { SouthConnectorEntityLight } from '../model/south-connector.model';
 import { PassThrough } from 'node:stream';
@@ -57,7 +60,8 @@ export const northManifestList: Array<NorthConnectorManifest> = [
   azureManifest,
   amazonManifest,
   fileWriterManifest,
-  sftpManifest
+  sftpManifest,
+  restManifest
 ];
 
 export default class NorthService {
@@ -133,6 +137,15 @@ export default class NorthService {
       case 'sftp':
         return new NorthSFTP(
           settings as NorthConnectorEntity<NorthSFTPSettings>,
+          this.encryptionService,
+          this.northConnectorRepository,
+          this.scanModeRepository,
+          logger,
+          northBaseFolders
+        );
+      case 'rest':
+        return new NorthREST(
+          settings as NorthConnectorEntity<NorthRESTSettings>,
           this.encryptionService,
           this.northConnectorRepository,
           this.scanModeRepository,
