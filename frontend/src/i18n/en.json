@@ -190,7 +190,8 @@
       "console": "Console",
       "file-writer": "File writer",
       "oianalytics": "OIAnalytics®",
-      "sftp": "SFTP"
+      "sftp": "SFTP",
+      "rest": "REST"
     },
     "oibus-north-type-description": {
       "aws-s3": "Store files in Amazon S3™ (Simple Storage Service)",
@@ -198,7 +199,8 @@
       "console": "Display filenames or values in Console (used for debug)",
       "file-writer": "Write files and data to the output folder",
       "oianalytics": "Send files and values to OIAnalytics®",
-      "sftp": "Upload files and data to an SFTP server"
+      "sftp": "Upload files and data to an SFTP server",
+      "rest": "Upload files to a REST endpoint"
     },
     "oibus-south-category": {
       "iot": "IOT",
@@ -1714,6 +1716,33 @@
       "private-key": "Private key",
       "passphrase": "Passphrase",
       "compression": "Compress files"
+    },
+    "rest": {
+      "endpoint": "Endpoint",
+      "test-path": "Test path",
+      "auth-type": {
+        "title": "Authentication type",
+        "bearer": "Bearer Auth"
+      },
+      "auth": {
+        "title": "Authentication type",
+        "basic": "Basic Auth",
+        "bearer": "Bearer Auth",
+        "bearer-token": "Bearer token",
+        "basic-username": "Username",
+        "basic-password": "Password"
+      },
+      "query-params": {
+        "query-param": "Query params",
+        "key": "Key",
+        "value": "Value"
+      },
+      "proxy": {
+        "title": "Use proxy",
+        "url": "Proxy URL",
+        "username": "Proxy username",
+        "password": "Proxy password"
+      }
     }
   },
   "logs": {
