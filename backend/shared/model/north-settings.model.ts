@@ -9,6 +9,9 @@ export const NORTH_O_I_ANALYTICS_SETTINGS_SPECIFIC_SETTINGS_AUTHENTICATIONS = ['
 export type NorthOIAnalyticsSettingsSpecificSettingsAuthentication =
   (typeof NORTH_O_I_ANALYTICS_SETTINGS_SPECIFIC_SETTINGS_AUTHENTICATIONS)[number];
 
+export const NORTH_R_E_S_T_SETTINGS_AUTH_TYPES = ['basic', 'bearer'] as const;
+export type NorthRESTSettingsAuthType = (typeof NORTH_R_E_S_T_SETTINGS_AUTH_TYPES)[number];
+
 export const NORTH_S_F_T_P_SETTINGS_AUTHENTICATIONS = ['password', 'private-key'] as const;
 export type NorthSFTPSettingsAuthentication = (typeof NORTH_S_F_T_P_SETTINGS_AUTHENTICATIONS)[number];
 
@@ -27,6 +30,11 @@ export interface NorthOIAnalyticsSettingsSpecificSettings {
   proxyUrl?: string;
   proxyUsername?: string | null;
   proxyPassword?: string | null;
+}
+
+export interface QueryParams {
+  key: string;
+  value: string;
 }
 
 export interface NorthAmazonS3Settings {
@@ -77,6 +85,20 @@ export interface NorthOIAnalyticsSettings {
   specificSettings?: NorthOIAnalyticsSettingsSpecificSettings | null;
 }
 
+export interface NorthRESTSettings {
+  endpoint: string;
+  testPath: string;
+  authType: NorthRESTSettingsAuthType;
+  bearerAuthToken?: string | null;
+  basicAuthUsername?: string;
+  basicAuthPassword?: string | null;
+  queryParams: Array<QueryParams> | null;
+  useProxy: boolean;
+  proxyUrl?: string;
+  proxyUsername?: string | null;
+  proxyPassword?: string | null;
+}
+
 export interface NorthSFTPSettings {
   host: string;
   port: number;
@@ -96,4 +118,5 @@ export type NorthSettings =
   | NorthConsoleSettings
   | NorthFileWriterSettings
   | NorthOIAnalyticsSettings
+  | NorthRESTSettings
   | NorthSFTPSettings;
