@@ -287,7 +287,7 @@ describe('SouthOLEDB', () => {
           json: () => ({
             recordCount: 2,
             content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
-            maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
+            maxInstant: '2020-03-01T00:00:00.000Z'
           })
         })
       )
@@ -297,7 +297,7 @@ describe('SouthOLEDB', () => {
           json: () => ({
             recordCount: 0,
             content: [],
-            maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
+            maxInstant: '2020-03-01T00:00:00.000Z'
           })
         })
       );
@@ -353,7 +353,7 @@ describe('SouthOLEDB', () => {
         json: () => ({
           recordCount: 2,
           content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
-          maxInstantRetrieved: startTime
+          maxInstant: startTime
         })
       })
     );
