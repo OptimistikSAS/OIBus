@@ -317,10 +317,10 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     };
     const response = await fetch(`${this.connector.settings.agentUrl}/api/odbc/${this.connector.id}/read`, fetchOptions);
     if (response.status === 200) {
-      const result: { recordCount: number; content: string; maxInstantRetrieved: Instant } = (await response.json()) as {
+      const result: { recordCount: number; content: string; maxInstant: Instant } = (await response.json()) as {
         recordCount: number;
         content: string;
-        maxInstantRetrieved: string;
+        maxInstant: Instant;
       };
       const requestDuration = DateTime.now().toMillis() - startRequest;
       this.logger.info(`Found ${result.recordCount} results for item ${item.name} in ${requestDuration} ms`);
@@ -338,8 +338,8 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
             this.addContent.bind(this),
             this.logger
           );
-          if (result.maxInstantRetrieved > startTime) {
-            updatedStartTime = result.maxInstantRetrieved;
+          if (result.maxInstant > startTime) {
+            updatedStartTime = result.maxInstant;
           }
         } else {
           this.logger.debug(`No result found for item ${item.name}. Request done in ${requestDuration} ms`);
