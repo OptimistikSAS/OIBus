@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.5.12](https://github.com/OptimistikSAS/OIBus/compare/v3.5.11...v3.5.12) (2025-02-24)
+
+
+### Bug Fixes
+
+* **south:** fix max instant for odbc and oledb ([1aa194d](https://github.com/OptimistikSAS/OIBus/commit/1aa194d63115ddf24fced386754e434e9b4ba8dc))
+
 ## [3.5.11](https://github.com/OptimistikSAS/OIBus/compare/v3.5.10...v3.5.11) (2025-02-18)
 
 
