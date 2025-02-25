@@ -19,9 +19,18 @@ const manifest: NorthConnectorManifest = {
     },
     {
       key: 'testPath',
-      translationKey: 'north.rest.test-path',
       type: 'OibText',
+      translationKey: 'north.rest.test-path',
       defaultValue: '/',
+      validators: [{ key: 'required' }],
+      class: 'col-3'
+    },
+    {
+      key: 'timeout',
+      type: 'OibNumber',
+      translationKey: 'north.rest.timeout',
+      defaultValue: 30,
+      unitLabel: 's',
       validators: [{ key: 'required' }],
       class: 'col-3'
     },

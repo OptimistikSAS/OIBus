@@ -29,7 +29,7 @@ import {
 import OianalyticsCommandController from '../controllers/oianalytics-command.controller';
 import ContentController from '../controllers/content.controller';
 import { Page } from '../../../shared/model/types';
-import { ChangePasswordCommand, UserDTO, UserCommandDTO, UserLight } from '../../../shared/model/user.model';
+import { ChangePasswordCommand, UserDTO, UserCommandDTO } from '../../../shared/model/user.model';
 import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '../../../shared/model/scan-mode.model';
 import { CertificateCommandDTO, CertificateDTO } from '../../../shared/model/certificate.model';
 import {

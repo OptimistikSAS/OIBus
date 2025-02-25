@@ -1718,6 +1718,7 @@
     "rest": {
       "endpoint": "Endpoint",
       "test-path": "Test path",
+      "timeout": "Timeout",
       "auth-type": {
         "title": "Authentication type",
         "bearer": "Bearer Auth"
