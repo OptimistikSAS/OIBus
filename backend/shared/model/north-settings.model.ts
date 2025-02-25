@@ -97,6 +97,7 @@ export interface NorthRESTSettings {
   proxyUrl?: string;
   proxyUsername?: string | null;
   proxyPassword?: string | null;
+  timeout: number;
 }
 
 export interface NorthSFTPSettings {
