@@ -12,9 +12,8 @@ import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
 import { filesExists } from '../../service/utils';
 import FormData from 'form-data';
-import fetch from 'node-fetch';
-import { URL, URLSearchParams } from 'node:url';
-import { createProxyAgent } from '../../service/proxy-agent';
+import { request, ProxyAgent } from 'undici';
+import { URL } from 'node:url';
 
 /**
  * Class Console - display values and file path into the console
@@ -44,46 +43,58 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
    * Handle the file by sending it over to the specified endpoint
    */
   async handleFile(filePath: string): Promise<void> {
-    let endpoint = this.connector.settings.endpoint;
-
     if (!(await filesExists(filePath))) {
       throw new Error(`File ${filePath} does not exist`);
     }
 
-    const { base } = path.parse(filePath);
-    const readStream = createReadStream(path.resolve(filePath));
-    const body = new FormData();
-    body.append('file', readStream, { filename: base });
+    const endpoint = this.connector.settings.endpoint;
 
+    // Get query params
     const queryParams = this.getQueryParams();
-    if (queryParams) {
-      endpoint += `?${queryParams}`;
-    }
-    const request = {
-      method: 'POST',
-      headers: new fetch.Headers(body.getHeaders()),
-      body,
-      agent: await this.getProxyAgent(endpoint)
-    };
+
+    // Create FormData with file
+    const { base } = path.parse(filePath);
+    const form = new FormData();
+    const fileStream = createReadStream(path.resolve(filePath));
+    form.append('file', fileStream, { filename: base });
+
+    const headers: Record<string, string> = form.getHeaders();
+
+    // Get proxy agent if needed
+    const proxyAgent = await this.getProxyAgent();
+
+    // Add authorization header if available
     const authHeader = await this.getAuthorizationHeader();
     if (authHeader) {
-      request.headers.append('Authorization', authHeader);
+      headers['Authorization'] = authHeader;
     }
 
+    let response;
     try {
-      await fetch(endpoint, request);
-    } catch (fetchError) {
-      let code: string | undefined;
-      if (fetchError instanceof fetch.FetchError) {
-        code = fetchError.code;
-      }
+      response = await request(endpoint, {
+        method: 'POST',
+        headers,
+        query: queryParams,
+        body: form,
+        dispatcher: proxyAgent,
+        signal: AbortSignal.timeout(this.connector.settings.timeout * 1000)
+      });
+    } catch (error) {
+      const message = this.getMessageFromError(error);
 
       throw {
-        message: `Fail to reach file endpoint ${endpoint}. ${fetchError}${code ? `, code: ${code}` : ''}`,
+        message: `Failed to reach file endpoint ${endpoint}; ${message}`,
         retry: true
       };
     } finally {
-      readStream.close();
+      if (!fileStream.closed) {
+        fileStream.close();
+      }
+    }
+
+    const ok = response.statusCode >= 200 && response.statusCode <= 299;
+    if (!ok) {
+      throw new Error(`HTTP request failed with status code ${response.statusCode} and message: ${await response.body.text()}`);
     }
   }
 
@@ -99,64 +110,88 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
     }
 
     const testEndpoint = `${origin}/${path}`;
-    const request = {
-      method: 'GET',
-      headers: new fetch.Headers(),
-      agent: await this.getProxyAgent(testEndpoint)
-    };
+    const headers: Record<string, string> = {};
+
+    // Get proxy agent if needed
+    const proxyAgent = await this.getProxyAgent();
+
+    // Add authorization header if available
     const authHeader = await this.getAuthorizationHeader();
     if (authHeader) {
-      request.headers.append('Authorization', authHeader);
+      headers['Authorization'] = authHeader;
     }
 
     let response;
     try {
-      response = await fetch(testEndpoint, request);
-    } catch (fetchError) {
-      let code: string | undefined;
-      if (fetchError instanceof fetch.FetchError) {
-        code = fetchError.code;
+      response = await request(testEndpoint, {
+        method: 'GET',
+        headers,
+        dispatcher: proxyAgent,
+        signal: AbortSignal.timeout(this.connector.settings.timeout * 1000)
+      });
+    } catch (error) {
+      const message = this.getMessageFromError(error);
+      throw new Error(`Failed to reach file endpoint ${testEndpoint}; ${message}`);
+    }
+
+    const ok = response.statusCode >= 200 && response.statusCode <= 299;
+    if (!ok) {
+      throw new Error(`HTTP request failed with status code ${response.statusCode} and message: ${await response.body.text()}`);
+    }
+  }
+
+  /**
+   * Get query parameters as an object
+   */
+  private getQueryParams(): Record<string, string> {
+    if (!this.connector.settings.queryParams) return {};
+
+    const queryParams: Record<string, string> = {};
+
+    for (const param of this.connector.settings.queryParams) {
+      queryParams[param.key] = param.value;
+    }
+
+    return queryParams;
+  }
+
+  /**
+   * Get proxy agent if proxy is enabled
+   * @throws Error if no proxy url is specified in settings
+   */
+  private async getProxyAgent() {
+    if (!this.connector.settings.useProxy) {
+      return;
+    }
+    if (!this.connector.settings.proxyUrl) {
+      throw new Error(`Proxy URL not specified`);
+    }
+
+    const options: ProxyAgent.Options = {
+      uri: this.connector.settings.proxyUrl
+    };
+
+    if (this.connector.settings.proxyUsername) {
+      const username = this.connector.settings.proxyUsername;
+      let password = this.connector.settings.proxyPassword;
+
+      if (password) {
+        password = await this.encryptionService.decryptText(password);
+      } else {
+        password = '';
       }
-      throw new Error(`Fetch error: ${fetchError}${code ? `, code: ${code}` : ''}`);
+
+      options.token = `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`;
     }
 
-    if (!response.ok) {
-      throw new Error(`HTTP request failed with status code ${response.status} and message: ${response.statusText}`);
-    }
+    return new ProxyAgent(options);
   }
 
-  private getQueryParams() {
-    if (!this.connector.settings.queryParams) return;
-
-    const params: ReadonlyArray<[string, string]> = this.connector.settings.queryParams.map(q => [q.key, q.value]);
-    const queryParams = new URLSearchParams(params);
-
-    if (queryParams.size > 0) {
-      return queryParams.toString();
-    }
-
-    return;
-  }
-
-  private async getProxyAgent(targetUrl: string) {
-    return createProxyAgent(
-      this.connector.settings.useProxy,
-      targetUrl,
-      this.connector.settings.useProxy
-        ? {
-            url: this.connector.settings.proxyUrl!,
-            username: this.connector.settings.proxyUsername!,
-            password: this.connector.settings.proxyPassword
-              ? await this.encryptionService.decryptText(this.connector.settings.proxyPassword)
-              : null
-          }
-        : null,
-      true // TODO: accept unauthorized?
-    );
-  }
-
-  private async getAuthorizationHeader() {
-    let header: string;
+  /**
+   * Get authorization header based on configured authentication type
+   */
+  private async getAuthorizationHeader(): Promise<string | undefined> {
+    let header: string | undefined = undefined;
 
     switch (this.connector.settings.authType) {
       case 'basic':
@@ -186,5 +221,39 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
     }
 
     return header;
+  }
+
+  /**
+   * Convert an unknown request error to a readable message
+   */
+  private getMessageFromError(error: unknown) {
+    if (!(error instanceof Error)) {
+      return String(error);
+    }
+
+    const errors: Array<Error> = [error];
+
+    if (error instanceof AggregateError) {
+      errors.push(...error.errors);
+    }
+
+    const messages: Array<string> = [];
+
+    for (const error of errors) {
+      let code: string | number | undefined = undefined;
+      let message: string | undefined = undefined;
+
+      if (error.message) {
+        message = `message: ${error.message}`;
+      }
+
+      if ('code' in error && error.code && (typeof error.code === 'string' || typeof error.code === 'number')) {
+        code = `code: ${error.code}`;
+      }
+
+      messages.push([message, code].filter(Boolean).join(', '));
+    }
+
+    return messages.join('; ');
   }
 }
