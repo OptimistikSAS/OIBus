@@ -6,8 +6,7 @@ import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-import ValueCacheServiceMock from '../../tests/__mocks__/service/cache/value-cache-service.mock';
-import FileCacheServiceMock from '../../tests/__mocks__/service/cache/file-cache-service.mock';
+import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
 import { OIBusTimeValue } from '../../../shared/model/engine.model';
 import csv from 'papaparse';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
@@ -18,6 +17,7 @@ import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { NorthFileWriterSettings } from '../../../shared/model/north-settings.model';
 import testData from '../../tests/utils/test-data';
 import { mockBaseFolders } from '../../tests/utils/test-utils';
+import CacheService from '../../service/cache/cache.service';
 
 jest.mock('node:fs/promises');
 
@@ -25,29 +25,28 @@ const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
-const valueCacheService = new ValueCacheServiceMock();
-const fileCacheService = new FileCacheServiceMock();
+const cacheService: CacheService = new CacheServiceMock();
 
 jest.mock(
-  '../../service/cache/value-cache.service',
+  '../../service/cache/cache.service',
   () =>
     function () {
-      return valueCacheService;
+      return cacheService;
     }
 );
-jest.mock(
-  '../../service/cache/file-cache.service',
-  () =>
-    function () {
-      return fileCacheService;
-    }
-);
-
 jest.mock('../../service/utils');
 jest.mock('papaparse');
 
 let configuration: NorthConnectorEntity<NorthFileWriterSettings>;
 let north: NorthFileWriter;
+
+const timeValues: Array<OIBusTimeValue> = [
+  {
+    timestamp: '2021-07-29T12:13:31.883Z',
+    data: { value: '666', quality: 'good' },
+    pointId: 'pointId'
+  }
+];
 
 describe('NorthFileWriter', () => {
   beforeEach(async () => {
@@ -75,14 +74,17 @@ describe('NorthFileWriter', () => {
   });
 
   it('should properly handle values', async () => {
-    const values: Array<OIBusTimeValue> = [
-      {
-        timestamp: '2021-07-29T12:13:31.883Z',
-        data: { value: '666', quality: 'good' },
-        pointId: 'pointId'
-      }
-    ];
-    await north.handleContent({ type: 'time-values', content: values });
+    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(timeValues));
+    await north.handleContent({
+      contentFile: '/path/to/file/example-123.json',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'time-values',
+      source: 'south',
+      options: {}
+    });
+    expect(fs.readFile).toHaveBeenCalledWith('/path/to/file/example-123.json', { encoding: 'utf-8' });
 
     const expectedFileName = `${configuration.settings.prefix}${new Date().getTime()}${configuration.settings.suffix}.csv`;
     const expectedOutputFolder = path.resolve(configuration.settings.outputFolder);
@@ -91,26 +93,37 @@ describe('NorthFileWriter', () => {
   });
 
   it('should properly catch handle values error', async () => {
-    const values: Array<OIBusTimeValue> = [
-      {
-        timestamp: '2021-07-29T12:13:31.883Z',
-        data: { value: '666', quality: 'good' },
-        pointId: 'pointId'
-      }
-    ];
+    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(timeValues));
     jest.spyOn(fs, 'writeFile').mockImplementationOnce(() => {
       throw new Error('Error handling values');
     });
-    await expect(north.handleValues(values)).rejects.toThrow('Error handling values');
+    await expect(
+      north.handleContent({
+        contentFile: '/path/to/file/example-123.json',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'time-values',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow('Error handling values');
   });
 
   it('should properly handle files', async () => {
     (fs.stat as jest.Mock).mockReturnValue({ size: 666 });
-    const filePath = '/path/to/file/example-123456.file';
     const expectedFileName = `${configuration.settings.prefix}example${configuration.settings.suffix}.file`;
     const expectedOutputFolder = path.resolve(configuration.settings.outputFolder);
-    await north.handleContent({ type: 'raw', filePath });
-    expect(fs.copyFile).toHaveBeenCalledWith(filePath, path.join(expectedOutputFolder, expectedFileName));
+    await north.handleContent({
+      contentFile: 'path/to/file/example-123456789.file',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'raw',
+      source: 'south',
+      options: {}
+    });
+    expect(fs.copyFile).toHaveBeenCalledWith('path/to/file/example-123456789.file', path.join(expectedOutputFolder, expectedFileName));
   });
 
   it('should properly catch handle file error', async () => {
@@ -118,8 +131,17 @@ describe('NorthFileWriter', () => {
     (fs.copyFile as jest.Mock).mockImplementationOnce(() => {
       throw new Error('Error handling files');
     });
-    const filePath = '/path/to/file/example-123456.file';
-    await expect(north.handleFile(filePath)).rejects.toThrow('Error handling files');
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example-123456789.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'raw',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow('Error handling files');
   });
 });
 
@@ -147,14 +169,16 @@ describe('NorthFileWriter without suffix or prefix', () => {
   });
 
   it('should properly handle values', async () => {
-    const values: Array<OIBusTimeValue> = [
-      {
-        timestamp: '2021-07-29T12:13:31.883Z',
-        data: { value: '666', quality: 'good' },
-        pointId: 'pointId'
-      }
-    ];
-    await north.handleValues(values);
+    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(timeValues));
+    await north.handleContent({
+      contentFile: '/path/to/file/example-123.json',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'time-values',
+      source: 'south',
+      options: {}
+    });
     const expectedFileName = `${new Date().getTime()}.csv`;
     const expectedOutputFolder = path.resolve(configuration.settings.outputFolder);
     const expectedPath = path.join(expectedOutputFolder, expectedFileName);
@@ -163,10 +187,17 @@ describe('NorthFileWriter without suffix or prefix', () => {
 
   it('should properly handle files', async () => {
     (fs.stat as jest.Mock).mockReturnValue({ size: 666 });
-    const filePath = '/path/to/file/example-123456.file';
     const expectedOutputFolder = path.resolve(configuration.settings.outputFolder);
-    await north.handleFile(filePath);
-    expect(fs.copyFile).toHaveBeenCalledWith(filePath, path.join(expectedOutputFolder, 'example.file'));
+    await north.handleContent({
+      contentFile: 'path/to/file/example-123456789.file',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'raw',
+      source: 'south',
+      options: {}
+    });
+    expect(fs.copyFile).toHaveBeenCalledWith('path/to/file/example-123456789.file', path.join(expectedOutputFolder, 'example.file'));
   });
 
   it('should have access to output folder', async () => {
