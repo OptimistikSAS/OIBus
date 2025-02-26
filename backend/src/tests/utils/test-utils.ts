@@ -30,6 +30,7 @@ import {
   SouthConnectorMetrics
 } from '../../../shared/model/engine.model';
 import { BaseFolders } from 'src/model/types';
+import { Readable, Writable } from 'node:stream';
 
 const CONFIG_TEST_DATABASE = path.resolve('src', 'tests', 'test-config.db');
 const CRYPTO_TEST_DATABASE = path.resolve('src', 'tests', 'test-crypto.db');
@@ -37,6 +38,27 @@ const LOGS_TEST_DATABASE = path.resolve('src', 'tests', 'test-logs.db');
 const CACHE_TEST_DATABASE = path.resolve('src', 'tests', 'test-cache.db');
 
 export const flushPromises = () => new Promise(jest.requireActual('timers').setImmediate);
+
+export function createMockWriteStream(): Writable & { data: Array<string> } {
+  const writtenData: Array<string> = [];
+
+  const stream = new Writable({
+    write(chunk, _encoding, callback) {
+      writtenData.push(chunk.toString()); // Store received data
+      callback(); // Notify that writing is done
+    }
+  });
+
+  return Object.assign(stream, { data: writtenData });
+}
+
+export function createMockReadStream(): Readable {
+  return new Readable({
+    read() {
+      return;
+    } // No need to override, just push data externally
+  });
+}
 
 export const initDatabase = async (database: 'config' | 'crypto' | 'cache' | 'logs', populate = true) => {
   switch (database) {
@@ -162,16 +184,17 @@ const createNorthMetrics = async (database: knex.Knex, northId: string, northMet
     .insert({
       north_id: northId,
       metrics_start: northMetrics.metricsStart,
-      nb_values: northMetrics.numberOfValuesSent,
-      nb_files: northMetrics.numberOfFilesSent,
       last_connection: northMetrics.lastConnection,
       last_run_start: northMetrics.lastRunStart,
       last_run_duration: northMetrics.lastRunDuration,
-      last_value: northMetrics.lastValueSent,
-      last_file: northMetrics.lastFileSent,
-      cache_size: northMetrics.cacheSize,
-      error_size: northMetrics.errorSize,
-      archive_size: northMetrics.archiveSize
+      content_sent_size: northMetrics.contentSentSize,
+      content_cached_size: northMetrics.contentCachedSize,
+      content_errored_size: northMetrics.contentErroredSize,
+      content_archived_size: northMetrics.contentArchivedSize,
+      last_content_sent: northMetrics.lastContentSent,
+      current_cache_size: northMetrics.currentCacheSize,
+      current_error_size: northMetrics.currentErrorSize,
+      current_archive_size: northMetrics.currentArchiveSize
     })
     .into('north_metrics');
 };
@@ -204,16 +227,17 @@ const createHistoryQueryMetrics = async (database: knex.Knex, historyQueryId: st
       last_south_run_duration: historyQueryMetrics.south.lastRunDuration,
       last_value_retrieved: historyQueryMetrics.south.lastValueRetrieved,
       last_file_retrieved: historyQueryMetrics.south.lastFileRetrieved,
-      nb_values_sent: historyQueryMetrics.north.numberOfValuesSent,
-      nb_files_sent: historyQueryMetrics.north.numberOfFilesSent,
-      last_value_sent: historyQueryMetrics.north.lastValueSent,
-      last_file_sent: historyQueryMetrics.north.lastFileSent,
+      content_sent_size: historyQueryMetrics.north.contentSentSize,
+      content_cached_size: historyQueryMetrics.north.contentCachedSize,
+      content_errored_size: historyQueryMetrics.north.contentErroredSize,
+      content_archived_size: historyQueryMetrics.north.contentArchivedSize,
+      last_content_sent: historyQueryMetrics.north.lastContentSent,
       last_north_connection: historyQueryMetrics.north.lastConnection,
       last_north_run_start: historyQueryMetrics.north.lastRunStart,
       last_north_run_duration: historyQueryMetrics.north.lastRunDuration,
-      north_cache_size: historyQueryMetrics.north.cacheSize,
-      north_error_size: historyQueryMetrics.north.errorSize,
-      north_archive_size: historyQueryMetrics.north.archiveSize
+      north_current_cache_size: historyQueryMetrics.north.currentCacheSize,
+      north_current_error_size: historyQueryMetrics.north.currentErrorSize,
+      north_current_archive_size: historyQueryMetrics.north.currentArchiveSize
     })
     .into('history_query_metrics');
 };
@@ -431,11 +455,12 @@ const createNorth = async (database: knex.Knex, north: NorthConnectorEntity<Nort
       caching_group_count: north.caching.oibusTimeValues.groupCount,
       caching_retry_interval: north.caching.retryInterval,
       caching_retry_count: north.caching.retryCount,
+      caching_run_min_delay: north.caching.runMinDelay,
       caching_max_send_count: north.caching.oibusTimeValues.maxSendCount,
       caching_send_file_immediately: north.caching.rawFiles.sendFileImmediately,
       caching_max_size: north.caching.maxSize,
-      archive_enabled: north.caching.rawFiles.archive.enabled,
-      archive_retention_duration: north.caching.rawFiles.archive.retentionDuration
+      archive_enabled: north.caching.archive.enabled,
+      archive_retention_duration: north.caching.archive.retentionDuration
     })
     .into('north_connectors');
 
@@ -552,11 +577,12 @@ const createHistoryQuery = async (
       caching_group_count: historyQuery.caching.oibusTimeValues.groupCount,
       caching_retry_interval: historyQuery.caching.retryInterval,
       caching_retry_count: historyQuery.caching.retryCount,
+      caching_run_min_delay: historyQuery.caching.runMinDelay,
       caching_max_send_count: historyQuery.caching.oibusTimeValues.maxSendCount,
       caching_send_file_immediately: historyQuery.caching.rawFiles.sendFileImmediately,
       caching_max_size: historyQuery.caching.maxSize,
-      archive_enabled: historyQuery.caching.rawFiles.archive.enabled,
-      archive_retention_duration: historyQuery.caching.rawFiles.archive.retentionDuration
+      archive_enabled: historyQuery.caching.archive.enabled,
+      archive_retention_duration: historyQuery.caching.archive.retentionDuration
     })
     .into('history_queries');
 
