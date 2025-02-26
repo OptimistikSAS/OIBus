@@ -670,17 +670,18 @@ export const toHistoryQueryDTO = <S extends SouthSettings, N extends NorthSettin
       scanModeId: historyQuery.caching.scanModeId,
       retryInterval: historyQuery.caching.retryInterval,
       retryCount: historyQuery.caching.retryCount,
+      runMinDelay: historyQuery.caching.runMinDelay,
       maxSize: historyQuery.caching.maxSize,
       oibusTimeValues: {
         groupCount: historyQuery.caching.oibusTimeValues.groupCount,
         maxSendCount: historyQuery.caching.oibusTimeValues.maxSendCount
       },
       rawFiles: {
-        sendFileImmediately: historyQuery.caching.rawFiles.sendFileImmediately,
-        archive: {
-          enabled: historyQuery.caching.rawFiles.archive.enabled,
-          retentionDuration: historyQuery.caching.rawFiles.archive.retentionDuration
-        }
+        sendFileImmediately: historyQuery.caching.rawFiles.sendFileImmediately
+      },
+      archive: {
+        enabled: historyQuery.caching.archive.enabled,
+        retentionDuration: historyQuery.caching.archive.retentionDuration
       }
     },
     items: historyQuery.items.map(item => toHistoryQueryItemDTO<I>(item, historyQuery.southType, encryptionService))
@@ -731,17 +732,18 @@ const copyHistoryQueryCommandToHistoryQueryEntity = async <S extends SouthSettin
     scanModeId: checkScanMode(scanModes, command.caching.scanModeId, command.caching.scanModeName),
     retryInterval: command.caching.retryInterval,
     retryCount: command.caching.retryCount,
+    runMinDelay: command.caching.runMinDelay,
     maxSize: command.caching.maxSize,
     oibusTimeValues: {
       groupCount: command.caching.oibusTimeValues.groupCount,
       maxSendCount: command.caching.oibusTimeValues.maxSendCount
     },
     rawFiles: {
-      sendFileImmediately: command.caching.rawFiles.sendFileImmediately,
-      archive: {
-        enabled: command.caching.rawFiles.archive.enabled,
-        retentionDuration: command.caching.rawFiles.archive.retentionDuration
-      }
+      sendFileImmediately: command.caching.rawFiles.sendFileImmediately
+    },
+    archive: {
+      enabled: command.caching.archive.enabled,
+      retentionDuration: command.caching.archive.retentionDuration
     }
   };
 
