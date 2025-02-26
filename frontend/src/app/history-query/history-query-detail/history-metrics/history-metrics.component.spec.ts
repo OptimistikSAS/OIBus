@@ -95,17 +95,18 @@ class TestComponent {
       scanModeId: 'scanModeId1',
       retryInterval: 1000,
       retryCount: 3,
+      runMinDelay: 200,
       maxSize: 30,
       oibusTimeValues: {
         groupCount: 1000,
         maxSendCount: 10000
       },
       rawFiles: {
-        sendFileImmediately: true,
-        archive: {
-          enabled: false,
-          retentionDuration: 0
-        }
+        sendFileImmediately: true
+      },
+      archive: {
+        enabled: false,
+        retentionDuration: 0
       }
     },
     items: []
@@ -125,13 +126,14 @@ class TestComponent {
       lastConnection: null,
       lastRunStart: null,
       lastRunDuration: null,
-      numberOfValuesSent: 11,
-      numberOfFilesSent: 11,
-      lastValueSent: null,
-      lastFileSent: null,
-      cacheSize: 10,
-      errorSize: 9,
-      archiveSize: 8
+      lastContentSent: null,
+      contentCachedSize: 11,
+      contentErroredSize: 22,
+      contentArchivedSize: 33,
+      contentSentSize: 44,
+      currentCacheSize: 10,
+      currentErrorSize: 9,
+      currentArchiveSize: 8
     },
     historyMetrics: {
       running: false,

@@ -170,25 +170,23 @@ describe('Repository with populated database', () => {
     it('should update metrics', () => {
       const newMetrics: NorthConnectorMetrics = JSON.parse(JSON.stringify(testData.north.metrics));
       newMetrics.metricsStart = testData.constants.dates.DATE_1;
-      newMetrics.numberOfFilesSent = 45;
-      newMetrics.lastValueSent = {
-        pointId: 'my reference',
-        timestamp: testData.constants.dates.DATE_3,
-        data: {
-          value: 'my value'
-        }
-      };
+      newMetrics.contentSentSize = 45;
+      newMetrics.contentCachedSize = 90;
+      newMetrics.lastContentSent = 'file.json';
       repository.updateMetrics(testData.north.list[0].id, newMetrics);
 
       const result = repository.getMetrics(testData.north.list[0].id)!;
       expect(result.metricsStart).toEqual(newMetrics.metricsStart);
-      expect(result.numberOfFilesSent).toEqual(newMetrics.numberOfFilesSent);
-      expect(result.lastValueSent).toEqual(newMetrics.lastValueSent);
+      expect(result.contentSentSize).toEqual(newMetrics.contentSentSize);
+      expect(result.contentCachedSize).toEqual(newMetrics.contentCachedSize);
+      expect(result.contentErroredSize).toEqual(newMetrics.contentErroredSize);
+      expect(result.contentArchivedSize).toEqual(newMetrics.contentArchivedSize);
+      expect(result.lastContentSent).toEqual(newMetrics.lastContentSent);
 
-      newMetrics.lastValueSent = null;
+      newMetrics.lastContentSent = null;
       repository.updateMetrics(testData.north.list[0].id, newMetrics);
       const resultWithoutValue = repository.getMetrics(testData.north.list[0].id)!;
-      expect(resultWithoutValue.lastValueSent).toEqual(null);
+      expect(resultWithoutValue.lastContentSent).toEqual(null);
     });
 
     it('should remove metrics', () => {
@@ -270,13 +268,7 @@ describe('Repository with populated database', () => {
           value: 'my value'
         }
       };
-      newMetrics.north.lastValueSent = {
-        pointId: 'my reference',
-        timestamp: testData.constants.dates.DATE_3,
-        data: {
-          value: 'my value'
-        }
-      };
+      newMetrics.north.lastContentSent = 'file.csv';
       repository.updateMetrics(testData.historyQueries.list[0].id, newMetrics);
 
       const result = repository.getMetrics(testData.historyQueries.list[0].id)!;
@@ -285,11 +277,11 @@ describe('Repository with populated database', () => {
       expect(result.south.lastValueRetrieved).toEqual(newMetrics.south.lastValueRetrieved);
 
       newMetrics.south.lastValueRetrieved = null;
-      newMetrics.north.lastValueSent = null;
+      newMetrics.north.lastContentSent = null;
       repository.updateMetrics(testData.historyQueries.list[0].id, newMetrics);
       const resultWithoutValue = repository.getMetrics(testData.historyQueries.list[0].id)!;
       expect(resultWithoutValue.south.lastValueRetrieved).toEqual(null);
-      expect(resultWithoutValue.north.lastValueSent).toEqual(null);
+      expect(resultWithoutValue.north.lastContentSent).toEqual(null);
     });
 
     it('should remove metrics', () => {
@@ -391,13 +383,14 @@ describe('Repository with empty database', () => {
         lastConnection: null,
         lastRunStart: null,
         lastRunDuration: null,
-        numberOfValuesSent: 0,
-        numberOfFilesSent: 0,
-        lastValueSent: null,
-        lastFileSent: null,
-        cacheSize: 0,
-        errorSize: 0,
-        archiveSize: 0
+        contentSentSize: 0,
+        contentCachedSize: 0,
+        contentErroredSize: 0,
+        contentArchivedSize: 0,
+        lastContentSent: null,
+        currentCacheSize: 0,
+        currentErrorSize: 0,
+        currentArchiveSize: 0
       });
     });
   });
@@ -421,13 +414,14 @@ describe('Repository with empty database', () => {
           lastConnection: null,
           lastRunStart: null,
           lastRunDuration: null,
-          numberOfValuesSent: 0,
-          numberOfFilesSent: 0,
-          lastValueSent: null,
-          lastFileSent: null,
-          cacheSize: 0,
-          errorSize: 0,
-          archiveSize: 0
+          contentSentSize: 0,
+          contentCachedSize: 0,
+          contentErroredSize: 0,
+          contentArchivedSize: 0,
+          lastContentSent: null,
+          currentCacheSize: 0,
+          currentErrorSize: 0,
+          currentArchiveSize: 0
         },
         south: {
           lastConnection: null,

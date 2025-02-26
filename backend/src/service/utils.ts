@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises';
-import { createReadStream, createWriteStream } from 'node:fs';
+import { createReadStream, createWriteStream, ReadStream, WriteStream } from 'node:fs';
 import zlib from 'node:zlib';
 import path from 'node:path';
 
@@ -14,7 +14,6 @@ import https from 'node:https';
 import http from 'node:http';
 import { EngineSettingsDTO, OIBusContent, OIBusInfo, OIBusTimeValue } from '../../shared/model/engine.model';
 import os from 'node:os';
-import { NorthCacheFiles } from '../../shared/model/north-connector.model';
 import cronstrue from 'cronstrue';
 import cronparser from 'cron-parser';
 import { ValidatedCronExpression } from '../../shared/model/scan-mode.model';
@@ -24,6 +23,7 @@ import { HistoryQueryItemDTO } from '../../shared/model/history-query.model';
 import { SouthItemSettings } from '../../shared/model/south-settings.model';
 import { EventEmitter } from 'node:events';
 import { BaseFolders } from '../model/types';
+import { pipeline, Readable, Writable } from 'node:stream';
 
 const COMPRESSION_LEVEL = 9;
 
@@ -101,10 +101,23 @@ export const createFolder = async (folder: string): Promise<void> => {
 /**
  * Create folders defined by the BaseFolders type
  */
-export const createBaseFolders = async (baseFoldes: BaseFolders) => {
-  for (const type of Object.keys(baseFoldes) as Array<keyof BaseFolders>) {
-    await createFolder(baseFoldes[type]);
+export const createBaseFolders = async (baseFolders: BaseFolders) => {
+  for (const type of Object.keys(baseFolders) as Array<keyof BaseFolders>) {
+    await createFolder(baseFolders[type]);
   }
+};
+
+export const pipeTransformers = async (readStream: ReadStream | Readable, writeStream: WriteStream | Writable): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    // Use `pipeline` to safely chain streams
+    pipeline(readStream, writeStream, err => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
 };
 
 /**
@@ -525,40 +538,6 @@ export const getPlatformFromOsType = (osType: string): string => {
     default:
       return 'unknown';
   }
-};
-
-/**
- * Returns file metadata from the folder based on filters.
- */
-export const getFilesFiltered = async (
-  folder: string,
-  fromDate: Instant | null,
-  toDate: Instant | null,
-  nameFilter: string | null,
-  logger: pino.Logger
-): Promise<Array<NorthCacheFiles>> => {
-  const filenames = await fs.readdir(folder);
-  const filteredFilenames: Array<NorthCacheFiles> = [];
-  for (const filename of filenames) {
-    try {
-      const stats = await fs.stat(path.join(folder, filename));
-
-      const dateIsSuperiorToStart = fromDate ? stats.mtimeMs >= DateTime.fromISO(fromDate).toMillis() : true;
-      const dateIsInferiorToEnd = toDate ? stats.mtimeMs <= DateTime.fromISO(toDate).toMillis() : true;
-      const dateIsBetween = dateIsSuperiorToStart && dateIsInferiorToEnd;
-      const filenameContains = nameFilter ? filename.toUpperCase().includes(nameFilter.toUpperCase()) : true;
-      if (dateIsBetween && filenameContains) {
-        filteredFilenames.push({
-          filename,
-          modificationDate: DateTime.fromMillis(stats.mtimeMs).toUTC().toISO() as Instant,
-          size: stats.size
-        });
-      }
-    } catch (error) {
-      logger.error(`Error while reading in ${path.basename(folder)} folder file stats "${path.join(folder, filename)}": ${error}`);
-    }
-  }
-  return filteredFilenames;
 };
 
 /**

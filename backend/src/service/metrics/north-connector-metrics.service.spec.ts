@@ -29,67 +29,98 @@ describe('NorthConnectorMetricsService', () => {
     northMock.metricsEvent.emit('cache-size', { cacheSize: 999, errorSize: 888, archiveSize: 777 });
     expect(northConnectorMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.north.list[0].id, {
       ...testData.north.metrics,
-      cacheSize: 999,
-      errorSize: 888,
-      archiveSize: 777
+      currentCacheSize: 999,
+      currentErrorSize: 888,
+      currentArchiveSize: 777
     });
 
     northMock.metricsEvent.emit('connect', { lastConnection: testData.constants.dates.DATE_1 });
     expect(northConnectorMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.north.list[0].id, {
       ...testData.north.metrics,
-      cacheSize: 999,
-      errorSize: 888,
-      archiveSize: 777,
+      currentCacheSize: 999,
+      currentErrorSize: 888,
+      currentArchiveSize: 777,
       lastConnection: testData.constants.dates.DATE_1
     });
 
     northMock.metricsEvent.emit('run-start', { lastRunStart: testData.constants.dates.DATE_2 });
     expect(northConnectorMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.north.list[0].id, {
       ...testData.north.metrics,
-      cacheSize: 999,
-      errorSize: 888,
-      archiveSize: 777,
+      currentCacheSize: 999,
+      currentErrorSize: 888,
+      currentArchiveSize: 777,
       lastConnection: testData.constants.dates.DATE_1,
       lastRunStart: testData.constants.dates.DATE_2
     });
 
-    northMock.metricsEvent.emit('run-end', { lastRunDuration: 888 });
-    expect(northConnectorMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.north.list[0].id, {
-      ...testData.north.metrics,
-      cacheSize: 999,
-      errorSize: 888,
-      archiveSize: 777,
-      lastConnection: testData.constants.dates.DATE_1,
-      lastRunStart: testData.constants.dates.DATE_2,
-      lastRunDuration: 888
+    northMock.metricsEvent.emit('run-end', {
+      lastRunDuration: 888,
+      metadata: { contentSize: 10, contentFile: 'file.csv' },
+      action: 'sent'
     });
-
-    northMock.metricsEvent.emit('send-values', { numberOfValuesSent: 10, lastValueSent: {} });
     expect(northConnectorMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.north.list[0].id, {
       ...testData.north.metrics,
-      cacheSize: 999,
-      errorSize: 888,
-      archiveSize: 777,
+      currentCacheSize: 999,
+      currentErrorSize: 888,
+      currentArchiveSize: 777,
       lastConnection: testData.constants.dates.DATE_1,
       lastRunStart: testData.constants.dates.DATE_2,
       lastRunDuration: 888,
-      numberOfValuesSent: testData.north.metrics.numberOfValuesSent + 10,
-      lastValueSent: {}
+      contentSentSize: testData.north.metrics.contentSentSize + 10,
+      lastContentSent: 'file.csv'
     });
 
-    northMock.metricsEvent.emit('send-file', { lastFileSent: 'last file sent' });
+    northMock.metricsEvent.emit('run-end', {
+      lastRunDuration: 888,
+      metadata: { contentSize: 10, contentFile: 'file.csv' },
+      action: 'archived'
+    });
     expect(northConnectorMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.north.list[0].id, {
       ...testData.north.metrics,
-      cacheSize: 999,
-      errorSize: 888,
-      archiveSize: 777,
+      currentCacheSize: 999,
+      currentErrorSize: 888,
+      currentArchiveSize: 777,
       lastConnection: testData.constants.dates.DATE_1,
       lastRunStart: testData.constants.dates.DATE_2,
       lastRunDuration: 888,
-      numberOfValuesSent: testData.north.metrics.numberOfValuesSent + 10,
-      lastValueSent: {},
-      lastFileSent: 'last file sent',
-      numberOfFilesSent: testData.north.metrics.numberOfFilesSent + 1
+      contentSentSize: testData.north.metrics.contentSentSize + 20,
+      contentArchivedSize: testData.north.metrics.contentArchivedSize + 10,
+      lastContentSent: 'file.csv'
+    });
+
+    northMock.metricsEvent.emit('run-end', {
+      lastRunDuration: 888,
+      metadata: { contentSize: 10, contentFile: 'file.csv' },
+      action: 'errored'
+    });
+    expect(northConnectorMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.north.list[0].id, {
+      ...testData.north.metrics,
+      currentCacheSize: 999,
+      currentErrorSize: 888,
+      currentArchiveSize: 777,
+      lastConnection: testData.constants.dates.DATE_1,
+      lastRunStart: testData.constants.dates.DATE_2,
+      lastRunDuration: 888,
+      contentSentSize: testData.north.metrics.contentSentSize + 20,
+      contentArchivedSize: testData.north.metrics.contentArchivedSize + 10,
+      contentErroredSize: testData.north.metrics.contentErroredSize + 10,
+      lastContentSent: 'file.csv'
+    });
+
+    northMock.metricsEvent.emit('cache-content-size', 123);
+    expect(northConnectorMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.north.list[0].id, {
+      ...testData.north.metrics,
+      currentCacheSize: 999,
+      currentErrorSize: 888,
+      currentArchiveSize: 777,
+      lastConnection: testData.constants.dates.DATE_1,
+      lastRunStart: testData.constants.dates.DATE_2,
+      lastRunDuration: 888,
+      contentCachedSize: testData.north.metrics.contentCachedSize + 123,
+      contentSentSize: testData.north.metrics.contentSentSize + 20,
+      contentArchivedSize: testData.north.metrics.contentArchivedSize + 10,
+      contentErroredSize: testData.north.metrics.contentErroredSize + 10,
+      lastContentSent: 'file.csv'
     });
   });
 

@@ -1,6 +1,5 @@
 import { KoaContext } from '../koa';
 import {
-  NorthCacheFiles,
   NorthConnectorCommandDTO,
   NorthConnectorDTO,
   NorthConnectorLightDTO,
@@ -10,6 +9,8 @@ import {
 import JoiValidator from './validators/joi.validator';
 import { toNorthConnectorDTO, toNorthConnectorLightDTO } from '../../service/north.service';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { CacheMetadata } from '../../../shared/model/engine.model';
+import { ReadStream } from 'node:fs';
 
 export default class NorthConnectorController {
   constructor(protected readonly validator: JoiValidator) {}
@@ -96,21 +97,36 @@ export default class NorthConnectorController {
     ctx.noContent();
   }
 
-  async getErrorFiles(ctx: KoaContext<void, Array<NorthCacheFiles>>): Promise<void> {
-    const filenameContains = (ctx.query.filenameContains as string) || null;
-    const startTime = (ctx.query.start as string) || null;
-    const endTime = (ctx.query.end as string) || null;
-    const errorFiles: Array<NorthCacheFiles> = await ctx.app.northService.getErrorFiles(
+  async searchCacheContent(ctx: KoaContext<void, Array<{ metadataFilename: string; metadata: CacheMetadata }>>): Promise<void> {
+    const nameContains = (ctx.query.nameContains as string) || null;
+    const start = (ctx.query.start as string) || null;
+    const end = (ctx.query.end as string) || null;
+    const folder = (ctx.query.folder as string) || '';
+    if (!['cache', 'archive', 'error'].includes(folder)) {
+      return ctx.badRequest('A folder must be specified among "cache", "error" or "archive"');
+    }
+    const cacheContentList: Array<{ metadataFilename: string; metadata: CacheMetadata }> = await ctx.app.northService.searchCacheContent(
       ctx.params.northId,
-      startTime,
-      endTime,
-      filenameContains
+      { start: start, end: end, nameContains },
+      folder as 'cache' | 'archive' | 'error'
     );
-    ctx.ok(errorFiles);
+    ctx.ok(cacheContentList);
   }
 
-  async getErrorFileContent(ctx: KoaContext<void, void>): Promise<void> {
-    const fileStream = await ctx.app.northService.getErrorFileContent(ctx.params.northId, ctx.params.filename);
+  async getCacheContentFileStream(ctx: KoaContext<void, ReadStream>): Promise<void> {
+    const folder = (ctx.query.folder as string) || '';
+    const filename = (ctx.params.filename as string) || '';
+    if (!['cache', 'archive', 'error'].includes(folder)) {
+      return ctx.badRequest('A folder must be specified among "cache", "error" or "archive"');
+    }
+    if (!filename) {
+      return ctx.badRequest('A filename must be specified');
+    }
+    const fileStream = await ctx.app.northService.getCacheContentFileStream(
+      ctx.params.northId,
+      folder as 'cache' | 'archive' | 'error',
+      filename
+    );
     if (!fileStream) {
       return ctx.notFound();
     }
@@ -118,163 +134,62 @@ export default class NorthConnectorController {
     ctx.ok(fileStream);
   }
 
-  async removeErrorFiles(ctx: KoaContext<Array<string>, void>): Promise<void> {
+  async removeCacheContent(ctx: KoaContext<Array<string>, void>): Promise<void> {
+    const folder = (ctx.query.folder as string) || '';
+    if (!['cache', 'archive', 'error'].includes(folder)) {
+      return ctx.badRequest('A folder must be specified among "cache", "error" or "archive"');
+    }
     if (!Array.isArray(ctx.request.body)) {
       return ctx.badRequest('Invalid file list');
     }
-    await ctx.app.northService.removeErrorFiles(ctx.params.northId, ctx.request.body);
+    await ctx.app.northService.removeCacheContent(ctx.params.northId, folder as 'cache' | 'archive' | 'error', ctx.request.body);
     ctx.noContent();
   }
 
-  async retryErrorFiles(ctx: KoaContext<Array<string>, void>): Promise<void> {
+  async removeAllCacheContent(ctx: KoaContext<void, void>): Promise<void> {
+    const folder = (ctx.query.folder as string) || '';
+    if (!['cache', 'archive', 'error'].includes(folder)) {
+      return ctx.badRequest('A folder must be specified among "cache", "error" or "archive"');
+    }
+    await ctx.app.northService.removeAllCacheContent(ctx.params.northId, folder as 'cache' | 'archive' | 'error');
+    ctx.noContent();
+  }
+
+  async moveCacheContent(ctx: KoaContext<Array<string>, void>): Promise<void> {
+    const originFolder = (ctx.query.originFolder as string) || '';
+    if (!['cache', 'archive', 'error'].includes(originFolder)) {
+      return ctx.badRequest('The originFolder must be specified among "cache", "error" or "archive"');
+    }
+    const destinationFolder = (ctx.query.destinationFolder as string) || '';
+    if (!['cache', 'archive', 'error'].includes(destinationFolder)) {
+      return ctx.badRequest('The destinationFolder must be specified among "cache", "error" or "archive"');
+    }
     if (!Array.isArray(ctx.request.body)) {
       return ctx.badRequest('Invalid file list');
     }
-    await ctx.app.northService.retryErrorFiles(ctx.params.northId, ctx.request.body);
+    await ctx.app.northService.moveCacheContent(
+      ctx.params.northId,
+      originFolder as 'cache' | 'archive' | 'error',
+      destinationFolder as 'cache' | 'archive' | 'error',
+      ctx.request.body
+    );
     ctx.noContent();
   }
 
-  async removeAllErrorFiles(ctx: KoaContext<void, void>): Promise<void> {
-    await ctx.app.northService.removeAllErrorFiles(ctx.params.northId);
-    ctx.noContent();
-  }
-
-  async retryAllErrorFiles(ctx: KoaContext<void, void>): Promise<void> {
-    await ctx.app.northService.retryAllErrorFiles(ctx.params.northId);
-    ctx.noContent();
-  }
-
-  async getCacheFiles(ctx: KoaContext<void, Array<NorthCacheFiles>>): Promise<void> {
-    const filenameContains = (ctx.query.filenameContains as string) || null;
-    const startTime = (ctx.query.start as string) || null;
-    const endTime = (ctx.query.end as string) || null;
-    const cacheFiles = await ctx.app.northService.getCacheFiles(ctx.params.northId, startTime, endTime, filenameContains);
-    ctx.ok(cacheFiles);
-  }
-
-  async getCacheFileContent(ctx: KoaContext<void, void>): Promise<void> {
-    const fileStream = await ctx.app.northService.getCacheFileContent(ctx.params.northId, ctx.params.filename);
-    if (!fileStream) {
-      return ctx.notFound();
+  async moveAllCacheContent(ctx: KoaContext<void, void>): Promise<void> {
+    const originFolder = (ctx.query.originFolder as string) || '';
+    if (!['cache', 'archive', 'error'].includes(originFolder)) {
+      return ctx.badRequest('The originFolder must be specified among "cache", "error" or "archive"');
     }
-    ctx.attachment(ctx.params.filename);
-    ctx.ok(fileStream);
-  }
-
-  async removeCacheFiles(ctx: KoaContext<Array<string>, void>): Promise<void> {
-    if (!Array.isArray(ctx.request.body)) {
-      return ctx.badRequest('Invalid file list');
+    const destinationFolder = (ctx.query.destinationFolder as string) || '';
+    if (!['cache', 'archive', 'error'].includes(destinationFolder)) {
+      return ctx.badRequest('The destinationFolder must be specified among "cache", "error" or "archive"');
     }
-    await ctx.app.northService.removeCacheFiles(ctx.params.northId, ctx.request.body);
-    ctx.noContent();
-  }
-
-  async archiveCacheFiles(ctx: KoaContext<Array<string>, void>): Promise<void> {
-    if (!Array.isArray(ctx.request.body)) {
-      return ctx.badRequest('Invalid file list');
-    }
-    await ctx.app.northService.archiveCacheFiles(ctx.params.northId, ctx.request.body);
-    ctx.noContent();
-  }
-
-  async removeAllCacheFiles(ctx: KoaContext<void, void>): Promise<void> {
-    await ctx.app.northService.removeAllCacheFiles(ctx.params.northId);
-    ctx.noContent();
-  }
-
-  async getArchiveFiles(ctx: KoaContext<void, void>): Promise<void> {
-    const filenameContains = (ctx.query.filenameContains as string) || null;
-    const startTime = (ctx.query.start as string) || null;
-    const endTime = (ctx.query.end as string) || null;
-    const archiveFiles = await ctx.app.northService.getArchiveFiles(ctx.params.northId, startTime, endTime, filenameContains);
-    ctx.ok(archiveFiles);
-  }
-
-  async getArchiveFileContent(ctx: KoaContext<void, void>): Promise<void> {
-    const fileStream = await ctx.app.northService.getArchiveFileContent(ctx.params.northId, ctx.params.filename);
-    if (!fileStream) {
-      return ctx.notFound();
-    }
-    ctx.attachment(ctx.params.filename);
-    ctx.ok(fileStream);
-  }
-
-  async removeArchiveFiles(ctx: KoaContext<Array<string>, void>): Promise<void> {
-    if (!Array.isArray(ctx.request.body)) {
-      return ctx.badRequest('Invalid file list');
-    }
-    await ctx.app.northService.removeArchiveFiles(ctx.params.northId, ctx.request.body);
-    ctx.noContent();
-  }
-
-  async retryArchiveFiles(ctx: KoaContext<Array<string>, void>): Promise<void> {
-    if (!Array.isArray(ctx.request.body)) {
-      return ctx.badRequest('Invalid file list');
-    }
-    await ctx.app.northService.retryArchiveFiles(ctx.params.northId, ctx.request.body);
-    ctx.noContent();
-  }
-
-  async removeAllArchiveFiles(ctx: KoaContext<void, void>): Promise<void> {
-    await ctx.app.northService.removeAllArchiveFiles(ctx.params.northId);
-    ctx.noContent();
-  }
-
-  async retryAllArchiveFiles(ctx: KoaContext<void, void>): Promise<void> {
-    await ctx.app.northService.retryAllArchiveFiles(ctx.params.northId);
-    ctx.noContent();
-  }
-
-  async getCacheValues(ctx: KoaContext<void, Array<NorthCacheFiles>>): Promise<void> {
-    const filenameContains = (ctx.query.filenameContains as string) || '';
-    const cacheValues = await ctx.app.northService.getCacheValues(ctx.params.northId, filenameContains);
-    ctx.ok(cacheValues);
-  }
-
-  async removeCacheValues(ctx: KoaContext<Array<string>, void>): Promise<void> {
-    if (!Array.isArray(ctx.request.body)) {
-      return ctx.badRequest('Invalid file list');
-    }
-    await ctx.app.northService.removeCacheValues(ctx.params.northId, ctx.request.body);
-    ctx.noContent();
-  }
-
-  async removeAllCacheValues(ctx: KoaContext<void, void>): Promise<void> {
-    await ctx.app.northService.removeAllCacheValues(ctx.params.northId);
-    ctx.noContent();
-  }
-
-  async getErrorValues(ctx: KoaContext<void, void>): Promise<void> {
-    const filenameContains = (ctx.query.filenameContains as string) || null;
-    const startTime = (ctx.query.start as string) || null;
-    const endTime = (ctx.query.end as string) || null;
-    const errorValues = await ctx.app.northService.getErrorValues(ctx.params.northId, startTime, endTime, filenameContains);
-    ctx.ok(errorValues);
-  }
-
-  async removeErrorValues(ctx: KoaContext<Array<string>, void>): Promise<void> {
-    if (!Array.isArray(ctx.request.body)) {
-      return ctx.badRequest('Invalid file list');
-    }
-    await ctx.app.northService.removeErrorValues(ctx.params.northId, ctx.request.body);
-    ctx.noContent();
-  }
-
-  async retryErrorValues(ctx: KoaContext<Array<string>, void>): Promise<void> {
-    if (!Array.isArray(ctx.request.body)) {
-      return ctx.badRequest('Invalid file list');
-    }
-    await ctx.app.northService.retryErrorValues(ctx.params.northId, ctx.request.body);
-    ctx.noContent();
-  }
-
-  async removeAllErrorValues(ctx: KoaContext<void, void>): Promise<void> {
-    await ctx.app.northService.removeAllErrorValues(ctx.params.northId);
-    ctx.noContent();
-  }
-
-  async retryAllErrorValues(ctx: KoaContext<void, void>): Promise<void> {
-    await ctx.app.northService.retryAllErrorValues(ctx.params.northId);
+    await ctx.app.northService.moveAllCacheContent(
+      ctx.params.northId,
+      originFolder as 'cache' | 'archive' | 'error',
+      destinationFolder as 'cache' | 'archive' | 'error'
+    );
     ctx.noContent();
   }
 

@@ -1563,6 +1563,7 @@
       "send-scan-mode": "Send interval",
       "retry-interval": "Retry interval",
       "retry-count": "Retry count",
+      "run-min-delay": "Run min delay",
       "group-count": "Group count",
       "max-send-count": "Max send count",
       "max-size": "Max size",
@@ -1600,6 +1601,7 @@
       }
     },
     "archive-settings": {
+      "title": "Archive",
       "enabled": "Enable archive",
       "retention-duration": "Archive retention duration"
     },
@@ -1623,17 +1625,16 @@
       "reset-metrics": "Reset metrics",
       "metrics-reset": "Metrics successfully reset",
       "metrics-start": "Metrics started on {{ start }}",
-      "number-of-values": "Number of values sent",
-      "number-of-files": "Number of files sent",
       "last-connection": "Last connection",
-      "last-file": "Last file sent",
-      "last-value": "Last value sent",
-      "last-value-content": "{{ pointId }} at {{ timestamp }} with content {{ data }}",
+      "last-content-sent": "Last content sent",
       "last-run-start": "Last run",
       "last-run-duration": "Last run duration",
-      "cache-size": "Cache folder size",
-      "error-size": "Error folder size",
-      "archive-size": "Archive folder size"
+      "cache-size-title": "Cache size",
+      "cache-size-value": "Current size: {{ currentSize }} / Total cached: {{ totalCached }} / Total sent: {{ totalSent }}",
+      "error-size-title": "Error size",
+      "error-size-value": "Current size: {{ currentSize }} / Total errored: {{ totalSize }}",
+      "archive-size-title": "Archive size",
+      "archive-size-value": "Current size: {{ currentSize }} / Total archived: {{ totalSize }}"
     },
     "cache": {
       "title": "Cache content for connector {{ name }}"
@@ -1852,12 +1853,14 @@
         "reset-metrics": "Reset metrics",
         "metrics-reset": "Metrics successfully reset",
         "metrics-start": "Metrics started on {{ start }}",
-        "number-of-values": "Number of values sent",
-        "number-of-files": "Number of files sent",
+        "cache-size-title": "Cache size",
+        "cache-size-value": "Current size: {{ currentSize }} / Total cached: {{ totalCached }} / Total sent: {{ totalSent }}",
+        "error-size-title": "Error size",
+        "error-size-value": "Current size: {{ currentSize }} / Total errored: {{ totalSize }}",
+        "archive-size-title": "Archive size",
+        "archive-size-value": "Current size: {{ currentSize }} / Total archived: {{ totalSize }}",
+        "last-content-sent": "Last content sent",
         "last-connection": "Last connection",
-        "last-file": "Last file sent",
-        "last-value": "Last value sent",
-        "last-value-content": "{{ pointId }} at {{ timestamp }} with content {{ data }}",
         "last-run-start": "Last run",
         "last-run-duration": "Last run duration",
         "data-sent": "Data sent"

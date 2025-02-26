@@ -43,7 +43,6 @@ import {
   SouthType
 } from '../../../shared/model/south-connector.model';
 import {
-  NorthCacheFiles,
   NorthConnectorCommandDTO,
   NorthConnectorDTO,
   NorthConnectorLightDTO,
@@ -52,6 +51,7 @@ import {
 } from '../../../shared/model/north-connector.model';
 import { IPFilterCommandDTO, IPFilterDTO } from '../../../shared/model/ip-filter.model';
 import {
+  CacheMetadata,
   EngineSettingsCommandDTO,
   EngineSettingsDTO,
   OIBusContent,
@@ -70,6 +70,7 @@ import { LogDTO, LogStreamCommandDTO, Scope } from '../../../shared/model/logs.m
 import { OIBusCommandDTO } from '../../../shared/model/command.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
+import { ReadStream } from 'node:fs';
 
 const joiValidator = new JoiValidator();
 const scanModeController = new ScanModeController(joiValidator, scanModeSchema);
@@ -164,78 +165,25 @@ router.get('/api/north/:northId/subscriptions', (ctx: KoaContext<void, Array<Sou
 );
 router.post('/api/north/:northId/subscriptions/:southId', (ctx: KoaContext<void, void>) => subscriptionController.create(ctx));
 router.delete('/api/north/:northId/subscriptions/:southId', (ctx: KoaContext<void, void>) => subscriptionController.delete(ctx));
-router.get('/api/north/:northId/cache/file-errors', (ctx: KoaContext<void, Array<NorthCacheFiles>>) =>
-  northConnectorController.getErrorFiles(ctx)
+router.get('/api/north/:northId/cache/content', (ctx: KoaContext<void, Array<{ metadataFilename: string; metadata: CacheMetadata }>>) =>
+  northConnectorController.searchCacheContent(ctx)
 );
-router.get('/api/north/:northId/cache/file-errors/:filename', (ctx: KoaContext<void, void>) =>
-  northConnectorController.getErrorFileContent(ctx)
+router.get('/api/north/:northId/cache/content/:filename', (ctx: KoaContext<void, ReadStream>) =>
+  northConnectorController.getCacheContentFileStream(ctx)
 );
-router.post('/api/north/:northId/cache/file-errors/remove', (ctx: KoaContext<Array<string>, void>) =>
-  northConnectorController.removeErrorFiles(ctx)
+router.post('/api/north/:northId/cache/cache/remove', (ctx: KoaContext<Array<string>, void>) =>
+  northConnectorController.removeCacheContent(ctx)
 );
-router.post('/api/north/:northId/cache/file-errors/retry', (ctx: KoaContext<Array<string>, void>) =>
-  northConnectorController.retryErrorFiles(ctx)
+router.delete('/api/north/:northId/cache/cache/remove-all', (ctx: KoaContext<void, void>) =>
+  northConnectorController.removeAllCacheContent(ctx)
 );
-router.delete('/api/north/:northId/cache/file-errors/remove-all', (ctx: KoaContext<void, void>) =>
-  northConnectorController.removeAllErrorFiles(ctx)
+router.post('/api/north/:northId/cache/cache/move', (ctx: KoaContext<Array<string>, void>) =>
+  northConnectorController.moveCacheContent(ctx)
 );
-router.delete('/api/north/:northId/cache/file-errors/retry-all', (ctx: KoaContext<void, void>) =>
-  northConnectorController.retryAllErrorFiles(ctx)
+router.delete('/api/north/:northId/cache/cache/move-all', (ctx: KoaContext<void, void>) =>
+  northConnectorController.moveAllCacheContent(ctx)
 );
-
-router.get('/api/north/:northId/cache/files', (ctx: KoaContext<void, Array<NorthCacheFiles>>) =>
-  northConnectorController.getCacheFiles(ctx)
-);
-router.get('/api/north/:northId/cache/files/:filename', (ctx: KoaContext<void, void>) => northConnectorController.getCacheFileContent(ctx));
-router.post('/api/north/:northId/cache/files/remove', (ctx: KoaContext<Array<string>, void>) =>
-  northConnectorController.removeCacheFiles(ctx)
-);
-router.post('/api/north/:northId/cache/files/archive', (ctx: KoaContext<Array<string>, void>) =>
-  northConnectorController.archiveCacheFiles(ctx)
-);
-
-router.get('/api/north/:northId/cache/archive-files', (ctx: KoaContext<void, void>) => northConnectorController.getArchiveFiles(ctx));
-router.get('/api/north/:northId/cache/archive-files/:filename', (ctx: KoaContext<void, void>) =>
-  northConnectorController.getArchiveFileContent(ctx)
-);
-router.post('/api/north/:northId/cache/archive-files/remove', (ctx: KoaContext<Array<string>, void>) =>
-  northConnectorController.removeArchiveFiles(ctx)
-);
-router.post('/api/north/:northId/cache/archive-files/retry', (ctx: KoaContext<Array<string>, void>) =>
-  northConnectorController.retryArchiveFiles(ctx)
-);
-router.delete('/api/north/:northId/cache/archive-files/remove-all', (ctx: KoaContext<void, void>) =>
-  northConnectorController.removeAllArchiveFiles(ctx)
-);
-router.delete('/api/north/:northId/cache/archive-files/retry-all', (ctx: KoaContext<void, void>) =>
-  northConnectorController.retryAllArchiveFiles(ctx)
-);
-
 router.put('/api/north/:northId/cache/reset-metrics', (ctx: KoaContext<void, void>) => northConnectorController.resetMetrics(ctx));
-
-router.get('/api/north/:northId/cache/values', (ctx: KoaContext<void, Array<NorthCacheFiles>>) =>
-  northConnectorController.getCacheValues(ctx)
-);
-router.post('/api/north/:northId/cache/values/remove', (ctx: KoaContext<Array<string>, void>) =>
-  northConnectorController.removeCacheValues(ctx)
-);
-router.delete('/api/north/:northId/cache/values/remove-all', (ctx: KoaContext<void, void>) =>
-  northConnectorController.removeAllCacheValues(ctx)
-);
-
-router.get('/api/north/:northId/cache/value-errors', (ctx: KoaContext<void, void>) => northConnectorController.getErrorValues(ctx));
-router.post('/api/north/:northId/cache/value-errors/remove', (ctx: KoaContext<Array<string>, void>) =>
-  northConnectorController.removeErrorValues(ctx)
-);
-router.delete('/api/north/:northId/cache/value-errors/remove-all', (ctx: KoaContext<void, void>) =>
-  northConnectorController.removeAllErrorValues(ctx)
-);
-router.post('/api/north/:northId/cache/value-errors/retry', (ctx: KoaContext<Array<string>, void>) =>
-  northConnectorController.retryErrorValues(ctx)
-);
-router.delete('/api/north/:northId/cache/value-errors/retry-all', (ctx: KoaContext<void, void>) =>
-  northConnectorController.retryAllErrorValues(ctx)
-);
 
 router.get('/api/south-types', (ctx: KoaContext<void, Array<SouthType>>) => southConnectorController.getSouthConnectorTypes(ctx));
 router.get('/api/south-types/:id', (ctx: KoaContext<void, SouthConnectorManifest>) =>

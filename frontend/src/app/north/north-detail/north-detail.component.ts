@@ -169,17 +169,18 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
         scanModeName: null,
         retryInterval: this.northConnector!.caching.retryInterval,
         retryCount: this.northConnector!.caching.retryCount,
+        runMinDelay: this.northConnector!.caching.runMinDelay,
         maxSize: this.northConnector!.caching.maxSize,
         oibusTimeValues: {
           groupCount: this.northConnector!.caching.oibusTimeValues!.groupCount,
           maxSendCount: this.northConnector!.caching.oibusTimeValues!.maxSendCount
         },
         rawFiles: {
-          sendFileImmediately: this.northConnector!.caching.rawFiles.sendFileImmediately,
-          archive: {
-            enabled: this.northConnector!.caching.rawFiles.archive.enabled,
-            retentionDuration: this.northConnector!.caching.rawFiles.archive.retentionDuration
-          }
+          sendFileImmediately: this.northConnector!.caching.rawFiles.sendFileImmediately
+        },
+        archive: {
+          enabled: this.northConnector!.caching.archive.enabled,
+          retentionDuration: this.northConnector!.caching.archive.retentionDuration
         }
       },
       subscriptions: []

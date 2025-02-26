@@ -5,8 +5,7 @@ import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-import ValueCacheServiceMock from '../../tests/__mocks__/service/cache/value-cache-service.mock';
-import FileCacheServiceMock from '../../tests/__mocks__/service/cache/file-cache-service.mock';
+import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
 import { NorthConsoleSettings } from '../../../shared/model/north-settings.model';
 import { OIBusTimeValue } from '../../../shared/model/engine.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
@@ -16,6 +15,7 @@ import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import testData from '../../tests/utils/test-data';
 import { mockBaseFolders } from '../../tests/utils/test-utils';
+import CacheService from '../../service/cache/cache.service';
 
 jest.mock('node:fs/promises');
 // Spy on console table and info
@@ -26,23 +26,23 @@ const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
-const valueCacheService = new ValueCacheServiceMock();
-const fileCacheService = new FileCacheServiceMock();
+const cacheService: CacheService = new CacheServiceMock();
 
 jest.mock(
-  '../../service/cache/value-cache.service',
+  '../../service/cache/cache.service',
   () =>
     function () {
-      return valueCacheService;
+      return cacheService;
     }
 );
-jest.mock(
-  '../../service/cache/file-cache.service',
-  () =>
-    function () {
-      return fileCacheService;
-    }
-);
+
+const timeValues: Array<OIBusTimeValue> = [
+  {
+    pointId: 'pointId',
+    timestamp: testData.constants.dates.FAKE_NOW,
+    data: { value: '666', quality: 'good' }
+  }
+];
 
 let configuration: NorthConnectorEntity<NorthConsoleSettings>;
 let north: NorthConsole;
@@ -68,26 +68,40 @@ describe('NorthConsole with verbose mode', () => {
     );
   });
 
-  it('should properly handle values in verbose mode', async () => {
-    const values: Array<OIBusTimeValue> = [
-      {
-        pointId: 'pointId',
-        timestamp: testData.constants.dates.FAKE_NOW,
-        data: { value: '666', quality: 'good' }
-      }
-    ];
-    await north.handleContent({ type: 'time-values', content: values });
+  afterEach(() => {
+    cacheService.cacheSizeEventEmitter.removeAllListeners();
+  });
 
-    expect(console.table).toHaveBeenCalledWith(values, ['pointId', 'timestamp', 'data']);
+  it('should properly handle values in verbose mode', async () => {
+    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(timeValues));
+    await north.handleContent({
+      contentFile: '/path/to/file/example-123.json',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'time-values',
+      source: 'south',
+      options: {}
+    });
+    expect(fs.readFile).toHaveBeenCalledWith('/path/to/file/example-123.json', { encoding: 'utf-8' });
+
+    expect(console.table).toHaveBeenCalledWith(timeValues, ['pointId', 'timestamp', 'data']);
     expect(process.stdout.write).not.toHaveBeenCalled();
   });
 
   it('should properly handle values in verbose mode', async () => {
-    const filePath = '/path/to/file/example.file';
     (fs.stat as jest.Mock).mockImplementationOnce(() => Promise.resolve({ size: 666 }));
-    await north.handleContent({ type: 'raw', filePath });
-    expect(fs.stat).toHaveBeenCalledWith(filePath);
-    expect(console.table).toHaveBeenCalledWith([{ filePath, fileSize: 666 }]);
+    await north.handleContent({
+      contentFile: 'path/to/file/example.file',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'raw',
+      source: 'south',
+      options: {}
+    });
+    expect(fs.stat).toHaveBeenCalledWith('path/to/file/example.file');
+    expect(console.table).toHaveBeenCalledWith([{ filePath: 'path/to/file/example.file', fileSize: 666 }]);
     expect(process.stdout.write).not.toHaveBeenCalled();
   });
 });
@@ -114,24 +128,38 @@ describe('NorthConsole without verbose mode', () => {
     );
   });
 
+  afterEach(() => {
+    cacheService.cacheSizeEventEmitter.removeAllListeners();
+  });
+
   it('should properly handle values in non verbose mode', async () => {
-    const values: Array<OIBusTimeValue> = [
-      {
-        pointId: 'pointId',
-        timestamp: testData.constants.dates.FAKE_NOW,
-        data: { value: '666', quality: 'good' }
-      }
-    ];
-    await north.handleValues(values);
+    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(timeValues));
+    await north.handleContent({
+      contentFile: '/path/to/file/example-123.json',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'time-values',
+      source: 'south',
+      options: {}
+    });
+    expect(fs.readFile).toHaveBeenCalledWith('/path/to/file/example-123.json', { encoding: 'utf-8' });
 
     expect(process.stdout.write).toHaveBeenCalledWith('North Console sent 1 values.\r\n');
     expect(console.table).not.toHaveBeenCalled();
   });
 
   it('should properly handle file in non verbose mode', async () => {
-    const filePath = '/path/to/file/example.file';
-
-    await north.handleFile(filePath);
+    (fs.stat as jest.Mock).mockImplementationOnce(() => Promise.resolve({ size: 666 }));
+    await north.handleContent({
+      contentFile: 'path/to/file/example.file',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'raw',
+      source: 'south',
+      options: {}
+    });
 
     expect(fs.stat).not.toHaveBeenCalled();
     expect(process.stdout.write).toHaveBeenCalledWith('North Console sent 1 file.\r\n');
