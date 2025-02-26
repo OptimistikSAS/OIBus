@@ -20,6 +20,7 @@ export interface NorthConnectorEntity<T extends NorthSettings> extends BaseEntit
     scanModeId: string;
     retryInterval: number;
     retryCount: number;
+    runMinDelay: number;
     maxSize: number;
     oibusTimeValues: {
       groupCount: number;
@@ -27,20 +28,11 @@ export interface NorthConnectorEntity<T extends NorthSettings> extends BaseEntit
     };
     rawFiles: {
       sendFileImmediately: boolean;
-      archive: {
-        enabled: boolean;
-        retentionDuration: number;
-      };
+    };
+    archive: {
+      enabled: boolean;
+      retentionDuration: number;
     };
   };
   subscriptions: Array<SouthConnectorEntityLight>;
-}
-
-// TODO: Change this type with generated types for every type of north item settings. Also change in NorthConnector class
-type NorthItemSettings = any;
-
-export interface NorthConnectorItemEntity<T extends NorthItemSettings = any> extends BaseEntity {
-  name: string;
-  enabled: boolean;
-  settings: T;
 }

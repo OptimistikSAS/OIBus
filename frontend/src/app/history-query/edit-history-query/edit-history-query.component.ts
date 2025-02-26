@@ -106,14 +106,15 @@ export class EditHistoryQueryComponent implements OnInit {
       scanModeId: FormControl<string | null>;
       retryInterval: FormControl<number>;
       retryCount: FormControl<number>;
+      runMinDelay: FormControl<number>;
       maxSize: FormControl<number>;
       oibusTimeValues: FormGroup<{ groupCount: FormControl<number>; maxSendCount: FormControl<number> }>;
       rawFiles: FormGroup<{
         sendFileImmediately: FormControl<boolean>;
-        archive: FormGroup<{
-          enabled: FormControl<boolean>;
-          retentionDuration: FormControl<number>;
-        }>;
+      }>;
+      archive: FormGroup<{
+        enabled: FormControl<boolean>;
+        retentionDuration: FormControl<number>;
       }>;
     }>;
     northSettings: FormGroup;
@@ -226,17 +227,18 @@ export class EditHistoryQueryComponent implements OnInit {
             scanModeId: this.fb.control<string | null>(null, Validators.required),
             retryInterval: [5000, Validators.required],
             retryCount: [3, Validators.required],
+            runMinDelay: [200, Validators.required],
             maxSize: [0, Validators.required],
             oibusTimeValues: this.fb.group({
               groupCount: [1000, Validators.required],
               maxSendCount: [10_000, Validators.required]
             }),
             rawFiles: this.fb.group({
-              sendFileImmediately: true as boolean,
-              archive: this.fb.group({
-                enabled: [false, Validators.required],
-                retentionDuration: [72, Validators.required]
-              })
+              sendFileImmediately: true as boolean
+            }),
+            archive: this.fb.group({
+              enabled: [false, Validators.required],
+              retentionDuration: [72, Validators.required]
             })
           }),
           northSettings: createFormGroup(northManifest.settings, this.fb),
@@ -288,17 +290,18 @@ export class EditHistoryQueryComponent implements OnInit {
         scanModeName: null,
         retryInterval: formValue.caching!.retryInterval!,
         retryCount: formValue.caching!.retryCount!,
+        runMinDelay: formValue.caching!.runMinDelay!,
         maxSize: formValue.caching!.maxSize!,
         oibusTimeValues: {
           groupCount: formValue.caching!.oibusTimeValues!.groupCount!,
           maxSendCount: formValue.caching!.oibusTimeValues!.maxSendCount!
         },
         rawFiles: {
-          sendFileImmediately: formValue.caching!.rawFiles!.sendFileImmediately!,
-          archive: {
-            enabled: formValue.caching!.rawFiles!.archive!.enabled!,
-            retentionDuration: formValue.caching!.rawFiles!.archive!.retentionDuration!
-          }
+          sendFileImmediately: formValue.caching!.rawFiles!.sendFileImmediately!
+        },
+        archive: {
+          enabled: formValue.caching!.archive!.enabled!,
+          retentionDuration: formValue.caching!.archive!.retentionDuration!
         }
       },
       items:

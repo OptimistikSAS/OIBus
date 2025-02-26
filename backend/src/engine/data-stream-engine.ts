@@ -2,9 +2,14 @@ import pino from 'pino';
 import NorthConnector from '../north/north-connector';
 import SouthConnector from '../south/south-connector';
 import path from 'node:path';
-import { Instant } from '../../shared/model/types';
 import { BaseFolders } from '../model/types';
-import { NorthConnectorMetrics, OIBusContent, SouthConnectorMetrics } from '../../shared/model/engine.model';
+import {
+  CacheMetadata,
+  CacheSearchParam,
+  NorthConnectorMetrics,
+  OIBusContent,
+  SouthConnectorMetrics
+} from '../../shared/model/engine.model';
 import { ScanMode } from '../model/scan-mode.model';
 import { NorthSettings } from '../../shared/model/north-settings.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
@@ -15,7 +20,6 @@ import SouthConnectorMetricsRepository from '../repository/logs/south-connector-
 import NorthConnectorMetricsRepository from '../repository/logs/north-connector-metrics.repository';
 import NorthConnectorMetricsService from '../service/metrics/north-connector-metrics.service';
 import { PassThrough } from 'node:stream';
-import { NorthCacheFiles } from '../../shared/model/north-connector.model';
 import { ReadStream } from 'node:fs';
 
 const CACHE_FOLDER = './cache';
@@ -88,34 +92,18 @@ export default class DataStreamEngine {
   async addContent(southId: string, data: OIBusContent) {
     for (const north of this.northConnectors.values()) {
       if (north.isEnabled() && north.isSubscribed(southId)) {
-        switch (data.type) {
-          case 'time-values':
-            await north.cacheValues(data.content);
-            break;
-          case 'raw':
-            await north.cacheFile(data.filePath);
-            break;
-        }
+        await north.cacheContent(data, southId);
       }
     }
   }
 
   /**
    * Add content to a north connector from the OIBus API endpoints
-   * @param northId - the north id
-   * @param data - the content to be added
    */
-  async addExternalContent(northId: string, data: OIBusContent): Promise<void> {
+  async addExternalContent(northId: string, data: OIBusContent, source: string): Promise<void> {
     const north = this.northConnectors.get(northId);
     if (north && north.isEnabled()) {
-      switch (data.type) {
-        case 'time-values':
-          await north.cacheValues(data.content);
-          return;
-        case 'raw':
-          await north.cacheFile(data.filePath);
-          return;
-      }
+      await north.cacheContent(data, source);
     }
   }
 
@@ -253,114 +241,52 @@ export default class DataStreamEngine {
     }
   }
 
-  async getErrorFiles(
+  async searchCacheContent(
     northId: string,
-    start: Instant | null,
-    end: Instant | null,
-    filenameContains: string | null
-  ): Promise<Array<NorthCacheFiles>> {
-    return (await this.northConnectors.get(northId)?.getErrorFiles(start, end, filenameContains)) || [];
+    searchParams: CacheSearchParam,
+    folder: 'cache' | 'archive' | 'error'
+  ): Promise<Array<{ metadataFilename: string; metadata: CacheMetadata }>> {
+    return (await this.northConnectors.get(northId)?.searchCacheContent(searchParams, folder)) || [];
   }
 
-  async getErrorFileContent(northId: string, filename: string): Promise<ReadStream | null> {
-    return (await this.northConnectors.get(northId)?.getErrorFileContent(filename)) || null;
+  async getCacheContentFileStream(northId: string, folder: 'cache' | 'archive' | 'error', filename: string): Promise<ReadStream | null> {
+    return (await this.northConnectors.get(northId)?.getCacheContentFileStream(folder, filename)) || null;
   }
 
-  async removeErrorFiles(northId: string, filenames: Array<string>): Promise<void> {
-    await this.northConnectors.get(northId)?.removeErrorFiles(filenames);
+  async removeCacheContent(northId: string, folder: 'cache' | 'archive' | 'error', metadataFilenameList: Array<string>): Promise<void> {
+    await this.northConnectors
+      .get(northId)
+      ?.removeCacheContent(
+        folder,
+        await this.northConnectors.get(northId)!.metadataFileListToCacheContentList(folder, metadataFilenameList)
+      );
   }
 
-  async retryErrorFiles(northId: string, filenames: Array<string>): Promise<void> {
-    await this.northConnectors.get(northId)?.retryErrorFiles(filenames);
+  async removeAllCacheContent(northId: string, folder: 'cache' | 'archive' | 'error'): Promise<void> {
+    await this.northConnectors.get(northId)?.removeAllCacheContent(folder);
   }
 
-  async removeAllErrorFiles(northId: string): Promise<void> {
-    await this.northConnectors.get(northId)?.removeAllErrorFiles();
-  }
-
-  async retryAllErrorFiles(northId: string): Promise<void> {
-    await this.northConnectors.get(northId)?.retryAllErrorFiles();
-  }
-
-  async getCacheFiles(northId: string, start: Instant | null, end: Instant | null, filenameContains: string | null) {
-    return (await this.northConnectors.get(northId)?.getCacheFiles(start, end, filenameContains)) || [];
-  }
-
-  async getCacheFileContent(northId: string, filename: string) {
-    return (await this.northConnectors.get(northId)?.getCacheFileContent(filename)) || null;
-  }
-
-  async removeCacheFiles(northId: string, filenames: Array<string>): Promise<void> {
-    await this.northConnectors.get(northId)?.removeCacheFiles(filenames);
-  }
-
-  async removeAllCacheFiles(northId: string) {
-    await this.northConnectors.get(northId)?.removeAllCacheFiles();
-  }
-
-  async archiveCacheFiles(northId: string, filenames: Array<string>): Promise<void> {
-    await this.northConnectors.get(northId)?.archiveCacheFiles(filenames);
-  }
-
-  async getArchiveFiles(northId: string, start: Instant | null, end: Instant | null, filenameContains: string | null) {
-    return (await this.northConnectors.get(northId)?.getArchiveFiles(start, end, filenameContains)) || [];
-  }
-
-  async getArchiveFileContent(northId: string, filename: string) {
-    return (await this.northConnectors.get(northId)?.getArchiveFileContent(filename)) || null;
-  }
-
-  async removeArchiveFiles(northId: string, filenames: Array<string>): Promise<void> {
-    await this.northConnectors.get(northId)?.removeArchiveFiles(filenames);
-  }
-
-  async retryArchiveFiles(northId: string, filenames: Array<string>): Promise<void> {
-    await this.northConnectors.get(northId)?.retryArchiveFiles(filenames);
-  }
-
-  async removeAllArchiveFiles(northId: string): Promise<void> {
-    await this.northConnectors.get(northId)?.removeAllArchiveFiles();
-  }
-
-  async retryAllArchiveFiles(northId: string): Promise<void> {
-    await this.northConnectors.get(northId)?.retryAllArchiveFiles();
-  }
-
-  async getCacheValues(northId: string, fileNameContains: string): Promise<Array<NorthCacheFiles>> {
-    return this.northConnectors.get(northId)?.getCacheValues(fileNameContains) || [];
-  }
-
-  async removeCacheValues(northId: string, filenames: Array<string>) {
-    await this.northConnectors.get(northId)?.removeCacheValues(filenames);
-  }
-
-  async removeAllCacheValues(northId: string) {
-    await this.northConnectors.get(northId)?.removeAllCacheValues();
-  }
-
-  async getErrorValues(
+  async moveCacheContent(
     northId: string,
-    start: Instant | null,
-    end: Instant | null,
-    filenameContains: string | null
-  ): Promise<Array<NorthCacheFiles>> {
-    return (await this.northConnectors.get(northId)?.getErrorValues(start, end, filenameContains)) || [];
+    originFolder: 'cache' | 'archive' | 'error',
+    destinationFolder: 'cache' | 'archive' | 'error',
+    cacheContentList: Array<string>
+  ): Promise<void> {
+    await this.northConnectors
+      .get(northId)
+      ?.moveCacheContent(
+        originFolder,
+        destinationFolder,
+        await this.northConnectors.get(northId)!.metadataFileListToCacheContentList(originFolder, cacheContentList)
+      );
   }
 
-  async removeErrorValues(northId: string, filenames: Array<string>) {
-    await this.northConnectors.get(northId)?.removeErrorValues(filenames);
-  }
-
-  async retryErrorValues(northId: string, filenames: Array<string>) {
-    await this.northConnectors.get(northId)?.retryErrorValues(filenames);
-  }
-
-  async removeAllErrorValues(northId: string) {
-    await this.northConnectors.get(northId)?.removeAllErrorValues();
-  }
-
-  async retryAllErrorValues(northId: string) {
-    await this.northConnectors.get(northId)?.retryAllErrorValues();
+  async moveAllCacheContent(
+    northId: string,
+    originFolder: 'cache' | 'archive' | 'error',
+    destinationFolder: 'cache' | 'archive' | 'error'
+  ): Promise<void> {
+    await this.northConnectors.get(northId)?.moveAllCacheContent(originFolder, destinationFolder);
   }
 
   async updateScanMode(scanMode: ScanMode): Promise<void> {

@@ -1,7 +1,7 @@
 import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { PassThrough } from 'node:stream';
-import { NorthConnectorMetrics, OIBusTimeValue } from '../../../shared/model/engine.model';
+import { CacheMetadata, NorthConnectorMetrics } from '../../../shared/model/engine.model';
 import NorthConnectorMetricsRepository from '../../repository/logs/north-connector-metrics.repository';
 import NorthConnector from '../../north/north-connector';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
@@ -11,16 +11,17 @@ export default class NorthConnectorMetricsService {
 
   private _metrics: NorthConnectorMetrics = {
     metricsStart: DateTime.now().toUTC().toISO() as Instant,
-    numberOfValuesSent: 0,
-    numberOfFilesSent: 0,
-    lastValueSent: null,
-    lastFileSent: null,
+    contentSentSize: 0,
+    contentCachedSize: 0,
+    contentErroredSize: 0,
+    contentArchivedSize: 0,
     lastConnection: null,
+    lastContentSent: null,
     lastRunStart: null,
     lastRunDuration: null,
-    cacheSize: 0,
-    errorSize: 0,
-    archiveSize: 0
+    currentCacheSize: 0,
+    currentErrorSize: 0,
+    currentArchiveSize: 0
   };
 
   constructor(
@@ -29,9 +30,13 @@ export default class NorthConnectorMetricsService {
   ) {
     this.initMetrics();
     this.northConnector.metricsEvent.on('cache-size', (data: { cacheSize: number; errorSize: number; archiveSize: number }) => {
-      this._metrics.cacheSize = data.cacheSize;
-      this._metrics.errorSize = data.errorSize;
-      this._metrics.archiveSize = data.archiveSize;
+      this._metrics.currentCacheSize = data.cacheSize;
+      this._metrics.currentErrorSize = data.errorSize;
+      this._metrics.currentArchiveSize = data.archiveSize;
+      this.updateMetrics();
+    });
+    this.northConnector.metricsEvent.on('cache-content-size', (cachedSize: number) => {
+      this._metrics.contentCachedSize += cachedSize;
       this.updateMetrics();
     });
     this.northConnector.metricsEvent.on('connect', (data: { lastConnection: Instant }) => {
@@ -42,20 +47,23 @@ export default class NorthConnectorMetricsService {
       this._metrics.lastRunStart = data.lastRunStart;
       this.updateMetrics();
     });
-    this.northConnector.metricsEvent.on('run-end', (data: { lastRunDuration: number }) => {
-      this._metrics.lastRunDuration = data.lastRunDuration;
-      this.updateMetrics();
-    });
-    this.northConnector.metricsEvent.on('send-values', (data: { numberOfValuesSent: number; lastValueSent: OIBusTimeValue }) => {
-      this._metrics.numberOfValuesSent += data.numberOfValuesSent;
-      this._metrics.lastValueSent = data.lastValueSent;
-      this.updateMetrics();
-    });
-    this.northConnector.metricsEvent.on('send-file', (data: { lastFileSent: string }) => {
-      this._metrics.numberOfFilesSent += 1;
-      this._metrics.lastFileSent = data.lastFileSent;
-      this.updateMetrics();
-    });
+    this.northConnector.metricsEvent.on(
+      'run-end',
+      (data: { lastRunDuration: number; metadata: CacheMetadata; action: 'sent' | 'errored' | 'archived' }) => {
+        this._metrics.lastRunDuration = data.lastRunDuration;
+        if (data.action === 'sent') {
+          this._metrics.lastContentSent = data.metadata.contentFile;
+          this._metrics.contentSentSize += data.metadata.contentSize;
+        } else if (data.action === 'archived') {
+          this._metrics.lastContentSent = data.metadata.contentFile;
+          this._metrics.contentArchivedSize += data.metadata.contentSize;
+          this._metrics.contentSentSize += data.metadata.contentSize;
+        } else {
+          this._metrics.contentErroredSize += data.metadata.contentSize;
+        }
+        this.updateMetrics();
+      }
+    );
   }
 
   initMetrics(): void {

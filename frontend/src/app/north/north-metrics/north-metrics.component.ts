@@ -1,7 +1,6 @@
-import { Component, NgZone, OnInit, inject, input, linkedSignal } from '@angular/core';
+import { Component, inject, input, linkedSignal, NgZone, OnInit } from '@angular/core';
 import { TranslateDirective } from '@ngx-translate/core';
 import { NorthConnectorMetrics } from '../../../../../backend/shared/model/engine.model';
-import { JsonPipe } from '@angular/common';
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { DurationPipe } from '../../shared/duration.pipe';
 import { NorthConnectorLightDTO, NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
@@ -15,7 +14,7 @@ import { Router } from '@angular/router';
   selector: 'oib-north-metrics',
   templateUrl: './north-metrics.component.html',
   styleUrl: './north-metrics.component.scss',
-  imports: [TranslateDirective, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe, FileSizePipe]
+  imports: [TranslateDirective, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, FileSizePipe]
 })
 export class NorthMetricsComponent implements OnInit {
   private zone = inject(NgZone);

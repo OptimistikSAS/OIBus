@@ -6,9 +6,6 @@ export type ScopeType = (typeof SCOPE_TYPES)[number];
 export const LOG_LEVELS = ['silent', 'error', 'warn', 'info', 'debug', 'trace'];
 export type LogLevel = (typeof LOG_LEVELS)[number];
 
-export const AUTHENTICATION_TYPES = ['none', 'basic', 'bearer', 'api-key', 'cert'];
-export type AuthenticationType = (typeof AUTHENTICATION_TYPES)[number];
-
 /**
  * Engine settings DTO
  */
@@ -203,13 +200,14 @@ export interface BaseConnectorMetrics {
 }
 
 export interface NorthConnectorMetrics extends BaseConnectorMetrics {
-  numberOfValuesSent: number;
-  numberOfFilesSent: number;
-  lastValueSent: OIBusTimeValue | null;
-  lastFileSent: string | null;
-  cacheSize: number;
-  errorSize: number;
-  archiveSize: number;
+  contentSentSize: number;
+  contentErroredSize: number;
+  contentArchivedSize: number;
+  contentCachedSize: number;
+  lastContentSent: string | null;
+  currentCacheSize: number;
+  currentErrorSize: number;
+  currentArchiveSize: number;
 }
 
 export interface SouthConnectorMetrics extends BaseConnectorMetrics {
@@ -225,13 +223,14 @@ export interface HistoryQueryMetrics {
     lastConnection: Instant | null;
     lastRunStart: Instant | null;
     lastRunDuration: number | null;
-    numberOfValuesSent: number;
-    numberOfFilesSent: number;
-    lastValueSent: OIBusTimeValue | null;
-    lastFileSent: string | null;
-    cacheSize: number;
-    errorSize: number;
-    archiveSize: number;
+    contentSentSize: number;
+    contentErroredSize: number;
+    contentArchivedSize: number;
+    contentCachedSize: number;
+    lastContentSent: string | null;
+    currentCacheSize: number;
+    currentErrorSize: number;
+    currentArchiveSize: number;
   };
   south: {
     lastConnection: Instant | null;
@@ -313,3 +312,19 @@ export interface OIBusRawContent extends BaseOIBusContent {
 }
 
 export type OIBusContent = OIBusTimeValueContent | OIBusRawContent;
+
+export interface CacheMetadata {
+  contentFile: string;
+  contentSize: number;
+  numberOfElement: number;
+  createdAt: Instant;
+  contentType: string;
+  source: string;
+  options: Record<string, string | number>;
+}
+
+export interface CacheSearchParam {
+  start: string | null;
+  end: string | null;
+  nameContains: string | null;
+}

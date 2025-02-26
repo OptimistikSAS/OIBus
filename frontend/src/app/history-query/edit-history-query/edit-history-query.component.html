@@ -56,7 +56,7 @@
               </ng-template>
               <div class="row">
                 <h6 class="text-center mt-2" translate="north.cache-settings.schedule"></h6>
-                <div class="col-3">
+                <div class="col-4">
                   <div class="form-group">
                     <oib-scan-mode
                       key="cache-scan-mode"
@@ -68,7 +68,7 @@
                   </div>
                 </div>
                 <!-- Retry interval -->
-                <div class="col-3">
+                <div class="col-4">
                   <div class="form-group">
                     <label class="form-label" for="retry-interval" translate="north.cache-settings.retry-interval"></label>
                     <div class="input-group">
@@ -79,15 +79,28 @@
                   </div>
                 </div>
                 <!-- Retry count -->
-                <div class="col-3">
+                <div class="col-4">
                   <div class="form-group">
                     <label class="form-label" for="retry-count" translate="north.cache-settings.retry-count"></label>
                     <input type="number" formControlName="retryCount" id="retry-count" class="form-control" />
                     <val-errors controlName="retryCount" />
                   </div>
                 </div>
+              </div>
+              <div class="row">
+                <!-- Run min delay -->
+                <div class="col-4">
+                  <div class="form-group">
+                    <label class="form-label" for="run-min-delay" translate="north.cache-settings.run-min-delay"></label>
+                    <div class="input-group">
+                      <input type="number" formControlName="runMinDelay" id="run-min-delay" class="form-control" />
+                      <span class="input-group-text" translate="common.unit.ms"></span>
+                    </div>
+                    <val-errors controlName="runMinDelay" />
+                  </div>
+                </div>
                 <!-- Max size -->
-                <div class="col-3">
+                <div class="col-4">
                   <div class="form-group">
                     <label class="form-label" for="maxSize" translate="north.cache-settings.max-size"></label>
                     <div class="input-group">
@@ -137,31 +150,35 @@
                       </div>
                     </div>
                   </div>
-                  <!-- Archive Enabled -->
-                  <div class="col-4" formGroupName="archive">
-                    <div class="form-group">
-                      <div class="form-check form-switch padded">
-                        <label class="form-check-label" for="archive-enabled" translate="north.archive-settings.enabled"></label>
-                        <input formControlName="enabled" id="archive-enabled" type="checkbox" class="form-check-input" />
-                      </div>
-                    </div>
-                  </div>
-                  <!-- Retention duration -->
-                  <div class="col-4" formGroupName="archive">
-                    <div class="form-group">
-                      <label
-                        class="form-label"
-                        for="archive-retention-duration"
-                        translate="north.archive-settings.retention-duration"
-                      ></label>
-                      <div class="input-group">
-                        <input type="number" formControlName="retentionDuration" id="archive-retention-duration" class="form-control" />
-                        <span class="input-group-text" translate="common.unit.hr"></span>
-                      </div>
+                </div>
+              }
+              <hr />
+              <h6 class="text-center" translate="north.archive-settings.title"></h6>
+              <div class="row" formGroupName="archive">
+                <!-- Archive Enabled -->
+                <div class="col-4">
+                  <div class="form-group">
+                    <div class="form-check form-switch padded">
+                      <label class="form-check-label" for="archive-enabled" translate="north.archive-settings.enabled"></label>
+                      <input formControlName="enabled" id="archive-enabled" type="checkbox" class="form-check-input" />
                     </div>
                   </div>
                 </div>
-              }
+                <!-- Retention duration -->
+                <div class="col-4">
+                  <div class="form-group">
+                    <label
+                      class="form-label"
+                      for="archive-retention-duration"
+                      translate="north.archive-settings.retention-duration"
+                    ></label>
+                    <div class="input-group">
+                      <input type="number" formControlName="retentionDuration" id="archive-retention-duration" class="form-control" />
+                      <span class="input-group-text" translate="common.unit.hr"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </oib-box>
             <!-- North settings -->
             <oib-box>
