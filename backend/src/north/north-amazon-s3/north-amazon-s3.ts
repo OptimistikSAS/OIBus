@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import fsAsync from 'node:fs/promises';
 import path from 'node:path';
 
 import { HeadBucketCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
@@ -9,7 +10,7 @@ import EncryptionService from '../../service/encryption.service';
 import pino from 'pino';
 import { NorthAmazonS3Settings } from '../../../shared/model/north-settings.model';
 import { createProxyAgent } from '../../service/proxy-agent';
-import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
+import { CacheMetadata, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
 import csv from 'papaparse';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
@@ -75,13 +76,15 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
     });
   }
 
-  async handleContent(data: OIBusContent): Promise<void> {
-    switch (data.type) {
+  override async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
+    switch (cacheMetadata.contentType) {
       case 'raw':
-        return this.handleFile(data.filePath);
+        return this.handleFile(cacheMetadata.contentFile);
 
       case 'time-values':
-        return this.handleValues(data.content);
+        return this.handleValues(
+          JSON.parse(await fsAsync.readFile(cacheMetadata.contentFile, { encoding: 'utf-8' })) as Array<OIBusTimeValue>
+        );
     }
   }
 

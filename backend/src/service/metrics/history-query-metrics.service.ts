@@ -1,4 +1,4 @@
-import { HistoryQueryMetrics, OIBusTimeValue } from '../../../shared/model/engine.model';
+import { CacheMetadata, HistoryQueryMetrics, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { PassThrough } from 'node:stream';
 import HistoryQuery from '../../engine/history-query';
 import HistoryQueryMetricsRepository from '../../repository/logs/history-query-metrics.repository';
@@ -10,16 +10,17 @@ export default class HistoryQueryMetricsService {
   private _metrics: HistoryQueryMetrics = {
     metricsStart: DateTime.now().toUTC().toISO()!,
     north: {
-      numberOfValuesSent: 0,
-      numberOfFilesSent: 0,
-      lastValueSent: null,
-      lastFileSent: null,
+      contentSentSize: 0,
+      contentCachedSize: 0,
+      contentErroredSize: 0,
+      contentArchivedSize: 0,
+      lastContentSent: null,
       lastConnection: null,
       lastRunStart: null,
       lastRunDuration: null,
-      cacheSize: 0,
-      errorSize: 0,
-      archiveSize: 0
+      currentCacheSize: 0,
+      currentErrorSize: 0,
+      currentArchiveSize: 0
     },
     south: {
       numberOfValuesRetrieved: 0,
@@ -53,24 +54,31 @@ export default class HistoryQueryMetricsService {
       this._metrics.north.lastRunStart = data.lastRunStart;
       this.updateMetrics();
     });
-    this.historyQuery.metricsEvent.on('north-run-end', (data: { lastRunDuration: number }) => {
-      this._metrics.north.lastRunDuration = data.lastRunDuration;
-      this.updateMetrics();
-    });
+    this.historyQuery.metricsEvent.on(
+      'north-run-end',
+      (data: { lastRunDuration: number; metadata: CacheMetadata; action: 'sent' | 'errored' | 'archived' }) => {
+        this._metrics.north.lastRunDuration = data.lastRunDuration;
+        if (data.action === 'sent') {
+          this._metrics.north.lastContentSent = data.metadata.contentFile;
+          this._metrics.north.contentSentSize += data.metadata.contentSize;
+        } else if (data.action === 'archived') {
+          this._metrics.north.lastContentSent = data.metadata.contentFile;
+          this._metrics.north.contentArchivedSize += data.metadata.contentSize;
+          this._metrics.north.contentSentSize += data.metadata.contentSize;
+        } else {
+          this._metrics.north.contentErroredSize += data.metadata.contentSize;
+        }
+        this.updateMetrics();
+      }
+    );
     this.historyQuery.metricsEvent.on('north-cache-size', (data: { cacheSize: number; errorSize: number; archiveSize: number }) => {
-      this._metrics.north.cacheSize = data.cacheSize;
-      this._metrics.north.errorSize = data.errorSize;
-      this._metrics.north.archiveSize = data.archiveSize;
+      this._metrics.north.currentCacheSize = data.cacheSize;
+      this._metrics.north.currentErrorSize = data.errorSize;
+      this._metrics.north.currentArchiveSize = data.archiveSize;
       this.updateMetrics();
     });
-    this.historyQuery.metricsEvent.on('north-send-values', (data: { numberOfValuesSent: number; lastValueSent: OIBusTimeValue }) => {
-      this._metrics.north.numberOfValuesSent += data.numberOfValuesSent;
-      this._metrics.north.lastValueSent = data.lastValueSent;
-      this.updateMetrics();
-    });
-    this.historyQuery.metricsEvent.on('north-send-file', (data: { lastFileSent: string }) => {
-      this._metrics.north.numberOfFilesSent += 1;
-      this._metrics.north.lastFileSent = data.lastFileSent;
+    this.historyQuery.metricsEvent.on('north-cache-content-size', (cachedSize: number) => {
+      this._metrics.north.contentCachedSize += cachedSize;
       this.updateMetrics();
     });
 

@@ -261,17 +261,18 @@ export default class OIAnalyticsMessageService {
               scanModeName: null,
               retryInterval: historyQuery.caching.retryInterval,
               retryCount: historyQuery.caching.retryCount,
+              runMinDelay: historyQuery.caching.runMinDelay,
               maxSize: historyQuery.caching.maxSize,
               oibusTimeValues: {
                 groupCount: historyQuery.caching.oibusTimeValues.groupCount,
                 maxSendCount: historyQuery.caching.oibusTimeValues.maxSendCount
               },
               rawFiles: {
-                sendFileImmediately: historyQuery.caching.rawFiles.sendFileImmediately,
-                archive: {
-                  enabled: historyQuery.caching.rawFiles.archive.enabled,
-                  retentionDuration: historyQuery.caching.rawFiles.archive.retentionDuration
-                }
+                sendFileImmediately: historyQuery.caching.rawFiles.sendFileImmediately
+              },
+              archive: {
+                enabled: historyQuery.caching.archive.enabled,
+                retentionDuration: historyQuery.caching.archive.retentionDuration
               }
             },
             items: historyQuery.items.map(item => ({
@@ -440,17 +441,18 @@ export default class OIAnalyticsMessageService {
             scanModeName: null,
             retryInterval: north.caching.retryInterval,
             retryCount: north.caching.retryCount,
+            runMinDelay: north.caching.runMinDelay,
             maxSize: north.caching.maxSize,
             oibusTimeValues: {
               groupCount: north.caching.oibusTimeValues.groupCount,
               maxSendCount: north.caching.oibusTimeValues.maxSendCount
             },
             rawFiles: {
-              sendFileImmediately: north.caching.rawFiles.sendFileImmediately,
-              archive: {
-                enabled: north.caching.rawFiles.archive.enabled,
-                retentionDuration: north.caching.rawFiles.archive.retentionDuration
-              }
+              sendFileImmediately: north.caching.rawFiles.sendFileImmediately
+            },
+            archive: {
+              enabled: north.caching.archive.enabled,
+              retentionDuration: north.caching.archive.retentionDuration
             }
           },
           subscriptions: north.subscriptions.map(south => south.id)

@@ -15,16 +15,16 @@ export default class NorthConnectorMetricsRepository {
     const foundMetrics = this.getMetrics(northId);
     if (!foundMetrics) {
       const insertQuery =
-        `INSERT INTO ${NORTH_METRICS_TABLE} (north_id, metrics_start, nb_values, nb_files, last_value, last_file, ` +
-        `last_connection, last_run_start, last_run_duration, cache_size, error_size, archive_size) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
-      this._database.prepare(insertQuery).run(northId, DateTime.now().toUTC().toISO(), 0, 0, null, null, null, null, null, 0, 0, 0);
+        `INSERT INTO ${NORTH_METRICS_TABLE} (north_id, metrics_start, content_sent_size, content_cached_size, content_errored_size, content_archived_size, last_content_sent, ` +
+        `last_connection, last_run_start, last_run_duration, current_cache_size, current_error_size, current_archive_size) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+      this._database.prepare(insertQuery).run(northId, DateTime.now().toUTC().toISO(), 0, 0, 0, 0, null, null, null, null, 0, 0, 0);
     }
   }
 
   getMetrics(northId: string): NorthConnectorMetrics | null {
     const query =
-      `SELECT metrics_start, nb_values, nb_files, last_value, last_file, last_connection, last_run_start, ` +
-      `last_run_duration, cache_size, error_size, archive_size FROM ${NORTH_METRICS_TABLE} WHERE north_id = ?;`;
+      `SELECT metrics_start, content_sent_size, content_cached_size, content_errored_size, content_archived_size, last_content_sent, last_connection, last_run_start, ` +
+      `last_run_duration, current_cache_size, current_error_size, current_archive_size FROM ${NORTH_METRICS_TABLE} WHERE north_id = ?;`;
     const result = this._database.prepare(query).get(northId);
     if (!result) return null;
     return this.toNorthConnectorMetrics(result as Record<string, string | number>);
@@ -32,22 +32,23 @@ export default class NorthConnectorMetricsRepository {
 
   updateMetrics(northId: string, metrics: NorthConnectorMetrics): void {
     const updateQuery =
-      `UPDATE ${NORTH_METRICS_TABLE} SET metrics_start = ?, nb_values = ?, nb_files = ?, last_value = ?, last_file = ?, ` +
-      'last_connection = ?, last_run_start = ?, last_run_duration = ?, cache_size = ?, error_size = ?, archive_size = ? WHERE north_id = ?;';
+      `UPDATE ${NORTH_METRICS_TABLE} SET metrics_start = ?, content_sent_size = ?, content_cached_size = ?, content_errored_size = ?, content_archived_size = ?, last_content_sent = ?, ` +
+      'last_connection = ?, last_run_start = ?, last_run_duration = ?, current_cache_size = ?, current_error_size = ?, current_archive_size = ? WHERE north_id = ?;';
     this._database
       .prepare(updateQuery)
       .run(
         metrics.metricsStart,
-        metrics.numberOfValuesSent,
-        metrics.numberOfFilesSent,
-        metrics.lastValueSent ? JSON.stringify(metrics.lastValueSent) : null,
-        metrics.lastFileSent,
+        metrics.contentSentSize,
+        metrics.contentCachedSize,
+        metrics.contentErroredSize,
+        metrics.contentArchivedSize,
+        metrics.lastContentSent,
         metrics.lastConnection,
         metrics.lastRunStart,
         metrics.lastRunDuration,
-        metrics.cacheSize,
-        metrics.errorSize,
-        metrics.archiveSize,
+        metrics.currentCacheSize,
+        metrics.currentErrorSize,
+        metrics.currentArchiveSize,
         northId
       );
   }
@@ -60,16 +61,17 @@ export default class NorthConnectorMetricsRepository {
   private toNorthConnectorMetrics(result: Record<string, string | number>): NorthConnectorMetrics {
     return {
       metricsStart: result.metrics_start as Instant,
-      numberOfValuesSent: result.nb_values as number,
-      numberOfFilesSent: result.nb_files as number,
-      lastValueSent: result.last_value ? JSON.parse(result.last_value as string) : null,
-      lastFileSent: result.last_file as string | null,
+      contentSentSize: result.content_sent_size as number,
+      contentCachedSize: result.content_cached_size as number,
+      contentErroredSize: result.content_errored_size as number,
+      contentArchivedSize: result.content_archived_size as number,
+      lastContentSent: result.last_content_sent as string | null,
       lastConnection: result.last_connection as Instant | null,
       lastRunStart: result.last_run_start as Instant | null,
       lastRunDuration: result.last_run_duration as number,
-      cacheSize: result.cache_size as number,
-      errorSize: result.error_size as number,
-      archiveSize: result.archive_size as number
+      currentCacheSize: result.current_cache_size as number,
+      currentErrorSize: result.current_error_size as number,
+      currentArchiveSize: result.current_archive_size as number
     };
   }
 }

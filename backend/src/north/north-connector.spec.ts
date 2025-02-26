@@ -4,31 +4,30 @@ import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service
 
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
-import ValueCacheServiceMock from '../tests/__mocks__/service/cache/value-cache-service.mock';
-import FileCacheServiceMock from '../tests/__mocks__/service/cache/file-cache-service.mock';
-import fs from 'node:fs/promises';
-import { dirSize, validateCronExpression } from '../service/utils';
-import { OIBusContent, OIBusTimeValue } from '../../shared/model/engine.model';
-import path from 'node:path';
+import CacheServiceMock from '../tests/__mocks__/service/cache/cache-service.mock';
+import { createBaseFolders, delay, dirSize, generateRandomId, pipeTransformers, validateCronExpression } from '../service/utils';
+import { CacheMetadata, OIBusRawContent } from '../../shared/model/engine.model';
 import testData from '../tests/utils/test-data';
-import { NorthFileWriterSettings, NorthOIAnalyticsSettings, NorthSettings } from '../../shared/model/north-settings.model';
+import { NorthFileWriterSettings, NorthSettings } from '../../shared/model/north-settings.model';
 import NorthFileWriter from './north-file-writer/north-file-writer';
 import { NorthConnectorEntity } from '../model/north-connector.model';
 import { flushPromises, mockBaseFolders } from '../tests/utils/test-utils';
-import NorthOIAnalytics from './north-oianalytics/north-oianalytics';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
-import CertificateRepository from '../repository/config/certificate.repository';
-import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import NorthConnectorRepositoryMock from '../tests/__mocks__/repository/config/north-connector-repository.mock';
 import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
-import CertificateRepositoryMock from '../tests/__mocks__/repository/config/certificate-repository.mock';
-import OianalyticsRegistrationRepositoryMock from '../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
+import CacheService from '../service/cache/cache.service';
 import { OIBusError } from '../model/engine.model';
+import fsAsync from 'node:fs/promises';
+import path from 'node:path';
+import { DateTime } from 'luxon';
+import { createReadStream, createWriteStream } from 'node:fs';
+import { Readable } from 'node:stream';
 
 // Mock fs
+jest.mock('node:stream');
+jest.mock('node:fs');
 jest.mock('node:fs/promises');
-jest.mock('node:path');
 
 // Mock services
 jest.mock('../service/utils');
@@ -36,28 +35,31 @@ jest.mock('../service/utils');
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
-const certificateRepository: CertificateRepository = new CertificateRepositoryMock();
-const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OianalyticsRegistrationRepositoryMock();
-const valueCacheService = new ValueCacheServiceMock();
-const fileCacheService = new FileCacheServiceMock();
+const cacheService: CacheService = new CacheServiceMock();
 
 jest.mock(
-  '../service/cache/value-cache.service',
+  '../service/cache/cache.service',
   () =>
     function () {
-      return valueCacheService;
-    }
-);
-jest.mock(
-  '../service/cache/file-cache.service',
-  () =>
-    function () {
-      return fileCacheService;
+      return cacheService;
     }
 );
 
 const logger: pino.Logger = new PinoLogger();
 const anotherLogger: pino.Logger = new PinoLogger();
+
+const contentToHandle: { metadataFilename: string; metadata: CacheMetadata } = {
+  metadataFilename: 'file1.json',
+  metadata: {
+    contentFile: 'file1-123456.json',
+    contentSize: 100,
+    numberOfElement: 3,
+    createdAt: testData.constants.dates.DATE_1,
+    contentType: 'time-values',
+    source: 'south',
+    options: {}
+  }
+};
 
 let north: NorthConnector<NorthSettings>;
 describe('NorthConnector', () => {
@@ -77,17 +79,16 @@ describe('NorthConnector', () => {
       logger,
       mockBaseFolders(testData.north.list[0].id)
     );
-    await north.start();
   });
 
   afterEach(() => {
-    valueCacheService.triggerRun.removeAllListeners();
-    fileCacheService.triggerRun.removeAllListeners();
+    cacheService.cacheSizeEventEmitter.removeAllListeners();
   });
 
   it('should be properly initialized', async () => {
+    await north.start();
     expect(north.isEnabled()).toEqual(true);
-    expect(logger.debug).toHaveBeenCalledWith(`North connector "${testData.north.list[0].name}" enabled. Starting services...`);
+    expect(logger.debug).toHaveBeenCalledWith(`North connector "${testData.north.list[0].name}" enabled`);
     expect(logger.error).not.toHaveBeenCalled();
     expect(logger.info).toHaveBeenCalledWith(
       `North connector "${testData.north.list[0].name}" of type ${testData.north.list[0].type} started`
@@ -95,31 +96,50 @@ describe('NorthConnector', () => {
     expect(north.settings).toEqual(testData.north.list[0]);
   });
 
+  it('should properly update cache size', () => {
+    const mockListener = jest.fn();
+    north.metricsEvent.on('cache-size', mockListener);
+
+    cacheService.cacheSizeEventEmitter.emit('init-cache-size', { cacheSizeToAdd: 1, errorSizeToAdd: 2, archiveSizeToAdd: 3 });
+    expect(mockListener).toHaveBeenCalledWith({
+      cacheSize: 1,
+      errorSize: 2,
+      archiveSize: 3
+    });
+
+    cacheService.cacheSizeEventEmitter.emit('cache-size', { cacheSizeToAdd: 1, errorSizeToAdd: 2, archiveSizeToAdd: 3 });
+    expect(mockListener).toHaveBeenCalledWith({
+      cacheSize: 2,
+      errorSize: 4,
+      archiveSize: 6
+    });
+  });
+
   it('should properly create cron job and add to queue', async () => {
     (scanModeRepository.findById as jest.Mock).mockReturnValue(testData.scanMode.list[0]);
 
-    north.addToQueue = jest.fn();
+    north.addTaskToQueue = jest.fn();
     await north.connect();
     expect(logger.debug).toHaveBeenCalledWith(
-      `Creating North cron job for scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
+      `Creating cron job for scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
     );
 
     await north.connect();
     expect(logger.debug).toHaveBeenCalledWith(
-      `Removing existing North cron job associated to scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
+      `Removing existing cron job associated to scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
     );
 
     jest.advanceTimersByTime(1000);
-    expect(north.addToQueue).toHaveBeenCalledTimes(1);
-    expect(north.addToQueue).toHaveBeenCalledWith(testData.scanMode.list[0]);
+    expect(north.addTaskToQueue).toHaveBeenCalledTimes(1);
+    expect(north.addTaskToQueue).toHaveBeenCalledWith({ id: testData.scanMode.list[0].id, name: testData.scanMode.list[0].name });
 
     await north.updateScanMode(testData.scanMode.list[0]);
     await north.updateScanMode(testData.scanMode.list[1]);
     expect(logger.debug).toHaveBeenCalledWith(
-      `Creating North cron job for scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
+      `Creating cron job for scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
     );
     expect(logger.debug).toHaveBeenCalledWith(
-      `Removing existing North cron job associated to scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
+      `Removing existing cron job associated to scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
     );
 
     await north.stop();
@@ -134,54 +154,66 @@ describe('NorthConnector', () => {
     north.createCronJob({ ...testData.scanMode.list[0], cron: '* * * * * *L' });
 
     expect(logger.error).toHaveBeenCalledWith(
-      `Error when creating North cron job for scan mode "${testData.scanMode.list[0].name}" (* * * * * *L): ${error.message}`
+      `Error when creating cron job for scan mode "${testData.scanMode.list[0].name}" (* * * * * *L): ${error.message}`
     );
   });
 
   it('should properly add to queue a new task and trigger next run', async () => {
+    await north.start();
     north.run = jest.fn();
-    north.addToQueue(testData.scanMode.list[0]);
+    north.addTaskToQueue({ id: testData.scanMode.list[0].id, name: testData.scanMode.list[0].name });
     expect(logger.warn).not.toHaveBeenCalled();
 
-    expect(north.run).toHaveBeenCalledWith('scan');
+    expect(north.run).toHaveBeenCalledWith({ id: testData.scanMode.list[0].id, name: testData.scanMode.list[0].name });
     expect(north.run).toHaveBeenCalledTimes(1);
-    north.addToQueue(testData.scanMode.list[0]);
+    north.addTaskToQueue({ id: testData.scanMode.list[0].id, name: testData.scanMode.list[0].name });
 
-    expect(logger.warn).toHaveBeenCalledWith(
-      `Task job not added in North connector queue for cron "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
-    );
+    expect(logger.warn).toHaveBeenCalledWith(`Task "${testData.scanMode.list[0].name}" is already in queue`);
     expect(north.run).toHaveBeenCalledTimes(1);
   });
 
-  it('should properly add to queue a new task and not trigger next run', async () => {
-    north.run = jest.fn();
-    north.createDeferredPromise();
-    north.addToQueue(testData.scanMode.list[0]);
-    expect(north.run).not.toHaveBeenCalled();
+  it('should properly run a task', async () => {
+    north.handleContentWrapper = jest.fn();
+    north['triggerRunIfNecessary'] = jest.fn();
+    await north.run({ id: 'scanModeId1', name: 'scan' });
+
+    expect(north.handleContentWrapper).toHaveBeenCalledTimes(1);
+    expect(north['triggerRunIfNecessary']).toHaveBeenCalledTimes(1);
+    expect(north['triggerRunIfNecessary']).toHaveBeenCalledWith(north['connector'].caching.runMinDelay);
   });
 
-  it('should properly run task a task', async () => {
-    north.handleValuesWrapper = jest.fn();
-    north.handleFilesWrapper = jest.fn();
-    await north.run('scan');
+  it('should properly run a task and trigger next after error', async () => {
+    north['errorCount'] = 1;
+    north.handleContentWrapper = jest.fn();
+    north['triggerRunIfNecessary'] = jest.fn();
+    await north.run({ id: 'scanModeId1', name: 'scan' });
+    expect(north['triggerRunIfNecessary']).toHaveBeenCalledWith(north['connector'].caching.retryInterval);
+  });
 
-    expect(north.handleValuesWrapper).toHaveBeenCalledTimes(1);
-    expect(north.handleFilesWrapper).toHaveBeenCalledTimes(1);
-
-    expect(logger.trace).toHaveBeenCalledWith('No more task to run');
+  it('should properly run two times if a task is already in queue', async () => {
+    await north.start();
+    north['taskJobQueue'] = [
+      { id: 'scanModeId1', name: 'scan' },
+      { id: 'previous-task', name: 'previous task' }
+    ];
+    north.handleContentWrapper = jest.fn();
+    north['triggerRunIfNecessary'] = jest.fn();
+    await north.run({ id: 'scanModeId1', name: 'scan' });
+    expect(logger.trace).toHaveBeenCalledWith(`North run triggered by task "scan" (scanModeId1)`);
+    expect(logger.trace).toHaveBeenCalledWith(`North run triggered by task "previous task" (previous-task)`);
+    expect(north.handleContentWrapper).toHaveBeenCalledTimes(2);
+    expect(north['triggerRunIfNecessary']).toHaveBeenCalledTimes(1);
   });
 
   it('should properly disconnect', async () => {
     await north.disconnect();
-    expect(logger.info).toHaveBeenCalledWith(
-      `North connector "${testData.north.list[0].name}" (${testData.north.list[0].id}) disconnected`
-    );
+    expect(logger.info).toHaveBeenCalledWith(`"${testData.north.list[0].name}" (${testData.north.list[0].id}) disconnected`);
   });
 
   it('should properly stop', async () => {
     north.disconnect = jest.fn();
     await north.stop();
-    expect(logger.debug).toHaveBeenCalledWith(`Stopping North "${testData.north.list[0].name}" (${testData.north.list[0].id})...`);
+    expect(logger.debug).toHaveBeenCalledWith(`Stopping "${testData.north.list[0].name}" (${testData.north.list[0].id})...`);
     expect(north.disconnect).toHaveBeenCalledTimes(1);
     expect(logger.info(`North connector "${testData.north.list[0].name}" stopped`));
   });
@@ -190,81 +222,28 @@ describe('NorthConnector', () => {
     const promise = new Promise<void>(resolve => {
       setTimeout(resolve, 1000);
     });
-    north.handleValuesWrapper = jest.fn(async () => promise);
-    north.handleFilesWrapper = jest.fn();
+    north.handleContentWrapper = jest.fn(async () => promise);
 
     north.disconnect = jest.fn();
 
-    north.run('scan');
+    north.run({ id: 'scanModeId1', name: 'scan' });
 
     north.stop();
-    expect(logger.debug).toHaveBeenCalledWith(`Stopping North "${testData.north.list[0].name}" (${testData.north.list[0].id})...`);
-    expect(logger.debug).toHaveBeenCalledWith('Waiting for North task to finish');
+    expect(logger.debug).toHaveBeenCalledWith(`Stopping "${testData.north.list[0].name}" (${testData.north.list[0].id})...`);
+    expect(logger.debug).toHaveBeenCalledWith('Waiting for task to finish');
     expect(north.disconnect).not.toHaveBeenCalled();
+    north.run({ id: 'trigger1', name: 'Another trigger' });
+    expect(logger.debug).toHaveBeenCalledWith(
+      'Task "Another trigger" not run because the connector is stopping or a run is already in progress'
+    );
     jest.advanceTimersByTime(1000);
     await flushPromises();
     expect(north.disconnect).toHaveBeenCalledTimes(1);
-    expect(logger.info).toHaveBeenCalledWith(`North connector "${testData.north.list[0].name}" stopped`);
+    expect(logger.info).toHaveBeenCalledWith(`"${testData.north.list[0].name}" stopped`);
   });
-
-  it('should trigger values first', async () => {
-    const promise = new Promise<void>(resolve => {
-      setTimeout(resolve, 1000);
-    });
-    north.handleValuesWrapper = jest.fn(async () => promise);
-    north.handleFilesWrapper = jest.fn();
-
-    valueCacheService.triggerRun.emit('next');
-    expect(north.handleValuesWrapper).toHaveBeenCalled();
-    expect(logger.trace).toHaveBeenCalledWith(`Value cache trigger immediately: true`);
-    expect(north.handleFilesWrapper).not.toHaveBeenCalled();
-    valueCacheService.triggerRun.emit('cache-size', 123);
-    valueCacheService.triggerRun.emit('next');
-    valueCacheService.triggerRun.emit('cache-size', 123);
-
-    expect(north.handleFilesWrapper).not.toHaveBeenCalled();
-    jest.advanceTimersByTime(1000);
-
-    await flushPromises();
-    fileCacheService.triggerRun.emit('next');
-    expect(north.handleFilesWrapper).toHaveBeenCalled();
-  });
-
-  it('should trigger files first', async () => {
-    const promise = new Promise<void>(resolve => {
-      setTimeout(resolve, 1000);
-    });
-    north.handleFilesWrapper = jest.fn(async () => promise);
-    north.handleValuesWrapper = jest.fn();
-
-    fileCacheService.triggerRun.emit('next');
-    expect(north.handleValuesWrapper).not.toHaveBeenCalled();
-    expect(logger.trace).toHaveBeenCalledWith(`File cache trigger immediately: true`);
-    expect(north.handleFilesWrapper).toHaveBeenCalled();
-
-    valueCacheService.triggerRun.emit('next');
-    fileCacheService.triggerRun.emit('cache-size', 123);
-    expect(north.handleValuesWrapper).not.toHaveBeenCalled();
-    jest.advanceTimersByTime(1000);
-    await flushPromises();
-    fileCacheService.triggerRun.emit('next');
-    expect(north.handleValuesWrapper).toHaveBeenCalled();
-  });
-
-  it('should properly cache values', async () => {
-    await north.cacheValues([{}, {}] as Array<OIBusTimeValue>);
-    expect(logger.debug).toHaveBeenCalledWith(`Caching 2 values (cache size: 0 MB)`);
-  });
-
-  it('should properly cache file', async () => {
-    await north.cacheFile('myFilePath');
-    expect(logger.debug).toHaveBeenCalledWith(`Caching file "myFilePath" in North connector "${testData.north.list[0].name}"...`);
-  });
-
   it('should check if North caches are empty', async () => {
-    fileCacheService.isEmpty.mockReturnValueOnce(true);
-    valueCacheService.isEmpty.mockReturnValueOnce(true);
-    expect(await north.isCacheEmpty()).toBeTruthy();
+    (cacheService.cacheIsEmpty as jest.Mock).mockReturnValueOnce(true);
+    expect(north.isCacheEmpty()).toBeTruthy();
   });
 
   it('should check if North is subscribed to all South', async () => {
@@ -285,404 +264,367 @@ describe('NorthConnector', () => {
     expect(north.isSubscribed('badId')).toBeFalsy();
   });
 
-  it('should get error files', async () => {
+  it('should search cache content', async () => {
     const expectedResult = [
       { filename: 'file1.name', modificationDate: '', size: 1 },
       { filename: 'file2.name', modificationDate: '', size: 2 },
       { filename: 'file3.name', modificationDate: '', size: 3 }
     ];
-    fileCacheService.getErrorFiles.mockReturnValueOnce(expectedResult);
-    const result = await north.getErrorFiles('2022-11-11T11:11:11.111Z', '2022-11-12T11:11:11.111Z', 'file');
-    expect(result).toEqual(expectedResult);
-  });
-
-  it('should remove error files', async () => {
-    const files = ['file1.name', 'file2.name', 'file3.name'];
-    await north.removeErrorFiles(files);
-    expect(logger.trace).toHaveBeenCalledWith(`Removing 3 error files from North connector "${testData.north.list[0].name}"...`);
-  });
-
-  it('should retry error files', async () => {
-    const files = ['file1.name', 'file2.name', 'file3.name'];
-    await north.retryErrorFiles(files);
-    expect(logger.trace).toHaveBeenCalledWith(`Retrying 3 error files in North connector "${testData.north.list[0].name}"...`);
-  });
-
-  it('should remove all error files', async () => {
-    await north.removeAllErrorFiles();
-    expect(logger.trace).toHaveBeenCalledWith(`Removing all error files from North connector "${testData.north.list[0].name}"...`);
-  });
-
-  it('should retry all error files', async () => {
-    await north.retryAllErrorFiles();
-    expect(logger.trace).toHaveBeenCalledWith(`Retrying all error files in North connector "${testData.north.list[0].name}"...`);
-  });
-
-  it('should get cache files', async () => {
-    const expectedResult = [
-      { filename: 'file4.name', modificationDate: '', size: 1 },
-      { filename: 'file5.name', modificationDate: '', size: 2 },
-      { filename: 'file6.name', modificationDate: '', size: 3 }
-    ];
-    fileCacheService.getCacheFiles.mockReturnValueOnce(expectedResult);
-    const result = await north.getCacheFiles('2022-11-11T11:11:11.111Z', '2022-11-12T11:11:11.111Z', 'file');
-    expect(result).toEqual(expectedResult);
-  });
-
-  it('should remove cache files', async () => {
-    const files = ['file4.name', 'file5.name', 'file6.name'];
-    await north.removeCacheFiles(files);
-    expect(logger.trace).toHaveBeenCalledWith(`Removing 3 cache files from North connector "${testData.north.list[0].name}"...`);
-  });
-
-  it('should archive cache files', async () => {
-    const files = ['file4.name', 'file5.name', 'file6.name'];
-    await north.archiveCacheFiles(files);
-    expect(logger.trace).toHaveBeenCalledWith(`Moving 3 cache files into archive from North connector "${testData.north.list[0].name}"...`);
-  });
-
-  it('should get archive files', async () => {
-    const expectedResult = [
-      { filename: 'file1.name', modificationDate: '', size: 1 },
-      { filename: 'file2.name', modificationDate: '', size: 2 },
-      { filename: 'file3.name', modificationDate: '', size: 3 }
-    ];
-    fileCacheService.getArchiveFiles.mockReturnValueOnce(expectedResult);
-    const result = await north.getArchiveFiles('2022-11-11T11:11:11.111Z', '2022-11-12T11:11:11.111Z', 'file');
-    expect(result).toEqual(expectedResult);
-  });
-
-  it('should remove archive files', async () => {
-    const files = ['file1.name', 'file2.name', 'file3.name'];
-    await north.removeArchiveFiles(files);
-    expect(logger.trace).toHaveBeenCalledWith(`Removing 3 archive files from North connector "${testData.north.list[0].name}"...`);
-  });
-
-  it('should retry archive files', async () => {
-    const files = ['file1.name', 'file2.name', 'file3.name'];
-    await north.retryArchiveFiles(files);
-    expect(logger.trace).toHaveBeenCalledWith(`Retrying 3 archive files in North connector "${testData.north.list[0].name}"...`);
-  });
-
-  it('should remove all archive files', async () => {
-    await north.removeAllArchiveFiles();
-    expect(logger.trace).toHaveBeenCalledWith(`Removing all archive files from North connector "${testData.north.list[0].name}"...`);
-  });
-
-  it('should retry all archive files', async () => {
-    await north.retryAllArchiveFiles();
-    expect(logger.trace).toHaveBeenCalledWith(`Retrying all archive files in North connector "${testData.north.list[0].name}"...`);
-  });
-
-  it('should handle values properly', async () => {
-    const valuesToSend = new Map<string, Array<OIBusContent>>();
-    valuesToSend.set('queue-file.json', testData.oibusContent);
-    valueCacheService.getValuesToSend.mockReturnValue(valuesToSend);
-    north.handleContent = jest
-      .fn()
-      .mockImplementationOnce(() => null)
-      .mockImplementationOnce(() => {
-        throw new Error('handle value error');
-      })
-      .mockImplementationOnce(() => {
-        throw new OIBusError('oibus error', true);
-      })
-      .mockImplementationOnce(() => {
-        throw new OIBusError('oibus error 2', false);
-      });
-
-    await north.handleValuesWrapper();
-    expect(logger.error).not.toHaveBeenCalled();
-    await north.handleValuesWrapper();
-    expect(logger.error).toHaveBeenCalledWith(`Error while sending 3 values (1). handle value error`);
-    await north.handleValuesWrapper();
-    expect(logger.error).toHaveBeenCalledWith(`Error while sending 3 values (2). oibus error`);
-    await north.handleValuesWrapper();
-    expect(logger.error).toHaveBeenCalledWith(`Error while sending 3 values (3). oibus error 2`);
-  });
-
-  it('should handle files properly', async () => {
-    fileCacheService.getFileToSend.mockReturnValue('file-to-send.csv');
-    north.handleContent = jest
-      .fn()
-      .mockImplementationOnce(() => null)
-      .mockImplementationOnce(() => {
-        throw new Error('handle value error');
-      })
-      .mockImplementationOnce(() => {
-        throw new OIBusError('oibus error', true);
-      })
-      .mockImplementationOnce(() => {
-        throw new OIBusError('oibus error 2', false);
-      });
-
-    (fs.stat as jest.Mock).mockReturnValue({ size: 123 });
-    (path.parse as jest.Mock).mockImplementation(filePath => ({ base: filePath }));
-
-    await north.handleFilesWrapper();
-    expect(logger.error).not.toHaveBeenCalled();
-    await north.handleFilesWrapper();
-    expect(logger.error).toHaveBeenCalledWith(`Error while handling file "file-to-send.csv" (1). handle value error`);
-    await north.handleFilesWrapper();
-    expect(logger.error).toHaveBeenCalledWith(`Error while handling file "file-to-send.csv" (2). oibus error`);
-    await north.handleFilesWrapper();
-    expect(logger.error).toHaveBeenCalledWith(`Error while handling file "file-to-send.csv" (3). oibus error 2`);
-  });
-
-  it('should get cache values', async () => {
-    north.getCacheValues('');
-    expect(valueCacheService.getQueuedFilesMetadata).toHaveBeenCalledWith('');
-
-    north.getCacheValues('file');
-    expect(valueCacheService.getQueuedFilesMetadata).toHaveBeenCalledWith('file');
-  });
-
-  it('should remove all cache values', async () => {
-    await north.removeAllCacheValues();
-    expect(valueCacheService.removeAllValues).toHaveBeenCalled();
-  });
-
-  it('should remove all cache files', async () => {
-    await north.removeAllCacheFiles();
-    expect(fileCacheService.removeAllCacheFiles).toHaveBeenCalled();
-  });
-
-  it('should remove cache values by filename', async () => {
-    const filenames = ['file1.queue.tmp', 'file2.queue.tmp'];
-    path.join = jest.fn().mockImplementation((...args) => args.join('/'));
-
-    await north.removeCacheValues(filenames);
-
-    expect(valueCacheService.removeSentValues).toHaveBeenCalledWith(
-      new Map([
-        ['valueFolder/file1.queue.tmp', []],
-        ['valueFolder/file2.queue.tmp', []]
-      ])
+    (cacheService.searchCacheContent as jest.Mock).mockReturnValueOnce(expectedResult);
+    const result = await north.searchCacheContent(
+      { start: '2022-11-11T11:11:11.111Z', end: '2022-11-12T11:11:11.111Z', nameContains: 'file' },
+      'cache'
     );
-  });
-
-  it('should get cache values errors', async () => {
-    north.getErrorValues('', '', '');
-    expect(valueCacheService.getErrorValues).toHaveBeenCalledWith('', '', '');
-
-    north.getErrorValues('', '', 'file');
-    expect(valueCacheService.getErrorValues).toHaveBeenCalledWith('', '', 'file');
-  });
-
-  it('should remove cache value errors', async () => {
-    await north.removeErrorValues(['file1.queue.tmp', 'file2.queue.tmp']);
-    expect(valueCacheService.removeErrorValues).toHaveBeenCalledWith(['file1.queue.tmp', 'file2.queue.tmp']);
-    expect(logger.trace).toHaveBeenCalledWith(`Removing 2 value error files from North connector "${testData.north.list[0].name}"...`);
-  });
-
-  it('should remove all cache value errors', async () => {
-    await north.removeAllErrorValues();
-    expect(valueCacheService.removeAllErrorValues).toHaveBeenCalled();
-    expect(logger.trace).toHaveBeenCalledWith(`Removing all value error files from North connector "${testData.north.list[0].name}"...`);
-  });
-
-  it('should retry cache value errors', async () => {
-    await north.retryErrorValues(['file1.queue.tmp', 'file2.queue.tmp']);
-    expect(valueCacheService.retryErrorValues).toHaveBeenCalledWith(['file1.queue.tmp', 'file2.queue.tmp']);
-    expect(logger.trace).toHaveBeenCalledWith(`Retrying 2 value error files in North connector "${testData.north.list[0].name}"...`);
-  });
-
-  it('should retry all cache value errors', async () => {
-    await north.retryAllErrorValues();
-    expect(valueCacheService.retryAllErrorValues).toHaveBeenCalled();
-    expect(logger.trace).toHaveBeenCalledWith(`Retrying all value error files in North connector "${testData.north.list[0].name}"...`);
-  });
-
-  it('should get error file content', async () => {
-    await north.getErrorFileContent('file1.queue.tmp');
-    expect(fileCacheService.getErrorFileContent).toHaveBeenCalledWith('file1.queue.tmp');
-  });
-
-  it('should get cache file content', async () => {
-    await north.getCacheFileContent('file1.queue.tmp');
-    expect(fileCacheService.getCacheFileContent).toHaveBeenCalledWith('file1.queue.tmp');
-  });
-
-  it('should get archive file content', async () => {
-    await north.getArchiveFileContent('file1.queue.tmp');
-    expect(fileCacheService.getArchiveFileContent).toHaveBeenCalledWith('file1.queue.tmp');
-  });
-});
-
-describe('NorthConnector disabled', () => {
-  const cacheSize = 1_000_000_000;
-
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-
-    (dirSize as jest.Mock).mockReturnValue(cacheSize);
-    const valuesInQueue = new Map();
-    valueCacheService.getValuesToSend.mockImplementation(() => valuesInQueue);
-    valueCacheService.isEmpty.mockImplementation(() => false);
-    fileCacheService.getFileToSend.mockImplementation(() => null);
-    fileCacheService.isEmpty.mockImplementation(() => false);
-
-    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(testData.north.list[1]);
-    (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
-
-    north = new NorthOIAnalytics(
-      testData.north.list[1] as NorthConnectorEntity<NorthOIAnalyticsSettings>,
-      encryptionService,
-      northConnectorRepository,
-      scanModeRepository,
-      certificateRepository,
-      oIAnalyticsRegistrationRepository,
-      logger,
-      mockBaseFolders(testData.north.list[1].id)
-    );
-  });
-
-  afterEach(() => {
-    valueCacheService.triggerRun.removeAllListeners();
-    fileCacheService.triggerRun.removeAllListeners();
-  });
-
-  it('should not call handle values if no values in queue', async () => {
-    north.handleContent = jest.fn();
-    await north.handleValuesWrapper();
-    expect(logger.error).not.toHaveBeenCalled();
-    expect(north.handleContent).not.toHaveBeenCalled();
-  });
-
-  it('should not call handle file if no file in queue', async () => {
-    north.handleContent = jest.fn();
-    await north.handleFilesWrapper();
-    expect(logger.error).not.toHaveBeenCalled();
-    expect(north.handleContent).not.toHaveBeenCalled();
-  });
-
-  it('should properly create an OIBus error', () => {
-    expect(north.createOIBusError(new Error('node error'))).toEqual(new OIBusError('node error', false));
-    expect(north.createOIBusError('string error')).toEqual(new OIBusError('string error', false));
-    expect(north.createOIBusError(new OIBusError('oibus error', true))).toEqual(new OIBusError('oibus error', true));
-    expect(north.createOIBusError({ field: 'another error' })).toEqual(new OIBusError(JSON.stringify({ field: 'another error' }), false));
-  });
-
-  it('should retry values and manage error', async () => {
-    const valuesToSend = new Map<string, Array<OIBusContent>>();
-    valuesToSend.set('queue-file.json', testData.oibusContent);
-    valueCacheService.getValuesToSend.mockReturnValue(valuesToSend);
-
-    north.handleContent = jest
-      .fn()
-      .mockImplementationOnce(() => {
-        throw new OIBusError('error 1', true);
-      })
-      .mockImplementationOnce(() => {
-        throw new OIBusError('error 2', true);
-      })
-      .mockImplementationOnce(() => {
-        throw new OIBusError('error 3', false);
-      });
-    await north.handleValuesWrapper();
-    await north.handleValuesWrapper();
-    await north.handleValuesWrapper();
-    expect(logger.error).toHaveBeenCalledTimes(3);
-    expect(valueCacheService.getValuesToSend).toHaveBeenCalledTimes(1);
-    expect(valueCacheService.manageErroredValues).toHaveBeenCalledTimes(1);
-  });
-
-  it('should retry file and manage error', async () => {
-    fileCacheService.getFileToSend.mockReturnValue('file-to-send.csv');
-    north.handleContent = jest
-      .fn()
-      .mockImplementationOnce(() => {
-        throw new OIBusError('error 1', true);
-      })
-      .mockImplementationOnce(() => {
-        throw new OIBusError('error 2', true);
-      })
-      .mockImplementationOnce(() => {
-        throw new OIBusError('error 3', false);
-      });
-
-    await north.handleFilesWrapper();
-    await north.handleFilesWrapper();
-    await north.handleFilesWrapper();
-    expect(logger.error).toHaveBeenCalledTimes(3);
-    expect(fileCacheService.getFileToSend).toHaveBeenCalledTimes(1);
-    expect(fileCacheService.manageErroredFiles).toHaveBeenCalledTimes(1);
-  });
-
-  it('should use another logger', async () => {
-    north.setLogger(anotherLogger);
-    await north.retryAllErrorFiles();
-    expect(anotherLogger.trace).toHaveBeenCalledTimes(1);
-    expect(logger.trace).not.toHaveBeenCalled();
+    expect(result).toEqual(expectedResult);
   });
 
   it('should reset cache', async () => {
     await north.resetCache();
-    expect(fileCacheService.removeAllErrorFiles).toHaveBeenCalledTimes(1);
-    expect(fileCacheService.removeAllCacheFiles).toHaveBeenCalledTimes(1);
-
-    fileCacheService.removeAllErrorFiles.mockImplementationOnce(() => {
-      throw new Error('removeAllErrorFiles error');
-    });
-    fileCacheService.removeAllCacheFiles.mockImplementationOnce(() => {
-      throw new Error('removeAllCacheFiles error');
-    });
-    await north.resetCache();
-    expect(logger.error).toHaveBeenCalledWith(`Error while removing error files. ${new Error('removeAllErrorFiles error')}`);
-    expect(logger.error).toHaveBeenCalledWith(`Error while removing cache files. ${new Error('removeAllCacheFiles error')}`);
+    expect(cacheService.removeAllCacheContent).toHaveBeenCalledWith('cache');
+    expect(cacheService.removeAllCacheContent).toHaveBeenCalledWith('error');
+    expect(cacheService.removeAllCacheContent).toHaveBeenCalledWith('archive');
   });
 
-  it('should manage caching file when cache size is more than max size', async () => {
-    await north.start();
-    await north.cacheFile('filePath');
-    expect(logger.warn).toHaveBeenCalledWith(
-      `North cache is exceeding the maximum allowed size ` +
-        `(${Math.floor(((cacheSize * 3) / 1024 / 1024) * 100) / 100} MB >= ${testData.north.list[1].caching.maxSize} MB). ` +
-        'Files will be discarded until the cache is emptied (by sending files/values or manual removal)'
-    );
+  it('should get cache content list from file list', async () => {
+    await north.metadataFileListToCacheContentList('cache', ['file1.queue.tmp']);
+    expect(cacheService.metadataFileListToCacheContentList).toHaveBeenCalledWith('cache', ['file1.queue.tmp']);
   });
 
-  it('should manage caching value when cache size is more than max size', async () => {
-    await north.start();
-    await north.cacheValues([]);
-    expect(logger.warn).toHaveBeenCalledWith(
-      `North cache is exceeding the maximum allowed size ` +
-        `(${Math.floor(((cacheSize * 3) / 1024 / 1024) * 100) / 100} MB >= ${testData.north.list[1].caching.maxSize} MB). ` +
-        'Values will be discarded until the cache is emptied (by sending files/values or manual removal)'
+  it('should get cache content file stream', async () => {
+    await north.getCacheContentFileStream('cache', 'file1.queue.tmp');
+    expect(cacheService.getCacheContentFileStream).toHaveBeenCalledWith('cache', 'file1.queue.tmp');
+  });
+
+  it('should remove cache content', async () => {
+    const files: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [
+      { metadataFilename: 'file1.name', metadata: {} as CacheMetadata },
+      { metadataFilename: 'file2.name', metadata: {} as CacheMetadata },
+      { metadataFilename: 'file3.name', metadata: {} as CacheMetadata }
+    ];
+    await north.removeCacheContent('cache', files);
+    expect(cacheService.removeCacheContent).toHaveBeenCalledWith('cache', files[0]);
+    expect(cacheService.removeCacheContent).toHaveBeenCalledWith('cache', files[1]);
+    expect(cacheService.removeCacheContent).toHaveBeenCalledWith('cache', files[2]);
+  });
+
+  it('should remove all cache content', async () => {
+    await north.removeAllCacheContent('cache');
+    expect(cacheService.removeAllCacheContent).toHaveBeenCalledWith('cache');
+  });
+
+  it('should move cache content', async () => {
+    const files: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [
+      { metadataFilename: 'file1.name', metadata: {} as CacheMetadata },
+      { metadataFilename: 'file2.name', metadata: {} as CacheMetadata },
+      { metadataFilename: 'file3.name', metadata: {} as CacheMetadata }
+    ];
+    await north.moveCacheContent('cache', 'error', files);
+    expect(cacheService.moveCacheContent).toHaveBeenCalledWith('cache', 'error', files[0]);
+    expect(cacheService.moveCacheContent).toHaveBeenCalledWith('cache', 'error', files[1]);
+    expect(cacheService.moveCacheContent).toHaveBeenCalledWith('cache', 'error', files[2]);
+  });
+
+  it('should retry all cache content', async () => {
+    await north.moveAllCacheContent('cache', 'error');
+    expect(cacheService.moveAllCacheContent).toHaveBeenCalledWith('cache', 'error');
+  });
+
+  it('should use another logger', async () => {
+    north.setLogger(anotherLogger);
+    (logger.debug as jest.Mock).mockClear();
+    await north.stop();
+    expect(anotherLogger.debug).toHaveBeenCalledTimes(1);
+    expect(logger.debug).not.toHaveBeenCalled();
+  });
+
+  it('should trigger run if necessary because of retry', async () => {
+    north.addTaskToQueue = jest.fn();
+    north.run = jest.fn();
+    north['errorCount'] = 1;
+    await north['triggerRunIfNecessary'](0);
+    expect(delay).not.toHaveBeenCalled();
+    expect(north.addTaskToQueue).toHaveBeenCalledTimes(1);
+    expect(north.addTaskToQueue).toHaveBeenCalledWith({
+      id: 'retry',
+      name: `Retry content after 1 errors`
+    });
+    expect(north.run).not.toHaveBeenCalled();
+  });
+
+  it('should trigger run if necessary because of group count', async () => {
+    (cacheService.getNumberOfElementsInQueue as jest.Mock).mockReturnValueOnce(north.settings.caching.oibusTimeValues.groupCount);
+    north.addTaskToQueue = jest.fn();
+    north.run = jest.fn();
+    await north['triggerRunIfNecessary'](0);
+    expect(delay).not.toHaveBeenCalled(); // Once at startup with default delay
+    expect(north.addTaskToQueue).toHaveBeenCalledTimes(1);
+    expect(north.addTaskToQueue).toHaveBeenCalledWith({
+      id: 'limit-reach',
+      name: `Limit reach: ${north.settings.caching.oibusTimeValues.groupCount} elements in queue >= ${north.settings.caching.oibusTimeValues.groupCount}`
+    });
+    expect(north.run).not.toHaveBeenCalled();
+  });
+
+  it('should trigger run if necessary because of file trigger', async () => {
+    (cacheService.getNumberOfRawFilesInQueue as jest.Mock).mockReturnValueOnce(1);
+    north.addTaskToQueue = jest.fn();
+    await north['triggerRunIfNecessary'](10);
+    expect(delay).toHaveBeenCalledWith(10);
+    expect(north.addTaskToQueue).toHaveBeenCalledTimes(1);
+    expect(north.addTaskToQueue).toHaveBeenCalledWith({
+      id: 'limit-reach',
+      name: `1 files in queue, sending it immediately`
+    });
+  });
+
+  it('should handle content and remove it when handled', async () => {
+    (cacheService.getCacheContentToSend as jest.Mock).mockReturnValueOnce(contentToHandle);
+    north.handleContent = jest.fn();
+    await north.handleContentWrapper();
+    expect(cacheService.getCacheContentToSend).toHaveBeenCalledWith(north.settings.caching.oibusTimeValues.maxSendCount);
+    expect(north.handleContent).toHaveBeenCalledWith({
+      ...contentToHandle.metadata,
+      contentFile: path.join('cache', 'content', 'file1-123456.json')
+    });
+    expect(cacheService.removeCacheContent).toHaveBeenCalledWith('cache', contentToHandle);
+    expect(cacheService.moveCacheContent).not.toHaveBeenCalled();
+  });
+
+  it('should handle content and archive it when handled', async () => {
+    north.settings.caching.archive.enabled = true;
+    (cacheService.getCacheContentToSend as jest.Mock).mockReturnValueOnce(contentToHandle);
+    north.handleContent = jest.fn();
+    await north.handleContentWrapper();
+    expect(cacheService.getCacheContentToSend).toHaveBeenCalledWith(north.settings.caching.oibusTimeValues.maxSendCount);
+    expect(north.handleContent).toHaveBeenCalledWith({
+      ...contentToHandle.metadata,
+      contentFile: path.join('cache', 'content', 'file1-123456.json')
+    });
+    expect(cacheService.moveCacheContent).toHaveBeenCalledWith('cache', 'archive', contentToHandle);
+    expect(cacheService.removeCacheContent).not.toHaveBeenCalled();
+  });
+
+  it('should not handle content if no content to handle', async () => {
+    (cacheService.getCacheContentToSend as jest.Mock).mockReturnValueOnce(null);
+    north.handleContent = jest.fn();
+    await north.handleContentWrapper();
+    expect(cacheService.getCacheContentToSend).toHaveBeenCalledWith(north.settings.caching.oibusTimeValues.maxSendCount);
+    expect(north.handleContent).not.toHaveBeenCalled();
+  });
+
+  it('should handle content and manage errors', async () => {
+    north.settings.caching.retryCount = 0;
+    (cacheService.getCacheContentToSend as jest.Mock).mockReturnValueOnce(contentToHandle);
+    north.handleContent = jest.fn().mockImplementationOnce(() => {
+      throw new OIBusError('handle error', false);
+    });
+    await north.handleContentWrapper();
+    expect(cacheService.getCacheContentToSend).toHaveBeenCalledWith(north.settings.caching.oibusTimeValues.maxSendCount);
+    expect(north.handleContent).toHaveBeenCalledWith({
+      ...contentToHandle.metadata,
+      contentFile: path.join('cache', 'content', 'file1-123456.json')
+    });
+    expect(cacheService.removeCacheContent).not.toHaveBeenCalled();
+    expect(cacheService.moveCacheContent).toHaveBeenCalledWith('cache', 'error', contentToHandle);
+  });
+
+  it('should cache json content without maxSendCount', async () => {
+    north['connector'].caching.oibusTimeValues.maxSendCount = 0;
+    (fsAsync.stat as jest.Mock).mockReturnValueOnce({ size: 100, ctimeMs: 123 });
+    (generateRandomId as jest.Mock).mockReturnValueOnce('1234567890');
+    (createWriteStream as jest.Mock).mockReturnValueOnce('writeStream');
+    (Readable.from as jest.Mock).mockReturnValueOnce('readStream');
+    const metadata: CacheMetadata = {
+      contentFile: '1234567890.json',
+      contentSize: 100,
+      numberOfElement: (testData.oibusContent[0].content as Array<object>).length,
+      createdAt: DateTime.fromMillis(123).toUTC().toISO()!,
+      contentType: 'time-values',
+      source: 'south',
+      options: {}
+    };
+    await north.cacheContent(testData.oibusContent[0], 'south');
+
+    expect(createWriteStream).toHaveBeenCalledWith(path.join(cacheService.cacheFolder, cacheService.CONTENT_FOLDER, '1234567890.json'));
+    expect(Readable.from).toHaveBeenCalledWith(JSON.stringify(testData.oibusContent[0].content));
+    expect(pipeTransformers).toHaveBeenCalledWith('readStream', 'writeStream');
+
+    expect(fsAsync.stat).toHaveBeenCalledWith(path.join(cacheService.cacheFolder, cacheService.CONTENT_FOLDER, '1234567890.json'));
+    expect(fsAsync.writeFile).toHaveBeenCalledWith(
+      path.join(cacheService.cacheFolder, cacheService.METADATA_FOLDER, '1234567890.json'),
+      JSON.stringify(metadata),
+      {
+        encoding: 'utf-8',
+        flag: 'w'
+      }
     );
+    expect(cacheService.addCacheContentToQueue).toHaveBeenCalledWith({ metadataFilename: '1234567890.json', metadata });
+  });
+
+  it('should cache json content with maxSendCount', async () => {
+    north['connector'].caching.oibusTimeValues.maxSendCount = testData.oibusContent[0].content!.length - 1;
+
+    (fsAsync.stat as jest.Mock).mockReturnValueOnce({ size: 100, ctimeMs: 123 }).mockReturnValueOnce({ size: 100, ctimeMs: 123 });
+    (generateRandomId as jest.Mock).mockReturnValueOnce('1234567890').mockReturnValueOnce('0987654321');
+    (createWriteStream as jest.Mock).mockReturnValueOnce('writeStream').mockReturnValueOnce('writeStream');
+    (Readable.from as jest.Mock).mockReturnValueOnce('readStream').mockReturnValueOnce('readStream');
+    const metadata1: CacheMetadata = {
+      contentFile: '1234567890.json',
+      contentSize: 100,
+      numberOfElement: (testData.oibusContent[0].content as Array<object>).length - 1,
+      createdAt: DateTime.fromMillis(123).toUTC().toISO()!,
+      contentType: 'time-values',
+      source: 'south',
+      options: {}
+    };
+    const metadata2: CacheMetadata = {
+      contentFile: '0987654321.json',
+      contentSize: 100,
+      numberOfElement: 1,
+      createdAt: DateTime.fromMillis(123).toUTC().toISO()!,
+      contentType: 'time-values',
+      source: 'south',
+      options: {}
+    };
+    await north.cacheContent(testData.oibusContent[0], 'south');
+
+    expect(createWriteStream).toHaveBeenCalledWith(path.join(cacheService.cacheFolder, cacheService.CONTENT_FOLDER, '1234567890.json'));
+    expect(createWriteStream).toHaveBeenCalledWith(path.join(cacheService.cacheFolder, cacheService.CONTENT_FOLDER, '0987654321.json'));
+    expect(Readable.from).toHaveBeenCalledWith(
+      JSON.stringify(testData.oibusContent[0].content!.slice(0, testData.oibusContent[0].content!.length - 1))
+    );
+    expect(Readable.from).toHaveBeenCalledWith(
+      JSON.stringify([testData.oibusContent[0].content![testData.oibusContent[0].content!.length - 1]])
+    );
+    expect(pipeTransformers).toHaveBeenCalledTimes(2);
+
+    expect(fsAsync.stat).toHaveBeenCalledWith(path.join(cacheService.cacheFolder, cacheService.CONTENT_FOLDER, '1234567890.json'));
+    expect(fsAsync.stat).toHaveBeenCalledWith(path.join(cacheService.cacheFolder, cacheService.CONTENT_FOLDER, '0987654321.json'));
+    expect(fsAsync.writeFile).toHaveBeenCalledWith(
+      path.join(cacheService.cacheFolder, cacheService.METADATA_FOLDER, '1234567890.json'),
+      JSON.stringify(metadata1),
+      {
+        encoding: 'utf-8',
+        flag: 'w'
+      }
+    );
+    expect(fsAsync.writeFile).toHaveBeenCalledWith(
+      path.join(cacheService.cacheFolder, cacheService.METADATA_FOLDER, '0987654321.json'),
+      JSON.stringify(metadata2),
+      {
+        encoding: 'utf-8',
+        flag: 'w'
+      }
+    );
+    expect(cacheService.addCacheContentToQueue).toHaveBeenCalledWith({ metadataFilename: '1234567890.json', metadata: metadata1 });
+    expect(cacheService.addCacheContentToQueue).toHaveBeenCalledWith({ metadataFilename: '0987654321.json', metadata: metadata2 });
+  });
+
+  it('should cache file content', async () => {
+    (fsAsync.stat as jest.Mock).mockReturnValueOnce({ size: 100, ctimeMs: 123 });
+    (generateRandomId as jest.Mock).mockReturnValueOnce('1234567890');
+    (createWriteStream as jest.Mock).mockReturnValueOnce('writeStream');
+    (createReadStream as jest.Mock).mockReturnValueOnce('readStream');
+    const metadata: CacheMetadata = {
+      contentFile: `${path.parse((testData.oibusContent[1] as OIBusRawContent).filePath).name}-1234567890.csv`,
+      contentSize: 100,
+      numberOfElement: 0,
+      createdAt: DateTime.fromMillis(123).toUTC().toISO()!,
+      contentType: 'raw',
+      source: 'south',
+      options: {}
+    };
+    await north.cacheContent(testData.oibusContent[1], 'south');
+
+    expect(createWriteStream).toHaveBeenCalledWith(
+      path.join(
+        cacheService.cacheFolder,
+        cacheService.CONTENT_FOLDER,
+        `${path.parse((testData.oibusContent[1] as OIBusRawContent).filePath).name}-1234567890.csv`
+      )
+    );
+    expect(createReadStream).toHaveBeenCalledWith((testData.oibusContent[1] as OIBusRawContent).filePath);
+    expect(pipeTransformers).toHaveBeenCalledWith('readStream', 'writeStream');
+
+    expect(fsAsync.stat).toHaveBeenCalledWith(
+      path.join(
+        cacheService.cacheFolder,
+        cacheService.CONTENT_FOLDER,
+        `${path.parse((testData.oibusContent[1] as OIBusRawContent).filePath).name}-1234567890.csv`
+      )
+    );
+    expect(fsAsync.writeFile).toHaveBeenCalledWith(
+      path.join(cacheService.cacheFolder, cacheService.METADATA_FOLDER, '1234567890.json'),
+      JSON.stringify(metadata),
+      {
+        encoding: 'utf-8',
+        flag: 'w'
+      }
+    );
+    expect(cacheService.addCacheContentToQueue).toHaveBeenCalledWith({ metadataFilename: '1234567890.json', metadata });
+  });
+
+  it('should not cache content if max size reach', async () => {
+    north['connector'].caching.maxSize = 1;
+    north['cacheSize'].cacheSize = (north['connector'].caching.maxSize + 1) * 1024 * 1024;
+    await north.cacheContent(testData.oibusContent[0], 'south');
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      `North cache is exceeding the maximum allowed size (2 MB >= ${north['connector'].caching.maxSize} MB). Values will be discarded until the cache is emptied (by sending files/values or manual removal)`
+    );
+    expect(pipeTransformers).not.toHaveBeenCalled();
+  });
+
+  it('should not cache content if file contains parent folder', async () => {
+    (generateRandomId as jest.Mock).mockReturnValueOnce('1234567890');
+
+    await expect(
+      north.cacheContent(
+        {
+          type: 'raw',
+          filePath: path.join('..', 'path', 'file-123456.csv')
+        },
+        'south'
+      )
+    ).rejects.toThrow(`Invalid file path "${path.resolve('..', 'path', 'file-123456.csv')}"`);
+
+    expect(pipeTransformers).not.toHaveBeenCalled();
+  });
+
+  it('should create OIBus error', () => {
+    expect(north.createOIBusError('error')).toEqual(new OIBusError('error', false));
+    expect(north.createOIBusError(new Error('error'))).toEqual(new OIBusError('error', false));
+    expect(north.createOIBusError(400)).toEqual(new OIBusError('400', false));
+    expect(north.createOIBusError(new OIBusError('error', false))).toEqual(new OIBusError('error', false));
   });
 });
 
-describe('NorthConnector test', () => {
+describe('NorthConnector test id', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
-    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(testData.north.list[1]);
-    (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
+    const northTest: NorthConnectorEntity<NorthFileWriterSettings> = JSON.parse(JSON.stringify(testData.north.list[0]));
+    northTest.id = 'test';
 
-    const testSettings = JSON.parse(JSON.stringify(testData.north.list[1]));
-    testSettings.id = 'test';
-
-    north = new NorthOIAnalytics(
-      testSettings as NorthConnectorEntity<NorthOIAnalyticsSettings>,
+    north = new NorthFileWriter(
+      northTest,
       encryptionService,
       northConnectorRepository,
       scanModeRepository,
-      certificateRepository,
-      oIAnalyticsRegistrationRepository,
       logger,
-      mockBaseFolders(testData.north.list[1].id)
+      mockBaseFolders(northTest.id)
     );
   });
 
-  afterEach(() => {
-    valueCacheService.triggerRun.removeAllListeners();
-    fileCacheService.triggerRun.removeAllListeners();
-  });
-
-  it('should check if North caches are empty', async () => {
-    expect(await north.isCacheEmpty()).toBeFalsy();
+  it('should properly start with test id', async () => {
+    north.updateConnectorSubscription = jest.fn();
+    north.connect = jest.fn();
+    await north.start(false);
+    expect(createBaseFolders).not.toHaveBeenCalled();
+    expect(north.updateConnectorSubscription).not.toHaveBeenCalled();
+    expect(northConnectorRepository.findNorthById).not.toHaveBeenCalled();
+    expect(cacheService.start).toHaveBeenCalledTimes(1);
+    expect(north.connect).toHaveBeenCalledTimes(1);
   });
 });

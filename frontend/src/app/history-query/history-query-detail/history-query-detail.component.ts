@@ -243,7 +243,7 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
     if (type === 'south') {
       command = this.southConnectorCommand;
     } else {
-      command = this.northConnectorComand;
+      command = this.northConnectorCommand;
     }
 
     const modalRef = this.modalService.open(TestConnectionResultModalComponent);
@@ -255,12 +255,7 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
     if (!this.historyMetrics || this.historyMetrics.historyMetrics.intervalProgress !== 1) {
       return false;
     }
-
-    const valueProgress = this.historyMetrics.north.numberOfValuesSent / this.historyMetrics.south.numberOfValuesRetrieved;
-    const fileProgress = this.historyMetrics.north.numberOfFilesSent / this.historyMetrics.south.numberOfFilesRetrieved;
-
-    const percentage = valueProgress > 0 ? valueProgress : fileProgress;
-    return percentage === 1;
+    return this.historyMetrics.north.currentCacheSize === 0;
   }
 
   get southConnectorCommand() {
@@ -270,7 +265,7 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
     } as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
   }
 
-  get northConnectorComand() {
+  get northConnectorCommand() {
     return {
       type: this.northManifest!.id,
       settings: this.historyQuery!.northSettings,
