@@ -5,7 +5,7 @@ import NorthConnector from '../north-connector';
 import pino from 'pino';
 import EncryptionService from '../../service/encryption.service';
 import { NorthRESTSettings } from '../../../shared/model/north-settings.model';
-import { OIBusContent } from '../../../shared/model/engine.model';
+import { CacheMetadata } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
@@ -31,10 +31,11 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
     super(configuration, encryptionService, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
-  async handleContent(data: OIBusContent): Promise<void> {
-    switch (data.type) {
+  async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
+    switch (cacheMetadata.contentType) {
       case 'raw':
-        return this.handleFile(data.filePath);
+        return this.handleFile(cacheMetadata.contentFile);
+
       case 'time-values':
         throw new Error('Can not manage time values');
     }

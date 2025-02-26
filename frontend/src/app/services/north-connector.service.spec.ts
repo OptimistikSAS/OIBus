@@ -92,17 +92,18 @@ describe('NorthConnectorService', () => {
         scanModeName: null,
         retryInterval: 1000,
         retryCount: 3,
+        runMinDelay: 200,
         maxSize: 30,
         oibusTimeValues: {
           groupCount: 1000,
           maxSendCount: 10000
         },
         rawFiles: {
-          sendFileImmediately: true,
-          archive: {
-            enabled: false,
-            retentionDuration: 0
-          }
+          sendFileImmediately: true
+        },
+        archive: {
+          enabled: false,
+          retentionDuration: 0
         }
       },
       subscriptions: []
@@ -128,17 +129,18 @@ describe('NorthConnectorService', () => {
         scanModeName: null,
         retryInterval: 1000,
         retryCount: 3,
+        runMinDelay: 200,
         maxSize: 30,
         oibusTimeValues: {
           groupCount: 1000,
           maxSendCount: 10000
         },
         rawFiles: {
-          sendFileImmediately: true,
-          archive: {
-            enabled: false,
-            retentionDuration: 0
-          }
+          sendFileImmediately: true
+        },
+        archive: {
+          enabled: false,
+          retentionDuration: 0
         }
       },
       subscriptions: []
@@ -389,17 +391,18 @@ describe('NorthConnectorService', () => {
         scanModeName: null,
         retryInterval: 1000,
         retryCount: 3,
+        runMinDelay: 200,
         maxSize: 30,
         oibusTimeValues: {
           groupCount: 1000,
           maxSendCount: 10000
         },
         rawFiles: {
-          sendFileImmediately: true,
-          archive: {
-            enabled: false,
-            retentionDuration: 0
-          }
+          sendFileImmediately: true
+        },
+        archive: {
+          enabled: false,
+          retentionDuration: 0
         }
       },
       subscriptions: []

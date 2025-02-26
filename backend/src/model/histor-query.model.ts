@@ -29,6 +29,7 @@ export interface HistoryQueryEntity<S extends SouthSettings, N extends NorthSett
     scanModeId: string;
     retryInterval: number;
     retryCount: number;
+    runMinDelay: number;
     maxSize: number;
     oibusTimeValues: {
       groupCount: number;
@@ -36,8 +37,8 @@ export interface HistoryQueryEntity<S extends SouthSettings, N extends NorthSett
     };
     rawFiles: {
       sendFileImmediately: boolean;
-      archive: { enabled: boolean; retentionDuration: number };
     };
+    archive: { enabled: boolean; retentionDuration: number };
   };
   items: Array<HistoryQueryItemEntity<I>>;
 }
