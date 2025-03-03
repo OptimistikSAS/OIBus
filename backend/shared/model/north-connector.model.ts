@@ -1,5 +1,5 @@
 import { OibFormControl } from './form.model';
-import { BaseEntity, Instant } from './types';
+import { BaseEntity } from './types';
 import { NorthSettings } from './north-settings.model';
 import { SouthConnectorLightDTO } from './south-connector.model';
 
@@ -88,10 +88,4 @@ export interface NorthConnectorManifest {
     points: boolean;
   };
   settings: Array<OibFormControl>;
-}
-
-export interface NorthCacheFiles {
-  filename: string;
-  modificationDate: Instant;
-  size: number;
 }
