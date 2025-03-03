@@ -1,0 +1,100 @@
+<oib-box>
+  <ng-template oibBoxTitle>
+    <div class="d-flex justify-content-between">
+      @switch (cacheType()) {
+        @case ('cache') {
+          <span translate="north.cache-settings.cache-content"></span>
+        }
+        @case ('error') {
+          <span translate="north.cache-settings.error-content"></span>
+        }
+        @case ('archive') {
+          <span translate="north.cache-settings.archive-content"></span>
+        }
+      }
+      @if (cacheContentFiles.length !== 0) {
+        <div>
+          @switch (cacheType()) {
+            @case ('cache') {
+              <button
+                type="button"
+                class="btn btn-secondary btn-sm oib-box-btn"
+                (click)="moveCacheContent('error')"
+                translate="north.cache-settings.error-selected-content"
+                id="error-selected-content"
+              ></button
+              ><button
+                type="button"
+                class="btn btn-secondary btn-sm oib-box-btn"
+                (click)="moveCacheContent('archive')"
+                translate="north.cache-settings.archive-selected-content"
+                id="archive-selected-content"
+              ></button>
+            }
+            @case ('error') {
+              <button
+                type="button"
+                class="btn btn-secondary btn-sm oib-box-btn"
+                (click)="moveCacheContent('cache')"
+                translate="north.cache-settings.retry-selected-content"
+                id="retry-selected-error-content"
+              ></button>
+              <button
+                type="button"
+                class="btn btn-secondary btn-sm oib-box-btn"
+                (click)="moveCacheContent('archive')"
+                translate="north.cache-settings.archive-selected-content"
+                id="archive-selected-error-content"
+              ></button>
+            }
+            @case ('archive') {
+              <button
+                type="button"
+                class="btn btn-secondary btn-sm oib-box-btn"
+                (click)="moveCacheContent('cache')"
+                translate="north.cache-settings.replay-selected-content"
+                id="retry-selected-archive-content"
+              ></button>
+            }
+          }
+
+          <button
+            type="button"
+            class="btn btn-danger btn-sm oib-box-btn"
+            (click)="removeCacheContent()"
+            translate="north.cache-settings.remove-selected-content"
+            id="remove-selected-files"
+          ></button>
+        </div>
+      }
+    </div>
+  </ng-template>
+
+  @if (cacheContentFiles.length !== 0) {
+    <oib-file-table
+      #fileTable
+      [cacheType]="cacheType()"
+      [files]="cacheContentFiles"
+      (itemAction)="onItemAction($event)"
+      (selectedFiles)="selectedFiles.set($event)"
+    />
+  } @else {
+    @switch (cacheType()) {
+      @case ('cache') {
+        <div>
+          <div class="mb-3 oib-grey-container" translate="north.cache-settings.cache-content-none"></div>
+        </div>
+      }
+      @case ('error') {
+        <div>
+          <div class="mb-3 oib-grey-container" translate="north.cache-settings.error-content-none"></div>
+        </div>
+      }
+      @case ('archive') {
+        <div>
+          <div class="mb-3 oib-grey-container" translate="north.cache-settings.archive-content-none"></div>
+        </div>
+      }
+    }
+  }
+</oib-box>
