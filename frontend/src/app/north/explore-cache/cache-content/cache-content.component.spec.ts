@@ -1,4 +1,4 @@
-import { CacheFilesComponent } from './cache-files.component';
+import { CacheContentComponent } from './cache-content.component';
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { TestBed } from '@angular/core/testing';
 import { NorthConnectorService } from '../../../services/north-connector.service';
@@ -7,13 +7,14 @@ import { NorthConnectorDTO } from '../../../../../../backend/shared/model/north-
 import { Component, viewChild } from '@angular/core';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { NorthSettings } from '../../../../../../backend/shared/model/north-settings.model';
+import testData from '../../../../../../backend/src/tests/utils/test-data';
 
 @Component({
-  template: `<oib-cache-files #component [northConnector]="northConnector" />`,
-  imports: [CacheFilesComponent]
+  template: `<oib-cache-content cacheType="cache" #component [northConnector]="northConnector" />`,
+  imports: [CacheContentComponent]
 })
 class TestComponent {
-  readonly component = viewChild.required<CacheFilesComponent>('component');
+  readonly component = viewChild.required<CacheContentComponent>('component');
   northConnector: NorthConnectorDTO<NorthSettings> = {
     id: 'northId',
     name: 'North Connector'
@@ -42,9 +43,9 @@ describe('CacheFilesComponent', () => {
     });
 
     tester = new CacheFilesComponentTester();
-    northConnectorService.getCacheFiles.and.returnValue(of([]));
-    northConnectorService.removeCacheFiles.and.returnValue(of());
-    northConnectorService.archiveCacheFiles.and.returnValue(of());
+    northConnectorService.searchCacheContent.and.returnValue(of([]));
+    northConnectorService.removeCacheContent.and.returnValue(of());
+    northConnectorService.moveCacheContent.and.returnValue(of());
     northConnectorService.getCacheFileContent.and.returnValue(of());
     tester.detectChanges();
   });
@@ -55,16 +56,23 @@ describe('CacheFilesComponent', () => {
 
   it('should handle item actions', () => {
     const file = {
-      filename: 'filename',
-      modificationDate: '2021-01-01T00:00:00.000Z',
-      size: 123
+      metadataFilename: 'file1.json',
+      metadata: {
+        contentFile: '8-1696843490050.txt',
+        contentSize: 6,
+        numberOfElement: 0,
+        createdAt: testData.constants.dates.DATE_1,
+        contentType: 'raw',
+        source: 'south',
+        options: {}
+      }
     };
 
     tester.componentInstance.component().onItemAction({ type: 'remove', file });
-    expect(northConnectorService.removeCacheFiles).toHaveBeenCalled();
+    expect(northConnectorService.removeCacheContent).toHaveBeenCalled();
 
     tester.componentInstance.component().onItemAction({ type: 'archive', file });
-    expect(northConnectorService.archiveCacheFiles).toHaveBeenCalled();
+    expect(northConnectorService.moveCacheContent).toHaveBeenCalled();
 
     tester.componentInstance.component().onItemAction({ type: 'view', file });
     expect(northConnectorService.getCacheFileContent).toHaveBeenCalled();

@@ -1,8 +1,9 @@
-import { AfterViewInit, Component, inject, viewChild } from '@angular/core';
+import { Component, inject, viewChild } from '@angular/core';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
 import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-code-block.component';
+import { CacheMetadata } from '../../../../../../backend/shared/model/engine.model';
 
 @Component({
   selector: 'oib-file-content-modal',
@@ -10,21 +11,23 @@ import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-c
   templateUrl: './file-content-modal.component.html',
   styleUrl: './file-content-modal.component.scss'
 })
-export class FileContentModalComponent implements AfterViewInit {
+export class FileContentModalComponent {
   private modal = inject(NgbActiveModal);
 
   readonly codeBlock = viewChild.required<OibCodeBlockComponent>('codeBlock');
+  contentFile: { metadataFilename: string; metadata: CacheMetadata } | null = null;
   content = '';
-  filename = '';
-  contentType = '';
   private callbackSet = false;
 
-  ngAfterViewInit() {
+  prepareForCreation(contentFile: { metadataFilename: string; metadata: CacheMetadata }, content: string) {
+    this.contentFile = contentFile;
+    this.content = content;
+
     this.codeBlock().writeValue(this.content);
-    const codeBlock = this.codeBlock();
+    // this.codeBlock().contentType = this.contentFile.metadata.contentType === 'raw' ? 'csv' : 'json';
 
     // Attach a listener to the code editor to resize the modal when the content changes
-    codeBlock.onChange = () => {
+    this.codeBlock().onChange = () => {
       if (this.callbackSet) {
         return;
       }
@@ -41,12 +44,6 @@ export class FileContentModalComponent implements AfterViewInit {
         });
       }
     };
-  }
-
-  prepareForCreation(filename: string, contentType: string, content: string) {
-    this.filename = filename;
-    this.contentType = contentType;
-    this.content = content;
   }
 
   dismiss() {
