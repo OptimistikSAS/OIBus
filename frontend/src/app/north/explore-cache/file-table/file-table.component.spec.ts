@@ -1,40 +1,121 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { FileTableComponent, FileTableData, ItemActionEvent } from './file-table.component';
+import { FileTableComponent } from './file-table.component';
 import { provideHttpClient } from '@angular/common/http';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { ComponentTester, TestButton } from 'ngx-speculoos';
+import { CacheMetadata } from '../../../../../../backend/shared/model/engine.model';
+import testData from '../../../../../../backend/src/tests/utils/test-data';
 
-const firstFile = { filename: '8-1696843490050.txt', modificationDate: '2023-10-10T17:41:59.937Z', size: 6 };
-const unsortedFiles: Array<FileTableData> = [
+const firstFile = {
+  metadataFilename: 'file1.json',
+  metadata: {
+    contentFile: '8-1696843490050.txt',
+    contentSize: 6,
+    numberOfElement: 0,
+    createdAt: testData.constants.dates.DATE_1,
+    contentType: 'raw',
+    source: 'south',
+    options: {}
+  }
+};
+const unsortedFiles: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [
   firstFile,
-  { filename: '5-1696843490043.txt', modificationDate: '2023-10-10T17:41:58.395Z', size: 4 },
-  { filename: '7-1696843490046.txt', modificationDate: '2023-10-09T09:24:43.208Z', size: 0 },
-  { filename: '4-1696843490042.txt', modificationDate: '2023-10-10T17:41:55.343Z', size: 5 },
-  { filename: '1-1696843490039.txt', modificationDate: '2023-10-10T17:41:53.331Z', size: 3 },
-  { filename: '3-1696843490039.txt', modificationDate: '2023-10-09T09:24:43.187Z', size: 0 },
-  { filename: '6-1696843490045.txt', modificationDate: '2023-10-09T09:24:43.207Z', size: 0 },
-  { filename: '2-1696843490039.txt', modificationDate: '2023-10-09T09:24:43.187Z', size: 0 }
+  {
+    metadataFilename: 'file2.json',
+    metadata: {
+      contentFile: '5-1696843490043.txt',
+      contentSize: 4,
+      numberOfElement: 0,
+      createdAt: testData.constants.dates.DATE_3,
+      contentType: 'raw',
+      source: 'south',
+      options: {}
+    }
+  },
+  {
+    metadataFilename: 'file3.json',
+    metadata: {
+      contentFile: '7-1696843490046.txt',
+      contentSize: 0,
+      numberOfElement: 0,
+      createdAt: testData.constants.dates.DATE_2,
+      contentType: 'raw',
+      source: 'south',
+      options: {}
+    }
+  },
+  {
+    metadataFilename: 'file4.json',
+    metadata: {
+      contentFile: '4-1696843490042.txt',
+      contentSize: 5,
+      numberOfElement: 0,
+      createdAt: testData.constants.dates.DATE_1,
+      contentType: 'raw',
+      source: 'south',
+      options: {}
+    }
+  },
+  {
+    metadataFilename: 'file5.json',
+    metadata: {
+      contentFile: '1-1696843490039.txt',
+      contentSize: 3,
+      numberOfElement: 0,
+      createdAt: testData.constants.dates.DATE_1,
+      contentType: 'raw',
+      source: 'south',
+      options: {}
+    }
+  },
+  {
+    metadataFilename: 'file6.json',
+    metadata: {
+      contentFile: '3-1696843490039.txt',
+      contentSize: 0,
+      numberOfElement: 0,
+      createdAt: testData.constants.dates.DATE_2,
+      contentType: 'raw',
+      source: 'south',
+      options: {}
+    }
+  },
+  {
+    metadataFilename: 'file7.json',
+    metadata: {
+      contentFile: '6-1696843490045.txt',
+      contentSize: 0,
+      numberOfElement: 0,
+      createdAt: testData.constants.dates.DATE_2,
+      contentType: 'raw',
+      source: 'south',
+      options: {}
+    }
+  }
 ];
 
 @Component({
   template: `
-    <oib-file-table
-      [files]="files()"
-      [actions]="actions()"
-      (itemAction)="onItemAction($event)"
-      (selectedFiles)="selectedFiles.set($event)"
-    />
+    <oib-file-table [files]="files()" cacheType="archive" (itemAction)="onItemAction($event)" (selectedFiles)="selectedFiles.set($event)" />
   `,
   imports: [FileTableComponent]
 })
 class FileTableTestComponent {
   readonly files = signal(unsortedFiles);
-  readonly actions = signal(['remove', 'retry', 'view', 'archive'] as Array<ItemActionEvent['type']>);
-  readonly itemAction = signal<ItemActionEvent | undefined>(undefined);
-  readonly selectedFiles = signal<Array<FileTableData>>([]);
+  readonly itemAction = signal<
+    | {
+        type: 'remove' | 'error' | 'archive' | 'retry' | 'view';
+        file: { metadataFilename: string; metadata: CacheMetadata };
+      }
+    | undefined
+  >(undefined);
+  readonly selectedFiles = signal<Array<{ metadataFilename: string; metadata: CacheMetadata }>>([]);
 
-  onItemAction(event: ItemActionEvent) {
+  onItemAction(event: {
+    type: 'remove' | 'error' | 'archive' | 'retry' | 'view';
+    file: { metadataFilename: string; metadata: CacheMetadata };
+  }) {
     this.itemAction.set(event);
   }
 }
@@ -86,47 +167,24 @@ describe('FileTableComponent', () => {
   });
 
   it('should display files', () => {
-    expect(tester.filenames.length).toBe(8);
-  });
-
-  it('should create actions on init', () => {
-    expect(tester.actionGroups.length).toBe(8);
-
-    const actionButtons = tester.actionGroups[0].elements('button');
-    expect(actionButtons[0].element('span')).toHaveClass('fa-trash');
-    expect(actionButtons[1].element('span')).toHaveClass('fa-refresh');
-    expect(actionButtons[2].element('span')).toHaveClass('fa-search');
-    expect(actionButtons[3].element('span')).toHaveClass('fa-archive');
+    expect(tester.filenames.length).toBe(7);
   });
 
   it('should dispatch action event', () => {
     tester.removeButton.click();
-    expect(tester.componentInstance.itemAction()).toEqual({ type: 'remove', file: firstFile });
-  });
-
-  it('should handle passing duplicate actions', () => {
-    tester.componentInstance.actions.set(['remove', 'remove', 'remove', 'retry', 'view', 'archive']);
-    tester.detectChanges();
-    expect(tester.actionGroups.length).toBe(8);
-
-    const actionButtons = tester.actionGroups[0].elements('button');
-    expect(actionButtons[0].element('span')).toHaveClass('fa-trash');
-    expect(actionButtons[1].element('span')).toHaveClass('fa-refresh');
-    expect(actionButtons[2].element('span')).toHaveClass('fa-search');
-    expect(actionButtons[3].element('span')).toHaveClass('fa-archive');
+    expect(tester.componentInstance.itemAction()).toEqual({ type: 'remove', file: unsortedFiles[1] });
   });
 
   it('should be sorted by modification date by default', () => {
     const modificationDates = tester.modificationDates.map(cell => cell.textContent);
     expect(modificationDates).toEqual([
-      '10 Oct 2023, 19:41:59',
-      '10 Oct 2023, 19:41:58',
-      '10 Oct 2023, 19:41:55',
-      '10 Oct 2023, 19:41:53',
-      '9 Oct 2023, 11:24:43',
-      '9 Oct 2023, 11:24:43',
-      '9 Oct 2023, 11:24:43',
-      '9 Oct 2023, 11:24:43'
+      '25 Mar 2020, 01:00:00',
+      '20 Mar 2020, 01:00:00',
+      '20 Mar 2020, 01:00:00',
+      '20 Mar 2020, 01:00:00',
+      '15 Mar 2020, 01:00:00',
+      '15 Mar 2020, 01:00:00',
+      '15 Mar 2020, 01:00:00'
     ]);
   });
 
@@ -150,16 +208,16 @@ describe('FileTableComponent', () => {
     tester.checkboxes[1].check();
     tester.checkboxes[2].check();
     // the first 3 sorted files are checked
-    expect(tester.componentInstance.selectedFiles().map(file => file.modificationDate)).toEqual([
-      '2023-10-10T17:41:59.937Z',
-      '2023-10-10T17:41:58.395Z',
-      '2023-10-10T17:41:55.343Z'
+    expect(tester.componentInstance.selectedFiles().map(file => file.metadata.createdAt)).toEqual([
+      '2020-03-25T00:00:00.000Z',
+      '2020-03-20T00:00:00.000Z',
+      '2020-03-20T00:00:00.000Z'
     ]);
 
     tester.checkboxes[0].uncheck();
-    expect(tester.componentInstance.selectedFiles().map(file => file.modificationDate)).toEqual([
-      '2023-10-10T17:41:58.395Z',
-      '2023-10-10T17:41:55.343Z'
+    expect(tester.componentInstance.selectedFiles().map(file => file.metadata.createdAt)).toEqual([
+      '2020-03-20T00:00:00.000Z',
+      '2020-03-20T00:00:00.000Z'
     ]);
   });
 
@@ -178,18 +236,17 @@ describe('FileTableComponent', () => {
     tester.detectChanges();
 
     // Files changed
-    expect(tester.filenames.length).toBe(7);
+    expect(tester.filenames.length).toBe(6);
 
     // Default ordering is kept
     const modificationDates = tester.modificationDates.map(cell => cell.textContent);
     expect(modificationDates).toEqual([
-      '10 Oct 2023, 19:41:59',
-      '10 Oct 2023, 19:41:58',
-      '10 Oct 2023, 19:41:55',
-      '10 Oct 2023, 19:41:53',
-      '9 Oct 2023, 11:24:43',
-      '9 Oct 2023, 11:24:43',
-      '9 Oct 2023, 11:24:43'
+      '25 Mar 2020, 01:00:00',
+      '20 Mar 2020, 01:00:00',
+      '20 Mar 2020, 01:00:00',
+      '15 Mar 2020, 01:00:00',
+      '15 Mar 2020, 01:00:00',
+      '15 Mar 2020, 01:00:00'
     ]);
 
     // Checkboxes are cleared

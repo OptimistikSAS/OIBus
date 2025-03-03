@@ -4,16 +4,16 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 
 import { NorthConnectorService } from './north-connector.service';
 import {
-  NorthCacheFiles,
   NorthConnectorCommandDTO,
   NorthConnectorDTO,
+  NorthConnectorLightDTO,
   NorthConnectorManifest,
-  NorthType,
-  NorthConnectorLightDTO
+  NorthType
 } from '../../../../backend/shared/model/north-connector.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { SouthConnectorLightDTO } from '../../../../backend/shared/model/south-connector.model';
 import { NorthSettings } from '../../../../backend/shared/model/north-settings.model';
+import { CacheMetadata } from '../../../../backend/shared/model/engine.model';
 
 describe('NorthConnectorService', () => {
   let http: HttpTestingController;
@@ -187,183 +187,69 @@ describe('NorthConnectorService', () => {
     expect(done).toBe(true);
   });
 
-  it('should get error cache files', () => {
-    let expectedNorthCacheFiles: Array<NorthCacheFiles> | null = null;
-    const northCacheFiles: Array<NorthCacheFiles> = [];
+  it('should search cache content', () => {
+    let expectedNorthCacheFiles: Array<{ metadataFilename: string; metadata: CacheMetadata }> | null = null;
+    const northCacheFiles: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [];
 
-    service.getCacheErrorFiles('id1').subscribe(c => (expectedNorthCacheFiles = c));
+    service
+      .searchCacheContent('id1', { start: '2020-01-01T00:00:00.000Z', end: '2021-01-01T00:00:00.000Z', nameContains: 'file' }, 'cache')
+      .subscribe(c => (expectedNorthCacheFiles = c));
 
-    http.expectOne({ url: '/api/north/id1/cache/file-errors', method: 'GET' }).flush(northCacheFiles);
-    expect(expectedNorthCacheFiles!).toEqual(northCacheFiles);
-  });
-
-  it('should get error cache file content', () => {
-    let httpResponse: HttpResponse<Blob>;
-    const northCacheFileContent = new Blob(['test'], { type: 'text/plain' });
-    service.getCacheErrorFileContent('id1', 'file1').subscribe(c => (httpResponse = c));
-
-    http.expectOne({ url: '/api/north/id1/cache/file-errors/file1', method: 'GET' }).flush(northCacheFileContent);
-    expect(httpResponse!.body).toEqual(northCacheFileContent);
-  });
-
-  it('should remove listed error cache files', () => {
-    let done = false;
-    service.removeCacheErrorFiles('id1', ['file1', 'file2']).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'POST', url: '/api/north/id1/cache/file-errors/remove' });
-    testRequest.flush(null);
-    expect(done).toBe(true);
-  });
-
-  it('should retry listed error cache files', () => {
-    let done = false;
-    service.retryCacheErrorFiles('id1', ['file1', 'file2']).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'POST', url: '/api/north/id1/cache/file-errors/retry' });
-    testRequest.flush(null);
-    expect(done).toBe(true);
-  });
-
-  it('should remove all error cache files', () => {
-    let done = false;
-    service.removeAllCacheErrorFiles('id1').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/north/id1/cache/file-errors/remove-all' });
-    testRequest.flush(null);
-    expect(done).toBe(true);
-  });
-
-  it('should retry all error cache files', () => {
-    let done = false;
-    service.retryAllCacheErrorFiles('id1').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/north/id1/cache/file-errors/retry-all' });
-    testRequest.flush(null);
-    expect(done).toBe(true);
-  });
-
-  it('should get cache files', () => {
-    let expectedNorthCacheFiles: Array<NorthCacheFiles> | null = null;
-    const northCacheFiles: Array<NorthCacheFiles> = [];
-
-    service.getCacheFiles('id1').subscribe(c => (expectedNorthCacheFiles = c));
-
-    http.expectOne({ url: '/api/north/id1/cache/files', method: 'GET' }).flush(northCacheFiles);
+    http
+      .expectOne({
+        url: '/api/north/id1/cache/content?folder=cache&start=2020-01-01T00:00:00.000Z&end=2021-01-01T00:00:00.000Z&nameContains=file',
+        method: 'GET'
+      })
+      .flush(northCacheFiles);
     expect(expectedNorthCacheFiles!).toEqual(northCacheFiles);
   });
 
   it('should get cache file content', () => {
     let httpResponse: HttpResponse<Blob>;
     const northCacheFileContent = new Blob(['test'], { type: 'text/plain' });
-    service.getCacheFileContent('id1', 'file1').subscribe(c => (httpResponse = c));
+    service.getCacheFileContent('id1', 'cache', 'file1').subscribe(c => (httpResponse = c));
 
-    http.expectOne({ url: '/api/north/id1/cache/files/file1', method: 'GET' }).flush(northCacheFileContent);
+    http.expectOne({ url: '/api/north/id1/cache/content/file1?folder=cache', method: 'GET' }).flush(northCacheFileContent);
     expect(httpResponse!.body).toEqual(northCacheFileContent);
   });
 
   it('should remove listed cache files', () => {
     let done = false;
-    service.removeCacheFiles('id1', ['file1', 'file2']).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'POST', url: '/api/north/id1/cache/files/remove' });
-    testRequest.flush(null);
-    expect(done).toBe(true);
-  });
-
-  it('should archive listed cache files', () => {
-    let done = false;
-    service.archiveCacheFiles('id1', ['file1', 'file2']).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'POST', url: '/api/north/id1/cache/files/archive' });
-    testRequest.flush(null);
-    expect(done).toBe(true);
-  });
-
-  it('should get archive files', () => {
-    let expectedNorthArchiveFiles: Array<NorthCacheFiles> | null = null;
-    const northArchiveFiles: Array<NorthCacheFiles> = [];
-
-    service.getCacheArchiveFiles('id1').subscribe(c => (expectedNorthArchiveFiles = c));
-
-    http.expectOne({ url: '/api/north/id1/cache/archive-files', method: 'GET' }).flush(northArchiveFiles);
-    expect(expectedNorthArchiveFiles!).toEqual(northArchiveFiles);
-  });
-
-  it('should get archive file content', () => {
-    let httpResponse: HttpResponse<Blob>;
-    const northCacheFileContent = new Blob(['test'], { type: 'text/plain' });
-    service.getCacheArchiveFileContent('id1', 'file1').subscribe(c => (httpResponse = c));
-
-    http.expectOne({ url: '/api/north/id1/cache/archive-files/file1', method: 'GET' }).flush(northCacheFileContent);
-    expect(httpResponse!.body).toEqual(northCacheFileContent);
-  });
-
-  it('should remove listed archive files', () => {
-    let done = false;
-    service.removeCacheArchiveFiles('id1', ['file1', 'file2']).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'POST', url: '/api/north/id1/cache/archive-files/remove' });
-    testRequest.flush(null);
-    expect(done).toBe(true);
-  });
-
-  it('should retry listed archive files', () => {
-    let done = false;
-    service.retryCacheArchiveFiles('id1', ['file1', 'file2']).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'POST', url: '/api/north/id1/cache/archive-files/retry' });
+    service.removeCacheContent('id1', 'cache', ['file1', 'file2']).subscribe(() => (done = true));
+    const testRequest = http.expectOne({
+      method: 'DELETE',
+      url: '/api/north/id1/cache/content/remove?folder=cache&filenames=file1&filenames=file2'
+    });
     testRequest.flush(null);
     expect(done).toBe(true);
   });
 
   it('should remove all archive files', () => {
     let done = false;
-    service.removeAllCacheArchiveFiles('id1').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/north/id1/cache/archive-files/remove-all' });
+    service.removeAllCacheContent('id1', 'archive').subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/north/id1/cache/content/remove-all?folder=archive' });
     testRequest.flush(null);
     expect(done).toBe(true);
   });
 
-  it('should retry all archive files', () => {
+  it('should move listed cache files into archive', () => {
     let done = false;
-    service.retryAllCacheArchiveFiles('id1').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/north/id1/cache/archive-files/retry-all' });
+    service.moveCacheContent('id1', 'cache', 'archive', ['file1', 'file2']).subscribe(() => (done = true));
+    const testRequest = http.expectOne({
+      method: 'POST',
+      url: '/api/north/id1/cache/content/move?originFolder=cache&destinationFolder=archive'
+    });
     testRequest.flush(null);
     expect(done).toBe(true);
   });
 
-  it('should get cache values', () => {
-    let expectedNorthValues: Array<NorthCacheFiles> | null = null;
-    const northValueFiles: Array<NorthCacheFiles> = [];
-
-    service.getCacheValues('id1').subscribe(c => (expectedNorthValues = c));
-
-    http.expectOne({ url: '/api/north/id1/cache/values', method: 'GET' }).flush(northValueFiles);
-    expect(expectedNorthValues!).toEqual(northValueFiles);
-  });
-
-  it('should remove listed cache values', () => {
+  it('should move all archive files into cache', () => {
     let done = false;
-    service.removeCacheValues('id1', ['file1', 'file2']).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'POST', url: '/api/north/id1/cache/values/remove' });
-    testRequest.flush(null);
-    expect(done).toBe(true);
-  });
-
-  it('should get cache value errors', () => {
-    let expectedNorthCacheFiles: Array<NorthCacheFiles> | null = null;
-    const northCacheFiles: Array<NorthCacheFiles> = [];
-
-    service.getCacheErrorValues('id1').subscribe(c => (expectedNorthCacheFiles = c));
-
-    http.expectOne({ url: '/api/north/id1/cache/value-errors', method: 'GET' }).flush(northCacheFiles);
-    expect(expectedNorthCacheFiles!).toEqual(northCacheFiles);
-  });
-
-  it('should remove cache value errors', () => {
-    let done = false;
-    service.removeCacheErrorValues('id1', ['file1', 'file2']).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'POST', url: '/api/north/id1/cache/value-errors/remove' });
-    testRequest.flush(null);
-    expect(done).toBe(true);
-  });
-
-  it('should retry cache value errors', () => {
-    let done = false;
-    service.retryCacheErrorValues('id1', ['file1', 'file2']).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'POST', url: '/api/north/id1/cache/value-errors/retry' });
+    service.moveAllCacheContent('id1', 'archive', 'cache').subscribe(() => (done = true));
+    const testRequest = http.expectOne({
+      method: 'POST',
+      url: '/api/north/id1/cache/content/move-all?originFolder=archive&destinationFolder=cache'
+    });
     testRequest.flush(null);
     expect(done).toBe(true);
   });
