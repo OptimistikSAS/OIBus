@@ -1,6 +1,7 @@
-import { OIBusContent } from '../../../shared/model/engine.model';
+import { OIBusContent, OIBusTimeValueContent } from '../../../shared/model/engine.model';
 import { KoaContext } from '../koa';
 import AbstractController from './abstract.controller';
+import path from 'node:path';
 
 export default class ContentController extends AbstractController {
   async addContent(ctx: KoaContext<OIBusContent, void>): Promise<void> {
@@ -15,9 +16,10 @@ export default class ContentController extends AbstractController {
 
     let content: OIBusContent;
     if (ctx.request.file) {
-      content = { type: 'raw', filePath: ctx.request.file.path };
+      content = { type: 'raw', filePath: path.parse(ctx.request.file.path).base };
     } else {
-      content = ctx.request.body!;
+      const body = ctx.request.body! as OIBusTimeValueContent;
+      content = { type: 'time-values', content: body.content };
     }
     await this.validate(content);
 

@@ -1,5 +1,5 @@
 import { OibFormControl } from './form.model';
-import { BaseEntity, Instant } from './types';
+import { BaseEntity } from './types';
 import { NorthSettings } from './north-settings.model';
 import { SouthConnectorLightDTO } from './south-connector.model';
 
@@ -35,6 +35,7 @@ export interface NorthConnectorDTO<T extends NorthSettings> extends BaseEntity {
     scanModeId: string;
     retryInterval: number;
     retryCount: number;
+    runMinDelay: number;
     maxSize: number;
     oibusTimeValues: {
       groupCount: number;
@@ -42,10 +43,10 @@ export interface NorthConnectorDTO<T extends NorthSettings> extends BaseEntity {
     };
     rawFiles: {
       sendFileImmediately: boolean;
-      archive: {
-        enabled: boolean;
-        retentionDuration: number;
-      };
+    };
+    archive: {
+      enabled: boolean;
+      retentionDuration: number;
     };
   };
   subscriptions: Array<SouthConnectorLightDTO>;
@@ -62,6 +63,7 @@ export interface NorthConnectorCommandDTO<T extends NorthSettings> {
     scanModeName: string | null;
     retryInterval: number;
     retryCount: number;
+    runMinDelay: number;
     maxSize: number;
     oibusTimeValues: {
       groupCount: number;
@@ -69,10 +71,10 @@ export interface NorthConnectorCommandDTO<T extends NorthSettings> {
     };
     rawFiles: {
       sendFileImmediately: boolean;
-      archive: {
-        enabled: boolean;
-        retentionDuration: number;
-      };
+    };
+    archive: {
+      enabled: boolean;
+      retentionDuration: number;
     };
   };
   subscriptions: Array<string>;
@@ -86,10 +88,4 @@ export interface NorthConnectorManifest {
     points: boolean;
   };
   settings: Array<OibFormControl>;
-}
-
-export interface NorthCacheFiles {
-  filename: string;
-  modificationDate: Instant;
-  size: number;
 }
