@@ -191,391 +191,182 @@ describe('North connector controller', () => {
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
-  it('getErrorFiles() should get error files with default params', async () => {
+  it('searchCacheContent() should search cache content with default params', async () => {
     ctx.params.northId = testData.north.list[0].id;
-    ctx.app.northService.getErrorFiles.mockReturnValueOnce([]);
-    await northConnectorController.getErrorFiles(ctx);
-    expect(ctx.app.northService.getErrorFiles).toHaveBeenCalledWith(testData.north.list[0].id, null, null, null);
-    expect(ctx.ok).toHaveBeenCalledWith([]);
-  });
-
-  it('getErrorFiles() should get error files', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.query.start = testData.constants.dates.DATE_1;
-    ctx.query.end = testData.constants.dates.DATE_2;
-    ctx.query.filenameContains = 'filename';
-    ctx.app.northService.getErrorFiles.mockReturnValueOnce([]);
-    await northConnectorController.getErrorFiles(ctx);
-    expect(ctx.app.northService.getErrorFiles).toHaveBeenCalledWith(
+    ctx.query.folder = 'cache';
+    ctx.app.northService.searchCacheContent.mockReturnValueOnce([]);
+    await northConnectorController.searchCacheContent(ctx);
+    expect(ctx.app.northService.searchCacheContent).toHaveBeenCalledWith(
       testData.north.list[0].id,
-      new Date(testData.constants.dates.DATE_1).toISOString(),
-      new Date(testData.constants.dates.DATE_2).toISOString(),
-      'filename'
+      { start: null, end: null, nameContains: null },
+      'cache'
     );
     expect(ctx.ok).toHaveBeenCalledWith([]);
   });
 
-  it('getErrorFileContent() should get error file content', async () => {
+  it('searchCacheContent() should fail to search if bad folder', async () => {
+    ctx.params.northId = testData.north.list[0].id;
+    ctx.query.folder = null;
+    await northConnectorController.searchCacheContent(ctx);
+    expect(ctx.app.northService.searchCacheContent).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('A folder must be specified among "cache", "error" or "archive"');
+  });
+
+  it('searchCacheContent() should search cache content', async () => {
+    ctx.params.northId = testData.north.list[0].id;
+    ctx.query.start = testData.constants.dates.DATE_1;
+    ctx.query.end = testData.constants.dates.DATE_2;
+    ctx.query.nameContains = 'filename';
+    ctx.query.folder = 'cache';
+    ctx.app.northService.searchCacheContent.mockReturnValueOnce([]);
+    await northConnectorController.searchCacheContent(ctx);
+    expect(ctx.app.northService.searchCacheContent).toHaveBeenCalledWith(
+      testData.north.list[0].id,
+      { start: testData.constants.dates.DATE_1, end: testData.constants.dates.DATE_2, nameContains: 'filename' },
+      'cache'
+    );
+    expect(ctx.ok).toHaveBeenCalledWith([]);
+  });
+
+  it('getCacheContentFileStream() should get error file content', async () => {
     ctx.params.northId = testData.north.list[0].id;
     ctx.params.filename = 'my file';
-    ctx.app.northService.getErrorFileContent.mockReturnValueOnce('file content');
-    await northConnectorController.getErrorFileContent(ctx);
-    expect(ctx.app.northService.getErrorFileContent).toHaveBeenCalledWith(testData.north.list[0].id, 'my file');
+    ctx.query.folder = 'cache';
+    ctx.app.northService.getCacheContentFileStream.mockReturnValueOnce('file content');
+    await northConnectorController.getCacheContentFileStream(ctx);
+    expect(ctx.app.northService.getCacheContentFileStream).toHaveBeenCalledWith(testData.north.list[0].id, 'cache', 'my file');
     expect(ctx.attachment).toHaveBeenCalledWith('my file');
     expect(ctx.ok).toHaveBeenCalledWith('file content');
   });
 
-  it('getErrorFileContent() should not get error file content if null', async () => {
+  it('getCacheContentFileStream() should fail to get file if bad folder', async () => {
+    ctx.params.northId = testData.north.list[0].id;
+    ctx.query.folder = null;
+    await northConnectorController.getCacheContentFileStream(ctx);
+    expect(ctx.app.northService.getCacheContentFileStream).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('A folder must be specified among "cache", "error" or "archive"');
+  });
+
+  it('getCacheContentFileStream() should fail to get file if no filename', async () => {
+    ctx.params.northId = testData.north.list[0].id;
+    ctx.query.folder = 'cache';
+    ctx.params.filename = null;
+    await northConnectorController.getCacheContentFileStream(ctx);
+    expect(ctx.app.northService.getCacheContentFileStream).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('A filename must be specified');
+  });
+
+  it('getCacheContentFileStream() should not get error file content if null', async () => {
     ctx.params.northId = testData.north.list[0].id;
     ctx.params.filename = 'my file';
-    ctx.app.northService.getErrorFileContent.mockReturnValueOnce(null);
-    await northConnectorController.getErrorFileContent(ctx);
-    expect(ctx.app.northService.getErrorFileContent).toHaveBeenCalledWith(testData.north.list[0].id, 'my file');
+    ctx.query.folder = 'cache';
+    ctx.app.northService.getCacheContentFileStream.mockReturnValueOnce(null);
+    await northConnectorController.getCacheContentFileStream(ctx);
+    expect(ctx.app.northService.getCacheContentFileStream).toHaveBeenCalledWith(testData.north.list[0].id, 'cache', 'my file');
     expect(ctx.attachment).not.toHaveBeenCalled();
     expect(ctx.notFound).toHaveBeenCalled();
   });
 
-  it('removeErrorFiles() should not remove files if body is not an array', async () => {
+  it('removeCacheContent() should fail to remove if bad folder', async () => {
+    ctx.params.northId = testData.north.list[0].id;
+    ctx.query.folder = null;
+    await northConnectorController.removeCacheContent(ctx);
+    expect(ctx.app.northService.removeCacheContent).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('A folder must be specified among "cache", "error" or "archive"');
+  });
+
+  it('removeCacheContent() should not remove files if body is not an array', async () => {
     ctx.params.northId = testData.north.list[0].id;
     ctx.request.body = 'my file';
-    await northConnectorController.removeErrorFiles(ctx);
-    expect(ctx.app.northService.removeErrorFiles).not.toHaveBeenCalled();
+    ctx.query.folder = 'cache';
+    await northConnectorController.removeCacheContent(ctx);
+    expect(ctx.app.northService.removeCacheContent).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalledWith('Invalid file list');
   });
 
-  it('removeErrorFiles() should remove error files', async () => {
+  it('removeCacheContent() should remove error files', async () => {
     ctx.params.northId = testData.north.list[0].id;
+    ctx.query.folder = 'cache';
     ctx.request.body = ['my file'];
-    await northConnectorController.removeErrorFiles(ctx);
-    expect(ctx.app.northService.removeErrorFiles).toHaveBeenCalledWith(testData.north.list[0].id, ['my file']);
+    await northConnectorController.removeCacheContent(ctx);
+    expect(ctx.app.northService.removeCacheContent).toHaveBeenCalledWith(testData.north.list[0].id, 'cache', ['my file']);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
-  it('retryErrorFiles() should not retry files if body is not an array', async () => {
+  it('moveCacheContent() should fail to move all if bad originFolder', async () => {
+    ctx.params.northId = testData.north.list[0].id;
+    ctx.query.originFolder = null;
+    await northConnectorController.moveCacheContent(ctx);
+    expect(ctx.app.northService.moveCacheContent).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('The originFolder must be specified among "cache", "error" or "archive"');
+  });
+
+  it('moveCacheContent() should fail to move all if bad destinationFolder', async () => {
+    ctx.params.northId = testData.north.list[0].id;
+    ctx.query.originFolder = 'cache';
+    ctx.query.destinationFolder = null;
+    await northConnectorController.moveCacheContent(ctx);
+    expect(ctx.app.northService.moveCacheContent).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('The destinationFolder must be specified among "cache", "error" or "archive"');
+  });
+
+  it('moveCacheContent() should not move files if body is not an array', async () => {
     ctx.params.northId = testData.north.list[0].id;
     ctx.request.body = 'my file';
-    await northConnectorController.retryErrorFiles(ctx);
-    expect(ctx.app.northService.retryErrorFiles).not.toHaveBeenCalled();
+    ctx.query.originFolder = 'cache';
+    ctx.query.destinationFolder = 'error';
+    await northConnectorController.moveCacheContent(ctx);
+    expect(ctx.app.northService.moveCacheContent).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalledWith('Invalid file list');
   });
 
-  it('retryErrorFiles() should retry error files', async () => {
+  it('moveCacheContent() should move files', async () => {
     ctx.params.northId = testData.north.list[0].id;
+    ctx.query.originFolder = 'cache';
+    ctx.query.destinationFolder = 'error';
     ctx.request.body = ['my file'];
-    await northConnectorController.retryErrorFiles(ctx);
-    expect(ctx.app.northService.retryErrorFiles).toHaveBeenCalledWith(testData.north.list[0].id, ['my file']);
+    await northConnectorController.moveCacheContent(ctx);
+    expect(ctx.app.northService.moveCacheContent).toHaveBeenCalledWith(testData.north.list[0].id, 'cache', 'error', ['my file']);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
-  it('removeAllErrorFiles() should remove all error files', async () => {
+  it('removeAllCacheContent() should remove all cache content', async () => {
     ctx.params.northId = testData.north.list[0].id;
-    await northConnectorController.removeAllErrorFiles(ctx);
-    expect(ctx.app.northService.removeAllErrorFiles).toHaveBeenCalledWith(testData.north.list[0].id);
+    await northConnectorController.removeAllCacheContent(ctx);
+    expect(ctx.app.northService.removeAllCacheContent).toHaveBeenCalledWith(testData.north.list[0].id, 'cache');
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
-  it('retryAllErrorFiles() should retry all error files', async () => {
+  it('removeAllCacheContent() should fail to remove all if bad folder', async () => {
     ctx.params.northId = testData.north.list[0].id;
-    await northConnectorController.retryAllErrorFiles(ctx);
-    expect(ctx.app.northService.retryAllErrorFiles).toHaveBeenCalledWith(testData.north.list[0].id);
+    ctx.query.folder = null;
+    await northConnectorController.removeAllCacheContent(ctx);
+    expect(ctx.app.northService.removeAllCacheContent).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('A folder must be specified among "cache", "error" or "archive"');
+  });
+
+  it('moveAllCacheContent() should move all cache content', async () => {
+    ctx.params.northId = testData.north.list[0].id;
+    await northConnectorController.moveAllCacheContent(ctx);
+    expect(ctx.app.northService.moveAllCacheContent).toHaveBeenCalledWith(testData.north.list[0].id, 'cache', 'error');
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
-  it('getCacheFiles() should get cache files with default params', async () => {
+  it('moveAllCacheContent() should fail to move all if bad originFolder', async () => {
     ctx.params.northId = testData.north.list[0].id;
-    ctx.query.start = null;
-    ctx.query.end = null;
-    ctx.query.filenameContains = null;
-
-    ctx.app.northService.getCacheFiles.mockReturnValueOnce([]);
-    await northConnectorController.getCacheFiles(ctx);
-    expect(ctx.app.northService.getCacheFiles).toHaveBeenCalledWith(testData.north.list[0].id, null, null, null);
-    expect(ctx.ok).toHaveBeenCalledWith([]);
+    ctx.query.originFolder = null;
+    await northConnectorController.moveAllCacheContent(ctx);
+    expect(ctx.app.northService.moveAllCacheContent).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('The originFolder must be specified among "cache", "error" or "archive"');
   });
 
-  it('getCacheFiles() should get cache files', async () => {
+  it('moveAllCacheContent() should fail to move all if bad destinationFolder', async () => {
     ctx.params.northId = testData.north.list[0].id;
-    ctx.query.start = testData.constants.dates.DATE_1;
-    ctx.query.end = testData.constants.dates.DATE_2;
-    ctx.query.filenameContains = 'filename';
-    ctx.app.northService.getCacheFiles.mockReturnValueOnce([]);
-    await northConnectorController.getCacheFiles(ctx);
-    expect(ctx.app.northService.getCacheFiles).toHaveBeenCalledWith(
-      testData.north.list[0].id,
-      new Date(testData.constants.dates.DATE_1).toISOString(),
-      new Date(testData.constants.dates.DATE_2).toISOString(),
-      'filename'
-    );
-    expect(ctx.ok).toHaveBeenCalledWith([]);
-  });
-
-  it('getCacheFileContent() should get cache file content', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.params.filename = 'my file';
-    ctx.app.northService.getCacheFileContent.mockReturnValueOnce('file content');
-    await northConnectorController.getCacheFileContent(ctx);
-    expect(ctx.app.northService.getCacheFileContent).toHaveBeenCalledWith(testData.north.list[0].id, 'my file');
-    expect(ctx.attachment).toHaveBeenCalledWith('my file');
-    expect(ctx.ok).toHaveBeenCalledWith('file content');
-  });
-
-  it('getCacheFileContent() should not get cache file content if null', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.params.filename = 'my file';
-    ctx.app.northService.getCacheFileContent.mockReturnValueOnce(null);
-    await northConnectorController.getCacheFileContent(ctx);
-    expect(ctx.app.northService.getCacheFileContent).toHaveBeenCalledWith(testData.north.list[0].id, 'my file');
-    expect(ctx.attachment).not.toHaveBeenCalled();
-    expect(ctx.notFound).toHaveBeenCalled();
-  });
-
-  it('removeCacheFiles() should not remove files if body is not an array', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.request.body = 'my file';
-    await northConnectorController.removeCacheFiles(ctx);
-    expect(ctx.app.northService.removeCacheFiles).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('Invalid file list');
-  });
-
-  it('removeCacheFiles() should remove cache files', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.request.body = ['my file'];
-    await northConnectorController.removeCacheFiles(ctx);
-    expect(ctx.app.northService.removeCacheFiles).toHaveBeenCalledWith(testData.north.list[0].id, ['my file']);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('archiveCacheFiles() should not archive files if body is not an array', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.request.body = 'my file';
-    await northConnectorController.archiveCacheFiles(ctx);
-    expect(ctx.app.northService.archiveCacheFiles).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('Invalid file list');
-  });
-
-  it('archiveCacheFiles() should archive cache files', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.request.body = ['my file'];
-    await northConnectorController.archiveCacheFiles(ctx);
-    expect(ctx.app.northService.archiveCacheFiles).toHaveBeenCalledWith(testData.north.list[0].id, ['my file']);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('removeAllCacheFiles() should remove all error files', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    await northConnectorController.removeAllCacheFiles(ctx);
-    expect(ctx.app.northService.removeAllCacheFiles).toHaveBeenCalledWith(testData.north.list[0].id);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('getArchiveFiles() should get archive files with default params', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.query.start = null;
-    ctx.query.end = null;
-    ctx.query.filenameContains = null;
-    ctx.app.northService.getArchiveFiles.mockReturnValueOnce([]);
-    await northConnectorController.getArchiveFiles(ctx);
-    expect(ctx.app.northService.getArchiveFiles).toHaveBeenCalledWith(testData.north.list[0].id, null, null, null);
-    expect(ctx.ok).toHaveBeenCalledWith([]);
-  });
-
-  it('getArchiveFiles() should get archive files', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.query.start = testData.constants.dates.DATE_1;
-    ctx.query.end = testData.constants.dates.DATE_2;
-    ctx.query.filenameContains = 'filename';
-    ctx.app.northService.getArchiveFiles.mockReturnValueOnce([]);
-    await northConnectorController.getArchiveFiles(ctx);
-    expect(ctx.app.northService.getArchiveFiles).toHaveBeenCalledWith(
-      testData.north.list[0].id,
-      new Date(testData.constants.dates.DATE_1).toISOString(),
-      new Date(testData.constants.dates.DATE_2).toISOString(),
-      'filename'
-    );
-    expect(ctx.ok).toHaveBeenCalledWith([]);
-  });
-
-  it('getArchiveFileContent() should get archive file content', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.params.filename = 'my file';
-    ctx.app.northService.getArchiveFileContent.mockReturnValueOnce('file content');
-    await northConnectorController.getArchiveFileContent(ctx);
-    expect(ctx.app.northService.getArchiveFileContent).toHaveBeenCalledWith(testData.north.list[0].id, 'my file');
-    expect(ctx.attachment).toHaveBeenCalledWith('my file');
-    expect(ctx.ok).toHaveBeenCalledWith('file content');
-  });
-
-  it('getArchiveFileContent() should not get archive file content if null', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.params.filename = 'my file';
-    ctx.app.northService.getArchiveFileContent.mockReturnValueOnce(null);
-    await northConnectorController.getArchiveFileContent(ctx);
-    expect(ctx.app.northService.getArchiveFileContent).toHaveBeenCalledWith(testData.north.list[0].id, 'my file');
-    expect(ctx.attachment).not.toHaveBeenCalled();
-    expect(ctx.notFound).toHaveBeenCalled();
-  });
-
-  it('removeArchiveFiles() should not remove files if body is not an array', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.request.body = 'my file';
-    await northConnectorController.removeArchiveFiles(ctx);
-    expect(ctx.app.northService.removeArchiveFiles).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('Invalid file list');
-  });
-
-  it('removeArchiveFiles() should remove archive files', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.request.body = ['my file'];
-    await northConnectorController.removeArchiveFiles(ctx);
-    expect(ctx.app.northService.removeArchiveFiles).toHaveBeenCalledWith(testData.north.list[0].id, ['my file']);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('retryArchiveFiles() should not retry files if body is not an array', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.request.body = 'my file';
-    await northConnectorController.retryArchiveFiles(ctx);
-    expect(ctx.app.northService.retryArchiveFiles).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('Invalid file list');
-  });
-
-  it('retryArchiveFiles() should retry archive files', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.request.body = ['my file'];
-    await northConnectorController.retryArchiveFiles(ctx);
-    expect(ctx.app.northService.retryArchiveFiles).toHaveBeenCalledWith(testData.north.list[0].id, ['my file']);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('removeAllArchiveFiles() should remove all error files', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    await northConnectorController.removeAllArchiveFiles(ctx);
-    expect(ctx.app.northService.removeAllArchiveFiles).toHaveBeenCalledWith(testData.north.list[0].id);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('retryAllArchiveFiles() should retry all error files', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    await northConnectorController.retryAllArchiveFiles(ctx);
-    expect(ctx.app.northService.retryAllArchiveFiles).toHaveBeenCalledWith(testData.north.list[0].id);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('getCacheValues() should get cache values with default params', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.query.start = null;
-    ctx.query.end = null;
-    ctx.query.filenameContains = null;
-
-    ctx.app.northService.getCacheValues.mockReturnValueOnce([]);
-    await northConnectorController.getCacheValues(ctx);
-    expect(ctx.app.northService.getCacheValues).toHaveBeenCalledWith(testData.north.list[0].id, '');
-    expect(ctx.ok).toHaveBeenCalledWith([]);
-  });
-
-  it('getCacheValues() should get cache values', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.query.filenameContains = 'filename';
-    ctx.app.northService.getCacheValues.mockReturnValueOnce([]);
-    await northConnectorController.getCacheValues(ctx);
-    expect(ctx.app.northService.getCacheValues).toHaveBeenCalledWith(testData.north.list[0].id, 'filename');
-    expect(ctx.ok).toHaveBeenCalledWith([]);
-  });
-
-  it('removeCacheValues() should not remove values if body is not an array', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.request.body = 'my file';
-    await northConnectorController.removeCacheValues(ctx);
-    expect(ctx.app.northService.removeCacheValues).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('Invalid file list');
-  });
-
-  it('removeCacheValues() should remove cache values', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.request.body = ['my file'];
-    await northConnectorController.removeCacheValues(ctx);
-    expect(ctx.app.northService.removeCacheValues).toHaveBeenCalledWith(testData.north.list[0].id, ['my file']);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('removeAllCacheValues() should remove all error files', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    await northConnectorController.removeAllCacheValues(ctx);
-    expect(ctx.app.northService.removeAllCacheValues).toHaveBeenCalledWith(testData.north.list[0].id);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('getErrorValues() should get error values with default params', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.query.start = null;
-    ctx.query.end = null;
-    ctx.query.filenameContains = null;
-    ctx.app.northService.getErrorValues.mockReturnValueOnce([]);
-    await northConnectorController.getErrorValues(ctx);
-    expect(ctx.app.northService.getErrorValues).toHaveBeenCalledWith(testData.north.list[0].id, null, null, null);
-    expect(ctx.ok).toHaveBeenCalledWith([]);
-  });
-
-  it('getErrorValues() should get error values', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.query.start = testData.constants.dates.DATE_1;
-    ctx.query.end = testData.constants.dates.DATE_2;
-    ctx.query.filenameContains = 'filename';
-    ctx.app.northService.getErrorValues.mockReturnValueOnce([]);
-    await northConnectorController.getErrorValues(ctx);
-    expect(ctx.app.northService.getErrorValues).toHaveBeenCalledWith(
-      testData.north.list[0].id,
-      new Date(testData.constants.dates.DATE_1).toISOString(),
-      new Date(testData.constants.dates.DATE_2).toISOString(),
-      'filename'
-    );
-    expect(ctx.ok).toHaveBeenCalledWith([]);
-  });
-
-  it('removeErrorValues() should not remove values if body is not an array', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.request.body = 'my file';
-    await northConnectorController.removeErrorValues(ctx);
-    expect(ctx.app.northService.removeErrorValues).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('Invalid file list');
-  });
-
-  it('removeErrorValues() should remove error values', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.request.body = ['my file'];
-    await northConnectorController.removeErrorValues(ctx);
-    expect(ctx.app.northService.removeErrorValues).toHaveBeenCalledWith(testData.north.list[0].id, ['my file']);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('retryErrorValues() should not retry values if body is not an array', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.request.body = 'my file';
-    await northConnectorController.retryErrorValues(ctx);
-    expect(ctx.app.northService.retryErrorValues).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith('Invalid file list');
-  });
-
-  it('retryErrorValues() should retry error values', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    ctx.request.body = ['my file'];
-    await northConnectorController.retryErrorValues(ctx);
-    expect(ctx.app.northService.retryErrorValues).toHaveBeenCalledWith(testData.north.list[0].id, ['my file']);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('removeAllErrorValues() should remove all error values', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    await northConnectorController.removeAllErrorValues(ctx);
-    expect(ctx.app.northService.removeAllErrorValues).toHaveBeenCalledWith(testData.north.list[0].id);
-    expect(ctx.noContent).toHaveBeenCalled();
-  });
-
-  it('retryAllErrorValues() should retry all error values', async () => {
-    ctx.params.northId = testData.north.list[0].id;
-    await northConnectorController.retryAllErrorValues(ctx);
-    expect(ctx.app.northService.retryAllErrorValues).toHaveBeenCalledWith(testData.north.list[0].id);
-    expect(ctx.noContent).toHaveBeenCalled();
+    ctx.query.originFolder = 'cache';
+    ctx.query.destinationFolder = null;
+    await northConnectorController.moveAllCacheContent(ctx);
+    expect(ctx.app.northService.moveAllCacheContent).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('The destinationFolder must be specified among "cache", "error" or "archive"');
   });
 
   it('testNorthConnection() should test North connector settings on connector update', async () => {

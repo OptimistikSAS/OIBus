@@ -31,6 +31,7 @@ export interface HistoryQueryDTO<S extends SouthSettings, N extends NorthSetting
     scanModeId: string;
     retryInterval: number;
     retryCount: number;
+    runMinDelay: number;
     maxSize: number;
     oibusTimeValues: {
       groupCount: number;
@@ -38,8 +39,8 @@ export interface HistoryQueryDTO<S extends SouthSettings, N extends NorthSetting
     };
     rawFiles: {
       sendFileImmediately: boolean;
-      archive: { enabled: boolean; retentionDuration: number };
     };
+    archive: { enabled: boolean; retentionDuration: number };
   };
   items: Array<HistoryQueryItemDTO<I>>;
 }
@@ -58,6 +59,7 @@ export interface HistoryQueryCommandDTO<S extends SouthSettings, N extends North
     scanModeName: string | null;
     retryInterval: number;
     retryCount: number;
+    runMinDelay: number;
     maxSize: number;
     oibusTimeValues: {
       groupCount: number;
@@ -65,10 +67,10 @@ export interface HistoryQueryCommandDTO<S extends SouthSettings, N extends North
     };
     rawFiles: {
       sendFileImmediately: boolean;
-      archive: {
-        enabled: boolean;
-        retentionDuration: number;
-      };
+    };
+    archive: {
+      enabled: boolean;
+      retentionDuration: number;
     };
   };
   items: Array<HistoryQueryItemCommandDTO<I>>;
