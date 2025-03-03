@@ -29,7 +29,7 @@ export class OibCodeBlockComponent implements ControlValueAccessor {
   readonly height = input('12rem');
   readonly readOnly = input(false);
   readonly disabled = signal(false);
-  readonly chukedValueProgress = signal(0);
+  readonly chunkedValueProgress = signal(0);
 
   onChange: (value: string) => void = () => {};
   onTouched = () => {};
@@ -128,13 +128,13 @@ export class OibCodeBlockComponent implements ControlValueAccessor {
       );
 
       offset = firstChunk.length;
-      this.chukedValueProgress.update(() => offset / totalLength);
+      this.chunkedValueProgress.update(() => offset / totalLength);
 
       const applyNextChunk = () => {
         const chunk = value.slice(offset, offset + chunkSize);
 
         if (chunk.length === 0) {
-          this.chukedValueProgress.update(() => 1);
+          this.chunkedValueProgress.update(() => 1);
           return resolve();
         }
 
@@ -162,7 +162,7 @@ export class OibCodeBlockComponent implements ControlValueAccessor {
         offset += chunk.length;
 
         // Calculate and log progress
-        this.chukedValueProgress.update(() => offset / totalLength);
+        this.chunkedValueProgress.update(() => offset / totalLength);
 
         // Schedule next chunk
         requestAnimationFrame(applyNextChunk);

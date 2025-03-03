@@ -4,15 +4,9 @@ import { TestBed } from '@angular/core/testing';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { of } from 'rxjs';
 import { NorthConnectorDTO } from '../../../../../backend/shared/model/north-connector.model';
-import { By } from '@angular/platform-browser';
-import { ErrorFilesComponent } from './error-files/error-files.component';
-import { ArchiveFilesComponent } from './archive-files/archive-files.component';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { provideHttpClient } from '@angular/common/http';
-import { CacheFilesComponent } from './cache-files/cache-files.component';
-import { CacheValuesComponent } from './cache-values/cache-values.component';
-import { ErrorValuesComponent } from './error-values/error-values.component';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
 class ExploreCacheComponentTester extends ComponentTester<ExploreCacheComponent> {
@@ -24,23 +18,16 @@ class ExploreCacheComponentTester extends ComponentTester<ExploreCacheComponent>
     return this.element('#title')!;
   }
 
-  get errorFiles(): ErrorFilesComponent {
-    return this.debugElement.query(By.directive(ErrorFilesComponent)).componentInstance! as ErrorFilesComponent;
-  }
-  get archiveFiles(): ArchiveFilesComponent {
-    return this.debugElement.query(By.directive(ArchiveFilesComponent)).componentInstance! as ArchiveFilesComponent;
+  get cacheContent() {
+    return this.element('#cache')!;
   }
 
-  get cacheFiles(): CacheFilesComponent {
-    return this.debugElement.query(By.directive(CacheFilesComponent)).componentInstance! as CacheFilesComponent;
+  get errorContent() {
+    return this.element('#error')!;
   }
 
-  get cacheValues(): CacheValuesComponent {
-    return this.debugElement.query(By.directive(CacheValuesComponent)).componentInstance! as CacheValuesComponent;
-  }
-
-  get errorValues(): ErrorValuesComponent {
-    return this.debugElement.query(By.directive(ErrorValuesComponent)).componentInstance! as ErrorValuesComponent;
+  get archiveContent() {
+    return this.element('#archive')!;
   }
 }
 
@@ -86,21 +73,15 @@ describe('ExploreCacheComponent', () => {
       ]
     });
     northConnectorService.get.and.returnValue(of(northConnector));
-    northConnectorService.getCacheErrorFiles.and.returnValue(of([]));
-    northConnectorService.getCacheArchiveFiles.and.returnValue(of([]));
-    northConnectorService.getCacheFiles.and.returnValue(of([]));
-    northConnectorService.getCacheValues.and.returnValue(of([]));
-    northConnectorService.getCacheErrorValues.and.returnValue(of([]));
+    northConnectorService.searchCacheContent.and.returnValue(of([]));
     tester = new ExploreCacheComponentTester();
     tester.detectChanges();
   });
 
   it('should have a title, error and archive list components', () => {
     expect(tester.title).toContainText('Cache content for connector North Connector');
-    expect(tester.errorFiles).toBeDefined();
-    expect(tester.archiveFiles).toBeDefined();
-    expect(tester.cacheFiles).toBeDefined();
-    expect(tester.cacheValues).toBeDefined();
-    expect(tester.errorValues).toBeDefined();
+    expect(tester.cacheContent).toBeDefined();
+    expect(tester.errorContent).toBeDefined();
+    expect(tester.archiveContent).toBeDefined();
   });
 });

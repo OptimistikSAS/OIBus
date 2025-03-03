@@ -171,16 +171,16 @@ router.get('/api/north/:northId/cache/content', (ctx: KoaContext<void, Array<{ m
 router.get('/api/north/:northId/cache/content/:filename', (ctx: KoaContext<void, ReadStream>) =>
   northConnectorController.getCacheContentFileStream(ctx)
 );
-router.post('/api/north/:northId/cache/cache/remove', (ctx: KoaContext<Array<string>, void>) =>
+router.delete('/api/north/:northId/cache/content/remove', (ctx: KoaContext<Array<string>, void>) =>
   northConnectorController.removeCacheContent(ctx)
 );
-router.delete('/api/north/:northId/cache/cache/remove-all', (ctx: KoaContext<void, void>) =>
+router.delete('/api/north/:northId/cache/content/remove-all', (ctx: KoaContext<void, void>) =>
   northConnectorController.removeAllCacheContent(ctx)
 );
-router.post('/api/north/:northId/cache/cache/move', (ctx: KoaContext<Array<string>, void>) =>
+router.post('/api/north/:northId/cache/content/move', (ctx: KoaContext<Array<string>, void>) =>
   northConnectorController.moveCacheContent(ctx)
 );
-router.delete('/api/north/:northId/cache/cache/move-all', (ctx: KoaContext<void, void>) =>
+router.post('/api/north/:northId/cache/content/move-all', (ctx: KoaContext<void, void>) =>
   northConnectorController.moveAllCacheContent(ctx)
 );
 router.put('/api/north/:northId/cache/reset-metrics', (ctx: KoaContext<void, void>) => northConnectorController.resetMetrics(ctx));

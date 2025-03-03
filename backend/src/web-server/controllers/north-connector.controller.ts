@@ -139,10 +139,16 @@ export default class NorthConnectorController {
     if (!['cache', 'archive', 'error'].includes(folder)) {
       return ctx.badRequest('A folder must be specified among "cache", "error" or "archive"');
     }
-    if (!Array.isArray(ctx.request.body)) {
+
+    const filenames = Array.isArray(ctx.query.filenames) ? ctx.query.filenames : [];
+    if (typeof ctx.query.filenames === 'string') {
+      filenames.push(ctx.query.filenames);
+    }
+    if (filenames.length === 0) {
       return ctx.badRequest('Invalid file list');
     }
-    await ctx.app.northService.removeCacheContent(ctx.params.northId, folder as 'cache' | 'archive' | 'error', ctx.request.body);
+
+    await ctx.app.northService.removeCacheContent(ctx.params.northId, folder as 'cache' | 'archive' | 'error', filenames);
     ctx.noContent();
   }
 
