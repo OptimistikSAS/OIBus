@@ -621,15 +621,19 @@ describe('CacheService', () => {
       metadataFilename: 'fileToRemove.json',
       metadata: { contentFile: 'contentFile.csv' } as CacheMetadata
     });
+    service.moveCacheContent('archive', 'cache', {
+      metadataFilename: 'fileToRemove.json',
+      metadata: { contentFile: 'contentFile.csv' } as CacheMetadata
+    });
 
     expect(fs.readdir).toHaveBeenCalledTimes(0);
     expect(fs.unlink).toHaveBeenCalledTimes(0);
-    expect(fs.rename).toHaveBeenCalledTimes(0);
+    expect(fs.rename).toHaveBeenCalledTimes(1); // Block at first rename because of second move cache content
 
     await flushPromises();
     expect(fs.stat).toHaveBeenCalledTimes(1); // 1 from compact (called once because the size of copied queue at second call is one)
     expect(fs.writeFile).toHaveBeenCalledTimes(2); // 2 from compact (called once because the size of copied queue at second call is one)
-    expect(fs.rename).toHaveBeenCalledTimes(2); // 2 from moveCacheContent
+    expect(fs.rename).toHaveBeenCalledTimes(4); // 2 x2 from moveCacheContent
     expect(fs.unlink).toHaveBeenCalledTimes(8); // 6 from compact (called once because the size of copied queue at second call is one) + 2 from removeCacheContent
 
     expect(fs.readdir).toHaveBeenCalledTimes(1); // from search cache content

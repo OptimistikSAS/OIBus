@@ -4,6 +4,7 @@ import { TranslateDirective } from '@ngx-translate/core';
 import { FileContentModalComponent } from './file-content-modal.component';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock } from 'ngx-speculoos';
+import testData from '../../../../../../backend/src/tests/utils/test-data';
 
 describe('FileContentModalComponent', () => {
   let component: FileContentModalComponent;
@@ -26,13 +27,22 @@ describe('FileContentModalComponent', () => {
   });
 
   it('should call prepareForCreation method with correct parameters', () => {
-    const filename = 'test.json';
-    const contentType = 'json';
+    const contentFile = {
+      metadataFilename: 'file1.json',
+      metadata: {
+        contentFile: '8-1696843490050.txt',
+        contentSize: 6,
+        numberOfElement: 0,
+        createdAt: testData.constants.dates.DATE_1,
+        contentType: 'raw',
+        source: 'south',
+        options: {}
+      }
+    };
     const content = '{ "foo": "bar" }';
-    component.prepareForCreation(filename, contentType, content);
+    component.prepareForCreation(contentFile, content);
 
-    expect(component.filename).toEqual(filename);
-    expect(component.contentType).toEqual(contentType);
+    expect(component.contentFile!.metadata.contentFile).toEqual(contentFile.metadata.contentFile);
     expect(component.content).toEqual(content);
   });
 

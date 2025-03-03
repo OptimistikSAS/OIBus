@@ -83,7 +83,7 @@ export default class CacheService {
     let errorSize = 0;
     if (errorFiles.length > 0) {
       this.logger.warn(`${errorFiles.length} content errored`);
-      for (const filename of contentList) {
+      for (const filename of errorFiles) {
         const filePath = path.join(this.errorFolder, this.METADATA_FOLDER, filename);
         try {
           const metadata: CacheMetadata = JSON.parse(await fs.readFile(filePath, { encoding: 'utf8' }));
@@ -100,7 +100,7 @@ export default class CacheService {
     let archiveSize = 0;
     if (archiveFiles.length > 0) {
       this.logger.debug(`${archiveFiles.length} content archived`);
-      for (const filename of contentList) {
+      for (const filename of archiveFiles) {
         const filePath = path.join(this.archiveFolder, this.METADATA_FOLDER, filename);
         try {
           const metadata: CacheMetadata = JSON.parse(await fs.readFile(filePath, { encoding: 'utf8' }));
@@ -373,6 +373,13 @@ export default class CacheService {
       }
       await fs.rename(contentOriginPath, contentDestinationPath);
       await fs.rename(metadataOriginPath, metadataDestinationPath);
+
+      if (destinationFolder === 'cache') {
+        if (this.compactQueue$) {
+          await this.compactQueue$.promise;
+        }
+        this.addCacheContentToQueue(cacheContent);
+      }
 
       this.updateCacheSize(cacheContent.metadata.contentSize, originFolder, destinationFolder);
 

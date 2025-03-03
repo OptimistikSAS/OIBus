@@ -1,8 +1,7 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Injectable, inject } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import {
-  NorthCacheFiles,
   NorthConnectorCommandDTO,
   NorthConnectorDTO,
   NorthConnectorLightDTO,
@@ -11,6 +10,7 @@ import {
 } from '../../../../backend/shared/model/north-connector.model';
 import { SouthConnectorLightDTO } from '../../../../backend/shared/model/south-connector.model';
 import { NorthSettings } from '../../../../backend/shared/model/north-settings.model';
+import { CacheMetadata, CacheSearchParam } from '../../../../backend/shared/model/engine.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on North connectors
@@ -109,98 +109,80 @@ export class NorthConnectorService {
     return this.http.delete<void>(`/api/north/${northId}/subscriptions/${southId}`);
   }
 
-  getCacheErrorFiles(northId: string): Observable<Array<NorthCacheFiles>> {
-    return this.http.get<Array<NorthCacheFiles>>(`/api/north/${northId}/cache/file-errors`);
+  searchCacheContent(
+    northId: string,
+    searchParams: CacheSearchParam,
+    folder: 'cache' | 'archive' | 'error'
+  ): Observable<Array<{ metadataFilename: string; metadata: CacheMetadata }>> {
+    const params: Record<string, string | Array<string>> = {
+      folder
+    };
+    if (searchParams.start) {
+      params['start'] = searchParams.start;
+    }
+    if (searchParams.end) {
+      params['end'] = searchParams.end;
+    }
+    if (searchParams.nameContains) {
+      params['nameContains'] = searchParams.nameContains;
+    }
+    return this.http.get<Array<{ metadataFilename: string; metadata: CacheMetadata }>>(`/api/north/${northId}/cache/content`, { params });
   }
 
-  getCacheErrorFileContent(northId: string, filename: string): Observable<HttpResponse<Blob>> {
-    return this.http.get<Blob>(`/api/north/${northId}/cache/file-errors/${filename}`, {
+  getCacheFileContent(northId: string, folder: 'cache' | 'archive' | 'error', filename: string): Observable<HttpResponse<Blob>> {
+    return this.http.get<Blob>(`/api/north/${northId}/cache/content/${filename}`, {
       responseType: 'blob' as 'json',
-      observe: 'response'
+      observe: 'response',
+      params: {
+        folder
+      }
     });
   }
 
-  retryCacheErrorFiles(northId: string, filenames: Array<string>): Observable<void> {
-    return this.http.post<void>(`/api/north/${northId}/cache/file-errors/retry`, filenames);
-  }
-
-  retryAllCacheErrorFiles(northId: string): Observable<void> {
-    return this.http.delete<void>(`/api/north/${northId}/cache/file-errors/retry-all`);
-  }
-
-  removeCacheErrorFiles(northId: string, filenames: Array<string>): Observable<void> {
-    return this.http.post<void>(`/api/north/${northId}/cache/file-errors/remove`, filenames);
-  }
-
-  removeAllCacheErrorFiles(northId: string): Observable<void> {
-    return this.http.delete<void>(`/api/north/${northId}/cache/file-errors/remove-all`);
-  }
-
-  getCacheFiles(northId: string): Observable<Array<NorthCacheFiles>> {
-    return this.http.get<Array<NorthCacheFiles>>(`/api/north/${northId}/cache/files`);
-  }
-
-  getCacheFileContent(northId: string, filename: string): Observable<HttpResponse<Blob>> {
-    return this.http.get<Blob>(`/api/north/${northId}/cache/files/${filename}`, {
-      responseType: 'blob' as 'json',
-      observe: 'response'
+  removeCacheContent(northId: string, folder: 'cache' | 'archive' | 'error', filenames: Array<string>): Observable<void> {
+    return this.http.delete<void>(`/api/north/${northId}/cache/content/remove`, {
+      params: {
+        folder,
+        filenames
+      }
     });
   }
 
-  removeCacheFiles(northId: string, filenames: Array<string>): Observable<void> {
-    return this.http.post<void>(`/api/north/${northId}/cache/files/remove`, filenames);
-  }
-
-  archiveCacheFiles(northId: string, filenames: Array<string>): Observable<void> {
-    return this.http.post<void>(`/api/north/${northId}/cache/files/archive`, filenames);
-  }
-
-  getCacheArchiveFiles(northId: string): Observable<Array<NorthCacheFiles>> {
-    return this.http.get<Array<NorthCacheFiles>>(`/api/north/${northId}/cache/archive-files`);
-  }
-
-  getCacheArchiveFileContent(northId: string, filename: string): Observable<HttpResponse<Blob>> {
-    return this.http.get<Blob>(`/api/north/${northId}/cache/archive-files/${filename}`, {
-      responseType: 'blob' as 'json',
-      observe: 'response'
+  removeAllCacheContent(northId: string, folder: 'cache' | 'archive' | 'error'): Observable<void> {
+    return this.http.delete<void>(`/api/north/${northId}/cache/content/remove-all`, {
+      params: {
+        folder
+      }
     });
   }
 
-  retryCacheArchiveFiles(northId: string, filenames: Array<string>): Observable<void> {
-    return this.http.post<void>(`/api/north/${northId}/cache/archive-files/retry`, filenames);
+  moveCacheContent(
+    northId: string,
+    originFolder: 'cache' | 'archive' | 'error',
+    destinationFolder: 'cache' | 'archive' | 'error',
+    filenames: Array<string>
+  ): Observable<void> {
+    return this.http.post<void>(`/api/north/${northId}/cache/content/move`, filenames, {
+      params: {
+        originFolder,
+        destinationFolder
+      }
+    });
   }
 
-  retryAllCacheArchiveFiles(northId: string): Observable<void> {
-    return this.http.delete<void>(`/api/north/${northId}/cache/archive-files/retry-all`);
+  moveAllCacheContent(
+    northId: string,
+    originFolder: 'cache' | 'archive' | 'error',
+    destinationFolder: 'cache' | 'archive' | 'error'
+  ): Observable<void> {
+    return this.http.post<void>(`/api/north/${northId}/cache/content/move-all`, null, {
+      params: {
+        originFolder,
+        destinationFolder
+      }
+    });
   }
 
-  removeCacheArchiveFiles(northId: string, filenames: Array<string>): Observable<void> {
-    return this.http.post<void>(`/api/north/${northId}/cache/archive-files/remove`, filenames);
-  }
-
-  removeAllCacheArchiveFiles(northId: string): Observable<void> {
-    return this.http.delete<void>(`/api/north/${northId}/cache/archive-files/remove-all`);
-  }
-
-  getCacheValues(northId: string): Observable<Array<NorthCacheFiles>> {
-    return this.http.get<Array<NorthCacheFiles>>(`/api/north/${northId}/cache/values`);
-  }
-
-  removeCacheValues(northId: string, filenames: Array<string>): Observable<void> {
-    return this.http.post<void>(`/api/north/${northId}/cache/values/remove`, filenames);
-  }
-
-  getCacheErrorValues(northId: string): Observable<Array<NorthCacheFiles>> {
-    return this.http.get<Array<NorthCacheFiles>>(`/api/north/${northId}/cache/value-errors`);
-  }
-
-  removeCacheErrorValues(northId: string, filenames: Array<string>): Observable<void> {
-    return this.http.post<void>(`/api/north/${northId}/cache/value-errors/remove`, filenames);
-  }
-
-  retryCacheErrorValues(northId: string, filenames: Array<string>): Observable<void> {
-    return this.http.post<void>(`/api/north/${northId}/cache/value-errors/retry`, filenames);
-  }
   /**
    * Reset the selected North metrics
    * @param northId - the ID of the North connector to reset
