@@ -26,11 +26,12 @@ export default class NorthConnectorRepository {
 
   findNorthById<N extends NorthSettings>(id: string): NorthConnectorEntity<N> | null {
     const query =
-      `SELECT id, name, type, description, enabled, settings, caching_scan_mode_id, ` +
-      `caching_group_count, caching_retry_interval, ` +
-      `caching_retry_count, caching_run_min_delay, caching_max_send_count, ` +
-      `caching_send_file_immediately, caching_max_size, archive_enabled, ` +
-      `archive_retention_duration FROM ${NORTH_CONNECTORS_TABLE} WHERE id = ?;`;
+      `SELECT id, name, type, description, enabled, settings, ` +
+      `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
+      `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
+      `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, ` +
+      `caching_archive_enabled, caching_archive_retention_duration ` +
+      `FROM ${NORTH_CONNECTORS_TABLE} WHERE id = ?;`;
     const result = this.database.prepare(query).get(id);
     if (!result) return null;
     return this.toNorthConnector<N>(result as Record<string, string | number>);
@@ -42,9 +43,11 @@ export default class NorthConnectorRepository {
         north.id = generateRandomId(6);
         const insertQuery =
           `INSERT INTO ${NORTH_CONNECTORS_TABLE} (id, name, type, description, enabled, settings, ` +
-          `caching_scan_mode_id, caching_group_count, caching_retry_interval, caching_retry_count, caching_run_min_delay, caching_max_send_count, ` +
-          `caching_send_file_immediately, caching_max_size, archive_enabled, archive_retention_duration) ` +
-          `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+          `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
+          `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
+          `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, ` +
+          `caching_archive_enabled, caching_archive_retention_duration) ` +
+          `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
         this.database
           .prepare(insertQuery)
           .run(
@@ -54,22 +57,25 @@ export default class NorthConnectorRepository {
             north.description,
             +north.enabled,
             JSON.stringify(north.settings),
-            north.caching.scanModeId,
-            north.caching.oibusTimeValues.groupCount,
-            north.caching.retryInterval,
-            north.caching.retryCount,
-            north.caching.runMinDelay,
-            north.caching.oibusTimeValues.maxSendCount,
-            +north.caching.rawFiles.sendFileImmediately,
-            north.caching.maxSize,
+            north.caching.trigger.scanModeId,
+            north.caching.trigger.numberOfElements,
+            north.caching.trigger.numberOfFiles,
+            north.caching.throttling.runMinDelay,
+            north.caching.throttling.maxSize,
+            north.caching.throttling.maxNumberOfElements,
+            north.caching.error.retryInterval,
+            north.caching.error.retryCount,
+            north.caching.error.retentionDuration,
             +north.caching.archive.enabled,
             north.caching.archive.retentionDuration
           );
       } else {
         const query =
           `UPDATE ${NORTH_CONNECTORS_TABLE} SET name = ?, description = ?, enabled = ?, settings = ?, ` +
-          `caching_scan_mode_id = ?, caching_group_count = ?, caching_retry_interval = ?, caching_retry_count = ?, caching_run_min_delay = ?, ` +
-          `caching_max_send_count = ?, caching_send_file_immediately = ?, caching_max_size = ?, archive_enabled = ?, archive_retention_duration = ? ` +
+          `caching_trigger_schedule = ?, caching_trigger_number_of_elements = ?, caching_trigger_number_of_files = ?, ` +
+          `caching_throttling_run_min_delay = ?, caching_throttling_cache_max_size = ?, caching_throttling_max_number_of_elements = ?, ` +
+          `caching_error_retry_interval = ?, caching_error_retry_count = ?, caching_error_retention_duration = ?, ` +
+          `caching_archive_enabled = ?, caching_archive_retention_duration = ? ` +
           `WHERE id = ?;`;
         this.database
           .prepare(query)
@@ -78,14 +84,15 @@ export default class NorthConnectorRepository {
             north.description,
             +north.enabled,
             JSON.stringify(north.settings),
-            north.caching.scanModeId,
-            north.caching.oibusTimeValues.groupCount,
-            north.caching.retryInterval,
-            north.caching.retryCount,
-            north.caching.runMinDelay,
-            north.caching.oibusTimeValues.maxSendCount,
-            +north.caching.rawFiles.sendFileImmediately,
-            north.caching.maxSize,
+            north.caching.trigger.scanModeId,
+            north.caching.trigger.numberOfElements,
+            north.caching.trigger.numberOfFiles,
+            north.caching.throttling.runMinDelay,
+            north.caching.throttling.maxSize,
+            north.caching.throttling.maxNumberOfElements,
+            north.caching.error.retryInterval,
+            north.caching.error.retryCount,
+            north.caching.error.retentionDuration,
             +north.caching.archive.enabled,
             north.caching.archive.retentionDuration,
             north.id
@@ -186,21 +193,24 @@ export default class NorthConnectorRepository {
       enabled: Boolean(result.enabled),
       settings: JSON.parse(result.settings as string) as N,
       caching: {
-        scanModeId: result.caching_scan_mode_id as string,
-        retryInterval: result.caching_retry_interval as number,
-        retryCount: result.caching_retry_count as number,
-        runMinDelay: result.caching_run_min_delay as number,
-        maxSize: result.caching_max_size as number,
-        oibusTimeValues: {
-          groupCount: result.caching_group_count as number,
-          maxSendCount: result.caching_max_send_count as number
+        trigger: {
+          scanModeId: result.caching_trigger_schedule as string,
+          numberOfElements: result.caching_trigger_number_of_elements as number,
+          numberOfFiles: result.caching_trigger_number_of_files as number
         },
-        rawFiles: {
-          sendFileImmediately: Boolean(result.caching_send_file_immediately)
+        throttling: {
+          runMinDelay: result.caching_throttling_run_min_delay as number,
+          maxSize: result.caching_throttling_cache_max_size as number,
+          maxNumberOfElements: result.caching_throttling_max_number_of_elements as number
+        },
+        error: {
+          retryInterval: result.caching_error_retry_interval as number,
+          retryCount: result.caching_error_retry_count as number,
+          retentionDuration: result.caching_error_retention_duration as number
         },
         archive: {
-          enabled: Boolean(result.archive_enabled),
-          retentionDuration: result.archive_retention_duration as number
+          enabled: Boolean(result.caching_archive_enabled),
+          retentionDuration: result.caching_archive_retention_duration as number
         }
       },
       subscriptions: this.listNorthSubscriptions(result.id as string)
