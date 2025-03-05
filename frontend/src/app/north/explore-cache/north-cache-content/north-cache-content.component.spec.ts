@@ -1,4 +1,4 @@
-import { CacheContentComponent } from './cache-content.component';
+import { NorthCacheContentComponent } from './north-cache-content.component';
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { TestBed } from '@angular/core/testing';
 import { NorthConnectorService } from '../../../services/north-connector.service';
@@ -10,18 +10,18 @@ import { NorthSettings } from '../../../../../../backend/shared/model/north-sett
 import testData from '../../../../../../backend/src/tests/utils/test-data';
 
 @Component({
-  template: `<oib-cache-content cacheType="cache" #component [northConnector]="northConnector" />`,
-  imports: [CacheContentComponent]
+  template: `<oib-north-cache-content cacheType="cache" #component [northConnector]="northConnector" />`,
+  imports: [NorthCacheContentComponent]
 })
 class TestComponent {
-  readonly component = viewChild.required<CacheContentComponent>('component');
+  readonly component = viewChild.required<NorthCacheContentComponent>('component');
   northConnector: NorthConnectorDTO<NorthSettings> = {
     id: 'northId',
     name: 'North Connector'
   } as NorthConnectorDTO<NorthSettings>;
 }
 
-class CacheFilesComponentTester extends ComponentTester<TestComponent> {
+class NorthCacheContentComponentTester extends ComponentTester<TestComponent> {
   constructor() {
     super(TestComponent);
   }
@@ -31,8 +31,8 @@ class CacheFilesComponentTester extends ComponentTester<TestComponent> {
   }
 }
 
-describe('CacheFilesComponent', () => {
-  let tester: CacheFilesComponentTester;
+describe('NorthCacheContent', () => {
+  let tester: NorthCacheContentComponentTester;
   let northConnectorService: jasmine.SpyObj<NorthConnectorService>;
 
   beforeEach(() => {
@@ -42,7 +42,7 @@ describe('CacheFilesComponent', () => {
       providers: [provideI18nTesting(), { provide: NorthConnectorService, useValue: northConnectorService }]
     });
 
-    tester = new CacheFilesComponentTester();
+    tester = new NorthCacheContentComponentTester();
     northConnectorService.searchCacheContent.and.returnValue(of([]));
     northConnectorService.removeCacheContent.and.returnValue(of());
     northConnectorService.moveCacheContent.and.returnValue(of());

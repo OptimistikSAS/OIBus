@@ -1,11 +1,11 @@
 import { Component, computed, input, linkedSignal, output, signal } from '@angular/core';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
-import { DatetimePipe } from '../../../shared/datetime.pipe';
-import { FileSizePipe } from '../../../shared/file-size.pipe';
-import { createPageFromArray } from '../../../../../../backend/shared/model/types';
+import { DatetimePipe } from '../datetime.pipe';
+import { FileSizePipe } from '../file-size.pipe';
+import { createPageFromArray } from '../../../../../backend/shared/model/types';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { CacheMetadata } from '../../../../../../backend/shared/model/engine.model';
-import { PaginationComponent } from '../../../shared/pagination/pagination.component';
+import { CacheMetadata } from '../../../../../backend/shared/model/engine.model';
+import { PaginationComponent } from '../pagination/pagination.component';
 
 const PAGE_SIZE = 15;
 
