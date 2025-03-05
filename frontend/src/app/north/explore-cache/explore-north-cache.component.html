@@ -16,13 +16,25 @@
         </div>
         @if (northConnector) {
           <div class="mb-3">
-            <oib-cache-content id="cache" #cache [northConnector]="northConnector" cacheType="cache" (cacheUpdated)="refreshCache()" />
+            <oib-north-cache-content
+              id="cache"
+              #cache
+              [northConnector]="northConnector"
+              cacheType="cache"
+              (cacheUpdated)="refreshCache()"
+            />
           </div>
           <div class="mb-3">
-            <oib-cache-content id="error" #error [northConnector]="northConnector" cacheType="error" (cacheUpdated)="refreshCache()" />
+            <oib-north-cache-content
+              id="error"
+              #error
+              [northConnector]="northConnector"
+              cacheType="error"
+              (cacheUpdated)="refreshCache()"
+            />
           </div>
           <div class="mb-3">
-            <oib-cache-content
+            <oib-north-cache-content
               id="archive"
               #archive
               [northConnector]="northConnector"

@@ -25,7 +25,7 @@ import NorthService, { northManifestList } from './north.service';
 import LogRepository from '../repository/logs/log.repository';
 import { Page } from '../../shared/model/types';
 import pino from 'pino';
-import { OIBusContent } from '../../shared/model/engine.model';
+import { CacheMetadata, CacheSearchParam, OIBusContent } from '../../shared/model/engine.model';
 import { ScanMode } from '../model/scan-mode.model';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import multer from '@koa/multer';
@@ -39,6 +39,7 @@ import { PassThrough } from 'node:stream';
 import { BaseFolders } from '../model/types';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
+import { ReadStream } from 'node:fs';
 
 export default class HistoryQueryService {
   constructor(
@@ -578,6 +579,51 @@ export default class HistoryQueryService {
         );
       }
     }
+  }
+
+  async searchCacheContent(
+    historyQueryId: string,
+    searchParams: CacheSearchParam,
+    folder: 'cache' | 'archive' | 'error'
+  ): Promise<Array<{ metadataFilename: string; metadata: CacheMetadata }>> {
+    return await this.historyQueryEngine.searchCacheContent(historyQueryId, searchParams, folder);
+  }
+
+  async getCacheContentFileStream(
+    historyQueryId: string,
+    folder: 'cache' | 'archive' | 'error',
+    filename: string
+  ): Promise<ReadStream | null> {
+    return await this.historyQueryEngine.getCacheContentFileStream(historyQueryId, folder, filename);
+  }
+
+  async removeCacheContent(
+    historyQueryId: string,
+    folder: 'cache' | 'archive' | 'error',
+    metadataFilenameList: Array<string>
+  ): Promise<void> {
+    return await this.historyQueryEngine.removeCacheContent(historyQueryId, folder, metadataFilenameList);
+  }
+
+  async removeAllCacheContent(historyQueryId: string, folder: 'cache' | 'archive' | 'error'): Promise<void> {
+    return await this.historyQueryEngine.removeAllCacheContent(historyQueryId, folder);
+  }
+
+  async moveCacheContent(
+    historyQueryId: string,
+    originFolder: 'cache' | 'archive' | 'error',
+    destinationFolder: 'cache' | 'archive' | 'error',
+    cacheContentList: Array<string>
+  ): Promise<void> {
+    return await this.historyQueryEngine.moveCacheContent(historyQueryId, originFolder, destinationFolder, cacheContentList);
+  }
+
+  async moveAllCacheContent(
+    historyQueryId: string,
+    originFolder: 'cache' | 'archive' | 'error',
+    destinationFolder: 'cache' | 'archive' | 'error'
+  ): Promise<void> {
+    return await this.historyQueryEngine.moveAllCacheContent(historyQueryId, originFolder, destinationFolder);
   }
 
   private getDefaultBaseFolders(historyId: string) {
