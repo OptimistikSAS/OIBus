@@ -59,6 +59,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   private taskRunnerEvent: EventEmitter = new EventEmitter();
   public metricsEvent: EventEmitter = new EventEmitter();
 
+  private cacheSizeWarningHasBeenTriggered = false;
   private stopping = false;
 
   protected constructor(
@@ -81,6 +82,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
         this.cacheSize.cacheSize += sizeToAdd.cacheSizeToAdd;
         this.cacheSize.errorSize += sizeToAdd.errorSizeToAdd;
         this.cacheSize.archiveSize += sizeToAdd.archiveSizeToAdd;
+        this.cacheSizeWarningHasBeenTriggered = false; // If the cache size is updated, allow the warning to trigger again
         this.metricsEvent.emit('cache-size', this.cacheSize);
       }
     );
@@ -109,6 +111,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       // Reload the settings only on data stream case, otherwise let the history query manage the settings
       this.connector = this.northConnectorRepository.findNorthById(this.connector.id)!;
     }
+    this.cacheSizeWarningHasBeenTriggered = false;
     await this.cacheService.start();
     await this.connect();
   }
@@ -130,10 +133,10 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       this.metricsEvent.emit('connect', {
         lastConnection: DateTime.now().toUTC().toISO()!
       });
-      const scanMode = this.scanModeRepository.findById(this.connector.caching.scanModeId)!;
+      const scanMode = this.scanModeRepository.findById(this.connector.caching.trigger.scanModeId)!;
       this.createCronJob(scanMode);
       // Check at startup if a run must be triggered
-      await this.triggerRunIfNecessary(this.connector.caching.runMinDelay);
+      await this.triggerRunIfNecessary(this.connector.caching.throttling.runMinDelay);
     }
     this.logger.info(`North connector "${this.connector.name}" of type ${this.connector.type} started`);
   }
@@ -195,13 +198,15 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       this.taskRunnerEvent.emit('run', this.taskJobQueue[0]);
     } else {
       // If the task queue is empty, add one task if necessary, otherwise, it will be added by the cron
-      await this.triggerRunIfNecessary(this.errorCount ? this.connector.caching.retryInterval : this.connector.caching.runMinDelay);
+      await this.triggerRunIfNecessary(
+        this.errorCount ? this.connector.caching.error.retryInterval : this.connector.caching.throttling.runMinDelay
+      );
     }
   }
 
   async handleContentWrapper(): Promise<void> {
     if (!this.contentBeingSent) {
-      this.contentBeingSent = await this.cacheService.getCacheContentToSend(this.connector.caching.oibusTimeValues.maxSendCount);
+      this.contentBeingSent = await this.cacheService.getCacheContentToSend(this.connector.caching.throttling.maxNumberOfElements);
     }
     if (!this.contentBeingSent) {
       return;
@@ -247,7 +252,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       this.logger.error(
         `Could not send content "${JSON.stringify(this.contentBeingSent)}" (${this.errorCount}). Error: ${oibusError.message}`
       );
-      if (!oibusError.retry && this.errorCount > this.connector.caching.retryCount) {
+      if (!oibusError.retry && this.errorCount > this.connector.caching.error.retryCount) {
         this.logger.warn(`Moving content into error after ${this.errorCount} errors`);
         await this.cacheService.moveCacheContent('cache', 'error', this.contentBeingSent!);
         this.metricsEvent.emit('content-errored', {
@@ -278,10 +283,13 @@ export default abstract class NorthConnector<T extends NorthSettings> {
 
   async cacheContent(data: OIBusContent, source: string): Promise<void> {
     const cacheSize = this.cacheSize.cacheSize + this.cacheSize.errorSize + this.cacheSize.archiveSize;
-    if (this.connector.caching.maxSize !== 0 && cacheSize >= this.connector.caching.maxSize * 1024 * 1024) {
-      this.logger.warn(
-        `North cache is exceeding the maximum allowed size (${Math.floor((cacheSize / 1024 / 1024) * 100) / 100} MB >= ${this.connector.caching.maxSize} MB). Values will be discarded until the cache is emptied (by sending files/values or manual removal)`
-      );
+    if (this.connector.caching.throttling.maxSize !== 0 && cacheSize >= this.connector.caching.throttling.maxSize * 1024 * 1024) {
+      if (!this.cacheSizeWarningHasBeenTriggered) {
+        this.logger.warn(
+          `North cache is exceeding the maximum allowed size (${Math.floor((cacheSize / 1024 / 1024) * 100) / 100} MB >= ${this.connector.caching.throttling.maxSize} MB). Values will be discarded until the cache is emptied (by sending files/values or manual removal)`
+        );
+        this.cacheSizeWarningHasBeenTriggered = true;
+      }
       return;
     }
 
@@ -297,11 +305,11 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       const readStream = createReadStream(data.filePath);
       await this.cacheSingleBatch(readStream, cacheFilename, 'raw', 0, randomId, source);
     } else {
-      if (this.connector.caching.oibusTimeValues.maxSendCount > 0) {
-        for (let i = 0; i < data.content.length; i += this.connector.caching.oibusTimeValues.maxSendCount) {
+      if (this.connector.caching.throttling.maxNumberOfElements > 0) {
+        for (let i = 0; i < data.content.length; i += this.connector.caching.throttling.maxNumberOfElements) {
           const randomId = generateRandomId(10);
           const cacheFilename = `${randomId}.json`;
-          const chunks: Array<object> = data.content.slice(i, i + this.connector.caching.oibusTimeValues.maxSendCount);
+          const chunks: Array<object> = data.content.slice(i, i + this.connector.caching.throttling.maxNumberOfElements);
           const readStream = Readable.from(JSON.stringify(chunks));
           await this.cacheSingleBatch(readStream, cacheFilename, data.type, chunks.length, randomId, source);
         }
@@ -475,16 +483,16 @@ export default abstract class NorthConnector<T extends NorthSettings> {
 
     // Trigger because a file is in the queue and it must be sent immediately
     const numberOfFiles = this.cacheService.getNumberOfRawFilesInQueue();
-    if (numberOfFiles > 0 && !this.cacheService.cacheIsEmpty() && this.connector.caching.rawFiles.sendFileImmediately) {
+    if (numberOfFiles >= this.connector.caching.trigger.numberOfFiles && this.connector.caching.trigger.numberOfFiles > 0) {
       this.addTaskToQueue({ id: 'limit-reach', name: `${numberOfFiles} files in queue, sending it immediately` });
       return;
     }
     // Trigger because a group count is reach
     const numberOfElement = this.cacheService.getNumberOfElementsInQueue();
-    if (numberOfElement >= this.connector.caching.oibusTimeValues.groupCount && this.connector.caching.oibusTimeValues.groupCount > 0) {
+    if (numberOfElement >= this.connector.caching.trigger.numberOfElements && this.connector.caching.trigger.numberOfElements > 0) {
       this.addTaskToQueue({
         id: 'limit-reach',
-        name: `Limit reach: ${numberOfElement} elements in queue >= ${this.connector.caching.oibusTimeValues.groupCount}`
+        name: `Limit reach: ${numberOfElement} elements in queue >= ${this.connector.caching.trigger.numberOfElements}`
       });
       return;
     }

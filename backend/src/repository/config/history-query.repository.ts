@@ -28,10 +28,11 @@ export default class HistoryQueryRepository {
     const query =
       `SELECT id, name, description, status, start_time, end_time, ` +
       `south_type, north_type, south_settings, north_settings, ` +
-      `caching_scan_mode_id, caching_group_count, caching_retry_interval, ` +
-      `caching_retry_count, caching_run_min_delay, caching_max_send_count, ` +
-      `caching_send_file_immediately, caching_max_size, archive_enabled, ` +
-      `archive_retention_duration FROM ${HISTORY_QUERIES_TABLE};`;
+      `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
+      `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
+      `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, ` +
+      `caching_archive_enabled, caching_archive_retention_duration ` +
+      `FROM ${HISTORY_QUERIES_TABLE};`;
     const result = this.database.prepare(query).all();
 
     return result.map(element => this.toHistoryQueryEntity(element as Record<string, string | number>));
@@ -43,10 +44,11 @@ export default class HistoryQueryRepository {
     const query =
       `SELECT id, name, description, status, start_time, end_time, ` +
       `south_type, north_type, south_settings, north_settings, ` +
-      `caching_scan_mode_id, caching_group_count, caching_retry_interval, ` +
-      `caching_retry_count, caching_run_min_delay, caching_max_send_count, ` +
-      `caching_send_file_immediately, caching_max_size, archive_enabled, ` +
-      `archive_retention_duration FROM ${HISTORY_QUERIES_TABLE} WHERE id = ?;`;
+      `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
+      `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
+      `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, ` +
+      `caching_archive_enabled, caching_archive_retention_duration ` +
+      `FROM ${HISTORY_QUERIES_TABLE} WHERE id = ?;`;
     const result = this.database.prepare(query).get(id);
     if (!result) {
       return null;
@@ -62,9 +64,12 @@ export default class HistoryQueryRepository {
         historyQuery.id = generateRandomId(6);
         const insertQuery =
           `INSERT INTO ${HISTORY_QUERIES_TABLE} (id, name, description, status, ` +
-          `start_time, end_time, south_type, north_type, south_settings, north_settings, caching_scan_mode_id, caching_group_count, ` +
-          `caching_retry_interval, caching_retry_count, caching_run_min_delay, caching_max_send_count, caching_send_file_immediately, caching_max_size, archive_enabled, ` +
-          `archive_retention_duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+          `start_time, end_time, south_type, north_type, south_settings, north_settings, ` +
+          `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
+          `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
+          `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, ` +
+          `caching_archive_enabled, caching_archive_retention_duration)` +
+          `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
         this.database.prepare(insertQuery).run(
           historyQuery.id,
           historyQuery.name,
@@ -76,14 +81,15 @@ export default class HistoryQueryRepository {
           historyQuery.northType,
           JSON.stringify(historyQuery.southSettings),
           JSON.stringify(historyQuery.northSettings),
-          historyQuery.caching.scanModeId,
-          historyQuery.caching.oibusTimeValues.groupCount,
-          historyQuery.caching.retryInterval,
-          historyQuery.caching.retryCount,
-          historyQuery.caching.runMinDelay,
-          historyQuery.caching.oibusTimeValues.maxSendCount,
-          +historyQuery.caching.rawFiles.sendFileImmediately,
-          historyQuery.caching.maxSize,
+          historyQuery.caching.trigger.scanModeId,
+          historyQuery.caching.trigger.numberOfElements,
+          historyQuery.caching.trigger.numberOfFiles,
+          historyQuery.caching.throttling.runMinDelay,
+          historyQuery.caching.throttling.maxSize,
+          historyQuery.caching.throttling.maxNumberOfElements,
+          historyQuery.caching.error.retryInterval,
+          historyQuery.caching.error.retryCount,
+          historyQuery.caching.error.retentionDuration,
           +historyQuery.caching.archive.enabled,
           historyQuery.caching.archive.retentionDuration
         );
@@ -91,8 +97,10 @@ export default class HistoryQueryRepository {
         const query =
           `UPDATE ${HISTORY_QUERIES_TABLE} SET name = ?, description = ?, start_time = ?, ` +
           `end_time = ?, south_type = ?, north_type = ?, south_settings = ?, north_settings = ?,` +
-          `caching_scan_mode_id = ?, caching_group_count = ?, caching_retry_interval = ?, caching_retry_count = ?, caching_run_min_delay = ?, ` +
-          `caching_max_send_count = ?, caching_send_file_immediately = ?, caching_max_size = ?, archive_enabled = ?, archive_retention_duration = ? ` +
+          `caching_trigger_schedule = ?, caching_trigger_number_of_elements = ?, caching_trigger_number_of_files = ?, ` +
+          `caching_throttling_run_min_delay = ?, caching_throttling_cache_max_size = ?, caching_throttling_max_number_of_elements = ?, ` +
+          `caching_error_retry_interval = ?, caching_error_retry_count = ?, caching_error_retention_duration = ?, ` +
+          `caching_archive_enabled = ?, caching_archive_retention_duration = ? ` +
           `WHERE id = ?;`;
         this.database
           .prepare(query)
@@ -105,14 +113,15 @@ export default class HistoryQueryRepository {
             historyQuery.northType,
             JSON.stringify(historyQuery.southSettings),
             JSON.stringify(historyQuery.northSettings),
-            historyQuery.caching.scanModeId,
-            historyQuery.caching.oibusTimeValues.groupCount,
-            historyQuery.caching.retryInterval,
-            historyQuery.caching.retryCount,
-            historyQuery.caching.runMinDelay,
-            historyQuery.caching.oibusTimeValues.maxSendCount,
-            +historyQuery.caching.rawFiles.sendFileImmediately,
-            historyQuery.caching.maxSize,
+            historyQuery.caching.trigger.scanModeId,
+            historyQuery.caching.trigger.numberOfElements,
+            historyQuery.caching.trigger.numberOfFiles,
+            historyQuery.caching.throttling.runMinDelay,
+            historyQuery.caching.throttling.maxSize,
+            historyQuery.caching.throttling.maxNumberOfElements,
+            historyQuery.caching.error.retryInterval,
+            historyQuery.caching.error.retryCount,
+            historyQuery.caching.error.retentionDuration,
             +historyQuery.caching.archive.enabled,
             historyQuery.caching.archive.retentionDuration,
             historyQuery.id
@@ -313,21 +322,24 @@ export default class HistoryQueryRepository {
       southSettings: JSON.parse(result.south_settings as string) as S,
       northSettings: JSON.parse(result.north_settings as string) as N,
       caching: {
-        scanModeId: result.caching_scan_mode_id as string,
-        retryInterval: result.caching_retry_interval as number,
-        retryCount: result.caching_retry_count as number,
-        runMinDelay: result.caching_run_min_delay as number,
-        maxSize: result.caching_max_size as number,
-        oibusTimeValues: {
-          groupCount: result.caching_group_count as number,
-          maxSendCount: result.caching_max_send_count as number
+        trigger: {
+          scanModeId: result.caching_trigger_schedule as string,
+          numberOfElements: result.caching_trigger_number_of_elements as number,
+          numberOfFiles: result.caching_trigger_number_of_files as number
         },
-        rawFiles: {
-          sendFileImmediately: Boolean(result.caching_send_file_immediately)
+        throttling: {
+          runMinDelay: result.caching_throttling_run_min_delay as number,
+          maxSize: result.caching_throttling_cache_max_size as number,
+          maxNumberOfElements: result.caching_throttling_max_number_of_elements as number
+        },
+        error: {
+          retryInterval: result.caching_error_retry_interval as number,
+          retryCount: result.caching_error_retry_count as number,
+          retentionDuration: result.caching_error_retention_duration as number
         },
         archive: {
-          enabled: Boolean(result.archive_enabled),
-          retentionDuration: result.archive_retention_duration as number
+          enabled: Boolean(result.caching_archive_enabled),
+          retentionDuration: result.caching_archive_retention_duration as number
         }
       },
       items: this.findAllItemsForHistoryQuery<I>(result.id as string)
