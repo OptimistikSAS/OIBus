@@ -2,9 +2,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
 import { FileContentModalComponent } from './file-content-modal.component';
-import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock } from 'ngx-speculoos';
-import testData from '../../../../../../backend/src/tests/utils/test-data';
+import testData from '../../../../../backend/src/tests/utils/test-data';
 
 describe('FileContentModalComponent', () => {
   let component: FileContentModalComponent;
