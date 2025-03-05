@@ -17,17 +17,20 @@ export interface NorthConnectorEntity<T extends NorthSettings> extends BaseEntit
   enabled: boolean;
   settings: T;
   caching: {
-    scanModeId: string;
-    retryInterval: number;
-    retryCount: number;
-    runMinDelay: number;
-    maxSize: number;
-    oibusTimeValues: {
-      groupCount: number;
-      maxSendCount: number;
+    trigger: {
+      scanModeId: string;
+      numberOfElements: number;
+      numberOfFiles: number;
     };
-    rawFiles: {
-      sendFileImmediately: boolean;
+    throttling: {
+      runMinDelay: number;
+      maxSize: number;
+      maxNumberOfElements: number;
+    };
+    error: {
+      retryInterval: number;
+      retryCount: number;
+      retentionDuration: number;
     };
     archive: {
       enabled: boolean;

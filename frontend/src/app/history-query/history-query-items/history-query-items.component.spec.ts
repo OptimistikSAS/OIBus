@@ -1,6 +1,6 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ComponentTester, createMock, TestInput } from 'ngx-speculoos';
-import { SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
+import { SouthConnectorCommandDTO, SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
 import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
@@ -29,17 +29,20 @@ const testHistoryQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemS
     host: 'localhost'
   } as NorthSettings,
   caching: {
-    scanModeId: 'scanModeId1',
-    retryInterval: 1000,
-    retryCount: 3,
-    runMinDelay: 200,
-    maxSize: 30,
-    oibusTimeValues: {
-      groupCount: 1000,
-      maxSendCount: 10000
+    trigger: {
+      scanModeId: 'scanModeId1',
+      numberOfElements: 1_000,
+      numberOfFiles: 1
     },
-    rawFiles: {
-      sendFileImmediately: true
+    throttling: {
+      runMinDelay: 200,
+      maxSize: 30,
+      maxNumberOfElements: 10_000
+    },
+    error: {
+      retryInterval: 1_000,
+      retryCount: 3,
+      retentionDuration: 24
     },
     archive: {
       enabled: false,
@@ -79,6 +82,7 @@ const testHistoryQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemS
     [historyId]="historyQuery.id"
     [historyQuery]="historyQuery"
     [southManifest]="manifest"
+    [southConnectorCommand]="southCommand"
     [saveChangesDirectly]="saveChangesDirectly"
     (inMemoryItems)="updateInMemoryItems($event)"
   />`,
@@ -122,6 +126,10 @@ class TestComponent {
       });
     }
   }
+  southCommand: SouthConnectorCommandDTO<SouthSettings, SouthItemSettings> = {
+    name: 'test',
+    settings: {}
+  } as SouthConnectorCommandDTO<SouthSettings, SouthItemSettings>;
 }
 
 class HistoryQueryItemsComponentTester extends ComponentTester<TestComponent> {

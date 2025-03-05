@@ -179,7 +179,7 @@ describe('NorthConnector', () => {
 
     expect(north.handleContentWrapper).toHaveBeenCalledTimes(1);
     expect(north['triggerRunIfNecessary']).toHaveBeenCalledTimes(1);
-    expect(north['triggerRunIfNecessary']).toHaveBeenCalledWith(north['connector'].caching.runMinDelay);
+    expect(north['triggerRunIfNecessary']).toHaveBeenCalledWith(north['connector'].caching.throttling.runMinDelay);
   });
 
   it('should properly run a task and trigger next after error', async () => {
@@ -187,7 +187,7 @@ describe('NorthConnector', () => {
     north.handleContentWrapper = jest.fn();
     north['triggerRunIfNecessary'] = jest.fn();
     await north.run({ id: 'scanModeId1', name: 'scan' });
-    expect(north['triggerRunIfNecessary']).toHaveBeenCalledWith(north['connector'].caching.retryInterval);
+    expect(north['triggerRunIfNecessary']).toHaveBeenCalledWith(north['connector'].caching.error.retryInterval);
   });
 
   it('should properly run two times if a task is already in queue', async () => {
@@ -352,7 +352,7 @@ describe('NorthConnector', () => {
   });
 
   it('should trigger run if necessary because of group count', async () => {
-    (cacheService.getNumberOfElementsInQueue as jest.Mock).mockReturnValueOnce(north.settings.caching.oibusTimeValues.groupCount);
+    (cacheService.getNumberOfElementsInQueue as jest.Mock).mockReturnValueOnce(north.settings.caching.trigger.numberOfElements);
     north.addTaskToQueue = jest.fn();
     north.run = jest.fn();
     await north['triggerRunIfNecessary'](0);
@@ -360,7 +360,7 @@ describe('NorthConnector', () => {
     expect(north.addTaskToQueue).toHaveBeenCalledTimes(1);
     expect(north.addTaskToQueue).toHaveBeenCalledWith({
       id: 'limit-reach',
-      name: `Limit reach: ${north.settings.caching.oibusTimeValues.groupCount} elements in queue >= ${north.settings.caching.oibusTimeValues.groupCount}`
+      name: `Limit reach: ${north.settings.caching.trigger.numberOfElements} elements in queue >= ${north.settings.caching.trigger.numberOfElements}`
     });
     expect(north.run).not.toHaveBeenCalled();
   });
@@ -381,7 +381,7 @@ describe('NorthConnector', () => {
     (cacheService.getCacheContentToSend as jest.Mock).mockReturnValueOnce(contentToHandle);
     north.handleContent = jest.fn();
     await north.handleContentWrapper();
-    expect(cacheService.getCacheContentToSend).toHaveBeenCalledWith(north.settings.caching.oibusTimeValues.maxSendCount);
+    expect(cacheService.getCacheContentToSend).toHaveBeenCalledWith(north.settings.caching.throttling.maxNumberOfElements);
     expect(north.handleContent).toHaveBeenCalledWith({
       ...contentToHandle.metadata,
       contentFile: path.join('cache', 'content', 'file1-123456.json')
@@ -395,7 +395,7 @@ describe('NorthConnector', () => {
     (cacheService.getCacheContentToSend as jest.Mock).mockReturnValueOnce(contentToHandle);
     north.handleContent = jest.fn();
     await north.handleContentWrapper();
-    expect(cacheService.getCacheContentToSend).toHaveBeenCalledWith(north.settings.caching.oibusTimeValues.maxSendCount);
+    expect(cacheService.getCacheContentToSend).toHaveBeenCalledWith(north.settings.caching.throttling.maxNumberOfElements);
     expect(north.handleContent).toHaveBeenCalledWith({
       ...contentToHandle.metadata,
       contentFile: path.join('cache', 'content', 'file1-123456.json')
@@ -408,18 +408,18 @@ describe('NorthConnector', () => {
     (cacheService.getCacheContentToSend as jest.Mock).mockReturnValueOnce(null);
     north.handleContent = jest.fn();
     await north.handleContentWrapper();
-    expect(cacheService.getCacheContentToSend).toHaveBeenCalledWith(north.settings.caching.oibusTimeValues.maxSendCount);
+    expect(cacheService.getCacheContentToSend).toHaveBeenCalledWith(north.settings.caching.throttling.maxNumberOfElements);
     expect(north.handleContent).not.toHaveBeenCalled();
   });
 
   it('should handle content and manage errors', async () => {
-    north.settings.caching.retryCount = 0;
+    north.settings.caching.error.retryCount = 0;
     (cacheService.getCacheContentToSend as jest.Mock).mockReturnValueOnce(contentToHandle);
     north.handleContent = jest.fn().mockImplementationOnce(() => {
       throw new OIBusError('handle error', false);
     });
     await north.handleContentWrapper();
-    expect(cacheService.getCacheContentToSend).toHaveBeenCalledWith(north.settings.caching.oibusTimeValues.maxSendCount);
+    expect(cacheService.getCacheContentToSend).toHaveBeenCalledWith(north.settings.caching.throttling.maxNumberOfElements);
     expect(north.handleContent).toHaveBeenCalledWith({
       ...contentToHandle.metadata,
       contentFile: path.join('cache', 'content', 'file1-123456.json')
@@ -429,7 +429,7 @@ describe('NorthConnector', () => {
   });
 
   it('should cache json content without maxSendCount', async () => {
-    north['connector'].caching.oibusTimeValues.maxSendCount = 0;
+    north['connector'].caching.throttling.maxNumberOfElements = 0;
     (fsAsync.stat as jest.Mock).mockReturnValueOnce({ size: 100, ctimeMs: 123 });
     (generateRandomId as jest.Mock).mockReturnValueOnce('1234567890');
     (createWriteStream as jest.Mock).mockReturnValueOnce('writeStream');
@@ -462,7 +462,7 @@ describe('NorthConnector', () => {
   });
 
   it('should cache json content with maxSendCount', async () => {
-    north['connector'].caching.oibusTimeValues.maxSendCount = testData.oibusContent[0].content!.length - 1;
+    north['connector'].caching.throttling.maxNumberOfElements = testData.oibusContent[0].content!.length - 1;
 
     (fsAsync.stat as jest.Mock).mockReturnValueOnce({ size: 100, ctimeMs: 123 }).mockReturnValueOnce({ size: 100, ctimeMs: 123 });
     (generateRandomId as jest.Mock).mockReturnValueOnce('1234567890').mockReturnValueOnce('0987654321');
@@ -565,12 +565,12 @@ describe('NorthConnector', () => {
   });
 
   it('should not cache content if max size reach', async () => {
-    north['connector'].caching.maxSize = 1;
-    north['cacheSize'].cacheSize = (north['connector'].caching.maxSize + 1) * 1024 * 1024;
+    north['connector'].caching.throttling.maxSize = 1;
+    north['cacheSize'].cacheSize = (north['connector'].caching.throttling.maxSize + 1) * 1024 * 1024;
     await north.cacheContent(testData.oibusContent[0], 'south');
 
     expect(logger.warn).toHaveBeenCalledWith(
-      `North cache is exceeding the maximum allowed size (2 MB >= ${north['connector'].caching.maxSize} MB). Values will be discarded until the cache is emptied (by sending files/values or manual removal)`
+      `North cache is exceeding the maximum allowed size (2 MB >= ${north['connector'].caching.throttling.maxSize} MB). Values will be discarded until the cache is emptied (by sending files/values or manual removal)`
     );
     expect(pipeTransformers).not.toHaveBeenCalled();
   });
