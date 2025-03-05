@@ -32,17 +32,20 @@ export interface NorthConnectorDTO<T extends NorthSettings> extends BaseEntity {
   enabled: boolean;
   settings: T;
   caching: {
-    scanModeId: string;
-    retryInterval: number;
-    retryCount: number;
-    runMinDelay: number;
-    maxSize: number;
-    oibusTimeValues: {
-      groupCount: number;
-      maxSendCount: number;
+    trigger: {
+      scanModeId: string;
+      numberOfElements: number;
+      numberOfFiles: number;
     };
-    rawFiles: {
-      sendFileImmediately: boolean;
+    throttling: {
+      runMinDelay: number;
+      maxSize: number;
+      maxNumberOfElements: number;
+    };
+    error: {
+      retryInterval: number;
+      retryCount: number;
+      retentionDuration: number;
     };
     archive: {
       enabled: boolean;
@@ -59,18 +62,21 @@ export interface NorthConnectorCommandDTO<T extends NorthSettings> {
   enabled: boolean;
   settings: T;
   caching: {
-    scanModeId: string | null;
-    scanModeName: string | null;
-    retryInterval: number;
-    retryCount: number;
-    runMinDelay: number;
-    maxSize: number;
-    oibusTimeValues: {
-      groupCount: number;
-      maxSendCount: number;
+    trigger: {
+      scanModeId: string;
+      scanModeName: string | null;
+      numberOfElements: number;
+      numberOfFiles: number;
     };
-    rawFiles: {
-      sendFileImmediately: boolean;
+    throttling: {
+      runMinDelay: number;
+      maxSize: number;
+      maxNumberOfElements: number;
+    };
+    error: {
+      retryInterval: number;
+      retryCount: number;
+      retentionDuration: number;
     };
     archive: {
       enabled: boolean;
