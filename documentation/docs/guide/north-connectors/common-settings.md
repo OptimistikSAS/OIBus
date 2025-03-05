@@ -55,15 +55,8 @@ The caching section plays a crucial role in helping OIBus efficiently manage net
 
 ## Archive
 
-It is also possible to enable archive mode, and to set a **retention duration**. With archive mode enabled, files will
-be
-kept in the `archive` subfolder. Otherwise, they are deleted once sent to the North application.
-
-If the retention duration is set to zero, it will keep files indefinitely.
-
 You can also activate archive mode and define a **retention duration**. When archive mode is enabled, files will be
-preserved
-in the `archive` subfolder; otherwise, they will be deleted once transmitted to the North application.
+preserved in the `archive` subfolder; otherwise, they will be deleted once transmitted to the North application.
 
 If you set the retention duration to zero, it means that files will be retained indefinitely.
 
