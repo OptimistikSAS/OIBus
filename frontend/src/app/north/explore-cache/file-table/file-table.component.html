@@ -24,7 +24,7 @@
             style="background: none; border: none; font-weight: bold"
             (click)="toggleColumnSort('createdAt')"
           >
-            <span translate="north.cache-settings.file-date" class="me-2"></span>
+            <span translate="north.caching.file-date" class="me-2"></span>
             <span
               class="fa"
               [class.fa-sort]="currentColumnSort() === 'createdAt' && currentColumnOrder() === 0"
@@ -39,7 +39,7 @@
             style="background: none; border: none; font-weight: bold"
             (click)="toggleColumnSort('contentFile')"
           >
-            <span translate="north.cache-settings.filename" class="me-2"></span>
+            <span translate="north.caching.filename" class="me-2"></span>
             <span
               class="fa"
               [class.fa-sort]="currentColumnSort() === 'contentFile' && currentColumnOrder() === 0"
@@ -54,7 +54,7 @@
             style="background: none; border: none; font-weight: bold"
             (click)="toggleColumnSort('contentSize')"
           >
-            <span translate="north.cache-settings.file-size" class="me-2"></span>
+            <span translate="north.caching.file-size" class="me-2"></span>
             <span
               class="fa"
               [class.fa-sort]="currentColumnSort() === 'contentSize' && currentColumnOrder() === 0"
@@ -91,7 +91,7 @@
                     (click)="onItemActionClick('error', file)"
                     triggers="hover"
                     placement="top"
-                    [ngbTooltip]="'north.cache-settings.error-content-action' | translate"
+                    [ngbTooltip]="'north.caching.error-content-action' | translate"
                   >
                     <span class="fa fa-bolt"></span>
                   </button>
@@ -101,7 +101,7 @@
                     (click)="onItemActionClick('archive', file)"
                     triggers="hover"
                     placement="top"
-                    [ngbTooltip]="'north.cache-settings.archive-content-action' | translate"
+                    [ngbTooltip]="'north.caching.archive-content-action' | translate"
                   >
                     <span class="fa fa-archive"></span>
                   </button>
@@ -113,7 +113,7 @@
                     (click)="onItemActionClick('retry', file)"
                     triggers="hover"
                     placement="top"
-                    [ngbTooltip]="'north.cache-settings.retry-content-action' | translate"
+                    [ngbTooltip]="'north.caching.retry-content-action' | translate"
                   >
                     <span class="fa fa-refresh"></span>
                   </button>
@@ -123,7 +123,7 @@
                     (click)="onItemActionClick('archive', file)"
                     triggers="hover"
                     placement="top"
-                    [ngbTooltip]="'north.cache-settings.archive-content-action' | translate"
+                    [ngbTooltip]="'north.caching.archive-content-action' | translate"
                   >
                     <span class="fa fa-archive"></span>
                   </button>
@@ -135,7 +135,7 @@
                     (click)="onItemActionClick('retry', file)"
                     triggers="hover"
                     placement="top"
-                    [ngbTooltip]="'north.cache-settings.replay-content-action' | translate"
+                    [ngbTooltip]="'north.caching.replay-content-action' | translate"
                   >
                     <span class="fa fa-refresh"></span>
                   </button>
@@ -147,7 +147,7 @@
                 (click)="onItemActionClick('view', file)"
                 triggers="hover"
                 placement="top"
-                [ngbTooltip]="'north.cache-settings.view-content-action' | translate"
+                [ngbTooltip]="'north.caching.view-content-action' | translate"
               >
                 <span class="fa fa-search"></span>
               </button>
@@ -157,7 +157,7 @@
                 (click)="onItemActionClick('remove', file)"
                 triggers="hover"
                 placement="top"
-                [ngbTooltip]="'north.cache-settings.remove-content-action' | translate"
+                [ngbTooltip]="'north.caching.remove-content-action' | translate"
               >
                 <span class="fa fa-trash"></span>
               </button>

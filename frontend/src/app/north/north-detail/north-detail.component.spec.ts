@@ -53,17 +53,20 @@ describe('NorthDetailComponent', () => {
       host: 'url'
     } as NorthSettings,
     caching: {
-      scanModeId: 'scanModeId1',
-      retryInterval: 1000,
-      retryCount: 3,
-      runMinDelay: 200,
-      maxSize: 30,
-      oibusTimeValues: {
-        groupCount: 1000,
-        maxSendCount: 10000
+      trigger: {
+        scanModeId: 'scanModeId1',
+        numberOfElements: 1_000,
+        numberOfFiles: 1
       },
-      rawFiles: {
-        sendFileImmediately: true
+      throttling: {
+        runMinDelay: 200,
+        maxSize: 30,
+        maxNumberOfElements: 10_000
+      },
+      error: {
+        retryInterval: 1_000,
+        retryCount: 3,
+        retentionDuration: 24
       },
       archive: {
         enabled: false,

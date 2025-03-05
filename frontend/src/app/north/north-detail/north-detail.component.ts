@@ -1,5 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
+import { ChangeDetectorRef, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ClipboardModule } from '@angular/cdk/clipboard';
@@ -16,7 +15,6 @@ import { ScanModeService } from '../../services/scan-mode.service';
 import { NorthSubscriptionsComponent } from '../north-subscriptions/north-subscriptions.component';
 import { NorthMetricsComponent } from '../north-metrics/north-metrics.component';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
-import { DurationPipe } from '../../shared/duration.pipe';
 import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
 import { NotificationService } from '../../shared/notification.service';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
@@ -36,13 +34,11 @@ import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe'
   imports: [
     TranslateDirective,
     RouterLink,
-    DecimalPipe,
     BackNavigationDirective,
     NorthSubscriptionsComponent,
     NorthMetricsComponent,
     BoxComponent,
     BoxTitleDirective,
-    DurationPipe,
     EnabledEnumPipe,
     ClipboardModule,
     LogsComponent,
@@ -165,22 +161,25 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
       enabled: this.northConnector!.enabled,
       settings: this.northConnector!.settings,
       caching: {
-        scanModeId: this.northConnector!.caching.scanModeId,
-        scanModeName: null,
-        retryInterval: this.northConnector!.caching.retryInterval,
-        retryCount: this.northConnector!.caching.retryCount,
-        runMinDelay: this.northConnector!.caching.runMinDelay,
-        maxSize: this.northConnector!.caching.maxSize,
-        oibusTimeValues: {
-          groupCount: this.northConnector!.caching.oibusTimeValues!.groupCount,
-          maxSendCount: this.northConnector!.caching.oibusTimeValues!.maxSendCount
+        trigger: {
+          scanModeId: this.northConnector!.caching!.trigger!.scanModeId!,
+          scanModeName: null,
+          numberOfElements: this.northConnector!.caching!.trigger!.numberOfElements!,
+          numberOfFiles: this.northConnector!.caching!.trigger!.numberOfFiles!
         },
-        rawFiles: {
-          sendFileImmediately: this.northConnector!.caching.rawFiles.sendFileImmediately
+        throttling: {
+          runMinDelay: this.northConnector!.caching!.throttling!.runMinDelay!,
+          maxSize: this.northConnector!.caching!.throttling!.maxSize!,
+          maxNumberOfElements: this.northConnector!.caching!.throttling!.maxNumberOfElements!
+        },
+        error: {
+          retryInterval: this.northConnector!.caching!.error!.retryInterval!,
+          retryCount: this.northConnector!.caching!.error!.retryCount!,
+          retentionDuration: this.northConnector!.caching!.error!.retentionDuration!
         },
         archive: {
-          enabled: this.northConnector!.caching.archive.enabled,
-          retentionDuration: this.northConnector!.caching.archive.retentionDuration
+          enabled: this.northConnector!.caching!.archive!.enabled!,
+          retentionDuration: this.northConnector!.caching!.archive!.retentionDuration!
         }
       },
       subscriptions: []
