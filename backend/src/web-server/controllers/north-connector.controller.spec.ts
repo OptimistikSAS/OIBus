@@ -287,7 +287,7 @@ describe('North connector controller', () => {
   it('removeCacheContent() should remove error files', async () => {
     ctx.params.northId = testData.north.list[0].id;
     ctx.query.folder = 'cache';
-    ctx.query.filenames = ['my file1', 'my file2'];
+    ctx.request.body = ['my file1', 'my file2'];
     await northConnectorController.removeCacheContent(ctx);
     expect(ctx.app.northService.removeCacheContent).toHaveBeenCalledWith(testData.north.list[0].id, 'cache', ['my file1', 'my file2']);
     expect(ctx.noContent).toHaveBeenCalled();
@@ -296,7 +296,7 @@ describe('North connector controller', () => {
   it('removeCacheContent() should remove error files with only one file', async () => {
     ctx.params.northId = testData.north.list[0].id;
     ctx.query.folder = 'cache';
-    ctx.query.filenames = 'my file';
+    ctx.request.body = ['my file'];
     await northConnectorController.removeCacheContent(ctx);
     expect(ctx.app.northService.removeCacheContent).toHaveBeenCalledWith(testData.north.list[0].id, 'cache', ['my file']);
     expect(ctx.noContent).toHaveBeenCalled();
