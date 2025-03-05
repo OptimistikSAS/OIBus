@@ -18,6 +18,8 @@ import { toHistoryQueryDTO, toHistoryQueryItemDTO, toHistoryQueryLightDTO } from
 import { itemToFlattenedCSV } from '../../service/utils';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { CacheMetadata } from '../../../shared/model/engine.model';
+import { ReadStream } from 'node:fs';
 
 export default class HistoryQueryController extends AbstractController {
   constructor(
@@ -326,6 +328,109 @@ export default class HistoryQueryController extends AbstractController {
     } catch (error: unknown) {
       return ctx.badRequest((error as Error).message);
     }
+    ctx.noContent();
+  }
+
+  async searchCacheContent(ctx: KoaContext<void, Array<{ metadataFilename: string; metadata: CacheMetadata }>>): Promise<void> {
+    const nameContains = (ctx.query.nameContains as string) || null;
+    const start = (ctx.query.start as string) || null;
+    const end = (ctx.query.end as string) || null;
+    const folder = (ctx.query.folder as string) || '';
+    if (!['cache', 'archive', 'error'].includes(folder)) {
+      return ctx.badRequest('A folder must be specified among "cache", "error" or "archive"');
+    }
+    const cacheContentList: Array<{ metadataFilename: string; metadata: CacheMetadata }> =
+      await ctx.app.historyQueryService.searchCacheContent(
+        ctx.params.historyQueryId,
+        { start: start, end: end, nameContains },
+        folder as 'cache' | 'archive' | 'error'
+      );
+    ctx.ok(cacheContentList);
+  }
+
+  async getCacheContentFileStream(ctx: KoaContext<void, ReadStream>): Promise<void> {
+    const folder = (ctx.query.folder as string) || '';
+    const filename = (ctx.params.filename as string) || '';
+    if (!['cache', 'archive', 'error'].includes(folder)) {
+      return ctx.badRequest('A folder must be specified among "cache", "error" or "archive"');
+    }
+    if (!filename) {
+      return ctx.badRequest('A filename must be specified');
+    }
+    const fileStream = await ctx.app.historyQueryService.getCacheContentFileStream(
+      ctx.params.historyQueryId,
+      folder as 'cache' | 'archive' | 'error',
+      filename
+    );
+    if (!fileStream) {
+      return ctx.notFound();
+    }
+    ctx.attachment(ctx.params.filename);
+    ctx.ok(fileStream);
+  }
+
+  async removeCacheContent(ctx: KoaContext<Array<string>, void>): Promise<void> {
+    const folder = (ctx.query.folder as string) || '';
+    if (!['cache', 'archive', 'error'].includes(folder)) {
+      return ctx.badRequest('A folder must be specified among "cache", "error" or "archive"');
+    }
+
+    if (!Array.isArray(ctx.request.body)) {
+      return ctx.badRequest('Invalid file list');
+    }
+
+    await ctx.app.historyQueryService.removeCacheContent(
+      ctx.params.historyQueryId,
+      folder as 'cache' | 'archive' | 'error',
+      ctx.request.body
+    );
+    ctx.noContent();
+  }
+
+  async removeAllCacheContent(ctx: KoaContext<void, void>): Promise<void> {
+    const folder = (ctx.query.folder as string) || '';
+    if (!['cache', 'archive', 'error'].includes(folder)) {
+      return ctx.badRequest('A folder must be specified among "cache", "error" or "archive"');
+    }
+    await ctx.app.historyQueryService.removeAllCacheContent(ctx.params.historyQueryId, folder as 'cache' | 'archive' | 'error');
+    ctx.noContent();
+  }
+
+  async moveCacheContent(ctx: KoaContext<Array<string>, void>): Promise<void> {
+    const originFolder = (ctx.query.originFolder as string) || '';
+    if (!['cache', 'archive', 'error'].includes(originFolder)) {
+      return ctx.badRequest('The originFolder must be specified among "cache", "error" or "archive"');
+    }
+    const destinationFolder = (ctx.query.destinationFolder as string) || '';
+    if (!['cache', 'archive', 'error'].includes(destinationFolder)) {
+      return ctx.badRequest('The destinationFolder must be specified among "cache", "error" or "archive"');
+    }
+    if (!Array.isArray(ctx.request.body)) {
+      return ctx.badRequest('Invalid file list');
+    }
+    await ctx.app.historyQueryService.moveCacheContent(
+      ctx.params.historyQueryId,
+      originFolder as 'cache' | 'archive' | 'error',
+      destinationFolder as 'cache' | 'archive' | 'error',
+      ctx.request.body
+    );
+    ctx.noContent();
+  }
+
+  async moveAllCacheContent(ctx: KoaContext<void, void>): Promise<void> {
+    const originFolder = (ctx.query.originFolder as string) || '';
+    if (!['cache', 'archive', 'error'].includes(originFolder)) {
+      return ctx.badRequest('The originFolder must be specified among "cache", "error" or "archive"');
+    }
+    const destinationFolder = (ctx.query.destinationFolder as string) || '';
+    if (!['cache', 'archive', 'error'].includes(destinationFolder)) {
+      return ctx.badRequest('The destinationFolder must be specified among "cache", "error" or "archive"');
+    }
+    await ctx.app.historyQueryService.moveAllCacheContent(
+      ctx.params.historyQueryId,
+      originFolder as 'cache' | 'archive' | 'error',
+      destinationFolder as 'cache' | 'archive' | 'error'
+    );
     ctx.noContent();
   }
 }
