@@ -94,6 +94,9 @@
           <ng-template oibBoxTitle>
             <div class="d-flex justify-content-between">
               <span translate="north.caching.title"></span>
+              <a class="ms-3 btn btn-secondary btn-sm oib-box-btn" [routerLink]="['/history-queries', historyQuery.id, 'cache']"
+                ><span class="fa fa-search"></span><span class="mx-1" translate="north.caching.explore-cache"></span
+              ></a>
             </div>
           </ng-template>
           <table class="table table-sm table-hover oib-table">

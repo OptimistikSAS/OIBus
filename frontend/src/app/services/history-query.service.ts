@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { Injectable, inject } from '@angular/core';
 import {
@@ -13,7 +13,7 @@ import { Page } from '../../../../backend/shared/model/types';
 import { SouthConnectorCommandDTO, SouthConnectorItemTestingSettings } from '../../../../backend/shared/model/south-connector.model';
 import { DownloadService } from './download.service';
 import { NorthConnectorCommandDTO } from '../../../../backend/shared/model/north-connector.model';
-import { OIBusContent } from '../../../../backend/shared/model/engine.model';
+import { CacheMetadata, CacheSearchParam, OIBusContent } from '../../../../backend/shared/model/engine.model';
 import { SouthItemSettings, SouthSettings } from '../../../../backend/shared/model/south-settings.model';
 import { NorthSettings } from '../../../../backend/shared/model/north-settings.model';
 
@@ -264,6 +264,83 @@ export class HistoryQueryService {
   ): Observable<void> {
     return this.http.put<void>(`/api/history-queries/${historyQueryId}/north/test-connection`, settings, {
       params: fromNorth ? { fromNorth } : {}
+    });
+  }
+
+  searchCacheContent(
+    historyQueryId: string,
+    searchParams: CacheSearchParam,
+    folder: 'cache' | 'archive' | 'error'
+  ): Observable<Array<{ metadataFilename: string; metadata: CacheMetadata }>> {
+    const params: Record<string, string | Array<string>> = {
+      folder
+    };
+    if (searchParams.start) {
+      params['start'] = searchParams.start;
+    }
+    if (searchParams.end) {
+      params['end'] = searchParams.end;
+    }
+    if (searchParams.nameContains) {
+      params['nameContains'] = searchParams.nameContains;
+    }
+    return this.http.get<Array<{ metadataFilename: string; metadata: CacheMetadata }>>(
+      `/api/history-query/${historyQueryId}/cache/content`,
+      { params }
+    );
+  }
+
+  getCacheFileContent(historyQueryId: string, folder: 'cache' | 'archive' | 'error', filename: string): Observable<HttpResponse<Blob>> {
+    return this.http.get<Blob>(`/api/history-query/${historyQueryId}/cache/content/${filename}`, {
+      responseType: 'blob' as 'json',
+      observe: 'response',
+      params: {
+        folder
+      }
+    });
+  }
+
+  removeCacheContent(historyQueryId: string, folder: 'cache' | 'archive' | 'error', filenames: Array<string>): Observable<void> {
+    return this.http.delete<void>(`/api/history-query/${historyQueryId}/cache/content/remove`, {
+      params: {
+        folder
+      },
+      body: filenames
+    });
+  }
+
+  removeAllCacheContent(historyQueryId: string, folder: 'cache' | 'archive' | 'error'): Observable<void> {
+    return this.http.delete<void>(`/api/history-query/${historyQueryId}/cache/content/remove-all`, {
+      params: {
+        folder
+      }
+    });
+  }
+
+  moveCacheContent(
+    historyQueryId: string,
+    originFolder: 'cache' | 'archive' | 'error',
+    destinationFolder: 'cache' | 'archive' | 'error',
+    filenames: Array<string>
+  ): Observable<void> {
+    return this.http.post<void>(`/api/history-query/${historyQueryId}/cache/content/move`, filenames, {
+      params: {
+        originFolder,
+        destinationFolder
+      }
+    });
+  }
+
+  moveAllCacheContent(
+    historyQueryId: string,
+    originFolder: 'cache' | 'archive' | 'error',
+    destinationFolder: 'cache' | 'archive' | 'error'
+  ): Observable<void> {
+    return this.http.post<void>(`/api/history-query/${historyQueryId}/cache/content/move-all`, null, {
+      params: {
+        originFolder,
+        destinationFolder
+      }
     });
   }
 }
