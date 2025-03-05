@@ -1552,24 +1552,40 @@
     "type": "Type",
     "general-settings": "General settings",
     "specific-settings": "{{ type }} settings",
-    "cache-settings": {
-      "title": "Cache",
-      "schedule": "Schedule",
-      "send-scan-mode": "Send interval",
-      "retry-interval": "Retry interval",
-      "retry-count": "Retry count",
-      "run-min-delay": "Run min delay",
-      "group-count": "Group count",
-      "max-send-count": "Max send count",
-      "max-size": "Max size",
-      "send-file-immediately": "Send file immediately",
+    "caching": {
+      "title": "Cache settings",
+      "trigger": {
+        "title": "Trigger conditions",
+        "schedule": "Schedule",
+        "number-of-elements": "Number of elements",
+        "number-of-files": "Number of files",
+        "value": "Schedule: {{ scanMode }} / Elements: {{ numberOfElements }} / Files: {{ numberOfFiles }}"
+      },
+      "throttling": {
+        "title": "Throttling",
+        "run-min-delay": "Minimum delay between two transmissions",
+        "max-size": "Maximum storage size (cache + error + archive)",
+        "max-number-of-elements": "Maximum number of elements",
+        "value": "Run min delay: {{ runMinDelay }} ms / Max cache size: {{ maxSize }} MB / Max number of elements: {{ maxNumberOfElements }}"
+      },
+      "error": {
+        "title": "Errors",
+        "retry-interval": "Delay to wait before retry after error",
+        "retry-count": "Number of retry",
+        "retention-duration": "Retention duration for errored data",
+        "value": "Retry interval: {{ retryInterval }} ms / Number of retry: {{ retryCount }} / Retention duration: {{ retentionDuration }} hr"
+      },
+      "archive": {
+        "title": "Archive",
+        "enabled": "Enabled",
+        "retention-duration": "Retention duration for archived data",
+        "value": "Enabled: {{ enabled }} / Retention duration: {{ retentionDuration }} hr"
+      },
       "explore-cache": "Explore cache",
       "refresh-cache": "Refresh cache",
-
       "file-date": "Creation date",
       "file-size": "Size",
       "filename": "Filename",
-
       "cache-content": "Cache files",
       "cache-content-none": "No cache files",
       "error-content": "Error content",
@@ -1588,18 +1604,7 @@
       "archive-content-action": "Archive content",
       "error-content-action": "Error content",
       "retry-content-action": "Retry content",
-      "replay-content-action": "Replay content",
-      "oibus-time-values": {
-        "title": "Time values"
-      },
-      "raw-files": {
-        "title": "Files"
-      }
-    },
-    "archive-settings": {
-      "title": "Archive",
-      "enabled": "Enable archive",
-      "retention-duration": "Archive retention duration"
+      "replay-content-action": "Replay content"
     },
     "subscriptions": {
       "title": "Subscriptions",
@@ -1623,8 +1628,8 @@
       "metrics-start": "Metrics started on {{ start }}",
       "last-connection": "Last connection",
       "last-content-sent": "Last content sent",
-      "last-run-start": "Last run",
-      "last-run-duration": "Last run duration",
+      "last-run": "Last run",
+      "last-run-value": "{{ lastRunStart }} (in {{ lastRunDuration }})",
       "cache-size-title": "Cache size",
       "cache-size-value": "Current size: {{ currentSize }} / Total cached: {{ totalCached }} / Total sent: {{ totalSent }}",
       "error-size-title": "Error size",
@@ -1801,20 +1806,6 @@
     },
     "north": {
       "specific-settings": "{{ type }} settings"
-    },
-    "cache-settings": {
-      "title": "Cache",
-      "send-scan-mode": "Send interval",
-      "retry-interval": "Retry interval",
-      "retry-count": "Retry count",
-      "group-count": "Group count",
-      "max-send-count": "Max send count",
-      "max-size": "Max size"
-    },
-    "archive-settings": {
-      "title": "Archive",
-      "enabled": "Enabled",
-      "retention-duration": "Retention duration"
     },
     "south": {
       "specific-settings": "{{ type }} settings"

@@ -43,15 +43,15 @@
           <!-- last run -->
           @if (connectorMetrics().lastRunStart; as lastRunStart) {
             <tr>
-              <td translate="north.monitoring.last-run-start"></td>
-              <td class="last-column-body">{{ lastRunStart | datetime: 'mediumWithSeconds' }}</td>
-            </tr>
-          }
-          <!-- last duration -->
-          @if (connectorMetrics().lastRunDuration; as lastRunDuration) {
-            <tr>
-              <td translate="north.monitoring.last-run-duration"></td>
-              <td class="last-column-body">{{ lastRunDuration | duration: 'short' }}</td>
+              <td translate="north.monitoring.last-run"></td>
+              <td
+                class="last-column-body"
+                translate="north.monitoring.last-run-value"
+                [translateParams]="{
+                  lastRunStart: lastRunStart | datetime: 'mediumWithSeconds',
+                  lastRunDuration: connectorMetrics().lastRunDuration! | duration: 'short'
+                }"
+              ></td>
             </tr>
           }
           <!-- cache size -->
