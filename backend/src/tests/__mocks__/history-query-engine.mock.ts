@@ -15,6 +15,12 @@ export default jest.fn().mockImplementation(logger => {
     stopHistoryQuery: jest.fn(),
     getHistoryQueryDataStream: jest.fn(),
     deleteHistoryQuery: jest.fn(),
-    reloadHistoryQuery: jest.fn()
+    reloadHistoryQuery: jest.fn(),
+    searchCacheContent: jest.fn(),
+    getCacheContentFileStream: jest.fn(),
+    removeCacheContent: jest.fn(),
+    removeAllCacheContent: jest.fn(),
+    moveCacheContent: jest.fn(),
+    moveAllCacheContent: jest.fn()
   };
 });

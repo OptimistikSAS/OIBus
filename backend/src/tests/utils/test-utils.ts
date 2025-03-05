@@ -451,16 +451,17 @@ const createNorth = async (database: knex.Knex, north: NorthConnectorEntity<Nort
       description: north.description,
       enabled: north.enabled,
       settings: JSON.stringify(north.settings),
-      caching_scan_mode_id: north.caching.scanModeId,
-      caching_group_count: north.caching.oibusTimeValues.groupCount,
-      caching_retry_interval: north.caching.retryInterval,
-      caching_retry_count: north.caching.retryCount,
-      caching_run_min_delay: north.caching.runMinDelay,
-      caching_max_send_count: north.caching.oibusTimeValues.maxSendCount,
-      caching_send_file_immediately: north.caching.rawFiles.sendFileImmediately,
-      caching_max_size: north.caching.maxSize,
-      archive_enabled: north.caching.archive.enabled,
-      archive_retention_duration: north.caching.archive.retentionDuration
+      caching_trigger_schedule: north.caching.trigger.scanModeId,
+      caching_trigger_number_of_elements: north.caching.trigger.numberOfElements,
+      caching_trigger_number_of_files: north.caching.trigger.numberOfFiles,
+      caching_throttling_run_min_delay: north.caching.throttling.runMinDelay,
+      caching_throttling_cache_max_size: north.caching.throttling.maxSize,
+      caching_throttling_max_number_of_elements: north.caching.throttling.maxNumberOfElements,
+      caching_error_retry_interval: north.caching.error.retryInterval,
+      caching_error_retry_count: north.caching.error.retryCount,
+      caching_error_retention_duration: north.caching.error.retentionDuration,
+      caching_archive_enabled: north.caching.archive.enabled,
+      caching_archive_retention_duration: north.caching.archive.retentionDuration
     })
     .into('north_connectors');
 
@@ -573,16 +574,17 @@ const createHistoryQuery = async (
       north_type: historyQuery.northType,
       south_settings: JSON.stringify(historyQuery.southSettings),
       north_settings: JSON.stringify(historyQuery.northSettings),
-      caching_scan_mode_id: historyQuery.caching.scanModeId,
-      caching_group_count: historyQuery.caching.oibusTimeValues.groupCount,
-      caching_retry_interval: historyQuery.caching.retryInterval,
-      caching_retry_count: historyQuery.caching.retryCount,
-      caching_run_min_delay: historyQuery.caching.runMinDelay,
-      caching_max_send_count: historyQuery.caching.oibusTimeValues.maxSendCount,
-      caching_send_file_immediately: historyQuery.caching.rawFiles.sendFileImmediately,
-      caching_max_size: historyQuery.caching.maxSize,
-      archive_enabled: historyQuery.caching.archive.enabled,
-      archive_retention_duration: historyQuery.caching.archive.retentionDuration
+      caching_trigger_schedule: historyQuery.caching.trigger.scanModeId,
+      caching_trigger_number_of_elements: historyQuery.caching.trigger.numberOfElements,
+      caching_trigger_number_of_files: historyQuery.caching.trigger.numberOfFiles,
+      caching_throttling_run_min_delay: historyQuery.caching.throttling.runMinDelay,
+      caching_throttling_cache_max_size: historyQuery.caching.throttling.maxSize,
+      caching_throttling_max_number_of_elements: historyQuery.caching.throttling.maxNumberOfElements,
+      caching_error_retry_interval: historyQuery.caching.error.retryInterval,
+      caching_error_retry_count: historyQuery.caching.error.retryCount,
+      caching_error_retention_duration: historyQuery.caching.error.retentionDuration,
+      caching_archive_enabled: historyQuery.caching.archive.enabled,
+      caching_archive_retention_duration: historyQuery.caching.archive.retentionDuration
     })
     .into('history_queries');
 
