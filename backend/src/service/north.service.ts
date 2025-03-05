@@ -175,7 +175,7 @@ export default class NorthService {
     const testToRun: NorthConnectorEntity<NorthSettings> = {
       id: northConnector?.id || 'test',
       ...command,
-      caching: { ...command.caching, scanModeId: command.caching.scanModeId! },
+      caching: { ...command.caching, trigger: { ...command.caching.trigger, scanModeId: command.caching.trigger.scanModeId! } },
       settings: await this.encryptionService.encryptConnectorSecrets<N>(
         command.settings,
         northConnector?.settings || null,
@@ -470,17 +470,20 @@ export const toNorthConnectorDTO = <N extends NorthSettings>(
       northManifestList.find(element => element.id === northEntity.type)!.settings
     ),
     caching: {
-      scanModeId: northEntity.caching.scanModeId,
-      retryInterval: northEntity.caching.retryInterval,
-      retryCount: northEntity.caching.retryCount,
-      runMinDelay: northEntity.caching.runMinDelay,
-      maxSize: northEntity.caching.maxSize,
-      oibusTimeValues: {
-        groupCount: northEntity.caching.oibusTimeValues.groupCount,
-        maxSendCount: northEntity.caching.oibusTimeValues.maxSendCount
+      trigger: {
+        scanModeId: northEntity.caching.trigger.scanModeId,
+        numberOfElements: northEntity.caching.trigger.numberOfElements,
+        numberOfFiles: northEntity.caching.trigger.numberOfFiles
       },
-      rawFiles: {
-        sendFileImmediately: northEntity.caching.rawFiles.sendFileImmediately
+      throttling: {
+        runMinDelay: northEntity.caching.throttling.runMinDelay,
+        maxSize: northEntity.caching.throttling.maxSize,
+        maxNumberOfElements: northEntity.caching.throttling.maxNumberOfElements
+      },
+      error: {
+        retryInterval: northEntity.caching.error.retryInterval,
+        retryCount: northEntity.caching.error.retryCount,
+        retentionDuration: northEntity.caching.error.retentionDuration
       },
       archive: {
         enabled: northEntity.caching.archive.enabled,
@@ -519,17 +522,20 @@ export const copyNorthConnectorCommandToNorthEntity = async <N extends NorthSett
     northManifestList.find(element => element.id === northEntity.type)!.settings
   );
   northEntity.caching = {
-    scanModeId: checkScanMode(scanModes, command.caching.scanModeId, command.caching.scanModeName),
-    retryInterval: command.caching.retryInterval,
-    retryCount: command.caching.retryCount,
-    runMinDelay: command.caching.runMinDelay,
-    maxSize: command.caching.maxSize,
-    oibusTimeValues: {
-      groupCount: command.caching.oibusTimeValues.groupCount,
-      maxSendCount: command.caching.oibusTimeValues.maxSendCount
+    trigger: {
+      scanModeId: checkScanMode(scanModes, command.caching.trigger.scanModeId, command.caching.trigger.scanModeName),
+      numberOfElements: command.caching.trigger.numberOfElements,
+      numberOfFiles: command.caching.trigger.numberOfFiles
     },
-    rawFiles: {
-      sendFileImmediately: command.caching.rawFiles.sendFileImmediately
+    throttling: {
+      runMinDelay: command.caching.throttling.runMinDelay,
+      maxSize: command.caching.throttling.maxSize,
+      maxNumberOfElements: command.caching.throttling.maxNumberOfElements
+    },
+    error: {
+      retryInterval: command.caching.error.retryInterval,
+      retryCount: command.caching.error.retryCount,
+      retentionDuration: command.caching.error.retentionDuration
     },
     archive: {
       enabled: command.caching.archive.enabled,

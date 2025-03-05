@@ -77,12 +77,12 @@
             </oib-box>
             <!-- Cache settings -->
             <oib-box
-              boxTitle="north.cache-settings.title"
+              boxTitle="north.caching.title"
               helpUrl="https://oibus.optimistik.com/docs/guide/north-connectors/common-settings#caching"
             >
               <div formGroupName="caching">
-                <h6 class="text-center mt-2" translate="north.cache-settings.schedule"></h6>
-                <div class="row">
+                <h4 class="mt-2" translate="north.caching.trigger.title"></h4>
+                <div formGroupName="trigger" class="row">
                   <!-- Scan mode -->
                   <div class="col-4">
                     <div class="form-group">
@@ -90,15 +90,73 @@
                         key="cache-scan-mode"
                         formControlName="scanModeId"
                         [scanModes]="scanModes"
-                        [label]="'north.cache-settings.send-scan-mode' | translate"
+                        [label]="'north.caching.trigger.schedule' | translate"
                       />
                       <val-errors controlName="scanModeId" />
                     </div>
                   </div>
+                  <!-- Number of elements -->
+                  <div class="col-4">
+                    <div class="form-group">
+                      <label class="form-label" for="number-of-elements" translate="north.caching.trigger.number-of-elements"></label>
+                      <input type="number" formControlName="numberOfElements" id="number-of-elements" class="form-control" />
+                      <val-errors controlName="numberOfElements" />
+                    </div>
+                  </div>
+                  <!-- Number of files -->
+                  <div class="col-4">
+                    <div class="form-group">
+                      <label class="form-label" for="number-of-files" translate="north.caching.trigger.number-of-files"></label>
+                      <input type="number" formControlName="numberOfFiles" id="number-of-files" class="form-control" />
+                      <val-errors controlName="numberOfFiles" />
+                    </div>
+                  </div>
+                </div>
+                <hr />
+                <h4 translate="north.caching.throttling.title"></h4>
+                <div formGroupName="throttling" class="row">
+                  <!-- Run min delay -->
+                  <div class="col-4">
+                    <div class="form-group">
+                      <label class="form-label" for="run-min-delay" translate="north.caching.throttling.run-min-delay"></label>
+                      <div class="input-group">
+                        <input type="number" formControlName="runMinDelay" id="run-min-delay" class="form-control" />
+                        <span class="input-group-text" translate="common.unit.ms"></span>
+                      </div>
+                      <val-errors controlName="runMinDelay" />
+                    </div>
+                  </div>
+                  <!-- Max send count -->
+                  <div class="col-4">
+                    <div class="form-group">
+                      <label
+                        class="form-label"
+                        for="max-number-of-elements"
+                        translate="north.caching.throttling.max-number-of-elements"
+                      ></label>
+                      <input type="number" formControlName="maxNumberOfElements" id="max-number-of-elements" class="form-control" />
+                      <val-errors controlName="maxNumberOfElements" />
+                    </div>
+                  </div>
+                  <!-- Max size -->
+                  <div class="col-4">
+                    <div class="form-group">
+                      <label class="form-label" for="maxSize" translate="north.caching.throttling.max-size"></label>
+                      <div class="input-group">
+                        <input type="number" formControlName="maxSize" id="maxSize" class="form-control" />
+                        <span class="input-group-text" translate="common.unit.MB"></span>
+                      </div>
+                      <val-errors controlName="maxSize" />
+                    </div>
+                  </div>
+                </div>
+                <hr />
+                <h4 translate="north.caching.error.title"></h4>
+                <div formGroupName="error" class="row">
                   <!-- Retry interval -->
                   <div class="col-4">
                     <div class="form-group">
-                      <label class="form-label" for="retry-interval" translate="north.cache-settings.retry-interval"></label>
+                      <label class="form-label" for="retry-interval" translate="north.caching.error.retry-interval"></label>
                       <div class="input-group">
                         <input type="number" formControlName="retryInterval" id="retry-interval" class="form-control" />
                         <span class="input-group-text" translate="common.unit.ms"></span>
@@ -109,90 +167,30 @@
                   <!-- Retry count -->
                   <div class="col-4">
                     <div class="form-group">
-                      <label class="form-label" for="retry-count" translate="north.cache-settings.retry-count"></label>
+                      <label class="form-label" for="retry-count" translate="north.caching.error.retry-count"></label>
                       <input type="number" formControlName="retryCount" id="retry-count" class="form-control" />
                       <val-errors controlName="retryCount" />
                     </div>
                   </div>
-                </div>
-                <div class="row">
-                  <!-- Run min delay -->
+                  <!-- Retention duration -->
                   <div class="col-4">
                     <div class="form-group">
-                      <label class="form-label" for="run-min-delay" translate="north.cache-settings.run-min-delay"></label>
+                      <label class="form-label" for="error-retention-duration" translate="north.caching.error.retention-duration"></label>
                       <div class="input-group">
-                        <input type="number" formControlName="runMinDelay" id="run-min-delay" class="form-control" />
-                        <span class="input-group-text" translate="common.unit.ms"></span>
+                        <input type="number" formControlName="retentionDuration" id="error-retention-duration" class="form-control" />
+                        <span class="input-group-text" translate="common.unit.hr"></span>
                       </div>
-                      <val-errors controlName="runMinDelay" />
-                    </div>
-                  </div>
-                  <!-- Max size -->
-                  <div class="col-4">
-                    <div class="form-group">
-                      <label class="form-label" for="maxSize" translate="north.cache-settings.max-size"></label>
-                      <div class="input-group">
-                        <input type="number" formControlName="maxSize" id="maxSize" class="form-control" />
-                        <span class="input-group-text" translate="common.unit.MB"></span>
-                      </div>
-                      <val-errors controlName="maxSize" />
                     </div>
                   </div>
                 </div>
-                @if (manifest.modes.points) {
-                  <hr />
-                  <h6 class="text-center" translate="north.cache-settings.oibus-time-values.title"></h6>
-                  <div class="row" formGroupName="oibusTimeValues">
-                    <!-- Group count -->
-                    <div class="col-4">
-                      <div class="form-group">
-                        <label class="form-label" for="group-count" translate="north.cache-settings.group-count"></label>
-                        <input type="number" formControlName="groupCount" id="group-count" class="form-control" />
-                        <val-errors controlName="groupCount" />
-                      </div>
-                    </div>
-                    <!-- Max send count -->
-                    <div class="col-4">
-                      <div class="form-group">
-                        <label class="form-label" for="max-send-count" translate="north.cache-settings.max-send-count"></label>
-                        <input type="number" formControlName="maxSendCount" id="max-send-count" class="form-control" />
-                        <val-errors controlName="maxSendCount" />
-                      </div>
-                    </div>
-                  </div>
-                }
-                @if (manifest.modes.files) {
-                  <hr />
-                  <h6 class="text-center" translate="north.cache-settings.raw-files.title"></h6>
-                  <div class="row" formGroupName="rawFiles">
-                    <!-- Send file immediately -->
-                    <div class="col-4">
-                      <div class="form-group">
-                        <div class="form-check form-switch padded">
-                          <input
-                            formControlName="sendFileImmediately"
-                            id="send-file-immediately"
-                            type="checkbox"
-                            class="form-check-input"
-                          />
-                          <label
-                            class="form-check-label"
-                            for="send-file-immediately"
-                            translate="north.cache-settings.send-file-immediately"
-                          ></label>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                }
                 <hr />
-                <h6 class="text-center" translate="north.archive-settings.title"></h6>
-                <div class="row" formGroupName="archive">
+                <h4 translate="north.caching.archive.title"></h4>
+                <div formGroupName="archive" class="row">
                   <!-- Archive Enabled -->
                   <div class="col-4">
                     <div class="form-group">
                       <div class="form-check form-switch padded">
-                        <label class="form-check-label" for="archive-enabled" translate="north.archive-settings.enabled"></label>
+                        <label class="form-check-label" for="archive-enabled" translate="north.caching.archive.enabled"></label>
                         <input formControlName="enabled" id="archive-enabled" type="checkbox" class="form-check-input" />
                       </div>
                     </div>
@@ -203,7 +201,7 @@
                       <label
                         class="form-label"
                         for="archive-retention-duration"
-                        translate="north.archive-settings.retention-duration"
+                        translate="north.caching.archive.retention-duration"
                       ></label>
                       <div class="input-group">
                         <input type="number" formControlName="retentionDuration" id="archive-retention-duration" class="form-control" />

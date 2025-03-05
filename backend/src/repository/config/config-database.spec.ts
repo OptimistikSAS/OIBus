@@ -1622,7 +1622,7 @@ describe('Repository with populated database', () => {
 
     it('should update a north connector', () => {
       const newNorthConnector: NorthConnectorEntity<NorthSettings> = JSON.parse(JSON.stringify(testData.north.list[1]));
-      newNorthConnector.caching.maxSize = 999;
+      newNorthConnector.caching.throttling.maxSize = 999;
       newNorthConnector.subscriptions = [
         ...testData.north.list[1].subscriptions,
         {
@@ -1637,7 +1637,7 @@ describe('Repository with populated database', () => {
 
       const updatedConnector = repository.findNorthById(newNorthConnector.id)!;
 
-      expect(updatedConnector.caching.maxSize).toEqual(newNorthConnector.caching.maxSize);
+      expect(updatedConnector.caching.throttling.maxSize).toEqual(newNorthConnector.caching.throttling.maxSize);
       expect(updatedConnector.subscriptions.length).toEqual(2);
     });
 
