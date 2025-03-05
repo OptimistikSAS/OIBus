@@ -11,6 +11,7 @@ const COMMANDS_TABLE = 'commands';
 const REGISTRATIONS_TABLE = 'registrations';
 const NORTH_CONNECTORS_TABLE = 'north_connectors';
 const HISTORY_QUERIES_TABLE = 'history_queries';
+
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
 
 interface OldSouthMQTTSettings {
@@ -154,21 +155,47 @@ async function updateRegistrationSettings(knex: Knex): Promise<void> {
 
 async function updateNorthConnectors(knex: Knex): Promise<void> {
   await knex.schema.alterTable(NORTH_CONNECTORS_TABLE, table => {
-    table.integer('caching_run_min_delay');
+    table.integer('caching_throttling_run_min_delay');
+    table.integer('caching_error_retention_duration');
+    table.renameColumn('caching_scan_mode_id', 'caching_trigger_schedule');
+    table.renameColumn('caching_group_count', 'caching_trigger_number_of_elements');
+    table.renameColumn('caching_max_size', 'caching_throttling_cache_max_size');
+    table.renameColumn('caching_max_send_count', 'caching_throttling_max_number_of_elements');
+    table.renameColumn('caching_send_file_immediately', 'caching_trigger_number_of_files');
+    table.renameColumn('caching_retry_interval', 'caching_error_retry_interval');
+    table.renameColumn('caching_retry_count', 'caching_error_retry_count');
+    table.renameColumn('archive_enabled', 'caching_archive_enabled');
+    table.renameColumn('archive_retention_duration', 'caching_archive_retention_duration');
   });
 
+  // Update the new column based on the old boolean column
   await knex(NORTH_CONNECTORS_TABLE).update({
-    caching_run_min_delay: 200
+    caching_trigger_number_of_files: knex.raw('CAST(caching_trigger_number_of_files AS INTEGER)'),
+    caching_throttling_run_min_delay: 200,
+    caching_error_retention_duration: 0
   });
 }
 
 async function updateHistoryQueries(knex: Knex): Promise<void> {
   await knex.schema.alterTable(HISTORY_QUERIES_TABLE, table => {
-    table.integer('caching_run_min_delay');
+    table.integer('caching_throttling_run_min_delay');
+    table.integer('caching_error_retention_duration');
+    table.renameColumn('caching_scan_mode_id', 'caching_trigger_schedule');
+    table.renameColumn('caching_group_count', 'caching_trigger_number_of_elements');
+    table.renameColumn('caching_max_size', 'caching_throttling_cache_max_size');
+    table.renameColumn('caching_max_send_count', 'caching_throttling_max_number_of_elements');
+    table.renameColumn('caching_send_file_immediately', 'caching_trigger_number_of_files');
+    table.renameColumn('caching_retry_interval', 'caching_error_retry_interval');
+    table.renameColumn('caching_retry_count', 'caching_error_retry_count');
+    table.renameColumn('archive_enabled', 'caching_archive_enabled');
+    table.renameColumn('archive_retention_duration', 'caching_archive_retention_duration');
   });
 
+  // Update the new column based on the old boolean column
   await knex(HISTORY_QUERIES_TABLE).update({
-    caching_run_min_delay: 200
+    caching_trigger_number_of_files: knex.raw('CAST(caching_trigger_number_of_elements AS INTEGER)'),
+    caching_throttling_run_min_delay: 200,
+    caching_error_retention_duration: 0
   });
 }
 

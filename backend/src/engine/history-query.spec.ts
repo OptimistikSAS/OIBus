@@ -290,6 +290,47 @@ describe('HistoryQuery enabled', () => {
     mockedSouth1.metricsEvent.emit('add-file', {});
     expect(emitSpy).toHaveBeenCalledWith('south-add-file', {});
   });
+
+  it('should manage cache', async () => {
+    await historyQuery.searchCacheContent(
+      { start: testData.constants.dates.DATE_1, end: testData.constants.dates.DATE_2, nameContains: 'file' },
+      'cache'
+    );
+    expect(mockedNorth1.searchCacheContent).not.toHaveBeenCalled();
+    await historyQuery.getCacheContentFileStream('cache', 'file');
+    expect(mockedNorth1.searchCacheContent).not.toHaveBeenCalled();
+    await historyQuery.removeCacheContent('cache', ['file']);
+    expect(mockedNorth1.removeCacheContent).not.toHaveBeenCalled();
+    expect(mockedNorth1.metadataFileListToCacheContentList).not.toHaveBeenCalled();
+    await historyQuery.removeAllCacheContent('cache');
+    expect(mockedNorth1.removeAllCacheContent).not.toHaveBeenCalled();
+    await historyQuery.moveCacheContent('cache', 'error', ['file']);
+    expect(mockedNorth1.moveCacheContent).not.toHaveBeenCalled();
+    await historyQuery.moveAllCacheContent('cache', 'error');
+    expect(mockedNorth1.moveAllCacheContent).not.toHaveBeenCalled();
+
+    await historyQuery.start();
+    await historyQuery.searchCacheContent(
+      { start: testData.constants.dates.DATE_1, end: testData.constants.dates.DATE_2, nameContains: 'file' },
+      'cache'
+    );
+    expect(mockedNorth1.searchCacheContent).toHaveBeenCalledWith(
+      { start: testData.constants.dates.DATE_1, end: testData.constants.dates.DATE_2, nameContains: 'file' },
+      'cache'
+    );
+    await historyQuery.getCacheContentFileStream('cache', 'file');
+    expect(mockedNorth1.getCacheContentFileStream).toHaveBeenCalledWith('cache', 'file');
+    (mockedNorth1.metadataFileListToCacheContentList as jest.Mock).mockReturnValue([]);
+    await historyQuery.removeCacheContent('cache', ['file']);
+    expect(mockedNorth1.metadataFileListToCacheContentList).toHaveBeenCalledWith('cache', ['file']);
+    expect(mockedNorth1.removeCacheContent).toHaveBeenCalledWith('cache', []);
+    await historyQuery.removeAllCacheContent('cache');
+    expect(mockedNorth1.removeAllCacheContent).toHaveBeenCalled();
+    await historyQuery.moveCacheContent('cache', 'error', ['file']);
+    expect(mockedNorth1.moveCacheContent).toHaveBeenCalledWith('cache', 'error', []);
+    await historyQuery.moveAllCacheContent('cache', 'error');
+    expect(mockedNorth1.moveAllCacheContent).toHaveBeenCalledWith('cache', 'error');
+  });
 });
 
 describe('HistoryQuery disabled', () => {

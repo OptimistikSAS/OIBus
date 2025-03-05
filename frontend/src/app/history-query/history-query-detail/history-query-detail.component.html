@@ -93,34 +93,53 @@
         <oib-box>
           <ng-template oibBoxTitle>
             <div class="d-flex justify-content-between">
-              <span translate="north.cache-settings.title"></span>
+              <span translate="north.caching.title"></span>
             </div>
           </ng-template>
           <table class="table table-sm table-hover oib-table">
             <tbody>
               <tr>
-                <td translate="history-query.cache-settings.send-scan-mode" style="width: 33%"></td>
-                <td>{{ getScanMode(historyQuery.caching.scanModeId) }}</td>
+                <td translate="north.caching.trigger.title" style="width: 33%"></td>
+                <td
+                  translate="north.caching.trigger.value"
+                  [translateParams]="{
+                    scanMode: getScanMode(historyQuery.caching.trigger.scanModeId),
+                    numberOfElements: historyQuery.caching.trigger.numberOfElements,
+                    numberOfFiles: historyQuery.caching.trigger.numberOfFiles
+                  }"
+                ></td>
               </tr>
               <tr>
-                <td translate="history-query.cache-settings.max-size"></td>
-                <td>{{ historyQuery.caching.maxSize | number }} <span translate="common.size.MB"></span></td>
+                <td translate="north.caching.throttling.title"></td>
+                <td
+                  translate="north.caching.throttling.value"
+                  [translateParams]="{
+                    runMinDelay: historyQuery.caching.throttling.runMinDelay,
+                    maxSize: historyQuery.caching.throttling.maxSize,
+                    maxNumberOfElements: historyQuery.caching.throttling.maxNumberOfElements
+                  }"
+                ></td>
               </tr>
               <tr>
-                <td translate="history-query.cache-settings.retry-interval"></td>
-                <td>{{ historyQuery.caching.retryInterval | duration }}</td>
+                <td translate="north.caching.error.title"></td>
+                <td
+                  translate="north.caching.error.value"
+                  [translateParams]="{
+                    retryInterval: historyQuery.caching.error.retryInterval,
+                    retryCount: historyQuery.caching.error.retryCount,
+                    retentionDuration: historyQuery.caching.error.retentionDuration
+                  }"
+                ></td>
               </tr>
               <tr>
-                <td translate="history-query.cache-settings.retry-count"></td>
-                <td>{{ historyQuery.caching.retryCount | number }}</td>
-              </tr>
-              <tr>
-                <td translate="history-query.cache-settings.group-count"></td>
-                <td>{{ historyQuery.caching.oibusTimeValues.groupCount | number }}</td>
-              </tr>
-              <tr>
-                <td translate="history-query.cache-settings.max-send-count"></td>
-                <td>{{ historyQuery.caching.oibusTimeValues.maxSendCount | number }}</td>
+                <td translate="north.caching.archive.title"></td>
+                <td
+                  translate="north.caching.archive.value"
+                  [translateParams]="{
+                    enabled: historyQuery.caching.archive.enabled,
+                    retentionDuration: historyQuery.caching.archive.retentionDuration
+                  }"
+                ></td>
               </tr>
             </tbody>
           </table>

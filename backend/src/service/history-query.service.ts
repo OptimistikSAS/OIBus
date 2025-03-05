@@ -673,17 +673,20 @@ export const toHistoryQueryDTO = <S extends SouthSettings, N extends NorthSettin
     southSettings: encryptionService.filterSecrets<S>(historyQuery.southSettings, southManifest.settings),
     northSettings: encryptionService.filterSecrets<N>(historyQuery.northSettings, northManifest.settings),
     caching: {
-      scanModeId: historyQuery.caching.scanModeId,
-      retryInterval: historyQuery.caching.retryInterval,
-      retryCount: historyQuery.caching.retryCount,
-      runMinDelay: historyQuery.caching.runMinDelay,
-      maxSize: historyQuery.caching.maxSize,
-      oibusTimeValues: {
-        groupCount: historyQuery.caching.oibusTimeValues.groupCount,
-        maxSendCount: historyQuery.caching.oibusTimeValues.maxSendCount
+      trigger: {
+        scanModeId: historyQuery.caching.trigger.scanModeId,
+        numberOfElements: historyQuery.caching.trigger.numberOfElements,
+        numberOfFiles: historyQuery.caching.trigger.numberOfFiles
       },
-      rawFiles: {
-        sendFileImmediately: historyQuery.caching.rawFiles.sendFileImmediately
+      throttling: {
+        runMinDelay: historyQuery.caching.throttling.runMinDelay,
+        maxSize: historyQuery.caching.throttling.maxSize,
+        maxNumberOfElements: historyQuery.caching.throttling.maxNumberOfElements
+      },
+      error: {
+        retryInterval: historyQuery.caching.error.retryInterval,
+        retryCount: historyQuery.caching.error.retryCount,
+        retentionDuration: historyQuery.caching.error.retentionDuration
       },
       archive: {
         enabled: historyQuery.caching.archive.enabled,
@@ -735,17 +738,20 @@ const copyHistoryQueryCommandToHistoryQueryEntity = async <S extends SouthSettin
     southManifest.settings
   );
   historyQueryEntity.caching = {
-    scanModeId: checkScanMode(scanModes, command.caching.scanModeId, command.caching.scanModeName),
-    retryInterval: command.caching.retryInterval,
-    retryCount: command.caching.retryCount,
-    runMinDelay: command.caching.runMinDelay,
-    maxSize: command.caching.maxSize,
-    oibusTimeValues: {
-      groupCount: command.caching.oibusTimeValues.groupCount,
-      maxSendCount: command.caching.oibusTimeValues.maxSendCount
+    trigger: {
+      scanModeId: checkScanMode(scanModes, command.caching.trigger.scanModeId, command.caching.trigger.scanModeName),
+      numberOfElements: command.caching.trigger.numberOfElements,
+      numberOfFiles: command.caching.trigger.numberOfFiles
     },
-    rawFiles: {
-      sendFileImmediately: command.caching.rawFiles.sendFileImmediately
+    throttling: {
+      runMinDelay: command.caching.throttling.runMinDelay,
+      maxSize: command.caching.throttling.maxSize,
+      maxNumberOfElements: command.caching.throttling.maxNumberOfElements
+    },
+    error: {
+      retryInterval: command.caching.error.retryInterval,
+      retryCount: command.caching.error.retryCount,
+      retentionDuration: command.caching.error.retentionDuration
     },
     archive: {
       enabled: command.caching.archive.enabled,

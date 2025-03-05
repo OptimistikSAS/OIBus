@@ -8,7 +8,7 @@ import NorthConnector from '../north/north-connector';
 import SouthConnector from '../south/south-connector';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { NorthSettings } from '../../shared/model/north-settings.model';
-import { CacheMetadata, OIBusContent, OIBusTimeValue } from '../../shared/model/engine.model';
+import { CacheMetadata, CacheSearchParam, OIBusContent, OIBusTimeValue } from '../../shared/model/engine.model';
 import { SouthConnectorEntity } from '../model/south-connector.model';
 import { NorthConnectorEntity } from '../model/north-connector.model';
 import { HistoryQueryEntity } from '../model/histor-query.model';
@@ -16,6 +16,7 @@ import HistoryQueryRepository from '../repository/config/history-query.repositor
 import { EventEmitter } from 'node:events';
 import { BaseFolders, Instant } from '../model/types';
 import { QueriesHistory } from '../south/south-interface';
+import { ReadStream } from 'node:fs';
 
 const FINISH_INTERVAL = 5000;
 
@@ -221,5 +222,40 @@ export default class HistoryQuery {
 
   get settings(): HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> {
     return this.historyConfiguration;
+  }
+
+  async searchCacheContent(
+    searchParams: CacheSearchParam,
+    folder: 'cache' | 'archive' | 'error'
+  ): Promise<Array<{ metadataFilename: string; metadata: CacheMetadata }>> {
+    return (await this.north?.searchCacheContent(searchParams, folder)) || [];
+  }
+
+  async getCacheContentFileStream(folder: 'cache' | 'archive' | 'error', filename: string): Promise<ReadStream | null> {
+    return (await this.north?.getCacheContentFileStream(folder, filename)) || null;
+  }
+
+  async removeCacheContent(folder: 'cache' | 'archive' | 'error', metadataFilenameList: Array<string>): Promise<void> {
+    await this.north?.removeCacheContent(folder, await this.north!.metadataFileListToCacheContentList(folder, metadataFilenameList));
+  }
+
+  async removeAllCacheContent(folder: 'cache' | 'archive' | 'error'): Promise<void> {
+    await this.north?.removeAllCacheContent(folder);
+  }
+
+  async moveCacheContent(
+    originFolder: 'cache' | 'archive' | 'error',
+    destinationFolder: 'cache' | 'archive' | 'error',
+    cacheContentList: Array<string>
+  ): Promise<void> {
+    await this.north?.moveCacheContent(
+      originFolder,
+      destinationFolder,
+      await this.north!.metadataFileListToCacheContentList(originFolder, cacheContentList)
+    );
+  }
+
+  async moveAllCacheContent(originFolder: 'cache' | 'archive' | 'error', destinationFolder: 'cache' | 'archive' | 'error'): Promise<void> {
+    await this.north?.moveAllCacheContent(originFolder, destinationFolder);
   }
 }
