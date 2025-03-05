@@ -1,4 +1,4 @@
-import { ExploreCacheComponent } from './explore-cache.component';
+import { ExploreNorthCacheComponent } from './explore-north-cache.component';
 import { ComponentTester, createMock, stubRoute } from 'ngx-speculoos';
 import { TestBed } from '@angular/core/testing';
 import { NorthConnectorService } from '../../services/north-connector.service';
@@ -9,9 +9,9 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { provideHttpClient } from '@angular/common/http';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 
-class ExploreCacheComponentTester extends ComponentTester<ExploreCacheComponent> {
+class ExploreNorthCacheComponentTester extends ComponentTester<ExploreNorthCacheComponent> {
   constructor() {
-    super(ExploreCacheComponent);
+    super(ExploreNorthCacheComponent);
   }
 
   get title() {
@@ -31,8 +31,8 @@ class ExploreCacheComponentTester extends ComponentTester<ExploreCacheComponent>
   }
 }
 
-describe('ExploreCacheComponent', () => {
-  let tester: ExploreCacheComponentTester;
+describe('ExploreNorthCacheComponent', () => {
+  let tester: ExploreNorthCacheComponentTester;
   let northConnectorService: jasmine.SpyObj<NorthConnectorService>;
 
   const northConnector: NorthConnectorDTO<NorthSettings> = {
@@ -85,7 +85,7 @@ describe('ExploreCacheComponent', () => {
     });
     northConnectorService.get.and.returnValue(of(northConnector));
     northConnectorService.searchCacheContent.and.returnValue(of([]));
-    tester = new ExploreCacheComponentTester();
+    tester = new ExploreNorthCacheComponentTester();
     tester.detectChanges();
   });
 

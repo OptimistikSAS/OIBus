@@ -224,9 +224,9 @@ describe('NorthConnectorService', () => {
     service.removeCacheContent('id1', 'cache', ['file1', 'file2']).subscribe(() => (done = true));
     const testRequest = http.expectOne({
       method: 'DELETE',
-      url: '/api/north/id1/cache/content/remove?folder=cache&filenames=file1&filenames=file2'
+      url: '/api/north/id1/cache/content/remove?folder=cache'
     });
-    testRequest.flush(null);
+    testRequest.flush(['file1', 'file2']);
     expect(done).toBe(true);
   });
 

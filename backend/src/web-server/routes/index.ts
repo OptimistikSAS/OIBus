@@ -367,6 +367,25 @@ router.put(
     >
   ) => historyQueryController.testHistoryQueryItem(ctx)
 );
+router.get(
+  '/api/history-query/:historyQueryId/cache/content',
+  (ctx: KoaContext<void, Array<{ metadataFilename: string; metadata: CacheMetadata }>>) => historyQueryController.searchCacheContent(ctx)
+);
+router.get('/api/history-query/:historyQueryId/cache/content/:filename', (ctx: KoaContext<void, ReadStream>) =>
+  historyQueryController.getCacheContentFileStream(ctx)
+);
+router.delete('/api/history-query/:historyQueryId/cache/content/remove', (ctx: KoaContext<Array<string>, void>) =>
+  historyQueryController.removeCacheContent(ctx)
+);
+router.delete('/api/history-query/:historyQueryId/cache/content/remove-all', (ctx: KoaContext<void, void>) =>
+  historyQueryController.removeAllCacheContent(ctx)
+);
+router.post('/api/history-query/:historyQueryId/cache/content/move', (ctx: KoaContext<Array<string>, void>) =>
+  historyQueryController.moveCacheContent(ctx)
+);
+router.post('/api/history-query/:historyQueryId/cache/content/move-all', (ctx: KoaContext<void, void>) =>
+  historyQueryController.moveAllCacheContent(ctx)
+);
 
 router.get('/api/logs', (ctx: KoaContext<void, Page<LogDTO>>) => logController.search(ctx));
 router.get('/api/scope-logs/suggestions', (ctx: KoaContext<void, Array<Scope>>) => logController.suggestScopes(ctx));

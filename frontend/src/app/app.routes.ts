@@ -15,9 +15,10 @@ import { HistoryQueryListComponent } from './history-query/history-query-list.co
 import { HistoryQueryDetailComponent } from './history-query/history-query-detail/history-query-detail.component';
 import { LoginComponent } from './auth/login/login.component';
 import { authenticationGuard } from './auth/authentication.guard';
-import { ExploreCacheComponent } from './north/explore-cache/explore-cache.component';
+import { ExploreNorthCacheComponent } from './north/explore-cache/explore-north-cache.component';
 import { EditUserSettingsComponent } from './user-settings/edit-user-settings/edit-user-settings.component';
 import { OiaModuleComponent } from './engine/oia-module/oia-module.component';
+import { ExploreHistoryCacheComponent } from './history-query/explore-cache/explore-history-cache.component';
 
 export const ROUTES: Routes = [
   { path: 'login', component: LoginComponent },
@@ -55,7 +56,7 @@ export const ROUTES: Routes = [
       },
       {
         path: 'north/:northId/cache',
-        component: ExploreCacheComponent
+        component: ExploreNorthCacheComponent
       },
       {
         path: 'north/:northId',
@@ -92,6 +93,10 @@ export const ROUTES: Routes = [
       {
         path: 'history-queries/:historyQueryId/edit',
         component: EditHistoryQueryComponent
+      },
+      {
+        path: 'history-queries/:historyQueryId/cache',
+        component: ExploreHistoryCacheComponent
       },
       {
         path: 'history-queries/:historyQueryId',

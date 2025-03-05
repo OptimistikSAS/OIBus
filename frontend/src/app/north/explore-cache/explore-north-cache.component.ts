@@ -1,28 +1,26 @@
-import { Component, OnInit, inject, viewChild } from '@angular/core';
-import { TranslateDirective } from '@ngx-translate/core';
-import { formDirectives } from '../../shared/form-directives';
+import { Component, inject, OnInit, viewChild } from '@angular/core';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { NorthConnectorDTO } from '../../../../../backend/shared/model/north-connector.model';
 import { of, switchMap } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { BackNavigationDirective } from '../../shared/back-navigation.directives';
-import { CacheContentComponent } from './cache-content/cache-content.component';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { TranslateDirective } from '@ngx-translate/core';
+import { NorthCacheContentComponent } from './north-cache-content/north-cache-content.component';
 
 @Component({
-  selector: 'oib-explore-cache',
-  templateUrl: './explore-cache.component.html',
-  styleUrl: './explore-cache.component.scss',
-  imports: [...formDirectives, TranslateDirective, BackNavigationDirective, CacheContentComponent]
+  selector: 'oib-explore-north-cache',
+  templateUrl: './explore-north-cache.component.html',
+  styleUrl: './explore-north-cache.component.scss',
+  imports: [TranslateDirective, NorthCacheContentComponent]
 })
-export class ExploreCacheComponent implements OnInit {
+export class ExploreNorthCacheComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private northConnectorService = inject(NorthConnectorService);
 
   northConnector: NorthConnectorDTO<NorthSettings> | null = null;
-  readonly cacheFilesComponent = viewChild.required<CacheContentComponent>('cache');
-  readonly errorFilesComponent = viewChild.required<CacheContentComponent>('error');
-  readonly archiveFilesComponent = viewChild.required<CacheContentComponent>('archive');
+  readonly cacheFilesComponent = viewChild.required<NorthCacheContentComponent>('cache');
+  readonly errorFilesComponent = viewChild.required<NorthCacheContentComponent>('error');
+  readonly archiveFilesComponent = viewChild.required<NorthCacheContentComponent>('archive');
 
   ngOnInit() {
     this.route.paramMap

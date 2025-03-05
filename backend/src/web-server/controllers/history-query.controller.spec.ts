@@ -773,4 +773,204 @@ describe('History query controller', () => {
     await historyQueryController.importSouthItems(ctx);
     expect(ctx.badRequest).toHaveBeenCalledWith('Missing file "items"');
   });
+
+  it('searchCacheContent() should search cache content with default params', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.query.folder = 'cache';
+    ctx.app.historyQueryService.searchCacheContent.mockReturnValueOnce([]);
+    await historyQueryController.searchCacheContent(ctx);
+    expect(ctx.app.historyQueryService.searchCacheContent).toHaveBeenCalledWith(
+      testData.historyQueries.list[0].id,
+      { start: null, end: null, nameContains: null },
+      'cache'
+    );
+    expect(ctx.ok).toHaveBeenCalledWith([]);
+  });
+
+  it('searchCacheContent() should fail to search if bad folder', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.query.folder = null;
+    await historyQueryController.searchCacheContent(ctx);
+    expect(ctx.app.historyQueryService.searchCacheContent).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('A folder must be specified among "cache", "error" or "archive"');
+  });
+
+  it('searchCacheContent() should search cache content', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.query.start = testData.constants.dates.DATE_1;
+    ctx.query.end = testData.constants.dates.DATE_2;
+    ctx.query.nameContains = 'filename';
+    ctx.query.folder = 'cache';
+    ctx.app.historyQueryService.searchCacheContent.mockReturnValueOnce([]);
+    await historyQueryController.searchCacheContent(ctx);
+    expect(ctx.app.historyQueryService.searchCacheContent).toHaveBeenCalledWith(
+      testData.historyQueries.list[0].id,
+      { start: testData.constants.dates.DATE_1, end: testData.constants.dates.DATE_2, nameContains: 'filename' },
+      'cache'
+    );
+    expect(ctx.ok).toHaveBeenCalledWith([]);
+  });
+
+  it('getCacheContentFileStream() should get error file content', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.params.filename = 'my file';
+    ctx.query.folder = 'cache';
+    ctx.app.historyQueryService.getCacheContentFileStream.mockReturnValueOnce('file content');
+    await historyQueryController.getCacheContentFileStream(ctx);
+    expect(ctx.app.historyQueryService.getCacheContentFileStream).toHaveBeenCalledWith(
+      testData.historyQueries.list[0].id,
+      'cache',
+      'my file'
+    );
+    expect(ctx.attachment).toHaveBeenCalledWith('my file');
+    expect(ctx.ok).toHaveBeenCalledWith('file content');
+  });
+
+  it('getCacheContentFileStream() should fail to get file if bad folder', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.query.folder = null;
+    await historyQueryController.getCacheContentFileStream(ctx);
+    expect(ctx.app.historyQueryService.getCacheContentFileStream).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('A folder must be specified among "cache", "error" or "archive"');
+  });
+
+  it('getCacheContentFileStream() should fail to get file if no filename', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.query.folder = 'cache';
+    ctx.params.filename = null;
+    await historyQueryController.getCacheContentFileStream(ctx);
+    expect(ctx.app.historyQueryService.getCacheContentFileStream).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('A filename must be specified');
+  });
+
+  it('getCacheContentFileStream() should not get error file content if null', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.params.filename = 'my file';
+    ctx.query.folder = 'cache';
+    ctx.app.historyQueryService.getCacheContentFileStream.mockReturnValueOnce(null);
+    await historyQueryController.getCacheContentFileStream(ctx);
+    expect(ctx.app.historyQueryService.getCacheContentFileStream).toHaveBeenCalledWith(
+      testData.historyQueries.list[0].id,
+      'cache',
+      'my file'
+    );
+    expect(ctx.attachment).not.toHaveBeenCalled();
+    expect(ctx.notFound).toHaveBeenCalled();
+  });
+
+  it('removeCacheContent() should fail to remove if bad folder', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.query.folder = null;
+    await historyQueryController.removeCacheContent(ctx);
+    expect(ctx.app.historyQueryService.removeCacheContent).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('A folder must be specified among "cache", "error" or "archive"');
+  });
+
+  it('removeCacheContent() should not remove files if body is not an array', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.request.body = 'my file';
+    ctx.query.folder = 'cache';
+    await historyQueryController.removeCacheContent(ctx);
+    expect(ctx.app.historyQueryService.removeCacheContent).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('Invalid file list');
+  });
+
+  it('removeCacheContent() should remove error files', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.query.folder = 'cache';
+    ctx.request.body = ['my file1', 'my file2'];
+    await historyQueryController.removeCacheContent(ctx);
+    expect(ctx.app.historyQueryService.removeCacheContent).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'cache', [
+      'my file1',
+      'my file2'
+    ]);
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('removeCacheContent() should remove error files with only one file', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.query.folder = 'cache';
+    ctx.request.body = ['my file'];
+    await historyQueryController.removeCacheContent(ctx);
+    expect(ctx.app.historyQueryService.removeCacheContent).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'cache', ['my file']);
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('moveCacheContent() should fail to move all if bad originFolder', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.query.originFolder = null;
+    await historyQueryController.moveCacheContent(ctx);
+    expect(ctx.app.historyQueryService.moveCacheContent).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('The originFolder must be specified among "cache", "error" or "archive"');
+  });
+
+  it('moveCacheContent() should fail to move all if bad destinationFolder', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.query.originFolder = 'cache';
+    ctx.query.destinationFolder = null;
+    await historyQueryController.moveCacheContent(ctx);
+    expect(ctx.app.historyQueryService.moveCacheContent).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('The destinationFolder must be specified among "cache", "error" or "archive"');
+  });
+
+  it('moveCacheContent() should not move files if body is not an array', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.request.body = 'my file';
+    ctx.query.originFolder = 'cache';
+    ctx.query.destinationFolder = 'error';
+    await historyQueryController.moveCacheContent(ctx);
+    expect(ctx.app.historyQueryService.moveCacheContent).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('Invalid file list');
+  });
+
+  it('moveCacheContent() should move files', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.query.originFolder = 'cache';
+    ctx.query.destinationFolder = 'error';
+    ctx.request.body = ['my file'];
+    await historyQueryController.moveCacheContent(ctx);
+    expect(ctx.app.historyQueryService.moveCacheContent).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'cache', 'error', [
+      'my file'
+    ]);
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('removeAllCacheContent() should remove all cache content', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    await historyQueryController.removeAllCacheContent(ctx);
+    expect(ctx.app.historyQueryService.removeAllCacheContent).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'cache');
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('removeAllCacheContent() should fail to remove all if bad folder', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.query.folder = null;
+    await historyQueryController.removeAllCacheContent(ctx);
+    expect(ctx.app.historyQueryService.removeAllCacheContent).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('A folder must be specified among "cache", "error" or "archive"');
+  });
+
+  it('moveAllCacheContent() should move all cache content', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    await historyQueryController.moveAllCacheContent(ctx);
+    expect(ctx.app.historyQueryService.moveAllCacheContent).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'cache', 'error');
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('moveAllCacheContent() should fail to move all if bad originFolder', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.query.originFolder = null;
+    await historyQueryController.moveAllCacheContent(ctx);
+    expect(ctx.app.historyQueryService.moveAllCacheContent).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('The originFolder must be specified among "cache", "error" or "archive"');
+  });
+
+  it('moveAllCacheContent() should fail to move all if bad destinationFolder', async () => {
+    ctx.params.historyQueryId = testData.historyQueries.list[0].id;
+    ctx.query.originFolder = 'cache';
+    ctx.query.destinationFolder = null;
+    await historyQueryController.moveAllCacheContent(ctx);
+    expect(ctx.app.historyQueryService.moveAllCacheContent).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith('The destinationFolder must be specified among "cache", "error" or "archive"');
+  });
 });

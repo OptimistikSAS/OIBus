@@ -1103,4 +1103,42 @@ describe('History Query service', () => {
   it('retrieveSecrets() should return null', () => {
     expect(service.retrieveSecrets(null, null, null, southManifestList[4], northManifestList[4])).toEqual(null);
   });
+
+  it('should search cache content', async () => {
+    await service.searchCacheContent(
+      testData.historyQueries.list[0].id,
+      { start: testData.constants.dates.DATE_1, end: testData.constants.dates.DATE_2, nameContains: 'file' },
+      'cache'
+    );
+    expect(historyQueryEngine.searchCacheContent).toHaveBeenCalledWith(
+      testData.historyQueries.list[0].id,
+      { start: testData.constants.dates.DATE_1, end: testData.constants.dates.DATE_2, nameContains: 'file' },
+      'cache'
+    );
+  });
+
+  it('should get cache content file stream', async () => {
+    await service.getCacheContentFileStream(testData.historyQueries.list[0].id, 'cache', 'filename');
+    expect(historyQueryEngine.getCacheContentFileStream).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'cache', 'filename');
+  });
+
+  it('should remove cache content', async () => {
+    await service.removeCacheContent(testData.historyQueries.list[0].id, 'cache', ['filename']);
+    expect(historyQueryEngine.removeCacheContent).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'cache', ['filename']);
+  });
+
+  it('should remove all cache content', async () => {
+    await service.removeAllCacheContent(testData.historyQueries.list[0].id, 'cache');
+    expect(historyQueryEngine.removeAllCacheContent).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'cache');
+  });
+
+  it('should move cache content', async () => {
+    await service.moveCacheContent(testData.historyQueries.list[0].id, 'cache', 'error', ['filename']);
+    expect(historyQueryEngine.moveCacheContent).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'cache', 'error', ['filename']);
+  });
+
+  it('should move all cache content', async () => {
+    await service.moveAllCacheContent(testData.historyQueries.list[0].id, 'cache', 'archive');
+    expect(historyQueryEngine.moveAllCacheContent).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'cache', 'archive');
+  });
 });

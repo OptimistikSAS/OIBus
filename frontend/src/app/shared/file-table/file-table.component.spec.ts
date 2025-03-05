@@ -2,10 +2,10 @@ import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FileTableComponent } from './file-table.component';
 import { provideHttpClient } from '@angular/common/http';
-import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { ComponentTester, TestButton } from 'ngx-speculoos';
-import { CacheMetadata } from '../../../../../../backend/shared/model/engine.model';
-import testData from '../../../../../../backend/src/tests/utils/test-data';
+import { CacheMetadata } from '../../../../../backend/shared/model/engine.model';
+import testData from '../../../../../backend/src/tests/utils/test-data';
 
 const firstFile = {
   metadataFilename: 'file1.json',
