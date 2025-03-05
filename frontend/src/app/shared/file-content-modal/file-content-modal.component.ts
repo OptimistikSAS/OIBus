@@ -2,8 +2,8 @@ import { Component, inject, viewChild } from '@angular/core';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
-import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-code-block.component';
-import { CacheMetadata } from '../../../../../../backend/shared/model/engine.model';
+import { OibCodeBlockComponent } from '../form/oib-code-block/oib-code-block.component';
+import { CacheMetadata } from '../../../../../backend/shared/model/engine.model';
 
 @Component({
   selector: 'oib-file-content-modal',

@@ -142,9 +142,9 @@ export class NorthConnectorService {
   removeCacheContent(northId: string, folder: 'cache' | 'archive' | 'error', filenames: Array<string>): Observable<void> {
     return this.http.delete<void>(`/api/north/${northId}/cache/content/remove`, {
       params: {
-        folder,
-        filenames
-      }
+        folder
+      },
+      body: filenames
     });
   }
 
