@@ -77,24 +77,30 @@ export class EditNorthComponent implements OnInit {
     description: FormControl<string>;
     enabled: FormControl<boolean>;
     caching: FormGroup<{
-      scanModeId: FormControl<string | null>;
-      retryInterval: FormControl<number>;
-      retryCount: FormControl<number>;
-      maxSize: FormControl<number>;
-      oibusTimeValues: FormGroup<{ groupCount: FormControl<number>; maxSendCount: FormControl<number> }>;
-      rawFiles: FormGroup<{
-        sendFileImmediately: FormControl<boolean>;
-        archive: FormGroup<{
-          enabled: FormControl<boolean>;
-          retentionDuration: FormControl<number>;
-        }>;
+      trigger: FormGroup<{
+        scanModeId: FormControl<string | null>;
+        numberOfElements: FormControl<number>;
+        numberOfFiles: FormControl<number>;
+      }>;
+      throttling: FormGroup<{
+        runMinDelay: FormControl<number>;
+        maxSize: FormControl<number>;
+        maxNumberOfElements: FormControl<number>;
+      }>;
+      error: FormGroup<{
+        retryInterval: FormControl<number>;
+        retryCount: FormControl<number>;
+        retentionDuration: FormControl<number>;
+      }>;
+      archive: FormGroup<{
+        enabled: FormControl<boolean>;
+        retentionDuration: FormControl<number>;
       }>;
     }>;
     settings: FormGroup;
   }> | null = null;
 
   inMemorySubscriptions: Array<SouthConnectorLightDTO> = [];
-  inMemorySubscriptionsToDelete: Array<string> = [];
 
   ngOnInit() {
     combineLatest([this.scanModeService.list(), this.certificateService.list(), this.route.paramMap, this.route.queryParamMap])
@@ -142,20 +148,24 @@ export class EditNorthComponent implements OnInit {
           enabled: true as boolean,
           settings: createFormGroup(manifest.settings, this.fb),
           caching: this.fb.group({
-            scanModeId: this.fb.control<string | null>(null, Validators.required),
-            retryInterval: [5000, Validators.required],
-            retryCount: [3, Validators.required],
-            maxSize: [0, Validators.required],
-            oibusTimeValues: this.fb.group({
-              groupCount: [1000, Validators.required],
-              maxSendCount: [10_000, Validators.required]
+            trigger: this.fb.group({
+              scanModeId: this.fb.control<string | null>(null, Validators.required),
+              numberOfElements: [1_000, Validators.required],
+              numberOfFiles: [1, Validators.required]
             }),
-            rawFiles: this.fb.group({
-              sendFileImmediately: true as boolean,
-              archive: this.fb.group({
-                enabled: [false, Validators.required],
-                retentionDuration: [72, Validators.required]
-              })
+            throttling: this.fb.group({
+              runMinDelay: [200, Validators.required],
+              maxSize: [0, Validators.required],
+              maxNumberOfElements: [10_000, Validators.required]
+            }),
+            error: this.fb.group({
+              retryInterval: [5_000, Validators.required],
+              retryCount: [3, Validators.required],
+              retentionDuration: [72, Validators.required]
+            }),
+            archive: this.fb.group({
+              enabled: [false, Validators.required],
+              retentionDuration: [72, Validators.required]
             })
           })
         });
@@ -203,21 +213,25 @@ export class EditNorthComponent implements OnInit {
       enabled: formValue.enabled!,
       settings: formValue.settings!,
       caching: {
-        scanModeId: formValue.caching!.scanModeId!,
-        scanModeName: null,
-        retryInterval: formValue.caching!.retryInterval!,
-        retryCount: formValue.caching!.retryCount!,
-        maxSize: formValue.caching!.maxSize!,
-        oibusTimeValues: {
-          groupCount: formValue.caching!.oibusTimeValues!.groupCount!,
-          maxSendCount: formValue.caching!.oibusTimeValues!.maxSendCount!
+        trigger: {
+          scanModeId: formValue.caching!.trigger!.scanModeId!,
+          scanModeName: null,
+          numberOfElements: formValue.caching!.trigger!.numberOfElements!,
+          numberOfFiles: formValue.caching!.trigger!.numberOfFiles!
         },
-        rawFiles: {
-          sendFileImmediately: formValue.caching!.rawFiles!.sendFileImmediately!,
-          archive: {
-            enabled: formValue.caching!.rawFiles!.archive!.enabled!,
-            retentionDuration: formValue.caching!.rawFiles!.archive!.retentionDuration!
-          }
+        throttling: {
+          runMinDelay: formValue.caching!.throttling!.runMinDelay!,
+          maxSize: formValue.caching!.throttling!.maxSize!,
+          maxNumberOfElements: formValue.caching!.throttling!.maxNumberOfElements!
+        },
+        error: {
+          retryInterval: formValue.caching!.error!.retryInterval!,
+          retryCount: formValue.caching!.error!.retryCount!,
+          retentionDuration: formValue.caching!.error!.retentionDuration!
+        },
+        archive: {
+          enabled: formValue.caching!.archive!.enabled!,
+          retentionDuration: formValue.caching!.archive!.retentionDuration!
         }
       },
       subscriptions: this.northConnector

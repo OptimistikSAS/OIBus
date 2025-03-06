@@ -21,13 +21,14 @@ class TestComponent {
     lastConnection: '2020-02-02T00:00:00.000Z',
     lastRunStart: '2020-02-02T00:00:00.000Z',
     lastRunDuration: 10,
-    numberOfValuesSent: 11,
-    numberOfFilesSent: 12,
-    lastValueSent: { pointId: 'pointId', timestamp: '2020-02-02T00:00:00.000Z', data: { value: '13' } },
-    lastFileSent: 'file',
-    cacheSize: 14,
-    errorSize: 15,
-    archiveSize: 16
+    lastContentSent: 'file',
+    contentCachedSize: 11,
+    contentErroredSize: 22,
+    contentArchivedSize: 33,
+    contentSentSize: 44,
+    currentCacheSize: 14,
+    currentErrorSize: 15,
+    currentArchiveSize: 16
   };
   northConnector: NorthConnectorDTO<NorthSettings> = {
     id: 'northId',

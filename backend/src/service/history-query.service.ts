@@ -667,20 +667,24 @@ export const toHistoryQueryDTO = <S extends SouthSettings, N extends NorthSettin
     southSettings: encryptionService.filterSecrets<S>(historyQuery.southSettings, southManifest.settings),
     northSettings: encryptionService.filterSecrets<N>(historyQuery.northSettings, northManifest.settings),
     caching: {
-      scanModeId: historyQuery.caching.scanModeId,
-      retryInterval: historyQuery.caching.retryInterval,
-      retryCount: historyQuery.caching.retryCount,
-      maxSize: historyQuery.caching.maxSize,
-      oibusTimeValues: {
-        groupCount: historyQuery.caching.oibusTimeValues.groupCount,
-        maxSendCount: historyQuery.caching.oibusTimeValues.maxSendCount
+      trigger: {
+        scanModeId: historyQuery.caching.trigger.scanModeId,
+        numberOfElements: historyQuery.caching.trigger.numberOfElements,
+        numberOfFiles: historyQuery.caching.trigger.numberOfFiles
       },
-      rawFiles: {
-        sendFileImmediately: historyQuery.caching.rawFiles.sendFileImmediately,
-        archive: {
-          enabled: historyQuery.caching.rawFiles.archive.enabled,
-          retentionDuration: historyQuery.caching.rawFiles.archive.retentionDuration
-        }
+      throttling: {
+        runMinDelay: historyQuery.caching.throttling.runMinDelay,
+        maxSize: historyQuery.caching.throttling.maxSize,
+        maxNumberOfElements: historyQuery.caching.throttling.maxNumberOfElements
+      },
+      error: {
+        retryInterval: historyQuery.caching.error.retryInterval,
+        retryCount: historyQuery.caching.error.retryCount,
+        retentionDuration: historyQuery.caching.error.retentionDuration
+      },
+      archive: {
+        enabled: historyQuery.caching.archive.enabled,
+        retentionDuration: historyQuery.caching.archive.retentionDuration
       }
     },
     items: historyQuery.items.map(item => toHistoryQueryItemDTO<I>(item, historyQuery.southType, encryptionService))
@@ -728,20 +732,24 @@ const copyHistoryQueryCommandToHistoryQueryEntity = async <S extends SouthSettin
     southManifest.settings
   );
   historyQueryEntity.caching = {
-    scanModeId: checkScanMode(scanModes, command.caching.scanModeId, command.caching.scanModeName),
-    retryInterval: command.caching.retryInterval,
-    retryCount: command.caching.retryCount,
-    maxSize: command.caching.maxSize,
-    oibusTimeValues: {
-      groupCount: command.caching.oibusTimeValues.groupCount,
-      maxSendCount: command.caching.oibusTimeValues.maxSendCount
+    trigger: {
+      scanModeId: checkScanMode(scanModes, command.caching.trigger.scanModeId, command.caching.trigger.scanModeName),
+      numberOfElements: command.caching.trigger.numberOfElements,
+      numberOfFiles: command.caching.trigger.numberOfFiles
     },
-    rawFiles: {
-      sendFileImmediately: command.caching.rawFiles.sendFileImmediately,
-      archive: {
-        enabled: command.caching.rawFiles.archive.enabled,
-        retentionDuration: command.caching.rawFiles.archive.retentionDuration
-      }
+    throttling: {
+      runMinDelay: command.caching.throttling.runMinDelay,
+      maxSize: command.caching.throttling.maxSize,
+      maxNumberOfElements: command.caching.throttling.maxNumberOfElements
+    },
+    error: {
+      retryInterval: command.caching.error.retryInterval,
+      retryCount: command.caching.error.retryCount,
+      retentionDuration: command.caching.error.retentionDuration
+    },
+    archive: {
+      enabled: command.caching.archive.enabled,
+      retentionDuration: command.caching.archive.retentionDuration
     }
   };
 
