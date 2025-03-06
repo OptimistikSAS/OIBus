@@ -346,6 +346,8 @@
       "north-connector": "North connector",
       "south-connector": "South connector",
       "test-connector": "Test connectors",
+      "history-query": "History query",
+      "test-history-query": "Test history queries",
       "details-modal": {
         "title": "Command {{ type }}",
         "success-info": "Command completed successfully",
