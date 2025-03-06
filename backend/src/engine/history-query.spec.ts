@@ -158,20 +158,14 @@ describe('HistoryQuery enabled', () => {
     await historyQuery.start();
 
     await historyQuery.addContent('southId', { type: 'time-values', content: [{}, {}] as Array<OIBusTimeValue> });
-    expect(logger.info).toHaveBeenCalledWith(
-      `Add 2 values from History Query "${testData.historyQueries.list[0].name}" to north connector`
-    );
-    expect(mockedNorth1.cacheValues).toHaveBeenCalledWith([{}, {}]);
+    expect(mockedNorth1.cacheContent).toHaveBeenCalledWith({ type: 'time-values', content: [{}, {}] as Array<OIBusTimeValue> }, 'southId');
   });
 
   it('should cache file', async () => {
     await historyQuery.start();
 
     await historyQuery.addContent('southId', { type: 'raw', filePath: 'myFile' });
-    expect(logger.info).toHaveBeenCalledWith(
-      `Add file "myFile" from History Query "${testData.historyQueries.list[0].name}" to north connector`
-    );
-    expect(mockedNorth1.cacheFile).toHaveBeenCalledWith('myFile');
+    expect(mockedNorth1.cacheContent).toHaveBeenCalledWith({ type: 'raw', filePath: 'myFile' }, 'southId');
   });
 
   it('should properly stop', async () => {
@@ -277,10 +271,8 @@ describe('HistoryQuery enabled', () => {
     expect(emitSpy).toHaveBeenCalledWith('north-run-end', {});
     mockedNorth1.metricsEvent.emit('cache-size', {});
     expect(emitSpy).toHaveBeenCalledWith('north-cache-size', {});
-    mockedNorth1.metricsEvent.emit('send-values', {});
-    expect(emitSpy).toHaveBeenCalledWith('north-send-values', {});
-    mockedNorth1.metricsEvent.emit('send-file', {});
-    expect(emitSpy).toHaveBeenCalledWith('north-send-file', {});
+    mockedNorth1.metricsEvent.emit('cache-content-size', 123);
+    expect(emitSpy).toHaveBeenCalledWith('north-cache-content-size', 123);
     mockedSouth1.metricsEvent.emit('connect', {});
     expect(emitSpy).toHaveBeenCalledWith('south-connect', {});
     mockedSouth1.metricsEvent.emit('run-start', {});
