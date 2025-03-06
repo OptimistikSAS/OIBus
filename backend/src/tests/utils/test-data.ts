@@ -394,20 +394,24 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
       suffix: '-suffix'
     },
     caching: {
-      scanModeId: scanModes[0].id,
-      retryInterval: 1_000,
-      retryCount: 3,
-      maxSize: 0,
-      oibusTimeValues: {
-        groupCount: 250,
-        maxSendCount: 10_000
+      trigger: {
+        scanModeId: scanModes[0].id,
+        numberOfElements: 250,
+        numberOfFiles: 1
       },
-      rawFiles: {
-        sendFileImmediately: false,
-        archive: {
-          enabled: false,
-          retentionDuration: 72
-        }
+      throttling: {
+        runMinDelay: 200,
+        maxSize: 30,
+        maxNumberOfElements: 10_000
+      },
+      error: {
+        retryInterval: 1_000,
+        retryCount: 3,
+        retentionDuration: 24
+      },
+      archive: {
+        enabled: false,
+        retentionDuration: 72
       }
     },
     subscriptions: [
@@ -439,20 +443,24 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
       compress: true
     },
     caching: {
-      scanModeId: scanModes[1].id,
-      retryInterval: 1_000,
-      retryCount: 1,
-      maxSize: 10,
-      oibusTimeValues: {
-        groupCount: 1_000,
-        maxSendCount: 10_000
+      trigger: {
+        scanModeId: scanModes[1].id,
+        numberOfElements: 1_000,
+        numberOfFiles: 1
       },
-      rawFiles: {
-        sendFileImmediately: false,
-        archive: {
-          enabled: false,
-          retentionDuration: 72
-        }
+      throttling: {
+        runMinDelay: 200,
+        maxSize: 30,
+        maxNumberOfElements: 10_000
+      },
+      error: {
+        retryInterval: 1_000,
+        retryCount: 1,
+        retentionDuration: 24
+      },
+      archive: {
+        enabled: false,
+        retentionDuration: 72
       }
     },
     subscriptions: [
@@ -477,21 +485,25 @@ const northConnectorCommand: NorthConnectorCommandDTO<NorthSettings> = {
     suffix: '-suffix'
   },
   caching: {
-    scanModeId: scanModes[0].id,
-    scanModeName: null,
-    retryInterval: 1_000,
-    retryCount: 3,
-    maxSize: 0,
-    oibusTimeValues: {
-      groupCount: 1_000,
-      maxSendCount: 10_000
+    trigger: {
+      scanModeId: scanModes[0].id,
+      scanModeName: null,
+      numberOfElements: 1_000,
+      numberOfFiles: 1
     },
-    rawFiles: {
-      sendFileImmediately: true,
-      archive: {
-        enabled: true,
-        retentionDuration: 72
-      }
+    throttling: {
+      runMinDelay: 200,
+      maxSize: 30,
+      maxNumberOfElements: 10_000
+    },
+    error: {
+      retryInterval: 1_000,
+      retryCount: 3,
+      retentionDuration: 24
+    },
+    archive: {
+      enabled: false,
+      retentionDuration: 0
     }
   },
   subscriptions: [southConnectors[0].id]
@@ -530,20 +542,24 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
       compress: true
     },
     caching: {
-      scanModeId: scanModes[0].id,
-      retryInterval: 1000,
-      retryCount: 3,
-      maxSize: 10000,
-      oibusTimeValues: {
-        groupCount: 100,
-        maxSendCount: 1000
+      trigger: {
+        scanModeId: scanModes[0].id,
+        numberOfElements: 100,
+        numberOfFiles: 1
       },
-      rawFiles: {
-        archive: {
-          enabled: true,
-          retentionDuration: 1000
-        },
-        sendFileImmediately: false
+      throttling: {
+        runMinDelay: 200,
+        maxSize: 10_000,
+        maxNumberOfElements: 1_000
+      },
+      error: {
+        retryInterval: 1_000,
+        retryCount: 3,
+        retentionDuration: 24
+      },
+      archive: {
+        enabled: true,
+        retentionDuration: 1_000
       }
     },
     items: [
@@ -593,20 +609,24 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
       suffix: '-suffix'
     },
     caching: {
-      scanModeId: scanModes[0].id,
-      retryInterval: 1000,
-      retryCount: 3,
-      maxSize: 10000,
-      oibusTimeValues: {
-        groupCount: 100,
-        maxSendCount: 1000
+      trigger: {
+        scanModeId: scanModes[0].id,
+        numberOfElements: 100,
+        numberOfFiles: 0
       },
-      rawFiles: {
-        archive: {
-          enabled: true,
-          retentionDuration: 1000
-        },
-        sendFileImmediately: false
+      throttling: {
+        runMinDelay: 200,
+        maxSize: 10_000,
+        maxNumberOfElements: 1_000
+      },
+      error: {
+        retryInterval: 1_000,
+        retryCount: 3,
+        retentionDuration: 24
+      },
+      archive: {
+        enabled: true,
+        retentionDuration: 1_000
       }
     },
     items: [
@@ -649,21 +669,25 @@ const historyQueryCommand: HistoryQueryCommandDTO<SouthSettings, NorthSettings, 
     suffix: '-suffix'
   },
   caching: {
-    scanModeId: scanModes[0].id,
-    scanModeName: null,
-    retryInterval: 1000,
-    retryCount: 3,
-    maxSize: 10000,
-    oibusTimeValues: {
-      groupCount: 100,
-      maxSendCount: 1000
+    trigger: {
+      scanModeId: scanModes[0].id,
+      scanModeName: null,
+      numberOfElements: 1_000,
+      numberOfFiles: 1
     },
-    rawFiles: {
-      archive: {
-        enabled: true,
-        retentionDuration: 1000
-      },
-      sendFileImmediately: false
+    throttling: {
+      runMinDelay: 200,
+      maxSize: 30,
+      maxNumberOfElements: 10_000
+    },
+    error: {
+      retryInterval: 1_000,
+      retryCount: 3,
+      retentionDuration: 24
+    },
+    archive: {
+      enabled: false,
+      retentionDuration: 0
     }
   },
   items: [
@@ -799,13 +823,14 @@ const northMetrics: NorthConnectorMetrics = {
   lastConnection: null,
   lastRunStart: null,
   lastRunDuration: null,
-  numberOfValuesSent: 11,
-  numberOfFilesSent: 11,
-  lastValueSent: null,
-  lastFileSent: null,
-  cacheSize: 10,
-  errorSize: 20,
-  archiveSize: 30
+  contentSentSize: 11,
+  contentCachedSize: 22,
+  contentErroredSize: 23,
+  contentArchivedSize: 24,
+  lastContentSent: null,
+  currentCacheSize: 10,
+  currentErrorSize: 20,
+  currentArchiveSize: 30
 };
 const historyQueryMetrics: HistoryQueryMetrics = {
   metricsStart: constants.dates.DATE_1,
@@ -822,13 +847,14 @@ const historyQueryMetrics: HistoryQueryMetrics = {
     lastConnection: null,
     lastRunStart: null,
     lastRunDuration: null,
-    numberOfValuesSent: 11,
-    numberOfFilesSent: 11,
-    lastValueSent: null,
-    lastFileSent: null,
-    cacheSize: 10,
-    errorSize: 20,
-    archiveSize: 30
+    contentSentSize: 11,
+    contentCachedSize: 22,
+    contentErroredSize: 23,
+    contentArchivedSize: 24,
+    lastContentSent: null,
+    currentCacheSize: 10,
+    currentErrorSize: 20,
+    currentArchiveSize: 30
   },
   historyMetrics: {
     running: false,

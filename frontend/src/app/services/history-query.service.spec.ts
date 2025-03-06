@@ -14,10 +14,11 @@ import { toPage } from '../shared/test-utils';
 import { Page } from '../../../../backend/shared/model/types';
 import { SouthConnectorCommandDTO } from '../../../../backend/shared/model/south-connector.model';
 import { DownloadService } from './download.service';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { NorthConnectorCommandDTO } from '../../../../backend/shared/model/north-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../../../backend/shared/model/south-settings.model';
 import { NorthSettings } from '../../../../backend/shared/model/north-settings.model';
+import { CacheMetadata } from '../../../../backend/shared/model/engine.model';
 
 describe('HistoryQueryService', () => {
   let http: HttpTestingController;
@@ -82,21 +83,25 @@ describe('HistoryQueryService', () => {
       southSettings: {} as SouthSettings,
       northSettings: {} as NorthSettings,
       caching: {
-        scanModeId: 'scanModeId1',
-        scanModeName: null,
-        retryInterval: 1000,
-        retryCount: 3,
-        maxSize: 30,
-        oibusTimeValues: {
-          groupCount: 1000,
-          maxSendCount: 10000
+        trigger: {
+          scanModeId: 'scanModeId1',
+          scanModeName: null,
+          numberOfElements: 1_000,
+          numberOfFiles: 1
         },
-        rawFiles: {
-          sendFileImmediately: true,
-          archive: {
-            enabled: false,
-            retentionDuration: 0
-          }
+        throttling: {
+          runMinDelay: 200,
+          maxSize: 30,
+          maxNumberOfElements: 10_000
+        },
+        error: {
+          retryInterval: 1_000,
+          retryCount: 3,
+          retentionDuration: 24
+        },
+        archive: {
+          enabled: false,
+          retentionDuration: 0
         }
       },
       items: []
@@ -313,6 +318,73 @@ describe('HistoryQueryService', () => {
     service.testSouthConnection('id1', command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1/south/test-connection' });
     expect(testRequest.request.body).toEqual(command);
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should search cache content', () => {
+    let expectedNorthCacheFiles: Array<{ metadataFilename: string; metadata: CacheMetadata }> | null = null;
+    const northCacheFiles: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [];
+
+    service
+      .searchCacheContent('id1', { start: '2020-01-01T00:00:00.000Z', end: '2021-01-01T00:00:00.000Z', nameContains: 'file' }, 'cache')
+      .subscribe(c => (expectedNorthCacheFiles = c));
+
+    http
+      .expectOne({
+        url: '/api/history-query/id1/cache/content?folder=cache&start=2020-01-01T00:00:00.000Z&end=2021-01-01T00:00:00.000Z&nameContains=file',
+        method: 'GET'
+      })
+      .flush(northCacheFiles);
+    expect(expectedNorthCacheFiles!).toEqual(northCacheFiles);
+  });
+
+  it('should get cache file content', () => {
+    let httpResponse: HttpResponse<Blob>;
+    const northCacheFileContent = new Blob(['test'], { type: 'text/plain' });
+    service.getCacheFileContent('id1', 'cache', 'file1').subscribe(c => (httpResponse = c));
+
+    http.expectOne({ url: '/api/history-query/id1/cache/content/file1?folder=cache', method: 'GET' }).flush(northCacheFileContent);
+    expect(httpResponse!.body).toEqual(northCacheFileContent);
+  });
+
+  it('should remove listed cache files', () => {
+    let done = false;
+    service.removeCacheContent('id1', 'cache', ['file1', 'file2']).subscribe(() => (done = true));
+    const testRequest = http.expectOne({
+      method: 'DELETE',
+      url: '/api/history-query/id1/cache/content/remove?folder=cache&filenames=file1&filenames=file2'
+    });
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should remove all archive files', () => {
+    let done = false;
+    service.removeAllCacheContent('id1', 'archive').subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/history-query/id1/cache/content/remove-all?folder=archive' });
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should move listed cache files into archive', () => {
+    let done = false;
+    service.moveCacheContent('id1', 'cache', 'archive', ['file1', 'file2']).subscribe(() => (done = true));
+    const testRequest = http.expectOne({
+      method: 'POST',
+      url: '/api/history-query/id1/cache/content/move?originFolder=cache&destinationFolder=archive'
+    });
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should move all archive files into cache', () => {
+    let done = false;
+    service.moveAllCacheContent('id1', 'archive', 'cache').subscribe(() => (done = true));
+    const testRequest = http.expectOne({
+      method: 'POST',
+      url: '/api/history-query/id1/cache/content/move-all?originFolder=archive&destinationFolder=cache'
+    });
     testRequest.flush(null);
     expect(done).toBe(true);
   });

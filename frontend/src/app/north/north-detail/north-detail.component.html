@@ -68,37 +68,56 @@
         <oib-box>
           <ng-template oibBoxTitle>
             <div class="d-flex justify-content-between align-items-center">
-              <span translate="north.cache-settings.title"></span>
+              <span translate="north.caching.title"></span>
               <a class="ms-3 btn btn-secondary btn-sm oib-box-btn" [routerLink]="['/north', northConnector.id, 'cache']"
-                ><span class="fa fa-search"></span><span class="mx-1" translate="north.cache-settings.explore-cache"></span
+                ><span class="fa fa-search"></span><span class="mx-1" translate="north.caching.explore-cache"></span
               ></a>
             </div>
           </ng-template>
           <table class="table table-sm table-hover oib-table mb-3">
             <tbody>
               <tr>
-                <td translate="north.cache-settings.send-scan-mode" style="width: 33%"></td>
-                <td>{{ getScanMode(northConnector.caching.scanModeId) }}</td>
+                <td translate="north.caching.trigger.title" style="width: 33%"></td>
+                <td
+                  translate="north.caching.trigger.value"
+                  [translateParams]="{
+                    scanMode: getScanMode(northConnector.caching.trigger.scanModeId),
+                    numberOfElements: northConnector.caching.trigger.numberOfElements,
+                    numberOfFiles: northConnector.caching.trigger.numberOfFiles
+                  }"
+                ></td>
               </tr>
               <tr>
-                <td translate="north.cache-settings.max-size"></td>
-                <td>{{ northConnector.caching.maxSize | number }} <span translate="common.size.MB"></span></td>
+                <td translate="north.caching.throttling.title"></td>
+                <td
+                  translate="north.caching.throttling.value"
+                  [translateParams]="{
+                    runMinDelay: northConnector.caching.throttling.runMinDelay,
+                    maxSize: northConnector.caching.throttling.maxSize,
+                    maxNumberOfElements: northConnector.caching.throttling.maxNumberOfElements
+                  }"
+                ></td>
               </tr>
               <tr>
-                <td translate="north.cache-settings.retry-interval"></td>
-                <td>{{ northConnector.caching.retryInterval | duration }}</td>
+                <td translate="north.caching.error.title"></td>
+                <td
+                  translate="north.caching.error.value"
+                  [translateParams]="{
+                    retryInterval: northConnector.caching.error.retryInterval,
+                    retryCount: northConnector.caching.error.retryCount,
+                    retentionDuration: northConnector.caching.error.retentionDuration
+                  }"
+                ></td>
               </tr>
               <tr>
-                <td translate="north.cache-settings.retry-count"></td>
-                <td>{{ northConnector.caching.retryCount | number }}</td>
-              </tr>
-              <tr>
-                <td translate="north.cache-settings.group-count"></td>
-                <td>{{ northConnector.caching.oibusTimeValues.groupCount | number }}</td>
-              </tr>
-              <tr>
-                <td translate="north.cache-settings.max-send-count"></td>
-                <td>{{ northConnector.caching.oibusTimeValues.maxSendCount | number }}</td>
+                <td translate="north.caching.archive.title"></td>
+                <td
+                  translate="north.caching.archive.value"
+                  [translateParams]="{
+                    enabled: northConnector.caching.archive.enabled,
+                    retentionDuration: northConnector.caching.archive.retentionDuration
+                  }"
+                ></td>
               </tr>
             </tbody>
           </table>
