@@ -311,7 +311,7 @@
             <div class="form-group">
               <div class="form-check form-switch">
                 <input formControlName="testNorthConnection" id="test-north-connection" type="checkbox" class="form-check-input" />
-                <label class="form-check-label" for="create-north">{{ 'test-north-connection' | oibusCommandTypeEnum }}</label>
+                <label class="form-check-label" for="test-north-connection">{{ 'test-north-connection' | oibusCommandTypeEnum }}</label>
               </div>
             </div>
           </div>
@@ -319,7 +319,7 @@
             <div class="form-group">
               <div class="form-check form-switch">
                 <input formControlName="testSouthConnection" id="test-south-connection" type="checkbox" class="form-check-input" />
-                <label class="form-check-label" for="create-north">{{ 'test-south-connection' | oibusCommandTypeEnum }}</label>
+                <label class="form-check-label" for="test-south-connection">{{ 'test-south-connection' | oibusCommandTypeEnum }}</label>
               </div>
             </div>
           </div>
@@ -327,7 +327,92 @@
             <div class="form-group">
               <div class="form-check form-switch">
                 <input formControlName="testSouthItem" id="test-south-item" type="checkbox" class="form-check-input" />
-                <label class="form-check-label" for="create-north">{{ 'test-south-item' | oibusCommandTypeEnum }}</label>
+                <label class="form-check-label" for="test-south-item">{{ 'test-south-item' | oibusCommandTypeEnum }}</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row mb-2">
+          <label class="form-label" translate="oia-module.commands.history-query"></label>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="createHistoryQuery" id="create-history-query" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="create-history-query">{{ 'create-history-query' | oibusCommandTypeEnum }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="updateHistoryQuery" id="update-history-query" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="update-history-query">{{ 'update-history-query' | oibusCommandTypeEnum }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input
+                  formControlName="createOrUpdateHistoryItemsFromCsv"
+                  id="create-or-update-history-query-south-items-from-csv"
+                  type="checkbox"
+                  class="form-check-input"
+                />
+                <label class="form-check-label" for="create-or-update-history-query-south-items-from-csv">{{
+                  'create-or-update-history-query-south-items-from-csv' | oibusCommandTypeEnum
+                }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="deleteHistoryQuery" id="delete-history-query" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="delete-history-query">{{ 'delete-history-query' | oibusCommandTypeEnum }}</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row mb-2">
+          <label class="form-label" translate="oia-module.commands.test-history-query"></label>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input
+                  formControlName="testHistoryNorthConnection"
+                  id="test-history-query-north-connection"
+                  type="checkbox"
+                  class="form-check-input"
+                />
+                <label class="form-check-label" for="test-history-query-north-connection">{{
+                  'test-history-query-north-connection' | oibusCommandTypeEnum
+                }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input
+                  formControlName="testHistorySouthConnection"
+                  id="test-history-query-south-connection"
+                  type="checkbox"
+                  class="form-check-input"
+                />
+                <label class="form-check-label" for="test-history-query-south-connection">{{
+                  'test-history-query-south-connection' | oibusCommandTypeEnum
+                }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="testHistorySouthItem" id="test-history-query-south-item" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="test-history-query-south-item">{{
+                  'test-history-query-south-item' | oibusCommandTypeEnum
+                }}</label>
               </div>
             </div>
           </div>
