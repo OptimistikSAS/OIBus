@@ -33,6 +33,9 @@ jobs:
         with:
           ref: ${{ github.ref }}
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4.0.0
+
       - name: Use Node.js
         if: ${{ steps.release.outputs.release_created }}
         uses: actions/setup-node@v4
@@ -44,8 +47,8 @@ jobs:
         shell: bash
         run: |
           cd documentation
-          npm ci
-          npm run build
+          pnpm install --frozen-lockfile
+          pnpm run build
 
       - name: Deploy documentation
         if: ${{ steps.release.outputs.release_created }}
@@ -61,5 +64,5 @@ jobs:
           # You can swap them out with your own user credentials.
           user_name: Optimistik SAS
           user_email: optimistiksas@users.noreply.github.com
-          
-          
+
+

@@ -30,21 +30,22 @@ You can learn more about OIBus by reading [our documentation](https://oibus.opti
 
 ## Build and deploy step
 
-* **Fork** the OIBus repository and clone it. Be sure to have NodeJS and npm installed (LTS versions).
+* **Fork** the OIBus repository and clone it. Be sure to have NodeJS and pnpm installed (LTS versions).
 * **Backend**: open a terminal in the backend folder `cd backend`
-    * Install the node dependencies: `npm install`
-    * Run the backend: `npm start`
+    * Install the node dependencies: `pnpm install`
+    * Run the backend: `pnpm start`
 * **Frontend**: open a terminal in the frontend folder `cd frontend`
-    * Install the node dependencies : `npm install`
-    * Run the frontend: `npm start`
+    * Install the node dependencies : `pnpm install`
+    * Run the frontend: `pnpm start`
     * Access the application on `http://localhost:2223` (default port)
     * Log in using `admin/pass`
 * You can compile OIBus on your appropriate distribution. To do that:
-    * In the frontend folder, run `npm install` and `npm run build`
+    * In the frontend folder, run `pnpm install` and `pnpm run build`
     * In the backend folder, run the command associated to the distribution you want to build
-      OIBus: `npm run build:win`, `npm run build:linux`, `npm run build:macos`, `npm run build:macos-arm64`
-    * You can now start OIBus from its binaries with `npm run start:win`, `npm run start:linux`, `npm run start:macos`
-      or `npm run start:macos-arm64`
+      OIBus: `pnpm run build:win`, `pnpm run build:linux`, `pnpm run build:macos`, `pnpm run build:macos-arm64`
+    * You can now start OIBus from its binaries with `pnpm run start:win`, `pnpm run start:linux`,
+      `pnpm run start:macos`
+      or `pnpm run start:macos-arm64`
 
 A more complete developer guide is accessible
 on [our developer documentation](https://oibus.optimistik.com/docs/developer/).
