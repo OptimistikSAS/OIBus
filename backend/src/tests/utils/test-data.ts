@@ -1301,7 +1301,40 @@ const oIBusCommands: Array<OIBusCommand> = [
     commandContent: {
       commandRefreshInterval: 15,
       commandRetryInterval: 5,
-      messageRetryInterval: 5
+      messageRetryInterval: 5,
+      commandPermissions: {
+        updateVersion: true,
+        restartEngine: true,
+        regenerateCipherKeys: true,
+        updateEngineSettings: true,
+        updateRegistrationSettings: true,
+        createScanMode: true,
+        updateScanMode: true,
+        deleteScanMode: true,
+        createIpFilter: true,
+        updateIpFilter: true,
+        deleteIpFilter: true,
+        createCertificate: true,
+        updateCertificate: true,
+        deleteCertificate: true,
+        createHistoryQuery: true,
+        updateHistoryQuery: true,
+        deleteHistoryQuery: true,
+        createOrUpdateHistoryItemsFromCsv: true,
+        testHistoryNorthConnection: true,
+        testHistorySouthConnection: true,
+        testHistorySouthItem: true,
+        createSouth: true,
+        updateSouth: true,
+        deleteSouth: true,
+        createOrUpdateSouthItemsFromCsv: true,
+        testSouthConnection: true,
+        testSouthItem: true,
+        createNorth: true,
+        updateNorth: true,
+        deleteNorth: true,
+        testNorthConnection: true
+      }
     }
   }
 ];
