@@ -52,9 +52,9 @@ describe('ChooseNorthConnectorTypeModal', () => {
           category: 'file',
           name: 'File Writer',
           description: 'File Writer description',
-          modes: { files: false, points: true }
+          types: ['raw']
         },
-        { id: 'console', category: 'debug', name: 'Console', description: 'Console description', modes: { files: false, points: true } }
+        { id: 'console', category: 'debug', name: 'Console', description: 'Console description', types: ['raw'] }
       ])
     );
 
