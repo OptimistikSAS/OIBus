@@ -87,10 +87,7 @@ describe('HistoryQueryDetailComponent', () => {
   const northManifest: NorthConnectorManifest = {
     id: 'oianalytics',
     category: 'api',
-    modes: {
-      files: true,
-      points: true
-    },
+    types: ['raw', 'time-values'],
     settings: [
       {
         key: 'host',
@@ -152,7 +149,8 @@ describe('HistoryQueryDetailComponent', () => {
           query: 'sql'
         } as SouthItemSettings
       }
-    ]
+    ],
+    northTransformers: []
   };
   const engineInfo: OIBusInfo = {
     version: '3.0.0',
