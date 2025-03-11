@@ -187,6 +187,10 @@
       "create-or-update-history-query-south-items-from-csv": "Load south items from CSV",
       "update-history-query-status": "Update history query status"
     },
+    "oibus-data-type": {
+      "raw": "Raw files (CSV, JSON, Text...)",
+      "time-values": "Time values (JSON)"
+    },
     "oibus-north-category": {
       "debug": "Debug",
       "file": "File",
@@ -1716,6 +1720,17 @@
       "proxy-url": "Proxy URL",
       "proxy-username": "Proxy username",
       "proxy-password": "Proxy password"
+    }
+  },
+  "transformers": {
+    "title": "Transform payloads",
+    "input-type": "Source type",
+    "output-type": "Destination type",
+    "standard": {
+      "iso-raw": "Raw (keep raw file as it is)",
+      "iso-time-values": "Time values (keep time values as it is)",
+      "time-values-to-csv": "To CSV (convert time values into CSV)",
+      "time-values-to-json": "To JSON (convert time values into raw JSON)"
     }
   },
   "logs": {
