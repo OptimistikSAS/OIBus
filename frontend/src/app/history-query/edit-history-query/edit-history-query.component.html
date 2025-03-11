@@ -213,6 +213,7 @@
                   [form]="historyQueryForm.controls.northSettings"
                   [settingsSchema]="northSettingsControls"
                   [scanModes]="scanModes"
+                  [certificates]="certificates"
                 />
               }
             </oib-box>
@@ -272,6 +273,7 @@
               (inMemoryItems)="updateInMemoryItems($event)"
             />
           }
+          <!-- TODO transformers here -->
         </form>
         @if (mode === 'create') {
           <div id="actions" class="mt-2 d-flex justify-content-end">
