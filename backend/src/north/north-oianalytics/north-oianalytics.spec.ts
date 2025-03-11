@@ -30,6 +30,8 @@ import OianalyticsRegistrationRepositoryMock from '../../tests/__mocks__/reposit
 import { mockBaseFolders } from '../../tests/utils/test-utils';
 import CacheService from '../../service/cache/cache.service';
 import { OIBusError } from '../../model/engine.model';
+import TransformerService from '../../service/transformer.service';
+import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
 
 jest.mock('node:fs/promises');
 jest.mock('node:fs');
@@ -54,6 +56,7 @@ const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const certificateRepository: CertificateRepository = new CertificateRepositoryMock();
 const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OianalyticsRegistrationRepositoryMock();
 const cacheService: CacheService = new CacheServiceMock();
+const transformerService: TransformerService = new TransformerServiceMock();
 
 jest.mock(
   '../../service/cache/cache.service',
@@ -114,9 +117,9 @@ describe('NorthOIAnalytics without proxy', () => {
     north = new NorthOIAnalytics(
       configuration,
       encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
-
       certificateRepository,
       oIAnalyticsRegistrationRepository,
       logger,
@@ -372,9 +375,9 @@ describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
     north = new NorthOIAnalytics(
       configuration,
       encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
-
       certificateRepository,
       oIAnalyticsRegistrationRepository,
       logger,
@@ -487,9 +490,9 @@ describe('NorthOIAnalytics with proxy', () => {
     north = new NorthOIAnalytics(
       configuration,
       encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
-
       certificateRepository,
       oIAnalyticsRegistrationRepository,
       logger,
@@ -608,9 +611,9 @@ describe('NorthOIAnalytics with proxy but without proxy password', () => {
     north = new NorthOIAnalytics(
       configuration,
       encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
-
       certificateRepository,
       oIAnalyticsRegistrationRepository,
       logger,
@@ -743,9 +746,9 @@ describe('NorthOIAnalytics with aad-certificate', () => {
     north = new NorthOIAnalytics(
       configuration,
       encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
-
       certificateRepository,
       oIAnalyticsRegistrationRepository,
       logger,
@@ -815,6 +818,7 @@ describe('NorthOIAnalytics with OIA module', () => {
     north = new NorthOIAnalytics(
       configuration,
       encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       certificateRepository,

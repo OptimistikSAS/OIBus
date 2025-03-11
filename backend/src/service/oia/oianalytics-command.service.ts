@@ -933,7 +933,8 @@ export default class OIAnalyticsCommandService {
         enabled: true,
         settings: command.commandContent.northSettings,
         caching: command.commandContent.caching,
-        subscriptions: []
+        subscriptions: [],
+        transformers: []
       },
       this.logger
     );

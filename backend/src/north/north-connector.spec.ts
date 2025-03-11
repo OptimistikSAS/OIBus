@@ -23,6 +23,8 @@ import path from 'node:path';
 import { DateTime } from 'luxon';
 import { createReadStream, createWriteStream } from 'node:fs';
 import { Readable } from 'node:stream';
+import TransformerService from '../service/transformer.service';
+import TransformerServiceMock from '../tests/__mocks__/service/transformer-service.mock';
 
 // Mock fs
 jest.mock('node:stream');
@@ -36,6 +38,7 @@ const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const cacheService: CacheService = new CacheServiceMock();
+const transformerService: TransformerService = new TransformerServiceMock();
 
 jest.mock(
   '../service/cache/cache.service',
@@ -74,6 +77,7 @@ describe('NorthConnector', () => {
     north = new NorthFileWriter(
       testData.north.list[0] as NorthConnectorEntity<NorthFileWriterSettings>,
       encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
@@ -594,6 +598,7 @@ describe('NorthConnector test id', () => {
     north = new NorthFileWriter(
       northTest,
       encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
