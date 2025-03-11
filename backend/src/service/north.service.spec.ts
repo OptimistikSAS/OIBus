@@ -27,6 +27,8 @@ import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
 import NorthConnectorMock from '../tests/__mocks__/north-connector.mock';
 import { createBaseFolders, filesExists } from './utils';
 import fs from 'node:fs/promises';
+import TransformerServiceMock from '../tests/__mocks__/service/transformer-service.mock';
+import TransformerService from './transformer.service';
 
 jest.mock('./encryption.service');
 jest.mock('./utils');
@@ -45,6 +47,7 @@ const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new
 const oIAnalyticsMessageService: OIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const dataStreamEngine: DataStreamEngine = new DataStreamEngineMock(logger);
+const transformerService: TransformerService = new TransformerServiceMock();
 
 const mockedNorth1 = new NorthConnectorMock(testData.north.list[0]);
 
@@ -113,6 +116,7 @@ describe('north service', () => {
       oIAnalyticsRegistrationRepository,
       oIAnalyticsMessageService,
       encryptionService,
+      transformerService,
       dataStreamEngine
     );
   });
@@ -233,8 +237,9 @@ describe('north service', () => {
 
   it('createNorth() should create North connector', async () => {
     service.runNorth = jest.fn().mockReturnValue(mockedNorth1);
-    (scanModeRepository.findAll as jest.Mock).mockReturnValue(testData.scanMode.list);
-    (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValue(
+    (scanModeRepository.findAll as jest.Mock).mockReturnValueOnce(testData.scanMode.list);
+    (transformerService.findAll as jest.Mock).mockReturnValueOnce(testData.transformers.list);
+    (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValueOnce(
       testData.south.list.map(element => ({
         id: element.id,
         name: element.name,
@@ -253,8 +258,8 @@ describe('north service', () => {
 
   it('createNorth() should not create North connector if subscription not found', async () => {
     service.runNorth = jest.fn().mockReturnValue(mockedNorth1);
-    (scanModeRepository.findAll as jest.Mock).mockReturnValue(testData.scanMode.list);
-    (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValue(
+    (scanModeRepository.findAll as jest.Mock).mockReturnValueOnce(testData.scanMode.list);
+    (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValueOnce(
       testData.south.list.map(element => ({
         id: element.id,
         name: element.name,
@@ -266,6 +271,24 @@ describe('north service', () => {
     const command = JSON.parse(JSON.stringify(testData.north.command));
     command.subscriptions = [testData.south.list[0].id, 'bad'];
     await expect(service.createNorth(command, null)).rejects.toThrow(`Could not find South Connector bad`);
+  });
+
+  it('createNorth() should not create North connector if transformer is not found', async () => {
+    service.runNorth = jest.fn().mockReturnValue(mockedNorth1);
+    (scanModeRepository.findAll as jest.Mock).mockReturnValueOnce(testData.scanMode.list);
+    (transformerService.findAll as jest.Mock).mockReturnValueOnce([]);
+    (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValueOnce(
+      testData.south.list.map(element => ({
+        id: element.id,
+        name: element.name,
+        type: element.type,
+        description: element.description,
+        enabled: element.enabled
+      }))
+    );
+    await expect(service.createNorth(testData.north.command, null)).rejects.toThrow(
+      `Could not find OIBus transformer ${testData.north.command.transformers[0]}`
+    );
   });
 
   it('should get North data stream', () => {
@@ -318,6 +341,9 @@ describe('north service', () => {
 
   it('updateNorth() should update North connector', async () => {
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(testData.north.list[0]);
+    (transformerService.findAll as jest.Mock).mockReturnValueOnce(testData.transformers.list);
+    (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValueOnce(testData.south.list);
+    (scanModeRepository.findAll as jest.Mock).mockReturnValueOnce(testData.scanMode.list);
     await service.updateNorth(testData.north.list[0].id, testData.north.command);
 
     expect(northConnectorRepository.saveNorthConnector).toHaveBeenCalledTimes(1);

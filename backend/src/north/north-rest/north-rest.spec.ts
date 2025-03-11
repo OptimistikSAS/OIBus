@@ -22,6 +22,8 @@ import { mockBaseFolders } from '../../tests/utils/test-utils';
 import { OIBusError } from '../../model/engine.model';
 import CacheService from '../../service/cache/cache.service';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
+import TransformerService from '../../service/transformer.service';
+import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
 
 function mockResponseData(data: string, statusCode: number) {
   return {
@@ -40,6 +42,7 @@ const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
+const transformerService: TransformerService = new TransformerServiceMock();
 const cacheService: CacheService = new CacheServiceMock();
 
 jest.mock(
@@ -88,6 +91,7 @@ describe('NorthREST', () => {
     north = new NorthREST(
       configuration,
       encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
@@ -272,6 +276,7 @@ describe('NorthREST without proxy', () => {
     north = new NorthREST(
       configuration,
       encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
@@ -809,6 +814,7 @@ describe('NorthREST with proxy', () => {
     north = new NorthREST(
       configuration,
       encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,

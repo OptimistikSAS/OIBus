@@ -8,9 +8,13 @@ import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { Instant } from '../../model/types';
 import { OIBusNorthType } from '../../../shared/model/north-connector.model';
 import { OIBusSouthType } from '../../../shared/model/south-connector.model';
+import { Transformer } from '../../model/transformer.model';
+import { toTransformer } from './transformer.repository';
 
 const HISTORY_QUERIES_TABLE = 'history_queries';
 const HISTORY_ITEMS_TABLE = 'history_items';
+const HISTORY_TRANSFORMERS_TABLE = 'history_query_transformers';
+const TRANSFORMERS_TABLE = 'transformers';
 const PAGE_SIZE = 50;
 
 export default class HistoryQueryRepository {
@@ -153,6 +157,14 @@ export default class HistoryQueryRepository {
       } else {
         this.database.prepare(`DELETE FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ?;`).run(historyQuery.id);
       }
+
+      this.database.prepare(`DELETE FROM ${HISTORY_TRANSFORMERS_TABLE} WHERE history_id = ?;`).run(historyQuery.id);
+      if (historyQuery.northTransformers.length > 0) {
+        const insert = this.database.prepare(`INSERT INTO ${HISTORY_TRANSFORMERS_TABLE} (history_id, transformer_id) VALUES (?, ?);`);
+        for (const transformer of historyQuery.northTransformers) {
+          insert.run(historyQuery.id, transformer.id);
+        }
+      }
     });
     transaction();
   }
@@ -165,6 +177,7 @@ export default class HistoryQueryRepository {
   deleteHistoryQuery(id: string): void {
     const transaction = this.database.transaction(() => {
       this.database.prepare(`DELETE FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ?;`).run(id);
+      this.database.prepare(`DELETE FROM ${HISTORY_TRANSFORMERS_TABLE} WHERE history_id = ?;`).run(id);
       this.database.prepare(`DELETE FROM ${HISTORY_QUERIES_TABLE} WHERE id = ?;`).run(id);
     });
     transaction();
@@ -298,6 +311,14 @@ export default class HistoryQueryRepository {
     this.database.prepare(query).run(id);
   }
 
+  findAllTransformersForHistory(historyId: string): Array<Transformer> {
+    const query = `SELECT t.id, t.name, t.type, t.description, t.input_type, t.output_type, t.standard_code, t.custom_code FROM ${HISTORY_TRANSFORMERS_TABLE} ht JOIN ${TRANSFORMERS_TABLE} t ON ht.transformer_id = t.id WHERE ht.history_id = ?;`;
+    return this.database
+      .prepare(query)
+      .all(historyId)
+      .map(result => toTransformer(result as Record<string, string>));
+  }
+
   private toHistoryQueryItemEntity<I extends SouthItemSettings>(result: Record<string, string>): HistoryQueryItemEntity<I> {
     return {
       id: result.id,
@@ -342,7 +363,8 @@ export default class HistoryQueryRepository {
           retentionDuration: result.caching_archive_retention_duration as number
         }
       },
-      items: this.findAllItemsForHistoryQuery<I>(result.id as string)
+      items: this.findAllItemsForHistoryQuery<I>(result.id as string),
+      northTransformers: this.findAllTransformersForHistory(result.id as string)
     };
   }
 }

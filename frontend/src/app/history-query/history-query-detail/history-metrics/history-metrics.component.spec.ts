@@ -55,10 +55,7 @@ class TestComponent {
   northManifest: NorthConnectorManifest = {
     id: 'oianalytics',
     category: 'api',
-    modes: {
-      files: true,
-      points: true
-    },
+    types: ['raw', 'time-values'],
     settings: [
       {
         key: 'host',
@@ -112,7 +109,8 @@ class TestComponent {
         retentionDuration: 0
       }
     },
-    items: []
+    items: [],
+    northTransformers: []
   };
   historyMetrics: HistoryQueryMetrics = {
     metricsStart: '2020-01-01T00:00:00.000Z',
