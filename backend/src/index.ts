@@ -25,6 +25,7 @@ import CertificateService from './service/certificate.service';
 import UserService from './service/user.service';
 import LogService from './service/log.service';
 import CleanupService from './service/cache/cleanup.service';
+import TransformerService from './service/transformer.service';
 
 const CONFIG_DATABASE = 'oibus.db';
 const CRYPTO_DATABASE = 'crypto.db';
@@ -126,6 +127,8 @@ const LOG_DB_NAME = 'logs.db';
     loggerService.logger!
   );
 
+  const transformerService = new TransformerService(new JoiValidator(), repositoryService.transformerRepository, oIAnalyticsMessageService);
+
   const connectionService = new ConnectionService(loggerService.logger!);
   const northService = new NorthService(
     new JoiValidator(),
@@ -138,6 +141,7 @@ const LOG_DB_NAME = 'logs.db';
     repositoryService.oianalyticsRegistrationRepository,
     oIAnalyticsMessageService,
     encryptionService,
+    transformerService,
     dataStreamEngine
   );
   const southService = new SouthService(
@@ -164,6 +168,7 @@ const LOG_DB_NAME = 'logs.db';
     repositoryService.historyQueryMetricsRepository,
     southService,
     northService,
+    transformerService,
     oIAnalyticsMessageService,
     encryptionService,
     historyQueryEngine
@@ -252,6 +257,7 @@ const LOG_DB_NAME = 'logs.db';
     oIBusService,
     southService,
     northService,
+    transformerService,
     historyQueryService,
     homeMetricsService,
     ignoreIpFilters,

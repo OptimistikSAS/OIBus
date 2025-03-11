@@ -109,7 +109,8 @@ describe('NorthConnectorService', () => {
           retentionDuration: 0
         }
       },
-      subscriptions: []
+      subscriptions: [],
+      transformers: []
     };
 
     service.create(command, '').subscribe(() => (done = true));
@@ -149,7 +150,8 @@ describe('NorthConnectorService', () => {
           retentionDuration: 0
         }
       },
-      subscriptions: []
+      subscriptions: [],
+      transformers: []
     };
 
     service.update('id1', command).subscribe(() => (done = true));
@@ -300,7 +302,8 @@ describe('NorthConnectorService', () => {
           retentionDuration: 0
         }
       },
-      subscriptions: []
+      subscriptions: [],
+      transformers: []
     };
 
     service.testConnection('id1', command).subscribe(() => (done = true));
