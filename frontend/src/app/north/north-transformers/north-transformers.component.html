@@ -1,0 +1,30 @@
+<oib-box boxTitle="transformers.title" helpUrl="https://oibus.optimistik.com/docs/guide/north-connectors/common-settings#transformers">
+  <div class="mb-3 px-2">
+    <table class="table table-sm oib-table">
+      <thead class="light">
+        <tr>
+          <th translate="transformers.input-type"></th>
+          <th translate="transformers.output-type"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (transformer of controls().controls; track transformer) {
+          <tr>
+            <td class="align-middle">
+              <span>{{ transformer.value.type! | oIBusDataTypeEnum }}</span>
+            </td>
+            <td class="align-middle">
+              <oib-transformer
+                [key]="transformer.value.type!"
+                [formControl]="transformer.controls.transformer"
+                [transformers]="transformers()"
+                [inputType]="transformer.value.type!"
+                [outputType]="northManifest().types"
+              />
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</oib-box>

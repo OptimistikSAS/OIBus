@@ -115,6 +115,7 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
               case 'OibNumber':
               case 'OibTimezone':
               case 'OibScanMode':
+              case 'OibTransformer':
                 return {
                   key: setting.translationKey,
                   value: northSettings[setting.key]
@@ -182,7 +183,8 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
           retentionDuration: this.northConnector!.caching!.archive!.retentionDuration!
         }
       },
-      subscriptions: []
+      subscriptions: [],
+      transformers: []
     };
 
     const modalRef = this.modalService.open(TestConnectionResultModalComponent);

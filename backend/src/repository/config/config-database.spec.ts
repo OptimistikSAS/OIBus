@@ -63,6 +63,12 @@ import {
   SouthConnectorItemTestingSettings
 } from '../../../shared/model/south-connector.model';
 import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO } from '../../../shared/model/history-query.model';
+import TransformerRepository from './transformer.repository';
+import { StandardTransformer } from '../../model/transformer.model';
+import IsoTimeValuesTransformer from '../../service/transformers/iso-time-values-transformer';
+import OIBusTimeValuesToCsvTransformer from '../../service/transformers/oibus-time-values-to-csv-transformer';
+import IsoRawTransformer from '../../service/transformers/iso-raw-transformer';
+import OIBusTimeValuesToJSONTransformer from '../../service/transformers/oibus-time-values-to-json-transformer';
 
 jest.mock('../../service/utils');
 jest.mock('argon2');
@@ -102,6 +108,102 @@ describe('Repository with populated database', () => {
     it('should update version', () => {
       repository.updateVersion('9.9.99', '9.9.99');
       expect(repository.get()!.version).toEqual('9.9.99');
+    });
+  });
+
+  describe('Transformer', () => {
+    const standardTransformers: Array<StandardTransformer> = [
+      {
+        id: IsoRawTransformer.transformerName,
+        type: 'standard',
+        name: IsoRawTransformer.transformerName,
+        description: '',
+        standardCode: '',
+        inputType: 'raw',
+        outputType: 'raw'
+      },
+      {
+        id: IsoTimeValuesTransformer.transformerName,
+        type: 'standard',
+        name: IsoTimeValuesTransformer.transformerName,
+        description: '',
+        standardCode: '',
+        inputType: 'time-values',
+        outputType: 'time-values'
+      },
+      {
+        id: OIBusTimeValuesToCsvTransformer.transformerName,
+        type: 'standard',
+        name: OIBusTimeValuesToCsvTransformer.transformerName,
+        description: '',
+        standardCode: '',
+        inputType: 'time-values',
+        outputType: 'raw'
+      },
+      {
+        id: OIBusTimeValuesToJSONTransformer.transformerName,
+        type: 'standard',
+        name: OIBusTimeValuesToJSONTransformer.transformerName,
+        description: '',
+        standardCode: '',
+        inputType: 'time-values',
+        outputType: 'raw'
+      }
+    ];
+    let repository: TransformerRepository;
+    beforeEach(() => {
+      jest.clearAllMocks();
+      repository = new TransformerRepository(database);
+    });
+
+    it('should properly find all transformers', () => {
+      expect(repository.findAll()).toEqual([...testData.transformers.list, ...standardTransformers]);
+    });
+
+    it('should properly find a transformer by its ID', () => {
+      expect(repository.findById(testData.transformers.list[0].id)).toEqual(testData.transformers.list[0]);
+      expect(repository.findById('bad id')).toEqual(null);
+    });
+
+    it('should create a transformer', () => {
+      (generateRandomId as jest.Mock).mockReturnValueOnce('newId');
+      const createTransformer = JSON.parse(JSON.stringify(testData.transformers.list[0]));
+      createTransformer.id = '';
+      createTransformer.name = 'new name';
+      repository.save(createTransformer);
+      expect(repository.findById('newId')).toEqual(createTransformer);
+    });
+
+    it('should update a transformer', () => {
+      const updateTransformer = JSON.parse(JSON.stringify(testData.transformers.list[0]));
+      updateTransformer.id = 'newId';
+      updateTransformer.name = 'new name updated';
+      updateTransformer.description = 'new description updated';
+      repository.save(updateTransformer);
+      const result = repository.findById(updateTransformer.id)!;
+      expect(result.name).toEqual(updateTransformer.name);
+      expect(result.description).toEqual(updateTransformer.description);
+    });
+
+    it('should delete transformer', () => {
+      repository.delete('newId');
+      expect(repository.findById('newId')).toEqual(null);
+    });
+
+    it('should properly search transformers with search params and page them', () => {
+      expect(
+        repository.search({
+          name: testData.transformers.list[0].name,
+          type: testData.transformers.list[0].type,
+          inputType: testData.transformers.list[0].inputType,
+          outputType: testData.transformers.list[0].outputType,
+          page: 0
+        })
+      ).toEqual(createPageFromArray([testData.transformers.list[0]], 10, 0));
+    });
+
+    it('should properly search transformers and page them', () => {
+      expect(repository.search({})).toEqual(createPageFromArray([...testData.transformers.list, ...standardTransformers], 10, 0));
     });
   });
 
