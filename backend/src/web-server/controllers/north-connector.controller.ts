@@ -20,7 +20,7 @@ export default class NorthConnectorController {
       ctx.app.northService.getInstalledNorthManifests().map(manifest => ({
         id: manifest.id,
         category: manifest.category,
-        modes: manifest.modes
+        types: manifest.types
       }))
     );
   }

@@ -1294,7 +1294,8 @@ describe('OIAnalytics Command Service', () => {
         enabled: true,
         settings: command.commandContent.northSettings,
         caching: command.commandContent.caching,
-        subscriptions: []
+        subscriptions: [],
+        transformers: []
       },
       logger
     );

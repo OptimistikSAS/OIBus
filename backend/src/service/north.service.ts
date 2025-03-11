@@ -52,6 +52,8 @@ import fs from 'node:fs/promises';
 import { BaseFolders } from '../model/types';
 import { ReadStream } from 'node:fs';
 import { CacheMetadata, CacheSearchParam } from '../../shared/model/engine.model';
+import TransformerService, { toTransformerLightDTO } from './transformer.service';
+import { TransformerLightDTO } from '../../shared/model/transformer.model';
 
 export const northManifestList: Array<NorthConnectorManifest> = [
   consoleManifest,
@@ -75,6 +77,7 @@ export default class NorthService {
     private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
     private oIAnalyticsMessageService: OIAnalyticsMessageService,
     private readonly encryptionService: EncryptionService,
+    private readonly transformerService: TransformerService,
     private readonly dataStreamEngine: DataStreamEngine
   ) {}
 
@@ -90,6 +93,7 @@ export default class NorthService {
         return new NorthAmazonS3(
           settings as NorthConnectorEntity<NorthAmazonS3Settings>,
           this.encryptionService,
+          this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
@@ -99,6 +103,7 @@ export default class NorthService {
         return new NorthAzureBlob(
           settings as NorthConnectorEntity<NorthAzureBlobSettings>,
           this.encryptionService,
+          this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
@@ -108,6 +113,7 @@ export default class NorthService {
         return new NorthConsole(
           settings as NorthConnectorEntity<NorthConsoleSettings>,
           this.encryptionService,
+          this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
@@ -117,6 +123,7 @@ export default class NorthService {
         return new NorthFileWriter(
           settings as NorthConnectorEntity<NorthFileWriterSettings>,
           this.encryptionService,
+          this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
@@ -126,6 +133,7 @@ export default class NorthService {
         return new NorthOIAnalytics(
           settings as NorthConnectorEntity<NorthOIAnalyticsSettings>,
           this.encryptionService,
+          this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
           this.certificateRepository,
@@ -137,6 +145,7 @@ export default class NorthService {
         return new NorthSFTP(
           settings as NorthConnectorEntity<NorthSFTPSettings>,
           this.encryptionService,
+          this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
@@ -146,6 +155,7 @@ export default class NorthService {
         return new NorthREST(
           settings as NorthConnectorEntity<NorthRESTSettings>,
           this.encryptionService,
+          this.transformerService,
           this.northConnectorRepository,
           this.scanModeRepository,
           logger,
@@ -182,7 +192,8 @@ export default class NorthService {
         manifest.settings
       ),
       name: northConnector ? northConnector.name : `${command!.type}:test-connection`,
-      subscriptions: []
+      subscriptions: [],
+      transformers: []
     };
 
     const north = this.runNorth(testToRun, logger, { cache: 'baseCacheFolder', archive: 'baseArchiveFolder', error: 'baseErrorFolder' });
@@ -218,7 +229,8 @@ export default class NorthService {
       this.retrieveSecretsFromNorth(retrieveSecretsFromNorth, manifest),
       this.encryptionService,
       this.scanModeRepository.findAll(),
-      this.southConnectorRepository.findAllSouth()
+      this.southConnectorRepository.findAllSouth(),
+      this.transformerService.findAll()
     );
     this.northConnectorRepository.saveNorthConnector(northEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
@@ -304,7 +316,8 @@ export default class NorthService {
       previousSettings,
       this.encryptionService,
       this.scanModeRepository.findAll(),
-      this.southConnectorRepository.findAllSouth()
+      this.southConnectorRepository.findAllSouth(),
+      this.transformerService.findAll()
     );
     this.northConnectorRepository.saveNorthConnector(northEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
@@ -490,7 +503,8 @@ export const toNorthConnectorDTO = <N extends NorthSettings>(
         retentionDuration: northEntity.caching.archive.retentionDuration
       }
     },
-    subscriptions: northEntity.subscriptions
+    subscriptions: northEntity.subscriptions,
+    transformers: northEntity.transformers.map(transformer => toTransformerLightDTO(transformer))
   };
 };
 
@@ -510,7 +524,8 @@ export const copyNorthConnectorCommandToNorthEntity = async <N extends NorthSett
   currentSettings: NorthConnectorEntity<N> | null,
   encryptionService: EncryptionService,
   scanModes: Array<ScanMode>,
-  southConnectors: Array<SouthConnectorLightDTO>
+  southConnectors: Array<SouthConnectorLightDTO>,
+  transformers: Array<TransformerLightDTO>
 ): Promise<void> => {
   northEntity.name = command.name;
   northEntity.type = command.type;
@@ -548,5 +563,12 @@ export const copyNorthConnectorCommandToNorthEntity = async <N extends NorthSett
       throw new Error(`Could not find South Connector ${subscriptionId}`);
     }
     return subscription;
+  });
+  northEntity.transformers = command.transformers.map(transformerId => {
+    const transformer = transformers.find(element => element.id === transformerId);
+    if (!transformer) {
+      throw new Error(`Could not find OIBus transformer ${transformerId}`);
+    }
+    return transformer;
   });
 };
