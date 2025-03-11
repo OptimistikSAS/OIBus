@@ -14,6 +14,7 @@ import { NorthConnectorEntity } from '../../model/north-connector.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
+import TransformerService from '../../service/transformer.service';
 import type { ProxySettings } from '@azure/core-rest-pipeline/dist/browser';
 
 const TEST_FILE = 'oibus-azure-test.txt';
@@ -25,12 +26,13 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
   constructor(
     connector: NorthConnectorEntity<NorthAzureBlobSettings>,
     encryptionService: EncryptionService,
+    transformerService: TransformerService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(connector, encryptionService, northConnectorRepository, scanModeRepository, logger, baseFolders);
+    super(connector, encryptionService, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   async start(dataStream = true): Promise<void> {

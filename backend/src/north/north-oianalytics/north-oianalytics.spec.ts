@@ -29,6 +29,8 @@ import FormData from 'form-data';
 import { ClientCertificateCredential, ClientSecretCredential } from '@azure/identity';
 import CacheService from '../../service/cache/cache.service';
 import { OIBusError } from '../../model/engine.model';
+import TransformerService from '../../service/transformer.service';
+import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
 
 jest.mock('node:fs/promises');
 jest.mock('node:fs');
@@ -53,6 +55,7 @@ const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const certificateRepository: CertificateRepository = new CertificateRepositoryMock();
 const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OianalyticsRegistrationRepositoryMock();
 const cacheService: CacheService = new CacheServiceMock();
+const transformerService: TransformerService = new TransformerServiceMock();
 
 jest.mock(
   '../../service/cache/cache.service',
@@ -163,6 +166,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
     north = new NorthOIAnalytics(
       configuration,
       encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       certificateRepository,
@@ -594,6 +598,7 @@ describe('NorthOIAnalytics with Azure Active Directory', () => {
       north = new NorthOIAnalytics(
         configuration,
         encryptionService,
+        transformerService,
         northConnectorRepository,
         scanModeRepository,
         certificateRepository,
@@ -695,6 +700,7 @@ describe('NorthOIAnalytics with Azure Active Directory', () => {
       north = new NorthOIAnalytics(
         configuration,
         encryptionService,
+        transformerService,
         northConnectorRepository,
         scanModeRepository,
         certificateRepository,
@@ -778,6 +784,7 @@ describe('NorthOIAnalytics with OIA module', () => {
     north = new NorthOIAnalytics(
       configuration,
       encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       certificateRepository,

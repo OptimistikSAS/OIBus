@@ -60,6 +60,8 @@ export const createFormControl = (formControlSettings: OibFormControl, fb: NonNu
       return fb.control(formControlSettings.defaultValue || false, validators);
     case 'OibScanMode':
       return fb.control(null, validators);
+    case 'OibTransformer':
+      return fb.control(null, getValidators(formControlSettings.validators || []));
     case 'OibFormGroup':
       return createFormGroup(formControlSettings.content, fb);
   }

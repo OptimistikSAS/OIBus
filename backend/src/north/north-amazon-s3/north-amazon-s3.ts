@@ -15,6 +15,7 @@ import { NorthConnectorEntity } from '../../model/north-connector.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
+import TransformerService from '../../service/transformer.service';
 
 /**
  * Class NorthAmazonS3 - sends files to Amazon AWS S3
@@ -25,12 +26,13 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
   constructor(
     connector: NorthConnectorEntity<NorthAmazonS3Settings>,
     encryptionService: EncryptionService,
+    transformerService: TransformerService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(connector, encryptionService, northConnectorRepository, scanModeRepository, logger, baseFolders);
+    super(connector, encryptionService, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   /**

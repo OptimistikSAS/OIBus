@@ -19,6 +19,7 @@ import { HTTPRequest, ReqAuthOptions, ReqProxyOptions, ReqResponse, retryableHtt
 import fs from 'node:fs/promises';
 import { DateTime } from 'luxon';
 import csv from 'papaparse';
+import TransformerService from '../../service/transformer.service';
 
 /**
  * Class Console - display values and file path into the console
@@ -27,12 +28,13 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
   constructor(
     configuration: NorthConnectorEntity<NorthRESTSettings>,
     encryptionService: EncryptionService,
+    transformerService: TransformerService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(configuration, encryptionService, northConnectorRepository, scanModeRepository, logger, baseFolders);
+    super(configuration, encryptionService, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   async handleContent(cacheMetadata: CacheMetadata): Promise<void> {

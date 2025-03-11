@@ -26,6 +26,8 @@ import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.
 import fs from 'node:fs/promises';
 import { OIBusTimeValue } from '../../../shared/model/engine.model';
 import csv from 'papaparse';
+import TransformerService from '../../service/transformer.service';
+import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
 
 jest.mock('node:fs');
 jest.mock('node:fs/promises');
@@ -37,6 +39,7 @@ const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
+const transformerService: TransformerService = new TransformerServiceMock();
 const cacheService: CacheService = new CacheServiceMock();
 
 jest.mock(
@@ -209,6 +212,7 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
     north = new NorthREST(
       configuration,
       encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,

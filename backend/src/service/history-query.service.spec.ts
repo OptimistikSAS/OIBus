@@ -31,6 +31,8 @@ import NorthConnectorRepository from '../repository/config/north-connector.repos
 import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/south-connector-repository.mock';
 import NorthConnectorRepositoryMock from '../tests/__mocks__/repository/config/north-connector-repository.mock';
 import { filesExists, stringToBoolean } from './utils';
+import TransformerService from './transformer.service';
+import TransformerServiceMock from '../tests/__mocks__/service/transformer-service.mock';
 jest.mock('papaparse');
 jest.mock('node:fs/promises');
 jest.mock('../web-server/controllers/validators/joi.validator');
@@ -49,6 +51,7 @@ const northService: NorthService = new NorthServiceMock();
 const oIAnalyticsMessageService: OIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const historyQueryEngine: HistoryQueryEngine = new HistoryQueryEngineMock(logger);
+const transformerService: TransformerService = new TransformerServiceMock();
 
 let service: HistoryQueryService;
 describe('History Query service', () => {
@@ -64,6 +67,7 @@ describe('History Query service', () => {
       historyQueryMetricsRepository,
       southService,
       northService,
+      transformerService,
       oIAnalyticsMessageService,
       encryptionService,
       historyQueryEngine
@@ -356,6 +360,7 @@ describe('History Query service', () => {
         ...southManifestList[4] // mssql
       }
     ]);
+    (transformerService.findAll as jest.Mock).mockReturnValueOnce(testData.transformers.list);
     service.retrieveSecrets = jest.fn();
 
     await service.createHistoryQuery(testData.historyQueries.command, testData.historyQueries.list[0].id, null, null);
@@ -396,6 +401,25 @@ describe('History Query service', () => {
     );
   });
 
+  it('createHistoryQuery() should fail to create a history query when transformer is not found', async () => {
+    (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...northManifestList[4] // file-writer
+      }
+    ]);
+    (southService.getInstalledSouthManifests as jest.Mock).mockReturnValueOnce([
+      {
+        ...southManifestList[4] // mssql
+      }
+    ]);
+    (transformerService.findAll as jest.Mock).mockReturnValueOnce([]);
+    service.retrieveSecrets = jest.fn();
+
+    await expect(service.createHistoryQuery(testData.historyQueries.command, null, null, null)).rejects.toThrow(
+      `Could not find OIBus transformer ${testData.historyQueries.command.northTransformers[0]}`
+    );
+  });
+
   it('should get history query data stream', () => {
     service.getHistoryQueryDataStream(testData.historyQueries.list[0].id);
     expect(historyQueryEngine.getHistoryQueryDataStream).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
@@ -403,6 +427,7 @@ describe('History Query service', () => {
 
   it('updateHistoryQuery() should create a history query', async () => {
     (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
+    (transformerService.findAll as jest.Mock).mockReturnValueOnce(testData.transformers.list);
     (northService.getInstalledNorthManifests as jest.Mock).mockReturnValueOnce([
       {
         ...northManifestList[4] // file-writer

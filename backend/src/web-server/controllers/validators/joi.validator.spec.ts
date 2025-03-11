@@ -800,6 +800,26 @@ describe('Joi validator', () => {
     });
   });
 
+  it('generateJoiSchema should generate proper Joi schema for form Transformer', async () => {
+    const settings: Array<OibFormControl> = [
+      {
+        key: 'transformer',
+        type: 'OibTransformer',
+        translationKey: 'Transformer',
+        class: 'col',
+        newRow: true,
+        displayInViewMode: false,
+        validators: [{ key: 'required' }]
+      }
+    ];
+    const generatedSchema = extendedValidator.generateJoiSchema(settings);
+
+    const expectedSchema = Joi.object({
+      transformer: Joi.object({}).required()
+    });
+    expect(expectedSchema.describe()).toEqual(generatedSchema.describe());
+  });
+
   describe('MQTT Topic Validation', () => {
     describe('isMqttItemsArray', () => {
       it('should return true when array contains topic field', () => {

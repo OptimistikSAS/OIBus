@@ -12,7 +12,8 @@ import {
   OibTextAreaFormControl,
   OibTextFormControl,
   OibTimezoneFormControl,
-  OibCertificateFormControl
+  OibCertificateFormControl,
+  OibTransformerFormControl
 } from '../../../../shared/model/form.model';
 
 export default class JoiValidator {
@@ -62,6 +63,8 @@ export default class JoiValidator {
         return this.generateFormGroupJoiSchema(oibFormControl);
       case 'OibArray':
         return this.generateFormArrayJoiSchema(oibFormControl);
+      case 'OibTransformer':
+        return this.generateFormTransformerJoiSchema(oibFormControl);
     }
   }
 
@@ -197,6 +200,15 @@ export default class JoiValidator {
 
     schema = this.handleConditionalDisplay(formControl, schema) as Joi.ArraySchema;
 
+    return {
+      [formControl.key]: schema
+    };
+  }
+
+  private generateFormTransformerJoiSchema(formControl: OibTransformerFormControl) {
+    const subSchema: Record<string, AnySchema> = {};
+
+    const schema = Joi.object(subSchema).required();
     return {
       [formControl.key]: schema
     };

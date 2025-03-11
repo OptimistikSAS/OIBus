@@ -81,7 +81,8 @@ const testHistoryQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemS
         query: 'sql'
       } as SouthItemSettings
     }
-  ]
+  ],
+  northTransformers: []
 };
 
 @Component({
