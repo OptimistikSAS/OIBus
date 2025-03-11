@@ -82,13 +82,13 @@ describe('CreateHistoryQueryModalComponent', () => {
     historyQueryService.create.and.returnValue(of({ id: 'historyId' } as HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings>));
     northConnectorService.getNorthConnectorTypes.and.returnValue(
       of([
-        { id: 'console', category: 'debug', name: 'Console', description: 'Console description', modes: { files: false, points: true } },
+        { id: 'console', category: 'debug', name: 'Console', description: 'Console description', types: ['raw', 'time-values'] },
         {
           id: 'file-writer',
           category: 'file',
           name: 'File writer',
           description: 'File writer description',
-          modes: { files: false, points: true }
+          types: ['raw']
         }
       ])
     );

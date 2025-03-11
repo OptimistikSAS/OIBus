@@ -104,7 +104,8 @@ describe('HistoryQueryService', () => {
           retentionDuration: 0
         }
       },
-      items: []
+      items: [],
+      northTransformers: []
     };
 
     service.update('id1', command, true).subscribe(() => (done = true));
