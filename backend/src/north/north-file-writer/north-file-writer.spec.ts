@@ -18,6 +18,8 @@ import { NorthFileWriterSettings } from '../../../shared/model/north-settings.mo
 import testData from '../../tests/utils/test-data';
 import { mockBaseFolders } from '../../tests/utils/test-utils';
 import CacheService from '../../service/cache/cache.service';
+import TransformerService from '../../service/transformer.service';
+import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
 
 jest.mock('node:fs/promises');
 
@@ -26,6 +28,7 @@ const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const cacheService: CacheService = new CacheServiceMock();
+const transformerService: TransformerService = new TransformerServiceMock();
 
 jest.mock(
   '../../service/cache/cache.service',
@@ -65,6 +68,7 @@ describe('NorthFileWriter', () => {
     north = new NorthFileWriter(
       configuration,
       encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
@@ -161,6 +165,7 @@ describe('NorthFileWriter without suffix or prefix', () => {
     north = new NorthFileWriter(
       configuration,
       encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,

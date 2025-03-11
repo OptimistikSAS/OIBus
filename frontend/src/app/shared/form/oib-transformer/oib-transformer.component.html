@@ -1,0 +1,11 @@
+<label class="form-label" [for]="'oib-transformer-input-' + key()">{{ label() }}</label>
+<select [formControl]="transformerInputCtrl" [id]="'OibTransformer-' + key()" class="form-select mb-2 mr-sm-2">
+  <option [ngValue]="null"></option>
+  @for (transformer of selectableTransformer(); track transformer.id) {
+    @if (transformer.type === 'standard') {
+      <option [ngValue]="transformer.id">{{ 'transformers.standard.' + transformer.id | translate }}</option>
+    } @else {
+      <option [ngValue]="transformer.id">{{ transformer.name }}</option>
+    }
+  }
+</select>

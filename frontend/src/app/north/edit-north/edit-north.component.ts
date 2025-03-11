@@ -1,9 +1,9 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { formDirectives } from '../../shared/form-directives';
-import { FormControl, FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
+import { FormArray, FormControl, FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest, Observable, of, switchMap, tap } from 'rxjs';
@@ -31,6 +31,10 @@ import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { SouthConnectorLightDTO } from '../../../../../backend/shared/model/south-connector.model';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
+import { TransformerLightDTO } from '../../../../../backend/shared/model/transformer.model';
+import { TransformerService } from '../../services/transformer.service';
+import { NorthTransformersComponent } from '../north-transformers/north-transformers.component';
+import { OIBUS_DATA_TYPES, OIBusDataType } from '../../../../../backend/shared/model/engine.model';
 
 @Component({
   selector: 'oib-edit-north',
@@ -46,7 +50,8 @@ import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe'
     NorthSubscriptionsComponent,
     OibHelpComponent,
     TranslatePipe,
-    OIBusNorthTypeEnumPipe
+    OIBusNorthTypeEnumPipe,
+    NorthTransformersComponent
   ],
   templateUrl: './edit-north.component.html',
   styleUrl: './edit-north.component.scss'
@@ -57,9 +62,12 @@ export class EditNorthComponent implements OnInit {
   private notificationService = inject(NotificationService);
   private scanModeService = inject(ScanModeService);
   private certificateService = inject(CertificateService);
+  private transformerService = inject(TransformerService);
   private modalService = inject(ModalService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+
+  readonly oIBusDataTypes = OIBUS_DATA_TYPES;
 
   mode: 'create' | 'edit' = 'create';
   northConnector: NorthConnectorDTO<NorthSettings> | null = null;
@@ -69,6 +77,7 @@ export class EditNorthComponent implements OnInit {
   loading = true;
   northSettingsControls: Array<Array<OibFormControl>> = [];
   scanModes: Array<ScanModeDTO> = [];
+  transformers: Array<TransformerLightDTO> = [];
   certificates: Array<CertificateDTO> = [];
   manifest: NorthConnectorManifest | null = null;
 
@@ -98,16 +107,24 @@ export class EditNorthComponent implements OnInit {
       }>;
     }>;
     settings: FormGroup;
+    transformers: FormArray<FormGroup<{ type: FormControl<OIBusDataType>; transformer: FormControl<string> }>>;
   }> | null = null;
 
   inMemorySubscriptions: Array<SouthConnectorLightDTO> = [];
 
   ngOnInit() {
-    combineLatest([this.scanModeService.list(), this.certificateService.list(), this.route.paramMap, this.route.queryParamMap])
+    combineLatest([
+      this.scanModeService.list(),
+      this.certificateService.list(),
+      this.transformerService.list(),
+      this.route.paramMap,
+      this.route.queryParamMap
+    ])
       .pipe(
-        switchMap(([scanModes, certificates, params, queryParams]) => {
+        switchMap(([scanModes, certificates, transformers, params, queryParams]) => {
           this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
           this.certificates = certificates;
+          this.transformers = transformers;
           let paramNorthId = params.get('northId');
           this.northType = queryParams.get('type') || '';
           // if there is a North ID, we are editing a North connector
@@ -167,12 +184,26 @@ export class EditNorthComponent implements OnInit {
               enabled: [false, Validators.required],
               retentionDuration: [72, Validators.required]
             })
-          })
+          }),
+          transformers: this.fb.array(
+            this.oIBusDataTypes.map(type => {
+              return this.fb.group({
+                type: this.fb.control(type, Validators.required),
+                transformer: this.fb.control('', Validators.required)
+              });
+            })
+          )
         });
 
         // if we have a south connector we initialize the values
         if (northConnector) {
-          this.northForm.patchValue(northConnector);
+          this.northForm.patchValue({
+            ...northConnector,
+            transformers: northConnector.transformers.map(element => ({
+              type: element.inputType,
+              transformer: element.id
+            }))
+          });
         } else {
           this.northForm.setValue(this.northForm.getRawValue());
         }
@@ -236,7 +267,8 @@ export class EditNorthComponent implements OnInit {
       },
       subscriptions: this.northConnector
         ? this.northConnector.subscriptions.map(subscription => subscription.id)
-        : this.inMemorySubscriptions.map(subscription => subscription.id)
+        : this.inMemorySubscriptions.map(subscription => subscription.id),
+      transformers: formValue.transformers!.map(element => element.transformer!)
     };
     if (value === 'save') {
       this.createOrUpdateNorthConnector(command);
