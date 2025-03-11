@@ -18,6 +18,7 @@ export default jest.fn().mockImplementation(() => {
     deleteHistoryQueryItem: jest.fn(),
     deleteAllHistoryQueryItemsByHistoryQuery: jest.fn(),
     enableHistoryQueryItem: jest.fn(),
-    disableHistoryQueryItem: jest.fn()
+    disableHistoryQueryItem: jest.fn(),
+    findAllTransformersForHistory: jest.fn()
   };
 });

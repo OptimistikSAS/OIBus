@@ -48,6 +48,10 @@ import { NorthSettings } from '../../../../../backend/shared/model/north-setting
 import { dateTimeRangeValidatorBuilder } from '../../shared/validators';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
+import { TransformerLightDTO } from '../../../../../backend/shared/model/transformer.model';
+import { TransformerService } from '../../services/transformer.service';
+import { CertificateService } from '../../services/certificate.service';
+import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
 
 @Component({
   selector: 'oib-edit-history-query',
@@ -77,6 +81,8 @@ export class EditHistoryQueryComponent implements OnInit {
   private fb = inject(NonNullableFormBuilder);
   private notificationService = inject(NotificationService);
   private scanModeService = inject(ScanModeService);
+  private transformerService = inject(TransformerService);
+  private certificateService = inject(CertificateService);
   private modalService = inject(ModalService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
@@ -88,6 +94,8 @@ export class EditHistoryQueryComponent implements OnInit {
   northSettingsControls: Array<Array<OibFormControl>> = [];
   southSettingsControls: Array<Array<OibFormControl>> = [];
   scanModes: Array<ScanModeDTO> = [];
+  transformers: Array<TransformerLightDTO> = [];
+  certificates: Array<CertificateDTO> = [];
   northManifest: NorthConnectorManifest | null = null;
   southManifest: SouthConnectorManifest | null = null;
   southType = '';
@@ -128,12 +136,21 @@ export class EditHistoryQueryComponent implements OnInit {
   }> | null = null;
 
   inMemoryItems: Array<HistoryQueryItemCommandDTO<SouthItemSettings>> = [];
+  inMemoryNorthTransformers: Array<TransformerLightDTO> = [];
 
   ngOnInit() {
-    combineLatest([this.scanModeService.list(), this.route.paramMap, this.route.queryParamMap])
+    combineLatest([
+      this.scanModeService.list(),
+      this.certificateService.list(),
+      this.transformerService.list(),
+      this.route.paramMap,
+      this.route.queryParamMap
+    ])
       .pipe(
-        switchMap(([scanModes, params, queryParams]) => {
+        switchMap(([scanModes, certificates, transformers, params, queryParams]) => {
           this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
+          this.certificates = certificates;
+          this.transformers = transformers;
 
           const paramHistoryQueryId = params.get('historyQueryId');
           const paramDuplicateHistoryQueryId = queryParams.get('duplicate');
@@ -324,7 +341,11 @@ export class EditHistoryQueryComponent implements OnInit {
               enabled: item.enabled,
               settings: item.settings
             }))
-          : this.inMemoryItems
+          : this.inMemoryItems,
+      northTransformers:
+        this.saveItemChangesDirectly && this.historyQuery
+          ? this.historyQuery.northTransformers.map(transformer => transformer.id)
+          : this.inMemoryNorthTransformers.map(transformer => transformer.id)
     };
     if (this.mode === 'edit') {
       const modalRef = this.modalService.open(ResetCacheHistoryQueryModalComponent);

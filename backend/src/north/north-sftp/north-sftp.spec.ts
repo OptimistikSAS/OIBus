@@ -18,6 +18,8 @@ import testData from '../../tests/utils/test-data';
 import { mockBaseFolders } from '../../tests/utils/test-utils';
 import CacheService from '../../service/cache/cache.service';
 import fs from 'node:fs/promises';
+import TransformerService from '../../service/transformer.service';
+import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
 
 jest.mock('node:fs/promises');
 
@@ -26,6 +28,7 @@ const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const cacheService: CacheService = new CacheServiceMock();
+const transformerService: TransformerService = new TransformerServiceMock();
 
 jest.mock(
   '../../service/cache/cache.service',
@@ -87,6 +90,7 @@ describe('NorthSFTP', () => {
     north = new NorthSftp(
       configuration,
       encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
@@ -217,6 +221,7 @@ describe('NorthSFTP without suffix or prefix', () => {
     north = new NorthSftp(
       configuration,
       encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
