@@ -20,6 +20,7 @@ import OianalyticsRegistrationRepository from '../repository/config/oianalytics-
 import OianalyticsCommandRepository from '../repository/config/oianalytics-command.repository';
 import OianalyticsMessageRepository from '../repository/config/oianalytics-message.repository';
 import HistoryQueryMetricsRepository from '../repository/metrics/history-query-metrics.repository';
+import TransformerRepository from '../repository/config/transformer.repository';
 
 const mockedDatabase = {
   file: 'mocked-db.db',
@@ -45,6 +46,7 @@ jest.mock('../repository/config/certificate.repository');
 jest.mock('../repository/config/oianalytics-registration.repository');
 jest.mock('../repository/config/oianalytics-command.repository');
 jest.mock('../repository/config/oianalytics-message.repository');
+jest.mock('../repository/config/transformer.repository');
 
 describe('Repository service', () => {
   it('should properly initialize service', () => {
@@ -81,6 +83,7 @@ describe('Repository service', () => {
     expect(CertificateRepository).toHaveBeenCalledWith(mockedDatabase);
     expect(OianalyticsCommandRepository).toHaveBeenCalledWith(mockedDatabase);
     expect(OianalyticsMessageRepository).toHaveBeenCalledWith(mockedDatabase);
+    expect(TransformerRepository).toHaveBeenCalledWith('sqlite database');
 
     expect(repositoryService.engineRepository).toBeDefined();
     expect(repositoryService.cryptoRepository).toBeDefined();
@@ -100,6 +103,7 @@ describe('Repository service', () => {
     expect(repositoryService.certificateRepository).toBeDefined();
     expect(repositoryService.oianalyticsCommandRepository).toBeDefined();
     expect(repositoryService.oianalyticsMessageRepository).toBeDefined();
+    expect(repositoryService.transformerRepository).toBeDefined();
   });
 
   it('should properly close', () => {

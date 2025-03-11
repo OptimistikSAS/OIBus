@@ -2,6 +2,7 @@ import { BaseEntity } from './types';
 import { NorthSettings } from '../../shared/model/north-settings.model';
 import { SouthConnectorEntityLight } from './south-connector.model';
 import { OIBusNorthType } from '../../shared/model/north-connector.model';
+import { TransformerLight } from './transformer.model';
 
 export interface NorthConnectorEntityLight extends BaseEntity {
   name: string;
@@ -38,4 +39,5 @@ export interface NorthConnectorEntity<T extends NorthSettings> extends BaseEntit
     };
   };
   subscriptions: Array<SouthConnectorEntityLight>;
+  transformers: Array<TransformerLight>;
 }

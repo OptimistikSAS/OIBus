@@ -19,6 +19,7 @@ import { BaseFolders } from '../model/types';
 import CacheService from '../service/cache/cache.service';
 import { Readable } from 'node:stream';
 import fsAsync from 'node:fs/promises';
+import TransformerService from '../service/transformer.service';
 
 /**
  * Class NorthConnector : provides general attributes and methods for north connectors.
@@ -65,6 +66,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   protected constructor(
     protected connector: NorthConnectorEntity<T>,
     protected readonly encryptionService: EncryptionService,
+    protected readonly transformerService: TransformerService,
     protected readonly northConnectorRepository: NorthConnectorRepository,
     protected readonly scanModeRepository: ScanModeRepository,
     protected logger: pino.Logger,
@@ -326,6 +328,8 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     source: string
   ) {
     const writeStream = createWriteStream(path.join(this.cacheService.cacheFolder, this.cacheService.CONTENT_FOLDER, cacheFilename));
+
+    // TODO: use transformers here
     // Use `pipeline` to safely chain streams
     await pipeTransformers(readStream, writeStream);
 

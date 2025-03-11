@@ -13,6 +13,7 @@ import HomeMetricsService from '../service/metrics/home-metrics.service';
 import UserService from '../service/user.service';
 import CertificateService from '../service/certificate.service';
 import LogService from '../service/log.service';
+import TransformerService from '../service/transformer.service';
 
 interface KoaRequest<RequestBody> extends Request {
   body?: RequestBody;
@@ -29,6 +30,7 @@ export interface KoaApplication extends Koa {
   oIAnalyticsCommandService: OIAnalyticsCommandService;
   southService: SouthService;
   northService: NorthService;
+  transformerService: TransformerService;
   historyQueryService: HistoryQueryService;
   homeMetricsService: HomeMetricsService;
   whiteList: Array<string>;
