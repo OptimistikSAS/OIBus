@@ -24,6 +24,9 @@ import CacheService from '../../service/cache/cache.service';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
 import TransformerService from '../../service/transformer.service';
 import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
+import { createTransformer } from '../../service/transformers/transformers-utils';
+import OIBusTransformer from '../../service/transformers/oibus-transformer';
+import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
 
 function mockResponseData(data: string, statusCode: number) {
   return {
@@ -36,6 +39,7 @@ function mockResponseData(data: string, statusCode: number) {
 
 jest.mock('node:fs');
 jest.mock('../../service/utils');
+jest.mock('../../service/transformers/transformers-utils');
 jest.mock('undici');
 
 const logger: pino.Logger = new PinoLogger();
@@ -44,6 +48,7 @@ const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRep
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const transformerService: TransformerService = new TransformerServiceMock();
 const cacheService: CacheService = new CacheServiceMock();
+const oiBusTransformer: OIBusTransformer = new OIBusTransformerMock() as unknown as OIBusTransformer;
 
 jest.mock(
   '../../service/cache/cache.service',
@@ -86,8 +91,9 @@ describe('NorthREST', () => {
     };
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
-
     (filesExists as jest.Mock).mockReturnValue(true);
+    (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
+
     north = new NorthREST(
       configuration,
       encryptionService,
@@ -271,8 +277,9 @@ describe('NorthREST without proxy', () => {
     };
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
-
     (filesExists as jest.Mock).mockReturnValue(true);
+    (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
+
     north = new NorthREST(
       configuration,
       encryptionService,
@@ -809,8 +816,9 @@ describe('NorthREST with proxy', () => {
     };
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
-
     (filesExists as jest.Mock).mockReturnValue(true);
+    (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
+
     north = new NorthREST(
       configuration,
       encryptionService,
