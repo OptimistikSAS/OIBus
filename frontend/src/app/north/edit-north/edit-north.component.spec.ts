@@ -12,6 +12,7 @@ import { NorthConnectorService } from '../../services/north-connector.service';
 import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
 import { CertificateService } from '../../services/certificate.service';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { TransformerService } from '../../services/transformer.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 class EditNorthComponentTester extends ComponentTester<EditNorthComponent> {
@@ -49,11 +50,13 @@ describe('EditNorthComponent', () => {
   let northConnectorService: jasmine.SpyObj<NorthConnectorService>;
   let scanModeService: jasmine.SpyObj<ScanModeService>;
   let certificateService: jasmine.SpyObj<CertificateService>;
+  let transformerService: jasmine.SpyObj<TransformerService>;
 
   beforeEach(() => {
     northConnectorService = createMock(NorthConnectorService);
     scanModeService = createMock(ScanModeService);
     certificateService = createMock(CertificateService);
+    transformerService = createMock(TransformerService);
 
     TestBed.configureTestingModule({
       providers: [
@@ -63,12 +66,14 @@ describe('EditNorthComponent', () => {
         provideHttpClientTesting(),
         { provide: NorthConnectorService, useValue: northConnectorService },
         { provide: ScanModeService, useValue: scanModeService },
-        { provide: CertificateService, useValue: certificateService }
+        { provide: CertificateService, useValue: certificateService },
+        { provide: TransformerService, useValue: transformerService }
       ]
     });
 
     scanModeService.list.and.returnValue(of([]));
     certificateService.list.and.returnValue(of([]));
+    transformerService.list.and.returnValue(of([]));
 
     northConnectorService.getNorthConnectorTypeManifest.and.returnValue(
       of({
@@ -76,10 +81,7 @@ describe('EditNorthComponent', () => {
         category: 'debug',
         name: 'Console',
         description: 'Console description',
-        modes: {
-          files: true,
-          points: true
-        },
+        types: ['raw', 'time-values'],
         settings: [],
         schema: {} as unknown
       } as NorthConnectorManifest)
@@ -133,7 +135,8 @@ describe('EditNorthComponent', () => {
           retentionDuration: 0
         }
       },
-      subscriptions: []
+      subscriptions: [],
+      transformers: []
     };
 
     beforeEach(() => {

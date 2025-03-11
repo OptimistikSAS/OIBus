@@ -18,6 +18,7 @@ import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-
 import OIAnalyticsCommandRepository from '../repository/config/oianalytics-command.repository';
 import OIAnalyticsMessageRepository from '../repository/config/oianalytics-message.repository';
 import HistoryQueryMetricsRepository from '../repository/logs/history-query-metrics.repository';
+import TransformerRepository from '../repository/config/transformer.repository';
 
 export default class RepositoryService {
   private readonly _engineRepository: EngineRepository;
@@ -38,6 +39,7 @@ export default class RepositoryService {
   private readonly _oianalyticsRegistrationRepository: OIAnalyticsRegistrationRepository;
   private readonly _oianalyticsCommandRepository: OIAnalyticsCommandRepository;
   private readonly _oianalyticsMessageRepository: OIAnalyticsMessageRepository;
+  private readonly _transformerRepository: TransformerRepository;
 
   constructor(
     oibusDatabasePath: string,
@@ -62,6 +64,7 @@ export default class RepositoryService {
     this._oianalyticsRegistrationRepository = new OIAnalyticsRegistrationRepository(oibusDatabase);
     this._oianalyticsCommandRepository = new OIAnalyticsCommandRepository(oibusDatabase);
     this._oianalyticsMessageRepository = new OIAnalyticsMessageRepository(oibusDatabase);
+    this._transformerRepository = new TransformerRepository(oibusDatabase);
 
     this._cryptoRepository = new CryptoRepository(cryptoDatabase);
 
@@ -145,5 +148,9 @@ export default class RepositoryService {
 
   get historyQueryRepository(): HistoryQueryRepository {
     return this._historyQueryRepository;
+  }
+
+  get transformerRepository(): TransformerRepository {
+    return this._transformerRepository;
   }
 }
