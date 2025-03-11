@@ -19,6 +19,8 @@ import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { mockBaseFolders } from '../../tests/utils/test-utils';
 import CacheService from '../../service/cache/cache.service';
 import { OIBusTimeValue } from '../../../shared/model/engine.model';
+import TransformerService from '../../service/transformer.service';
+import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
 
 const sendMock = jest.fn();
 jest.mock('@aws-sdk/client-s3');
@@ -34,6 +36,7 @@ const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const cacheService: CacheService = new CacheServiceMock();
+const transformerService: TransformerService = new TransformerServiceMock();
 
 jest.mock(
   '../../service/cache/cache.service',
@@ -81,6 +84,7 @@ describe('NorthAmazonS3', () => {
       north = new NorthAmazonS3(
         configuration,
         encryptionService,
+        transformerService,
         northConnectorRepository,
         scanModeRepository,
         logger,
@@ -178,6 +182,7 @@ describe('NorthAmazonS3', () => {
       north = new NorthAmazonS3(
         configuration,
         encryptionService,
+        transformerService,
         northConnectorRepository,
         scanModeRepository,
         logger,
@@ -249,6 +254,7 @@ describe('NorthAmazonS3', () => {
       north = new NorthAmazonS3(
         configuration,
         encryptionService,
+        transformerService,
         northConnectorRepository,
         scanModeRepository,
         logger,

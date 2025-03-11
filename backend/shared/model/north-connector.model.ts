@@ -2,6 +2,8 @@ import { OibFormControl } from './form.model';
 import { BaseEntity } from './types';
 import { NorthSettings } from './north-settings.model';
 import { SouthConnectorLightDTO } from './south-connector.model';
+import { TransformerLightDTO } from './transformer.model';
+import { OIBusDataType } from './engine.model';
 
 export const OIBUS_NORTH_CATEGORIES = ['debug', 'api', 'file'] as const;
 export type OIBusNorthCategory = (typeof OIBUS_NORTH_CATEGORIES)[number];
@@ -12,10 +14,7 @@ export type OIBusNorthType = (typeof OIBUS_NORTH_TYPES)[number];
 export interface NorthType {
   id: OIBusNorthType;
   category: OIBusNorthCategory;
-  modes: {
-    files: boolean;
-    points: boolean;
-  };
+  types: Array<OIBusDataType>;
 }
 
 export interface NorthConnectorLightDTO extends BaseEntity {
@@ -53,6 +52,7 @@ export interface NorthConnectorDTO<T extends NorthSettings> extends BaseEntity {
     };
   };
   subscriptions: Array<SouthConnectorLightDTO>;
+  transformers: Array<TransformerLightDTO>;
 }
 
 export interface NorthConnectorCommandDTO<T extends NorthSettings> {
@@ -84,14 +84,12 @@ export interface NorthConnectorCommandDTO<T extends NorthSettings> {
     };
   };
   subscriptions: Array<string>;
+  transformers: Array<string>;
 }
 
 export interface NorthConnectorManifest {
   id: OIBusNorthType;
   category: OIBusNorthCategory;
-  modes: {
-    files: boolean;
-    points: boolean;
-  };
+  types: Array<OIBusDataType>;
   settings: Array<OibFormControl>;
 }

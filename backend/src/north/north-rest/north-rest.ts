@@ -15,6 +15,7 @@ import FormData from 'form-data';
 import { request, ProxyAgent } from 'undici';
 import { URL } from 'node:url';
 import { OIBusError } from '../../model/engine.model';
+import TransformerService from '../../service/transformer.service';
 
 /**
  * Class Console - display values and file path into the console
@@ -23,12 +24,13 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
   constructor(
     configuration: NorthConnectorEntity<NorthRESTSettings>,
     encryptionService: EncryptionService,
+    transformerService: TransformerService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(configuration, encryptionService, northConnectorRepository, scanModeRepository, logger, baseFolders);
+    super(configuration, encryptionService, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   async handleContent(cacheMetadata: CacheMetadata): Promise<void> {

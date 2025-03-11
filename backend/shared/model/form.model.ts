@@ -9,6 +9,7 @@ export const FORM_COMPONENT_TYPES = [
   'OibCodeBlock',
   'OibCheckbox',
   'OibScanMode',
+  'OibTransformer',
   'OibCertificate',
   'OibTimezone',
   'OibArray',
@@ -124,6 +125,10 @@ export interface OibScanModeFormControl extends BaseOibFormControl<ScanModeDTO> 
   subscriptionOnly: boolean;
 }
 
+export interface OibTransformerFormControl extends BaseOibFormControl<string> {
+  type: 'OibTransformer';
+}
+
 export interface OibCertificateFormControl extends BaseOibFormControl<string> {
   type: 'OibCertificate';
 }
@@ -151,6 +156,7 @@ export type OibFormControl =
   | OibSecretFormControl
   | OibCheckboxFormControl
   | OibScanModeFormControl
+  | OibTransformerFormControl
   | OibCertificateFormControl
   | OibTimezoneFormControl
   | OibArrayFormControl

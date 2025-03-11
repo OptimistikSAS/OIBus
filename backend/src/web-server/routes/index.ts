@@ -24,6 +24,7 @@ import {
   logSchema,
   registrationSchema,
   scanModeSchema,
+  transformerSchema,
   userSchema
 } from '../controllers/validators/oibus-validation-schema';
 import OianalyticsCommandController from '../controllers/oianalytics-command.controller';
@@ -71,6 +72,8 @@ import { OIBusCommandDTO } from '../../../shared/model/command.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { ReadStream } from 'node:fs';
+import { CustomTransformerCommand, TransformerDTO } from '../../../shared/model/transformer.model';
+import TransformerController from '../controllers/transformer.controller';
 
 const joiValidator = new JoiValidator();
 const scanModeController = new ScanModeController(joiValidator, scanModeSchema);
@@ -86,6 +89,7 @@ const historyQueryController = new HistoryQueryController(joiValidator, historyQ
 const userController = new UserController(joiValidator, userSchema);
 const logController = new LogController(joiValidator, logSchema);
 const subscriptionController = new SubscriptionController();
+const transformerController = new TransformerController(joiValidator, transformerSchema);
 
 const router = new Router();
 
@@ -130,6 +134,12 @@ router.put('/api/registration/edit', (ctx: KoaContext<RegistrationSettingsComman
   registrationController.editConnectionSettings(ctx)
 );
 router.put('/api/registration/unregister', (ctx: KoaContext<void, void>) => registrationController.unregister(ctx));
+
+router.get('/api/transformers', (ctx: KoaContext<void, Array<TransformerDTO>>) => transformerController.findAll(ctx));
+router.get('/api/transformers/:id', (ctx: KoaContext<void, TransformerDTO>) => transformerController.findById(ctx));
+router.post('/api/transformers', (ctx: KoaContext<CustomTransformerCommand, TransformerDTO>) => transformerController.create(ctx));
+router.put('/api/transformers/:id', (ctx: KoaContext<CustomTransformerCommand, void>) => transformerController.update(ctx));
+router.delete('/api/transformers/:id', (ctx: KoaContext<void, void>) => transformerController.delete(ctx));
 
 router.get('/api/ip-filters', (ctx: KoaContext<void, Array<IPFilterDTO>>) => ipFilterController.findAll(ctx));
 router.get('/api/ip-filters/:id', (ctx: KoaContext<void, IPFilterDTO>) => ipFilterController.findById(ctx));

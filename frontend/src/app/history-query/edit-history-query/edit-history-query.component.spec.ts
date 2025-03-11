@@ -21,6 +21,8 @@ import {
 import { Modal, ModalService } from '../../shared/modal.service';
 import { SouthItemSettings, SouthSettings } from '../../../../../backend/shared/model/south-settings.model';
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
+import { TransformerService } from '../../services/transformer.service';
+import { CertificateService } from '../../services/certificate.service';
 
 class EditHistoryQueryComponentTester extends ComponentTester<EditHistoryQueryComponent> {
   constructor() {
@@ -74,6 +76,8 @@ describe('EditHistoryQueryComponent', () => {
   let southConnectorService: jasmine.SpyObj<SouthConnectorService>;
   let historyQueryService: jasmine.SpyObj<HistoryQueryService>;
   let scanModeService: jasmine.SpyObj<ScanModeService>;
+  let certificateService: jasmine.SpyObj<CertificateService>;
+  let transformerService: jasmine.SpyObj<TransformerService>;
   let modalService: jasmine.SpyObj<ModalService>;
 
   const historyQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
@@ -117,7 +121,8 @@ describe('EditHistoryQueryComponent', () => {
           query: 'sql'
         } as SouthItemSettings
       }
-    ]
+    ],
+    northTransformers: []
   };
 
   beforeEach(() => {
@@ -125,6 +130,8 @@ describe('EditHistoryQueryComponent', () => {
     southConnectorService = createMock(SouthConnectorService);
     historyQueryService = createMock(HistoryQueryService);
     scanModeService = createMock(ScanModeService);
+    certificateService = createMock(CertificateService);
+    transformerService = createMock(TransformerService);
     modalService = createMock(ModalService);
 
     TestBed.configureTestingModule({
@@ -136,6 +143,8 @@ describe('EditHistoryQueryComponent', () => {
         { provide: SouthConnectorService, useValue: southConnectorService },
         { provide: HistoryQueryService, useValue: historyQueryService },
         { provide: ScanModeService, useValue: scanModeService },
+        { provide: CertificateService, useValue: certificateService },
+        { provide: TransformerService, useValue: transformerService },
         {
           provide: ActivatedRoute,
           useValue: stubRoute({
@@ -149,16 +158,15 @@ describe('EditHistoryQueryComponent', () => {
     });
 
     scanModeService.list.and.returnValue(of([]));
+    certificateService.list.and.returnValue(of([]));
+    transformerService.list.and.returnValue(of([]));
 
     historyQueryService.get.and.returnValue(of(historyQuery));
     northConnectorService.getNorthConnectorTypeManifest.and.returnValue(
       of({
         id: 'console',
         category: 'debug',
-        modes: {
-          files: true,
-          points: true
-        },
+        types: ['raw', 'time-values'],
         settings: [],
         schema: {} as unknown
       } as NorthConnectorManifest)
@@ -229,7 +237,7 @@ describe('EditHistoryQueryComponent', () => {
   });
 
   it('should test north connection', () => {
-    tester.componentInstance.northManifest = { id: 'console', modes: {} } as NorthConnectorManifest;
+    tester.componentInstance.northManifest = { id: 'console', types: ['raw'] } as NorthConnectorManifest;
     tester.componentInstance.historyQuery = historyQuery;
 
     const command = {

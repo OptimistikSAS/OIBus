@@ -23,6 +23,7 @@ import https from 'node:https';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { HttpProxyAgent } from 'http-proxy-agent';
 import { BaseFolders } from '../../model/types';
+import TransformerService from '../../service/transformer.service';
 
 /**
  * Class NorthOIAnalytics - Send files to a POST Multipart HTTP request and values as JSON payload
@@ -32,6 +33,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
   constructor(
     connector: NorthConnectorEntity<NorthOIAnalyticsSettings>,
     encryptionService: EncryptionService,
+    transformerService: TransformerService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
     private readonly certificateRepository: CertificateRepository,
@@ -39,7 +41,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(connector, encryptionService, northConnectorRepository, scanModeRepository, logger, baseFolders);
+    super(connector, encryptionService, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   override async testConnection(): Promise<void> {
