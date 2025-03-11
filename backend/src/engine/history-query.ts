@@ -69,7 +69,8 @@ export default class HistoryQuery {
       type: this.historyConfiguration.northType,
       settings: this.historyConfiguration.northSettings,
       caching: this.historyConfiguration.caching,
-      subscriptions: []
+      subscriptions: [],
+      transformers: []
     };
     const northFolders: BaseFolders = {
       cache: path.resolve(this.baseFolders.cache, 'north'),
