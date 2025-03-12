@@ -236,6 +236,12 @@ describe('SouthMQTT without authentication', () => {
     expect(logger.trace).toHaveBeenCalledWith('MQTT message for topic myTopic: myMessage, dup:false');
     expect(south.handleMessage).toHaveBeenCalledTimes(1);
     expect(south.handleMessage).toHaveBeenCalledWith('myTopic', 'myMessage');
+
+    (south.handleMessage as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('handle message error');
+    });
+    mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false });
+    expect(logger.error).toHaveBeenCalledWith('Error on topic "myTopic" when handling message "myMessage": handle message error');
   });
 
   it('should properly disconnect', async () => {

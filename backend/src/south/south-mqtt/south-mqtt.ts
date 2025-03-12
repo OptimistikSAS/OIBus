@@ -67,7 +67,11 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     });
     this.client.on('message', async (topic, message, packet) => {
       this.logger.trace(`MQTT message for topic ${topic}: ${message}, dup:${packet.dup}`);
-      await this.handleMessage(topic, message);
+      try {
+        await this.handleMessage(topic, message);
+      } catch (error: unknown) {
+        this.logger.error(`Error on topic "${topic}" when handling message "${message}": ${(error as Error).message}`);
+      }
     });
   }
 
