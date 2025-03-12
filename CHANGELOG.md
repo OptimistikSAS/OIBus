@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.5.13](https://github.com/OptimistikSAS/OIBus/compare/v3.5.12...v3.5.13) (2025-03-12)
+
+
+### Bug Fixes
+
+* **mqtt:** catch handle message error ([2a51ce5](https://github.com/OptimistikSAS/OIBus/commit/2a51ce58dcfdd02d1008f785f67de1a01663437e))
+
 ## [3.5.12](https://github.com/OptimistikSAS/OIBus/compare/v3.5.11...v3.5.12) (2025-02-24)
 
 
