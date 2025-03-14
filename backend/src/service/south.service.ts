@@ -379,7 +379,9 @@ export default class SouthService {
       items: []
     };
 
-    const south = this.runSouth(testToRun, async (_southId: string, _content: OIBusContent): Promise<void> => Promise.resolve(), logger, {
+    /* istanbul ignore next */
+    const mockedAddContent = async (_southId: string, _content: OIBusContent): Promise<void> => Promise.resolve();
+    const south = this.runSouth(testToRun, mockedAddContent, logger, {
       cache: 'baseCacheFolder',
       archive: 'baseArchiveFolder',
       error: 'baseErrorFolder'
@@ -428,6 +430,7 @@ export default class SouthService {
       items: [testItemToRun]
     };
 
+    /* istanbul ignore next */
     const mockedAddContent = async (_southId: string, _content: OIBusContent): Promise<void> => Promise.resolve();
     const south = this.runSouth(testConnectorToRun, mockedAddContent, logger, {
       cache: 'baseCacheFolder',
