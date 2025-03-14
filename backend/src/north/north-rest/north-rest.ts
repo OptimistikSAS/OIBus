@@ -14,6 +14,7 @@ import { filesExists } from '../../service/utils';
 import FormData from 'form-data';
 import { request, ProxyAgent } from 'undici';
 import { URL } from 'node:url';
+import { OIBusError } from '../../model/engine.model';
 
 /**
  * Class Console - display values and file path into the console
@@ -43,11 +44,13 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
    * Handle the file by sending it over to the specified endpoint
    */
   async handleFile(filePath: string): Promise<void> {
+    filePath = path.resolve(filePath);
+
     if (!(await filesExists(filePath))) {
-      throw new Error(`File ${filePath} does not exist`);
+      throw new OIBusError(`File ${filePath} does not exist`, false);
     }
 
-    const endpoint = this.connector.settings.endpoint;
+    const endpoint = new URL(this.connector.settings.endpoint);
 
     // Get query params
     const queryParams = this.getQueryParams();
@@ -55,7 +58,7 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
     // Create FormData with file
     const { base } = path.parse(filePath);
     const form = new FormData();
-    const fileStream = createReadStream(path.resolve(filePath));
+    const fileStream = createReadStream(filePath);
     form.append('file', fileStream, { filename: base });
 
     const headers: Record<string, string> = form.getHeaders();
@@ -82,10 +85,7 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
     } catch (error) {
       const message = this.getMessageFromError(error);
 
-      throw {
-        message: `Failed to reach file endpoint ${endpoint}; ${message}`,
-        retry: true
-      };
+      throw new OIBusError(`Failed to reach file endpoint ${endpoint}; ${message}`, true);
     } finally {
       if (!fileStream.closed) {
         fileStream.close();
@@ -94,22 +94,29 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
 
     const ok = response.statusCode >= 200 && response.statusCode <= 299;
     if (!ok) {
-      throw new Error(`HTTP request failed with status code ${response.statusCode} and message: ${await response.body.text()}`);
+      throw new OIBusError(
+        `HTTP request failed with status code ${response.statusCode} and message: ${await response.body.text()}`,
+        [
+          // Only retry the request if the status code is one of the following
+          // Source: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
+          401, // Unauthorized
+          403, // Forbidden
+          404, // Not Found
+          407, // Proxy Authentication Required
+          408, // Request Timeout
+          429, // Too Many Requests
+          502, // Bad Gateway
+          503, // Service Unavailable
+          504, // Gateway Timeout
+          511 //  Network Authentication Required
+        ].includes(response.statusCode)
+      );
     }
   }
 
   override async testConnection(): Promise<void> {
-    let { origin } = URL.parse(this.connector.settings.endpoint)!;
-    if (origin.endsWith('/')) {
-      origin = origin.slice(-1);
-    }
-
-    let path = this.connector.settings.testPath;
-    if (path.startsWith('/')) {
-      path = path.slice(1);
-    }
-
-    const testEndpoint = `${origin}/${path}`;
+    // the URL class handles the correct use of slashes
+    const testEndpoint = new URL(this.connector.settings.testPath, this.connector.settings.endpoint);
     const headers: Record<string, string> = {};
 
     // Get proxy agent if needed
@@ -131,12 +138,12 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
       });
     } catch (error) {
       const message = this.getMessageFromError(error);
-      throw new Error(`Failed to reach file endpoint ${testEndpoint}; ${message}`);
+      throw new OIBusError(`Failed to reach file endpoint ${testEndpoint}; ${message}`, false);
     }
 
     const ok = response.statusCode >= 200 && response.statusCode <= 299;
     if (!ok) {
-      throw new Error(`HTTP request failed with status code ${response.statusCode} and message: ${await response.body.text()}`);
+      throw new OIBusError(`HTTP request failed with status code ${response.statusCode} and message: ${await response.body.text()}`, false);
     }
   }
 
@@ -164,7 +171,7 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
       return;
     }
     if (!this.connector.settings.proxyUrl) {
-      throw new Error(`Proxy URL not specified`);
+      throw new Error('Proxy URL not specified');
     }
 
     const options: ProxyAgent.Options = {
@@ -228,7 +235,7 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
    */
   private getMessageFromError(error: unknown) {
     if (!(error instanceof Error)) {
-      return String(error);
+      return String(JSON.stringify(error));
     }
 
     const errors: Array<Error> = [error];
@@ -251,7 +258,9 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
         code = `code: ${error.code}`;
       }
 
-      messages.push([message, code].filter(Boolean).join(', '));
+      if ([message, code].filter(Boolean).length) {
+        messages.push([message, code].filter(Boolean).join(', '));
+      }
     }
 
     return messages.join('; ');

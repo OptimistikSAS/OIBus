@@ -90,6 +90,13 @@ jest.mock(
       return mockedNorth1;
     }
 );
+jest.mock(
+  '../north/north-rest/north-rest',
+  () =>
+    function () {
+      return mockedNorth1;
+    }
+);
 
 let service: NorthService;
 describe('north service', () => {
@@ -160,6 +167,13 @@ describe('north service', () => {
     const sftp = JSON.parse(JSON.stringify(testData.north.list[0]));
     sftp.type = 'sftp';
     const connector = service.runNorth(sftp, logger, mockBaseFolders(sftp.id));
+    expect(connector).toEqual(mockedNorth1);
+  });
+
+  it('runNorth() should run NorthREST', () => {
+    const rest = JSON.parse(JSON.stringify(testData.north.list[0]));
+    rest.type = 'rest';
+    const connector = service.runNorth(rest, logger, mockBaseFolders(rest.id));
     expect(connector).toEqual(mockedNorth1);
   });
 
