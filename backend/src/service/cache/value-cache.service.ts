@@ -63,6 +63,7 @@ export default class ValueCacheService {
         // If a file is being written or corrupted, the readFile method can fail
         // An error is logged and the cache goes through the other files
         this._logger.error(`Error while reading buffer file "${path.resolve(this.cacheFolder, filename)}": ${(error as Error).message}`);
+        await fs.rm(path.resolve(this.cacheFolder, filename), { force: true });
       }
     }
 
@@ -79,6 +80,7 @@ export default class ValueCacheService {
         // If a file is being written or corrupted, the readFile method can fail
         // An error is logged and the cache goes through the other files
         this._logger.error(`Error while reading queue file "${path.resolve(this.cacheFolder, filename)}": ${(error as Error).message}`);
+        await fs.rm(path.resolve(this.cacheFolder, filename), { force: true });
       }
     }
 
