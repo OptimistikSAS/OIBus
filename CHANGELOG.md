@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.5.14](https://github.com/OptimistikSAS/OIBus/compare/v3.5.13...v3.5.14) (2025-03-21)
+
+
+### Bug Fixes
+
+* **mqtt:** rework connection and handling of messages ([77f20cb](https://github.com/OptimistikSAS/OIBus/commit/77f20cb5beb238af9ee85009256a51419b37db70))
+
 ## [3.5.13](https://github.com/OptimistikSAS/OIBus/compare/v3.5.12...v3.5.13) (2025-03-12)
 
 
