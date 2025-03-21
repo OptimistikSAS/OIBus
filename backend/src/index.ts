@@ -1,7 +1,7 @@
 import path from 'node:path';
 import WebServer from './web-server/web-server';
 import LoggerService from './service/logger/logger.service';
-import EncryptionService from './service/encryption.service';
+import { encryptionService } from './service/encryption.service';
 
 import { createFolder, getCommandLineArguments, getOIBusInfo } from './service/utils';
 import RepositoryService from './service/repository.service';
@@ -78,9 +78,7 @@ const LOG_DB_NAME = 'logs.db';
     console.error('Error while loading OIBus crypto settings from database');
     return;
   }
-
-  const encryptionService = new EncryptionService(cryptoSettings);
-  await encryptionService.init();
+  await encryptionService.init(cryptoSettings);
 
   if (check) {
     console.info('OIBus started in check mode. Exiting process.');

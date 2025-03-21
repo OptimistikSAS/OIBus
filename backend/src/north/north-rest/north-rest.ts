@@ -12,9 +12,9 @@ import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
 import { filesExists } from '../../service/utils';
 import FormData from 'form-data';
-import { request, ProxyAgent } from 'undici';
 import { URL } from 'node:url';
 import { OIBusError } from '../../model/engine.model';
+import { HTTPRequest, ReqAuthOptions, ReqProxyOptions, ReqResponse } from '../../service/http-request.utils';
 
 /**
  * Class Console - display values and file path into the console
@@ -62,26 +62,20 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
     const fileStream = createReadStream(filePath);
     form.append('file', fileStream, { filename: base });
 
-    const headers: Record<string, string> = form.getHeaders();
+    const headers = form.getHeaders();
+    const proxyOptions = this.getProxyOptions();
+    const authOptions = this.getAuthorizationOptions();
 
-    // Get proxy agent if needed
-    const proxyAgent = await this.getProxyAgent();
-
-    // Add authorization header if available
-    const authHeader = await this.getAuthorizationHeader();
-    if (authHeader) {
-      headers['Authorization'] = authHeader;
-    }
-
-    let response;
+    let response: ReqResponse;
     try {
-      response = await request(endpoint, {
+      response = await HTTPRequest(endpoint, {
         method: 'POST',
         headers,
         query: queryParams,
         body: form,
-        dispatcher: proxyAgent,
-        signal: AbortSignal.timeout(this.connector.settings.timeout * 1000)
+        auth: authOptions,
+        proxy: proxyOptions,
+        timeout: this.connector.settings.timeout * 1000
       });
     } catch (error) {
       const message = this.getMessageFromError(error);
@@ -93,8 +87,7 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
       }
     }
 
-    const ok = response.statusCode >= 200 && response.statusCode <= 299;
-    if (!ok) {
+    if (!response.ok) {
       throw new OIBusError(
         `HTTP request failed with status code ${response.statusCode} and message: ${await response.body.text()}`,
         [
@@ -120,30 +113,24 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
     const testEndpoint = new URL(this.connector.settings.testPath, this.connector.settings.endpoint);
     const headers: Record<string, string> = {};
 
-    // Get proxy agent if needed
-    const proxyAgent = await this.getProxyAgent();
+    const proxyOptions = this.getProxyOptions();
+    const authOptions = this.getAuthorizationOptions();
 
-    // Add authorization header if available
-    const authHeader = await this.getAuthorizationHeader();
-    if (authHeader) {
-      headers['Authorization'] = authHeader;
-    }
-
-    let response;
+    let response: ReqResponse;
     try {
-      response = await request(testEndpoint, {
+      response = await HTTPRequest(testEndpoint, {
         method: 'GET',
         headers,
-        dispatcher: proxyAgent,
-        signal: AbortSignal.timeout(this.connector.settings.timeout * 1000)
+        auth: authOptions,
+        proxy: proxyOptions,
+        timeout: this.connector.settings.timeout * 1000
       });
     } catch (error) {
       const message = this.getMessageFromError(error);
       throw new OIBusError(`Failed to reach file endpoint ${testEndpoint}; ${message}`, false);
     }
 
-    const ok = response.statusCode >= 200 && response.statusCode <= 299;
-    if (!ok) {
+    if (!response.ok) {
       throw new OIBusError(`HTTP request failed with status code ${response.statusCode} and message: ${await response.body.text()}`, false);
     }
   }
@@ -164,10 +151,10 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
   }
 
   /**
-   * Get proxy agent if proxy is enabled
+   * Get proxy options if proxy is enabled
    * @throws Error if no proxy url is specified in settings
    */
-  private async getProxyAgent() {
+  private getProxyOptions(): ReqProxyOptions | undefined {
     if (!this.connector.settings.useProxy) {
       return;
     }
@@ -175,60 +162,43 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
       throw new Error('Proxy URL not specified');
     }
 
-    const options: ProxyAgent.Options = {
-      uri: this.connector.settings.proxyUrl
+    const options: ReqProxyOptions = {
+      url: this.connector.settings.proxyUrl
     };
 
     if (this.connector.settings.proxyUsername) {
-      const username = this.connector.settings.proxyUsername;
-      let password = this.connector.settings.proxyPassword;
-
-      if (password) {
-        password = await this.encryptionService.decryptText(password);
-      } else {
-        password = '';
-      }
-
-      options.token = `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`;
+      options.auth = {
+        type: 'basic',
+        username: this.connector.settings.proxyUsername,
+        password: this.connector.settings.proxyPassword
+      };
     }
 
-    return new ProxyAgent(options);
+    return options;
   }
 
   /**
-   * Get authorization header based on configured authentication type
+   * Get authorization options from settings
    */
-  private async getAuthorizationHeader(): Promise<string | undefined> {
-    let header: string | undefined = undefined;
-
+  private getAuthorizationOptions(): ReqAuthOptions | undefined {
     switch (this.connector.settings.authType) {
       case 'basic':
-        const username = this.connector.settings.basicAuthUsername;
-        let password = this.connector.settings.basicAuthPassword;
+        if (!this.connector.settings.basicAuthUsername) return;
 
-        if (password) {
-          password = await this.encryptionService.decryptText(password);
-        } else {
-          password = '';
-        }
-        header = Buffer.from(`${username}:${password}`).toString('base64');
-        header = `Basic ${header}`;
-        break;
+        return {
+          type: 'basic',
+          username: this.connector.settings.basicAuthUsername,
+          password: this.connector.settings.basicAuthPassword
+        };
 
       case 'bearer':
         if (!this.connector.settings.bearerAuthToken) return;
 
-        header = await this.encryptionService.decryptText(this.connector.settings.bearerAuthToken);
-
-        // Make sure to include "Bearer " in front of the token, if the token provided does not have it
-        if (!header.startsWith('Bearer ')) {
-          header = `Bearer ${header}`;
-        }
-
-        break;
+        return {
+          type: 'bearer',
+          token: this.connector.settings.bearerAuthToken
+        };
     }
-
-    return header;
   }
 
   /**
