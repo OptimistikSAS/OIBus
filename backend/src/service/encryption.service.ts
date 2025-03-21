@@ -15,24 +15,43 @@ export const CERT_PRIVATE_KEY_FILE_NAME = 'private.pem';
 export const CERT_PUBLIC_KEY_FILE_NAME = 'public.pem';
 export const CERT_FILE_NAME = 'cert.pem';
 
+interface CryptoSettingsInternal {
+  algorithm: string;
+  initVector: Buffer;
+  securityKey: Buffer;
+}
+
 /**
  * Service used to manage encryption and decryption of secrets in the config file
  * Also responsible to create private and public key used for encrypting the secrets
  */
-export default class EncryptionService {
-  private readonly cryptoSettings: { algorithm: string; initVector: Buffer; securityKey: Buffer };
-  private readonly _certsFolder: string = '';
+export default class EncryptionService<TInitialized extends boolean = false> {
+  private static instance: EncryptionService | null = null;
+  private initialized = false;
+  private _cryptoSettings: CryptoSettingsInternal | null = null;
+  private readonly _certsFolder: string;
   private _publicKey: string | null = null;
   private _privateKey: string | null = null;
   private _certFile: string | null = null;
 
-  constructor(cryptoSettings: CryptoSettings) {
-    this.cryptoSettings = {
-      algorithm: cryptoSettings.algorithm,
-      initVector: Buffer.from(cryptoSettings.initVector, 'base64'),
-      securityKey: Buffer.from(cryptoSettings.securityKey, 'base64')
-    };
+  private constructor() {
     this._certsFolder = path.resolve('./', CERT_FOLDER);
+  }
+
+  get cryptoSettings() {
+    return this._cryptoSettings as TInitialized extends true ? CryptoSettingsInternal : CryptoSettingsInternal | null;
+  }
+
+  static getInstance() {
+    if (!this.instance) {
+      this.instance = new EncryptionService();
+    }
+
+    return this.instance;
+  }
+
+  isInitialized(): this is EncryptionService<true> {
+    return this.initialized;
   }
 
   getCertPath(): string {
@@ -68,7 +87,13 @@ export default class EncryptionService {
     return this._publicKey;
   }
 
-  async init() {
+  async init(cryptoSettings: CryptoSettings) {
+    this._cryptoSettings = {
+      algorithm: cryptoSettings.algorithm,
+      initVector: Buffer.from(cryptoSettings.initVector, 'base64'),
+      securityKey: Buffer.from(cryptoSettings.securityKey, 'base64')
+    };
+
     await createFolder(this._certsFolder);
 
     if (
@@ -89,6 +114,8 @@ export default class EncryptionService {
       await fs.writeFile(this.getPublicKeyPath(), certificate.public);
       await fs.writeFile(this.getCertPath(), certificate.cert);
     }
+
+    this.initialized = true;
   }
 
   generateSelfSignedCertificate(options: CertificateOptions): GenerateResult {
@@ -235,6 +262,15 @@ export default class EncryptionService {
    * Return the encrypted text
    */
   async encryptText(plainText: string): Promise<string> {
+    if (!this.isInitialized()) {
+      throw Error('EncryptionService not initialized');
+    }
+
+    // Manage empty strings
+    if (plainText.length === 0) {
+      return '';
+    }
+
     const cipher = crypto.createCipheriv(this.cryptoSettings.algorithm, this.cryptoSettings.securityKey, this.cryptoSettings.initVector);
     let encryptedData = cipher.update(plainText, 'utf8', 'base64');
     encryptedData += cipher.final('base64');
@@ -245,6 +281,15 @@ export default class EncryptionService {
    * Return the decrypted text
    */
   async decryptText(encryptedText: string): Promise<string> {
+    if (!this.isInitialized()) {
+      throw Error('EncryptionService not initialized');
+    }
+
+    // Manage empty strings
+    if (encryptedText.length === 0) {
+      return '';
+    }
+
     const decipher = crypto.createDecipheriv(
       this.cryptoSettings.algorithm,
       this.cryptoSettings.securityKey,
@@ -304,3 +349,5 @@ export default class EncryptionService {
     return encryptedSettings as T;
   }
 }
+
+export const encryptionService = EncryptionService.getInstance();
