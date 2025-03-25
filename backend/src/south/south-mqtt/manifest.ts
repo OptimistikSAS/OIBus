@@ -155,7 +155,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'flushMessageTimeout',
       type: 'OibNumber',
-      translationKey: 'south.mqtt.flush_message_timeout',
+      translationKey: 'south.mqtt.flush-message-timeout',
       unitLabel: 'ms',
       defaultValue: 1_000,
       newRow: false,
