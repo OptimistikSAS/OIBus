@@ -32,7 +32,7 @@ export interface NorthOIAnalyticsSettingsSpecificSettings {
   proxyPassword?: string | null;
 }
 
-export interface QueryParams {
+export interface NorthRESTSettingsQueryParams {
   key: string;
   value: string;
 }
@@ -88,16 +88,16 @@ export interface NorthOIAnalyticsSettings {
 export interface NorthRESTSettings {
   endpoint: string;
   testPath: string;
+  timeout: number;
   authType: NorthRESTSettingsAuthType;
   bearerAuthToken?: string | null;
   basicAuthUsername?: string;
   basicAuthPassword?: string | null;
-  queryParams: Array<QueryParams> | null;
+  queryParams: Array<NorthRESTSettingsQueryParams> | null;
   useProxy: boolean;
   proxyUrl?: string;
   proxyUsername?: string | null;
   proxyPassword?: string | null;
-  timeout: number;
 }
 
 export interface NorthSFTPSettings {
