@@ -455,6 +455,8 @@ export interface SouthMQTTSettings {
   rejectUnauthorized: boolean;
   reconnectPeriod: number;
   connectTimeout: number;
+  maxNumberOfMessages: number;
+  flushMessageTimeout: number;
 }
 
 export interface SouthMSSQLSettings {
