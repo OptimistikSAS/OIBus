@@ -285,26 +285,12 @@ function buildNorthInterfaceName(connectorId: string): string {
       return 'NorthAzureBlobSettings';
     case 'console':
       return 'NorthConsoleSettings';
-    case 'csv-to-http':
-      return 'NorthCsvToHttpSettings';
     case 'file-writer':
       return 'NorthFileWriterSettings';
-    case 'influxdb':
-      return 'NorthInfluxDBSettings';
-    case 'mongodb':
-      return 'NorthMongoDBSettings';
-    case 'mqtt':
-      return 'NorthMqttSettings';
     case 'oianalytics':
       return 'NorthOIAnalyticsSettings';
-    case 'rest-api':
-      return 'NorthRestAPISettings';
-    case 'oibus':
-      return 'NorthOIBusSettings';
-    case 'timescaledb':
-      return 'NorthTimescaleDBSettings';
-    case 'watsy':
-      return 'NorthWatsySettings';
+    case 'rest':
+      return 'NorthRESTSettings';
     case 'sftp':
       return 'NorthSFTPSettings';
   }
