@@ -142,6 +142,25 @@ const manifest: SouthConnectorManifest = {
       newRow: false,
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30_000 } }],
       displayInViewMode: false
+    },
+    {
+      key: 'maxNumberOfMessages',
+      type: 'OibNumber',
+      translationKey: 'south.mqtt.max-number-of-messages',
+      defaultValue: 1_000,
+      newRow: true,
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 1_000_000 } }],
+      displayInViewMode: false
+    },
+    {
+      key: 'flushMessageTimeout',
+      type: 'OibNumber',
+      translationKey: 'south.mqtt.flush_message_timeout',
+      unitLabel: 'ms',
+      defaultValue: 1_000,
+      newRow: false,
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 1_000_000 } }],
+      displayInViewMode: false
     }
   ],
   items: {

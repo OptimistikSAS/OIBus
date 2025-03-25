@@ -83,7 +83,9 @@ describe('SouthMQTT without authentication', () => {
       },
       connectTimeout: 1000,
       reconnectPeriod: 1000,
-      rejectUnauthorized: false
+      rejectUnauthorized: false,
+      maxNumberOfMessages: 1,
+      flushMessageTimeout: 1000
     },
     items: [
       {
@@ -219,7 +221,6 @@ describe('SouthMQTT without authentication', () => {
   it('should properly connect', async () => {
     south.subscribe = jest.fn();
     south.parseMessage = jest.fn();
-    south['MAX_NUMBER_OF_MESSAGES'] = 1;
     south.start();
     const expectedOptions = {
       clean: !configuration.settings.persistent,
@@ -310,7 +311,9 @@ describe('SouthMQTT with Basic Auth', () => {
       },
       connectTimeout: 1000,
       reconnectPeriod: 1000,
-      rejectUnauthorized: false
+      rejectUnauthorized: false,
+      maxNumberOfMessages: 1,
+      flushMessageTimeout: 1000
     },
     items: [
       {
@@ -813,7 +816,9 @@ describe('SouthMQTT with Cert', () => {
       },
       connectTimeout: 1000,
       reconnectPeriod: 1000,
-      rejectUnauthorized: false
+      rejectUnauthorized: false,
+      maxNumberOfMessages: 1,
+      flushMessageTimeout: 1000
     },
     items: [
       {
@@ -992,7 +997,9 @@ describe('SouthMQTT without Cert', () => {
       },
       connectTimeout: 1000,
       reconnectPeriod: 1000,
-      rejectUnauthorized: false
+      rejectUnauthorized: false,
+      maxNumberOfMessages: 1,
+      flushMessageTimeout: 1000
     },
     items: [
       {
