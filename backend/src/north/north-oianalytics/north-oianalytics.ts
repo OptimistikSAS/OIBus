@@ -5,7 +5,14 @@ import pino from 'pino';
 import { createReadStream } from 'node:fs';
 import zlib from 'node:zlib';
 import FormData from 'form-data';
-import { HTTPRequest, ReqAuthOptions, ReqOptions, ReqProxyOptions, ReqResponse } from '../../service/http-request.utils';
+import {
+  HTTPRequest,
+  ReqAuthOptions,
+  ReqOptions,
+  ReqProxyOptions,
+  ReqResponse,
+  shouldHTTPRequestRetry
+} from '../../service/http-request.utils';
 import path from 'node:path';
 import { compress, filesExists } from '../../service/utils';
 import { NorthOIAnalyticsSettings } from '../../../shared/model/north-settings.model';
@@ -41,13 +48,11 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
   override async testConnection(): Promise<void> {
     const host = this.getHost();
     const requestUrl = `${host}/api/optimistik/oibus/status`;
-    const proxyOptions = this.getProxyOptions();
-    const authOptions = await this.getAuthorizationOptions();
 
     const fetchOptions: ReqOptions = {
       method: 'GET',
-      auth: authOptions,
-      proxy: proxyOptions,
+      auth: await this.getAuthorizationOptions(),
+      proxy: this.getProxyOptions(),
       timeout: this.connector.settings.timeout * 1000
     };
 
@@ -80,19 +85,16 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     const endpoint = this.connector.settings.compress
       ? '/api/oianalytics/oibus/time-values/compressed'
       : '/api/oianalytics/oibus/time-values';
-    const query = { dataSourceId: this.connector.name };
-    const proxyOptions = this.getProxyOptions();
-    const authOptions = await this.getAuthorizationOptions();
 
     let response: ReqResponse;
     const valuesUrl = `${host}${endpoint}`;
     const fetchOptions: ReqOptions = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      query,
+      query: { dataSourceId: this.connector.name },
       body: this.connector.settings.compress ? zlib.gzipSync(JSON.stringify(values)) : JSON.stringify(values),
-      auth: authOptions,
-      proxy: proxyOptions,
+      auth: await this.getAuthorizationOptions(),
+      proxy: this.getProxyOptions(),
       timeout: this.connector.settings.timeout * 1000
     };
 
@@ -103,10 +105,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     }
 
     if (!response.ok) {
-      throw new OIBusError(
-        `Error ${response.statusCode}: ${await response.body.text()}`,
-        [401, 403, 404, 500, 502, 503, 504].includes(response.statusCode)
-      );
+      throw new OIBusError(`Error ${response.statusCode}: ${await response.body.text()}`, shouldHTTPRequestRetry(response.statusCode));
     }
   }
 
@@ -141,19 +140,16 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     body.append('file', readStream, {
       filename: `${fileToSend.slice(0, fileToSend.lastIndexOf('-'))}${this.connector.settings.compress ? '.gz' : ext}`
     });
-    const headers = body.getHeaders();
-    const proxyOptions = this.getProxyOptions();
-    const authOptions = await this.getAuthorizationOptions();
 
     let response: ReqResponse;
     try {
       response = await HTTPRequest(fileUrl, {
         method: 'POST',
-        headers,
+        headers: body.getHeaders(),
         query,
         body,
-        auth: authOptions,
-        proxy: proxyOptions,
+        auth: await this.getAuthorizationOptions(),
+        proxy: this.getProxyOptions(),
         timeout: this.connector.settings.timeout * 1000
       });
       readStream.close();
@@ -167,10 +163,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     }
 
     if (!response.ok) {
-      throw new OIBusError(
-        `Error ${response.statusCode}: ${await response.body.text()}`,
-        [401, 403, 404, 500, 502, 503, 504].includes(response.statusCode)
-      );
+      throw new OIBusError(`Error ${response.statusCode}: ${await response.body.text()}`, shouldHTTPRequestRetry(response.statusCode));
     }
   }
 
