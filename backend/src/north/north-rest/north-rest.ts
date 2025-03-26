@@ -14,7 +14,7 @@ import { filesExists } from '../../service/utils';
 import FormData from 'form-data';
 import { URL } from 'node:url';
 import { OIBusError } from '../../model/engine.model';
-import { HTTPRequest, ReqAuthOptions, ReqProxyOptions, ReqResponse } from '../../service/http-request.utils';
+import { HTTPRequest, ReqAuthOptions, ReqProxyOptions, ReqResponse, shouldHTTPRequestRetry } from '../../service/http-request.utils';
 
 /**
  * Class Console - display values and file path into the console
@@ -62,48 +62,33 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
     const fileStream = createReadStream(filePath);
     form.append('file', fileStream, { filename: base });
 
-    const headers = form.getHeaders();
-    const proxyOptions = this.getProxyOptions();
-    const authOptions = this.getAuthorizationOptions();
-
     let response: ReqResponse;
     try {
       response = await HTTPRequest(endpoint, {
         method: 'POST',
-        headers,
+        headers: form.getHeaders(),
         query: queryParams,
         body: form,
-        auth: authOptions,
-        proxy: proxyOptions,
+        auth: this.getAuthorizationOptions(),
+        proxy: this.getProxyOptions(),
         timeout: this.connector.settings.timeout * 1000
       });
     } catch (error) {
       const message = this.getMessageFromError(error);
-
-      throw new OIBusError(`Failed to reach file endpoint ${endpoint}; ${message}`, true);
-    } finally {
       if (!fileStream.closed) {
         fileStream.close();
       }
+      throw new OIBusError(`Failed to reach file endpoint ${endpoint}; ${message}`, true);
+    }
+
+    if (!fileStream.closed) {
+      fileStream.close();
     }
 
     if (!response.ok) {
       throw new OIBusError(
         `HTTP request failed with status code ${response.statusCode} and message: ${await response.body.text()}`,
-        [
-          // Only retry the request if the status code is one of the following
-          // Source: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
-          401, // Unauthorized
-          403, // Forbidden
-          404, // Not Found
-          407, // Proxy Authentication Required
-          408, // Request Timeout
-          429, // Too Many Requests
-          502, // Bad Gateway
-          503, // Service Unavailable
-          504, // Gateway Timeout
-          511 //  Network Authentication Required
-        ].includes(response.statusCode)
+        shouldHTTPRequestRetry(response.statusCode)
       );
     }
   }
@@ -111,18 +96,12 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
   override async testConnection(): Promise<void> {
     // the URL class handles the correct use of slashes
     const testEndpoint = new URL(this.connector.settings.testPath, this.connector.settings.endpoint);
-    const headers: Record<string, string> = {};
-
-    const proxyOptions = this.getProxyOptions();
-    const authOptions = this.getAuthorizationOptions();
-
     let response: ReqResponse;
     try {
       response = await HTTPRequest(testEndpoint, {
         method: 'GET',
-        headers,
-        auth: authOptions,
-        proxy: proxyOptions,
+        auth: this.getAuthorizationOptions(),
+        proxy: this.getProxyOptions(),
         timeout: this.connector.settings.timeout * 1000
       });
     } catch (error) {
