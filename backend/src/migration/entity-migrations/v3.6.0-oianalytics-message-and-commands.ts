@@ -1,13 +1,59 @@
 import { Knex } from 'knex';
+import { SouthMQTTSettingsAuthentication, SouthMQTTSettingsQos } from '../../../shared/model/south-settings.model';
 
 const OIANALYTICS_MESSAGE_TABLE = 'oianalytics_messages';
 const COMMANDS_TABLE = 'commands';
 const REGISTRATIONS_TABLE = 'registrations';
+const SOUTH_CONNECTORS_TABLE = 'south_connectors';
+
+interface OldSouthMQTTSettings {
+  url: string;
+  qos: SouthMQTTSettingsQos;
+  persistent?: boolean;
+  authentication: SouthMQTTSettingsAuthentication;
+  rejectUnauthorized: boolean;
+  reconnectPeriod: number;
+  connectTimeout: number;
+}
+
+interface NewSouthMQTTSettings {
+  url: string;
+  qos: SouthMQTTSettingsQos;
+  persistent?: boolean;
+  authentication: SouthMQTTSettingsAuthentication;
+  rejectUnauthorized: boolean;
+  reconnectPeriod: number;
+  connectTimeout: number;
+  maxNumberOfMessages: number;
+  flushMessageTimeout: number;
+}
 
 export async function up(knex: Knex): Promise<void> {
   await updateOIAMessageTable(knex);
   await updateOIACommandTable(knex);
   await updateRegistrationSettings(knex);
+
+  await updateSouthMQTTSettings(knex);
+}
+
+async function updateSouthMQTTSettings(knex: Knex) {
+  const oldSouthSettings: Array<{
+    id: string;
+    type: string;
+    settings: string;
+  }> = await knex(SOUTH_CONNECTORS_TABLE).select('id', 'type', 'settings').where('type', 'mqtt');
+
+  for (const connector of oldSouthSettings) {
+    const oldSettings: OldSouthMQTTSettings = JSON.parse(connector.settings);
+    const newSettings: NewSouthMQTTSettings = {
+      ...oldSettings,
+      maxNumberOfMessages: 1_000,
+      flushMessageTimeout: 1_000
+    };
+    await knex(SOUTH_CONNECTORS_TABLE)
+      .update({ settings: JSON.stringify(newSettings) })
+      .where('id', connector.id);
+  }
 }
 
 async function updateOIAMessageTable(knex: Knex): Promise<void> {
