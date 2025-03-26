@@ -82,6 +82,26 @@ export async function HTTPRequest(url: ReqURL, options: ReqOptions = {}): Promis
 }
 
 /**
+ * General function to use in order to check if a request should be retried
+ */
+export function shouldHTTPRequestRetry(statusCode: number) {
+  return [
+    // Only retry the request if the status code is one of the following
+    // Source: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
+    401, // Unauthorized
+    403, // Forbidden
+    404, // Not Found
+    407, // Proxy Authentication Required
+    408, // Request Timeout
+    429, // Too Many Requests
+    502, // Bad Gateway
+    503, // Service Unavailable
+    504, // Gateway Timeout
+    511 //  Network Authentication Required
+  ].includes(statusCode);
+}
+
+/**
  * Helper function to get correct authorization data.
  *
  * URL is always returned, and is left unchanged when the auth type is not 'url'
@@ -110,12 +130,9 @@ async function getAuthorization(options: ReqAuthOptions, url: string) {
     }
 
     case 'url': {
-      const username = options.username;
-      const password = await encryptionService.decryptText(options.password ?? '');
-
       const urlObj = new URL(url);
-      urlObj.username = username;
-      urlObj.password = password;
+      urlObj.username = options.username;
+      urlObj.password = await encryptionService.decryptText(options.password ?? '');
       auth.url = urlObj.toString();
       break;
     }
