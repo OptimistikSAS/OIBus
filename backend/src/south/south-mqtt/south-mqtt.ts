@@ -80,12 +80,12 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
       this.logger.info(`Connecting to "${this.connector.settings.url}"`);
       this.client = mqtt.connect(this.connector.settings.url, options);
 
-      this.client.on('connect', async () => {
+      this.client.once('connect', async () => {
         this.logger.info(`Connected to ${this.connector.settings.url}`);
         this.flushTimeout = setTimeout(this.flushMessages.bind(this), this.FLUSH_MESSAGE_TIMEOUT);
         resolve();
       });
-      this.client.on('error', async error => {
+      this.client.once('error', async error => {
         await this.disconnect();
         this.logger.error(`MQTT Client error: ${error}`);
         this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.reconnectPeriod);
@@ -144,6 +144,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
       this.reconnectTimeout = null;
     }
     if (this.client) {
+      this.client.removeAllListeners();
       this.client.end(true, { cmd: 'disconnect', properties: { sessionExpiryInterval: 60 } });
       this.logger.info(`Disconnected from ${this.connector.settings.url}...`);
       this.client = null;
@@ -169,15 +170,15 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     const options = await this.createConnectionOptions();
     return new Promise((resolve, reject) => {
       this.client = mqtt.connect(this.connector.settings.url, options);
-      this.client.on('connect', async () => {
+      this.client.once('connect', async () => {
         this.logger.info(`Connected to ${this.connector.settings.url}`);
         await this.subscribe([item]);
       });
-      this.client.on('error', async error => {
+      this.client.once('error', async error => {
         await this.disconnect();
         reject(`MQTT connection error ${error}`);
       });
-      this.client.on('message', async (topic, message, packet) => {
+      this.client.once('message', async (topic, message, packet) => {
         this.logger.trace(`MQTT message for topic ${topic}: ${message}, dup:${packet.dup}`);
         const messageTimestamp: Instant = DateTime.now().toUTC().toISO()!;
         await this.unsubscribe([item]);
@@ -194,12 +195,12 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
   async testConnectionToBroker(options: mqtt.IClientOptions): Promise<void> {
     return new Promise((resolve, reject) => {
       const client = mqtt.connect(this.connector.settings.url, options);
-      client.on('connect', () => {
+      client.once('connect', () => {
         this.logger.info(`Connection test to "${this.connector.settings.url}" successful`);
         client.end(true);
         resolve();
       });
-      client.on('error', error => {
+      client.once('error', error => {
         this.logger.error(`MQTT connection error. ${error}`);
         client.end(true);
         reject(`MQTT connection error. ${error}`);
@@ -210,7 +211,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
   async createConnectionOptions(): Promise<mqtt.IClientOptions> {
     const options: mqtt.IClientOptions = {
       rejectUnauthorized: this.connector.settings.rejectUnauthorized,
-      reconnectPeriod: this.connector.settings.reconnectPeriod,
+      reconnectPeriod: 0, // managed by OIBus
       connectTimeout: this.connector.settings.connectTimeout,
       clientId: this.connector.id,
       queueQoSZero: false

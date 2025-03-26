@@ -226,16 +226,13 @@ describe('SouthMQTT without authentication', () => {
       clientId: configuration.id,
       rejectUnauthorized: false,
       connectTimeout: 1000,
-      reconnectPeriod: 1000,
+      reconnectPeriod: 0,
       queueQoSZero: false
     };
     await flushPromises();
     expect(mqtt.connect).toHaveBeenCalledWith(configuration.settings.url, expectedOptions);
     mqttStream.emit('connect');
     expect(logger.info).toHaveBeenCalledWith(`Connected to ${configuration.settings.url}`);
-    mqttStream.emit('error', new Error('error'));
-    await flushPromises(); // Flush disconnect promise
-    expect(logger.error).toHaveBeenCalledWith(`MQTT Client error: ${new Error('error')}`); // Not called because promise is already resolved
     mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false, qos: 1, retain: false });
     await flushPromises(); // Flush disconnect promise
     expect(logger.trace).toHaveBeenCalledWith('MQTT message for topic myTopic: myMessage, dup:false, qos:1, retain:false');
@@ -248,6 +245,10 @@ describe('SouthMQTT without authentication', () => {
     mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false });
     await flushPromises(); // Flush disconnect promise
     expect(logger.error).toHaveBeenCalledWith('Error when flushing messages: Error: handle message error');
+
+    mqttStream.emit('error', new Error('error'));
+    await flushPromises(); // Flush disconnect promise
+    expect(logger.error).toHaveBeenCalledWith(`MQTT Client error: ${new Error('error')}`); // Not called because promise is already resolved
   });
 
   it('should properly disconnect', async () => {
@@ -454,7 +455,7 @@ describe('SouthMQTT with Basic Auth', () => {
       username: 'username',
       password: 'pass',
       connectTimeout: 1000,
-      reconnectPeriod: 1000,
+      reconnectPeriod: 0,
       queueQoSZero: false
     };
     expect(mqtt.connect).toHaveBeenCalledWith(configuration.settings.url, expectedOptions);
@@ -960,7 +961,7 @@ describe('SouthMQTT with Cert', () => {
       key: 'myKey',
       ca: 'myCa',
       connectTimeout: 1000,
-      reconnectPeriod: 1000,
+      reconnectPeriod: 0,
       queueQoSZero: false
     };
     expect(mqtt.connect).toHaveBeenCalledWith(configuration.settings.url, expectedOptions);
@@ -1139,7 +1140,7 @@ describe('SouthMQTT without Cert', () => {
       key: '',
       ca: '',
       connectTimeout: 1000,
-      reconnectPeriod: 1000,
+      reconnectPeriod: 0,
       queueQoSZero: false
     };
     expect(mqtt.connect).toHaveBeenCalledWith(configuration.settings.url, expectedOptions);
@@ -1153,7 +1154,7 @@ describe('SouthMQTT without Cert', () => {
       key: '',
       ca: '',
       connectTimeout: 1000,
-      reconnectPeriod: 1000,
+      reconnectPeriod: 0,
       queueQoSZero: false
     };
     south.testConnectionToBroker = jest.fn();
@@ -1170,7 +1171,7 @@ describe('SouthMQTT without Cert', () => {
       key: '',
       ca: '',
       connectTimeout: 1000,
-      reconnectPeriod: 1000,
+      reconnectPeriod: 0,
       queueQoSZero: false
     };
     (mqttStream.end as jest.Mock).mockClear();
