@@ -208,10 +208,25 @@ export default class SouthOPCUA
     testingSettings: SouthConnectorItemTestingSettings,
     callback: (data: OIBusContent) => void
   ): Promise<void> {
-    await this.connect();
+    const tempCertFolder = `opcua-test-${randomUUID()}`;
+    await this.initOpcuaCertificateFolders(tempCertFolder);
+    const clientCertificateManager = new OPCUACertificateManager({
+      rootFolder: path.resolve(tempCertFolder, 'opcua'),
+      automaticallyAcceptUnknownCertificate: true
+    });
+    // Set the state to the CertificateManager to 2 (Initialized) to avoid a call to openssl
+    // It is useful for offline instances of OIBus where downloading openssl is not possible
+    clientCertificateManager.state = 2;
+
     let session;
     try {
-      session = await this.connection.getSession();
+      const { options, userIdentity } = await this.createSessionConfigs(
+        this.connector.settings,
+        clientCertificateManager,
+        this.encryptionService,
+        'OIBus Connector test'
+      );
+      session = await OPCUAClient.createSession(this.connector.settings.url, userIdentity, options);
       let content: OIBusContent;
       if (item.settings.mode === 'da') {
         content = await this.getDAValues([item], session);
@@ -392,7 +407,7 @@ export default class SouthOPCUA
                     continuationPoint: result.continuationPoint
                   };
                 })
-                .filter(node => !!node.continuationPoint);
+                .filter(node => node.continuationPoint && node.continuationPoint.length > 0);
 
               this.logger.debug(`Adding ${dataByItems.length} values between ${startTime} and ${endTime}`);
               if (!testingItem) {
