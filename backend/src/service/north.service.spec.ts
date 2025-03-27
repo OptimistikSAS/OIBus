@@ -273,149 +273,42 @@ describe('north service', () => {
     expect(dataStreamEngine.getNorthDataStream).toHaveBeenCalledWith(testData.north.list[0].id);
   });
 
-  it('should get error files', async () => {
-    await service.getErrorFiles(testData.north.list[0].id, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'filename');
-    expect(dataStreamEngine.getErrorFiles).toHaveBeenCalledWith(
+  it('should search cache content', async () => {
+    await service.searchCacheContent(
       testData.north.list[0].id,
-      testData.constants.dates.DATE_1,
-      testData.constants.dates.DATE_2,
-      'filename'
+      { start: testData.constants.dates.DATE_1, end: testData.constants.dates.DATE_2, nameContains: 'file' },
+      'cache'
+    );
+    expect(dataStreamEngine.searchCacheContent).toHaveBeenCalledWith(
+      testData.north.list[0].id,
+      { start: testData.constants.dates.DATE_1, end: testData.constants.dates.DATE_2, nameContains: 'file' },
+      'cache'
     );
   });
 
-  it('should get error file content', async () => {
-    await service.getErrorFileContent(testData.north.list[0].id, 'filename');
-    expect(dataStreamEngine.getErrorFileContent).toHaveBeenCalledWith(testData.north.list[0].id, 'filename');
+  it('should get cache content file stream', async () => {
+    await service.getCacheContentFileStream(testData.north.list[0].id, 'cache', 'filename');
+    expect(dataStreamEngine.getCacheContentFileStream).toHaveBeenCalledWith(testData.north.list[0].id, 'cache', 'filename');
   });
 
-  it('should remove error files', async () => {
-    await service.removeErrorFiles(testData.north.list[0].id, ['filename']);
-    expect(dataStreamEngine.removeErrorFiles).toHaveBeenCalledWith(testData.north.list[0].id, ['filename']);
+  it('should remove cache content', async () => {
+    await service.removeCacheContent(testData.north.list[0].id, 'cache', ['filename']);
+    expect(dataStreamEngine.removeCacheContent).toHaveBeenCalledWith(testData.north.list[0].id, 'cache', ['filename']);
   });
 
-  it('should retry error files', async () => {
-    await service.retryErrorFiles(testData.north.list[0].id, ['filename']);
-    expect(dataStreamEngine.retryErrorFiles).toHaveBeenCalledWith(testData.north.list[0].id, ['filename']);
+  it('should remove all cache content', async () => {
+    await service.removeAllCacheContent(testData.north.list[0].id, 'cache');
+    expect(dataStreamEngine.removeAllCacheContent).toHaveBeenCalledWith(testData.north.list[0].id, 'cache');
   });
 
-  it('should remove all error files', async () => {
-    await service.removeAllErrorFiles(testData.north.list[0].id);
-    expect(dataStreamEngine.removeAllErrorFiles).toHaveBeenCalledWith(testData.north.list[0].id);
+  it('should move cache content', async () => {
+    await service.moveCacheContent(testData.north.list[0].id, 'cache', 'error', ['filename']);
+    expect(dataStreamEngine.moveCacheContent).toHaveBeenCalledWith(testData.north.list[0].id, 'cache', 'error', ['filename']);
   });
 
-  it('should retry all error files', async () => {
-    await service.retryAllErrorFiles(testData.north.list[0].id);
-    expect(dataStreamEngine.retryAllErrorFiles).toHaveBeenCalledWith(testData.north.list[0].id);
-  });
-
-  it('should get cache files', async () => {
-    await service.getCacheFiles(testData.north.list[0].id, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'filename');
-    expect(dataStreamEngine.getCacheFiles).toHaveBeenCalledWith(
-      testData.north.list[0].id,
-      testData.constants.dates.DATE_1,
-      testData.constants.dates.DATE_2,
-      'filename'
-    );
-  });
-
-  it('should get cache file content', async () => {
-    await service.getCacheFileContent(testData.north.list[0].id, 'filename');
-    expect(dataStreamEngine.getCacheFileContent).toHaveBeenCalledWith(testData.north.list[0].id, 'filename');
-  });
-
-  it('should remove cache files', async () => {
-    await service.removeCacheFiles(testData.north.list[0].id, ['filename']);
-    expect(dataStreamEngine.removeCacheFiles).toHaveBeenCalledWith(testData.north.list[0].id, ['filename']);
-  });
-
-  it('should archive cache files', async () => {
-    await service.archiveCacheFiles(testData.north.list[0].id, ['filename']);
-    expect(dataStreamEngine.archiveCacheFiles).toHaveBeenCalledWith(testData.north.list[0].id, ['filename']);
-  });
-
-  it('should remove all cache files', async () => {
-    await service.removeAllCacheFiles(testData.north.list[0].id);
-    expect(dataStreamEngine.removeAllCacheFiles).toHaveBeenCalledWith(testData.north.list[0].id);
-  });
-
-  it('should get archive files', async () => {
-    await service.getArchiveFiles(testData.north.list[0].id, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'filename');
-    expect(dataStreamEngine.getArchiveFiles).toHaveBeenCalledWith(
-      testData.north.list[0].id,
-      testData.constants.dates.DATE_1,
-      testData.constants.dates.DATE_2,
-      'filename'
-    );
-  });
-
-  it('should get archive file content', async () => {
-    await service.getArchiveFileContent(testData.north.list[0].id, 'filename');
-    expect(dataStreamEngine.getArchiveFileContent).toHaveBeenCalledWith(testData.north.list[0].id, 'filename');
-  });
-
-  it('should remove archive files', async () => {
-    await service.removeArchiveFiles(testData.north.list[0].id, ['filename']);
-    expect(dataStreamEngine.removeArchiveFiles).toHaveBeenCalledWith(testData.north.list[0].id, ['filename']);
-  });
-
-  it('should retry archive files', async () => {
-    await service.retryArchiveFiles(testData.north.list[0].id, ['filename']);
-    expect(dataStreamEngine.retryArchiveFiles).toHaveBeenCalledWith(testData.north.list[0].id, ['filename']);
-  });
-
-  it('should remove all archive files', async () => {
-    await service.removeAllArchiveFiles(testData.north.list[0].id);
-    expect(dataStreamEngine.removeAllArchiveFiles).toHaveBeenCalledWith(testData.north.list[0].id);
-  });
-
-  it('should retry all error files', async () => {
-    await service.retryAllArchiveFiles(testData.north.list[0].id);
-    expect(dataStreamEngine.retryAllArchiveFiles).toHaveBeenCalledWith(testData.north.list[0].id);
-  });
-
-  it('should get cache values', async () => {
-    await service.getCacheValues(testData.north.list[0].id, 'filename');
-    expect(dataStreamEngine.getCacheValues).toHaveBeenCalledWith(testData.north.list[0].id, 'filename');
-  });
-
-  it('should remove cache values', async () => {
-    await service.removeCacheValues(testData.north.list[0].id, ['filename']);
-    expect(dataStreamEngine.removeCacheValues).toHaveBeenCalledWith(testData.north.list[0].id, ['filename']);
-  });
-
-  it('should remove all cache values', async () => {
-    await service.removeAllCacheValues(testData.north.list[0].id);
-    expect(dataStreamEngine.removeAllCacheValues).toHaveBeenCalledWith(testData.north.list[0].id);
-  });
-
-  it('should get error values', async () => {
-    await service.getErrorValues(testData.north.list[0].id, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'filename');
-    expect(dataStreamEngine.getErrorValues).toHaveBeenCalledWith(
-      testData.north.list[0].id,
-      testData.constants.dates.DATE_1,
-      testData.constants.dates.DATE_2,
-      'filename'
-    );
-  });
-
-  it('should remove error values', async () => {
-    await service.removeErrorValues(testData.north.list[0].id, ['filename']);
-    expect(dataStreamEngine.removeErrorValues).toHaveBeenCalledWith(testData.north.list[0].id, ['filename']);
-  });
-
-  it('should retry error values', async () => {
-    await service.retryErrorValues(testData.north.list[0].id, ['filename']);
-    expect(dataStreamEngine.retryErrorValues).toHaveBeenCalledWith(testData.north.list[0].id, ['filename']);
-  });
-
-  it('should remove all error values', async () => {
-    await service.removeAllErrorValues(testData.north.list[0].id);
-    expect(dataStreamEngine.removeAllErrorValues).toHaveBeenCalledWith(testData.north.list[0].id);
-  });
-
-  it('should retry all error values', async () => {
-    await service.retryAllErrorValues(testData.north.list[0].id);
-    expect(dataStreamEngine.retryAllErrorValues).toHaveBeenCalledWith(testData.north.list[0].id);
+  it('should move all cache content', async () => {
+    await service.moveAllCacheContent(testData.north.list[0].id, 'cache', 'archive');
+    expect(dataStreamEngine.moveAllCacheContent).toHaveBeenCalledWith(testData.north.list[0].id, 'cache', 'archive');
   });
 
   it('should retrieve a list of north manifest', () => {
