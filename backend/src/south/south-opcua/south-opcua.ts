@@ -101,7 +101,7 @@ export default class SouthOPCUA
   connectionSettings: ManagedConnectionSettings<ClientSession>;
   connection!: ManagedConnection<ClientSession>;
   private flushTimeout: NodeJS.Timeout | null = null;
-  private bufferedMessages: Array<OIBusTimeValue> = [];
+  private bufferedValues: Array<OIBusTimeValue> = [];
 
   constructor(
     connector: SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings>,
@@ -723,7 +723,7 @@ export default class SouthOPCUA
       monitoredItem.on('changed', async (dataValue: DataValue) => {
         const parsedValue = this.parseOPCUAValue(item.name, dataValue.value);
         if (parsedValue) {
-          this.bufferedMessages.push({
+          this.bufferedValues.push({
             pointId: item.name,
             timestamp: DateTime.now().toUTC().toISO()!,
             data: {
@@ -731,7 +731,7 @@ export default class SouthOPCUA
               quality: dataValue.statusCode.name
             }
           });
-          if (this.bufferedMessages.length >= this.MAX_NUMBER_OF_MESSAGES) {
+          if (this.bufferedValues.length >= this.MAX_NUMBER_OF_MESSAGES) {
             await this.flushMessages();
           }
         }
@@ -741,18 +741,18 @@ export default class SouthOPCUA
   }
 
   async flushMessages(): Promise<void> {
-    const messageToParse = Array.from(this.bufferedMessages);
-    this.bufferedMessages = [];
+    const valuesToSend = Array.from(this.bufferedValues);
+    this.bufferedValues = [];
     if (this.flushTimeout) {
       clearTimeout(this.flushTimeout);
       this.flushTimeout = null;
     }
-    if (messageToParse.length) {
-      this.logger.debug(`Flushing ${messageToParse.length} messages`);
+    if (valuesToSend.length) {
+      this.logger.debug(`Flushing ${valuesToSend.length} messages`);
       try {
         await this.addContent({
           type: 'time-values',
-          content: messageToParse
+          content: valuesToSend
         });
       } catch (error: unknown) {
         this.logger.error(`Error when flushing messages: ${error}`);
