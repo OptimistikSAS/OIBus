@@ -25,19 +25,7 @@ import SouthCacheRepository from '../../repository/cache/south-cache.repository'
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let odbc: any | null = null;
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import('odbc')
-  .then(obj => {
-    odbc = obj.default;
-    console.info('odbc library loaded');
-  })
-  .catch(() => {
-    console.error('Could not load odbc');
-  });
+import { loadOdbc } from './odbc-loader';
 
 /**
  * Class SouthODBC - Retrieve data from SQL databases with ODBC driver and send them to the cache as CSV files.
@@ -184,8 +172,9 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
   }
 
   async testOdbcConnection(): Promise<void> {
+    const odbc = await loadOdbc();
     if (!odbc) {
-      throw new Error('odbc library not loaded');
+      throw new Error('ODBC library not available');
     }
     let connection;
     try {
@@ -362,10 +351,10 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     startTime: Instant,
     endTime: Instant,
     test?: boolean
-  ): Promise<Instant | Array<Record<string, any>> | null> {
-    // test is here in case we are testing items
+  ): Promise<Instant | Array<Record<string, string | number>> | null> {
+    const odbc = await loadOdbc();
     if (!odbc) {
-      throw new Error('odbc library not loaded');
+      throw new Error('ODBC library not available');
     }
 
     let updatedStartTime: Instant | null = null;
@@ -410,7 +399,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
       if (connection) {
         await connection.close();
       }
-      throw error;
+      throw new Error((error as Error).message);
     }
     const requestDuration = DateTime.now().toMillis() - startRequest;
 
