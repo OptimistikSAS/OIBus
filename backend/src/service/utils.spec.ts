@@ -649,6 +649,14 @@ describe('Service utils', () => {
   describe('convertDateTimeFromInstant', () => {
     const testInstant = '2020-02-02T02:02:02.222Z';
 
+    it('should return empty string', () => {
+      const dateTimeFormat = {
+        type: 'unix-epoch-ms' as DateTimeType
+      };
+      const result = formatInstant(undefined, dateTimeFormat);
+      expect(result).toEqual('');
+    });
+
     it('should return Number of ms', () => {
       const dateTimeFormat = {
         type: 'unix-epoch-ms' as DateTimeType

@@ -367,47 +367,47 @@ export default class SouthOPCUA
                   const result = response.results[i];
                   const associatedItem = resampledItems.find(item => item.nodeId === node.nodeId)!;
 
-                  if (result.historyData?.dataValues) {
-                    this.logger.trace(
-                      `Result for node "${node.nodeId}" (number ${i}) contains ` +
-                        `${result.historyData.dataValues.length} values and has status code ` +
-                        `${JSON.stringify(result.statusCode.value)}, continuation point is ${result.continuationPoint}`
-                    );
-                    dataByItems = [
-                      ...dataByItems,
-                      ...result.historyData.dataValues.map((dataValue: DataValue) => {
-                        const selectedTimestamp = dataValue.sourceTimestamp ?? dataValue.serverTimestamp;
-                        const selectedTime = selectedTimestamp!.getTime();
-                        maxTimestamp = !maxTimestamp || selectedTime > maxTimestamp ? selectedTime : maxTimestamp;
-                        return {
-                          pointId: associatedItem.itemName,
-                          timestamp: selectedTimestamp!.toISOString(),
-                          data: {
-                            value: this.parseOPCUAValue(associatedItem.itemName, dataValue.value),
-                            quality: JSON.stringify(dataValue.statusCode)
-                          }
-                        };
-                      })
-                    ];
-                  }
                   // Reason of statusCode not equal to zero could be there is no data for the requested data and interval
-                  if (result.statusCode.value !== StatusCodes.Good) {
-                    if (!logs.has(result.statusCode.value)) {
-                      logs.set(result.statusCode.value, {
+                  if (result.statusCode !== StatusCodes.Good) {
+                    if (!logs.has(result.statusCode.name)) {
+                      logs.set(result.statusCode.name, {
                         description: result.statusCode.description,
                         affectedNodes: [associatedItem.itemName]
                       });
                     } else {
-                      logs.get(result.statusCode.value)!.affectedNodes.push(associatedItem.itemName);
+                      logs.get(result.statusCode.name)!.affectedNodes.push(associatedItem.itemName);
+                    }
+                  } else if (result.historyData && result.historyData.dataValues) {
+                    this.logger.trace(
+                      `Result for node "${node.nodeId}" (number ${i}) contains ` +
+                        `${result.historyData.dataValues.length} values and has status code ` +
+                        `${result.statusCode.name}, continuation point is ${result.continuationPoint}`
+                    );
+                    for (const historyValue of result.historyData.dataValues) {
+                      const selectedTimestamp = historyValue.sourceTimestamp ?? historyValue.serverTimestamp;
+                      maxTimestamp =
+                        !maxTimestamp || selectedTimestamp!.getTime() > maxTimestamp ? selectedTimestamp!.getTime() : maxTimestamp;
+                      dataByItems.push({
+                        pointId: associatedItem.itemName,
+                        timestamp: selectedTimestamp!.toISOString(),
+                        data: {
+                          value: this.parseOPCUAValue(associatedItem.itemName, historyValue.value),
+                          quality: historyValue.statusCode.name
+                        }
+                      });
                     }
                   }
 
                   return {
                     ...node,
-                    continuationPoint: result.continuationPoint
+                    continuationPoint: result.continuationPoint,
+                    status: result.statusCode,
+                    hasData: result.historyData && result.historyData.dataValues && result.historyData.dataValues.length > 0
                   };
                 })
-                .filter(node => node.continuationPoint && node.continuationPoint.length > 0);
+                .filter(
+                  node => node.hasData && node.status === StatusCodes.Good && node.continuationPoint && node.continuationPoint.length > 0
+                );
 
               this.logger.debug(`Adding ${dataByItems.length} values between ${startTime} and ${endTime}`);
               if (!testingItem) {
@@ -441,7 +441,7 @@ export default class SouthOPCUA
           for (const [statusCode, log] of logs.entries()) {
             if (log.affectedNodes.length > MAX_NUMBER_OF_NODE_TO_LOG) {
               this.logger.debug(
-                `${log.description} with status code ${statusCode}: [${log.affectedNodes[0]}..${
+                `${statusCode} status code (${log.description}): [${log.affectedNodes[0]}..${
                   log.affectedNodes[log.affectedNodes.length - 1]
                 }]`
               );
