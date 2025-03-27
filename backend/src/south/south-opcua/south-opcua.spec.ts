@@ -19,7 +19,8 @@ import nodeOPCUAClient, {
   ReadRawModifiedDetails,
   StatusCodes,
   TimestampsToReturn,
-  ClientSession
+  ClientSession,
+  Variant
 } from 'node-opcua';
 
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
@@ -298,10 +299,7 @@ describe('SouthOPCUA', () => {
                     value: '123',
                     dataType: DataType.String
                   },
-                  statusCode: {
-                    value: StatusCodes.Good,
-                    description: 'ok'
-                  }
+                  statusCode: StatusCodes.Good
                 },
                 {
                   serverTimestamp: new Date(testData.constants.dates.FAKE_NOW),
@@ -309,10 +307,7 @@ describe('SouthOPCUA', () => {
                     value: [0, 456],
                     dataType: DataType.UInt64
                   },
-                  statusCode: {
-                    value: StatusCodes.Good,
-                    description: 'ok'
-                  }
+                  statusCode: StatusCodes.Good
                 },
                 {
                   serverTimestamp: new Date('2023-12-12T00:00:00.000Z'),
@@ -320,10 +315,7 @@ describe('SouthOPCUA', () => {
                     value: [0, 789],
                     dataType: DataType.Int64
                   },
-                  statusCode: {
-                    value: StatusCodes.Good,
-                    description: 'ok'
-                  }
+                  statusCode: StatusCodes.Good
                 },
                 {
                   serverTimestamp: new Date('2023-12-12T00:00:00.000Z'),
@@ -331,10 +323,7 @@ describe('SouthOPCUA', () => {
                     value: [0x0a],
                     dataType: DataType.ByteString
                   },
-                  statusCode: {
-                    value: StatusCodes.Good,
-                    description: 'ok'
-                  }
+                  statusCode: StatusCodes.Good
                 },
                 {
                   serverTimestamp: new Date('2023-12-12T00:00:00.000Z'),
@@ -342,10 +331,7 @@ describe('SouthOPCUA', () => {
                     value: new Date('2023-12-12T00:00:00.000Z'),
                     dataType: DataType.DateTime
                   },
-                  statusCode: {
-                    value: StatusCodes.Good,
-                    description: 'ok'
-                  }
+                  statusCode: StatusCodes.Good
                 },
                 {
                   serverTimestamp: new Date('2023-12-12T00:00:00.000Z'),
@@ -353,15 +339,12 @@ describe('SouthOPCUA', () => {
                     value: null,
                     dataType: DataType.Null
                   },
-                  statusCode: {
-                    value: StatusCodes.Good,
-                    description: 'ok'
-                  }
+                  statusCode: StatusCodes.Good
                 }
               ]
             },
-            statusCode: { value: StatusCodes.Good, description: 'ok' },
-            continuationPoint: false
+            statusCode: StatusCodes.Good,
+            continuationPoint: []
           },
           {
             historyData: {
@@ -372,10 +355,7 @@ describe('SouthOPCUA', () => {
                     value: true,
                     dataType: DataType.Boolean
                   },
-                  statusCode: {
-                    value: StatusCodes.Good,
-                    description: 'ok'
-                  }
+                  statusCode: StatusCodes.Good
                 },
                 {
                   sourceTimestamp: new Date(testData.constants.dates.FAKE_NOW),
@@ -383,19 +363,21 @@ describe('SouthOPCUA', () => {
                     value: false,
                     dataType: DataType.Boolean
                   },
-                  statusCode: {
-                    value: StatusCodes.Bad,
-                    description: 'not ok'
-                  }
+                  statusCode: StatusCodes.Bad
                 }
               ]
             },
-            statusCode: { value: StatusCodes.Bad, description: 'not ok' },
-            continuationPoint: true
+            statusCode: StatusCodes.Bad,
+            continuationPoint: ['']
           },
           {
-            statusCode: { value: StatusCodes.Bad, description: 'not ok' },
-            continuationPoint: false
+            historyData: { dataValues: [] },
+            statusCode: StatusCodes.Good,
+            continuationPoint: []
+          },
+          {
+            statusCode: StatusCodes.Bad,
+            continuationPoint: null
           }
         ]
       })
@@ -410,7 +392,7 @@ describe('SouthOPCUA', () => {
             historyData: {
               dataValues: []
             },
-            statusCode: { value: StatusCodes.Good, description: 'ok' },
+            statusCode: StatusCodes.Good,
             continuationPoint: false
           }
         ]
@@ -433,45 +415,58 @@ describe('SouthOPCUA', () => {
       type: 'time-values',
       content: [
         {
-          data: { value: '123', quality: JSON.stringify({ value: StatusCodes.Good, description: 'ok' }) },
+          data: { value: '123', quality: StatusCodes.Good.name },
           pointId: configuration.items[0].name,
           timestamp: testData.constants.dates.FAKE_NOW
         },
         {
-          data: { value: '456', quality: JSON.stringify({ value: StatusCodes.Good, description: 'ok' }) },
+          data: { value: '456', quality: StatusCodes.Good.name },
           pointId: configuration.items[0].name,
           timestamp: testData.constants.dates.FAKE_NOW
         },
         {
-          data: { value: '789', quality: JSON.stringify({ value: StatusCodes.Good, description: 'ok' }) },
+          data: { value: '789', quality: StatusCodes.Good.name },
           pointId: configuration.items[0].name,
           timestamp: '2023-12-12T00:00:00.000Z'
         },
         {
-          data: { value: '10', quality: JSON.stringify({ value: StatusCodes.Good, description: 'ok' }) },
+          data: { value: '10', quality: StatusCodes.Good.name },
           pointId: configuration.items[0].name,
           timestamp: '2023-12-12T00:00:00.000Z'
         },
         {
           data: {
             value: '2023-12-12T00:00:00.000Z',
-            quality: JSON.stringify({ value: StatusCodes.Good, description: 'ok' })
+            quality: StatusCodes.Good.name
           },
           pointId: configuration.items[0].name,
           timestamp: '2023-12-12T00:00:00.000Z'
-        },
-        {
-          data: { value: '1', quality: JSON.stringify({ value: StatusCodes.Good, description: 'ok' }) },
-          pointId: configuration.items[1].name,
-          timestamp: testData.constants.dates.FAKE_NOW
-        },
-        {
-          data: { value: '0', quality: JSON.stringify({ value: StatusCodes.Bad, description: 'not ok' }) },
-          pointId: configuration.items[1].name,
-          timestamp: testData.constants.dates.FAKE_NOW
         }
       ]
     });
+  });
+
+  it('should properly parse boolean values', async () => {
+    const values = [
+      {
+        sourceTimestamp: new Date(testData.constants.dates.FAKE_NOW),
+        value: {
+          value: true,
+          dataType: DataType.Boolean
+        },
+        statusCode: StatusCodes.Good
+      },
+      {
+        sourceTimestamp: new Date(testData.constants.dates.FAKE_NOW),
+        value: {
+          value: false,
+          dataType: DataType.Boolean
+        },
+        statusCode: StatusCodes.Bad
+      }
+    ];
+    south.parseOPCUAValue('item1', values[0].value as Variant);
+    south.parseOPCUAValue('item1', values[1].value as Variant);
   });
 
   it('should properly manage history query with status not good', async () => {
@@ -508,7 +503,7 @@ describe('SouthOPCUA', () => {
         historyData: {
           dataValues: []
         },
-        statusCode: { value: StatusCodes.Bad, description: 'not ok' },
+        statusCode: StatusCodes.Bad,
         continuationPoint: false
       });
     }
@@ -548,7 +543,7 @@ describe('SouthOPCUA', () => {
     );
 
     expect(logger.debug).toHaveBeenCalledWith(
-      `not ok with status code ${StatusCodes.Bad}: [${configuration.items[0].name}..${configuration.items[0].name}]`
+      `${StatusCodes.Bad.name} status code (${StatusCodes.Bad.description}): [${configuration.items[0].name}..${configuration.items[0].name}]`
     );
   });
 
