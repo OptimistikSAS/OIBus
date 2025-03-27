@@ -90,12 +90,18 @@ export default class SouthOPCUA
   extends SouthConnector<SouthOPCUASettings, SouthOPCUAItemSettings>
   implements QueriesHistory, QueriesLastPoint, QueriesSubscription, DelegatesConnection<ClientSession>
 {
+  // TODO: add these as settings
+  private MAX_NUMBER_OF_MESSAGES = 1000;
+  private FLUSH_MESSAGE_TIMEOUT = 1000;
+
   private clientCertificateManager: OPCUACertificateManager | null = null;
   private disconnecting = false;
   private monitoredItems = new Map<string, ClientMonitoredItem>();
   private subscription: ClientSubscription | null = null;
   connectionSettings: ManagedConnectionSettings<ClientSession>;
   connection!: ManagedConnection<ClientSession>;
+  private flushTimeout: NodeJS.Timeout | null = null;
+  private bufferedMessages: Array<OIBusTimeValue> = [];
 
   constructor(
     connector: SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings>,
@@ -467,8 +473,14 @@ export default class SouthOPCUA
   override async disconnect(): Promise<void> {
     this.disconnecting = true;
 
-    await this.subscription?.terminate();
-    this.subscription = null;
+    if (this.subscription) {
+      await this.subscription.terminate();
+      this.subscription = null;
+    }
+    if (this.flushTimeout) {
+      clearTimeout(this.flushTimeout);
+      this.flushTimeout = null;
+    }
 
     await super.disconnect();
     this.disconnecting = false;
@@ -655,7 +667,7 @@ export default class SouthOPCUA
           timestamp: selectedTimestamp ? selectedTimestamp.toISOString() : defaultTimestamp,
           data: {
             value: this.parseOPCUAValue(items[i].name, dataValue.value),
-            quality: JSON.stringify(dataValue.statusCode)
+            quality: dataValue.statusCode.name
           }
         };
       });
@@ -684,55 +696,75 @@ export default class SouthOPCUA
     }
 
     if (!this.subscription) {
-      this.subscription = ClientSubscription.create(session, {
+      this.subscription = await session.createSubscription2({
         requestedPublishingInterval: 150,
-        requestedLifetimeCount: 10 * 60 * 10,
+        requestedLifetimeCount: 100,
         requestedMaxKeepAliveCount: 10,
-        maxNotificationsPerPublish: 2,
+        maxNotificationsPerPublish: 0,
         publishingEnabled: true,
-        priority: 6
+        priority: 10
       });
+      this.flushTimeout = setTimeout(this.flushMessages.bind(this), this.FLUSH_MESSAGE_TIMEOUT);
     }
 
-    items.forEach(item => {
-      const monitoredItem = ClientMonitoredItem.create(
-        this.subscription!,
+    for (const item of items) {
+      const monitoredItem = await this.subscription.monitor(
         {
           nodeId: item.settings.nodeId,
           attributeId: AttributeIds.Value
         },
         {
-          samplingInterval: 2,
+          samplingInterval: -1,
           discardOldest: true,
-          queueSize: 1
+          queueSize: 10
         },
         TimestampsToReturn.Neither
       );
       monitoredItem.on('changed', async (dataValue: DataValue) => {
         const parsedValue = this.parseOPCUAValue(item.name, dataValue.value);
         if (parsedValue) {
-          await this.addContent({
-            type: 'time-values',
-            content: [
-              {
-                pointId: item.name,
-                timestamp: DateTime.now().toUTC().toISO()!,
-                data: {
-                  value: parsedValue,
-                  quality: JSON.stringify(dataValue.statusCode)
-                }
-              }
-            ]
+          this.bufferedMessages.push({
+            pointId: item.name,
+            timestamp: DateTime.now().toUTC().toISO()!,
+            data: {
+              value: parsedValue,
+              quality: dataValue.statusCode.name
+            }
           });
+          if (this.bufferedMessages.length >= this.MAX_NUMBER_OF_MESSAGES) {
+            await this.flushMessages();
+          }
         }
       });
       this.monitoredItems.set(item.id, monitoredItem);
-    });
+    }
+  }
+
+  async flushMessages(): Promise<void> {
+    const messageToParse = Array.from(this.bufferedMessages);
+    this.bufferedMessages = [];
+    if (this.flushTimeout) {
+      clearTimeout(this.flushTimeout);
+      this.flushTimeout = null;
+    }
+    if (messageToParse.length) {
+      this.logger.debug(`Flushing ${messageToParse.length} messages`);
+      try {
+        await this.addContent({
+          type: 'time-values',
+          content: messageToParse
+        });
+      } catch (error: unknown) {
+        this.logger.error(`Error when flushing messages: ${error}`);
+      }
+    }
+    this.flushTimeout = setTimeout(this.flushMessages.bind(this), this.FLUSH_MESSAGE_TIMEOUT);
   }
 
   async unsubscribe(items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>): Promise<void> {
     for (const item of items) {
       if (this.monitoredItems.has(item.id)) {
+        this.monitoredItems.get(item.id)!.removeAllListeners();
         await this.monitoredItems.get(item.id)!.terminate();
         this.monitoredItems.delete(item.id);
       }

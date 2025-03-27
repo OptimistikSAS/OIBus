@@ -33,6 +33,7 @@ import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-ser
 import testData from '../../tests/utils/test-data';
 import { mockBaseFolders } from '../../tests/utils/test-utils';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
+import { DateTime } from 'luxon';
 
 class CustomStream extends Stream {
   constructor() {
@@ -627,14 +628,14 @@ describe('SouthOPCUA', () => {
       {
         value: { value: 1, dataType: DataType.Float },
         sourceTimestamp: new Date(testData.constants.dates.DATE_1),
-        statusCode: { value: 0 }
+        statusCode: StatusCodes.Good
       },
       {
         value: { value: 2, dataType: DataType.Double },
         serverTimestamp: new Date(testData.constants.dates.DATE_2),
-        statusCode: { value: 0 }
+        statusCode: StatusCodes.Good
       },
-      { value: { value: 3, dataType: DataType.UInt16 }, statusCode: { value: 0 } }
+      { value: { value: 3, dataType: DataType.UInt16 }, statusCode: StatusCodes.Good }
     ]);
     (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ read });
     south.addContent = jest.fn();
@@ -656,7 +657,7 @@ describe('SouthOPCUA', () => {
           timestamp: testData.constants.dates.DATE_1,
           data: {
             value: '1',
-            quality: JSON.stringify({ value: 0 })
+            quality: StatusCodes.Good.name
           }
         },
         {
@@ -664,7 +665,7 @@ describe('SouthOPCUA', () => {
           timestamp: testData.constants.dates.DATE_2,
           data: {
             value: '2',
-            quality: JSON.stringify({ value: 0 })
+            quality: StatusCodes.Good.name
           }
         },
         {
@@ -672,7 +673,7 @@ describe('SouthOPCUA', () => {
           timestamp: testData.constants.dates.FAKE_NOW,
           data: {
             value: '3',
-            quality: JSON.stringify({ value: 0 })
+            quality: StatusCodes.Good.name
           }
         }
       ]
@@ -738,8 +739,8 @@ describe('SouthOPCUA', () => {
 
   it('should properly query items and log error when not same number of items and values', async () => {
     const read = jest.fn().mockReturnValue([
-      { value: { value: 1, dataType: DataType.Float }, sourceTimestamp: new Date(), statusCode: { value: 0 } },
-      { value: { value: 2, dataType: DataType.Double }, serverTimestamp: new Date(), statusCode: { value: 0 } }
+      { value: { value: 1, dataType: DataType.Float }, sourceTimestamp: new Date(), statusCode: StatusCodes.Good },
+      { value: { value: 2, dataType: DataType.Double }, serverTimestamp: new Date(), statusCode: StatusCodes.Good }
     ]);
     (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ read });
     south.addContent = jest.fn();
@@ -759,7 +760,7 @@ describe('SouthOPCUA', () => {
           timestamp: testData.constants.dates.FAKE_NOW,
           data: {
             value: '1',
-            quality: JSON.stringify({ value: 0 })
+            quality: StatusCodes.Good.name
           }
         },
         {
@@ -767,7 +768,7 @@ describe('SouthOPCUA', () => {
           timestamp: testData.constants.dates.FAKE_NOW,
           data: {
             value: '2',
-            quality: JSON.stringify({ value: 0 })
+            quality: StatusCodes.Good.name
           }
         }
       ]
@@ -794,18 +795,29 @@ describe('SouthOPCUA', () => {
   it('should properly subscribe', async () => {
     const stream = new CustomStream();
     stream.terminate = jest.fn();
-    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ close: jest.fn() });
-    (nodeOPCUAClient.ClientSubscription.create as jest.Mock).mockReturnValue({ terminate: jest.fn() });
-    (nodeOPCUAClient.ClientMonitoredItem.create as jest.Mock).mockReturnValue(stream);
-    south.addContent = jest.fn();
+    const monitorFn = jest.fn().mockReturnValue(stream);
+    const session = { close: jest.fn(), createSubscription2: jest.fn() };
+    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue(session);
+    (session.createSubscription2 as jest.Mock).mockReturnValue({ terminate: jest.fn(), monitor: monitorFn });
+    south.addContent = jest
+      .fn()
+      .mockImplementationOnce(() => Promise.resolve())
+      .mockImplementationOnce(() => {
+        throw new Error('add content error');
+      });
 
+    south['MAX_NUMBER_OF_MESSAGES'] = 1;
     await south.start();
     await south.subscribe([configuration.items[0]]);
-    expect(nodeOPCUAClient.ClientSubscription.create).toHaveBeenCalledTimes(1);
-    expect(nodeOPCUAClient.ClientMonitoredItem.create).toHaveBeenCalledTimes(1);
-    stream.emit('changed', { value: { value: 1, dataType: DataType.Null }, sourceTimestamp: new Date(), statusCode: { value: 0 } });
+    expect(session.createSubscription2).toHaveBeenCalledTimes(1);
+    expect(monitorFn).toHaveBeenCalledTimes(1);
+    stream.emit('changed', { value: { value: 1, dataType: DataType.Null }, sourceTimestamp: DateTime.now(), statusCode: StatusCodes.Good });
     expect(south.addContent).not.toHaveBeenCalled();
-    stream.emit('changed', { value: { value: 1, dataType: DataType.Float }, serverTimestamp: new Date(), statusCode: { value: 0 } });
+    stream.emit('changed', {
+      value: { value: 1, dataType: DataType.Float },
+      serverTimestamp: DateTime.now(),
+      statusCode: StatusCodes.Good
+    });
     expect(south.addContent).toHaveBeenCalledWith({
       type: 'time-values',
       content: [
@@ -814,11 +826,17 @@ describe('SouthOPCUA', () => {
           timestamp: testData.constants.dates.FAKE_NOW,
           data: {
             value: '1',
-            quality: JSON.stringify({ value: 0 })
+            quality: StatusCodes.Good.name
           }
         }
       ]
     });
+    stream.emit('changed', {
+      value: { value: 1, dataType: DataType.Float },
+      serverTimestamp: DateTime.now(),
+      statusCode: StatusCodes.Good
+    });
+    expect(logger.error).toHaveBeenCalledWith('Error when flushing messages: Error: add content error');
 
     await south.unsubscribe([configuration.items[0]]);
     expect(stream.terminate).toHaveBeenCalledTimes(1);
