@@ -3,9 +3,9 @@ import LogRepository from '../../repository/logs/log.repository';
 import db from 'better-sqlite3';
 import { PinoLog } from '../../../shared/model/logs.model';
 
-const DEFAULT_MAX_NUMBER_OF_LOGS = 2000000;
-const CLEAN_UP_INTERVAL = 24 * 3600 * 1000; // One day
+const DEFAULT_MAX_NUMBER_OF_LOGS = 2_000_000;
 const BATCH_TEMPO = 700; // Store logs in database every x ms
+const VACUUM_THRESHOLD = 10; // After 10 deletions, run VACUUM
 
 interface SqliteOptions {
   filename: string;
@@ -17,59 +17,68 @@ interface SqliteOptions {
  */
 class SqliteTransport {
   private readonly repository: LogRepository;
-  private readonly removeOldLogsTimeout: NodeJS.Timeout;
-  private readonly storeLogsInterval: NodeJS.Timeout;
-  batchLogs: Array<PinoLog> = [];
+  private storeLogsInterval: NodeJS.Timeout | null = null;
+  private batchLogs: Array<PinoLog> = [];
+  private numberOfLogs = 0;
+  private numberOfDeletion = 0;
+  private readonly maxNumberOfLogs;
 
   constructor(private readonly options: SqliteOptions) {
-    const database = db(this.options.filename);
-    this.repository = new LogRepository(database);
+    this.repository = new LogRepository(db(this.options.filename));
+    this.maxNumberOfLogs = this.options.maxNumberOfLogs || DEFAULT_MAX_NUMBER_OF_LOGS;
+    this.numberOfLogs = this.repository.count();
+    console.info(`${this.numberOfLogs} logs in database`);
     this.deleteOldLogsIfDatabaseTooLarge();
-    this.removeOldLogsTimeout = setInterval(this.deleteOldLogsIfDatabaseTooLarge.bind(this), CLEAN_UP_INTERVAL);
-    this.storeLogsInterval = setInterval(this.addLogs.bind(this), BATCH_TEMPO);
+    this.storeLogsInterval = setTimeout(this.writeLogs.bind(this), BATCH_TEMPO);
   }
 
-  addLogs = (): void => {
+  writeLogs = (ending = false): void => {
+    if (this.storeLogsInterval) {
+      clearTimeout(this.storeLogsInterval);
+      this.storeLogsInterval = null;
+    }
     try {
-      if (this.batchLogs.length === 0) {
-        return;
+      if (this.batchLogs.length > 0) {
+        const logsToStore = Array.from(this.batchLogs);
+        this.batchLogs = [];
+        this.repository.saveAll(logsToStore);
+        this.numberOfLogs += logsToStore.length;
+        if (this.numberOfLogs >= this.maxNumberOfLogs) {
+          this.deleteOldLogsIfDatabaseTooLarge();
+        }
       }
-      const logsToStore = this.batchLogs;
-      this.batchLogs = [];
-      this.repository.saveAll(logsToStore);
-    } catch (error) {
-      console.error(error);
+    } catch (error: unknown) {
+      console.error(`Error while writing logs: ${(error as Error).message}`);
+    }
+    if (!ending) {
+      this.storeLogsInterval = setTimeout(this.writeLogs.bind(this), BATCH_TEMPO);
     }
   };
 
-  /**
-   * Core logging method.
-   */
   log = (payload: PinoLog): void => {
     this.batchLogs.push(payload);
   };
 
-  /**
-   * Delete old logs.
-   */
   deleteOldLogsIfDatabaseTooLarge = (): void => {
-    const numberOfLogs = this.repository.count();
-    const maxNumberOfLogs = this.options.maxNumberOfLogs || DEFAULT_MAX_NUMBER_OF_LOGS;
-    if (numberOfLogs > maxNumberOfLogs) {
-      // Remove the excess of logs and one tenth of the max allowed size
-      const numberOfRecordToDelete = numberOfLogs - maxNumberOfLogs + maxNumberOfLogs / 10;
-      this.repository.delete(numberOfRecordToDelete);
+    // Remove the excess of logs and one fifth of the max allowed size
+    const numberOfRecordToDelete = this.numberOfLogs - this.maxNumberOfLogs + this.maxNumberOfLogs / 5;
+    console.info(`Removing ${numberOfRecordToDelete} rows from logs table`);
+    this.repository.delete(numberOfRecordToDelete);
+    this.numberOfDeletion += 1;
+    // Do not vacuum every time to reduce workload
+    if (this.numberOfDeletion >= VACUUM_THRESHOLD) {
+      console.info('Running vacuum on logs database');
+      this.repository.vacuum();
+      this.numberOfDeletion = 0;
     }
+    this.numberOfLogs = this.repository.count();
   };
 
   /**
-   * Make sure the requests are done before closing the repository
+   * Make sure the logs are stored before closing the repository
    */
   end = async () => {
-    clearInterval(this.removeOldLogsTimeout);
-    clearInterval(this.storeLogsInterval);
-
-    this.addLogs();
+    this.writeLogs(true);
   };
 }
 

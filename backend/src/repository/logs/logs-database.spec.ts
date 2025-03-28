@@ -101,6 +101,8 @@ describe('Repository with populated database', () => {
 
       repository.deleteLogsByScopeId('south', testData.logs.list[0].scopeId as string);
       expect(repository.count()).toEqual(testData.logs.list.length - 2);
+
+      repository.vacuum();
     });
 
     it('should search scopes and find by id', () => {

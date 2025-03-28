@@ -75,18 +75,17 @@ export default class LogRepository {
 
   saveAll = (logsToStore: Array<PinoLog>): void => {
     if (logsToStore.length === 0) return;
-    // Create a single query to store many logs at once
-    let valueClause = 'VALUES';
-    const params: Array<string | number | null> = [];
-    logsToStore.forEach(log => {
-      valueClause += ' (?,?,?,?,?,?),';
-      params.push(log.time, LEVEL_FORMAT[log.level], log.scopeType, log.scopeId, log.scopeName, log.msg);
+
+    const stmt = this.database.prepare(
+      `INSERT INTO ${LOG_TABLE} (timestamp, level, scope_type, scope_id, scope_name, message) VALUES (?, ?, ?, ?, ?, ?)`
+    );
+    const insertMany = this.database.transaction((logs: Array<PinoLog>) => {
+      for (const log of logs) {
+        stmt.run(log.time, LEVEL_FORMAT[log.level], log.scopeType, log.scopeId, log.scopeName, log.msg);
+      }
     });
 
-    // Remove last string char ","
-    const query = `INSERT INTO ${LOG_TABLE} (timestamp, level, scope_type, scope_id, scope_name, message) ${valueClause.slice(0, -1)};`;
-
-    this.database.prepare(query).run(...params);
+    insertMany(logsToStore);
   };
 
   count = (): number => {
@@ -95,12 +94,16 @@ export default class LogRepository {
   };
 
   delete = (numberOfLogsToDelete: number): void => {
-    const query = `DELETE FROM ${LOG_TABLE} WHERE ROWID IN (SELECT ROWID FROM ${LOG_TABLE} ORDER BY timestamp LIMIT ?);`;
+    const query = `DELETE FROM ${LOG_TABLE} WHERE ROWID IN (SELECT ROWID FROM ${LOG_TABLE} LIMIT ?);`;
     this.database.prepare(query).run(numberOfLogsToDelete);
   };
 
   deleteLogsByScopeId = (scopeType: ScopeType, scopeId: string): void => {
     this.database.prepare(`DELETE FROM ${LOG_TABLE} WHERE scope_type = ? AND scope_id = ?`).run(scopeType, scopeId);
+  };
+
+  vacuum = (): void => {
+    this.database.exec('VACUUM');
   };
 
   private toLog(result: Record<string, string>): OIBusLog {
