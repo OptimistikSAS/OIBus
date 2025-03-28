@@ -8,25 +8,53 @@ import ThrottlingSettings from './_throttling-settings.mdx';
 # Oracle Database™
 Query data from an Oracle Database™.
 
-## Specific settings
+## Specific Settings
 
-When configuring the SQL connector to send SQL queries to an Oracle Server, you will need to provide the following
-details:
-- **Thick mode**: When enabled, access the database through an Oracle Client Library. More details [here](https://node-oracledb.readthedocs.io/en/latest/user_guide/introduction.html#node-oracledb-thick-mode-architecture).
-  - **Oracle Client Library**: The directory of the library installed on the machine.
-- **Host**: The address of the Oracle server.
-- **Port**: The Oracle server port (default is 1521).
-- **Connection timeout**: Timeout setting for establishing the connection.
-- **Database**: The name of the database to connect to.
-- **Username**: The username used for authentication.
-- **Password**: The password used for authentication.
+To configure the SQL connector for querying an Oracle Server, provide the following details:
 
-:::caution Dependency
-Oracle Instant Client (Basic or Basic Light) minimal supported version is 18.5.0.0.0)
+- **Thick mode**: When enabled, uses the Oracle Client Library to access the database. More details [here](https://node-oracledb.readthedocs.io/en/latest/user_guide/introduction.html#node-oracledb-thick-mode-architecture).
+  - **Oracle Client Library**: Path to the installed Oracle Client Library on the host machine.
+- **Host**: Address of the Oracle server.
+- **Port**: Server port (default is `1521`).
+- **Connection timeout**: Maximum time allowed to establish the connection.
+- **Database**: Name of the target database.
+- **Username**: Username for authentication.
+- **Password**: Corresponding password.
+
+:::tip Thin vs. Thick Mode
+OIBus supports both *thin* and *thick* modes via the `oracledb` driver. Thin mode does **not** require the Oracle Instant
+Client, making it easier to set up (no native binaries, no `LD_LIBRARY_PATH` — just pure JavaScript).
+Refer to the compatibility matrix below to determine which mode is appropriate for your Oracle version.
 :::
 
-:::tip Database access
-It is strongly advised to use a read-only user when connecting to the database for security and data integrity purposes.
+### Oracle Database Version Compatibility with OIBus
+
+| Oracle DB Version | Thin Mode Support           | Thick Mode Support (with Instant Client) | Notes                                       |
+|-------------------|-----------------------------|------------------------------------------|---------------------------------------------|
+| **19c or newer**  | ✅ Supported                | ✅ Supported                             | Recommended version                         |
+| **12.2** (12c R2) | ✅ Supported                | ✅ Supported                             | Minimum version for thin mode               |
+| **12.1** (12c R1) | ⚠️ Not officially supported | ✅ Supported                             | Thin mode may work but is not guaranteed    |
+| **11.2** (11g R2) | ❌ Not supported            | ✅ Supported (with Instant Client 11.2+) | Minimum version for thick mode              |
+| **10g or older**  | ❌ Not supported            | ❌ Not supported                         | Not compatible with OIBus                   |
+
+## Oracle Instant Client
+
+Oracle Instant Client is **only required for thick mode**.
+
+In thick mode, OIBus’s compatibility with Oracle Database versions depends on the version of the Oracle Instant Client in use.
+
+According to Oracle’s client-server interoperability policy, Oracle Instant Client 18.x can connect to Oracle Database **11.2 and newer**.
+
+:::caution Minimum Oracle Instant Client Version
+The minimum supported version for Oracle Instant Client (Basic or Basic Light) is **18.5.0.0.0**.
+:::
+
+You can download the Oracle Instant Client [here](https://www.oracle.com/fr/database/technologies/instant-client/winx64-64-downloads.html).
+
+Thus, when using Oracle Instant Client 18.5.0.0.0 with OIBus, compatibility is ensured for Oracle Database **11.2 and above**.
+
+:::tip Best Practice for Database Access
+For security and data integrity, it is strongly recommended to use a **read-only** user when connecting to the database.
 :::
 
 <ThrottlingSettings/>
