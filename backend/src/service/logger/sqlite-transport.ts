@@ -28,7 +28,7 @@ class SqliteTransport {
     this.maxNumberOfLogs = this.options.maxNumberOfLogs || DEFAULT_MAX_NUMBER_OF_LOGS;
     this.numberOfLogs = this.repository.count();
     console.info(`${this.numberOfLogs} logs in database`);
-    this.deleteOldLogsIfDatabaseTooLarge();
+    this.repository.vacuum();
     this.storeLogsInterval = setTimeout(this.writeLogs.bind(this), BATCH_TEMPO);
   }
 
