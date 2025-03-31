@@ -62,22 +62,28 @@ export type ReqResponse = Awaited<ReturnType<typeof request>> & {
 export async function HTTPRequest(url: ReqURL, options: ReqOptions = {}): Promise<ReqResponse> {
   if (options.auth) {
     const { token, url: authUrl } = await getAuthorization(options.auth, url.toString());
+    url = authUrl;
 
-    // Remove potential user provided non-capitalized authorization header to not have the header twice
-    if (options.headers && 'authorization' in options.headers) {
-      delete options.headers.authorization;
+    if (token) {
+      // Remove potential user provided non-capitalized authorization header to not have the header twice
+      if (options.headers && 'authorization' in options.headers) {
+        delete options.headers.authorization;
+      }
+
+      options.headers = { ...options.headers, Authorization: token };
     }
 
-    options.headers = { ...options.headers, Authorization: token };
-    url = authUrl;
+    delete options.auth; // remove non-standard option
   }
 
   if (options.proxy) {
     options.dispatcher = await createProxy(options.proxy);
+    delete options.proxy; // remove non-standard option
   }
 
   if (options.timeout) {
     options.signal = AbortSignal.timeout(options.timeout);
+    delete options.timeout; // remove non-standard option
   }
 
   const response = (await request(url, options)) as ReqResponse;
