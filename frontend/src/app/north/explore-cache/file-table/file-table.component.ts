@@ -1,11 +1,11 @@
-import { Component, output, input, computed, signal, linkedSignal } from '@angular/core';
-import { TranslateDirective } from '@ngx-translate/core';
-import { formDirectives } from '../../../shared/form-directives';
-import { NorthCacheFiles } from '../../../../../../backend/shared/model/north-connector.model';
+import { Component, computed, input, linkedSignal, output, signal } from '@angular/core';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { DatetimePipe } from '../../../shared/datetime.pipe';
 import { FileSizePipe } from '../../../shared/file-size.pipe';
-import { createPageFromArray, Instant } from '../../../../../../backend/shared/model/types';
+import { createPageFromArray } from '../../../../../../backend/shared/model/types';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { CacheMetadata } from '../../../../../../backend/shared/model/engine.model';
+import { PaginationComponent } from '../../../shared/pagination/pagination.component';
 
 const PAGE_SIZE = 15;
 
@@ -15,68 +15,54 @@ const enum ColumnSortState {
   DESCENDING = 2
 }
 
-export interface FileTableData {
-  filename: string;
-  modificationDate: Instant;
-  size: number;
-}
-
-export interface ItemActionEvent {
-  type: 'remove' | 'retry' | 'view' | 'archive';
-  file: FileTableData;
-}
-
 @Component({
   selector: 'oib-file-table',
   templateUrl: './file-table.component.html',
   styleUrl: './file-table.component.scss',
-  imports: [...formDirectives, TranslateDirective, DatetimePipe, FileSizePipe, NgbTooltipModule]
+  imports: [TranslateDirective, DatetimePipe, FileSizePipe, NgbTooltipModule, TranslatePipe, PaginationComponent]
 })
 export class FileTableComponent {
-  readonly itemAction = output<ItemActionEvent>();
-  readonly actions = input<Array<ItemActionEvent['type']>>([]);
-  readonly selectedFiles = output<Array<FileTableData>>();
-  // remove possible duplicates
-  readonly uniqueActions = computed(() => [...new Set(this.actions())]);
-  actionButtonData: Record<ItemActionEvent['type'], { icon: string; text: string }> = {
-    remove: { icon: 'fa-trash', text: 'north.cache-settings.remove-file' },
-    retry: { icon: 'fa-refresh', text: 'north.cache-settings.retry-file' },
-    view: { icon: 'fa-search', text: 'north.cache-settings.view-file' },
-    archive: { icon: 'fa-archive', text: 'north.cache-settings.archive-file' }
-  };
-  readonly pageNumber = input(0);
-  readonly files = input<Array<FileTableData>>([]);
+  readonly cacheType = input.required<'cache' | 'error' | 'archive'>();
+  readonly files = input<Array<{ metadataFilename: string; metadata: CacheMetadata }>>([]);
+
+  readonly currentPage = signal(0);
   readonly sortedFiles = computed(() => this.sortTable());
-  readonly pages = computed(() => createPageFromArray(this.sortedFiles(), PAGE_SIZE, this.pageNumber()));
+  readonly pages = computed(() => createPageFromArray(this.sortedFiles(), PAGE_SIZE, this.currentPage()));
   protected readonly checkboxByFiles = linkedSignal({
     source: () => this.files(),
     computation: () => new Map<string, boolean>()
   });
 
-  readonly currentColumnSort = signal<keyof FileTableData>('modificationDate');
+  readonly currentColumnSort = signal<keyof CacheMetadata>('createdAt');
   readonly currentColumnOrder = signal<ColumnSortState>(ColumnSortState.DESCENDING);
   readonly mainFilesCheckboxState = linkedSignal({
     source: () => this.files(),
     computation: () => 'UNCHECKED' as 'CHECKED' | 'UNCHECKED' | 'INDETERMINATE'
   });
 
+  readonly itemAction = output<{
+    type: 'remove' | 'error' | 'archive' | 'retry' | 'view';
+    file: { metadataFilename: string; metadata: CacheMetadata };
+  }>();
+  readonly selectedFiles = output<Array<{ metadataFilename: string; metadata: CacheMetadata }>>();
+
   /**
    * Called when the user check or uncheck the main checkbox
    */
   onFileMainCheckBoxClick(isChecked: boolean) {
     this.files().forEach(errorFile => {
-      this.checkboxByFiles().set(errorFile.filename, isChecked);
+      this.checkboxByFiles().set(errorFile.metadataFilename, isChecked);
     });
     if (isChecked) {
       this.mainFilesCheckboxState.set('CHECKED');
     } else {
       this.mainFilesCheckboxState.set('UNCHECKED');
     }
-    this.selectedFiles.emit(this.files().filter(file => this.checkboxByFiles().get(file.filename)));
+    this.selectedFiles.emit(this.files().filter(file => this.checkboxByFiles().get(file.metadataFilename)));
   }
 
-  onFileCheckboxClick(isChecked: boolean, errorFile: NorthCacheFiles) {
-    this.checkboxByFiles().set(errorFile.filename, isChecked);
+  onFileCheckboxClick(isChecked: boolean, errorFile: { metadataFilename: string; metadata: CacheMetadata }) {
+    this.checkboxByFiles().set(errorFile.metadataFilename, isChecked);
     let everythingIsChecked = true;
     let everythingIsUnChecked = true;
     for (const isSelected of this.checkboxByFiles().values()) {
@@ -93,10 +79,10 @@ export class FileTableComponent {
     } else {
       this.mainFilesCheckboxState.set('INDETERMINATE');
     }
-    this.selectedFiles.emit(this.files().filter(file => this.checkboxByFiles().get(file.filename)));
+    this.selectedFiles.emit(this.files().filter(file => this.checkboxByFiles().get(file.metadataFilename)));
   }
 
-  toggleColumnSort(columnName: keyof FileTableData) {
+  toggleColumnSort(columnName: keyof CacheMetadata) {
     if (columnName === this.currentColumnSort()) {
       this.currentColumnOrder.update(order => (order + 1) % 3);
     } else {
@@ -111,25 +97,31 @@ export class FileTableComponent {
     if (this.currentColumnOrder() !== ColumnSortState.INDETERMINATE) {
       const ascending = this.currentColumnOrder() === ColumnSortState.ASCENDING;
       switch (this.currentColumnSort()) {
-        case 'modificationDate':
+        case 'createdAt':
           fileTableData.sort((a, b) => {
-            const aDate = new Date(a.modificationDate);
-            const bDate = new Date(b.modificationDate);
+            const aDate = new Date(a.metadata.createdAt);
+            const bDate = new Date(b.metadata.createdAt);
             return ascending ? aDate.getTime() - bDate.getTime() : bDate.getTime() - aDate.getTime();
           });
           break;
-        case 'filename':
-          fileTableData.sort((a, b) => (ascending ? a.filename.localeCompare(b.filename) : b.filename.localeCompare(a.filename)));
+        case 'contentFile':
+          fileTableData.sort((a, b) =>
+            ascending
+              ? a.metadata.contentFile.localeCompare(b.metadata.contentFile)
+              : b.metadata.contentFile.localeCompare(a.metadata.contentFile)
+          );
           break;
-        case 'size':
-          fileTableData.sort((a, b) => (ascending ? a.size - b.size : b.size - a.size));
+        case 'contentSize':
+          fileTableData.sort((a, b) =>
+            ascending ? a.metadata.contentSize - b.metadata.contentSize : b.metadata.contentSize - a.metadata.contentSize
+          );
           break;
       }
     }
     return fileTableData;
   }
 
-  onItemActionClick(action: ItemActionEvent['type'], file: FileTableData) {
-    this.itemAction.emit({ type: action, file });
+  onItemActionClick(type: 'remove' | 'error' | 'archive' | 'retry' | 'view', file: { metadataFilename: string; metadata: CacheMetadata }) {
+    this.itemAction.emit({ type, file });
   }
 }

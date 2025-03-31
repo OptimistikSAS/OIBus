@@ -397,17 +397,18 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
       scanModeId: scanModes[0].id,
       retryInterval: 1_000,
       retryCount: 3,
+      runMinDelay: 200,
       maxSize: 0,
       oibusTimeValues: {
         groupCount: 250,
         maxSendCount: 10_000
       },
       rawFiles: {
-        sendFileImmediately: false,
-        archive: {
-          enabled: false,
-          retentionDuration: 72
-        }
+        sendFileImmediately: true
+      },
+      archive: {
+        enabled: false,
+        retentionDuration: 72
       }
     },
     subscriptions: [
@@ -442,17 +443,18 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
       scanModeId: scanModes[1].id,
       retryInterval: 1_000,
       retryCount: 1,
+      runMinDelay: 200,
       maxSize: 10,
       oibusTimeValues: {
         groupCount: 1_000,
         maxSendCount: 10_000
       },
       rawFiles: {
-        sendFileImmediately: false,
-        archive: {
-          enabled: false,
-          retentionDuration: 72
-        }
+        sendFileImmediately: false
+      },
+      archive: {
+        enabled: false,
+        retentionDuration: 72
       }
     },
     subscriptions: [
@@ -481,17 +483,18 @@ const northConnectorCommand: NorthConnectorCommandDTO<NorthSettings> = {
     scanModeName: null,
     retryInterval: 1_000,
     retryCount: 3,
+    runMinDelay: 200,
     maxSize: 0,
     oibusTimeValues: {
       groupCount: 1_000,
       maxSendCount: 10_000
     },
     rawFiles: {
-      sendFileImmediately: true,
-      archive: {
-        enabled: true,
-        retentionDuration: 72
-      }
+      sendFileImmediately: true
+    },
+    archive: {
+      enabled: true,
+      retentionDuration: 72
     }
   },
   subscriptions: [southConnectors[0].id]
@@ -533,17 +536,18 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
       scanModeId: scanModes[0].id,
       retryInterval: 1000,
       retryCount: 3,
+      runMinDelay: 200,
       maxSize: 10000,
       oibusTimeValues: {
         groupCount: 100,
         maxSendCount: 1000
       },
       rawFiles: {
-        archive: {
-          enabled: true,
-          retentionDuration: 1000
-        },
         sendFileImmediately: false
+      },
+      archive: {
+        enabled: true,
+        retentionDuration: 1000
       }
     },
     items: [
@@ -596,17 +600,18 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
       scanModeId: scanModes[0].id,
       retryInterval: 1000,
       retryCount: 3,
+      runMinDelay: 200,
       maxSize: 10000,
       oibusTimeValues: {
         groupCount: 100,
         maxSendCount: 1000
       },
       rawFiles: {
-        archive: {
-          enabled: true,
-          retentionDuration: 1000
-        },
         sendFileImmediately: false
+      },
+      archive: {
+        enabled: true,
+        retentionDuration: 1000
       }
     },
     items: [
@@ -653,17 +658,18 @@ const historyQueryCommand: HistoryQueryCommandDTO<SouthSettings, NorthSettings, 
     scanModeName: null,
     retryInterval: 1000,
     retryCount: 3,
+    runMinDelay: 200,
     maxSize: 10000,
     oibusTimeValues: {
       groupCount: 100,
       maxSendCount: 1000
     },
     rawFiles: {
-      archive: {
-        enabled: true,
-        retentionDuration: 1000
-      },
       sendFileImmediately: false
+    },
+    archive: {
+      enabled: true,
+      retentionDuration: 1000
     }
   },
   items: [
@@ -799,13 +805,14 @@ const northMetrics: NorthConnectorMetrics = {
   lastConnection: null,
   lastRunStart: null,
   lastRunDuration: null,
-  numberOfValuesSent: 11,
-  numberOfFilesSent: 11,
-  lastValueSent: null,
-  lastFileSent: null,
-  cacheSize: 10,
-  errorSize: 20,
-  archiveSize: 30
+  contentSentSize: 11,
+  contentCachedSize: 22,
+  contentErroredSize: 23,
+  contentArchivedSize: 24,
+  lastContentSent: null,
+  currentCacheSize: 10,
+  currentErrorSize: 20,
+  currentArchiveSize: 30
 };
 const historyQueryMetrics: HistoryQueryMetrics = {
   metricsStart: constants.dates.DATE_1,
@@ -822,13 +829,14 @@ const historyQueryMetrics: HistoryQueryMetrics = {
     lastConnection: null,
     lastRunStart: null,
     lastRunDuration: null,
-    numberOfValuesSent: 11,
-    numberOfFilesSent: 11,
-    lastValueSent: null,
-    lastFileSent: null,
-    cacheSize: 10,
-    errorSize: 20,
-    archiveSize: 30
+    contentSentSize: 11,
+    contentCachedSize: 22,
+    contentErroredSize: 23,
+    contentArchivedSize: 24,
+    lastContentSent: null,
+    currentCacheSize: 10,
+    currentErrorSize: 20,
+    currentArchiveSize: 30
   },
   historyMetrics: {
     running: false,
