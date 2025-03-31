@@ -62,6 +62,12 @@ export type ReqResponse = Awaited<ReturnType<typeof request>> & {
 export async function HTTPRequest(url: ReqURL, options: ReqOptions = {}): Promise<ReqResponse> {
   if (options.auth) {
     const { token, url: authUrl } = await getAuthorization(options.auth, url.toString());
+
+    // Remove potential user provided non-capitalized authorization header to not have the header twice
+    if (options.headers && 'authorization' in options.headers) {
+      delete options.headers.authorization;
+    }
+
     options.headers = { ...options.headers, Authorization: token };
     url = authUrl;
   }
@@ -82,24 +88,22 @@ export async function HTTPRequest(url: ReqURL, options: ReqOptions = {}): Promis
 }
 
 /**
- * General function to use in order to check if a request should be retried
+ * HTTP Status codes which can be retried
  */
-export function shouldHTTPRequestRetry(statusCode: number) {
-  return [
-    // Only retry the request if the status code is one of the following
-    // Source: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
-    401, // Unauthorized
-    403, // Forbidden
-    404, // Not Found
-    407, // Proxy Authentication Required
-    408, // Request Timeout
-    429, // Too Many Requests
-    502, // Bad Gateway
-    503, // Service Unavailable
-    504, // Gateway Timeout
-    511 //  Network Authentication Required
-  ].includes(statusCode);
-}
+export const retryableHttpStatusCodes = [
+  // Only retry the request if the status code is one of the following
+  // Source: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
+  401, // Unauthorized
+  403, // Forbidden
+  404, // Not Found
+  407, // Proxy Authentication Required
+  408, // Request Timeout
+  429, // Too Many Requests
+  502, // Bad Gateway
+  503, // Service Unavailable
+  504, // Gateway Timeout
+  511 //  Network Authentication Required
+];
 
 /**
  * Helper function to get correct authorization data.
@@ -112,7 +116,7 @@ async function getAuthorization(options: ReqAuthOptions, url: string) {
   switch (options.type) {
     case 'basic': {
       const username = options.username;
-      const password = await encryptionService.decryptText(options.password ?? '');
+      const password = await encryptionService.decryptText(options.password);
 
       auth.token = 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64');
       break;
@@ -132,7 +136,7 @@ async function getAuthorization(options: ReqAuthOptions, url: string) {
     case 'url': {
       const urlObj = new URL(url);
       urlObj.username = options.username;
-      urlObj.password = await encryptionService.decryptText(options.password ?? '');
+      urlObj.password = await encryptionService.decryptText(options.password);
       auth.url = urlObj.toString();
       break;
     }

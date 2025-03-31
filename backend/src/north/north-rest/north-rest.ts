@@ -14,7 +14,7 @@ import { filesExists } from '../../service/utils';
 import FormData from 'form-data';
 import { URL } from 'node:url';
 import { OIBusError } from '../../model/engine.model';
-import { HTTPRequest, ReqAuthOptions, ReqProxyOptions, ReqResponse, shouldHTTPRequestRetry } from '../../service/http-request.utils';
+import { HTTPRequest, ReqAuthOptions, ReqProxyOptions, ReqResponse, retryableHttpStatusCodes } from '../../service/http-request.utils';
 
 /**
  * Class Console - display values and file path into the console
@@ -73,6 +73,9 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
         proxy: this.getProxyOptions(),
         timeout: this.connector.settings.timeout * 1000
       });
+      if (!fileStream.closed) {
+        fileStream.close();
+      }
     } catch (error) {
       const message = this.getMessageFromError(error);
       if (!fileStream.closed) {
@@ -81,14 +84,10 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
       throw new OIBusError(`Failed to reach file endpoint ${endpoint}; ${message}`, true);
     }
 
-    if (!fileStream.closed) {
-      fileStream.close();
-    }
-
     if (!response.ok) {
       throw new OIBusError(
         `HTTP request failed with status code ${response.statusCode} and message: ${await response.body.text()}`,
-        shouldHTTPRequestRetry(response.statusCode)
+        retryableHttpStatusCodes.includes(response.statusCode)
       );
     }
   }
