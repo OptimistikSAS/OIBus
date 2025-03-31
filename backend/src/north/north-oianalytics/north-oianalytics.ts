@@ -11,7 +11,7 @@ import {
   ReqOptions,
   ReqProxyOptions,
   ReqResponse,
-  shouldHTTPRequestRetry
+  retryableHttpStatusCodes
 } from '../../service/http-request.utils';
 import path from 'node:path';
 import { compress, filesExists } from '../../service/utils';
@@ -101,14 +101,14 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     try {
       response = await HTTPRequest(valuesUrl, fetchOptions);
     } catch (fetchError) {
-      throw {
-        message: `Fail to reach values endpoint ${valuesUrl}. ${fetchError}`,
-        retry: true
-      };
+      throw new OIBusError(`Fail to reach values endpoint ${valuesUrl}. ${fetchError}`, true);
     }
 
     if (!response.ok) {
-      throw new OIBusError(`Error ${response.statusCode}: ${await response.body.text()}`, shouldHTTPRequestRetry(response.statusCode));
+      throw new OIBusError(
+        `Error ${response.statusCode}: ${await response.body.text()}`,
+        retryableHttpStatusCodes.includes(response.statusCode)
+      );
     }
   }
 
@@ -155,21 +155,25 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
         proxy: this.getProxyOptions(),
         timeout: this.connector.settings.timeout * 1000
       });
-      readStream.close();
+      if (!readStream.closed) {
+        readStream.close();
+      }
       if (this.connector.settings.compress && !filePath.endsWith('.gz')) {
         // Remove only the compressed file. The uncompressed file will be removed by north connector logic
         await fs.unlink(path.resolve(dir, fileToSend));
       }
     } catch (fetchError) {
-      readStream.close();
-      throw {
-        message: `Fail to reach file endpoint ${fileUrl}. ${fetchError}`,
-        retry: true
-      };
+      if (!readStream.closed) {
+        readStream.close();
+      }
+      throw new OIBusError(`Fail to reach file endpoint ${fileUrl}. ${fetchError}`, true);
     }
 
     if (!response.ok) {
-      throw new OIBusError(`Error ${response.statusCode}: ${await response.body.text()}`, shouldHTTPRequestRetry(response.statusCode));
+      throw new OIBusError(
+        `Error ${response.statusCode}: ${await response.body.text()}`,
+        retryableHttpStatusCodes.includes(response.statusCode)
+      );
     }
   }
 

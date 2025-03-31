@@ -259,15 +259,15 @@ export default class EncryptionService<TInitialized extends boolean = false> {
   }
 
   /**
-   * Return the encrypted text
+   * Returns the encrypted text or an empty string when the parameter is falsy
    */
-  async encryptText(plainText: string): Promise<string> {
+  async encryptText(plainText?: string | null): Promise<string> {
     if (!this.isInitialized()) {
       throw Error('EncryptionService not initialized');
     }
 
     // Manage empty strings
-    if (plainText.length === 0) {
+    if (!plainText) {
       return '';
     }
 
@@ -278,15 +278,15 @@ export default class EncryptionService<TInitialized extends boolean = false> {
   }
 
   /**
-   * Return the decrypted text
+   * Returns the decrypted text or an empty string when the parameter is falsy
    */
-  async decryptText(encryptedText: string): Promise<string> {
+  async decryptText(encryptedText?: string | null): Promise<string> {
     if (!this.isInitialized()) {
       throw Error('EncryptionService not initialized');
     }
 
     // Manage empty strings
-    if (encryptedText.length === 0) {
+    if (!encryptedText) {
       return '';
     }
 
