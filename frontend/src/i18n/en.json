@@ -448,10 +448,10 @@
       "cpu-usage-average": "CPU usage (average)",
       "uptime": "Uptime",
       "free-memory": "Free memory",
-      "rss": "RSS (min / current / max)",
+      "rss": "RAM usage (min / current / max)",
       "heap-total": "Heap total (min / current / max)",
       "heap-used": "Heap used (min / current / max)",
-      "external": "External (min / current / max)",
+      "external": "External memory (min / current / max)",
       "array-buffer": "Array buffer (min / current / max)",
       "reset-metrics": "Reset metrics",
       "since": "since {{ date }}"
