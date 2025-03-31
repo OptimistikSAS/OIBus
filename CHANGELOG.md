@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.5.15](https://github.com/OptimistikSAS/OIBus/compare/v3.5.14...v3.5.15) (2025-03-31)
+
+
+### Bug Fixes
+
+* **logger:** properly log engine metrics every 10 minutes and improve metrics doc ([df82317](https://github.com/OptimistikSAS/OIBus/commit/df8231780029af3dbcb82305789a2acd39aa270d))
+* **logger:** vacuum at transport startup ([e341a11](https://github.com/OptimistikSAS/OIBus/commit/e341a114786bdcd664d71c65303bb38c94e1b0ab))
+* **logger:** vacuum logs database and improve logs writing and removing performances ([9afe63f](https://github.com/OptimistikSAS/OIBus/commit/9afe63fa4ff4d81bd36689da8d72aa9fae55352f))
+* **mqtt:** fix event emitter and reconnection to mqtt broker ([9ecb508](https://github.com/OptimistikSAS/OIBus/commit/9ecb5085327defc16325f21a5a5aed71742aebdc))
+* **opcua:** batch opcua subscription messages ([097c7ad](https://github.com/OptimistikSAS/OIBus/commit/097c7ad6d025eb83909c54768009836b55341802))
+* **opcua:** filter node to read if no more data or bad status ([f7fd5d8](https://github.com/OptimistikSAS/OIBus/commit/f7fd5d8e7fd38ebb54156e6ead8aacf5eff694c7))
+* **opcua:** fix continuation point and test item ([bbd1db7](https://github.com/OptimistikSAS/OIBus/commit/bbd1db782947ba9eda71b8ec6314b8975a23d707))
+
 ## [3.5.14](https://github.com/OptimistikSAS/OIBus/compare/v3.5.13...v3.5.14) (2025-03-21)
 
 
