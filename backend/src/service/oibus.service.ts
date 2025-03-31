@@ -23,7 +23,7 @@ import HistoryQueryService from './history-query.service';
 import OIAnalyticsRegistrationService from './oia/oianalytics-registration.service';
 import { EventEmitter } from 'node:events';
 
-const HEALTH_SIGNAL_INTERVAL = 60_000_000; // 10 minutes
+const HEALTH_SIGNAL_INTERVAL = 60_000; // 10 minutes
 const UPDATE_ENGINE_METRICS_INTERVAL = 1000; // every second
 
 export default class OIBusService {
