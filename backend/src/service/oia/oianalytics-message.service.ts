@@ -257,21 +257,25 @@ export default class OIAnalyticsMessageService {
             northSettings: this.encryptionService.filterSecrets(historyQuery.northSettings, northManifest.settings),
             southSettings: this.encryptionService.filterSecrets(historyQuery.southSettings, southManifest.settings),
             caching: {
-              scanModeId: historyQuery.caching.scanModeId,
-              scanModeName: null,
-              retryInterval: historyQuery.caching.retryInterval,
-              retryCount: historyQuery.caching.retryCount,
-              maxSize: historyQuery.caching.maxSize,
-              oibusTimeValues: {
-                groupCount: historyQuery.caching.oibusTimeValues.groupCount,
-                maxSendCount: historyQuery.caching.oibusTimeValues.maxSendCount
+              trigger: {
+                scanModeId: historyQuery.caching.trigger.scanModeId,
+                scanModeName: null,
+                numberOfElements: historyQuery.caching.trigger.numberOfElements,
+                numberOfFiles: historyQuery.caching.trigger.numberOfFiles
               },
-              rawFiles: {
-                sendFileImmediately: historyQuery.caching.rawFiles.sendFileImmediately,
-                archive: {
-                  enabled: historyQuery.caching.rawFiles.archive.enabled,
-                  retentionDuration: historyQuery.caching.rawFiles.archive.retentionDuration
-                }
+              throttling: {
+                runMinDelay: historyQuery.caching.throttling.runMinDelay,
+                maxSize: historyQuery.caching.throttling.maxSize,
+                maxNumberOfElements: historyQuery.caching.throttling.maxNumberOfElements
+              },
+              error: {
+                retryInterval: historyQuery.caching.error.retryInterval,
+                retryCount: historyQuery.caching.error.retryCount,
+                retentionDuration: historyQuery.caching.error.retentionDuration
+              },
+              archive: {
+                enabled: historyQuery.caching.archive.enabled,
+                retentionDuration: historyQuery.caching.archive.retentionDuration
               }
             },
             items: historyQuery.items.map(item => ({
@@ -436,21 +440,25 @@ export default class OIAnalyticsMessageService {
           enabled: north.enabled,
           settings: this.encryptionService.filterSecrets(north.settings, manifest.settings),
           caching: {
-            scanModeId: north.caching.scanModeId,
-            scanModeName: null,
-            retryInterval: north.caching.retryInterval,
-            retryCount: north.caching.retryCount,
-            maxSize: north.caching.maxSize,
-            oibusTimeValues: {
-              groupCount: north.caching.oibusTimeValues.groupCount,
-              maxSendCount: north.caching.oibusTimeValues.maxSendCount
+            trigger: {
+              scanModeId: north.caching.trigger.scanModeId,
+              scanModeName: null,
+              numberOfElements: north.caching.trigger.numberOfElements,
+              numberOfFiles: north.caching.trigger.numberOfFiles
             },
-            rawFiles: {
-              sendFileImmediately: north.caching.rawFiles.sendFileImmediately,
-              archive: {
-                enabled: north.caching.rawFiles.archive.enabled,
-                retentionDuration: north.caching.rawFiles.archive.retentionDuration
-              }
+            throttling: {
+              runMinDelay: north.caching.throttling.runMinDelay,
+              maxSize: north.caching.throttling.maxSize,
+              maxNumberOfElements: north.caching.throttling.maxNumberOfElements
+            },
+            error: {
+              retryInterval: north.caching.error.retryInterval,
+              retryCount: north.caching.error.retryCount,
+              retentionDuration: north.caching.error.retentionDuration
+            },
+            archive: {
+              enabled: north.caching.archive.enabled,
+              retentionDuration: north.caching.archive.retentionDuration
             }
           },
           subscriptions: north.subscriptions.map(south => south.id)
