@@ -23,14 +23,13 @@ OIBus is composed of 3 layers.
 
 - The **Engine** that orchestrates everything and is configured through an admin interface
 - Several **South** connectors that will retrieve data from a given technology (SQL, OPCUA, MQTT, Modbus...)
-- Several **North** connectors that will be able to transfer the data to application such as OIAnalytics, Rest API,
-  Timeseries databases, MQTT broker...
+- Several **North** connectors that will be able to transfer the data to application such as OIAnalytics, folders...
 
 You can learn more about OIBus by reading [our documentation](https://oibus.optimistik.com/).
 
 ## Build and deploy step
 
-* **Fork** the OIBus repository and clone it. Be sure to have NodeJS and npm installed (LTS versions).
+* **Fork** the OIBus repository and clone it. Be sure to have Node.js and npm installed (LTS versions).
 * **Backend**: open a terminal in the backend folder `cd backend`
     * Install the node dependencies: `npm install`
     * Run the backend: `npm start`
@@ -41,8 +40,8 @@ You can learn more about OIBus by reading [our documentation](https://oibus.opti
     * Log in using `admin/pass`
 * You can compile OIBus on your appropriate distribution. To do that:
     * In the frontend folder, run `npm install` and `npm run build`
-    * In the backend folder, run the command associated to the distribution you want to build
-      OIBus: `npm run build:win`, `npm run build:linux`, `npm run build:macos`, `npm run build:macos-arm64`
+    * In the backend folder, run the command associated to the distribution you want to build OIBus:
+      `npm run build:win`, `npm run build:linux`, `npm run build:macos`, `npm run build:macos-arm64`
     * You can now start OIBus from its binaries with `npm run start:win`, `npm run start:linux`, `npm run start:macos`
       or `npm run start:macos-arm64`
 
