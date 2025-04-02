@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.5.16](https://github.com/OptimistikSAS/OIBus/compare/v3.5.15...v3.5.16) (2025-04-02)
+
+
+### Bug Fixes
+
+* **metrics:** metrics are sent to the logger every 30 minutes instead of every minute ([39b45a1](https://github.com/OptimistikSAS/OIBus/commit/39b45a1765934b4b32b1623853042112aed633c5))
+
 ## [3.5.15](https://github.com/OptimistikSAS/OIBus/compare/v3.5.14...v3.5.15) (2025-03-31)
 
 
