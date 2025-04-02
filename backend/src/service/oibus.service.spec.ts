@@ -196,7 +196,7 @@ describe('OIBus Service', () => {
     service.logHealthSignal();
     expect(logger.info).toHaveBeenCalledTimes(4);
 
-    jest.advanceTimersByTime(60_000);
+    jest.advanceTimersByTime(1_800_000);
     expect(logger.info).toHaveBeenCalledTimes(5);
   });
 
