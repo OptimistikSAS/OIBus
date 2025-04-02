@@ -8,7 +8,7 @@ import NorthConnector from '../north/north-connector';
 import SouthConnector from '../south/south-connector';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { NorthSettings } from '../../shared/model/north-settings.model';
-import { OIBusContent, OIBusTimeValue } from '../../shared/model/engine.model';
+import { CacheMetadata, CacheSearchParam, OIBusContent, OIBusTimeValue } from '../../shared/model/engine.model';
 import { SouthConnectorEntity } from '../model/south-connector.model';
 import { NorthConnectorEntity } from '../model/north-connector.model';
 import { HistoryQueryEntity } from '../model/histor-query.model';
@@ -16,6 +16,7 @@ import HistoryQueryRepository from '../repository/config/history-query.repositor
 import { EventEmitter } from 'node:events';
 import { BaseFolders, Instant } from '../model/types';
 import { QueriesHistory } from '../south/south-interface';
+import { ReadStream } from 'node:fs';
 
 const FINISH_INTERVAL = 5000;
 
@@ -87,17 +88,17 @@ export default class HistoryQuery {
     this.north.metricsEvent.on('run-start', (data: { lastRunStart: Instant }) => {
       this.metricsEvent.emit('north-run-start', data);
     });
-    this.north.metricsEvent.on('run-end', (data: { lastRunDuration: number }) => {
-      this.metricsEvent.emit('north-run-end', data);
-    });
+    this.north.metricsEvent.on(
+      'run-end',
+      (data: { lastRunDuration: number; metadata: CacheMetadata; action: 'sent' | 'errored' | 'archived' }) => {
+        this.metricsEvent.emit('north-run-end', data);
+      }
+    );
     this.north.metricsEvent.on('cache-size', (data: { cacheSize: number; errorSize: number; archiveSize: number }) => {
       this.metricsEvent.emit('north-cache-size', data);
     });
-    this.north.metricsEvent.on('send-values', (data: { numberOfValuesSent: number; lastValueSent: OIBusTimeValue }) => {
-      this.metricsEvent.emit('north-send-values', data);
-    });
-    this.north.metricsEvent.on('send-file', (data: { lastFileSent: string }) => {
-      this.metricsEvent.emit('north-send-file', data);
+    this.north.metricsEvent.on('cache-content-size', (cachedSize: number) => {
+      this.metricsEvent.emit('north-cache-content-size', cachedSize);
     });
     await this.north.start(false);
 
@@ -168,16 +169,9 @@ export default class HistoryQuery {
     await this.south.start(false);
   }
 
-  async addContent(_historyId: string, data: OIBusContent) {
+  async addContent(historyId: string, data: OIBusContent) {
     if (this.north) {
-      switch (data.type) {
-        case 'time-values':
-          this.logger.info(`Add ${data.content.length} values from History Query "${this.historyConfiguration.name}" to north connector`);
-          return await this.north.cacheValues(data.content);
-        case 'raw':
-          this.logger.info(`Add file "${data.filePath}" from History Query "${this.historyConfiguration.name}" to north connector`);
-          return await this.north.cacheFile(data.filePath);
-      }
+      return await this.north.cacheContent(data, historyId);
     }
   }
 
@@ -212,7 +206,7 @@ export default class HistoryQuery {
    * Finish HistoryQuery.
    */
   async finish(): Promise<void> {
-    if (!this.north || !this.south || ((await this.north.isCacheEmpty()) && !this.south.historyIsRunning)) {
+    if (!this.north || !this.south || (this.north.isCacheEmpty() && !this.south.historyIsRunning)) {
       this.logger.info(`Finish "${this.historyConfiguration.name}" (${this.historyConfiguration.id})`);
       await this.stop();
       this.historyQueryRepository.updateHistoryQueryStatus(this.historyConfiguration.id, 'FINISHED');
@@ -228,5 +222,40 @@ export default class HistoryQuery {
 
   get settings(): HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> {
     return this.historyConfiguration;
+  }
+
+  async searchCacheContent(
+    searchParams: CacheSearchParam,
+    folder: 'cache' | 'archive' | 'error'
+  ): Promise<Array<{ metadataFilename: string; metadata: CacheMetadata }>> {
+    return (await this.north?.searchCacheContent(searchParams, folder)) || [];
+  }
+
+  async getCacheContentFileStream(folder: 'cache' | 'archive' | 'error', filename: string): Promise<ReadStream | null> {
+    return (await this.north?.getCacheContentFileStream(folder, filename)) || null;
+  }
+
+  async removeCacheContent(folder: 'cache' | 'archive' | 'error', metadataFilenameList: Array<string>): Promise<void> {
+    await this.north?.removeCacheContent(folder, await this.north!.metadataFileListToCacheContentList(folder, metadataFilenameList));
+  }
+
+  async removeAllCacheContent(folder: 'cache' | 'archive' | 'error'): Promise<void> {
+    await this.north?.removeAllCacheContent(folder);
+  }
+
+  async moveCacheContent(
+    originFolder: 'cache' | 'archive' | 'error',
+    destinationFolder: 'cache' | 'archive' | 'error',
+    cacheContentList: Array<string>
+  ): Promise<void> {
+    await this.north?.moveCacheContent(
+      originFolder,
+      destinationFolder,
+      await this.north!.metadataFileListToCacheContentList(originFolder, cacheContentList)
+    );
+  }
+
+  async moveAllCacheContent(originFolder: 'cache' | 'archive' | 'error', destinationFolder: 'cache' | 'archive' | 'error'): Promise<void> {
+    await this.north?.moveAllCacheContent(originFolder, destinationFolder);
   }
 }

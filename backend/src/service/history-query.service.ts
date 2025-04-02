@@ -25,7 +25,7 @@ import NorthService, { northManifestList } from './north.service';
 import LogRepository from '../repository/logs/log.repository';
 import { Page } from '../../shared/model/types';
 import pino from 'pino';
-import { OIBusContent } from '../../shared/model/engine.model';
+import { CacheMetadata, CacheSearchParam, OIBusContent } from '../../shared/model/engine.model';
 import { ScanMode } from '../model/scan-mode.model';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import multer from '@koa/multer';
@@ -39,6 +39,7 @@ import { PassThrough } from 'node:stream';
 import { BaseFolders } from '../model/types';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
+import { ReadStream } from 'node:fs';
 
 export default class HistoryQueryService {
   constructor(
@@ -580,6 +581,51 @@ export default class HistoryQueryService {
     }
   }
 
+  async searchCacheContent(
+    historyQueryId: string,
+    searchParams: CacheSearchParam,
+    folder: 'cache' | 'archive' | 'error'
+  ): Promise<Array<{ metadataFilename: string; metadata: CacheMetadata }>> {
+    return await this.historyQueryEngine.searchCacheContent(historyQueryId, searchParams, folder);
+  }
+
+  async getCacheContentFileStream(
+    historyQueryId: string,
+    folder: 'cache' | 'archive' | 'error',
+    filename: string
+  ): Promise<ReadStream | null> {
+    return await this.historyQueryEngine.getCacheContentFileStream(historyQueryId, folder, filename);
+  }
+
+  async removeCacheContent(
+    historyQueryId: string,
+    folder: 'cache' | 'archive' | 'error',
+    metadataFilenameList: Array<string>
+  ): Promise<void> {
+    return await this.historyQueryEngine.removeCacheContent(historyQueryId, folder, metadataFilenameList);
+  }
+
+  async removeAllCacheContent(historyQueryId: string, folder: 'cache' | 'archive' | 'error'): Promise<void> {
+    return await this.historyQueryEngine.removeAllCacheContent(historyQueryId, folder);
+  }
+
+  async moveCacheContent(
+    historyQueryId: string,
+    originFolder: 'cache' | 'archive' | 'error',
+    destinationFolder: 'cache' | 'archive' | 'error',
+    cacheContentList: Array<string>
+  ): Promise<void> {
+    return await this.historyQueryEngine.moveCacheContent(historyQueryId, originFolder, destinationFolder, cacheContentList);
+  }
+
+  async moveAllCacheContent(
+    historyQueryId: string,
+    originFolder: 'cache' | 'archive' | 'error',
+    destinationFolder: 'cache' | 'archive' | 'error'
+  ): Promise<void> {
+    return await this.historyQueryEngine.moveAllCacheContent(historyQueryId, originFolder, destinationFolder);
+  }
+
   private getDefaultBaseFolders(historyId: string) {
     const folders = structuredClone(this.historyQueryEngine.baseFolders);
 
@@ -667,20 +713,24 @@ export const toHistoryQueryDTO = <S extends SouthSettings, N extends NorthSettin
     southSettings: encryptionService.filterSecrets<S>(historyQuery.southSettings, southManifest.settings),
     northSettings: encryptionService.filterSecrets<N>(historyQuery.northSettings, northManifest.settings),
     caching: {
-      scanModeId: historyQuery.caching.scanModeId,
-      retryInterval: historyQuery.caching.retryInterval,
-      retryCount: historyQuery.caching.retryCount,
-      maxSize: historyQuery.caching.maxSize,
-      oibusTimeValues: {
-        groupCount: historyQuery.caching.oibusTimeValues.groupCount,
-        maxSendCount: historyQuery.caching.oibusTimeValues.maxSendCount
+      trigger: {
+        scanModeId: historyQuery.caching.trigger.scanModeId,
+        numberOfElements: historyQuery.caching.trigger.numberOfElements,
+        numberOfFiles: historyQuery.caching.trigger.numberOfFiles
       },
-      rawFiles: {
-        sendFileImmediately: historyQuery.caching.rawFiles.sendFileImmediately,
-        archive: {
-          enabled: historyQuery.caching.rawFiles.archive.enabled,
-          retentionDuration: historyQuery.caching.rawFiles.archive.retentionDuration
-        }
+      throttling: {
+        runMinDelay: historyQuery.caching.throttling.runMinDelay,
+        maxSize: historyQuery.caching.throttling.maxSize,
+        maxNumberOfElements: historyQuery.caching.throttling.maxNumberOfElements
+      },
+      error: {
+        retryInterval: historyQuery.caching.error.retryInterval,
+        retryCount: historyQuery.caching.error.retryCount,
+        retentionDuration: historyQuery.caching.error.retentionDuration
+      },
+      archive: {
+        enabled: historyQuery.caching.archive.enabled,
+        retentionDuration: historyQuery.caching.archive.retentionDuration
       }
     },
     items: historyQuery.items.map(item => toHistoryQueryItemDTO<I>(item, historyQuery.southType, encryptionService))
@@ -728,20 +778,24 @@ const copyHistoryQueryCommandToHistoryQueryEntity = async <S extends SouthSettin
     southManifest.settings
   );
   historyQueryEntity.caching = {
-    scanModeId: checkScanMode(scanModes, command.caching.scanModeId, command.caching.scanModeName),
-    retryInterval: command.caching.retryInterval,
-    retryCount: command.caching.retryCount,
-    maxSize: command.caching.maxSize,
-    oibusTimeValues: {
-      groupCount: command.caching.oibusTimeValues.groupCount,
-      maxSendCount: command.caching.oibusTimeValues.maxSendCount
+    trigger: {
+      scanModeId: checkScanMode(scanModes, command.caching.trigger.scanModeId, command.caching.trigger.scanModeName),
+      numberOfElements: command.caching.trigger.numberOfElements,
+      numberOfFiles: command.caching.trigger.numberOfFiles
     },
-    rawFiles: {
-      sendFileImmediately: command.caching.rawFiles.sendFileImmediately,
-      archive: {
-        enabled: command.caching.rawFiles.archive.enabled,
-        retentionDuration: command.caching.rawFiles.archive.retentionDuration
-      }
+    throttling: {
+      runMinDelay: command.caching.throttling.runMinDelay,
+      maxSize: command.caching.throttling.maxSize,
+      maxNumberOfElements: command.caching.throttling.maxNumberOfElements
+    },
+    error: {
+      retryInterval: command.caching.error.retryInterval,
+      retryCount: command.caching.error.retryCount,
+      retentionDuration: command.caching.error.retentionDuration
+    },
+    archive: {
+      enabled: command.caching.archive.enabled,
+      retentionDuration: command.caching.archive.retentionDuration
     }
   };
 

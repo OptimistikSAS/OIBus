@@ -11,7 +11,7 @@ import DataStreamEngine from './engine/data-stream-engine';
 import HistoryQueryEngine from './engine/history-query-engine';
 import HistoryQueryService from './service/history-query.service';
 import OIBusService from './service/oibus.service';
-import { migrateCrypto, migrateEntities, migrateDataFolder, migrateLogsAndMetrics, migrateSouthCache } from './migration/migration-service';
+import { migrateCrypto, migrateDataFolder, migrateEntities, migrateLogsAndMetrics, migrateSouthCache } from './migration/migration-service';
 import OIAnalyticsCommandService from './service/oia/oianalytics-command.service';
 import OianalyticsRegistrationService from './service/oia/oianalytics-registration.service';
 import ConnectionService from './service/connection.service';
@@ -24,6 +24,7 @@ import OIAnalyticsClient from './service/oia/oianalytics-client.service';
 import CertificateService from './service/certificate.service';
 import UserService from './service/user.service';
 import LogService from './service/log.service';
+import CleanupService from './service/cache/cleanup.service';
 
 const CONFIG_DATABASE = 'oibus.db';
 const CRYPTO_DATABASE = 'crypto.db';
@@ -226,6 +227,17 @@ const LOG_DB_NAME = 'logs.db';
   await oIAnalyticsCommandService.start();
   oIAnalyticsMessageService.start(); // Start after command to send the full config with new version after an update
 
+  const cleanupService = new CleanupService(
+    loggerService.logger!,
+    './',
+    repositoryService.historyQueryRepository,
+    repositoryService.northConnectorRepository,
+    repositoryService.southConnectorRepository,
+    dataStreamEngine,
+    historyQueryEngine
+  );
+  await cleanupService.start();
+
   const server = new WebServer(
     oibusSettings.id,
     oibusSettings.port,
@@ -257,6 +269,7 @@ const LOG_DB_NAME = 'logs.db';
     await oIAnalyticsCommandService.stop();
     await oIAnalyticsMessageService.stop();
     await server.stop();
+    await cleanupService.stop();
     oIAnalyticsRegistrationService.stop();
     loggerService.stop();
     console.info('OIBus stopped');

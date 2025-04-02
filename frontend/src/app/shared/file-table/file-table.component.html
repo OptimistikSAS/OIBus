@@ -1,0 +1,170 @@
+<div class="mb-3">
+  @if (pages().totalElements) {
+    <div class="d-flex flex-row-reverse mt-3">
+      <oib-pagination [page]="pages()" (pageChanged)="currentPage.set($event)" />
+    </div>
+  }
+
+  <table class="table table-sm table-hover oib-table">
+    <thead class="light">
+      <tr>
+        <th>
+          <input
+            [checked]="mainFilesCheckboxState() === 'CHECKED'"
+            [indeterminate]="mainFilesCheckboxState() === 'INDETERMINATE'"
+            (change)="onFileMainCheckBoxClick(checkbox.checked)"
+            type="checkbox"
+            #checkbox
+            id="toggle-all-parameters"
+          /><label></label>
+        </th>
+        <th>
+          <button
+            class="py-1 px-0 sort-by-modification-date"
+            style="background: none; border: none; font-weight: bold"
+            (click)="toggleColumnSort('createdAt')"
+          >
+            <span translate="north.caching.file-date" class="me-2"></span>
+            <span
+              class="fa"
+              [class.fa-sort]="currentColumnSort() === 'createdAt' && currentColumnOrder() === 0"
+              [class.fa-sort-asc]="currentColumnSort() === 'createdAt' && currentColumnOrder() === 1"
+              [class.fa-sort-desc]="currentColumnSort() === 'createdAt' && currentColumnOrder() === 2"
+            ></span>
+          </button>
+        </th>
+        <th>
+          <button
+            class="py-1 px-0 sort-by-filename"
+            style="background: none; border: none; font-weight: bold"
+            (click)="toggleColumnSort('contentFile')"
+          >
+            <span translate="north.caching.filename" class="me-2"></span>
+            <span
+              class="fa"
+              [class.fa-sort]="currentColumnSort() === 'contentFile' && currentColumnOrder() === 0"
+              [class.fa-sort-asc]="currentColumnSort() === 'contentFile' && currentColumnOrder() === 1"
+              [class.fa-sort-desc]="currentColumnSort() === 'contentFile' && currentColumnOrder() === 2"
+            ></span>
+          </button>
+        </th>
+        <th>
+          <button
+            class="py-1 px-0 sort-by-size"
+            style="background: none; border: none; font-weight: bold"
+            (click)="toggleColumnSort('contentSize')"
+          >
+            <span translate="north.caching.file-size" class="me-2"></span>
+            <span
+              class="fa"
+              [class.fa-sort]="currentColumnSort() === 'contentSize' && currentColumnOrder() === 0"
+              [class.fa-sort-asc]="currentColumnSort() === 'contentSize' && currentColumnOrder() === 1"
+              [class.fa-sort-desc]="currentColumnSort() === 'contentSize' && currentColumnOrder() === 2"
+            ></span>
+          </button>
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (file of pages().content; track file) {
+        <tr class="data">
+          <td>
+            <input
+              type="checkbox"
+              (change)="onFileCheckboxClick(checkbox.checked, file)"
+              #checkbox
+              [checked]="checkboxByFiles().get(file.metadataFilename)"
+              class="toggle-parameter"
+              [id]="'error-file-' + file.metadataFilename"
+            /><label></label>
+          </td>
+          <td class="modification-date">{{ file.metadata.createdAt | datetime: 'mediumWithSeconds' }}</td>
+          <td class="filename">{{ file.metadata.contentFile }}</td>
+          <td>{{ file.metadata.contentSize | fileSize }}</td>
+          <td class="text-nowrap action-buttons">
+            <div class="pull-right">
+              @switch (cacheType()) {
+                @case ('cache') {
+                  <button
+                    type="button"
+                    class="btn btn-link px-1 py-0"
+                    (click)="onItemActionClick('error', file)"
+                    triggers="hover"
+                    placement="top"
+                    [ngbTooltip]="'north.caching.error-content-action' | translate"
+                  >
+                    <span class="fa fa-bolt"></span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-link px-1 py-0"
+                    (click)="onItemActionClick('archive', file)"
+                    triggers="hover"
+                    placement="top"
+                    [ngbTooltip]="'north.caching.archive-content-action' | translate"
+                  >
+                    <span class="fa fa-archive"></span>
+                  </button>
+                }
+                @case ('error') {
+                  <button
+                    type="button"
+                    class="btn btn-link px-1 py-0"
+                    (click)="onItemActionClick('retry', file)"
+                    triggers="hover"
+                    placement="top"
+                    [ngbTooltip]="'north.caching.retry-content-action' | translate"
+                  >
+                    <span class="fa fa-refresh"></span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-link px-1 py-0"
+                    (click)="onItemActionClick('archive', file)"
+                    triggers="hover"
+                    placement="top"
+                    [ngbTooltip]="'north.caching.archive-content-action' | translate"
+                  >
+                    <span class="fa fa-archive"></span>
+                  </button>
+                }
+                @case ('archive') {
+                  <button
+                    type="button"
+                    class="btn btn-link px-1 py-0"
+                    (click)="onItemActionClick('retry', file)"
+                    triggers="hover"
+                    placement="top"
+                    [ngbTooltip]="'north.caching.replay-content-action' | translate"
+                  >
+                    <span class="fa fa-refresh"></span>
+                  </button>
+                }
+              }
+              <button
+                type="button"
+                class="btn btn-link px-1 py-0"
+                (click)="onItemActionClick('view', file)"
+                triggers="hover"
+                placement="top"
+                [ngbTooltip]="'north.caching.view-content-action' | translate"
+              >
+                <span class="fa fa-search"></span>
+              </button>
+              <button
+                type="button"
+                class="btn btn-link px-1 py-0"
+                (click)="onItemActionClick('remove', file)"
+                triggers="hover"
+                placement="top"
+                [ngbTooltip]="'north.caching.remove-content-action' | translate"
+              >
+                <span class="fa fa-trash"></span>
+              </button>
+            </div>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
