@@ -92,20 +92,24 @@ class TestComponent {
       host: 'localhost'
     } as NorthSettings,
     caching: {
-      scanModeId: 'scanModeId1',
-      retryInterval: 1000,
-      retryCount: 3,
-      maxSize: 30,
-      oibusTimeValues: {
-        groupCount: 1000,
-        maxSendCount: 10000
+      trigger: {
+        scanModeId: 'scanModeId1',
+        numberOfElements: 1_000,
+        numberOfFiles: 1
       },
-      rawFiles: {
-        sendFileImmediately: true,
-        archive: {
-          enabled: false,
-          retentionDuration: 0
-        }
+      throttling: {
+        runMinDelay: 200,
+        maxSize: 30,
+        maxNumberOfElements: 10_000
+      },
+      error: {
+        retryInterval: 1_000,
+        retryCount: 3,
+        retentionDuration: 24
+      },
+      archive: {
+        enabled: false,
+        retentionDuration: 0
       }
     },
     items: []
@@ -125,13 +129,14 @@ class TestComponent {
       lastConnection: null,
       lastRunStart: null,
       lastRunDuration: null,
-      numberOfValuesSent: 11,
-      numberOfFilesSent: 11,
-      lastValueSent: null,
-      lastFileSent: null,
-      cacheSize: 10,
-      errorSize: 9,
-      archiveSize: 8
+      lastContentSent: null,
+      contentCachedSize: 11,
+      contentErroredSize: 22,
+      contentArchivedSize: 33,
+      contentSentSize: 44,
+      currentCacheSize: 10,
+      currentErrorSize: 9,
+      currentArchiveSize: 8
     },
     historyMetrics: {
       running: false,

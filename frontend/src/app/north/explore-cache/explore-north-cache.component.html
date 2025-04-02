@@ -1,0 +1,49 @@
+@if (northConnector) {
+  <div class="oib-padded-container">
+    <div class="row justify-content-center align-items-center">
+      <div class="col-md-10 col-lg-8">
+        <div class="oib-header-container">
+          <h1 class="d-flex justify-content-between">
+            <div>
+              <span translate="north.cache.title" [translateParams]="{ name: northConnector.name }" id="title"></span>
+              <button class="ms-2 btn btn-cancel" translate="common.back" id="cancel-edit-button" oibBackButton></button>
+            </div>
+            <button class="ms-2 btn btn-primary" id="refresh-cache-button" (click)="refreshCache()">
+              <span class="fa fa-refresh me-1"></span>
+              <span translate="north.caching.refresh-cache"></span>
+            </button>
+          </h1>
+        </div>
+        @if (northConnector) {
+          <div class="mb-3">
+            <oib-north-cache-content
+              id="cache"
+              #cache
+              [northConnector]="northConnector"
+              cacheType="cache"
+              (cacheUpdated)="refreshCache()"
+            />
+          </div>
+          <div class="mb-3">
+            <oib-north-cache-content
+              id="error"
+              #error
+              [northConnector]="northConnector"
+              cacheType="error"
+              (cacheUpdated)="refreshCache()"
+            />
+          </div>
+          <div class="mb-3">
+            <oib-north-cache-content
+              id="archive"
+              #archive
+              [northConnector]="northConnector"
+              cacheType="archive"
+              (cacheUpdated)="refreshCache()"
+            />
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+}
