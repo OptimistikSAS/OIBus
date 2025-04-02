@@ -8,13 +8,14 @@ import NorthConnector from '../north-connector';
 import EncryptionService from '../../service/encryption.service';
 import { NorthAzureBlobSettings } from '../../../shared/model/north-settings.model';
 import { ProxyOptions } from '@azure/core-http';
-import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
+import { CacheMetadata, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
 import csv from 'papaparse';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
+import TransformerService from '../../service/transformer.service';
 
 const TEST_FILE = 'oibus-azure-test.txt';
 
@@ -25,12 +26,13 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
   constructor(
     connector: NorthConnectorEntity<NorthAzureBlobSettings>,
     encryptionService: EncryptionService,
+    transformerService: TransformerService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(connector, encryptionService, northConnectorRepository, scanModeRepository, logger, baseFolders);
+    super(connector, encryptionService, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   async start(dataStream = true): Promise<void> {
@@ -132,13 +134,13 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
     }
   }
 
-  async handleContent(data: OIBusContent): Promise<void> {
-    switch (data.type) {
+  async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
+    switch (cacheMetadata.contentType) {
       case 'raw':
-        return this.handleFile(data.filePath);
+        return this.handleFile(cacheMetadata.contentFile);
 
       case 'time-values':
-        return this.handleValues(data.content);
+        return this.handleValues(JSON.parse(await fs.readFile(cacheMetadata.contentFile, { encoding: 'utf-8' })) as Array<OIBusTimeValue>);
     }
   }
 

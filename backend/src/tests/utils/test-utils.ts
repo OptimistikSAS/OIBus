@@ -30,6 +30,8 @@ import {
   SouthConnectorMetrics
 } from '../../../shared/model/engine.model';
 import { BaseFolders } from 'src/model/types';
+import { Readable, Writable } from 'node:stream';
+import { Transformer } from '../../model/transformer.model';
 
 const CONFIG_TEST_DATABASE = path.resolve('src', 'tests', 'test-config.db');
 const CRYPTO_TEST_DATABASE = path.resolve('src', 'tests', 'test-crypto.db');
@@ -37,6 +39,27 @@ const LOGS_TEST_DATABASE = path.resolve('src', 'tests', 'test-logs.db');
 const CACHE_TEST_DATABASE = path.resolve('src', 'tests', 'test-cache.db');
 
 export const flushPromises = () => new Promise(jest.requireActual('timers').setImmediate);
+
+export function createMockWriteStream(): Writable & { data: Array<string> } {
+  const writtenData: Array<string> = [];
+
+  const stream = new Writable({
+    write(chunk, _encoding, callback) {
+      writtenData.push(chunk.toString()); // Store received data
+      callback(); // Notify that writing is done
+    }
+  });
+
+  return Object.assign(stream, { data: writtenData });
+}
+
+export function createMockReadStream(): Readable {
+  return new Readable({
+    read() {
+      return;
+    } // No need to override, just push data externally
+  });
+}
 
 export const initDatabase = async (database: 'config' | 'crypto' | 'cache' | 'logs', populate = true) => {
   switch (database) {
@@ -162,16 +185,17 @@ const createNorthMetrics = async (database: knex.Knex, northId: string, northMet
     .insert({
       north_id: northId,
       metrics_start: northMetrics.metricsStart,
-      nb_values: northMetrics.numberOfValuesSent,
-      nb_files: northMetrics.numberOfFilesSent,
       last_connection: northMetrics.lastConnection,
       last_run_start: northMetrics.lastRunStart,
       last_run_duration: northMetrics.lastRunDuration,
-      last_value: northMetrics.lastValueSent,
-      last_file: northMetrics.lastFileSent,
-      cache_size: northMetrics.cacheSize,
-      error_size: northMetrics.errorSize,
-      archive_size: northMetrics.archiveSize
+      content_sent_size: northMetrics.contentSentSize,
+      content_cached_size: northMetrics.contentCachedSize,
+      content_errored_size: northMetrics.contentErroredSize,
+      content_archived_size: northMetrics.contentArchivedSize,
+      last_content_sent: northMetrics.lastContentSent,
+      current_cache_size: northMetrics.currentCacheSize,
+      current_error_size: northMetrics.currentErrorSize,
+      current_archive_size: northMetrics.currentArchiveSize
     })
     .into('north_metrics');
 };
@@ -204,16 +228,17 @@ const createHistoryQueryMetrics = async (database: knex.Knex, historyQueryId: st
       last_south_run_duration: historyQueryMetrics.south.lastRunDuration,
       last_value_retrieved: historyQueryMetrics.south.lastValueRetrieved,
       last_file_retrieved: historyQueryMetrics.south.lastFileRetrieved,
-      nb_values_sent: historyQueryMetrics.north.numberOfValuesSent,
-      nb_files_sent: historyQueryMetrics.north.numberOfFilesSent,
-      last_value_sent: historyQueryMetrics.north.lastValueSent,
-      last_file_sent: historyQueryMetrics.north.lastFileSent,
+      content_sent_size: historyQueryMetrics.north.contentSentSize,
+      content_cached_size: historyQueryMetrics.north.contentCachedSize,
+      content_errored_size: historyQueryMetrics.north.contentErroredSize,
+      content_archived_size: historyQueryMetrics.north.contentArchivedSize,
+      last_content_sent: historyQueryMetrics.north.lastContentSent,
       last_north_connection: historyQueryMetrics.north.lastConnection,
       last_north_run_start: historyQueryMetrics.north.lastRunStart,
       last_north_run_duration: historyQueryMetrics.north.lastRunDuration,
-      north_cache_size: historyQueryMetrics.north.cacheSize,
-      north_error_size: historyQueryMetrics.north.errorSize,
-      north_archive_size: historyQueryMetrics.north.archiveSize
+      north_current_cache_size: historyQueryMetrics.north.currentCacheSize,
+      north_current_error_size: historyQueryMetrics.north.currentErrorSize,
+      north_current_archive_size: historyQueryMetrics.north.currentArchiveSize
     })
     .into('history_query_metrics');
 };
@@ -264,6 +289,9 @@ const populateConfigDatabase = async () => {
   }
   for (const element of testData.scanMode.list) {
     await createScanMode(testDatabase, element);
+  }
+  for (const element of testData.transformers.list) {
+    await createTransformer(testDatabase, element);
   }
   for (const element of testData.south.list) {
     await createSouth(testDatabase, element);
@@ -427,20 +455,25 @@ const createNorth = async (database: knex.Knex, north: NorthConnectorEntity<Nort
       description: north.description,
       enabled: north.enabled,
       settings: JSON.stringify(north.settings),
-      caching_scan_mode_id: north.caching.scanModeId,
-      caching_group_count: north.caching.oibusTimeValues.groupCount,
-      caching_retry_interval: north.caching.retryInterval,
-      caching_retry_count: north.caching.retryCount,
-      caching_max_send_count: north.caching.oibusTimeValues.maxSendCount,
-      caching_send_file_immediately: north.caching.rawFiles.sendFileImmediately,
-      caching_max_size: north.caching.maxSize,
-      archive_enabled: north.caching.rawFiles.archive.enabled,
-      archive_retention_duration: north.caching.rawFiles.archive.retentionDuration
+      caching_trigger_schedule: north.caching.trigger.scanModeId,
+      caching_trigger_number_of_elements: north.caching.trigger.numberOfElements,
+      caching_trigger_number_of_files: north.caching.trigger.numberOfFiles,
+      caching_throttling_run_min_delay: north.caching.throttling.runMinDelay,
+      caching_throttling_cache_max_size: north.caching.throttling.maxSize,
+      caching_throttling_max_number_of_elements: north.caching.throttling.maxNumberOfElements,
+      caching_error_retry_interval: north.caching.error.retryInterval,
+      caching_error_retry_count: north.caching.error.retryCount,
+      caching_error_retention_duration: north.caching.error.retentionDuration,
+      caching_archive_enabled: north.caching.archive.enabled,
+      caching_archive_retention_duration: north.caching.archive.retentionDuration
     })
     .into('north_connectors');
 
   for (const element of north.subscriptions) {
     await createSubscription(database, north.id, element.id);
+  }
+  for (const element of north.transformers) {
+    await createNorthTransformer(database, north.id, element.id);
   }
 };
 
@@ -548,20 +581,25 @@ const createHistoryQuery = async (
       north_type: historyQuery.northType,
       south_settings: JSON.stringify(historyQuery.southSettings),
       north_settings: JSON.stringify(historyQuery.northSettings),
-      caching_scan_mode_id: historyQuery.caching.scanModeId,
-      caching_group_count: historyQuery.caching.oibusTimeValues.groupCount,
-      caching_retry_interval: historyQuery.caching.retryInterval,
-      caching_retry_count: historyQuery.caching.retryCount,
-      caching_max_send_count: historyQuery.caching.oibusTimeValues.maxSendCount,
-      caching_send_file_immediately: historyQuery.caching.rawFiles.sendFileImmediately,
-      caching_max_size: historyQuery.caching.maxSize,
-      archive_enabled: historyQuery.caching.rawFiles.archive.enabled,
-      archive_retention_duration: historyQuery.caching.rawFiles.archive.retentionDuration
+      caching_trigger_schedule: historyQuery.caching.trigger.scanModeId,
+      caching_trigger_number_of_elements: historyQuery.caching.trigger.numberOfElements,
+      caching_trigger_number_of_files: historyQuery.caching.trigger.numberOfFiles,
+      caching_throttling_run_min_delay: historyQuery.caching.throttling.runMinDelay,
+      caching_throttling_cache_max_size: historyQuery.caching.throttling.maxSize,
+      caching_throttling_max_number_of_elements: historyQuery.caching.throttling.maxNumberOfElements,
+      caching_error_retry_interval: historyQuery.caching.error.retryInterval,
+      caching_error_retry_count: historyQuery.caching.error.retryCount,
+      caching_error_retention_duration: historyQuery.caching.error.retentionDuration,
+      caching_archive_enabled: historyQuery.caching.archive.enabled,
+      caching_archive_retention_duration: historyQuery.caching.archive.retentionDuration
     })
     .into('history_queries');
 
   for (const item of historyQuery.items) {
     await createHistoryQueryItem(database, historyQuery.id, item);
+  }
+  for (const element of historyQuery.northTransformers) {
+    await createHistoryQueryTransformer(database, historyQuery.id, element.id);
   }
 };
 
@@ -575,4 +613,42 @@ const createHistoryQueryItem = async (database: knex.Knex, historyQueryId: strin
       settings: JSON.stringify(item.settings)
     })
     .into('history_items');
+};
+
+const createTransformer = async (database: knex.Knex, transformer: Transformer) => {
+  switch (transformer.type) {
+    case 'custom':
+      await database
+        .insert({
+          id: transformer.id,
+          name: transformer.name,
+          description: transformer.description,
+          type: transformer.type,
+          input_type: transformer.inputType,
+          output_type: transformer.outputType,
+          custom_code: transformer.customCode
+        })
+        .into('transformers');
+      break;
+    case 'standard':
+      await database
+        .insert({
+          id: transformer.id,
+          name: transformer.name,
+          description: transformer.description,
+          type: transformer.type,
+          input_type: transformer.inputType,
+          output_type: transformer.outputType,
+          standard_code: transformer.standardCode
+        })
+        .into('transformers');
+  }
+};
+
+const createNorthTransformer = async (database: knex.Knex, northId: string, transformerId: string) => {
+  await database.insert({ north_id: northId, transformer_id: transformerId }).into('north_transformers');
+};
+
+const createHistoryQueryTransformer = async (database: knex.Knex, historyId: string, transformerId: string) => {
+  await database.insert({ history_id: historyId, transformer_id: transformerId }).into('history_query_transformers');
 };

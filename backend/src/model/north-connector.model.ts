@@ -2,6 +2,7 @@ import { BaseEntity } from './types';
 import { NorthSettings } from '../../shared/model/north-settings.model';
 import { SouthConnectorEntityLight } from './south-connector.model';
 import { OIBusNorthType } from '../../shared/model/north-connector.model';
+import { TransformerLight } from './transformer.model';
 
 export interface NorthConnectorEntityLight extends BaseEntity {
   name: string;
@@ -17,30 +18,26 @@ export interface NorthConnectorEntity<T extends NorthSettings> extends BaseEntit
   enabled: boolean;
   settings: T;
   caching: {
-    scanModeId: string;
-    retryInterval: number;
-    retryCount: number;
-    maxSize: number;
-    oibusTimeValues: {
-      groupCount: number;
-      maxSendCount: number;
+    trigger: {
+      scanModeId: string;
+      numberOfElements: number;
+      numberOfFiles: number;
     };
-    rawFiles: {
-      sendFileImmediately: boolean;
-      archive: {
-        enabled: boolean;
-        retentionDuration: number;
-      };
+    throttling: {
+      runMinDelay: number;
+      maxSize: number;
+      maxNumberOfElements: number;
+    };
+    error: {
+      retryInterval: number;
+      retryCount: number;
+      retentionDuration: number;
+    };
+    archive: {
+      enabled: boolean;
+      retentionDuration: number;
     };
   };
   subscriptions: Array<SouthConnectorEntityLight>;
-}
-
-// TODO: Change this type with generated types for every type of north item settings. Also change in NorthConnector class
-type NorthItemSettings = any;
-
-export interface NorthConnectorItemEntity<T extends NorthItemSettings = any> extends BaseEntity {
-  name: string;
-  enabled: boolean;
-  settings: T;
+  transformers: Array<TransformerLight>;
 }

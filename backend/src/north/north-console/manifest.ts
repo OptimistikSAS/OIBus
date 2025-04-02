@@ -3,10 +3,7 @@ import { NorthConnectorManifest } from '../../../shared/model/north-connector.mo
 const manifest: NorthConnectorManifest = {
   id: 'console',
   category: 'debug',
-  modes: {
-    files: true,
-    points: true
-  },
+  types: ['raw', 'time-values'],
   settings: [
     {
       key: 'verbose',

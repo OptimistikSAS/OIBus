@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { EngineService } from '../../services/engine.service';
 import { RegistrationSettingsDTO } from '../../../../../backend/shared/model/engine.model';
 import { DatetimePipe } from '../../shared/datetime.pipe';
-import { ModalService } from '../../shared/modal.service';
+import { Modal, ModalService } from '../../shared/modal.service';
 import { RegisterOibusModalComponent } from './register-oibus-modal/register-oibus-modal.component';
 import { catchError, EMPTY, exhaustMap, map, Subscription, switchMap, tap, timer } from 'rxjs';
 import { NotificationService } from '../../shared/notification.service';
@@ -114,6 +114,7 @@ export class OiaModuleComponent implements OnInit, OnDestroy {
   editRegister(): void {
     const modalRef = this.modalService.open(RegisterOibusModalComponent, { size: 'xl' });
     modalRef.componentInstance.prepare(this.registration!, 'edit');
+    this.refreshAfterModalClosed(modalRef);
   }
 
   createRegistrationSubscription(): void {
@@ -164,5 +165,14 @@ export class OiaModuleComponent implements OnInit, OnDestroy {
   openCommandDetails(command: OIBusCommandDTO) {
     const modal = this.modalService.open(OiaCommandDetailsModalComponent, { size: 'lg' });
     modal.componentInstance.prepare(command);
+  }
+
+  private refreshAfterModalClosed(modalRef: Modal<any>) {
+    modalRef.result
+      .pipe(switchMap(() => this.oibusService.getRegistrationSettings()))
+      .subscribe((registration: RegistrationSettingsDTO) => {
+        this.registration = registration;
+        this.notificationService.success('oia-module.registration.saved');
+      });
   }
 }

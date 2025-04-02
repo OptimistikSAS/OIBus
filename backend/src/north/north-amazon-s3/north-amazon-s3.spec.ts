@@ -7,8 +7,7 @@ import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-import ValueCacheServiceMock from '../../tests/__mocks__/service/cache/value-cache-service.mock';
-import FileCacheServiceMock from '../../tests/__mocks__/service/cache/file-cache-service.mock';
+import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
 import { NorthAmazonS3Settings } from '../../../shared/model/north-settings.model';
 import csv from 'papaparse';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
@@ -18,6 +17,10 @@ import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan
 import testData from '../../tests/utils/test-data';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { mockBaseFolders } from '../../tests/utils/test-utils';
+import CacheService from '../../service/cache/cache.service';
+import { OIBusTimeValue } from '../../../shared/model/engine.model';
+import TransformerService from '../../service/transformer.service';
+import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
 
 const sendMock = jest.fn();
 jest.mock('@aws-sdk/client-s3');
@@ -32,23 +35,24 @@ const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
-const valueCacheService = new ValueCacheServiceMock();
-const fileCacheService = new FileCacheServiceMock();
+const cacheService: CacheService = new CacheServiceMock();
+const transformerService: TransformerService = new TransformerServiceMock();
 
 jest.mock(
-  '../../service/cache/value-cache.service',
+  '../../service/cache/cache.service',
   () =>
     function () {
-      return valueCacheService;
+      return cacheService;
     }
 );
-jest.mock(
-  '../../service/cache/file-cache.service',
-  () =>
-    function () {
-      return fileCacheService;
-    }
-);
+
+const timeValues: Array<OIBusTimeValue> = [
+  {
+    pointId: 'pointId',
+    timestamp: testData.constants.dates.FAKE_NOW,
+    data: { value: '666', quality: 'good' }
+  }
+];
 
 let north: NorthAmazonS3;
 let configuration: NorthConnectorEntity<NorthAmazonS3Settings>;
@@ -80,11 +84,16 @@ describe('NorthAmazonS3', () => {
       north = new NorthAmazonS3(
         configuration,
         encryptionService,
+        transformerService,
         northConnectorRepository,
         scanModeRepository,
         logger,
         mockBaseFolders(testData.north.list[0].id)
       );
+    });
+
+    afterEach(() => {
+      cacheService.cacheSizeEventEmitter.removeAllListeners();
     });
 
     it('should properly start', async () => {
@@ -100,28 +109,35 @@ describe('NorthAmazonS3', () => {
     });
 
     it('should properly handle file', async () => {
-      const filePath = '/csv/test/file-789.csv';
       (createReadStream as jest.Mock).mockImplementation(() => ({}) as ReadStream);
 
       await north.start();
-      await north.handleContent({ type: 'raw', filePath });
+      await north.handleContent({
+        contentFile: '/csv/test/file-789.csv',
+        contentSize: 1234,
+        numberOfElement: 0,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'raw',
+        source: 'south',
+        options: {}
+      });
 
-      expect(createReadStream).toHaveBeenCalledWith(filePath);
+      expect(createReadStream).toHaveBeenCalledWith('/csv/test/file-789.csv');
     });
 
     it('should properly handle values', async () => {
       (createReadStream as jest.Mock).mockImplementation(() => ({}) as ReadStream);
 
       await north.start();
+      (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(timeValues));
       await north.handleContent({
-        type: 'time-values',
-        content: [
-          {
-            pointId: 'pointId',
-            timestamp: '2020-02-02T02:02:02.222Z',
-            data: { value: '123' }
-          }
-        ]
+        contentFile: '/path/to/file/example-123.json',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'time-values',
+        source: 'south',
+        options: {}
       });
     });
 
@@ -166,11 +182,16 @@ describe('NorthAmazonS3', () => {
       north = new NorthAmazonS3(
         configuration,
         encryptionService,
+        transformerService,
         northConnectorRepository,
         scanModeRepository,
         logger,
         mockBaseFolders(testData.north.list[0].id)
       );
+    });
+
+    afterEach(() => {
+      cacheService.cacheSizeEventEmitter.removeAllListeners();
     });
 
     it('should properly start', async () => {
@@ -233,11 +254,16 @@ describe('NorthAmazonS3', () => {
       north = new NorthAmazonS3(
         configuration,
         encryptionService,
+        transformerService,
         northConnectorRepository,
         scanModeRepository,
         logger,
         mockBaseFolders(testData.north.list[0].id)
       );
+    });
+
+    afterEach(() => {
+      cacheService.cacheSizeEventEmitter.removeAllListeners();
     });
 
     it('should properly start', async () => {

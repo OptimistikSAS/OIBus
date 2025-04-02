@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import fsAsync from 'node:fs/promises';
 import path from 'node:path';
 
 import { HeadBucketCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
@@ -9,13 +10,14 @@ import EncryptionService from '../../service/encryption.service';
 import pino from 'pino';
 import { NorthAmazonS3Settings } from '../../../shared/model/north-settings.model';
 import { createProxyAgent } from '../../service/proxy-agent';
-import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
+import { CacheMetadata, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
 import csv from 'papaparse';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
+import TransformerService from '../../service/transformer.service';
 
 /**
  * Class NorthAmazonS3 - sends files to Amazon AWS S3
@@ -26,12 +28,13 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
   constructor(
     connector: NorthConnectorEntity<NorthAmazonS3Settings>,
     encryptionService: EncryptionService,
+    transformerService: TransformerService,
     northConnectorRepository: NorthConnectorRepository,
     scanModeRepository: ScanModeRepository,
     logger: pino.Logger,
     baseFolders: BaseFolders
   ) {
-    super(connector, encryptionService, northConnectorRepository, scanModeRepository, logger, baseFolders);
+    super(connector, encryptionService, transformerService, northConnectorRepository, scanModeRepository, logger, baseFolders);
   }
 
   /**
@@ -75,13 +78,15 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
     });
   }
 
-  async handleContent(data: OIBusContent): Promise<void> {
-    switch (data.type) {
+  override async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
+    switch (cacheMetadata.contentType) {
       case 'raw':
-        return this.handleFile(data.filePath);
+        return this.handleFile(cacheMetadata.contentFile);
 
       case 'time-values':
-        return this.handleValues(data.content);
+        return this.handleValues(
+          JSON.parse(await fsAsync.readFile(cacheMetadata.contentFile, { encoding: 'utf-8' })) as Array<OIBusTimeValue>
+        );
     }
   }
 

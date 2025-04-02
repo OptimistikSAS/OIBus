@@ -1,7 +1,9 @@
 import { OibFormControl } from './form.model';
-import { BaseEntity, Instant } from './types';
+import { BaseEntity } from './types';
 import { NorthSettings } from './north-settings.model';
 import { SouthConnectorLightDTO } from './south-connector.model';
+import { TransformerLightDTO } from './transformer.model';
+import { OIBusDataType } from './engine.model';
 
 export const OIBUS_NORTH_CATEGORIES = ['debug', 'api', 'file'] as const;
 export type OIBusNorthCategory = (typeof OIBUS_NORTH_CATEGORIES)[number];
@@ -12,10 +14,7 @@ export type OIBusNorthType = (typeof OIBUS_NORTH_TYPES)[number];
 export interface NorthType {
   id: OIBusNorthType;
   category: OIBusNorthCategory;
-  modes: {
-    files: boolean;
-    points: boolean;
-  };
+  types: Array<OIBusDataType>;
 }
 
 export interface NorthConnectorLightDTO extends BaseEntity {
@@ -32,23 +31,28 @@ export interface NorthConnectorDTO<T extends NorthSettings> extends BaseEntity {
   enabled: boolean;
   settings: T;
   caching: {
-    scanModeId: string;
-    retryInterval: number;
-    retryCount: number;
-    maxSize: number;
-    oibusTimeValues: {
-      groupCount: number;
-      maxSendCount: number;
+    trigger: {
+      scanModeId: string;
+      numberOfElements: number;
+      numberOfFiles: number;
     };
-    rawFiles: {
-      sendFileImmediately: boolean;
-      archive: {
-        enabled: boolean;
-        retentionDuration: number;
-      };
+    throttling: {
+      runMinDelay: number;
+      maxSize: number;
+      maxNumberOfElements: number;
+    };
+    error: {
+      retryInterval: number;
+      retryCount: number;
+      retentionDuration: number;
+    };
+    archive: {
+      enabled: boolean;
+      retentionDuration: number;
     };
   };
   subscriptions: Array<SouthConnectorLightDTO>;
+  transformers: Array<TransformerLightDTO>;
 }
 
 export interface NorthConnectorCommandDTO<T extends NorthSettings> {
@@ -58,38 +62,34 @@ export interface NorthConnectorCommandDTO<T extends NorthSettings> {
   enabled: boolean;
   settings: T;
   caching: {
-    scanModeId: string | null;
-    scanModeName: string | null;
-    retryInterval: number;
-    retryCount: number;
-    maxSize: number;
-    oibusTimeValues: {
-      groupCount: number;
-      maxSendCount: number;
+    trigger: {
+      scanModeId: string;
+      scanModeName: string | null;
+      numberOfElements: number;
+      numberOfFiles: number;
     };
-    rawFiles: {
-      sendFileImmediately: boolean;
-      archive: {
-        enabled: boolean;
-        retentionDuration: number;
-      };
+    throttling: {
+      runMinDelay: number;
+      maxSize: number;
+      maxNumberOfElements: number;
+    };
+    error: {
+      retryInterval: number;
+      retryCount: number;
+      retentionDuration: number;
+    };
+    archive: {
+      enabled: boolean;
+      retentionDuration: number;
     };
   };
   subscriptions: Array<string>;
+  transformers: Array<string>;
 }
 
 export interface NorthConnectorManifest {
   id: OIBusNorthType;
   category: OIBusNorthCategory;
-  modes: {
-    files: boolean;
-    points: boolean;
-  };
+  types: Array<OIBusDataType>;
   settings: Array<OibFormControl>;
-}
-
-export interface NorthCacheFiles {
-  filename: string;
-  modificationDate: Instant;
-  size: number;
 }
