@@ -3,8 +3,8 @@ import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-import ValueCacheServiceMock from '../../tests/__mocks__/service/cache/value-cache-service.mock';
-import FileCacheServiceMock from '../../tests/__mocks__/service/cache/file-cache-service.mock';
+import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
+
 import csv from 'papaparse';
 import { NorthSFTPSettings } from '../../../shared/model/north-settings.model';
 import sftpClient from 'ssh2-sftp-client';
@@ -16,6 +16,8 @@ import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import testData from '../../tests/utils/test-data';
 import { mockBaseFolders } from '../../tests/utils/test-utils';
+import CacheService from '../../service/cache/cache.service';
+import fs from 'node:fs/promises';
 
 jest.mock('node:fs/promises');
 
@@ -23,21 +25,13 @@ const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
-const valueCacheService = new ValueCacheServiceMock();
-const fileCacheService = new FileCacheServiceMock();
+const cacheService: CacheService = new CacheServiceMock();
 
 jest.mock(
-  '../../service/cache/value-cache.service',
+  '../../service/cache/cache.service',
   () =>
     function () {
-      return valueCacheService;
-    }
-);
-jest.mock(
-  '../../service/cache/file-cache.service',
-  () =>
-    function () {
-      return fileCacheService;
+      return cacheService;
     }
 );
 
@@ -52,6 +46,19 @@ const mockSftpClient = {
 jest.mock('ssh2-sftp-client');
 jest.mock('../../service/utils');
 jest.mock('papaparse');
+
+const timeValues: Array<OIBusTimeValue> = [
+  {
+    pointId: 'pointId1',
+    timestamp: testData.constants.dates.FAKE_NOW,
+    data: { value: '666', quality: 'good' }
+  },
+  {
+    pointId: 'pointId2',
+    timestamp: testData.constants.dates.FAKE_NOW,
+    data: { value: '777', quality: 'good' }
+  }
+];
 
 let configuration: NorthConnectorEntity<NorthSFTPSettings>;
 let north: NorthSftp;
@@ -88,19 +95,24 @@ describe('NorthSFTP', () => {
     await north.start();
   });
 
+  afterEach(() => {
+    cacheService.cacheSizeEventEmitter.removeAllListeners();
+  });
+
   it('should properly handle values', async () => {
-    const values: Array<OIBusTimeValue> = [
-      {
-        timestamp: '2021-07-29T12:13:31.883Z',
-        data: { value: '666', quality: 'good' },
-        pointId: 'pointId'
-      }
-    ];
     north.sendToSftpServer = jest.fn();
     csv.unparse = jest.fn().mockReturnValue('csv content');
 
-    await north.handleContent({ type: 'time-values', content: values });
-
+    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(timeValues));
+    await north.handleContent({
+      contentFile: '/path/to/file/example-123.json',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'time-values',
+      source: 'south',
+      options: {}
+    });
     const expectedFileName = `${configuration.settings.prefix}${new Date().getTime()}${configuration.settings.suffix}.csv`;
     expect(north.sendToSftpServer).toHaveBeenCalledWith(
       Buffer.from('csv content', 'utf8'),
@@ -109,33 +121,57 @@ describe('NorthSFTP', () => {
   });
 
   it('should properly catch handle values error', async () => {
-    const values: Array<OIBusTimeValue> = [
-      {
-        timestamp: '2021-07-29T12:13:31.883Z',
-        data: { value: '666', quality: 'good' },
-        pointId: 'pointId'
-      }
-    ];
+    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(timeValues));
+
     north.sendToSftpServer = jest.fn().mockImplementationOnce(() => {
       throw new Error('Error handling values');
     });
-    await expect(north.handleContent({ type: 'time-values', content: values })).rejects.toThrow('Error handling values');
+    await expect(
+      north.handleContent({
+        contentFile: '/path/to/file/example-123.json',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'time-values',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow('Error handling values');
   });
 
   it('should properly handle files', async () => {
     north.sendToSftpServer = jest.fn();
-    const filePath = '/path/to/file/example-123456.file';
     const expectedFileName = `${configuration.settings.prefix}example${configuration.settings.suffix}.file`;
-    await north.handleContent({ type: 'raw', filePath });
-    expect(north.sendToSftpServer).toHaveBeenCalledWith(filePath, `${configuration.settings.remoteFolder}/${expectedFileName}`);
+    await north.handleContent({
+      contentFile: 'path/to/file/example-123.file',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'raw',
+      source: 'south',
+      options: {}
+    });
+    expect(north.sendToSftpServer).toHaveBeenCalledWith(
+      'path/to/file/example-123.file',
+      `${configuration.settings.remoteFolder}/${expectedFileName}`
+    );
   });
 
   it('should properly catch handle file error', async () => {
     north.sendToSftpServer = jest.fn().mockImplementationOnce(() => {
       throw new Error('Error handling files');
     });
-    const filePath = '/path/to/file/example-123456.file';
-    await expect(north.handleContent({ type: 'raw', filePath })).rejects.toThrow('Error handling files');
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example-123.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'raw',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow('Error handling files');
   });
 
   it('should send content into SFTP server', async () => {
@@ -188,19 +224,24 @@ describe('NorthSFTP without suffix or prefix', () => {
     );
   });
 
-  it('should properly handle values', async () => {
-    const values: Array<OIBusTimeValue> = [
-      {
-        timestamp: '2021-07-29T12:13:31.883Z',
-        data: { value: '666', quality: 'good' },
-        pointId: 'pointId'
-      }
-    ];
+  afterEach(() => {
+    cacheService.cacheSizeEventEmitter.removeAllListeners();
+  });
 
+  it('should properly handle values', async () => {
     north.sendToSftpServer = jest.fn();
     csv.unparse = jest.fn().mockReturnValue('csv content');
 
-    await north.handleContent({ type: 'time-values', content: values });
+    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(timeValues));
+    await north.handleContent({
+      contentFile: '/path/to/file/example-123.json',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'time-values',
+      source: 'south',
+      options: {}
+    });
 
     const expectedFileName = `${new Date().getTime()}.csv`;
     expect(north.sendToSftpServer).toHaveBeenCalledWith(
@@ -208,7 +249,6 @@ describe('NorthSFTP without suffix or prefix', () => {
       `${configuration.settings.remoteFolder}/${expectedFileName}`
     );
 
-    await north.handleContent({ type: 'time-values', content: values });
     expect(north.sendToSftpServer).toHaveBeenCalledWith(
       Buffer.from('csv content', 'utf8'),
       `${configuration.settings.remoteFolder}/${new Date().getTime()}.csv`
@@ -217,9 +257,19 @@ describe('NorthSFTP without suffix or prefix', () => {
 
   it('should properly handle files', async () => {
     north.sendToSftpServer = jest.fn();
-    const filePath = '/path/to/file/example-123456.file';
-    await north.handleContent({ type: 'raw', filePath });
-    expect(north.sendToSftpServer).toHaveBeenCalledWith(filePath, `${configuration.settings.remoteFolder}/example.file`);
+    await north.handleContent({
+      contentFile: 'path/to/file/example-123.file',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'raw',
+      source: 'south',
+      options: {}
+    });
+    expect(north.sendToSftpServer).toHaveBeenCalledWith(
+      'path/to/file/example-123.file',
+      `${configuration.settings.remoteFolder}/example.file`
+    );
   });
 
   it('should have access to output folder', async () => {

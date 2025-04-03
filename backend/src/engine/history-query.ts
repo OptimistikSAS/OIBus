@@ -8,7 +8,7 @@ import NorthConnector from '../north/north-connector';
 import SouthConnector from '../south/south-connector';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { NorthSettings } from '../../shared/model/north-settings.model';
-import { OIBusContent, OIBusTimeValue } from '../../shared/model/engine.model';
+import { CacheMetadata, OIBusContent, OIBusTimeValue } from '../../shared/model/engine.model';
 import { SouthConnectorEntity } from '../model/south-connector.model';
 import { NorthConnectorEntity } from '../model/north-connector.model';
 import { HistoryQueryEntity } from '../model/histor-query.model';
@@ -87,17 +87,17 @@ export default class HistoryQuery {
     this.north.metricsEvent.on('run-start', (data: { lastRunStart: Instant }) => {
       this.metricsEvent.emit('north-run-start', data);
     });
-    this.north.metricsEvent.on('run-end', (data: { lastRunDuration: number }) => {
-      this.metricsEvent.emit('north-run-end', data);
-    });
+    this.north.metricsEvent.on(
+      'run-end',
+      (data: { lastRunDuration: number; metadata: CacheMetadata; action: 'sent' | 'errored' | 'archived' }) => {
+        this.metricsEvent.emit('north-run-end', data);
+      }
+    );
     this.north.metricsEvent.on('cache-size', (data: { cacheSize: number; errorSize: number; archiveSize: number }) => {
       this.metricsEvent.emit('north-cache-size', data);
     });
-    this.north.metricsEvent.on('send-values', (data: { numberOfValuesSent: number; lastValueSent: OIBusTimeValue }) => {
-      this.metricsEvent.emit('north-send-values', data);
-    });
-    this.north.metricsEvent.on('send-file', (data: { lastFileSent: string }) => {
-      this.metricsEvent.emit('north-send-file', data);
+    this.north.metricsEvent.on('cache-content-size', (cachedSize: number) => {
+      this.metricsEvent.emit('north-cache-content-size', cachedSize);
     });
     await this.north.start(false);
 
@@ -168,16 +168,9 @@ export default class HistoryQuery {
     await this.south.start(false);
   }
 
-  async addContent(_historyId: string, data: OIBusContent) {
+  async addContent(historyId: string, data: OIBusContent) {
     if (this.north) {
-      switch (data.type) {
-        case 'time-values':
-          this.logger.info(`Add ${data.content.length} values from History Query "${this.historyConfiguration.name}" to north connector`);
-          return await this.north.cacheValues(data.content);
-        case 'raw':
-          this.logger.info(`Add file "${data.filePath}" from History Query "${this.historyConfiguration.name}" to north connector`);
-          return await this.north.cacheFile(data.filePath);
-      }
+      return await this.north.cacheContent(data, historyId);
     }
   }
 
@@ -212,7 +205,7 @@ export default class HistoryQuery {
    * Finish HistoryQuery.
    */
   async finish(): Promise<void> {
-    if (!this.north || !this.south || ((await this.north.isCacheEmpty()) && !this.south.historyIsRunning)) {
+    if (!this.north || !this.south || (this.north.isCacheEmpty() && !this.south.historyIsRunning)) {
       this.logger.info(`Finish "${this.historyConfiguration.name}" (${this.historyConfiguration.id})`);
       await this.stop();
       this.historyQueryRepository.updateHistoryQueryStatus(this.historyConfiguration.id, 'FINISHED');
