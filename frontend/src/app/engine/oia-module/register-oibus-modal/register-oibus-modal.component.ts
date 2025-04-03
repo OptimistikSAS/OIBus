@@ -5,7 +5,7 @@ import { ObservableState, SaveButtonComponent } from '../../../shared/save-butto
 import { TranslateDirective } from '@ngx-translate/core';
 import { formDirectives } from '../../../shared/form-directives';
 import { EngineService } from '../../../services/engine.service';
-import { LOG_LEVELS, RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../../../../backend/shared/model/engine.model';
+import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../../../../backend/shared/model/engine.model';
 import { BoxComponent } from '../../../shared/box/box.component';
 import { OibusCommandTypeEnumPipe } from '../../../shared/oibus-command-type-enum.pipe';
 
@@ -205,6 +205,4 @@ export class RegisterOibusModalComponent {
         });
     }
   }
-
-  protected readonly logLevels = LOG_LEVELS;
 }

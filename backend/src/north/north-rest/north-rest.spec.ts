@@ -11,10 +11,7 @@ import { Dispatcher, request, ProxyAgent } from 'undici';
 import { filesExists } from '../../service/utils';
 import FormData from 'form-data';
 
-import ValueCacheServiceMock from '../../tests/__mocks__/service/cache/value-cache-service.mock';
-import FileCacheServiceMock from '../../tests/__mocks__/service/cache/file-cache-service.mock';
 import { NorthRESTSettings } from '../../../shared/model/north-settings.model';
-import { OIBusTimeValue } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import testData from '../../tests/utils/test-data';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
@@ -23,6 +20,13 @@ import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/confi
 import ScanModeRepositoryMock from '../../tests/__mocks__/repository/config/scan-mode-repository.mock';
 import { mockBaseFolders } from '../../tests/utils/test-utils';
 import { OIBusError } from '../../model/engine.model';
+import CacheService from '../../service/cache/cache.service';
+import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
+import TransformerService from '../../service/transformer.service';
+import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
+import { createTransformer } from '../../service/transformers/transformers-utils';
+import OIBusTransformer from '../../service/transformers/oibus-transformer';
+import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
 
 function mockResponseData(data: string, statusCode: number) {
   return {
@@ -35,27 +39,22 @@ function mockResponseData(data: string, statusCode: number) {
 
 jest.mock('node:fs');
 jest.mock('../../service/utils');
+jest.mock('../../service/transformers/transformers-utils');
 jest.mock('undici');
 
 const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
-const valueCacheService = new ValueCacheServiceMock();
-const fileCacheService = new FileCacheServiceMock();
+const transformerService: TransformerService = new TransformerServiceMock();
+const cacheService: CacheService = new CacheServiceMock();
+const oiBusTransformer: OIBusTransformer = new OIBusTransformerMock() as unknown as OIBusTransformer;
 
 jest.mock(
-  '../../service/cache/value-cache.service',
+  '../../service/cache/cache.service',
   () =>
     function () {
-      return valueCacheService;
-    }
-);
-jest.mock(
-  '../../service/cache/file-cache.service',
-  () =>
-    function () {
-      return fileCacheService;
+      return cacheService;
     }
 );
 
@@ -92,11 +91,13 @@ describe('NorthREST', () => {
     };
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
-
     (filesExists as jest.Mock).mockReturnValue(true);
+    (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
+
     north = new NorthREST(
       configuration,
       encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
@@ -106,34 +107,53 @@ describe('NorthREST', () => {
   });
 
   it('should not handle values', async () => {
-    const values: Array<OIBusTimeValue> = [
-      {
-        pointId: 'pointId1',
-        timestamp: testData.constants.dates.FAKE_NOW,
-        data: { value: '666', quality: 'good' }
-      }
-    ];
-
-    await expect(north.handleContent({ type: 'time-values', content: values })).rejects.toThrow('Can not manage time values');
+    await expect(
+      north.handleContent({
+        contentFile: '/path/to/file/example-123.json',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'time-values',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow('Can not manage time values');
 
     expect(request).not.toHaveBeenCalled();
   });
 
   it('should properly throw error when file does not exist', async () => {
-    const filePath = '/path/to/file/example.file';
-
     (filesExists as jest.Mock).mockReturnValueOnce(false);
 
-    await expect(north.handleContent({ type: 'raw', filePath })).rejects.toThrow(`File ${path.resolve(filePath)} does not exist`);
+    await expect(
+      north.handleContent({
+        contentFile: 'example.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'raw',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(`File ${path.resolve('example.file')} does not exist`);
 
     expect(request).not.toHaveBeenCalled();
   });
 
   it('should properly get message from generic Error', async () => {
-    const filePath = '/path/to/file/example.file';
     (request as unknown as jest.Mock).mockRejectedValue(new Error('generic error object'));
 
-    await expect(north.handleContent({ type: 'raw', filePath })).rejects.toThrow(
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'raw',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(
       new OIBusError(`Failed to reach file endpoint ${new URL(configuration.settings.endpoint)}; message: generic error object`, true)
     );
 
@@ -141,21 +161,37 @@ describe('NorthREST', () => {
   });
 
   it('should properly get message from non Errors', async () => {
-    const filePath = '/path/to/file/example.file';
     (request as unknown as jest.Mock).mockRejectedValue({ some: 'data' });
 
-    await expect(north.handleContent({ type: 'raw', filePath })).rejects.toThrow(
-      new OIBusError(`Failed to reach file endpoint ${new URL(configuration.settings.endpoint)}; {"some":"data"}`, true)
-    );
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'raw',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(new OIBusError(`Failed to reach file endpoint ${new URL(configuration.settings.endpoint)}; {"some":"data"}`, true));
 
     expect(request).toHaveBeenCalled();
   });
 
   it('should properly get message from generic AggregateError', async () => {
-    const filePath = '/path/to/file/example.file';
     (request as unknown as jest.Mock).mockRejectedValue(new AggregateError([new Error('error 1'), new Error('error 2')]));
 
-    await expect(north.handleContent({ type: 'raw', filePath })).rejects.toThrow(
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'raw',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(
       new OIBusError(`Failed to reach file endpoint ${new URL(configuration.settings.endpoint)}; message: error 1; message: error 2`, true)
     );
 
@@ -163,13 +199,22 @@ describe('NorthREST', () => {
   });
 
   it('should properly get message from Error with code', async () => {
-    const filePath = '/path/to/file/example.file';
     const error = new Error('error with code');
     // @ts-expect-error Error does not have 'code' by default, adding it dynamically
     error['code'] = 1;
     (request as unknown as jest.Mock).mockRejectedValue(error);
 
-    await expect(north.handleContent({ type: 'raw', filePath })).rejects.toThrow(
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'raw',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(
       new OIBusError(`Failed to reach file endpoint ${new URL(configuration.settings.endpoint)}; message: error with code, code: 1`, true)
     );
 
@@ -177,7 +222,6 @@ describe('NorthREST', () => {
   });
 
   it('should properly get message from AggregateError with codes', async () => {
-    const filePath = '/path/to/file/example.file';
     const error1 = new Error('error with code 1');
     // @ts-expect-error Error does not have 'code' by default, adding it dynamically
     error1['code'] = 1;
@@ -186,7 +230,17 @@ describe('NorthREST', () => {
     error2['code'] = 2;
     (request as unknown as jest.Mock).mockRejectedValue(new AggregateError([error1, error2]));
 
-    await expect(north.handleContent({ type: 'raw', filePath })).rejects.toThrow(
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'raw',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(
       new OIBusError(
         `Failed to reach file endpoint ${new URL(configuration.settings.endpoint)}; message: error with code 1, code: 1; message: error with code 2, code: 2`,
         true
@@ -223,11 +277,13 @@ describe('NorthREST without proxy', () => {
     };
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
-
     (filesExists as jest.Mock).mockReturnValue(true);
+    (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
+
     north = new NorthREST(
       configuration,
       encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
@@ -320,21 +376,22 @@ describe('NorthREST without proxy', () => {
   });
 
   it('should not handle values', async () => {
-    const values: Array<OIBusTimeValue> = [
-      {
-        pointId: 'pointId1',
-        timestamp: testData.constants.dates.FAKE_NOW,
-        data: { value: '666', quality: 'good' }
-      }
-    ];
-
-    await expect(north.handleContent({ type: 'time-values', content: values })).rejects.toThrow('Can not manage time values');
+    await expect(
+      north.handleContent({
+        contentFile: '/path/to/file/example-123.json',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'time-values',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow('Can not manage time values');
 
     expect(request).not.toHaveBeenCalled();
   });
 
   it('should properly handle files', async () => {
-    const filePath = '/path/to/file/example.file';
     const expectedOptions = {
       method: 'POST',
       headers: {
@@ -349,7 +406,15 @@ describe('NorthREST without proxy', () => {
 
     (request as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(mockResponseData('Ok', 200)));
 
-    await north.handleContent({ type: 'raw', filePath });
+    await north.handleContent({
+      contentFile: 'path/to/file/example.file',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'raw',
+      source: 'south',
+      options: {}
+    });
 
     expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint), expectedOptions);
   });
@@ -362,7 +427,6 @@ describe('NorthREST without proxy', () => {
         queryParams: null
       }
     });
-    const filePath = '/path/to/file/example.file';
     const expectedOptions = {
       method: 'POST',
       headers: {
@@ -377,7 +441,15 @@ describe('NorthREST without proxy', () => {
 
     (request as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(mockResponseData('Ok', 200)));
 
-    await north.handleContent({ type: 'raw', filePath });
+    await north.handleContent({
+      contentFile: 'path/to/file/example.file',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'raw',
+      source: 'south',
+      options: {}
+    });
 
     expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint), expectedOptions);
   });
@@ -390,7 +462,6 @@ describe('NorthREST without proxy', () => {
         basicAuthPassword: null
       }
     });
-    const filePath = '/path/to/file/example.file';
     const expectedOptions = {
       method: 'POST',
       headers: {
@@ -405,7 +476,15 @@ describe('NorthREST without proxy', () => {
 
     (request as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(mockResponseData('Ok', 200)));
 
-    await north.handleContent({ type: 'raw', filePath });
+    await north.handleContent({
+      contentFile: 'path/to/file/example.file',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'raw',
+      source: 'south',
+      options: {}
+    });
 
     expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint), expectedOptions);
   });
@@ -421,7 +500,6 @@ describe('NorthREST without proxy', () => {
         basicAuthPassword: null
       }
     });
-    const filePath = '/path/to/file/example.file';
     const expectedOptions = {
       method: 'POST',
       headers: {
@@ -436,7 +514,15 @@ describe('NorthREST without proxy', () => {
 
     (request as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(mockResponseData('Ok', 200)));
 
-    await north.handleContent({ type: 'raw', filePath });
+    await north.handleContent({
+      contentFile: 'path/to/file/example.file',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'raw',
+      source: 'south',
+      options: {}
+    });
 
     expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint), expectedOptions);
   });
@@ -452,7 +538,6 @@ describe('NorthREST without proxy', () => {
         basicAuthPassword: null
       }
     });
-    const filePath = '/path/to/file/example.file';
     const expectedOptions = {
       method: 'POST',
       headers: {
@@ -467,23 +552,38 @@ describe('NorthREST without proxy', () => {
 
     (request as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(mockResponseData('Ok', 200)));
 
-    await north.handleContent({ type: 'raw', filePath });
+    await north.handleContent({
+      contentFile: 'path/to/file/example.file',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'raw',
+      source: 'south',
+      options: {}
+    });
 
     expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint), expectedOptions);
   });
 
   it('should properly throw error when file does not exist', async () => {
-    const filePath = '/path/to/file/example.file';
-
     (filesExists as jest.Mock).mockReturnValueOnce(false);
 
-    await expect(north.handleContent({ type: 'raw', filePath })).rejects.toThrow(`File ${path.resolve(filePath)} does not exist`);
+    await expect(
+      north.handleContent({
+        contentFile: 'example.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'raw',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(`File ${path.resolve('example.file')} does not exist`);
 
     expect(request).not.toHaveBeenCalled();
   });
 
   it('should properly throw fetch error with files', async () => {
-    const filePath = '/path/to/file/example.file';
     const expectedOptions = {
       method: 'POST',
       headers: {
@@ -498,15 +598,22 @@ describe('NorthREST without proxy', () => {
 
     (request as unknown as jest.Mock).mockRejectedValueOnce(new Error('error'));
 
-    await expect(north.handleContent({ type: 'raw', filePath })).rejects.toThrow(
-      new OIBusError(`Failed to reach file endpoint ${new URL(configuration.settings.endpoint)}; message: error`, true)
-    );
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'raw',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(new OIBusError(`Failed to reach file endpoint ${new URL(configuration.settings.endpoint)}; message: error`, true));
 
     expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint), expectedOptions);
   });
 
   it('should properly throw error on file bad response without retrying', async () => {
-    const filePath = '/path/to/file/example.file';
     const expectedOptions = {
       method: 'POST',
       headers: {
@@ -522,15 +629,22 @@ describe('NorthREST without proxy', () => {
     // 500 error should not be retried
     (request as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(mockResponseData('Internal Server Error', 500)));
 
-    await expect(north.handleContent({ type: 'raw', filePath })).rejects.toThrow(
-      new OIBusError('HTTP request failed with status code 500 and message: Internal Server Error', false)
-    );
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'raw',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(new OIBusError('HTTP request failed with status code 500 and message: Internal Server Error', false));
 
     expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint), expectedOptions);
   });
 
   it('should properly throw error on file bad response with retrying', async () => {
-    const filePath = '/path/to/file/example.file';
     const expectedOptions = {
       method: 'POST',
       headers: {
@@ -546,18 +660,35 @@ describe('NorthREST without proxy', () => {
     // 401 error should be retried
     (request as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(mockResponseData('Internal Server Error', 401)));
 
-    await expect(north.handleContent({ type: 'raw', filePath })).rejects.toThrow(
-      new OIBusError('HTTP request failed with status code 401 and message: Internal Server Error', true)
-    );
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'raw',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(new OIBusError('HTTP request failed with status code 401 and message: Internal Server Error', true));
 
     expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint), expectedOptions);
   });
 
   it('should properly get message from generic Error', async () => {
-    const filePath = '/path/to/file/example.file';
     (request as unknown as jest.Mock).mockRejectedValue(new Error('generic error object'));
 
-    await expect(north.handleContent({ type: 'raw', filePath })).rejects.toThrow(
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'raw',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(
       new OIBusError(`Failed to reach file endpoint ${new URL(configuration.settings.endpoint)}; message: generic error object`, true)
     );
 
@@ -565,21 +696,37 @@ describe('NorthREST without proxy', () => {
   });
 
   it('should properly get message from non Errors', async () => {
-    const filePath = '/path/to/file/example.file';
     (request as unknown as jest.Mock).mockRejectedValue({ some: 'data' });
 
-    await expect(north.handleContent({ type: 'raw', filePath })).rejects.toThrow(
-      new OIBusError(`Failed to reach file endpoint ${new URL(configuration.settings.endpoint)}; {"some":"data"}`, true)
-    );
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'raw',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(new OIBusError(`Failed to reach file endpoint ${new URL(configuration.settings.endpoint)}; {"some":"data"}`, true));
 
     expect(request).toHaveBeenCalled();
   });
 
   it('should properly get message from generic AggregateError', async () => {
-    const filePath = '/path/to/file/example.file';
     (request as unknown as jest.Mock).mockRejectedValue(new AggregateError([new Error('error 1'), new Error('error 2')]));
 
-    await expect(north.handleContent({ type: 'raw', filePath })).rejects.toThrow(
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'raw',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(
       new OIBusError(`Failed to reach file endpoint ${new URL(configuration.settings.endpoint)}; message: error 1; message: error 2`, true)
     );
 
@@ -587,13 +734,22 @@ describe('NorthREST without proxy', () => {
   });
 
   it('should properly get message from Error with code', async () => {
-    const filePath = '/path/to/file/example.file';
     const error = new Error('error with code');
     // @ts-expect-error Error does not have 'code' by default, adding it dynamically
     error['code'] = 1;
     (request as unknown as jest.Mock).mockRejectedValue(error);
 
-    await expect(north.handleContent({ type: 'raw', filePath })).rejects.toThrow(
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'raw',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(
       new OIBusError(`Failed to reach file endpoint ${new URL(configuration.settings.endpoint)}; message: error with code, code: 1`, true)
     );
 
@@ -601,7 +757,6 @@ describe('NorthREST without proxy', () => {
   });
 
   it('should properly get message from AggregateError with codes', async () => {
-    const filePath = '/path/to/file/example.file';
     const error1 = new Error('error with code 1');
     // @ts-expect-error Error does not have 'code' by default, adding it dynamically
     error1['code'] = 1;
@@ -610,7 +765,17 @@ describe('NorthREST without proxy', () => {
     error2['code'] = 2;
     (request as unknown as jest.Mock).mockRejectedValue(new AggregateError([error1, error2]));
 
-    await expect(north.handleContent({ type: 'raw', filePath })).rejects.toThrow(
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'raw',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(
       new OIBusError(
         `Failed to reach file endpoint ${new URL(configuration.settings.endpoint)}; message: error with code 1, code: 1; message: error with code 2, code: 2`,
         true
@@ -651,11 +816,13 @@ describe('NorthREST with proxy', () => {
     };
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
-
     (filesExists as jest.Mock).mockReturnValue(true);
+    (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
+
     north = new NorthREST(
       configuration,
       encryptionService,
+      transformerService,
       northConnectorRepository,
       scanModeRepository,
       logger,
@@ -768,7 +935,6 @@ describe('NorthREST with proxy', () => {
   });
 
   it('should properly handle files', async () => {
-    const filePath = '/path/to/file/example.file';
     const expectedOptions = {
       method: 'POST',
       headers: {
@@ -783,7 +949,15 @@ describe('NorthREST with proxy', () => {
 
     (request as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(mockResponseData('Ok', 200)));
 
-    await north.handleContent({ type: 'raw', filePath });
+    await north.handleContent({
+      contentFile: 'path/to/file/example.file',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'raw',
+      source: 'south',
+      options: {}
+    });
 
     expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint), expectedOptions);
     expect(ProxyAgent).toHaveBeenCalledWith({
@@ -800,9 +974,18 @@ describe('NorthREST with proxy', () => {
         proxyUrl: undefined
       }
     });
-    const filePath = '/path/to/file/example.file';
 
-    await expect(north.handleContent({ type: 'raw', filePath })).rejects.toThrow(new Error('Proxy URL not specified'));
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'raw',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(new Error('Proxy URL not specified'));
 
     expect(ProxyAgent).not.toHaveBeenCalled();
   });
@@ -815,7 +998,6 @@ describe('NorthREST with proxy', () => {
         proxyPassword: undefined
       }
     });
-    const filePath = '/path/to/file/example.file';
     const expectedOptions = {
       method: 'POST',
       headers: {
@@ -830,7 +1012,15 @@ describe('NorthREST with proxy', () => {
 
     (request as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(mockResponseData('Ok', 200)));
 
-    await north.handleContent({ type: 'raw', filePath });
+    await north.handleContent({
+      contentFile: 'path/to/file/example.file',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'raw',
+      source: 'south',
+      options: {}
+    });
 
     expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint), expectedOptions);
     expect(ProxyAgent).toHaveBeenCalledWith({
@@ -847,7 +1037,6 @@ describe('NorthREST with proxy', () => {
         queryParams: null
       }
     });
-    const filePath = '/path/to/file/example.file';
     const expectedOptions = {
       method: 'POST',
       headers: {
@@ -862,7 +1051,15 @@ describe('NorthREST with proxy', () => {
 
     (request as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(mockResponseData('Ok', 200)));
 
-    await north.handleContent({ type: 'raw', filePath });
+    await north.handleContent({
+      contentFile: 'path/to/file/example.file',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'raw',
+      source: 'south',
+      options: {}
+    });
 
     expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint), expectedOptions);
     expect(ProxyAgent).toHaveBeenCalledWith({
@@ -879,7 +1076,6 @@ describe('NorthREST with proxy', () => {
         basicAuthPassword: null
       }
     });
-    const filePath = '/path/to/file/example.file';
     const expectedOptions = {
       method: 'POST',
       headers: {
@@ -894,7 +1090,15 @@ describe('NorthREST with proxy', () => {
 
     (request as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(mockResponseData('Ok', 200)));
 
-    await north.handleContent({ type: 'raw', filePath });
+    await north.handleContent({
+      contentFile: 'path/to/file/example.file',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'raw',
+      source: 'south',
+      options: {}
+    });
 
     expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint), expectedOptions);
     expect(ProxyAgent).toHaveBeenCalledWith({
@@ -914,7 +1118,6 @@ describe('NorthREST with proxy', () => {
         basicAuthPassword: null
       }
     });
-    const filePath = '/path/to/file/example.file';
     const expectedOptions = {
       method: 'POST',
       headers: {
@@ -929,7 +1132,15 @@ describe('NorthREST with proxy', () => {
 
     (request as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(mockResponseData('Ok', 200)));
 
-    await north.handleContent({ type: 'raw', filePath });
+    await north.handleContent({
+      contentFile: 'path/to/file/example.file',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'raw',
+      source: 'south',
+      options: {}
+    });
 
     expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint), expectedOptions);
     expect(ProxyAgent).toHaveBeenCalledWith({
@@ -949,7 +1160,6 @@ describe('NorthREST with proxy', () => {
         basicAuthPassword: null
       }
     });
-    const filePath = '/path/to/file/example.file';
     const expectedOptions = {
       method: 'POST',
       headers: {
@@ -964,7 +1174,15 @@ describe('NorthREST with proxy', () => {
 
     (request as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(mockResponseData('Ok', 200)));
 
-    await north.handleContent({ type: 'raw', filePath });
+    await north.handleContent({
+      contentFile: 'path/to/file/example.file',
+      contentSize: 1234,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'raw',
+      source: 'south',
+      options: {}
+    });
 
     expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint), expectedOptions);
     expect(ProxyAgent).toHaveBeenCalledWith({
@@ -974,7 +1192,6 @@ describe('NorthREST with proxy', () => {
   });
 
   it('should properly throw fetch error with files', async () => {
-    const filePath = '/path/to/file/example.file';
     const expectedOptions = {
       method: 'POST',
       headers: {
@@ -989,9 +1206,17 @@ describe('NorthREST with proxy', () => {
 
     (request as unknown as jest.Mock).mockRejectedValueOnce(new Error('error'));
 
-    await expect(north.handleContent({ type: 'raw', filePath })).rejects.toThrow(
-      new OIBusError(`Failed to reach file endpoint ${new URL(configuration.settings.endpoint)}; message: error`, true)
-    );
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'raw',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(new OIBusError(`Failed to reach file endpoint ${new URL(configuration.settings.endpoint)}; message: error`, true));
 
     expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint), expectedOptions);
     expect(ProxyAgent).toHaveBeenCalledWith({
@@ -1001,7 +1226,6 @@ describe('NorthREST with proxy', () => {
   });
 
   it('should properly throw error on file bad response without retrying', async () => {
-    const filePath = '/path/to/file/example.file';
     const expectedOptions = {
       method: 'POST',
       headers: {
@@ -1017,9 +1241,17 @@ describe('NorthREST with proxy', () => {
     // 500 error should not be retried
     (request as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(mockResponseData('Internal Server Error', 500)));
 
-    await expect(north.handleContent({ type: 'raw', filePath })).rejects.toThrow(
-      new OIBusError('HTTP request failed with status code 500 and message: Internal Server Error', false)
-    );
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'raw',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(new OIBusError('HTTP request failed with status code 500 and message: Internal Server Error', false));
 
     expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint), expectedOptions);
     expect(ProxyAgent).toHaveBeenCalledWith({
@@ -1029,7 +1261,6 @@ describe('NorthREST with proxy', () => {
   });
 
   it('should properly throw error on file bad response with retrying', async () => {
-    const filePath = '/path/to/file/example.file';
     const expectedOptions = {
       method: 'POST',
       headers: {
@@ -1045,9 +1276,17 @@ describe('NorthREST with proxy', () => {
     // 401 error should be retried
     (request as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(mockResponseData('Internal Server Error', 401)));
 
-    await expect(north.handleContent({ type: 'raw', filePath })).rejects.toThrow(
-      new OIBusError('HTTP request failed with status code 401 and message: Internal Server Error', true)
-    );
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'raw',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(new OIBusError('HTTP request failed with status code 401 and message: Internal Server Error', true));
 
     expect(request).toHaveBeenCalledWith(new URL(configuration.settings.endpoint), expectedOptions);
     expect(ProxyAgent).toHaveBeenCalledWith({

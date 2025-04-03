@@ -48,6 +48,10 @@ import { NorthSettings } from '../../../../../backend/shared/model/north-setting
 import { dateTimeRangeValidatorBuilder } from '../../shared/validators';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
+import { TransformerLightDTO } from '../../../../../backend/shared/model/transformer.model';
+import { TransformerService } from '../../services/transformer.service';
+import { CertificateService } from '../../services/certificate.service';
+import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
 
 @Component({
   selector: 'oib-edit-history-query',
@@ -77,6 +81,8 @@ export class EditHistoryQueryComponent implements OnInit {
   private fb = inject(NonNullableFormBuilder);
   private notificationService = inject(NotificationService);
   private scanModeService = inject(ScanModeService);
+  private transformerService = inject(TransformerService);
+  private certificateService = inject(CertificateService);
   private modalService = inject(ModalService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
@@ -88,6 +94,8 @@ export class EditHistoryQueryComponent implements OnInit {
   northSettingsControls: Array<Array<OibFormControl>> = [];
   southSettingsControls: Array<Array<OibFormControl>> = [];
   scanModes: Array<ScanModeDTO> = [];
+  transformers: Array<TransformerLightDTO> = [];
+  certificates: Array<CertificateDTO> = [];
   northManifest: NorthConnectorManifest | null = null;
   southManifest: SouthConnectorManifest | null = null;
   southType = '';
@@ -103,17 +111,24 @@ export class EditHistoryQueryComponent implements OnInit {
     startTime: FormControl<Instant>;
     endTime: FormControl<Instant>;
     caching: FormGroup<{
-      scanModeId: FormControl<string | null>;
-      retryInterval: FormControl<number>;
-      retryCount: FormControl<number>;
-      maxSize: FormControl<number>;
-      oibusTimeValues: FormGroup<{ groupCount: FormControl<number>; maxSendCount: FormControl<number> }>;
-      rawFiles: FormGroup<{
-        sendFileImmediately: FormControl<boolean>;
-        archive: FormGroup<{
-          enabled: FormControl<boolean>;
-          retentionDuration: FormControl<number>;
-        }>;
+      trigger: FormGroup<{
+        scanModeId: FormControl<string | null>;
+        numberOfElements: FormControl<number>;
+        numberOfFiles: FormControl<number>;
+      }>;
+      throttling: FormGroup<{
+        runMinDelay: FormControl<number>;
+        maxSize: FormControl<number>;
+        maxNumberOfElements: FormControl<number>;
+      }>;
+      error: FormGroup<{
+        retryInterval: FormControl<number>;
+        retryCount: FormControl<number>;
+        retentionDuration: FormControl<number>;
+      }>;
+      archive: FormGroup<{
+        enabled: FormControl<boolean>;
+        retentionDuration: FormControl<number>;
       }>;
     }>;
     northSettings: FormGroup;
@@ -121,12 +136,21 @@ export class EditHistoryQueryComponent implements OnInit {
   }> | null = null;
 
   inMemoryItems: Array<HistoryQueryItemCommandDTO<SouthItemSettings>> = [];
+  inMemoryNorthTransformers: Array<TransformerLightDTO> = [];
 
   ngOnInit() {
-    combineLatest([this.scanModeService.list(), this.route.paramMap, this.route.queryParamMap])
+    combineLatest([
+      this.scanModeService.list(),
+      this.certificateService.list(),
+      this.transformerService.list(),
+      this.route.paramMap,
+      this.route.queryParamMap
+    ])
       .pipe(
-        switchMap(([scanModes, params, queryParams]) => {
+        switchMap(([scanModes, certificates, transformers, params, queryParams]) => {
           this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
+          this.certificates = certificates;
+          this.transformers = transformers;
 
           const paramHistoryQueryId = params.get('historyQueryId');
           const paramDuplicateHistoryQueryId = queryParams.get('duplicate');
@@ -223,20 +247,24 @@ export class EditHistoryQueryComponent implements OnInit {
           startTime: [DateTime.now().minus({ days: 1 }).toUTC().toISO()!, [dateTimeRangeValidatorBuilder('start')]],
           endTime: [DateTime.now().toUTC().toISO()!, [dateTimeRangeValidatorBuilder('end')]],
           caching: this.fb.group({
-            scanModeId: this.fb.control<string | null>(null, Validators.required),
-            retryInterval: [5000, Validators.required],
-            retryCount: [3, Validators.required],
-            maxSize: [0, Validators.required],
-            oibusTimeValues: this.fb.group({
-              groupCount: [1000, Validators.required],
-              maxSendCount: [10_000, Validators.required]
+            trigger: this.fb.group({
+              scanModeId: this.fb.control<string | null>(null, Validators.required),
+              numberOfElements: [1_000, Validators.required],
+              numberOfFiles: [1, Validators.required]
             }),
-            rawFiles: this.fb.group({
-              sendFileImmediately: true as boolean,
-              archive: this.fb.group({
-                enabled: [false, Validators.required],
-                retentionDuration: [72, Validators.required]
-              })
+            throttling: this.fb.group({
+              runMinDelay: [200, Validators.required],
+              maxSize: [0, Validators.required],
+              maxNumberOfElements: [10_000, Validators.required]
+            }),
+            error: this.fb.group({
+              retryInterval: [5_000, Validators.required],
+              retryCount: [3, Validators.required],
+              retentionDuration: [72, Validators.required]
+            }),
+            archive: this.fb.group({
+              enabled: [false, Validators.required],
+              retentionDuration: [72, Validators.required]
             })
           }),
           northSettings: createFormGroup(northManifest.settings, this.fb),
@@ -284,21 +312,25 @@ export class EditHistoryQueryComponent implements OnInit {
       southSettings: formValue.southSettings,
       northSettings: formValue.northSettings,
       caching: {
-        scanModeId: formValue.caching!.scanModeId!,
-        scanModeName: null,
-        retryInterval: formValue.caching!.retryInterval!,
-        retryCount: formValue.caching!.retryCount!,
-        maxSize: formValue.caching!.maxSize!,
-        oibusTimeValues: {
-          groupCount: formValue.caching!.oibusTimeValues!.groupCount!,
-          maxSendCount: formValue.caching!.oibusTimeValues!.maxSendCount!
+        trigger: {
+          scanModeId: formValue.caching!.trigger!.scanModeId!,
+          scanModeName: null,
+          numberOfElements: formValue.caching!.trigger!.numberOfElements!,
+          numberOfFiles: formValue.caching!.trigger!.numberOfFiles!
         },
-        rawFiles: {
-          sendFileImmediately: formValue.caching!.rawFiles!.sendFileImmediately!,
-          archive: {
-            enabled: formValue.caching!.rawFiles!.archive!.enabled!,
-            retentionDuration: formValue.caching!.rawFiles!.archive!.retentionDuration!
-          }
+        throttling: {
+          runMinDelay: formValue.caching!.throttling!.runMinDelay!,
+          maxSize: formValue.caching!.throttling!.maxSize!,
+          maxNumberOfElements: formValue.caching!.throttling!.maxNumberOfElements!
+        },
+        error: {
+          retryInterval: formValue.caching!.error!.retryInterval!,
+          retryCount: formValue.caching!.error!.retryCount!,
+          retentionDuration: formValue.caching!.error!.retentionDuration!
+        },
+        archive: {
+          enabled: formValue.caching!.archive!.enabled!,
+          retentionDuration: formValue.caching!.archive!.retentionDuration!
         }
       },
       items:
@@ -309,7 +341,11 @@ export class EditHistoryQueryComponent implements OnInit {
               enabled: item.enabled,
               settings: item.settings
             }))
-          : this.inMemoryItems
+          : this.inMemoryItems,
+      northTransformers:
+        this.saveItemChangesDirectly && this.historyQuery
+          ? this.historyQuery.northTransformers.map(transformer => transformer.id)
+          : this.inMemoryNorthTransformers.map(transformer => transformer.id)
     };
     if (this.mode === 'edit') {
       const modalRef = this.modalService.open(ResetCacheHistoryQueryModalComponent);

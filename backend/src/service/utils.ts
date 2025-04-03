@@ -14,7 +14,6 @@ import https from 'node:https';
 import http from 'node:http';
 import { EngineSettingsDTO, OIBusContent, OIBusInfo, OIBusTimeValue } from '../../shared/model/engine.model';
 import os from 'node:os';
-import { NorthCacheFiles } from '../../shared/model/north-connector.model';
 import cronstrue from 'cronstrue';
 import cronparser from 'cron-parser';
 import { ValidatedCronExpression } from '../../shared/model/scan-mode.model';
@@ -101,10 +100,23 @@ export const createFolder = async (folder: string): Promise<void> => {
 /**
  * Create folders defined by the BaseFolders type
  */
-export const createBaseFolders = async (baseFoldes: BaseFolders) => {
-  for (const type of Object.keys(baseFoldes) as Array<keyof BaseFolders>) {
-    await createFolder(baseFoldes[type]);
+export const createBaseFolders = async (baseFolders: BaseFolders) => {
+  for (const type of Object.keys(baseFolders) as Array<keyof BaseFolders>) {
+    await createFolder(baseFolders[type]);
   }
+};
+
+/**
+ * Get filename without random ID from file path.
+ * Example: file1-123456.json => file1.json
+ */
+export const getFilenameWithoutRandomId = (filePath: string): string => {
+  const { name, ext } = path.parse(filePath);
+  if (name.lastIndexOf('-') === -1) {
+    return `${name}${ext}`;
+  }
+  const filename = name.slice(0, name.lastIndexOf('-'));
+  return `${filename}${ext}`;
 };
 
 /**
@@ -525,40 +537,6 @@ export const getPlatformFromOsType = (osType: string): string => {
     default:
       return 'unknown';
   }
-};
-
-/**
- * Returns file metadata from the folder based on filters.
- */
-export const getFilesFiltered = async (
-  folder: string,
-  fromDate: Instant | null,
-  toDate: Instant | null,
-  nameFilter: string | null,
-  logger: pino.Logger
-): Promise<Array<NorthCacheFiles>> => {
-  const filenames = await fs.readdir(folder);
-  const filteredFilenames: Array<NorthCacheFiles> = [];
-  for (const filename of filenames) {
-    try {
-      const stats = await fs.stat(path.join(folder, filename));
-
-      const dateIsSuperiorToStart = fromDate ? stats.mtimeMs >= DateTime.fromISO(fromDate).toMillis() : true;
-      const dateIsInferiorToEnd = toDate ? stats.mtimeMs <= DateTime.fromISO(toDate).toMillis() : true;
-      const dateIsBetween = dateIsSuperiorToStart && dateIsInferiorToEnd;
-      const filenameContains = nameFilter ? filename.toUpperCase().includes(nameFilter.toUpperCase()) : true;
-      if (dateIsBetween && filenameContains) {
-        filteredFilenames.push({
-          filename,
-          modificationDate: DateTime.fromMillis(stats.mtimeMs).toUTC().toISO() as Instant,
-          size: stats.size
-        });
-      }
-    } catch (error) {
-      logger.error(`Error while reading in ${path.basename(folder)} folder file stats "${path.join(folder, filename)}": ${error}`);
-    }
-  }
-  return filteredFilenames;
 };
 
 /**
