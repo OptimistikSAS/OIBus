@@ -202,9 +202,9 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
         if (northConnector) {
           this.northForm.patchValue({
             ...northConnector,
-            transformers: northConnector.transformers.map(element => ({
-              type: element.inputType,
-              transformer: element.id
+            transformers: this.oIBusDataTypes.map(element => ({
+              type: element,
+              transformer: northConnector.transformers.find(transformer => transformer.inputType === element)?.id ?? 'none'
             }))
           });
         } else {
@@ -284,7 +284,7 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
       subscriptions: this.northConnector
         ? this.northConnector.subscriptions.map(subscription => subscription.id)
         : this.inMemorySubscriptions.map(subscription => subscription.id),
-      transformers: formValue.transformers!.map(element => element.transformer!)
+      transformers: formValue.transformers!.filter(element => element.transformer !== 'none').map(element => element.transformer!)
     };
     if (value === 'save') {
       this.createOrUpdateNorthConnector(command);

@@ -8,7 +8,6 @@ import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.
 import csv from 'papaparse';
 import { NorthSFTPSettings } from '../../../shared/model/north-settings.model';
 import sftpClient from 'ssh2-sftp-client';
-import { OIBusTimeValue } from '../../../shared/model/engine.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
@@ -17,9 +16,11 @@ import { NorthConnectorEntity } from '../../model/north-connector.model';
 import testData from '../../tests/utils/test-data';
 import { mockBaseFolders } from '../../tests/utils/test-utils';
 import CacheService from '../../service/cache/cache.service';
-import fs from 'node:fs/promises';
-import TransformerService from '../../service/transformer.service';
+import TransformerService, { createTransformer } from '../../service/transformer.service';
 import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
+import OIBusTransformer from '../../service/transformers/oibus-transformer';
+import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
+import { getFilenameWithoutRandomId } from '../../service/utils';
 
 jest.mock('node:fs/promises');
 
@@ -29,6 +30,7 @@ const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRep
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const cacheService: CacheService = new CacheServiceMock();
 const transformerService: TransformerService = new TransformerServiceMock();
+const oiBusTransformer: OIBusTransformer = new OIBusTransformerMock() as unknown as OIBusTransformer;
 
 jest.mock(
   '../../service/cache/cache.service',
@@ -48,20 +50,8 @@ const mockSftpClient = {
 };
 jest.mock('ssh2-sftp-client');
 jest.mock('../../service/utils');
+jest.mock('../../service/transformer.service');
 jest.mock('papaparse');
-
-const timeValues: Array<OIBusTimeValue> = [
-  {
-    pointId: 'pointId1',
-    timestamp: testData.constants.dates.FAKE_NOW,
-    data: { value: '666', quality: 'good' }
-  },
-  {
-    pointId: 'pointId2',
-    timestamp: testData.constants.dates.FAKE_NOW,
-    data: { value: '777', quality: 'good' }
-  }
-];
 
 let configuration: NorthConnectorEntity<NorthSFTPSettings>;
 let north: NorthSftp;
@@ -83,9 +73,10 @@ describe('NorthSFTP', () => {
     };
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
-
     (sftpClient as jest.Mock).mockImplementation(() => mockSftpClient);
     (csv.unparse as jest.Mock).mockReturnValue('csv content');
+    (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
+    (getFilenameWithoutRandomId as jest.Mock).mockReturnValue('example.file');
 
     north = new NorthSftp(
       configuration,
@@ -101,46 +92,6 @@ describe('NorthSFTP', () => {
 
   afterEach(() => {
     cacheService.cacheSizeEventEmitter.removeAllListeners();
-  });
-
-  it('should properly handle values', async () => {
-    north.sendToSftpServer = jest.fn();
-    csv.unparse = jest.fn().mockReturnValue('csv content');
-
-    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(timeValues));
-    await north.handleContent({
-      contentFile: '/path/to/file/example-123.json',
-      contentSize: 1234,
-      numberOfElement: 1,
-      createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'time-values',
-      source: 'south',
-      options: {}
-    });
-    const expectedFileName = `${configuration.settings.prefix}${new Date().getTime()}${configuration.settings.suffix}.csv`;
-    expect(north.sendToSftpServer).toHaveBeenCalledWith(
-      Buffer.from('csv content', 'utf8'),
-      `${configuration.settings.remoteFolder}/${expectedFileName}`
-    );
-  });
-
-  it('should properly catch handle values error', async () => {
-    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(timeValues));
-
-    north.sendToSftpServer = jest.fn().mockImplementationOnce(() => {
-      throw new Error('Error handling values');
-    });
-    await expect(
-      north.handleContent({
-        contentFile: '/path/to/file/example-123.json',
-        contentSize: 1234,
-        numberOfElement: 1,
-        createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'time-values',
-        source: 'south',
-        options: {}
-      })
-    ).rejects.toThrow('Error handling values');
   });
 
   it('should properly handle files', async () => {
@@ -215,8 +166,8 @@ describe('NorthSFTP without suffix or prefix', () => {
     };
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
-
     (sftpClient as jest.Mock).mockImplementation(() => mockSftpClient);
+    (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
 
     north = new NorthSftp(
       configuration,
@@ -231,33 +182,6 @@ describe('NorthSFTP without suffix or prefix', () => {
 
   afterEach(() => {
     cacheService.cacheSizeEventEmitter.removeAllListeners();
-  });
-
-  it('should properly handle values', async () => {
-    north.sendToSftpServer = jest.fn();
-    csv.unparse = jest.fn().mockReturnValue('csv content');
-
-    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(timeValues));
-    await north.handleContent({
-      contentFile: '/path/to/file/example-123.json',
-      contentSize: 1234,
-      numberOfElement: 1,
-      createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'time-values',
-      source: 'south',
-      options: {}
-    });
-
-    const expectedFileName = `${new Date().getTime()}.csv`;
-    expect(north.sendToSftpServer).toHaveBeenCalledWith(
-      Buffer.from('csv content', 'utf8'),
-      `${configuration.settings.remoteFolder}/${expectedFileName}`
-    );
-
-    expect(north.sendToSftpServer).toHaveBeenCalledWith(
-      Buffer.from('csv content', 'utf8'),
-      `${configuration.settings.remoteFolder}/${new Date().getTime()}.csv`
-    );
   });
 
   it('should properly handle files', async () => {

@@ -2,7 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { formDirectives } from '../../shared/form-directives';
-import { FormControl, FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
+import { FormArray, FormControl, FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest, Observable, of, switchMap, tap } from 'rxjs';
@@ -48,6 +48,8 @@ import { TransformerLightDTO } from '../../../../../backend/shared/model/transfo
 import { TransformerService } from '../../services/transformer.service';
 import { CertificateService } from '../../services/certificate.service';
 import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
+import { OIBUS_DATA_TYPES, OIBusDataType } from '../../../../../backend/shared/model/engine.model';
+import { NorthTransformersComponent } from '../../north/north-transformers/north-transformers.component';
 import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
 import { DateRange, DateRangeSelectorComponent } from '../../shared/date-range-selector/date-range-selector.component';
@@ -68,7 +70,8 @@ import { DateRange, DateRangeSelectorComponent } from '../../shared/date-range-s
     OibHelpComponent,
     TranslatePipe,
     OIBusNorthTypeEnumPipe,
-    OIBusSouthTypeEnumPipe
+    OIBusSouthTypeEnumPipe,
+    NorthTransformersComponent
   ],
   templateUrl: './edit-history-query.component.html',
   styleUrl: './edit-history-query.component.scss'
@@ -86,6 +89,8 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
+
+  readonly oIBusDataTypes = OIBUS_DATA_TYPES;
 
   mode: 'create' | 'edit' = 'create';
   historyId!: string;
@@ -132,6 +137,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
     }>;
     northSettings: FormGroup;
     southSettings: FormGroup;
+    northTransformers: FormArray<FormGroup<{ type: FormControl<OIBusDataType>; transformer: FormControl<string> }>>;
   }> | null = null;
 
   inMemoryItems: Array<HistoryQueryItemCommandDTO<SouthItemSettings>> = [];
@@ -272,7 +278,15 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
             })
           }),
           northSettings: createFormGroup(northManifest.settings, this.fb),
-          southSettings: createFormGroup(southManifest.settings, this.fb)
+          southSettings: createFormGroup(southManifest.settings, this.fb),
+          northTransformers: this.fb.array(
+            this.oIBusDataTypes.map(type => {
+              return this.fb.group({
+                type: this.fb.control(type, Validators.required),
+                transformer: this.fb.control('', Validators.required)
+              });
+            })
+          )
         });
 
         if (this.historyQuery) {
@@ -283,7 +297,11 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
 
           this.historyQueryForm.patchValue({
             ...this.historyQuery,
-            dateRange
+            dateRange,
+            northTransformers: this.oIBusDataTypes.map(element => ({
+              type: element,
+              transformer: this.historyQuery!.northTransformers.find(transformer => transformer.inputType === element)?.id ?? 'none'
+            }))
           });
         } else {
           if (southConnector) {
@@ -292,6 +310,12 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
           if (northConnector) {
             this.historyQueryForm.controls.northSettings.patchValue(northConnector.settings);
             this.historyQueryForm.controls.caching.patchValue(northConnector.caching);
+            this.historyQueryForm.controls.northTransformers.patchValue(
+              this.oIBusDataTypes.map(element => ({
+                type: element,
+                transformer: northConnector.transformers.find(transformer => transformer.inputType === element)?.id ?? 'none'
+              }))
+            );
           }
         }
 
