@@ -6,34 +6,19 @@ import { ComponentTester, createMock } from 'ngx-speculoos';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { Component, inject } from '@angular/core';
 import { NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
-import { TransformerLightDTO } from '../../../../../backend/shared/model/transformer.model';
-import { FormArray, FormControl, FormGroup, NonNullableFormBuilder } from '@angular/forms';
-import { OIBusDataType } from '../../../../../backend/shared/model/engine.model';
+import { TransformerDTO, TransformerDTOWithOptions } from '../../../../../backend/shared/model/transformer.model';
+import { FormControl, NonNullableFormBuilder } from '@angular/forms';
 
 @Component({
-  template: `<oib-north-transformers [northManifest]="northManifest" [transformers]="transformers" [controls]="controls" />`,
+  template: `<oib-north-transformers [northManifest]="northManifest" [transformers]="transformers" [control]="control" />`,
   imports: [NorthTransformersComponent]
 })
 class TestComponent {
   private fb = inject(NonNullableFormBuilder);
 
-  controls: FormArray<FormGroup<{ type: FormControl<OIBusDataType>; transformer: FormControl<string> }>> = this.fb.array<
-    FormGroup<{
-      type: FormControl<OIBusDataType>;
-      transformer: FormControl<string>;
-    }>
-  >([
-    this.fb.group({
-      type: this.fb.control<OIBusDataType>('raw'),
-      transformer: this.fb.control<string>('')
-    }),
-    this.fb.group({
-      type: this.fb.control<OIBusDataType>('time-values'),
-      transformer: this.fb.control<string>('')
-    })
-  ]);
-  transformers: Array<TransformerLightDTO> = [];
-  northManifest: NorthConnectorManifest = { id: 'console', types: ['raw', 'time-values'] } as NorthConnectorManifest;
+  control: FormControl<Array<TransformerDTOWithOptions>> = this.fb.control([]);
+  transformers: Array<TransformerDTO> = [];
+  northManifest: NorthConnectorManifest = { id: 'console', types: ['any', 'time-values'] } as NorthConnectorManifest;
 }
 
 class NorthTransformersComponentTester extends ComponentTester<TestComponent> {
@@ -66,7 +51,6 @@ describe('NorthTransformersComponent', () => {
 
   it('should display forms with types', () => {
     tester.detectChanges();
-
-    expect(tester.transformers.length).toEqual(2);
+    expect(tester.transformers.length).toEqual(0);
   });
 });

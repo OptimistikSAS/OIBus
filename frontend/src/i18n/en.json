@@ -208,8 +208,8 @@
       "update-history-query-status": "Update history query status"
     },
     "oibus-data-type": {
-      "raw": "Raw files (CSV, JSON, Text...)",
-      "time-values": "Time values (JSON)"
+      "any": "Unknown",
+      "time-values": "OIBus time values"
     },
     "oibus-north-category": {
       "debug": "Debug",
@@ -674,7 +674,7 @@
         "cancel": "Test cancelled"
       },
       "view": {
-        "raw": "Raw view",
+        "any": "Raw view",
         "table": "Table view",
         "json": "JSON view"
       },
@@ -1894,15 +1894,56 @@
     "title": "Transform payloads",
     "input-type": "Source type",
     "output-type": "Destination type",
+    "transformer": "Transformer",
+    "add": "Add a transformer",
+    "none": "No transformer",
     "standard": {
-      "none": "Ignore data",
-      "iso-raw": "Raw (keep raw file as it is)",
-      "iso-time-values": "Time values (keep time values as it is)",
+      "ignore": "Ignore",
+      "iso": "No transform",
       "time-values-to-csv": "To CSV (convert time values into CSV)",
       "time-values-to-json": "To JSON (convert time values into raw JSON)",
       "time-values-to-mqtt": "To MQTT payloads (convert time values into MQTT payloads)",
       "time-values-to-opcua": "To OPCUA values (convert time values into OPCUA values)",
       "time-values-to-modbus": "To Modbus values (convert time values into Modbus values)"
+    },
+    "choose-transformer-modal": {
+      "title": "Choose how to handle payloads",
+      "transformer": "Transformer to apply",
+      "options": "options"
+    },
+    "mapping": {
+      "title": "Mapping table",
+      "point-id": "Point ID (Reference)",
+      "mqtt": {
+        "topic": "MQTT Topic"
+      },
+      "modbus": {
+        "address": "Modbus address",
+        "modbus-type": {
+          "title": "Modbus type",
+          "coil": "Coil",
+          "register": "Register"
+        }
+      },
+      "opcua": {
+        "node-id": "OPCUA Node ID"  ,
+        "data-type": {
+          "title": "Data type",
+          "boolean": "Boolean",
+          "s-byte": "SByte",
+          "byte": "Byte",
+          "int16": "Int16",
+          "uint16": "UInt16",
+          "int32": "Int32",
+          "uint32": "UInt32",
+          "int64": "Int64",
+          "uint64": "UInt64",
+          "float": "Float",
+          "double": "Double",
+          "string": "String",
+          "date-time": "Date Time"
+        }
+      }
     }
   },
   "logs": {

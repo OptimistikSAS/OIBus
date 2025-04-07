@@ -3,14 +3,15 @@ import { TransformerSearchParam } from '../../../shared/model/transformer.model'
 import { generateRandomId } from '../../service/utils';
 import { CustomTransformer, StandardTransformer, Transformer } from '../../model/transformer.model';
 import { Page } from '../../../shared/model/types';
-import IsoTimeValuesTransformer from '../../service/transformers/iso-time-values-transformer';
 import OIBusTimeValuesToCsvTransformer from '../../service/transformers/oibus-time-values-to-csv-transformer';
-import IsoRawTransformer from '../../service/transformers/iso-raw-transformer';
+import IsoTransformer from '../../service/transformers/iso-transformer';
 import { OIBusDataType } from '../../../shared/model/engine.model';
 import OIBusTimeValuesToJSONTransformer from '../../service/transformers/oibus-time-values-to-json-transformer';
 import OIBusTimeValuesToMQTTTransformer from '../../service/transformers/oibus-time-values-to-mqtt-transformer';
-import OIBusTimeValuesToModbusTransformer from '../../service/transformers/oibus-time-values-to-modbus-transformer';
 import OIBusTimeValuesToOPCUATransformer from '../../service/transformers/oibus-time-values-to-opcua-transformer';
+import OIBusTimeValuesToModbusTransformer from '../../service/transformers/oibus-time-values-to-modbus-transformer';
+import { OibFormControl } from '../../../shared/model/form.model';
+import IgnoreTransformer from '../../service/transformers/ignore-transformer';
 
 const TRANSFORMERS_TABLE = 'transformers';
 const PAGE_SIZE = 10;
@@ -21,7 +22,7 @@ export default class TransformerRepository {
   }
 
   findAll(): Array<Transformer> {
-    const query = `SELECT id, name, description, type, input_type, output_type, standard_code, custom_code FROM ${TRANSFORMERS_TABLE};`;
+    const query = `SELECT id, type, input_type, output_type, function_name, name, description, custom_manifest, custom_code FROM ${TRANSFORMERS_TABLE};`;
     const result = this.database.prepare(query).all();
     return result.map(element => toTransformer(element as Record<string, string>));
   }
@@ -31,21 +32,22 @@ export default class TransformerRepository {
       transformer.id = generateRandomId(6);
       this.database
         .prepare(
-          `INSERT INTO ${TRANSFORMERS_TABLE} (id, name, description, type, input_type, output_type, custom_code) VALUES (?, ?, ?, ?, ?, ?, ?)`
+          `INSERT INTO ${TRANSFORMERS_TABLE} (id, type, input_type, output_type, name, description, custom_manifest, custom_code) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
         )
         .run(
           transformer.id,
-          transformer.name,
-          transformer.description,
           transformer.type,
           transformer.inputType,
           transformer.outputType,
+          transformer.name,
+          transformer.description,
+          JSON.stringify(transformer.customManifest),
           transformer.customCode
         );
     } else {
       this.database
-        .prepare(`UPDATE ${TRANSFORMERS_TABLE} SET name = ?, description = ?, custom_code = ? WHERE id = ?`)
-        .run(transformer.name, transformer.description, transformer.customCode, transformer.id);
+        .prepare(`UPDATE ${TRANSFORMERS_TABLE} SET name = ?, description = ?, custom_manifest = ?, custom_code = ? WHERE id = ?`)
+        .run(transformer.name, transformer.description, JSON.stringify(transformer.customManifest), transformer.customCode, transformer.id);
     }
   }
 
@@ -54,27 +56,25 @@ export default class TransformerRepository {
   }
 
   findById(id: string): Transformer | null {
-    const query = `SELECT id, name, description, type, input_type, output_type, standard_code, custom_code FROM ${TRANSFORMERS_TABLE} WHERE id = ?;`;
+    const query = `SELECT id, type, input_type, output_type, function_name, name, description, custom_manifest, custom_code FROM ${TRANSFORMERS_TABLE} WHERE id = ?;`;
     const result = this.database.prepare(query).get(id);
     if (!result) return null;
 
     return toTransformer(result as Record<string, string>);
   }
 
+  findByFunctionName(functionName: string): StandardTransformer | null {
+    const query = `SELECT id, type, input_type, output_type, function_name, custom_manifest, custom_code FROM ${TRANSFORMERS_TABLE} WHERE function_name = ?;`;
+    const result = this.database.prepare(query).get(functionName);
+    if (!result) return null;
+
+    return toTransformer(result as Record<string, string>) as StandardTransformer;
+  }
+
   createStandardTransformer(transformer: StandardTransformer): void {
     this.database
-      .prepare(
-        `INSERT INTO ${TRANSFORMERS_TABLE} (id, name, description, type, input_type, output_type, standard_code) VALUES (?, ?, ?, ?, ?, ?, ?)`
-      )
-      .run(
-        transformer.id,
-        transformer.name,
-        transformer.description,
-        transformer.type,
-        transformer.inputType,
-        transformer.outputType,
-        transformer.standardCode
-      );
+      .prepare(`INSERT INTO ${TRANSFORMERS_TABLE} (id, type, input_type, output_type, function_name) VALUES (?, ?, ?, ?, ?)`)
+      .run(transformer.id, transformer.type, transformer.inputType, transformer.outputType, transformer.functionName);
   }
 
   search(searchParams: TransformerSearchParam): Page<Transformer> {
@@ -95,13 +95,9 @@ export default class TransformerRepository {
       queryParams.push(searchParams.outputType);
       whereClause += ` AND output_type = ?`;
     }
-    if (searchParams.name) {
-      queryParams.push(searchParams.name);
-      whereClause += ` AND name like '%' || ? || '%'`;
-    }
 
     const query =
-      `SELECT id, name, description, type, input_type, output_type, standard_code, custom_code FROM ${TRANSFORMERS_TABLE} ${whereClause}` +
+      `SELECT id, type, input_type, output_type, function_name, name, description, custom_manifest, custom_code FROM ${TRANSFORMERS_TABLE} ${whereClause}` +
       ` LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * page};`;
 
     const results = this.database
@@ -122,85 +118,71 @@ export default class TransformerRepository {
   }
 
   private createStandardTransformers() {
-    if (!this.findById(IsoRawTransformer.transformerName)) {
+    if (!this.findByFunctionName(IgnoreTransformer.transformerName)) {
       const standardTransformer: StandardTransformer = {
-        id: IsoRawTransformer.transformerName,
+        id: generateRandomId(6),
         type: 'standard',
-        name: IsoRawTransformer.transformerName,
-        description: '',
-        standardCode: '',
-        inputType: 'raw',
-        outputType: 'raw'
+        functionName: IgnoreTransformer.transformerName,
+        inputType: 'any',
+        outputType: 'any'
       };
       this.createStandardTransformer(standardTransformer);
     }
-    if (!this.findById(IsoTimeValuesTransformer.transformerName)) {
+    if (!this.findByFunctionName(IsoTransformer.transformerName)) {
       const standardTransformer: StandardTransformer = {
-        id: IsoTimeValuesTransformer.transformerName,
+        id: generateRandomId(6),
         type: 'standard',
-        name: IsoTimeValuesTransformer.transformerName,
-        description: '',
-        standardCode: '',
+        functionName: IsoTransformer.transformerName,
+        inputType: 'any',
+        outputType: 'any'
+      };
+      this.createStandardTransformer(standardTransformer);
+    }
+    if (!this.findByFunctionName(OIBusTimeValuesToCsvTransformer.transformerName)) {
+      const standardTransformer: StandardTransformer = {
+        id: generateRandomId(6),
+        type: 'standard',
+        functionName: OIBusTimeValuesToCsvTransformer.transformerName,
         inputType: 'time-values',
-        outputType: 'time-values'
+        outputType: 'any'
       };
       this.createStandardTransformer(standardTransformer);
     }
-    if (!this.findById(OIBusTimeValuesToCsvTransformer.transformerName)) {
+    if (!this.findByFunctionName(OIBusTimeValuesToJSONTransformer.transformerName)) {
       const standardTransformer: StandardTransformer = {
-        id: OIBusTimeValuesToCsvTransformer.transformerName,
+        id: generateRandomId(6),
         type: 'standard',
-        name: OIBusTimeValuesToCsvTransformer.transformerName,
-        description: '',
-        standardCode: '',
+        functionName: OIBusTimeValuesToJSONTransformer.transformerName,
         inputType: 'time-values',
-        outputType: 'raw'
+        outputType: 'any'
       };
       this.createStandardTransformer(standardTransformer);
     }
-    if (!this.findById(OIBusTimeValuesToJSONTransformer.transformerName)) {
+    if (!this.findByFunctionName(OIBusTimeValuesToMQTTTransformer.transformerName)) {
       const standardTransformer: StandardTransformer = {
-        id: OIBusTimeValuesToJSONTransformer.transformerName,
+        id: generateRandomId(6),
         type: 'standard',
-        name: OIBusTimeValuesToJSONTransformer.transformerName,
-        description: '',
-        standardCode: '',
-        inputType: 'time-values',
-        outputType: 'raw'
-      };
-      this.createStandardTransformer(standardTransformer);
-    }
-    if (!this.findById(OIBusTimeValuesToMQTTTransformer.transformerName)) {
-      const standardTransformer: StandardTransformer = {
-        id: OIBusTimeValuesToMQTTTransformer.transformerName,
-        type: 'standard',
-        name: OIBusTimeValuesToMQTTTransformer.transformerName,
-        description: '',
-        standardCode: '',
+        functionName: OIBusTimeValuesToMQTTTransformer.transformerName,
         inputType: 'time-values',
         outputType: 'mqtt'
       };
       this.createStandardTransformer(standardTransformer);
     }
-    if (!this.findById(OIBusTimeValuesToOPCUATransformer.transformerName)) {
+    if (!this.findByFunctionName(OIBusTimeValuesToOPCUATransformer.transformerName)) {
       const standardTransformer: StandardTransformer = {
-        id: OIBusTimeValuesToOPCUATransformer.transformerName,
+        id: generateRandomId(6),
         type: 'standard',
-        name: OIBusTimeValuesToOPCUATransformer.transformerName,
-        description: '',
-        standardCode: '',
+        functionName: OIBusTimeValuesToOPCUATransformer.transformerName,
         inputType: 'time-values',
         outputType: 'opcua'
       };
       this.createStandardTransformer(standardTransformer);
     }
-    if (!this.findById(OIBusTimeValuesToModbusTransformer.transformerName)) {
+    if (!this.findByFunctionName(OIBusTimeValuesToModbusTransformer.transformerName)) {
       const standardTransformer: StandardTransformer = {
-        id: OIBusTimeValuesToModbusTransformer.transformerName,
+        id: generateRandomId(6),
         type: 'standard',
-        name: OIBusTimeValuesToModbusTransformer.transformerName,
-        description: '',
-        standardCode: '',
+        functionName: OIBusTimeValuesToModbusTransformer.transformerName,
         inputType: 'time-values',
         outputType: 'modbus'
       };
@@ -214,21 +196,20 @@ export const toTransformer = (result: Record<string, string>): Transformer => {
     return {
       id: result.id as string,
       type: 'standard',
-      name: result.name as string,
-      description: result.description as string,
       inputType: result.input_type as OIBusDataType,
       outputType: result.output_type as OIBusDataType,
-      standardCode: result.standard_code as string
+      functionName: result.function_name as string
     };
   } else {
     return {
       id: result.id as string,
       type: 'custom',
-      name: result.name as string,
-      description: result.description as string,
       inputType: result.input_type as OIBusDataType,
       outputType: result.output_type as OIBusDataType,
-      customCode: result.custom_code as string
+      name: result.name as string,
+      description: result.description as string,
+      customCode: result.custom_code as string,
+      customManifest: JSON.parse(result.custom_manifest as string) as Array<OibFormControl>
     };
   }
 };

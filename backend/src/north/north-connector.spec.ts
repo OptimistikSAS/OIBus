@@ -6,7 +6,7 @@ import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
 import CacheServiceMock from '../tests/__mocks__/service/cache/cache-service.mock';
 import { createBaseFolders, delay, dirSize, generateRandomId, validateCronExpression } from '../service/utils';
-import { CacheMetadata, OIBusRawContent } from '../../shared/model/engine.model';
+import { CacheMetadata, OIBusRawContent, OIBusTimeValueContent } from '../../shared/model/engine.model';
 import testData from '../tests/utils/test-data';
 import { NorthFileWriterSettings, NorthSettings } from '../../shared/model/north-settings.model';
 import NorthFileWriter from './north-file-writer/north-file-writer';
@@ -27,6 +27,8 @@ import TransformerService, { createTransformer } from '../service/transformer.se
 import TransformerServiceMock from '../tests/__mocks__/service/transformer-service.mock';
 import OIBusTransformerMock from '../tests/__mocks__/service/transformers/oibus-transformer.mock';
 import OIBusTransformer from '../service/transformers/oibus-transformer';
+import IgnoreTransformer from '../service/transformers/ignore-transformer';
+import IsoTransformer from '../service/transformers/iso-transformer';
 
 // Mock fs
 jest.mock('node:stream');
@@ -457,7 +459,11 @@ describe('NorthConnector', () => {
 
     expect(oiBusTransformer.transform).toHaveBeenCalledWith('readStream', 'south', null);
     expect(Readable.from).toHaveBeenCalledWith(JSON.stringify(testData.oibusContent[0].content));
-    expect(createTransformer).toHaveBeenCalledWith(testData.transformers.list[0], testData.north.list[0], logger);
+    expect(createTransformer).toHaveBeenCalledWith(
+      { transformer: testData.transformers.list[0], options: {}, inputType: 'time-values' },
+      testData.north.list[0],
+      logger
+    );
 
     expect(fsAsync.stat).toHaveBeenCalledWith(path.join(cacheService.cacheFolder, cacheService.CONTENT_FOLDER, '1234567890.json'));
     expect(fsAsync.writeFile).toHaveBeenCalledWith(
@@ -526,7 +532,7 @@ describe('NorthConnector', () => {
     expect(Readable.from).toHaveBeenCalledWith(
       JSON.stringify([testData.oibusContent[0].content![testData.oibusContent[0].content!.length - 1]])
     );
-    expect(createTransformer).toHaveBeenCalledTimes(2);
+    expect(createTransformer).toHaveBeenCalledTimes(1);
 
     expect(fsAsync.stat).toHaveBeenCalledWith(path.join(cacheService.cacheFolder, cacheService.CONTENT_FOLDER, '1234567890.json'));
     expect(fsAsync.stat).toHaveBeenCalledWith(path.join(cacheService.cacheFolder, cacheService.CONTENT_FOLDER, '0987654321.json'));
@@ -559,7 +565,7 @@ describe('NorthConnector', () => {
       contentSize: 100,
       numberOfElement: 0,
       createdAt: DateTime.fromMillis(123).toUTC().toISO()!,
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     };
@@ -580,7 +586,11 @@ describe('NorthConnector', () => {
       }
     );
     expect(createReadStream).toHaveBeenCalledWith((testData.oibusContent[1] as OIBusRawContent).filePath);
-    expect(createTransformer).toHaveBeenCalledWith(testData.transformers.list[0], testData.north.list[0], logger);
+    expect(createTransformer).toHaveBeenCalledWith(
+      { transformer: testData.transformers.list[1], options: {}, inputType: 'any' },
+      testData.north.list[0],
+      logger
+    );
 
     expect(fsAsync.stat).toHaveBeenCalledWith(
       path.join(
@@ -613,16 +623,149 @@ describe('NorthConnector', () => {
 
   it('should not cache content if transformer not found', async () => {
     north['connector'].transformers = [];
+    north['supportedTypes'] = () => [];
     await north.cacheContent(
       {
-        type: 'raw',
+        type: 'any',
         filePath: 'path/file.csv'
       },
       'south'
     );
 
-    expect(logger.error).toHaveBeenCalledWith(`Could not find a transformer of input type raw. Content is not cached for this North`);
+    expect(logger.trace).toHaveBeenCalledWith(`Data type "any" not supported by the connector. Data will be ignored.`);
     expect(createTransformer).not.toHaveBeenCalled();
+  });
+
+  it('should cache content without transform', async () => {
+    north['connector'].transformers = [];
+    north['cacheWithoutTransform'] = jest.fn();
+    await north.cacheContent(
+      {
+        type: 'any',
+        filePath: 'path/file.csv'
+      },
+      'south'
+    );
+
+    expect(north['cacheWithoutTransform']).toHaveBeenCalledTimes(1);
+  });
+
+  it('should ignore content if ignore transformer is selected', async () => {
+    north['connector'].transformers = [
+      {
+        transformer: {
+          id: 'transformerId3',
+          type: 'standard',
+          functionName: IgnoreTransformer.transformerName,
+          inputType: 'any',
+          outputType: 'any'
+        },
+        options: {},
+        inputType: 'any'
+      }
+    ];
+    await north.cacheContent(
+      {
+        type: 'any',
+        filePath: 'path/file.csv'
+      },
+      'south'
+    );
+
+    expect(logger.trace).toHaveBeenCalledWith(`Ignoring data of type any`);
+  });
+
+  it('should not transformer content if iso transformer is selected', async () => {
+    north['connector'].transformers = [
+      {
+        transformer: {
+          id: 'transformerId4',
+          type: 'standard',
+          functionName: IsoTransformer.transformerName,
+          inputType: 'any',
+          outputType: 'any'
+        },
+        options: {},
+        inputType: 'any'
+      }
+    ];
+    north['cacheWithoutTransform'] = jest.fn();
+    await north.cacheContent(
+      {
+        type: 'any',
+        filePath: 'path/file.csv'
+      },
+      'south'
+    );
+
+    expect(north['cacheWithoutTransform']).toHaveBeenCalledTimes(1);
+  });
+
+  it('should cache any data without transform', async () => {
+    (createReadStream as jest.Mock).mockReturnValueOnce('readStream');
+    north.persistDataInCache = jest.fn();
+    await north['cacheWithoutTransform'](
+      {
+        type: 'any',
+        filePath: 'path/file.csv'
+      },
+      'south'
+    );
+
+    expect(north.persistDataInCache).toHaveBeenCalledWith(
+      {
+        contentFile: 'file.csv',
+        contentSize: 0,
+        createdAt: '',
+        numberOfElement: 0,
+        contentType: 'any',
+        source: 'south',
+        options: {}
+      },
+      'readStream'
+    );
+  });
+
+  it('should cache time values data without transform and without chunks', async () => {
+    (generateRandomId as jest.Mock).mockReturnValueOnce('1234567890');
+    north.persistDataInCache = jest.fn();
+    north['connector'].caching.throttling.maxNumberOfElements = 0;
+    await north['cacheWithoutTransform'](testData.oibusContent[0], 'south');
+
+    expect(north.persistDataInCache).toHaveBeenCalledWith(
+      {
+        contentFile: '1234567890',
+        contentSize: 0,
+        createdAt: '',
+        numberOfElement: (testData.oibusContent[0] as OIBusTimeValueContent).content.length,
+        contentType: 'time-values',
+        source: 'south',
+        options: {}
+      },
+      Readable.from(JSON.stringify((testData.oibusContent[0] as OIBusTimeValueContent).content))
+    );
+  });
+
+  it('should cache time values data without transform and with chunks', async () => {
+    (generateRandomId as jest.Mock).mockReturnValueOnce('1234567890').mockReturnValueOnce('1234567890').mockReturnValueOnce('1234567890');
+    north.persistDataInCache = jest.fn();
+    north['connector'].caching.throttling.maxNumberOfElements = 1;
+    await north['cacheWithoutTransform'](testData.oibusContent[0], 'south');
+
+    expect(north.persistDataInCache).toHaveBeenCalledWith(
+      {
+        contentFile: '1234567890',
+        contentSize: 0,
+        createdAt: '',
+        numberOfElement: 1,
+        contentType: 'time-values',
+        source: 'south',
+        options: {}
+      },
+      Readable.from(JSON.stringify([(testData.oibusContent[0] as OIBusTimeValueContent).content[0]]))
+    );
+    expect(north.persistDataInCache).toHaveBeenCalledTimes(3);
+    expect(generateRandomId).toHaveBeenCalledTimes(3);
   });
 
   it('should create OIBus error', () => {

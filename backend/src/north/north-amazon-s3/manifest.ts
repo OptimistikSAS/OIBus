@@ -3,7 +3,7 @@ import { NorthConnectorManifest } from '../../../shared/model/north-connector.mo
 const manifest: NorthConnectorManifest = {
   id: 'aws-s3',
   category: 'file',
-  types: ['raw'],
+  types: ['any'],
   settings: [
     {
       key: 'bucket',
