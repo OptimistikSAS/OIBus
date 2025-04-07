@@ -5,10 +5,21 @@ import { SouthConnectorLightDTO } from './south-connector.model';
 import { TransformerLightDTO } from './transformer.model';
 import { OIBusDataType } from './engine.model';
 
-export const OIBUS_NORTH_CATEGORIES = ['debug', 'api', 'file'] as const;
+export const OIBUS_NORTH_CATEGORIES = ['debug', 'api', 'file', 'iot'] as const;
 export type OIBusNorthCategory = (typeof OIBUS_NORTH_CATEGORIES)[number];
 
-export const OIBUS_NORTH_TYPES = ['azure-blob', 'aws-s3', 'console', 'file-writer', 'oianalytics', 'sftp', 'rest'] as const;
+export const OIBUS_NORTH_TYPES = [
+  'azure-blob',
+  'aws-s3',
+  'console',
+  'file-writer',
+  'oianalytics',
+  'sftp',
+  'rest',
+  'opcua',
+  'mqtt',
+  'modbus'
+] as const;
 export type OIBusNorthType = (typeof OIBUS_NORTH_TYPES)[number];
 
 export interface NorthType {
@@ -90,6 +101,6 @@ export interface NorthConnectorCommandDTO<T extends NorthSettings> {
 export interface NorthConnectorManifest {
   id: OIBusNorthType;
   category: OIBusNorthCategory;
-  types: Array<OIBusDataType>;
+  types: Array<string>;
   settings: Array<OibFormControl>;
 }
