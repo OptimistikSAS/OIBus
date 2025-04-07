@@ -69,6 +69,9 @@ import IsoTimeValuesTransformer from '../../service/transformers/iso-time-values
 import OIBusTimeValuesToCsvTransformer from '../../service/transformers/oibus-time-values-to-csv-transformer';
 import IsoRawTransformer from '../../service/transformers/iso-raw-transformer';
 import OIBusTimeValuesToJSONTransformer from '../../service/transformers/oibus-time-values-to-json-transformer';
+import OIBusTimeValuesToMQTTTransformer from '../../service/transformers/oibus-time-values-to-mqtt-transformer';
+import OIBusTimeValuesToOPCUATransformer from '../../service/transformers/oibus-time-values-to-opcua-transformer';
+import OIBusTimeValuesToModbusTransformer from '../../service/transformers/oibus-time-values-to-modbus-transformer';
 
 jest.mock('../../service/utils');
 jest.mock('argon2');
@@ -148,6 +151,33 @@ describe('Repository with populated database', () => {
         standardCode: '',
         inputType: 'time-values',
         outputType: 'raw'
+      },
+      {
+        description: '',
+        id: OIBusTimeValuesToMQTTTransformer.transformerName,
+        inputType: 'time-values',
+        name: OIBusTimeValuesToMQTTTransformer.transformerName,
+        outputType: 'mqtt',
+        standardCode: '',
+        type: 'standard'
+      },
+      {
+        description: '',
+        id: OIBusTimeValuesToOPCUATransformer.transformerName,
+        inputType: 'time-values',
+        name: OIBusTimeValuesToOPCUATransformer.transformerName,
+        outputType: 'opcua',
+        standardCode: '',
+        type: 'standard'
+      },
+      {
+        description: '',
+        id: OIBusTimeValuesToModbusTransformer.transformerName,
+        inputType: 'time-values',
+        name: OIBusTimeValuesToModbusTransformer.transformerName,
+        outputType: 'modbus',
+        standardCode: '',
+        type: 'standard'
       }
     ];
     let repository: TransformerRepository;
