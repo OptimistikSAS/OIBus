@@ -135,6 +135,7 @@ export interface OibTimezoneFormControl extends BaseOibFormControl<string> {
 export interface OibArrayFormControl extends BaseOibFormControl<Array<OibFormControl>> {
   type: 'OibArray';
   content: Array<OibFormControl>;
+  allowRowDuplication?: boolean;
 }
 
 export interface OibFormGroup extends BaseOibFormControl<void> {
