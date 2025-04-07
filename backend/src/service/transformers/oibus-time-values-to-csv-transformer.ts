@@ -1,21 +1,56 @@
-import BaseTransformer from './base-transformer';
+import OIBusTransformer from './oibus-transformer';
 import csv from 'papaparse';
-import { OIBusTimeValueContent } from '../../../shared/model/engine.model';
+import { CacheMetadata, OIBusTimeValue } from '../../../shared/model/engine.model';
+import { ReadStream } from 'node:fs';
+import { pipeline, Readable, Transform } from 'node:stream';
+import { promisify } from 'node:util';
+import { generateRandomId } from '../utils';
 
-export default class OIBusTimeValuesToCsvTransformer extends BaseTransformer {
+const pipelineAsync = promisify(pipeline);
+
+export default class OIBusTimeValuesToCsvTransformer extends OIBusTransformer {
   public static transformerName = 'time-values-to-csv';
 
-  async transform(data: OIBusTimeValueContent): Promise<string> {
-    return csv.unparse(
-      data.content.map(value => ({
-        pointId: value.pointId,
-        timestamp: value.timestamp,
-        value: value.data.value
-      })),
-      {
-        header: true,
-        delimiter: ';'
-      }
+  async transform(
+    data: ReadStream | Readable,
+    source: string,
+    _filename: string | null
+  ): Promise<{ metadata: CacheMetadata; output: string }> {
+    // Collect the data from the stream
+    const chunks: Array<Buffer> = [];
+    await pipelineAsync(
+      data,
+      new Transform({
+        transform(chunk, encoding, callback) {
+          chunks.push(chunk);
+          callback();
+        }
+      })
     );
+    const jsonData: Array<OIBusTimeValue> = JSON.parse(Buffer.concat(chunks).toString('utf-8'));
+
+    const metadata: CacheMetadata = {
+      contentFile: `${generateRandomId(10)}.csv`,
+      contentSize: 0, // It will be set outside the transformer, once the file is written
+      createdAt: '', // It will be set outside the transformer, once the file is written
+      numberOfElement: 0,
+      contentType: 'raw',
+      source,
+      options: {}
+    };
+    return {
+      output: csv.unparse(
+        jsonData.map(value => ({
+          pointId: value.pointId,
+          timestamp: value.timestamp,
+          value: value.data.value
+        })),
+        {
+          header: true,
+          delimiter: ';'
+        }
+      ),
+      metadata
+    };
   }
 }
