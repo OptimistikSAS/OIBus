@@ -13,6 +13,9 @@ import IsoRawTransformer from './transformers/iso-raw-transformer';
 import IsoTimeValuesTransformer from './transformers/iso-time-values-transformer';
 import OIBusTimeValuesToJSONTransformer from './transformers/oibus-time-values-to-json-transformer';
 import OIBusTimeValuesToCsvTransformer from './transformers/oibus-time-values-to-csv-transformer';
+import OIBusTimeValuesToModbusTransformer from './transformers/oibus-time-values-to-modbus-transformer';
+import OIBusTimeValuesToOPCUATransformer from './transformers/oibus-time-values-to-opcua-transformer';
+import OIBusTimeValuesToMQTTTransformer from './transformers/oibus-time-values-to-mqtt-transformer';
 
 jest.mock('papaparse');
 jest.mock('./utils');
@@ -147,12 +150,24 @@ describe('Transformer Service', () => {
     const transformer: Transformer = JSON.parse(JSON.stringify(testData.transformers.list[0]));
     transformer.id = 'iso-raw';
     expect(createTransformer(transformer, testData.north.list[0], logger)).toBeInstanceOf(IsoRawTransformer);
+
     transformer.id = 'iso-time-values';
     expect(createTransformer(transformer, testData.north.list[0], logger)).toBeInstanceOf(IsoTimeValuesTransformer);
+
     transformer.id = 'time-values-to-csv';
     expect(createTransformer(transformer, testData.north.list[0], logger)).toBeInstanceOf(OIBusTimeValuesToCsvTransformer);
+
     transformer.id = 'time-values-to-json';
     expect(createTransformer(transformer, testData.north.list[0], logger)).toBeInstanceOf(OIBusTimeValuesToJSONTransformer);
+
+    transformer.id = 'time-values-to-modbus';
+    expect(createTransformer(transformer, testData.north.list[0], logger)).toBeInstanceOf(OIBusTimeValuesToModbusTransformer);
+
+    transformer.id = 'time-values-to-opcua';
+    expect(createTransformer(transformer, testData.north.list[0], logger)).toBeInstanceOf(OIBusTimeValuesToOPCUATransformer);
+
+    transformer.id = 'time-values-to-mqtt';
+    expect(createTransformer(transformer, testData.north.list[0], logger)).toBeInstanceOf(OIBusTimeValuesToMQTTTransformer);
 
     transformer.id = 'bad-id';
     expect(() => createTransformer(transformer, testData.north.list[0], logger)).toThrow(new Error('Could not create bad-id transformer'));

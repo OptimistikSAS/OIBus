@@ -15,6 +15,9 @@ import consoleManifest from '../north/north-console/manifest';
 import amazonManifest from '../north/north-amazon-s3/manifest';
 import sftpManifest from '../north/north-sftp/manifest';
 import restManifest from '../north/north-rest/manifest';
+import opcuaManifest from '../north/north-opcua/manifest';
+import mqttManifest from '../north/north-mqtt/manifest';
+import modbusManifest from '../north/north-modbus/manifest';
 import { NorthConnectorEntity, NorthConnectorEntityLight } from '../model/north-connector.model';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
@@ -31,7 +34,10 @@ import {
   NorthAzureBlobSettings,
   NorthConsoleSettings,
   NorthFileWriterSettings,
+  NorthModbusSettings,
+  NorthMQTTSettings,
   NorthOIAnalyticsSettings,
+  NorthOPCUASettings,
   NorthRESTSettings,
   NorthSettings,
   NorthSFTPSettings
@@ -54,6 +60,9 @@ import { ReadStream } from 'node:fs';
 import { CacheMetadata, CacheSearchParam } from '../../shared/model/engine.model';
 import TransformerService, { toTransformerLightDTO } from './transformer.service';
 import { TransformerLightDTO } from '../../shared/model/transformer.model';
+import NorthOPCUA from '../north/north-opcua/north-opcua';
+import NorthMQTT from '../north/north-mqtt/north-mqtt';
+import NorthModbus from '../north/north-modbus/north-modbus';
 
 export const northManifestList: Array<NorthConnectorManifest> = [
   consoleManifest,
@@ -62,7 +71,10 @@ export const northManifestList: Array<NorthConnectorManifest> = [
   amazonManifest,
   fileWriterManifest,
   sftpManifest,
-  restManifest
+  restManifest,
+  opcuaManifest,
+  modbusManifest,
+  mqttManifest
 ];
 
 export default class NorthService {
@@ -154,6 +166,36 @@ export default class NorthService {
       case 'rest':
         return new NorthREST(
           settings as NorthConnectorEntity<NorthRESTSettings>,
+          this.encryptionService,
+          this.transformerService,
+          this.northConnectorRepository,
+          this.scanModeRepository,
+          logger,
+          northBaseFolders
+        );
+      case 'opcua':
+        return new NorthOPCUA(
+          settings as NorthConnectorEntity<NorthOPCUASettings>,
+          this.encryptionService,
+          this.transformerService,
+          this.northConnectorRepository,
+          this.scanModeRepository,
+          logger,
+          northBaseFolders
+        );
+      case 'mqtt':
+        return new NorthMQTT(
+          settings as NorthConnectorEntity<NorthMQTTSettings>,
+          this.encryptionService,
+          this.transformerService,
+          this.northConnectorRepository,
+          this.scanModeRepository,
+          logger,
+          northBaseFolders
+        );
+      case 'modbus':
+        return new NorthModbus(
+          settings as NorthConnectorEntity<NorthModbusSettings>,
           this.encryptionService,
           this.transformerService,
           this.northConnectorRepository,
