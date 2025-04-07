@@ -194,7 +194,7 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
         // Compress and send the compressed file
         const gzipPath = path.resolve(this.tmpFolder, `${file.name}.gz`);
         await compress(resultingFile, gzipPath);
-        await this.addContent({ type: 'raw', filePath: gzipPath });
+        await this.addContent({ type: 'any', filePath: gzipPath });
         try {
           await fs.unlink(resultingFile);
           await fs.unlink(gzipPath);
@@ -203,10 +203,10 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
         }
       } catch {
         this.logger.error(`Error compressing file "${resultingFile}". Sending it raw instead`);
-        await this.addContent({ type: 'raw', filePath: resultingFile });
+        await this.addContent({ type: 'any', filePath: resultingFile });
       }
     } else {
-      await this.addContent({ type: 'raw', filePath: resultingFile });
+      await this.addContent({ type: 'any', filePath: resultingFile });
     }
 
     await client.end();

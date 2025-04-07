@@ -57,14 +57,14 @@ const engineSchema: Joi.ObjectSchema = Joi.object({
 });
 
 const contentSchema: Joi.ObjectSchema = Joi.object({
-  type: Joi.string().required().allow('raw', 'time-values'),
+  type: Joi.string().required().allow('any', 'time-values'),
   content: Joi.array().when('type', {
     is: Joi.string().valid('time-values'),
     then: Joi.required(),
     otherwise: Joi.allow('').optional()
   }),
   filePath: Joi.string().when('type', {
-    is: Joi.string().valid('raw'),
+    is: Joi.string().valid('any'),
     then: Joi.required(),
     otherwise: Joi.allow('').optional()
   })

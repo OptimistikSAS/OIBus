@@ -5,7 +5,7 @@ import { ItemTestCodeblockResultComponent } from './item-test-codeblock-result/i
 import { LoadingSpinnerComponent } from '../../../shared/loading-spinner/loading-spinner.component';
 import { TranslatePipe } from '@ngx-translate/core';
 
-export type ContentDisplayMode = 'table' | 'raw' | 'json';
+export type ContentDisplayMode = 'table' | 'any' | 'json';
 
 type ComponentInputs<T> = {
   [P in keyof T as T[P] extends InputSignal<any> ? P : never]: T[P] extends InputSignal<infer A> ? A : never;
@@ -46,7 +46,7 @@ export class ItemTestResultComponent implements OnInit {
   readonly availableDisplayModes = output<Array<ContentDisplayMode>>();
   private _availableDisplayModes: Array<ContentDisplayMode> = [];
 
-  readonly displayModeIcons: Record<ContentDisplayMode, string> = { table: 'fa-table', raw: 'fa-file-text', json: 'fa-code' };
+  readonly displayModeIcons: Record<ContentDisplayMode, string> = { table: 'fa-table', any: 'fa-file-text', json: 'fa-code' };
 
   ngOnInit(): void {
     // Instantiate component refs
@@ -82,7 +82,7 @@ export class ItemTestResultComponent implements OnInit {
         this.changeActiveComponent('codeblock', { content: { ...this.result }, contentType: 'json' });
         break;
 
-      case 'raw':
+      case 'any':
         this.changeActiveComponent('codeblock', { content: { ...this.result }, contentType: 'plaintext' });
         break;
     }
