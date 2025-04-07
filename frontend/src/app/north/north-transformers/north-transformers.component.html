@@ -1,30 +1,56 @@
-<oib-box boxTitle="transformers.title" helpUrl="https://oibus.optimistik.com/docs/guide/north-connectors/common-settings#transformers">
-  <div class="mb-3 px-2">
-    <table class="table table-sm oib-table">
-      <thead class="light">
-        <tr>
-          <th translate="transformers.input-type"></th>
-          <th translate="transformers.output-type"></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (transformer of controls().controls; track transformer) {
+<oib-box>
+  <ng-template oibBoxTitle>
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <span translate="transformers.title" id="title"></span>
+      </div>
+      <div>
+        <button class="btn btn-primary btn-sm oib-box-btn" (click)="createTransformer($event)" translate="transformers.add"></button>
+        <oib-help url="https://oibus.optimistik.com/docs/guide/north-connectors/common-settings#transformers" />
+      </div>
+    </div>
+  </ng-template>
+  @if (control().getRawValue().length) {
+    <div class="mb-3 px-2">
+      <table class="table table-sm oib-table">
+        <thead class="light">
           <tr>
-            <td class="align-middle">
-              <span>{{ transformer.value.type! | oIBusDataTypeEnum }}</span>
-            </td>
-            <td class="align-middle">
-              <oib-transformer
-                [key]="transformer.value.type!"
-                [formControl]="transformer.controls.transformer"
-                [transformers]="transformers()"
-                [inputType]="transformer.value.type!"
-                [outputType]="northManifest().types"
-              />
-            </td>
+            <th></th>
+            <th translate="transformers.input-type"></th>
+            <th translate="transformers.transformer"></th>
+            <th></th>
           </tr>
-        }
-      </tbody>
-    </table>
-  </div>
+        </thead>
+        <tbody>
+          @for (transformerWithOptions of control().getRawValue(); track transformerWithOptions.transformer.id; let index = $index) {
+            <tr>
+              <td></td>
+              <td>
+                <span>{{ 'enums.oibus-data-type.' + transformerWithOptions.inputType | translate }}</span>
+              </td>
+              <td>
+                @if (transformerWithOptions.transformer.type === 'standard') {
+                  <span>{{ 'transformers.standard.' + transformerWithOptions.transformer.functionName | translate }}</span>
+                } @else {
+                  <span>{{ transformerWithOptions.transformer.name }}</span>
+                }
+              </td>
+              <td class="pull-right">
+                <button type="button" class="btn btn-link" (click)="editTransformer(transformerWithOptions, index)">
+                  <span class="fa fa-pencil"></span>
+                </button>
+                <button type="button" class="btn btn-link" (click)="deleteTransformer(transformerWithOptions)">
+                  <span class="fa fa-trash"></span>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <div>
+      <div class="mb-3 oib-grey-container" id="no-transformer" translate="transformers.none"></div>
+    </div>
+  }
 </oib-box>

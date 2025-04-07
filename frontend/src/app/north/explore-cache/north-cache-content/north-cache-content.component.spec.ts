@@ -62,7 +62,7 @@ describe('NorthCacheContent', () => {
         contentSize: 6,
         numberOfElement: 0,
         createdAt: testData.constants.dates.DATE_1,
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       }
