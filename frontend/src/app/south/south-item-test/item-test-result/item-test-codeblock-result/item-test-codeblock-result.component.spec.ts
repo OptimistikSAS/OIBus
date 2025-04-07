@@ -67,26 +67,26 @@ describe('ItemTestCodeblockResultComponent', () => {
     // plaintext -> time-values -> simple stringify
     expect(writeValueChunkedSpy).toHaveBeenCalledWith(JSON.stringify(tester.componentInstance.content.content));
 
-    // plaintext -> raw -> with content
-    tester.changeContent({ type: 'raw', filePath: '/path/to/file', content: 'foo bar' });
+    // plaintext -> any -> with content
+    tester.changeContent({ type: 'any', filePath: '/path/to/file', content: 'foo bar' });
     tester.detectChanges();
     expect(writeValueChunkedSpy).toHaveBeenCalledWith('foo bar');
 
-    // plaintext -> raw -> without content
-    tester.changeContent({ type: 'raw', filePath: '/path/to/file' });
+    // plaintext -> any -> without content
+    tester.changeContent({ type: 'any', filePath: '/path/to/file' });
     tester.detectChanges();
     expect(writeValueChunkedSpy).toHaveBeenCalledWith('/path/to/file');
   });
 
   it('should provide supported display modes', () => {
-    // time-values -> json, raw
+    // time-values -> json, any
     expect(tester.componentInstance.testedComponent().getSupportedDisplayModes({ type: 'time-values' } as OIBusContent)).toEqual([
       'json',
-      'raw'
+      'any'
     ]);
 
-    // raw csv -> raw
-    expect(tester.componentInstance.testedComponent().getSupportedDisplayModes({ type: 'raw' } as OIBusContent)).toEqual(['raw']);
+    // raw csv -> any
+    expect(tester.componentInstance.testedComponent().getSupportedDisplayModes({ type: 'any' } as OIBusContent)).toEqual(['any']);
 
     // unexpected -> nothing
     expect(
