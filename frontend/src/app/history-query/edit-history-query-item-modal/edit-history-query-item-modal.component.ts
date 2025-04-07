@@ -110,10 +110,6 @@ export class EditHistoryQueryItemModalComponent {
     this.createForm(null);
   }
 
-  /**
-   * Prepares the component for edition.
-   * @param tableIndex an additional identifier, when item ids are not available. This indexes the given itemList param
-   */
   prepareForEdition(
     southItemSchema: SouthConnectorItemManifest,
     itemList: Array<HistoryQueryItemDTO<SouthItemSettings> | HistoryQueryItemCommandDTO<SouthItemSettings>>,

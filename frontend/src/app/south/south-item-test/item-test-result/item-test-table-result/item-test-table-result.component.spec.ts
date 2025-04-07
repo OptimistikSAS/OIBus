@@ -68,7 +68,7 @@ describe('ItemTestTableResultComponent', () => {
 
   it('should display csv as a table', () => {
     tester.changeContent({
-      type: 'raw',
+      type: 'any',
       filePath: 'test.csv',
       content: 'foo,bar,baz\n1234,string with spaces,5678'
     });
@@ -89,7 +89,7 @@ describe('ItemTestTableResultComponent', () => {
 
   it('should not display csv as a table', () => {
     tester.changeContent({
-      type: 'raw',
+      type: 'any',
       filePath: 'test.csv',
       content: ''
     });
@@ -104,25 +104,25 @@ describe('ItemTestTableResultComponent', () => {
     // time-values -> table
     expect(tester.componentInstance.testedComponent().getSupportedDisplayModes({ type: 'time-values' } as OIBusContent)).toEqual(['table']);
 
-    // raw (csv with content) -> table
+    // any (csv with content) -> table
     expect(
       tester.componentInstance
         .testedComponent()
-        .getSupportedDisplayModes({ type: 'raw', filePath: 'test.csv', content: 'a,b,c\nd,e,f' } as OIBusContent)
+        .getSupportedDisplayModes({ type: 'any', filePath: 'test.csv', content: 'a,b,c\nd,e,f' } as OIBusContent)
     ).toEqual(['table']);
 
-    // raw (csv without content) -> table
+    // any (csv without content) -> table
     expect(
       tester.componentInstance.testedComponent().getSupportedDisplayModes({
-        type: 'raw',
+        type: 'any',
         filePath: 'test.csv'
       } as OIBusContent)
     ).toEqual(null);
 
-    // raw (generic) -> nothing
+    // any (generic) -> nothing
     expect(
       tester.componentInstance.testedComponent().getSupportedDisplayModes({
-        type: 'raw',
+        type: 'any',
         filePath: 'test.txt'
       } as OIBusContent)
     ).toEqual(null);

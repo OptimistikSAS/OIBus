@@ -58,11 +58,12 @@ import fs from 'node:fs/promises';
 import { BaseFolders } from '../model/types';
 import { ReadStream } from 'node:fs';
 import { CacheMetadata, CacheSearchParam } from '../../shared/model/engine.model';
-import TransformerService, { toTransformerLightDTO } from './transformer.service';
-import { TransformerLightDTO } from '../../shared/model/transformer.model';
+import TransformerService, { toTransformerDTO } from './transformer.service';
+import { TransformerDTO } from '../../shared/model/transformer.model';
 import NorthOPCUA from '../north/north-opcua/north-opcua';
 import NorthMQTT from '../north/north-mqtt/north-mqtt';
 import NorthModbus from '../north/north-modbus/north-modbus';
+import { Transformer } from '../model/transformer.model';
 
 export const northManifestList: Array<NorthConnectorManifest> = [
   consoleManifest,
@@ -546,7 +547,11 @@ export const toNorthConnectorDTO = <N extends NorthSettings>(
       }
     },
     subscriptions: northEntity.subscriptions,
-    transformers: northEntity.transformers.map(transformer => toTransformerLightDTO(transformer))
+    transformers: northEntity.transformers.map(transformerWithOptions => ({
+      transformer: toTransformerDTO(transformerWithOptions.transformer),
+      options: transformerWithOptions.options,
+      inputType: transformerWithOptions.inputType
+    }))
   };
 };
 
@@ -567,7 +572,7 @@ export const copyNorthConnectorCommandToNorthEntity = async <N extends NorthSett
   encryptionService: EncryptionService,
   scanModes: Array<ScanMode>,
   southConnectors: Array<SouthConnectorLightDTO>,
-  transformers: Array<TransformerLightDTO>
+  transformers: Array<Transformer>
 ): Promise<void> => {
   northEntity.name = command.name;
   northEntity.type = command.type;
@@ -606,11 +611,20 @@ export const copyNorthConnectorCommandToNorthEntity = async <N extends NorthSett
     }
     return subscription;
   });
-  northEntity.transformers = command.transformers.map(transformerId => {
-    const transformer = transformers.find(element => element.id === transformerId);
-    if (!transformer) {
-      throw new Error(`Could not find OIBus transformer ${transformerId}`);
+  northEntity.transformers = command.transformers.map(transformerIdWithOptions => {
+    const foundTransformer = transformers.find(transformer => transformer.id === transformerIdWithOptions.transformerId);
+    if (!foundTransformer) {
+      throw new Error(`Could not find OIBus Transformer ${transformerIdWithOptions.transformerId}`);
     }
-    return transformer;
+    return { transformer: foundTransformer, options: transformerIdWithOptions.options, inputType: transformerIdWithOptions.inputType };
   });
+};
+
+export const getTransformer = (id: string | null, transformers: Array<TransformerDTO>): TransformerDTO | null => {
+  if (!id) return null;
+  const transformer = transformers.find(element => element.id === id);
+  if (!transformer) {
+    throw new Error(`Could not find OIBus Transformer ${id}`);
+  }
+  return transformer;
 };

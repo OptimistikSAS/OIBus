@@ -312,6 +312,20 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
     expect(zlib.gzipSync).toHaveBeenCalledWith(JSON.stringify(values));
   });
 
+  it('should ignore data if bad content type', async () => {
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example-123456789.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'bad',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(`Unsupported data type: bad (file path/to/file/example-123456789.file)`);
+  });
+
   it('should properly throw fetch error with values', async () => {
     await north.start();
     const error = new Error('error');
@@ -386,7 +400,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -421,7 +435,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -501,7 +515,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -535,7 +549,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -558,7 +572,7 @@ describe.each(testCases)('NorthOIAnalytics %s', (_, settings) => {
           contentSize: 1234,
           numberOfElement: 1,
           createdAt: '2020-02-02T02:02:02.222Z',
-          contentType: 'raw',
+          contentType: 'any',
           source: 'south',
           options: {}
         })
@@ -647,7 +661,7 @@ describe('NorthOIAnalytics with Azure Active Directory', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       });
@@ -683,7 +697,7 @@ describe('NorthOIAnalytics with Azure Active Directory', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       });
@@ -742,7 +756,7 @@ describe('NorthOIAnalytics with Azure Active Directory', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       });
@@ -833,7 +847,7 @@ describe('NorthOIAnalytics with OIA module', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -880,7 +894,7 @@ describe('NorthOIAnalytics with OIA module', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -920,7 +934,7 @@ describe('NorthOIAnalytics with OIA module', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -940,7 +954,7 @@ describe('NorthOIAnalytics with OIA module', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       })
@@ -962,7 +976,7 @@ describe('NorthOIAnalytics with OIA module', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       })
@@ -986,7 +1000,7 @@ describe('NorthOIAnalytics with OIA module', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       })
@@ -1010,7 +1024,7 @@ describe('NorthOIAnalytics with OIA module', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       })

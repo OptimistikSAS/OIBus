@@ -68,7 +68,7 @@ const fileList: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [
       contentSize: 100,
       numberOfElement: 0,
       createdAt: testData.constants.dates.DATE_3,
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     }
@@ -92,7 +92,7 @@ const fileList: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [
       contentSize: 100,
       numberOfElement: 0,
       createdAt: testData.constants.dates.FAKE_NOW,
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     }

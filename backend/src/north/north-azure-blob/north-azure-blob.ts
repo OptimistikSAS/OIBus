@@ -136,6 +136,10 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
    * Handle the file by uploading it to Azure Blob Storage.
    */
   async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
+    if (!this.supportedTypes().includes(cacheMetadata.contentType)) {
+      throw new Error(`Unsupported data type: ${cacheMetadata.contentType} (file ${cacheMetadata.contentFile})`);
+    }
+
     const container = this.connector.settings.container;
     const blobPath = this.connector.settings.path ? `${this.connector.settings.path}/` : '';
     this.logger.info(
@@ -195,5 +199,9 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
     if (!result) {
       throw new Error(`Container ${this.connector.settings.container} and path ${blobPath} does not exist`);
     }
+  }
+
+  supportedTypes(): Array<string> {
+    return ['any'];
   }
 }
