@@ -1,0 +1,127 @@
+import { Readable } from 'stream';
+import pino from 'pino';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
+import testData from '../../tests/utils/test-data';
+import { flushPromises } from '../../tests/utils/test-utils';
+import { OIBusTimeValue } from '../../../shared/model/engine.model';
+import csv from 'papaparse';
+import OIBusTimeValuesToModbusTransformer from './oibus-time-values-to-modbus-transformer';
+
+jest.mock('../utils', () => ({
+  generateRandomId: jest.fn().mockReturnValue('randomId')
+}));
+jest.mock('papaparse');
+
+const logger: pino.Logger = new PinoLogger();
+
+describe('OIBusTimeValuesToModbusTransformer', () => {
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+  });
+
+  it('should transform data from a stream and return metadata', async () => {
+    (csv.unparse as jest.Mock).mockReturnValue('csv content');
+
+    const options = {
+      mapping: [
+        { pointId: 'reference1', address: 0x0001, modbusType: 'coil' },
+        { pointId: 'reference2', address: 0x0002, modbusType: 'holding-register' }
+      ]
+    };
+    // Arrange
+    const transformer = new OIBusTimeValuesToModbusTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
+    const source = 'test-source';
+    const dataChunks: Array<OIBusTimeValue> = [
+      {
+        pointId: 'reference1',
+        timestamp: testData.constants.dates.DATE_1,
+        data: {
+          value: '1'
+        }
+      },
+      {
+        pointId: 'reference2',
+        timestamp: testData.constants.dates.DATE_2,
+        data: {
+          value: '2',
+          quality: 'good'
+        }
+      },
+      {
+        pointId: 'reference3',
+        timestamp: testData.constants.dates.DATE_3,
+        data: {
+          value: 'value1'
+        }
+      }
+    ];
+
+    // Mock Readable stream
+    const mockStream = new Readable();
+
+    // Act
+    const promise = transformer.transform(mockStream, source, null);
+    mockStream.push(JSON.stringify(dataChunks));
+    mockStream.push(null); // End the stream
+
+    await flushPromises();
+    const result = await promise;
+    // Assert
+    expect(result).toEqual({
+      output: JSON.stringify([
+        { address: 1, value: true, modbusType: 'coil' },
+        { address: 2, value: 2, modbusType: 'holding-register' }
+      ]),
+      metadata: {
+        contentFile: 'randomId.json',
+        contentSize: 0,
+        createdAt: '',
+        numberOfElement: 2,
+        contentType: 'modbus',
+        source,
+        options: {}
+      }
+    });
+  });
+
+  it('should return manifest', () => {
+    expect(OIBusTimeValuesToModbusTransformer.manifestSettings).toEqual([
+      {
+        key: 'mapping',
+        type: 'OibArray',
+        translationKey: 'transformers.mapping.title',
+        content: [
+          {
+            key: 'pointId',
+            translationKey: 'transformers.mapping.point-id',
+            type: 'OibText',
+            defaultValue: '',
+            validators: [{ key: 'required' }],
+            displayInViewMode: true
+          },
+          {
+            key: 'address',
+            translationKey: 'transformers.mapping.modbus.address',
+            type: 'OibText',
+            defaultValue: '',
+            validators: [{ key: 'required' }],
+            displayInViewMode: true
+          },
+          {
+            key: 'modbusType',
+            type: 'OibSelect',
+            options: ['coil', 'register'],
+            translationKey: 'transformers.mapping.modbus.modbus-type',
+            defaultValue: 'register',
+            validators: [{ key: 'required' }],
+            displayInViewMode: true
+          }
+        ],
+        class: 'col',
+        newRow: true,
+        displayInViewMode: false
+      }
+    ]);
+  });
+});

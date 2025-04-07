@@ -166,16 +166,17 @@ describe('NorthModbus', () => {
   });
 
   it('should ignore data if bad content type', async () => {
-    await north.handleContent({
-      contentFile: 'path/to/file/example-123456789.file',
-      contentSize: 1234,
-      numberOfElement: 1,
-      createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
-      source: 'south',
-      options: {}
-    });
-    expect(logger.debug).toHaveBeenCalledWith(`File "path/to/file/example-123456789.file" of type raw ignored`);
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example-123456789.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'any',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(`Unsupported data type: any (file path/to/file/example-123456789.file)`);
   });
 
   it('modbusFunction() should throw error if bad modbus type', async () => {

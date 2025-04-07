@@ -416,7 +416,7 @@ describe('History Query service', () => {
     service.retrieveSecrets = jest.fn();
 
     await expect(service.createHistoryQuery(testData.historyQueries.command, null, null, null)).rejects.toThrow(
-      `Could not find OIBus transformer ${testData.historyQueries.command.northTransformers[0]}`
+      `Could not find OIBus Transformer ${testData.transformers.list[0].id}`
     );
   });
 

@@ -6,7 +6,7 @@ import { toSouthConnectorLight } from './south-connector.repository';
 import { SouthConnectorEntityLight } from '../../model/south-connector.model';
 import { OIBusNorthType } from '../../../shared/model/north-connector.model';
 import { toTransformer } from './transformer.repository';
-import { Transformer } from '../../model/transformer.model';
+import { TransformerWithOptions } from '../../model/transformer.model';
 
 const NORTH_CONNECTORS_TABLE = 'north_connectors';
 const SUBSCRIPTION_TABLE = 'subscription';
@@ -126,11 +126,16 @@ export default class NorthConnectorRepository {
       }
 
       this.database.prepare(`DELETE FROM ${NORTH_TRANSFORMERS_TABLE} WHERE north_id = ?;`).run(north.id);
-      if (north.transformers.length > 0) {
-        const insert = this.database.prepare(`INSERT INTO ${NORTH_TRANSFORMERS_TABLE} (north_id, transformer_id) VALUES (?, ?);`);
-        for (const transformer of north.transformers) {
-          insert.run(north.id, transformer.id);
-        }
+      const insert = this.database.prepare(
+        `INSERT INTO ${NORTH_TRANSFORMERS_TABLE} (north_id, transformer_id, options, input_type) VALUES (?, ?, ?, ?);`
+      );
+      for (const transformerWithOptions of north.transformers) {
+        insert.run(
+          north.id,
+          transformerWithOptions.transformer.id,
+          JSON.stringify(transformerWithOptions.options),
+          transformerWithOptions.inputType
+        );
       }
     });
     transaction();
@@ -187,12 +192,14 @@ export default class NorthConnectorRepository {
     this.database.prepare(query).run(northId);
   }
 
-  findAllTransformersForNorth(northId: string): Array<Transformer> {
-    const query = `SELECT t.id, t.name, t.type, t.description, t.input_type, t.output_type, t.standard_code, t.custom_code FROM ${NORTH_TRANSFORMERS_TABLE} nt JOIN ${TRANSFORMERS_TABLE} t ON nt.transformer_id = t.id WHERE nt.north_id = ?;`;
-    return this.database
-      .prepare(query)
-      .all(northId)
-      .map(result => toTransformer(result as Record<string, string>));
+  findTransformersForNorth(northId: string): Array<TransformerWithOptions> {
+    const query = `SELECT t.id, t.type, nt.input_type, t.output_type, t.function_name, t.name, t.description, t.custom_manifest, t.custom_code, nt.options FROM ${NORTH_TRANSFORMERS_TABLE} nt JOIN ${TRANSFORMERS_TABLE} t ON nt.transformer_id = t.id WHERE nt.north_id = ?;`;
+    const result = this.database.prepare(query).all(northId) as Array<Record<string, string>>;
+    return result.map(element => ({
+      transformer: toTransformer(element),
+      options: JSON.parse(element.options),
+      inputType: element.input_type
+    }));
   }
 
   private toNorthConnectorLight(result: Record<string, string>): NorthConnectorEntityLight {
@@ -235,7 +242,7 @@ export default class NorthConnectorRepository {
         }
       },
       subscriptions: this.listNorthSubscriptions(result.id as string),
-      transformers: this.findAllTransformersForNorth(result.id as string)
+      transformers: this.findTransformersForNorth(result.id as string)
     };
   }
 }

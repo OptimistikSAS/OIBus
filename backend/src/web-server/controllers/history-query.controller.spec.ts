@@ -35,12 +35,18 @@ describe('History query controller', () => {
 
   it('findById() should return history query', async () => {
     ctx.params.id = testData.historyQueries.list[0].id;
-    ctx.app.historyQueryService.findById.mockReturnValueOnce(testData.historyQueries.list[0]);
+    ctx.app.historyQueryService.findById
+      .mockReturnValueOnce(testData.historyQueries.list[0])
+      .mockReturnValueOnce(testData.historyQueries.list[1]);
 
     await historyQueryController.findById(ctx);
-
     expect(ctx.app.historyQueryService.findById).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
     expect(ctx.ok).toHaveBeenCalledWith(toHistoryQueryDTO(testData.historyQueries.list[0], ctx.app.encryptionService));
+
+    ctx.params.id = testData.historyQueries.list[1].id;
+    await historyQueryController.findById(ctx);
+    expect(ctx.app.historyQueryService.findById).toHaveBeenCalledWith(testData.historyQueries.list[1].id);
+    expect(ctx.ok).toHaveBeenCalledWith(toHistoryQueryDTO(testData.historyQueries.list[1], ctx.app.encryptionService));
   });
 
   it('findById() should return not found when history query is not found', async () => {
