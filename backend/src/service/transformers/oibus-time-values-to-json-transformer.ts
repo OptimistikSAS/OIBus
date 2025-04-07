@@ -3,6 +3,7 @@ import { ReadStream } from 'node:fs';
 import { Readable, Transform, pipeline } from 'node:stream';
 import { CacheMetadata } from '../../../shared/model/engine.model';
 import { promisify } from 'node:util';
+import { OibFormControl } from '../../../shared/model/form.model';
 import { generateRandomId } from '../utils';
 
 const pipelineAsync = promisify(pipeline);
@@ -35,7 +36,7 @@ export default class OIBusTimeValuesToJSONTransformer extends OIBusTransformer {
       contentSize: 0, // It will be set outside the transformer, once the file is written
       createdAt: '', // It will be set outside the transformer, once the file is written
       numberOfElement: content.length,
-      contentType: 'raw',
+      contentType: 'any',
       source,
       options: {}
     };
@@ -43,5 +44,9 @@ export default class OIBusTimeValuesToJSONTransformer extends OIBusTransformer {
       output: stringContent,
       metadata
     };
+  }
+
+  public static get manifestSettings(): Array<OibFormControl> {
+    return [];
   }
 }

@@ -102,7 +102,7 @@ describe('NorthSFTP', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -122,7 +122,7 @@ describe('NorthSFTP', () => {
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'raw',
+        contentType: 'any',
         source: 'south',
         options: {}
       })
@@ -191,7 +191,7 @@ describe('NorthSFTP without suffix or prefix', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -245,5 +245,19 @@ describe('NorthSFTP without suffix or prefix', () => {
     expect(mockSftpClient.exists).toHaveBeenCalledTimes(1);
     expect(mockSftpClient.end).not.toHaveBeenCalled();
     expect(encryptionService.decryptText).not.toHaveBeenCalled();
+  });
+
+  it('should ignore data if bad content type', async () => {
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example-123456789.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'time-values',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(`Unsupported data type: time-values (file path/to/file/example-123456789.file)`);
   });
 });

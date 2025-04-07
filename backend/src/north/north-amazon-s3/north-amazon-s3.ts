@@ -72,6 +72,9 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
   }
 
   override async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
+    if (!this.supportedTypes().includes(cacheMetadata.contentType)) {
+      throw new Error(`Unsupported data type: ${cacheMetadata.contentType} (file ${cacheMetadata.contentFile})`);
+    }
     const params = {
       Bucket: this.connector.settings.bucket,
       Body: fs.createReadStream(cacheMetadata.contentFile),
@@ -94,5 +97,9 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
     } catch (error) {
       throw new Error(`Error testing Amazon S3 connection. ${error}`);
     }
+  }
+
+  supportedTypes(): Array<string> {
+    return ['any'];
   }
 }

@@ -6,7 +6,7 @@ export type ScopeType = (typeof SCOPE_TYPES)[number];
 export const LOG_LEVELS = ['silent', 'error', 'warn', 'info', 'debug', 'trace'];
 export type LogLevel = (typeof LOG_LEVELS)[number];
 
-export const OIBUS_DATA_TYPES = ['raw', 'time-values'] as const;
+export const OIBUS_DATA_TYPES = ['any', 'time-values'] as const;
 export type OIBusDataType = (typeof OIBUS_DATA_TYPES)[number];
 
 /**
@@ -309,7 +309,7 @@ export interface OIBusTimeValueContent extends BaseOIBusContent {
 }
 
 export interface OIBusRawContent extends BaseOIBusContent {
-  type: 'raw';
+  type: 'any';
   filePath: string;
   content?: string;
 }

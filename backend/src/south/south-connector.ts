@@ -98,7 +98,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       await createBaseFolders(this.baseFolders);
     }
     if (dataStream) {
-      // Reload the settings only on data stream case, otherwise let the history query manage the settings
+      // Reload the settings only on a data stream case, otherwise let the history query manage the settings
       this.connector = this.southConnectorRepository.findSouthById(this.connector.id)!;
     }
     this.logger.debug(`South connector ${this.connector.name} enabled. Starting services...`);
@@ -530,7 +530,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     switch (data.type) {
       case 'time-values':
         return this.addValues(data);
-      case 'raw':
+      case 'any':
         return this.addFile(data);
     }
   }
