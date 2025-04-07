@@ -157,7 +157,7 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
           formattedResult as unknown as Array<Record<string, string | number>>,
           item.settings.serialization.delimiter
         );
-        oibusContent = { type: 'raw', filePath, content };
+        oibusContent = { type: 'any', filePath, content };
         break;
       }
     }

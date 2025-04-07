@@ -3,9 +3,9 @@ import JoiValidator from './validators/joi.validator';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
 import testData from '../../tests/utils/test-data';
 import TransformerController from './transformer.controller';
-import { toTransformerDTO, toTransformerLightDTO } from '../../service/transformer.service';
+import { toTransformerDTO } from '../../service/transformer.service';
 import { StandardTransformer } from '../../model/transformer.model';
-import IsoRawTransformer from '../../service/transformers/iso-raw-transformer';
+import IsoTransformer from '../../service/transformers/iso-transformer';
 
 jest.mock('./validators/joi.validator');
 
@@ -17,11 +17,9 @@ const ctx = new KoaContextMock();
 
 describe('Transformer Controller', () => {
   const standardTransformer: StandardTransformer = {
-    id: IsoRawTransformer.transformerName,
+    id: IsoTransformer.transformerName,
     type: 'standard',
-    name: IsoRawTransformer.transformerName,
-    description: '',
-    standardCode: '',
+    functionName: IsoTransformer.transformerName,
     inputType: 'raw',
     outputType: 'raw'
   };
@@ -35,7 +33,7 @@ describe('Transformer Controller', () => {
     await transformerController.findAll(ctx);
 
     expect(ctx.app.transformerService.findAll).toHaveBeenCalled();
-    expect(ctx.ok).toHaveBeenCalledWith(testData.transformers.list.map(element => toTransformerLightDTO(element)));
+    expect(ctx.ok).toHaveBeenCalledWith(testData.transformers.list.map(element => toTransformerDTO(element)));
   });
 
   it('search() should return transformers', async () => {
@@ -51,7 +49,7 @@ describe('Transformer Controller', () => {
 
     expect(ctx.app.transformerService.search).toHaveBeenCalled();
     expect(ctx.ok).toHaveBeenCalledWith({
-      content: [...testData.transformers.list.map(element => toTransformerLightDTO(element)), toTransformerLightDTO(standardTransformer)],
+      content: [...testData.transformers.list.map(element => toTransformerDTO(element)), toTransformerDTO(standardTransformer)],
       totalElements: testData.transformers.list.length + 1,
       size: 25,
       number: 1,
@@ -101,7 +99,7 @@ describe('Transformer Controller', () => {
     await transformerController.create(ctx);
 
     expect(ctx.app.transformerService.create).toHaveBeenCalledWith(testData.transformers.command);
-    expect(ctx.created).toHaveBeenCalledWith(toTransformerLightDTO(testData.transformers.list[0]));
+    expect(ctx.created).toHaveBeenCalledWith(toTransformerDTO(testData.transformers.list[0]));
   });
 
   it('create() should throw bad request', async () => {

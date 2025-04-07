@@ -2,7 +2,7 @@ import { OibFormControl } from './form.model';
 import { BaseEntity } from './types';
 import { NorthSettings } from './north-settings.model';
 import { SouthConnectorLightDTO } from './south-connector.model';
-import { TransformerLightDTO } from './transformer.model';
+import { TransformerDTOWithOptions } from './transformer.model';
 import { OIBusDataType } from './engine.model';
 
 export const OIBUS_NORTH_CATEGORIES = ['debug', 'api', 'file', 'iot'] as const;
@@ -63,7 +63,7 @@ export interface NorthConnectorDTO<T extends NorthSettings> extends BaseEntity {
     };
   };
   subscriptions: Array<SouthConnectorLightDTO>;
-  transformers: Array<TransformerLightDTO>;
+  transformers: Array<TransformerDTOWithOptions>;
 }
 
 export interface NorthConnectorCommandDTO<T extends NorthSettings> {
@@ -95,7 +95,7 @@ export interface NorthConnectorCommandDTO<T extends NorthSettings> {
     };
   };
   subscriptions: Array<string>;
-  transformers: Array<string>;
+  transformers: Array<{ transformerId: string; options: object; inputType: string }>;
 }
 
 export interface NorthConnectorManifest {

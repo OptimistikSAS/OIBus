@@ -717,9 +717,9 @@ describe('SouthConnector with history and subscription', () => {
   });
 
   it('should add file', async () => {
-    await south.addContent({ type: 'raw', filePath: 'file.csv' });
+    await south.addContent({ type: 'any', filePath: 'file.csv' });
     expect(logger.debug).toHaveBeenCalledWith(`Add file "file.csv" to cache from South "${testData.south.list[2].name}"`);
-    expect(addContentCallback).toHaveBeenCalledWith(testData.south.list[2].id, { type: 'raw', filePath: 'file.csv' });
+    expect(addContentCallback).toHaveBeenCalledWith(testData.south.list[2].id, { type: 'any', filePath: 'file.csv' });
   });
 
   it('should manage history query with several intervals', async () => {
