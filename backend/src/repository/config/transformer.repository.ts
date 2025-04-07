@@ -9,8 +9,8 @@ import IsoRawTransformer from '../../service/transformers/iso-raw-transformer';
 import { OIBusDataType } from '../../../shared/model/engine.model';
 import OIBusTimeValuesToJSONTransformer from '../../service/transformers/oibus-time-values-to-json-transformer';
 import OIBusTimeValuesToMQTTTransformer from '../../service/transformers/oibus-time-values-to-mqtt-transformer';
-import OIBusTimeValuesToModbusTransformer from '../../service/transformers/oibus-time-values-to-modbus-transformer';
 import OIBusTimeValuesToOPCUATransformer from '../../service/transformers/oibus-time-values-to-opcua-transformer';
+import OIBusTimeValuesToModbusTransformer from '../../service/transformers/oibus-time-values-to-modbus-transformer';
 
 const TRANSFORMERS_TABLE = 'transformers';
 const PAGE_SIZE = 10;

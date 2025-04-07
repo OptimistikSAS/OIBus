@@ -1857,6 +1857,40 @@
       "time-values-to-mqtt": "To MQTT payloads (convert time values into MQTT payloads)",
       "time-values-to-opcua": "To OPCUA values (convert time values into OPCUA values)",
       "time-values-to-modbus": "To Modbus values (convert time values into Modbus values)"
+    },
+    "mapping": {
+      "title": "Mapping table",
+      "point-id": "Point ID (Reference)",
+      "mqtt": {
+        "topic": "MQTT Topic"
+      },
+      "modbus": {
+        "address": "Modbus address",
+        "modbus-type": {
+          "title": "Modbus type",
+          "coil": "Coil",
+          "register": "Register"
+        }
+      },
+      "opcua": {
+        "node-id": "OPCUA Node ID"  ,
+        "data-type": {
+          "title": "Data type",
+          "boolean": "Boolean",
+          "s-byte": "SByte",
+          "byte": "Byte",
+          "int16": "Int16",
+          "uint16": "UInt16",
+          "int32": "Int32",
+          "uint32": "UInt32",
+          "int64": "Int64",
+          "uint64": "UInt64",
+          "float": "Float",
+          "double": "Double",
+          "string": "String",
+          "date-time": "Date Time"
+        }
+      }
     }
   },
   "logs": {

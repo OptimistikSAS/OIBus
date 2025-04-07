@@ -3,12 +3,18 @@ import { ReadStream } from 'node:fs';
 import { pipeline, Readable, Transform } from 'node:stream';
 import { CacheMetadata, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { promisify } from 'node:util';
+import { OibFormControl } from '../../../shared/model/form.model';
 
 const pipelineAsync = promisify(pipeline);
 
 export interface OIBusOPCUAValue {
   nodeId: string;
   value: string | number;
+  dataType: string;
+}
+
+interface TransformerOptions {
+  mapping: Array<{ pointId: string; nodeId: string; dataType: string }>;
 }
 
 export default class OIBusTimeValuesToOPCUATransformer extends OIBusTransformer {
@@ -32,12 +38,17 @@ export default class OIBusTimeValuesToOPCUATransformer extends OIBusTransformer 
     );
     const stringContent = Buffer.concat(chunks).toString('utf-8');
     // Combine the chunks into a single buffer
-    const content: Array<OIBusOPCUAValue> = (JSON.parse(stringContent) as Array<OIBusTimeValue>).map(element => {
-      return {
-        nodeId: element.pointId,
-        value: element.data.value
-      }; // TODO: add options (data type)
-    });
+    const content: Array<OIBusOPCUAValue> = (JSON.parse(stringContent) as Array<OIBusTimeValue>)
+      .map(element => {
+        const mappedElement = this.options.mapping.find(matchingElement => matchingElement.pointId === element.pointId);
+        if (!mappedElement) return null;
+        return {
+          nodeId: mappedElement.nodeId,
+          value: element.data.value,
+          dataType: mappedElement.dataType
+        };
+      })
+      .filter((mappedElement): mappedElement is OIBusOPCUAValue => mappedElement !== null);
 
     const metadata: CacheMetadata = {
       contentFile: cacheFilename,
@@ -52,5 +63,64 @@ export default class OIBusTimeValuesToOPCUATransformer extends OIBusTransformer 
       output: JSON.stringify(content),
       metadata
     };
+  }
+
+  get options(): TransformerOptions {
+    return this._options as TransformerOptions;
+  }
+
+  get manifestSettings(): Array<OibFormControl> {
+    return [
+      {
+        key: 'mapping',
+        type: 'OibArray',
+        translationKey: 'transformers.mapping.title',
+        content: [
+          {
+            key: 'pointId',
+            translationKey: 'transformers.mapping.point-id',
+            type: 'OibText',
+            defaultValue: '',
+            validators: [{ key: 'required' }],
+            displayInViewMode: true
+          },
+          {
+            key: 'nodeId',
+            translationKey: 'transformers.mapping.opcua.node-id',
+            type: 'OibText',
+            defaultValue: '',
+            validators: [{ key: 'required' }],
+            displayInViewMode: true
+          },
+          {
+            key: 'dataType',
+            type: 'OibSelect',
+            options: [
+              'boolean',
+              's-byte',
+              'byte',
+              'int16',
+              'uint16',
+              'int32',
+              'uint32',
+              'int64',
+              'uint64',
+              'float',
+              'double',
+              'string',
+              'date-time'
+            ],
+            translationKey: 'transformers.mapping.opcua.data-type',
+            defaultValue: 'uint16',
+            validators: [{ key: 'required' }],
+            class: 'col-4',
+            displayInViewMode: false
+          }
+        ],
+        class: 'col',
+        newRow: true,
+        displayInViewMode: false
+      }
+    ];
   }
 }
