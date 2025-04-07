@@ -102,7 +102,7 @@ const transformers: Array<Transformer> = [
     type: 'custom',
     name: 'my transformer 2',
     description: 'description',
-    inputType: 'time-values',
+    inputType: 'raw',
     outputType: 'raw',
     customCode: 'console.log("Hello World");'
   }
@@ -457,7 +457,7 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
         enabled: southConnectors[1].enabled
       }
     ],
-    transformers: [transformers[0]]
+    transformers: [transformers[0], transformers[1]]
   },
   {
     id: 'northId2',

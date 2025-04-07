@@ -6,13 +6,13 @@ import EncryptionService from '../../service/encryption.service';
 import pino from 'pino';
 import { DateTime } from 'luxon';
 import { NorthFileWriterSettings } from '../../../shared/model/north-settings.model';
-import { CacheMetadata, OIBusTimeValue } from '../../../shared/model/engine.model';
-import csv from 'papaparse';
+import { CacheMetadata } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
 import TransformerService from '../../service/transformer.service';
+import { getFilenameWithoutRandomId } from '../../service/utils';
 
 /**
  * Class NorthFileWriter - Write files in an output folder
@@ -31,54 +31,17 @@ export default class NorthFileWriter extends NorthConnector<NorthFileWriterSetti
   }
 
   async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
-    switch (cacheMetadata.contentType) {
-      case 'raw':
-        return this.handleFile(cacheMetadata.contentFile);
-
-      case 'time-values':
-        return this.handleValues(JSON.parse(await fs.readFile(cacheMetadata.contentFile, { encoding: 'utf-8' })) as Array<OIBusTimeValue>);
-    }
-  }
-
-  async handleValues(values: Array<OIBusTimeValue>): Promise<void> {
-    const nowDate = DateTime.now().toUTC();
-    const prefix = (this.connector.settings.prefix || '')
-      .replace('@CurrentDate', nowDate.toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))
-      .replace('@ConnectorName', this.connector.name);
-    const suffix = (this.connector.settings.suffix || '')
-      .replace('@CurrentDate', nowDate.toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))
-      .replace('@ConnectorName', this.connector.name);
-
-    const filename = `${prefix}${nowDate.toMillis()}${suffix}.csv`;
-
-    const csvContent = csv.unparse(
-      values.map(value => ({
-        pointId: value.pointId,
-        timestamp: value.timestamp,
-        value: value.data.value
-      })),
-      {
-        header: true,
-        delimiter: ';'
-      }
-    );
-    await fs.writeFile(path.join(path.resolve(this.connector.settings.outputFolder), filename), csvContent);
-    this.logger.debug(`File "${filename}" created in "${path.resolve(this.connector.settings.outputFolder)}" output folder`);
-  }
-
-  async handleFile(filePath: string): Promise<void> {
     const nowDate = DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS');
 
     // Remove timestamp from the file path
-    const { name, ext } = path.parse(filePath);
-    const filename = name.slice(0, name.lastIndexOf('-'));
+    const { name, ext } = path.parse(getFilenameWithoutRandomId(cacheMetadata.contentFile));
 
     const prefix = (this.connector.settings.prefix || '').replace('@CurrentDate', nowDate).replace('@ConnectorName', this.connector.name);
     const suffix = (this.connector.settings.suffix || '').replace('@CurrentDate', nowDate).replace('@ConnectorName', this.connector.name);
 
-    const resultingFilename = `${prefix}${filename}${suffix}${ext}`;
-    await fs.copyFile(filePath, path.join(path.resolve(this.connector.settings.outputFolder), resultingFilename));
-    this.logger.debug(`File "${filePath}" copied into "${resultingFilename}"`);
+    const resultingFilename = `${prefix}${name}${suffix}${ext}`;
+    await fs.copyFile(cacheMetadata.contentFile, path.join(path.resolve(this.connector.settings.outputFolder), resultingFilename));
+    this.logger.debug(`File "${cacheMetadata.contentFile}" copied into "${resultingFilename}"`);
   }
 
   override async testConnection(): Promise<void> {

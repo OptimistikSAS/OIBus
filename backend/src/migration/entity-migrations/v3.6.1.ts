@@ -10,7 +10,6 @@ export async function up(knex: Knex): Promise<void> {
   await createTransformersTable(knex);
   await createNorthTransformersTable(knex);
   await createHistoryTransformersTable(knex);
-  // TODO: create standard transformers
 }
 
 async function createTransformersTable(knex: Knex): Promise<void> {

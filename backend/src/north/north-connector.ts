@@ -5,10 +5,10 @@ import { EventEmitter } from 'node:events';
 import DeferredPromise from '../service/deferred-promise';
 import { CacheMetadata, CacheSearchParam, OIBusContent } from '../../shared/model/engine.model';
 import { DateTime } from 'luxon';
-import { createReadStream, createWriteStream, ReadStream } from 'node:fs';
+import { createReadStream, ReadStream } from 'node:fs';
 import path from 'node:path';
 import { NorthSettings } from '../../shared/model/north-settings.model';
-import { createBaseFolders, delay, generateRandomId, pipeTransformers, validateCronExpression } from '../service/utils';
+import { createBaseFolders, delay, generateRandomId, validateCronExpression } from '../service/utils';
 import { NorthConnectorEntity } from '../model/north-connector.model';
 import { SouthConnectorEntityLight } from '../model/south-connector.model';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
@@ -19,7 +19,7 @@ import { BaseFolders } from '../model/types';
 import CacheService from '../service/cache/cache.service';
 import { Readable } from 'node:stream';
 import fsAsync from 'node:fs/promises';
-import TransformerService from '../service/transformer.service';
+import TransformerService, { createTransformer } from '../service/transformer.service';
 
 /**
  * Class NorthConnector : provides general attributes and methods for north connectors.
@@ -216,7 +216,10 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     const runStart = DateTime.now();
     try {
       // Transform content filename into full path of file to ease the treatment in each north connector
-      const contentToSend: { metadataFilename: string; metadata: CacheMetadata } = JSON.parse(JSON.stringify(this.contentBeingSent));
+      const contentToSend: {
+        metadataFilename: string;
+        metadata: CacheMetadata;
+      } = JSON.parse(JSON.stringify(this.contentBeingSent));
       contentToSend.metadata.contentFile = path.join(
         this.cacheService.cacheFolder,
         this.cacheService.CONTENT_FOLDER,
@@ -296,62 +299,52 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     }
 
     if (data.type === 'raw') {
-      const randomId = generateRandomId(10);
-      const cacheFilename = `${path.parse(data.filePath).name}-${randomId}${path.parse(data.filePath).ext}`;
       const readStream = createReadStream(data.filePath);
-      await this.cacheSingleBatch(readStream, cacheFilename, 'raw', 0, randomId, source);
+      await this.cacheSingleBatch(readStream, 'raw', source, path.parse(data.filePath).base);
     } else {
       if (this.connector.caching.throttling.maxNumberOfElements > 0) {
         for (let i = 0; i < data.content.length; i += this.connector.caching.throttling.maxNumberOfElements) {
-          const randomId = generateRandomId(10);
-          const cacheFilename = `${randomId}.json`;
           const chunks: Array<object> = data.content.slice(i, i + this.connector.caching.throttling.maxNumberOfElements);
           const readStream = Readable.from(JSON.stringify(chunks));
-          await this.cacheSingleBatch(readStream, cacheFilename, data.type, chunks.length, randomId, source);
+          await this.cacheSingleBatch(readStream, data.type, source, null);
         }
       } else {
-        const randomId = generateRandomId(10);
-        const cacheFilename = `${randomId}.json`;
         const readStream = Readable.from(JSON.stringify(data.content));
-        await this.cacheSingleBatch(readStream, cacheFilename, data.type, data.content.length, randomId, source);
+        await this.cacheSingleBatch(readStream, data.type, source, null);
       }
     }
     await this.triggerRunIfNecessary(0); // No delay needed here, we check for trigger right now, once the cache is updated
   }
 
-  private async cacheSingleBatch(
-    readStream: ReadStream | Readable,
-    cacheFilename: string,
-    dataType: string,
-    numberOfElement: number,
-    randomId: string,
-    source: string
-  ) {
-    const writeStream = createWriteStream(path.join(this.cacheService.cacheFolder, this.cacheService.CONTENT_FOLDER, cacheFilename));
+  private async cacheSingleBatch(readStream: ReadStream | Readable, inputType: string, source: string, filename: string | null) {
+    // Either generate a filename
+    const transformerForInputType = this.connector.transformers.find(element => element.inputType === inputType);
+    if (!transformerForInputType) {
+      this.logger.error(`Could not find a transformer of input type ${inputType}. Content is not cached for this North`);
+      return;
+    }
 
-    // TODO: use transformers here
-    // Use `pipeline` to safely chain streams
-    await pipeTransformers(readStream, writeStream);
+    const transformer = createTransformer(this.transformerService.findById(transformerForInputType.id)!, this.connector, this.logger);
+    const { metadata, output } = await transformer.transform(readStream, source, filename);
 
-    const fileStat = await fsAsync.stat(path.join(this.cacheService.cacheFolder, this.cacheService.CONTENT_FOLDER, cacheFilename));
-    const metadata: CacheMetadata = {
-      contentFile: cacheFilename,
-      contentSize: fileStat.size,
-      numberOfElement: numberOfElement,
-      createdAt: DateTime.fromMillis(fileStat.ctimeMs).toUTC().toISO()!,
-      contentType: dataType,
-      source,
-      options: {} // TODO: implement that with transformers
-    };
+    await fsAsync.writeFile(path.join(this.cacheService.cacheFolder, this.cacheService.CONTENT_FOLDER, metadata.contentFile), output, {
+      encoding: 'utf-8',
+      flag: 'w'
+    });
+
+    const fileStat = await fsAsync.stat(path.join(this.cacheService.cacheFolder, this.cacheService.CONTENT_FOLDER, metadata.contentFile));
+    metadata.contentSize = fileStat.size;
+    metadata.createdAt = DateTime.fromMillis(fileStat.ctimeMs).toUTC().toISO()!;
+    const metadataFilename = `${generateRandomId(10)}.json`;
     await fsAsync.writeFile(
-      path.join(this.cacheService.cacheFolder, this.cacheService.METADATA_FOLDER, `${randomId}.json`),
+      path.join(this.cacheService.cacheFolder, this.cacheService.METADATA_FOLDER, metadataFilename),
       JSON.stringify(metadata),
       {
         encoding: 'utf-8',
         flag: 'w'
       }
     );
-    this.cacheService.addCacheContentToQueue({ metadataFilename: `${randomId}.json`, metadata });
+    this.cacheService.addCacheContentToQueue({ metadataFilename, metadata });
     this.metricsEvent.emit('cache-content-size', fileStat.size);
   }
 
