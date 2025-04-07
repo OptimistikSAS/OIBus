@@ -5,7 +5,7 @@ import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
 import CacheServiceMock from '../tests/__mocks__/service/cache/cache-service.mock';
-import { createBaseFolders, delay, dirSize, generateRandomId, pipeTransformers, validateCronExpression } from '../service/utils';
+import { createBaseFolders, delay, dirSize, generateRandomId, validateCronExpression } from '../service/utils';
 import { CacheMetadata, OIBusRawContent } from '../../shared/model/engine.model';
 import testData from '../tests/utils/test-data';
 import { NorthFileWriterSettings, NorthSettings } from '../../shared/model/north-settings.model';
@@ -21,10 +21,12 @@ import { OIBusError } from '../model/engine.model';
 import fsAsync from 'node:fs/promises';
 import path from 'node:path';
 import { DateTime } from 'luxon';
-import { createReadStream, createWriteStream } from 'node:fs';
+import { createReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
-import TransformerService from '../service/transformer.service';
+import TransformerService, { createTransformer } from '../service/transformer.service';
 import TransformerServiceMock from '../tests/__mocks__/service/transformer-service.mock';
+import OIBusTransformerMock from '../tests/__mocks__/service/transformers/oibus-transformer.mock';
+import OIBusTransformer from '../service/transformers/oibus-transformer';
 
 // Mock fs
 jest.mock('node:stream');
@@ -33,12 +35,14 @@ jest.mock('node:fs/promises');
 
 // Mock services
 jest.mock('../service/utils');
+jest.mock('../service/transformer.service');
 
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const cacheService: CacheService = new CacheServiceMock();
 const transformerService: TransformerService = new TransformerServiceMock();
+const oiBusTransformer: OIBusTransformer = new OIBusTransformerMock() as unknown as OIBusTransformer;
 
 jest.mock(
   '../service/cache/cache.service',
@@ -73,6 +77,7 @@ describe('NorthConnector', () => {
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(testData.north.list[0]);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
     (dirSize as jest.Mock).mockReturnValue(123);
+    (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
 
     north = new NorthFileWriter(
       testData.north.list[0] as NorthConnectorEntity<NorthFileWriterSettings>,
@@ -436,7 +441,6 @@ describe('NorthConnector', () => {
     north['connector'].caching.throttling.maxNumberOfElements = 0;
     (fsAsync.stat as jest.Mock).mockReturnValueOnce({ size: 100, ctimeMs: 123 });
     (generateRandomId as jest.Mock).mockReturnValueOnce('1234567890');
-    (createWriteStream as jest.Mock).mockReturnValueOnce('writeStream');
     (Readable.from as jest.Mock).mockReturnValueOnce('readStream');
     const metadata: CacheMetadata = {
       contentFile: '1234567890.json',
@@ -447,11 +451,13 @@ describe('NorthConnector', () => {
       source: 'south',
       options: {}
     };
+    (oiBusTransformer.transform as jest.Mock).mockReturnValueOnce({ metadata, output: 'output' });
+    (transformerService.findById as jest.Mock).mockReturnValueOnce(testData.transformers.list[0]);
     await north.cacheContent(testData.oibusContent[0], 'south');
 
-    expect(createWriteStream).toHaveBeenCalledWith(path.join(cacheService.cacheFolder, cacheService.CONTENT_FOLDER, '1234567890.json'));
+    expect(oiBusTransformer.transform).toHaveBeenCalledWith('readStream', 'south', null);
     expect(Readable.from).toHaveBeenCalledWith(JSON.stringify(testData.oibusContent[0].content));
-    expect(pipeTransformers).toHaveBeenCalledWith('readStream', 'writeStream');
+    expect(createTransformer).toHaveBeenCalledWith(testData.transformers.list[0], testData.north.list[0], logger);
 
     expect(fsAsync.stat).toHaveBeenCalledWith(path.join(cacheService.cacheFolder, cacheService.CONTENT_FOLDER, '1234567890.json'));
     expect(fsAsync.writeFile).toHaveBeenCalledWith(
@@ -470,7 +476,6 @@ describe('NorthConnector', () => {
 
     (fsAsync.stat as jest.Mock).mockReturnValueOnce({ size: 100, ctimeMs: 123 }).mockReturnValueOnce({ size: 100, ctimeMs: 123 });
     (generateRandomId as jest.Mock).mockReturnValueOnce('1234567890').mockReturnValueOnce('0987654321');
-    (createWriteStream as jest.Mock).mockReturnValueOnce('writeStream').mockReturnValueOnce('writeStream');
     (Readable.from as jest.Mock).mockReturnValueOnce('readStream').mockReturnValueOnce('readStream');
     const metadata1: CacheMetadata = {
       contentFile: '1234567890.json',
@@ -490,17 +495,38 @@ describe('NorthConnector', () => {
       source: 'south',
       options: {}
     };
+    (oiBusTransformer.transform as jest.Mock)
+      .mockReturnValueOnce({ metadata: metadata1, output: 'output1' })
+      .mockReturnValueOnce({ metadata: metadata2, output: 'output2' });
+    (transformerService.findById as jest.Mock)
+      .mockReturnValueOnce(testData.transformers.list[0])
+      .mockReturnValueOnce(testData.transformers.list[0]);
+
     await north.cacheContent(testData.oibusContent[0], 'south');
 
-    expect(createWriteStream).toHaveBeenCalledWith(path.join(cacheService.cacheFolder, cacheService.CONTENT_FOLDER, '1234567890.json'));
-    expect(createWriteStream).toHaveBeenCalledWith(path.join(cacheService.cacheFolder, cacheService.CONTENT_FOLDER, '0987654321.json'));
+    expect(fsAsync.writeFile).toHaveBeenCalledWith(
+      path.join(cacheService.cacheFolder, cacheService.CONTENT_FOLDER, '1234567890.json'),
+      'output1',
+      {
+        encoding: 'utf-8',
+        flag: 'w'
+      }
+    );
+    expect(fsAsync.writeFile).toHaveBeenCalledWith(
+      path.join(cacheService.cacheFolder, cacheService.CONTENT_FOLDER, '0987654321.json'),
+      'output2',
+      {
+        encoding: 'utf-8',
+        flag: 'w'
+      }
+    );
     expect(Readable.from).toHaveBeenCalledWith(
       JSON.stringify(testData.oibusContent[0].content!.slice(0, testData.oibusContent[0].content!.length - 1))
     );
     expect(Readable.from).toHaveBeenCalledWith(
       JSON.stringify([testData.oibusContent[0].content![testData.oibusContent[0].content!.length - 1]])
     );
-    expect(pipeTransformers).toHaveBeenCalledTimes(2);
+    expect(createTransformer).toHaveBeenCalledTimes(2);
 
     expect(fsAsync.stat).toHaveBeenCalledWith(path.join(cacheService.cacheFolder, cacheService.CONTENT_FOLDER, '1234567890.json'));
     expect(fsAsync.stat).toHaveBeenCalledWith(path.join(cacheService.cacheFolder, cacheService.CONTENT_FOLDER, '0987654321.json'));
@@ -527,7 +553,6 @@ describe('NorthConnector', () => {
   it('should cache file content', async () => {
     (fsAsync.stat as jest.Mock).mockReturnValueOnce({ size: 100, ctimeMs: 123 });
     (generateRandomId as jest.Mock).mockReturnValueOnce('1234567890');
-    (createWriteStream as jest.Mock).mockReturnValueOnce('writeStream');
     (createReadStream as jest.Mock).mockReturnValueOnce('readStream');
     const metadata: CacheMetadata = {
       contentFile: `${path.parse((testData.oibusContent[1] as OIBusRawContent).filePath).name}-1234567890.csv`,
@@ -538,17 +563,24 @@ describe('NorthConnector', () => {
       source: 'south',
       options: {}
     };
+    (oiBusTransformer.transform as jest.Mock).mockReturnValueOnce({ metadata, output: 'output' });
+    (transformerService.findById as jest.Mock).mockReturnValueOnce(testData.transformers.list[0]);
     await north.cacheContent(testData.oibusContent[1], 'south');
 
-    expect(createWriteStream).toHaveBeenCalledWith(
+    expect(fsAsync.writeFile).toHaveBeenCalledWith(
       path.join(
         cacheService.cacheFolder,
         cacheService.CONTENT_FOLDER,
         `${path.parse((testData.oibusContent[1] as OIBusRawContent).filePath).name}-1234567890.csv`
-      )
+      ),
+      'output',
+      {
+        encoding: 'utf-8',
+        flag: 'w'
+      }
     );
     expect(createReadStream).toHaveBeenCalledWith((testData.oibusContent[1] as OIBusRawContent).filePath);
-    expect(pipeTransformers).toHaveBeenCalledWith('readStream', 'writeStream');
+    expect(createTransformer).toHaveBeenCalledWith(testData.transformers.list[0], testData.north.list[0], logger);
 
     expect(fsAsync.stat).toHaveBeenCalledWith(
       path.join(
@@ -576,7 +608,21 @@ describe('NorthConnector', () => {
     expect(logger.warn).toHaveBeenCalledWith(
       `North cache is exceeding the maximum allowed size (2 MB >= ${north['connector'].caching.throttling.maxSize} MB). Values will be discarded until the cache is emptied (by sending files/values or manual removal)`
     );
-    expect(pipeTransformers).not.toHaveBeenCalled();
+    expect(createTransformer).not.toHaveBeenCalled();
+  });
+
+  it('should not cache content if transformer not found', async () => {
+    north['connector'].transformers = [];
+    await north.cacheContent(
+      {
+        type: 'raw',
+        filePath: 'path/file.csv'
+      },
+      'south'
+    );
+
+    expect(logger.error).toHaveBeenCalledWith(`Could not find a transformer of input type raw. Content is not cached for this North`);
+    expect(createTransformer).not.toHaveBeenCalled();
   });
 
   it('should create OIBus error', () => {
