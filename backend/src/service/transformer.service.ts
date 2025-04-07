@@ -14,13 +14,14 @@ import { NorthConnectorEntity } from '../model/north-connector.model';
 import { NorthSettings } from '../../shared/model/north-settings.model';
 import pino from 'pino';
 import OibusTransformer from './transformers/oibus-transformer';
-import IsoRawTransformer from './transformers/iso-raw-transformer';
-import IsoTimeValuesTransformer from './transformers/iso-time-values-transformer';
+import IsoTransformer from './transformers/iso-transformer';
 import OIBusTimeValuesToCsvTransformer from './transformers/oibus-time-values-to-csv-transformer';
 import OIBusTimeValuesToJSONTransformer from './transformers/oibus-time-values-to-json-transformer';
 import OIBusTimeValuesToMQTTTransformer from './transformers/oibus-time-values-to-mqtt-transformer';
 import OIBusTimeValuesToOPCUATransformer from './transformers/oibus-time-values-to-opcua-transformer';
 import OIBusTimeValuesToModbusTransformer from './transformers/oibus-time-values-to-modbus-transformer';
+import { OibFormControl } from '../../shared/model/form.model';
+import IsoTimeValuesTransformer from './transformers/iso-time-values-transformer';
 
 export default class TransformerService {
   constructor(
@@ -88,6 +89,7 @@ export const copyTransformerCommandToTransformerEntity = async (
   transformer.inputType = command.inputType;
   transformer.outputType = command.outputType;
   transformer.customCode = command.customCode;
+  transformer.customManifest = command.customManifest;
 };
 
 export const toTransformerLightDTO = (transformer: TransformerLight): TransformerLightDTO => {
@@ -111,7 +113,7 @@ export const toTransformerDTO = (transformer: Transformer): TransformerDTO => {
         description: transformer.description,
         inputType: transformer.inputType,
         outputType: transformer.outputType,
-        standardCode: transformer.standardCode
+        manifest: getStandardManifest(transformer.id)
       };
     case 'custom':
       return {
@@ -121,39 +123,63 @@ export const toTransformerDTO = (transformer: Transformer): TransformerDTO => {
         description: transformer.description,
         inputType: transformer.inputType,
         outputType: transformer.outputType,
-        customCode: transformer.customCode
+        customCode: transformer.customCode,
+        manifest: transformer.customManifest
       };
   }
 };
 
 export const createTransformer = (
   transformer: Transformer,
+  options: object,
   northConnector: NorthConnectorEntity<NorthSettings>,
   logger: pino.Logger
 ): OibusTransformer => {
   switch (transformer.id) {
-    case IsoRawTransformer.transformerName: {
-      return new IsoRawTransformer(logger, transformer, northConnector);
-    }
-    case IsoTimeValuesTransformer.transformerName: {
-      return new IsoTimeValuesTransformer(logger, transformer, northConnector);
-    }
     case OIBusTimeValuesToCsvTransformer.transformerName: {
-      return new OIBusTimeValuesToCsvTransformer(logger, transformer, northConnector);
+      return new OIBusTimeValuesToCsvTransformer(logger, transformer, northConnector, options);
     }
     case OIBusTimeValuesToJSONTransformer.transformerName: {
-      return new OIBusTimeValuesToJSONTransformer(logger, transformer, northConnector);
+      return new OIBusTimeValuesToJSONTransformer(logger, transformer, northConnector, options);
     }
     case OIBusTimeValuesToMQTTTransformer.transformerName: {
-      return new OIBusTimeValuesToMQTTTransformer(logger, transformer, northConnector);
+      return new OIBusTimeValuesToMQTTTransformer(logger, transformer, northConnector, options);
     }
     case OIBusTimeValuesToOPCUATransformer.transformerName: {
-      return new OIBusTimeValuesToOPCUATransformer(logger, transformer, northConnector);
+      return new OIBusTimeValuesToOPCUATransformer(logger, transformer, northConnector, options);
     }
     case OIBusTimeValuesToModbusTransformer.transformerName: {
-      return new OIBusTimeValuesToModbusTransformer(logger, transformer, northConnector);
+      return new OIBusTimeValuesToModbusTransformer(logger, transformer, northConnector, options);
     }
     default:
-      throw new Error(`Could not create ${transformer.id} transformer`);
+      return new IsoTransformer(logger, transformer, northConnector, options);
+  }
+};
+
+export const getStandardManifest = (transformerId: string): Array<OibFormControl> => {
+  switch (transformerId) {
+    case IsoTransformer.transformerName: {
+      return IsoTransformer.manifestSettings;
+    }
+    case IsoTimeValuesTransformer.transformerName: {
+      return IsoTimeValuesTransformer.manifestSettings;
+    }
+    case OIBusTimeValuesToCsvTransformer.transformerName: {
+      return OIBusTimeValuesToCsvTransformer.manifestSettings;
+    }
+    case OIBusTimeValuesToJSONTransformer.transformerName: {
+      return OIBusTimeValuesToJSONTransformer.manifestSettings;
+    }
+    case OIBusTimeValuesToMQTTTransformer.transformerName: {
+      return OIBusTimeValuesToMQTTTransformer.manifestSettings;
+    }
+    case OIBusTimeValuesToOPCUATransformer.transformerName: {
+      return OIBusTimeValuesToOPCUATransformer.manifestSettings;
+    }
+    case OIBusTimeValuesToModbusTransformer.transformerName: {
+      return OIBusTimeValuesToModbusTransformer.manifestSettings;
+    }
+    default:
+      throw new Error(`Could not find manifest for ${transformerId} transformer`);
   }
 };

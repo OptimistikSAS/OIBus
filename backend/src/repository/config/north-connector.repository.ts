@@ -34,7 +34,8 @@ export default class NorthConnectorRepository {
       `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
       `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
       `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, ` +
-      `caching_archive_enabled, caching_archive_retention_duration ` +
+      `caching_archive_enabled, caching_archive_retention_duration, ` +
+      `unknown_transformer_id, time_values_transformer_id ` +
       `FROM ${NORTH_CONNECTORS_TABLE} WHERE id = ?;`;
     const result = this.database.prepare(query).get(id);
     if (!result) return null;
@@ -50,8 +51,8 @@ export default class NorthConnectorRepository {
           `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
           `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
           `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, ` +
-          `caching_archive_enabled, caching_archive_retention_duration) ` +
-          `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+          `caching_archive_enabled, caching_archive_retention_duration, unknown_transformer_id, time_values_transformer_id) ` +
+          `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
         this.database
           .prepare(insertQuery)
           .run(
@@ -71,7 +72,9 @@ export default class NorthConnectorRepository {
             north.caching.error.retryCount,
             north.caching.error.retentionDuration,
             +north.caching.archive.enabled,
-            north.caching.archive.retentionDuration
+            north.caching.archive.retentionDuration,
+            north.transformers.unknown.transformer?.id ?? null,
+            north.transformers.timeValues.transformer?.id ?? null
           );
       } else {
         const query =
@@ -79,7 +82,8 @@ export default class NorthConnectorRepository {
           `caching_trigger_schedule = ?, caching_trigger_number_of_elements = ?, caching_trigger_number_of_files = ?, ` +
           `caching_throttling_run_min_delay = ?, caching_throttling_cache_max_size = ?, caching_throttling_max_number_of_elements = ?, ` +
           `caching_error_retry_interval = ?, caching_error_retry_count = ?, caching_error_retention_duration = ?, ` +
-          `caching_archive_enabled = ?, caching_archive_retention_duration = ? ` +
+          `caching_archive_enabled = ?, caching_archive_retention_duration = ?, ` +
+          `unknown_transformer_id = ?, time_values_transformer_id = ? ` +
           `WHERE id = ?;`;
         this.database
           .prepare(query)
@@ -99,6 +103,8 @@ export default class NorthConnectorRepository {
             north.caching.error.retentionDuration,
             +north.caching.archive.enabled,
             north.caching.archive.retentionDuration,
+            north.transformers.unknown.transformer?.id ?? null,
+            north.transformers.timeValues.transformer?.id ?? null,
             north.id
           );
       }
@@ -126,11 +132,12 @@ export default class NorthConnectorRepository {
       }
 
       this.database.prepare(`DELETE FROM ${NORTH_TRANSFORMERS_TABLE} WHERE north_id = ?;`).run(north.id);
-      if (north.transformers.length > 0) {
-        const insert = this.database.prepare(`INSERT INTO ${NORTH_TRANSFORMERS_TABLE} (north_id, transformer_id) VALUES (?, ?);`);
-        for (const transformer of north.transformers) {
-          insert.run(north.id, transformer.id);
-        }
+      const insert = this.database.prepare(`INSERT INTO ${NORTH_TRANSFORMERS_TABLE} (north_id, transformer_id, options) VALUES (?, ?, ?);`);
+      if (north.transformers.timeValues.transformer) {
+        insert.run(north.id, north.transformers.timeValues.transformer.id, JSON.stringify(north.transformers.timeValues.options));
+      }
+      if (north.transformers.unknown.transformer) {
+        insert.run(north.id, north.transformers.unknown.transformer.id, JSON.stringify(north.transformers.unknown.options));
       }
     });
     transaction();
@@ -187,12 +194,13 @@ export default class NorthConnectorRepository {
     this.database.prepare(query).run(northId);
   }
 
-  findAllTransformersForNorth(northId: string): Array<Transformer> {
-    const query = `SELECT t.id, t.name, t.type, t.description, t.input_type, t.output_type, t.standard_code, t.custom_code FROM ${NORTH_TRANSFORMERS_TABLE} nt JOIN ${TRANSFORMERS_TABLE} t ON nt.transformer_id = t.id WHERE nt.north_id = ?;`;
-    return this.database
-      .prepare(query)
-      .all(northId)
-      .map(result => toTransformer(result as Record<string, string>));
+  findTransformerForNorth(northId: string, transformerId: string): { transformer: Transformer | null; options: object } {
+    const query = `SELECT t.id, t.name, t.type, t.description, t.input_type, t.output_type, t.custom_manifest, t.custom_code, nt.options FROM ${NORTH_TRANSFORMERS_TABLE} nt JOIN ${TRANSFORMERS_TABLE} t ON nt.transformer_id = t.id WHERE nt.north_id = ? AND nt.transformer_id = ?;`;
+    const result = this.database.prepare(query).get(northId, transformerId) as Record<string, string>;
+    return {
+      transformer: result ? toTransformer(result as Record<string, string>) : null,
+      options: (result as Record<string, string>)?.options ? JSON.parse((result as Record<string, string>).options) : {}
+    };
   }
 
   private toNorthConnectorLight(result: Record<string, string>): NorthConnectorEntityLight {
@@ -235,7 +243,10 @@ export default class NorthConnectorRepository {
         }
       },
       subscriptions: this.listNorthSubscriptions(result.id as string),
-      transformers: this.findAllTransformersForNorth(result.id as string)
+      transformers: {
+        unknown: this.findTransformerForNorth(result.id as string, result.unknown_transformer_id as string),
+        timeValues: this.findTransformerForNorth(result.id as string, result.time_values_transformer_id as string)
+      }
     };
   }
 }

@@ -10,7 +10,8 @@ export default abstract class OIBusTransformer {
   constructor(
     protected logger: pino.Logger,
     protected transformer: Transformer,
-    protected northConnector: NorthConnectorEntity<NorthSettings>
+    protected northConnector: NorthConnectorEntity<NorthSettings>,
+    protected _options: object
   ) {}
   abstract transform(
     data: ReadStream | Readable,

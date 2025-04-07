@@ -235,7 +235,10 @@ export default class NorthService {
       ),
       name: northConnector ? northConnector.name : `${command!.type}:test-connection`,
       subscriptions: [],
-      transformers: []
+      transformers: {
+        unknown: { transformer: null, options: {} },
+        timeValues: { transformer: null, options: {} }
+      }
     };
 
     const north = this.runNorth(testToRun, logger, { cache: 'baseCacheFolder', archive: 'baseArchiveFolder', error: 'baseErrorFolder' });
@@ -546,7 +549,20 @@ export const toNorthConnectorDTO = <N extends NorthSettings>(
       }
     },
     subscriptions: northEntity.subscriptions,
-    transformers: northEntity.transformers.map(transformer => toTransformerLightDTO(transformer))
+    transformers: {
+      unknown: {
+        transformer: northEntity.transformers.unknown.transformer
+          ? toTransformerLightDTO(northEntity.transformers.unknown.transformer)
+          : null,
+        options: northEntity.transformers.unknown.options
+      },
+      timeValues: {
+        transformer: northEntity.transformers.timeValues.transformer
+          ? toTransformerLightDTO(northEntity.transformers.timeValues.transformer)
+          : null,
+        options: northEntity.transformers.timeValues.options
+      }
+    }
   };
 };
 
@@ -606,11 +622,23 @@ export const copyNorthConnectorCommandToNorthEntity = async <N extends NorthSett
     }
     return subscription;
   });
-  northEntity.transformers = command.transformers.map(transformerId => {
-    const transformer = transformers.find(element => element.id === transformerId);
-    if (!transformer) {
-      throw new Error(`Could not find OIBus transformer ${transformerId}`);
+  northEntity.transformers = {
+    unknown: {
+      transformer: getTransformer(command.transformers.unknown.transformerId, transformers),
+      options: command.transformers.unknown.options
+    },
+    timeValues: {
+      transformer: getTransformer(command.transformers.timeValues.transformerId, transformers),
+      options: command.transformers.timeValues.options
     }
-    return transformer;
-  });
+  };
+};
+
+export const getTransformer = (id: string | null, transformers: Array<TransformerLightDTO>): TransformerLightDTO | null => {
+  if (!id) return null;
+  const transformer = transformers.find(element => element.id === id);
+  if (!transformer) {
+    throw new Error(`Could not find OIBus transformer ${id}`);
+  }
+  return transformer;
 };

@@ -457,7 +457,7 @@ describe('NorthConnector', () => {
 
     expect(oiBusTransformer.transform).toHaveBeenCalledWith('readStream', 'south', null);
     expect(Readable.from).toHaveBeenCalledWith(JSON.stringify(testData.oibusContent[0].content));
-    expect(createTransformer).toHaveBeenCalledWith(testData.transformers.list[0], testData.north.list[0], logger);
+    expect(createTransformer).toHaveBeenCalledWith(testData.transformers.list[0], {}, testData.north.list[0], logger);
 
     expect(fsAsync.stat).toHaveBeenCalledWith(path.join(cacheService.cacheFolder, cacheService.CONTENT_FOLDER, '1234567890.json'));
     expect(fsAsync.writeFile).toHaveBeenCalledWith(
@@ -580,7 +580,7 @@ describe('NorthConnector', () => {
       }
     );
     expect(createReadStream).toHaveBeenCalledWith((testData.oibusContent[1] as OIBusRawContent).filePath);
-    expect(createTransformer).toHaveBeenCalledWith(testData.transformers.list[0], testData.north.list[0], logger);
+    expect(createTransformer).toHaveBeenCalledWith(testData.transformers.list[0], {}, testData.north.list[0], logger);
 
     expect(fsAsync.stat).toHaveBeenCalledWith(
       path.join(
@@ -612,7 +612,16 @@ describe('NorthConnector', () => {
   });
 
   it('should not cache content if transformer not found', async () => {
-    north['connector'].transformers = [];
+    north['connector'].transformers = {
+      timeValues: {
+        transformer: null,
+        options: {}
+      },
+      unknown: {
+        transformer: null,
+        options: {}
+      }
+    };
     await north.cacheContent(
       {
         type: 'raw',
@@ -621,7 +630,7 @@ describe('NorthConnector', () => {
       'south'
     );
 
-    expect(logger.error).toHaveBeenCalledWith(`Could not find a transformer of input type raw. Content is not cached for this North`);
+    expect(logger.trace).toHaveBeenCalledWith(`Ignoring data of type raw`);
     expect(createTransformer).not.toHaveBeenCalled();
   });
 

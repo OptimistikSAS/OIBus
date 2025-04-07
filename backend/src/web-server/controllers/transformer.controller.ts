@@ -6,7 +6,7 @@ import {
   TransformerLightDTO,
   TransformerSearchParam
 } from '../../../shared/model/transformer.model';
-import { toTransformerDTO, toTransformerLightDTO } from '../../service/transformer.service';
+import { toTransformerLightDTO, toTransformerDTO } from '../../service/transformer.service';
 import { Page } from '../../../shared/model/types';
 import { OIBusDataType } from '../../../shared/model/engine.model';
 

@@ -21,7 +21,7 @@ import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
 import { checkScanMode, createBaseFolders, filesExists } from './utils';
 import SouthService, { southManifestList } from './south.service';
-import NorthService, { northManifestList } from './north.service';
+import NorthService, { getTransformer, northManifestList } from './north.service';
 import LogRepository from '../repository/logs/log.repository';
 import { Page } from '../../shared/model/types';
 import pino from 'pino';
@@ -743,7 +743,20 @@ export const toHistoryQueryDTO = <S extends SouthSettings, N extends NorthSettin
       }
     },
     items: historyQuery.items.map(item => toHistoryQueryItemDTO<I>(item, historyQuery.southType, encryptionService)),
-    northTransformers: historyQuery.northTransformers.map(transformer => toTransformerLightDTO(transformer))
+    northTransformers: {
+      unknown: {
+        transformer: historyQuery.northTransformers.unknown.transformer
+          ? toTransformerLightDTO(historyQuery.northTransformers.unknown.transformer)
+          : null,
+        options: historyQuery.northTransformers.unknown.options
+      },
+      timeValues: {
+        transformer: historyQuery.northTransformers.timeValues.transformer
+          ? toTransformerLightDTO(historyQuery.northTransformers.timeValues.transformer)
+          : null,
+        options: historyQuery.northTransformers.timeValues.options
+      }
+    }
   };
 };
 
@@ -809,14 +822,16 @@ const copyHistoryQueryCommandToHistoryQueryEntity = async <S extends SouthSettin
       retentionDuration: command.caching.archive.retentionDuration
     }
   };
-
-  historyQueryEntity.northTransformers = command.northTransformers.map(transformerId => {
-    const transformer = transformers.find(element => element.id === transformerId);
-    if (!transformer) {
-      throw new Error(`Could not find OIBus transformer ${transformerId}`);
+  historyQueryEntity.northTransformers = {
+    unknown: {
+      transformer: getTransformer(command.northTransformers.unknown.transformerId, transformers),
+      options: command.northTransformers.unknown.options
+    },
+    timeValues: {
+      transformer: getTransformer(command.northTransformers.timeValues.transformerId, transformers),
+      options: command.northTransformers.timeValues.options
     }
-    return transformer;
-  });
+  };
   historyQueryEntity.items = await Promise.all(
     command.items.map(async itemCommand => {
       const itemEntity = { id: itemCommand.id } as HistoryQueryItemEntity<I>;

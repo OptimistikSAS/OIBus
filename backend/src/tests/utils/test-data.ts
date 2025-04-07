@@ -85,7 +85,8 @@ const transformerCommandDTO: CustomTransformerCommand = {
   description: 'description',
   inputType: 'time-values',
   outputType: 'raw',
-  customCode: 'console.log("Hello World");'
+  customCode: 'console.log("Hello World");',
+  customManifest: []
 };
 const transformers: Array<Transformer> = [
   {
@@ -95,7 +96,8 @@ const transformers: Array<Transformer> = [
     description: 'description',
     inputType: 'time-values',
     outputType: 'raw',
-    customCode: 'console.log("Hello World");'
+    customCode: 'console.log("Hello World");',
+    customManifest: []
   },
   {
     id: 'transformerId2',
@@ -104,7 +106,8 @@ const transformers: Array<Transformer> = [
     description: 'description',
     inputType: 'raw',
     outputType: 'raw',
-    customCode: 'console.log("Hello World");'
+    customCode: 'console.log("Hello World");',
+    customManifest: []
   }
 ];
 
@@ -457,7 +460,10 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
         enabled: southConnectors[1].enabled
       }
     ],
-    transformers: [transformers[0], transformers[1]]
+    transformers: {
+      timeValues: { transformer: transformers[0], options: {} },
+      unknown: { transformer: transformers[1], options: {} }
+    }
   },
   {
     id: 'northId2',
@@ -500,7 +506,10 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
         enabled: southConnectors[0].enabled
       }
     ],
-    transformers: []
+    transformers: {
+      timeValues: { transformer: null, options: {} },
+      unknown: { transformer: null, options: {} }
+    }
   }
 ];
 const northConnectorCommand: NorthConnectorCommandDTO<NorthSettings> = {
@@ -536,7 +545,10 @@ const northConnectorCommand: NorthConnectorCommandDTO<NorthSettings> = {
     }
   },
   subscriptions: [southConnectors[0].id],
-  transformers: [transformers[0].id]
+  transformers: {
+    timeValues: { transformerId: transformers[0].id, options: {} },
+    unknown: { transformerId: transformers[1].id, options: {} }
+  }
 };
 
 const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>> = [
@@ -606,7 +618,10 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
         settings: {} as SouthItemSettings
       }
     ],
-    northTransformers: [transformers[0]]
+    northTransformers: {
+      timeValues: { transformer: transformers[0], options: {} },
+      unknown: { transformer: transformers[1], options: {} }
+    }
   },
   {
     id: 'historyId2',
@@ -668,7 +683,10 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
         settings: {} as SouthItemSettings
       }
     ],
-    northTransformers: [transformers[0]]
+    northTransformers: {
+      timeValues: { transformer: transformers[0], options: {} },
+      unknown: { transformer: transformers[1], options: {} }
+    }
   }
 ];
 const historyQueryCommand: HistoryQueryCommandDTO<SouthSettings, NorthSettings, SouthItemSettings> = {
@@ -730,7 +748,10 @@ const historyQueryCommand: HistoryQueryCommandDTO<SouthSettings, NorthSettings, 
       settings: {} as SouthItemSettings
     }
   ],
-  northTransformers: [transformers[0].id]
+  northTransformers: {
+    timeValues: { transformerId: transformers[0].id, options: {} },
+    unknown: { transformerId: transformers[1].id, options: {} }
+  }
 };
 const historyQueryItemCommand: HistoryQueryItemCommandDTO<SouthItemSettings> = {
   id: 'newHistoryQueryItemId',

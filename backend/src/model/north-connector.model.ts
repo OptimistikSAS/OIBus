@@ -39,5 +39,8 @@ export interface NorthConnectorEntity<T extends NorthSettings> extends BaseEntit
     };
   };
   subscriptions: Array<SouthConnectorEntityLight>;
-  transformers: Array<TransformerLight>;
+  transformers: {
+    unknown: { transformer: TransformerLight | null; options: object };
+    timeValues: { transformer: TransformerLight | null; options: object };
+  };
 }

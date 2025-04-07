@@ -1,14 +1,19 @@
 import OIBusTransformer from './oibus-transformer';
 import { ReadStream } from 'node:fs';
-import { Readable, Transform, pipeline } from 'node:stream';
+import { pipeline, Readable, Transform } from 'node:stream';
 import { CacheMetadata, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { promisify } from 'node:util';
+import { OibFormControl } from '../../../shared/model/form.model';
 
 const pipelineAsync = promisify(pipeline);
 
 export interface OIBusMQTTValue {
   topic: string;
   payload: string;
+}
+
+interface TransformerOptions {
+  mapping: Array<{ pointId: string; topic: string }>;
 }
 
 export default class OIBusTimeValuesToMQTTTransformer extends OIBusTransformer {
@@ -32,12 +37,16 @@ export default class OIBusTimeValuesToMQTTTransformer extends OIBusTransformer {
     );
     const stringContent = Buffer.concat(chunks).toString('utf-8');
     // Combine the chunks into a single buffer
-    const content: Array<OIBusMQTTValue> = (JSON.parse(stringContent) as Array<OIBusTimeValue>).map(element => {
-      return {
-        topic: element.pointId,
-        payload: JSON.stringify({ ...element.data, timestamp: element.timestamp })
-      };
-    });
+    const content: Array<OIBusMQTTValue> = (JSON.parse(stringContent) as Array<OIBusTimeValue>)
+      .map(element => {
+        const mappedElement = this.options.mapping.find(matchingElement => matchingElement.pointId === element.pointId);
+        if (!mappedElement) return null;
+        return {
+          topic: mappedElement.topic,
+          payload: JSON.stringify({ ...element.data, timestamp: element.timestamp })
+        };
+      })
+      .filter((mappedElement): mappedElement is OIBusMQTTValue => mappedElement !== null);
 
     const metadata: CacheMetadata = {
       contentFile: cacheFilename,
@@ -52,5 +61,40 @@ export default class OIBusTimeValuesToMQTTTransformer extends OIBusTransformer {
       output: JSON.stringify(content),
       metadata
     };
+  }
+
+  get options(): TransformerOptions {
+    return this._options as TransformerOptions;
+  }
+
+  public static get manifestSettings(): Array<OibFormControl> {
+    return [
+      {
+        key: 'mapping',
+        type: 'OibArray',
+        translationKey: 'transformers.mapping.title',
+        content: [
+          {
+            key: 'pointId',
+            translationKey: 'transformers.mapping.point-id',
+            type: 'OibText',
+            defaultValue: '',
+            validators: [{ key: 'required' }],
+            displayInViewMode: true
+          },
+          {
+            key: 'topic',
+            translationKey: 'transformers.mapping.mqtt.topic',
+            type: 'OibText',
+            defaultValue: '',
+            validators: [{ key: 'required' }],
+            displayInViewMode: true
+          }
+        ],
+        class: 'col',
+        newRow: true,
+        displayInViewMode: false
+      }
+    ];
   }
 }

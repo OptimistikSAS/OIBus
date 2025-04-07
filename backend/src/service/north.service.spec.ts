@@ -329,7 +329,7 @@ describe('north service', () => {
       }))
     );
     await expect(service.createNorth(testData.north.command, null)).rejects.toThrow(
-      `Could not find OIBus transformer ${testData.north.command.transformers[0]}`
+      `Could not find OIBus transformer ${testData.north.command.transformers.unknown.transformerId}`
     );
   });
 

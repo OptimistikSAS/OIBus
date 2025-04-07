@@ -3,27 +3,53 @@
     <table class="table table-sm oib-table">
       <thead class="light">
         <tr>
+          <th></th>
           <th translate="transformers.input-type"></th>
-          <th translate="transformers.output-type"></th>
+          <th translate="transformers.transformer"></th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
-        @for (transformer of controls().controls; track transformer) {
-          <tr>
-            <td class="align-middle">
-              <span>{{ transformer.value.type! | oIBusDataTypeEnum }}</span>
-            </td>
-            <td class="align-middle">
-              <oib-transformer
-                [key]="transformer.value.type!"
-                [formControl]="transformer.controls.transformer"
-                [transformers]="transformers()"
-                [inputType]="transformer.value.type!"
-                [outputType]="northManifest().types"
-              />
-            </td>
-          </tr>
-        }
+        <tr>
+          <td></td>
+          <td translate="enums.oibus-data-type.time-values"></td>
+          <td>
+            @if (!controls().controls.timeValues.controls.transformer.value) {
+              <span translate="transformers.standard.none"></span>
+            } @else {
+              @if (controls().controls.timeValues.controls.transformer.value!.type === 'standard') {
+                <span [translate]="'transformers.standard.' + controls().controls.timeValues.controls.transformer.value!.id"></span>
+              } @else {
+                <span>{{ controls().controls.timeValues.controls.transformer.value!.name }}</span>
+              }
+            }
+          </td>
+          <td class="pull-right">
+            <button type="button" class="btn btn-link" (click)="editTransformer('time-values')">
+              <span class="fa fa-pencil"></span>
+            </button>
+          </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td translate="enums.oibus-data-type.raw"></td>
+          <td>
+            @if (!controls().controls.unknown.controls.transformer.value) {
+              <span translate="transformers.standard.none"></span>
+            } @else {
+              @if (controls().controls.unknown.controls.transformer.value!.type === 'standard') {
+                <span [translate]="'transformers.standard.' + controls().controls.unknown.controls.transformer.value!.id"></span>
+              } @else {
+                <span>{{ controls().controls.unknown.controls.transformer.value!.name }}</span>
+              }
+            }
+          </td>
+          <td class="pull-right">
+            <button type="button" class="btn btn-link" (click)="editTransformer('raw')">
+              <span class="fa fa-pencil"></span>
+            </button>
+          </td>
+        </tr>
       </tbody>
     </table>
   </div>

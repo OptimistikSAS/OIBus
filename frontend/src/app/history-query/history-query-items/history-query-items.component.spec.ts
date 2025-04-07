@@ -75,7 +75,16 @@ const testHistoryQuery: HistoryQueryDTO<SouthSettings, NorthSettings, SouthItemS
       } as SouthItemSettings
     }
   ],
-  northTransformers: []
+  northTransformers: {
+    timeValues: {
+      transformer: null,
+      options: {}
+    },
+    unknown: {
+      transformer: null,
+      options: {}
+    }
+  }
 };
 
 @Component({

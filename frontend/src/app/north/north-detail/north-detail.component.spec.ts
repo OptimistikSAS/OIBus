@@ -74,7 +74,16 @@ describe('NorthDetailComponent', () => {
       }
     },
     subscriptions: [],
-    transformers: []
+    transformers: {
+      timeValues: {
+        transformer: null,
+        options: {}
+      },
+      unknown: {
+        transformer: null,
+        options: {}
+      }
+    }
   };
   const manifest: NorthConnectorManifest = {
     id: 'oianalytics',

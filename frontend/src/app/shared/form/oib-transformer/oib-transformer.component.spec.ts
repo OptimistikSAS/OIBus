@@ -58,7 +58,7 @@ describe('OibTransformerComponent', () => {
   });
 
   it('should change value', () => {
-    tester.oibFormInput.selectLabel('Time values (keep time values as it is)');
-    expect(tester.oibFormInput).toHaveSelectedLabel('Time values (keep time values as it is)');
+    tester.oibFormInput.selectLabel('No transform');
+    expect(tester.oibFormInput).toHaveSelectedLabel('No transform');
   });
 });

@@ -9,8 +9,7 @@ import OianalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianal
 import { StandardTransformer, Transformer } from '../model/transformer.model';
 import pino from 'pino';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
-import IsoRawTransformer from './transformers/iso-raw-transformer';
-import IsoTimeValuesTransformer from './transformers/iso-time-values-transformer';
+import IsoTransformer from './transformers/iso-transformer';
 import OIBusTimeValuesToJSONTransformer from './transformers/oibus-time-values-to-json-transformer';
 import OIBusTimeValuesToCsvTransformer from './transformers/oibus-time-values-to-csv-transformer';
 import OIBusTimeValuesToModbusTransformer from './transformers/oibus-time-values-to-modbus-transformer';
@@ -95,8 +94,7 @@ describe('Transformer Service', () => {
   it('update() should not update if the transformer is a standard one', async () => {
     const standardTransformer: StandardTransformer = {
       id: 'id',
-      type: 'standard',
-      standardCode: 'code'
+      type: 'standard'
     } as StandardTransformer;
     (transformerRepository.findById as jest.Mock).mockReturnValueOnce(standardTransformer);
 
@@ -131,8 +129,7 @@ describe('Transformer Service', () => {
   it('delete() should not delete if the transformer is a standard one', async () => {
     const standardTransformer: StandardTransformer = {
       id: 'id',
-      type: 'standard',
-      standardCode: 'code'
+      type: 'standard'
     } as StandardTransformer;
     (transformerRepository.findById as jest.Mock).mockReturnValueOnce(standardTransformer);
 
@@ -148,28 +145,25 @@ describe('Transformer Service', () => {
     const logger: pino.Logger = new PinoLogger();
 
     const transformer: Transformer = JSON.parse(JSON.stringify(testData.transformers.list[0]));
-    transformer.id = 'iso-raw';
-    expect(createTransformer(transformer, testData.north.list[0], logger)).toBeInstanceOf(IsoRawTransformer);
-
-    transformer.id = 'iso-time-values';
-    expect(createTransformer(transformer, testData.north.list[0], logger)).toBeInstanceOf(IsoTimeValuesTransformer);
+    transformer.id = 'iso';
+    expect(createTransformer(transformer, {}, testData.north.list[0], logger)).toBeInstanceOf(IsoTransformer);
 
     transformer.id = 'time-values-to-csv';
-    expect(createTransformer(transformer, testData.north.list[0], logger)).toBeInstanceOf(OIBusTimeValuesToCsvTransformer);
+    expect(createTransformer(transformer, {}, testData.north.list[0], logger)).toBeInstanceOf(OIBusTimeValuesToCsvTransformer);
 
     transformer.id = 'time-values-to-json';
-    expect(createTransformer(transformer, testData.north.list[0], logger)).toBeInstanceOf(OIBusTimeValuesToJSONTransformer);
+    expect(createTransformer(transformer, {}, testData.north.list[0], logger)).toBeInstanceOf(OIBusTimeValuesToJSONTransformer);
 
     transformer.id = 'time-values-to-modbus';
-    expect(createTransformer(transformer, testData.north.list[0], logger)).toBeInstanceOf(OIBusTimeValuesToModbusTransformer);
+    expect(createTransformer(transformer, {}, testData.north.list[0], logger)).toBeInstanceOf(OIBusTimeValuesToModbusTransformer);
 
     transformer.id = 'time-values-to-opcua';
-    expect(createTransformer(transformer, testData.north.list[0], logger)).toBeInstanceOf(OIBusTimeValuesToOPCUATransformer);
+    expect(createTransformer(transformer, {}, testData.north.list[0], logger)).toBeInstanceOf(OIBusTimeValuesToOPCUATransformer);
 
     transformer.id = 'time-values-to-mqtt';
-    expect(createTransformer(transformer, testData.north.list[0], logger)).toBeInstanceOf(OIBusTimeValuesToMQTTTransformer);
+    expect(createTransformer(transformer, {}, testData.north.list[0], logger)).toBeInstanceOf(OIBusTimeValuesToMQTTTransformer);
 
     transformer.id = 'bad-id';
-    expect(() => createTransformer(transformer, testData.north.list[0], logger)).toThrow(new Error('Could not create bad-id transformer'));
+    expect(createTransformer(transformer, {}, testData.north.list[0], logger)).toBeInstanceOf(IsoTransformer);
   });
 });

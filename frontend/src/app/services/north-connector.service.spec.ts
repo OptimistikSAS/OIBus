@@ -110,7 +110,16 @@ describe('NorthConnectorService', () => {
         }
       },
       subscriptions: [],
-      transformers: []
+      transformers: {
+        timeValues: {
+          transformerId: null,
+          options: {}
+        },
+        unknown: {
+          transformerId: null,
+          options: {}
+        }
+      }
     };
 
     service.create(command, '').subscribe(() => (done = true));
@@ -151,7 +160,16 @@ describe('NorthConnectorService', () => {
         }
       },
       subscriptions: [],
-      transformers: []
+      transformers: {
+        timeValues: {
+          transformerId: null,
+          options: {}
+        },
+        unknown: {
+          transformerId: null,
+          options: {}
+        }
+      }
     };
 
     service.update('id1', command).subscribe(() => (done = true));
@@ -303,7 +321,16 @@ describe('NorthConnectorService', () => {
         }
       },
       subscriptions: [],
-      transformers: []
+      transformers: {
+        timeValues: {
+          transformerId: null,
+          options: {}
+        },
+        unknown: {
+          transformerId: null,
+          options: {}
+        }
+      }
     };
 
     service.testConnection('id1', command).subscribe(() => (done = true));

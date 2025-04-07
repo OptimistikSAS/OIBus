@@ -934,7 +934,10 @@ export default class OIAnalyticsCommandService {
         settings: command.commandContent.northSettings,
         caching: command.commandContent.caching,
         subscriptions: [],
-        transformers: []
+        transformers: {
+          unknown: { transformerId: null, options: {} },
+          timeValues: { transformerId: null, options: {} }
+        }
       },
       this.logger
     );

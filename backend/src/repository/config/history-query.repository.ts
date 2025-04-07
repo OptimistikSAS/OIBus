@@ -35,7 +35,8 @@ export default class HistoryQueryRepository {
       `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
       `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
       `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, ` +
-      `caching_archive_enabled, caching_archive_retention_duration ` +
+      `caching_archive_enabled, caching_archive_retention_duration, ` +
+      `unknown_transformer_id, time_values_transformer_id ` +
       `FROM ${HISTORY_QUERIES_TABLE};`;
     const result = this.database.prepare(query).all();
 
@@ -51,7 +52,8 @@ export default class HistoryQueryRepository {
       `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
       `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
       `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, ` +
-      `caching_archive_enabled, caching_archive_retention_duration ` +
+      `caching_archive_enabled, caching_archive_retention_duration, ` +
+      `unknown_transformer_id, time_values_transformer_id ` +
       `FROM ${HISTORY_QUERIES_TABLE} WHERE id = ?;`;
     const result = this.database.prepare(query).get(id);
     if (!result) {
@@ -72,8 +74,9 @@ export default class HistoryQueryRepository {
           `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
           `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
           `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, ` +
-          `caching_archive_enabled, caching_archive_retention_duration)` +
-          `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+          `caching_archive_enabled, caching_archive_retention_duration, ` +
+          `unknown_transformer_id, time_values_transformer_id) ` +
+          `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
         this.database.prepare(insertQuery).run(
           historyQuery.id,
           historyQuery.name,
@@ -95,7 +98,9 @@ export default class HistoryQueryRepository {
           historyQuery.caching.error.retryCount,
           historyQuery.caching.error.retentionDuration,
           +historyQuery.caching.archive.enabled,
-          historyQuery.caching.archive.retentionDuration
+          historyQuery.caching.archive.retentionDuration,
+          historyQuery.northTransformers.unknown.transformer?.id ?? null,
+          historyQuery.northTransformers.timeValues.transformer?.id ?? null
         );
       } else {
         const query =
@@ -104,7 +109,8 @@ export default class HistoryQueryRepository {
           `caching_trigger_schedule = ?, caching_trigger_number_of_elements = ?, caching_trigger_number_of_files = ?, ` +
           `caching_throttling_run_min_delay = ?, caching_throttling_cache_max_size = ?, caching_throttling_max_number_of_elements = ?, ` +
           `caching_error_retry_interval = ?, caching_error_retry_count = ?, caching_error_retention_duration = ?, ` +
-          `caching_archive_enabled = ?, caching_archive_retention_duration = ? ` +
+          `caching_archive_enabled = ?, caching_archive_retention_duration = ?, ` +
+          `unknown_transformer_id = ?, time_values_transformer_id = ? ` +
           `WHERE id = ?;`;
         this.database
           .prepare(query)
@@ -128,6 +134,8 @@ export default class HistoryQueryRepository {
             historyQuery.caching.error.retentionDuration,
             +historyQuery.caching.archive.enabled,
             historyQuery.caching.archive.retentionDuration,
+            historyQuery.northTransformers.unknown.transformer?.id ?? null,
+            historyQuery.northTransformers.timeValues.transformer?.id ?? null,
             historyQuery.id
           );
       }
@@ -159,11 +167,22 @@ export default class HistoryQueryRepository {
       }
 
       this.database.prepare(`DELETE FROM ${HISTORY_TRANSFORMERS_TABLE} WHERE history_id = ?;`).run(historyQuery.id);
-      if (historyQuery.northTransformers.length > 0) {
-        const insert = this.database.prepare(`INSERT INTO ${HISTORY_TRANSFORMERS_TABLE} (history_id, transformer_id) VALUES (?, ?);`);
-        for (const transformer of historyQuery.northTransformers) {
-          insert.run(historyQuery.id, transformer.id);
-        }
+      const insert = this.database.prepare(
+        `INSERT INTO ${HISTORY_TRANSFORMERS_TABLE} (history_id, transformer_id, options) VALUES (?, ?, ?);`
+      );
+      if (historyQuery.northTransformers.timeValues.transformer) {
+        insert.run(
+          historyQuery.id,
+          historyQuery.northTransformers.timeValues.transformer.id,
+          JSON.stringify(historyQuery.northTransformers.timeValues.options)
+        );
+      }
+      if (historyQuery.northTransformers.unknown.transformer) {
+        insert.run(
+          historyQuery.id,
+          historyQuery.northTransformers.unknown.transformer.id,
+          JSON.stringify(historyQuery.northTransformers.unknown.options)
+        );
       }
     });
     transaction();
@@ -311,12 +330,13 @@ export default class HistoryQueryRepository {
     this.database.prepare(query).run(id);
   }
 
-  findAllTransformersForHistory(historyId: string): Array<Transformer> {
-    const query = `SELECT t.id, t.name, t.type, t.description, t.input_type, t.output_type, t.standard_code, t.custom_code FROM ${HISTORY_TRANSFORMERS_TABLE} ht JOIN ${TRANSFORMERS_TABLE} t ON ht.transformer_id = t.id WHERE ht.history_id = ?;`;
-    return this.database
-      .prepare(query)
-      .all(historyId)
-      .map(result => toTransformer(result as Record<string, string>));
+  findTransformerForHistory(historyId: string, transformerId: string): { transformer: Transformer | null; options: object } {
+    const query = `SELECT t.id, t.name, t.type, t.description, t.input_type, t.output_type, t.custom_manifest, t.custom_code, ht.options FROM ${HISTORY_TRANSFORMERS_TABLE} ht JOIN ${TRANSFORMERS_TABLE} t ON ht.transformer_id = t.id WHERE ht.history_id = ? AND ht.transformer_id = ?;`;
+    const result = this.database.prepare(query).get(historyId, transformerId) as Record<string, string>;
+    return {
+      transformer: result ? toTransformer(result as Record<string, string>) : null,
+      options: (result as Record<string, string>)?.options ? JSON.parse((result as Record<string, string>).options) : {}
+    };
   }
 
   private toHistoryQueryItemEntity<I extends SouthItemSettings>(result: Record<string, string>): HistoryQueryItemEntity<I> {
@@ -364,7 +384,10 @@ export default class HistoryQueryRepository {
         }
       },
       items: this.findAllItemsForHistoryQuery<I>(result.id as string),
-      northTransformers: this.findAllTransformersForHistory(result.id as string)
+      northTransformers: {
+        unknown: this.findTransformerForHistory(result.id as string, result.unknown_transformer_id as string),
+        timeValues: this.findTransformerForHistory(result.id as string, result.time_values_transformer_id as string)
+      }
     };
   }
 }

@@ -122,7 +122,16 @@ describe('EditHistoryQueryComponent', () => {
         } as SouthItemSettings
       }
     ],
-    northTransformers: []
+    northTransformers: {
+      timeValues: {
+        transformer: null,
+        options: {}
+      },
+      unknown: {
+        transformer: null,
+        options: {}
+      }
+    }
   };
 
   beforeEach(() => {

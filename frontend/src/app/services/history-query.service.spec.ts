@@ -105,7 +105,16 @@ describe('HistoryQueryService', () => {
         }
       },
       items: [],
-      northTransformers: []
+      northTransformers: {
+        timeValues: {
+          transformerId: null,
+          options: {}
+        },
+        unknown: {
+          transformerId: null,
+          options: {}
+        }
+      }
     };
 
     service.update('id1', command, true).subscribe(() => (done = true));

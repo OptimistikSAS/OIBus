@@ -5,11 +5,12 @@ import { CacheMetadata } from '../../../shared/model/engine.model';
 import { promisify } from 'node:util';
 import path from 'node:path';
 import { generateRandomId } from '../utils';
+import { OibFormControl } from '../../../shared/model/form.model';
 
 const pipelineAsync = promisify(pipeline);
 
-export default class IsoRawTransformer extends OIBusTransformer {
-  public static transformerName = 'iso-raw';
+export default class IsoTransformer extends OIBusTransformer {
+  public static transformerName = 'iso';
 
   async transform(
     data: ReadStream | Readable,
@@ -42,5 +43,9 @@ export default class IsoRawTransformer extends OIBusTransformer {
       output: stringContent,
       metadata
     };
+  }
+
+  public static get manifestSettings(): Array<OibFormControl> {
+    return [];
   }
 }
