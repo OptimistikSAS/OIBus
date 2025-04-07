@@ -4,6 +4,7 @@ import { CacheMetadata, OIBusTimeValue } from '../../../shared/model/engine.mode
 import { ReadStream } from 'node:fs';
 import { pipeline, Readable, Transform } from 'node:stream';
 import { promisify } from 'node:util';
+import { OibFormControl } from '../../../shared/model/form.model';
 import { generateRandomId } from '../utils';
 
 const pipelineAsync = promisify(pipeline);
@@ -34,7 +35,7 @@ export default class OIBusTimeValuesToCsvTransformer extends OIBusTransformer {
       contentSize: 0, // It will be set outside the transformer, once the file is written
       createdAt: '', // It will be set outside the transformer, once the file is written
       numberOfElement: 0,
-      contentType: 'raw',
+      contentType: 'any',
       source,
       options: {}
     };
@@ -52,5 +53,9 @@ export default class OIBusTimeValuesToCsvTransformer extends OIBusTransformer {
       ),
       metadata
     };
+  }
+
+  public static get manifestSettings(): Array<OibFormControl> {
+    return [];
   }
 }

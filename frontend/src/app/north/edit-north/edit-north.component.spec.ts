@@ -78,7 +78,7 @@ describe('EditNorthComponent', () => {
         category: 'debug',
         name: 'Console',
         description: 'Console description',
-        types: ['raw', 'time-values'],
+        types: ['any', 'time-values'],
         settings: [],
         schema: {} as unknown
       } as NorthConnectorManifest)

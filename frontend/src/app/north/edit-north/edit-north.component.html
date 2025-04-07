@@ -58,7 +58,7 @@
                       type="button"
                       class="btn btn-secondary btn-sm oib-box-btn ms-3"
                       id="test-connection"
-                      (click)="northForm.markAllAsTouched(); submit('test')"
+                      (click)="northForm!.markAllAsTouched(); submit('test')"
                       translate="north.test-connection.button"
                     ></button>
                     <oib-help [url]="'https://oibus.optimistik.com/docs/guide/north-connectors/' + northType" />
@@ -212,7 +212,7 @@
                 </div>
               </div>
             </oib-box>
-            <oib-north-transformers [controls]="northForm.controls.transformers" [northManifest]="manifest" [transformers]="transformers" />
+            <oib-north-transformers [control]="northForm.controls.transformers" [northManifest]="manifest" [transformers]="transformers" />
           </div>
           @if (mode === 'edit' && northConnector) {
             <div id="actions" class="d-flex justify-content-end">
