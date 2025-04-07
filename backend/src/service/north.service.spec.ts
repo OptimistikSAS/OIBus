@@ -100,6 +100,27 @@ jest.mock(
       return mockedNorth1;
     }
 );
+jest.mock(
+  '../north/north-opcua/north-opcua',
+  () =>
+    function () {
+      return mockedNorth1;
+    }
+);
+jest.mock(
+  '../north/north-mqtt/north-mqtt',
+  () =>
+    function () {
+      return mockedNorth1;
+    }
+);
+jest.mock(
+  '../north/north-modbus/north-modbus',
+  () =>
+    function () {
+      return mockedNorth1;
+    }
+);
 
 let service: NorthService;
 describe('north service', () => {
@@ -177,6 +198,27 @@ describe('north service', () => {
   it('runNorth() should run NorthREST', () => {
     const rest = JSON.parse(JSON.stringify(testData.north.list[0]));
     rest.type = 'rest';
+    const connector = service.runNorth(rest, logger, mockBaseFolders(rest.id));
+    expect(connector).toEqual(mockedNorth1);
+  });
+
+  it('runNorth() should run NorthOPCUA', () => {
+    const rest = JSON.parse(JSON.stringify(testData.north.list[0]));
+    rest.type = 'opcua';
+    const connector = service.runNorth(rest, logger, mockBaseFolders(rest.id));
+    expect(connector).toEqual(mockedNorth1);
+  });
+
+  it('runNorth() should run NorthModbus', () => {
+    const rest = JSON.parse(JSON.stringify(testData.north.list[0]));
+    rest.type = 'modbus';
+    const connector = service.runNorth(rest, logger, mockBaseFolders(rest.id));
+    expect(connector).toEqual(mockedNorth1);
+  });
+
+  it('runNorth() should run NorthMQTT', () => {
+    const rest = JSON.parse(JSON.stringify(testData.north.list[0]));
+    rest.type = 'mqtt';
     const connector = service.runNorth(rest, logger, mockBaseFolders(rest.id));
     expect(connector).toEqual(mockedNorth1);
   });
