@@ -5,7 +5,7 @@ describe('OIBusSouthCategoryEnumPipe', () => {
   it('should translate south category', () => {
     testEnumPipe(OIBusSouthCategoryEnumPipe, {
       file: 'File',
-      iot: 'IOT',
+      iot: 'IoT',
       database: 'Database'
     });
   });

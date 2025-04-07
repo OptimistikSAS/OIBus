@@ -26,13 +26,16 @@ import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.
 import fs from 'node:fs/promises';
 import { OIBusTimeValue } from '../../../shared/model/engine.model';
 import csv from 'papaparse';
-import TransformerService from '../../service/transformer.service';
+import TransformerService, { createTransformer } from '../../service/transformer.service';
 import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
+import OIBusTransformer from '../../service/transformers/oibus-transformer';
+import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
 
 jest.mock('node:fs');
 jest.mock('node:fs/promises');
 jest.mock('papaparse');
 jest.mock('../../service/utils');
+jest.mock('../../service/transformer.service');
 jest.mock('../../service/http-request.utils');
 
 const logger: pino.Logger = new PinoLogger();
@@ -41,6 +44,7 @@ const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRep
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const transformerService: TransformerService = new TransformerServiceMock();
 const cacheService: CacheService = new CacheServiceMock();
+const oiBusTransformer: OIBusTransformer = new OIBusTransformerMock() as unknown as OIBusTransformer;
 
 jest.mock(
   '../../service/cache/cache.service',
@@ -171,6 +175,7 @@ describe.each(testCases)('NorthREST %s', (_, settings) => {
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
     (filesExists as jest.Mock).mockReturnValue(true);
+    (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
     (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(200));
     (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(timeValues));
     (csv.unparse as jest.Mock).mockReturnValue('csv content');

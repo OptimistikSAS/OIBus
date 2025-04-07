@@ -10,6 +10,14 @@ import {
 } from '../../shared/model/transformer.model';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { Page } from '../../shared/model/types';
+import { NorthConnectorEntity } from '../model/north-connector.model';
+import { NorthSettings } from '../../shared/model/north-settings.model';
+import pino from 'pino';
+import OibusTransformer from './transformers/oibus-transformer';
+import IsoRawTransformer from './transformers/iso-raw-transformer';
+import IsoTimeValuesTransformer from './transformers/iso-time-values-transformer';
+import OIBusTimeValuesToCsvTransformer from './transformers/oibus-time-values-to-csv-transformer';
+import OIBusTimeValuesToJSONTransformer from './transformers/oibus-time-values-to-json-transformer';
 
 export default class TransformerService {
   constructor(
@@ -112,5 +120,28 @@ export const toTransformerDTO = (transformer: Transformer): TransformerDTO => {
         outputType: transformer.outputType,
         customCode: transformer.customCode
       };
+  }
+};
+
+export const createTransformer = (
+  transformer: Transformer,
+  northConnector: NorthConnectorEntity<NorthSettings>,
+  logger: pino.Logger
+): OibusTransformer => {
+  switch (transformer.id) {
+    case IsoRawTransformer.transformerName: {
+      return new IsoRawTransformer(logger, transformer, northConnector);
+    }
+    case IsoTimeValuesTransformer.transformerName: {
+      return new IsoTimeValuesTransformer(logger, transformer, northConnector);
+    }
+    case OIBusTimeValuesToCsvTransformer.transformerName: {
+      return new OIBusTimeValuesToCsvTransformer(logger, transformer, northConnector);
+    }
+    case OIBusTimeValuesToJSONTransformer.transformerName: {
+      return new OIBusTimeValuesToJSONTransformer(logger, transformer, northConnector);
+    }
+    default:
+      throw new Error(`Could not create ${transformer.id} transformer`);
   }
 };
