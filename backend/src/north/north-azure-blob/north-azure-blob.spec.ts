@@ -139,7 +139,7 @@ describe('NorthAzureBlob without proxy', () => {
       contentSize: 1234,
       numberOfElement: 0,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -178,7 +178,7 @@ describe('NorthAzureBlob without proxy', () => {
       contentSize: 1234,
       numberOfElement: 0,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -219,7 +219,7 @@ describe('NorthAzureBlob without proxy', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -259,7 +259,7 @@ describe('NorthAzureBlob without proxy', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -304,7 +304,7 @@ describe('NorthAzureBlob without proxy', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -348,7 +348,7 @@ describe('NorthAzureBlob without proxy', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -390,7 +390,7 @@ describe('NorthAzureBlob without proxy', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -432,7 +432,7 @@ describe('NorthAzureBlob without proxy', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -685,7 +685,7 @@ describe('NorthAzureBlob with proxy', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -727,7 +727,7 @@ describe('NorthAzureBlob with proxy', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -773,7 +773,7 @@ describe('NorthAzureBlob with proxy', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -814,7 +814,7 @@ describe('NorthAzureBlob with proxy', () => {
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'raw',
+      contentType: 'any',
       source: 'south',
       options: {}
     });
@@ -859,5 +859,19 @@ describe('NorthAzureBlob with proxy', () => {
     expect(proxy3.proxyPort).toBe(3128);
 
     expect(() => north.parseProxyUrl('http://127.0.0.1:3128:3128')).toThrow('Bad proxy url http://127.0.0.1:3128:3128');
+  });
+
+  it('should ignore data if bad content type', async () => {
+    await expect(
+      north.handleContent({
+        contentFile: 'path/to/file/example-123456789.file',
+        contentSize: 1234,
+        numberOfElement: 1,
+        createdAt: '2020-02-02T02:02:02.222Z',
+        contentType: 'time-values',
+        source: 'south',
+        options: {}
+      })
+    ).rejects.toThrow(`Unsupported data type: time-values (file path/to/file/example-123456789.file)`);
   });
 });

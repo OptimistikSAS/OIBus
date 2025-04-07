@@ -208,7 +208,7 @@ export default class SouthFolderScanner
         // Compress and send the compressed file
         const gzipPath = path.resolve(this.tmpFolder, `${filename}.gz`);
         await compress(filePath, gzipPath);
-        await this.addContent({ type: 'raw', filePath: gzipPath });
+        await this.addContent({ type: 'any', filePath: gzipPath });
         try {
           await fs.unlink(gzipPath);
         } catch (unlinkError) {
@@ -216,10 +216,10 @@ export default class SouthFolderScanner
         }
       } catch (error: unknown) {
         this.logger.error(`Error compressing file "${filePath}": ${(error as Error).message}. Sending it raw instead.`);
-        await this.addContent({ type: 'raw', filePath });
+        await this.addContent({ type: 'any', filePath });
       }
     } else {
-      await this.addContent({ type: 'raw', filePath });
+      await this.addContent({ type: 'any', filePath });
     }
 
     // Delete original file if preserveFile is not set
