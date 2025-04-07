@@ -186,6 +186,11 @@
                 </div>
               </div>
             </oib-box>
+            <oib-north-transformers
+              [controls]="historyQueryForm.controls.northTransformers"
+              [northManifest]="northManifest"
+              [transformers]="transformers"
+            />
             <!-- North settings -->
             <oib-box>
               <ng-template oibBoxTitle>
@@ -273,7 +278,6 @@
               (inMemoryItems)="updateInMemoryItems($event)"
             />
           }
-          <!-- TODO transformers here -->
         </form>
         @if (mode === 'create') {
           <div id="actions" class="mt-2 d-flex justify-content-end">

@@ -133,6 +133,8 @@ export default class CacheService {
     if (this.queue[0].metadata.contentType !== 'raw') {
       await this.compactQueue(maxGroupCount, this.queue[0].metadata.contentType);
     }
+
+    // TODO: transform here ?
     return this.queue[0];
   }
 
