@@ -1,12 +1,18 @@
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import { transformerSchema } from '../web-server/controllers/validators/oibus-validation-schema';
 import testData from '../tests/utils/test-data';
-import TransformerService from './transformer.service';
+import TransformerService, { createTransformer } from './transformer.service';
 import TransformerRepository from '../repository/config/transformer.repository';
 import TransformerRepositoryMock from '../tests/__mocks__/repository/config/transformer-repository.mock';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import OianalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
-import { StandardTransformer } from '../model/transformer.model';
+import { StandardTransformer, Transformer } from '../model/transformer.model';
+import pino from 'pino';
+import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
+import IsoRawTransformer from './transformers/iso-raw-transformer';
+import IsoTimeValuesTransformer from './transformers/iso-time-values-transformer';
+import OIBusTimeValuesToJSONTransformer from './transformers/oibus-time-values-to-json-transformer';
+import OIBusTimeValuesToCsvTransformer from './transformers/oibus-time-values-to-csv-transformer';
 
 jest.mock('papaparse');
 jest.mock('./utils');
@@ -133,5 +139,22 @@ describe('Transformer Service', () => {
 
     expect(transformerRepository.findById).toHaveBeenCalledWith(standardTransformer.id);
     expect(transformerRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('createTransformer() should create the transformer', async () => {
+    const logger: pino.Logger = new PinoLogger();
+
+    const transformer: Transformer = JSON.parse(JSON.stringify(testData.transformers.list[0]));
+    transformer.id = 'iso-raw';
+    expect(createTransformer(transformer, testData.north.list[0], logger)).toBeInstanceOf(IsoRawTransformer);
+    transformer.id = 'iso-time-values';
+    expect(createTransformer(transformer, testData.north.list[0], logger)).toBeInstanceOf(IsoTimeValuesTransformer);
+    transformer.id = 'time-values-to-csv';
+    expect(createTransformer(transformer, testData.north.list[0], logger)).toBeInstanceOf(OIBusTimeValuesToCsvTransformer);
+    transformer.id = 'time-values-to-json';
+    expect(createTransformer(transformer, testData.north.list[0], logger)).toBeInstanceOf(OIBusTimeValuesToJSONTransformer);
+
+    transformer.id = 'bad-id';
+    expect(() => createTransformer(transformer, testData.north.list[0], logger)).toThrow(new Error('Could not create bad-id transformer'));
   });
 });

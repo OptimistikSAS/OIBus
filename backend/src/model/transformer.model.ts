@@ -6,7 +6,7 @@ export interface BaseTransformer {
   name: string;
   description: string;
   inputType: OIBusDataType;
-  outputType: OIBusDataType;
+  outputType: string;
   type: 'custom' | 'standard';
 }
 
@@ -27,6 +27,6 @@ export interface TransformerLight {
   name: string;
   description: string;
   inputType: OIBusDataType;
-  outputType: OIBusDataType;
+  outputType: string;
   type: 'custom' | 'standard';
 }

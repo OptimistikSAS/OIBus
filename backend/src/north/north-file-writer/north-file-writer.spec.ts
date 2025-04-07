@@ -7,7 +7,6 @@ import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
-import { OIBusTimeValue } from '../../../shared/model/engine.model';
 import csv from 'papaparse';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
@@ -18,8 +17,11 @@ import { NorthFileWriterSettings } from '../../../shared/model/north-settings.mo
 import testData from '../../tests/utils/test-data';
 import { mockBaseFolders } from '../../tests/utils/test-utils';
 import CacheService from '../../service/cache/cache.service';
-import TransformerService from '../../service/transformer.service';
+import TransformerService, { createTransformer } from '../../service/transformer.service';
 import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
+import OIBusTransformer from '../../service/transformers/oibus-transformer';
+import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
+import { getFilenameWithoutRandomId } from '../../service/utils';
 
 jest.mock('node:fs/promises');
 
@@ -29,6 +31,7 @@ const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRep
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const cacheService: CacheService = new CacheServiceMock();
 const transformerService: TransformerService = new TransformerServiceMock();
+const oiBusTransformer: OIBusTransformer = new OIBusTransformerMock() as unknown as OIBusTransformer;
 
 jest.mock(
   '../../service/cache/cache.service',
@@ -38,18 +41,11 @@ jest.mock(
     }
 );
 jest.mock('../../service/utils');
+jest.mock('../../service/transformer.service');
 jest.mock('papaparse');
 
 let configuration: NorthConnectorEntity<NorthFileWriterSettings>;
 let north: NorthFileWriter;
-
-const timeValues: Array<OIBusTimeValue> = [
-  {
-    timestamp: '2021-07-29T12:13:31.883Z',
-    data: { value: '666', quality: 'good' },
-    pointId: 'pointId'
-  }
-];
 
 describe('NorthFileWriter', () => {
   beforeEach(async () => {
@@ -64,6 +60,8 @@ describe('NorthFileWriter', () => {
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
     (csv.unparse as jest.Mock).mockReturnValue('csv content');
+    (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
+    (getFilenameWithoutRandomId as jest.Mock).mockReturnValue('example.file');
 
     north = new NorthFileWriter(
       configuration,
@@ -75,43 +73,6 @@ describe('NorthFileWriter', () => {
       mockBaseFolders(testData.north.list[0].id)
     );
     await north.start();
-  });
-
-  it('should properly handle values', async () => {
-    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(timeValues));
-    await north.handleContent({
-      contentFile: '/path/to/file/example-123.json',
-      contentSize: 1234,
-      numberOfElement: 1,
-      createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'time-values',
-      source: 'south',
-      options: {}
-    });
-    expect(fs.readFile).toHaveBeenCalledWith('/path/to/file/example-123.json', { encoding: 'utf-8' });
-
-    const expectedFileName = `${configuration.settings.prefix}${new Date().getTime()}${configuration.settings.suffix}.csv`;
-    const expectedOutputFolder = path.resolve(configuration.settings.outputFolder);
-    const expectedPath = path.join(expectedOutputFolder, expectedFileName);
-    expect(fs.writeFile).toHaveBeenCalledWith(expectedPath, 'csv content');
-  });
-
-  it('should properly catch handle values error', async () => {
-    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(timeValues));
-    jest.spyOn(fs, 'writeFile').mockImplementationOnce(() => {
-      throw new Error('Error handling values');
-    });
-    await expect(
-      north.handleContent({
-        contentFile: '/path/to/file/example-123.json',
-        contentSize: 1234,
-        numberOfElement: 1,
-        createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'time-values',
-        source: 'south',
-        options: {}
-      })
-    ).rejects.toThrow('Error handling values');
   });
 
   it('should properly handle files', async () => {
@@ -161,6 +122,8 @@ describe('NorthFileWriter without suffix or prefix', () => {
     };
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(configuration);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
+    (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
+    (getFilenameWithoutRandomId as jest.Mock).mockReturnValue('example.file');
 
     north = new NorthFileWriter(
       configuration,
@@ -171,23 +134,6 @@ describe('NorthFileWriter without suffix or prefix', () => {
       logger,
       mockBaseFolders(testData.north.list[0].id)
     );
-  });
-
-  it('should properly handle values', async () => {
-    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(timeValues));
-    await north.handleContent({
-      contentFile: '/path/to/file/example-123.json',
-      contentSize: 1234,
-      numberOfElement: 1,
-      createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'time-values',
-      source: 'south',
-      options: {}
-    });
-    const expectedFileName = `${new Date().getTime()}.csv`;
-    const expectedOutputFolder = path.resolve(configuration.settings.outputFolder);
-    const expectedPath = path.join(expectedOutputFolder, expectedFileName);
-    expect(fs.writeFile).toHaveBeenCalledWith(expectedPath, 'csv content');
   });
 
   it('should properly handle files', async () => {

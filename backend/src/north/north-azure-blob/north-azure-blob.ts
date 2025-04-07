@@ -1,5 +1,4 @@
 import fs from 'node:fs/promises';
-import path from 'node:path';
 import pino from 'pino';
 import { BlobServiceClient, StorageSharedKeyCredential } from '@azure/storage-blob';
 import { ClientSecretCredential, DefaultAzureCredential } from '@azure/identity';
@@ -8,14 +7,13 @@ import NorthConnector from '../north-connector';
 import EncryptionService from '../../service/encryption.service';
 import { NorthAzureBlobSettings } from '../../../shared/model/north-settings.model';
 import { ProxyOptions } from '@azure/core-http';
-import { CacheMetadata, OIBusTimeValue } from '../../../shared/model/engine.model';
-import { DateTime } from 'luxon';
-import csv from 'papaparse';
+import { CacheMetadata } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import ScanModeRepository from '../../repository/config/scan-mode.repository';
 import { BaseFolders } from '../../model/types';
 import TransformerService from '../../service/transformer.service';
+import { getFilenameWithoutRandomId } from '../../service/utils';
 
 const TEST_FILE = 'oibus-azure-test.txt';
 
@@ -134,36 +132,24 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
     }
   }
 
-  async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
-    switch (cacheMetadata.contentType) {
-      case 'raw':
-        return this.handleFile(cacheMetadata.contentFile);
-
-      case 'time-values':
-        return this.handleValues(JSON.parse(await fs.readFile(cacheMetadata.contentFile, { encoding: 'utf-8' })) as Array<OIBusTimeValue>);
-    }
-  }
-
   /**
    * Handle the file by uploading it to Azure Blob Storage.
    */
-  async handleFile(filePath: string): Promise<void> {
+  async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
     const container = this.connector.settings.container;
     const blobPath = this.connector.settings.path ? `${this.connector.settings.path}/` : '';
     this.logger.info(
-      `Uploading file "${filePath}" to ${this.connector.settings.useADLS ? 'Azure Data Lake Storage' : 'Azure Blob Storage'}  for container ${container} and path ${blobPath}.`
+      `Uploading file "${cacheMetadata.contentFile}" to ${this.connector.settings.useADLS ? 'Azure Data Lake Storage' : 'Azure Blob Storage'}  for container ${container} and path ${blobPath}.`
     );
-    const { name, ext } = path.parse(filePath);
-    const filename = name.slice(0, name.lastIndexOf('-'));
-    const blobName = `${blobPath}${filename}${ext}`;
-    const stats = await fs.stat(filePath);
-    const content = await fs.readFile(filePath);
+    const blobName = `${blobPath}${getFilenameWithoutRandomId(cacheMetadata.contentFile)}`;
+    const stats = await fs.stat(cacheMetadata.contentFile);
+    const content = await fs.readFile(cacheMetadata.contentFile);
 
     if (this.connector.settings.useADLS) {
       const fileSystemClient = this.dataLakeClient!.getFileSystemClient(container);
       const fileClient = fileSystemClient.getFileClient(blobName);
       let requestId = (await fileClient.createIfNotExists()).requestId;
-      if (content.length != 0) {
+      if (content.length !== 0) {
         await fileClient.append(content, 0, content.length);
         requestId = (await fileClient.flush(content.length)).requestId;
       }
@@ -175,41 +161,6 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
     }
   }
 
-  async handleValues(values: Array<OIBusTimeValue>): Promise<void> {
-    const filename = `${this.connector.name}-${DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS')}.csv`;
-    const container = this.connector.settings.container;
-    const blobPath = this.connector.settings.path ? `${this.connector.settings.path}/${filename}` : filename;
-
-    this.logger.info(
-      `Uploading file "${filename}" to ${!this.connector.settings.useADLS ? 'Azure Data Lake Storage' : 'Azure Blob Storage'} for container ${container} and path ${blobPath}.`
-    );
-    const csvContent = csv.unparse(
-      values.map(value => ({
-        pointId: value.pointId,
-        timestamp: value.timestamp,
-        value: value.data.value
-      })),
-      {
-        header: true,
-        delimiter: ';'
-      }
-    );
-
-    if (this.connector.settings.useADLS) {
-      const fileSystemClient = this.dataLakeClient!.getFileSystemClient(container);
-      const fileClient = fileSystemClient.getFileClient(blobPath);
-      let requestId = (await fileClient.createIfNotExists()).requestId;
-      if (csvContent.length != 0) {
-        await fileClient.append(csvContent, 0, csvContent.length);
-        requestId = (await fileClient.flush(csvContent.length)).requestId;
-      }
-      this.logger.info(`Uploaded successfully "${blobPath}" to Azure Data Lake Storage with requestId: ${requestId}.`);
-    } else {
-      const blockBlobClient = this.blobClient!.getContainerClient(container).getBlockBlobClient(blobPath);
-      const uploadBlobResponse = await blockBlobClient.upload(csvContent, csvContent.length);
-      this.logger.info(`Upload block blob "${blobPath}" successfully with requestId: ${uploadBlobResponse.requestId}`);
-    }
-  }
   override async testConnection(): Promise<void> {
     await this.prepareConnection();
     const blobPath = this.connector.settings.path ? `${this.connector.settings.path}/${TEST_FILE}` : TEST_FILE;
